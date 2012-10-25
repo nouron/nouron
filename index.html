@@ -33,6 +33,25 @@
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="apple-touch-icon-114-precomposed.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-57-precomposed.png">
+    <link rel="stylesheet" href="css/prettyPhoto.css" type="text/css" media="screen" charset="utf-8" />
+    
+    <script src="js/jquery-1.7.1.min.js"></script>
+    <script src="js/jquery.prettyPhoto.js" type="text/javascript" charset="utf-8"></script>
+    <script type="text/javascript" src="jquery.socialshareprivacy.min.js"></script>
+    <script type="text/javascript">
+    jQuery(document).ready(function($){
+      if($('#socialshareprivacy').length > 0){
+        $('#socialshareprivacy').socialSharePrivacy({
+          services : {
+            facebook : {'recommend': 'like'}, 
+            twitter : {'language' : 'de'}
+          },
+          'cookie_domain' : 'heise.de'
+        }
+      }
+    });
+    </script>
+    
   </head>
 
   <body>
@@ -61,17 +80,34 @@
 
       <div class="row">
         <div class="span4" id="logo">
-            <img src="img/logo.png" height="250" width="250" />
+            <a href="media/nouron_logo.svg" title="Das Nouron-Logo als SVG-Datei herunterladen"><img src="img/logo.png" alt="Nouron" width="250" height="250"/></a>
         </div>
         <div class="span8">
     <p>Nouron steht für rundenbasierte Weltraum-Strategie im Browser, mit drei unterschiedlichen Rassen und acht spielbaren Fraktionen. Der Schwerpunkt liegt, im Gegensatz zu den meisten anderen Browsergames des Genres, nicht auf Kampfhandlungen. Vielmehr rückt die Diplomatie und Politik in den Vordergrund. Das typische Bashen und Farmen wird es in Nouron nicht geben!</p>
     <p>Ein weiteres Hauptziel ist es, dem Spieler ein wirklich angenehmes Spielerlebnis zu bieten - ohne Stress und ohne den Zwang, zu bestimmten Uhrzeiten online sein zu müssen. Es ist vor allem ein Spiel für Leute die wenig Zeit haben oder ein Zweitbrowsergame suchen ;)</p>
     <p>Aktuelle Neuigkeiten über die Entwicklung des Spiels gibt es im <a href="http://cotoyomi.silver-boards.com/blog/" target="_blank">Blog</a>.</p>
+            <div id="socialshareprivacy"></div>
         </div>
       </div>
 
       <div class="hero-unit" id="picA">
-
+        <div id="gallery">
+            <a href="images/gallery/200907_galaxy.png" rel="prettyPhoto[pp_gal]">
+                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_galaxy_t.gif) center center no-repeat;" title="Die Nouron-Galaxie (P.Wippermann)"><!----></span>
+            </a>
+            <a href="images/gallery/200907_sketch_city.png" rel="prettyPhoto[pp_gal]">
+                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_sketch_city_t.gif) center center no-repeat;" title="Eine Stadtkolonie (P.Wippermann)"><!----></span>
+            </a>
+            <a href="images/gallery/200907_sketch_hangar.png" rel="prettyPhoto[pp_gal]">
+                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_sketch_hangar_t.gif) center center no-repeat;" title="Hangar für die Raumschiffe (P.Wippermann)"><!----></span>
+            </a>
+            <a href="images/gallery/201103_avatars_ena.png" rel="prettyPhoto[pp_gal]">
+                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/201103_avatars_ena_t.gif) center center no-repeat;" title="Avatare der Ena-Rasse (J. Wiesenberg)"><!----></span>
+            </a>
+            <a href="images/gallery/200907_planets.png" rel="prettyPhoto[pp_gal]">
+                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_planets_t.gif) center center no-repeat;"  title="Planetenarten (M.Gehnke)"><!----></span>
+            </a>
+        </div>
       </div>
 
       <div class="row">
@@ -155,9 +191,9 @@ Nouron wird beweisen, dass das Spaß machen kann!</p>
       </div>
 
       <hr />
-
       <footer>
-        <p>&copy; Mario Gehnke</p>
+        <p><a href="http://tector.wordpress.com" target="_blank">Blog</a> | 
+            <a href="#">Impressum</a> | Dieser Inhalt ist unter einer <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/de/">Creative Commons-Lizenz</a> lizenziert.</p>
       </footer>
 
     </div> <!-- /container -->
@@ -165,7 +201,7 @@ Nouron wird beweisen, dass das Spaß machen kann!</p>
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="js/jquery.js"></script>
+    
     <script src="js/bootstrap-transition.js"></script>
     <script src="js/bootstrap-alert.js"></script>
     <script src="js/bootstrap-modal.js"></script>
@@ -179,6 +215,11 @@ Nouron wird beweisen, dass das Spaß machen kann!</p>
     <script src="js/bootstrap-carousel.js"></script>
     <script src="js/bootstrap-typeahead.js"></script>
 
+    <script type="text/javascript" charset="utf-8">
+      $(document).ready(function(){
+        $("a[rel^='prettyPhoto']").prettyPhoto();
+      });
+    </script>
   </body>
 </html>
 
