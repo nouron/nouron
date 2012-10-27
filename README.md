@@ -29,13 +29,11 @@ Blog
 
 
 
-Authors
--------
+Authors and Supporters
+----------------------
 
-**Mario Gehnke**
-
-+ http://github.com/tector
-
++ Mario Gehnke http://github.com/tector
++ Thanks to Peter Wippermann (www.todoz.de) and Jacqueline Wiesenberg for some of the graphics.
 
 
 Copyright and license
@@ -43,4 +41,13 @@ Copyright and license
 
 Copyright 2012 Mario Gehnke
 
-License informations will be follow...
+The sourcecode is licensed unter the conditions of GNU General Public License V3. See:
+* LICENSE.txt
+* http://www.gnu.org/licenses/
+
+All graphics and texts are licensed (unless otherwise noted) under the conditions of Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Germany (CC BY-NC-SA 3.0).
+See:
+* (de) http://creativecommons.org/licenses/by-nc-sa/3.0/de
+* (en) http://creativecommons.org/licenses/by-nc-sa/3.0/de/deed.en
+
+The project uses code of frameworks or libraries which have their own licenses. Please see the license informations in these libraries too.
