@@ -1,1 +1,22 @@
+body {padding-top: 60px;padding-bottom: 40px;}
+
+.sidebar-nav {padding: 9px 0;}
+
 a {text-color: #000}
+
+/* modification of bootstrap css */
+.modal.fade {
+    -webkit-transition: none;
+    -moz-transition: none;
+    -ms-transition: none;
+    -o-transition: none;
+    transition: none;
+}​
+
+body .carousel .carousel-inner .item{
+	height: 300px !important;
+}
+
+.carousel-inner .item .row-fluid{
+	margin-bottom: 30px;
+}
