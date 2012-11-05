@@ -2,10 +2,13 @@ body {padding-top: 60px;padding-bottom: 40px;}
 
 .sidebar-nav {padding: 9px 0;}
 
+.navbar-inner {background: #eee}
+
 a {color: #333; white-space: nowrap;}
 a:hover {color:000; text-decoration:none;}
+a.btn {background: #eee}
 
-#myCarousel {background-image: url("/img/gallery/200907_sketch_city_t.gif");}
+/*#myCarousel {background: center center url("../img/gallery/200907_sketch_city.png") no-repeat;}*/
 
 /* modification of bootstrap css */
 .modal.fade {

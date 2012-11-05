@@ -71,19 +71,20 @@
         <div id="myCarousel" class="carousel slide row-fluid">
           <!-- Carousel items -->
           <div class="carousel-inner">
-            <div class="active item" id="stage1">
-              <div class="span10 offset2">
+            <div class="active item" id="stage1" style="position: relative;">
+              <div class="span10 offset1" style="position:absolute">
                 <div class="row-fluid">
-                  <span class="span2 a1"><a href="#techModal" role="button" class="btn btn-block" data-toggle="modal">test</a></span>
-                  <span class="span2 a2"></span>
-                  <span class="span2 a3"><a href="#" class="btn btn-block">test</a></span>
+                  <span class="span2 a1" id="a1"><a href="#techModal" role="button" class="btn btn-block" data-toggle="modal">test</a></span>
+                  <span class="span2 a2" id="a2"></span>
+                  <span class="span2 a3" id="a3"><a href="#" class="btn btn-block">test</a></span>
                   <span class="span2 a4"></span>
                   <span class="span2 a5"><a href="#" class="btn btn-block">test</a></span>
+                  <span class="span2 a6"><a href="#" class="btn btn-block">test</a></span>
                 </div>
                 <div class="row-fluid">
                   <span class="span2 b1"></span>
                   <span class="span2 b2"></span>
-                  <span class="span2 b3"><a href="#" class="btn btn-block">test</a></span>
+                  <span class="span2 b3" id="b3"><a href="#" class="btn btn-block">test</a></span>
                   <span class="span2 b4"><a href="#" class="btn btn-block">test</a></span>
                   <span class="span2 b5"><a href="#" class="btn btn-block">test</a></span>
                 </div>
@@ -93,7 +94,6 @@
                   <span class="span2 c3"><a href="#" class="btn btn-block">test</a></span>
                   <span class="span2 c4"><a href="#" class="btn btn-block">test</a></span>
                   <span class="span2 c5"><a href="#" class="btn btn-block">test</a></span>
-                
                 </div>
                 <div class="row-fluid">
                   <span class="span2 d1"><a href="#techModal" role="button" class="btn btn-block" data-toggle="modal">test</a></span>
@@ -105,9 +105,14 @@
                   <span class="span2 f1"><a href="#techModal" role="button" class="btn btn-block" data-toggle="modal">test</a></span>
                 </div>
               </div>
+              <svg id="stage1-svg" height="100%" width="100%"  class="span10 offset1" stye="position: absolute; background-color: #bbb">
+                <g>
+                  <line x1="0" y1="0" x2="100%" y2="100%" stroke="black" />
+                </g>
+              </svg>
             </div>
             <div class="item" id="stage2">
-              <div class="span10 offset2">
+              <div class="span10 offset1">
                 <div class="row-fluid">
                   <span class="span2 a1"><a href="#" class="btn btn-block">22222</a></span>
                   <span class="span2 a2"></span>
@@ -208,6 +213,34 @@
         $(this).hide();
         $('.carousel-control.left').show();
       })
+
+      function draw_requirement(src, trgt) {
+        var src = src.position();
+        var trgt = trgt.position();
+
+        xa = src.left;
+        xm = xb = xc = Math.round( (trgt.left + src.left) / 2 );
+        xd = trgt.left;
+
+        ya = yb = src.top;
+        yc = yd = trgt.top;
+        ym = Math.round( (yb+yc) / 2 );
+
+        svg =  '<g>';
+        svg += '  <line x1="'+xa+'" y1="'+ya+'" x2="'+xb+'" y2="'+yb+'" style="stroke: black;" />';
+        svg += '  <line x1="'+xb+'" y1="'+yb+'" x2="'+xc+'" y2="'+yc+'" style="stroke: black;" />';
+        svg += '  <line x1="'+xc+'" y1="'+yc+'" x2="'+xd+'" y2="'+yd+'" style="stroke: black;" />';
+        svg += '  <rect id="Rect1" x="'+xm+'" y="'+ym+'" height="6%" width="6%" style="fill: white;" />';
+        svg += '  <text x="'+xm+'" y="'+ym+'" font-family="Verdana" font-size="1em" fill="black" > 99</text>';
+        svg += '</g>';
+
+        $('#stage1-svg').append(svg);
+      }
+
+      src = $('#a1');
+      trgt = $('#b3');
+      draw_requirement(src, trgt);
+
 
     });
     </script>
