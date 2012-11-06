@@ -8,6 +8,8 @@ a {color: #333; white-space: nowrap;}
 a:hover {color:000; text-decoration:none;}
 a.btn {background: #eee}
 
+.stage-svg {position: absolute;}
+
 /*#myCarousel {background: center center url("../img/gallery/200907_sketch_city.png") no-repeat;}*/
 
 /* modification of bootstrap css */

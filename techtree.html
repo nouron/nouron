@@ -105,10 +105,8 @@
                   <span class="span2 f1"><a href="#techModal" role="button" class="btn btn-block" data-toggle="modal">test</a></span>
                 </div>
               </div>
-              <svg id="stage1-svg" height="100%" width="100%"  class="span10 offset1" stye="position: absolute; background-color: #bbb">
-                <g>
-                  <line x1="0" y1="0" x2="100%" y2="100%" stroke="black" />
-                </g>
+              <svg id="stage1-svg" height="100%" width="100%" stye="position: absolute; background-color: #bbb">
+                <!-- svg content via javascript -->
               </svg>
             </div>
             <div class="item" id="stage2">
@@ -215,30 +213,44 @@
       })
 
       function draw_requirement(src, trgt) {
-        var src = src.position();
-        var trgt = trgt.position();
+        var srcpos = src.position();
+        var trgtpos = trgt.position();
 
-        xa = src.left;
-        xm = xb = xc = Math.round( (trgt.left + src.left) / 2 );
-        xd = trgt.left;
+        if (srcpos.left <= trgtpos.left) {
+          left = srcpos.left + src.width();
+          right = trgtpos.left;
+        } else {
+          left = trgtpos.left + trgt.width();
+          right = srcpos.left;
+        }
 
-        ya = yb = src.top;
-        yc = yd = trgt.top;
+        xa = left;
+        xm = xb = xc = Math.round( (right + left) / 2 );
+        xd = right;
+
+        ya = yb = Math.round( (srcpos.top  + src.height())  / 2);
+        yc = yd = Math.round( (trgtpos.top + trgt.height()) / 2);
         ym = Math.round( (yb+yc) / 2 );
 
-        svg =  '<g>';
-        svg += '  <line x1="'+xa+'" y1="'+ya+'" x2="'+xb+'" y2="'+yb+'" style="stroke: black;" />';
-        svg += '  <line x1="'+xb+'" y1="'+yb+'" x2="'+xc+'" y2="'+yc+'" style="stroke: black;" />';
-        svg += '  <line x1="'+xc+'" y1="'+yc+'" x2="'+xd+'" y2="'+yd+'" style="stroke: black;" />';
-        svg += '  <rect id="Rect1" x="'+xm+'" y="'+ym+'" height="6%" width="6%" style="fill: white;" />';
-        svg += '  <text x="'+xm+'" y="'+ym+'" font-family="Verdana" font-size="1em" fill="black" > 99</text>';
-        svg += '</g>';
+        function makeSVG(tag, attrs = {}) {
+          var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
+          for (var k in attrs)
+            el.setAttribute(k, attrs[k]);
+          return el;
+        }
 
-        $('#stage1-svg').append(svg);
+        var group = makeSVG('g')
+        group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xb, y2:yb, stroke: 'black'}));
+        group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: 'black'}));
+        group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: 'black'}));
+        group.appendChild(makeSVG('rect', {x:xm, y:ym, height:'6%', width:'6%', fill: 'white'}));
+        //group.appendChild(makeSVG('text', {x1:xa, y1:ya, x2:xb, y2:yb, font-family:'Verdana'}));
+        document.getElementById('stage1-svg').appendChild(group);
+
       }
 
-      src = $('#a1');
-      trgt = $('#b3');
+      src = $('#a1 a');
+      trgt = $('#b3 a');
       draw_requirement(src, trgt);
 
 
