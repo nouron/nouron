@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon-precomposed" href="ico/apple-touch-icon-57-precomposed.png">
   </head>
 
-  <body>
+  <body id="galaxy">
 
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
@@ -68,7 +68,7 @@
 
       <hr />
       <div class="row-fluid">
-        <div class="span2">
+        <div class="span3">
           <div class="well sidebar-nav">
             <ul class="nav nav-list">
               <li class="nav-header">Eigene Flotten</li>
@@ -98,10 +98,17 @@
             </ul>
           </div><!--/.well -->
         </div><!--/span-->
-        <div class="span7 well" style="height: 100%">
-          test
+        <div class="parallax-viewport span6">
+          <div id="layerA" class="parallax-layer">
+            redredredredredredredredredred
+          </div>
+          <div id="layerB" class="parallax-layer">
+            blue blueblueblueblueblueblueblue
+          </div>
+          <div id="layerC" class="parallax-layer">
+          </div>
         </div>
-        <div class="span3 well" style="height: 100%">
+        <div class="span3 well">
           <p>
             Koordinaten: <br/>
             [123;456;1]<br />
@@ -174,71 +181,14 @@
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/jquery.jparallax.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
-      $('#myCarousel').carousel({ 
-         interval:1500, 
-         pause: true 
-        }); 
-      $('#myCarousel').carousel('pause');
+
       $('[rel=tooltip]').tooltip();
-
-      $('.carousel-control.left').hide();
-
-      $('.carousel-control.left').click(function(e){
-        $(this).hide();
-        $('.carousel-control.right').show();
-      })
-
-      $('.carousel-control.right').click(function(e){
-        $(this).hide();
-        $('.carousel-control.left').show();
-      })
-
-      function draw_requirement(src, trgt) {
-        var srcpos = src.position();
-        var trgtpos = trgt.position();
-
-        if (srcpos.left <= trgtpos.left) {
-          left = srcpos.left + src.width();
-          right = trgtpos.left;
-        } else {
-          left = trgtpos.left + trgt.width();
-          right = srcpos.left;
-        }
-
-        xa = left;
-        xm = xb = xc = Math.round( (right + left) / 2 );
-        xd = right;
-
-        ya = yb = Math.round( (srcpos.top  + src.height())  / 2);
-        yc = yd = Math.round( (trgtpos.top + trgt.height()) / 2);
-        ym = Math.round( (yb+yc) / 2 );
-
-        function makeSVG(tag, attrs = {}) {
-          var el= document.createElementNS('http://www.w3.org/2000/svg', tag);
-          for (var k in attrs)
-            el.setAttribute(k, attrs[k]);
-          return el;
-        }
-
-        var group = makeSVG('g')
-        group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xb, y2:yb, stroke: 'black'}));
-        group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: 'black'}));
-        group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: 'black'}));
-        group.appendChild(makeSVG('rect', {x:xm, y:ym, height:'6%', width:'6%', fill: 'white'}));
-        //group.appendChild(makeSVG('text', {x1:xa, y1:ya, x2:xb, y2:yb, font-family:'Verdana'}));
-        document.getElementById('stage1-svg').appendChild(group);
-
-      }
-
-      src = $('#a1 a');
-      trgt = $('#b3 a');
-      draw_requirement(src, trgt);
-
-
+      $('.parallax-layer').parallax();
     });
     </script>
 

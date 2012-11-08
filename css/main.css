@@ -1,18 +1,23 @@
 body {padding-top: 60px;padding-bottom: 40px;}
 
-.sidebar-nav {padding: 9px 0;}
-
 .navbar-inner {background: #eee}
 
 a {color: #333; white-space: nowrap;}
 a:hover {color:000; text-decoration:none;}
 a.btn {background: #eee}
 
-.stage-svg {position: absolute;}
+.sidebar-nav {padding: 9px 0;}
 
-/*#myCarousel {background: center center url("../img/gallery/200907_sketch_city.png") no-repeat;}*/
+#techtree .stage-svg {position: absolute;}
 
-/* modification of bootstrap css */
+#galaxy .sidebar-nav { height: 380px; overflow-y: auto; }
+#galaxy .parallax-viewport { position:relative; overflow:hidden; min-width: 200px; height:400px;border:5px solid #ccc;}
+#galaxy .parallax-layer { position: absolute; }
+#galaxy #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/layout/starfield.png");}
+#galaxy #layerB {height: 120%; width: 120%;}
+#galaxy #layerC {height: 100%; width: 100%;}
+
+/***** modifications of bootstrap css starts here: ****/
 .modal.fade {
     -webkit-transition: none;
     -moz-transition: none;
@@ -21,10 +26,6 @@ a.btn {background: #eee}
     transition: none;
 }​
 
-body .carousel .carousel-inner .item{
-	min-height: 300px !important;
-}
-
-.carousel-inner .item .row-fluid{
-	margin-bottom: 30px;
-}
+body .carousel .carousel-inner .item{ min-height: 300px !important; }
+body .carousel-inner .item .row-fluid{ margin-bottom: 30px; }
+body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
