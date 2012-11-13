@@ -29,3 +29,11 @@ a.btn {background: #eee}
 body .carousel .carousel-inner .item{ min-height: 300px !important; }
 body .carousel-inner .item .row-fluid{ margin-bottom: 30px; }
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
+
+.tooltip {z-index:2070;}
+
+.nav-tabs .secondary-nav {
+	float:right;
+	margin-left:10px;
+	margin-right:0;
+}

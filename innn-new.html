@@ -71,95 +71,55 @@
       <div class="row-fluid">
       
         <ul class="nav nav-tabs">
-          <li><a href="innn-new.html">New Message</a></li>
-          <li class="active"><a href="innn.html">Inbox</a></li>
+          <li class="active"><a href="#">New Message</a></li>
+          <li><a href="innn.html">Inbox</a></li>
           <li><a href="#">Outbox</a></li>
           <li class="secondary-nav"><a href="#">Archive</a></li>
         </ul>
 
-
-        <div class="accordion" id="accordion2">
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10"><i class="icon-envelope new-inbox-message"></i> hallo (ungelesene Nachricht)</span>
-              </a>
-            </div>
-            <div id="collapseOne" class="accordion-body collapse in row-fluid">
-              <div class="accordion-inner">
-                <span class="span2">...</span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10">hallo (gelesen, aber nicht reagiert)</span>
-              </a>
-            </div>
-            <div id="collapseTwo" class="accordion-body collapse row-fluid">
-              <div class="accordion-inner">
-                <span class="span2"></span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
-                  
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10">hallo (gelesen und reagiert)</span>
-              </a>
-            </div>
-            <div id="collapseThree" class="accordion-body collapse row-fluid">
-              <div class="accordion-inner">
-                <span class="span2"></span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren und antworten"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn">Archivieren</a>
-                  <a href="#" class="btn">Löschen</a>
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <div class="pagination">
-          <ul>
-            <li><a href="#">Prev</a></li>
-            <li><a href="#">1</a></li>
-            <li><a href="#">2</a></li>
-            <li><a href="#">3</a></li>
-            <li><a href="#">4</a></li>
-            <li><a href="#">Next</a></li>
+        <div class="tabbable tabs-left">
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#">... to User</a></li>
+            <li><a href="#">... to Faction</a></li>
+            <li><a href="#">... to Support</a></li>
           </ul>
+          <div class="tab-content">
+
+            <form class="form-horizontal" action="" method="POST">
+              <div class="control-group">
+                <label class="control-label" for="title">Titel</label>
+                <div class="controls">
+                  <input class="input-xxlarge" id="title" name="title" type="text" value="title" />
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="mood">Stimmung</label>
+                <div class="controls">
+                  <select class="input-xlarge" id="mood" name="mood">
+                    <option val="freundlich">freundlich</option>
+                    <option val="neutral">neutral</option>
+                    <option val="aggressiv">aggressiv</option>
+                  </select>
+                </div>
+              </div>
+              <div class="control-group">
+                <label class="control-label" for="text">Text</label>
+                <div class="controls">
+                  <textarea class="input-xxlarge" rows="4" id="text" name="text" />ganz viel text</textarea>
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save changes</button>
+                <button type="button" class="btn">Cancel</button>
+              </div>
+            </form>
+          </div>
+
+
+
+
         </div>
+
       </div><!--/row-->
 
       <hr>
