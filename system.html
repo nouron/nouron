@@ -25,7 +25,7 @@
     <link rel="apple-touch-icon-precomposed" href="ico/apple-touch-icon-57-precomposed.png">
   </head>
 
-  <body id="techtree">
+  <body id="system">
 
     <div class="navbar navbar-fixed-top">
       <div class="navbar-inner">
@@ -41,10 +41,10 @@
               Logged in as <a href="#" class="navbar-link">Username</a>
             </p>
             <ul class="nav">
-              <li class="active"><a href="innn.html">INNN</a></li>
+              <li><a href="innn.html">INNN</a></li>
               <li><a href="colony.html">Colony</a></li>
               <li><a href="#trade">Trade</a></li>
-              <li><a href="galaxy.html">Galaxy</a></li>
+              <li class="active"><a href="galaxy.html">Galaxy</a></li>
               <li><a href="#diplomacy">Diplomacy</a></li>
             </ul>
           </div><!--/.nav-collapse -->
@@ -67,98 +67,75 @@
       </div>
 
       <hr />
+      <div class="row-fluid">
+
+        <ul class="nav nav-tabs">
+          <li><a href="galaxy.html">Galaxy</a></li>
+          <li class="active"><a href="system.html">System</a></li>
+        </ul>
+      </div>
 
       <div class="row-fluid">
-      
-        <ul class="nav nav-tabs">
-          <li><a href="innn-new.html">New Message</a></li>
-          <li class="active"><a href="innn.html">Inbox</a></li>
-          <li><a href="#">Outbox</a></li>
-          <li class="secondary-nav"><a href="#">Archive</a></li>
-        </ul>
-
-
-        <div class="accordion" id="accordion2">
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10"><i class="icon-envelope new-inbox-message"></i> hallo (ungelesene Nachricht)</span>
-              </a>
-            </div>
-            <div id="collapseOne" class="accordion-body collapse in row-fluid">
-              <div class="accordion-inner">
-                <span class="span2">...</span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
-                </span>
-              </div>
-            </div>
+        <div class="span3 well sidebar-nav">
+          <ul class="nav nav-list">
+            <li class="nav-header">Eigene Flotten</li>
+            <li class="active"><a href="#"><i class="icon-plane icon-white"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li class="nav-header">Fremde Flotten</li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+            <li class="nav-header">Stationen</li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li class="nav-header">Planeten/Monde</li>
+            <li><a href="#"><i class="icon-globe"></i> Link</a></li>
+            <li><a href="#"><i class="icon-globe"></i> Link</a></li>
+            <li><a href="#"><i class="icon-globe"></i> Link</a></li>
+            <li class="nav-header">Sonstige Objekte</li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+            <li><a href="#">Link</a></li>
+          </ul>
+        </div><!--/span-->
+        <div class="parallax-viewport span6">
+          <div id="layerA" class="parallax-layer">
+            redredredredredredredredredred
           </div>
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10">hallo (gelesen, aber nicht reagiert)</span>
-              </a>
-            </div>
-            <div id="collapseTwo" class="accordion-body collapse row-fluid">
-              <div class="accordion-inner">
-                <span class="span2"></span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-envelope"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i></a>
-                  <a href="#" class="btn" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
-                  
-                </span>
-              </div>
-            </div>
+          <div id="layerB" class="parallax-layer">
+            blue blueblueblueblueblueblueblue
           </div>
-          <div class="accordion-group">
-            <div class="accordion-heading row-fluid">
-              <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                <span class="span1"><i class="icon-time"></i> 12345</span>
-                <span class="span1"><strong>tector:</strong></span>
-                <span class="span10">hallo (gelesen und reagiert)</span>
-              </a>
-            </div>
-            <div id="collapseThree" class="accordion-body collapse row-fluid">
-              <div class="accordion-inner">
-                <span class="span2"></span>
-                <span class="span10">
-                  <p>Message Message Message Message Message Message Message Message Message</p>
-                  <hr />
-                  <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren und antworten"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                  <a href="#" class="btn">Archivieren</a>
-                  <a href="#" class="btn">Löschen</a>
-                </span>
-              </div>
-            </div>
+          <div id="layerC" class="parallax-layer">
           </div>
         </div>
+        <div class="span3 well">
+          <p>
+            Koordinaten: <br/>
+            [123;456;1]<br />
+            Info:<br />
+            abxbcbdafgagds safds fd<br/>
+            dsfghfdgh sfgsfd gfdg <br />
+          </p>
+          <hr />
+          <div class="row-fluid">
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+          </div>
+          <div class="row-fluid">
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+          </div>
+          <div class="row-fluid">
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+            <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+          </div>
 
-
-        <div class="pagination">
-          <ul>
-            <li><a href="#">Prev</a></li>
-            <li><a href="#">1</a></li>
-            <li><a href="#">2</a></li>
-            <li><a href="#">3</a></li>
-            <li><a href="#">4</a></li>
-            <li><a href="#">Next</a></li>
-          </ul>
         </div>
       </div><!--/row-->
 
@@ -210,28 +187,14 @@
     <!-- Le javascript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/jquery.jparallax.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
+
       $('[rel=tooltip]').tooltip();
-
-      $('.new-inbox-message').bind('fade-cycle', function() {
-          $(this).fadeOut('slow', function() {
-              $(this).fadeIn('slow', function() {
-                  $(this).trigger('fade-cycle');
-              });
-          });
-      });
-
-      $('.new-inbox-message').each(function(index, elem) {
-          setTimeout(function() {
-              $(elem).trigger('fade-cycle');
-          }, index * 250);
-      });
-
-
-
+      $('.parallax-layer').parallax();
     });
     </script>
 
