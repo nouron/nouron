@@ -71,135 +71,49 @@
       <div class="row-fluid">
       
         <ul class="nav nav-tabs">
-          <li class="active"><a href="#">New Message</a></li>
-          <li><a href="innn.html">Inbox</a></li>
-          <li><a href="#">Outbox</a></li>
-          <li class="secondary-nav"><a href="#">Archive</a></li>
+          <li class="active"><a href="contacts.html">Meine Kontakte</a></li>
+          <li><a href="contacts.html">Fraktionsmitglieder</a></li>
         </ul>
 
-        <div class="tabbable tabs-left">
-          <ul class="nav nav-tabs" id="myTab">
-            <li class="active"><a href="#msg-to-user" data-toggle="tab">... to User</a></li>
-            <li><a href="#msg-to-faction" data-toggle="tab">... to Faction</a></li>
-            <li>&nbsp;</li>
-            <li>&nbsp;</li>
-            <li class="disabled"><a href="#msg-to-innn">... to INNN</a></li>
-            <li>&nbsp;</li>
-            <li class="disabled"><a href="#msg-to-support">... to Support</a></li>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Beziehung</th>
+              <th>Diplomaten</th>
+              <th>Verträge</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a class="btn" href="#"><i class="icon-user"></i>tector</a></td>
+              <td></td>
+              <td><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i> <a class="btn" href="#"><i class="icon-plus-sign"></i></a> <a class="btn" href="#"><i class="icon-minus-sign"></i></a></td>
+              <td><i class="icon-file"></i><i class="icon-file"></i><i class="icon-file"></i><i class="icon-file"></i><i class="icon-file"></i></td>
+              <td><a class="btn" href="#"><i class="icon-envelope"></i></a></td>
+            </tr>
+            <tr>
+              <td><a class="btn" href="#"><i class="icon-user"></i>Brasow</a></td>
+              <td></td>
+              <td><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i><i class="icon-user"></i> <a class="btn" href="#"><i class="icon-plus-sign"></i></a> <a class="btn" href="#"><i class="icon-minus-sign"></i></a></td>
+              <td><i class="icon-file"></i><i class="icon-file"></i><i class="icon-file"></i></td>
+              <td><a class="btn" href="#"><i class="icon-envelope"></i></a></td>
+            </tr>
+          </tbody>
+        </table>
+
+
+        <div class="pagination">
+          <ul>
+            <li><a href="#">Prev</a></li>
+            <li><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">Next</a></li>
           </ul>
-          <div class="tab-content">
-
-            <div class="tab-pane active" id="msg-to-user">
-              <form name="msg-to-user" class="form-horizontal" action="" method="POST">
-                <div class="control-group">
-                  <label class="control-label" for="title">An:</label>
-                  <div class="controls">
-                    <input class="input-xxlarge" id="to" name="to" type="text" value="title" />
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="title">Titel</label>
-                  <div class="controls">
-                    <input class="input-xxlarge" id="title" name="title" type="text" value="title" />
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="mood">Stimmung</label>
-                  <div class="controls">
-                    <select class="input-xlarge" id="mood" name="mood">
-                      <option val="freundlich">freundlich</option>
-                      <option val="neutral">neutral</option>
-                      <option val="aggressiv">aggressiv</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="text">Text</label>
-                  <div class="controls">
-                    <textarea class="input-xxlarge" rows="4" id="text" name="text" />ganz viel text</textarea>
-                  </div>
-                </div>
-
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">Save changes</button>
-                  <button type="button" class="btn">Cancel</button>
-                </div>
-
-                <div class="control-group warning">
-                  <label class="control-label" for="inputWarning">Input with warning</label>
-                  <div class="controls">
-                    <input type="text" id="inputWarning">
-                    <span class="help-inline">Something may have gone wrong</span>
-                  </div>
-                </div>
-                <div class="control-group error">
-                  <label class="control-label" for="inputError">Input with error</label>
-                  <div class="controls">
-                    <input type="text" id="inputError">
-                    <span class="help-inline">Please correct the error</span>
-                  </div>
-                </div>
-                <div class="control-group success">
-                  <label class="control-label" for="inputSuccess">Input with success</label>
-                  <div class="controls">
-                    <input type="text" id="inputSuccess">
-                    <span class="help-inline">Woohoo!</span>
-                  </div>
-                </div>
-              </form>
-            </div>
-
-            <div class="tab-pane" id="msg-to-faction">
-              <form name="msg-to-user" class="form-horizontal" action="" method="POST">
-                <div class="control-group">
-                  <label class="control-label" for="title">An:</label>
-                  <div class="controls">
-                    <input class="input-xxlarge" id="to" name="to" type="text" value="title" />
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="title">Titel</label>
-                  <div class="controls">
-                    <input class="input-xxlarge" id="title" name="title" type="text" value="title" />
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="mood">Stimmung</label>
-                  <div class="controls">
-                    <select class="input-xlarge" id="mood" name="mood">
-                      <option val="freundlich">freundlich</option>
-                      <option val="neutral">neutral</option>
-                      <option val="aggressiv">aggressiv</option>
-                    </select>
-                  </div>
-                </div>
-                <div class="control-group">
-                  <label class="control-label" for="text">Text</label>
-                  <div class="controls">
-                    <textarea class="input-xxlarge" rows="4" id="text" name="text" />ganz viel text</textarea>
-                  </div>
-                </div>
-                <div class="form-actions">
-                  <button type="submit" class="btn btn-primary">Save changes</button>
-                  <button type="button" class="btn">Cancel</button>
-                </div>
-              </form>
-            </div>
-
-            <div class="tab-pane" id="msg-to-innn">
-
-            </div>
-
-            <div class="tab-pane" id="msg-to-support">
-
-            </div>
-          </div>
-
-
-
-
         </div>
-
       </div><!--/row-->
 
       <hr>
@@ -270,7 +184,6 @@
           }, index * 250);
       });
 
-      $('#myTab').tab;
 
 
     });
