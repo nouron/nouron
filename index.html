@@ -10,19 +10,7 @@
 
     <!-- Le styles -->
     <link href="css/bootstrap.css" rel="stylesheet">
-    <style type="text/css">
-      body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-        color: #555;
-      }
-      
-      a, a:hover {color:#000}
-      
-      #logo {text-align: center;}
-      #picA {background: url("img/layout/starfield.png");}
-      #picB {background: url("img/gallery/200907_sketch_city.png");}
-    </style>
+    <link href="css/main.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -37,25 +25,10 @@
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-57-precomposed.png">
     <link rel="stylesheet" href="css/prettyPhoto.css" type="text/css" media="screen" charset="utf-8" />
-
-    <script type="text/javascript" src="jquery.socialshareprivacy.min.js"></script>
-    <script type="text/javascript">
-    jQuery(document).ready(function($){
-      if($('#socialshareprivacy').length > 0){
-        $('#socialshareprivacy').socialSharePrivacy({
-          services : {
-            facebook : {'recommend': 'like'}, 
-            twitter : {'language' : 'de'}
-          },
-          'cookie_domain' : 'heise.de'
-        }
-      }
-    });
-    </script>
-    
+   
   </head>
 
-  <body>
+  <body data-spy="scroll" data-target=".navbar">
 
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
@@ -67,10 +40,10 @@
           </a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li><a href="#about">About</a></li>
-              <li><a href="#features">Features</a></li>
-              <li><a href="#graphics">Graphics/Media</a></li>
-              <li><a href="#faq">F.A.Q.</a></li>
+              <li><a href="#description">Beschreibung</a></li>
+              <li><a href="#targets">Ziele</a></li>
+              <li><a href="#gallery">Bilder</a></li>
+              <li><a href="#questions">Fragen</a></li>
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -78,181 +51,219 @@
     </div>
 
     <div class="container">
-
-      <div class="row">
+      <div class="row-fluid">
         <div class="span4" id="logo">
             <a href="media/nouron_logo.svg" title="Das Nouron-Logo als SVG-Datei herunterladen"><img src="img/logo.png" alt="Nouron" width="250" height="250"/></a>
+            
         </div>
-        <div class="span8">
-    <p>Nouron steht für rundenbasierte Weltraum-Strategie im Browser, mit drei unterschiedlichen Rassen und acht spielbaren Fraktionen. Der Schwerpunkt liegt, im Gegensatz zu den meisten anderen Browsergames des Genres, nicht auf Kampfhandlungen. Vielmehr rückt die Diplomatie und Politik in den Vordergrund. Das typische Bashen und Farmen wird es in Nouron nicht geben!</p>
-    <p>Ein weiteres Hauptziel ist es, dem Spieler ein wirklich angenehmes Spielerlebnis zu bieten - ohne Stress und ohne den Zwang, zu bestimmten Uhrzeiten online sein zu müssen. Es ist vor allem ein Spiel für Leute die wenig Zeit haben oder ein Zweitbrowsergame suchen ;)</p>
-    <p>Aktuelle Neuigkeiten über die Entwicklung des Spiels gibt es im <a href="http://cotoyomi.silver-boards.com/blog/" target="_blank">Blog</a>.</p>
-            <div id="socialshareprivacy"></div>
-        </div>
-      </div>
-
-      <div class="hero-unit" id="picA">
-        <div id="gallery">
-            <a href="images/gallery/200907_galaxy.png" rel="prettyPhoto[pp_gal]">
-                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_galaxy_t.gif) center center no-repeat;" title="Die Nouron-Galaxie (P.Wippermann)"><!----></span>
-            </a>
-            <a href="images/gallery/200907_sketch_city.png" rel="prettyPhoto[pp_gal]">
-                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_sketch_city_t.gif) center center no-repeat;" title="Eine Stadtkolonie (P.Wippermann)"><!----></span>
-            </a>
-            <a href="images/gallery/200907_sketch_hangar.png" rel="prettyPhoto[pp_gal]">
-                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_sketch_hangar_t.gif) center center no-repeat;" title="Hangar für die Raumschiffe (P.Wippermann)"><!----></span>
-            </a>
-            <a href="images/gallery/201103_avatars_ena.png" rel="prettyPhoto[pp_gal]">
-                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/201103_avatars_ena_t.gif) center center no-repeat;" title="Avatare der Ena-Rasse (J. Wiesenberg)"><!----></span>
-            </a>
-            <a href="images/gallery/200907_planets.png" rel="prettyPhoto[pp_gal]">
-                <span class="thumb roundedCorners" style="background: transparent url(images/gallery/200907_planets_t.gif) center center no-repeat;"  title="Planetenarten (M.Gehnke)"><!----></span>
-            </a>
+        <div class="span8 lead" id="description">
+          <p>Nouron steht für <a href="http://en.wikipedia.org/wiki/Turns,_rounds_and_time-keeping_systems_in_games#Ticks_and_rounds">tickbasierte</a> Weltraum-Strategie im Browser, mit drei unterschiedlichen Rassen und acht spielbaren Fraktionen. Der Schwerpunkt liegt, im Gegensatz zu den meisten anderen Browsergames des Genres, nicht auf Kampfhandlungen. Vielmehr rückt die Diplomatie und Politik in den Vordergrund. Das typische Bashen und Farmen wird es in Nouron nicht geben!</p>
+          <p>Ein weiteres Hauptziel ist es, dem Spieler ein wirklich angenehmes Spielerlebnis zu bieten - ohne Stress und ohne den Zwang, zu bestimmten Uhrzeiten online sein zu müssen. Es ist vor allem ein Spiel für Leute die wenig Zeit haben oder ein Zweitbrowsergame suchen ;)</p>
+          <p>Aktuelle Neuigkeiten über die Entwicklung des Spiels gibt es im <a href="http://cotoyomi.silver-boards.com/blog/" target="_blank">Blog</a>.</p>
+          <div id="socialshareprivacy"></div>
         </div>
       </div>
 
-      <div class="row">
-        <div class="span4">
-          <h3>Techtree</h3>
-          <p>Die Techtree-Build-Option ist eine vollkommen neue Mög-lichkeit den Aufbau deiner Kolonie zu managen. Zudem sind alle Bau- und Forschungszeiten konstant und werden nicht unlogisch pro Level erhöht.</p>
-          <!--<p><a class="btn" href="#">View details &raquo;</a></p>-->
-        </div>
-        <div class="span4">
-          <h3>Rassen und Fraktionen</h3>
-          <p>Es gibt drei Rassen: die altehr-würdigen Lhonurier, die auf- strebenden Ena und die kühnen Akumarer. Innerhalb der Rassen gibt es geteilte Lager - entscheide dich für eine Seite!</p>
-          <!--<p><a class="btn" href="#">View details &raquo;</a></p>-->
-       </div>
-        <div class="span4">
-          <h3>Vielfältiger Weltraum</h3>
-          <p>Stellare Objekte, Planeten, Monde, Raumstationen, Minen-felder, Asteroidengürtel, Raumschifffriedhöfe und mehr sorgen für eine abwechslungsreiche Umgebung.</p>
-          <!--<p><a class="btn" href="#">View details &raquo;</a></p>-->
+      <div class="row-fluid">
+        <div class="span12 well well-large" id="targets">
+          <ul class="span4 unstyled">
+            <li>&#10004; <a href="http://en.wikipedia.org/wiki/Turns,_rounds_and_time-keeping_systems_in_games#Ticks_and_rounds" target="_blank">tickbasiert</a> (24h-Ticks)</li>
+            <li>&#10004; geringer Klick- und Zeitaufwand</li>
+            <li>&#10004; konstante Bau- und Forschungszeiten</li>
+            <li>&#10004; kein Farming</li>
+            <li>&#10004; kein Bashing</li>
+          </ul>
+          <ul class="span4 unstyled">
+            <li>&#10004; vielfältiger Weltraum</li>
+            <li>&#10004; Diplomatie und Politik</li>
+            <li>&#10004; Handel</li>
+            <li>&#10004; Spionage- und Sabotage</li>
+            <li>&#10004; primitives Kampfsystem</li>
+          </ul>
+          <ul class="span4 unstyled">
+            <li>&#10004; ... ein paar wirklich neue Ideen :)</li>
+            <li>&#10004; zweckmäßiges, minimales aber schönes Design</li>
+            <li>&#10004; für mobile Geräte geeignet</li>
+            <li>&#10004; moderne Technik und Open Source</li>
+            <li>&#10004; kostenlos spielbar</li>
+          </ul>
         </div>
       </div>
-      
-      <div class="row">
-        <div class="span4">
+
+      <ul class="thumbnails">
+        <li class="span4">
+          <div class="thumbnail">
+            <h3>Techtree</h3>
+            <p>Die Techtree-Build-Option ist eine vollkommen neue Mög&shy;lichkeit den Aufbau deiner Kolonie zu managen. Zudem sind alle Bau- und Forschungs&shy;zeiten konstant und werden nicht unlogisch pro Level erhöht.</p>
+          </div>
+        </li>
+        <li class="span4">
+          <div class="thumbnail">
+            <h3>Rassen und Fraktionen</h3>
+            <p>Es gibt drei Rassen: die altehr&shy;würdigen Lhonurier, die auf&shy;strebenden Ena und die kühnen Akumarer. Innerhalb der Rassen gibt es geteilte Lager - entscheide dich für eine Seite!</p>
+          </div>
+        </li>
+        <li class="span4">
+          <div class="thumbnail">
+            <h3>Vielfältiger Weltraum</h3>
+            <p>Stellare Objekte, Planeten, Monde, Raumstationen, Minen&shy;felder, Asteroiden&shy;gürtel, Raumschiff&shy;friedhöfe und mehr sorgen für eine abwechslungs&shy;reiche Umgebung.</p>
+          </div>
+        </li>
+      </ul>
+      <ul class="thumbnails">
+        <li class="span4">
+          <div class="thumbnail">
             <h3>Militär</h3>
-            <p>Das Kampfsystem ist absichtlich primitiv gehalten um nicht zu Kriegshandlungen zu verleiten. Es gibt keine Verteidigungsanlangen und es wird kein Bashing/Farming geben.</p>
-        </div>
-        <div class="span4">
+            <p>Das Kampfsystem ist absichtlich primitiv gehalten um nicht zu Kriegs&shy;handlungen zu verleiten. Es gibt keine Verteidigungs&shy;anlangen, da Kolonien nicht angegriffen werden können. Somit wird es kein Bashing und kein Farming geben.</p>
+          </div>
+        </li>
+        <li class="span4">
+          <div class="thumbnail">
             <h3>Handel</h3>
             <p>Handle mit Ressourcen, Gebäuden, Schiffen, Berater, Aktien und sogar Flugrouten. Oder werde Pirat - habe aber stets acht vor der N-Polizei.</p>
-        </div>
-        <div class="span4">
+          </div>
+        </li>
+        <li class="span4">
+          <div class="thumbnail">
             <h3>Diplomatie, Politik und Gesetze</h3>
             <p>Politik/Diplomatie</span>Jegliche Kommunikation hat diplomatische Folgen. Sobald du Senatsmitglied bist, kannst du selbst mit über Gesetze bestimmen.</p>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="span4">
+          </div>
+        </li>
+      </ul>
+      <ul class="thumbnails">
+        <li class="span4">
+          <div class="thumbnail">
             <h3>INNN</h3>
             <p>Über das Nachrichtensystem INNN wird jede Art von Information verarbeitet. Sowohl die Nachrichten deiner Berater, als auch diplomatische Botschaften und der Nouron-Nachrichtensender werden hier bereitgestellt.</p>
-        </div>
-        <div class="span4">
+          </div>
+        </li>
+        <li class="span4">
+          <div class="thumbnail">
             <h3>Supply</h3>
             <p>Mit dem Supply-Management kannst du genau deine Spezialisierung bestimmen. Denn man kann nicht alles haben ;)</p>
-        </div>
-      </div>
+          </div>
+        </li>
+      </ul>
 
-      <div class="hero-unit" id="picB">
-
-      </div>
-
-      <div class="row">      
-        <div class="span10">
-    
-            <div class="accordion" id="accordion2">
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                        Wann wird Nouron fertig sein?
-                        </a>
-                    </div>
-                    <div id="collapseOne" class="accordion-body collapse in">
-                        <div class="accordion-inner">
-                        Zunächst einmal ist Nouron ein privates Hobby-Projekt. Es gibt keine Garantie dafür, dass das Spiel wirklich veröffentlicht wird. Es wäre aber wirklich schade wenn nicht ;) Da ich Nouron in meiner Freizeit entwickle dauert es alles etwas länger. It's done, when it's done.
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                        Warum 24h-Ticks? Ist das nicht langweilig?
-                        </a>
-                    </div>
-                    <div id="collapseTwo" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Nouron ist kein Spiel für die breite Masse. Wer dauerklicken will ist hier definitiv falsch! Nouron soll niemanden dazu zwingen zu bestimmten Uhrzeiten online zu sein oder gar nachts aufzustehen. So hat jeder die gleichen Chancen und weniger Stress.
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                        Wird das Spiel Geld kosten (Premiumaccount, Itemkauf, etc.)?
-                        </a>
-                    </div>
-                    <div id="collapseThree" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Das ist nicht geplant. Das Spiel wird durch Werbung und privat finanziert solange es möglich ist.
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
-                        Kein Krieg? Nur Diplomatie? Ist das nicht langweilig?
-                        </a>
-                    </div>
-                    <div id="collapseFour" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Natürlich wird es auch Krieg geben. Der Schwerpunkt des Spiels liegt aber auf Diplomatie und Politik.
-    Nouron wird beweisen, dass das Spaß machen kann!
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFive">
-                        Welche Sprachen wird das Spiel unterstützen?
-                        </a>
-                    </div>
-                    <div id="collapseFive" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Primär natürlich deutsch. Wenn das Spiel fertiggestellt ist wird auch eine englische Version erstellt. Die Grundlagen dafür werden bereits bei der Entwicklung der deutschen Version geschaffen.
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSix">
-                        Wieviele Spielwelten wird es geben?
-                        </a>
-                    </div>
-                    <div id="collapseSix" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Solange die Spieleranzahl nicht explodiert: nur eine.
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-group">
-                    <div class="accordion-heading">
-                        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSeven">
-                        Wieviele Planeten/Monde/Sterne/etc. wird es in etwa geben?
-                        </a>
-                    </div>
-                    <div id="collapseSeven" class="accordion-body collapse">
-                        <div class="accordion-inner">
-                        Viele Spiele prahlen gerne mit der Anzahl von Spielobjekten. Nouron soll sich eher auf einen Teil der Galaxie mit nicht zu vielen Planeten beschränken. Dafür werden diese aber mit Geschichten ausgestattet und mehrere Spieler können auf dem gleichen Planeten siedeln. Auch Monde sind kolonisierbar.
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="row-fluid">
+        <div class="span12 well well-large">
+          <div id="gallery">
+            <a class="span2 offset1" href="img/gallery/200907_galaxy.png" rel="prettyPhoto[pp_gal]">
+                <span class="span12 img-rounded" style="background: #000 url(img/gallery/200907_galaxy_t.gif) center center no-repeat;" title="Die Nouron-Galaxie (P.Wippermann)"></span>
+            </a>
+            <a class="span2"  href="img/gallery/200907_sketch_city.png" rel="prettyPhoto[pp_gal]">
+                <span class="span12 img-rounded" style="background: #eee url(img/gallery/200907_sketch_city_t.gif) center center no-repeat;" title="Eine Stadtkolonie (P.Wippermann)"><!----></span>
+            </a>
+            <a class="span2"  href="img/gallery/200907_sketch_hangar.png" rel="prettyPhoto[pp_gal]">
+                <span class="span12 img-rounded" style="background: #fff url(img/gallery/200907_sketch_hangar_t.gif) center center no-repeat;" title="Hangar für die Raumschiffe (P.Wippermann)"><!----></span>
+            </a>
+            <a class="span2"  href="img/gallery/201103_avatars_ena.png" rel="prettyPhoto[pp_gal]">
+                <span class="span12 img-rounded" style="background: #fff url(img/gallery/201103_avatars_ena_t.gif) center center no-repeat;" title="Avatare der Ena-Rasse (J. Wiesenberg)"><!----></span>
+            </a>
+            <a class="span2"  href="img/gallery/200907_planets.png" rel="prettyPhoto[pp_gal]">
+                <span class="span12 img-rounded" style="background: #fff url(img/gallery/200907_planets_t.gif) center center no-repeat;"  title="Planetenarten (M.Gehnke)"><!----></span>
+            </a>
+          </div>
         </div>
       </div>
 
       <hr />
+      <div class="row-fluid" id="questions">
+        <div class="span9">
+          <div class="accordion" id="accordion2">
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
+                Wann wird Nouron fertig sein?
+                </a>
+              </div>
+              <div id="collapseOne" class="accordion-body collapse in">
+                <div class="accordion-inner">
+                Zunächst einmal ist Nouron ein privates Hobby-Projekt. Es gibt keine Garantie dafür, dass das Spiel wirklich veröffentlicht wird. Es wäre aber wirklich schade wenn nicht ;) Da ich Nouron in meiner Freizeit entwickle dauert es alles etwas länger. It's done, when it's done.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
+                Warum 24h-Ticks? Ist das nicht langweilig?
+                </a>
+              </div>
+              <div id="collapseTwo" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Nouron ist kein Spiel für die breite Masse. Wer dauerklicken will ist hier definitiv falsch! Nouron soll niemanden dazu zwingen, zu bestimmten Uhrzeiten online zu sein oder gar nachts aufzustehen. So hat jeder die gleichen Chancen und weniger Stress.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
+                Wird das Spiel Geld kosten (Premiumaccount, Itemkauf, etc.)?
+                </a>
+              </div>
+              <div id="collapseThree" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Das ist nicht geplant. Das Spiel wird durch Werbung und privat finanziert solange es möglich ist.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
+                Kein Krieg? Nur Diplomatie? Ist das nicht langweilig?
+                </a>
+              </div>
+              <div id="collapseFour" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Natürlich wird es auch Krieg geben. Der Schwerpunkt des Spiels liegt aber auf Diplomatie und Politik. Nouron wird beweisen, dass das Spaß machen kann!
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFive">
+                Welche Sprachen wird das Spiel unterstützen?
+                </a>
+              </div>
+              <div id="collapseFive" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Primär natürlich deutsch. Wenn das Spiel fertiggestellt ist wird auch eine englische Version erstellt. Die Grundlagen dafür werden bereits bei der Entwicklung der deutschen Version geschaffen.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSix">
+                Wieviele Spielwelten wird es geben?
+                </a>
+              </div>
+              <div id="collapseSix" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Solange die Spieleranzahl nicht explodiert: nur eine.
+                </div>
+              </div>
+            </div>
+            <div class="accordion-group">
+              <div class="accordion-heading">
+                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSeven">
+                Wieviele Planeten/Monde/Sterne/etc. wird es in etwa geben?
+                </a>
+              </div>
+              <div id="collapseSeven" class="accordion-body collapse">
+                <div class="accordion-inner">
+                Viele Spiele prahlen gerne mit der Anzahl von Spielobjekten. Nouron soll sich eher auf einen Teil der Galaxie mit nicht zu vielen Planeten beschränken. Dafür werden diese aber mit Geschichten ausgestattet und mehrere Spieler können auf dem gleichen Planeten siedeln. Auch Monde sind kolonisierbar.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="span3 well-large" id="bottom_eyecatcher">
+            <br />
+        </div>
+      </div>
+
+      <hr />
+
       <footer>
         <p><a href="http://tector.wordpress.com" target="_blank">Blog</a> | 
             <a href="#">Impressum</a> | Dieser Inhalt ist unter einer <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/de/">Creative Commons-Lizenz</a> lizenziert.</p>
@@ -264,21 +275,23 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="http://code.jquery.com/jquery-latest.js"></script>
     <script src="js/bootstrap.min.js"></script>
-    <script src="js/bootstrap-transition.js"></script>
-    <script src="js/bootstrap-alert.js"></script>
-    <script src="js/bootstrap-modal.js"></script>
-    <script src="js/bootstrap-dropdown.js"></script>
-    <script src="js/bootstrap-scrollspy.js"></script>
-    <script src="js/bootstrap-tab.js"></script>
-    <script src="js/bootstrap-tooltip.js"></script>
-    <script src="js/bootstrap-popover.js"></script>
-    <script src="js/bootstrap-button.js"></script>
-    <script src="js/bootstrap-collapse.js"></script>
-    <script src="js/bootstrap-carousel.js"></script>
-    <script src="js/bootstrap-typeahead.js"></script>
-
+    <script src="js/jquery.prettyPhoto.js"></script>
+    <script src="jquery.socialshareprivacy.min.js"></script>
+    
     <script type="text/javascript" charset="utf-8">
-      $(document).ready(function(){
+      $(document).ready( function() {
+        $('#navbar').scrollspy()
+
+        if( $('#socialshareprivacy').length > 0 ) {
+          $('#socialshareprivacy').socialSharePrivacy( {
+            services : {
+              facebook : {'recommend': 'like'}, 
+              twitter : {'language' : 'de'}
+            },
+            'cookie_domain' : 'heise.de',
+          })
+        }
+
         $("a[rel^='prettyPhoto']").prettyPhoto();
       });
     </script>

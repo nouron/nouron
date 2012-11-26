@@ -1,14 +1,24 @@
 body {padding-top: 60px;padding-bottom: 40px;}
+      
+#logo {text-align: center;}
+#targets {background: url("../img/layout/starfield.png");color:#ddd;}
+#targets a {color: #fff;}
+#bottom_eyecatcher {background: url("../img/gallery/200907_sketch_city.png") center center no-repeat; min-height: 300px;}
+
 
 .navbar-inner {background: #eee}
+#socialshareprivacy {text-align:center;}
+#socialshareprivacy ul{width: 600px;}
 
-a {color: #333; white-space: nowrap;}
-a:hover {color:000; text-decoration:none;}
+a {color: #000; white-space: nowrap;}
+a:hover {text-decoration:underline;}
 a.btn {background: #eee}
 
 .sidebar-nav {padding: 9px 0;}
 
 .resource-bar {text-align:center;}
+
+#gallery a span {height: 80px;border:1px solid #ddd;background-color: #eee;}
 
 #techtree .stage-svg {position: absolute;}
 
