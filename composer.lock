@@ -1,0 +1,448 @@
+{
+    "hash": "919944e5bda8dce1a4760c87a8f782e5",
+    "packages": [
+        {
+            "name": "dlu/dlutwbootstrap",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap.git",
+                "reference": "05b821e97bf1d1dd4721c86f034e49944a11fabe"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap/get/05b821e97bf1d1dd4721c86f034e49944a11fabe.zip",
+                "reference": "05b821e97bf1d1dd4721c86f034e49944a11fabe",
+                "shasum": ""
+            },
+            "require": {
+                "zendframework/zendframework": "dev-master#2a398b4e81c31bdfbda917a867896c48d4f62bcf"
+            },
+            "time": "1347897760",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "DluTwBootstrap": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "license": [
+                "New-BSD-License"
+            ],
+            "authors": [
+                {
+                    "name": "David Lukas",
+                    "homepage": "http://www.zfdaily.com"
+                }
+            ],
+            "description": "ZF2 module to generate Twitter Bootstrap UI - forms, navigation, etc.",
+            "homepage": "https://bitbucket.org/dlu/dlutwbootstrap",
+            "keywords": [
+                "zf2",
+                "module",
+                "twitter bootstrap",
+                "zend framework 2",
+                "dlutwbootstrap"
+            ]
+        },
+        {
+            "name": "dlu/dlutwbootstrapdemo",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo.git",
+                "reference": "dfc7634d1e13a843da745ca8d4d912c6e6f0ff42"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo/get/dfc7634d1e13a843da745ca8d4d912c6e6f0ff42.zip",
+                "reference": "dfc7634d1e13a843da745ca8d4d912c6e6f0ff42",
+                "shasum": ""
+            },
+            "require": {
+                "zendframework/zendframework": "dev-master",
+                "dlu/dlutwbootstrap": "dev-master"
+            },
+            "time": "1346330193",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "DluTwBootstrapDemo": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "license": [
+                "New-BSD-License"
+            ],
+            "authors": [
+                {
+                    "name": "David Lukas",
+                    "homepage": "http://www.zfdaily.com"
+                }
+            ],
+            "description": "ZF2 module to check & demonstrate the DluTwBootstrap module (Twitter Bootstrap UI - forms, navigation, etc.)",
+            "homepage": "https://bitbucket.org/dlu/dlutwbootstrap-demo",
+            "keywords": [
+                "zf2",
+                "module",
+                "twitter bootstrap",
+                "zend framework 2",
+                "dlutwbootstrap",
+                "demo",
+                "dlutwbootstrapdemo"
+            ]
+        },
+        {
+            "name": "doctrine/common",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/doctrine/common",
+                "reference": "20cb487a5809a42f03020c89fa09eb4458de827f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/doctrine/common/zipball/20cb487a5809a42f03020c89fa09eb4458de827f",
+                "reference": "20cb487a5809a42f03020c89fa09eb4458de827f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.2"
+            },
+            "time": "1350491397",
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.4.x-dev"
+                }
+            },
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "Doctrine\\Common\\": "lib/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jonathan Wage",
+                    "email": "jonwage@gmail.com",
+                    "homepage": "http://www.jwage.com/"
+                },
+                {
+                    "name": "Guilherme Blanco",
+                    "email": "guilhermeblanco@gmail.com",
+                    "homepage": "http://www.instaclick.com"
+                },
+                {
+                    "name": "Roman Borschel",
+                    "email": "roman@code-factory.org"
+                },
+                {
+                    "name": "Benjamin Eberlei",
+                    "email": "kontakt@beberlei.de"
+                },
+                {
+                    "name": "Johannes M. Schmitt",
+                    "email": "schmittjoh@gmail.com",
+                    "homepage": "http://jmsyst.com",
+                    "role": "Developer of wrapped JMSSerializerBundle"
+                }
+            ],
+            "description": "Common Library for Doctrine projects",
+            "homepage": "http://www.doctrine-project.org",
+            "keywords": [
+                "collections",
+                "spl",
+                "eventmanager",
+                "annotations",
+                "persistence"
+            ]
+        },
+        {
+            "name": "firephp/firephp-core",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/RobLoach/firephp-core",
+                "reference": "c26d972dcb28fd483fa193512091df7b3c85e450"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/RobLoach/firephp-core/zipball/c26d972dcb28fd483fa193512091df7b3c85e450",
+                "reference": "c26d972dcb28fd483fa193512091df7b3c85e450",
+                "shasum": ""
+            },
+            "time": "1338250094",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "classmap": [
+                    "lib/FirePHPCore/FirePHP.class.php",
+                    "lib/FirePHPCore/fb.php"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christoph Dorn",
+                    "email": "christoph@christophdorn.com",
+                    "homepage": "christophdorn.com"
+                }
+            ],
+            "description": "Traditional FirePHPCore library for sending PHP variables to the browser.",
+            "homepage": "https://github.com/firephp/firephp-core"
+        },
+        {
+            "name": "zendframework/zendframework",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git://github.com/zendframework/zf2.git",
+                "reference": "0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/zendframework/zf2/zipball/0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f",
+                "reference": "0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3"
+            },
+            "replace": {
+                "zendframework/zend-acl": "self.version",
+                "zendframework/zend-authentication": "self.version",
+                "zendframework/zend-barcode": "self.version",
+                "zendframework/zend-cache": "self.version",
+                "zendframework/zend-captcha": "self.version",
+                "zendframework/zend-code": "self.version",
+                "zendframework/zend-config": "self.version",
+                "zendframework/zend-console": "self.version",
+                "zendframework/zend-crypt": "self.version",
+                "zendframework/zend-db": "self.version",
+                "zendframework/zend-di": "self.version",
+                "zendframework/zend-dom": "self.version",
+                "zendframework/zend-eventmanager": "self.version",
+                "zendframework/zend-feed": "self.version",
+                "zendframework/zend-file": "self.version",
+                "zendframework/zend-filter": "self.version",
+                "zendframework/zend-form": "self.version",
+                "zendframework/zend-http": "self.version",
+                "zendframework/zend-inputfilter": "self.version",
+                "zendframework/zend-json": "self.version",
+                "zendframework/zend-ldap": "self.version",
+                "zendframework/zend-loader": "self.version",
+                "zendframework/zend-log": "self.version",
+                "zendframework/zend-mail": "self.version",
+                "zendframework/zend-markup": "self.version",
+                "zendframework/zend-math": "self.version",
+                "zendframework/zend-memory": "self.version",
+                "zendframework/zend-mime": "self.version",
+                "zendframework/zend-modulemanager": "self.version",
+                "zendframework/zend-mvc": "self.version",
+                "zendframework/zend-navigation": "self.version",
+                "zendframework/zend-paginator": "self.version",
+                "zendframework/zend-progressbar": "self.version",
+                "zendframework/zend-serializer": "self.version",
+                "zendframework/zend-server": "self.version",
+                "zendframework/zend-servicemanager": "self.version",
+                "zendframework/zend-session": "self.version",
+                "zendframework/zend-soap": "self.version",
+                "zendframework/zend-stdlib": "self.version",
+                "zendframework/zend-tag": "self.version",
+                "zendframework/zend-text": "self.version",
+                "zendframework/zend-uri": "self.version",
+                "zendframework/zend-validator": "self.version",
+                "zendframework/zend-view": "self.version",
+                "zendframework/zend-xmlrpc": "self.version",
+                "zendframework/zend-escaper": "self.version",
+                "zendframework/zend-i18n": "self.version"
+            },
+            "require-dev": {
+                "doctrine/common": ">=2.1",
+                "phpunit/phpunit": "3.7.*"
+            },
+            "suggest": {
+                "doctrine/common": "Doctrine\\Common >=2.1 for annotation features",
+                "ext-intl": "ext/intl for i18n features",
+                "zendframework/zendservice-recaptcha": "ZendService\\ReCaptcha for rendering ReCaptchas in Zend\\Captcha and/or Zend\\Form",
+                "zendframework/zendpdf": "ZendPdf for creating PDF representations of barcodes",
+                "pecl-weakref": "Implementation of weak references for Zend\\Stdlib\\CallbackHandler"
+            },
+            "time": "1351122517",
+            "bin": [
+                "bin/classmap_generator.php"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "2.0-dev"
+                }
+            },
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "Zend\\": "library/",
+                    "ZendTest\\": "tests/"
+                }
+            },
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "Zend Framework 2",
+            "homepage": "http://framework.zend.com/",
+            "keywords": [
+                "framework",
+                "zf2"
+            ]
+        },
+        {
+            "name": "zf-commons/zfc-base",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git://github.com/ZF-Commons/ZfcBase.git",
+                "reference": "38990ad5f51002dd271ab676b90a3d59728190e2"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/ZF-Commons/ZfcBase/zipball/38990ad5f51002dd271ab676b90a3d59728190e2",
+                "reference": "38990ad5f51002dd271ab676b90a3d59728190e2",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zendframework/zendframework": "2.*"
+            },
+            "time": "1351100548",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "ZfcBase": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "authors": [
+                {
+                    "name": "Kyle Spraggs",
+                    "email": "theman@spiffyjr.me",
+                    "homepage": "http://www.spiffyjr.me/"
+                },
+                {
+                    "name": "Evan Coury",
+                    "email": "me@evancoury.com",
+                    "homepage": "http://blog.evan.pro/"
+                }
+            ],
+            "description": "A set of genetic (abstract) classes which are commonly used across multiple modules.",
+            "homepage": "https://github.com/ZF-Commons/ZfcBase",
+            "keywords": [
+                "zf2"
+            ]
+        },
+        {
+            "name": "zf-commons/zfc-user",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "git://github.com/ZF-Commons/ZfcUser.git",
+                "reference": "2a30bda620f962b9919459aef5b279bdb5f44bd8"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/ZF-Commons/ZfcUser/zipball/2a30bda620f962b9919459aef5b279bdb5f44bd8",
+                "reference": "2a30bda620f962b9919459aef5b279bdb5f44bd8",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zf-commons/zfc-base": "dev-master",
+                "zendframework/zendframework": "2.*"
+            },
+            "time": "1351124306",
+            "type": "library",
+            "installation-source": "source",
+            "autoload": {
+                "psr-0": {
+                    "ZfcUser": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "authors": [
+                {
+                    "name": "Kyle Spraggs",
+                    "email": "theman@spiffyjr.me",
+                    "homepage": "http://www.spiffyjr.me/"
+                },
+                {
+                    "name": "Evan Coury",
+                    "email": "me@evancoury.com",
+                    "homepage": "http://blog.evan.pro/"
+                }
+            ],
+            "description": "A generic user registration and authentication module for ZF2. Supports Zend\\Db and Doctrine2.",
+            "homepage": "https://github.com/ZF-Commons/ZfcUser",
+            "keywords": [
+                "zf2"
+            ]
+        },
+        {
+            "name": "zfb/zfb-vm",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/michael-romer/zfb2-vm",
+                "reference": "730162340db7e24add34b7826df576257ff1b4c4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://github.com/michael-romer/zfb2-vm/zipball/730162340db7e24add34b7826df576257ff1b4c4",
+                "reference": "730162340db7e24add34b7826df576257ff1b4c4",
+                "shasum": ""
+            },
+            "time": "1342098925",
+            "type": "library",
+            "installation-source": "source",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "description": "Code to set up a VM running Zend Framework 2",
+            "homepage": "http://zf-boilerplate.com/",
+            "keywords": [
+                "zf2",
+                "zend framework boilerplate"
+            ]
+        }
+    ],
+    "packages-dev": null,
+    "aliases": [
+
+    ],
+    "minimum-stability": "stable",
+    "stability-flags": {
+        "zendframework/zendframework": 20,
+        "zfb/zfb-vm": 20,
+        "doctrine/common": 20,
+        "zf-commons/zfc-base": 20,
+        "zf-commons/zfc-user": 20,
+        "dlu/dlutwbootstrap": 20,
+        "dlu/dlutwbootstrapdemo": 20,
+        "firephp/firephp-core": 20
+    }
+}

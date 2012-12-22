@@ -1,0 +1,72 @@
+<?php
+
+$this->headTitle()->setSeparator(' - ')
+                  ->setAutoEscape(false);
+$basePath = $this->basePath();
+
+//Twitter Bootstrap styles
+$this->headLink()->appendStylesheet($basePath . '/css/bootstrap.min.css');
+//Twitter Bootstrap style override by DluTwBootstrap
+$this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
+
+//Add your own style here
+$this->headLink()->appendStylesheet($basePath . '/css/style.css');
+
+//Twitter Bootstrap responsive styles
+$this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
+
+//jQuery and Twitter Bootstrap JS libraries
+$this->inlineScript()->appendFile($basePath . '/js/jquery-1.8.2.min.js');
+$this->inlineScript()->appendFile($basePath . '/js/bootstrap.min.js');
+$this->inlineScript()->appendFile($basePath . '/js/nouron.js');
+
+echo $this->doctype();
+?>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <?php //Set your headTitle here ?>
+    <?php echo $this->headTitle('') ?>
+    <?php echo $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1.0') ?>
+    <!-- Le styles -->
+    <?php echo $this->headLink() ?>
+    <?php echo $this->headStyle(); ?>
+    <!-- Scripts -->
+    <?php echo $this->headScript() ?>
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="<?php echo $this->url('home') ?>"><?php echo $this->translate('Nouron') ?></a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="<?= $this->url('home') ?>"><?= $this->translate('Home') ?></a></li>
+              <li ><a href="<?= $this->url('techtree') ?>"><?= $this->translate('Techtree') ?></a></li>
+              <li ><a href="<?= $this->url('galaxy') ?>"><?= $this->translate('Galaxy') ?></a></li>
+            </ul>
+            <?php echo $this->zfcUserLoginWidget() ?>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+        <?php echo $this->partial('layout/resource-bar', array()); ?>
+        <hr />
+        <?php echo $this->content; ?>
+        <hr />
+    </div> <!-- /container -->
+    <?php echo $this->inlineScript(); ?>
+  </body>
+</html>

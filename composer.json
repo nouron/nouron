@@ -1,0 +1,21 @@
+{
+    "name": "tector/nouron",
+    "description": "Nouron - a free space opera browsergame",
+    "license": "GNU GPL3",
+    "keywords": [
+        "nouron",
+        "browsergame"
+    ],
+    "homepage": "www.nouron.de.vu",
+    "require": {
+        "php": ">=5.3.3",
+        "zendframework/zendframework": "dev-master",
+        "zfb/zfb-vm": "dev-master",
+        "doctrine/common": "dev-master",
+        "zf-commons/zfc-base": "dev-master",
+        "zf-commons/zfc-user": "dev-master",
+        "dlu/dlutwbootstrap": "dev-master",
+        "dlu/dlutwbootstrapdemo": "dev-master",
+        "firephp/firephp-core": "dev-master"
+    }
+}

@@ -1,0 +1,139 @@
+/**
+ * DluTwBootstrap CSS styles
+ * Responsibility: Override the default styles for Twitter Bootstrap
+ * @package DluTwBootstrap
+ * @copyright David Lukas (c) - http://www.zfdaily.com
+ * @license http://www.zfdaily.com/code/license New BSD License
+ * @link http://www.zfdaily.com
+ * @link https://bitbucket.org/dlu/dlutwbootstrap
+ */
+
+/* **************************** FORMS *********************************** */
+
+/* Fieldset legend */
+form fieldset legend {
+    font-size: 17px;
+    line-height: 32px;
+    margin-bottom: 16px;
+}
+
+/* Remove the gap before the first control group after the fieldset legend */
+legend + .control-group {
+    margin-top: 0px;
+}
+
+/* Denote required fields */
+form label.required {
+    font-weight: bold;
+}
+form label.required:after {
+    color: #B94A48;
+    content: '*';
+    display:inline;
+    font-weight: bold;
+}
+
+/* Format inline and block help */
+form span.help-inline,
+form p.help-block {
+    color: #888888;
+    font-size: 90%;
+}
+
+/* Format fields with validation errors */
+form ul.errors {
+    color: #B94A48;
+    font-size: 90%;
+    margin-top: 4px;
+}
+/* Keep the help block and inline help gray for elements with errors */
+.control-group.error .help-block,
+.control-group.error .help-inline {
+    color: #888888;
+}
+
+/*
+.control-group.error input,
+.control-group.error select,
+.control-group.error textarea {
+    color: #B94A48;
+}
+*/
+
+/* Move inline help from the center to the top (for multi select and textarea) */
+.help-inline {
+    vertical-align: top;
+    margin-top: 5px;
+}
+.form-horizontal .help-inline, .form-vertical .help-inline {
+    vertical-align: top;
+}
+
+/* ************************** PAGINATION ********************************** */
+
+/* A bit more visible active page on the pagination control */
+.pagination .active a {
+    color: #666666;
+    background-color: #ededed;
+    font-weight: bold;
+}
+
+/* Outer container for pagination, encompasses the actual pagination control and the optional statistics */
+div.pagination-container {
+    margin-top: 10px;
+    margin-bottom: 12px;
+}
+
+/* Remove the original .pagination class margins */
+.pagination {
+    margin: 0;
+}
+
+/* An extra class added to the right aligned pagination control when statistics are displayed inline */
+.pagination-float-right {
+    float: right;
+}
+
+/* An extra class added to the left aligned pagination control when statistics are displayed inline */
+.pagination-float-left {
+    float: left;
+}
+
+/* Pagination statistics */
+.pagination-stats {
+    margin-top: 4px;
+    margin-bottom: 0;
+    color: #808080;
+    font-size: 90%;
+}
+
+/* Pagination statistics aligned left */
+.pagination-stats-left {
+    text-align: left;
+}
+
+/* Pagination statistics aligned center */
+.pagination-stats-center {
+    text-align: center;
+}
+
+/* Pagination statistics aligned right */
+.pagination-stats-right {
+    text-align: right;
+}
+
+/* An extra class added to the right aligned pagination statistics when statistics are displayed inline */
+.pagination-stats-float-right {
+    float: right;
+    margin-right: 8px;
+    margin-top: 0;
+    line-height: 36px;
+}
+
+/* An extra class added to the left aligned pagination statistics when statistics are displayed inline */
+.pagination-stats-float-left {
+    float: left;
+    margin-left: 8px;
+    margin-top: 0;
+    line-height: 36px;
+}
