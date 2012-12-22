@@ -19,7 +19,7 @@ more informations will be follow...
 Bug tracker
 -----------
 
-https://github.com/tector/nouron/issues
+https://github.com/nouron/nouron/issues
 
 
 Blog
