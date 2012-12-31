@@ -1,5 +1,5 @@
 <?php
-namespace Resources\Service;
+namespace Galaxy\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
@@ -9,7 +9,7 @@ class GatewayFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return User
+     * @return
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
@@ -17,13 +17,9 @@ class GatewayFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
-        $tables['resource'] = new \Resources\Table\Resource($db);
-        $tables['colonyresources'] = new \Resources\Table\Colony($db);
-        $tables['userresources'] = new \Resources\Table\User($db);
+        $tables['colony'] = new \Galaxy\Table\Colony($db);
 
-        $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
-
-        $resourcesGateway = new Gateway($tick, $tables, $gateways);
+        $resourcesGateway = new Gateway($tick, $tables);
         $resourcesGateway->setLogger($logger);
         return $resourcesGateway;
     }

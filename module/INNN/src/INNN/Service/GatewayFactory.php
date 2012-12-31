@@ -13,13 +13,13 @@ class GatewayFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db = $serviceLocator->get("Zend\Db\Adapter\Adapter");
-        //$tick = $serviceLocator->get('tick');
-        $tick = 12345;
+        $db   = $serviceLocator->get('Zend\Db\Adapter\Adapter');
+        $tick = $serviceLocator->get('Nouron\Service\Tick');
+
         $tables['message'] = new \INNN\Table\Message($db);
         $tables['event'] = new \INNN\Table\Event($db);
-        #$config = $this->getConfig();
-        $service   = new Gateway($tick, $tables);#, $options);
+
+        $service   = new Gateway($tick, $tables);
         return $service;
     }
 }

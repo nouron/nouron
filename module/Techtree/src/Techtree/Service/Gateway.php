@@ -1,74 +1,13 @@
 <?php
 namespace Techtree\Service;
 
-class Gateway
+class Gateway extends \Nouron\Service\Gateway
 {
-    const STAGES = 6;
-    const GRID_COLUMNS = 10;
-    const GRID_ROWS_PER_STAGE = 5;
-    const GRID_HEIGHT = 1400;
-    const GRID_WIDTH  = 940;
-    const GRID_COLUMN_SPACE = 2;
-    const GRID_ROW_SPACE = 10;
-
     const ADVISOR_ENGINEER_TECHID = 35;
     const ADVISOR_SCIENTIST_TECHID = 36;
     const ADVISOR_FLEETCOMMANDER_TECHID = 89;
     const ADVISOR_DIPLOMAT_TECHID = 90;
     const ADVISOR_CHIEFOFINTELLIGENCE = 94;
-
-    private $tick;
-
-    /**
-     * Configuration settings for the techtree
-     *
-     * @var array
-     */
-    protected $config = array();
-
-    public function __construct($tick, array $tables)
-    {
-        $this->tick = $tick;
-        $this->tables = $tables;
-        $this->setConfig(800,1600);
-    }
-
-    private function getTable($table)
-    {
-        return $this->tables[strtolower($table)];
-    }
-
-    /**
-     * Prepare configuration settings and store in private _config var.
-     *
-     * @param  array  $values
-     */
-    private function setConfig($width = self::GRID_WIDTH, $height = self::GRID_HEIGHT)
-    {
-        //Groesse von EINER EvoStufe
-        $stageSize  = ceil ( $height / self::STAGES );
-
-        // Breite/Hoehe des Buttons
-        $btnWidth  = floor( $width / (self::GRID_COLUMNS + 1) ) - self::GRID_COLUMN_SPACE; // massgeblich fuer die Breite der Buttons im Techtree
-        $btnHeight = ceil ( $stageSize / (self::GRID_ROWS_PER_STAGE) ) - self::GRID_ROW_SPACE;//      ||      ||   ||  Hoehe  ||  ||      || ||
-
-        // Zeilenhoehe, Spaltenbreite fuer das "Raster"
-        $config['columnWidth'] = ceil ( $width / self::GRID_COLUMNS );
-        $config['rowHeight']   = ceil ( $stageSize / self::GRID_ROWS_PER_STAGE );
-
-        // Entwicklungsstufen
-        $config['stages']      = self::STAGES;
-        $config['stageSize']   = $stageSize;
-
-        // Breite und Hoehe des Techtrees
-        $config['width']  = $width;
-        $config['height'] = $height;
-
-        // Buttonmaße
-        $config['btnWidth']  = $btnWidth;
-        $config['btnHeight'] = $btnHeight;
-
-    }
 
     /**
      * get Requirements as array in the form:
@@ -80,6 +19,7 @@ class Gateway
      *   )
      * )
      *
+     * @return array
      */
     public function getRequirementsAsArray()
     {
@@ -106,7 +46,18 @@ class Gateway
     }
 
     /**
-     * return ResultSet
+     *
+     * @param numeric $techId
+     * @return \Techtree\Mapper\Technology
+     */
+    public function getTechnology($techId)
+    {
+        $this->_validateId($techId);
+        return $this->getTable('technology')->getEntity($techId);
+    }
+
+    /**
+     * @return ResultSet
      */
     public function getCosts()
     {
@@ -194,129 +145,25 @@ class Gateway
 
         return $techs;
     }
-    /**
-     * Get an array with techtree informations for a graphical display of the techtree.
-     *
-     * @param int $colonyId
-     * @param int $width
-     * @param int $height
-     * @return array
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
-     */
-    public function getGraphicalTechtreeByColonyId($colonyId, $width = self::GRID_WIDTH, $height = self::GRID_HEIGHT)
-    {
-        $this->_validateId($colonyId);
-
-        // Defining height and width for visual techtree.
-        if ( !is_numeric($width) || $width <= 0
-        || !is_numeric($height) || $height <= 0 )
-        {
-            $width  = self::GRID_WIDTH;
-            $height = self::GRID_HEIGHT;
-        }
-
-        // configurate techtree for that width and height
-        $this->setConfig($width, $height);
-
-        // Read requirements
-        $requirements = $this->getRequirementsAsArray();
-
-        // add position data to the techs:
-        $technologies = $this->getTechtreeByColonyId($colonyId);
-
-        foreach ($technologies as $id => $t) {
-            //if ( !isset($t['nStage']) ) { continue; }
-            $technologies[$id]['y'] = (int) ( $this->config['stageSize'] * $t['nStage'] + $this->config['rowHeight'] * $t['nRow']);
-            $technologies[$id]['x'] = (int) ( $this->config['columnWidth'] * $t['nColumn'] );
-            $technologies[$id]['centerX']= (int) ( $technologies[$id]['x'] + ( ceil ( $this->config['btnWidth'] / 2 ) ) );
-            $technologies[$id]['centerY']= (int) ( $technologies[$id]['y'] + $this->config['btnHeight'] / 2 );
-        }
-
-        // store information for drawing lines in the techtree between techs.
-        // iterate through requirements array to add additional infos:
-        foreach ($requirements as $t1_id => $requiredTech) {
-            foreach ($requiredTech as $t2_id => $values) {
-//                if (!isset($technologies[$t2_id])) continue;
-//
-//                // no requirements for not existing techs:
-//                if (!isset($technologies[$t1_id])) {
-//                    unset($requirements[$t1_id]);
-//                    continue;
-//                } else {
-//                    if (!isset($technologies[$t1_id]['missingRequirements'])) {
-//                        $technologies[$t1_id]['missingRequirements'] = false;
-//                    }
-//                    if ($values['count'] > $technologies[$t2_id]['count']) {
-//                        $technologies[$t1_id]['missingRequirements'] = true;
-//                    }
-//                }
-
-                // add data for the lines:
-                if ( $technologies[$t1_id]['centerX'] > $technologies[$t2_id]['centerX'] ) {
-                    // the line goes from northwest to southeast
-                    $requirements[$t1_id][$t2_id]['width'] = $technologies[$t1_id]['centerX'] - $technologies[$t2_id]['centerX'];
-                    $requirements[$t1_id][$t2_id]['start'] = 'nw';
-                    $requirements[$t1_id][$t2_id]['end']   = 'se';
-                    $requirements[$t1_id][$t2_id]['left']  = $technologies[$t2_id]['centerX'];
-                } elseif ($technologies[$t1_id]['centerX'] < $technologies[$t2_id]['centerX']) {
-                    // the line goes from northeast to southwest
-                    $requirements[$t1_id][$t2_id]['width'] = $technologies[$t2_id]['centerX'] - $technologies[$t1_id]['centerX'];
-                    $requirements[$t1_id][$t2_id]['start'] = 'ne';
-                    $requirements[$t1_id][$t2_id]['end']   = 'sw';
-                    $requirements[$t1_id][$t2_id]['left']  = $technologies[$t1_id]['centerX'];
-                } else { // wenn width=0
-                    // the line goes from north to south
-                    $requirements[$t1_id][$t2_id]['width'] = 20;
-                    $requirements[$t1_id][$t2_id]['start'] = 'n';
-                    $requirements[$t1_id][$t2_id]['end']   = 's';
-                    $requirements[$t1_id][$t2_id]['left']  = $technologies[$t1_id]['centerX'] - 10;
-                }
-                $requirements[$t1_id][$t2_id]['height'] = abs ( $technologies[$t1_id]['centerY'] - $technologies[$t2_id]['centerY']);
-                $requirements[$t1_id][$t2_id]['top'] = $technologies[$t2_id]['centerY'];
-            }
-        }
-
-        // Trennlinien zwischen den Evo-Stufen
-        $maxStage = $this->getCurrentMaxStage($colonyId);
-        $techtree['maxStage'] = $maxStage;
-        $lines = array();
-        for ( $i = 0; $i <= $maxStage; $i++ ) {
-            $lines[$i] = $this->config['stageSize'] * ($i+1);
-        }
-
-        // pack all together:
-        $techtree['technologies'] = $technologies;
-        $techtree['requirements'] = $requirements;
-        $techtree['imgWidth']     = $width;  // Breite des angezeigten Techtrees
-        $techtree['imgHeight']    = $height; // Hoehe   - || -
-        $techtree['btnWidth']     = $this->config['btnWidth'];
-        $techtree['btnHeight']    = $this->config['btnHeight'];
-        $techtree['stages']       = $this->config['stages'];
-        $techtree['lines']        = $lines;
-
-        // return techtree data:
-        return $techtree;
-    }
 
     /**
      * Abfrage der Voraussetzungen für eine Technologie
      *
      * @param int $techId
-     * @return \Techtree\Model\Requirements
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @return ResultSet
      */
     public function getRequirementsByTechnologyId($techId)
     {
         $this->_validateId($techId);
 
-        return $this->getTable('requirement')->fetchAll("technology_id = $techId");
+        return $this->getTable('requirement')->fetchAll("tech_id = $techId");
     }
+
     /**
      * Get the costs of the given technology.
      *
      * @param  integer $techId
      * @return Costs
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
      */
     public function getCostsByTechnologyId($techId)
     {
@@ -330,8 +177,7 @@ class Gateway
      * Get the technologies in possession from given colony.
      *
      * @param  integer $colonyId
-     * @return \Techtree\Model\Possessions
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @return ResultSet
      */
     public function getPossessionsByColonyId($colonyId)
     {
@@ -350,21 +196,18 @@ class Gateway
     {
         $this->_validateId($userId);
 
-        $galaxyGateway = new \Galaxy\Model\Gateway();
+        $galaxyGateway = new \Galaxy\Service\Gateway();
         $colonies = $galaxyGateway->getColoniesByUserId($userId);
 
-        if (!$colonies->valid() || !($colonies instanceof \Galaxy\Model\Colonies)) {
-            return new \Techtree\Model\Possessions(array(), $this);
-        }
+//         if (!$colonies->valid() || !($colonies instanceof \Galaxy\Model\Colonies)) {
+//             return new \Techtree\Model\Possessions(array(), $this);
+//         }
 
         if ( $colonies->count() > 1 ) {
-
             foreach ($colonies as $col) {
                 $coloIds[] = $col->id;
             }
-
             $coloIds = implode($coloIds, ',');
-
             $possessions = $this->getPossessions("colony_id IN ($coloIds)");
         } else {
             $possessions = $this->getPossessionsByColonyId($colonies->id);
@@ -374,7 +217,32 @@ class Gateway
     }
 
     /**
-     * Add an order to raise the technology level within the following ticks.
+     *
+     * @param  numeric $colonyId
+     * @param  numeric $techId
+     * @param  string $order
+     * @return boolean
+     */
+    public function order($colonyId, $techId, $order)
+    {
+        $this->_validateId($techId);
+        $this->_validateId($colonyId);
+
+        switch ($order) {
+            case 'add':    return $this->technologyLevelUp($techId, $colonyId);
+                           break;
+            case 'remove': return $this->technologyLevelDown($techId, $colonyId);
+                           break;
+            case 'repair': return $this->technologyLevelRepair($techId, $colonyId);
+                           break;
+            default:       // TODO
+                           break;
+        }
+
+    }
+
+    /**
+     * Add an order to raise/lower/repair the technology level within the following ticks.
      *
      * Checks if all requirements for technology level up are fullfilled
      * (technology dependencies, resources,..). If the check is true  1 technology
@@ -382,6 +250,7 @@ class Gateway
      * is thrown.
      *
      * what this function does:
+     *      - check if order already exists
      *      - check if maximum is reached
      *      - check technology requirements for levelup
      *      - check resource requirements for levelup
@@ -401,85 +270,90 @@ class Gateway
      * @param  integer  $techId     Which technology...
      * @param  integer  $colonyId   ... on which colony
      * @return boolean
-     * @throws \Techtree\Model\Exception  if invalid parameter(s)
-     * @throws \Techtree\Model\Exception  if one of the checks was negative
+     * @throws \Techtree\Service\Exception  if invalid parameter(s)
+     * @throws \Techtree\Service\Exception  if one of the checks was negative
      */
-    public function technologyLevelUp($techId, $colonyId)
+    private function technologyLevelUp($techId, $colonyId)
     {
-        $this->_validateId($techId);
-        $this->_validateId($colonyId);
+        $this->logger->log(\Zend\Log\Logger::INFO, "add one level to technology $techId on colony $colonyId");
 
         // check if maxlevel is reached
         $possessLevel = $this->getLevelByTechnologyId($techId, $colonyId);
         $tech = $this->getTechnology($techId);
 
         if ( is_null($tech) ) {
-            throw new \Techtree\Model\Exception($this->_translate('exception_Unknowtechnology_id'));
+            throw new \Techtree\Service\Exception('exception_Unknowtechnology_id');
         }
 
-        $buildtime = $tech->nBuildingTime;
-        $maxLevel  = $tech->nMax;
+        $buildtime = $tech->build_time;
+        $maxLevel  = $tech->max_level;
+
+        /**
+         * TODO: check if order already exists
+         */
 
         if ( !is_null($maxLevel) && $possessLevel >= $maxLevel ) {
-            throw new \Techtree\Model\Exception($this->_translate('exception_MaximumReached'));
+            throw new \Techtree\Service\Exception('exception_MaximumReached '.$maxLevel.' '.$possessLevel);
         }
 
         // check techtree requirements
         if ( ! ($this->checkRequirementsByTechnologyId($techId, $colonyId)) ) {
-            throw new \Techtree\Model\Exception($this->_translate('exception_FailRequirements'));
+            throw new \Techtree\Model\Exception('exception_FailRequirements');
         }
 
         // check if player colony has enough resources
         if ( ! ($this->checkResourcePossessionByTechnologyId($techId, $colonyId)) ) {
-            throw new \Techtree\Model\Exception($this->_translate('exception_NotEnoughResources'));
+            throw new \Techtree\Service\Exception('exception_NotEnoughResources');
         }
 
         // pay Costs:
         $costs = $this->getCostsByTechnologyId($techId);
-        $resourcesGW = new \Resources\Model\Gateway();
-        $resourcesGW->payCosts($costs, $colonyId);
+        $this->getGateway('resources')->payCosts($costs, $colonyId);
 
         if ($buildtime > 0)
         {
-            $firstTick = $this->getServiceLocator()->get('Tick');
+            $firstTick = $this->tick;
             $lastTick  = $firstTick + $buildtime - 1;
 
+            $table = $this->getTable('order');
             for ($i = $firstTick; $i < $lastTick; $i++) {
                 // one order can consists of multiple steps,
                 // so first add the steps that NOT finish the order
-                $order = $this->createOrder(array(
+                $order = array(
                     'tick'   => $i,
                     'colony_id' => $colonyId,
-                    'technology_id' => $techId,
-                    'action' => 'add',
+                    'tech_id' => $techId,
+                    'order' => 'add',
                     'is_final_step' => 0,
-                ));
-                $order->save();
+                );
+
+                $result = $table->save($order);
             }
 
             // create the order for the final step, e.g. 'building finished'
-            /**
-             * @var \Techtree\Model\Order
-             */
-            $order = $this->createOrder(array(
+            $order = array(
                 'tick'   => $lastTick,
                 'colony_id' => $colonyId,
-                'technology_id' => $techId,
-                'action' => 'add',
-                'is_final_step' => 1,
-            ));
+                'tech_id' => $techId,
+                'order' => 'add',
+                'is_final_step' => 1
+            );
 
-            $result = $order->save();
+            $result = $table->save($order);
 
         } elseif ($buildtime == 0) {
             // build immediately => only hire/fire advisors!
             $conditions = array(
                 'colony_id' => $colonyId,
-                'technology_id' => $techId,
+                'tech_id' => $techId,
             );
-            $possess = $this->getPossession($conditions);
-            $possess->count = $possess->count + 1;
-            $result = $possess->save();
+
+            $table = $this->getTable('possession');
+            $possess = $table->fetchAll($conditions);
+            foreach ($possess as $poss) {
+                $poss->count = $poss->count + 1;
+                $result = $table->update($poss);
+            }
         }
 
 //        $cache = $this->getServiceLocator()->get('cache');
@@ -507,7 +381,7 @@ class Gateway
      * @return boolean
      * @throws \Techtree\Model\Exception   if invalid parameter(s)
      */
-    public function technologyLevelDown($techId, $colonyId)
+    private function technologyLevelDown($techId, $colonyId)
     {
         $this->_validateId($techId);
         $this->_validateId($colonyId);
@@ -515,22 +389,22 @@ class Gateway
         // check if 0 is reached
         $possessLevel = $this->getLevelByTechnologyId($techId,$colonyId);
         if ( $possessLevel <= 0 ) {
-            throw new \Techtree\Model\Exception($this->_translate('exception_MinimumReached'));
+            throw new Exception('exception_MinimumReached');
         }
 
         // create the order and save it:
         // (it is always just 1tick)
         $order = $this->createOrder(array(
-            'tick' => $this->getServiceLocator()->get('Tick'),
+            'tick' => $this->tick,
             'colony_id' => $colonyId,
-            'technology_id' => $techId,
+            'tech_id' => $techId,
             'action' => 'sub',
             'is_final_step' => 1,
         ));
         $result = $order->save();
 
-        $cache = $this->getServiceLocator()->get('cache');
-        $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
+//         $cache = $this->getServiceLocator()->get('cache');
+//         $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
 
         return (bool) $result;
     }
@@ -549,8 +423,8 @@ class Gateway
         $this->_validateId($techId);
         $amount = (int) $amount;
 
-        $table = $this->getTable('PossessionsTable');
-        $row = $table->fetchRow("colony_id = $colonyId AND technology_id = $techId");
+        $table = $this->getTable('possessions');
+        $row = $table->fetchRow("colony_id = $colonyId AND tech_id = $techId");
         if ( !empty($row) ){
             //update
             $row = $row->toArray();
@@ -558,7 +432,7 @@ class Gateway
             $data  = array('count' => $data);
             $where = array(
                 $table->getAdapter()->quoteInto('colony_id = ?', $colonyId),
-                $table->getAdapter()->quoteInto('technology_id = ?', $techId)
+                $table->getAdapter()->quoteInto('tech_id = ?', $techId)
             );
             $result = $table->update($data,$where);
         }
@@ -566,15 +440,15 @@ class Gateway
             //insert
             $data = array(
                 'colony_id'   => $colonyId,
-                'technology_id' => $techId,
+                'tech_id' => $techId,
                 'count'    => $amount
             );
 
             $result = $table->insert($data);
         }
 
-        $cache = $this->getServiceLocator()->get('cache');
-        $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','possessions'));
+//         $cache = $this->getServiceLocator()->get('cache');
+//         $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','possessions'));
 
         return (bool) $result;
     }
@@ -605,10 +479,9 @@ class Gateway
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $tick = $this->getServiceLocator()->get('Tick');
-        $where = "technology_id = $techId AND colony_id = $colonyId";
+        $where = "tech_id = $techId AND colony_id = $colonyId";
         if ( $includePast !== true ) {
-            $where .= " AND tick >= $tick";
+            $where .= " AND tick >= " . $this->tick;
         }
         $orders = $this->getOrders($where);
 
@@ -683,8 +556,7 @@ class Gateway
 
         // get costs of technology:
         $costs = $this->getCostsByTechnologyId($techId);
-        $resGW = new \Resources\Model\Gateway();
-        return $resGW->check($costs, $colonyId);
+        return $this->getGateway('resources')->check($costs, $colonyId);
     }
 
     /**
@@ -700,8 +572,8 @@ class Gateway
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $dbTable = $this->getTable('PossessionsTable');
-        $rowset = $dbTable->fetchAll("technology_id = $techId AND colony_id = $colonyId");
+        $dbTable = $this->getTable('possession');
+        $rowset = $dbTable->fetchAll("tech_id = $techId AND colony_id = $colonyId");
         if ($rowset->valid()) {
             return $rowset->current()->count;
         } else {
@@ -712,13 +584,12 @@ class Gateway
     /**
      *
      * @param  integer $colonyId
-     * @return Orders
+     * @return ResultSet
      */
     public function getOrders($where = null, $order = null, $count = null, $offset = null)
     {
         $dbTable = $this->getTable('order');
-        $rowset = $dbTable->fetchAll($where, $order, $count, $offset);
-        return $rowset;
+        return $dbTable->fetchAll($where, $order, $count, $offset);
     }
 
     /**
@@ -779,6 +650,8 @@ class Gateway
 
     /**
      *
+     * @param numeric $userId
+     * @return numeric
      */
     public function getMaxSpyActions($userId)
     {
@@ -797,7 +670,7 @@ class Gateway
      * @param  integer $colonyId
      * @return number|number
      */
-    private function _getMaxOrders($type, $colonyId)
+    protected function _getMaxOrders($type, $colonyId)
     {
         $this->_validateId($colonyId);
 
@@ -813,7 +686,7 @@ class Gateway
 
         $level = $this->getLevelByTechnologyId($techId, $colonyId);
 
-        // TODO: eingesetzte Artefakte/Premiumfeatures erhöhen die mögliche Auftragsanzahl
+        // TODO: eingesetzte Artefakte erhöhen die mögliche Auftragsanzahl
 
         return ( $level+1 );
     }
@@ -889,7 +762,7 @@ class Gateway
     {
         $this->_validateId($userId);
 
-        $lastTick = $this->getServiceLocator()->get('Tick') - 1;
+        $lastTick = $this->tick - 1;
 
         if ( !is_numeric($sinceTick) ) {
             $sinceTick = $lastTick;
@@ -929,8 +802,8 @@ class Gateway
         $innnGw = new \Innn\Model\Gateway();
         $orders = $this->getProcessedOrders($userId);
 
-        $tick = $this->getServiceLocator()->get('Tick');
-        $cache = $this->getServiceLocator()->get('cache');
+        $tick = $this->tick;
+//         $cache = $this->getServiceLocator()->get('cache');
 
         while ( $orders->valid() ) {
 
@@ -949,7 +822,7 @@ class Gateway
                     'user_id' => $userId,
                     'tick' => $tick,
                     'event' => $event,
-                    'parameters' => serialize(array('technology_id' => $order->technology_id, 'colony_id' => $order->colony_id))
+                    'parameters' => serialize(array('tech_id' => $order->tech_id, 'colony_id' => $order->colony_id))
                 );
 
                 $innnEvent = $innnGw->createEvent($data);
@@ -966,45 +839,6 @@ class Gateway
                 //$cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
             }
             $orders->next();
-        }
-    }
-
-    /**
-     * Validates an id parameter to be a positive numeric number.
-     * In case of an compound primary key the parameter $compoundKey holds the
-     * indezes of the ids.
-     *
-     * @param  mixed       $id           the id (primary key)
-     * @param  null|array  $compoundKey  OPTIONAL the indezes in case of an compoundKey
-     * @throws Exception    if id is invalid
-     */
-    protected function _validateId($id, $compoundKey = null)
-    {
-        $error = false;
-        if (empty($compoundKey)) {
-            if (!is_numeric($id) || $id < 0) {
-                throw new Exception('Parameter is not a valid id.');
-            }
-        } else {
-            $idArray = $id;
-            if (is_array($idArray)) {
-                foreach ($compoundKey as $key) {
-                    if (!isset($idArray[$key])) {
-                        $error = true;
-                        break;
-                    }
-                    try {
-                        $this->_validateId($idArray[$key]);
-                    } catch (Exception $e) {
-                        $error = true;
-                    }
-                }
-            } else {
-                $error = true;
-            }
-            if ($error) {
-                throw new Exception('Parameter is not a valid compound id.');
-            }
         }
     }
 }

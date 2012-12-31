@@ -13,7 +13,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
      * If the column was not found a normal non assoziative array is returned.
      *
      * Column as Index    |
-     * (standard: nId):   |    No Column as Index:
+     * (standard: id):   |    No Column as Index:
      *                    |
      * array(             |    array(
      *   4 => ..,         |      0 => ...,

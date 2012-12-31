@@ -12,25 +12,15 @@ a:hover {color:000; text-decoration:underline;}
 
 .resource-bar {text-align:center;}
 
-#colony {background: url(../img/screens/city_light.gif) center center no-repeat; min-height: 400px;}
+#colony {/*background: url(../img/screens/city_light.gif) center center no-repeat;*/ min-height: 400px;}
 #colony .stage-svg {position: absolute;}
-/*#techtree .stage-svg {position: absolute;}*/
-#visualTechtree .span2 {border: 1px dotted #ccc}
 
-body .carousel .carousel-inner .item {height:700px; border: 1px solid grey; position: relative;}
+#visualTechtree .span2 {border: 1px dotted #ddd}
+
+body .carousel .carousel-inner .item {height:700px; position: relative;}
 body .carousel-inner .item .row-fluid{ margin-bottom: 30px; }
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
 
-/* body .modal {
-  width: 90%; desired relative width
-  left: 5%; (100%-width)/2
-  margin: auto auto auto auto; place center
-}
-body .modal.fade.in {
-  top: auto; fade in to correct spot
-}
- */
- 
 #stage-0 .span12 {margin-left:0}
 
 #galaxy .sidebar-nav,
@@ -48,22 +38,9 @@ body .modal.fade.in {
 #system #layerC {height: 100%; width: 100%;}
 
 /***** modifications of bootstrap css starts here: ****/
-/* .modal.fade {
-    -webkit-transition: none;
-    -moz-transition: none;
-    -ms-transition: none;
-    -o-transition: none;
-    transition: none;
-} */​
-
-
 .tooltip {z-index:2070;}
 
-.nav-tabs .secondary-nav {
-    float:right;
-    margin-left:10px;
-    margin-right:0;
-}
+.nav-tabs .secondary-nav {float:right; margin-left:10px; margin-right:0;}
 
 [class^="resicon-"],
 [class*=" resicon-"] {
@@ -82,9 +59,10 @@ body .modal.fade.in {
           border-radius: 500px;
 
 }
-
+/**
+ * resource icons
+ */
 /* White icons with optional class, or on hover/active states of certain elements */
-
 .resicon-white,
 .nav-pills > .active > a > [class^="resicon-"],
 .nav-pills > .active > a > [class*=" resicon-"],
@@ -98,9 +76,8 @@ body .modal.fade.in {
 .dropdown-menu > .active > a > [class*=" resicon-"],
 .dropdown-submenu:hover > a > [class^="resicon-"],
 .dropdown-submenu:hover > a > [class*=" resicon-"] {
-  text-color: #fff;
+    text-color: #fff;
 }
-
 
 .resicon-credits {background-color: gold;}
 .resicon-supply {background-color: #ddd;}
@@ -111,3 +88,11 @@ body .modal.fade.in {
 .resicon-ena {background-color: #9f9;}
 .resicon-aku {background-color: #ff9;}
 .resicon-lho {background-color: #99f;}
+
+/**
+ * technology types
+ */
+.building {background-color: rgb(180, 180, 255); background-image: -moz-linear-gradient(center top , #99f, #E6E6E6);}
+.research {background-color: rgb(180, 255, 180); background-image: -moz-linear-gradient(center top , #9f9, #E6E6E6);}
+.ship {background-color: rgb(255, 255, 180); background-image: -moz-linear-gradient(center top , #ff9, #E6E6E6);}
+.advisor {}

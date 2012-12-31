@@ -4,18 +4,33 @@ namespace Techtree;
 class Module
 {
     const STAGES = 6;
-    const GRID_COLUMNS = 10;
-    const GRID_ROWS_PER_STAGE = 5;
-    const GRID_HEIGHT = 1400;
-    const GRID_WIDTH  = 940;
-    const GRID_COLUMN_SPACE = 2;
-    const GRID_ROW_SPACE = 10;
+//     const GRID_COLUMNS = 10;
+//     const GRID_ROWS_PER_STAGE = 5;
+//     const GRID_HEIGHT = 1400;
+//     const GRID_WIDTH  = 940;
+//     const GRID_COLUMN_SPACE = 2;
+//     const GRID_ROW_SPACE = 10;
 
     const ADVISOR_ENGINEER_TECHID = 35;
     const ADVISOR_SCIENTIST_TECHID = 36;
     const ADVISOR_FLEETCOMMANDER_TECHID = 89;
     const ADVISOR_DIPLOMAT_TECHID = 90;
     const ADVISOR_CHIEFOFINTELLIGENCE = 94;
+
+    public function onBootstrap($e)
+    {
+        $sm = $e->getApplication()->getServiceManager();
+
+        \Locale::setDefault('de_DE');
+        \Zend\Validator\AbstractValidator::setDefaultTranslator(
+                $sm->get('translator')
+        );
+
+
+
+        $em = $e->getApplication()->getEventManager();
+
+    }
 
     public function getAutoloaderConfig()
     {

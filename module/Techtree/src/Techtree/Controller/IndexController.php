@@ -47,16 +47,22 @@ class IndexController extends AbstractActionController
 
         $techtree = $gw->getTechtreeByColonyId($colonyId);
         //$costs = $gw->getTechCosts();
+        $orders = $gw->getOrders();
 
-        return new ViewModel(
+        $model =  new ViewModel(
             array(
                 'techs' => $techs,
                 'techtree' => $techtree,
                 'requirements' => $requirements,
                 //'techgraph_infos' => $this->getTechGraphInfos($colonyId),
                 //'costs' => $this->getTechCosts
+                'orders' => $orders,
             )
         );
+
+        //\Zend\Debug\Debug::dump($model);
+
+        return $model;
 
 //         // Technologien und TechVoraussetzungen an die View uebergeben
 //         $techtree = $this->techtreeGateway->getGraphicalTechtreeByColonyId($colonyId);

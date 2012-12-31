@@ -1,11 +1,4 @@
 <?php
-/**
- * Zend Framework (http://framework.zend.com/)
- *
- * @link      http://github.com/zendframework/ZendSkeletonApplication for the canonical source repository
- * @copyright Copyright (c) 2005-2012 Zend Technologies USA Inc. (http://www.zend.com)
- * @license   http://framework.zend.com/license/new-bsd New BSD License
- */
 
 return array(
     'router' => array(
@@ -58,17 +51,22 @@ return array(
         ),
     ),
     'translator' => array(
-        'locale' => 'de_DE',
+        #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
         'translation_file_patterns' => array(
-//            array(
-//                'type'     => 'gettext',
-//                'base_dir' => __DIR__ . '/../language',
-//                'pattern'  => '%s.mo',
-//            ),
             array(
-                'type' => 'ini',
+                'type'     => 'gettext',
                 'base_dir' => __DIR__ . '/../language',
-                'pattern'  => '%s.ini',
+                'pattern'  => '%s.mo',
+            ),
+//             array(
+//                 'type' => 'ini',
+//                 'base_dir' => __DIR__ . '/../language',
+//                 'pattern'  => '%s.ini',
+//             )
+            array(
+                'type' => 'php',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern'  => '%s.php',
             )
         ),
     ),
@@ -76,13 +74,13 @@ return array(
         'invokables' => array(
             'Application\Controller\Index' => 'Application\Controller\IndexController'
         ),
-        'initializers' => array(
-            'logger' => function($instance, $serviceManager){
-                if ($instance instanceof \Helloworld\Controller\LoggerAware) {
-                    $instance->setLogger($serviceManager->getServiceLocator()->get('logger'));
-                }
-            }
-        )
+//         'initializers' => array(
+//             'logger' => function($instance, $serviceManager){
+//                 if ($instance instanceof \Helloworld\Controller\LoggerAware) {
+//                     $instance->setLogger($serviceManager->getServiceLocator()->get('logger'));
+//                 }
+//             }
+//         )
     ),
     'view_manager' => array(
         'display_not_found_reason' => true,
@@ -101,11 +99,11 @@ return array(
             __DIR__ . '/../view',
         ),
     ),
-    'view_helpers' => array(
-        'invokables' => array(
-             'testtest' => 'Application\View\Helper\Testtest',
-         )
-     ),
+//     'view_helpers' => array(
+//         'invokables' => array(
+//              'testtest' => 'Application\View\Helper\Testtest',
+//          )
+//      ),
     'cache_objects' => array(
         'adapter' => array(
             'name' => 'filesystem',

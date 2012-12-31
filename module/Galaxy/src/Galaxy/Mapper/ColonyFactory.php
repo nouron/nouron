@@ -1,15 +1,15 @@
 <?php
-namespace Resources\Mapper;
+namespace Galaxy\Mapper;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class ResourceFactory implements FactoryInterface
+class ColonyFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new Resource(new \Resources\Table\Resource($db));
+        $mapper    = new Colony(new \Galaxy\Table\Colony($db));
         return $mapper;
     }
 }

@@ -32,9 +32,25 @@ return array(
                             ),
                             'defaults' => array()
                         )
+                    ),
+                    'technology' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/technology/order/35/add
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/technology/:action/:id/:order',
+                            'constraints' => array(
+                                'action' => 'order',
+                                'id' => '[0-9]+',
+                                'order' => '[a-z]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'order'
+                            )
+                        )
                     )
                 )
-            )
+            ),
         )
     ),
     'view_manager' => array(
@@ -42,13 +58,28 @@ return array(
             'techtree' => __DIR__ . '/../view',
         ),
         'strategies' => array(
-                'ViewJsonStrategy',
+            'ViewJsonStrategy',
         ),
     ),
     'view_helpers' => array(
         'invokables' => array(
             'technologyNameLink' => 'Techtree\View\Helper\TechnologyNameLink',
         )
+    ),
+    'translator' => array(
+        #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
+        'translation_file_patterns' => array(
+            array(
+                'type'     => 'gettext',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern'  => '%s.mo',
+            ),
+            array(
+                'type' => 'array',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern'  => '%s.php',
+            )
+        ),
     ),
     'service_manager' => array(
 //        'invokables' => array(

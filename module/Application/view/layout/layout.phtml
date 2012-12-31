@@ -51,20 +51,30 @@ echo $this->doctype();
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="<?= $this->url('home') ?>"><?= $this->translate('Home') ?></a></li>
+              <? #if ($this->zfcUserIdentity()): ?>
               <li ><a href="<?= $this->url('techtree') ?>"><?= $this->translate('Techtree') ?></a></li>
               <li ><a href="<?= $this->url('galaxy') ?>"><?= $this->translate('Galaxy') ?></a></li>
+              <? #endif; ?>
             </ul>
-            <?php echo $this->zfcUserLoginWidget() ?>
+
+            <? #if (!$this->zfcUserIdentity()): ?>
+            <ul class="nav pull-right">
+                <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
+                <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
+            </ul>
+            <? #endif; ?>
+
           </div><!--/.nav-collapse -->
         </div>
       </div>
     </div>
 
     <div class="container">
-
-        <?php echo $this->partial('layout/resource-bar', array()); ?>
+        <? if ($this->zfcUserIdentity()):
+               echo $this->partial('layout/resource-bar', array()); ?>
         <hr />
-        <?php echo $this->content; ?>
+        <? endif;
+        echo $this->content; ?>
         <hr />
     </div> <!-- /container -->
     <?php echo $this->inlineScript(); ?>

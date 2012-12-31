@@ -12,5 +12,19 @@
  */
 
 return array(
-    // ...
+    'db' => array(
+        'username' => 'your_username',
+        'password' => 'your_password',
+    ),
+    'logger' => array(
+        'writer' => array('string') // and/or FirePHP, ChromePHP,...
+    ),
+    'tick' => array(
+        'length' => 24,
+        'calculation' => array (
+            'start' => 3,
+            'end' => 4
+        ),
+        'testcase' => 14479 // Tick to use in Testcases
+    )
 );

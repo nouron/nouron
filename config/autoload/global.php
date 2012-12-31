@@ -25,10 +25,25 @@ return array(
             'logger' => function($sl) {
                 $logger = new \Zend\Log\Logger();
                 $config = $sl->get('Config');
-                $logger->addWriter('FirePhp');
+                if ($config['logger']['writer'] == 'ChromePhp')
+                    $logger->addWriter(new \Helloworld\Log\Writer\ChromePhp());
+                else
+                    $logger->addWriter('FirePhp');
                 return $logger;
+            },
+            'Nouron\Service\Tick' => function($sl) {
+                $config = $sl->get('Config');
+                $config = $config['tick'];
+                return new \Nouron\Service\Tick($config);
             }
         ),
-
     ),
+    'tick' => array(
+        'length' => 24,
+        'calculation' => array (
+            'start' => 3,
+            'end' => 4
+        ),
+        'testcase' => 14479 // Tick to use in Testcases
+    )
 );

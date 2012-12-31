@@ -21,6 +21,7 @@ $settings = array(
      * instead of the default one provided. Default is ZfcUser\Entity\User.
      */
     //'user_entity_class' => 'ZfcUser\Entity\User',
+    'user_entity_class' => 'User\Mapper\User',
 
     /**
      * Enable registration
@@ -39,7 +40,7 @@ $settings = array(
      *
      * Accepted values: boolean true or false
      */
-    //'enable_username' => false,
+    'enable_username' => true,
 
     /**
      * Enable Display Name
@@ -49,7 +50,7 @@ $settings = array(
      *
      * Accepted values: boolean true or false
      */
-    //'enable_display_name' => true,
+    'enable_display_name' => false,
 
     /**
      * Modes for authentication identity match
@@ -60,7 +61,7 @@ $settings = array(
      * Default value: array containing 'email'
      * Accepted values: array containing one or more of: email, username
      */
-    //'auth_identity_fields' => array( 'email' ),
+    'auth_identity_fields' => array( 'email','username' ),
 
     /**
      * Login form timeout
@@ -131,7 +132,7 @@ $settings = array(
 	 * Default value: 'zfc-user/user/login.phtml'
      * Accepted values: string path to a view script
 	 */
-    'user_login_widget_view_template' => 'zfc-user-mod/user/login.phtml',
+    //'user_login_widget_view_template' => 'zfc-user-mod/user/login.phtml',
 
     /**
      * Login Redirect Route
@@ -143,6 +144,7 @@ $settings = array(
      *
      */
     //'login_redirect_route' => 'zfcuser',
+    'login_redirect_route' => 'techtree',
 
     /**
      * Logout Redirect Route

@@ -1,0 +1,61 @@
+<!-- Modal -->
+<div id="techModal" class="modal hide fade in" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel"><?= $this->translate($tech->name) ?></h3>
+    </div>
+    <div class="modal-body">
+        <!-- Description -->
+        <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
+
+        <!-- Data -->
+        <table class="table">
+            <tr>
+                <td><?= $this->translate('type') . ': '. $tech->type ?></td>
+                <td><?= $this->translate('max_level') . ': '. $tech->max_level ?></td>
+                <td><i class="icon-time"></i><?= $tech->build_time ?></td>
+            </tr>
+            <tr>
+                <td><?= $this->translate('purpose') . ': '. $this->translate('purpose_' . $tech->purpose) ?></td>
+                <td><?= $this->translate('decay') . ': '. $tech->decay ?></td>
+                <td><?= $this->translate('tradeable') . ': '?><i class="icon-<?= ($tech->tradeable) ? 'ok' : 'remove' ?>"></i></td>
+            </tr>
+            <?php if ($tech->type == 'ship'): ?>
+            <tr>
+                <td><?= $this->translate('moving_speed') . ': '. $tech->moving_speed ?></td>
+            </tr>
+            <?php endif; ?>
+        </table>
+
+
+        <hr />
+        <!-- Costs -->
+
+        <?php
+        foreach ($costs as $cost):
+            $resource = $resources[ $cost->resource_id ];
+            $name = $resource['name'];
+            $abbreviation =  $resource['abbreviation'];
+            $class =  $resource['icon'];
+            $amount  = $cost['amount'];
+            if ($amount > 0):
+                echo '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$name.'">';
+                echo '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
+            endif;
+        endforeach;
+        ?>
+        <hr />
+        <!-- Requirements -->
+        <?php foreach ($requirements as $req): ?>
+        <span><?= $techs[ $req->required_tech_id ]['name'].' Level '.$req->required_tech_count ?> <i class="icon-ok"></i></span>
+        <?php endforeach ?>
+        <hr />
+    </div>
+    <div class="modal-footer">
+        <a href="<?= $urls[0] ?>" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-plus"></i> Ausbauen</a>
+        <a href="<?= $urls[1] ?>" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-minus"></i> Zurückbauen</a>
+        <a href="<?= $urls[2] ?>" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-wrench"></i> Reparieren</a>
+        <a href="javascript::void()" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i> Close</a>
+        <!--<button class="btn btn-primary">Save changes</button>-->
+    </div>
+</div>

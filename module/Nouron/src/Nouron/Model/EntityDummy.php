@@ -1,9 +1,7 @@
 <?php
-namespace Techtree\Model;
+namespace Nouron\Model;
 
-use Nouron\Model;
-
-class Technology implements EntityInterface
+class EntityDummy implements EntityInterface
 {
     public $id;
     public $type;

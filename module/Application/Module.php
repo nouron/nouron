@@ -16,7 +16,12 @@ class Module
 {
     public function onBootstrap($e)
     {
-        #\Locale::setDefault('de_DE');
+        \Locale::setDefault('de_DE');
+        \Zend\Validator\AbstractValidator::setDefaultTranslator(
+            $e->getApplication()
+            ->getServiceManager()
+            ->get('translator')
+        );
         $e->getApplication()->getServiceManager()->get('translator');
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
