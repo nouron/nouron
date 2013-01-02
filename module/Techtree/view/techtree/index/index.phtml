@@ -47,10 +47,12 @@
         foreach ($requirements as $id => $req):
             foreach ($req as $toId => $val):
                 $key = $id . '-' . $toId;
-                $fullfilled = ($techtree[$id]['count'] >= $val['required_tech_count']) ? 'true' : 'false';
+                /*$fullfilled = ($techtree[$id]['count'] >= $val['required_tech_count']) ? 'true' : 'false';*/
+                $tech_count = $techtree[$id]['count'];
+                $required_tech_count = $val['required_tech_count'];
         ?>
 
-        <div class="requirementsdata" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s", $id, $toId, $val['required_tech_count'], $fullfilled) ?></div>
+        <div class="requirementsdata" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s", $id, $toId, $required_tech_count, $tech_count) ?></div>
 
         <?php endforeach;
         endforeach; ?>

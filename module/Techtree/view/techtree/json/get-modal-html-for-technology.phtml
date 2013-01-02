@@ -18,7 +18,7 @@
             <tr>
                 <td><?= $this->translate('purpose') . ': '. $this->translate('purpose_' . $tech->purpose) ?></td>
                 <td><?= $this->translate('decay') . ': '. $tech->decay ?></td>
-                <td><?= $this->translate('tradeable') . ': '?><i class="icon-<?= ($tech->tradeable) ? 'ok' : 'remove' ?>"></i></td>
+                <td><?= ($tech->tradeable) ? '<i class="icon-ok"></i> ' . $this->translate('tradeable') : '' ?></td>
             </tr>
             <?php if ($tech->type == 'ship'): ?>
             <tr>
@@ -27,10 +27,11 @@
             <?php endif; ?>
         </table>
 
-
-        <hr />
         <!-- Costs -->
+        <h4><?= $this->translate('costs and requirements') ?></h4>
 
+        <table class="table">
+        <tr><td colspan="2">
         <?php
         foreach ($costs as $cost):
             $resource = $resources[ $cost->resource_id ];
@@ -44,12 +45,11 @@
             endif;
         endforeach;
         ?>
-        <hr />
-        <!-- Requirements -->
+        </td></tr>
         <?php foreach ($requirements as $req): ?>
-        <span><?= $techs[ $req->required_tech_id ]['name'].' Level '.$req->required_tech_count ?> <i class="icon-ok"></i></span>
+        <tr><td><?= $techs[ $req->required_tech_id ]['name'] ?></td><td><?= ' Level ' . $req->required_tech_count ?> <i class="icon-ok"></i></td></tr>
         <?php endforeach ?>
-        <hr />
+        </table>
     </div>
     <div class="modal-footer">
         <a href="<?= $urls[0] ?>" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-plus"></i> Ausbauen</a>

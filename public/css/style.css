@@ -17,7 +17,7 @@ a:hover {color:000; text-decoration:underline;}
 
 #visualTechtree .span2 {border: 1px dotted #ddd}
 
-body .carousel .carousel-inner .item {height:700px; position: relative;}
+body .carousel .carousel-inner .item {min-height:800px; position: relative;}
 body .carousel-inner .item .row-fluid{ margin-bottom: 30px; }
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
 
