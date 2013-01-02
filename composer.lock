@@ -7,18 +7,19 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/dlu/dlutwbootstrap.git",
-                "reference": "05b821e97bf1d1dd4721c86f034e49944a11fabe"
+                "reference": "release-0.1.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap/get/05b821e97bf1d1dd4721c86f034e49944a11fabe.zip",
-                "reference": "05b821e97bf1d1dd4721c86f034e49944a11fabe",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap/get/release-0.1.1.zip",
+                "reference": "release-0.1.1",
                 "shasum": ""
             },
             "require": {
-                "zendframework/zendframework": "dev-master#2a398b4e81c31bdfbda917a867896c48d4f62bcf"
+                "php": ">=5.3.3",
+                "zendframework/zendframework": ">=2.0.5"
             },
-            "time": "1347897760",
+            "time": "2012-12-15 10:03:41",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -54,19 +55,20 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo.git",
-                "reference": "dfc7634d1e13a843da745ca8d4d912c6e6f0ff42"
+                "reference": "release-0.1.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo/get/dfc7634d1e13a843da745ca8d4d912c6e6f0ff42.zip",
-                "reference": "dfc7634d1e13a843da745ca8d4d912c6e6f0ff42",
+                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo/get/release-0.1.2.zip",
+                "reference": "release-0.1.2",
                 "shasum": ""
             },
             "require": {
-                "zendframework/zendframework": "dev-master",
-                "dlu/dlutwbootstrap": "dev-master"
+                "php": ">=5.3.3",
+                "zendframework/zendframework": ">=2.0.5",
+                "dlu/dlutwbootstrap": ">=0.1.1"
             },
-            "time": "1346330193",
+            "time": "2012-12-15 10:29:31",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -104,18 +106,18 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/common",
-                "reference": "20cb487a5809a42f03020c89fa09eb4458de827f"
+                "reference": "a890fe1b689ed65c52bf4a7e64333a27b3c400d6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/doctrine/common/zipball/20cb487a5809a42f03020c89fa09eb4458de827f",
-                "reference": "20cb487a5809a42f03020c89fa09eb4458de827f",
+                "url": "https://github.com/doctrine/common/archive/a890fe1b689ed65c52bf4a7e64333a27b3c400d6.zip",
+                "reference": "a890fe1b689ed65c52bf4a7e64333a27b3c400d6",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.2"
             },
-            "time": "1350491397",
+            "time": "2012-12-18 00:45:03",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -151,9 +153,9 @@
                     "email": "kontakt@beberlei.de"
                 },
                 {
-                    "name": "Johannes M. Schmitt",
+                    "name": "Johannes Schmitt",
                     "email": "schmittjoh@gmail.com",
-                    "homepage": "http://jmsyst.com",
+                    "homepage": "https://github.com/schmittjoh",
                     "role": "Developer of wrapped JMSSerializerBundle"
                 }
             ],
@@ -181,7 +183,7 @@
                 "reference": "c26d972dcb28fd483fa193512091df7b3c85e450",
                 "shasum": ""
             },
-            "time": "1338250094",
+            "time": "2012-05-29 00:08:14",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -209,12 +211,12 @@
             "source": {
                 "type": "git",
                 "url": "git://github.com/zendframework/zf2.git",
-                "reference": "0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f"
+                "reference": "release-2.0.6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/zendframework/zf2/zipball/0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f",
-                "reference": "0abbba9f1171e5c7cd7997f4d185d5ffe0cd7c5f",
+                "url": "https://github.com/zendframework/zf2/archive/release-2.0.6.zip",
+                "reference": "release-2.0.6",
                 "shasum": ""
             },
             "require": {
@@ -280,14 +282,15 @@
                 "zendframework/zendpdf": "ZendPdf for creating PDF representations of barcodes",
                 "pecl-weakref": "Implementation of weak references for Zend\\Stdlib\\CallbackHandler"
             },
-            "time": "1351122517",
+            "time": "2012-12-19 21:14:25",
             "bin": [
                 "bin/classmap_generator.php"
             ],
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0-dev"
+                    "dev-master": "2.0-dev",
+                    "dev-develop": "2.1-dev"
                 }
             },
             "installation-source": "source",
@@ -325,7 +328,7 @@
                 "php": ">=5.3.3",
                 "zendframework/zendframework": "2.*"
             },
-            "time": "1351100548",
+            "time": "2012-10-24 17:42:28",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -360,12 +363,12 @@
             "source": {
                 "type": "git",
                 "url": "git://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "2a30bda620f962b9919459aef5b279bdb5f44bd8"
+                "reference": "18c4fc2e71a53b558e1feec51c9c5fb10a070188"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/ZF-Commons/ZfcUser/zipball/2a30bda620f962b9919459aef5b279bdb5f44bd8",
-                "reference": "2a30bda620f962b9919459aef5b279bdb5f44bd8",
+                "url": "https://github.com/ZF-Commons/ZfcUser/archive/18c4fc2e71a53b558e1feec51c9c5fb10a070188.zip",
+                "reference": "18c4fc2e71a53b558e1feec51c9c5fb10a070188",
                 "shasum": ""
             },
             "require": {
@@ -373,7 +376,7 @@
                 "zf-commons/zfc-base": "dev-master",
                 "zendframework/zendframework": "2.*"
             },
-            "time": "1351124306",
+            "time": "2012-12-08 23:49:26",
             "type": "library",
             "installation-source": "source",
             "autoload": {
@@ -408,15 +411,15 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/michael-romer/zfb2-vm",
-                "reference": "730162340db7e24add34b7826df576257ff1b4c4"
+                "reference": "a5da2e6a87ac33caae27d8b81bcb0a7888499c7f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/michael-romer/zfb2-vm/zipball/730162340db7e24add34b7826df576257ff1b4c4",
-                "reference": "730162340db7e24add34b7826df576257ff1b4c4",
+                "url": "https://github.com/michael-romer/zfb2-vm/archive/a5da2e6a87ac33caae27d8b81bcb0a7888499c7f.zip",
+                "reference": "a5da2e6a87ac33caae27d8b81bcb0a7888499c7f",
                 "shasum": ""
             },
-            "time": "1342098925",
+            "time": "2012-11-13 20:17:28",
             "type": "library",
             "installation-source": "source",
             "license": [

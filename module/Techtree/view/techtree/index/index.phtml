@@ -38,7 +38,7 @@
                 <? if (!empty($tech['order'])):
                     echo '<i class="icon-arrow-up"></i>';
                 endif;
-                echo $this->translate($tech['name']) . '<br />' . $tech['count'] . ' // ' . $key ?>
+                echo $this->translate($tech['name'], null, 'de_DE') . '<br />' . $tech['count'] . ' // ' . $key ?>
             </a>
             <span class="hidden data"><?= json_encode($tech) ?></span>
         </span>

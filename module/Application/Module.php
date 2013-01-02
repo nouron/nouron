@@ -22,7 +22,12 @@ class Module
             ->getServiceManager()
             ->get('translator')
         );
-        $e->getApplication()->getServiceManager()->get('translator');
+        $translator = $e->getApplication()->getServiceManager()->get('translator');
+        $translator->setLocale(\Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+                   ->setFallbackLocale('de_DE');
+
+
+
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();
         $moduleRouteListener->attach($eventManager);

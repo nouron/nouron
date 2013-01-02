@@ -47,7 +47,7 @@
         ?>
         </td></tr>
         <?php foreach ($requirements as $req): ?>
-        <tr><td><?= $techs[ $req->required_tech_id ]['name'] ?></td><td><?= ' Level ' . $req->required_tech_count ?> <i class="icon-ok"></i></td></tr>
+        <tr><td><?= $this->translate($techs[ $req->required_tech_id ]['name']) ?></td><td><?= ' Level ' . $req->required_tech_count ?> <i class="icon-ok"></i></td></tr>
         <?php endforeach ?>
         </table>
     </div>

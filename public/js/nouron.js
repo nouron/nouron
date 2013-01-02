@@ -92,21 +92,22 @@ $(document).ready(function(){
      }
 
      function draw_requirements() {
-         setTimeout('2000');
-         $('svg.span12').children().remove();
-         /* Take requirements data to draw the lines into techtree */
-         $('.requirementsdata').each(function() {
-             data = $(this).html().trim().split('-');
-             techId = data[0];
-             requiredTechId = data[1];
-             count = data[2];
-             fullfilled = data[3];
-             domSourceElem = $('#tech-' + requiredTechId);
-             domTargetElem = $('#tech-' + techId);
-             if (domSourceElem && domTargetElem) {
-                 draw_requirement(domSourceElem, domTargetElem, count, fullfilled);
-             }
-         });
+         setTimeout(function() {
+             $('svg.span12 *').remove();
+             /* Take requirements data to draw the lines into techtree */
+             $('.requirementsdata').each(function() {
+                 data = $(this).html().trim().split('-');
+                 techId = data[0];
+                 requiredTechId = data[1];
+                 count = data[2];
+                 fullfilled = data[3];
+                 domSourceElem = $('#tech-' + requiredTechId);
+                 domTargetElem = $('#tech-' + techId);
+                 if (domSourceElem && domTargetElem) {
+                     draw_requirement(domSourceElem, domTargetElem, count, fullfilled);
+                 }
+             });
+         }, 500);
      }
     
     /* stop automatic sliding of carousel: */

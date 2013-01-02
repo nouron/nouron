@@ -70,12 +70,7 @@ return array(
         #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
         'translation_file_patterns' => array(
             array(
-                'type'     => 'gettext',
-                'base_dir' => __DIR__ . '/../language',
-                'pattern'  => '%s.mo',
-            ),
-            array(
-                'type' => 'array',
+                'type' => 'phparray',
                 'base_dir' => __DIR__ . '/../language',
                 'pattern'  => '%s.php',
             )
