@@ -23,6 +23,10 @@ class JsonController extends AbstractActionController
             $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'repair')),
         );
 
+        $tech = $techtreeGw->getTechnology($techId);
+        $logger = $sm->get('logger');
+        $logger->log(\Zend\Log\Logger::INFO, serialize($tech));
+
         $result = new ViewModel(
             array(
                 'tech' => $techtreeGw->getTechnology($techId),

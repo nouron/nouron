@@ -64,7 +64,7 @@ abstract class AbstractTable extends AbstractTableGateway
             $this->_validateId($id);
         }
 
-        $rowset = $this->select($id);
+        $rowset = $this->select("id = $id");
         $row = $rowset->current();
         if (!$row) {
             throw new \Exception("Could not find row $id");
