@@ -52,18 +52,21 @@ echo $this->doctype();
           <div class="nav-collapse">
             <ul class="nav">
               <li class="active"><a href="<?= $this->url('home') ?>"><?= $this->translate('Home') ?></a></li>
-              <? #if ($this->zfcUserIdentity()): ?>
+              <? if ($this->zfcUserIdentity()): ?>
               <li ><a href="<?= $this->url('techtree') ?>"><?= $this->translate('Techtree') ?></a></li>
               <li ><a href="<?= $this->url('galaxy') ?>"><?= $this->translate('Galaxy') ?></a></li>
-              <? #endif; ?>
+              <? endif; ?>
             </ul>
 
-            <? #if (!$this->zfcUserIdentity()): ?>
             <ul class="nav pull-right">
+            <? if (!$this->zfcUserIdentity()): ?>
                 <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
                 <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
+            <? else: ?>
+                <li><a href="#"><?= $this->zfcUserIdentity()->getDisplayname(); ?></a></li>
+                <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> logout</a></li>
+            <? endif; ?>
             </ul>
-            <? #endif; ?>
 
           </div><!--/.nav-collapse -->
         </div>

@@ -4,7 +4,7 @@ return array(
         'Application',
         'ZfcBase',
         'ZfcUser',
-        'User',
+        //'User',
         'Nouron',
         'Resources',
         'Techtree',

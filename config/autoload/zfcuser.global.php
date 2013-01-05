@@ -12,7 +12,7 @@ $settings = array(
      * Please specify the DI alias for the configured Zend\Db\Adapter\Adapter
      * instance that ZfcUser should use.
      */
-    //'zend_db_adapter' => 'Zend\Db\Adapter\Adapter',
+    'zend_db_adapter' => 'Zend\Db\Adapter\Adapter',
 
     /**
      * User Model Entity Class
@@ -21,7 +21,7 @@ $settings = array(
      * instead of the default one provided. Default is ZfcUser\Entity\User.
      */
     //'user_entity_class' => 'ZfcUser\Entity\User',
-    'user_entity_class' => 'User\Mapper\User',
+    //'user_entity_class' => 'User\Mapper\User',
 
     /**
      * Enable registration
@@ -40,7 +40,7 @@ $settings = array(
      *
      * Accepted values: boolean true or false
      */
-    'enable_username' => true,
+    //'enable_username' => true,
 
     /**
      * Enable Display Name
@@ -50,7 +50,7 @@ $settings = array(
      *
      * Accepted values: boolean true or false
      */
-    'enable_display_name' => false,
+    //'enable_display_name' => false,
 
     /**
      * Modes for authentication identity match
@@ -61,7 +61,7 @@ $settings = array(
      * Default value: array containing 'email'
      * Accepted values: array containing one or more of: email, username
      */
-    'auth_identity_fields' => array( 'email','username' ),
+    //'auth_identity_fields' => array( 'email','username' ),
 
     /**
      * Login form timeout

@@ -211,12 +211,12 @@
             "source": {
                 "type": "git",
                 "url": "git://github.com/zendframework/zf2.git",
-                "reference": "release-2.0.6"
+                "reference": "f642ecf40f686d4b7f6dc8224007aac0117c1d56"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/zendframework/zf2/archive/release-2.0.6.zip",
-                "reference": "release-2.0.6",
+                "url": "https://github.com/zendframework/zf2/archive/f642ecf40f686d4b7f6dc8224007aac0117c1d56.zip",
+                "reference": "f642ecf40f686d4b7f6dc8224007aac0117c1d56",
                 "shasum": ""
             },
             "require": {
@@ -282,7 +282,7 @@
                 "zendframework/zendpdf": "ZendPdf for creating PDF representations of barcodes",
                 "pecl-weakref": "Implementation of weak references for Zend\\Stdlib\\CallbackHandler"
             },
-            "time": "2012-12-19 21:14:25",
+            "time": "2013-01-04 22:51:05",
             "bin": [
                 "bin/classmap_generator.php"
             ],
@@ -300,6 +300,7 @@
                     "ZendTest\\": "tests/"
                 }
             },
+            "notification-url": "http://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
