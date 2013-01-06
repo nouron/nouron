@@ -17,15 +17,35 @@ class JsonController extends AbstractActionController
         $resourcesGw = $sm->get('Resources\Service\Gateway');
         $techtreeGw = $sm->get('Techtree\Service\Gateway');
 
-        $urls = array(
-            $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'add')),
-            $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'remove')),
-            $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'repair')),
-        );
+        $levelAddUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'add'));
+        $levelRemoveUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'remove'));
+        $levelRepairUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'repair'));
+
 
         $tech = $techtreeGw->getTechnology($techId);
-        $logger = $sm->get('logger');
-        $logger->log(\Zend\Log\Logger::INFO, serialize($tech));
+//         $logger = $sm->get('logger');
+//         $logger->log(\Zend\Log\Logger::INFO, serialize($tech));
+
+        $colonyId = 0;
+        $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);
+        $requiredResourcesCheck = $techtreeGw->checkRequiredResourcesByTechId($techId, $colonyId);
+
+        $level = $techtreeGw->getLevelByTechnologyId($techId, $colonyId);
+
+        $urls = array(
+            'add' => null,
+            'remove' => null,
+            'repair' => null
+        );
+        if ($requiredTechsCheck && $requiredResourcesCheck) {
+            $urls['add'] = $levelAddUrl;
+        }
+        if ($level > 0) {
+            $urls['remove'] = $levelRemoveUrl;
+        }
+        if ($requiredResourcesCheck) {
+            $urls['repair'] = $levelRepairUrl;
+        }
 
         $result = new ViewModel(
             array(

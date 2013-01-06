@@ -111,7 +111,7 @@ class Gateway extends \Nouron\Service\Gateway
                 //@todo: slot
             }
 
-            $checkReqs = $this->checkRequirementsByTechnologyId($id, $colonyId);
+            $checkReqs = $this->checkRequiredResourcesByTechId($id, $colonyId);
             if ($checkReqs == true) {
                 $techs[$id]['status'] = 'available';
             } elseif ($techs[$id]['count'] > 0) {
@@ -510,7 +510,7 @@ class Gateway extends \Nouron\Service\Gateway
      * @return boolean
      * @throws \Techtree\Model\Exception if invalid parameter(s)
      */
-    public function checkRequirementsByTechnologyId($techId, $colonyId)
+    public function checkRequiredTechsByTechId($techId, $colonyId)
     {
         $this->_validateId($techId);
         $this->_validateId($colonyId);
@@ -528,16 +528,6 @@ class Gateway extends \Nouron\Service\Gateway
             }
         }
 
-//        while ( $rqrmnts->valid() )
-//        {
-//            $id  = $rqrmnts->required_tech_id;
-//            if ( !isset($poss[$id]) || $rqrmnts->count > $poss[$id]['count']) {
-//                // if not enough techs in possess return false
-//                return false;
-//            }
-//            $rqrmnts->next();
-//        }
-
         return true;
     }
 
@@ -549,7 +539,7 @@ class Gateway extends \Nouron\Service\Gateway
      * @return boolean
      * @throws \Techtree\Model\Exception if invalid parameter(s)
      */
-    public function checkResourcePossessionByTechnologyId($techId, $colonyId)
+    public function checkRequiredResourcesByTechId($techId, $colonyId)
     {
         $this->_validateId($techId);
         $this->_validateId($colonyId);

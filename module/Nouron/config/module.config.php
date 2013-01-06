@@ -28,4 +28,14 @@ return array(
             'nouron' => __DIR__ . '/../view',
         ),
     ),
+    'translator' => array(
+        #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
+        'translation_file_patterns' => array(
+            array(
+                'type' => 'phparray',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern'  => '%s.php',
+            )
+        ),
+    ),
 );
