@@ -1,8 +1,23 @@
 <?php
 namespace Galaxy;
 
-class Module
+use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
+use Zend\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface
 {
+    public function onBootstrap($e)
+    {
+        $sm = $e->getApplication()->getServiceManager();
+
+        \Locale::setDefault('de_DE');
+        \Zend\Validator\AbstractValidator::setDefaultTranslator(
+                $sm->get('translator')
+        );
+
+        $em = $e->getApplication()->getEventManager();
+    }
+
     public function getAutoloaderConfig()
     {
         return array(
@@ -21,5 +36,6 @@ class Module
     {
         return include __DIR__ . '/config/module.config.php';
     }
+
 }
 

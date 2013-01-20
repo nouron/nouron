@@ -7,7 +7,7 @@ use Nouron\Model\AbstractTable,
 
 class Colony extends AbstractTable
 {
-    protected $table  = 'glx_colonies';
+    protected $table  = 'v_glx_colonies';
 
     public function __construct(Adapter $adapter)
     {

@@ -1,7 +1,10 @@
 <?php
 namespace Techtree;
 
-class Module
+use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
+use Zend\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface
 {
     const STAGES = 6;
 //     const GRID_COLUMNS = 10;
@@ -26,10 +29,7 @@ class Module
                 $sm->get('translator')
         );
 
-
-
         $em = $e->getApplication()->getEventManager();
-
     }
 
     public function getAutoloaderConfig()

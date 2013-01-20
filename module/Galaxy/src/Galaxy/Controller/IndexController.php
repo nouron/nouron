@@ -11,21 +11,21 @@ class IndexController extends AbstractActionController
     {
         $sm = $this->getServiceLocator();
 
-        $sm->setService('colonyId', 0);
-        $sm->setService('tick', 12345);
+        $tick     = $sm->get('Nouron\Service\Tick');
 
-        $colonyId = $sm->get('colonyId');
-        $tick     = $sm->get('Tick');
+        $gw = $sm->get('Galaxy\Service\Gateway');
+        $systems = $gw->getSystems()->toArray('id');
 
-//         $gw = $sm->get('Techtree\Service\Gateway');
-//         $techs = $gw->getTechnologies();
+        $config = $sm->get('Config');
+        $config = $config['galaxy_view_config'];
+
         return new ViewModel(
-                array(
-
-                )
+            array(
+                'systems' => $systems,
+                'config' => $config
+            )
         );
 
     }
-
 }
 

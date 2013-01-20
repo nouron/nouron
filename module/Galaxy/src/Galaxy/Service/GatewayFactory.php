@@ -18,9 +18,11 @@ class GatewayFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables['colony'] = new \Galaxy\Table\Colony($db);
+        $tables['system'] = new \Galaxy\Table\System($db);
+        $tables['systemobject'] = new \Galaxy\Table\SystemObject($db);
 
-        $resourcesGateway = new Gateway($tick, $tables);
-        $resourcesGateway->setLogger($logger);
-        return $resourcesGateway;
+        $gateway = new Gateway($tick, $tables, array());
+        $gateway->setLogger($logger);
+        return $gateway;
     }
 }

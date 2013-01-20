@@ -1,5 +1,7 @@
 $(document).ready(function(){
 
+    
+    
     /**
      * 
      */
@@ -115,6 +117,8 @@ $(document).ready(function(){
     
     /* enable tooltips */
     $('[rel=tooltip]').tooltip();
+    
+    $('.parallax-layer').parallax();
 
     /* moving technology divs to correct spots */
     $('.techdata').each(function(index) {

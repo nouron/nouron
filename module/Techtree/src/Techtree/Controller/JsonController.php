@@ -7,8 +7,17 @@ use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
+/**
+ *
+ * @author tt
+ *
+ */
 class JsonController extends AbstractActionController
 {
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function getModalHtmlForTechnologyAction()
     {
         $techId = $this->params()->fromRoute('id');
@@ -17,7 +26,7 @@ class JsonController extends AbstractActionController
         $resourcesGw = $sm->get('Resources\Service\Gateway');
         $techtreeGw = $sm->get('Techtree\Service\Gateway');
 
-        $levelAddUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'add'));
+        $levelAddUrl    = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'add'));
         $levelRemoveUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'remove'));
         $levelRepairUrl = $this->url()->fromRoute('techtree/technology', array('controller' => 'technology', 'action' => 'order', 'id' => $techId, 'order'=>'repair'));
 
@@ -64,6 +73,10 @@ class JsonController extends AbstractActionController
         return $result;
     }
 
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel
+     */
     public function getRequirementsAction()
     {
         $sm = $this->getServiceLocator();
@@ -71,6 +84,10 @@ class JsonController extends AbstractActionController
         return new JsonModel( $gw->getRequirementsAsArray() );
     }
 
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel
+     */
     public function getRequirementsForTechnologyAction()
     {
         $techId = $this->params()->fromRoute('id');
@@ -79,6 +96,10 @@ class JsonController extends AbstractActionController
         return new JsonModel( $gw->getRequirementsByTechnologyId($techId) );
     }
 
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function getCostsForTechnologyAction()
     {
         $techId = $this->params()->fromRoute('id');

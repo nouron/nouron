@@ -12,8 +12,8 @@
         <!-- Data -->
         <table class="table">
             <tr>
-                <td><?= $this->translate('max_level') . ': '. $tech->max_level ?></td>
-                <td><?= $this->translate('decay') . ': '. $tech->decay ?></td>
+                <td><?= $this->translate('decay') ?>: <i class="icon-time" /> <?= $tech->decay ?></td>
+                <td><?= ($tech->max_level > 0) ? ($this->translate('max_level') . ': '. $tech->max_level) : '' ?></td>
             </tr>
             <tr>
                 <td><?= ($tech->type == 'ship') ? $this->translate('moving_speed') . ': '. $tech->moving_speed : '' ?></td>

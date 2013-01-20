@@ -1,0 +1,106 @@
+<div id="system" class="row-fluid">
+
+<div class="hidden">
+    <?php
+    $scale  = $config['scale'];
+    $offset = $config['offset'];
+    $max = $scale * $config['range'];
+          $radius  = round($config['range']/2); ?>
+    <div id="data_xMin"><?= $system['x'] - $radius;?></div>
+    <div id="data_xMax"><?= $system['x'] + $radius;?></div>
+    <div id="data_yMin"><?= $system['y'] - $radius;?></div>
+    <div id="data_yMax"><?= $system['y'] + $radius;?></div>
+    <div id="data_offset"><?= $offset?></div>
+    <div id="data_range"><?= $config['range']?></div>
+    <div id="data_scale"><?= $scale?></div>
+</div>
+
+<div class="span3">
+  <div class="well sidebar-nav">
+    <ul class="nav nav-list">
+      <li class="nav-header">Eigene Flotten</li>
+      <li class="active"><a href="#"><i class="icon-plane icon-white"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li class="nav-header">Fremde Flotten</li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+      <li class="nav-header">Stationen</li>
+      <li><a href="#">Link</a></li>
+      <li><a href="#">Link</a></li>
+      <li><a href="#">Link</a></li>
+      <li class="nav-header">Planeten/Monde</li>
+      <?php foreach ($objects as $o): ?>
+      <li><a href="#"><i class="icon-globe"></i> <?= $o['name'] ?></a></li>
+      <?php endforeach; ?>
+      <li class="nav-header">Sonstige Objekte</li>
+      <li><a href="#">Link</a></li>
+      <li><a href="#">Link</a></li>
+      <li><a href="#">Link</a></li>
+    </ul>
+  </div><!--/.well -->
+</div><!--/span-->
+<div id="parallax" class="parallax-viewport span6">
+    <div id="systemBackground" class="parallax-layer" style="background-image: url(/img/<?= $system['background_image_url'] ?>);"></div>
+    <div id="systemFrame" class="parallax-layer"></div>
+    <div id="systemLayer" class="parallax-layer" style="width:<?= $max#+200 ?>px;height:<?= $max#+200 ?>px">
+
+<?php
+for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
+//            for ($x=$config['offset; $x<=$max+$config['offset; $x=$x+$scale):
+//                echo '<div class="field" style="left:'.$x.'px; top:'.$y.'px;width:'.$scale.'px;height:'.$scale.'px;"><!-- --></div>';
+//            endfor;
+//            echo '<hr class="debug" noshade="noshade" style="width:'.$max.'px;left: '.$offset.'px; top:'.$y.'px" /><p class="debug" style="left: '.$offset.'px; top:'.$y.'px">'.$y.'</p>';
+        endfor;
+
+        // planets and moons:
+        foreach ($objects as $p):
+            $m = $config['range'];
+            $r = round($m/2);
+
+            $left = round((($p['x'] + $r) % $m) * $scale) + $offset;
+            $top  = round((($p['y'] + $r) % $m) * $scale) + $offset;
+        ?>
+            <div class="dropdown" style="top:<?= $top?>px;left:<?= $left?>px">
+                <img id="pid-<?= $p['id']?>" src="/img/<?= $p['image_url'] ?>" width="<?= $scale ?>" height="<?= $scale ?>" />
+                <ul id="pid-<?= $p['id']?>-spots" class="dropdown-menu spots" role="menu" aria-labelledby="dLabel">
+                    <? foreach ($colonies as $cid => $colony):
+                        if ($colony['system_object_id'] == $p['id']):
+                    ?>
+                    <li id="cid-<?= $cid ?>"><a tabindex="-1" href="#"><?= $colony['name'] ?></a></li>
+                    <?  endif;
+                    endforeach; ?>
+                </ul>
+            </div>
+        <? endforeach ?>
+    </div>
+</div>
+<div class="span3 well">
+  <p>
+    Koordinaten: <br/>
+    [123;456;1]<br />
+    Info:<br />
+    abxbcbdafgagds safds fd<br/>
+    dsfghfdgh sfgsfd gfdg <br />
+  </p>
+  <hr />
+  <div class="row-fluid">
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+  </div>
+  <div class="row-fluid">
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+  </div>
+  <div class="row-fluid">
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
+  </div>
+
+</div>
+</div><!--/row-->

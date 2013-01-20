@@ -13,4 +13,5 @@ return array(
     'Resources\Table\Colony'           => __DIR__ . '/src/Resources/Table/Colony.php',
     'Resources\Table\Resource'         => __DIR__ . '/src/Resources/Table/Resource.php',
     'Resources\Table\User'             => __DIR__ . '/src/Resources/Table/User.php',
+    'Resources\View\Helper\Resources'  => __DIR__ . '/src/Resources/View/Helper/Resources.php',
 );

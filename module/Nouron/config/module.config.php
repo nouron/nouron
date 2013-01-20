@@ -1,28 +1,8 @@
 <?php
 return array(
-    'controller' => array(
-//        'classes' => array(
-//            'album/album' => 'Album\Controller\AlbumController',
-//        ),
-    ),
-    'router' => array(
-//        'routes' => array(
-//            'album' => array(
-//                'type'    => 'segment',
-//                'options' => array(
-//                    'route'    => '/album[/:action][/:id]',
-//                    'constraints' => array(
-//                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-//                        'id'     => '[0-9]+',
-//                    ),
-//                    'defaults' => array(
-//                        'controller' => 'album/album',
-//                        'action'     => 'index',
-//                    ),
-//                ),
-//            ),
-//        ),
-    ),
+    // general config:
+    'controller' => array(),
+    'router' => array(),
     'view_manager' => array(
         'template_path_stack' => array(
             'nouron' => __DIR__ . '/../view',
@@ -38,4 +18,13 @@ return array(
             )
         ),
     ),
+    // gameplay specific config values:
+    'tick' => array(
+        'length' => 24, // in hours
+        'calculation' => array (
+            'start' => 3, // hour of day
+            'end' => 4 // hour of day
+        ),
+        'testcase' => 14479 // Tick to use in Testcases
+    )
 );

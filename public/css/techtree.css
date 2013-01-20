@@ -1,0 +1,4 @@
+@charset "UTF-8"
+
+#colony {/*background: url(../img/screens/city_light.gif) center center no-repeat;*/ min-height: 400px;}
+#colony .stage-svg {position: absolute;}

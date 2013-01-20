@@ -95,6 +95,10 @@ return array(
 'purposes_politics' => 'Politik',
 'purposes_military' => 'Militär',
 
+'decay' => 'Verfallszeit',
+'max_level' => 'Maximalstufe',
+'costs and requirements' => 'Kosten und Vorraussetzungen',
+
 'desc_techs_bank' => "Die Bank ist das Zentrum aller finaziellen Transaktionen. Vergabe von Krediten oder Anlagen und Aktienhandel.",
 'desc_techs_bar' => "Die Bar sorgt für Entspannung von der harten Arbeit der Koloniebewohner. Je mehr Einwohner desto mehr Freizeiteinrichtungen möchte die Bevölkerung.",
 'desc_techs_battlecruiser1' => "Ein großes Kampfschiff. Schwere Bewaffnung und träge im Flugverhalten.",

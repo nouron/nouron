@@ -1,16 +1,44 @@
-#colony {/*background: url(../img/screens/city_light.gif) center center no-repeat;*/ min-height: 400px;}
-#colony .stage-svg {position: absolute;}
+@charset "UTF-8";
 
 #galaxy .sidebar-nav,
 #system .sidebar-nav { height: 380px; overflow-y: auto; }
 #galaxy .parallax-viewport,
-#system .parallax-viewport { position:relative; overflow:hidden; min-width: 200px; height:400px;border:5px solid #ccc; background-color: #000;}
+#system .parallax-viewport { position:relative; overflow:hidden; min-width: 200px; height:400px; background-color: #000;}
 #galaxy .parallax-layer,
 #system .parallax-layer { position: absolute; }
-#galaxy #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/gallery/200907_galaxy.png") no-repeat;}
+/* #galaxy #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/gallery/200907_galaxy.png") no-repeat;}
 #galaxy #layerB {height: 120%; width: 120%;}
 #galaxy #layerC {height: 100%; width: 100%;}
-
 #system #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/layout/starfield.png");}
 #system #layerB {height: 120%; width: 120%;}
-#system #layerC {height: 100%; width: 100%;}
+#system #layerC {height: 100%; width: 100%;} */
+/*********************************************/
+#parallax {position:relative;overflow:hidden;width: 497px;height: 498px;}
+.parallax-layer{position:absolute;}
+#background1 {width: 510px;height: 510px;background-color: #000;background-image: url("../img/galaxy/test.png");background-repeat: no-repeat;}
+#background2 {width: 510px;height: 510px;}
+#galaxy {display: block; height: 540px;}
+#systemFrame {width: 502px;height: 502px;background-image: url("../img/layout/screenframe.png");}
+#systemBackground {width: 550px;height: 550px;}
+#systemLayer {top: -100px;left: -100px;}
+#system #systemLayer img {border: 1px solid transparent;}
+#system #systemLayer img.hover {border: 1px solid #900;}
+#system #systemLayer img.active {border: 1px solid #eee;}
+#system #systemLayer ul.spots {margin:0;padding: 0;display:none;list-style-type: none;border:1px solid #111}
+#system #systemLayer ul.spots li{background-color: black;padding: 2px;border-bottom: 1px dotted #111}
+#system #systemLayer ul.spots li:hover,
+#system #systemLayer ul.spots li.active {color: white;}
+#system #systemLayer #field_selector {display:block; position:absolute;border:1px dotted #eee}
+#system .colonyInfos,
+#system #fleetActions {display: none;margin-bottom: 2em;}
+#system #systemLayer .field {width: 18px; height: 18px; border:1px solid transparent;}
+#system #systemLayer .field:hover {border: 1px dotted #999}
+/*#system #fleetActions a,*/
+#system #fleetActions button {padding: 5px;margin: 5px;float: left;display: block;float: left;width: 70px;height: 40px;}
+#system #fleetActions button[disabled=disabled],
+#system #fleetActions button[disabled=disabled]:hover {color: #ccc;border: 1px solid #ccc;cursor: default;background-color: #ddd;background-image: url("../images/layout/gradient_light.png");background-repeat: repeat-x;background-position: -2px -2px;}
+#system ul.fleetList {height: 200px;overflow: auto;overflow-y: auto;overflow-x: hidden;border: 1px solid #bbb;}
+#system ul.fleetList li a {display:inline}
+/*Debug*/
+#system #systemLayer .debug{margin:0; padding: 0;border: 0; position:absolute;}
+#system #systemLayer hr.debug {display:block; border: 1px dotted #111;}

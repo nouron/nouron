@@ -9,12 +9,6 @@ namespace Nouron\Service;
  */
 class Tick
 {
-//     /**
-//      *
-//      * @var Zenddb
-//      */
-//     protected $db = null;
-
     /**
      * @var integer
      */

@@ -8,18 +8,19 @@ $basePath = $this->basePath();
 $this->headLink()->appendStylesheet($basePath . '/css/bootstrap.min.css');
 //Twitter Bootstrap style override by DluTwBootstrap
 $this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
-
 //Add your own style here
 $this->headLink()->appendStylesheet($basePath . '/css/style.css');
-
 //Twitter Bootstrap responsive styles
 $this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
 
 //jQuery and Twitter Bootstrap JS libraries
 $this->inlineScript()->appendFile($basePath . '/js/jquery-1.8.2.min.js');
-$this->inlineScript()->appendFile($basePath . '/js/jquery-timing.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/bootstrap.min.js');
+$this->inlineScript()->appendFile($basePath . '/js/jquery-timing.min.js');
+$this->inlineScript()->appendFile($basePath . '/js/jquery.event.frame.js');
+$this->inlineScript()->appendFile($basePath . '/js/jquery.parallax.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/nouron.js');
+$this->inlineScript()->appendFile($basePath . '/js/galaxy.js');
 
 echo $this->doctype();
 ?>
@@ -75,7 +76,7 @@ echo $this->doctype();
 
     <div class="container">
         <? if ($this->zfcUserIdentity()):
-               echo $this->partial('layout/resource-bar', array()); ?>
+               echo $this->resources(); #echo $this->partial('layout/resource-bar', array()); ?>
         <hr />
         <? endif;
         echo $this->content; ?>

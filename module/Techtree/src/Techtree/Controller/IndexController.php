@@ -7,26 +7,26 @@ use Techtree\Service\Gateway;
 
 class IndexController extends AbstractActionController
 {
-    /**
-     * Auswertung der uebergebenen Parameter, Auslesen der Techdaten aus der DB
-     * und Berechnung der Grunddaten die sowohl fuer die klassische Variante des
-     * Techtrees als auch fuer die Techtree-Build-Variante noetig sind!
-     *
-     * @param string $type    OPTIONAL Gewaehlter Typcode
-     * @param string $purpose OPTIONAL Gewaehlter Zweckcode
-     */
-    function init()
-    {
-        parent::init();
+//     /**
+//      * Auswertung der uebergebenen Parameter, Auslesen der Techdaten aus der DB
+//      * und Berechnung der Grunddaten die sowohl fuer die klassische Variante des
+//      * Techtrees als auch fuer die Techtree-Build-Variante noetig sind!
+//      *
+//      * @param string $type    OPTIONAL Gewaehlter Typcode
+//      * @param string $purpose OPTIONAL Gewaehlter Zweckcode
+//      */
+//     function init()
+//     {
+//         parent::init();
 
-        // Auswertung der uebergebenen Parameter
-        $selectedType    = $this->_params->type;
-        $selectedPurpose = $this->_params->purpose;
+//         // Auswertung der uebergebenen Parameter
+//         $selectedType    = $this->_params->type;
+//         $selectedPurpose = $this->_params->purpose;
 
-        // falls Parameter fehlen gelten diese Standardwerte:
-        $selectedType = empty($selectedType) ? $selectedType=0 : $selectedType;  //  0  = alle Techtypen anzeigen
-        $selectedPurpose = empty($selectedPurpose) ? $selectedPurpose = 'a' : $selectedPurpose; // 'a' = Techs fuer alle Zwecke anzeigen
-    }
+//         // falls Parameter fehlen gelten diese Standardwerte:
+//         $selectedType = empty($selectedType) ? $selectedType=0 : $selectedType;  //  0  = alle Techtypen anzeigen
+//         $selectedPurpose = empty($selectedPurpose) ? $selectedPurpose = 'a' : $selectedPurpose; // 'a' = Techs fuer alle Zwecke anzeigen
+//     }
 
     /**
      * Zeigt den Techtree an und ermoeglicht das Bauen und Forschen mithilfe der Techtree-Build-Optionen
@@ -35,11 +35,10 @@ class IndexController extends AbstractActionController
     {
         $sm = $this->getServiceLocator();
 
-        $sm->setService('colonyId', 0);
-        $sm->setService('tick', 12345);
+        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
 
         $colonyId = $sm->get('colonyId');
-        $tick     = $sm->get('Tick');
+        $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Techtree\Service\Gateway');
         $techs = $gw->getTechnologies();

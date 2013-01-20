@@ -73,11 +73,8 @@ class Gateway extends \Nouron\Service\Gateway
         return $possessions->fetchAll($where, $order, $offset, $limit);
     }
 
-
-
-
     /**
-     * Get the technologies in possession from given colony.
+     * return colony resources from given colony plus user resources from colony owner
      *
      * @param  integer $colonyId
      * @return ResultSet
@@ -86,28 +83,53 @@ class Gateway extends \Nouron\Service\Gateway
     {
         $this->_validateId($colonyId);
 
-        $possessions = $this->tables['colonyResources'];
-        return $possessions->fetchAll("colony_id = $colonyId");
+        $galaxyGw = $this->getGateway('galaxy');
+        $colony = $galaxyGw->getColony($colonyId);
+
+        $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->toArray('resource_id');
+        $userResources = $this->getUserResources('user_id = ' . $colony['user_id']);
+        foreach ($userResources as $t) {
+            $add = array(
+                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t['credits']),
+                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY,  'amount'=>$t['supply']),
+            );
+            $possessions += $add;
+        }
+
+        return $possessions;
     }
 
     /**
+     * return user resources from given user plus all resources from all his colonies
      *
      * @param  numeric $userId
      * @return ResultSet
      */
     public function getPossessionsByUserId($userId)
     {
-        $this->_validateId($userId);
+//         $this->_validateId($userId);
 
-        $colonies = $this->getGateway('galaxy')->getColoniesByUserId($userId);
+//         $colonies = $this->getGateway('galaxy')->getColoniesByUserId($userId);
 
-        foreach ($colonies as $col) {
-            $coloIds[] = $col->id;
-        }
-        $coloIds = implode($coloIds, ',');
-        $possessions = $this->getPossessions("colony_id IN ($coloIds)");
+//         foreach ($colonies as $col) {
+//             $coloIds[] = $col->id;
+//         }
+//         $coloIds = implode($coloIds, ',');
+//         $colResources = $this->getColonyResources("colony_id IN ($coloIds)")->toArray('resource_id');
 
-        return $possessions;
+
+// //         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->toArray('resource_id');
+// //         $tmp  = $this->getUserResources('user_id = ' . $colony->user_id);
+// //         foreach ($tmp as $t) {
+// //             $add = array(
+// //                     self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->credits),
+// //                     self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY, 'amount'=>$t->supply),
+// //             );
+// //             $possessions += $add;
+// //         }
+
+
+//         return $possessions;
     }
 
     /**
@@ -123,17 +145,7 @@ class Gateway extends \Nouron\Service\Gateway
 
         $result = true;
 
-        $colony = $this->getGateway('galaxy')->getColony($colonyId);
-
-        $poss = $this->getColonyResources('colony_id = ' . $colonyId)->toArray('resource_id');
-        $tmp  = $this->getUserResources('user_id = ' . $colony->user_id);
-        foreach ($tmp as $t) {
-            $add = array(
-                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->credits),
-                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY, 'amount'=>$t->supply),
-            );
-            $poss += $add;
-        }
+        $poss = $this->getPossessionsByColonyId($colonyId);
 
         // check costs
         foreach ($costs as $cost) {

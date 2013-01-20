@@ -6,9 +6,9 @@ return array(
         'ZfcUser',
         'User',
         'Nouron',
-        'Resources',
         'Techtree',
         'Galaxy',
+        'Resources',
         'DluTwBootstrap',
         'DluTwBootstrapDemo'
     ),

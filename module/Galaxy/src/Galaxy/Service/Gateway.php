@@ -3,6 +3,27 @@ namespace Galaxy\Service;
 
 class Gateway extends \Nouron\Service\Gateway
 {
+    public function __construct($tick, array $tables, array $gateways = array())
+    {
+        $this->setTick($tick);
+        $this->setTables($tables);
+        $this->setGateways($gateways);
+    }
+
+    /**
+     * Get all systems.
+     *
+     * @param  string|array $where  OPTIONAL
+     * @param  string|array $order  OPTIONAL
+     * @param  integer $offset  OPTIONAL
+     * @param  integer $limit   OPTIONAL
+     * @return ResultSet
+     */
+    public function getSystems($where = null, $order = null, $offset = null, $limit =null)
+    {
+        return $this->getTable('system')->fetchAll($where, $order, $offset, $limit);
+    }
+
     /**
      * @return ResultSet
      */
@@ -29,8 +50,61 @@ class Gateway extends \Nouron\Service\Gateway
     public function getColoniesByUserId($userId)
     {
         $this->_validateId($userId);
-
         return $this->getTable('colony')->fetchAll('user_id = ' . $userId);
+    }
+
+    /**
+     *
+     * @param  numeric $userId
+     * @return Galaxy\Mapper\Colony|null
+     * @throws Exception if no main colony was found
+     */
+    public function getPrimeColony($userId)
+    {
+        $this->_validateId($userId);
+        $colonies = $this->getColoniesByUserId((int) $userId);
+        foreach ($colonies as $colony) {
+            if ( $colony['is_primary'] || count($colonies) == 1) {
+                if (!$colony['is_primary']) {
+                    $colony['is_primary'] = 1; /* set as prime colony*/
+                    // TODO: $colony->save()
+                }
+                return $colony;
+            }
+        }
+
+        // TODO: throw exception if no primary colony could be returned
+    }
+
+    /**
+     * @deprecated since v0.2
+     * @param unknown $userId
+     */
+    public function getMainColony($userId)
+    {
+        return $this->getPrimeColony();
+    }
+
+    /**
+     *
+     * @return \Galaxy\Mapper\Colony|null
+     */
+    public function getCurrentColony()
+    {
+        if (!isset($_SESSION['colony'])) {
+            $userId = 3; // TODO: get userId
+            $_SESSION['colony'] = $this->getPrimeColony($userId);
+        }
+        return $_SESSION['colony'];
+    }
+
+    /**
+     *
+     * @param unknown $newColonyId
+     */
+    public function switchCurrentColony($newColonyId)
+    {
+        $_SESSION['colony'] = $this->getColony((int) $newColonyId);
     }
 
 //     /**
@@ -42,336 +116,68 @@ class Gateway extends \Nouron\Service\Gateway
 //         return new Zend_Config_Ini(APPLICATION_PATH . '/modules/galaxy/configs/module.ini', APPLICATION_ENV);
 //     }
 
-//     /**
-//      * Get the fleet by id.
-//      *
-//      * @param  integer $id
-//      * @return Galaxy_Model_Fleet
-//      */
-//     public function getFleet($id)
-//     {
-//         $this->_validateId($id);
-//         $dbView = $this->getDbView('Fleets');
-//         $result = $dbView->find($id)->current();
-//         return new Galaxy_Model_Fleet($result, $this);
-//     }
+    /**
+     * get all colonies in a system system
+     * @TODO this function is very similar to $this->getFleetsBySystemCoordinates,
+     *       maybe its possible to merge this to function and parameterize it?
+     *
+     * @param  array $coords
+     * @return Galaxy_Model_Colonies
+     */
+    public function getColoniesBySystemCoordinates(array $coords)
+    {
+        //$config = $this->getConfig();
+        $radius = round(100 / 2);
 
-//     /**
-//      * Get all fleets or fleets matching where condition.
-//      *
-//      * @param  string|array  $where  SQL where clause
-//      * @param  string|array  $order  SQL order clause
-//      * @return Galaxy_Model_Fleets
-//      */
-//     public function getFleets($where = null, $order = null)
-//     {
-//         $rowset = $this->getDbView('fleets')->fetchAll($where, $order);
-//         return new Galaxy_Model_Fleets($rowset, $this);
-//     }
+        $x1 = $coords[0] - $radius;
+        $x2 = $coords[0] + $radius;
+        $y1 = $coords[1] - $radius;
+        $y2 = $coords[1] + $radius;
 
-//     /**
-//      * Get all fleets near a system by comparing their x and y coords.
-//      *
-//      * @param   array  $coords
-//      * @return  Galaxy_Model_Fleets
-//      */
-//     public function getFleetsBySystemCoordinates(array $coords)
-//     {
-//         $x = round($coords[0] / 100);
-//         $y = round($coords[1] / 100);
+        $table = $this->getTable('colony');
+        return $table->fetchAll("x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2");
+    }
 
-//         $table = $this->getDbView('Fleets');
+    /**
+     * Get a system object by id.
+     *
+     * @param  integer $systemId
+     * @return Galaxy_Model_System
+     */
+    public function getSystem($systemId)
+    {
+        $this->_validateId($systemId);
+        return $this->getTable('system')->getEntity($systemId);
+    }
 
-//         $where = "sCoordinates LIKE 'a:3:{i:0;i:".$x."__;i:1;i:".$y."%'";
+    /**
+     * Get planetaries that surrounding a system
+     *
+     * @param   integer  $systemId
+     * @param   string   $order      OPTIONAL: sql order string
+     * @return  Galaxy_Model_System_Objects
+     */
+    public function getSystemObjects($systemId, $order = null, $systemRange = null)
+    {
+        $this->_validateId($systemId);
 
-//         $result = $table->fetchAll($where);
+        if (empty($systemRange)) {
+            $systemRange = 100; // TODO: get value from config instead of hardcoded value
+        }
 
-//         return new Galaxy_Model_Fleets($result, $this);
-//     }
+        $radius = round($systemRange / 2);
+        $system = $this->getSystem($systemId);
 
-//     /**
-//      *
-//      * @param  integer $userId
-//      * @return Galaxy_Model_Fleets
-//      */
-//     public function getFleetsFromUser($userId)
-//     {
-//         $this->_validateId($userId);
-//         $result = $this->getFleets("nUser = $userId");
-//         return new Galaxy_Model_Fleets($result, $this);
-//     }
+        $x1 = $system['x'] - $radius;
+        $x2 = $system['x'] + $radius;
+        $y1 = $system['y'] - $radius;
+        $y2 = $system['y'] + $radius;
 
-//     /**
-//      * get all colonies in a system system
-//      * @TODO this function is very similar to $this->getFleetsBySystemCoordinates,
-//      *       maybe its possible to merge this to function and parameterize it?
-//      *
-//      * @param  array $coords
-//      * @return Galaxy_Model_Colonies
-//      */
-//     public function getColoniesBySystemCoordinates(array $coords)
-//     {
-//         $config = $this->getConfig();
-//         $radius = round($config->system->range / 2);
+        $plntrsView = $this->getTable('systemobject');
+        $where  = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
 
-//         $x1 = $coords[0] - $radius;
-//         $x2 = $coords[0] + $radius;
-//         $y1 = $coords[1] - $radius;
-//         $y2 = $coords[1] + $radius;
-
-//         $table = $this->getDbView('Colonies');
-//         $result = $table->fetchAll("x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2");
-
-//         return new Galaxy_Model_Colonies($result, $this);
-//     }
-
-//     /**
-//      * Get the colony by id.
-//      *
-//      * @param  integer $id
-//      * @return Galaxy_Model_Colony
-//      */
-//     public function getColony($id)
-//     {
-//         $this->_validateId($id);
-//         $dbTable = $this->getDbTable('Colonies');
-//         $result = $dbTable->find($id)->current();
-//         if ($result) {
-//             return new Galaxy_Model_Colony($result, $this);
-//         } else {
-//             return null;
-//         }
-//     }
-
-//     /**
-//      * @param $data
-//      */
-//     public function createColony($data)
-//     {
-//         return $this->_create('colony',$data);
-//     }
-
-//     /**
-//      * @param $data
-//      */
-//     public function createSystem($data)
-//     {
-//         return $this->_create('system',$data);
-//     }
-
-//     /**
-//      *
-//      * @deprecated since 2011-08-19
-//      * @param  array $data
-//      * @return Galaxy_Model_System_Object
-//      */
-//     public function createSystem_Object($data)
-//     {
-//         return $this->createSystemObject($data);
-
-//     }
-
-//     /**
-//      * @param $data
-//      * @return Galaxy_Model_System_Object
-//      */
-//     public function createSystemObject($data)
-//     {
-//         return $this->_create('system_object',$data);
-//     }
-
-//     /**
-//      *
-//      * @deprecated since 2011-08-19
-//      * @param  array $data
-//      * @return Galaxy_Model_System_Type
-//      */
-//     public function createSystem_Type($data)
-//     {
-//         return $this->createSystemType($data);
-
-//     }
-
-//     /**
-//      * @param  array $data
-//      * @return Galaxy_Model_System_Type
-//      */
-//     public function createSystemType($data)
-//     {
-//         return $this->_create('system_type',$data);
-//     }
-
-//     /**
-//      * @deprecated since 2011-08-19
-//      * @param  array $data
-//      * @return Galaxy_Model_Fleets_Technology
-//      */
-//     public function createFleets_Technology($data)
-//     {
-//         return $this->createFleetTechnology($data);
-//     }
-
-//     /**
-//      * @param  array $data
-//      * @return Galaxy_Model_Fleets_Technology
-//      */
-//     public function createFleetTechnology($data)
-//     {
-//         return $this->_create('fleets_technology', $data);
-//     }
-
-//     /**
-//      * @param  array $data
-//      */
-//     public function createFleet($data)
-//     {
-//         return $this->_create('fleet',$data);
-//     }
-
-//     /**
-//      * @deprecated since 2011-08-19
-//      * @param  array $data
-//      * @return Galaxy_Model_Fleets_Order
-//      */
-//     public function createFleets_Order($data)
-//     {
-//         return $this->createFleetOrder($data);
-//     }
-
-//     /**
-//      * @param  array $data
-//      * @return Galaxy_Model_Fleets_Order
-//      */
-//     public function createFleetOrder($data)
-//     {
-//         return $this->_create('fleets_order',$data);
-//     }
-
-//     /**
-//      *
-//      * @param  integer  $userId
-//      * @return Galaxy_Model_Colony
-//      * @throws Exception if no main colony was found
-//      */
-//     public function getMainColony($userId)
-//     {
-//         $this->_validateId($userId);
-//         $colonies = $this->getColoniesByUserId($userId);
-//         while ($colonies->valid()) {
-//             if ($colonies->bHome == 1 || $colonies->count() == 1) {
-//                 $colony = $colonies->current();
-//                 if (empty($colony->bHome)) {
-//                     $colony->bHome = 1;
-//                     $colony->save();
-//                 }
-//                 return $colony;
-//             }
-//             $colonies->next();
-//         }
-
-//         throw new Galaxy_Model_Exception('No main colony found!');
-//     }
-
-//     /**
-//      * Get all colonies from a planetary.
-//      *
-//      * @param  integer    $planetaryId
-//      * @return Galaxy_Model_Colonies
-//      */
-//     public function getColoniesBySystem_ObjectId($planetaryId) // underscore is necessary
-//     {
-//         $this->_validateId($planetaryId);
-//         $colonies = $this->getDbTable('Colonies');
-//         $where = $colonies->getAdapter()->quoteInto('nPlanetary = ?', $planetaryId);
-//         return new Galaxy_Model_Colonies($colonies->fetchAll($where), $this);
-//     }
-
-//     /**
-//      *
-//      */
-//     public function getSystemObjectsWithSpots($systemId)
-//     {
-
-//     }
-
-//     /**
-//      * Get a system object by id.
-//      *
-//      * @param  integer$id
-//      * @return Galaxy_Model_System
-//      */
-//     public function getSystem($id)
-//     {
-//         $this->_validateId($id);
-//         $table = $this->getDbView('Systems');
-//         $row = $table->find($id)->current();
-//         if (!empty($row)) {
-//             return new Galaxy_Model_System($row, $this);
-//         } else {
-//             return null;
-//         }
-//     }
-
-//     /**
-//      * Get all systems.
-//      *
-//      * @param  string|array $where  OPTIONAL
-//      * @param  string|array $order  OPTIONAL
-//      * @param  integer $offset  OPTIONAL
-//      * @param  integer $limit   OPTIONAL
-//      * @return Galaxy_Model_Systems
-//      */
-//     public function getSystems($where = null, $order = null, $offset = null, $limit =null)
-//     {
-//         $cache = Zend_Registry::get('cache');
-//         if ( !($systems = $cache->load('systems')) ) {
-//             $dbview = $this->getDbView('Systems');
-//             $rowset = $dbview->fetchAll($where, $order, $offset, $limit);
-//             $systems = new Galaxy_Model_Systems($rowset, $this);
-//             $cache->save($systems, 'systems');
-//         }
-//         return $systems;
-//     }
-
-//     /**
-//      *
-//      * @return Galaxy_Model_System_Types
-//      */
-//     public function getSystemTypes()
-//     {
-//         //        $result = $this->getDbTable('System_Types')->fetchAll();
-//         //        return new Galaxy_Model_System_Types($result, $this);
-
-//         return $this->_get('system_types');
-//     }
-
-//     /**
-//      * Get planetaries that surrounding a system
-//      *
-//      * @param   integer  $systemId
-//      * @param   string   $order      OPTIONAL: sql order string
-//      * @return  Galaxy_Model_System_Objects
-//      */
-//     public function getSystemObjects($systemId, $order = null)
-//     {
-//         $coords = $this->getSystem($systemId)->getCoords();
-//         $config = $this->getConfig();
-//         $radius = round($config->system->range / 2);
-
-//         $x1 = $coords[0] - $radius;
-//         $x2 = $coords[0] + $radius;
-//         $y1 = $coords[1] - $radius;
-//         $y2 = $coords[1] + $radius;
-
-//         $plntrsView = $this->getDbView('system_objects');
-//         $where  = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
-
-//         $result = $plntrsView->fetchAll($where, $order);
-
-//         $plntrs = new Galaxy_Model_System_Objects($result, $this);
-
-//         return $plntrs;
-//     }
+        return $plntrsView->fetchAll($where, $order);
+    }
 
 //     /**
 //      *
