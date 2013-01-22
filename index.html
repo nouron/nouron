@@ -12,6 +12,7 @@
     <link href="css/bootstrap.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
+    <link href="css/prettyPhoto.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
 
     <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
     <!--[if lt IE 9]>
@@ -24,7 +25,6 @@
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="apple-touch-icon-114-precomposed.png">
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-57-precomposed.png">
-    <link rel="stylesheet" href="css/prettyPhoto.css" type="text/css" media="screen" charset="utf-8" />
 
     <!-- Google Analytics -->
     <script type="text/javascript">   
@@ -285,7 +285,7 @@
 
     <!-- ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="http://code.jquery.com/jquery-1.8.0.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
     <script src="js/jquery.prettyPhoto.js"></script>
     <script src="jquery.socialshareprivacy.min.js"></script>
@@ -297,8 +297,9 @@
         if( $('#socialshareprivacy').length > 0 ) {
           $('#socialshareprivacy').socialSharePrivacy( {
             services : {
-              facebook : {'recommend': 'like'}, 
-              twitter : {'language' : 'de'}
+              facebook : {'status': 'on','recommend': 'like'}, 
+              twitter : {'status': 'on','language' : 'de'},
+              gplus: {'status': 'on'}
             },
             'cookie_domain' : 'heise.de',
           })
