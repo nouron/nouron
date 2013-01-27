@@ -17,31 +17,44 @@
 
 <div class="span3">
   <div class="well sidebar-nav">
-    <ul class="nav nav-list">
+    <ul class="nav nav-list fleetList">
       <li class="nav-header">Eigene Flotten</li>
-      <li class="active"><a href="#"><i class="icon-plane icon-white"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
+        <?php
+        $myFleets = array(
+            array(
+                'id' => 1,
+                'coordinates' => '{"0":1,"1":2,"2":3}',
+                'name' => 'TestFlotte A'
+            ),
+            array(
+                'id' => 2,
+                'coordinates' => '{"0":23,"1":22,"2":267}',
+                'name' => 'TestFlotte B'
+            ),
+        );
+
+        $foreignFleets = $myFleets;
+
+        foreach ($myFleets as $fleet):
+            $c = json_decode($fleet['coordinates'],true);
+        ?>
+            <li id="fid-<?= $fleet['id']?>">
+                <a title="<?= "($c[0],$c[1],$c[2])"?>" href="#"><i class="icon-plane"></i> <?= $fleet['name'] ?></span>
+            </li>
+        <?php endforeach; ?>
+
       <li class="nav-header">Fremde Flotten</li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li><a href="#"><i class="icon-plane"></i> Link</a></li>
-      <li class="nav-header">Stationen</li>
-      <li><a href="#">Link</a></li>
-      <li><a href="#">Link</a></li>
-      <li><a href="#">Link</a></li>
+      <?php foreach ($foreignFleets as $fleet):
+        $c = json_decode($fleet['coordinates'],true);
+      ?>
+        <li id="fid-<?= $fleet['id']?>">
+            <a title="<?= "($c[0],$c[1],$c[2])"?>" href="#"><i class="icon-plane"></i> <?= $fleet['name'] ?></span>
+        </li>
+      <?php endforeach; ?>
       <li class="nav-header">Planeten/Monde</li>
       <?php foreach ($objects as $o): ?>
-      <li><a href="#"><i class="icon-globe"></i> <?= $o['name'] ?></a></li>
+      <li class=""><a href="#" title="(<?= $o['x'].','.$o['y'] ?>,0)"><i class="icon-globe"></i> <?= $o['name'] ?></a></li>
       <?php endforeach; ?>
-      <li class="nav-header">Sonstige Objekte</li>
-      <li><a href="#">Link</a></li>
-      <li><a href="#">Link</a></li>
-      <li><a href="#">Link</a></li>
     </ul>
   </div><!--/.well -->
 </div><!--/span-->
@@ -65,42 +78,54 @@ for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
 
             $left = round((($p['x'] + $r) % $m) * $scale) + $offset;
             $top  = round((($p['y'] + $r) % $m) * $scale) + $offset;
+            $colony_count = 0
         ?>
             <div class="dropdown" style="top:<?= $top?>px;left:<?= $left?>px">
                 <img id="pid-<?= $p['id']?>" src="/img/<?= $p['image_url'] ?>" width="<?= $scale ?>" height="<?= $scale ?>" />
                 <ul id="pid-<?= $p['id']?>-spots" class="dropdown-menu spots" role="menu" aria-labelledby="dLabel">
                     <? foreach ($colonies as $cid => $colony):
                         if ($colony['system_object_id'] == $p['id']):
+                            $colony_count += 1;
                     ?>
                     <li id="cid-<?= $cid ?>"><a tabindex="-1" href="#"><?= $colony['name'] ?></a></li>
                     <?  endif;
-                    endforeach; ?>
+                    endforeach;
+                    if ($colony_count == 0): ?>
+                    <li><a tabindex="-1" href="#">keine Kolonien</a></li>
+                    <? endif ?>
                 </ul>
             </div>
         <? endforeach ?>
     </div>
 </div>
 <div class="span3 well">
-  <p>
-    Koordinaten: <br/>
-    [123;456;1]<br />
-    Info:<br />
-    abxbcbdafgagds safds fd<br/>
-    dsfghfdgh sfgsfd gfdg <br />
-  </p>
-  <hr />
-  <div class="row-fluid">
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-  </div>
-  <div class="row-fluid">
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-  </div>
-  <div class="row-fluid">
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-    <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
-  </div>
+  <h4>Infos</h4>
+  <form name="fleetActions" action="#" method="POST">
+    <input type="hidden" name="fleetId" value="" />
+    <input type="text" name="coords"  value="" style="background-color: transparent; border: 0" />
+    <?php foreach ($colonies as $i => $c):
+    $x = (int) $c['x'];
+    $y = (int) $c['y'];
+    $z = (int) $c['spot'];
+    ?>
+    <ul id="cid-<?= $c['id']?>-info" class="unstyled colonyInfos">
+        <li>Kolonie: <?= $c['name']?></li>
+        <li>Größe: </li>
+        <li>Spieler: </li>
+        <li>Punkte: </li>
+        <li>Allianz: </li>
+        <li class="hidden coords"><?= json_encode(array($x,$y,$z)) ?></li>
+    </ul>
+    <?php endforeach;?>
+
+    <div id="fleetActions">
+        <button type="submit" class="btn btn-large btn-block" name="order" value="move" >Bewegen</button>
+        <button type="submit" class="btn btn-large btn-block" name="order" value="transport" >Transport</button>
+        <button type="submit" class="btn btn-large btn-block" name="order" value="attack" >Angriff</button>
+        <div class="error" style="display:none"></div>
+    </div>
+  </form>
+
 
 </div>
 </div><!--/row-->

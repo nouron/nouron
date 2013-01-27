@@ -28,7 +28,7 @@
 #system #systemLayer ul.spots li{background-color: black;padding: 2px;border-bottom: 1px dotted #111}
 #system #systemLayer ul.spots li:hover,
 #system #systemLayer ul.spots li.active {color: white;}
-#system #systemLayer #field_selector {display:block; position:absolute;border:1px dotted #eee}
+#system #systemLayer #field_selector {display:block; position:relative;border:1px dotted #eee}
 #system .colonyInfos,
 #system #fleetActions {display: none;margin-bottom: 2em;}
 #system #systemLayer .field {width: 18px; height: 18px; border:1px solid transparent;}
@@ -37,8 +37,8 @@
 #system #fleetActions button {padding: 5px;margin: 5px;float: left;display: block;float: left;width: 70px;height: 40px;}
 #system #fleetActions button[disabled=disabled],
 #system #fleetActions button[disabled=disabled]:hover {color: #ccc;border: 1px solid #ccc;cursor: default;background-color: #ddd;background-image: url("../images/layout/gradient_light.png");background-repeat: repeat-x;background-position: -2px -2px;}
-#system ul.fleetList {height: 200px;overflow: auto;overflow-y: auto;overflow-x: hidden;border: 1px solid #bbb;}
-#system ul.fleetList li a {display:inline}
+#system ul.fleetList {overflow: auto;overflow-y: auto;overflow-x: hidden;}
+
 /*Debug*/
 #system #systemLayer .debug{margin:0; padding: 0;border: 0; position:absolute;}
 #system #systemLayer hr.debug {display:block; border: 1px dotted #111;}

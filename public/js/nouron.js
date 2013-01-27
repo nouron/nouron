@@ -1,6 +1,45 @@
 $(document).ready(function(){
 
+    // Techtree (Show/Hide Technologies)
+    $('#toggleBuildings').toggle(function() {
+        $('.building').fadeOut('slow');
+        $('.line_building').fadeOut('slow');
+    }, function() {
+        $('.building').fadeIn('slow');
+        $('.line_building').fadeIn('slow');
+    });
     
+    $('#toggleResearches').toggle(function() {
+        $('.research').fadeOut('slow');
+        $('.line_research').fadeOut('slow');
+    }, function() {
+        $('.research').fadeIn('slow');
+        $('.line_research').fadeIn('slow');
+    });
+    
+    $('#toggleShips').toggle(function() {
+        $('.ship').fadeOut('slow');
+        $('.line_ship').fadeOut('slow');
+    }, function() {
+        $('.ship').fadeIn('slow');
+        $('.line_ship').fadeIn('slow');
+    });
+    
+    $('#toggleAdvisors').toggle(function() {
+        $('.advisor').fadeOut('slow');
+        $('.line_advisor').fadeOut('slow');
+    }, function() {
+        $('.advisor').fadeIn('slow');
+        $('.line_advisor').fadeIn('slow');
+    });
+    
+    $('#toggleFullTechtree').toggle(function(e) {
+        e.preventDefault();
+        $('#techtree .na').fadeIn('slow');
+    }, function(e) {
+        e.preventDefault();
+        $('#techtree .na').fadeOut('slow');
+    });
     
     /**
      * 

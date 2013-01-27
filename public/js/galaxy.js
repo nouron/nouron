@@ -1,7 +1,5 @@
 // Run once the DOM is ready
 $(document).ready(function () {
-    //jQuery('#parallax').parallax();
-    
     // Declare parallax on layers
     jQuery('.parallax-layer').parallax({
         mouseport: "#parallax"
@@ -28,27 +26,35 @@ $(document).ready(function () {
     }
     
     /* Klick auf Koloniespot */
-    $("#system #systemLayer img + ul.spots li").click(function(e) {
+    $("#system #systemLayer .spots li").click(function(e) {
         e.preventDefault();
-        id = $(this).attr('id').slice(4); // cut 'cid-'
+        id = $(this).attr('id');
+        cid = parseInt(id.slice(4)); // cut 'cid-'
         $('#system .colonyInfos').hide();
         
-        if (id > 0) {
-            $('#system #cid-'+id+'-info').show();
-            coords  = $('#system #cid-'+id+'-info li.coords').text();
-            // set coords into hidden form field
-            $('#system form[name=fleetActions] input[name=coords]').val(coords);
+        if (cid >= 0) {
+            $('#system #cid-'+cid+'-info').show();
+            coords  = $('#system #cid-'+cid+'-info li.coords').text();
         } else {
-            // wenn keine Kolonien auf Planet vorhanden, nehme Koordinaten des Planeten    
-            
+            // wenn keine Kolonien auf Planet vorhanden, nehme Koordinaten des Planeten
             x = xMin + Math.round(($(this).parent().prev().offset().left - $('#system #systemLayer').offset().left - offset) / scale);
             y = yMin + Math.round(($(this).parent().prev().offset().top - $('#system #systemLayer').offset().top - offset) / scale);
             coords = '['+x+','+y+',0]';
-            $('#system form[name=fleetActions] input[name=coords]').val(coords);
+        }
+        
+        // set coords into hidden form field
+        $('#system form[name=fleetActions] input[name=coords]').val(coords);
+        
+        if ( cid >= 0 ) {
+            $('#system #colonyInfos').show();
+        } else {
+            $('#system #colonyInfos').hide();
         }
         
         if ( $('#system form[name=fleetActions] input[name=fleetId]').val() > 0 ) {
             $('#system #fleetActions').show();
+        } else {
+            $('#system #fleetActions').hide();
         }
         
         toggleSelect();
@@ -79,7 +85,7 @@ $(document).ready(function () {
         top_ = offset + (y % range) * scale;
         
         $('#system #systemLayer #field_selector').remove();
-        $('#system #systemLayer').append('<div id="field_selector" style="top:'+top_+'px; left:'+left+'px; width:'+scale+'px; height:'+scale+'px;"><!-- --></div>')
+        $('#system #systemLayer').append('<div id="field_selector" style="top:'+top_+'px; left:'+left+'px; width:'+scale+'px; height:'+scale+'px;"><!-- --></div>');
         
         coords  = '['+x+','+y+',0]';
         $('#system form[name=fleetActions] input[name=coords]').val(coords);
@@ -100,7 +106,6 @@ $(document).ready(function () {
             $(this).children('ul.spots').hide();
         }
     });
-    
     
     // show list of colony spots when hovering a system object
     $("#system #systemLayer ul.spots").mouseenter(function(e) {
