@@ -22,12 +22,13 @@ Bug tracker
 https://github.com/nouron/nouron/issues
 
 
-Blog
-----
+Blog and Social Media
+---------------------
 
 [Tec's Playground](http://tector.wordpress.com).
-
-
+[Facebook](http://facebook.com/nouronbg).
+[Twitter](http://twitter.com/_nouron).
+[Google+](http://plus.google.com/106638531327318351915)
 
 Authors and Supporters
 ----------------------
@@ -50,4 +51,9 @@ See:
 * (de) http://creativecommons.org/licenses/by-nc-sa/3.0/de
 * (en) http://creativecommons.org/licenses/by-nc-sa/3.0/de/deed.en
 
-The project uses code of frameworks or libraries which have their own licenses. Please see the license informations in these libraries too.
+The project uses code of frameworks or libraries which have their own licenses. Please see the license informations in these libraries too:
+* Zend Framework 2
+* Bootstrap
+* JQuery
+* JParallax
+* 
