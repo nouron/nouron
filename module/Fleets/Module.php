@@ -1,5 +1,5 @@
 <?php
-namespace Galaxy;
+namespace Fleets;
 
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;

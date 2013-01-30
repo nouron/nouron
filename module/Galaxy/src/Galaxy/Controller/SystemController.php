@@ -47,8 +47,11 @@ class SystemController extends AbstractActionController
 
         $objects  = $gw->getSystemObjects($systemId, null, $config['range'])->toArray('id');
 
-        $colonies = $gw->getColoniesBySystemCoordinates(array($system['x'], $system['y']))->toArray();
-        //$fleets = $gw->getFleetsBySystemId($systemId);
+        $sysCoords = array($system['x'], $system['y']);
+        $colonies = $gw->getColoniesBySystemCoordinates($sysCoords)->toArray();
+
+        $fleetsGw = $sm->get('Fleets\Service\Gateway');
+        $fleets = $fleetsGw->getFleetsBySystemCoordinates($sysCoords)->toArray();
 
         return new ViewModel(
             array(
@@ -56,7 +59,7 @@ class SystemController extends AbstractActionController
                 'objects' => $objects,
                 'colonies' => $colonies,
                 'config'  => $config,
-                //'fleets' => $fleets,
+                'fleets' => $fleets,
                 'sid' => $systemId,
                 'pid' => $objectId,
                 'cid' => $colonyId,
