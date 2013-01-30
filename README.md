@@ -25,10 +25,10 @@ https://github.com/nouron/nouron/issues
 Blog and Social Media
 ---------------------
 
-[Tec's Playground](http://tector.wordpress.com).
-[Facebook](http://facebook.com/nouronbg).
-[Twitter](http://twitter.com/_nouron).
-[Google+](http://plus.google.com/106638531327318351915)
+* [Tec's Playground](http://tector.wordpress.com).
+* [Facebook](http://facebook.com/nouronbg).
+* [Twitter](http://twitter.com/_nouron).
+* [Google+](http://plus.google.com/106638531327318351915)
 
 Authors and Supporters
 ----------------------
