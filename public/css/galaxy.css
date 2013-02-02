@@ -2,27 +2,19 @@
 
 #galaxy .sidebar-nav,
 #system .sidebar-nav { height: 380px; overflow-y: auto; }
-#galaxy .parallax-viewport,
-#system .parallax-viewport { position:relative; overflow:hidden; min-width: 200px; height:400px; background-color: #000;}
-#galaxy .parallax-layer,
-#system .parallax-layer { position: absolute; }
-/* #galaxy #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/gallery/200907_galaxy.png") no-repeat;}
-#galaxy #layerB {height: 120%; width: 120%;}
-#galaxy #layerC {height: 100%; width: 100%;}
-#system #layerA {display: block; height: 110%; width: 110%; background: center center url("../img/layout/starfield.png");}
-#system #layerB {height: 120%; width: 120%;}
-#system #layerC {height: 100%; width: 100%;} */
+
 /*********************************************/
-#parallax {position:relative;overflow:hidden;width: 497px;height: 498px;}
+#parallax { position:relative; overflow:hidden; min-width: 200px; height:1200px; background-color: #000;border: 0px solid #CCCCCC;overflow:hidden;width: 497px;height: 498px;}
 .parallax-layer{position:absolute;}
 #background1 {width: 510px;height: 510px;background-color: #000;background-image: url("../img/galaxy/test.png");background-repeat: no-repeat;}
 #background2 {width: 510px;height: 510px;}
 #galaxy {display: block; height: 540px;}
-#systemFrame {width: 502px;height: 502px;background-image: url("../img/layout/screenframe.png");}
-#systemBackground {width: 550px;height: 550px;}
-#systemLayer {top: -100px;left: -100px;}
+/*#systemFrame {width: 502px;height: 502px;background-image: url("../img/layout/screenframe.png");}*/
+#system #systemBackground {width: 550px;height: 550px;}
+#system #systemLayer {top: -100px;left: -100px;}
+#system #systemLayer .dropdown{line-height:auto;}
 #system #systemLayer img {border: 1px solid transparent;}
-#system #systemLayer img.hover {border: 1px solid #900;}
+#system #systemLayer img.hover {cursor:pointer;border: 1px solid #900;}
 #system #systemLayer img.active {border: 1px solid #eee;}
 #system #systemLayer ul.spots {margin:0;padding: 0;display:none;list-style-type: none;border:1px solid #111}
 #system #systemLayer ul.spots li{background-color: black;padding: 2px;border-bottom: 1px dotted #111}

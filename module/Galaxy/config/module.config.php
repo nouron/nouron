@@ -104,8 +104,8 @@ return array(
     'system_view_config' => array(
         'range'  => 100,
         'offset' => 100,
-        'scale'  => 15,
-        'planetSize' => 20,
-        'slotSize' => 25
+        'scale'  => 10,//15,
+        'planetSize' => 10,//20,
+        'slotSize' => 10,//25
     )
 );

@@ -11,6 +11,11 @@ class User extends \ZfcUser\Entity\User implements EntityInterface
     {
         return array(
             'id' => $this->id,
+            'username' => $this->username,
+            'email' => $this->email,
+            'displayName' => $this->displayName,
+            'password' => $this->password,
+            'state' => $this->state
         );
     }
 }

@@ -30,7 +30,7 @@ $settings = array(
      *
      * Accepted values: boolean true or false
      */
-    //'enable_registration' => true,
+    'enable_registration' => true,
 
     /**
      * Enable Username
@@ -132,7 +132,10 @@ $settings = array(
 	 * Default value: 'zfc-user/user/login.phtml'
      * Accepted values: string path to a view script
 	 */
-    //'user_login_widget_view_template' => 'zfc-user-mod/user/login.phtml',
+    'user_login_widget_view_template' => 'zfc-user-mod/user/login.phtml',
+
+    /* */
+    'user_register_widget_view_template' => 'zfc-user-mod/user/register.phtml',
 
     /**
      * Login Redirect Route

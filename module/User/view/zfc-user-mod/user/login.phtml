@@ -1,21 +1,32 @@
+<h1>Sign In</h1>
+
 <?php
 $form = $this->loginForm;
 $form->prepare();
 $form->setAttribute('action', $this->url('zfcuser/login'));
 $form->setAttribute('method', 'post');
-$form->setAttribute('class', 'navbar-search pull-right form-horizontal');
-$elementDisplayOptions = array();
-#$formType = \DluTwBootstrap\Form\FormUtil::FORM_TYPE_INLINE;
-$formType = null;
-echo $this->formTwb()->openTag($form, $formType)."\n"; ?>
-    <?= $this->formElementErrors($form->get('identity')) ?>
-    <?= $this->formInputTwb($form->get('identity'), $formType, array('class'=>'span2', 'placeholder' => 'Login')) ?>
-    <?= $this->formInputTwb($form->get('credential'), $formType, array('class'=>'span2', 'placeholder' => 'Password')) ?>
-<?php if ($this->redirect): ?>
-    <input type="hidden" name="redirect" value="<?php echo $this->redirect ?>" />
-<?php endif; ?>
-    <?= $this->formButton($form->get('submit', $formType)); ?>
-<?= $this->form()->closeTag(); ?>
-<? if ($this->enableRegistration) : ?>
+?>
+
+<?php echo $this->form()->openTag($form) ?>
+
+    <dl class="zend_form">
+        <?php echo $this->formElementErrors($form->get('identity')) ?>
+
+        <dt><?php echo $this->formLabel($form->get('identity')) ?></dt>
+        <dd><?php echo $this->formInput($form->get('identity')) ?></dd>
+
+        <dt><?php echo $this->formLabel($form->get('credential')) ?></dt>
+        <dd><?php echo $this->formInput($form->get('credential')) ?></dd>
+
+        <?php if ($this->redirect): ?>
+            <input type="hidden" name="redirect" value="<?php echo $this->redirect ?>" />
+        <?php endif ?>
+
+        <dd><?php echo $this->formButton($form->get('submit')) ?></dd>
+    </dl>
+
+<?php echo $this->form()->closeTag() ?>
+
+<?php if ($this->enableRegistration) : ?>
 Not registered? <a href="<?php echo $this->url('zfcuser/register') . ($this->redirect ? '?redirect='.$this->redirect : '') ?>">Sign up!</a>
 <?php endif; ?>

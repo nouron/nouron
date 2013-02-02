@@ -1,11 +1,18 @@
-<div id="system" class="row-fluid">
+<div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li><a href="<?= $this->url('galaxy', array('action'=>'index'));?>">Galaxy</a></li>
+      <li class="active"><a href="#">System</a></li>
+    </ul>
+</div>
 
+<?php
+$scale  = $config['scale'];
+$offset = $config['offset'];
+$max = $scale * $config['range'];
+$radius  = round($config['range']/2); ?>
+
+<div id="system">
 <div class="hidden">
-    <?php
-    $scale  = $config['scale'];
-    $offset = $config['offset'];
-    $max = $scale * $config['range'];
-          $radius  = round($config['range']/2); ?>
     <div id="data_xMin"><?= $system['x'] - $radius;?></div>
     <div id="data_xMax"><?= $system['x'] + $radius;?></div>
     <div id="data_yMin"><?= $system['y'] - $radius;?></div>
@@ -14,24 +21,12 @@
     <div id="data_range"><?= $config['range']?></div>
     <div id="data_scale"><?= $scale?></div>
 </div>
+<div class="row-fluid">
+<div class="span3 well sidebar-nav">
 
-<div class="span3">
-  <div class="well sidebar-nav">
     <ul class="nav nav-list fleetList">
       <li class="nav-header">Eigene Flotten</li>
         <?php
-//         $myFleets = array(
-//             array(
-//                 'id' => 1,
-//                 'coordinates' => '{"0":1,"1":2,"2":3}',
-//                 'name' => 'TestFlotte A'
-//             ),
-//             array(
-//                 'id' => 2,
-//                 'coordinates' => '{"0":23,"1":22,"2":267}',
-//                 'name' => 'TestFlotte B'
-//             ),
-//         );
         $myFleets = $fleets;
 
         $foreignFleets = $myFleets;
@@ -57,31 +52,35 @@
       <li class=""><a href="#" title="(<?= $o['x'].','.$o['y'] ?>,0)"><i class="icon-globe"></i> <?= $o['name'] ?></a></li>
       <?php endforeach; ?>
     </ul>
-  </div><!--/.well -->
 </div><!--/span-->
-<div id="parallax" class="parallax-viewport span6">
-    <div id="systemBackground" class="parallax-layer" style="background-image: url(/img/<?= $system['background_image_url'] ?>);"></div>
-    <div id="systemFrame" class="parallax-layer"></div>
-    <div id="systemLayer" class="parallax-layer" style="width:<?= $max#+200 ?>px;height:<?= $max#+200 ?>px">
+<div class="span6">
+<div id="parallax">
+    <!-- <div id="systemBackground" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;"></div><!-- background-image: url(/img/<?= $system['background_image_url'] ?>); -->
+    <div id="systemLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;background-image: url(/img/grid.gif)">
 
 <?php
-for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
-//            for ($x=$config['offset; $x<=$max+$config['offset; $x=$x+$scale):
-//                echo '<div class="field" style="left:'.$x.'px; top:'.$y.'px;width:'.$scale.'px;height:'.$scale.'px;"><!-- --></div>';
-//            endfor;
-//            echo '<hr class="debug" noshade="noshade" style="width:'.$max.'px;left: '.$offset.'px; top:'.$y.'px" /><p class="debug" style="left: '.$offset.'px; top:'.$y.'px">'.$y.'</p>';
-        endfor;
+    for ($x=$offset; $x <=$max+$offset; $x=$x+$scale):
+        if ($x%50 == 0):
+            echo '<p class="debug" style="left: '.$x.'px; top:'.$offset.'px; border: 1px dotted grey;">'.$x.'</p>';
+        endif;
+    endfor;
+    for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
+        if ($y%50 == 0):
+            echo '<p class="debug" style="left: '.$offset.'px; top:'.$y.'px; border: 1px dotted grey;">'.$y.'</p>';
+        endif;
+    endfor;
 
-        // planets and moons:
-        foreach ($objects as $p):
-            $m = $config['range'];
-            $r = round($m/2);
+    // planets and moons:
+    foreach ($objects as $p):
+        $m = $config['range'];
+        $r = round($m/2);
 
-            $left = round((($p['x'] + $r) % $m) * $scale) + $offset;
-            $top  = round((($p['y'] + $r) % $m) * $scale) + $offset;
-            $colony_count = 0
+        $left = round((($p['x'] + $r) % $m) * $scale) + $offset;
+        $top  = round((($p['y'] + $r) % $m) * $scale) + $offset;
+
+        $colony_count = 0
         ?>
-            <div class="dropdown" style="top:<?= $top?>px;left:<?= $left?>px">
+            <div style="position:absolute;line-height:10px;top:<?= $top?>px;left:<?= $left?>px">
                 <img id="pid-<?= $p['id']?>" src="/img/<?= $p['image_url'] ?>" width="<?= $scale ?>" height="<?= $scale ?>" />
                 <ul id="pid-<?= $p['id']?>-spots" class="dropdown-menu spots" role="menu" aria-labelledby="dLabel">
                     <? foreach ($colonies as $cid => $colony):
@@ -98,6 +97,7 @@ for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
             </div>
         <? endforeach ?>
     </div>
+</div>
 </div>
 <div class="span3 well">
   <h4>Infos</h4>
@@ -126,7 +126,5 @@ for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
         <div class="error" style="display:none"></div>
     </div>
   </form>
-
-
 </div>
 </div><!--/row-->
