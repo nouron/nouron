@@ -74,7 +74,7 @@ echo $this->doctype();
     </div>
     <div class="container">
         <? if ($this->zfcUserIdentity()):
-               $this->resources(); #echo $this->partial('layout/resource-bar', array()); ?>
+            echo $this->resources(); #echo $this->partial('layout/resource-bar', array()); ?>
         <hr />
         <? endif;
         echo $this->content; ?>
