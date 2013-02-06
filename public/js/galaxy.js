@@ -78,12 +78,15 @@ $(document).ready(function () {
         x = xMin + Math.round((e.pageX - $('#system #systemLayer').offset().left - offset) / scale);
         y = yMin + Math.round((e.pageY - $('#system #systemLayer').offset().top - offset) / scale);
         
-        console.log($('#system #systemLayer').offset().left + ", " + $('#system #systemLayer').offset().top);
-        console.log(offset + " + (" + x +" %"+range+"*"+scale);
+//        console.log($('#system #systemLayer').offset().left + ", " + $('#system #systemLayer').offset().top);
+//        console.log(offset + " + (" + x +" %"+range+"*"+scale);
         
-        left = offset + (x % range) * scale;
-        top_ = offset + (y % range) * scale;
-        
+        left = offset + ((x-range/2) % (range)) * scale;
+        top_ = offset + ((y-range/2) % (range)) * scale;
+
+//        console.log(Math.round(x) + " " + Math.round(y));
+//        console.log(Math.round(left) + " " + Math.round(top_));
+
         $('#system #systemLayer #field_selector').remove();
         $('#system #systemLayer').append('<div id="field_selector" style="top:'+top_+'px; left:'+left+'px; width:'+scale+'px; height:'+scale+'px;"><!-- --></div>');
         
