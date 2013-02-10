@@ -1,0 +1,23 @@
+<div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li><a href="<?= $this->url('galaxy', array());?>">Galaxy</a></li>
+      <li><a href="<?= $this->url('galaxy/system', array('sid'=> null));?>">System</a></li>
+      <li><a href="<?= $this->url('fleets', array());?>">Flotten</a></li>
+      <li class="active"><a href="#">Flotte</a></li>
+    </ul>
+</div>
+
+<div id="fleet">
+
+<?php if ($this->success): ?>
+<div class="alert alert-success">Flotte wurde erstellt!</div>
+<?php endif; ?>
+
+<?php $form->prepare();
+echo $this->form()->openTag($form);
+echo $this->formRowTwb($form->get('id'));
+echo $this->formRowTwb($form->get('fleet'));
+echo $this->formSubmitTwb($form->get('submit'));
+echo $this->form()->closeTag();
+?>
+</div>

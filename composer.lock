@@ -1,5 +1,5 @@
 {
-    "hash": "919944e5bda8dce1a4760c87a8f782e5",
+    "hash": "4903bcadc7e1fa40ee0247258755c0cf",
     "packages": [
         {
             "name": "dlu/dlutwbootstrap",
@@ -21,7 +21,6 @@
             },
             "time": "2012-12-15 10:03:41",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "DluTwBootstrap": "src/"
@@ -42,11 +41,11 @@
             "description": "ZF2 module to generate Twitter Bootstrap UI - forms, navigation, etc.",
             "homepage": "https://bitbucket.org/dlu/dlutwbootstrap",
             "keywords": [
-                "zf2",
+                "dlutwbootstrap",
                 "module",
                 "twitter bootstrap",
                 "zend framework 2",
-                "dlutwbootstrap"
+                "zf2"
             ]
         },
         {
@@ -64,13 +63,12 @@
                 "shasum": ""
             },
             "require": {
+                "dlu/dlutwbootstrap": ">=0.1.1",
                 "php": ">=5.3.3",
-                "zendframework/zendframework": ">=2.0.5",
-                "dlu/dlutwbootstrap": ">=0.1.1"
+                "zendframework/zendframework": ">=2.0.5"
             },
             "time": "2012-12-15 10:29:31",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "DluTwBootstrapDemo": "src/"
@@ -91,82 +89,13 @@
             "description": "ZF2 module to check & demonstrate the DluTwBootstrap module (Twitter Bootstrap UI - forms, navigation, etc.)",
             "homepage": "https://bitbucket.org/dlu/dlutwbootstrap-demo",
             "keywords": [
-                "zf2",
+                "demo",
+                "dlutwbootstrap",
+                "dlutwbootstrapdemo",
                 "module",
                 "twitter bootstrap",
                 "zend framework 2",
-                "dlutwbootstrap",
-                "demo",
-                "dlutwbootstrapdemo"
-            ]
-        },
-        {
-            "name": "doctrine/common",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/doctrine/common",
-                "reference": "a890fe1b689ed65c52bf4a7e64333a27b3c400d6"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://github.com/doctrine/common/archive/a890fe1b689ed65c52bf4a7e64333a27b3c400d6.zip",
-                "reference": "a890fe1b689ed65c52bf4a7e64333a27b3c400d6",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.2"
-            },
-            "time": "2012-12-18 00:45:03",
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "2.4.x-dev"
-                }
-            },
-            "installation-source": "source",
-            "autoload": {
-                "psr-0": {
-                    "Doctrine\\Common\\": "lib/"
-                }
-            },
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Jonathan Wage",
-                    "email": "jonwage@gmail.com",
-                    "homepage": "http://www.jwage.com/"
-                },
-                {
-                    "name": "Guilherme Blanco",
-                    "email": "guilhermeblanco@gmail.com",
-                    "homepage": "http://www.instaclick.com"
-                },
-                {
-                    "name": "Roman Borschel",
-                    "email": "roman@code-factory.org"
-                },
-                {
-                    "name": "Benjamin Eberlei",
-                    "email": "kontakt@beberlei.de"
-                },
-                {
-                    "name": "Johannes Schmitt",
-                    "email": "schmittjoh@gmail.com",
-                    "homepage": "https://github.com/schmittjoh",
-                    "role": "Developer of wrapped JMSSerializerBundle"
-                }
-            ],
-            "description": "Common Library for Doctrine projects",
-            "homepage": "http://www.doctrine-project.org",
-            "keywords": [
-                "collections",
-                "spl",
-                "eventmanager",
-                "annotations",
-                "persistence"
+                "zf2"
             ]
         },
         {
@@ -174,24 +103,24 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/RobLoach/firephp-core",
-                "reference": "c26d972dcb28fd483fa193512091df7b3c85e450"
+                "url": "https://github.com/firephp/firephp-core",
+                "reference": "f60753a8dd7817e4da6bc73e0e717387a9a0866a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/RobLoach/firephp-core/zipball/c26d972dcb28fd483fa193512091df7b3c85e450",
-                "reference": "c26d972dcb28fd483fa193512091df7b3c85e450",
+                "url": "https://api.github.com/repos/firephp/firephp-core/zipball/f60753a8dd7817e4da6bc73e0e717387a9a0866a",
+                "reference": "f60753a8dd7817e4da6bc73e0e717387a9a0866a",
                 "shasum": ""
             },
-            "time": "2012-05-29 00:08:14",
+            "time": "2013-01-19 22:55:24",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "classmap": [
                     "lib/FirePHPCore/FirePHP.class.php",
                     "lib/FirePHPCore/fb.php"
                 ]
             },
+            "notification-url": "http://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -199,7 +128,7 @@
                 {
                     "name": "Christoph Dorn",
                     "email": "christoph@christophdorn.com",
-                    "homepage": "christophdorn.com"
+                    "homepage": "http://christophdorn.com"
                 }
             ],
             "description": "Traditional FirePHPCore library for sending PHP variables to the browser.",
@@ -207,23 +136,22 @@
         },
         {
             "name": "zendframework/zendframework",
-            "version": "dev-master",
+            "version": "2.1.1",
             "source": {
                 "type": "git",
                 "url": "git://github.com/zendframework/zf2.git",
-                "reference": "f642ecf40f686d4b7f6dc8224007aac0117c1d56"
+                "reference": "release-2.1.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/zendframework/zf2/archive/f642ecf40f686d4b7f6dc8224007aac0117c1d56.zip",
-                "reference": "f642ecf40f686d4b7f6dc8224007aac0117c1d56",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.1.1",
+                "reference": "release-2.1.1",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3"
             },
             "replace": {
-                "zendframework/zend-acl": "self.version",
                 "zendframework/zend-authentication": "self.version",
                 "zendframework/zend-barcode": "self.version",
                 "zendframework/zend-cache": "self.version",
@@ -233,21 +161,23 @@
                 "zendframework/zend-console": "self.version",
                 "zendframework/zend-crypt": "self.version",
                 "zendframework/zend-db": "self.version",
+                "zendframework/zend-debug": "self.version",
                 "zendframework/zend-di": "self.version",
                 "zendframework/zend-dom": "self.version",
+                "zendframework/zend-escaper": "self.version",
                 "zendframework/zend-eventmanager": "self.version",
                 "zendframework/zend-feed": "self.version",
                 "zendframework/zend-file": "self.version",
                 "zendframework/zend-filter": "self.version",
                 "zendframework/zend-form": "self.version",
                 "zendframework/zend-http": "self.version",
+                "zendframework/zend-i18n": "self.version",
                 "zendframework/zend-inputfilter": "self.version",
                 "zendframework/zend-json": "self.version",
                 "zendframework/zend-ldap": "self.version",
                 "zendframework/zend-loader": "self.version",
                 "zendframework/zend-log": "self.version",
                 "zendframework/zend-mail": "self.version",
-                "zendframework/zend-markup": "self.version",
                 "zendframework/zend-math": "self.version",
                 "zendframework/zend-memory": "self.version",
                 "zendframework/zend-mime": "self.version",
@@ -255,6 +185,8 @@
                 "zendframework/zend-mvc": "self.version",
                 "zendframework/zend-navigation": "self.version",
                 "zendframework/zend-paginator": "self.version",
+                "zendframework/zend-permissions-acl": "self.version",
+                "zendframework/zend-permissions-rbac": "self.version",
                 "zendframework/zend-progressbar": "self.version",
                 "zendframework/zend-serializer": "self.version",
                 "zendframework/zend-server": "self.version",
@@ -263,13 +195,13 @@
                 "zendframework/zend-soap": "self.version",
                 "zendframework/zend-stdlib": "self.version",
                 "zendframework/zend-tag": "self.version",
+                "zendframework/zend-test": "self.version",
                 "zendframework/zend-text": "self.version",
                 "zendframework/zend-uri": "self.version",
                 "zendframework/zend-validator": "self.version",
+                "zendframework/zend-version": "self.version",
                 "zendframework/zend-view": "self.version",
-                "zendframework/zend-xmlrpc": "self.version",
-                "zendframework/zend-escaper": "self.version",
-                "zendframework/zend-i18n": "self.version"
+                "zendframework/zend-xmlrpc": "self.version"
             },
             "require-dev": {
                 "doctrine/common": ">=2.1",
@@ -278,27 +210,30 @@
             "suggest": {
                 "doctrine/common": "Doctrine\\Common >=2.1 for annotation features",
                 "ext-intl": "ext/intl for i18n features",
-                "zendframework/zendservice-recaptcha": "ZendService\\ReCaptcha for rendering ReCaptchas in Zend\\Captcha and/or Zend\\Form",
+                "pecl-weakref": "Implementation of weak references for Zend\\Stdlib\\CallbackHandler",
                 "zendframework/zendpdf": "ZendPdf for creating PDF representations of barcodes",
-                "pecl-weakref": "Implementation of weak references for Zend\\Stdlib\\CallbackHandler"
+                "zendframework/zendservice-recaptcha": "ZendService\\ReCaptcha for rendering ReCaptchas in Zend\\Captcha and/or Zend\\Form"
             },
-            "time": "2013-01-04 22:51:05",
+            "time": "2013-02-06 21:23:43",
             "bin": [
                 "bin/classmap_generator.php"
             ],
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0-dev",
-                    "dev-develop": "2.1-dev"
+                    "dev-master": "2.1-dev",
+                    "dev-develop": "2.2-dev"
                 }
             },
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "Zend\\": "library/",
                     "ZendTest\\": "tests/"
-                }
+                },
+                "files": [
+                    "library/Zend/Stdlib/compatibility/autoload.php",
+                    "library/Zend/Session/compatibility/autoload.php"
+                ]
             },
             "notification-url": "http://packagist.org/downloads/",
             "license": [
@@ -313,16 +248,16 @@
         },
         {
             "name": "zf-commons/zfc-base",
-            "version": "dev-master",
+            "version": "0.1.0",
             "source": {
                 "type": "git",
                 "url": "git://github.com/ZF-Commons/ZfcBase.git",
-                "reference": "38990ad5f51002dd271ab676b90a3d59728190e2"
+                "reference": "0.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/ZF-Commons/ZfcBase/zipball/38990ad5f51002dd271ab676b90a3d59728190e2",
-                "reference": "38990ad5f51002dd271ab676b90a3d59728190e2",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcBase/zipball/0.1.0",
+                "reference": "0.1.0",
                 "shasum": ""
             },
             "require": {
@@ -331,7 +266,6 @@
             },
             "time": "2012-10-24 17:42:28",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "ZfcBase": "src/"
@@ -340,6 +274,7 @@
                     "./Module.php"
                 ]
             },
+            "notification-url": "http://packagist.org/downloads/",
             "authors": [
                 {
                     "name": "Kyle Spraggs",
@@ -364,22 +299,21 @@
             "source": {
                 "type": "git",
                 "url": "git://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "18c4fc2e71a53b558e1feec51c9c5fb10a070188"
+                "reference": "0.1.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://github.com/ZF-Commons/ZfcUser/archive/18c4fc2e71a53b558e1feec51c9c5fb10a070188.zip",
-                "reference": "18c4fc2e71a53b558e1feec51c9c5fb10a070188",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/0.1.0",
+                "reference": "0.1.0",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
-                "zf-commons/zfc-base": "dev-master",
-                "zendframework/zendframework": "2.*"
+                "zendframework/zendframework": "2.1.*",
+                "zf-commons/zfc-base": "0.*"
             },
-            "time": "2012-12-08 23:49:26",
+            "time": "2013-02-07 00:18:14",
             "type": "library",
-            "installation-source": "source",
             "autoload": {
                 "psr-0": {
                     "ZfcUser": "src/"
@@ -388,6 +322,7 @@
                     "./Module.php"
                 ]
             },
+            "notification-url": "http://packagist.org/downloads/",
             "authors": [
                 {
                     "name": "Kyle Spraggs",
@@ -405,33 +340,6 @@
             "keywords": [
                 "zf2"
             ]
-        },
-        {
-            "name": "zfb/zfb-vm",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/michael-romer/zfb2-vm",
-                "reference": "a5da2e6a87ac33caae27d8b81bcb0a7888499c7f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://github.com/michael-romer/zfb2-vm/archive/a5da2e6a87ac33caae27d8b81bcb0a7888499c7f.zip",
-                "reference": "a5da2e6a87ac33caae27d8b81bcb0a7888499c7f",
-                "shasum": ""
-            },
-            "time": "2012-11-13 20:17:28",
-            "type": "library",
-            "installation-source": "source",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "description": "Code to set up a VM running Zend Framework 2",
-            "homepage": "http://zf-boilerplate.com/",
-            "keywords": [
-                "zf2",
-                "zend framework boilerplate"
-            ]
         }
     ],
     "packages-dev": null,
@@ -440,10 +348,6 @@
     ],
     "minimum-stability": "stable",
     "stability-flags": {
-        "zendframework/zendframework": 20,
-        "zfb/zfb-vm": 20,
-        "doctrine/common": 20,
-        "zf-commons/zfc-base": 20,
         "zf-commons/zfc-user": 20,
         "dlu/dlutwbootstrap": 20,
         "dlu/dlutwbootstrapdemo": 20,

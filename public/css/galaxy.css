@@ -32,5 +32,7 @@
 #system ul.fleetList {overflow: auto;overflow-y: auto;overflow-x: hidden;}
 
 /*Debug*/
-#system #systemLayer .debug{margin:0; padding: 0;border: 0; position:absolute;}
-#system #systemLayer hr.debug {display:block; border: 1px dotted #111;}
+#system #gridLayer .debug{margin:0; padding: 0;border: 0; position:absolute;}
+#system #gridLayer hr.debug {display:block; border: 1px dotted #111;}
+
+#system #fleetsLayer .fleet {display:hidden; position:absolute; margin:-1px; padding:0; height:10px;width:10px;border: 1px solid transparent}

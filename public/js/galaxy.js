@@ -14,15 +14,37 @@ $(document).ready(function () {
     
     freeze = 0;
     
-    function toggleSelect() {
-        $('#system #systemLayer #field_selector').remove();
-        if (freeze == 1) {
-            freeze = 0;
-            $('.parallax-layer').trigger('unfreeze');
-        } else {
-            freeze = 1;
+    function toggleSelect(e) {
+        
+        x = xMin + Math.round((e.pageX - $('#system #systemLayer').offset().left - offset) / scale);
+        y = yMin + Math.round((e.pageY - $('#system #systemLayer').offset().top - offset) / scale);
+        
+        left = offset + ((x-range/2) % (range)) * scale;
+        top_ = offset + ((y-range/2) % (range)) * scale;
+        
+        field_selector = $('#system #systemLayer #field_selector');
+        oldleft = field_selector.left;
+        oldtop = field_selector.top;
+        
+        if (oldleft != left || oldtop != top_) {
+            field_selector.remove();
+            $('#system #systemLayer').append('<div id="field_selector" style="top:'+top_+'px; left:'+left+'px; width:'+scale+'px; height:'+scale+'px;"><!-- --></div>');
             $('.parallax-layer').trigger('freeze');
+        } else {
+            field_selector.remove();
+            $('.parallax-layer').trigger('unfreeze');
         }
+        
+        return '['+x+','+y+',0]';
+        
+//        if ( $('#system #systemLayer #field_selector') )
+//        if (freeze == 1) {
+//            freeze = 0;
+//            $('.parallax-layer').trigger('unfreeze');
+//        } else {
+//            freeze = 1;
+//            $('.parallax-layer').trigger('freeze');
+//        }
     }
     
     /* Klick auf Koloniespot */
@@ -57,7 +79,7 @@ $(document).ready(function () {
             $('#system #fleetActions').hide();
         }
         
-        toggleSelect();
+        toggleSelect(e);
         
         return false; // this line makes it possible to click anywhere else to unselect the object
     });
@@ -65,8 +87,6 @@ $(document).ready(function () {
     /* Klick irgendwo ins System */
     $("#system #systemLayer").click(function(e) {
         
-        toggleSelect();
-            
         $('#system #fleetActions').hide();
         // function makes it possible to click anywhere else to unselect the object
         $('.colonyInfos').hide();
@@ -74,23 +94,9 @@ $(document).ready(function () {
         $('#system #systemLayer img').removeClass('active'); // remove 'active' from all objects
         $('#system #systemLayer ul.spots li').removeClass('active'); // remove 'active' from all spots
         $('#system #systemLayer ul.spots').hide();
-        
-        x = xMin + Math.round((e.pageX - $('#system #systemLayer').offset().left - offset) / scale);
-        y = yMin + Math.round((e.pageY - $('#system #systemLayer').offset().top - offset) / scale);
-        
-//        console.log($('#system #systemLayer').offset().left + ", " + $('#system #systemLayer').offset().top);
-//        console.log(offset + " + (" + x +" %"+range+"*"+scale);
-        
-        left = offset + ((x-range/2) % (range)) * scale;
-        top_ = offset + ((y-range/2) % (range)) * scale;
 
-//        console.log(Math.round(x) + " " + Math.round(y));
-//        console.log(Math.round(left) + " " + Math.round(top_));
-
-        $('#system #systemLayer #field_selector').remove();
-        $('#system #systemLayer').append('<div id="field_selector" style="top:'+top_+'px; left:'+left+'px; width:'+scale+'px; height:'+scale+'px;"><!-- --></div>');
+        coords = toggleSelect(e);
         
-        coords  = '['+x+','+y+',0]';
         $('#system form[name=fleetActions] input[name=coords]').val(coords);
         
         fleetId = $('#system form[name=fleetActions] input[name=fleetId]').val();
@@ -143,6 +149,14 @@ $(document).ready(function () {
 
     $("#system ul.foreignFleetList li").click(function(e) {
         $('#system #fleetActions').hide();
+    });
+    
+    $("#system #switchFleetsLayerDisplay").click(function(e) {
+        $('#system #fleetsLayer .fleet').toggle();
+    });
+    
+    $("#system #switchGridLayerDisplay").click(function(e) {
+        $('#system #gridLayer').toggle();
     });
     
     $("form#fleetActions button").click(function(e){

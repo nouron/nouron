@@ -8,7 +8,7 @@ return array(
         'Nouron',
         'Techtree',
         'Galaxy',
-        'Fleets', /* maybe combine this with galaxy like in old version*/
+        /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'Resources',
         'DluTwBootstrap',
         'DluTwBootstrapDemo'

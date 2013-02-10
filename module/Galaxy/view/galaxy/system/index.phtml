@@ -2,6 +2,8 @@
     <ul class="nav nav-tabs">
       <li><a href="<?= $this->url('galaxy', array('action'=>'index'));?>">Galaxy</a></li>
       <li class="active"><a href="#">System</a></li>
+      <li><a href="<?= $this->url('fleets', array('cid'=> null));?>">Flotten</a></li>
+      <li><a href="<?= $this->url('fleet', array('fid'=> null));?>">Flotte</a></li>
     </ul>
 </div>
 
@@ -23,79 +25,107 @@ $radius  = round($config['range']/2); ?>
 </div>
 <div class="row-fluid">
 <div class="span3 well sidebar-nav">
-
     <ul class="nav nav-list fleetList">
-      <li class="nav-header">Eigene Flotten</li>
-        <?php
-        $myFleets = $fleets;
-
-        $foreignFleets = $myFleets;
-
-        foreach ($myFleets as $fleet):
-            $c = json_decode($fleet['coordinates'],true);
+        <li class="nav-header">Eigene Flotten</li>
+        <? foreach ($fleets as $fleet):
+            if ($fleet['user_id'] == $userId):
         ?>
-            <li id="fid-<?= $fleet['id']?>">
-                <a title="<?= "($c[0],$c[1],$c[2])"?>" href="#"><i class="icon-plane"></i> <?= $fleet['name'] ?></span>
-            </li>
-        <?php endforeach; ?>
-
-      <li class="nav-header">Fremde Flotten</li>
-      <?php foreach ($foreignFleets as $fleet):
-        $c = json_decode($fleet['coordinates'],true);
-      ?>
         <li id="fid-<?= $fleet['id']?>">
-            <a title="<?= "($c[0],$c[1],$c[2])"?>" href="#"><i class="icon-plane"></i> <?= $fleet['name'] ?></span>
+            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['slot']?>)" href="#">
+                <i class="icon-plane"></i> <?= $fleet['fleet'] ?>
+            </a>
         </li>
-      <?php endforeach; ?>
-      <li class="nav-header">Planeten/Monde</li>
-      <?php foreach ($objects as $o): ?>
-      <li class=""><a href="#" title="(<?= $o['x'].','.$o['y'] ?>,0)"><i class="icon-globe"></i> <?= $o['name'] ?></a></li>
-      <?php endforeach; ?>
+        <? endif;
+        endforeach; ?>
+        <li class="nav-header">Fremde Flotten</li>
+        <? foreach ($fleets as $fleet):
+            if ($fleet['user_id'] != $userId):
+        ?>
+        <li id="fid-<?= $fleet['id']?>">
+            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['slot']?>)" href="#"><i class="icon-plane"></i> <?= $fleet['fleet'] ?></a>
+        </li>
+        <? endif;
+        endforeach; ?>
+        <li class="nav-header">Planeten/Monde</li>
+        <? foreach ($objects as $o): ?>
+        <li class="">
+            <a href="#" title="(<?= $o['x'].','.$o['y'] ?>,0)"><i class="icon-globe"></i> <?= $o['name'] ?></a>
+        </li>
+        <? endforeach; ?>
     </ul>
 </div><!--/span-->
 <div class="span6">
+
+<div>
+<a href="#" id="switchGridLayerDisplay">Gitter an/aus</a>
+<a href="#" id="switchFleetsLayerDisplay">Flotten an/aus</a>
+</div>
+
 <div id="parallax">
-    <!-- <div id="systemBackground" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;"></div><!-- background-image: url(/img/<?= $system['background_image_url'] ?>); -->
-    <div id="systemLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;background-image: url(/img/grid.gif)">
+    <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/img/<?= $system['background_image_url'] ?>);"></div>
+    <div id="gridLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;background-image: url(/img/grid.gif)">
+<?php
+$m = $config['range'];
+$r = round($m/2);
+
+    $label = $system['x'] - $radius;
+    for ($x=$offset; $x <=$max+$offset; $x=$x+$scale):
+    if ($x%50 == 0):
+    echo '<p class="debug" style="left: '.$x.'px; top:'.$offset.'px; border: 1px dotted grey;">'.$label.'</p>';
+    $label = $label + 5;
+    endif;
+    endfor;
+    $label = $system['y'] + $label%5;
+    for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
+    if ($y%50 == 0):
+    $label = $label + 5;
+    echo '<p class="debug" style="left: '.$offset.'px; top:'.$y.'px; border: 1px dotted grey;">'.$label.'</p>';
+    endif;
+    endfor;
+?>
+    </div>
+
+    <div id="fleetsLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;">
+    <? foreach ($fleets as $f):
+        $left = round((($f['x'] + $r) % $m) * $scale) + $offset;
+        $top  = round((($f['y'] + $r) % $m) * $scale) + $offset;
+        if ($fleet['user_id'] == $userId):
+            $color = '#0d0';
+        else:
+            $color = '#ddd';
+        endif;
+    ?>
+        <div class="fleet" style="top:<?= $top?>px;left:<?= $left?>px;border: 1px dotted <?= $color ?>"> </div>
+    <? endforeach; ?>
+    </div>
+
+    <div id="systemLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;">
 
 <?php
-    for ($x=$offset; $x <=$max+$offset; $x=$x+$scale):
-        if ($x%50 == 0):
-            echo '<p class="debug" style="left: '.$x.'px; top:'.$offset.'px; border: 1px dotted grey;">'.$x.'</p>';
-        endif;
-    endfor;
-    for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
-        if ($y%50 == 0):
-            echo '<p class="debug" style="left: '.$offset.'px; top:'.$y.'px; border: 1px dotted grey;">'.$y.'</p>';
-        endif;
-    endfor;
-
     // planets and moons:
     foreach ($objects as $p):
-        $m = $config['range'];
-        $r = round($m/2);
 
         $left = round((($p['x'] + $r) % $m) * $scale) + $offset;
         $top  = round((($p['y'] + $r) % $m) * $scale) + $offset;
 
         $colony_count = 0
         ?>
-            <div style="position:absolute;line-height:10px;top:<?= $top?>px;left:<?= $left?>px">
-                <img id="pid-<?= $p['id']?>" src="/img/<?= $p['image_url'] ?>" width="<?= $scale ?>" height="<?= $scale ?>" />
-                <ul id="pid-<?= $p['id']?>-spots" class="dropdown-menu spots" role="menu" aria-labelledby="dLabel">
-                    <? foreach ($colonies as $cid => $colony):
-                        if ($colony['system_object_id'] == $p['id']):
-                            $colony_count += 1;
-                    ?>
-                    <li id="cid-<?= $cid ?>"><a tabindex="-1" href="#"><?= $colony['name'] ?></a></li>
-                    <?  endif;
-                    endforeach;
-                    if ($colony_count == 0): ?>
-                    <li><a tabindex="-1" href="#">keine Kolonien</a></li>
-                    <? endif ?>
-                </ul>
-            </div>
-        <? endforeach ?>
+        <div style="position:absolute;line-height:10px;top:<?= $top?>px;left:<?= $left?>px">
+            <img id="pid-<?= $p['id']?>" src="/img/<?= $p['image_url'] ?>" width="<?= $scale ?>" height="<?= $scale ?>" />
+            <ul id="pid-<?= $p['id']?>-spots" class="dropdown-menu spots" role="menu" aria-labelledby="dLabel">
+                <? foreach ($colonies as $cid => $colony):
+                    if ($colony['system_object_id'] == $p['id']):
+                        $colony_count += 1;
+                ?>
+                <li id="cid-<?= $cid ?>"><a tabindex="-1" href="#"><?= $colony['name'] ?></a></li>
+                <?  endif;
+                endforeach;
+                if ($colony_count == 0): ?>
+                <li><a tabindex="-1" href="#">keine Kolonien</a></li>
+                <? endif ?>
+            </ul>
+        </div>
+    <? endforeach ?>
     </div>
 </div>
 </div>

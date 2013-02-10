@@ -42,14 +42,15 @@ class Gateway extends \Nouron\Service\Gateway
     public function getFleetsBySystemCoordinates(array $coords)
     {
         //$config = $this->getConfig();
-        $x = round($coords[0] / 100);
-        $y = round($coords[1] / 100);
+        $radius = round(100 / 2);
+
+        $x1 = $coords[0] - $radius;
+        $x2 = $coords[0] + $radius;
+        $y1 = $coords[1] - $radius;
+        $y2 = $coords[1] + $radius;
 
         $table = $this->getTable('fleet');
-
-        $where = "coordinates LIKE 'a:3:{i:0;i:".$x."__;i:1;i:".$y."%'";
-
-        return $table->fetchAll($where);
+        return $table->fetchAll("x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2");
 
     }
 }

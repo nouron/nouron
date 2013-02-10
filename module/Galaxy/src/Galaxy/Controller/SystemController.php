@@ -29,6 +29,8 @@ class SystemController extends AbstractActionController
     {
         $sm = $this->getServiceLocator();
 
+        $userId = 3;
+
         $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
         $sm->setService('systemId', 1); // TODO: get systemId via controller plugin or session
 
@@ -45,16 +47,15 @@ class SystemController extends AbstractActionController
         $config = $sm->get('Config');
         $config = $config['system_view_config'];
 
-        $objects  = $gw->getSystemObjects($systemId, null, $config['range'])->toArray('id');
+        $objects  = $gw->getSystemObjects($systemId)->toArray('id');
 
         $sysCoords = array($system['x'], $system['y']);
-        $colonies = $gw->getColoniesBySystemCoordinates($sysCoords)->toArray();
-
-        $fleetsGw = $sm->get('Fleets\Service\Gateway');
-        $fleets = $fleetsGw->getFleetsBySystemCoordinates($sysCoords)->toArray();
+        $colonies = $gw->getByCoordinates('colonies', $sysCoords)->toArray();
+        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->toArray();
 
         return new ViewModel(
             array(
+                'userId'  => $userId,
                 'system'  => $system,
                 'objects' => $objects,
                 'colonies' => $colonies,

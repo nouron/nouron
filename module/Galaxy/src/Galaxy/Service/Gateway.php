@@ -25,11 +25,64 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
+     * @return \Fleets\Mapper\Fleet
+     */
+    public function getFleet($fleetId)
+    {
+        $this->_validateId($colonyId);
+        return $this->getTable('fleet')->getEntity($fleetId);
+    }
+
+    /**
+     *
+     * @param \Galaxy\Mapper\Fleet $entity
+     */
+    public function saveFleet($entity)
+    {
+        print("saveFleet");
+        return $this->getTable('fleet')->save($entity);
+    }
+
+    /**
+     * Get all fleets from a user.
+     *
+     * @param  integer    $userId
+     * @return ResultSet
+     */
+    public function getFleetsByUserId($userId)
+    {
+        $this->_validateId($userId);
+        return $this->getTable('fleet')->fetchAll('user_id = ' . $userId)->toArray();
+    }
+
+    /**
+     * Get all fleets from coordinates of an colony, system object or system entity.
+     *
+     * @param  string  $entityType
+     * @param  integer $id
+     * @return ResultSet
+     */
+    public function getFleetsByEntityId($entityType, $id)
+    {
+        $this->_validateId($id);
+
+        switch (strtolower($entityType)) {
+            case 'colony': $table = $this->getTable('colony'); break;
+            case 'object': $table = $this->getTable('systemobject'); break;
+            case 'system': $table = $this->getTable('system'); break;
+            default: return array(); break;
+        }
+
+        $entity = $table->getEntity($id);
+        return $this->getByCoordinates('fleets', array($entity['x'],$entity['y']))->toArray();
+    }
+
+    /**
      * @return ResultSet
      */
     public function getColonies()
     {
-        return $this->getTable('resource')->fetchAll();
+        return $this->getTable('colony')->fetchAll();
     }
 
     /**
@@ -107,24 +160,12 @@ class Gateway extends \Nouron\Service\Gateway
         $_SESSION['colony'] = $this->getColony((int) $newColonyId);
     }
 
-//     /**
-//      *
-//      * @return Zend_Config_Ini
-//      */
-//     public function getConfig()
-//     {
-//         return new Zend_Config_Ini(APPLICATION_PATH . '/modules/galaxy/configs/module.ini', APPLICATION_ENV);
-//     }
-
     /**
-     * get all colonies in a system system
-     * @TODO this function is very similar to $this->getFleetsBySystemCoordinates,
-     *       maybe its possible to merge this to function and parameterize it?
      *
      * @param  array $coords
-     * @return Galaxy_Model_Colonies
+     * @return ResultSet
      */
-    public function getColoniesBySystemCoordinates(array $coords)
+    public function getByCoordinates($objectType, array $coords)
     {
         //$config = $this->getConfig();
         $radius = round(100 / 2);
@@ -134,8 +175,16 @@ class Gateway extends \Nouron\Service\Gateway
         $y1 = $coords[1] - $radius;
         $y2 = $coords[1] + $radius;
 
-        $table = $this->getTable('colony');
-        return $table->fetchAll("x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2");
+        switch (strtolower($objectType)) {
+            case 'fleets':  $table = $this->getTable('fleet'); break;
+            case 'colonies':$table = $this->getTable('colony');break;
+            case 'objects': $table = $this->getTable('systemobject');break;
+            default: return null;break;
+        }
+
+        $where = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
+
+        return $table->fetchAll($where);
     }
 
     /**
@@ -157,26 +206,13 @@ class Gateway extends \Nouron\Service\Gateway
      * @param   string   $order      OPTIONAL: sql order string
      * @return  Galaxy_Model_System_Objects
      */
-    public function getSystemObjects($systemId, $order = null, $systemRange = null)
+    public function getSystemObjects($systemId)
     {
         $this->_validateId($systemId);
-
-        if (empty($systemRange)) {
-            $systemRange = 100; // TODO: get value from config instead of hardcoded value
-        }
-
-        $radius = round($systemRange / 2);
         $system = $this->getSystem($systemId);
+        $coords = array($system['x'], $system['y']);
 
-        $x1 = $system['x'] - $radius;
-        $x2 = $system['x'] + $radius;
-        $y1 = $system['y'] - $radius;
-        $y2 = $system['y'] + $radius;
-
-        $plntrsView = $this->getTable('systemobject');
-        $where  = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
-
-        return $plntrsView->fetchAll($where, $order);
+        return $this->getByCoordinates('objects', $coords);
     }
 
 //     /**

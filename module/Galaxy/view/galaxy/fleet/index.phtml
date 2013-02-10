@@ -1,0 +1,93 @@
+<div class="row-fluid">
+    <ul class="nav nav-tabs">
+      <li><a href="<?= $this->url('galaxy', array());?>">Galaxy</a></li>
+      <li><a href="<?= $this->url('galaxy/system', array('sid'=> null));?>">System</a></li>
+      <li class="active"><a href="#">Flotten</a></li>
+      <li><a href="<?= $this->url('fleet', array('fid'=> null));?>">Flotte</a></li>
+    </ul>
+</div>
+
+<div id="fleets">
+    <?php if ($cid): ?>
+        <p style="text-align: center">Flotten auf der Kolonie und in der näheren Umgebung.</p>
+    <?php elseif($pid): ?>
+        <p style="text-align: center">Flotten auf dem Planeten und in der näheren Umgebung.</p>
+    <?php elseif($sid): ?>
+        <p style="text-align: center">Flotten im System.</p>
+    <?php endif; ?>
+    <div class="row-fluid">
+        <div class="span6 well">
+            <h4>eigene Flotten</h4>
+
+            <form action="#" method="post" id="createFleetForm">
+                <table class="table table-striped">
+                    <tr>
+                        <th>Flotte</th>
+                        <th>Position</th>
+                        <th>Aktion</th>
+                        <th></th>
+                        <th></th>
+                    </tr>
+            <?php
+            foreach ($fleets as $fleet):
+            if ($fleet['user_id'] == $userId): ?>
+            <tr class="">
+                <td><a href="#"><i class="icon-search"></i><?= $fleet['fleet'] ?></a></td>
+                <?php
+                if (isset($colony) && $colony['x'] == $fleet['x'] && $colony['y'] == $fleet['y'] ): ?>
+                <td>angedockt</td>
+                <td><?php
+                if (isset($myFleetOrders[$fleet['id']])):
+                    $myOrders = $myFleetOrders[$fleet['id']]['order'];
+                    echo $myFleetOrders[$fleet['id']]['order'];
+                else:
+                    echo 'leer';
+                endif; ?></td>
+                <td>
+                    <?php if ($trade): ?>
+                    <a class="button" href="#">Auftrag zuweisen</a>
+                    <?php else:?>
+                    befehligen
+                    <?php endif;?>
+                </td>
+                <td><a href="#"><i class="icon-remove"></i></a></td>
+                <?php else:?>
+                <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['slot'] ?></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <?php endif;?>
+            </tr>
+            <?php endif;
+            endforeach;?>
+            <!-- <tr>
+                <td colspan="3"><input type="text" value="" id="name" name="name"><input class="btn" type="submit" value="Erstellen" id="send" name="send"></td>
+            </tr>-->
+            </table>
+            </form>
+        </div>
+        <?php if ($cid || $pid || $sid): ?>
+        <div class="span6 well">
+            <h4>fremde Flotten</h4>
+            <table class="table table-striped">
+                <tr>
+                    <th>Flotte</th>
+                    <th>Position</th>
+                    <th>Aktion</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            <?php foreach ($fleets as $fleet):
+                if ( $fleet['user_id'] != $userId): ?>
+                <tr>
+                    <td><?= $fleet['fleet'] ?></td>
+                    <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['slot'] ?></td>
+                    <td></td>
+                </tr>
+                <?php endif;
+            endforeach; ?>
+            </table>
+        </div>
+        <?php endif; ?>
+    </div>
+</div>
