@@ -37,10 +37,10 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
     {
         $sm = $this->getServiceLocator();
 
-//         $galaxyGw = $sm->get('Galaxy\Service\Gateway');
-//         $resourcesGw = $sm->get('Resources\Service\Gateway');
-//         $colony = $galaxyGw->getCurrentColony();
-//         $possessions = $resourcesGw->getPossessionsByColonyId($colony['id']);
+//          $galaxyGw = $sm->get('Galaxy\Service\Gateway');
+//          $resourcesGw = $sm->get('Resources\Service\Gateway');
+//          $colony = $galaxyGw->getCurrentColony();
+//          $possessions = $resourcesGw->getPossessionsByColonyId($colony['id']);
 
         $xhtml = '<div class="row-fluid resource-bar">';
 
@@ -54,16 +54,16 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
         //             echo '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
         //         endif;
         //     endforeach;
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Ticks"><i class="icon-time"></i> 5 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Credits"><i class="resicon-credits">Cr</i> 123456 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Supply"><i class="resicon-supply">Sup</i> 155/322 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Moral"><i class="resicon-moral">Mor</i> gut </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Eisen"><i class="resicon-iron">I</i> 12345 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Wasser"><i class="resicon-water">W</i> 12345 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Silikate"><i class="resicon-silicates">S</i> 12345 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-ena">E</i> 12345 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-aku">A</i> 12345 </a>';
-        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-lho">L</i> 12345 </a>';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Ticks"><i class="icon-time"></i> 5 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Credits"><i class="resicon-credits">Cr</i> 123456 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Supply"><i class="resicon-supply">Sup</i> 155/322 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Moral"><i class="resicon-moral">Mor</i> gut </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Eisen"><i class="resicon-iron">I</i> 12345 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Wasser"><i class="resicon-water">W</i> 12345 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="Silikate"><i class="resicon-silicates">S</i> 12345 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-ena">E</i> 12345 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-aku">A</i> 12345 </a> ';
+        $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="resicon-lho">L</i> 12345 </a> ';
         $xhtml .= '</div>';
 
         return $xhtml;

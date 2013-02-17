@@ -1,6 +1,6 @@
 #fleet .well {display: block;float: right;width:100%;background: #eee  url("../images/layout/gradient_light.png") repeat-x; padding: 3px;}
 #fleet .well.active  {border: 1px solid grey;}
-#fleet .well li a  {white-space: nowrap;}
+#fleet .well li a  {white-space: nowrap;padding: 4px}
 #fleet .well li a span.id,
 #fleet .well li a span.type  {display:none;}
 #fleet .well hr {border-bottom: 1px dotted grey;}
