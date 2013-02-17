@@ -7,19 +7,19 @@ fleets = {
          * first get all available technologies
          */
         $.getJSON(
-            "/galaxy/fleet/getTechnologiesAsJson",
+            "/techtree/json/getTechnologiesAsJson",
             function(items) {
                 $.each(items, function(techId, tech) {
-                    colonyItemHtml = '<li class="colo_item ' + tech.sType + ' roundedCorners" id="colo_' + tech.sType + '_' + techId + '">';
-                    fleetItemHtml  = '<li class="fleet_item ' + tech.sType + ' roundedCorners" id="fleet_' + tech.sType + '_' + techId + '">';
-                    html = '<a href="#" title="' + tech.sTranslated + '">'
-                        + tech.sTranslated
+                    colonyItemHtml = '<li class="colo_item" id="colo_' + tech.type + '_' + techId + '">';
+                    fleetItemHtml  = '<li class="fleet_item" id="fleet_' + tech.type + '_' + techId + '">';
+                    html = '<a href="#" class="btn ' + tech.type + '" title="' + tech.name + '">'
+                        + tech.name
                         + ' <span class="amount">0</span>'
                         + '<span class="id">' + techId + '</span>'
-                        + '<span class="type">' + tech.sType + '</span>'
+                        + '<span class="type">' + tech.type + '</span>'
                         + '</a></li>';
                     
-                    switch (tech.sType) {
+                    switch (tech.type) {
                         case 'ship':
                             $("#colo_category_ships ul.list_ships").append(colonyItemHtml + html);
                             $("#fleet_category_ships ul.list_ships").append(fleetItemHtml + html);
@@ -35,8 +35,8 @@ fleets = {
                             break;
                     }
                     
-                    $('#colo_' + tech.sType + '_' + techId).hide();
-                    $('#fleet_' + tech.sType + '_' + techId).hide();
+                    $('#colo_' + tech.type + '_' + techId).hide();
+                    $('#fleet_' + tech.type + '_' + techId).hide();
                 });
             });
         
@@ -45,13 +45,13 @@ fleets = {
          * update the values
          */
         $.getJSON(
-            "/galaxy/fleet/getTechtreeAsJson",
+            "/techtree/json/getTechtreeAsJson",
             function (items) {
                 $.each(items, function(techId, tech) {
-                    $('#colo_' + tech.sType + '_' + techId + ' .amount').html(tech.nCount);
-                    count = $('#colo_' + tech.sType + '_' + techId + ' .amount').html();
+                    $('#colo_' + tech.type + '_' + techId + ' .amount').html(tech.count);
+                    count = $('#colo_' + tech.type + '_' + techId + ' .amount').html();
                     if (count > 0) {
-                        $('#colo_' + tech.sType + '_' + techId).show();
+                        $('#colo_' + tech.type + '_' + techId).show();
                     }
                 });
             }
@@ -62,7 +62,7 @@ fleets = {
          * update the values
          */
         $.getJSON(
-            "/galaxy/fleet/getFleetTechnologiesAsJson",
+            "/fleet/json/getFleetTechnologiesAsJson",
             function (items) {
                 $.each(items, function(techId, tech) {
                     $('#fleet_' + tech.sType + '_' + techId + ' .amount').html(tech.nCount);
@@ -79,32 +79,32 @@ fleets = {
          * - will select category
          * - will select side
          */
-        $("#fleet_category_ships li").click(function(e) {
+        $("#fleet_category_ships a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_ships');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_ships li").click(function(e) {
+        $("#colo_category_ships a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_ships');
             fleets.selectSide('colony');
         });
-        $("#fleet_category_crew li").click(function(e) {
+        $("#fleet_category_crew a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_crew');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_crew li").click(function(e) {
+        $("#colo_category_crew a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_crew');
             fleets.selectSide('colony');
         });
-        $("#fleet_category_cargo li").click(function(e) {
+        $("#fleet_category_cargo a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_cargo');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_cargo li").click(function(e) {
+        $("#colo_category_cargo a").click(function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_cargo');
             fleets.selectSide('colony');
@@ -243,7 +243,7 @@ fleets = {
     addToFleet : function(tech, amount, asCargo) {
         fleet = $("#fleet_id").html();
 
-        $.post("/galaxy/fleet/addToFleet/", {
+        $.post("/fleet/json/addToFleet/", {
             'id' : fleet,
             'tech' : tech,
             'amount' : amount,
@@ -311,7 +311,7 @@ fleets = {
             oldFleetAmount = parseInt($(".fleet_item.active span.amount").html());
             if (oldFleetAmount == NaN) {oldFleetAmount=0;}
             $(".fleet_item.active span.amount").html(oldFleetAmount + delta);
-            if (oldFleetAmount+delta > 0) { $(".fleet_item.active").show() }
+            if (oldFleetAmount+delta > 0) { $(".fleet_item.active").show(); }
         }
         
         $("#fleet li a span.amount").each(function(index) {

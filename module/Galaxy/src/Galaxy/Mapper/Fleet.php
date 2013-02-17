@@ -10,6 +10,7 @@ class Fleet implements EntityInterface
     public $user_id;
     public $x;
     public $y;
+    public $spot;
 
     public function toArray()
     {
@@ -18,7 +19,8 @@ class Fleet implements EntityInterface
             'name' => $this->name,
             'user_id' => $this->user_id,
             'x' => $this->x,
-            'y' => $this->y
+            'y' => $this->y,
+            'spot' => $this->spot
         );
     }
 }

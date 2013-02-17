@@ -62,6 +62,8 @@ class FleetController extends AbstractActionController
         $form = new \Galaxy\Form\Fleet();
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
+        $resourcesGw = $sm->get('Resources\Service\Gateway');
+        $resources = $resourcesGw->getResources();
 
         if ($this->getRequest()->isPost()) {
             $form->setData($this->getRequest()->getPost());
@@ -69,29 +71,45 @@ class FleetController extends AbstractActionController
                 $newEntity = $form->getData();
                 $gw->saveFleet($newEntity);
                 $form = new \Galaxy\Form\Fleet();
-                return new ViewModel(
-                    array(
-                        'form' => $form,
-                        'success' => true
-                    )
-                );
-            } else {
-                return new ViewModel(
-                    array(
-                        'form' => $form
-                    )
-                );
+                $success = true;
             }
-        } else {
-            return new ViewModel(
-                array(
-                    'form' => $form
-                )
-            );
         }
-    }
 
-    public function deleteFleetAction() {
+        /// set view variable (visible foreign fleets too)
+        $fid = $this->params()->fromRoute('fid');
+        $fleet = $fid ? $gw->getFleet($fid) : null;
 
+        $fleetIsInColonyOrbit = false;
+
+        $userId = 3;
+
+        if ($fleet && $fleet->user_id == $userId) {
+            // own fleet
+            $colony = $gw->getColonyByCoords(array($fleet['x'],$fleet['y'],$fleet['spot']));
+            if ($colony) {
+                $fleetIsInColonyOrbit = true;
+                //get Colony Id
+                $colonyId = $colony['id'];
+            }
+            #$commands = $fleet->getOrders();
+        }
+
+        return new ViewModel(
+            array(
+                'form' => $form,
+                'fleet' => $fleet,
+                'fleetIsInColonyOrbit' => $fleetIsInColonyOrbit,
+//                 'ships' => $ships,
+//                 'advisors' => $advisors,
+//                 'techs' => $buildingsAndResearches,
+//                 'resources' => $resources,
+//                 'fleetShips' => $fleetShips,
+//                 'fleetCrew' => $fleetCrew,
+//                 'fleetCargoShips' => $fleetCargoShips,
+//                 'fleetPassengers' => $fleetPassengers,
+//                 'fleetCargoTechs' => $fleetCargoTechs,
+//                 'fleetCargoResources' => $fleetCargoResources,
+            )
+        );
     }
 }

@@ -5,6 +5,7 @@ return array(
             'Galaxy\Controller\Index' => 'Galaxy\Controller\IndexControllerFactory',
             'Galaxy\Controller\Fleet' => 'Galaxy\Controller\FleetControllerFactory',
             'Galaxy\Controller\System' => 'Galaxy\Controller\SystemControllerFactory',
+            'Galaxy\Controller\Json' => 'Galaxy\Controller\JsonControllerFactory',
         ),
     ),
     'controller_plugins' => array(
@@ -15,9 +16,12 @@ return array(
     'router' => array(
         'routes' => array(
             'fleet' => array(
-                'type' => 'Literal',
+                'type' => 'Segment',
                 'options' => array(
-                    'route' => '/fleet',
+                    'route' => '/fleet[/:fid]',
+                    'constraints' => array(
+                        'fid' => '[0-9]+',
+                    ),
                     'defaults' => array(
                         '__NAMESPACE__' => 'Galaxy\Controller',
                         'controller' => 'Fleet',
@@ -25,6 +29,24 @@ return array(
                     ),
                 ),
                 'may_terminate' => true,
+                'child_routes' => array(
+                    'default' => array(
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/:controller[/:action[/:id]]',
+                            'constraints' => array(
+                                'controller' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'id' => '[0-9]*',
+                            ),
+                            'defaults' => array(
+                                '__NAMESPACE__' => 'Galaxy\Controller',
+                                'controller' => 'Fleet',
+                                'action' => 'json',
+                            )
+                        )
+                    ),
+                ),
              ),
             'fleets' => array(
                 'type' => 'Literal',

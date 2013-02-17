@@ -151,12 +151,16 @@ $(document).ready(function () {
         $('#system #fleetActions').hide();
     });
     
-    $("#system #switchFleetsLayerDisplay").click(function(e) {
+    $("#system #toggleFleetsLayer").click(function(e) {
         $('#system #fleetsLayer .fleet').toggle();
     });
     
-    $("#system #switchGridLayerDisplay").click(function(e) {
+    $("#system #toggleGridLayer").click(function(e) {
         $('#system #gridLayer').toggle();
+    });
+    
+    $("#system #toggleSystemLayer").click(function(e) {
+        $('#system #systemLayer').toggle();
     });
     
     $("form#fleetActions button").click(function(e){

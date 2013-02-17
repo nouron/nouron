@@ -117,5 +117,71 @@ class JsonController extends AbstractActionController
         $result->setTerminal(true);
         return $result;
     }
+
+    /**
+     *
+     */
+    public function gettechtreeasjsonAction()
+    {
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Techtree\Service\Gateway');
+
+        $colonyId = $this->params()->fromRoute('id');
+        if (empty($colonyId)) {
+
+            $galaxyGw = $sm->get('Galaxy\Service\Gateway');
+            $colony = $galaxyGw->getCurrentColony();
+            $colonyId = $colony['id'];
+
+        }
+        $coloTechtree = $gw->getTechtreeByColonyId($colonyId);
+        return new JsonModel($coloTechtree);
+    }
+
+    /**
+     *
+     */
+    public function gettechnologiesasjsonAction()
+    {
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Techtree\Service\Gateway');
+        $techs = $gw->getTechnologies()->toArray('id');
+
+//         foreach ($techs as $id => $tech) {
+//             $techs[$id]['translated'] = $this->translate( $tech['name'] );
+//         }
+
+        return new JsonModel($techs);
+    }
+
+    /**
+     * @todo
+     * @return JSON
+     */
+    public function addtofleetAction()
+    {
+        $fleetId = (int) $this->params()->fromRoute('id');
+        $techId = (int) $this->params()->fromQuery('tech');
+        $resId  = (int) $this->params()->fromQuery('res');
+        $amount = (int) $this->params()->fromQuery('amount');
+        $isCargo = (int) $this->params()->fromQuery('isCargo');
+
+        //get Colony Id
+        $colonyId = 0;
+
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Techtree\Service\Gateway');
+        $transferred = $gw->transferTechnology($colonyId, $fleetId, $techId, $amount, $isCargo);
+
+        $data = array(
+            'colonyId' => $colonyId,
+            'fleetId' => $fleetId,
+            'techId' => $techId,
+            'isCargo' => $isCargo,
+            'transferred' => $transferred
+        );
+
+        return new JsonModel($data);
+    }
 }
 

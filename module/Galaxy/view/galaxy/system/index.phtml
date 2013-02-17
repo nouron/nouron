@@ -7,6 +7,8 @@
     </ul>
 </div>
 
+
+
 <?php
 $scale  = $config['scale'];
 $offset = $config['offset'];
@@ -14,6 +16,7 @@ $max = $scale * $config['range'];
 $radius  = round($config['range']/2); ?>
 
 <div id="system">
+<?= $this->partial('galaxy/_switch_layer_display') ?>
 <div class="hidden">
     <div id="data_xMin"><?= $system['x'] - $radius;?></div>
     <div id="data_xMax"><?= $system['x'] + $radius;?></div>
@@ -55,11 +58,6 @@ $radius  = round($config['range']/2); ?>
     </ul>
 </div><!--/span-->
 <div class="span6">
-
-<div>
-<a href="#" id="switchGridLayerDisplay">Gitter an/aus</a>
-<a href="#" id="switchFleetsLayerDisplay">Flotten an/aus</a>
-</div>
 
 <div id="parallax">
     <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/img/<?= $system['background_image_url'] ?>);"></div>

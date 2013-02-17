@@ -32,7 +32,7 @@
             foreach ($fleets as $fleet):
             if ($fleet['user_id'] == $userId): ?>
             <tr class="">
-                <td><a href="#"><i class="icon-search"></i><?= $fleet['fleet'] ?></a></td>
+                <td><a href="<?= $this->url('fleet', array('fid' => $fleet['id'])) ?>"><i class="icon-search"></i><?= $fleet['fleet'] ?></a></td>
                 <?php
                 if (isset($colony) && $colony['x'] == $fleet['x'] && $colony['y'] == $fleet['y'] ): ?>
                 <td>angedockt</td>
@@ -52,7 +52,7 @@
                 </td>
                 <td><a href="#"><i class="icon-remove"></i></a></td>
                 <?php else:?>
-                <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['slot'] ?></td>
+                <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['spot'] ?></td>
                 <td></td>
                 <td></td>
                 <td></td>
@@ -81,7 +81,7 @@
                 if ( $fleet['user_id'] != $userId): ?>
                 <tr>
                     <td><?= $fleet['fleet'] ?></td>
-                    <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['slot'] ?></td>
+                    <td><?= $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['spot'] ?></td>
                     <td></td>
                 </tr>
                 <?php endif;

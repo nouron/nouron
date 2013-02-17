@@ -21,6 +21,7 @@ $this->inlineScript()->appendFile($basePath . '/js/jquery.event.frame.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.parallax.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/nouron.js');
 $this->inlineScript()->appendFile($basePath . '/js/galaxy.js');
+$this->inlineScript()->appendFile($basePath . '/js/fleets.js');
 
 echo $this->doctype();
 ?>
@@ -81,5 +82,10 @@ echo $this->doctype();
         <hr />
     </div><!-- /container -->
     <?php echo $this->inlineScript(); ?>
+    <script  type="text/javascript">
+    $(document).ready(function() {
+        fleets.init();
+    });
+    </script>
   </body>
 </html>

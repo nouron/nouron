@@ -29,7 +29,7 @@ class Gateway extends \Nouron\Service\Gateway
      */
     public function getFleet($fleetId)
     {
-        $this->_validateId($colonyId);
+        $this->_validateId($fleetId);
         return $this->getTable('fleet')->getEntity($fleetId);
     }
 
@@ -133,7 +133,7 @@ class Gateway extends \Nouron\Service\Gateway
      * @deprecated since v0.2
      * @param unknown $userId
      */
-    public function getMainColony($userId)
+    public function getMaicolony_id($userId)
     {
         return $this->getPrimeColony();
     }
@@ -511,145 +511,148 @@ class Gateway extends \Nouron\Service\Gateway
 //         return $fleet->addOrder($order, $destination, $additionalData);
 //     }
 
-//     /**
-//      * Transfer an amount of technology from colony to fleet.
-//      * (Vice versa when amount is negative!)
-//      *
-//      * @param  int|object   $colony
-//      * @param  int|object   $fleet
-//      * @param  integer      $techId
-//      * @param  integer      $amount
-//      * @param  boolean      $isCargo       OPTIONAL set true if use fleet cargo (not fleet itself)
-//      * @param  boolean      $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
-//      *
-//      * @return int          Count of transfered Technologies
-//      */
-//     public function transferTechnology($colony, $fleet, $techId, $amount, $isCargo = false, $isTradeOffer = false)
-//     {
-//         if (is_numeric($colony)) {
-//             $colony = $this->getColony($colony);
-//         }
+    /**
+     * Transfer an amount of technology from colony to fleet.
+     * (Vice versa when amount is negative!)
+     *
+     * @param  int|object   $colony
+     * @param  int|object   $fleet
+     * @param  integer      $techId
+     * @param  integer      $amount
+     * @param  boolean      $isCargo       OPTIONAL set true if use fleet cargo (not fleet itself)
+     * @param  boolean      $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
+     *
+     * @return int          Count of transfered Technologies
+     */
+    public function transferTechnology($colony, $fleet, $techId, $amount, $isCargo = false, $isTradeOffer = false)
+    {
+        if (is_numeric($colony)) {
+            $colony = $this->getColony($colony);
+        }
 
-//         if (is_numeric($fleet)) {
-//             $fleet = $this->getFleet($fleet);
-//         }
+        if (is_numeric($fleet)) {
+            $fleet = $this->getFleet($fleet);
+        }
 
-//         if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
+        $colonyCoords = array($colony['x'],$colony['y'],$colony['spot']);
+        $fleetCoords = array($fleet['x'],$fleet['y'],$fleet['spot']);
 
-//             if ( !$isTradeOffer ) {
-//                 $techtreeGw   = new Techtree_Model_Gateway();
-//                 $techOnColony = $techtreeGw->getPossession(array('nColony' => $colony->nId, 'nTechnology' => $techId));
-//             } else {
-//                 $tradeGw      = new Trade_Model_Gateway();
-//                 $techOnColony = $tradeGw->getTechnologyOffer($colony->nId, $techId);
-//                 if ( $techOnColony == null) {
-//                     return 0;
-//                 }
-//             }
+        if (serialize($colonyCoords) == serialize($fleetCoords)) {
 
-//             $techInFleet  = $this->getFleetTechnology(array('nFleet' => $fleet->nId, 'nTechnology' => $techId, 'bIsCargo' => $isCargo));
+            if ( !$isTradeOffer ) {
+                $techtreeGw   = new Techtree_Model_Gateway();
+                $techOnColony = $techtreeGw->getPossession(array('colonyId' => $colony['id'], 'tech_id' => $techId));
+            } else {
+                $tradeGw      = new Trade_Model_Gateway();
+                $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
+                if ( $techOnColony == null) {
+                    return 0;
+                }
+            }
 
-//             if ($amount >= 0 ) {
-//                 // check if there are enough techs on the colony:
-//                 if ($amount > $techOnColony->nCount) {
-//                     // only remove the count of techs that really exists on the colony;
-//                     $amount = $techOnColony->nCount;
-//                 }
-//             } else {
-//                 // check if there are enough techs in the fleet:
-//                 if ($amount < -$techInFleet->nCount) {
-//                     // only remove the count of techs that really exists in the fleet:
-//                     $amount = -$techInFleet->nCount;
-//                 }
-//             }
+            $techInFleet  = $this->getFleetTechnology(array('fleet_id' => $fleet['id'], 'tech_id' => $techId, 'bIsCargo' => $isCargo));
 
-//             try {
-//                 $db = $this->getDbTable('fleets')->getAdapter();
-//                 $db->beginTransaction();
-//                 $techOnColony->nCount = $techOnColony->nCount - $amount;
-//                 $techOnColony->save();
-//                 $techInFleet->nCount = $techInFleet->nCount + $amount;
-//                 $techInFleet->save();
+            if ($amount >= 0 ) {
+                // check if there are enough techs on the colony:
+                if ($amount > $techOnColony->count) {
+                    // only remove the count of techs that really exists on the colony;
+                    $amount = $techOnColony->count;
+                }
+            } else {
+                // check if there are enough techs in the fleet:
+                if ($amount < -$techInFleet->count) {
+                    // only remove the count of techs that really exists in the fleet:
+                    $amount = -$techInFleet->count;
+                }
+            }
 
-//                 $db->commit();
+            try {
+                $db = $this->getTable('fleets')->getAdapter();
+                $db->beginTransaction();
+                $techOnColony->count = $techOnColony->count - $amount;
+                $techOnColony->save();
+                $techInFleet->count = $techInFleet->count + $amount;
+                $techInFleet->save();
 
-//             } catch (Exception $e) {
-//                 $db->rollBack();
-//                 throw new Galaxy_Model_Exception( $e->getMessage() );
-//             }
+                $db->commit();
 
-//             return abs($amount);
-//         }
-//     }
+            } catch (Exception $e) {
+                $db->rollBack();
+                throw new Galaxy_Model_Exception( $e->getMessage() );
+            }
 
-//     /**
-//      * Transfer an amount of resources from colony to fleet.
-//      * (Vice versa when amount is negative!)
-//      *
-//      * @param  int|object  $colony
-//      * @param  int|object  $fleet
-//      * @param  integer     $resId
-//      * @param  integer     $amount
-//      * @param  boolean     $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
-//      * @return int    Count of transfered res
-//      */
-//     public function transferResource($colony, $fleet, $resId, $amount, $isTradeOffer = false)
-//     {
-//         if (is_numeric($colony)) {
-//             $colony = $this->getColony($colony);
-//         }
+            return abs($amount);
+        }
+    }
 
-//         if (is_numeric($fleet)) {
-//             $fleet = $this->getFleet($fleet);
-//         }
+    /**
+     * Transfer an amount of resources from colony to fleet.
+     * (Vice versa when amount is negative!)
+     *
+     * @param  int|object  $colony
+     * @param  int|object  $fleet
+     * @param  integer     $resId
+     * @param  integer     $amount
+     * @param  boolean     $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
+     * @return int    Count of transfered res
+     */
+    public function transferResource($colony, $fleet, $resId, $amount, $isTradeOffer = false)
+    {
+        if (is_numeric($colony)) {
+            $colony = $this->getColony($colony);
+        }
 
-//         if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
+        if (is_numeric($fleet)) {
+            $fleet = $this->getFleet($fleet);
+        }
 
-//             if ( !$isTradeOffer ) {
-//                 $resGw       = new Resources_Model_Gateway();
-//                 $resOnColony = $resGw->getColonyResource(array('nColony' => $colony->nId, 'nResource' => $resId));
-//             } else {
-//                 $tradeGw     = new Trade_Model_Gateway();
-//                 $resOnColony = $tradeGw->getResourceOffer($colony->nId, $resId);
-//                 if ( $resOnColony == null) {
-//                     return 0;
-//                 }
-//             }
-//             $resInFleet  = $this->getFleetResource(array('nFleet' => $fleet->nId, 'nResource' => $resId));
+        if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
 
-//             if ($amount >= 0 ) {
-//                 // check if there are enough res on the colony:
-//                 if ($amount > $resOnColony->nAmount) {
-//                     // only remove the count of res that really exists in the fleet:
-//                     $amount = $resOnColony->nAmount;
-//                 }
-//             } else {
-//                 // check if there are enough res in the fleet:
-//                 if ($amount < -$resInFleet->nAmount) {
-//                     // only remove the count of res that really exists in the fleet:
-//                     $amount = -$resInFleet->nAmount;
-//                 }
-//             }
+            if ( !$isTradeOffer ) {
+                $resGw       = new Resources_Model_Gateway();
+                $resOnColony = $resGw->getColonyResource(array('colony_id' => $colony['id'], 'resource_id' => $resId));
+            } else {
+                $tradeGw     = new Trade_Model_Gateway();
+                $resOnColony = $tradeGw->getResourceOffer($colony['id'], $resId);
+                if ( $resOnColony == null) {
+                    return 0;
+                }
+            }
+            $resInFleet  = $this->getFleetResource(array('fleet_id' => $fleet['id'], 'resource_id' => $resId));
 
-//             try {
-//                 $db = $this->getDbTable('fleets')->getAdapter();
-//                 $db->beginTransaction();
+            if ($amount >= 0 ) {
+                // check if there are enough res on the colony:
+                if ($amount > $resOnColony['amount']) {
+                    // only remove the count of res that really exists in the fleet:
+                    $amount = $resOnColony['amount'];
+                }
+            } else {
+                // check if there are enough res in the fleet:
+                if ($amount < -$resInFleet['amount']) {
+                    // only remove the count of res that really exists in the fleet:
+                    $amount = -$resInFleet['amount'];
+                }
+            }
 
-//                 $resOnColony->nAmount = $resOnColony->nAmount - $amount;
-//                 $resOnColony->save();
-//                 $resInFleet->nAmount = $resInFleet->nAmount + $amount;
-//                 $resInFleet->save();
+            try {
+                $db = $this->getTable('fleets')->getAdapter();
+                $db->beginTransaction();
 
-//                 $db->commit();
+                $resOnColony['amount'] = $resOnColony['amount'] - $amount;
+                $resOnColony->save();
+                $resInFleet['amount'] = $resInFleet['amount'] + $amount;
+                $resInFleet->save();
 
-//             } catch (Exception $e) {
-//                 $db->rollBack();
-//                 throw new Galaxy_Model_Exception( $e->getMessage() );
-//             }
+                $db->commit();
 
-//             return abs($amount);
-//         }
-//     }
+            } catch (Exception $e) {
+                $db->rollBack();
+                throw new Exception( $e->getMessage() );
+            }
+
+            return abs($amount);
+        }
+    }
 
 //     /**
 //      * Get one specific technology from a fleet specified by given compound primary key.
@@ -658,12 +661,12 @@ class Gateway extends \Nouron\Service\Gateway
 //      * tech is not in the fleet!
 //      * @TODO: proove this!
 //      *
-//      * @param  array $keys  The compound primary key in form: array('nFleet' => 1, 'nTechnology' => 2)
+//      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
 //      * @return Galaxy_Model_Fleets_Technology
 //      */
 //     public function getFleetTechnology(array $keys)
 //     {
-//         if (!isset($keys['nFleet']) || !isset($keys['nTechnology'])) {
+//         if (!isset($keys['fleet_id']) || !isset($keys['tech_id'])) {
 //             throw new Techtree_Model_Exception('Not a valid compound primary key.');
 //         }
 
@@ -682,30 +685,28 @@ class Gateway extends \Nouron\Service\Gateway
 //         return new Galaxy_Model_Fleets_Technology($row, $this);
 //     }
 
-//     /**
-//      * Get all ships and other technologies from a fleet.
-//      *
-//      * @param $where
-//      * @return Galaxy_Model_Fleets_Technologies
-//      */
-//     public function getFleetTechnologies($where)
-//     {
-//         $dbTable = $this->getDbView('Fleets_Technologies');
-//         $rowset = $dbTable->fetchAll($where);
-//         $result = new Galaxy_Model_Fleets_Technologies($rowset, $this);
-//         return $result;
-//     }
+    /**
+     * Get all ships and other technologies from a fleet.
+     *
+     * @param $where
+     * @return Galaxy_Model_Fleets_Technologies
+     */
+    public function getFleetTechnologies($where)
+    {
+        $table = $this->gettable('fleettechnology');
+        return $table->fetchAll($where);
+    }
 
 //     /**
 //      * Get one specific resource from a fleet specified by given compound primary key.
 //      * One resource from a fleet - not more!
 //      *
-//      * @param  array $keys  The compound primary key in form: array('nFleet' => 1, 'nResource' => 2)
+//      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'resource_id' => 2)
 //      * @return Galaxy_Model_Fleets_Resource
 //      */
 //     public function getFleetResource(array $keys)
 //     {
-//         if (!isset($keys['nFleet']) || !isset($keys['nResource'])) {
+//         if (!isset($keys['fleet_id']) || !isset($keys['resource_id'])) {
 //             throw new Techtree_Model_Exception('Not a valid compound primary key.');
 //         }
 
@@ -748,61 +749,68 @@ class Gateway extends \Nouron\Service\Gateway
 //             return new Galaxy_Model_Fleets_Orders(array(), $this);
 //         }
 
-//         $table = $this->getDbTable('Fleets_Orders');
+//         $table = $this->getTable('fleetorder');
 //         if (!$past) {
 //             $tick = Zend_Registry::get('Tick');
-//             $orders = $table->fetchAll("nFleet IN ($fleets) AND nTick >= $tick");
+//             $orders = $table->fetchAll("fleet_id IN ($fleets) AND tick >= $tick");
 //         } else {
-//             $orders = $table->fetchAll("nFleet IN ($fleets)");
+//             $orders = $table->fetchAll("fleet_id IN ($fleets)");
 //         }
 
 //         return new Galaxy_Model_Fleets_Orders($orders, $this);
 //     }
 
-//     /**
-//      * Get the planetary object by its coords.
-//      * (Colony spot is ignored by comparison)
-//      *
-//      * @param  array $coords
-//      * @return Galaxy_Model_System_Object|null
-//      */
-//     public function getSystemObjectByCoords(array $coords)
-//     {
-//         $x = $coords[0];
-//         $y = $coords[1];
-//         $view = $this->getDbView('system_objects');
-//         $row = $view->fetchRow("X = $x AND Y = $y");
-//         if (!empty($row)) {
-//             return new Galaxy_Model_System_Object($row, $this);
-//         }
-//         // if none found:
-//         return null;
-//     }
+    /**
+     * Get the planetary object by its coords.
+     * (Colony spot is ignored by comparison)
+     *
+     * @param  array $coords
+     * @return Galaxy_Model_System_Object|null
+     */
+    public function getSystemObjectByCoords(array $coords)
+    {
+        $x = $coords[0];
+        $y = $coords[1];
+        $table = $this->getTable('systemobject');
+        return $table->fetchRow("X = $x AND Y = $y");
+    }
 
-//     /**
-//      * Get a colony object by its coords
-//      *
-//      * @param  array $coords
-//      * @return Galaxy_Model_Colony|null
-//      */
-//     public function getColonyByCoords(array $coords)
-//     {
-//         $planetary = $this->getSystemObjectByCoords($coords);
-//         if (!empty($planetary)) {
-//             // get colos on the found planetary
-//             // (although it is a rowset only one row is possible!)
-//             $colos = $this->getColoniesBySystem_ObjectId($planetary->nId);
-//             while ($colos->valid()) {
-//                 // compare colony coords with given coords
-//                 if (serialize($colos->getCoords()) == serialize($coords)) {
-//                     return new Galaxy_Model_Colony($colos->current()->toArray(), $this);
-//                 }
-//                 $colos->next();
-//             }
-//         }
-//         // return null if no colony was found
-//         return null;
-//     }
+    /**
+     * Get a colony object by its coords
+     *
+     * @param  array $coords
+     * @return Galaxy_Model_Colony|null
+     */
+    public function getColonyByCoords(array $coords)
+    {
+        $planetary = $this->getSystemObjectByCoords($coords);
+        if (!empty($planetary)) {
+            // get colos on the found planetary
+            // (although it is a rowset only one row is possible!)
+            $colos = $this->getColoniesBySystemObjectId($planetary->id);
+            foreach ($colos as $colo) {
+                // compare colony coords with given coords
+                if (serialize(array($colo['x'],$colo['y'],$colo['spot']) == serialize($coords))) {
+                    return $colo;
+                }
+            }
+        }
+        // return null if no colony was found
+        return null;
+    }
+
+    /**
+     * Get all colonies from a planetary.
+     *
+     * @param  integer    $planetaryId
+     * @return Galaxy_Model_Colonies
+     */
+    public function getColoniesBySystemObjectId($planetaryId)
+    {
+        $this->_validateId($planetaryId);
+        $table = $this->getTable('colony');
+        return $table->fetchAll("system_object_id = $planetaryId");
+    }
 
 //     /**
 //      *
@@ -815,7 +823,7 @@ class Gateway extends \Nouron\Service\Gateway
 
 //         $cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
 //         if (!($result = $cache->load($cacheName))) {
-//             $dbTable = $this->getDbTable('Fleets_Orders');
+//             $dbTable = $this->getTable('fleetorder');
 //             $rowset = $dbTable->fetchAll($where, $order, $count, $offset);
 
 //             $result = new Galaxy_Model_Fleets_Orders($rowset, $this);
@@ -839,7 +847,7 @@ class Gateway extends \Nouron\Service\Gateway
 //             $sinceTick = $lastTick;
 //         }
 
-//         return $this->getOrders("nTick >= $sinceTick AND nTick <= $lastTick AND sOrder <> 'move' AND bProcessed = 1");
+//         return $this->getOrders("tick >= $sinceTick AND tick <= $lastTick AND sOrder <> 'move' AND bProcessed = 1");
 //     }
 
 //     /**
@@ -875,9 +883,9 @@ class Gateway extends \Nouron\Service\Gateway
 //                 // set innn event:
 //                 $data = array(
 //                         'nUser' => $userId,
-//                         'nTick' => $tick,
+//                         'tick' => $tick,
 //                         'sEvent' => $event,
-//                         'sParameters' => serialize(array('nColony' => $orderData['nColony']))
+//                         'sParameters' => serialize(array('colony_id' => $orderData['colony_id']))
 //                 );
 
 //                 $innnEvent = $innnGw->createEvent($data);
