@@ -242,7 +242,7 @@ fleets = {
      */
     addToFleet : function(tech, amount, asCargo) {
         fleet = $("#fleet_id").html();
-
+        
         $.post("/fleet/json/addToFleet/", {
             'id' : fleet,
             'tech' : tech,

@@ -19,21 +19,20 @@ class JsonController extends AbstractActionController
      */
     public function addtofleetAction()
     {
-        $fleetId = (int) $this->params()->fromRoute('id');
+        $fleetId = (int) $this->params()->fromPost('id');
         if (empty($fleetId)) {
             $fleetId = 10; // TODO: get from session
         }
-        $techId = (int) $this->params()->fromQuery('tech');
-        $resId  = (int) $this->params()->fromQuery('res');
-        $amount = (int) $this->params()->fromQuery('amount');
-        $isCargo = (int) $this->params()->fromQuery('isCargo');
+
+        $techId  = (int) $this->params()->fromPost('tech');
+        $amount  = (int) $this->params()->fromPost('amount');
+        $isCargo = (int) $this->params()->fromPost('isCargo');
 
         //get Colony Id
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
         $colony = $gw->getCurrentColony();
-        $colonyId = $colony['id'];
-        #$fleetId = 17;
+        $colonyId = (int) $colony['id'];
 
         $transferred = $gw->transferTechnology($colonyId, $fleetId, $techId, $amount, $isCargo);
 

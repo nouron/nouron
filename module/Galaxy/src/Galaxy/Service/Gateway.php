@@ -512,6 +512,18 @@ class Gateway extends \Nouron\Service\Gateway
 //     }
 
     /**
+     *
+     * @param array $primaryKey
+     * @return mixed
+     */
+    public function getColonyTechnology(array $primaryKey)
+    {
+        $table = $this->getTable('colonytechnology');
+        $possession = $table->fetchAll($primaryKey);
+        return $possession->current();
+    }
+
+    /**
      * Transfer an amount of technology from colony to fleet.
      * (Vice versa when amount is negative!)
      *
@@ -534,51 +546,50 @@ class Gateway extends \Nouron\Service\Gateway
             $fleet = $this->getFleet($fleet);
         }
 
-        $colonyCoords = array($colony['x'],$colony['y'],$colony['spot']);
-        $fleetCoords = array($fleet['x'],$fleet['y'],$fleet['spot']);
+        $colonyCoords = array($colony['x'],$colony['y']);#,$colony['spot']);
+        $fleetCoords = array($fleet['x'],$fleet['y']);#,$fleet['spot']);
 
         if (serialize($colonyCoords) == serialize($fleetCoords)) {
 
             if ( !$isTradeOffer ) {
-                $techtreeGw   = new Techtree_Model_Gateway();
-                $techOnColony = $techtreeGw->getPossession(array('colonyId' => $colony['id'], 'tech_id' => $techId));
+                $techOnColony = $this->getColonyTechnology(array('colony_id' => $colony['id'], 'tech_id' => $techId));
             } else {
-                $tradeGw      = new Trade_Model_Gateway();
-                $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
-                if ( $techOnColony == null) {
-                    return 0;
-                }
+//                 $tradeGw      = new Trade_Model_Gateway();
+//                 $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
+//                 if ( $techOnColony == null) {
+//                     return 0;
+//                 }
             }
 
-            $techInFleet  = $this->getFleetTechnology(array('fleet_id' => $fleet['id'], 'tech_id' => $techId, 'bIsCargo' => $isCargo));
+            $techInFleet  = $this->getFleetTechnology(array('fleet_id' => $fleet['id'], 'tech_id' => $techId, 'is_cargo' => $isCargo));
 
             if ($amount >= 0 ) {
                 // check if there are enough techs on the colony:
-                if ($amount > $techOnColony->count) {
+                if ($amount > $techOnColony['count']) {
                     // only remove the count of techs that really exists on the colony;
-                    $amount = $techOnColony->count;
+                    $amount = $techOnColony['count'];
                 }
             } else {
                 // check if there are enough techs in the fleet:
-                if ($amount < -$techInFleet->count) {
+                if ($amount < -$techInFleet['count']) {
                     // only remove the count of techs that really exists in the fleet:
-                    $amount = -$techInFleet->count;
+                    $amount = -$techInFleet['count'];
                 }
             }
 
             try {
-                $db = $this->getTable('fleets')->getAdapter();
+                $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
-                $techOnColony->count = $techOnColony->count - $amount;
+                $techOnColony['count'] = $techOnColony['count'] - $amount;
                 $techOnColony->save();
-                $techInFleet->count = $techInFleet->count + $amount;
+                $techInFleet['count'] = $techInFleet['count'] + $amount;
                 $techInFleet->save();
 
                 $db->commit();
 
             } catch (Exception $e) {
                 $db->rollBack();
-                throw new Galaxy_Model_Exception( $e->getMessage() );
+                throw new Exception( $e->getMessage() );
             }
 
             return abs($amount);
@@ -654,36 +665,22 @@ class Gateway extends \Nouron\Service\Gateway
         }
     }
 
-//     /**
-//      * Get one specific technology from a fleet specified by given compound primary key.
-//      * One technology from a fleet - not more!
-//      * ATTENTION: This function allways return a fleets_technology object even if the
-//      * tech is not in the fleet!
-//      * @TODO: proove this!
-//      *
-//      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
-//      * @return Galaxy_Model_Fleets_Technology
-//      */
-//     public function getFleetTechnology(array $keys)
-//     {
-//         if (!isset($keys['fleet_id']) || !isset($keys['tech_id'])) {
-//             throw new Techtree_Model_Exception('Not a valid compound primary key.');
-//         }
-
-//         $table = $this->getDbView('Fleets_Technologies');
-//         foreach ($table->info('primary') as $id) {
-//             $val = $keys[$id];
-//             $this->_validateId($val);
-//             $sql[] = "$id = $val";
-//         }
-//         $result = $table->fetchAll($sql);
-//         if ($result->valid()) {
-//             $row = $result->current();
-//         } else {
-//             $row = $keys;
-//         }
-//         return new Galaxy_Model_Fleets_Technology($row, $this);
-//     }
+    /**
+     * Get one specific technology from a fleet specified by given compound primary key.
+     * One technology from a fleet - not more!
+     * ATTENTION: This function allways return a fleets_technology object even if the
+     * tech is not in the fleet!
+     * @TODO: proove this!
+     *
+     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
+     * @return Galaxy_Model_Fleets_Technology
+     */
+    public function getFleetTechnology(array $keys)
+    {
+        $table = $this->getTable('fleettechnology');
+        $fleettech = $table->fetchAll($keys);
+        return $fleettech->current();
+    }
 
     /**
      * Get all ships and other technologies from a fleet.

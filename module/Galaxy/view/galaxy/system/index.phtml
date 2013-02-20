@@ -34,7 +34,7 @@ $radius  = round($config['range']/2); ?>
             if ($fleet['user_id'] == $userId):
         ?>
         <li id="fid-<?= $fleet['id']?>">
-            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['slot']?>)" href="#">
+            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['spot']?>)" href="#">
                 <i class="icon-plane"></i> <?= $fleet['fleet'] ?>
             </a>
         </li>
