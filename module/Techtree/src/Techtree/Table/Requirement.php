@@ -13,7 +13,7 @@ class Requirement extends AbstractTable
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Techtree\Mapper\Requirement());
+        $this->resultSetPrototype = new ResultSet(new \Techtree\Entity\Requirement());
         $this->initialize();
     }
 }

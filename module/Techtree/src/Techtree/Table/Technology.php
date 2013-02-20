@@ -12,7 +12,7 @@ class Technology extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Techtree\Mapper\Technology());
+        $this->resultSetPrototype = new ResultSet(new \Techtree\Entity\Technology());
         $this->initialize();
     }
 }

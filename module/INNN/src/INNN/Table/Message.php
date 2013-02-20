@@ -13,7 +13,7 @@ class Message extends AbstractTable
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \INNN\Mapper\Message());
+        $this->resultSetPrototype = new ResultSet(new \INNN\Entity\Message());
         $this->initialize();
     }
 }

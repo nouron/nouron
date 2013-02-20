@@ -10,8 +10,8 @@ return array(
         'Galaxy',
         /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'Resources',
-        'DluTwBootstrap',
-        'DluTwBootstrapDemo'
+//         'DluTwBootstrap',
+//         'DluTwBootstrapDemo'
     ),
     'module_listener_options' => array(
         'config_glob_paths'    => array(

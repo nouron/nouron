@@ -48,7 +48,7 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      *
      * @param numeric $techId
-     * @return \Techtree\Mapper\Technology
+     * @return \Techtree\Entity\Technology
      */
     public function getTechnology($techId)
     {

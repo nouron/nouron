@@ -12,7 +12,7 @@ class Resource extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Resources\Mapper\Resource());
+        $this->resultSetPrototype = new ResultSet(new \Resources\Entity\Resource());
         $this->initialize();
     }
 }

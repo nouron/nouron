@@ -200,10 +200,10 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
-            'Galaxy\Mapper\System' => 'Galaxy\Mapper\SystemFactory',
-            'Galaxy\Mapper\SystemObject' => 'Galaxy\Mapper\SystemObjectFactory',
-            'Galaxy\Mapper\Colony' => 'Galaxy\Mapper\ColonyFactory',
-            'Galaxy\Mapper\Fleet' => 'Galaxy\Mapper\FleetFactory',
+            'Galaxy\Entity\System' => 'Galaxy\Entity\SystemFactory',
+            'Galaxy\Entity\SystemObject' => 'Galaxy\Entity\SystemObjectFactory',
+            'Galaxy\Entity\Colony' => 'Galaxy\Entity\ColonyFactory',
+            'Galaxy\Entity\Fleet' => 'Galaxy\Entity\FleetFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
         ),
     ),

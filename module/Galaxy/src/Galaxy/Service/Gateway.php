@@ -25,7 +25,7 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
-     * @return \Fleets\Mapper\Fleet
+     * @return \Fleets\Entity\Fleet
      */
     public function getFleet($fleetId)
     {
@@ -35,7 +35,7 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param \Galaxy\Mapper\Fleet $entity
+     * @param \Galaxy\Entity\Fleet $entity
      */
     public function saveFleet($entity)
     {
@@ -86,7 +86,7 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
-     * @return \Galaxy\Mapper\Colony
+     * @return \Galaxy\Entity\Colony
      */
     public function getColony($colonyId)
     {
@@ -109,7 +109,7 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      *
      * @param  numeric $userId
-     * @return Galaxy\Mapper\Colony|null
+     * @return Galaxy\Entity\Colony|null
      * @throws Exception if no main colony was found
      */
     public function getPrimeColony($userId)
@@ -140,7 +140,7 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @return \Galaxy\Mapper\Colony|null
+     * @return \Galaxy\Entity\Colony|null
      */
     public function getCurrentColony()
     {

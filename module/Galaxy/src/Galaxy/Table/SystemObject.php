@@ -12,7 +12,7 @@ class SystemObject extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Galaxy\Mapper\SystemObject());
+        $this->resultSetPrototype = new ResultSet(new \Galaxy\Entity\SystemObject());
         $this->initialize();
     }
 }

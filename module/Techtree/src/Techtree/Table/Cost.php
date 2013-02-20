@@ -13,7 +13,7 @@ class Cost extends AbstractTable
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Techtree\Mapper\Cost());
+        $this->resultSetPrototype = new ResultSet(new \Techtree\Entity\Cost());
         $this->initialize();
     }
 }

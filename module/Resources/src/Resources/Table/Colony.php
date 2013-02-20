@@ -12,7 +12,7 @@ class Colony extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Resources\Mapper\Colony());
+        $this->resultSetPrototype = new ResultSet(new \Resources\Entity\Colony());
         $this->initialize();
     }
 }

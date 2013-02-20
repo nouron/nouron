@@ -13,7 +13,7 @@ class Possession extends AbstractTable
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Techtree\Mapper\Possession());
+        $this->resultSetPrototype = new ResultSet(new \Techtree\Entity\Possession());
         $this->initialize();
     }
 }

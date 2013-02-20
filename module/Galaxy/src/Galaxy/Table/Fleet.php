@@ -12,7 +12,7 @@ class Fleet extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Galaxy\Mapper\Fleet());
+        $this->resultSetPrototype = new ResultSet(new \Galaxy\Entity\Fleet());
         $this->initialize();
     }
 }

@@ -12,7 +12,7 @@ class User extends AbstractTable
     public function __construct(Adapter $adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Resources\Mapper\User());
+        $this->resultSetPrototype = new ResultSet(new \Resources\Entity\User());
         $this->initialize();
     }
 }

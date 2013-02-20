@@ -13,7 +13,7 @@ class Order extends AbstractTable
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \Techtree\Mapper\Order());
+        $this->resultSetPrototype = new ResultSet(new \Techtree\Entity\Order());
         $this->initialize();
     }
 }

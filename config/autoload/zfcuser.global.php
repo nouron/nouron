@@ -21,7 +21,7 @@ $settings = array(
      * instead of the default one provided. Default is ZfcUser\Entity\User.
      */
     //'user_entity_class' => 'ZfcUser\Entity\User',
-    'user_entity_class' => 'User\Mapper\User',
+    'user_entity_class' => 'User\Entity\User',
 
     /**
      * Enable registration

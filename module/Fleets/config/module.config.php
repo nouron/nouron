@@ -55,10 +55,10 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
-            'Fleets\Mapper\System' => 'Fleets\Mapper\SystemFactory',
-            'Fleets\Mapper\SystemObject' => 'Fleets\Mapper\SystemObjectFactory',
-            'Fleets\Mapper\Colony' => 'Fleets\Mapper\ColonyFactory',
-            'Fleets\Mapper\Fleet' => 'Fleets\Mapper\FleetFactory',
+            'Fleets\Entity\System' => 'Fleets\Entity\SystemFactory',
+            'Fleets\Entity\SystemObject' => 'Fleets\Entity\SystemObjectFactory',
+            'Fleets\Entity\Colony' => 'Fleets\Entity\ColonyFactory',
+            'Fleets\Entity\Fleet' => 'Fleets\Entity\FleetFactory',
             'Fleets\Service\Gateway' => 'Fleets\Service\GatewayFactory',
         ),
     ),

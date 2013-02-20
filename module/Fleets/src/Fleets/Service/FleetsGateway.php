@@ -11,7 +11,7 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
-     * @return \Fleets\Mapper\Fleet
+     * @return \Fleets\Entity\Fleet
      */
     public function getFleet($fleetId)
     {

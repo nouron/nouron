@@ -51,8 +51,8 @@ return array(
            'INNN\Table\Event' => 'INNN\Table\Event',
        ),
         'factories' => array(
-            'INNN\Mapper\Message' => 'INNN\Mapper\MessageFactory',
-            'INNN\Mapper\Event' => 'INNN\Mapper\EventFactory',
+            'INNN\Entity\Message' => 'INNN\Entity\MessageFactory',
+            'INNN\Entity\Event' => 'INNN\Entity\EventFactory',
             'INNN\Service\Gateway' => 'INNN\Service\GatewayFactory',
         ),
     )

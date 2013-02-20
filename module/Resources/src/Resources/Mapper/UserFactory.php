@@ -1,5 +1,5 @@
 <?php
-namespace Resources\Mapper;
+namespace Resources\Entity;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
