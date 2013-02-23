@@ -4,12 +4,12 @@ namespace Galaxy\Entity;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class FleetFactory implements FactoryInterface
+class FleetTechnologyFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new Fleet(new \Galaxy\Table\Fleet($db));
+        $mapper    = new FleetTechnology(new \Galaxy\Table\FleetTechnology($db));
         return $mapper;
     }
 }

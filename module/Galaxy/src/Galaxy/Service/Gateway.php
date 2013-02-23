@@ -485,42 +485,28 @@ class Gateway extends \Nouron\Service\Gateway
 //         return $path;
 //     }
 
-//     /**
-//      * Add a fleet Order.
-//      *
-//      * @param  string   $order
-//      * @param  integer|Galaxy_Model_Fleet
-//      *              $fleet                The Id of a fleet or a fleet Object
-//      * @param  integer|array|string|Galaxy_Model_Fleet|Galaxy_Model_Fleet
-//      *              $destination          The Id or Coords of a colony or fleet
-//      * @return boolean
-//      * @throws Galaxy_Model_Exception
-//      */
-//     public function addOrder($order, $fleet, $destination, $additionalData = null)
-//     {
-//         // check the parameter '$fleet':
-//         if ( is_numeric($fleet) ) {
-//             $fleetId = (int) $fleet;
-//             $fleet = $this->getFleet($fleetId);
-//         }
-
-//         if ( !($fleet instanceOf Galaxy_Model_Fleet) ) {
-//             throw new Galaxy_Model_Exception('The Object is not a valid Fleet!');
-//         }
-
-//         return $fleet->addOrder($order, $destination, $additionalData);
-//     }
-
     /**
+     * Add a fleet Order.
      *
-     * @param array $primaryKey
-     * @return mixed
+     * @param  string   $order
+     * @param  integer|\Galaxy\Entity\Fleet  $fleet The id of a fleet or a fleet object
+     * @param  integer|array|string|\Galaxy\Entity\Fleet  $destination  The id or coords of a colony or fleet
+     * @return boolean
+     * @throws Galaxy_Model_Exception
      */
-    public function getColonyTechnology(array $primaryKey)
+    public function addOrder($order, $fleet, $destination, $additionalData = null)
     {
-        $table = $this->getTable('colonytechnology');
-        $possession = $table->fetchAll($primaryKey);
-        return $possession->current();
+        // check the parameter '$fleet':
+        if ( is_numeric($fleet) ) {
+            $fleetId = (int) $fleet;
+            $fleet = $this->getFleet($fleetId);
+        }
+
+        if ( !($fleet instanceOf \Galaxy\Entity\Fleet) ) {
+            throw new \Exception('The Object is not a valid Fleet!');
+        }
+
+        return $fleet->addOrder($order, $destination, $additionalData);
     }
 
     /**
@@ -581,10 +567,9 @@ class Gateway extends \Nouron\Service\Gateway
                 $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
                 $techOnColony['count'] = $techOnColony['count'] - $amount;
-                $techOnColony->save();
+                $this->getTable('colonytechnology')->save($techOnColony);
                 $techInFleet['count'] = $techInFleet['count'] + $amount;
-                $techInFleet->save();
-
+                $this->getTable('fleettechnology')->save($techInFleet);
                 $db->commit();
 
             } catch (Exception $e) {
@@ -668,18 +653,52 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      * Get one specific technology from a fleet specified by given compound primary key.
      * One technology from a fleet - not more!
-     * ATTENTION: This function allways return a fleets_technology object even if the
+     * ATTENTION: This function allways return a fleetstechnology object even if the
      * tech is not in the fleet!
-     * @TODO: proove this!
      *
      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
-     * @return Galaxy_Model_Fleets_Technology
+     * @return \Galaxy\Entity\FleetTechnology | array
      */
     public function getFleetTechnology(array $keys)
     {
         $table = $this->getTable('fleettechnology');
         $fleettech = $table->fetchAll($keys);
-        return $fleettech->current();
+        $result = $fleettech->current();
+        if (empty($result)) {
+            return array(
+                'fleet_id' => $keys['fleet_id'],
+                'tech_id' => $keys['tech_id'],
+                'count' => 0,
+                'is_cargo' =>  $keys['is_cargo'],
+            );
+        } else {
+            return $result;
+        }
+    }
+
+    /**
+     * Get one specific technology from a colony specified by given compound primary key.
+     * One technology from a colony - not more!
+     * ATTENTION: This function allways return a colonytechnology object even if the
+     * tech is not on the colony!
+     *
+     * @param  array $keys  The compound primary key in form: array('colony_id' => 1, 'tech_id' => 2)
+     * @return \Galaxy\Entity\ColonyTechnology | array
+     */
+    public function getColonyTechnology(array $keys)
+    {
+        $table = $this->getTable('colonytechnology');
+        $tech = $table->fetchAll($keys);
+        $result = $tech->current();
+        if (empty($result)) {
+            return array(
+                'colony_id' => $keys['colony_id'],
+                'tech_id' => $keys['tech_id'],
+                'count' => 0,
+            );
+        } else {
+            return $result;
+        }
     }
 
     /**

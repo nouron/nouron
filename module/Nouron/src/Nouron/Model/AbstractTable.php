@@ -1,7 +1,8 @@
 <?php
 namespace Nouron\Model;
 
-use Zend\Db\TableGateway\AbstractTableGateway,
+use Zend\Db\TableGateway\TableGateway,
+    Zend\Db\TableGateway\Feature\RowGatewayFeature,
     Zend\Db\Adapter\Adapter,
     Zend\Db\ResultSet\ResultSet,
     Nouron\Model\EntityInterface;
@@ -11,7 +12,7 @@ use Zend\Db\TableGateway\AbstractTableGateway,
  * methods for table classes so they are 'ready-to-use' for new table classes.
  *
  */
-abstract class AbstractTable extends AbstractTableGateway
+abstract class AbstractTable extends TableGateway
 {
     /**
      * @var string
@@ -27,7 +28,15 @@ abstract class AbstractTable extends AbstractTableGateway
      *
      * @param \Zend\Db\Adapter\Adapter $adapter
      */
-    abstract public function __construct(\Zend\Db\Adapter\Adapter $adapter);
+    public function __construct(\Zend\Db\Adapter\Adapter $adapter)
+    {
+        parent::__construct($this->table,
+            $adapter,
+            new RowGatewayFeature($this->primary)
+        );
+
+        $this->adapter = $adapter;
+    }
 
     /**
      *
@@ -60,11 +69,12 @@ abstract class AbstractTable extends AbstractTableGateway
     {
         if (is_array($this->primary)) {
             $this->_validateId($id, $this->primary);
+            $rowset = $this->select($id);
         } else {
             $this->_validateId($id);
+            $rowset = $this->select("id = $id");
         }
 
-        $rowset = $this->select("id = $id");
         $row = $rowset->current();
         if (!$row) {
             throw new \Exception("Could not find row $id");
@@ -107,19 +117,16 @@ abstract class AbstractTable extends AbstractTableGateway
         // make a copy of row data (to avoid changing original data):
         if ($entity instanceof EntityInterface) {
             $data = $entity->toArray();
-        } elseif (is_array($entity)) {
-            $data = $entity;
+        } elseif (is_array($entity) or is_object($entity)) {
+            $data = (array) $entity;
         } else {
-            throw new Exception('Invalid parameter type for save().');
+            throw new \Exception('Invalid parameter type for save(): ' . get_class($entity));
         }
 
         $primary = (array) $this->primary;
         // primary is now an array so we can handle scalar and compound keys the same way:
 
         $where = array();
-
-        \Zend\Debug\Debug::dump($primary);
-        \Zend\Debug\Debug::dump($data);
 
         foreach ($primary as $key) {
             $val = $data[$key];

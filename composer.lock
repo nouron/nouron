@@ -19,7 +19,6 @@
                 "php": ">=5.3.3",
                 "zendframework/zendframework": ">=2.0.5"
             },
-            "time": "2012-12-15 10:03:41",
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -46,7 +45,8 @@
                 "twitter bootstrap",
                 "zend framework 2",
                 "zf2"
-            ]
+            ],
+            "time": "2012-12-15 10:03:41"
         },
         {
             "name": "dlu/dlutwbootstrapdemo",
@@ -67,7 +67,6 @@
                 "php": ">=5.3.3",
                 "zendframework/zendframework": ">=2.0.5"
             },
-            "time": "2012-12-15 10:29:31",
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -97,7 +96,8 @@
                 "twitter bootstrap",
                 "zend framework 2",
                 "zf2"
-            ]
+            ],
+            "time": "2012-12-15 10:29:31"
         },
         {
             "name": "firephp/firephp-core",
@@ -113,7 +113,6 @@
                 "reference": "f60753a8dd7817e4da6bc73e0e717387a9a0866a",
                 "shasum": ""
             },
-            "time": "2013-01-19 22:55:24",
             "type": "library",
             "autoload": {
                 "classmap": [
@@ -133,20 +132,21 @@
                 }
             ],
             "description": "Traditional FirePHPCore library for sending PHP variables to the browser.",
-            "homepage": "https://github.com/firephp/firephp-core"
+            "homepage": "https://github.com/firephp/firephp-core",
+            "time": "2013-01-19 22:55:24"
         },
         {
             "name": "zendframework/zendframework",
-            "version": "2.1.2",
+            "version": "2.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "release-2.1.2"
+                "reference": "release-2.1.3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.1.2",
-                "reference": "release-2.1.2",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.1.3",
+                "reference": "release-2.1.3",
                 "shasum": ""
             },
             "require": {
@@ -215,7 +215,6 @@
                 "zendframework/zendpdf": "ZendPdf for creating PDF representations of barcodes",
                 "zendframework/zendservice-recaptcha": "ZendService\\ReCaptcha for rendering ReCaptchas in Zend\\Captcha and/or Zend\\Form"
             },
-            "time": "2013-02-20 19:05:13",
             "bin": [
                 "bin/classmap_generator.php"
             ],
@@ -245,7 +244,8 @@
             "keywords": [
                 "framework",
                 "zf2"
-            ]
+            ],
+            "time": "2013-02-21 21:00:16"
         },
         {
             "name": "zf-commons/zfc-base",
@@ -265,7 +265,6 @@
                 "php": ">=5.3.3",
                 "zendframework/zendframework": "2.*"
             },
-            "time": "2012-10-24 17:42:28",
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -292,7 +291,8 @@
             "homepage": "https://github.com/ZF-Commons/ZfcBase",
             "keywords": [
                 "zf2"
-            ]
+            ],
+            "time": "2012-10-24 17:42:28"
         },
         {
             "name": "zf-commons/zfc-user",
@@ -300,12 +300,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "e4dafa5625500b807ea937e4d6e1de1a03321386"
+                "reference": "a1682b787a9b11fe7e3b4110e8bd5c4b69ce42ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/e4dafa5625500b807ea937e4d6e1de1a03321386",
-                "reference": "e4dafa5625500b807ea937e4d6e1de1a03321386",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/a1682b787a9b11fe7e3b4110e8bd5c4b69ce42ca",
+                "reference": "a1682b787a9b11fe7e3b4110e8bd5c4b69ce42ca",
                 "shasum": ""
             },
             "require": {
@@ -313,7 +313,6 @@
                 "zendframework/zendframework": "2.1.*",
                 "zf-commons/zfc-base": "0.*"
             },
-            "time": "2013-02-17 20:42:17",
             "type": "library",
             "autoload": {
                 "psr-0": {
@@ -340,7 +339,8 @@
             "homepage": "https://github.com/ZF-Commons/ZfcUser",
             "keywords": [
                 "zf2"
-            ]
+            ],
+            "time": "2013-02-21 09:29:06"
         }
     ],
     "packages-dev": null,
