@@ -17,6 +17,8 @@ class SelectedIds extends AbstractPlugin
      */
     public function __invoke()
     {
+        session_start();
+
         $sm = $this->getController()->getServiceLocator();
 
         $systemId = $this->getController()->params()->fromRoute('sid');
@@ -37,10 +39,24 @@ class SelectedIds extends AbstractPlugin
         }
         $_SESSION['colonyId'] = $colonyId;
 
+        $fleetId = $this->getController()->params()->fromRoute('fid');
+        if (!$fleetId && isset($_SESSION['fleetId'])) {
+            $fleetId = $_SESSION['fleetId'];
+        }
+        $_SESSION['fleetId'] = $fleetId;
+
+        $techId = $this->getController()->params()->fromRoute('tid');
+        if (!$techId && isset($_SESSION['techId'])) {
+            $techId = $_SESSION['techId'];
+        }
+        $_SESSION['techId'] = $techId;
+
         return array (
             'systemId' => $systemId,
             'objectId' => $objectId,
-            'colonyId' => $colonyId
+            'colonyId' => $colonyId,
+            'fleetId'  => $fleetId,
+            'techId'   => $techId,
         );
     }
 

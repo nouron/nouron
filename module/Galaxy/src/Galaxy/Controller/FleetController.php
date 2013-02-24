@@ -112,4 +112,24 @@ class FleetController extends AbstractActionController
             )
         );
     }
+
+    public function orderAction()
+    {
+        $form = new \Galaxy\Form\Fleet();
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Galaxy\Service\Gateway');
+
+        if ($this->getRequest()->isPost()) {
+            $data = $this->getRequest()->getPost();
+            $order = (string) $data['order'];
+            $fleetId = (int) $data['fleetId'];
+            $coords = $data['coords'];
+            $gw->addOrder($fleetId, $order, $coords, array());
+        }
+
+
+        $selectedIds = $this->selectedIds(); /* ugly: find a better solution */
+        $systemId = $selectedIds['systemId'];
+        $this->redirect()->toUrl('/galaxy/'.$systemId);
+    }
 }

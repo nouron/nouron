@@ -39,8 +39,16 @@ class Gateway extends \Nouron\Service\Gateway
      */
     public function saveFleet($entity)
     {
-        print("saveFleet");
         return $this->getTable('fleet')->save($entity);
+    }
+
+    /**
+     *
+     * @param \Galaxy\Entity\Fleet $entity
+     */
+    public function saveFleetOrder($entity)
+    {
+        return $this->getTable('fleetorder')->save($entity);
     }
 
     /**
@@ -98,7 +106,7 @@ class Gateway extends \Nouron\Service\Gateway
      * Get all colonies from a user.
      *
      * @param  integer    $userId
-     * @return Galaxy_Model_Colonies
+     * @return ResultSet
      */
     public function getColoniesByUserId($userId)
     {
@@ -133,7 +141,7 @@ class Gateway extends \Nouron\Service\Gateway
      * @deprecated since v0.2
      * @param unknown $userId
      */
-    public function getMaicolony_id($userId)
+    public function getMainColony($userId)
     {
         return $this->getPrimeColony();
     }
@@ -191,7 +199,7 @@ class Gateway extends \Nouron\Service\Gateway
      * Get a system object by id.
      *
      * @param  integer $systemId
-     * @return Galaxy_Model_System
+     * @return \Galaxy\Entity\System
      */
     public function getSystem($systemId)
     {
@@ -204,7 +212,7 @@ class Gateway extends \Nouron\Service\Gateway
      *
      * @param   integer  $systemId
      * @param   string   $order      OPTIONAL: sql order string
-     * @return  Galaxy_Model_System_Objects
+     * @return  \Galaxy\Entity\SystemObject
      */
     public function getSystemObjects($systemId)
     {
@@ -215,37 +223,37 @@ class Gateway extends \Nouron\Service\Gateway
         return $this->getByCoordinates('objects', $coords);
     }
 
-//     /**
-//      *
-//      * @param $object
-//      */
-//     public function getSystemByPlanetary($object)
-//     {
-//         return $this->getSystemBySystemObject($object);
-//     }
+    /**
+     *
+     * @param $object
+     */
+    public function getSystemByPlanetary($object)
+    {
+        return $this->getSystemBySystemObject($object);
+    }
+
+    /**
+     *
+     * @param  \Galaxy\Entity\Colony | integer  $colony
+     * @return \Galaxy\Entity\System
+     */
+    public function getSystemBySystemObject($object)
+    {
+        if (is_numeric($object)) {
+            $object = $this->getSystemObject($object);
+        }
+
+        if (!($object instanceof \Galaxy\Entity\SystemObject)) {
+            throw new \Exception('Not a valid colony.');
+        }
+
+        return $this->getSystemByObjectCoords(array($object['x'],$object['y']));
+    }
 
 //     /**
 //      *
-//      * @param Galaxy_Model_Colony | integer  $colony
-//      * @return Galaxy_Model_System
-//      */
-//     public function getSystemBySystemObject($object)
-//     {
-//         if (is_numeric($object)) {
-//             $object = $this->getSystemObject($object);
-//         }
-
-//         if (!($object instanceof Galaxy_Model_System_Object)) {
-//             throw new Galaxy_Model_Exception('Not a valid colony.');
-//         }
-
-//         return $this->getSystemByObjectCoords($object->getCoords());
-//     }
-
-//     /**
-//      *
-//      * @param Galaxy_Model_Colony | integer  $colony
-//      * @return Galaxy_Model_System
+//      * @param \Galaxy\Entity\Colony | integer  $colony
+//      * @return \Galaxy\Entity\System
 //      */
 //     public function getSystemByColony($colony)
 //     {
@@ -253,8 +261,8 @@ class Gateway extends \Nouron\Service\Gateway
 //             $colony = $this->getColony($colony);
 //         }
 
-//         if (!($colony instanceof Galaxy_Model_Colony)) {
-//             throw new Galaxy_Model_Exception('Not a valid colony.');
+//         if (!($colony instanceof \Galaxy\Entity\Colony)) {
+//             throw new \Galaxy\Entity\Exception('Not a valid colony.');
 //         }
 
 //         return $this->getSystemByObjectCoords($colony->getCoords());
@@ -263,7 +271,7 @@ class Gateway extends \Nouron\Service\Gateway
 //     /**
 //      *
 //      * @param  array  $object
-//      * @return Galaxy_Model_System | null
+//      * @return \Galaxy\Entity\System | null
 //      */
 //     public function getSystemByObjectCoords(array $coords)
 //     {
@@ -328,26 +336,26 @@ class Gateway extends \Nouron\Service\Gateway
 //      * Get the planetary object (planet, moon, asteroid field, etc. ) by its id.
 //      *
 //      * @param  integer $id
-//      * @return Galaxy_Model_System_Object
+//      * @return \Galaxy\Entity\System_Object
 //      */
 //     public function getSystemObject($id)
 //     {
 //         $dbView = $this->getDbView('system_objects');
 //         $result = $dbView->find($id)->current();
-//         return new Galaxy_Model_System_Object($result, $this);
+//         return new \Galaxy\Entity\System_Object($result, $this);
 //     }
 
-//     /**
-//      * Ermittelt den Planeten oder Mond anhand einer ColonyId
-//      *
-//      * @param  integer$colonyId
-//      * @return array
-//      */
-//     public function getSystemObjectByColonyId($colonyId)
-//     {
-//         $planetaryId = $this->getColony($colonyId)->nPlanetary;
-//         return $this->getSystemObject($planetaryId);
-//     }
+    /**
+     * Ermittelt den Planeten oder Mond anhand einer ColonyId
+     *
+     * @param  integer $colonyId
+     * @return array
+     */
+    public function getSystemObjectByColonyId($colonyId)
+    {
+        $planetaryId = $this->getColony($colonyId)->system_object_id;
+        return $this->getSystemObject($planetaryId);
+    }
 
 //     /**
 //      * Get Distance between two coordinates.
@@ -379,134 +387,219 @@ class Gateway extends \Nouron\Service\Gateway
 //         return ( $this->getDistance($coordsA, $coordsB) + 1);
 //     }
 
-//     /**
-//      * Get the path from A to B depending on the given speed.
-//      *
-//      * This is a modified version of the elegant form of the bresenham algorithm described on wikipedia:
-//      * @link http://de.wikipedia.org/wiki/Bresenham-Algorithmus
-//      *
-//      * The modification is that we have a given speed > 1 so that not every point
-//      * needs to be stored. Instead just one point per game tick is stored in the
-//      * returned path array.
-//      *
-//      * @param   array   $coordsA   Source position
-//      * @param   array   $coordsB   Target position
-//      * @param   integer $speed     Travel speed in fields per Tick
-//      * @return  array
-//      */
-//     public function getPath(array $coordsA, array $coordsB, $speed)
-//     {
-//         $tick = Zend_Registry::get('Tick');
+    /**
+     * Get the path from A to B depending on the given speed.
+     *
+     * This is a modified version of the elegant form of the bresenham algorithm described on wikipedia:
+     * @link http://de.wikipedia.org/wiki/Bresenham-Algorithmus
+     *
+     * The modification is that we have a given speed > 1 so that not every point
+     * needs to be stored. Instead just one point per game tick is stored in the
+     * returned path array.
+     *
+     * @param   array   $coordsA   Source position
+     * @param   array   $coordsB   Target position
+     * @param   integer $speed     Travel speed in fields per Tick
+     * @return  array
+     */
+    public function getPath(array $coordsA, array $coordsB, $speed)
+    {
+        $tick = $this->getTick();
 
-//         if ( !is_numeric($tick) ) {
-//             throw new Galaxy_Model_Exception('Invalid tick number given.');
-//         }
+        $xstart = $coordsA[0];
+        $ystart = $coordsA[1];
+        $xend   = $coordsB[0];
+        $yend   = $coordsB[1];
 
-//         $xstart = $coordsA[0];
-//         $ystart = $coordsA[1];
-//         $xend   = $coordsB[0];
-//         $yend   = $coordsB[1];
+        /* Entfernung in beiden Dimensionen berechnen */
+        $dx = $xend - $xstart;
+        $dy = $yend - $ystart;
 
-//         /* Entfernung in beiden Dimensionen berechnen */
-//         $dx = $xend - $xstart;
-//         $dy = $yend - $ystart;
+        /* Vorzeichen des Inkrements bestimmen */
+        $incx = ($dx>0) ? 1 : (($dx<0) ? -1 : 0); // signum function
+        $incy = ($dy>0) ? 1 : (($dy<0) ? -1 : 0);
 
-//         /* Vorzeichen des Inkrements bestimmen */
-//         $incx = ($dx>0) ? 1 : (($dx<0) ? -1 : 0); // signum function
-//         $incy = ($dy>0) ? 1 : (($dy<0) ? -1 : 0);
+        if( $dx < 0 ) $dx = -$dx;
+        if( $dy < 0 ) $dy = -$dy;
 
-//         if( $dx < 0 ) $dx = -$dx;
-//         if( $dy < 0 ) $dy = -$dy;
+        /* feststellen, welche Entfernung größer ist */
+        if ( $dx > $dy ) {
+            /* x ist schnelle Richtung */
+            $pdx = $incx;
+            $pdy = 0;    /* pd. ist Parallelschritt */
+            $ddx = $incx;
+            $ddy = $incy; /* dd. ist Diagonalschritt */
+            $es  = $dy;
+            $el  = $dx;   /* Fehlerschritte schnell, langsam */
+        } else {
+            /* y ist schnelle Richtung */
+            $pdx = 0;
+            $pdy = $incy; /* pd. ist Parallelschritt */
+            $ddx = $incx;
+            $ddy = $incy; /* dd. ist Diagonalschritt */
+            $es  = $dx;
+            $el  = $dy;   /* Fehlerschritte schnell, langsam */
+        }
 
-//         /* feststellen, welche Entfernung größer ist */
-//         if ( $dx > $dy ) {
-//             /* x ist schnelle Richtung */
-//             $pdx = $incx;
-//             $pdy = 0;    /* pd. ist Parallelschritt */
-//             $ddx = $incx;
-//             $ddy = $incy; /* dd. ist Diagonalschritt */
-//             $es  = $dy;
-//             $el  = $dx;   /* Fehlerschritte schnell, langsam */
-//         } else {
-//             /* y ist schnelle Richtung */
-//             $pdx = 0;
-//             $pdy = $incy; /* pd. ist Parallelschritt */
-//             $ddx = $incx;
-//             $ddy = $incy; /* dd. ist Diagonalschritt */
-//             $es  = $dx;
-//             $el  = $dy;   /* Fehlerschritte schnell, langsam */
-//         }
+        /* Initialisierungen vor Schleifenbeginn */
+        $x = $xstart;
+        $y = $ystart;
+        $err = $el/2;
 
-//         /* Initialisierungen vor Schleifenbeginn */
-//         $x = $xstart;
-//         $y = $ystart;
-//         $err = $el/2;
+        $path = array();
+        $path[$tick] = $coordsA;  // first point in path is current position
+        if (!isset($path[$tick][2])) {
+            $path[$tick][2] = 0;
+        }
 
-//         $path = array();
-//         $path[$tick] = $coordsA;  // first point in path is current position
-//         if (!isset($path[$tick][2])) {
-//             $path[$tick][2] = 0;
-//         }
+        /* Pixel berechnen */
+        for($t = 1; $t <= $el; ++$t) /* t zaehlt die Pixel, el ist auch Anzahl */
+        {
+            /* Aktualisierung Fehlerterm */
+            $err -= $es;
+            if( $err < 0 ) {
+                /* Fehlerterm wieder positiv (>=0) machen */
+                $err += $el;
+                /* Schritt in langsame Richtung, Diagonalschritt */
+                $x += $ddx;
+                $y += $ddy;
+            } else {
+                /* Schritt in schnelle Richtung, Parallelschritt */
+                $x += $pdx;
+                $y += $pdy;
+            }
 
-//         /* Pixel berechnen */
-//         for($t = 1; $t <= $el; ++$t) /* t zaehlt die Pixel, el ist auch Anzahl */
-//         {
-//             /* Aktualisierung Fehlerterm */
-//             $err -= $es;
-//             if( $err < 0 ) {
-//                 /* Fehlerterm wieder positiv (>=0) machen */
-//                 $err += $el;
-//                 /* Schritt in langsame Richtung, Diagonalschritt */
-//                 $x += $ddx;
-//                 $y += $ddy;
-//             } else {
-//                 /* Schritt in schnelle Richtung, Parallelschritt */
-//                 $x += $pdx;
-//                 $y += $pdy;
-//             }
+            // wenn maximale Distanz pro Tick oder Zielpunkt erreicht setze Pfadpunkt:
+            if ( ($t % $speed) == 0 || ($x == $xend && $y == $yend) ) {
 
-//             // wenn maximale Distanz pro Tick oder Zielpunkt erreicht setze Pfadpunkt:
-//             if ( ($t % $speed) == 0 || ($x == $xend && $y == $yend) ) {
+                // neuen Pfadpunkt eintragen
+                $path[++$tick] = array(0 => $x, 1 => $y, 2 => 0);
+                if ( isset($coordsB[2]) && $x == $xend && $y == $yend) {
+                    // wenn Colony-Slot gegeben und Zielpunkt erreicht setze Zielslot
+                    $path[$tick++][2] = $coordsB[2];
+                }
+            }
+        }
 
-//                 // neuen Pfadpunkt eintragen
-//                 $path[++$tick] = array(0 => $x, 1 => $y, 2 => 0);
-//                 if ( isset($coordsB[2]) && $x == $xend && $y == $yend) {
-//                     // wenn Colony-Slot gegeben und Zielpunkt erreicht setze Zielslot
-//                     $path[$tick++][2] = $coordsB[2];
-//                 }
-//             }
-//         }
-
-//         //        foreach ($path as $tick => $coords){
-//         //            print($tick.': '); print_r($coords);print('<br />');
-//         //        }
-//         //        exit;
-
-//         return $path;
-//     }
+        return $path;
+    }
 
     /**
      * Add a fleet Order.
      *
+     * @todo: just move is working now - implement all the order types!
+     *
      * @param  string   $order
-     * @param  integer|\Galaxy\Entity\Fleet  $fleet The id of a fleet or a fleet object
-     * @param  integer|array|string|\Galaxy\Entity\Fleet  $destination  The id or coords of a colony or fleet
+     * @param  integer|array|string|\Galaxy\Entity\Colony|\Galaxy\Entity\Fleet
+     *                  $destination     The Id or Coords of a colony or fleet
+     * @param  array    $additionalData  OPTIONAL array with optional target data like trade orders etc.
      * @return boolean
-     * @throws Galaxy_Model_Exception
+     * @throws \Exception
      */
-    public function addOrder($order, $fleet, $destination, $additionalData = null)
+    public function addOrder($fleet, $order, $destination, $additionalData = null)
     {
         // check the parameter '$fleet':
         if ( is_numeric($fleet) ) {
             $fleetId = (int) $fleet;
             $fleet = $this->getFleet($fleetId);
+        } else {
+            $fleetId = $fleet['id'];
         }
 
-        if ( !($fleet instanceOf \Galaxy\Entity\Fleet) ) {
-            throw new \Exception('The Object is not a valid Fleet!');
+        // check the parameter $order:
+        if ( !in_array($order, array('move','trade','hold','convoy','defend','attack','join','devide')) ) {
+            throw new \Exception('Unknown command given: ' . $order);
         }
 
-        return $fleet->addOrder($order, $destination, $additionalData);
+
+        // get coordinates:
+        if ( !(is_array($destination) && (array_keys($destination) == array(0,1,2) )) ){
+
+            if (is_numeric($destination)) {
+
+                //destination is a fleet id or colony id
+                $destination = (int) $destination;
+                switch (strtolower($order)) {
+                    case 'move':   $object = $this->getColony($destination); break;
+                    case 'trade':  $object = $this->getColony($destination); break;
+                    case 'hold':   $object = $this->getColony($destination); break;
+                    case 'convoy': $object = $this->getFleet($destination);  break;
+                    case 'defend': $object = $this->getFleet($destination);  break;
+                    case 'attack': $object = $this->getFleet($destination);  break;
+                    case 'join':   $object = $this->getFleet($destination);  break;
+                    case 'devide': break; // nothing
+                    default:       break; // nothing
+                }
+
+                $destinationCoords = $object->getCoords();
+
+            } elseif ( $destination instanceof \Galaxy\Entity\Colony || $destination instanceof \Galaxy\Entity\Fleet ) {
+                // destination is an object:
+                $destinationCoords = $destination->getCoords();
+            } elseif ( is_array(@unserialize($destination)) ) {
+                // destination is a serialized coords array:
+                $destinationCoords = unserialize($destination);
+            } elseif ( is_array(@json_decode($destination)) ) {
+                // destination is a json encoded coords array:
+                $destinationCoords = json_decode($destination);
+            } else {
+                throw new \Galaxy\Entity\Exception('Invalid variable type of $destination. $destination has to be an id, object or 3-dimensional array.');
+            }
+
+            $destination = $destinationCoords;
+            unset($destinationCoords);
+        }
+
+        // get coords of fleet and destination coords:
+        $coords = array($fleet['x'], $fleet['y'], $fleet['spot']);
+
+        // if not, then get the paths and add the movement steps:
+        $path = $this->getPath( $coords, $destination, 1); #$fleet->getTravelSpeed() );
+        $this->_storePathInDb($fleetId, $path, $order, $additionalData);
+
+    }
+
+    /**
+     *
+     * @param array $path
+     * @throws Galaxy_Model_Exception
+     */
+    protected function _storePathInDb($fleetId, $path, $order, $additionalData)
+    {
+        try {
+            $db = $this->getTable('fleetorder')->getAdapter()->getDriver()->getConnection();
+            $db->beginTransaction();
+
+            // first remove the currently set future orders:
+            $where = "fleet_id = {$fleetId} AND tick >= {$this->tick}";
+            $ordersTable = $this->getTable('fleetorder');
+            $ordersTable->delete($where);
+
+            // set the new path
+            $i = 1;
+            foreach ($path as $tickNr => $tmpCoords) {
+                // create a move order for one tick and save to db
+                $tmpOrder = ($i == count($path)) ? $order : 'move';
+                $cmdArray = array(
+                    'fleet_id' => $fleetId,
+                    'tick'  => $tickNr,
+                    'order' => strtolower($tmpOrder),
+                    'coordinates' => serialize($tmpCoords),
+                );
+
+                if ($i == count($path) && is_array($additionalData)) {
+                    $cmdArray['data'] = serialize($additionalData);
+                }
+
+                $result = $ordersTable->save($cmdArray);
+                unset($cmd);
+                $i++;
+            }
+            $db->commit();
+        } catch (Exception $e) {
+            $db->rollBack();
+            throw new \Galaxy\Service\Exception($e->getMessage());
+        }
     }
 
     /**
@@ -540,7 +633,7 @@ class Gateway extends \Nouron\Service\Gateway
             if ( !$isTradeOffer ) {
                 $techOnColony = $this->getColonyTechnology(array('colony_id' => $colony['id'], 'tech_id' => $techId));
             } else {
-//                 $tradeGw      = new Trade_Model_Gateway();
+//                 $tradeGw      = new Trade\Service\Gateway();
 //                 $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
 //                 if ( $techOnColony == null) {
 //                     return 0;
@@ -605,10 +698,10 @@ class Gateway extends \Nouron\Service\Gateway
         if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
 
             if ( !$isTradeOffer ) {
-                $resGw       = new Resources_Model_Gateway();
+                $resGw       = new Resources\Service\Gateway();
                 $resOnColony = $resGw->getColonyResource(array('colony_id' => $colony['id'], 'resource_id' => $resId));
             } else {
-                $tradeGw     = new Trade_Model_Gateway();
+                $tradeGw     = new Trade\Service\Gateway();
                 $resOnColony = $tradeGw->getResourceOffer($colony['id'], $resId);
                 if ( $resOnColony == null) {
                     return 0;
@@ -631,7 +724,7 @@ class Gateway extends \Nouron\Service\Gateway
             }
 
             try {
-                $db = $this->getTable('fleets')->getAdapter();
+                $db = $this->getTable('fleets')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
 
                 $resOnColony['amount'] = $resOnColony['amount'] - $amount;
@@ -705,11 +798,11 @@ class Gateway extends \Nouron\Service\Gateway
      * Get all ships and other technologies from a fleet.
      *
      * @param $where
-     * @return Galaxy_Model_Fleets_Technologies
+     * @return \ResultSet
      */
     public function getFleetTechnologies($where)
     {
-        $table = $this->gettable('fleettechnology');
+        $table = $this->getTable('fleettechnology');
         return $table->fetchAll($where);
     }
 
@@ -718,7 +811,7 @@ class Gateway extends \Nouron\Service\Gateway
 //      * One resource from a fleet - not more!
 //      *
 //      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'resource_id' => 2)
-//      * @return Galaxy_Model_Fleets_Resource
+//      * @return \Galaxy\Entity\Fleets_Resource
 //      */
 //     public function getFleetResource(array $keys)
 //     {
@@ -737,7 +830,7 @@ class Gateway extends \Nouron\Service\Gateway
 //         } else {
 //             $row = $keys;
 //         }
-//         return new Galaxy_Model_Fleets_Resource($row, $this);
+//         return new \Galaxy\Entity\Fleets_Resource($row, $this);
 //     }
 
 //     /**
@@ -745,11 +838,11 @@ class Gateway extends \Nouron\Service\Gateway
 //      *
 //      * @param  string|array|object $fleets
 //      * @param  boolean $past   Include orders in the past?
-//      * @return Galaxy_Model_Fleets_Orders
+//      * @return \Galaxy\Entity\fleetorder
 //      */
 //     public function getFleetsOrders($fleets, $past = false)
 //     {
-//         if ($fleets instanceof Galaxy_Model_Fleets) {
+//         if ($fleets instanceof \Galaxy\Entity\Fleets) {
 //             $fleets = $fleets->toArray();
 //         }
 
@@ -762,18 +855,18 @@ class Gateway extends \Nouron\Service\Gateway
 //         }
 
 //         if (empty($fleets)) {
-//             return new Galaxy_Model_Fleets_Orders(array(), $this);
+//             return new \Galaxy\Entity\fleetorder(array(), $this);
 //         }
 
 //         $table = $this->getTable('fleetorder');
 //         if (!$past) {
-//             $tick = Zend_Registry::get('Tick');
+//             $tick = $this->getTick();
 //             $orders = $table->fetchAll("fleet_id IN ($fleets) AND tick >= $tick");
 //         } else {
 //             $orders = $table->fetchAll("fleet_id IN ($fleets)");
 //         }
 
-//         return new Galaxy_Model_Fleets_Orders($orders, $this);
+//         return new \Galaxy\Entity\fleetorder($orders, $this);
 //     }
 
     /**
@@ -781,7 +874,7 @@ class Gateway extends \Nouron\Service\Gateway
      * (Colony spot is ignored by comparison)
      *
      * @param  array $coords
-     * @return Galaxy_Model_System_Object|null
+     * @return \Galaxy\Entity\System_Object|null
      */
     public function getSystemObjectByCoords(array $coords)
     {
@@ -795,7 +888,7 @@ class Gateway extends \Nouron\Service\Gateway
      * Get a colony object by its coords
      *
      * @param  array $coords
-     * @return Galaxy_Model_Colony|null
+     * @return \Galaxy\Entity\Colony|null
      */
     public function getColonyByCoords(array $coords)
     {
@@ -819,7 +912,7 @@ class Gateway extends \Nouron\Service\Gateway
      * Get all colonies from a planetary.
      *
      * @param  integer    $planetaryId
-     * @return Galaxy_Model_Colonies
+     * @return \Galaxy\Entity\Colonies
      */
     public function getColoniesBySystemObjectId($planetaryId)
     {
@@ -828,25 +921,25 @@ class Gateway extends \Nouron\Service\Gateway
         return $table->fetchAll("system_object_id = $planetaryId");
     }
 
-//     /**
-//      *
-//      * @param  integer $colonyId
-//      * @return Techtree_Model_Orders
-//      */
-//     public function getOrders($where = null, $order = null, $count = null, $offset = null)
-//     {
-//         $cache = Zend_Registry::get('cache');
-
-//         $cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
-//         if (!($result = $cache->load($cacheName))) {
-//             $dbTable = $this->getTable('fleetorder');
-//             $rowset = $dbTable->fetchAll($where, $order, $count, $offset);
-
-//             $result = new Galaxy_Model_Fleets_Orders($rowset, $this);
-//             $cache->save($result, $cacheName, array('fleets', 'orders'));
-//         }
-//         return $result;
-//     }
+    /**
+     *
+     * @param string $where
+     * @param string $order
+     * @param string $count
+     * @param string $offset
+     * @return ResultSet
+     */
+    public function getOrders($where = null, $order = null, $count = null, $offset = null)
+    {
+        #$cache = Zend_Registry::get('cache');
+        #$cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
+        #if (!($result = $cache->load($cacheName))) {
+            $table = $this->getTable('fleetorder');
+            $result = $table->fetchAll($where, $order, $count, $offset);
+            #$cache->save($result, $cacheName, array('fleets', 'orders'));
+        #}
+        return $result;
+    }
 
 //     /**
 //      *
@@ -857,7 +950,7 @@ class Gateway extends \Nouron\Service\Gateway
 //     {
 //         $this->_validateId($userId);
 
-//         $lastTick = Zend_Registry::get('Tick') - 1;
+//         $lastTick = $this->getTick() - 1;
 
 //         if ( !is_numeric($sinceTick) ) {
 //             $sinceTick = $lastTick;
@@ -868,7 +961,7 @@ class Gateway extends \Nouron\Service\Gateway
 
 //     /**
 //      * Find all processed orders and notify innn and eventDispatcher about them.
-//      * Set bNotified to true to avoid a double notification.
+//      * Set has_notified to true to avoid a double notification.
 //      *
 //      * - set innn events
 //      * - set event dispatcher events
@@ -878,13 +971,13 @@ class Gateway extends \Nouron\Service\Gateway
 //     public function notifyAboutProcessedOrders($userId)
 //     {
 //         $this->_validateId($userId);
-//         $tick = Zend_Registry::get('Tick');
-//         $innnGw = new Innn_Model_Gateway();
+//         $tick = $this->getTick();
+//         $innnGw = new \Innn\Service\Gateway();
 //         $orders = $this->getProcessedOrders($userId);
 //         $cache = Zend_Registry::get('cache');
 //         while ( $orders->valid() ) {
 
-//             if ( $orders->bNotified == 0 ) {
+//             if ( $orders->has_notified == 0 ) {
 
 //                 $order = $orders->current();
 //                 $coords = $order->getCoords();
@@ -913,7 +1006,7 @@ class Gateway extends \Nouron\Service\Gateway
 //                 $dispatcher->notify($event);
 
 //                 // mark order as notified
-//                 $order->bNotified = 1;
+//                 $order->has_notified = 1;
 //                 $order->save();
 
 //                 // clear cache

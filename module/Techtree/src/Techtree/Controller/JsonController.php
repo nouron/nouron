@@ -147,9 +147,9 @@ class JsonController extends AbstractActionController
         $gw = $sm->get('Techtree\Service\Gateway');
         $techs = $gw->getTechnologies()->toArray('id');
 
-//         foreach ($techs as $id => $tech) {
-//             $techs[$id]['translated'] = $this->translate( $tech['name'] );
-//         }
+        foreach ($techs as $id => $tech) {
+            $techs[$id]['name'] = $sm->get('translator')->translate( $tech['name'] );
+        }
 
         return new JsonModel($techs);
     }

@@ -65,10 +65,10 @@ fleets = {
             "/fleet/json/getFleetTechnologiesAsJson",
             function (items) {
                 $.each(items, function(techId, tech) {
-                    $('#fleet_' + tech.sType + '_' + techId + ' .amount').html(tech.nCount);
-                    count = $('#fleet_' + tech.sType + '_' + techId + ' .amount').html();
+                    $('#fleet_' + tech.type + '_' + techId + ' .amount').html(tech.count);
+                    count = $('#fleet_' + tech.type + '_' + techId + ' .amount').html();
                     if (count > 0) {
-                        $('#fleet_' + tech.sType + '_' + techId).show();
+                        $('#fleet_' + tech.type + '_' + techId).show();
                     }
                 });
             }
@@ -79,32 +79,33 @@ fleets = {
          * - will select category
          * - will select side
          */
-        $("#fleet_category_ships a").click(function(e) {
+        $("#fleet_category_ships").live('click', function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_ships');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_ships a").click(function(e) {
+        $("#colo_category_ships").live('click', function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_ships');
             fleets.selectSide('colony');
         });
-        $("#fleet_category_crew a").click(function(e) {
+        $("#fleet_category_crew").live('click', function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_crew');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_crew a").click(function(e) {
+        $("#colo_category_crew").live('click', function(e) {
+            console.log('test');
             e.preventDefault();
             fleets.selectCategory('.category_crew');
             fleets.selectSide('colony');
         });
-        $("#fleet_category_cargo a").click(function(e) {
+        $("#fleet_category_cargo").live('click', function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_cargo');
             fleets.selectSide('fleet');
         });
-        $("#colo_category_cargo a").click(function(e) {
+        $("#colo_category_cargo").live('click', function(e) {
             e.preventDefault();
             fleets.selectCategory('.category_cargo');
             fleets.selectSide('colony');

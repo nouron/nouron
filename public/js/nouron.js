@@ -12,6 +12,7 @@ $(document).ready(function(){
     $('#toggleResearches').toggle(function() {
         $('.research').fadeOut('slow');
         $('.line_research').fadeOut('slow');
+        $('.category_ships').fadeOut('slow');
     }, function() {
         $('.research').fadeIn('slow');
         $('.line_research').fadeIn('slow');
@@ -20,17 +21,21 @@ $(document).ready(function(){
     $('#toggleShips').toggle(function() {
         $('.ship').fadeOut('slow');
         $('.line_ship').fadeOut('slow');
+        $('.category_ships').fadeOut('slow');
     }, function() {
         $('.ship').fadeIn('slow');
         $('.line_ship').fadeIn('slow');
+        $('.category_ships').fadeIn('slow');
     });
     
     $('#toggleAdvisors').toggle(function() {
         $('.advisor').fadeOut('slow');
         $('.line_advisor').fadeOut('slow');
+        $('.category_crew').fadeOut('slow');
     }, function() {
         $('.advisor').fadeIn('slow');
         $('.line_advisor').fadeIn('slow');
+        $('.category_crew').fadeIn('slow');
     });
     
     $('#toggleFullTechtree').toggle(function(e) {

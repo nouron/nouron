@@ -129,7 +129,7 @@ $r = round($m/2);
 </div>
 <div class="span3 well">
   <h4>Infos</h4>
-  <form name="fleetActions" action="#" method="POST">
+  <form name="fleetActions" action="<?= $this->url('galaxy/default', array('controller'=>'fleet','action'=>'order'));?>" method="POST">
     <input type="hidden" name="fleetId" value="" />
     <input type="text" name="coords"  value="" style="background-color: transparent; border: 0" />
     <?php foreach ($colonies as $i => $c):

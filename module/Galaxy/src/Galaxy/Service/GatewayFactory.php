@@ -22,6 +22,7 @@ class GatewayFactory implements FactoryInterface
         $tables['fleet']  = new \Galaxy\Table\Fleet($db);
         $tables['systemobject'] = new \Galaxy\Table\SystemObject($db);
         $tables['fleettechnology'] = new \Galaxy\Table\FleetTechnology($db);
+        $tables['fleetorder'] = new \Galaxy\Table\FleetOrder($db);
         #$tables['fleetressource']  = new \Galaxy\Table\FleetRessource($db);
         $tables['colonytechnology'] = new \Techtree\Table\Possession($db);
         #$tables['colonyresource']  = new \Resources\Table\Possession($db);

@@ -58,13 +58,16 @@ class JsonController extends AbstractActionController
         }
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
+        $techtreeGw = $sm->get('Techtree\Service\Gateway');
+        $techs = $techtreeGw->getTechnologies()->toArray('id');
         $fleetTechs = $gw->getFleetTechnologies("fleet_id = $fleetId");
         $fleetTechsArray = $fleetTechs->toArray('tech_id');
 
-//         foreach ($fleetTechsArray as $i => $tmp) {
-//             $tmp['technology'] = $this->translate($tmp['technology']);
-//             $fleetTechsArray[$i] = $tmp;
-//         }
+        foreach ($fleetTechsArray as $techId => $tmp) {
+            $tmp['type'] = $techs[$techId]['type'];
+            $tmp['name'] = $sm->get('translator')->translate($techs[$techId]['name']);
+            $fleetTechsArray[$techId] = $tmp;
+        }
 
         return new JsonModel( $fleetTechsArray);
     }

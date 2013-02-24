@@ -18,9 +18,10 @@ return array(
             'fleet' => array(
                 'type' => 'Segment',
                 'options' => array(
-                    'route' => '/fleet[/:fid]',
+                    'route' => '/fleet[/:fid[/:order]]',
                     'constraints' => array(
                         'fid' => '[0-9]+',
+                        'order' => '[a-zA-Z][a-zA-Z0-9_-]*',
                     ),
                     'defaults' => array(
                         '__NAMESPACE__' => 'Galaxy\Controller',
