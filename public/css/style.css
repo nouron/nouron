@@ -24,6 +24,7 @@ body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #
 
 .sidebar-nav {padding: 9px 0;}
 
+.center {text-align: center}
 
 /***** modifications of bootstrap css starts here: ****/
 .tooltip {z-index:2070;}

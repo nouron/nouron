@@ -7,8 +7,6 @@
     </ul>
 </div>
 
-
-
 <?php
 $scale  = $config['scale'];
 $offset = $config['offset'];
@@ -60,7 +58,7 @@ $radius  = round($config['range']/2); ?>
 <div class="span6">
 
 <div id="parallax">
-    <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/img/<?= $system['background_image_url'] ?>);"></div>
+    <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/image/<?= $system['background_image_url'] ?>);"></div>
     <div id="gridLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;background-image: url(/img/grid.gif)">
 <?php
 $m = $config['range'];
@@ -87,14 +85,25 @@ $r = round($m/2);
     <? foreach ($fleets as $f):
         $left = round((($f['x'] + $r) % $m) * $scale) + $offset;
         $top  = round((($f['y'] + $r) % $m) * $scale) + $offset;
-        if ($fleet['user_id'] == $userId):
-            $color = '#0d0';
-        else:
-            $color = '#ddd';
-        endif;
+    if ($fleet['user_id'] == $userId):
+        $color = '#0d0';
+    else:
+        $color = '#ddd';
+    endif;
     ?>
         <div class="fleet" style="top:<?= $top?>px;left:<?= $left?>px;border: 1px dotted <?= $color ?>"> </div>
     <? endforeach; ?>
+        <svg id="fleetsLayer-svg" height="100%" width="100%" style="position:absolute">
+        <rect x="0" y="0" height="20" width="20" stroke="green" />
+        <!-- svg content via javascript -->
+        </svg>
+
+        <div class="hidden">
+        <?php foreach ($fleetOrders as $key => $order) :
+            echo '<div id="'.$order['fleet_id'].'-'.$order['tick'].'" class="fleetorder">' . $order['coordinates'] . '</div>';
+        endforeach;
+        ?>
+        </span>
     </div>
 
     <div id="systemLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;">

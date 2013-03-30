@@ -19,7 +19,7 @@
         <div class="span6 well">
             <h4>eigene Flotten</h4>
 
-            <form action="#" method="post" id="createFleetForm">
+            <form action="<?= $this->url('fleet', array());?>" method="post" id="createFleetForm">
                 <table class="table table-striped">
                     <tr>
                         <th>Flotte</th>
@@ -60,9 +60,13 @@
             </tr>
             <?php endif;
             endforeach;?>
-            <!-- <tr>
-                <td colspan="3"><input type="text" value="" id="name" name="name"><input class="btn" type="submit" value="Erstellen" id="send" name="send"></td>
-            </tr>-->
+            <tr>
+                <td colspan="3">
+                <input type="hidden" id="coords" name="coords" value="<?= "[$x, $y, 0]" ?>" />
+                <input type="text" id="fleet" name="fleet" />
+                <input class="btn" type="submit" value="Erstellen" id="submit" name="submit" />
+                </td>
+            </tr>
             </table>
             </form>
         </div>

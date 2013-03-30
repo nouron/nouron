@@ -9,7 +9,7 @@ return array(
     ),
     'router' => array(
         'routes' => array(
-            'techtree' => array(
+            'innn' => array(
                 'type' => 'Literal',
                 'options' => array(
                     'route' => '/innn',

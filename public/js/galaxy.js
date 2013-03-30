@@ -5,12 +5,14 @@ $(document).ready(function () {
         mouseport: "#parallax"
     });
     
-    offset = parseInt( $('#system #data_offset').text() );
-    scale = parseInt( $('#system #data_scale').text() );
-    range = parseInt( $('#system #data_range').text() );
+    var offset = parseInt( $('#system #data_offset').text() );
+    var scale = parseInt( $('#system #data_scale').text() );
+    var range = parseInt( $('#system #data_range').text() );
     
-    xMin = parseInt( $('#system #data_xMin').text() );
-    yMin = parseInt( $('#system #data_yMin').text() );
+    var xMin = parseInt( $('#system #data_xMin').text() );
+    var xMax = parseInt( $('#system #data_xMax').text() );
+    var yMin = parseInt( $('#system #data_yMin').text() );
+    var yMax = parseInt( $('#system #data_yMax').text() );
     
     freeze = 0;
     
@@ -152,15 +154,15 @@ $(document).ready(function () {
     });
     
     $("#system #toggleFleetsLayer").click(function(e) {
-        $('#system #fleetsLayer .fleet').toggle();
+        $('#system #fleetsLayer').fadeToggle('slow');
     });
     
     $("#system #toggleGridLayer").click(function(e) {
-        $('#system #gridLayer').toggle();
+        $('#system #gridLayer').fadeToggle('slow');
     });
     
     $("#system #toggleSystemLayer").click(function(e) {
-        $('#system #systemLayer').toggle();
+        $('#system #systemLayer').fadeToggle('slow');
     });
     
     $("form#fleetActions button").click(function(e){
@@ -179,7 +181,6 @@ $(document).ready(function () {
                     $('form[name=fleetActions] div.error').show();
                 } else {
                     $('form[name=fleetActions] div.error').hide();
-                    console.log(data);
                 }
                 
             },
@@ -187,4 +188,97 @@ $(document).ready(function () {
         );
         return false;
     });
+    
+    /**
+     * 
+     */
+    function _get_point(x,y)
+    {
+        var offset = parseInt($('#data_offset').text());
+        var range  = parseInt($('#data_range').text());
+        var scale  = parseInt($('#data_scale').text());
+        var m = range;
+        var r = Math.round(m/2);
+        var left = Math.round((( x + r) % m) * scale) + offset + Math.round(scale/2);
+        var top  = Math.round((( y + r) % m) * scale) + offset + Math.round(scale/2);
+        return [left, top];
+    }
+    
+    /**
+     * @param array from
+     * @param array to
+     */
+    function _draw_line(from, to) {
+        var group = makeSVG('g');
+        group.appendChild(makeSVG('line', {x1:from[0], y1:from[1], x2:to[0], y2:to[1], stroke: 'white'}));
+        document.getElementById('fleetsLayer-svg').appendChild(group);
+    }
+    
+    /**
+     * 
+     */
+    function draw_fleet_order_waypoint(fleetorder)
+    {
+        var coords = jQuery.parseJSON(fleetorder.text());
+        var point = _get_point(coords[0],coords[1]);
+
+        var group = makeSVG('g', {title: coords});
+        group.appendChild(makeSVG('circle', {cx: point[0], cy:point[1], r:2, fill: 'white'}));
+        document.getElementById('fleetsLayer-svg').appendChild(group);
+        
+        text = makeSVG('text', {x:point[0]+5, y:point[1]+5});
+        text.appendChild(makeSVG('tspan', {'font-family':'Verdana', 'font-size': '10px', stroke: '#999'}, fleetorder.text()));
+        group.appendChild(text);
+        
+    }
+    
+    /**
+     * 
+     */
+    function draw_fleet_order_path(ordersForFleet) {
+        for (var tick in ordersForFleet) {
+            
+            var coords = ordersForFleet[tick];
+            console.log(coords);
+            nexttick = parseInt(tick) + 1;
+
+            if (nexttick in ordersForFleet) {
+                var nextcoords = ordersForFleet[nexttick];
+                var point = _get_point(coords[0],coords[1]);
+                var nextpoint = _get_point(nextcoords[0],nextcoords[1], 'test');
+                _draw_line(point, nextpoint);
+            }
+            
+        }
+    }
+    
+    var fleetorders = {}
+    $('#fleetsLayer .fleetorder').each(function( index ) {
+        var key = $(this).attr('id').split('-');
+        var fleetId = parseInt(key[0]);
+        var tick = parseInt(key[1]);
+        if (!(fleetId in fleetorders)){
+            fleetorders[fleetId] = {}
+        }
+        var coords = jQuery.parseJSON($(this).text());
+        if ( (xMin <= coords[0]) && (coords[0] <= xMax) &&
+             (yMin <= coords[1]) && (coords[1] <= yMax)) {
+
+            if (fleetId == 16) {
+                
+                console.log(fleetId);
+                console.log(tick);
+                console.log(coords);
+            }
+            fleetorders[fleetId][tick] = coords;
+            draw_fleet_order_waypoint($(this));
+        }
+    });
+    
+    for (var i in fleetorders) {
+        console.log(fleetorders[i]);
+        draw_fleet_order_path(fleetorders[i]);
+    }
+    
+    
 });

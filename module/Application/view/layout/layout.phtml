@@ -54,6 +54,7 @@ echo $this->doctype();
             <ul class="nav">
               <li class="active"><a href="<?= $this->url('home') ?>"><?= $this->translate('Home') ?></a></li>
               <? if ($this->zfcUserIdentity()): ?>
+              <li ><a href="<?= $this->url('innn') ?>"><?= $this->translate('INNN') ?></a></li>
               <li ><a href="<?= $this->url('techtree') ?>"><?= $this->translate('Techtree') ?></a></li>
               <li ><a href="<?= $this->url('galaxy') ?>"><?= $this->translate('Galaxy') ?></a></li>
               <? endif; ?>

@@ -13,11 +13,11 @@ class Fleet extends Form implements InputFilterProviderInterface
         $this->setAttribute('action', '/fleet');
         $this->setAttribute('method', 'post');
         $this->add(array(
-                'name' => 'id',
-                'attributes' => array(
-                        'type' => 'hidden',
-                        'value' => 0
-                ),
+            'name' => 'id',
+            'attributes' => array(
+                'type' => 'hidden',
+                'value' => 0
+            ),
         ));
         $this->add(array(
             'name' => 'fleet',
@@ -38,7 +38,7 @@ class Fleet extends Form implements InputFilterProviderInterface
     public function getInputFilterSpecification()
     {
         return array(
-            'fleetname' => array (
+            'fleet' => array (
                 'required' => true,
                 'filters' => array(
                     array(

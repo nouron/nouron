@@ -1,3 +1,24 @@
+/**
+ * 
+ */
+ function makeSVG(tag, attribs, value)
+ {
+     if (attribs == null) {
+         attribs = {};
+     }
+   
+     var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+     for (var k in attribs) {
+         el.setAttribute(k, attribs[k]);
+     }
+   
+     if (value) {
+         value = document.createTextNode(value);
+         el.appendChild(value);
+     }
+     return el;
+ }
+
 $(document).ready(function(){
 
     // Techtree (Show/Hide Technologies)
@@ -45,28 +66,7 @@ $(document).ready(function(){
         e.preventDefault();
         $('#techtree .na').fadeOut('slow');
     });
-    
-    /**
-     * 
-     */
-     function makeSVG(tag, attribs, value)
-     {
-         if (attribs == null) {
-             attribs = {};
-         }
-       
-         var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-         for (var k in attribs) {
-             el.setAttribute(k, attribs[k]);
-         }
-       
-         if (value) {
-             value = document.createTextNode(value);
-             el.appendChild(value);
-         }
-         return el;
-     }
-   
+
      /**
       * 
       * @param object src A jquery object which serves as source point for the requirment line

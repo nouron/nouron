@@ -51,7 +51,9 @@ class SystemController extends AbstractActionController
 
         $sysCoords = array($system['x'], $system['y']);
         $colonies = $gw->getByCoordinates('colonies', $sysCoords)->toArray();
-        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->toArray();
+        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->toArray('id');
+        $fleetIds = array_keys($fleets);
+        $fleetOrders = $gw->getFleetOrdersByFleetIds($fleetIds);
 
         return new ViewModel(
             array(
@@ -61,95 +63,41 @@ class SystemController extends AbstractActionController
                 'colonies' => $colonies,
                 'config'  => $config,
                 'fleets' => $fleets,
+                'fleetOrders' => $fleetOrders,
                 'sid' => $systemId,
                 'pid' => $objectId,
                 'cid' => $colonyId,
             )
         );
-
-
-//         ############################################
-//         // collect the data from the user
-//         $this->view->id  = $systemId    = $this->_params->id;
-//         $this->view->pid = $planetaryId = $this->_params->pid;
-//         $this->view->cid = $colonyId    = $this->_params->cid;
-
-//         $session = new Zend_Session_Namespace('Nouron');
-
-//         if (is_numeric($colonyId)) {
-//             $this->view->system = $system = $this->galaxyGateway->getSystemByColony($colonyId);
-//             $systemId = $system->nId;
-//         } elseif (is_numeric($planetaryId)) {
-//             $this->view->system = $system = $this->galaxyGateway->getSystemByPlanetary($planetaryId);
-//             $systemId = $system->nId;
-//         } elseif (is_numeric($systemId)) {
-//             $this->view->system = $system = $this->galaxyGateway->getSystem($systemId);
-//         } elseif (isset($session->systemId)) {
-//             $systemId = $session->systemId;
-//             $this->view->system = $system = $this->galaxyGateway->getSystem($systemId);
-//         } else {
-//             $this->_flashMessenger->setNamespace('hint')->addMessage('galaxy_choose_system_first');
-//             $this->_redirect('/galaxy/index');
-//         }
-
-//         // aktualisiere session:
-//         $session->systemId = $systemId;
-
-//         $colonies = Zend_Registry::get('coloniesInPossession');
-
-//         if ($colonies->count() == 0) {
-//             $this->_setNewColony($planetaryId);
-//         }
-
-//         $config = $this->galaxyGateway->getConfig();
-//         $this->view->config = $config->system;
-
-//         //----------- Fleets -------------
-//         // get fleets surrounding the planetaries:
-//         $fleets  = $system->getFleets();
-//         $this->view->fleets = $fleets->toArray();
-//         $this->view->myFleets = $this->galaxyGateway->getFleets("nUser = " . $this->user->nId)->toArray();
-
-//         //----------- Colonies -------------
-//         // get colonies from ALL planetaries in this system:
-//         $colonies  = $system->getColonies();
-//         $this->view->colonies = $colonies->toArray();
-
-//         //----------- Planets & Co -------------
-//         // now get all the planetaries in this system
-//         $this->view->systemObjects = $_SESSION['objects'] = $system->getObjects();
-
-//         // systemgrenzen min/max für Javascript bereitstellen
-//         $this->view->system = $system;
     }
 
-    /**
-     *
-     * @param integer $planetaryId
-     */
-    private function _setNewColony($planetaryId = null)
-    {
-        $this->view->firstColoChoice = true;
-        if ( is_numeric($planetaryId) ) {
-            $this->view->planetary = $this->galaxyGateway->getSystemObject($planetaryId);
-            if ($this->_params->confirm == 1){
-                $data = array(
-                    'nUser' => $this->user->nId,
-                    'nPlanetary' => $this->view->planetary->nId,
-                    'nSinceTick' => Zend_Registry::get('Tick'),
-                    // @todo: check if spot is free!
-                    'nSpot' => 0,
-                    'bHome' => 1,
+//     /**
+//      *
+//      * @param integer $planetaryId
+//      */
+//     private function _setNewColony($planetaryId = null)
+//     {
+//         $this->view->firstColoChoice = true;
+//         if ( is_numeric($planetaryId) ) {
+//             $this->view->planetary = $this->galaxyGateway->getSystemObject($planetaryId);
+//             if ($this->_params->confirm == 1){
+//                 $data = array(
+//                     'nUser' => $this->user->nId,
+//                     'nPlanetary' => $this->view->planetary->nId,
+//                     'nSinceTick' => Zend_Registry::get('Tick'),
+//                     // @todo: check if spot is free!
+//                     'nSpot' => 0,
+//                     'bHome' => 1,
 
-                );
-                $newColony = $this->galaxyGateway->createColony($data);
-                $colonyId  = $newColony->save();
+//                 );
+//                 $newColony = $this->galaxyGateway->createColony($data);
+//                 $colonyId  = $newColony->save();
 
-                $resourcesGw = new Resources_Model_Gateway();
-                $resourcesGw->generateStartResources($colonyId);
-            }
-        }
-    }
+//                 $resourcesGw = new Resources_Model_Gateway();
+//                 $resourcesGw->generateStartResources($colonyId);
+//             }
+//         }
+//     }
 
     /**
      * @todo

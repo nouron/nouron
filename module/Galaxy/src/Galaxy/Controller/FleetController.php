@@ -22,34 +22,37 @@ class FleetController extends AbstractActionController
         $objectId = $selectedIds['objectId'];
         $colonyId = $selectedIds['colonyId'];
 
-        $cid = $this->params()->fromRoute('cid');
-        $pid = $this->params()->fromRoute('pid');
-        $sid = $this->params()->fromRoute('sid');
+//         $cid = $this->params()->fromRoute('cid');
+//         $pid = $this->params()->fromRoute('pid');
+//         $sid = $this->params()->fromRoute('sid');
         $y = $this->params()->fromRoute('y');
         $x = $this->params()->fromRoute('x');
-        $y = $this->params()->fromRoute('y');
 
         $gw = $sm->get('Galaxy\Service\Gateway');
 
         if ($x && $y) {
+            $entity = array('x' => $x, 'y' => $y);
             $fleets = $gw->getByCoordinates('fleets', array($x,$y));
-        } elseif ( $cid ) {
-            print($cid);
+        } elseif ( $colonyId ) {
+            $entity = $gw->getColony($colonyId);
             $fleets = $gw->getFleetsByEntityId('colony', $colonyId);
-        } elseif ( $pid ) {
+        } elseif ( $objectId ) {
+            $entity = $gw->getSystemObject($objectId);
             $fleets = $gw->getFleetsByEntityId('object', $objectId);
-        } elseif ( $sid) {
+        } elseif ( $systemId) {
+            $entity = $gw->getSystem($systemId);
             $fleets = $gw->getFleetsByEntityId('system', $systemId);
         } else {
             $fleets = $gw->getFleetsByUserId($userId);
+            //$entity = $gw->getSystemObject($colonyId);
         }
 
         return new ViewModel(
             array(
                 'fleets' => $fleets,
                 'userId' => $userId,
-                'x' => $x,
-                'y' => $y,
+                'x' => $entity['x'],
+                'y' => $entity['y'],
                 'sid' => $systemId,
                 'pid' => $objectId,
                 'cid' => $colonyId,
@@ -69,14 +72,20 @@ class FleetController extends AbstractActionController
             $form->setData($this->getRequest()->getPost());
             if ($form->isValid()) {
                 $newEntity = $form->getData();
-                $gw->saveFleet($newEntity);
+                unset($newEntity['id']);
+                unset($newEntity['submit']);
+                $fid = $gw->saveFleet($newEntity);
                 $form = new \Galaxy\Form\Fleet();
                 $success = true;
+                \Zend\Debug\Debug::dump($fid);
+            } else {
+                \Zend\Debug\Debug::dump($form);
             }
         }
 
         /// set view variable (visible foreign fleets too)
-        $fid = $this->params()->fromRoute('fid');
+
+        $fid = $fid ? $fid : $this->params()->fromRoute('fid');
         $fleet = $fid ? $gw->getFleet($fid) : null;
 
         $fleetIsInColonyOrbit = false;

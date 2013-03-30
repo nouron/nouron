@@ -70,6 +70,19 @@ class Gateway extends \Nouron\Service\Gateway
      * @param  integer $id
      * @return ResultSet
      */
+    public function getFleetOrdersByFleetIds(array $fleetIds)
+    {
+        $where = 'fleet_id IN (' . implode ( ',' , $fleetIds ) . ')';
+        return $this->getTable('fleetorder')->fetchAll($where);
+    }
+
+    /**
+     * Get all fleets from coordinates of an colony, system object or system entity.
+     *
+     * @param  string  $entityType
+     * @param  integer $id
+     * @return ResultSet
+     */
     public function getFleetsByEntityId($entityType, $id)
     {
         $this->_validateId($id);
@@ -332,18 +345,17 @@ class Gateway extends \Nouron\Service\Gateway
 //         }
 //     }
 
-//     /**
-//      * Get the planetary object (planet, moon, asteroid field, etc. ) by its id.
-//      *
-//      * @param  integer $id
-//      * @return \Galaxy\Entity\System_Object
-//      */
-//     public function getSystemObject($id)
-//     {
-//         $dbView = $this->getDbView('system_objects');
-//         $result = $dbView->find($id)->current();
-//         return new \Galaxy\Entity\System_Object($result, $this);
-//     }
+    /**
+     * Get the planetary object (planet, moon, asteroid field, etc. ) by its id.
+     *
+     * @param  integer $id
+     * @return \Galaxy\Entity\System_Object
+     */
+    public function getSystemObject($id)
+    {
+        $this->_validateId($id);
+        return $this->getTable('systemobject')->getEntity($id);
+    }
 
     /**
      * Ermittelt den Planeten oder Mond anhand einer ColonyId
