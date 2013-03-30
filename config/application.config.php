@@ -8,6 +8,7 @@ return array(
         'Nouron',
         'Techtree',
         'Galaxy',
+        'INNN',
         /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'Resources',
 //         'DluTwBootstrap',

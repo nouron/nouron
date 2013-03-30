@@ -15,8 +15,8 @@ return array(
                     'route' => '/innn',
                     'defaults' => array(
                         '__NAMESPACE__' => 'INNN\Controller',
-                        'controller' => 'Event',
-                        'action' => 'index',
+                        'controller' => 'Message',
+                        'action' => 'inbox',
                     ),
                 ),
                 'may_terminate' => true,
@@ -32,6 +32,26 @@ return array(
                             ),
                             'defaults' => array()
                         )
+                    ),
+                    'message' => array(
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/message[/:action]',
+                            'default' => array(
+                                'controller' => 'Message',
+                                'action' => 'inbox'
+                            )
+                        )
+                    ),
+                    'event' => array(
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/innn/event[/:action]',
+                            'default' => array(
+                                'controller' => 'Event',
+                                'action' => 'index'
+                            )
+                        )
                     )
                 )
             )
@@ -39,17 +59,27 @@ return array(
     ),
     'view_manager' => array(
         'template_path_stack' => array(
-            'techtree' => __DIR__ . '/../view',
+            'innn' => __DIR__ . '/../view',
         ),
         'strategies' => array(
-                'ViewJsonStrategy',
+            'ViewJsonStrategy',
+        ),
+    ),
+    'translator' => array(
+        #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
+        'translation_file_patterns' => array(
+            array(
+                'type' => 'phparray',
+                'base_dir' => __DIR__ . '/../language',
+                'pattern'  => '%s.php',
+            )
         ),
     ),
     'service_manager' => array(
-       'invokables' => array(
+        'invokables' => array(
            'INNN\Table\Message' => 'INNN\Table\Message',
            'INNN\Table\Event' => 'INNN\Table\Event',
-       ),
+        ),
         'factories' => array(
             'INNN\Entity\Message' => 'INNN\Entity\MessageFactory',
             'INNN\Entity\Event' => 'INNN\Entity\EventFactory',

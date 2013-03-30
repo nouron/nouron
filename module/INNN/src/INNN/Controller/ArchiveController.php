@@ -5,7 +5,7 @@ use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
-class EventController extends AbstractActionController
+class ArchiveController extends MessageController
 {
     public function indexAction()
     {
@@ -16,5 +16,10 @@ class EventController extends AbstractActionController
 
             )
         );
+    }
+
+    public function deleteAction()
+    {
+        return new JsonModel(array());
     }
 }

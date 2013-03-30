@@ -207,4 +207,18 @@ $(document).ready(function(){
         $('#techModal').load('http://dev.nouron.de/techtree/json/getModalHtmlForTechnology/'+techId);
     });
     
+    /*************** INNN *****************************************************/
+    $('.new-inbox-message').bind('fade-cycle', function() {
+        $(this).fadeOut('slow', function() {
+            $(this).fadeIn('slow', function() {
+                $(this).trigger('fade-cycle');
+            });
+        });
+    });
+    $('.new-inbox-message').each(function(index, elem) {
+        setTimeout(function() {
+            $(elem).trigger('fade-cycle');
+        }, index * 250);
+    });
+    /**************************************************************************/
 });

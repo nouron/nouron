@@ -4,7 +4,7 @@ namespace INNN\Service;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class GatewayFactory implements FactoryInterface
+class MessageFactory implements FactoryInterface
 {
     /**
      *
@@ -17,9 +17,8 @@ class GatewayFactory implements FactoryInterface
         $tick = $serviceLocator->get('Nouron\Service\Tick');
 
         $tables['message'] = new \INNN\Table\Message($db);
-        $tables['event'] = new \INNN\Table\Event($db);
 
-        $service   = new Gateway($tick, $tables);
+        $service   = new Message($tick, $tables);
         return $service;
     }
 }

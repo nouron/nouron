@@ -1,0 +1,19 @@
+<div class="row-fluid">
+    <ul class="nav nav-tabs">
+        <li><a href="<?= $this->url('innn/message', array('action' => 'new')) ?>">New Message</a></li>
+        <li class="active"><a href="<?= $this->url('innn/message', array('action' => 'inbox')) ?>">Inbox</a></li>
+        <li><a href="<?= $this->url('innn/message', array('action' => 'outbox')) ?>">Outbox</a></li>
+        <li class="secondary-nav"><a href="<?= $this->url('innn/message', array('action' => 'archive')) ?>">Archive</a></li>
+    </ul>
+
+    <div class="pagination">
+        <ul>
+            <li><a href="#">Prev</a></li>
+            <li><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">Next</a></li>
+        </ul>
+    </div>
+</div><!--/row-->

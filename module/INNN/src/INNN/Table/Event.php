@@ -5,15 +5,15 @@ use Nouron\Model\AbstractTable,
     Nouron\Model\ResultSet,
     Zend\Db\Adapter\Adapter;
 
-class Message extends AbstractTable
+class Event extends AbstractTable
 {
-    protected $table  = 'innn_messages';
+    protected $table  = 'innn_events';
     protected $primary = 'id';
 
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \INNN\Entity\Message());
+        $this->resultSetPrototype = new ResultSet(new \INNN\Entity\Event());
         $this->initialize();
     }
 }
