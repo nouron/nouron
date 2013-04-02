@@ -1,6 +1,11 @@
 <?php
 return array (
     # general
+    'galaxy' => 'Galaxie',
+    'system' => 'System',
+    'fleets' => 'Flotten',
+    'fleet' =>  'Flotte',
+
     'fleet_cargo' => 'Frachtraum',
     'fleet_ships' => 'Schiffe in der Flotte',
     'fleet_resources' => 'Resourcen in der Flotte',

@@ -1,12 +1,3 @@
-<div class="row-fluid">
-    <ul class="nav nav-tabs">
-      <li><a href="<?= $this->url('galaxy', array());?>">Galaxy</a></li>
-      <li><a href="<?= $this->url('galaxy/system', array('sid'=> null));?>">System</a></li>
-      <li class="active"><a href="#">Flotten</a></li>
-      <li><a href="<?= $this->url('fleet', array('fid'=> null));?>">Flotte</a></li>
-    </ul>
-</div>
-
 <div id="fleets">
     <?php if ($cid): ?>
         <p style="text-align: center">Flotten auf der Kolonie und in der näheren Umgebung.</p>

@@ -10,10 +10,12 @@ class MessageController extends AbstractActionController
     public function inboxAction()
     {
         $sm = $this->getServiceLocator();
+        $messageService = $sm->get('INNN\Service\Message');
+        $messages = $messageService->getInboxMessages(3);
 
         return new ViewModel(
             array(
-
+                'messages' => $messages
             )
         );
     }
@@ -21,10 +23,12 @@ class MessageController extends AbstractActionController
     public function outboxAction()
     {
         $sm = $this->getServiceLocator();
+        $messageService = $sm->get('INNN\Service\Message');
+        $messages = $messageService->getOutboxMessages(3);
 
         return new ViewModel(
             array(
-
+                'messages' => $messages
             )
         );
     }
@@ -52,14 +56,22 @@ class MessageController extends AbstractActionController
         $this->createAction();
 
         return new ViewModel(
-                array(
+            array(
 
-                )
+            )
         );
     }
 
     public function archiveAction()
     {
-        return new ViewModel(array());
+        $sm = $this->getServiceLocator();
+        $messageService = $sm->get('INNN\Service\Message');
+        $messages = $messageService->getArchivedMessages(3);
+
+        return new ViewModel(
+            array(
+                'messages' => $messages
+            )
+        );
     }
 }

@@ -66,6 +66,15 @@ return array(
             'technologyNameLink' => 'Techtree\View\Helper\TechnologyNameLink',
         )
     ),
+    'navigation' => array(
+        'default' => array(
+            'colony' => array(
+                'label' => 'colony',
+                'route' => 'techtree',
+                'order' => 2,
+            )
+        )
+    ),
     'translator' => array(
         #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
         'translation_file_patterns' => array(

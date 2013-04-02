@@ -189,6 +189,33 @@ return array(
             'customHelper' => 'Galaxy\View\Helper\ColonyNameLink',
         )
     ),
+    'navigation' => array(
+        'default' => array(
+            'galaxy' => array(
+                'label' => 'galaxy',
+                'route' => 'galaxy',
+                'order' => 3,
+                'pages' => array(
+                    'galaxy' => array(
+                        'label' => 'galaxy',
+                        'route' => 'galaxy',
+                    ),
+                    'system' => array(
+                        'label' => 'system',
+                        'route' => 'galaxy/system',
+                    ),
+                    'fleets' => array(
+                        'label' => 'fleets',
+                        'route' => 'fleets',
+                    ),
+                    'fleet' => array(
+                        'label' => 'fleet',
+                        'route' => 'fleet',
+                    )
+                )
+            )
+        )
+    ),
     'translator' => array(
         #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
         'translation_file_patterns' => array(

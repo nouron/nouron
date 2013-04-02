@@ -46,7 +46,7 @@ return array(
                     'event' => array(
                         'type' => 'Segment',
                         'options' => array(
-                            'route' => '/innn/event[/:action]',
+                            'route' => '/event[/:action]',
                             'default' => array(
                                 'controller' => 'Event',
                                 'action' => 'index'
@@ -65,6 +65,39 @@ return array(
             'ViewJsonStrategy',
         ),
     ),
+    'navigation' => array(
+        'default' => array(
+            'innn' => array(
+                'label' => 'innn',
+                'route' => 'innn/message',
+                'order' => 1,
+                'pages' => array(
+                    'events' => array(
+                        'label' => 'events',
+                        'route' => 'innn/event'
+                    ),
+                    'inbox' => array(
+                        'label' => 'inbox',
+                        'route' => 'innn/message/inbox',
+                    ),
+                    'new' => array(
+                        'label' => 'new message',
+                        'route' => 'innn/message/new',
+                    ),
+                    'outbox' => array(
+                        'label' => 'outbox',
+                        'route' => 'innn/message/outbox',
+                        #'class' => 'secondary-nav' #doesn't work yet
+                    ),
+                    'archive' => array(
+                        'label' => 'archive',
+                        'route' => 'innn/message/archive',
+                        #'class' => 'secondary-nav'
+                    )
+                )
+            )
+        )
+    ),
     'translator' => array(
         #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
         'translation_file_patterns' => array(
@@ -78,12 +111,13 @@ return array(
     'service_manager' => array(
         'invokables' => array(
            'INNN\Table\Message' => 'INNN\Table\Message',
-           'INNN\Table\Event' => 'INNN\Table\Event',
+           'INNN\Table\Event'   => 'INNN\Table\Event',
         ),
         'factories' => array(
-            'INNN\Entity\Message' => 'INNN\Entity\MessageFactory',
-            'INNN\Entity\Event' => 'INNN\Entity\EventFactory',
-            'INNN\Service\Gateway' => 'INNN\Service\GatewayFactory',
+            'INNN\Entity\Message'  => 'INNN\Entity\MessageFactory',
+            'INNN\Entity\Event'    => 'INNN\Entity\EventFactory',
+            'INNN\Service\Message' => 'INNN\Service\MessageFactory',
+            'INNN\Service\Event'   => 'INNN\Service\EventFactory',
         ),
     )
 );

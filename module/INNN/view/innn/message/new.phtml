@@ -1,9 +1,122 @@
 <div class="row-fluid">
-    <ul class="nav nav-tabs">
-        <li class="active"><a href="<?= $this->url('innn/message', array('action' => 'new')) ?>">New Message</a></li>
-        <li><a href="<?= $this->url('innn/message', array('action' => 'inbox')) ?>">Inbox</a></li>
-        <li><a href="<?= $this->url('innn/message', array('action' => 'outbox')) ?>">Outbox</a></li>
-        <li class="secondary-nav"><a href="<?= $this->url('innn/message', array('action' => 'archive')) ?>">Archive</a></li>
-    </ul>
+    <div class="tabbable tabs-left">
+      <ul class="nav nav-tabs" id="myTab">
+        <li class="active"><a href="#msg-to-user" data-toggle="tab">... to User</a></li>
+        <li><a href="#msg-to-faction" data-toggle="tab">... to Faction</a></li>
+        <li>&nbsp;</li>
+        <li>&nbsp;</li>
+        <li class="disabled"><a href="#msg-to-innn">... to INNN</a></li>
+        <li>&nbsp;</li>
+        <li class="disabled"><a href="#msg-to-support">... to Support</a></li>
+      </ul>
+      <div class="tab-content">
+
+        <div class="tab-pane active" id="msg-to-user">
+          <form name="msg-to-user" class="form-horizontal" action="" method="POST">
+            <div class="control-group">
+              <label class="control-label" for="title">An:</label>
+              <div class="controls">
+                <input class="input-xxlarge" id="to" name="to" type="text" value="title" />
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="title">Titel</label>
+              <div class="controls">
+                <input class="input-xxlarge" id="title" name="title" type="text" value="title" />
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="mood">Stimmung</label>
+              <div class="controls">
+                <select class="input-xlarge" id="mood" name="mood">
+                  <option val="freundlich">freundlich</option>
+                  <option val="neutral">neutral</option>
+                  <option val="aggressiv">aggressiv</option>
+                </select>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="text">Text</label>
+              <div class="controls">
+                <textarea class="input-xxlarge" rows="4" id="text" name="text" />ganz viel text</textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save changes</button>
+              <button type="button" class="btn">Cancel</button>
+            </div>
+
+            <div class="control-group warning">
+              <label class="control-label" for="inputWarning">Input with warning</label>
+              <div class="controls">
+                <input type="text" id="inputWarning">
+                <span class="help-inline">Something may have gone wrong</span>
+              </div>
+            </div>
+            <div class="control-group error">
+              <label class="control-label" for="inputError">Input with error</label>
+              <div class="controls">
+                <input type="text" id="inputError">
+                <span class="help-inline">Please correct the error</span>
+              </div>
+            </div>
+            <div class="control-group success">
+              <label class="control-label" for="inputSuccess">Input with success</label>
+              <div class="controls">
+                <input type="text" id="inputSuccess">
+                <span class="help-inline">Woohoo!</span>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane" id="msg-to-faction">
+          <form name="msg-to-user" class="form-horizontal" action="" method="POST">
+            <div class="control-group">
+              <label class="control-label" for="title">An:</label>
+              <div class="controls">
+                <input class="input-xxlarge" id="to" name="to" type="text" value="title" />
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="title">Titel</label>
+              <div class="controls">
+                <input class="input-xxlarge" id="title" name="title" type="text" value="title" />
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="mood">Stimmung</label>
+              <div class="controls">
+                <select class="input-xlarge" id="mood" name="mood">
+                  <option val="freundlich">freundlich</option>
+                  <option val="neutral">neutral</option>
+                  <option val="aggressiv">aggressiv</option>
+                </select>
+              </div>
+            </div>
+            <div class="control-group">
+              <label class="control-label" for="text">Text</label>
+              <div class="controls">
+                <textarea class="input-xxlarge" rows="4" id="text" name="text" />ganz viel text</textarea>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">Save changes</button>
+              <button type="button" class="btn">Cancel</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="tab-pane" id="msg-to-innn">
+
+        </div>
+
+        <div class="tab-pane" id="msg-to-support">
+
+        </div>
+      </div>
+
+    </div>
 
 </div><!--/row-->

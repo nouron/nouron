@@ -40,34 +40,23 @@ echo $this->doctype();
   </head>
 
   <body>
-
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
           <a class="brand" href="<?php echo $this->url('home') ?>"><?php echo $this->translate('Nouron') ?></a>
           <div class="nav-collapse">
-            <ul class="nav">
-              <li class="active"><a href="<?= $this->url('home') ?>"><?= $this->translate('Home') ?></a></li>
               <? if ($this->zfcUserIdentity()): ?>
-              <li ><a href="<?= $this->url('innn') ?>"><?= $this->translate('INNN') ?></a></li>
-              <li ><a href="<?= $this->url('techtree') ?>"><?= $this->translate('Techtree') ?></a></li>
-              <li ><a href="<?= $this->url('galaxy') ?>"><?= $this->translate('Galaxy') ?></a></li>
-              <? endif; ?>
-            </ul>
-
-            <ul class="nav pull-right">
-            <? if (!$this->zfcUserIdentity()): ?>
+              <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
+              <ul class="nav pull-right">
                 <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
                 <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
-            <? else: ?>
+              </ul>
+              <? else: ?>
+              <ul class="nav pull-right">
                 <li><a href="#"><?= $this->zfcUserIdentity()->getDisplayname(); ?></a></li>
                 <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> logout</a></li>
-            <? endif; ?>
+              </ul>
+              <? endif; ?>
             </ul>
 
           </div><!--/.nav-collapse -->
@@ -79,6 +68,12 @@ echo $this->doctype();
             echo $this->resources(); #echo $this->partial('layout/resource-bar', array()); ?>
         <hr />
         <? endif;
+        $options = array(
+            'minDepth' => 1,
+            'ulClass' => 'nav nav-tabs',
+            #'onlyActiveBranch' => true
+        );
+        echo $this->navigation('navigation')->menu()->setMinDepth(1)->setUlClass('nav nav-tabs')->setOnlyActiveBranch(true)->renderSubMenu();
         echo $this->content; ?>
         <hr />
     </div><!-- /container -->
