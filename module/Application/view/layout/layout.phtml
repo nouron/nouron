@@ -48,13 +48,13 @@ echo $this->doctype();
               <? if ($this->zfcUserIdentity()): ?>
               <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
               <ul class="nav pull-right">
-                <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
-                <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
+                <li><a href="#"><?= $this->zfcUserIdentity()->getDisplayname(); ?></a></li>
+                <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> logout</a></li>
               </ul>
               <? else: ?>
               <ul class="nav pull-right">
-                <li><a href="#"><?= $this->zfcUserIdentity()->getDisplayname(); ?></a></li>
-                <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> logout</a></li>
+                <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
+                <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
               </ul>
               <? endif; ?>
             </ul>
@@ -65,15 +65,16 @@ echo $this->doctype();
     </div>
     <div class="container">
         <? if ($this->zfcUserIdentity()):
-            echo $this->resources(); #echo $this->partial('layout/resource-bar', array()); ?>
+            echo $this->resources(); ?>
         <hr />
         <? endif;
-        $options = array(
-            'minDepth' => 1,
-            'ulClass' => 'nav nav-tabs',
-            #'onlyActiveBranch' => true
-        );
-        echo $this->navigation('navigation')->menu()->setMinDepth(1)->setUlClass('nav nav-tabs')->setOnlyActiveBranch(true)->renderSubMenu();
+        echo $this->navigation()
+                  ->menu()
+                  ->setUlClass('nav nav-tabs')
+                  ->setOnlyActiveBranch(true)
+                  ->setRenderParents(false)
+                  ->setMinDepth(1)
+                  ->setMaxDepth(1);
         echo $this->content; ?>
         <hr />
     </div><!-- /container -->

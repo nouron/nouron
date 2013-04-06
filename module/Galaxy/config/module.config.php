@@ -214,7 +214,7 @@ return array(
                     )
                 )
             )
-        )
+        ),
     ),
     'translator' => array(
         #'locale' => 'de_DE',  # local is set in onBootstrap()-method in Module.php
