@@ -2,8 +2,6 @@
 namespace Techtree\Controller;
 
 use Zend\View\Model\JsonModel;
-
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
@@ -12,7 +10,7 @@ use Techtree\Service\Gateway;
  * @author tt
  *
  */
-class JsonController extends AbstractActionController
+class JsonController extends \Nouron\Controller\IngameController
 {
     /**
      *

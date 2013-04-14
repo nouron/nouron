@@ -4,14 +4,16 @@ return array(
         'Application',
         'ZfcBase',
         'ZfcUser',
+        'ZfcAdmin',
         'User', /* based on ZfcUser */
+        'ZfcRbac',
         'Nouron',
         'Techtree',
         'Galaxy',
         'INNN',
         /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'Resources',
-//         'DluTwBootstrap',
+        'DluTwBootstrap',
 //         'DluTwBootstrapDemo'
         'ZendDeveloperTools'
     ),

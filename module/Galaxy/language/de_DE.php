@@ -3,6 +3,7 @@ return array (
     # general
     'galaxy' => 'Galaxie',
     'system' => 'System',
+    'colony' => 'Kolonie',
     'fleets' => 'Flotten',
     'fleet' =>  'Flotte',
 

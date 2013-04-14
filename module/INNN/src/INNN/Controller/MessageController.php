@@ -1,12 +1,14 @@
 <?php
 namespace INNN\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-use Techtree\Service\Gateway;
 
-class MessageController extends AbstractActionController
+class MessageController extends \Nouron\Controller\IngameController
 {
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function inboxAction()
     {
         $sm = $this->getServiceLocator();
@@ -20,6 +22,10 @@ class MessageController extends AbstractActionController
         );
     }
 
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function outboxAction()
     {
         $sm = $this->getServiceLocator();
@@ -33,7 +39,40 @@ class MessageController extends AbstractActionController
         );
     }
 
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function newAction()
+    {
+        $sm = $this->getServiceLocator();
+        $form = new \INNN\Form\Message();
+        $messageService = $sm->get('INNN\Service\Message');
+        //$userService = $sm->get('User\Service\User');
+//         $entity = new \INNN\Entity\Message();
+//         $form->bind($entity);
+
+        if ($this->getRequest()->isPost()) {
+            $form->setData($this->getRequest()->getPost());
+            if ($form->isValid()) {
+                $newEntity = $form->getData();
+                $messageId = $messageService->sendMessage($newEntity);
+                \Zend\Debug\Debug::dump($messageId);
+            }
+        }
+
+        return new ViewModel(
+            array(
+                'form' => $form
+            )
+        );
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
+    public function replyAction()
     {
         $sm = $this->getServiceLocator();
 

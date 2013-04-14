@@ -1,11 +1,10 @@
 <?php
 namespace Techtree\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
-class TechnologyController extends AbstractActionController
+class TechnologyController extends \Nouron\Controller\IngameController
 {
     public function orderAction()
     {

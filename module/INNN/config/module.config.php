@@ -69,7 +69,7 @@ return array(
         'default' => array(
             'innn' => array(
                 'label' => 'innn',
-                'route' => 'innn/message',
+                'route' => 'innn/event',
                 'order' => 1,
                 'pages' => array(
                     'events' => array(
@@ -78,20 +78,24 @@ return array(
                     ),
                     'inbox' => array(
                         'label' => 'inbox',
-                        'route' => 'innn/message/inbox',
+                        'route' => 'innn/message',
+                        'action' => 'inbox',
                     ),
                     'new' => array(
                         'label' => 'new message',
-                        'route' => 'innn/message/new',
+                        'route' => 'innn/message',
+                        'action' => 'new',
                     ),
                     'outbox' => array(
                         'label' => 'outbox',
-                        'route' => 'innn/message/outbox',
+                        'route' => 'innn/message',
+                        'action' => 'outbox',
                         #'class' => 'secondary-nav' #doesn't work yet
                     ),
                     'archive' => array(
                         'label' => 'archive',
-                        'route' => 'innn/message/archive',
+                        'route' => 'innn/message',
+                        'action' => 'archive',
                         #'class' => 'secondary-nav'
                     )
                 )

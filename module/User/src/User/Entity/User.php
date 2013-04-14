@@ -2,8 +2,9 @@
 namespace User\Entity;
 
 use Nouron\Model\EntityInterface;
+use ZfcRbac\Identity\IdentityInterface;
 
-class User extends \ZfcUser\Entity\User implements EntityInterface
+class User extends \ZfcUser\Entity\User implements EntityInterface, IdentityInterface
 {
     protected $tableName  = 'usr_users';
 
@@ -15,8 +16,14 @@ class User extends \ZfcUser\Entity\User implements EntityInterface
             'email' => $this->email,
             'displayName' => $this->displayName,
             'password' => $this->password,
-            'state' => $this->state
+            'state' => $this->state,
+            'role' => $this->role
         );
+    }
+
+    public function getRoles()
+    {
+        return array($this->role);
     }
 }
 

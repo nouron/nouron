@@ -17,8 +17,6 @@ class SelectedIds extends AbstractPlugin
      */
     public function __invoke()
     {
-        session_start();
-
         $sm = $this->getController()->getServiceLocator();
 
         $systemId = $this->getController()->params()->fromRoute('sid');

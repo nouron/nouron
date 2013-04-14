@@ -2,12 +2,10 @@
 namespace INNN\Controller;
 
 use Zend\View\Model\JsonModel;
-
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
-class JsonController extends AbstractActionController
+class JsonController extends \Nouron\Controller\IngameController
 {
     public function getMessagesAction()
     {

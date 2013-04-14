@@ -2,17 +2,9 @@
 namespace Galaxy\Controller;
 
 use Zend\View\Model\JsonModel;
-
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-use Techtree\Service\Gateway;
 
-/**
- *
- * @author tt
- *
- */
-class JsonController extends AbstractActionController
+class JsonController extends \Nouron\Controller\IngameController
 {
     /**
      * @return \Zend\View\Model\JsonModel

@@ -1,11 +1,9 @@
 <?php
 namespace Galaxy\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-//use Galaxy\Service\Gateway;
 
-class FleetController extends AbstractActionController
+class FleetController extends \Nouron\Controller\IngameController
 {
 
     public function indexAction()
@@ -47,12 +45,15 @@ class FleetController extends AbstractActionController
             //$entity = $gw->getSystemObject($colonyId);
         }
 
+        $x = isset($entity) ? $entity['x'] : $x;
+        $y = isset($entity) ? $entity['y'] : $y;
+
         return new ViewModel(
             array(
                 'fleets' => $fleets,
                 'userId' => $userId,
-                'x' => $entity['x'],
-                'y' => $entity['y'],
+                'x' => $x,
+                'y' => $y,
                 'sid' => $systemId,
                 'pid' => $objectId,
                 'cid' => $colonyId,

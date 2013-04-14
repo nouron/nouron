@@ -1,11 +1,9 @@
 <?php
 namespace Galaxy\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-//use Galaxy\Service\Gateway;
 
-class IndexController extends AbstractActionController
+class IndexController extends \Nouron\Controller\IngameController
 {
     public function indexAction()
     {

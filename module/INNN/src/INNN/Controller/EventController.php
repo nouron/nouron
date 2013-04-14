@@ -1,11 +1,9 @@
 <?php
 namespace INNN\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
-use Techtree\Service\Gateway;
 
-class EventController extends AbstractActionController
+class EventController extends \Nouron\Controller\IngameController
 {
     public function indexAction()
     {

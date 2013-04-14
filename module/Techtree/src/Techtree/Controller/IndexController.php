@@ -1,11 +1,10 @@
 <?php
 namespace Techtree\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\Gateway;
 
-class IndexController extends AbstractActionController
+class IndexController extends \Nouron\Controller\IngameController
 {
 //     /**
 //      * Auswertung der uebergebenen Parameter, Auslesen der Techdaten aus der DB

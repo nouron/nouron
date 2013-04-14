@@ -1,6 +1,52 @@
 {
-    "hash": "fa23434c374697fe77d51c9d3146115d",
+    "hash": "4fda6ec843417a1bb44e04466f5a8ecc",
     "packages": [
+        {
+            "name": "bjyoungblood/bjy-profiler",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/bjyoungblood/BjyProfiler.git",
+                "reference": "1ca31611b6960bcd744dced95764e3627e8d807a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/bjyoungblood/BjyProfiler/zipball/1ca31611b6960bcd744dced95764e3627e8d807a",
+                "reference": "1ca31611b6960bcd744dced95764e3627e8d807a",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3",
+                "zendframework/zendframework": ">=2.1.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "BjyProfiler": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "notification-url": "http://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "Ben Youngblood",
+                    "email": "bx.youngblood@gmail.com",
+                    "homepage": "http://bjyoungblood.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Database profiler for Zend\\Db (also plugin for ZendDeveloperTools)",
+            "homepage": "https://github.com/bjyoungblood/BjyProfiler",
+            "keywords": [
+                "db",
+                "profiler",
+                "zdt",
+                "zf2"
+            ],
+            "time": "2013-03-25 15:24:27"
+        },
         {
             "name": "dlu/dlutwbootstrap",
             "version": "dev-master",
@@ -142,12 +188,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "01b9db1c217233d06f40cdf576be1f50d56aec97"
+                "reference": "16291e15b461169a7ceec46eafac64afc2ebd98c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/01b9db1c217233d06f40cdf576be1f50d56aec97",
-                "reference": "01b9db1c217233d06f40cdf576be1f50d56aec97",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/16291e15b461169a7ceec46eafac64afc2ebd98c",
+                "reference": "16291e15b461169a7ceec46eafac64afc2ebd98c",
                 "shasum": ""
             },
             "require": {
@@ -193,7 +239,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-03-25 18:13:03"
+            "time": "2013-04-12 17:26:34"
         },
         {
             "name": "zendframework/zendframework",
@@ -307,6 +353,59 @@
             "time": "2013-03-13 22:26:48"
         },
         {
+            "name": "zf-commons/zfc-admin",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ZF-Commons/ZfcAdmin.git",
+                "reference": "dc2db7d38e1199882340ecd68a484ae847b5dafc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcAdmin/zipball/dc2db7d38e1199882340ecd68a484ae847b5dafc",
+                "reference": "dc2db7d38e1199882340ecd68a484ae847b5dafc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zendframework/zendframework": "2.*"
+            },
+            "suggest": {
+                "bjyoungblood/bjy-authorize": "Access control to protect ZfcAdmin against unauthorized users"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "ZfcAdmin": "src/"
+                },
+                "classmap": [
+                    "./Module.php"
+                ]
+            },
+            "notification-url": "http://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Jurian Sluiman ",
+                    "email": "jurian@juriansluiman.nl",
+                    "homepage": "http://juriansluiman.nl/en/"
+                },
+                {
+                    "name": "Martin Shwalbe",
+                    "email": "martin.shwalbe@gmail.com",
+                    "homepage": "http://hounddog.github.com"
+                }
+            ],
+            "description": "A generic Admin module for ZF2.",
+            "homepage": "https://github.com/juriansluiman/ZfcAdmin",
+            "keywords": [
+                "zf2"
+            ],
+            "time": "2013-03-07 08:12:42"
+        },
+        {
             "name": "zf-commons/zfc-base",
             "version": "0.1.1",
             "source": {
@@ -358,6 +457,49 @@
                 "zf2"
             ],
             "time": "2013-03-15 19:29:07"
+        },
+        {
+            "name": "zf-commons/zfc-rbac",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ZF-Commons/ZfcRbac.git",
+                "reference": "d173028fdf09f35b8ffe3fc57d961ed9f77743bc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/d173028fdf09f35b8ffe3fc57d961ed9f77743bc",
+                "reference": "d173028fdf09f35b8ffe3fc57d961ed9f77743bc",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zendframework/zend-mvc": ">=2.1",
+                "zendframework/zend-permissions-rbac": ">=2.1",
+                "zendframework/zend-servicemanager": ">=2.1",
+                "zendframework/zend-view": ">=2.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "ZfcRbac\\": "src/"
+                }
+            },
+            "notification-url": "http://packagist.org/downloads/",
+            "authors": [
+                {
+                    "name": "Kyle Spraggs",
+                    "email": "theman@spiffyjr.me",
+                    "homepage": "http://www.spiffyjr.me/"
+                }
+            ],
+            "description": "Zend Framework 2 Module that provides a layer of features of Zend\\Permissions\\Rbac",
+            "homepage": "http://www.github.com/ZF-Commons/ZfcRbac/",
+            "keywords": [
+                "module",
+                "zf2"
+            ],
+            "time": "2013-03-30 15:22:02"
         },
         {
             "name": "zf-commons/zfc-user",
@@ -431,6 +573,9 @@
     "stability-flags": {
         "zendframework/zend-developer-tools": 20,
         "zf-commons/zfc-user": 20,
+        "zf-commons/zfc-admin": 20,
+        "zf-commons/zfc-rbac": 20,
+        "bjyoungblood/bjy-profiler": 20,
         "dlu/dlutwbootstrap": 20,
         "dlu/dlutwbootstrapdemo": 20,
         "firephp/firephp-core": 20
