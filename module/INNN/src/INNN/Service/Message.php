@@ -15,7 +15,7 @@ class Message extends \Nouron\Service\Gateway
             'isDeleted' => 0,
             'isArchived' => 0
         );
-        return $this->getTable('message')->fetchAll($where);
+        return $this->getTable('message')->fetchAll($where, "tick DESC");
     }
 
     /**
@@ -55,13 +55,23 @@ class Message extends \Nouron\Service\Gateway
     public function sendMessage($entity)
     {
         $userTable = $this->getTable('user');
-        $where = 'name = ' . $entity['recipient'];
+        $where = 'username = "' . $entity['recipient'] . '"';
         $user = $userTable->fetchRow($where);
-        $entity['recipient_id'] = $user['id'];
-        //$entity['sender_id'] = // current logged in user
-        unset($newEntity['recipient']);
-        unset($newEntity['submit']);
-        return $this->getTable('message')->save($entity);
+
+        $data = array(
+            'sender_id' => $_SESSION['userId'], // current logged in user
+            'attitude'  => $entity['mood'],
+            'recipient_id' => $user['user_id'],
+            'tick' => $this->getTick(),
+            'type' => 0,
+            'subject' => $entity['subject'],
+            'text'   => $entity['text'],
+            'isRead' => 0,
+            'isArchived' => 0,
+            'isDeleted'  => 0
+        );
+
+        return $this->getTable('message')->save($data);
     }
 
     /**

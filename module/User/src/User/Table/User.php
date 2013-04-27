@@ -1,19 +1,19 @@
 <?php
-namespace INNN\Table;
+namespace User\Table;
 
 use Nouron\Model\AbstractTable,
     Nouron\Model\ResultSet,
     Zend\Db\Adapter\Adapter;
 
-class Message extends AbstractTable
+class User extends AbstractTable
 {
-    protected $table  = 'v_innn_messages';
+    protected $table  = 'user';
     protected $primary = 'id';
 
     public function __construct($adapter)
     {
         $this->adapter = $adapter;
-        $this->resultSetPrototype = new ResultSet(new \INNN\Entity\Message());
+        $this->resultSetPrototype = new ResultSet(new \User\Entity\User());
         $this->initialize();
     }
 }

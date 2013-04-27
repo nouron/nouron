@@ -1,13 +1,13 @@
 <div class="row-fluid">
-    <div class="accordion" id="inbox-accordion">
+    <div class="accordion" id="outbox-accordion">
     <? foreach ($messages as $message): ?>
         <div class="accordion-group">
             <div class="accordion-heading row-fluid">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#inbox-accordion" href="#collapse-message-<?= $message['id'] ?>">
+                <span class="accordion-toggle" data-toggle="collapse" data-parent="#outbox-accordion" href="#collapse-message-<?= $message['id'] ?>">
                     <span class="span1"><i class="icon-time"></i> <?= $message['tick'] ?></span>
-                    <span class="span1"><strong>an <?= $message['recipient_id'] ?>:</strong></span>
+                    <span class="span1"><strong>an <a href="<?= $this->url("user/".$message['recipient_id'])?>"><?= $message['recipient'] ?></a>:</strong></span>
                     <span class="span10"><?= $message['subject'] ?></span>
-                </a>
+                </span>
             </div>
             <div id="collapse-message-<?= $message['id'] ?>" class="accordion-body collapse row-fluid">
                 <div class="accordion-inner">
@@ -15,11 +15,11 @@
                     <div class="span10">
                       <p><?= $message['text'] ?></p>
                       <br />
-                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i></a>
-                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-envelope"></i></a>
-                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i></a>
-                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="positiv reagieren"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
+                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive')?>"><i class="icon-thumbs-up"></i></a>
+                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive_and_answer')?>"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
+                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_neutral_and_answer')?>"><i class="icon-envelope"></i></a>
+                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative')?>"><i class="icon-thumbs-down"></i></a>
+                      <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative_and_answer')?>"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
                     </div>
                 </div>
             </div>

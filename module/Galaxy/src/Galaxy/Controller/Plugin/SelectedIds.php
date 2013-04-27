@@ -19,6 +19,12 @@ class SelectedIds extends AbstractPlugin
     {
         $sm = $this->getController()->getServiceLocator();
 
+        $userId = $this->getController()->params()->fromRoute('uid');
+        if (!$userId && isset($_SESSION['userId'])) {
+            $userId = $_SESSION['userId'];
+        }
+        $_SESSION['systemId'] = $systemId;
+
         $systemId = $this->getController()->params()->fromRoute('sid');
         if (!$systemId && isset($_SESSION['systemId'])) {
             $systemId = $_SESSION['systemId'];
@@ -50,6 +56,7 @@ class SelectedIds extends AbstractPlugin
         $_SESSION['techId'] = $techId;
 
         return array (
+            'userId'   => $userId,
             'systemId' => $systemId,
             'objectId' => $objectId,
             'colonyId' => $colonyId,

@@ -47,9 +47,15 @@ class Message extends Form implements InputFilterProviderInterface
             'attributes' =>  array(
                 'id' => 'mood',
                 'options' => array(
-                    'friendly' => 'friendly',
-                    'neutral' => 'neutral',
-                    'aggressive' => 'aggressive'
+                    # key is value stored in db, value is translated for output
+                    'mood_friendly' => 'mood_friendly',
+                    'mood_neutral'  => 'mood_neutral',
+                    'mood_aggressive' => 'mood_aggressive',
+                    'mood_begging' => 'mood_begging',
+                    'mood_supliant' => 'mood_supliant',
+                    'mood_humble' => 'mood_humble',
+                    'mood_factual' => 'mood_factual',
+                    'mood_frosty' => 'mood_frosty',
                 ),
             ),
             'options' => array(

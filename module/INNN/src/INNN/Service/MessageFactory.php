@@ -17,6 +17,7 @@ class MessageFactory implements FactoryInterface
         $tick = $serviceLocator->get('Nouron\Service\Tick');
 
         $tables['message'] = new \INNN\Table\Message($db);
+        $tables['user'] = new \User\Table\User($db);
 
         $service   = new Message($tick, $tables);
         return $service;

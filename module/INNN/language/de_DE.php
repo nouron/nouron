@@ -55,6 +55,11 @@ return array (
     'innn_message_headline' => "Überschrift",
     'innn_message_location' => "Ort",
     'innn_message_to' => "Nachricht an",
+    'react_positive' => "positiv reagieren",
+    'react_positive_and_answer' => "positiv reagieren und antworten",
+    'react_neutral_and_answer' => "neutral reagieren und antworten",
+    'react_negative' => "negativ reagieren",
+    'react_negative_and_answer' => "negativ reagieren und antworten",
 
     'mood' => "Stimmung",
     'mood_friendly' => 'freundlich',
@@ -62,9 +67,9 @@ return array (
     'mood_aggressive' => 'aggressiv',
     'mood_begging' => "bettelnd",
     'mood_supliant' => "bittend",
-    'mood_humble ' => "demütig",
+    'mood_humble'  => "demütig",
     'mood_factual' => "sachlich",
-    'mood_frosty ' => "kühl",
+    'mood_frosty'  => "kühl",
 
     'subject_none' => "Kein",
     'subject_information' => "Information",

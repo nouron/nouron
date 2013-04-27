@@ -1,8 +1,6 @@
 <?php
 namespace Nouron;
 
-use Nouron\Model\AbstractTable;
-
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
 
@@ -25,18 +23,5 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
     public function getConfig()
     {
         return include __DIR__ . '/config/module.config.php';
-    }
-
-    public function getServiceConfiguration()
-    {
-        return array(
-            'factories' => array(
-                'abstract-table' =>  function($sm) {
-                    $dbAdapter = $sm->get('db-adapter');
-                    $table = new AbstractTable($dbAdapter);
-                    return $table;
-                },
-            ),
-        );
     }
 }

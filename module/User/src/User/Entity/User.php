@@ -6,7 +6,7 @@ use ZfcRbac\Identity\IdentityInterface;
 
 class User extends \ZfcUser\Entity\User implements EntityInterface, IdentityInterface
 {
-    protected $tableName  = 'usr_users';
+    protected $tableName  = 'user';
 
     public function toArray()
     {
@@ -15,9 +15,9 @@ class User extends \ZfcUser\Entity\User implements EntityInterface, IdentityInte
             'username' => $this->username,
             'email' => $this->email,
             'displayName' => $this->displayName,
-            'password' => $this->password,
+            #'password' => $this->password,
             'state' => $this->state,
-            'role' => $this->role
+            #'role' => $this->role
         );
     }
 

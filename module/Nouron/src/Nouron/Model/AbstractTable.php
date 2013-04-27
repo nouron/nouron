@@ -43,9 +43,16 @@ abstract class AbstractTable extends TableGateway
      * @param string|array $where
      * @return Ambigous <\Zend\Db\ResultSet\ResultSet, NULL, \Zend\Db\ResultSet\ResultSetInterface>
      */
-    public function fetchAll($where = null)
+    public function fetchAll($where = null, $order = null)
     {
-        $resultSet = $this->select($where);
+        $select = $this->sql->select();
+        if ($where) {
+            $select->where($where);
+        }
+        if ($order) {
+            $select->order($order);
+        }
+        $resultSet = $this->selectWith($select);
         return $resultSet;
     }
 
@@ -129,11 +136,17 @@ abstract class AbstractTable extends TableGateway
         $where = array();
 
         foreach ($primary as $key) {
-            $val = $data[$key];
-            if ( is_numeric($val) || !empty($val) ) {
-                $where[] = "$key = $val";
+            if (array_key_exists($key, $data)) {
+                $val = $data[$key];
+                if ( is_numeric($val) || !empty($val) ) {
+                    $where[] = "$key = $val";
+                } else {
+                    $missingPrimaryKey = true;
+                    break;
+                }
             } else {
                 $missingPrimaryKey = true;
+                break;
             }
         }
 

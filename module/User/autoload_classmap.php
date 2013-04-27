@@ -5,5 +5,9 @@ return array(
     'User\Controller\ContactsController'        => __DIR__ . '/src/User/Controller/ContactsController.php',
     'User\Controller\SettingsController'        => __DIR__ . '/src/User/Controller/SettingsController.php',
     'User\Controller\SettingsControllerFactory' => __DIR__ . '/src/User/Controller/SettingsControllerFactory.php',
+    'User\Controller\UserController'            => __DIR__ . '/src/User/Controller/UserController.php',
+    'User\Controller\UserControllerFactory'     => __DIR__ . '/src/User/Controller/UserControllerFactory.php',
     'User\Entity\User'                          => __DIR__ . '/src/User/Entity/User.php',
+    'User\Table\User'                           => __DIR__ . '/src/User/Table/User.php',
+    'User\View\Helper\UserNameLink'             => __DIR__ . '/src/User/View/Helper/UserNameLink.php',
 );

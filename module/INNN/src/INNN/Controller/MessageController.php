@@ -13,7 +13,7 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getInboxMessages(3);
+        $messages = $messageService->getInboxMessages($_SESSION['userId']);
 
         return new ViewModel(
             array(
@@ -30,7 +30,7 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getOutboxMessages(3);
+        $messages = $messageService->getOutboxMessages($_SESSION['userId']);
 
         return new ViewModel(
             array(
@@ -48,15 +48,13 @@ class MessageController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
         $form = new \INNN\Form\Message();
         $messageService = $sm->get('INNN\Service\Message');
-        //$userService = $sm->get('User\Service\User');
-//         $entity = new \INNN\Entity\Message();
-//         $form->bind($entity);
 
         if ($this->getRequest()->isPost()) {
-            $form->setData($this->getRequest()->getPost());
+            $data = $this->getRequest()->getPost();
+            $form->setData($data);
             if ($form->isValid()) {
-                $newEntity = $form->getData();
-                $messageId = $messageService->sendMessage($newEntity);
+                $data = $form->getData(); // replace data with filtered data
+                $messageId = $messageService->sendMessage($data);
                 \Zend\Debug\Debug::dump($messageId);
             }
         }
@@ -105,7 +103,7 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getArchivedMessages(3);
+        $messages = $messageService->getArchivedMessages($_SESSION['userId']);
 
         return new ViewModel(
             array(
