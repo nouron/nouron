@@ -1,10 +1,10 @@
 <?php
-namespace INNN\Service;
+namespace User\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class MessageFactory implements FactoryInterface
+class UserFactory implements FactoryInterface
 {
     /**
      *
@@ -16,11 +16,9 @@ class MessageFactory implements FactoryInterface
         $db   = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick = $serviceLocator->get('Nouron\Service\Tick');
 
-        $tables['message'] = new \INNN\Table\Message($db);
-        $tables['message_view'] = new \INNN\Table\MessageView($db);
         $tables['user'] = new \User\Table\User($db);
 
-        $service   = new Message($tick, $tables);
+        $service   = new User($tick, $tables);
         return $service;
     }
 }

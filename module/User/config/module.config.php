@@ -67,6 +67,7 @@ return array(
     'service_manager' => array(
         'factories' => array(
             'User\Entity\User' => 'User\Entity\UserFactory',
+            'User\Service\User' => 'User\Service\UserFactory'
         ),
     ),
 );

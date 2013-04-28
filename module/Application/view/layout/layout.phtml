@@ -20,6 +20,7 @@ $this->inlineScript()->appendFile($basePath . '/js/jquery-timing.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.event.frame.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.parallax.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/nouron.js');
+$this->inlineScript()->appendFile($basePath . '/js/innn.js');
 $this->inlineScript()->appendFile($basePath . '/js/galaxy.js');
 $this->inlineScript()->appendFile($basePath . '/js/fleets.js');
 
@@ -48,7 +49,7 @@ echo $this->doctype();
               <? if ($this->zfcUserIdentity()): ?>
               <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
               <ul class="nav pull-right">
-                <li><a href="#"><?= $this->zfcUserIdentity()->getDisplayname(); ?></a></li>
+                <li><a href="#"><?= $this->zfcUserIdentity()->getUsername(); ?></a></li>
                 <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> <?= $this->translate('logout') ?></a></li>
               </ul>
               <? else: ?>
@@ -68,6 +69,22 @@ echo $this->doctype();
             echo $this->resources(); ?>
         <hr />
         <? endif;
+        // flash messages if any
+        // First get the viewmodel and all its children (ie the actions viewmodel)
+        $children = $this->viewModel()
+                         ->getCurrent()
+                         ->getChildren();
+        $ourView  = $children[0];
+
+        #print_r($ourView->flashMessages);
+        if (isset($ourView->flashMessages) && count($ourView->flashMessages)) : ?>
+        <ul class="flashMessages">
+            <? foreach ($ourView->flashMessages as $message) : ?>
+            <li><?= $message; ?></li>
+            <? endforeach; ?>
+        </ul>
+        <? endif;
+
         echo $this->navigation()
                   ->menu()
                   ->setUlClass('nav nav-tabs')

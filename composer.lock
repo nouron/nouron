@@ -152,12 +152,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/firephp/firephp-core.git",
-                "reference": "f60753a8dd7817e4da6bc73e0e717387a9a0866a"
+                "reference": "v0.4.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/firephp/firephp-core/zipball/f60753a8dd7817e4da6bc73e0e717387a9a0866a",
-                "reference": "f60753a8dd7817e4da6bc73e0e717387a9a0866a",
+                "url": "https://api.github.com/repos/firephp/firephp-core/zipball/v0.4.0",
+                "reference": "v0.4.0",
                 "shasum": ""
             },
             "type": "library",
@@ -180,7 +180,7 @@
             ],
             "description": "Traditional FirePHPCore library for sending PHP variables to the browser.",
             "homepage": "https://github.com/firephp/firephp-core",
-            "time": "2013-01-19 22:55:24"
+            "time": "2013-04-23 15:28:20"
         },
         {
             "name": "zendframework/zend-developer-tools",
@@ -188,12 +188,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "16291e15b461169a7ceec46eafac64afc2ebd98c"
+                "reference": "3994622761f496b666a143156b4d21f19205aa66"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/16291e15b461169a7ceec46eafac64afc2ebd98c",
-                "reference": "16291e15b461169a7ceec46eafac64afc2ebd98c",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/3994622761f496b666a143156b4d21f19205aa66",
+                "reference": "3994622761f496b666a143156b4d21f19205aa66",
                 "shasum": ""
             },
             "require": {
@@ -239,20 +239,20 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-04-12 17:26:34"
+            "time": "2013-04-14 14:43:51"
         },
         {
             "name": "zendframework/zendframework",
-            "version": "2.1.4",
+            "version": "2.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "release-2.1.4"
+                "reference": "release-2.1.5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.1.4",
-                "reference": "release-2.1.4",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.1.5",
+                "reference": "release-2.1.5",
                 "shasum": ""
             },
             "require": {
@@ -350,7 +350,7 @@
                 "framework",
                 "zf2"
             ],
-            "time": "2013-03-13 22:26:48"
+            "time": "2013-04-17 15:15:58"
         },
         {
             "name": "zf-commons/zfc-admin",
@@ -358,12 +358,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcAdmin.git",
-                "reference": "dc2db7d38e1199882340ecd68a484ae847b5dafc"
+                "reference": "v0.1.1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcAdmin/zipball/dc2db7d38e1199882340ecd68a484ae847b5dafc",
-                "reference": "dc2db7d38e1199882340ecd68a484ae847b5dafc",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcAdmin/zipball/v0.1.1",
+                "reference": "v0.1.1",
                 "shasum": ""
             },
             "require": {
@@ -403,7 +403,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-03-07 08:12:42"
+            "time": "2013-04-23 09:31:59"
         },
         {
             "name": "zf-commons/zfc-base",

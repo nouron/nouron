@@ -36,7 +36,12 @@ return array(
                     'message' => array(
                         'type' => 'Segment',
                         'options' => array(
-                            'route' => '/message[/:action]',
+                            'route' => '/message[/:action[/:id[/:type]]]',
+                            'constraints' => array(
+                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'id' => '[0-9]+',
+                                'type' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                            ),
                             'default' => array(
                                 'controller' => 'Message',
                                 'action' => 'inbox'
@@ -113,10 +118,11 @@ return array(
         ),
     ),
     'service_manager' => array(
-        'invokables' => array(
-           'INNN\Table\Message' => 'INNN\Table\Message',
-           'INNN\Table\Event'   => 'INNN\Table\Event',
-        ),
+//         'invokables' => array(
+//            'INNN\Table\Message' => 'INNN\Table\Message',
+//            'INNN\Table\MessageView' => 'INNN\Table\MessageView',
+//            'INNN\Table\Event'   => 'INNN\Table\Event',
+//         ),
         'factories' => array(
             'INNN\Entity\Message'  => 'INNN\Entity\MessageFactory',
             'INNN\Entity\Event'    => 'INNN\Entity\EventFactory',

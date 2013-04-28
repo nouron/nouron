@@ -4,6 +4,17 @@ namespace INNN\Service;
 class Message extends \Nouron\Service\Gateway
 {
     /**
+     *
+     * @param numeric $id
+     */
+    public function getMessage($id)
+    {
+        $this->_validateId($id);
+        return $this->getTable('message_view')->getEntity($id);
+    }
+
+
+    /**
      * @param  numeric $userId
      * @return ResultSet
      */
@@ -15,7 +26,7 @@ class Message extends \Nouron\Service\Gateway
             'isDeleted' => 0,
             'isArchived' => 0
         );
-        return $this->getTable('message')->fetchAll($where, "tick DESC");
+        return $this->getTable('message_view')->fetchAll($where, "tick DESC");
     }
 
     /**
@@ -30,7 +41,7 @@ class Message extends \Nouron\Service\Gateway
             'isDeleted' => 0,
             'isArchived' => 0
         );
-        return $this->getTable('message')->fetchAll($where);
+        return $this->getTable('message_view')->fetchAll($where);
     }
 
     /**
@@ -45,7 +56,7 @@ class Message extends \Nouron\Service\Gateway
             'isDeleted' => 0,
             'isArchived' => 1
         );
-        return $this->getTable('message')->fetchAll($where);
+        return $this->getTable('message_view')->fetchAll($where);
     }
 
     /**
@@ -54,14 +65,13 @@ class Message extends \Nouron\Service\Gateway
      */
     public function sendMessage($entity)
     {
-        $userTable = $this->getTable('user');
-        $where = 'username = "' . $entity['recipient'] . '"';
-        $user = $userTable->fetchRow($where);
-
+        print_r($entity);
+        $this->_validateId($entity['sender_id']);
+        $this->_validateId($entity['recipient_id']);
         $data = array(
-            'sender_id' => $_SESSION['userId'], // current logged in user
+            'sender_id' => $entity['sender_id'], // current logged in user
             'attitude'  => $entity['mood'],
-            'recipient_id' => $user['user_id'],
+            'recipient_id' => $entity['recipient_id'],
             'tick' => $this->getTick(),
             'type' => 0,
             'subject' => $entity['subject'],
@@ -72,6 +82,25 @@ class Message extends \Nouron\Service\Gateway
         );
 
         return $this->getTable('message')->save($data);
+    }
+
+    /**
+     *
+     * @param numeric $entity_id
+     * @param string  $entity_id  'read'|'archived'|'deleted'
+     */
+    public function setMessageStatus($entity_id, $status)
+    {
+        $this->_validateId($entity_id);
+        $table = $this->getTable('message');
+        $entity = $table->getEntity($entity_id);
+        switch ($status) {
+            case 'read':     $entity->isRead = 1; break;
+            case 'archived': $enitity->isArchived = 1; break;
+            case 'deleted':  $entity->isDeleted = 1; break;
+            default: return false; break;
+        }
+        return $table->save($entity);
     }
 
     /**

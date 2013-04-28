@@ -20,4 +20,5 @@ return array(
     'INNN\Service\MessageFactory'              => __DIR__ . '/src/INNN/Service/MessageFactory.php',
     'INNN\Table\Event'                         => __DIR__ . '/src/INNN/Table/Event.php',
     'INNN\Table\Message'                       => __DIR__ . '/src/INNN/Table/Message.php',
+    'INNN\Table\MessageView'                   => __DIR__ . '/src/INNN/Table/MessageView.php',
 );

@@ -7,7 +7,7 @@ use Nouron\Model\AbstractTable,
 
 class Message extends AbstractTable
 {
-    protected $table  = 'v_innn_messages';
+    protected $table  = 'innn_messages';
     protected $primary = 'id';
 
     public function __construct($adapter)
