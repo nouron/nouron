@@ -9,56 +9,27 @@ return array(
     ),
     'router' => array(
         'routes' => array(
-            'innn' => array(
+            'events' => array(
                 'type' => 'Literal',
                 'options' => array(
-                    'route' => '/innn',
+                    'route' => '/events',
+                    'defaults' => array(
+                        '__NAMESPACE__' => 'INNN\Controller',
+                        'controller' => 'Event',
+                        'action' => 'index',
+                    ),
+                ),
+            ),
+            'messages' => array(
+                'type' => 'Segment',
+                'options' => array(
+                    'route' => '/messages[/:action[/:id[/:type]]]',
                     'defaults' => array(
                         '__NAMESPACE__' => 'INNN\Controller',
                         'controller' => 'Message',
                         'action' => 'inbox',
                     ),
                 ),
-                'may_terminate' => true,
-                'child_routes' => array(
-                    'default' => array(
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/[:controller[/:action[/:id]]]',
-                            'constraints' => array(
-                                'controller' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array()
-                        )
-                    ),
-                    'message' => array(
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/message[/:action[/:id[/:type]]]',
-                            'constraints' => array(
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'id' => '[0-9]+',
-                                'type' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                            ),
-                            'default' => array(
-                                'controller' => 'Message',
-                                'action' => 'inbox'
-                            )
-                        )
-                    ),
-                    'event' => array(
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/event[/:action]',
-                            'default' => array(
-                                'controller' => 'Event',
-                                'action' => 'index'
-                            )
-                        )
-                    )
-                )
             )
         )
     ),
@@ -74,32 +45,33 @@ return array(
         'default' => array(
             'innn' => array(
                 'label' => 'innn',
-                'route' => 'innn/event',
+                'route' => 'messages',
                 'order' => 1,
                 'pages' => array(
                     'events' => array(
                         'label' => 'events',
-                        'route' => 'innn/event'
+                        'route' => 'events',
+                        'action' => 'index'
                     ),
                     'inbox' => array(
                         'label' => 'inbox',
-                        'route' => 'innn/message',
+                        'route' => 'messages',
                         'action' => 'inbox',
                     ),
                     'new' => array(
                         'label' => 'new message',
-                        'route' => 'innn/message',
+                        'route' => 'messages',
                         'action' => 'new',
                     ),
                     'outbox' => array(
                         'label' => 'outbox',
-                        'route' => 'innn/message',
+                        'route' => 'messages',
                         'action' => 'outbox',
                         #'class' => 'secondary-nav' #doesn't work yet
                     ),
                     'archive' => array(
                         'label' => 'archive',
-                        'route' => 'innn/message',
+                        'route' => 'messages',
                         'action' => 'archive',
                         #'class' => 'secondary-nav'
                     )

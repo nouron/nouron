@@ -52,7 +52,7 @@ class Message extends \Nouron\Service\Gateway
     {
         $this->_validateId($userId);
         $where = array(
-            'sender_id' => $userId,
+            'recipient_id' => $userId,
             'isDeleted' => 0,
             'isArchived' => 1
         );
@@ -96,7 +96,7 @@ class Message extends \Nouron\Service\Gateway
         $entity = $table->getEntity($entity_id);
         switch ($status) {
             case 'read':     $entity->isRead = 1; break;
-            case 'archived': $enitity->isArchived = 1; break;
+            case 'archived': $entity->isArchived = 1; break;
             case 'deleted':  $entity->isDeleted = 1; break;
             default: return false; break;
         }

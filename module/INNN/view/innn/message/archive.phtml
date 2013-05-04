@@ -1,12 +1,12 @@
 <div class="row-fluid">
     <div class="accordion" id="inbox-accordion">
       <? foreach ($messages as $message): ?>
-        <div class="accordion-group">
+        <div id="message-<?= $message['id']?>" class="accordion-group">
             <div class="accordion-heading row-fluid">
                 <a class="accordion-toggle" data-toggle="collapse" data-parent="#inbox-accordion" href="#collapse-message-<?= $message['id'] ?>">
                     <span class="span1"><i class="icon-time"></i> <?= $message['tick'] ?></span>
-                    <span class="span1"><strong><?= $message['sender_id'] ?>:</strong></span>
-                    <span class="span10"><? if (!$message['isRead']): ?><i class="icon-envelope new-inbox-message"></i><? endif; ?> <?= $message['subject'] ?></span>
+                    <span class="span1"><strong><?= $message['sender'] ?>:</strong></span>
+                    <span class="span10"><?= $message['subject'] ?></span>
                 </a>
             </div>
             <div id="collapse-message-<?= $message['id'] ?>" class="accordion-body collapse row-fluid">
@@ -15,12 +15,14 @@
                     <div class="span10">
                       <p><?= $message['text'] ?></p>
                       <br />
+                      <span class="message-options" id="message-<?= $message['id']?>-options">
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive')?>"><i class="icon-thumbs-up"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive_and_answer')?>"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_neutral_and_answer')?>"><i class="icon-envelope"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative')?>"><i class="icon-thumbs-down"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative_and_answer')?>"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
-                      <a href="<?= $this->url('innn/message', array('action' => 'delete', 'id' => $message['id']))?>"  class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="icon-remove"></i> löschen</a>
+                      <a href="<?= $this->url('messages', array('action' => 'remove', 'id' => $message['id']))?>"  class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="icon-remove"></i> löschen</a>
+                      </span>
                     </div>
                 </div>
             </div>

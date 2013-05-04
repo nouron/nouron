@@ -5,7 +5,7 @@
             <div class="accordion-heading row-fluid">
                 <span class="accordion-toggle" data-toggle="collapse" data-parent="#outbox-accordion" href="#collapse-message-<?= $message['id'] ?>">
                     <span class="span1"><i class="icon-time"></i> <?= $message['tick'] ?></span>
-                    <span class="span1"><strong>an <a href="<?= $this->url("user/".$message['recipient_id'])?>"><?= $message['recipient'] ?></a>:</strong></span>
+                    <span class="span1"><strong>an <a href="<?= $this->url("user", array('id'=>$message['recipient_id']))?>"><?= $message['recipient'] ?></a>:</strong></span>
                     <span class="span10"><?= $message['subject'] ?></span>
                 </span>
             </div>

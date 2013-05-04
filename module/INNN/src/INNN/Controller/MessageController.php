@@ -10,6 +10,23 @@ class MessageController extends \Nouron\Controller\IngameController
      *
      * @return \Zend\View\Model\ViewModel
      */
+    public function eventsAction()
+    {
+        $sm = $this->getServiceLocator();
+        $messageService = $sm->get('INNN\Service\Event');
+        $messages = $messageService->getEvents($_SESSION['userId']);
+
+        return new ViewModel(
+            array(
+                'messages' => $messages
+            )
+        );
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
     public function inboxAction()
     {
         $sm = $this->getServiceLocator();
@@ -82,33 +99,14 @@ class MessageController extends \Nouron\Controller\IngameController
         );
     }
 
-    public function removeAction()
-    {
-        $id = $this->params('id');
-
-        $sm = $this->getServiceLocator();
-        $msgService = $sm->get('INNN\Service\Message');
-
-        // check if recipient is current user
-        $message = $msgService->getMessage($id);
-        if ($message && $message['recipient_id'] == $_SESSION['userId']) {
-            $result = $msgService->setMessageStatus($id, 'deleted');
-        } else {
-            $result = false;
-        }
-
-        return new JsonModel(array(
-            'result' => $result
-        ));
-    }
-
     public function reactAction()
     {
         $messageId = $this->params('id');
         $reactionType = $this->params('type');
         $result = $this->react($reactionType, $messageId, false);
         return new JsonModel(array(
-            'result' => $result
+            'result' => $result,
+            'status' => 'read'
         ));
     }
 
@@ -123,7 +121,8 @@ class MessageController extends \Nouron\Controller\IngameController
             $this->redirect()->toRoute('innn/message', array('action'=>'new', 'recipient_id' => $message['sender_id']));
         } else {
             return new JsonModel(array(
-                'result' => $result
+                'result' => $result,
+                'status' => 'read'
             ));
         }
     }
@@ -138,18 +137,7 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         // $type is not relevant for now, @TODO: implement later
 
-        $sm = $this->getServiceLocator();
-        $msgService = $sm->get('INNN\Service\Message');
-
-        // check if recipient is current user
-        $message = $msgService->getMessage($messageId);
-        if ($message && $message['recipient_id'] == $_SESSION['userId']) {
-            // setting message status is only allowed for recipient
-            $result = $msgService->setMessageStatus($messageId, 'read');
-        } else {
-            $result = false;
-        }
-        return $result;
+        return $this->setMessageStatus($messageId, 'read');
     }
 
 
@@ -160,16 +148,62 @@ class MessageController extends \Nouron\Controller\IngameController
 //         return new JsonModel( $gw->getMessagesAsArray() );
 //     }
 
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel|\Zend\View\Model\ViewModel
+     */
     public function archiveAction()
+    {
+        $messageId = $this->params('id');
+        if (!empty($messageId)) {
+            // archive the given message
+            return new JsonModel(array(
+                'result' => $this->setMessageStatus($messageId, 'archived'),
+                'status' => 'archived'
+            ));
+        } else {
+            // show archived messages
+            $sm = $this->getServiceLocator();
+            $messageService = $sm->get('INNN\Service\Message');
+            $messages = $messageService->getArchivedMessages($_SESSION['userId']);
+            return new ViewModel(array(
+                'messages' => $messages
+            ));
+        }
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel
+     */
+    public function removeAction()
+    {
+        $messageId = $this->params('id');
+        return new JsonModel(array(
+            'result' => $this->setMessageStatus($messageId, 'deleted'),
+            'status' => 'deleted'
+        ));
+    }
+
+    /**
+     *
+     * @param  numeric $messageId
+     * @param  string  $status  'read'|'archived'|'deleted'
+     * @return boolean
+     */
+    protected function setMessageStatus($messageId, $status)
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getArchivedMessages($_SESSION['userId']);
 
-        return new ViewModel(
-            array(
-                'messages' => $messages
-            )
-        );
+        $result = false;
+        if (!empty($messageId)) {
+            $message = $messageService->getMessage($messageId);
+            if ($message && $message['recipient_id'] == $_SESSION['userId']) {
+                // setting message status is only allowed for recipient
+                $result = $messageService->setMessageStatus($messageId, $status);
+            }
+        }
+        return $result;
     }
 }

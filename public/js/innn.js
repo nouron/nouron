@@ -3,21 +3,22 @@ $(document).ready(function () {
 
     $(".message-options a.btn").click(function(e){
         e.preventDefault();
-        //$(".message-options a.btn").disable();
+
+        $(this).addClass('disabled');
+        $(this).siblings().addClass('disabled');
         
         var target = $(this).attr('href');
-        $.post(
+        var message_id_options = $(this).parent().attr('id');
+        $.getJSON(
             target,
-            {},
             function(data) {
-                if (data.result) {
-                    alert('ok');
-                } else {
-                    //$(".message-options a.btn").enable();
-                }
+                $(this).removeClass('disabled');
+                message_dom_id = message_id_options.replace('-options', '');
                 
-            },
-            "html"
+                if (data.result && (data.status == 'archived' || data.status == 'deleted')) {
+                    $("#"+message_dom_id).fadeOut('fast');
+                }
+            }
         );
         return false;
     });
