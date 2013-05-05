@@ -102,13 +102,4 @@ class Message extends \Nouron\Service\Gateway
         }
         return $table->save($entity);
     }
-
-    /**
-     *
-     * @param \INNN\Entity\Event $entity
-     */
-    public function createEvent($entity)
-    {
-        return $this->getTable('event')->save($entity);
-    }
 }

@@ -74,24 +74,21 @@ echo $this->doctype();
         $children = $this->viewModel()
                          ->getCurrent()
                          ->getChildren();
-        $ourView  = $children[0];
+        $ourView  = $children[0];?>
 
-        #print_r($ourView->flashMessages);
-        if (isset($ourView->flashMessages) && count($ourView->flashMessages)) : ?>
-        <ul class="flashMessages">
-            <? foreach ($ourView->flashMessages as $message) : ?>
-            <li><?= $message; ?></li>
-            <? endforeach; ?>
-        </ul>
-        <? endif;
-
-        echo $this->navigation()
-                  ->menu()
-                  ->setUlClass('nav nav-tabs')
-                  ->setOnlyActiveBranch(true)
-                  ->setRenderParents(false)
-                  ->setMinDepth(1)
-                  ->setMaxDepth(1);
+        <div class="flashMessages" id="flashMessages">
+        <? if (isset($ourView->flashMessages) && count($ourView->flashMessages)) :
+            foreach ($ourView->flashMessages as $message) : ?>
+            <div class="alert"><?= $message; ?></div>
+            <? endforeach;
+        endif; ?>
+        </div>
+        <? echo $this->navigation()->menu()
+                                   ->setUlClass('nav nav-tabs')
+                                   ->setOnlyActiveBranch(true)
+                                   ->setRenderParents(false)
+                                   ->setMinDepth(1)
+                                   ->setMaxDepth(1);
         echo $this->content; ?>
         <hr />
     </div><!-- /container -->

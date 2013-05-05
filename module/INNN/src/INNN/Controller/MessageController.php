@@ -65,6 +65,9 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $form = new \INNN\Form\Message();
+        #$form->setAttribute('action', '/messages/new');
+        $form->setAttribute('method', 'post');
+
         $messageService = $sm->get('INNN\Service\Message');
         $userService = $sm->get('User\Service\User');
 
@@ -74,19 +77,15 @@ class MessageController extends \Nouron\Controller\IngameController
             if ($form->isValid()) {
                 $data = $form->getData(); // replace data with filtered data
                 $user = $userService->getUserByName(trim($data['recipient']));
-                print_r($user);
                 $data['recipient_id'] = $user['user_id'];
                 $data['sender_id']    = $_SESSION['userId'];
                 $result = $messageService->sendMessage($data);
                 if ( $result ) {
                     $this->flashMessenger()->setNamespace('success')->addMessage('Successfull!');
-                    print('TTTTTTTTTTTTTTTTTTTTTTTTTTTT');
-                    return $this->redirect()->toRoute('innn/message', array('action'=>'new'));
+                    return $this->redirect()->toRoute('messages', array('action'=>'new'));
                 } else {
-                    print('FALSE');
-
                     $this->flashMessenger()->setNamespace('success')->addMessage('Anything was wrong!');
-                    return $this->redirect()->toRoute('innn/message', array('action'=>'new'));
+                    return $this->redirect()->toRoute('messages', array('action'=>'new'));
                 }
             }
         }
@@ -117,8 +116,8 @@ class MessageController extends \Nouron\Controller\IngameController
         $result = $this->react($reactionType, $messageId, true);
 
         if ($result) {
-            // redirect to innn/message/new with given recipient id
-            $this->redirect()->toRoute('innn/message', array('action'=>'new', 'recipient_id' => $message['sender_id']));
+            // redirect to messages//new with given recipient id
+            $this->redirect()->toRoute('messages/', array('action'=>'new', 'recipient_id' => $message['sender_id']));
         } else {
             return new JsonModel(array(
                 'result' => $result,
@@ -137,16 +136,8 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         // $type is not relevant for now, @TODO: implement later
 
-        return $this->setMessageStatus($messageId, 'read');
+        return true; #$this->setMessageStatus($messageId, 'read');
     }
-
-
-//     public function getMessagesAsJson()
-//     {
-//         $sm = $this->getServiceLocator();
-//         $gw = $sm->get('INNN\Service\Gateway');
-//         return new JsonModel( $gw->getMessagesAsArray() );
-//     }
 
     /**
      *

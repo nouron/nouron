@@ -13,8 +13,6 @@ class Message extends Form implements InputFilterProviderInterface
     public function __construct()
     {
         parent::__construct('message');
-        $this->setAttribute('action', '/innn/message/new');
-        $this->setAttribute('method', 'post');
         $this->add(array(
             'name' => 'id',
             'attributes' => array(

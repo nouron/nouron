@@ -46,6 +46,7 @@ return array(
             'innn' => array(
                 'label' => 'innn',
                 'route' => 'messages',
+                'action'=> 'inbox',
                 'order' => 1,
                 'pages' => array(
                     'events' => array(
@@ -90,11 +91,6 @@ return array(
         ),
     ),
     'service_manager' => array(
-//         'invokables' => array(
-//            'INNN\Table\Message' => 'INNN\Table\Message',
-//            'INNN\Table\MessageView' => 'INNN\Table\MessageView',
-//            'INNN\Table\Event'   => 'INNN\Table\Event',
-//         ),
         'factories' => array(
             'INNN\Entity\Message'  => 'INNN\Entity\MessageFactory',
             'INNN\Entity\Event'    => 'INNN\Entity\EventFactory',
