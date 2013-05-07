@@ -8,6 +8,7 @@ return array(
         'User', /* based on ZfcUser */
         'ZfcRbac',
         'Nouron',
+        'Trade',
         'Techtree',
         'Galaxy',
         'INNN',
