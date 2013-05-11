@@ -2,6 +2,7 @@
 return array(
 'techs_commandCenter' => 'Kommandozentrale',
 'techs_hospital'   => 'Krankenhaus',
+'techs_university' => 'Universität',
 'techs_sciencelab' => 'Forschungslabor',
 'techs_mathematics' => 'Mathematik',
 'techs_languages'  => 'Sprachen',
@@ -64,6 +65,7 @@ return array(
 'techs_mediumTransporter' => 'Mittlerer Transporter',
 'techs_smallTransporter' => 'Kleiner Transporter',
 'techs_constructionShip' => 'Konstruktionsschiff',
+'techs_public_security'  => 'Sicherheitzentrale',
 'max_order_reached' => 'Maximale Anzahl an Aufträgen erreicht. Für mehr Aufträge benötigst du zusätzliche Berater!',
 'tech_orders' => 'Techtree-Befehle',
 'order_confirmed' => 'Auftrag bestätigt.',

@@ -564,7 +564,7 @@ class Gateway extends \Nouron\Service\Gateway
 
         $dbTable = $this->getTable('possession');
         $rowset = $dbTable->fetchAll("tech_id = $techId AND colony_id = $colonyId");
-        if ($rowset->valid()) {
+        if ($rowset->valid() and $rowset->count() > 0) {
             return $rowset->current()->count;
         } else {
             return 0;

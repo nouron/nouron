@@ -3,8 +3,8 @@
   <div id="visualTechtree" class="carousel slide row-fluid">
     <!-- Carousel items -->
     <div class="carousel-inner">
-      <?php for ($stage=0; $stage<=5; $stage++): ?>
-      <div class="stage <?= ($stage==0) ? 'active' : '' ?> item" id="stage-<?= $stage ?>">
+      <?php for ($stage=0; $stage<5; $stage++): ?>
+      <div class="stage <?= ($stage==2) ? 'active' : '' ?> item" id="stage-<?= $stage ?>">
         <svg class="span12 stage-svg" id="stage-<?= $stage ?>-svg" height="100%" width="100%" style="position:absolute">
         <!-- <rect x="0" y="0" height="10" width="10" stroke="black" /> -->
         <!-- svg content via javascript -->

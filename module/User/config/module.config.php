@@ -35,15 +35,15 @@ return array(
             ),
         ),
     ),
-    'navigation' => array(
-        'default' => array(
-            'settings' => array(
-                 'label' => 'settings',
-                 'route' => 'settings',
-                 'order' => 10
-            )
-        )
-    ),
+//     'navigation' => array(
+//         'default' => array(
+//             'settings' => array(
+//                  'label' => 'settings',
+//                  'route' => 'settings',
+//                  'order' => 10
+//             )
+//         )
+//     ),
     'view_manager' => array(
         'template_path_stack' => array(
             'zfc-user-mod' => __DIR__ . '/../view',

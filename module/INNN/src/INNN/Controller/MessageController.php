@@ -77,6 +77,11 @@ class MessageController extends \Nouron\Controller\IngameController
             if ($form->isValid()) {
                 $data = $form->getData(); // replace data with filtered data
                 $user = $userService->getUserByName(trim($data['recipient']));
+                if (empty($user)) {
+                    // TODO: Flash Messenger not working correctly yet!!!!!
+                    $this->flashMessenger()->setNamespace('error')->addMessage('Error: Recipient not found.');
+                    return $this->redirect()->toRoute('messages', array('action'=>'new'));
+                }
                 $data['recipient_id'] = $user['user_id'];
                 $data['sender_id']    = $_SESSION['userId'];
                 $result = $messageService->sendMessage($data);

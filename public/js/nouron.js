@@ -115,10 +115,15 @@ $(document).ready(function(){
          } else {
              xm = xb = xc = Math.round( (right + left) / 2 ) - 12 * grid_x_mod;
          }
-         
+
          padding = 5; // 4px padding +1px border
-         ya = yb = Math.round( (srcpos.top  + ((src.height() + 2*padding)  / 2) - 3*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
-         yc = yd = Math.round( (trgtpos.top + ((trgt.height() + 2*padding) / 2) + 4*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
+         if (srcpos.top > trgtpos.top) {
+             ya = yb = Math.round( (srcpos.top  + ((src.height() + 2*padding)  / 2) - 3*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
+             yc = yd = Math.round( (trgtpos.top + ((trgt.height() + 2*padding) / 2) + 4*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
+         } else {
+             yc = yd = Math.round( (trgtpos.top  + ((src.height() + 2*padding)  / 2) - 3*(trgt_grid_xyz[1] - src_grid_xyz[1])) );
+             ya = yb = Math.round( (srcpos.top + ((trgt.height() + 2*padding) / 2) + 4*(trgt_grid_xyz[1] - src_grid_xyz[1])) );
+         }
 
          ym = Math.round( (yb+yc) / 2 );
        
@@ -188,7 +193,7 @@ $(document).ready(function(){
         stage_id = $('#visualTechtree .item.active').attr('id');
         stage    = parseInt(stage_id.replace('stage-','')) + 1;
         $('.carousel-control.left').show();
-        if ( stage > 4 ) {
+        if ( stage > 3 ) {
             $(this).hide();
         }
         draw_requirements();
@@ -207,18 +212,5 @@ $(document).ready(function(){
         $('#techModal').load('http://dev.nouron.de/techtree/json/getModalHtmlForTechnology/'+techId);
     });
     
-    /*************** INNN *****************************************************/
-    $('.new-inbox-message').bind('fade-cycle', function() {
-        $(this).fadeOut('slow', function() {
-            $(this).fadeIn('slow', function() {
-                $(this).trigger('fade-cycle');
-            });
-        });
-    });
-    $('.new-inbox-message').each(function(index, elem) {
-        setTimeout(function() {
-            $(elem).trigger('fade-cycle');
-        }, index * 250);
-    });
-    /**************************************************************************/
+
 });

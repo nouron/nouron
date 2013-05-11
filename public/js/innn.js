@@ -1,5 +1,19 @@
 // Run once the DOM is ready
 $(document).ready(function () {
+    
+    $('.new-inbox-message').bind('fade-cycle', function() {
+        $(this).fadeOut('slow', function() {
+            $(this).fadeIn('slow', function() {
+                $(this).trigger('fade-cycle');
+            });
+        });
+    });
+    $('.new-inbox-message').each(function(index, elem) {
+        setTimeout(function() {
+            $(elem).trigger('fade-cycle');
+        }, index * 250);
+    });    
+    
     $(".message-options a.btn").click(function(e){
         e.preventDefault();
         button = $(this);
@@ -28,4 +42,8 @@ $(document).ready(function () {
         );
         return false;
     });
+    
+    
+    
+    
 });

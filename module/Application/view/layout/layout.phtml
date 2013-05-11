@@ -44,12 +44,12 @@ echo $this->doctype();
     <div class="navbar navbar-inverse navbar-fixed-top">
       <div class="navbar-inner">
         <div class="container">
-          <a class="brand" href="<?php echo $this->url('home') ?>"><?php echo $this->translate('Nouron') ?></a>
+          <a class="brand" href="<?= $this->url('home') ?>"><?= $this->translate('Nouron') ?></a>
           <div class="nav-collapse">
               <? if ($this->zfcUserIdentity()): ?>
               <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
               <ul class="nav pull-right">
-                <li><a href="#"><?= $this->zfcUserIdentity()->getUsername(); ?></a></li>
+                <li><a href="<?= $this->url('settings') ?>"><?= $this->zfcUserIdentity()->getUsername(); ?></a></li>
                 <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> <?= $this->translate('logout') ?></a></li>
               </ul>
               <? else: ?>
