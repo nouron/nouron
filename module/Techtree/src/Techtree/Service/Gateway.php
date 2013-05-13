@@ -831,4 +831,15 @@ class Gateway extends \Nouron\Service\Gateway
             $orders->next();
         }
     }
+
+    /**
+     *
+     */
+    public function setGridPosition($techId, $row, $column)
+    {
+        $tech = $this->getTechnology($techId);
+        $tech->row = $row;
+        $tech->column = $column;
+        return $this->getTable('technology')->save($tech);
+    }
 }

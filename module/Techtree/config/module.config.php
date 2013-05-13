@@ -48,6 +48,23 @@ return array(
                                 'action' => 'order'
                             )
                         )
+                    ),
+                    'gridposition' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/technology/order/35/add
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/technology/set/:id/:row/:column',
+                            'constraints' => array(
+                                'action' => 'order',
+                                'id' => '[0-9]+',
+                                'row' => '[0-9]+',
+                                'column' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'updatePosition'
+                            )
+                        )
                     )
                 )
             ),

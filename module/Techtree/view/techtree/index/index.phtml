@@ -1,35 +1,30 @@
 <?= $this->partial('partial/_switch_tech_display') ?>
-<div class="row-fluid"  id="colony">
-  <div id="visualTechtree" class="carousel slide row-fluid">
-    <!-- Carousel items -->
-    <div class="carousel-inner">
-      <?php for ($stage=0; $stage<5; $stage++): ?>
-      <div class="stage <?= ($stage==2) ? 'active' : '' ?> item" id="stage-<?= $stage ?>">
-        <svg class="span12 stage-svg" id="stage-<?= $stage ?>-svg" height="100%" width="100%" style="position:absolute">
-        <!-- <rect x="0" y="0" height="10" width="10" stroke="black" /> -->
-        <!-- svg content via javascript -->
-        </svg>
+<hr />
 
-        <div class="span12 stage-grid" style="position:absolute">
-        <?php for ($row=0; $row<10; $row++): ?>
-          <div class="row-fluid">
-              <?php for ($col=0; $col<=5; $col++): ?>
-              <span class="span2" id="<?= "tech-$stage-$row-$col"?>"></span>
-              <?php endfor; ?>
-          </div>
-        <?php endfor; ?>
-        </div>
+<div class="row-fluid"  id="colony">
+  <div id="visualTechtree" class="row-fluid" style="position:relative">
+      <div id="storage-tech-id" class="hidden"></div>
+      <div id="storage" class="hidden"></div>
+    <svg class="grid-svg" id="grid-svg" height="100%" width="100%" >
+    <!-- <rect x="0" y="0" height="10" width="10" stroke="black" /> -->
+    <!-- svg content via javascript -->
+    </svg>
+
+    <div class="grid">
+    <?php for ($row=0; $row<20; $row++): ?>
+      <div class="row-fluid">
+          <?php for ($col=0; $col<=5; $col++): ?>
+          <span class="span2 grid-cell" id="<?= "grid-$row-$col"?>"></span>
+          <?php endfor; ?>
       </div>
-      <?php endfor; ?>
+    <?php endfor; ?>
+    </div>
 
     <div class="hidden">
         <?php foreach ($techtree as $id => $tech) :
-        /* attention: x and y data is stored for the vertical techtree but used
-         * for a horizontal techtree view, so a grid row is represented by the X
-         * value instead of the Y Value (TODO: this should be fixed in future) */
-        $grid_x = $tech['graph_row'];
-        $grid_y = $tech['graph_column'];
-        $key = $tech['stage'] . '-' . $grid_x . '-' . $grid_y;
+        $grid_y = $tech['row'];
+        $grid_x = $tech['column'];
+        $key = $grid_y . '-' . $grid_x;
         ?>
         <span class="techdata" id="techsource-<?= $key ?>">
             <a id="tech-<?= $id ?>" class="btn btn-block <?= $tech['type'] ?>" href="#techModal" data-toggle="modal">
@@ -54,12 +49,6 @@
 
         <?php endforeach;
         endforeach; ?>
-    </div>
-
-
-    <!-- Carousel nav -->
-    <a class="carousel-control left" href="#visualTechtree" data-slide="prev">&lsaquo;</a>
-    <a class="carousel-control right" href="#visualTechtree" data-slide="next">&rsaquo;</a>
   </div>
 
   <!-- Modal -->

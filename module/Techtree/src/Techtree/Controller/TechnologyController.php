@@ -2,6 +2,7 @@
 namespace Techtree\Controller;
 
 use Zend\View\Model\ViewModel;
+use Zend\View\Model\JsonModel;
 use Techtree\Service\Gateway;
 
 class TechnologyController extends \Nouron\Controller\IngameController
@@ -30,6 +31,27 @@ class TechnologyController extends \Nouron\Controller\IngameController
         }
 
         $this->redirect()->toRoute('techtree');
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel
+     */
+    public function updatePositionAction()
+    {
+        $techId = $this->params('id');
+        $row = $this->params('row');
+        $column = $this->params('column');
+        $sm = $this->getServiceLocator();
+        $techtreeGw = $sm->get('Techtree\Service\Gateway');
+        $result = false;
+        if (!empty($techId)) {
+            $result = $techtreeGw->setGridPosition($techId, $row, $column);
+        }
+        $this->redirect()->toRoute('techtree');
+        return new JsonModel(array(
+            'result' => $result,
+        ));
     }
 }
 

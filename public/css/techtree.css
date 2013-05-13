@@ -1,4 +1,6 @@
 @charset "UTF-8"
 
 #colony {/*background: url(../img/screens/city_light.gif) center center no-repeat;*/ min-height: 400px;}
-#colony .stage-svg {position: absolute;}
+#colony .grid-svg {position: absolute;z-index:-255}
+#visualTechtree .span2 {border: 1px dotted #ddd}
+#visualTechtree .grid .row-fluid{ margin-bottom: 50px; }
