@@ -84,10 +84,10 @@ $(document).ready(function(){
 //         var srcid = src.parent().attr('id').replace('tech-','');
 //         var trgtid = trgt.parent().attr('id').replace('tech-','');
 //       
-//         src_grid_xyz  = srcid.split('-');
-//         trgt_grid_xyz = trgtid.split('-');
+//         source_grid_xyz  = srcid.split('-');
+//         target_grid_xyz = trgtid.split('-');
 //       
-//         if (src_grid_xyz[0] != trgt_grid_xyz[0]) {
+//         if (source_grid_xyz[0] != target_grid_xyz[0]) {
 //             /*console.log('Requirements between techs in different stages can not be drawn! (from '+srcid+' to '+trgtid+')');*/
 //             return false;
 //         }
@@ -106,8 +106,8 @@ $(document).ready(function(){
 //         xa = left;
 //         xd = right;
 //         
-//         grid_x_diff = Math.abs(src_grid_xyz[2] - trgt_grid_xyz[2]);
-//         grid_x_mod = Math.abs(src_grid_xyz[1] - trgt_grid_xyz[1]); /* Modifier depend on grid_y value!! */
+//         grid_x_diff = Math.abs(source_grid_xyz[2] - target_grid_xyz[2]);
+//         grid_x_mod = Math.abs(source_grid_xyz[1] - target_grid_xyz[1]); /* Modifier depend on grid_y value!! */
 //         
 //         if (grid_x_diff <=1 ) {
 //             /* there is only small space between two columns */
@@ -118,11 +118,11 @@ $(document).ready(function(){
 //
 //         padding = 5; // 4px padding +1px border
 //         if (srcpos.top > trgtpos.top) {
-//             ya = yb = Math.round( (srcpos.top  + ((src.height() + 2*padding)  / 2) - 3*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
-//             yc = yd = Math.round( (trgtpos.top + ((trgt.height() + 2*padding) / 2) + 4*(src_grid_xyz[1] - trgt_grid_xyz[1])) );
+//             ya = yb = Math.round( (srcpos.top  + ((src.height() + 2*padding)  / 2) - 3*(source_grid_xyz[1] - target_grid_xyz[1])) );
+//             yc = yd = Math.round( (trgtpos.top + ((trgt.height() + 2*padding) / 2) + 4*(source_grid_xyz[1] - target_grid_xyz[1])) );
 //         } else {
-//             yc = yd = Math.round( (trgtpos.top  + ((src.height() + 2*padding)  / 2) - 3*(trgt_grid_xyz[1] - src_grid_xyz[1])) );
-//             ya = yb = Math.round( (srcpos.top + ((trgt.height() + 2*padding) / 2) + 4*(trgt_grid_xyz[1] - src_grid_xyz[1])) );
+//             yc = yd = Math.round( (trgtpos.top  + ((src.height() + 2*padding)  / 2) - 3*(target_grid_xyz[1] - source_grid_xyz[1])) );
+//             ya = yb = Math.round( (srcpos.top + ((trgt.height() + 2*padding) / 2) + 4*(target_grid_xyz[1] - source_grid_xyz[1])) );
 //         }
 //
 //         ym = Math.round( (yb+yc) / 2 );
@@ -138,7 +138,7 @@ $(document).ready(function(){
 //         text.appendChild(makeSVG('tspan', {'font-family':'Courier', 'font-size': '10pt', stroke: stroke_color}, count));
 //         group.appendChild(text);
 //
-//         stage = src_grid_xyz[0];
+//         stage = source_grid_xyz[0];
 //         document.getElementById('grid-svg').appendChild(group);
 //     }
      
@@ -156,44 +156,84 @@ $(document).ready(function(){
 //             fullfilled = true;
 //         }
        
-         var srcid = src.parent().attr('id').replace('tech-','');
-         var trgtid = trgt.parent().attr('id').replace('tech-','');
-       
-         src_grid_xyz  = srcid.split('-');
-         trgt_grid_xyz = trgtid.split('-');
-       
-//         if (src_grid_xyz[0] != trgt_grid_xyz[0]) {
-//             /*console.log('Requirements between techs in different stages can not be drawn! (from '+srcid+' to '+trgtid+')');*/
-//             return false;
-//         }
-       
+         var srcid = src.parent().attr('id').replace('grid-','');
+         var trgtid = trgt.parent().attr('id').replace('grid-','');
          var srcpos = src.position();
          var trgtpos = trgt.position();
+         
+         source_grid_xy  = srcid.split('-');
+         target_grid_xy  = trgtid.split('-');
+         
+         source_y = source_grid_xy[0];
+         source_x = source_grid_xy[1];
+         source_left = srcpos.left;
+         source_top = srcpos.top;
+         source_width  = src.width();
+         source_height = src.height();
+         
+         target_y = target_grid_xy[0];
+         target_x = target_grid_xy[1];
+         target_left = trgtpos.left;
+         target_top = trgtpos.top;
+         target_width  = trgt.width();
+         target_height = trgt.height();
        
-         ya = srcpos.top + Math.round(src.height()/2);
-         //yb = yc = Math.round((srcpos.top + src.height() + trgtpos.top + trgt.height()) / 2); 
-         yd = trgtpos.top + Math.round(trgt.height()/2);
-         
-         xa = xb = srcpos.left + Math.round(src.width()/2);
-         xc = xd = trgtpos.left + Math.round(trgt.width()/2);
-         
+         ya = source_top + source_height + 10;
+         yb = ya + 20;
+         yc = target_top - target_height;
+         yd = yc + 10;
+         ye = target_top;
 
-         //xb = xc = Math.round((srcpos.left + src.width() + trgtpos.left + trgt.width()) / 2); 
-       
-         xm = Math.round((xa + xd)/2);
-         ym = Math.round((ya + yd)/2);
+         xa = source_left + Math.round(source_width/2);
+         xe = target_left + Math.round(target_width/2);
+         xb = xc = xd = xe;
+         if (source_y == target_y-1) {
+             xb = xc = xd = xe;
+         } else if (source_x < target_x) {
+             xb = xc = target_left - 5;
+         } else {
+             xb = xc = target_left + target_width - 20;
+         }
          
          stroke_color = fullfilled ? '#666' : '#aaa';
        
          var group = makeSVG('g', {title: src.attr('id') + ' to ' + trgt.attr('id')});
-         group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xd, y2:yd, stroke: stroke_color}));
-//         group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xb, y2:yb, stroke: stroke_color}));
-//         group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: stroke_color}));
-//         group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: stroke_color}));
-         group.appendChild(makeSVG('rect', {x:xm-10, y:ym-10, height:'20', width:'20', fill: 'white'}));
-         text = makeSVG('text', {x:xm-5, y:ym+5});
-         text.appendChild(makeSVG('tspan', {'font-family':'Courier', 'font-size': '10pt', stroke: stroke_color}, count));
-         group.appendChild(text);
+
+         diff_y = Math.abs(source_y - target_y)*3;
+         diff_x = Math.abs(source_x - target_x)*5;
+         if (source_x < target_x) {
+             xa = xa + diff_x;
+             xb = xc = xc - diff_x;
+             xd = xe = xe - diff_x;
+         } else if (source_x > target_x) {
+             xa = xa - diff_x;
+             xb = xc = xc + diff_x;
+             xd = xe = xe + diff_x;
+         }
+         
+         if (source_y < target_y && source_x == target_x) {
+             xa = xa + diff_y;
+             xb = xc = xc + diff_y;
+             xd = xe = xe + diff_y;
+         }
+         
+         group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xb, y2:yb, stroke: stroke_color}));
+         group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: stroke_color}));
+         group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: stroke_color}));
+         group.appendChild(makeSVG('line', {x1:xd, y1:yd, x2:xe, y2:ye, stroke: stroke_color}));
+         
+         d1 = String(xe-4) + ',' + String(ye-8);
+         d2 = String(xe)   + ',' + String(ye);
+         d3 = String(xe+4) + ',' + String(ye-8);
+         d = d1 + ' ' + d2 + ' ' + d3;
+         
+         group.appendChild(makeSVG('polygon', {points: d, fill: stroke_color}));
+
+         //group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: stroke_color}));
+         //group.appendChild(makeSVG('rect', {x:xm-10, y:ym-10, height:'20', width:'20', fill: 'white'}));
+         //text = makeSVG('text', {x:xm-5, y:ym+5});
+         //text.appendChild(makeSVG('tspan', {'font-family':'Courier', 'font-size': '10pt', stroke: stroke_color}, count));
+         //group.appendChild(text);
 
          document.getElementById('grid-svg').appendChild(group);
      }
@@ -237,28 +277,6 @@ $(document).ready(function(){
         }
     });
 
-//    $('.carousel-control.left').hide();
-//    
-//    $('.carousel-control.left').click(function(e){
-//        stage_id = $('#visualTechtree .item.active').attr('id');
-//        stage    = parseInt(stage_id.replace('stage-','')) - 1;
-//        $('.carousel-control.right').show();
-//        if ( stage < 1 ) {
-//            $(this).hide();
-//        }
-//        draw_requirements();
-//    });
-//
-//    $('.carousel-control.right').click(function(e){
-//        stage_id = $('#visualTechtree .item.active').attr('id');
-//        stage    = parseInt(stage_id.replace('stage-','')) + 1;
-//        $('.carousel-control.left').show();
-//        if ( stage > 3 ) {
-//            $(this).hide();
-//        }
-//        draw_requirements();
-//    });
-
     draw_requirements();
     
     $('#visualTechtree a.btn').click(function(e){
@@ -292,10 +310,11 @@ $(document).ready(function(){
             );
         }
     });
-//    $('.modal-footer a').click(function(e) {
-//        e.preventDefault();
-//        $('#techModal').load('http://dev.nouron.de/techtree/json/getModalHtmlForTechnology/'+techId);
-//    });
+    
+    $('.modal-footer a').click(function(e) {
+        e.preventDefault();
+        $('#techModal').load('http://dev.nouron.de/techtree/json/getModalHtmlForTechnology/'+techId);
+    });
     
 
 });

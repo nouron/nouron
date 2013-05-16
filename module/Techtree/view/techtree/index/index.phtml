@@ -31,7 +31,7 @@
                 <? if (!empty($tech['order'])):
                     echo '<i class="icon-arrow-up"></i>';
                 endif;
-                echo $this->translate($tech['name'], null, 'de_DE') . ' ' . $tech['count']  ?>
+                echo $this->translate($tech['name'], null, 'de_DE'); # . ' ' . $tech['count']  ?>
             </a>
             <span class="hidden data"><?= json_encode($tech) ?></span>
         </span>
@@ -40,13 +40,13 @@
         foreach ($requirements as $id => $req):
             foreach ($req as $toId => $val):
                 $key = $id . '-' . $toId;
+                #FB::log($key);
                 /*$fullfilled = ($techtree[$id]['count'] >= $val['required_tech_count']) ? 'true' : 'false';*/
                 $tech_count = $techtree[$id]['count'];
                 $required_tech_count = $val['required_tech_count'];
         ?>
 
         <div class="requirementsdata" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s", $id, $toId, $required_tech_count, $tech_count) ?></div>
-
         <?php endforeach;
         endforeach; ?>
   </div>

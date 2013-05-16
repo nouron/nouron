@@ -46,6 +46,85 @@
         <tr><td><?= $this->translate($techs[ $req->required_tech_id ]['name']) ?></td><td><?= ' Level ' . $req->required_tech_count ?> <i class="icon-ok"></i></td></tr>
         <?php endforeach ?>
         </table>
+
+        <table class="table">
+            <tr>
+            <th><i class="icon-time"></i></th>
+            <th><?=$tick-2?></th>
+            <th><?=$tick-1?></th>
+            <th><?=$tick?></th>
+            <th><?=$tick+1?></th>
+            <th><?=$tick+2?></th>
+            <th><?=$tick+3?></th>
+            <th><?=$tick+4?></th>
+            </tr>
+            <tr>
+                <td>BauAP</td>
+                <td>5</td>
+                <td>5</td>
+                <td>
+                    <div class="btn-group">
+                    <button class="btn btn-small">5</button>
+                    <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                    <!-- dropdown menu links -->
+                    </ul>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group">
+                    <button class="btn btn-small">5</button>
+                    <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                    <!-- dropdown menu links -->
+                    </ul>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group">
+                    <button class="btn btn-small">5</button>
+                    <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                    <!-- dropdown menu links -->
+                    </ul>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group">
+                    <button class="btn btn-small">5</button>
+                    <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                    <!-- dropdown menu links -->
+                    </ul>
+                    </div>
+                </td>
+                <td>
+                    <div class="btn-group">
+                    <button class="btn btn-small">5</button>
+                    <button class="btn btn-small dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                    <!-- dropdown menu links -->
+                    </ul>
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+
+        <div class="progress progress-striped">
+        <div class="bar bar-success" style="width: 35%;"></div>
+        <div class="bar bar-warning" style="width: 20%;"></div>
+        </div>
     </div>
     <div class="modal-footer">
         <?php foreach ($urls as $key => $url):

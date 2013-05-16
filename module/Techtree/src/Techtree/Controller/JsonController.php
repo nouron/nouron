@@ -56,6 +56,7 @@ class JsonController extends \Nouron\Controller\IngameController
 
         $result = new ViewModel(
             array(
+                'tick' => (string) $sm->get('Nouron\Service\Tick'),
                 'tech' => $techtreeGw->getTechnology($techId),
                 'requirements' => $techtreeGw->getRequirementsByTechnologyId($techId),
                 'costs' => $techtreeGw->getCostsByTechnologyId($techId),
