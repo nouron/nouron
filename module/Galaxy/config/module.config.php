@@ -173,6 +173,22 @@ return array(
                         )
                     )
                 )
+            ),
+            'coords' => array(
+                # Example-Url:  http://dev.nouron.de/2312/5412
+                'type' => 'Segment',
+                'options' => array(
+                    'route' => '[/:x/:y]',
+                    'constraints' => array(
+                        'x' => '[0-9]+',
+                        'y' => '[0-9]+',
+                    ),
+                    'defaults' => array(
+                        '__NAMESPACE__' => 'Galaxy\Controller',
+                        'controller' => 'System',
+                        'action' => 'index'
+                    )
+                )
             )
         )
     ),

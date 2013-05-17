@@ -18,6 +18,7 @@ class GatewayFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables['technology']  = new \Trade\Table\Technology($db);
+        $tables['resources']   = new \Trade\Table\Resource($db);
 
         $gateways['resources'] = $serviceLocator->get('Resources\Service\Gateway');
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');

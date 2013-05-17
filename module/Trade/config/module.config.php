@@ -8,16 +8,20 @@ return array(
     'router' => array(
         'routes' => array(
             'trade' => array(
-                'type' => 'Literal',
+                'type' => 'Segment',
                 'options' => array(
-                    'route' => '/trade',
+                    'route' => '/trade[/:action]',
+                    'constraints' => array(
+                        'type'   => '[a-zA-Z][a-zA-Z0-9_-]*',
+                        'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                    ),
                     'defaults' => array(
                         '__NAMESPACE__' => 'Trade\Controller',
-                        'controller' => 'Index',
-                        'action' => 'index',
+                        'controller' => 'index',
+                        'action' => 'resources'
                     ),
                 ),
-                'may_terminate' => true,
+                'may_terminate' => true
             ),
         )
     ),
@@ -34,7 +38,20 @@ return array(
             'trade' => array(
                 'label' => 'trade',
                 'route' => 'trade',
+                'action' => 'resources',
                 'order' => 4,
+                'pages' => array(
+                    'techs' => array(
+                        'label' => 'resources',
+                        'route' => 'trade',
+                        'action'=> 'resources'
+                    ),
+                    'resources' => array(
+                        'label' => 'technologies',
+                        'route' => 'trade',
+                        'action'=> 'technologies'
+                    ),
+                )
             )
         )
     ),

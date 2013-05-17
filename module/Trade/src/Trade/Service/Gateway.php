@@ -8,4 +8,8 @@ class Gateway extends \Nouron\Service\Gateway
         return $this->getTable('technology')->fetchAll();
     }
 
+    public function getResources()
+    {
+        return $this->getTable('resources')->fetchAll();
+    }
 }

@@ -1,0 +1,22 @@
+<div class="row-fluid" id="trade">
+    <table class="table">
+    <tr>
+        <th><?= $this->translate('colony') ?></th>
+        <th><?= $this->translate('offer-type') ?></th>
+        <th><?= $this->translate('resource') ?></th>
+        <th><?= $this->translate('amount') ?></th>
+        <th><?= $this->translate('credits-per-unit') ?></th>
+        <th><?= $this->translate('restriction') ?></th>
+    </tr>
+    <?php foreach ($resources as $offer): ?>
+        <tr id="offer-<?= $offer['id']?>">
+            <td><?= $offer['colony_id']?></td>
+            <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
+            <td><?= $offer['tech_id']?></td>
+            <td><?= $offer['amount']?></td>
+            <td><?= $offer['price']?></td>
+            <td><?= $offer['restriction']?></td>
+        </tr>
+    <?php endforeach; ?>
+    </table>
+</div>
