@@ -7,12 +7,12 @@ $(document).ready(function(){
       * @param numeric count Required tech level to fullfill the requirement
       * @param bool fullfilled OPTIONAL Is requirement fullfilled? (default = false)
       */
-     function draw_requirement(src, trgt, required_tech_count, tech_count)
+     function draw_requirement(src, trgt, type, required_tech_count, tech_count)
      {
          fullfilled = false;
-//         if (tech_count && tech_count >= required_tech_count) {
-//             fullfilled = true;
-//         }
+         if (tech_count && tech_count >= required_tech_count) {
+             fullfilled = true;
+         }
        
          var srcid = src.parent().attr('id').replace('grid-','');
          var trgtid = trgt.parent().attr('id').replace('grid-','');
@@ -53,9 +53,17 @@ $(document).ready(function(){
              xb = xc = target_left - unique_positioner  - 50;
          }
 
-         
-         stroke_color = fullfilled ? '#666' : '#aaa';
-       
+         switch (type) {
+             case 'building': stroke_color = fullfilled ? '#669' : '#99f';
+                              break;
+             case 'research': stroke_color = fullfilled ? '#696' : '#9f9';
+                              break;
+             case 'ship': stroke_color = fullfilled ? '#996' : '#ff9';
+                          break;
+             default: stroke_color = fullfilled ? '#666' : '#aaa';
+                      break;
+         }
+
          var group = makeSVG('g', {title: src.attr('id') + ' to ' + trgt.attr('id')});
          
          x_modifier = Math.round(source_width / 6) - 3;
@@ -64,16 +72,22 @@ $(document).ready(function(){
 
          if (source_y == target_y-1) {
              if (source_x != target_x) {
-                 group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xe, y2:yb, stroke: stroke_color}));
-                 group.appendChild(makeSVG('line', {x1:xe, y1:yb, x2:xe, y2:ye, stroke: stroke_color}));
+                 d1 = xa + ',' + ya;
+                 d2 = xe + ',' + yb;
+                 d3 = xe + ',' + ye;
+                 d = d1 + ' ' + d2 + ' ' + d3;
+                 group.appendChild(makeSVG('polygon', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
              } else {
-                 group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color}));
+                 group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color, 'class':type}));
              }
          } else {
-             group.appendChild(makeSVG('line', {x1:xa, y1:ya, x2:xb, y2:yb, stroke: stroke_color}));
-             group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: stroke_color}));
-             group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: stroke_color}));
-             group.appendChild(makeSVG('line', {x1:xd, y1:yd, x2:xe, y2:ye, stroke: stroke_color}));
+             d1 = xa + ',' + ya;
+             d2 = xb + ',' + yb;
+             d3 = xc + ',' + yc;
+             d4 = xd + ',' + yd;
+             d5 = xe + ',' + ye;
+             d = d1 + ' ' + d2 + ' ' + d3 + ' ' + d4 + ' ' + d5;
+             group.appendChild(makeSVG('polygon', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
          }
          
          d1 = String(xe-4) + ',' + String(ye-8);
@@ -81,10 +95,10 @@ $(document).ready(function(){
          d3 = String(xe+4) + ',' + String(ye-8);
          d = d1 + ' ' + d2 + ' ' + d3;
          
-         group.appendChild(makeSVG('polygon', {points: d, fill: stroke_color}));
+         group.appendChild(makeSVG('polygon', {points: d, fill: stroke_color, 'class':type}));
 
          text = makeSVG('text', {x:xe+5, y:ye-8});
-         text.appendChild(makeSVG('tspan', {'font-family':'Sans-serif', 'font-size': '11px', stroke: stroke_color}, count));
+         text.appendChild(makeSVG('tspan', {'font-family':'Sans-serif', 'font-size': '11px', stroke: '#666', 'class':type}, count));
          group.appendChild(text);
 
          test = makeSVG('rect', {x:0,y:0,'height':10, 'width':10, 'stroke':"black"});
@@ -104,15 +118,22 @@ $(document).ready(function(){
              $('svg *').remove();
              /* Take requirements data to draw the lines into techtree */
              $('.requirementsdata').each(function() {
+                 if ($(this).hasClass( 'building' )) {
+                     class_ = 'building';
+                 } else if ($(this).hasClass( 'research' )) {
+                     class_ = 'research';
+                 } else if ($(this).hasClass( 'ship' )) {
+                     class_ = 'ship';
+                 }
                  data = $(this).html().trim().split('-');
                  techId = data[0];
                  requiredTechId = data[1];
-                 count = data[2];
-                 fullfilled = data[3];
+                 req_count = data[2];
+                 count = data[3];
                  domSourceElem = $('#tech-' + requiredTechId);
                  domTargetElem = $('#tech-' + techId);
                  if (domSourceElem && domTargetElem) {
-                     draw_requirement(domSourceElem, domTargetElem, count, fullfilled);
+                     draw_requirement(domSourceElem, domTargetElem, class_, req_count, count);
                  }
              });
          }, 300);
