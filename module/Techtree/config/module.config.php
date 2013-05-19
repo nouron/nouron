@@ -33,13 +33,28 @@ return array(
                             'defaults' => array()
                         )
                     ),
-                    'technology' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/technology/order/35/add
+                    'tech' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
                         'type' => 'Segment',
                         'options' => array(
-                            'route' => '/technology/:action/:id/:order',
+                            'route' => '/tech/:id',
                             'constraints' => array(
                                 'action' => 'order',
+                                'id' => '[0-9]+',
+                                'order' => '[a-z]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'tech'
+                            )
+                        )
+                    ),
+                    'order' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/tech/35/add
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/tech/:id/:order',
+                            'constraints' => array(
                                 'id' => '[0-9]+',
                                 'order' => '[a-z]+'
                             ),
@@ -49,11 +64,11 @@ return array(
                             )
                         )
                     ),
-                    'gridposition' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/technology/order/35/add
+                    'reposition' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/tech/35/reposition/:row/:column
                         'type' => 'Segment',
                         'options' => array(
-                            'route' => '/technology/set/:id/:row/:column',
+                            'route' => '/tech/:id/reposition/:row/:column',
                             'constraints' => array(
                                 'action' => 'order',
                                 'id' => '[0-9]+',
@@ -62,7 +77,7 @@ return array(
                             ),
                             'defaults' => array(
                                 'controller' => 'Technology',
-                                'action' => 'updatePosition'
+                                'action' => 'reposition'
                             )
                         )
                     )

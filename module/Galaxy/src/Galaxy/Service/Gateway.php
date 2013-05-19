@@ -3,13 +3,6 @@ namespace Galaxy\Service;
 
 class Gateway extends \Nouron\Service\Gateway
 {
-    public function __construct($tick, array $tables, array $gateways = array())
-    {
-        $this->setTick($tick);
-        $this->setTables($tables);
-        $this->setGateways($gateways);
-    }
-
     /**
      * Get all systems.
      *

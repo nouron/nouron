@@ -1,0 +1,80 @@
+<!-- Modal -->
+<div id="techModal" class="modal hide fade in" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel"><?= $this->translate($tech->name) ?>
+            <small>(<?= $this->translate('types_' . $tech->type) ?>/<?= $this->translate('purposes_' . $tech->purpose) ?>)</small></h3>
+    </div>
+    <div class="modal-body">
+        <!-- Description -->
+        <p><?= $this->translate('desc_'.$tech->name)?></p>
+
+        <!-- Data -->
+        <table class="table">
+            <tr>
+                <td><?= $this->translate('decay') ?>/<?= $this->translate('tick') ?>: <?= $tech->decay ?></td>
+                <td><?= ($tech->max_level > 0) ? ($this->translate('max_level') . ': '. $tech->max_level) : '' ?></td>
+            </tr>
+            <tr>
+                <td><?= ($tech->type == 'ship') ? $this->translate('moving_speed') . ': '. $tech->moving_speed : '' ?></td>
+                <td><?= ($tech->tradeable) ? '<i class="icon-ok"></i> ' . $this->translate('tradeable') : '' ?></td>
+            </tr>
+        </table>
+
+        <!-- Costs -->
+        <h4><?= $this->translate('costs and requirements') ?></h4>
+
+        <table class="table">
+        <tr><td colspan="2">
+        <?php if ($tech->ap_for_levelup > 0): ?>
+        <a data-placement="bottom" rel="tooltip" href="#" data-original-title="benötigte AP für nächstes Level">AP <?= $tech->ap_for_levelup ?></a>
+        <?php endif;
+        foreach ($costs as $cost):
+            $resource = $resources[ $cost->resource_id ];
+            $name = $resource['name'];
+            $abbreviation =  $resource['abbreviation'];
+            $class =  $resource['icon'];
+            $amount  = $cost['amount'];
+            if ($amount > 0):
+                echo '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$name.'">';
+                echo '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
+            endif;
+        endforeach;
+        ?>
+        </td></tr>
+        <?php foreach ($requirements as $req):
+            if ($possessions[ $req->required_tech_id ]['level'] >= $req->required_tech_level):
+                $fullfilled = '<i class="icon-ok"></i>';
+            else:
+                $fullfilled = '<i class="icon-close"></i>';
+            endif;
+        ?>
+        <tr>
+            <td><?= $this->translate($techs[ $req->required_tech_id ]['name']) ?></td>
+            <td><?= ' Level ' . $req->required_tech_level . ' ' . $fullfilled ?></td>
+        </tr>
+        <?php endforeach ?>
+        </table>
+        <?php if ($tech->type != 'advisor'): ?>
+        <?= $tick ?>
+        <div class="progress progress-striped" rel="tooltip" data-placement="top" data-original-title="eingesetzt: <?= $ap_spend ?>|beauftragt: <?= $ap_ordered ?>|benötigt:<?= $tech->ap_for_levelup ?>">
+            <div class="bar bar-success" style="width: <?= $percentage_completed ?>%;"><?= $ap_spend ?></div>
+            <div class="bar bar-warning" style="width: <?= $percentage_gain ?>%;"><?= $ap_ordered ?></div>
+        </div>
+        <?php endif; ?>
+    </div>
+    <div class="modal-footer">
+        <?php foreach ($urls as $key => $url):
+            switch ($key) {
+                case 'add':    $button_text = '<i class="icon-plus"></i>'; break;
+                case 'remove': $button_text = '<i class="icon-minus"></i>'; break;
+                //case 'repair': $button_text = '<i class="icon-wrench"></i> Reparieren'; break;
+                case 'cancel': $button_text = 'Reset'; break;
+            }
+        ?>
+        <a href="<?= $url ? $url : '#' ?>" class="btn <?= $url ? '' : 'disabled'?>" data-dismiss="modal" aria-hidden="true"><?= $button_text ?></a>
+        <?php endforeach; ?>
+        <a href="javascript::void()" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i> Close</a>
+        <!--<button class="btn btn-primary">Save changes</button>-->
+    </div>
+</div>
