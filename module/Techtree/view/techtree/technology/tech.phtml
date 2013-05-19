@@ -43,10 +43,10 @@
         ?>
         </td></tr>
         <?php foreach ($requirements as $req):
-            if ($possessions[ $req->required_tech_id ]['level'] >= $req->required_tech_level):
+            if (isset($possessions[ $req->required_tech_id ]) && $possessions[ $req->required_tech_id ]['level'] >= $req->required_tech_level):
                 $fullfilled = '<i class="icon-ok"></i>';
             else:
-                $fullfilled = '<i class="icon-close"></i>';
+                $fullfilled = '<i class="icon-remove"></i>';
             endif;
         ?>
         <tr>

@@ -84,7 +84,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $colonyId = 0;
         $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);
         $requiredResourcesCheck = $techtreeGw->checkRequiredResourcesByTechId($techId, $colonyId);
-
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($requiredTechsCheck,$requiredResourcesCheck));
         $possessions = $techtreeGw->getPossessionsByColonyId($colonyId)->toArray('tech_id');
         $techs = $techtreeGw->getTechnologies()->toArray('id');
 

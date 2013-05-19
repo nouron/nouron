@@ -482,14 +482,13 @@ class Gateway extends \Nouron\Service\Gateway
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $poss  = $this->getPossessionsByColonyId($colonyId)->toArray();
+        $poss  = $this->getPossessionsByColonyId($colonyId)->toArray('tech_id');
         $rqrmnts = $this->getRequirementsByTechnologyId($techId);
 
         // compare possession with requirements:
-        foreach ($rqrmnts as $rq)
-        {
-            $id = $rq->tech_id;
-            if ( !isset($poss->$id) || $rq->required_tech_count > $poss[$id]['count']) {
+        foreach ($rqrmnts as $rq) {
+            $id = $rq->required_tech_id;
+            if ( !isset($poss[$id]) || $rq->required_tech_level > $poss[$id]['level']) {
                 // if not enough techs in possess return false
                 return false;
             }
