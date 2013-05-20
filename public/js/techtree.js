@@ -76,7 +76,7 @@ $(document).ready(function(){
                  d2 = xe + ',' + yb;
                  d3 = xe + ',' + ye;
                  d = d1 + ' ' + d2 + ' ' + d3;
-                 group.appendChild(makeSVG('polygon', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
+                 group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
              } else {
                  group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color, 'class':type}));
              }
@@ -87,7 +87,7 @@ $(document).ready(function(){
              d4 = xd + ',' + yd;
              d5 = xe + ',' + ye;
              d = d1 + ' ' + d2 + ' ' + d3 + ' ' + d4 + ' ' + d5;
-             group.appendChild(makeSVG('polygon', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
+             group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
          }
          
          d1 = String(xe-4) + ',' + String(ye-8);
@@ -95,10 +95,9 @@ $(document).ready(function(){
          d3 = String(xe+4) + ',' + String(ye-8);
          d = d1 + ' ' + d2 + ' ' + d3;
          
-         group.appendChild(makeSVG('polygon', {points: d, fill: stroke_color, 'class':type}));
+         group.appendChild(makeSVG('polyline', {points: d, fill: stroke_color, 'class':type}));
 
-         text = makeSVG('text', {x:xe+5, y:ye-8});
-         text.appendChild(makeSVG('tspan', {'font-family':'Sans-serif', 'font-size': '11px', stroke: '#666', 'class':type}, count));
+         text = makeSVG('text', {x:xe+5, y:ye-8,'font-size': '12px', fill: '#666', 'class':type}, required_tech_count);
          group.appendChild(text);
 
          test = makeSVG('rect', {x:0,y:0,'height':10, 'width':10, 'stroke':"black"});
