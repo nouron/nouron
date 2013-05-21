@@ -8,12 +8,12 @@ return array(
         'User', /* based on ZfcUser */
         'ZfcRbac',
         'Nouron',
+        'Galaxy',
+        'Resources',
         'Trade',
         'Techtree',
-        'Galaxy',
         'INNN',
         /*'Fleets', /* maybe combine this with galaxy like in old version*/
-        'Resources',
         'DluTwBootstrap',
 //         'DluTwBootstrapDemo'
         'ZendDeveloperTools'

@@ -13,14 +13,7 @@ a {color: #000; white-space: nowrap;}
 a:hover {color:000; text-decoration:underline;}
 
 .resource-bar {text-align:center;}
-
-#visualTechtree .span2 {border: 1px dotted #ddd}
-
-body .carousel .carousel-inner .item {min-height:500px; position: relative;}
-body .carousel-inner .item .row-fluid{ margin-bottom: 15px; }
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
-
-#stage-0 .span12 {margin-left:0}
 
 .sidebar-nav {padding: 9px 0;}
 
@@ -85,22 +78,3 @@ body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #
 .research {background-color: rgb(180, 255, 180); background-image: -moz-linear-gradient(center top , #9f9, #E6E6E6);}
 .ship {background-color: rgb(255, 255, 180); background-image: -moz-linear-gradient(center top , #ff9, #E6E6E6);}
 .advisor {}
-
-/**
- * Tooltips for galaxy
- */
- /* tooltips */
-/* .tooltip_trigger {  overflow: visible;  position: relative; text-align: left;   text-decoration: none;  font-size: 11px !important; margin: 0;  padding: 0; vertical-align:middle;  cursor: pointer;}
-.tooltip_box {
-color: #222 !important;font-size: 10pt !important;min-width: 250px;
-    max-width: 500px;display: none;position: absolute;top: 1em;left: 0px;margin: 5px;padding: 5px;padding-left: 10px;
-    border: 1px solid #bbb !important;
-    border-bottom: 3px solid #900 !important;
-    background: #eee;
-    border-top: 3px solid #000 !important;
-    background: #FEFEFE url('../images/layout/tooltip.gif') no-repeat;
-    text-align: left; clear: both; z-index: 255 !important;
-    -webkit-box-shadow:0px 1px 10px #000; -moz-box-shadow:0px 1px 10px #000; box-shadow:0px 1px 10px #000;
-    -webkit-border-radius: 4px; -moz-border-radius: 4px; border-radius: 4px;
-}
-.tooltip_box p {font-size:10pt;} */

@@ -20,6 +20,7 @@ $this->inlineScript()->appendFile($basePath . '/js/jquery-timing.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.event.frame.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.parallax.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/nouron.js');
+$this->inlineScript()->appendFile($basePath . '/js/techtree.js');
 $this->inlineScript()->appendFile($basePath . '/js/innn.js');
 $this->inlineScript()->appendFile($basePath . '/js/galaxy.js');
 $this->inlineScript()->appendFile($basePath . '/js/fleets.js');
@@ -30,7 +31,6 @@ echo $this->doctype();
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <?php //Set your headTitle here ?>
     <?php echo $this->headTitle('') ?>
     <?php echo $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1.0') ?>
     <!-- Le styles -->
@@ -58,23 +58,23 @@ echo $this->doctype();
                 <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
               </ul>
               <? endif; ?>
-            </ul>
-
           </div><!--/.nav-collapse -->
         </div>
       </div>
     </div>
     <div class="container">
-        <? if ($this->zfcUserIdentity()):
-            echo $this->resources(); ?>
-        <hr />
-        <? endif;
+        <?
         // flash messages if any
         // First get the viewmodel and all its children (ie the actions viewmodel)
         $children = $this->viewModel()
                          ->getCurrent()
                          ->getChildren();
-        $ourView  = $children[0];?>
+        $ourView  = $children[0];
+
+        if ($this->zfcUserIdentity() && isset($ourView->possessions)):
+            echo $this->resources($ourView->possessions); ?>
+        <hr />
+        <? endif; ?>
 
         <div class="flashMessages" id="flashMessages">
         <? if (isset($ourView->flashMessages) && count($ourView->flashMessages)) :
