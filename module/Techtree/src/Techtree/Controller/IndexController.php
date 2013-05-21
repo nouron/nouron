@@ -26,14 +26,13 @@ class IndexController extends \Nouron\Controller\IngameController
         //$costs = $gw->getTechCosts();
         $orders = $gw->getOrders();
 
-        $model =  new ViewModel(
-            array(
+        $model =  new ViewModel(array(
                 'techs' => $techs,
                 'techtree' => $techtree,
                 'requirements' => $requirements,
                 'orders' => $orders,
-            )
-        );
+                'possessions' => $this->resources()
+        ));
 
         return $model;
     }

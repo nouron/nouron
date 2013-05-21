@@ -78,8 +78,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $cancelActionPointsUrl = $this->url()->fromRoute('techtree/order', array('id' => $techId, 'order'=>'cancel'));
 
         $tech = $techtreeGw->getTechnology($techId);
-//         $logger = $sm->get('logger');
-//         $logger->log(\Zend\Log\Logger::INFO, serialize($tech));
+        //$sm->get('logger')->log(\Zend\Log\Logger::INFO, serialize($tech));
 
         $colonyId = 0;
         $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);

@@ -63,16 +63,18 @@ echo $this->doctype();
       </div>
     </div>
     <div class="container">
-        <? if ($this->zfcUserIdentity()):
-            echo $this->resources(); ?>
-        <hr />
-        <? endif;
+        <?
         // flash messages if any
         // First get the viewmodel and all its children (ie the actions viewmodel)
         $children = $this->viewModel()
                          ->getCurrent()
                          ->getChildren();
-        $ourView  = $children[0];?>
+        $ourView  = $children[0];
+
+        if ($this->zfcUserIdentity() && isset($ourView->possessions)):
+            echo $this->resources($ourView->possessions); ?>
+        <hr />
+        <? endif; ?>
 
         <div class="flashMessages" id="flashMessages">
         <? if (isset($ourView->flashMessages) && count($ourView->flashMessages)) :
