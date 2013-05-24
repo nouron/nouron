@@ -8,7 +8,7 @@ class User extends \ZfcUser\Entity\User implements EntityInterface, IdentityInte
 {
     protected $tableName  = 'user';
 
-    public function toArray()
+    public function getArrayCopy()
     {
         return array(
             'id' => $this->id,

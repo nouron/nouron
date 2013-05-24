@@ -16,20 +16,9 @@ class SystemObject implements EntityInterface
     public $type;
     public $image_url;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'x' => $this->x,
-            'y' => $this->y,
-            'type_id' => $this->type_id,
-            'sight' => $this->sight,
-            'density' => $this->density,
-            'radiation' => $this->radiation,
-            'type' => $this->type,
-            'image_url' => $this->image_url
-        );
+        return get_object_vars($this);
     }
 }
 

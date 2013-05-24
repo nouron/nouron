@@ -20,7 +20,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $gw = $sm->get('Techtree\Service\Gateway');
         $techs = $gw->getTechnologies();
-        $requirements = $gw->getRequirements()->toArray(array('tech_id','required_tech_id'));
+        $requirements = $gw->getRequirements()->getArrayCopy(array('tech_id','required_tech_id'));
 
         $techtree = $gw->getTechtreeByColonyId($colonyId);
         //$costs = $gw->getTechCosts();

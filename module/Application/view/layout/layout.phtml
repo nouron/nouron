@@ -49,7 +49,12 @@ echo $this->doctype();
               <? if ($this->zfcUserIdentity()): ?>
               <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
               <ul class="nav pull-right">
-                <li><a href="<?= $this->url('settings') ?>"><?= $this->zfcUserIdentity()->getUsername(); ?></a></li>
+                <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle" href="<?= $this->url('settings') ?>"><?= $this->zfcUserIdentity()->getUsername(); ?> <b class="caret"></b></a>
+                    <ul class="dropdown-menu">
+                        <li><a href="<?= $this->url('zfcuser/changepassword') ?>">Passwort ändern</a></li>
+                        <li><a href="<?= $this->url('zfcuser/changeemail') ?>">Email ändern</a></li>
+                    </ul>
+                </li>
                 <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> <?= $this->translate('logout') ?></a></li>
               </ul>
               <? else: ?>

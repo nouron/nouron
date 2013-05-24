@@ -89,7 +89,7 @@ class Requirements extends \Nouron\Service\Gateway
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $poss  = $this->getPossessionsByColonyId($colonyId)->toArray();
+        $poss  = $this->getPossessionsByColonyId($colonyId)->getArrayCopy();
         $rqrmnts = $this->getRequirementsByTechnologyId($techId);
 
         // compare possession with requirements:

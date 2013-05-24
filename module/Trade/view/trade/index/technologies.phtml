@@ -1,4 +1,11 @@
 <div class="row-fluid" id="trade">
+    <?
+    $form = $this->searchForm;
+    $form->prepare();
+    echo $this->formTwb($form);
+    ?>
+
+
     <table class="table">
     <tr>
         <th><?= $this->translate('colony') ?></th>

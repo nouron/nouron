@@ -13,17 +13,9 @@ class FleetOrder implements EntityInterface
     public $was_processed;
     public $has_notified;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'tick' => $this->tick,
-            'fleet_id' => $this->fleet_id,
-            'order' => $this->order,
-            'coordinates' => $this->coordinates,
-            'data' => $this->data,
-            'was_processed' => $this->was_processed,
-            'has_notified' => $this->has_notified,
-        );
+        return get_object_vars($this);
     }
 }
 

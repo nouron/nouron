@@ -13,7 +13,7 @@ class IngameController extends AbstractActionController
         $controller = $this;
         $events->attach('dispatch', function ($e) use ($controller) {
             if ($controller->zfcUserAuthentication()->hasIdentity()) {
-                $user  = $controller->zfcUserAuthentication()->getIdentity()->toArray();
+                $user  = $controller->zfcUserAuthentication()->getIdentity()->getArrayCopy();
                 $_SESSION['userId'] = $user['id'];
             } else {
                 return $controller->redirect()->toRoute('logout');

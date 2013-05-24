@@ -17,21 +17,9 @@ class Message implements EntityInterface
     public $archived;
     public $deleted;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'sender' => $this->sender,
-            'attitude' => $this->attitude,
-            'recipient' => $this->recipient,
-            'tick' => $this->tick,
-            'type' => $this->type,
-            'subject' => $this->subject,
-            'text' => $this->text,
-            'read' => $this->read,
-            'archived' => $this->archived,
-            'deleted' => $this->deleted
-        );
+        return get_object_vars($this);
     }
 }
 

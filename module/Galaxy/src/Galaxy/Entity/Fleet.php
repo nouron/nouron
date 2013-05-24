@@ -12,16 +12,9 @@ class Fleet implements EntityInterface
     public $y;
     public $spot;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'user_id' => $this->user_id,
-            'x' => $this->x,
-            'y' => $this->y,
-            'spot' => $this->spot
-        );
+        return get_object_vars($this);
     }
 }
 

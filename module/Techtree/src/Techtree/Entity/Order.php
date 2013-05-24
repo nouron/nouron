@@ -14,18 +14,9 @@ class Order implements EntityInterface
     public $was_progressed;
     public $has_notified;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'tick' => $this->tick,
-            'colony_id' => $this->colony_id,
-            'tech_id' => $this->tech_id,
-            'order' => $this->order,
-            'ap_ordered' => $this->ap_ordered,
-            'is_final_step' => $this->is_final_step,
-            'was_progressed' => $this->was_progressed,
-            'has_notified' => $this->has_notified,
-        );
+        return get_object_vars($this);
     }
 }
 

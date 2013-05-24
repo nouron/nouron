@@ -10,8 +10,8 @@ return array(
         'Nouron',
         'Galaxy',
         'Resources',
-        'Trade',
         'Techtree',
+        'Trade',
         'INNN',
         /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'DluTwBootstrap',

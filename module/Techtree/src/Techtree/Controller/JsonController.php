@@ -84,7 +84,7 @@ class JsonController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Techtree\Service\Gateway');
-        $techs = $gw->getTechnologies()->toArray('id');
+        $techs = $gw->getTechnologies()->getArrayCopy('id');
 
         foreach ($techs as $id => $tech) {
             $techs[$id]['name'] = $sm->get('translator')->translate( $tech['name'] );

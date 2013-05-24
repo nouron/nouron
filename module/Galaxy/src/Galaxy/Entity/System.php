@@ -15,19 +15,9 @@ class System implements EntityInterface
     public $density;
     public $radiation;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'x' => $this->x,
-            'y' => $this->y,
-            'type_id' => $this->type_id,
-            'background_image_url' => $this->background_image_url,
-            'sight' => $this->sight,
-            'density' => $this->density,
-            'radiation' => $this->radiation
-        );
+        return get_object_vars($this);
     }
 }
 

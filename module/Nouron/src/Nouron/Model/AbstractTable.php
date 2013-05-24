@@ -97,7 +97,7 @@ abstract class AbstractTable extends TableGateway
 //      */
 //     public function save(EntityInterface $entity)
 //     {
-//         $data = $entity->toArray();
+//         $data = $entity->getArrayCopy();
 //         $id = (int) $entity->id;
 
 //         if ($id == 0) {
@@ -123,7 +123,7 @@ abstract class AbstractTable extends TableGateway
     {
         // make a copy of row data (to avoid changing original data):
         if ($entity instanceof EntityInterface) {
-            $data = $entity->toArray();
+            $data = $entity->getArrayCopy();
         } elseif (is_array($entity) or is_object($entity)) {
             $data = (array) $entity;
         } else {
@@ -152,7 +152,7 @@ abstract class AbstractTable extends TableGateway
 
         // update if data set is in table,
         // else insert the new data to the table
-        $result = $this->fetchAll($where)->toArray();
+        $result = $this->fetchAll($where)->getArrayCopy();
         if (!empty( $result ) && !isset($missingPrimaryKey)) {
             // if check is not empty the record set exists and has to be updated
             $result = $this->update($data, $where);

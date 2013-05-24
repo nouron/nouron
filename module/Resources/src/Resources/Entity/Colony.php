@@ -9,13 +9,9 @@ class Colony implements EntityInterface
     public $colony_id;
     public $amount;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'resource_id' => $this->resource_id,
-            'colony_id' => $this->colony_id,
-            'amount' => $this->amount,
-        );
+        return get_object_vars($this);
     }
 }
 

@@ -12,7 +12,7 @@ class EntityDummy implements EntityInterface
     public $tradeable;
     public $moving_speed;
 
-    public function toArray()
+    public function getArrayCopy()
     {
         return array(
             'id' => $this->id,

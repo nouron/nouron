@@ -9,13 +9,9 @@ class Requirement implements EntityInterface
     public $required_tech_id;
     public $required_tech_level;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'tech_id' => $tech_id,
-            'required_tech_id' => $required_tech_id,
-            'required_tech_level' => $required_tech_level
-        );
+        return get_object_vars($this);
     }
 }
 

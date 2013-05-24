@@ -9,13 +9,9 @@ class Cost implements EntityInterface
     public $resource_id;
     public $amount;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'tech_id' => $this->tech_id,
-            'resource_id' => $this->resource_id,
-            'amount' => $this->amount,
-        );
+        return get_object_vars($this);
     }
 }
 

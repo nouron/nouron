@@ -51,9 +51,9 @@ class JsonController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
         $techtreeGw = $sm->get('Techtree\Service\Gateway');
-        $techs = $techtreeGw->getTechnologies()->toArray('id');
+        $techs = $techtreeGw->getTechnologies()->getArrayCopy('id');
         $fleetTechs = $gw->getFleetTechnologies("fleet_id = $fleetId");
-        $fleetTechsArray = $fleetTechs->toArray('tech_id');
+        $fleetTechsArray = $fleetTechs->getArrayCopy('tech_id');
 
         foreach ($fleetTechsArray as $techId => $tmp) {
             $tmp['type'] = $techs[$techId]['type'];

@@ -12,16 +12,9 @@ class Event implements EntityInterface
     public $area;
     public $parameters;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'user_id' => $this->user_id,
-            'tick' => $this->tick,
-            'event' => $this->event,
-            'area' => $this->area,
-            'parameters' => $this->parameters
-        );
+        return get_object_vars($this);
     }
 }
 

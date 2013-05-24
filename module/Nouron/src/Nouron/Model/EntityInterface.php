@@ -3,5 +3,5 @@ namespace Nouron\Model;
 
 interface EntityInterface
 {
-    public function toArray();
+    public function getArrayCopy();
 }

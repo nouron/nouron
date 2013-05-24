@@ -12,16 +12,9 @@ class Possession implements EntityInterface
     public $age;
     public $slot;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'colony_id' => $this->colony_id,
-            'tech_id' => $this->tech_id,
-            'name' => $this->name,
-            'count' => $this->count,
-            'age' => $this->age,
-            'slot' => $this->slot
-        );
+        return get_object_vars($this);
     }
 }
 

@@ -84,8 +84,8 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);
         $requiredResourcesCheck = $techtreeGw->checkRequiredResourcesByTechId($techId, $colonyId);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($requiredTechsCheck,$requiredResourcesCheck));
-        $possessions = $techtreeGw->getPossessionsByColonyId($colonyId)->toArray('tech_id');
-        $techs = $techtreeGw->getTechnologies()->toArray('id');
+        $possessions = $techtreeGw->getPossessionsByColonyId($colonyId)->getArrayCopy('tech_id');
+        $techs = $techtreeGw->getTechnologies()->getArrayCopy('id');
 
         if (array_key_exists($techId, $possessions)) {
             $level    = $possessions[$techId]['level'];
@@ -130,7 +130,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
                 'order' => $order,
                 'possessions' => $possessions,
                 'techs' => $techs,
-                'resources' => $resourcesGw->getResources()->toArray('id'),
+                'resources' => $resourcesGw->getResources()->getArrayCopy('id'),
                 'urls' => $urls,
                 'percentage_completed' => $percentage_completed,
                 'percentage_gain' => $percentage_gain,

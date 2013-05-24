@@ -13,17 +13,9 @@ class Colony implements EntityInterface
     public $since_tick;
     public $is_primary;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'system_object_id' => $this->system_object_id,
-            'spot' => $this->spot,
-            'user_id' => $this->user_id,
-            'since_tick' => $this->since_tick,
-            'is_primary' => $this->is_primary
-        );
+        return get_object_vars($this);
     }
 }
 

@@ -1,4 +1,8 @@
 {
+    "_readme": [
+        "This file locks the dependencies of your project to a known state",
+        "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
+    ],
     "hash": "4fda6ec843417a1bb44e04466f5a8ecc",
     "packages": [
         {
@@ -188,12 +192,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "3994622761f496b666a143156b4d21f19205aa66"
+                "reference": "9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/3994622761f496b666a143156b4d21f19205aa66",
-                "reference": "3994622761f496b666a143156b4d21f19205aa66",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c",
+                "reference": "9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c",
                 "shasum": ""
             },
             "require": {
@@ -239,7 +243,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-04-14 14:43:51"
+            "time": "2013-05-19 14:33:45"
         },
         {
             "name": "zendframework/zendframework",
@@ -407,27 +411,27 @@
         },
         {
             "name": "zf-commons/zfc-base",
-            "version": "0.1.1",
+            "version": "v0.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcBase.git",
-                "reference": "0.1.1"
+                "reference": "v0.1.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcBase/zipball/0.1.1",
-                "reference": "0.1.1",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcBase/zipball/v0.1.2",
+                "reference": "v0.1.2",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
-                "zendframework/zend-db": "2.1.*",
-                "zendframework/zend-eventmanager": "2.1.*",
-                "zendframework/zend-loader": "2.1.*",
-                "zendframework/zend-modulemanager": "2.1.*",
-                "zendframework/zend-mvc": "2.1.*",
-                "zendframework/zend-servicemanager": "2.1.*",
-                "zendframework/zend-stdlib": "2.1.*"
+                "zendframework/zend-db": ">=2.1,<3.0",
+                "zendframework/zend-eventmanager": ">=2.1,<3.0",
+                "zendframework/zend-loader": ">=2.1,<3.0",
+                "zendframework/zend-modulemanager": ">=2.1,<3.0",
+                "zendframework/zend-mvc": ">=2.1,<3.0",
+                "zendframework/zend-servicemanager": ">=2.1,<3.0",
+                "zendframework/zend-stdlib": ">=2.1,<3.0"
             },
             "type": "library",
             "autoload": {
@@ -456,7 +460,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-03-15 19:29:07"
+            "time": "2013-05-02 12:33:49"
         },
         {
             "name": "zf-commons/zfc-rbac",
@@ -464,12 +468,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcRbac.git",
-                "reference": "d173028fdf09f35b8ffe3fc57d961ed9f77743bc"
+                "reference": "4263ce8883f5b452cac52bf0b5618ac745c99aad"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/d173028fdf09f35b8ffe3fc57d961ed9f77743bc",
-                "reference": "d173028fdf09f35b8ffe3fc57d961ed9f77743bc",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/4263ce8883f5b452cac52bf0b5618ac745c99aad",
+                "reference": "4263ce8883f5b452cac52bf0b5618ac745c99aad",
                 "shasum": ""
             },
             "require": {
@@ -499,7 +503,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-03-30 15:22:02"
+            "time": "2013-05-10 20:35:56"
         },
         {
             "name": "zf-commons/zfc-user",
@@ -507,27 +511,27 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "48a77acdb2fe5ff73241e736ca88b4ed2f6831f3"
+                "reference": "0.1.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/48a77acdb2fe5ff73241e736ca88b4ed2f6831f3",
-                "reference": "48a77acdb2fe5ff73241e736ca88b4ed2f6831f3",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/0.1.2",
+                "reference": "0.1.2",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
-                "zendframework/zend-authentication": "2.1.*",
-                "zendframework/zend-crypt": "2.1.*",
-                "zendframework/zend-form": "2.1.*",
-                "zendframework/zend-inputfilter": "2.1.*",
-                "zendframework/zend-loader": "2.1.*",
-                "zendframework/zend-modulemanager": "2.1.*",
-                "zendframework/zend-mvc": "2.1.*",
-                "zendframework/zend-servicemanager": "2.1.*",
-                "zendframework/zend-stdlib": "2.1.*",
-                "zendframework/zend-validator": "2.1.*",
-                "zendframework/zend-view": "2.1.*",
+                "zendframework/zend-authentication": ">=2.1,<3.0",
+                "zendframework/zend-crypt": ">=2.1,<3.0",
+                "zendframework/zend-form": ">=2.1,<3.0",
+                "zendframework/zend-inputfilter": ">=2.1,<3.0",
+                "zendframework/zend-loader": ">=2.1,<3.0",
+                "zendframework/zend-modulemanager": ">=2.1,<3.0",
+                "zendframework/zend-mvc": ">=2.1,<3.0",
+                "zendframework/zend-servicemanager": ">=2.1,<3.0",
+                "zendframework/zend-stdlib": ">=2.1,<3.0",
+                "zendframework/zend-validator": ">=2.1,<3.0",
+                "zendframework/zend-view": ">=2.1,<3.0",
                 "zf-commons/zfc-base": "0.*"
             },
             "suggest": {
@@ -560,7 +564,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-03-27 14:54:31"
+            "time": "2013-05-02 12:33:31"
         }
     ],
     "packages-dev": [

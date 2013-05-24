@@ -12,16 +12,9 @@ class Technology implements EntityInterface
     public $price;
     public $restriction;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'colony_id' => $this->colony_id,
-            'direction' => $this->direction,
-            'tech_id' => $this->tech_id,
-            'amount' => $this->amount,
-            'price' => $this->price,
-            'restriction' => $this->restriction
-        );
+        return get_object_vars($this);
     }
 }
 

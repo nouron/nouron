@@ -12,16 +12,9 @@ class ColonyTechnology implements EntityInterface
     public $age;
     public $slot;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'colony_id' => $this->colony_id,
-            'tech_id' => $this->tech_id,
-            'display_name' => $this->display_name,
-            'count' => $this->count,
-            'age' => $this->age,
-            'slot' => $this->slot
-        );
+        return get_object_vars($this);
     }
 }
 

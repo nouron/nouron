@@ -81,13 +81,13 @@ class Gateway extends \Nouron\Service\Gateway
         $this->_validateId($colonyId);
 
         // Technologien-Stammdaten holen
-        $techs = $this->getTechnologies()->toArray('id');
+        $techs = $this->getTechnologies()->getArrayCopy('id');
 
         // Besitz holen
         $poss = $this->getPossessionsByColonyId($colonyId);
-        $poss = $poss->toArray('tech_id');
+        $poss = $poss->getArrayCopy('tech_id');
 
-        $requirements = $this->getRequirements()->toArray(array('tech_id','required_tech_id'));
+        $requirements = $this->getRequirements()->getArrayCopy(array('tech_id','required_tech_id'));
 
         // Besitz und Kosten den Stammdaten zuordnen
         foreach ($techs as $id => $t)
@@ -394,7 +394,7 @@ class Gateway extends \Nouron\Service\Gateway
         $row = $table->fetchRow("colony_id = $colonyId AND tech_id = $techId");
         if ( !empty($row) ){
             //update
-            $row = $row->toArray();
+            $row = $row->getArrayCopy();
             $data = $row['count'] + $amount;
             $data  = array('count' => $data);
             $where = array(
@@ -482,7 +482,7 @@ class Gateway extends \Nouron\Service\Gateway
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $poss  = $this->getPossessionsByColonyId($colonyId)->toArray('tech_id');
+        $poss  = $this->getPossessionsByColonyId($colonyId)->getArrayCopy('tech_id');
         $rqrmnts = $this->getRequirementsByTechnologyId($techId);
 
         // compare possession with requirements:

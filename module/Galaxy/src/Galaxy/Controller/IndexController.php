@@ -12,7 +12,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Galaxy\Service\Gateway');
-        $systems = $gw->getSystems()->toArray('id');
+        $systems = $gw->getSystems()->getArrayCopy('id');
 
         $config = $sm->get('Config');
         $config = $config['galaxy_view_config'];

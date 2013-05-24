@@ -10,14 +10,9 @@ class FleetTechnology implements EntityInterface
     public $count;
     public $is_cargo;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'fleet_id' => $this->fleet_id,
-            'tech_id' => $this->tech_id,
-            'count' => $this->count,
-            'is_cargo' => $this->is_cargo
-        );
+        return get_object_vars($this);
     }
 }
 

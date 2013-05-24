@@ -45,11 +45,11 @@ class SystemController extends \Nouron\Controller\IngameController
         $config = $sm->get('Config');
         $config = $config['system_view_config'];
 
-        $objects  = $gw->getSystemObjects($systemId)->toArray('id');
+        $objects  = $gw->getSystemObjects($systemId)->getArrayCopy('id');
 
         $sysCoords = array($system['x'], $system['y']);
-        $colonies = $gw->getByCoordinates('colonies', $sysCoords)->toArray();
-        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->toArray('id');
+        $colonies = $gw->getByCoordinates('colonies', $sysCoords)->getArrayCopy();
+        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->getArrayCopy('id');
         $fleetIds = array_keys($fleets);
         $fleetOrders = $gw->getFleetOrdersByFleetIds($fleetIds);
 

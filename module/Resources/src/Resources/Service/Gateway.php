@@ -86,7 +86,7 @@ class Gateway extends \Nouron\Service\Gateway
         $galaxyGw = $this->getGateway('galaxy');
         $colony = $galaxyGw->getColony($colonyId);
 
-        $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->toArray('resource_id');
+        $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
         $userResources = $this->getUserResources('user_id = ' . $colony['user_id']);
         foreach ($userResources as $t) {
             $add = array(
@@ -115,10 +115,10 @@ class Gateway extends \Nouron\Service\Gateway
 //             $coloIds[] = $col->id;
 //         }
 //         $coloIds = implode($coloIds, ',');
-//         $colResources = $this->getColonyResources("colony_id IN ($coloIds)")->toArray('resource_id');
+//         $colResources = $this->getColonyResources("colony_id IN ($coloIds)")->getArrayCopy('resource_id');
 
 
-// //         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->toArray('resource_id');
+// //         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
 // //         $tmp  = $this->getUserResources('user_id = ' . $colony->user_id);
 // //         foreach ($tmp as $t) {
 // //             $add = array(

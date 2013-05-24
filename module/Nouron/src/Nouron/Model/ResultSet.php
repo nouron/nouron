@@ -27,7 +27,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
      * @param  string|null $columnAsIndex Name of the column that serves as array index.
      * @return array
      */
-    public function toArray($columnAsIndex = null)
+    public function getArrayCopy($columnAsIndex = null)
     {
         if (!empty($columnAsIndex)) {
             $result = array();
@@ -58,13 +58,13 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
                     }
                 } catch (Exception $e) {
                     // 'id' doesn't work, so just convert to array
-                    //$this->log(\Zend\Log\Loger::INFO, 'toArray(): could not determine primary key');
-                    $result = parent::toArray();
+                    //$this->log(\Zend\Log\Loger::INFO, 'getArrayCopy(): could not determine primary key');
+                    $result = parent::getArrayCopy();
                 }
             }
 
         } else {
-            $result = parent::toArray();
+            $result = parent::getArrayCopy();
         }
 
         return $result;
@@ -74,7 +74,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
         if (is_array($row)) {
             $tmp = $row;
         } elseif (method_exists($row, 'toArray')) {
-            $tmp = $row->toArray();
+            $tmp = $row->getArrayCopy();
         } elseif ($row instanceof ArrayObject) {
             $tmp = $row->getArrayCopy();
         } else {

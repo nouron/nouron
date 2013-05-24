@@ -60,7 +60,7 @@ class Gateway extends \Nouron\Service\Gateway
     public function getFleetsByUserId($userId)
     {
         $this->_validateId($userId);
-        return $this->getTable('fleet')->fetchAll('user_id = ' . $userId)->toArray();
+        return $this->getTable('fleet')->fetchAll('user_id = ' . $userId)->getArrayCopy();
     }
 
     /**
@@ -95,7 +95,7 @@ class Gateway extends \Nouron\Service\Gateway
         }
 
         $entity = $table->getEntity($id);
-        return $this->getByCoordinates('fleets', array($entity['x'],$entity['y']))->toArray();
+        return $this->getByCoordinates('fleets', array($entity['x'],$entity['y']))->getArrayCopy();
     }
 
     /**
@@ -432,7 +432,7 @@ class Gateway extends \Nouron\Service\Gateway
 //     public function getFleetsOrders($fleets, $past = false)
 //     {
 //         if ($fleets instanceof \Galaxy\Entity\Fleets) {
-//             $fleets = $fleets->toArray();
+//             $fleets = $fleets->getArrayCopy();
 //         }
 
 //         if (is_array($fleets)) {

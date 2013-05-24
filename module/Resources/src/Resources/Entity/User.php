@@ -9,13 +9,9 @@ class User implements EntityInterface
     public $credits;
     public $supply;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'user_id' => $this->user_id,
-            'credits' => $this->credits,
-            'supply' => $this->supply,
-        );
+        return get_object_vars($this);
     }
 }
 

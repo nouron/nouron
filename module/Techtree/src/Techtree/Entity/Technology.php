@@ -14,18 +14,9 @@ class Technology implements EntityInterface
     public $tradeable;
     public $moving_speed;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'type' => $this->type,
-            'purpose' => $this->purpose,
-            'name' => $this->name,
-            'prime_colony_only' => $this->prime_colony_only,
-            'decay' => $this->decay,
-            'tradeable' => $this->tradeable,
-            'moving_speed' => $this->moving_speed
-        );
+        return get_object_vars($this);
     }
 }
 

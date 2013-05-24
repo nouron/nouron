@@ -13,17 +13,9 @@ class Resource implements EntityInterface
     public $start_amount;
     public $icon;
 
-    public function toArray()
+    public function getArrayCopy()
     {
-        return array(
-            'id' => $this->id,
-            'name' => $this->name,
-            'abbreviation' => $this->abbreviation,
-            'trigger' => $this->trigger,
-            'is_tradeable' => $this->is_tradeable,
-            'start_amount' => $this->start_amount,
-            'icon' => $this->icon
-        );
+        return get_object_vars($this);
     }
 }
 
