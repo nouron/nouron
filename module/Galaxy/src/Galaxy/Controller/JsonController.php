@@ -13,12 +13,13 @@ class JsonController extends \Nouron\Controller\IngameController
     {
         $fleetId = (int) $this->params()->fromPost('id');
         if (empty($fleetId)) {
-            $fleetId = 10; // TODO: get from session
+            $fleetId = $_SESSION['fleetId'];
         }
 
-        $techId  = (int) $this->params()->fromPost('tech');
-        $amount  = (int) $this->params()->fromPost('amount');
-        $isCargo = (int) $this->params()->fromPost('isCargo');
+        $itemType = $this->params()->fromPost('itemType');
+        $itemId   = (int) $this->params()->fromPost('itemId');
+        $amount   = (int) $this->params()->fromPost('amount');
+        $isCargo  = (int) $this->params()->fromPost('isCargo');
 
         //get Colony Id
         $sm = $this->getServiceLocator();
@@ -26,12 +27,19 @@ class JsonController extends \Nouron\Controller\IngameController
         $colony = $gw->getCurrentColony();
         $colonyId = (int) $colony['id'];
 
-        $transferred = $gw->transferTechnology($colonyId, $fleetId, $techId, $amount, $isCargo);
+        if (strtolower($itemType) == 'tech') {
+            $transferred = $gw->transferTechnology($colonyId, $fleetId, $itemId, $amount, $isCargo);
+        } elseif (strtolower($itemType) == 'resource') {
+            $transferred = $gw->transferResource($colonyId, $fleetId, $itemId, $amount);
+        } else {
+            $transferred = 0;
+        }
 
         $data = array(
             'colonyId' => $colonyId,
             'fleetId' => $fleetId,
-            'techId' => $techId,
+            'itemType' => $itemType,
+            'itemId' => $itemId,
             'isCargo' => $isCargo,
             'transferred' => $transferred
         );
@@ -46,7 +54,7 @@ class JsonController extends \Nouron\Controller\IngameController
     {
         $fleetId = (int) $this->params()->fromRoute('id');
         if (empty($fleetId)) {
-            $fleetId = 10; // TODO: get from session
+            $fleetId = $_SESSION['fleetId'];
         }
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
@@ -62,6 +70,31 @@ class JsonController extends \Nouron\Controller\IngameController
         }
 
         return new JsonModel( $fleetTechsArray);
+    }
+
+    /**
+     * @return \Zend\View\Model\JsonModel
+     */
+    public function getFleetResourcesAsJsonAction()
+    {
+        $fleetId = (int) $this->params()->fromRoute('id');
+        if (empty($fleetId)) {
+            $fleetId = $_SESSION['fleetId'];
+        }
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Galaxy\Service\Gateway');
+        $resGw = $sm->get('Resources\Service\Gateway');
+        $resources = $resGw->getResources()->getArrayCopy('id');
+        $fleetRes = $gw->getFleetResources("fleet_id = $fleetId");
+        $fleetResArray = $fleetRes->getArrayCopy('resource_id');
+
+        foreach ($fleetResArray as $resId => $tmp) {
+            #$tmp['type'] = $techs[$resId]['type'];
+            $tmp['name'] = $sm->get('translator')->translate($resources[$resId]['name']);
+            $fleetResArray[$resId] = $tmp;
+        }
+
+        return new JsonModel( $fleetResArray);
     }
 }
 

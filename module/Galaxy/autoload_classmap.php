@@ -22,6 +22,8 @@ return array(
     'Galaxy\Entity\FleetOrderFactory'           => __DIR__ . '/src/Galaxy/Entity/FleetOrderFactory.php',
     'Galaxy\Entity\FleetTechnology'             => __DIR__ . '/src/Galaxy/Entity/FleetTechnology.php',
     'Galaxy\Entity\FleetTechnologyFactory'      => __DIR__ . '/src/Galaxy/Entity/FleetTechnologyFactory.php',
+    'Galaxy\Entity\FleetResource'               => __DIR__ . '/src/Galaxy/Entity/FleetTechnology.php',
+    'Galaxy\Entity\FleetResourceFactory'        => __DIR__ . '/src/Galaxy/Entity/FleetTechnologyFactory.php',
     'Galaxy\Entity\System'                      => __DIR__ . '/src/Galaxy/Entity/System.php',
     'Galaxy\Entity\SystemFactory'               => __DIR__ . '/src/Galaxy/Entity/SystemFactory.php',
     'Galaxy\Entity\SystemObject'                => __DIR__ . '/src/Galaxy/Entity/SystemObject.php',
@@ -36,6 +38,7 @@ return array(
     'Galaxy\Table\Fleet'                        => __DIR__ . '/src/Galaxy/Table/Fleet.php',
     'Galaxy\Table\FleetOrder'                   => __DIR__ . '/src/Galaxy/Table/FleetOrder.php',
     'Galaxy\Table\FleetTechnology'              => __DIR__ . '/src/Galaxy/Table/FleetTechnology.php',
+    'Galaxy\Table\FleetResource'                => __DIR__ . '/src/Galaxy/Table/FleetResource.php',
     'Galaxy\Table\System'                       => __DIR__ . '/src/Galaxy/Table/System.php',
     'Galaxy\Table\SystemObject'                 => __DIR__ . '/src/Galaxy/Table/SystemObject.php',
 );

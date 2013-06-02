@@ -649,9 +649,9 @@ class Gateway extends \Nouron\Service\Gateway
 
             if ($amount >= 0 ) {
                 // check if there are enough techs on the colony:
-                if ($amount > $techOnColony['count']) {
+                if ($amount > $techOnColony['level']) {
                     // only remove the count of techs that really exists on the colony;
-                    $amount = $techOnColony['count'];
+                    $amount = $techOnColony['level'];
                 }
             } else {
                 // check if there are enough techs in the fleet:
@@ -664,7 +664,7 @@ class Gateway extends \Nouron\Service\Gateway
             try {
                 $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
-                $techOnColony['count'] = $techOnColony['count'] - $amount;
+                $techOnColony['level'] = $techOnColony['level'] - $amount;
                 $this->getTable('colonytechnology')->save($techOnColony);
                 $techInFleet['count'] = $techInFleet['count'] + $amount;
                 $this->getTable('fleettechnology')->save($techInFleet);
@@ -700,18 +700,21 @@ class Gateway extends \Nouron\Service\Gateway
             $fleet = $this->getFleet($fleet);
         }
 
-        if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
+        $colonyCoords = array($colony['x'],$colony['y']);#,$colony['spot']);
+        $fleetCoords = array($fleet['x'],$fleet['y']);#,$fleet['spot']);
+
+        if (serialize($colonyCoords) == serialize($fleetCoords)) {
 
             if ( !$isTradeOffer ) {
-                $resGw       = new Resources\Service\Gateway();
-                $resOnColony = $resGw->getColonyResource(array('colony_id' => $colony['id'], 'resource_id' => $resId));
-            } else {
-                $tradeGw     = new Trade\Service\Gateway();
-                $resOnColony = $tradeGw->getResourceOffer($colony['id'], $resId);
-                if ( $resOnColony == null) {
-                    return 0;
-                }
+                $resOnColony = $this->getColonyResource(array('colony_id' => $colony['id'], 'resource_id' => $resId));
+//          } else {
+//                 $tradeGw     = new Trade\Service\Gateway();
+//                 $resOnColony = $tradeGw->getResourceOffer($colony['id'], $resId);
+//                 if ( $resOnColony == null) {
+//                     return 0;
+//                  }
             }
+
             $resInFleet  = $this->getFleetResource(array('fleet_id' => $fleet['id'], 'resource_id' => $resId));
 
             if ($amount >= 0 ) {
@@ -729,14 +732,12 @@ class Gateway extends \Nouron\Service\Gateway
             }
 
             try {
-                $db = $this->getTable('fleets')->getAdapter()->getDriver()->getConnection();
+                $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
-
                 $resOnColony['amount'] = $resOnColony['amount'] - $amount;
-                $resOnColony->save();
+                $this->getTable('colonyresource')->save($resOnColony);
                 $resInFleet['amount'] = $resInFleet['amount'] + $amount;
-                $resInFleet->save();
-
+                $this->getTable('fleetresource')->save($resInFleet);
                 $db->commit();
 
             } catch (Exception $e) {
@@ -745,6 +746,8 @@ class Gateway extends \Nouron\Service\Gateway
             }
 
             return abs($amount);
+
+
         }
     }
 
@@ -809,6 +812,50 @@ class Gateway extends \Nouron\Service\Gateway
     {
         $table = $this->getTable('fleettechnology');
         return $table->fetchAll($where);
+    }
+
+    /**
+     * Get all resources from a fleet.
+     *
+     * @param $where
+     * @return \ResultSet
+     */
+    public function getFleetResources($where)
+    {
+        $table = $this->getTable('fleetresource');
+        return $table->fetchAll($where);
+    }
+
+    public function getFleetResource(array $keys)
+    {
+        $table = $this->getTable('fleetresource');
+        $fleetres = $table->fetchAll($keys);
+        $result = $fleetres->current();
+        if (empty($result)) {
+            return array(
+                'fleet_id' => $keys['fleet_id'],
+                'resource_id' => $keys['resource_id'],
+                'amount' => 0,
+            );
+        } else {
+            return $result;
+        }
+    }
+
+    public function getColonyResource(array $keys)
+    {
+        $table = $this->getTable('colonyresource');
+        $colonyres = $table->fetchAll($keys);
+        $result = $colonyres->current();
+        if (empty($result)) {
+            return array(
+                'colony_id' => $keys['colony_id'],
+                'resource_id' => $keys['resource_id'],
+                'amount' => 0,
+            );
+        } else {
+            return $result;
+        }
     }
 
 //     /**

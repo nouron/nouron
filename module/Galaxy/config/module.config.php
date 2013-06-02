@@ -250,6 +250,7 @@ return array(
             'Galaxy\Entity\ColonyTechnology' => 'Galaxy\Entity\ColonyTechnologyFactory',
             'Galaxy\Entity\Fleet' => 'Galaxy\Entity\FleetFactory',
             'Galaxy\Entity\FleetTechnology' => 'Galaxy\Entity\FleetTechnologyFactory',
+            'Galaxy\Entity\FleetResource' => 'Galaxy\Entity\FleetResourceFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
         ),
     ),

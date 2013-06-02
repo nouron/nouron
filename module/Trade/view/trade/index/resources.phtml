@@ -1,4 +1,10 @@
 <div class="row-fluid" id="trade">
+    <div class="span10">
+    <?= $this->formTwb($searchForm->prepare(), 'inline'); ?>
+    </div>
+    <div class="span2">
+        <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="icon-plus"></i> Angebot erstellen</a>
+    </div>
     <table class="table">
     <tr>
         <th><?= $this->translate('colony') ?></th>
@@ -8,15 +14,30 @@
         <th><?= $this->translate('credits-per-unit') ?></th>
         <th><?= $this->translate('restriction') ?></th>
     </tr>
-    <?php foreach ($resources as $offer): ?>
+    <?php foreach ($resourceOffers as $offer): ?>
         <tr id="offer-<?= $offer['id']?>">
             <td><?= $offer['colony_id']?></td>
             <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
-            <td><?= $offer['tech_id']?></td>
+            <td><?= $offer['resource_id']?></td>
             <td><?= $offer['amount']?></td>
             <td><?= $offer['price']?></td>
             <td><?= $offer['restriction']?></td>
         </tr>
     <?php endforeach; ?>
     </table>
+</div>
+
+<!-- Modal -->
+<!-- this Modal is filled with html data from json request -->
+<div id="newTradeOfferModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="newTradeOfferModalLabel">Loading...</h3>
+    </div>
+    <div class="modal-body">
+        <?= $this->formTwb($newOfferForm->prepare()); ?>
+    </div>
+    <!-- <div class="modal-footer">
+
+    </div> -->
 </div>

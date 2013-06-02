@@ -14,3 +14,11 @@
 #fleet div#addToFleetLinks span,
 #fleet div#addToFleetCargoLinks span,
 #fleet div#addToColonyLinks span {display: none;}
+
+#fleet .countOnColony,
+#fleet .countInFleet,
+#fleet .countInFleetCargo {text-align:right}
+#fleet .tech.building,
+#fleet .tech.ship,
+#fleet .tech.research,
+#fleet .tech.advisor, {background:transparent; background-image: none}

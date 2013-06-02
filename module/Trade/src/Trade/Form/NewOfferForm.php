@@ -5,89 +5,73 @@ use Zend\Form\Form;
 use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\InputFilterProviderInterface;
 
-class TradeItem extends Form implements InputFilterProviderInterface
+class NewOfferForm extends Form implements InputFilterProviderInterface
 {
-    /**
-     *
-     */
-    public function __construct()
+    public function getSelectOptions($items)
     {
-        parent::__construct('tradeitem');
-        $this->add(array(
-            'name' => 'id',
-            'attributes' => array(
-                'type' => 'hidden',
-            ),
-        ));
-        $this->add(array(
-            'name' => 'colony_id',
-            'attributes' => array(
-                'type' => 'select',
-                'class' => 'input-xxlarge'
-            ),
-            'options' => array(
-                'label' => 'colony',
-            )
-        ));
+        $options = array();
+        foreach ($items as $id => $item) {
+            if (!isset($item['tradeable']) || $item['tradeable'] == true) {
+                $options[$id] = $item['name'];
+            }
+        }
+        return $options;
+    }
+
+    public function __construct($offerType = 'resources', $items)
+    {
+        if (empty($offerType)) return false;
+
+        parent::__construct('offerType-'.$offerType);
+
+        $this->setAttribute('method', 'post');
+        $this->setAttribute('name', 'newOfferForm');
 
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
-            'name' => 'colony_id',
+            'name' => 'direction',
+            'label' => 'offerType',
             'options' => array(
-                'label' => 'colony',
+                'id' => 'direction',
                 'value_options' => array(
-                    '1' => 'colonyA',
-                    '2' => 'colonyB',
-                    '3' => 'colonyC'
-                ),
+                    0 => 'trade_iSearch',
+                    1 => 'trade_iSell'
+                )
             ),
             'attributes' => array(
-                'value' => '1' //set selected to '1'
+                'value' => '0'
             )
         ));
 
-
-        $this->add(array(
-            'name' => 'subject',
-            'attributes' => array(
-                'type' => 'input',
-                'class' => 'input-xxlarge'
-            ),
-            'options' => array(
-                'label' => 'subject',
-            )
-        ));
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
-            'name' => 'mood',
-            'attributes' =>  array(
-                'id' => 'mood',
-                'options' => array(
-                    # key is value stored in db, value is translated for output
-                    'mood_friendly' => 'mood_friendly',
-                    'mood_neutral'  => 'mood_neutral',
-                    'mood_aggressive' => 'mood_aggressive',
-                    'mood_begging' => 'mood_begging',
-                    'mood_supliant' => 'mood_supliant',
-                    'mood_humble' => 'mood_humble',
-                    'mood_factual' => 'mood_factual',
-                    'mood_frosty' => 'mood_frosty',
-                ),
-            ),
+            'name' => 'item',
             'options' => array(
-                'label' => 'mood',
+                'id' => 'item',
+                'value_options' => $this->getSelectOptions($items),
+                'empty_option'  => '--- please choose ---'
             ),
-        ));
-        $this->add(array(
-            'name' => 'text',
             'attributes' => array(
-                'type' => 'textarea',
-                'class' => 'input-xxlarge'
-             ),
-            'options' => array(
-                'label' => 'message',
+                'value' => '0'
             )
         ));
+
+        $this->add(array(
+            'type' => 'Zend\Form\Element\Select',
+            'name' => 'range',
+            'options' => array(
+                'id' => 'range',
+                'value_options' => array(
+                     0 => 'trade-on-this-planet',
+                     1 => 'trade-in-this-system',
+                     2 => 'trade-in-galaxy'
+                 ),
+            ),
+            'attributes' => array(
+                'value' => '0'
+            )
+        ));
+
         $this->add(array(
             'name' => 'submit',
             'attributes' => array(
@@ -105,7 +89,7 @@ class TradeItem extends Form implements InputFilterProviderInterface
     public function getInputFilterSpecification()
     {
         return array(
-            'recipient' => array (
+            'direction' => array (
                 'required' => true,
                 'filters' => array(
                     array(
@@ -116,12 +100,12 @@ class TradeItem extends Form implements InputFilterProviderInterface
                     array(
                         'name' => 'NotEmpty',
                         'options' => array(
-                            'message' => "Bitte gib einen Spielernamen an."
+                            'message' => "Bitte gib den Angebotstyp an."
                         )
                     ),
                 )
             ),
-            'subject' => array (
+            'item' => array (
                 'required' => true,
                 'filters' => array(
                     array(
@@ -132,12 +116,12 @@ class TradeItem extends Form implements InputFilterProviderInterface
                     array(
                         'name' => 'NotEmpty',
                         'options' => array(
-                            'message' => "Bitte gib einen Betreff an."
+                            'message' => "Wähle das Handelsobjekt."
                         )
                     ),
                 )
             ),
-            'text' => array (
+            'range' => array (
                 'required' => true,
                 'filters' => array(
                     array(
@@ -148,7 +132,7 @@ class TradeItem extends Form implements InputFilterProviderInterface
                     array(
                         'name' => 'NotEmpty',
                         'options' => array(
-                            'message' => "Bitte gib einen Text an."
+                            'message' => "Wähle den Angebotsbereich."
                         )
                     ),
                 )

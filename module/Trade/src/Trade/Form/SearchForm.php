@@ -7,31 +7,31 @@ use Zend\InputFilter\InputFilterProviderInterface;
 
 class SearchForm extends Form implements InputFilterProviderInterface
 {
-    public function getSelectOptions($techs)
+    public function getSelectOptions($items)
     {
         $options = array();
-        foreach ($techs as $id => $tech) {
-            if ($tech['tradeable'] == true) {
-                $options[$id] = $tech['name'];
+        foreach ($items as $id => $item) {
+            if (!isset($item['tradeable']) || $item['tradeable'] == true) {
+                $options[$id] = $item['name'];
             }
         }
         return $options;
     }
 
-    public function __construct($search = 'technologies', $techs)
+    public function __construct($search = 'resources', $items)
     {
         if (empty($search)) return false;
 
         parent::__construct('search-'.$search);
 
         $this->setAttribute('method', 'post');
+        $this->setAttribute('name', 'searchForm');
 
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'direction',
             'options' => array(
                 'id' => 'direction',
-                'label' => 'direction',
                 'value_options' => array(
                     0 => 'trade_iSearch',
                     1 => 'trade_iSell'
@@ -44,11 +44,10 @@ class SearchForm extends Form implements InputFilterProviderInterface
 
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
-            'name' => 'technology',
+            'name' => 'item',
             'options' => array(
-                'id' => 'technology',
-                'label' => 'technology',
-                'value_options' => $this->getSelectOptions($techs),
+                'id' => 'item',
+                'value_options' => $this->getSelectOptions($items),
                 'empty_option'  => '--- please choose ---'
             ),
             'attributes' => array(
@@ -61,11 +60,10 @@ class SearchForm extends Form implements InputFilterProviderInterface
             'name' => 'range',
             'options' => array(
                 'id' => 'range',
-                'label' => 'range',
                 'value_options' => array(
-                     0 => 'planet',
-                     1 => 'system',
-                     2 => 'galaxy'
+                     0 => 'trade-on-this-planet',
+                     1 => 'trade-in-this-system',
+                     2 => 'trade-in-galaxy'
                  ),
             ),
             'attributes' => array(

@@ -64,7 +64,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
             }
 
         } else {
-            $result = parent::getArrayCopy();
+            $result = parent::toArray();
         }
 
         return $result;

@@ -4,6 +4,7 @@ namespace Trade\Controller;
 use Zend\View\Model\ViewModel;
 use Trade\Service\Gateway;
 use Techtree\Entity\Technology;
+use Resources\Entity\Resource;
 
 class IndexController extends \Nouron\Controller\IngameController
 {
@@ -53,11 +54,57 @@ class IndexController extends \Nouron\Controller\IngameController
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
-        $resources = $gw->getResources();
+        $resourceOffers = $gw->getResources();
+
+        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resources = $resourceService->getResources();
+
+        $tradeService = $sm->get('Trade\Service\Gateway');
+        $userService = $sm->get('User\Service\User');
+        $resources = $resources->getArrayCopy('id');
+        $searchForm = new \Trade\Form\SearchForm('resources', $resources);
+        $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
+
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+
+            $post = $request->getPost();
+            switch ($post['form_name']) {
+                case 'new_offer': $newOfferForm = $this->_processNewOfferForm($newOfferForm, $post); break;
+                case 'search':    $searchForm   = $this->_processNewOfferForm($searchForm, $post); break;
+                default: break;
+            }
+        }
 
         return new ViewModel( array(
-            'resources' => $resources
-        ) );
+            'searchForm' => $searchForm,
+            'newOfferForm' => $newOfferForm,
+            'resourceOffers' => $resourceOffers
+        ));
+    }
+
+    protected function _processSearchForm($searchForm, $data)
+    {
+        $resource = new Resource();
+        $searchForm->bind($resource);
+        $searchForm->setData($data);
+
+        if ($searchForm->isValid()) {
+            var_dump($resource);
+        }
+        return $searchForm;
+    }
+
+    protected function _processNewOfferForm($newOfferForm, $data)
+    {
+//         $resource = new NewOffer();
+//         $form->bind($resource);
+        $newOfferForm->setData($data);
+
+        if ($newOfferForm->isValid()) {
+            var_dump('test');
+        }
+        return $newOfferForm;
     }
 }
 

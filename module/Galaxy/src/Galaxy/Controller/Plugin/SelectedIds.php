@@ -23,7 +23,7 @@ class SelectedIds extends AbstractPlugin
         if (!$userId && isset($_SESSION['userId'])) {
             $userId = $_SESSION['userId'];
         }
-        $_SESSION['systemId'] = $systemId;
+        $_SESSION['userId'] = $userId;
 
         $systemId = $this->getController()->params()->fromRoute('sid');
         if (!$systemId && isset($_SESSION['systemId'])) {

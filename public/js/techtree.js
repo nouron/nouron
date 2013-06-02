@@ -58,7 +58,7 @@ $(document).ready(function(){
                               break;
              case 'research': stroke_color = fullfilled ? '#696' : '#9f9';
                               break;
-             case 'ship': stroke_color = fullfilled ? '#996' : '#ff9';
+             case 'ship': stroke_color = fullfilled ? '#bb5' : '#dd7';
                           break;
              default: stroke_color = fullfilled ? '#666' : '#aaa';
                       break;

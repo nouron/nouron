@@ -23,9 +23,9 @@ class GatewayFactory implements FactoryInterface
         $tables['systemobject'] = new \Galaxy\Table\SystemObject($db);
         $tables['fleettechnology'] = new \Galaxy\Table\FleetTechnology($db);
         $tables['fleetorder'] = new \Galaxy\Table\FleetOrder($db);
-        #$tables['fleetressource']  = new \Galaxy\Table\FleetRessource($db);
+        $tables['fleetresource']  = new \Galaxy\Table\FleetResource($db);
         $tables['colonytechnology'] = new \Techtree\Table\Possession($db);
-        #$tables['colonyresource']  = new \Resources\Table\Possession($db);
+        $tables['colonyresource']  = new \Resources\Table\Colony($db);
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\Gateway'); // causes circularDependancyException
         $gateway = new Gateway($tick, $tables, array());

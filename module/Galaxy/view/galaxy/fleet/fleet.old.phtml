@@ -1,0 +1,99 @@
+<?php if ($this->success): ?>
+<div class="alert alert-success">Flotte wurde erstellt!</div>
+<?php endif; ?>
+
+<?= $this->partial('partial/_switch_tech_display') ?>
+
+<div class="row-fluid">
+<div id="fleet">
+<?php
+// if ($fleet != null):
+//     $form->prepare();
+//     echo $this->form()->openTag($form);
+//     echo $this->formRowTwb($form->get('id'));
+//     echo $this->formRowTwb($form->get('fleet'));
+//     echo $this->formSubmitTwb($form->get('submit'));
+//     echo $this->form()->closeTag();
+if ($fleetIsInColonyOrbit):
+?>
+
+  <div class="span4">
+    <h3><?= $this->translate('colony')?></h3>
+    <div id="colo_category_ships" class="well category_ships active">
+        <!--<?= $this->translate('ships')?> -->
+        <ul class="list_ships"><!-- filled with ajax request data --></ul>
+    </div>
+    <div id="colo_category_crew" class="well category_crew">
+        <!--<?= $this->translate('advisors')?> -->
+        <ul class="list_crew list_passengers"><!-- filled with ajax request data --></ul>
+    </div>
+    <div id="colo_category_cargo" class="well category_cargo">
+        <!-- Cargo -->
+        <strong><?= $this->translate('technologies')?>/<?= $this->translate('researches')?></strong>
+        <ul class="list_cargo clearfix"><!-- filled with ajax request data --></ul>
+        <hr />
+        <strong><?= $this->translate('resources')?></strong>
+        <ul class="list_resources"><!-- filled with ajax request data --></ul>
+    </div>
+  </div>
+
+  <div class="span4">
+  <br />
+  <br />
+    <div id="fleet_id" style="display:none"><?= $fleet->id ?></div>
+    <div id="addToFleetLinks" class="roundedCorners">
+        <h6>zur Flotte hinzufügen &raquo;</h6>
+        <p><!-- actual tech name via js --></p>
+        <a id="add1" class="btn btn-large" href="#">1</a>
+        <a id="add5" class="btn btn-large" href="#">5</a>
+        <a id="add10" class="btn btn-large" href="#">10</a>
+    </div>
+    <div id="addToFleetCargoLinks" class="roundedCorners">
+        <h6>als Fracht hinzufügen &gt;&gt;</h6>
+        <a id="addToCargo1" class="btn btn-large" href="#">1</a>
+        <a id="addToCargo5" class="btn btn-large" href="#">5</a>
+        <a id="addToCargo10" class="btn btn-large" href="#">10</a>
+    </div>
+    <div id="addToColonyLinks" class="roundedCorners">
+        <h6>&laquo; zur Kolonie hinzufügen</h6>
+        <p><!-- actual tech name via js --></p>
+        <a id="remove1" class="btn btn-large" href="#">1</a>
+        <a id="remove5" class="btn btn-large" href="#">5</a>
+        <a id="remove10" class="btn btn-large" href="#">10</a>
+    </div>
+  </div>
+<? else: ?>
+  <div class="span4">
+  <br />
+  </div>
+
+  <div class="span4">
+  <br />
+  </div>
+<? endif; ?>
+  <div class="span4">
+    <h3><?= $this->translate('fleet')?></h3>
+    <div id="fleet_category_ships" class="well category_ships active">
+        <!-- <?= $this->translate('ships')?> -->
+        <ul class="list_ships"><!-- filled with ajax request data --></ul>
+    </div>
+    <div id="fleet_category_crew" class="well category_crew">
+        <!--<?= $this->translate('crew')?>/<?= $this->translate('passengers')?> -->
+        <strong><?= $this->translate('crew')?></strong>
+        <ul class="list_crew"><!-- filled with ajax request data --></ul>
+        <hr />
+        <strong><?= $this->translate('passengers')?></strong>
+        <ul class="list_passengers"><!-- filled with ajax request data --></ul>
+    </div>
+    <div id="fleet_category_cargo" class="well category_cargo">
+        <!--<?= $this->translate('fleet_cargo')?> -->
+        <strong><?= $this->translate('ships')?></strong>
+        <ul class="list_cargo  clearfix"><!-- filled with ajax request data --></ul>
+        <hr />
+        <strong><?= $this->translate('resources')?></strong>
+        <ul class="list_resources"><!-- filled with ajax request data --></ul>
+    </div>
+  </div>
+</div>
+
+</div>

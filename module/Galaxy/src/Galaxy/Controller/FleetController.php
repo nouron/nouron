@@ -67,8 +67,9 @@ class FleetController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
         $resourcesGw = $sm->get('Resources\Service\Gateway');
-        $resources = $resourcesGw->getResources();
-
+        $resources = $resourcesGw->getResources()->getArrayCopy('id');
+        $techtreeGw = $sm->get('Techtree\Service\Gateway');
+        $techs = $techtreeGw->getTechnologies()->getArrayCopy('id');
         if ($this->getRequest()->isPost()) {
             $form->setData($this->getRequest()->getPost());
             if ($form->isValid()) {
@@ -85,13 +86,12 @@ class FleetController extends \Nouron\Controller\IngameController
         }
 
         /// set view variable (visible foreign fleets too)
-
-        $fid = $fid ? $fid : $this->params()->fromRoute('fid');
-        $fleet = $fid ? $gw->getFleet($fid) : null;
+        $fid = !empty($fid) ? $fid : $this->params()->fromRoute('fid');
+        $fleet = !empty($fid) ? $gw->getFleet($fid) : null;
 
         $fleetIsInColonyOrbit = false;
 
-        $userId = 3;
+        $userId = $_SESSION['userId'];
 
         if ($fleet && $fleet->user_id == $userId) {
             // own fleet
@@ -108,11 +108,13 @@ class FleetController extends \Nouron\Controller\IngameController
             array(
                 'form' => $form,
                 'fleet' => $fleet,
+                'colony' => $colony,
+                'techs' => $techs,
                 'fleetIsInColonyOrbit' => $fleetIsInColonyOrbit,
 //                 'ships' => $ships,
 //                 'advisors' => $advisors,
 //                 'techs' => $buildingsAndResearches,
-//                 'resources' => $resources,
+                 'resources' => $resources,
 //                 'fleetShips' => $fleetShips,
 //                 'fleetCrew' => $fleetCrew,
 //                 'fleetCargoShips' => $fleetCargoShips,

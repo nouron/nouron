@@ -8,6 +8,7 @@ use Nouron\Model\AbstractTable,
 class Colony extends AbstractTable
 {
     protected $table  = 'res_colony_resources';
+    protected $primary = array('colony_id', 'resource_id');
 
     public function __construct(Adapter $adapter)
     {
