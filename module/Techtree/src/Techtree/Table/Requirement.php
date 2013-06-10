@@ -7,7 +7,7 @@ use Nouron\Model\AbstractTable,
 
 class Requirement extends AbstractTable
 {
-    protected $table  = 'tech_requirements';
+    protected $table  = 'v_tech_requirements';
     protected $primary = array('tech_id', 'required_tech_id');
 
     public function __construct($adapter)

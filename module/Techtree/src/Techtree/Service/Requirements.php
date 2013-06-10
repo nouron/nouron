@@ -15,9 +15,9 @@ class Requirements extends \Nouron\Service\Gateway
      *
      * @return array
      */
-    public function getRequirementsAsArray()
+    public function getRequirementsAsArray($where, $order)
     {
-        $rowset = $this->getRequirements();
+        $rowset = $this->getRequirements($where, $order);
         $this->_requirements = array();
         while ( $rowset->valid() ){
             $req = $rowset->current();
@@ -35,9 +35,9 @@ class Requirements extends \Nouron\Service\Gateway
     /**
      * @return ResultSet
      */
-    public function getRequirements()
+    public function getRequirements($where, $order)
     {
-        return $this->getTable('requirement')->fetchAll();
+        return $this->getTable('requirement')->fetchAll($where, $order);
     }
 
 

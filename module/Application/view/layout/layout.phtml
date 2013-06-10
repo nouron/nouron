@@ -100,7 +100,12 @@ echo $this->doctype();
     <?php echo $this->inlineScript(); ?>
     <script  type="text/javascript">
     $(document).ready(function() {
-        fleets.init();
+        if ($('#fleet').length > 0) {
+            fleets.init();
+        }
+        /*if ($('#galaxy').length > 0) {
+            galaxy.init();
+        }*/
     });
     </script>
   </body>

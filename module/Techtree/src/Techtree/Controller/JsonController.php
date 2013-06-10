@@ -60,7 +60,7 @@ class JsonController extends \Nouron\Controller\IngameController
     /**
      *
      */
-    public function gettechtreeasjsonAction()
+    public function getTechtreeAction()
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Techtree\Service\Gateway');
@@ -80,7 +80,7 @@ class JsonController extends \Nouron\Controller\IngameController
     /**
      *
      */
-    public function gettechnologiesasjsonAction()
+    public function getTechnologiesAction()
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Techtree\Service\Gateway');
@@ -97,7 +97,7 @@ class JsonController extends \Nouron\Controller\IngameController
      * @todo
      * @return JSON
      */
-    public function addtofleetAction()
+    public function addToFleetAction()
     {
         $fleetId = (int) $this->params()->fromRoute('id');
         $techId = (int) $this->params()->fromQuery('tech');

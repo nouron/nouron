@@ -192,12 +192,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c"
+                "reference": "d5ec47c8e916a083fe2ef8a5711b859e8864b042"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c",
-                "reference": "9e2cf51ffbd3778f07be4a245e6b7a84a6a18a1c",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/d5ec47c8e916a083fe2ef8a5711b859e8864b042",
+                "reference": "d5ec47c8e916a083fe2ef8a5711b859e8864b042",
                 "shasum": ""
             },
             "require": {
@@ -243,7 +243,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-05-19 14:33:45"
+            "time": "2013-06-07 08:49:48"
         },
         {
             "name": "zendframework/zendframework",
@@ -511,12 +511,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "0.1.2"
+                "reference": "b37b61c498e3d404e998c79de6b751f29b55b59d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/0.1.2",
-                "reference": "0.1.2",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/b37b61c498e3d404e998c79de6b751f29b55b59d",
+                "reference": "b37b61c498e3d404e998c79de6b751f29b55b59d",
                 "shasum": ""
             },
             "require": {
@@ -564,7 +564,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-05-02 12:33:31"
+            "time": "2013-06-06 16:03:51"
         }
     ],
     "packages-dev": [

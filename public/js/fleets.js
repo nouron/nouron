@@ -19,7 +19,7 @@ fleets = {
          * first get all available technologies
          */
         $.getJSON(
-            "/techtree/json/getTechnologiesAsJson",
+            "/techtree/json/getTechnologies",
             function(items) {
                 $.each(items, function(techId, tech) {
 
@@ -31,7 +31,7 @@ fleets = {
          * update the values
          */
         $.getJSON(
-            "/techtree/json/getTechtreeAsJson",
+            "/techtree/json/getTechtree",
             function (items) {
                 $.each(items, function(techId, tech) {
                     $('#techOnColony-'+techId).html(tech.level);
@@ -44,7 +44,7 @@ fleets = {
          * update the values
          */
         $.getJSON(
-            "/fleet/json/getFleetTechnologiesAsJson/"+fleetId,
+            "/fleet/json/getFleetTechnologies/"+fleetId,
             function (items) {
                 $.each(items, function(techId, tech) {
                     $('#techInFleet-'+techId).html(tech.count);
@@ -69,7 +69,7 @@ fleets = {
          * update the values
          */
         $.getJSON(
-            "/fleet/json/getFleetResourcesAsJson/"+fleetId,
+            "/fleet/json/getFleetResources/"+fleetId,
             function (items) {
                 $.each(items, function(resId, res) {
                     $('#resourceInFleetCargo-'+resId).html(res.amount);

@@ -10,7 +10,7 @@ return array(
             'trade' => array(
                 'type' => 'Segment',
                 'options' => array(
-                    'route' => '/trade[/:action]',
+                    'route' => '/trade/:action/[page/:page]',
                     'constraints' => array(
                         'type'   => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
@@ -18,11 +18,12 @@ return array(
                     'defaults' => array(
                         '__NAMESPACE__' => 'Trade\Controller',
                         'controller' => 'index',
-                        'action' => 'resources'
+                        'action' => 'resources',
+                        'page' => 1
                     ),
                 ),
                 'may_terminate' => true
-            ),
+            )
         )
     ),
     'view_manager' => array(

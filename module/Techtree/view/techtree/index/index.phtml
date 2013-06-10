@@ -1,6 +1,11 @@
 <?= $this->partial('partial/_switch_tech_display') ?>
 <hr />
-
+<style>
+    line:hover,
+    polyline:hover {
+        opacity: 0.5;
+    }
+</style>
 <div class="row-fluid"  id="colony">
   <div id="visualTechtree" class="row-fluid" style="position:relative">
       <div id="storage-tech-id" class="hidden"></div>
@@ -28,7 +33,7 @@
         $key = $grid_y . '-' . $grid_x;
         ?>
         <span class="techdata" id="techsource-<?= $key ?>">
-            <a id="tech-<?= $id ?>" class="btn btn-block <?= $tech['type'] ?>" href="#techModal" data-toggle="modal">
+            <a id="tech-<?= $id ?>" class="btn btn-block technology <?= $tech['type'] ?>" href="#techModal" data-toggle="modal">
                 <?= $this->translate($tech['name'], null, 'de_DE') . ' ' . $tech['level']  ?>
             </a>
             <span class="hidden data"><?= json_encode($tech) ?></span>

@@ -42,7 +42,7 @@ $(document).ready(function(){
          yd = target_top-20;
          ye = target_top;
 
-         xa = source_left + Math.round(source_width/2);
+         xa = source_left + Math.round(source_width/6) * target_x;
          xe = target_left + Math.round(target_width/2);
 
          unique_positioner = (source_x*2+target_x*2+source_y+target_y);
@@ -76,9 +76,9 @@ $(document).ready(function(){
                  d2 = xe + ',' + yb;
                  d3 = xe + ',' + ye;
                  d = d1 + ' ' + d2 + ' ' + d3;
-                 group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
+                 group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
              } else {
-                 group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color, 'class':type}));
+                 group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
              }
          } else {
              d1 = xa + ',' + ya;
@@ -87,7 +87,7 @@ $(document).ready(function(){
              d4 = xd + ',' + yd;
              d5 = xe + ',' + ye;
              d = d1 + ' ' + d2 + ' ' + d3 + ' ' + d4 + ' ' + d5;
-             group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, fill: 'transparent', 'class':type}));
+             group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
          }
          
          d1 = String(xe-4) + ',' + String(ye-8);
@@ -100,14 +100,14 @@ $(document).ready(function(){
          text = makeSVG('text', {x:xe+5, y:ye-8,'font-size': '12px', fill: '#666', 'class':type}, required_tech_count);
          group.appendChild(text);
 
-         test = makeSVG('rect', {x:0,y:0,'height':10, 'width':10, 'stroke':"black"});
-         group.appendChild(test);
-         test = makeSVG('rect', {x:300,y:0,'height':10, 'width':10, 'stroke':"black"});
-         group.appendChild(test);
-         test = makeSVG('rect', {x:600,y:0,'height':10, 'width':10, 'stroke':"black"});
-         group.appendChild(test);
-         test = makeSVG('rect', {x:900,y:0,'height':10, 'width':10, 'stroke':"black"});
-         group.appendChild(test);
+//         test = makeSVG('rect', {x:0,y:0,'height':10, 'width':10, 'stroke':"black"});
+//         group.appendChild(test);
+//         test = makeSVG('rect', {x:300,y:0,'height':10, 'width':10, 'stroke':"black"});
+//         group.appendChild(test);
+//         test = makeSVG('rect', {x:600,y:0,'height':10, 'width':10, 'stroke':"black"});
+//         group.appendChild(test);
+//         test = makeSVG('rect', {x:900,y:0,'height':10, 'width':10, 'stroke':"black"});
+//         group.appendChild(test);
          
          document.getElementById('grid-svg').appendChild(group);
      }
@@ -158,15 +158,7 @@ $(document).ready(function(){
     $('#visualTechtree a.btn').click(function(e){
         e.preventDefault();
         techId = $(this).attr('id').replace('tech-','');
-//        if ($('#storage').html()=='') {
-//            $('#storage-tech-id').html(techId);
-//            $('#storage').html($(this).html());
-//            $(this).remove();
-//        } else {
-//            $('#storage-tech-id').html('');
-//            $('#storage').html('');
-//        }
-        $('#techModal').load('/techtree/tech/'+techId, null, function(){console.log(":D");});
+        $('#techModal').load('/techtree/tech/'+techId, null, function(){console.log("techModal loaded :D");});
     });
     
     $('.modal-footer a').live('click', function(e) {

@@ -40,8 +40,27 @@ class IndexController extends \Nouron\Controller\IngameController
 
         return new ViewModel( array(
             'searchForm' => $form,
-            'technologies' => $techOffers
-        ) );
+            'paginator' => $this->_initPaginator($techOffers->getArrayCopy()),
+        ));
+    }
+
+    /**
+     *
+     * @param array $offers
+     * @return \Zend\Paginator\Paginator
+     */
+    private function _initPaginator(array $offers)
+    {
+        \Zend\Paginator\Paginator::setDefaultScrollingStyle('Sliding');
+        \Zend\View\Helper\PaginationControl::setDefaultViewPartial(
+            'layout/pagination_control.phtml'
+        );
+
+        $page = $this->params()->fromRoute('page');
+        $page = $page ? $page : 1;
+        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers));
+        $paginator->setCurrentPageNumber($page);
+        return $paginator;
     }
 
     public function resourcesAction()
@@ -79,7 +98,7 @@ class IndexController extends \Nouron\Controller\IngameController
         return new ViewModel( array(
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
-            'resourceOffers' => $resourceOffers
+            'paginator' => $this->_initPaginator($resourceOffers->getArrayCopy()),
         ));
     }
 

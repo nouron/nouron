@@ -21,16 +21,16 @@ class Gateway extends \Nouron\Service\Gateway
      *
      * @return array
      */
-    public function getRequirementsAsArray()
+    public function getRequirementsAsArray($where = null, $order = null)
     {
-        $rowset = $this->getRequirements();
+        $rowset = $this->getRequirements($where, $order);
         $this->_requirements = array();
         while ( $rowset->valid() ){
             $req = $rowset->current();
             $t1_id = $req->tech_id;
             $t2_id = $req->required_tech_id;
             $this->_requirements[$t1_id] = array();
-            $this->_requirements[$t1_id][$t2_id] =  $req->required_tech_count;
+            $this->_requirements[$t1_id][$t2_id] =  $req->required_tech_level;
             $rowset->next();
         }
 
@@ -67,9 +67,9 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      * @return ResultSet
      */
-    public function getRequirements()
+    public function getRequirements($where = null, $order = null)
     {
-        return $this->getTable('requirement')->fetchAll();
+        return $this->getTable('requirement')->fetchAll($where, $order);
     }
 
     /**
@@ -87,7 +87,7 @@ class Gateway extends \Nouron\Service\Gateway
         $poss = $this->getPossessionsByColonyId($colonyId);
         $poss = $poss->getArrayCopy('tech_id');
 
-        $requirements = $this->getRequirements()->getArrayCopy(array('tech_id','required_tech_id'));
+        $requirements = $this->getRequirementsAsArray();
 
         // Besitz und Kosten den Stammdaten zuordnen
         foreach ($techs as $id => $t)

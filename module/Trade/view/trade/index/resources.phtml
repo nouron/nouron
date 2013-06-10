@@ -14,7 +14,7 @@
         <th><?= $this->translate('credits-per-unit') ?></th>
         <th><?= $this->translate('restriction') ?></th>
     </tr>
-    <?php foreach ($resourceOffers as $offer): ?>
+    <?php foreach ($paginator as $offer): ?>
         <tr id="offer-<?= $offer['id']?>">
             <td><?= $offer['colony_id']?></td>
             <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
@@ -25,6 +25,8 @@
         </tr>
     <?php endforeach; ?>
     </table>
+
+    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
 </div>
 
 <!-- Modal -->
