@@ -29,8 +29,6 @@ class Bootstrap
 
         static::initAutoloader();
 
-        print_r($zf2ModulePaths);
-
         // use ModuleManager to load this module and it's dependencies
         $config = array(
             'module_listener_options' => array(
@@ -57,6 +55,10 @@ class Bootstrap
     protected static function initAutoloader()
     {
         $vendorPath = static::findParentPath('vendor');
+
+        if (is_readable($vendorPath . '/autoload.php')) {
+            include $vendorPath . '/autoload.php';
+        }
 
         $zf2Path = getenv('ZF2_PATH');
         if (!$zf2Path) {
