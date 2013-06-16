@@ -99,6 +99,7 @@ class IndexController extends \Nouron\Controller\IngameController
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
             'paginator' => $this->_initPaginator($resourceOffers->getArrayCopy()),
+            'resources' => $resources,
         ));
     }
 
@@ -121,7 +122,13 @@ class IndexController extends \Nouron\Controller\IngameController
         $newOfferForm->setData($data);
 
         if ($newOfferForm->isValid()) {
-            var_dump('test');
+            $sm = $this->getServiceLocator();
+            print("test");
+            $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+            $gw = $sm->get('Trade\Service\Gateway');
+            $result = $gw->storeNewOffer($data);
+        } else {
+            print_r($newOfferForm->getMessages());
         }
         return $newOfferForm;
     }

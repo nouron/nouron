@@ -90,25 +90,6 @@ abstract class AbstractTable extends TableGateway
         return $row;
     }
 
-//     /**
-//      *
-//      * @param EntityInterface $entity
-//      * @throws \Exception
-//      */
-//     public function save(EntityInterface $entity)
-//     {
-//         $data = $entity->getArrayCopy();
-//         $id = (int) $entity->id;
-
-//         if ($id == 0) {
-//             $this->insert($data); // @TODO: what happens if primary is broken, so new data is inserted instead of updated
-//         } elseif ($this->getEntity($id)) {
-//             $this->update($data, array($this->primary => $id));
-//         } else {
-//             throw new \Exception('Form id does not exist');
-//         }
-//     }
-
     /**
      * save the object to db:
      * - insert if new data

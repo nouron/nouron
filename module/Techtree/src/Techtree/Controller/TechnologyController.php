@@ -7,6 +7,10 @@ use Techtree\Service\Gateway;
 
 class TechnologyController extends \Nouron\Controller\IngameController
 {
+    /**
+     *
+     * @return \Zend\View\Model\JsonModel
+     */
     public function orderAction()
     {
         try {

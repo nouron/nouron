@@ -28,6 +28,14 @@ class NewOfferForm extends Form implements InputFilterProviderInterface
         $this->setAttribute('name', 'newOfferForm');
 
         $this->add(array(
+            'type' => 'hidden',
+            'name' => 'form_name',
+            'attributes' => array(
+                'value' => 'new_offer'
+            )
+        ));
+
+        $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'direction',
             'label' => 'offerType',
@@ -44,10 +52,16 @@ class NewOfferForm extends Form implements InputFilterProviderInterface
         ));
 
         $this->add(array(
+            'type' => 'text',
+            'name' => 'amount',
+            'label' => 'amount',
+        ));
+
+        $this->add(array(
             'type' => 'Zend\Form\Element\Select',
-            'name' => 'item',
+            'name' => 'item_id',
             'options' => array(
-                'id' => 'item',
+                'id' => 'item_id',
                 'value_options' => $this->getSelectOptions($items),
                 'empty_option'  => '--- please choose ---'
             ),
@@ -101,6 +115,22 @@ class NewOfferForm extends Form implements InputFilterProviderInterface
                         'name' => 'NotEmpty',
                         'options' => array(
                             'message' => "Bitte gib den Angebotstyp an."
+                        )
+                    ),
+                )
+            ),
+            'amount' => array (
+                'required' => true,
+                'filters' => array(
+                    array(
+                        'name' => 'StringTrim'
+                    )
+                ),
+                'validators' => array(
+                    array(
+                        'name' => 'NotEmpty',
+                        'options' => array(
+                            'message' => "Wähle die Menge."
                         )
                     ),
                 )

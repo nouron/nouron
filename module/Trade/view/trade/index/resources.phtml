@@ -18,7 +18,9 @@
         <tr id="offer-<?= $offer['id']?>">
             <td><?= $offer['colony_id']?></td>
             <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
-            <td><?= $offer['resource_id']?></td>
+            <td><?php $resName = $this->translate($resources[$offer['resource_id']]['name']) ?>
+            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?= $resName ?>"><i class="<?= $resources[$offer['resource_id']]['icon'] ?>"></i> <?= $resName ?></a>
+            </td>
             <td><?= $offer['amount']?></td>
             <td><?= $offer['price']?></td>
             <td><?= $offer['restriction']?></td>
@@ -34,7 +36,7 @@
 <div id="newTradeOfferModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="newTradeOfferModalLabel">Loading...</h3>
+        <h3 id="newTradeOfferModalLabel"><?= $this->translate("new-offer") ?></h3>
     </div>
     <div class="modal-body">
         <?= $this->formTwb($newOfferForm->prepare()); ?>
