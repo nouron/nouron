@@ -1,23 +1,10 @@
 <?php
 namespace Trade\Form;
 
-use Zend\Form\Form;
-use Zend\InputFilter\InputFilterInterface;
-use Zend\InputFilter\InputFilterProviderInterface;
+use \Trade\Form\AbstractTradeForm;
 
-class SearchForm extends Form implements InputFilterProviderInterface
+class SearchForm extends AbstractTradeForm
 {
-    public function getSelectOptions($items)
-    {
-        $options = array();
-        foreach ($items as $id => $item) {
-            if (!isset($item['tradeable']) || $item['tradeable'] == true) {
-                $options[$id] = $item['name'];
-            }
-        }
-        return $options;
-    }
-
     public function __construct($search = 'resources', $items)
     {
         if (empty($search)) return false;

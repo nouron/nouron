@@ -1,22 +1,9 @@
 <?php
 namespace Trade\Form;
 
-use Zend\Form\Form;
-use Zend\InputFilter\InputFilterInterface;
-use Zend\InputFilter\InputFilterProviderInterface;
 
-class NewOfferForm extends Form implements InputFilterProviderInterface
+class NewOfferForm extends \Trade\Form\AbstractTradeForm
 {
-    public function getSelectOptions($items)
-    {
-        $options = array();
-        foreach ($items as $id => $item) {
-            if (!isset($item['tradeable']) || $item['tradeable'] == true) {
-                $options[$id] = $item['name'];
-            }
-        }
-        return $options;
-    }
 
     public function __construct($offerType = 'resources', $items)
     {

@@ -3,7 +3,7 @@
 <phpunit bootstrap="Bootstrap.php" colors="false">
     <testsuites>
         <testsuite name="galaxy">
-            <directory>./GalaxyTest</directory>
+            <directory>./TradeTest</directory>
         </testsuite>
     </testsuites>
 </phpunit>

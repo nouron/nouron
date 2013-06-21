@@ -1,6 +1,6 @@
 <?php
 
-namespace GalaxyTest\Controller;
+namespace TradeTest\Controller;
 
 use Zend\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
 
@@ -17,14 +17,14 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
         parent::setUp();
     }
 
-    public function testIndexActionCanBeAccessed()
+    public function testTechnologiesActionCanBeAccessed()
     {
-        $this->dispatch('/galaxy');
+        $this->dispatch('/trade/technologies');
         $this->assertResponseStatusCode(200);
 
-        $this->assertModuleName('Galaxy');
-        $this->assertControllerName('Galaxy\Controller\Index');
+        $this->assertModuleName('Trade');
+        $this->assertControllerName('Trade\Controller\Index');
         $this->assertControllerClass('IndexController');
-        $this->assertMatchedRouteName('galaxy');
+        $this->assertMatchedRouteName('trade');
     }
 }
