@@ -23,10 +23,9 @@ class Module
             ->get('translator')
         );
         $translator = $e->getApplication()->getServiceManager()->get('translator');
-        $translator->setLocale(\Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-                   ->setFallbackLocale('de_DE');
-
-
+        #$translator->setLocale(\Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+        $translator->setLocale('de_DE')
+                   ->setFallbackLocale('en');
 
         $eventManager        = $e->getApplication()->getEventManager();
         $moduleRouteListener = new ModuleRouteListener();

@@ -10,7 +10,7 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
     {
         $sm = $e->getApplication()->getServiceManager();
 
-        \Locale::setDefault('de_DE');
+        \Locale::setDefault('de-DE');
         \Zend\Validator\AbstractValidator::setDefaultTranslator(
                 $sm->get('translator')
         );

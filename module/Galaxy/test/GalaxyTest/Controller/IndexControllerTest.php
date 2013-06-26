@@ -11,14 +11,25 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
     public function setUp()
     {
         $this->setApplicationConfig(
-            #include '../../../../../config/application.config.php'
-            include 'd:/htdocs/nouron/nouron/config/application.config.php'
+            include '../../../config/application.config.php'
         );
         parent::setUp();
     }
 
     public function testIndexActionCanBeAccessed()
     {
+        // $colonyTableMock = $this->getMockBuilder('Galaxy\Table\Colony')
+        //                         ->disableOriginalConstructor()
+        //                         ->getMock();
+
+        // $colonyTableMock->expects($this->once())
+        //                 ->method('fetchAll')
+        //                 ->will($this->returnValue(array()));
+
+        // $serviceManager = $this->getApplicationServiceLocator();
+        // $serviceManager->setAllowOverride(true);
+        // $serviceManager->setService('Galaxy\Table\Colony', $colonyTableMock);
+
         $this->dispatch('/galaxy');
         $this->assertResponseStatusCode(200);
 
