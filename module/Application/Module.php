@@ -17,10 +17,13 @@ class Module
     public function onBootstrap($e)
     {
         \Locale::setDefault('de_DE');
+
+        $translator = $e->getApplication()
+                        ->getServiceManager()
+                        ->get('translator');
+
         \Zend\Validator\AbstractValidator::setDefaultTranslator(
-            $e->getApplication()
-            ->getServiceManager()
-            ->get('translator')
+            new \Zend\Mvc\I18n\Translator($translator)
         );
         $translator = $e->getApplication()->getServiceManager()->get('translator');
         #$translator->setLocale(\Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))

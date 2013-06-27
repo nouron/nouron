@@ -3,6 +3,12 @@
 namespace GalaxyTest\Controller;
 
 use Zend\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
+use GalaxyTest\Bootstrap;
+
+use Zend\Http\Request;
+use Zend\Mvc\MvcEvent;
+use Zend\Mvc\Router\RouteMatch;
+use Zend\Mvc\Router\Http\TreeRouteStack as HttpRouter;
 
 class IndexControllerTest extends AbstractHttpControllerTestCase
 {
@@ -13,6 +19,40 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
         $this->setApplicationConfig(
             include '../../../config/application.config.php'
         );
+
+        $serviceManager = Bootstrap::getServiceManager();
+        $this->controller = new \Galaxy\Controller\IndexController();
+        $this->request    = new Request();
+        $this->routeMatch = new RouteMatch(array('controller' => 'index'));
+        $this->event      = new MvcEvent();
+        $config = $serviceManager->get('Config');
+        $routerConfig = isset($config['router']) ? $config['router'] : array();
+
+        $router = HttpRouter::factory($routerConfig);
+        $this->event->setRouter($router);
+        $this->event->setRouteMatch($this->routeMatch);
+        $this->controller->setEvent($this->event);
+        $this->controller->setServiceLocator($serviceManager);
+        $mockAuth = $this->getMock('ZfcUser\Entity\UserInterface');
+
+        $ZfcUserMock = $this->getMock('User\Entity\User');
+
+        $ZfcUserMock->expects($this->any())
+                    ->method('getId')
+                    ->will($this->returnValue('3'));
+
+        $authMock = $this->getMock('ZfcUser\Controller\Plugin\ZfcUserAuthentication');
+
+        $authMock->expects($this->any())
+                 ->method('hasIdentity')
+                 ->will($this->returnValue(true));
+
+        $authMock->expects($this->any())
+                 ->method('getIdentity')
+                 ->will($this->returnValue($ZfcUserMock));
+
+        $this->controller->getPluginManager()->setService('zfcUserAuthentication', $authMock);
+
         parent::setUp();
     }
 
