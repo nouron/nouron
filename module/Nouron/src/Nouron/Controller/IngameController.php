@@ -16,7 +16,7 @@ class IngameController extends AbstractActionController
                 $user  = $controller->zfcUserAuthentication()->getIdentity()->getArrayCopy();
                 $_SESSION['userId'] = $user['id'];
             } else {
-                return $controller->redirect()->toRoute('logout');
+                return $controller->redirect()->toRoute('home');
             }
         }, 100); // execute before executing action logic
     }

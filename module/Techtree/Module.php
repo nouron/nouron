@@ -25,8 +25,12 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
         $sm = $e->getApplication()->getServiceManager();
 
         \Locale::setDefault('de_DE');
+        $translator = $e->getApplication()
+                        ->getServiceManager()
+                        ->get('translator');
+
         \Zend\Validator\AbstractValidator::setDefaultTranslator(
-                $sm->get('translator')
+            new \Zend\Mvc\I18n\Translator($translator)
         );
 
         $em = $e->getApplication()->getEventManager();
