@@ -121,6 +121,23 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
+     * @param numeric|array $colony
+     * @param numeric $userId
+     * @return boolean
+     */
+    public function checkColonyOwner($colony, $userId)
+    {
+        if (is_numeric($colony)) {
+            $colony = $this->getColony($colony);
+        }
+        if ($colony['user_id'] == $userId) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      *
      * @param  numeric $userId
      * @return Galaxy\Entity\Colony|null

@@ -3,26 +3,26 @@ namespace Trade\Service;
 
 class Gateway extends \Nouron\Service\Gateway
 {
-    public function getTechnologies()
+    public function getTechnologies($where = null)
     {
-        return $this->getTable('technology')->fetchAll();
+        return $this->getTable('technology')->fetchAll($where);
     }
 
-    public function getResources()
+    public function getResources($where = null)
     {
-        return $this->getTable('resources')->fetchAll();
+        return $this->getTable('resources')->fetchAll($where);
     }
-
 
     /**
      *
      * @param  array  $data
      * @return boolean
      */
-    private function storeNewOffer($data)
+    public function addOffer(array $data)
     {
-        $this->logger->log(\Zend\Log\Logger::INFO, "store new Offer");
-
+        if (isset($this->logger)) {
+            $this->logger->log(\Zend\Log\Logger::INFO, "store new Offer");
+        }
         if ($data['item_type'] == 'technology') {
             $table = $this->getTable('technology');
             $column_name = 'tech_id';
@@ -35,25 +35,35 @@ class Gateway extends \Nouron\Service\Gateway
             return false;
         }
 
-        $entity = array(
-            'colony_id' => $data['colony_id'],
-            'direction' => $data['direction'],
-            $column_name => $data['item_id']
-        );
+        $userId = 3;
 
-        try {
-            $entity = $table->getEntity($entity);
-        } catch (Exception $e) {
-            null;
+        $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $userId);
+
+        if ($ownerCheck) {
+            $primaryKey = array(
+                'colony_id' => $data['colony_id'],
+                'direction' => $data['direction'],
+                $column_name => $data['item_id']
+            );
+            #print_r($entity);
+            $entity = $table->getEntity($primaryKey);
+            $entity['amount'] = $data['amount'];
+            $entity['price']  = $data['price'];
+            $entity['restriction'] = $data['restriction'];
+
+            $result = $table->save($entity);
+            if ((bool) $result) {
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            return false;
         }
+    }
 
-        $entity['amount'] = $data['amount'];
-        $entity['price']  = $data['price'];
-        $entity['restriction'] = $data['restriction'];
+    public function removeOffer()
+    {
 
-        print_r($entity);
-
-        $result = $table->save($entity);
-        return (bool) $result;
     }
 }

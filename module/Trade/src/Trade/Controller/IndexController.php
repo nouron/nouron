@@ -2,12 +2,50 @@
 namespace Trade\Controller;
 
 use Zend\View\Model\ViewModel;
+use Zend\View\Model\JsonModel;
 use Trade\Service\Gateway;
 use Techtree\Entity\Technology;
 use Resources\Entity\Resource;
 
 class IndexController extends \Nouron\Controller\IngameController
 {
+    public function addOfferAction()
+    {
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Trade\Service\Gateway');
+        $resourceOffers = $gw->getResources();
+
+        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resources = $resourceService->getResources();
+
+        $tradeService = $sm->get('Trade\Service\Gateway');
+        $userService = $sm->get('User\Service\User');
+        $resources = $resources->getArrayCopy('id');
+        $form = new \Trade\Form\NewOfferForm('resources', $resources);
+
+        $request = $this->getRequest();
+        if ( $request->isPost() ) {
+            $form->setData($request->getPost());
+            if ($form->isValid()) {
+                $sm = $this->getServiceLocator();
+                $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+                $gw = $sm->get('Trade\Service\Gateway');
+                $result = $gw->addOffer($request->getPost());
+                if (empty($result)) {
+                    $result = new ViewModel();
+                    $result->setTerminal(true);
+                    return null;
+                }
+            }
+        }
+
+        $result = new ViewModel(array(
+            'form' => $form
+        ));
+        $result->setTerminal(true);
+        return $result;
+    }
+
     public function technologiesAction()
     {
         $sm = $this->getServiceLocator();
@@ -18,28 +56,36 @@ class IndexController extends \Nouron\Controller\IngameController
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
-        $techOffers = $gw->getTechnologies();
 
         $techGw = $sm->get('Techtree\Service\Gateway');
         $techs = $techGw->getTechnologies();
-        $form = new \Trade\Form\SearchForm('technologies', $techs->getArrayCopy('id'));
-        $tech = new Technology();
-        $form->bind($tech);
+        $searchForm = new \Trade\Form\SearchForm('technologies', $techs->getArrayCopy('id'));
 
         $tradeService = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
 
-         $request = $this->getRequest();
-         if ($request->isPost()) {
-             $form->setData($request->getPost());
-
-             if ($form->isValid()) {
-                 var_dump($tech);
-             }
+        $where = array();
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            $post = $request->getPost();
+            if ($post['form_name'] == 'search') {
+                $searchForm->setData($request->getPost());
+                if ($searchForm->isValid()) {
+                    print_r('valid');
+                    $where['direction'] = $post['direction'];
+                    if (!empty($post['item_id'])) {
+                        $where['tech_id'] = $post['item_id'];
+                    }
+                } else {
+                    print_r($searchForm->getMessages());
+                }
+            }
          }
 
+        $techOffers = $gw->getTechnologies($where);
+
         return new ViewModel( array(
-            'searchForm' => $form,
+            'searchForm' => $searchForm,
             'paginator' => $this->_initPaginator($techOffers->getArrayCopy()),
         ));
     }
@@ -73,7 +119,6 @@ class IndexController extends \Nouron\Controller\IngameController
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
-        $resourceOffers = $gw->getResources();
 
         $resourceService = $sm->get('Resources\Service\Gateway');
         $resources = $resourceService->getResources();
@@ -84,16 +129,26 @@ class IndexController extends \Nouron\Controller\IngameController
         $searchForm = new \Trade\Form\SearchForm('resources', $resources);
         $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
 
+        $where = array();
         $request = $this->getRequest();
         if ($request->isPost()) {
-
             $post = $request->getPost();
-            switch ($post['form_name']) {
-                case 'new_offer': $newOfferForm = $this->_processNewOfferForm($newOfferForm, $post); break;
-                case 'search':    $searchForm   = $this->_processNewOfferForm($searchForm, $post); break;
-                default: break;
+            if ($post['form_name'] == 'search') {
+                $searchForm->setData($request->getPost());
+                if ($searchForm->isValid()) {
+                    print_r('valid');
+                    $where['direction'] = $post['direction'];
+                    if (!empty($post['item_id'])) {
+                        $where['resource_id'] = $post['item_id'];
+                    }
+                } else {
+                    print_r($searchForm->getMessages());
+                }
             }
-        }
+         }
+
+
+        $resourceOffers = $gw->getResources($where);
 
         return new ViewModel( array(
             'searchForm' => $searchForm,
@@ -123,12 +178,9 @@ class IndexController extends \Nouron\Controller\IngameController
 
         if ($newOfferForm->isValid()) {
             $sm = $this->getServiceLocator();
-            print("test");
             $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
             $gw = $sm->get('Trade\Service\Gateway');
             $result = $gw->storeNewOffer($data);
-        } else {
-            print_r($newOfferForm->getMessages());
         }
         return $newOfferForm;
     }

@@ -19,7 +19,7 @@ abstract class Gateway implements LoggerAwareInterface
     /**
      * @var array
      */
-    protected $gateway;
+    protected $services;
 
     /**
      * @var \Zend\Log\Logger
@@ -30,33 +30,41 @@ abstract class Gateway implements LoggerAwareInterface
      *
      * @param numeric $tick
      * @param array $tables
-     * @param array $gateways OPTIONAL
-     * @param \Resources\Service\Gateway $resourcesGateway
+     * @param array $services OPTIONAL
      */
-    public function __construct($tick, array $tables, array $gateways = array())
+    public function __construct($tick, array $tables, array $services = array())
     {
         $this->setTick($tick);
         $this->setTables($tables);
-        $this->setGateways($gateways);
+        $this->setServices($services);
+    }
+
+    /*
+     * @param String $name
+     * @param \Nouron\Service\Service $Service
+     */
+    public function setService($name, \Nouron\Service\Gateway $Service)
+    {
+        $this->services[$name] = $Service;
     }
 
     /**
      *
-     * @param array $gateways
+     * @param array $services
      */
-    public function setGateways(array $gateways = array())
+    public function setServices(array $services = array())
     {
-        $this->gateways = $gateways;
+        $this->services = $services;
     }
 
     /**
      *
      * @param String $name
-     * @return \Nouron\Service\Gateway
+     * @return \Nouron\Service\Service
      */
-    public function getGateway($name)
+    public function getService($name)
     {
-        return $this->gateways[ $name ];
+        return $this->services[ $name ];
     }
 
     /**
@@ -80,15 +88,25 @@ abstract class Gateway implements LoggerAwareInterface
      *
      * @param string $table
      */
-    protected function getTable($table)
+    public function getTable($table)
     {
         return $this->tables[strtolower($table)];
     }
 
     /**
+     *
+     * @param String $name
+     * @param \Nouron\Model\AbstractTable $table
+     */
+    public function setTable($name, \Nouron\Model\AbstractTable $table)
+    {
+        $this->tables[$name] = $table;
+    }
+
+    /**
      * @param array $tables
      */
-    protected function setTables(array $tables)
+    public function setTables(array $tables)
     {
         $this->tables = $tables;
     }

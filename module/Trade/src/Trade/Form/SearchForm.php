@@ -5,7 +5,13 @@ use \Trade\Form\AbstractTradeForm;
 
 class SearchForm extends AbstractTradeForm
 {
-    public function __construct($search = 'resources', $items)
+    /**
+     *
+     * @param String $offerType 'resources' or 'technologies'
+     * @param array  $items
+     * @param int    $range OPTIONAL (default=0: only offers on own planet)
+     */
+    public function __construct($search = 'resources', $items, $range=0)
     {
         if (empty($search)) return false;
 
@@ -15,46 +21,54 @@ class SearchForm extends AbstractTradeForm
         $this->setAttribute('name', 'searchForm');
 
         $this->add(array(
+            'type' => 'hidden',
+            'name' => 'form_name',
+            'attributes' => array(
+                'value' => 'search'
+            )
+        ));
+
+        $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'direction',
             'options' => array(
                 'id' => 'direction',
                 'value_options' => array(
-                    0 => 'trade_iSearch',
-                    1 => 'trade_iSell'
+                    1 => 'i search',
+                    0 => 'i sell'
                 )
-            ),
-            'attributes' => array(
-                'value' => '0'
             )
         ));
 
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
-            'name' => 'item',
+            'name' => 'item_id',
             'options' => array(
-                'id' => 'item',
+                'id' => 'item_id',
                 'value_options' => $this->getSelectOptions($items),
-                'empty_option'  => '--- please choose ---'
+                'empty_option'  => 'all'
             ),
             'attributes' => array(
                 'value' => '0'
             )
         ));
 
+        $options = array();
+        for ($i=0; $i<=$range; $i++) {
+            if ($i<2) {
+                $options[$i] = ($i==1) ? "in this system" : "on this planet";
+            } else {
+                $options[$i] = $i." Systeme";
+            }
+        }
+
+        # distance = $range * $system_size
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'range',
             'options' => array(
                 'id' => 'range',
-                'value_options' => array(
-                     0 => 'trade-on-this-planet',
-                     1 => 'trade-in-this-system',
-                     2 => 'trade-in-galaxy'
-                 ),
-            ),
-            'attributes' => array(
-                'value' => '0'
+                'value_options' => $options,
             )
         ));
 
@@ -91,21 +105,13 @@ class SearchForm extends AbstractTradeForm
                     ),
                 )
             ),
-            'item' => array (
-                'required' => true,
+            'item_id' => array (
+                'required' => false,
                 'filters' => array(
                     array(
                         'name' => 'StringTrim',
                     )
                 ),
-                'validators' => array(
-                    array(
-                        'name' => 'NotEmpty',
-                        'options' => array(
-                            'message' => "Wähle das Handelsobjekt."
-                        )
-                    ),
-                )
             ),
             'range' => array (
                 'required' => true,

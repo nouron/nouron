@@ -1,11 +1,17 @@
 <?php
 namespace Trade\Form;
 
+use \Trade\Form\AbstractTradeForm;
 
-class NewOfferForm extends \Trade\Form\AbstractTradeForm
+class NewOfferForm extends AbstractTradeForm
 {
-
-    public function __construct($offerType = 'resources', $items)
+    /**
+     *
+     * @param String $offerType 'resources' or 'technologies'
+     * @param array  $items
+     * @param int    $range OPTIONAL (default=0: only offers on own planet)
+     */
+    public function __construct($offerType = 'resources', $items, $range = 0)
     {
         if (empty($offerType)) return false;
 
@@ -13,6 +19,7 @@ class NewOfferForm extends \Trade\Form\AbstractTradeForm
 
         $this->setAttribute('method', 'post');
         $this->setAttribute('name', 'newOfferForm');
+        $this->setAttribute('action', '/trade/add-offer');
 
         $this->add(array(
             'type' => 'hidden',
@@ -29,19 +36,21 @@ class NewOfferForm extends \Trade\Form\AbstractTradeForm
             'options' => array(
                 'id' => 'direction',
                 'value_options' => array(
-                    0 => 'trade_iSearch',
-                    1 => 'trade_iSell'
+                    0 => 'i search',
+                    1 => 'i sell'
                 )
-            ),
-            'attributes' => array(
-                'value' => '0'
             )
         ));
 
         $this->add(array(
             'type' => 'text',
             'name' => 'amount',
-            'label' => 'amount',
+            'options' => array(
+                'label' => 'units'
+             ),
+            'attributes' => array(
+                'value' => '0'
+            )
         ));
 
         $this->add(array(
@@ -50,26 +59,26 @@ class NewOfferForm extends \Trade\Form\AbstractTradeForm
             'options' => array(
                 'id' => 'item_id',
                 'value_options' => $this->getSelectOptions($items),
-                'empty_option'  => '--- please choose ---'
-            ),
-            'attributes' => array(
-                'value' => '0'
             )
         ));
+
+        $options = array();
+        for ($i=0; $i<=$range; $i++) {
+            if ($i<2) {
+                $options[$i] = ($i==1) ? "in this system" : "on this planet";
+            } else {
+                $options[$i] = $i." Systeme";
+            }
+        }
+        # distance = $range * $system_size
 
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'range',
             'options' => array(
                 'id' => 'range',
-                'value_options' => array(
-                     0 => 'trade-on-this-planet',
-                     1 => 'trade-in-this-system',
-                     2 => 'trade-in-galaxy'
-                 ),
-            ),
-            'attributes' => array(
-                'value' => '0'
+                'label' => 'range',
+                'value_options' => $options,
             )
         ));
 
@@ -77,7 +86,7 @@ class NewOfferForm extends \Trade\Form\AbstractTradeForm
             'name' => 'submit',
             'attributes' => array(
                 'type' => 'submit',
-                'value' => 'send',
+                'value' => 'create offer',
                 'class' => 'btn btn-primary'
             ),
         ));
@@ -122,7 +131,7 @@ class NewOfferForm extends \Trade\Form\AbstractTradeForm
                     ),
                 )
             ),
-            'item' => array (
+            'item_id' => array (
                 'required' => true,
                 'filters' => array(
                     array(

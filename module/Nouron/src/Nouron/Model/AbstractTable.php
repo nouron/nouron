@@ -68,12 +68,14 @@ abstract class AbstractTable extends TableGateway
 
     /**
      *
-     * @param numeric $id
+     * @param numeric|array $id
      * @throws \Exception
      * @return Ambigous <multitype:, ArrayObject, NULL, \ArrayObject, unknown>
      */
     public function getEntity($id)
     {
+        print("testtesttest");
+        print $id;
         if (is_array($this->primary)) {
             $this->_validateId($id, $this->primary);
             $rowset = $this->select($id);

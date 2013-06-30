@@ -14,12 +14,17 @@ return array (
     'credits-per-unit' => 'Credits / Einheit',
     'restriction' => 'Einschränkung',
 
-    'trade_iSearch' => 'Ich suche',
-    'trade_iSell' => 'Ich biete',
-    '--- please choose ---' => '--- auswählen ---',
-    'trade-on-this-planet' => 'auf diesem Planet',
-    'trade-in-this-system' => 'in diesem System',
-    'trade-in-galaxy' => 'in der Galaxie'
+    'i search' => 'Ich suche',
+    'i sell' => 'Ich biete',
+    'on this planet' => 'auf diesem Planet',
+    'in this system' => 'in diesem System',
+
+    'range' => 'Reichweite',
+    'distance' => 'Entfernung',
+    'units' => 'Einheiten',
+    'create offer' => 'Angebot erstellen',
+
+    'all' => 'alle'
 
     # messages
 

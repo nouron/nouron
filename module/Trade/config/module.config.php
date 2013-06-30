@@ -10,7 +10,7 @@ return array(
             'trade' => array(
                 'type' => 'Segment',
                 'options' => array(
-                    'route' => '/trade/:action/[page/:page]',
+                    'route' => '/trade[/:action][/page/:page]',
                     'constraints' => array(
                         'type'   => '[a-zA-Z][a-zA-Z0-9_-]*',
                         'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
