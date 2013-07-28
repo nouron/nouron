@@ -68,7 +68,7 @@ class Gateway extends \Nouron\Service\Gateway
                 'tech_id' => $data['item_id']
             );
             try {
-                $table = $this->getTable('technologies');
+                $table = $this->getTable('technology');
                 $entity = $table->getEntity($primaryKey);
                 $entity['amount'] = $data['amount'];
                 $entity['price']  = $data['price'];

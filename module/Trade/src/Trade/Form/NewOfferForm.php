@@ -19,7 +19,11 @@ class NewOfferForm extends AbstractTradeForm
 
         $this->setAttribute('method', 'post');
         $this->setAttribute('name', 'newOfferForm');
-        $this->setAttribute('action', '/trade/add-offer');
+        if ($offerType == 'resources') {
+            $this->setAttribute('action', '/trade/add-resource-offer');
+        } else {
+            $this->setAttribute('action', '/trade/add-technology-offer');
+        }
 
         $this->add(array(
             'type' => 'hidden',

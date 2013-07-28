@@ -13,17 +13,56 @@ class IndexController extends \Nouron\Controller\IngameController
      *
      * @return \Zend\View\Model\ViewModel
      */
-    public function addOfferAction()
+    public function addTechnologyOfferAction()
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
-        $resourceOffers = $gw->getResources();
+        $userService = $sm->get('User\Service\User');
 
+        $techOffers = $gw->getTechnologies();
+        $technologyService = $sm->get('Techtree\Service\Gateway');
+        $techs = $technologyService->getTechnologies();
+        $techs = $techs->getArrayCopy('id');
+        $form = new \Trade\Form\NewOfferForm('technologies', $techs);
+
+        $request = $this->getRequest();
+        if ( $request->isPost() ) {
+            $form->setData($request->getPost());
+            if ($form->isValid()) {
+                $data = (array) $request->getPost();
+                $data['user_id']   = $this->getActive('user');
+                $data['colony_id'] = $this->getActive('colony');
+                $result = $gw->addTechnologyOffer($data);
+
+                if ($result) {
+                    $result = new ViewModel();
+                    $result->setTerminal(true);
+                    return $result;
+                }
+            }
+        }
+
+        $result = new ViewModel(array(
+            'form' => $form
+        ));
+        $result->setTerminal(true);
+        return $result;
+    }
+
+
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
+    public function addResourceOfferAction()
+    {
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Trade\Service\Gateway');
+        $userService = $sm->get('User\Service\User');
+
+        $resourceOffers = $gw->getResources();
         $resourceService = $sm->get('Resources\Service\Gateway');
         $resources = $resourceService->getResources();
-
-        $tradeService = $sm->get('Trade\Service\Gateway');
-        $userService = $sm->get('User\Service\User');
         $resources = $resources->getArrayCopy('id');
         $form = new \Trade\Form\NewOfferForm('resources', $resources);
 
@@ -31,13 +70,10 @@ class IndexController extends \Nouron\Controller\IngameController
         if ( $request->isPost() ) {
             $form->setData($request->getPost());
             if ($form->isValid()) {
-                $sm = $this->getServiceLocator();
-                $gw = $sm->get('Trade\Service\Gateway');
-
                 $data = (array) $request->getPost();
-                $data['user_id'] = $this->getActive('user');
+                $data['user_id']   = $this->getActive('user');
                 $data['colony_id'] = $this->getActive('colony');
-                $result = $gw->addOffer($data);
+                $result = $gw->addResourceOffer($data);
 
                 if ($result) {
                     $result = new ViewModel();
@@ -141,7 +177,6 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $techOffers = $gw->getTechnologies($where);
 
-        print_r($this->getActive('user'));
         return new ViewModel( array(
             'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
