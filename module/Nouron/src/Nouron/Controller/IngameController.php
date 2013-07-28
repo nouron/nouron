@@ -3,6 +3,7 @@ namespace Nouron\Controller;
 
 use Zend\EventManager\EventManagerInterface;
 use Zend\Mvc\Controller\AbstractActionController;
+use Application\Controller\Plugin\GetActive;
 
 class IngameController extends AbstractActionController
 {

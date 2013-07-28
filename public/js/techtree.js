@@ -158,7 +158,7 @@ $(document).ready(function(){
     $('#visualTechtree a.btn').click(function(e){
         e.preventDefault();
         techId = $(this).attr('id').replace('tech-','');
-        $('#techModal').load('/techtree/tech/'+techId, null, function(){console.log("techModal loaded :D");});
+        //$('#techModal').load('/techtree/tech/'+techId, null, function(){console.log("techModal loaded :D");});
     });
     
     $('.modal-footer a').live('click', function(e) {
@@ -166,12 +166,19 @@ $(document).ready(function(){
         $.getJSON(
             $(this).attr('href'),
             function(data) {
-                console.log('ok');
+                if (!data.result) {
+                    $('.modal-body').append('<p class="text-error">' + data.error + '</p>');
+
+                    $('.modal').modal({show:true});
+                } else {
+                    $('.modal').modal({show:false});
+                }
             },
             function(data) {
-                console.log('error');
+                console.log('error in json request');
             }
         );
+
     });
     
     $('.grid-cell').click(function(e){

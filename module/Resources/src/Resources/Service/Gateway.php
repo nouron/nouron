@@ -83,7 +83,7 @@ class Gateway extends \Nouron\Service\Gateway
     {
         $this->_validateId($colonyId);
 
-        $galaxyGw = $this->getGateway('galaxy');
+        $galaxyGw = $this->getService('galaxy');
         $colony = $galaxyGw->getColony($colonyId);
 
         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
@@ -109,7 +109,7 @@ class Gateway extends \Nouron\Service\Gateway
     {
 //         $this->_validateId($userId);
 
-//         $colonies = $this->getGateway('galaxy')->getColoniesByUserId($userId);
+//         $colonies = $this->getService('galaxy')->getColoniesByUserId($userId);
 
 //         foreach ($colonies as $col) {
 //             $coloIds[] = $col->id;
@@ -194,7 +194,7 @@ class Gateway extends \Nouron\Service\Gateway
 
             // user resources
 
-            $colony = $this->getGateway('galaxy')->getColony($colonyId);
+            $colony = $this->getService('galaxy')->getColony($colonyId);
             $table = $this->getTable('userresources');
             $userId = $colony->user_id;
             $row = $table->fetchRow("user_id = $userId");

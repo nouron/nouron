@@ -11,5 +11,6 @@ return array(
     'Trade\Service\Gateway'                   => __DIR__ . '/src/Trade/Service/Gateway.php',
     'Trade\Service\GatewayFactory'            => __DIR__ . '/src/Trade/Service/GatewayFactory.php',
     'Trade\Table\Resource'                    => __DIR__ . '/src/Trade/Table/Resource.php',
+    'Trade\Table\ResourceView'                => __DIR__ . '/src/Trade/Table/ResourceView.php',
     'Trade\Table\Technology'                  => __DIR__ . '/src/Trade/Table/Technology.php',
 );

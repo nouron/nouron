@@ -8,6 +8,7 @@ use Nouron\Model\AbstractTable,
 class Technology extends AbstractTable
 {
     protected $table  = 'trade_techs';
+    protected $primary = array('colony_id', 'tech_id', 'direction');
 
     public function __construct(Adapter $adapter)
     {

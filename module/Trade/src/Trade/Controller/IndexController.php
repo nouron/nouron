@@ -28,13 +28,18 @@ class IndexController extends \Nouron\Controller\IngameController
             $form->setData($request->getPost());
             if ($form->isValid()) {
                 $sm = $this->getServiceLocator();
-                $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+//                 $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
                 $gw = $sm->get('Trade\Service\Gateway');
-                $result = $gw->addOffer($request->getPost());
+
+                $data = (array) $request->getPost();
+                $data['user_id'] = $this->getActive('user');
+                $data['colony_id'] = $this->getActive('colony');
+                $result = $gw->addOffer($data);
+
                 if (empty($result)) {
                     $result = new ViewModel();
                     $result->setTerminal(true);
-                    return null;
+                    return $result;
                 }
             }
         }
@@ -151,6 +156,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $resourceOffers = $gw->getResources($where);
 
         return new ViewModel( array(
+            'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
             'paginator' => $this->_initPaginator($resourceOffers->getArrayCopy()),

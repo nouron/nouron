@@ -278,7 +278,7 @@ class Gateway extends \Nouron\Service\Gateway
             if ($apSpendBefore + $apOrdered + 1 >= $tech->ap_for_levelup) {
                 // pay Costs when levelup is ready:
                 $costs = $this->getCostsByTechnologyId($techId);
-                $this->getGateway('resources')->payCosts($costs, $colonyId);
+                $this->getService('resources')->payCosts($costs, $colonyId);
             }
 
             $order = array(
@@ -512,7 +512,7 @@ class Gateway extends \Nouron\Service\Gateway
 
         // get costs of technology:
         $costs = $this->getCostsByTechnologyId($techId);
-        return $this->getGateway('resources')->check($costs, $colonyId);
+        return $this->getService('resources')->check($costs, $colonyId);
     }
 
     /**

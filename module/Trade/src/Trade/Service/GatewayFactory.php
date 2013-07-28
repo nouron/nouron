@@ -19,6 +19,7 @@ class GatewayFactory implements FactoryInterface
 
         $tables['technology']  = new \Trade\Table\Technology($db);
         $tables['resources']   = new \Trade\Table\Resource($db);
+        $tables['resources_view']   = new \Trade\Table\ResourceView($db);
 
         $gateways['resources'] = $serviceLocator->get('Resources\Service\Gateway');
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');

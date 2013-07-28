@@ -30,6 +30,14 @@ class NewOfferForm extends AbstractTradeForm
         ));
 
         $this->add(array(
+            'type' => 'hidden',
+            'name' => 'item_type',
+            'attributes' => array(
+                'value' => $offerType
+            )
+        ));
+
+        $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'direction',
             'label' => 'offerType',
@@ -45,11 +53,12 @@ class NewOfferForm extends AbstractTradeForm
         $this->add(array(
             'type' => 'text',
             'name' => 'amount',
-            'options' => array(
-                'label' => 'units'
-             ),
+//             'options' => array(
+//                 'label' => 'units'
+//              ),
             'attributes' => array(
-                'value' => '0'
+                'class' => 'input-small',
+                'placeholder' => 'units'
             )
         ));
 
@@ -70,6 +79,19 @@ class NewOfferForm extends AbstractTradeForm
                 $options[$i] = $i." Systeme";
             }
         }
+
+        $this->add(array(
+            'type' => 'text',
+            'name' => 'price',
+//             'options' => array(
+//                 'label' => 'price'
+//              ),
+            'attributes' => array(
+                'class' => 'input-small',
+                'placeholder' => 'price per unit'
+            )
+        ));
+
         # distance = $range * $system_size
 
         $this->add(array(
@@ -77,10 +99,28 @@ class NewOfferForm extends AbstractTradeForm
             'name' => 'range',
             'options' => array(
                 'id' => 'range',
-                'label' => 'range',
                 'value_options' => $options,
             )
         ));
+
+        $this->add(array(
+            'type' => 'Zend\Form\Element\Select',
+            'name' => 'restriction',
+            'options' => array(
+                'id' => 'restriction',
+                #'label' => 'restriction'
+                'value_options' => array(
+                    0 => 'no restriction',
+                    1 => 'only my group',
+                    2 => 'only my faction',
+                    3 => 'only my race',
+                )
+             ),
+//             'attributes' => array(
+//                 'disabled' => 'disabled'
+//             )
+        ));
+
 
         $this->add(array(
             'name' => 'submit',

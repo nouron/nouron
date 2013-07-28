@@ -6,12 +6,14 @@ return array (
     'resource' => 'Ressource',
     'resources' => 'Ressourcen',
 
+    'new-offer' => 'Neues Angebot',
+
     'trade' => 'Handel',
     'offer' => 'Angebot',
     'offer-type' => 'Angebotstyp',
     'count' => 'Anzahl',
     'amount' => 'Menge',
-    'credits-per-unit' => 'Credits / Einheit',
+    'price per unit' => 'Preis pro Einheit',
     'restriction' => 'Einschränkung',
 
     'i search' => 'Ich suche',
@@ -24,7 +26,11 @@ return array (
     'units' => 'Einheiten',
     'create offer' => 'Angebot erstellen',
 
-    'all' => 'alle'
+    'all' => 'alle',
+    'no restriction' => 'keine Einschränkung',
+    'only my group' => 'nur für meine Gruppe',
+    'only my faction' => 'nur für meine Fraktion',
+    'only my race' => 'nur für meine Rasse',
 
     # messages
 

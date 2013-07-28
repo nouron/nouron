@@ -17,10 +17,9 @@ class TechnologyController extends \Nouron\Controller\IngameController
             $colonyId = 0; // TODO: take from Session
             $techId = $this->params()->fromRoute('id');
             $order  = $this->params()->fromRoute('order');
-
             if (!in_array($order,array('add','remove','repair','cancel'))) {
                 //$this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::ERR, 'Invalid order type.');
-                throw Exception('Invalid order type.');
+                throw new \Techtree\Service\Exception('Invalid order type.');
             }
 
             $sm = $this->getServiceLocator();
@@ -30,8 +29,9 @@ class TechnologyController extends \Nouron\Controller\IngameController
             $result = $techtreeGw->order($colonyId, $techId, $order, $ap);
             $error = null;
             // TODO : OK-Nachricht
-        } catch (Exception $e) {
+        } catch (\Techtree\Service\Exception $e) {
             // TODO : Error-Nachricht
+            $this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::ERR, $e->getMessage());
             $result = false;
             $error = $e->getMessage();
         }

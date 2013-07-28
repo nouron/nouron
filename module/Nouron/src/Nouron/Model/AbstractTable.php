@@ -74,8 +74,6 @@ abstract class AbstractTable extends TableGateway
      */
     public function getEntity($id)
     {
-        print("testtesttest");
-        print $id;
         if (is_array($this->primary)) {
             $this->_validateId($id, $this->primary);
             $rowset = $this->select($id);
@@ -85,9 +83,9 @@ abstract class AbstractTable extends TableGateway
         }
 
         $row = $rowset->current();
-        if (!$row) {
-            throw new \Exception("Could not find row $id");
-        }
+//         if (!$row) {
+//             throw new \Exception("Could not find row $id");
+//         }
 
         return $row;
     }
@@ -177,6 +175,8 @@ abstract class AbstractTable extends TableGateway
         $error = false;
         if (empty($compoundKey)) {
             if (!is_numeric($id) || $id < 0) {
+                print_r($id);
+                print_r($this->primary);
                 throw new Exception('Parameter is not a valid id.');
             }
         } else {

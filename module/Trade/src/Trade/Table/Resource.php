@@ -7,7 +7,8 @@ use Nouron\Model\AbstractTable,
 
 class Resource extends AbstractTable
 {
-    protected $table  = 'trade_res';
+    protected $table  = 'trade_resources';
+    protected $primary = array('colony_id', 'resource_id', 'direction');
 
     public function __construct(Adapter $adapter)
     {

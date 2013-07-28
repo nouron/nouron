@@ -5,18 +5,24 @@
     <div class="span2">
         <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="icon-plus"></i> Angebot erstellen</a>
     </div>
+
+    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
     <table class="table">
     <tr>
         <th><?= $this->translate('colony') ?></th>
         <th><?= $this->translate('offer-type') ?></th>
         <th><?= $this->translate('resource') ?></th>
         <th><?= $this->translate('amount') ?></th>
-        <th><?= $this->translate('credits-per-unit') ?></th>
+        <th><?= $this->translate('price per unit') ?></th>
         <th><?= $this->translate('restriction') ?></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
         <tr id="offer-<?= $offer['id']?>">
-            <td><?= $offer['colony_id']?></td>
+            <? if ($offer['user_id'] != $user_id): ?>
+            <td><?= $offer['colony']?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username']?></a>)</td>
+            <? else: ?>
+            <td><?= $offer['colony']?></td>
+            <?php endif ?>
             <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
             <td><?php $resName = $this->translate($resources[$offer['resource_id']]['name']) ?>
             <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?= $resName ?>"><i class="<?= $resources[$offer['resource_id']]['icon'] ?>"></i> <?= $resName ?></a>
