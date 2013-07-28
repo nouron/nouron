@@ -32,9 +32,7 @@ trade = {
     // Initialisierung
     init : function() {
         console.log('trade.init()');
-        console.log('price');
         trade.addPlusMinusButtons('price');
-        console.log('amount');
         trade.addPlusMinusButtons('amount');
         
         $(".modal form").live("submit", function(e){
@@ -55,6 +53,29 @@ trade = {
                 },
                 "html"
             );
+        });
+        
+        /** click and confirm delete button => remove offer, update dom */
+        $('.removeOfferButton').live('click', function(e){
+            e.preventDefault();
+            var href= $(this).attr('href');
+            var id = $(this).parent().parent().attr('id');
+            var offerType = $(this).hasClass('resource') ? 'resource' : 'technology';
+            bootbox.confirm("Are you sure?", function(result) {
+                if (result == true) {
+                    data = id.split("-",3);
+                    if (offerType == 'resource') {
+                        data = {'colony_id': data[1], 'resource_id': data[2]}
+                    } else {
+                        data = {'colony_id': data[1], 'tech_id': data[2]}
+                    }
+                    $.post(
+                        href,
+                        data,
+                        $("#"+id).remove()
+                    );
+                }
+            }); 
         });
     }
 };

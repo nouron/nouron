@@ -15,9 +15,10 @@
         <th><?= $this->translate('amount') ?></th>
         <th><?= $this->translate('price per unit') ?></th>
         <th><?= $this->translate('restriction') ?></th>
+        <th></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
-        <tr id="offer-<?= $offer['id']?>">
+        <tr id="offer-<?= $offer['colony_id']?>-<?= $offer['resource_id']?>">
             <? if ($offer['user_id'] != $user_id): ?>
             <td><?= $offer['colony']?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username']?></a>)</td>
             <? else: ?>
@@ -30,6 +31,11 @@
             <td><?= $offer['amount']?></td>
             <td><?= $offer['price']?></td>
             <td><?= $offer['restriction']?></td>
+            <? if ($offer['user_id'] == $user_id): ?>
+            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="icon-remove"></i></a></td>
+            <? else: ?>
+            <td></td>
+            <? endif; ?>
         </tr>
     <?php endforeach; ?>
     </table>

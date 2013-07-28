@@ -13,17 +13,27 @@
         <th><?= $this->translate('offer-type') ?></th>
         <th><?= $this->translate('technology') ?></th>
         <th><?= $this->translate('count') ?></th>
-        <th><?= $this->translate('credits-per-unit') ?></th>
+        <th><?= $this->translate('price per unit') ?></th>
         <th><?= $this->translate('restriction') ?></th>
+        <th></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
-        <tr id="offer-<?= $offer['id']?>">
-            <td><?= $offer['colony_id']?></td>
+        <tr id="offer-<?= $offer['colony_id']?>-<?= $offer['tech_id']?>">
+            <? if ($offer['user_id'] != $user_id): ?>
+            <td><?= $offer['colony']?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username']?></a>)</td>
+            <? else: ?>
+            <td><?= $offer['colony']?></td>
+            <?php endif ?>
             <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
             <td><?= $offer['tech_id']?></td>
             <td><?= $offer['amount']?></td>
             <td><?= $offer['price']?></td>
             <td><?= $offer['restriction']?></td>
+            <? if ($offer['user_id'] == $user_id): ?>
+            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="icon-remove"></i></a></td>
+            <? else: ?>
+            <td></td>
+            <? endif; ?>
         </tr>
     <?php endforeach; ?>
     </table>

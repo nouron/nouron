@@ -13,4 +13,5 @@ return array(
     'Trade\Table\Resource'                    => __DIR__ . '/src/Trade/Table/Resource.php',
     'Trade\Table\ResourceView'                => __DIR__ . '/src/Trade/Table/ResourceView.php',
     'Trade\Table\Technology'                  => __DIR__ . '/src/Trade/Table/Technology.php',
+    'Trade\Table\TechnologyView'              => __DIR__ . '/src/Trade/Table/TechnologyView.php',
 );

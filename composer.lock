@@ -11,12 +11,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/bjyoungblood/BjyProfiler.git",
-                "reference": "1ca31611b6960bcd744dced95764e3627e8d807a"
+                "reference": "v1.0.0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/bjyoungblood/BjyProfiler/zipball/1ca31611b6960bcd744dced95764e3627e8d807a",
-                "reference": "1ca31611b6960bcd744dced95764e3627e8d807a",
+                "url": "https://api.github.com/repos/bjyoungblood/BjyProfiler/zipball/v1.0.0",
+                "reference": "v1.0.0",
                 "shasum": ""
             },
             "require": {
@@ -32,12 +32,12 @@
                     "./Module.php"
                 ]
             },
-            "notification-url": "http://packagist.org/downloads/",
+            "notification-url": "https://packagist.org/downloads/",
             "authors": [
                 {
                     "name": "Ben Youngblood",
                     "email": "bx.youngblood@gmail.com",
-                    "homepage": "http://bjyoungblood.com",
+                    "homepage": "http://bjyoungblood.com/",
                     "role": "Developer"
                 }
             ],
@@ -49,7 +49,7 @@
                 "zdt",
                 "zf2"
             ],
-            "time": "2013-03-25 15:24:27"
+            "time": "2013-07-25 02:55:43"
         },
         {
             "name": "dlu/dlutwbootstrap",
@@ -192,16 +192,17 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "8e04c24099ac4b843d101522fda17457765332ce"
+                "reference": "0.0.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/8e04c24099ac4b843d101522fda17457765332ce",
-                "reference": "8e04c24099ac4b843d101522fda17457765332ce",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/0.0.2",
+                "reference": "0.0.2",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
+                "zendframework/zend-debug": "2.*",
                 "zendframework/zend-eventmanager": "2.*",
                 "zendframework/zend-mvc": "2.*",
                 "zendframework/zend-servicemanager": "2.*",
@@ -209,7 +210,8 @@
                 "zendframework/zend-version": "2.*"
             },
             "suggest": {
-                "bjyoungblood/bjy-profiler": "Version: dev-master, allows the usage of the (Zend) Db collector."
+                "bjyoungblood/bjy-profiler": "Version: dev-master, allows the usage of the (Zend) Db collector.",
+                "ocramius/ocra-service-manager": "OcraServiceManager can help you track dependencies within your application."
             },
             "type": "zf-module",
             "autoload": {
@@ -220,7 +222,7 @@
                     "./Module.php"
                 ]
             },
-            "notification-url": "http://packagist.org/downloads/",
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "BSD-3-Clause"
             ],
@@ -243,20 +245,20 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-06-15 07:41:17"
+            "time": "2013-07-08 19:52:34"
         },
         {
             "name": "zendframework/zendframework",
-            "version": "2.2.1",
+            "version": "2.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "release-2.2.1"
+                "reference": "release-2.2.2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.2.1",
-                "reference": "release-2.2.1",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/release-2.2.2",
+                "reference": "release-2.2.2",
                 "shasum": ""
             },
             "require": {
@@ -299,6 +301,7 @@
                 "zendframework/zend-permissions-acl": "self.version",
                 "zendframework/zend-permissions-rbac": "self.version",
                 "zendframework/zend-progressbar": "self.version",
+                "zendframework/zend-resources": "self.version",
                 "zendframework/zend-serializer": "self.version",
                 "zendframework/zend-server": "self.version",
                 "zendframework/zend-servicemanager": "self.version",
@@ -318,7 +321,7 @@
                 "doctrine/annotations": ">=1.0",
                 "ircmaxell/random-lib": "dev-master",
                 "ircmaxell/security-lib": "dev-master",
-                "ocramius/proxy-manager": "0.3.*",
+                "ocramius/proxy-manager": "0.4.*",
                 "phpunit/phpunit": "3.7.*"
             },
             "suggest": {
@@ -330,7 +333,9 @@
                 "zendframework/zendservice-recaptcha": "ZendService\\ReCaptcha for rendering ReCaptchas in Zend\\Captcha and/or Zend\\Form"
             },
             "bin": [
-                "bin/classmap_generator.php"
+                "bin/classmap_generator.php",
+                "bin/pluginmap_generator.php",
+                "bin/templatemap_generator.php"
             ],
             "type": "library",
             "extra": {
@@ -341,8 +346,7 @@
             },
             "autoload": {
                 "psr-0": {
-                    "Zend\\": "library/",
-                    "ZendTest\\": "tests/"
+                    "Zend\\": "library/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -355,7 +359,7 @@
                 "framework",
                 "zf2"
             ],
-            "time": "2013-06-12 20:13:34"
+            "time": "2013-07-24 14:02:19"
         },
         {
             "name": "zf-commons/zfc-admin",
@@ -469,12 +473,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcRbac.git",
-                "reference": "4263ce8883f5b452cac52bf0b5618ac745c99aad"
+                "reference": "102aeee97449c2e995ae98f0478741a0543afa99"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/4263ce8883f5b452cac52bf0b5618ac745c99aad",
-                "reference": "4263ce8883f5b452cac52bf0b5618ac745c99aad",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/102aeee97449c2e995ae98f0478741a0543afa99",
+                "reference": "102aeee97449c2e995ae98f0478741a0543afa99",
                 "shasum": ""
             },
             "require": {
@@ -490,7 +494,7 @@
                     "ZfcRbac\\": "src/"
                 }
             },
-            "notification-url": "http://packagist.org/downloads/",
+            "notification-url": "https://packagist.org/downloads/",
             "authors": [
                 {
                     "name": "Kyle Spraggs",
@@ -504,7 +508,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-05-10 20:35:56"
+            "time": "2013-07-28 08:50:57"
         },
         {
             "name": "zf-commons/zfc-user",
@@ -512,33 +516,38 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "73b973455a7ba991821f0278d88508e145684fda"
+                "reference": "fbbe5fdeabd9229bf7d1328358c2d95538a6081e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/73b973455a7ba991821f0278d88508e145684fda",
-                "reference": "73b973455a7ba991821f0278d88508e145684fda",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/fbbe5fdeabd9229bf7d1328358c2d95538a6081e",
+                "reference": "fbbe5fdeabd9229bf7d1328358c2d95538a6081e",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3",
-                "zendframework/zend-authentication": ">=2.1,<3.0",
-                "zendframework/zend-crypt": ">=2.1,<3.0",
-                "zendframework/zend-form": ">=2.1,<3.0",
-                "zendframework/zend-inputfilter": ">=2.1,<3.0",
-                "zendframework/zend-loader": ">=2.1,<3.0",
-                "zendframework/zend-modulemanager": ">=2.1,<3.0",
-                "zendframework/zend-mvc": ">=2.1,<3.0",
-                "zendframework/zend-servicemanager": ">=2.1,<3.0",
-                "zendframework/zend-stdlib": ">=2.1,<3.0",
-                "zendframework/zend-validator": ">=2.1,<3.0",
-                "zendframework/zend-view": ">=2.1,<3.0",
+                "zendframework/zend-authentication": "~2.1",
+                "zendframework/zend-crypt": "~2.1",
+                "zendframework/zend-form": "~2.1",
+                "zendframework/zend-inputfilter": "~2.1",
+                "zendframework/zend-loader": "~2.1",
+                "zendframework/zend-modulemanager": "~2.1",
+                "zendframework/zend-mvc": "~2.1",
+                "zendframework/zend-servicemanager": "~2.1",
+                "zendframework/zend-stdlib": "~2.1",
+                "zendframework/zend-validator": "~2.1",
+                "zendframework/zend-view": "~2.1",
                 "zf-commons/zfc-base": "0.*"
             },
             "suggest": {
                 "zendframework/zend-session": "To use the default authentication adapter."
             },
             "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "0.1.x-dev"
+                }
+            },
             "autoload": {
                 "psr-0": {
                     "ZfcUser": "src/"
@@ -565,7 +574,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-06-25 12:41:14"
+            "time": "2013-07-17 15:48:13"
         }
     ],
     "packages-dev": [
