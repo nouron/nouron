@@ -6,7 +6,5 @@
 #visualTechtree .span2 {border: 1px dotted #ddd}
 #visualTechtree .grid .row-fluid{ margin-bottom: 50px; }
 
-line.building {
-    border: 2px solid red;
-}
-
+line.building { border: 2px solid red;}
+#visualTechtree a.bar:hover {cursor:pointer}

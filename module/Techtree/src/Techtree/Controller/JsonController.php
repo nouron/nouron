@@ -68,10 +68,10 @@ class JsonController extends \Nouron\Controller\IngameController
         $colonyId = $this->params()->fromRoute('id');
         if (empty($colonyId)) {
 
-            $galaxyGw = $sm->get('Galaxy\Service\Gateway');
-            $colony = $galaxyGw->getCurrentColony();
-            $colonyId = $colony['id'];
-
+//             $galaxyGw = $sm->get('Galaxy\Service\Gateway');
+//             $colony = $galaxyGw->getCurrentColony();
+//             $colonyId = $colony['id'];
+            $colonyId = $this->getActive('colony');
         }
         $coloTechtree = $gw->getTechtreeByColonyId($colonyId);
         return new JsonModel($coloTechtree);

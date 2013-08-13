@@ -9,6 +9,8 @@ class Gateway extends \Nouron\Service\Gateway
     const ADVISOR_DIPLOMAT_TECHID = 90;
     const ADVISOR_CHIEFOFINTELLIGENCE = 94;
 
+    const DEFAULT_ACTIONPOINTS = 5;
+
     /**
      * get Requirements as array in the form:
      * requirements[$techId][$requiredTechId][$count];
@@ -47,7 +49,7 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param numeric $techId
+     * @param integer $techId
      * @return \Techtree\Entity\Technology
      */
     public function getTechnology($techId)
@@ -59,12 +61,26 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      * @return ResultSet
      */
-    public function getCosts()
+    public function getCosts($where = null, $order = null)
     {
-        return $this->getTable('cost')->fetchAll();
+        return $this->getTable('cost')->fetchAll($where = null, $order = null);
     }
 
     /**
+     *
+     * @param integer $techId
+     * @return ResultSet
+     */
+    public function getCostsForTechnology($techId)
+    {
+        $this->_validateId($techId);
+        return $this->getTable('cost')->fetchAll(array('tech_id' => $techId));
+    }
+
+    /**
+     *
+     * @param string|array $where
+     * @param string|array $order
      * @return ResultSet
      */
     public function getRequirements($where = null, $order = null)
@@ -74,7 +90,8 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param numeric $colonyId
+     * @param integer $colonyId
+     * @return array
      */
     public function getTechtreeByColonyId($colonyId)
     {
@@ -105,7 +122,7 @@ class Gateway extends \Nouron\Service\Gateway
             $checkReqs = $this->checkRequiredResourcesByTechId($id, $colonyId);
             if ($checkReqs == true) {
                 $techs[$id]['status'] = 'available';
-            } elseif ($techs[$id]['count'] > 0) {
+            } elseif ($techs[$id]['level'] > 0) {
                 $techs[$id]['status'] = 'inactive';
             } else {
                 $techs[$id]['status'] = 'not available';
@@ -118,7 +135,7 @@ class Gateway extends \Nouron\Service\Gateway
     /**
      * Abfrage der Voraussetzungen für eine Technologie
      *
-     * @param int $techId
+     * @param  integer $techId
      * @return ResultSet
      */
     public function getRequirementsByTechnologyId($techId)
@@ -131,7 +148,7 @@ class Gateway extends \Nouron\Service\Gateway
      * Get the costs of the given technology.
      *
      * @param  integer $techId
-     * @return Costs
+     * @return ResultSet
      */
     public function getCostsByTechnologyId($techId)
     {
@@ -153,7 +170,7 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param  numeric $userId
+     * @param  integer $userId
      * @return \Techtree\Model\Possessions
      */
     public function getPossessionsByUserId($userId)
@@ -182,33 +199,258 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param  numeric $colonyId
-     * @param  numeric $techId
-     * @param  string $order
+     * @param  integer $techId
+     * @param  integer $colonyId
+     * @param  integer $ap
      * @return boolean
      */
-    public function order($colonyId, $techId, $order, $ap)
+    private function _addActionPointsForLevelUp($colonyId, $techId, $ap)
     {
+        $this->_validateId($colonyId);
         $this->_validateId($techId);
+
+        // check if enough action points are available
+        $techTable = $this->getTable('technology');
+        $tech = $techTable->getEntity($techId);
+        $availableAp = $this->getAvailableActionPoints($tech->type, $colonyId);
+
+        $result = false;
+        if ($availableAp >= $ap) {
+            $this->getLogger()->log(
+                \Zend\Log\Logger::INFO,
+                "add $ap action points to technology $techId on colony $colonyId"
+            );
+            $table = $this->getTable('possession');
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+
+                $table = $this->getTable('possession');
+                $poss = $table->getEntity(array(
+                    'colony_id' => $colonyId,
+                    'tech_id' => $techId,
+                ));
+                if (empty($poss)) {
+                    $poss = array(
+                        'colony_id' => $colonyId,
+                        'tech_id' => $techId,
+                        'ap_spend' => 0
+                    );
+                } else {
+                    $poss = $poss->getArrayCopy();
+                }
+                $poss['ap_spend'] += (int) $ap;
+                $result = $table->save($poss);
+
+                # lock action points
+                $this->_lockActionPoints($tech->type, $colonyId, $ap);
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+
+            } catch(Exception $e) {
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::ERROR,
+                    "levelup failed for technology $techId on colony $colonyId"
+                );
+
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+            }
+        }
+
+        return (bool) $result;
+    }
+
+    /**
+     * Remove action points as a prepartion for leveldown.
+     * ATTENTION: this does NOT reduce the amount of spended ap for levelup.
+     *
+     * @param  integer $techId
+     * @param  integer $colonyId
+     * @param  integer $ap
+     * @return boolean
+     */
+    private function _addActionPointsForLevelDown($colonyId, $techId, $ap)
+    {
+        $this->getLogger()->log(
+            \Zend\Log\Logger::INFO,
+            "remove $ap action points to technology $techId on colony $colonyId"
+        );
+
+        $ap = abs((int) $ap);
+        $result = $this->_changeStatus($colonyId, $techId, -$ap);
+
+        return (bool) $result;
+    }
+
+    /**
+     *
+     * @param  integer $techId
+     * @param  integer $colonyId
+     * @param  integer $ap
+     * @return boolean
+     */
+    private function _addActionPointsForRepair($colonyId, $techId, $ap)
+    {
+        $this->getLogger()->log(\Zend\Log\Logger::INFO, "repair technology $techId on
+                           colony $colonyId with $ap action points");
+
+        $ap = abs((int) $ap);
+        $costs = $this->getCostsForTechnology($techId);
+        $result = $this->_changeStatus($colonyId, $techId, $ap, $costs);
+
+        return (bool) $result;
+    }
+
+    /**
+     *
+     * @param  integer $colonyId
+     * @param  integer $techId
+     * @param  integer $ap
+     * @return boolean
+     */
+    private function _changeStatus($colonyId, $techId, $ap)
+    {
+        $this->_validateId($colonyId);
+        $this->_validateId($techId);
+
+        $result = false;
+        // check if enough action points are available
+        $techTable = $this->getTable('technology');
+        $tech = $techTable->getEntity($techId);
+        $availableAP = $this->getAvailableActionPoints($tech->type, $colonyId);
+
+        if ($availableAP >= $ap) {
+            $table = $this->getTable('possession');
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+
+                # save new possession level
+                $poss = $table->getEntity(array(
+                    'colony_id' => $colonyId,
+                    'tech_id' => $techId,
+                ));
+                $poss->status_points += (int) $ap;
+                $result = $table->save($poss);
+
+                # pay Costs (only if repair -> that means positive action points)
+                if ($ap > 0) {
+                    $costs = $this->getCostsForTechnology($techId);
+                    if (!empty($costs)) {
+                        $costs = $costs->getArrayCopy('resource_id');
+                        $repairCosts = $costs;
+                        foreach ($costs as $resId => $cost) {
+                            $repairCosts[$resId]['amount'] = floor($cost['amount']/$tech->max_status_points);
+                        }
+                        $this->getLogger()->log(
+                            \Zend\Log\Logger::INFO,
+                            'Pay resources for repair: ' . serialize($repairCosts)
+                        );
+                        $resourcesGw = $this->getService('resources');
+                        $resourcesGw->payCosts($repairCosts, $colonyId);
+                    }
+                }
+
+                # lock action points
+                $this->_lockActionPoints($tech->type, $colonyId, $ap);
+
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::INFO,
+                    'Change technology status for technology ' . $techId . ' on colony ' . $colonyId . ' failed'
+                );
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+            }
+        }
+
+        return (bool) $result;
+    }
+
+    /**
+     * lock used action points for current tick
+     *
+     * @param string $type
+     * @param integer $colonyId
+     * @param integer $ap
+     * @return boolean
+     */
+    private function _lockActionPoints($type, $colonyId, $ap)
+    {
         $this->_validateId($colonyId);
 
-        switch ($order) {
-            case 'add':    return $this->technologyLevelUp($techId, $colonyId);
-                           break;
-            case 'remove': return $this->technologyLevelDown($techId, $colonyId);
-                           break;
-            case 'repair': return $this->technologyLevelRepair($techId, $colonyId);
-                           break;
-            case 'cancel': return $this->cancelOrders($techId, $colonyId);
-                           break;
-            default:       // TODO
-                           break;
+        $tick = $this->getTick();
+        $table = $this->getTable('log_actionpoints');
+        $techId = $this->_getPersonellIdByTechType($type);
+        $entity = $table->getEntity(array(
+            'tick' => $tick,
+            'colony_id' => $colonyId,
+            'personell_tech_id' => $techId
+        ));
+
+        if (empty($entity)) {
+            $entity = array(
+                'tick' => $tick,
+                'colony_id' => $colonyId,
+                'personell_tech_id' => $techId,
+                'spend_ap' => 0
+            );
+        } else {
+            $entity = $entity->getArrayCopy();
         }
+
+        $entity['spend_ap'] += abs((int) $ap);
+
+        $this->getLogger()->log(
+            \Zend\Log\Logger::INFO,
+            serialize($entity)
+        );
+
+        return $table->save($entity);
 
     }
 
     /**
-     * Add an order to raise/lower/repair the technology level within the following ticks.
+     *
+     * @param  integer $colonyId
+     * @param  integer $techId
+     * @param  string $order
+     * @return boolean
+     */
+    public function order($colonyId, $techId, $order, $ap = null)
+    {
+        $this->_validateId($colonyId);
+        $this->_validateId($techId);
+
+        $ap = empty($ap) ? 1 : $ap;
+
+        switch (strtolower($order)) {
+            case 'levelup':
+                $result = $this->_performLevelUp($colonyId, $techId);
+                break;
+            case 'leveldown':
+                $result = $this->_performLevelDown($colonyId, $techId);
+                break;
+            case 'repair':
+                $result = $this->_addActionPointsForRepair($colonyId, $techId, $ap);
+                break;
+            case 'add':
+                $result = $this->_addActionPointsForLevelUp($colonyId, $techId, $ap);
+                break;
+            case 'remove':
+                $result = $this->_addActionPointsForLevelDown($colonyId, $techId, $ap);
+                break;
+            default:
+                $result = false;
+                break;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Immidiatly change the level of the technology level after checking
+     * requirements.
      *
      * Checks if all requirements for technology level up are fullfilled
      * (technology dependencies, resources,..). If the check is true  1 technology
@@ -216,22 +458,16 @@ class Gateway extends \Nouron\Service\Gateway
      * is thrown.
      *
      * what this function does:
-     *      - check if order already exists
      *      - check if maximum is reached
      *      - check technology requirements for levelup
      *      - check resource requirements for levelup
      *      - if all checks are succesfull:
      *          - pay the costs of that technology level up
-     *          - if tech is an advisor:
-     *              - add a level immediatly
-     *          - else:
-     *              - store an order to add 1 level
+     *          - add a level to the technology
+     *          - clear invested action points
      *      - else:
      *          - throws exception
      *      - throws exception if an error occurs
-     *
-     * what this function NOT does:
-     *      - add a level immediatly for a technology that is not an advisor
      *
      * @param  integer  $techId     Which technology...
      * @param  integer  $colonyId   ... on which colony
@@ -239,9 +475,102 @@ class Gateway extends \Nouron\Service\Gateway
      * @throws \Techtree\Service\Exception  if invalid parameter(s)
      * @throws \Techtree\Service\Exception  if one of the checks was negative
      */
-    private function technologyLevelUp($techId, $colonyId)
+    private function _performLevelUp($colonyId, $techId)
     {
-        $this->logger->log(\Zend\Log\Logger::INFO, "add one level to technology $techId on colony $colonyId");
+        $this->_validateId($colonyId);
+        $this->_validateId($techId);
+
+        $this->getLogger()->log(
+            \Zend\Log\Logger::INFO,
+            "add one level to technology $techId on colony $colonyId"
+        );
+
+        $tech = $this->getTechnology($techId);
+        if ( is_null($tech) ) {
+            throw new \Techtree\Service\Exception('exception_unknowntechnology_id');
+        }
+
+        // check if maxlevel is reached
+        $poss = $this->getPossessionByTechnologyId($techId, $colonyId);
+        $possessLevel = $poss->level;
+        $maxLevel  = (int) $tech->max_level;
+
+        if ( $maxLevel > 0 && $possessLevel >= $maxLevel ) {
+            throw new \Techtree\Service\Exception('exception_maximumreached '.$maxLevel.' '.$possessLevel);
+        }
+
+        // check techtree requirements
+        if ( !($this->checkRequiredTechsByTechId($techId, $colonyId)) ) {
+            throw new \Techtree\Service\Exception('exception_failed_requirements');
+        }
+
+        // check if player colony has enough resources
+        if ( !($this->checkRequiredResourcesByTechId($techId, $colonyId)) ) {
+            throw new \Techtree\Service\Exception('exception_NotEnoughResources');
+        }
+        $totalAP = $this->getTotalActionPoints($tech->type, $colonyId);
+        $availableAP = $this->getAvailableActionPoints($tech->type, $colonyId);
+
+        if ($tech->ap_for_levelup == 0 or ($poss->ap_spend >= $tech->ap_for_levelup)) {
+            $table = $this->getTable('possession');
+            try {
+                # No levelup without paying resources! So we have to use a
+                # transaction and rollback all changes in case of an error
+
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+                $poss->level += 1;
+                $poss->ap_spend = 0; # reset action points
+                $poss->status_points = $tech->max_status_points; # reset status points
+                $result = $table->save($poss);
+
+                $costs = $this->getCostsForTechnology($techId);
+                $resourcesGw = $this->getService('resources');
+
+                $resourcesGw->payCosts($costs, $colonyId);
+
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                # rollback transaction
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::ERROR,
+                    "failed levelup for $techId on colony $colonyId"
+                );
+            }
+        } else {
+            throw new \Techtree\Service\Exception('exception_NotEnoughInvestedActionPoints');
+        }
+
+        return (bool) $result;
+    }
+
+    /**
+     * Check requirements and reduce technology level by 1.
+     *
+     * what this function does:
+     *      - check if minimum is reached
+     *      - if check is successfull:
+     *          - reduce 1 level
+     *      - else:
+     *          - throws exception
+     *      - throws exception if an error occurs
+     *
+     * @param  integer $colonyId
+     * @param  integer $techId
+     * @throws \Techtree\Service\Exception
+     * @return boolean
+     */
+    private function _performLevelDown($colonyId, $techId)
+    {
+        $this->_validateId($colonyId);
+        $this->_validateId($techId);
+
+        $this->getLogger()->log(
+            \Zend\Log\Logger::INFO,
+            "remove one level from technology $techId on colony $colonyId"
+        );
 
         $tech = $this->getTechnology($techId);
         if ( is_null($tech) ) {
@@ -251,222 +580,40 @@ class Gateway extends \Nouron\Service\Gateway
         // check if maxlevel is reached
         $poss = $this->getPossessionByTechnologyId($techId, $colonyId);
         $possessLevel = $poss->level;
-        $maxLevel  = $tech->max_level;
 
-        if ( !is_null($maxLevel) && $possessLevel >= $maxLevel ) {
-            throw new \Techtree\Service\Exception('exception_MaximumReached '.$maxLevel.' '.$possessLevel);
+        if ( $possessLevel <= 0 ) {
+            throw new \Techtree\Service\Exception(
+                'exception_MinimumReached ' . $maxLevel . ' ' . $possessLevel
+            );
         }
 
-        // check techtree requirements
-        if ( ! ($this->checkRequiredTechsByTechId($techId, $colonyId)) ) {
-            throw new \Techtree\Model\Exception('exception_FailRequirements');
-        }
-
-        // check if player colony has enough resources
-        if ( ! ($this->checkRequiredResourcesByTechId($techId, $colonyId)) ) {
-            throw new \Techtree\Service\Exception('exception_NotEnoughResources');
-        }
         $totalAP = $this->getTotalActionPoints($tech->type, $colonyId);
         $availableAP = $this->getAvailableActionPoints($tech->type, $colonyId);
 
-        if ($tech->ap_for_levelup > 0 and $availableAP > 0)
-        {
-            $order = $this->getOrderByTechnologyId($techId , $colonyId);
-            $apOrdered = ($order) ? $order->ap_ordered : 0;
-            $apSpendBefore = ($poss) ? $poss->ap_spend : 0;
-
-            if ($apSpendBefore + $apOrdered + 1 >= $tech->ap_for_levelup) {
-                // pay Costs when levelup is ready:
-                $costs = $this->getCostsByTechnologyId($techId);
-                $this->getService('resources')->payCosts($costs, $colonyId);
-            }
-
-            $order = array(
-                'tick'   => $this->tick,
-                'colony_id' => $colonyId,
-                'tech_id' => $techId,
-                'order' => 'add',
-                'ap_ordered' => $apOrdered+1,
-                'is_final_step' => 0, // ??
-            );
-            $table = $this->getTable('order');
-            $result = $table->save($order);
-
-        } elseif ($tech->ap_for_levelup == 0) {
-            // build immediately => only hire/fire advisors!
+        if ($poss->status_points <= 0 or $tech->type == 'advisor') {
             $table = $this->getTable('possession');
-            $possess = $table->fetchAll(array(
-                'colony_id' => $colonyId,
-                'tech_id' => $techId,
-            ));
-            foreach ($possess as $poss) {
-                $poss->level = $poss->level + 1;
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+                $poss->level -= 1;
+                $poss->ap_spend = 0; # reset action points
+                $poss->status_points = $tech->max_status_points; # reset status points
                 $result = $table->save($poss);
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                # rollback transaction
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::ERROR,
+                    "failed leveldown for $techId on colony $colonyId"
+                );
             }
+        } else {
+            throw new \Techtree\Service\Exception('exception_NotEnoughInvestedActionPoints');
         }
-
-//        $cache = $this->getServiceLocator()->get('cache');
-//        $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
 
         return (bool) $result;
-    }
-
-    /**
-     * Check requirements and add an order to reduce technology level by 1.
-     *
-     * what this function does:
-     *      - check if minimum is reached
-     *      - if check is successfull:
-     *          - store an order to reduce 1 level
-     *      - else:
-     *          - throws exception
-     *      - throws exception if an error occurs
-     *
-     * what this function NOT does:
-     *      - reduce a level immediatly
-     *
-     * @param  integer $techId
-     * @param  integer $colonyId
-     * @return boolean
-     * @throws \Techtree\Model\Exception   if invalid parameter(s)
-     */
-    private function technologyLevelDown($techId, $colonyId, $ap)
-    {
-        $this->_validateId($techId);
-        $this->_validateId($colonyId);
-
-        // check if 0 is reached
-        $possessLevel = $this->getLevelByTechnologyId($techId,$colonyId);
-        if ( $possessLevel <= 0 ) {
-            throw new Exception('exception_MinimumReached');
-        }
-
-        // create the order and save it:
-        // (it is always just 1tick)
-        $order = $this->createOrder(array(
-            'tick' => $this->tick,
-            'colony_id' => $colonyId,
-            'tech_id' => $techId,
-            'order' => 'remove',
-            'ap_ordered' => 1,
-            'is_final_step' => 1,
-        ));
-        $result = $order->save();
-        return (bool) $result;
-    }
-
-    /**
-     *
-     * @param unknown $techId
-     * @param unknown $colonyId
-     * @return boolean
-     */
-    private function cancelOrders($techId, $colonyId)
-    {
-        $this->_validateId($techId);
-        $this->_validateId($colonyId);
-
-        $entity = array(
-            'tick' => $this->tick,
-            'tech_id' => $techId,
-            'colony_id' => $colonyId
-        );
-        $table = $this->getTable('order');
-        $result = $table->delete($entity);
-        return (bool) $result;
-    }
-
-    /**
-     * Increase Tech Amount immediately without giving an order!
-     * ATTENTION: use "technologyLevelUp/Down"-functions for techtree actions instead
-     *
-     * @param integer $colonyId
-     * @param integer $techId
-     * @param integer $amount
-     */
-    public function increaseAmount($colonyId, $techId, $amount)
-    {
-        $this->_validateId($colonyId);
-        $this->_validateId($techId);
-        $amount = (int) $amount;
-
-        $table = $this->getTable('possessions');
-        $row = $table->fetchRow("colony_id = $colonyId AND tech_id = $techId");
-        if ( !empty($row) ){
-            //update
-            $row = $row->getArrayCopy();
-            $data = $row['count'] + $amount;
-            $data  = array('count' => $data);
-            $where = array(
-                $table->getAdapter()->quoteInto('colony_id = ?', $colonyId),
-                $table->getAdapter()->quoteInto('tech_id = ?', $techId)
-            );
-            $result = $table->update($data,$where);
-        }
-        else {
-            //insert
-            $data = array(
-                'colony_id'   => $colonyId,
-                'tech_id' => $techId,
-                'count'    => $amount
-            );
-
-            $result = $table->insert($data);
-        }
-
-//         $cache = $this->getServiceLocator()->get('cache');
-//         $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','possessions'));
-
-        return (bool) $result;
-    }
-
-    /**
-     *
-     * @param $colonyId
-     * @param $techId
-     * @param $amount
-     */
-    public function decreaseAmount($colonyId, $techId, $amount)
-    {
-        return $this->increaseAmount($colonyId, $techId, -$amount);
-    }
-
-    /**
-     * Cancel Order.
-     * - if actual tick: give back the resources
-     * - @TODO else: give back half resources
-     * - cancel the order
-     *
-     * @param int $techId
-     * @param int $colonyId
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
-     */
-    public function cancelOrder($techId, $colonyId, $includePast = false)
-    {
-        $this->_validateId($techId);
-        $this->_validateId($colonyId);
-
-        $where = "tech_id = $techId AND colony_id = $colonyId";
-        if ( $includePast !== true ) {
-            $where .= " AND tick >= " . $this->tick;
-        }
-        $orders = $this->getOrders($where);
-
-        if ($orders->valid() AND $orders->tick >= $tick) {
-            // give back the payed resources:
-            $costs = $this->getCostsByTechnologyId($techId);
-            $resourcesGW = new \Resources\Model\Gateway();
-            $resourcesGW->returnCosts($costs, $colonyId);
-        }
-
-        while ( $orders->valid() ) {
-            $orders->current()->delete();
-            $orders->next();
-        }
-
-//        $cache = $this->getServiceLocator()->get('cache');
-//        $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
-//        $cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','possessions'));
     }
 
     /**
@@ -517,8 +664,8 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param unknown $techId
-     * @param unknown $colonyId
+     * @param  integer $techId
+     * @param  integer $colonyId
      * @return mixed|NULL
      */
     public function getPossessionByTechnologyId($techId, $colonyId)
@@ -554,118 +701,11 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param  integer $colonyId
-     * @return ResultSet
-     */
-    public function getOrders($where = null, $order = null, $count = null, $offset = null)
-    {
-        $dbTable = $this->getTable('order');
-        return $dbTable->fetchAll($where, $order, $count, $offset);
-    }
-
-    /**
-     * get order by technology id for current tick
-     *
-     * @param unknown $techId
-     * @param unknown $colonyId
-     * @return mixed|NULL
-     */
-    public function getOrderByTechnologyId($techId, $colonyId)
-    {
-        $this->_validateId($techId);
-        $this->_validateId($colonyId);
-
-        $tick = $this->getTick();
-        $dbTable = $this->getTable('order');
-        $rowset = $dbTable->fetchAll("tick = $tick AND tech_id = $techId AND colony_id = $colonyId");
-        if ($rowset->valid() and $rowset->count() > 0) {
-            return $rowset->current();
-        }
-        return null;
-    }
-
-    /**
-     * Get the maximum amount of building orders. This is depending on the amount
-     * of engineers the player has. Without any engineers maximum is one order.
-     * Every engineer brings one possible order more.
-     *
-     * @param  integer $colonyId
+     * @param  string $type
      * @return integer
      */
-    public function getMaxBuildingOrders($colonyId)
+    private function _getPersonellIdByTechType($type)
     {
-        return $this->_getMaxOrders('building', $colonyId);
-    }
-
-    /**
-     * Get the maximum amount of research orders. This is depending on the amount
-     * of scientists the player have. Without any scientist no research is possible.
-     * Every scientist brings one possible order more.
-     *
-     * @param  integer $colonyId
-     * @return integer
-     */
-    public function getMaxResearchOrders($colonyId)
-    {
-        return $this->_getMaxOrders('research', $colonyId);
-    }
-
-    /**
-     * Get the maximum amount of research orders. This is depending on the amount
-     * of scientists the player have. Without any scientist no research is possible.
-     * Every scientist brings one possible order more.
-     *
-     * @param  integer $colonyId
-     * @return integer
-     */
-    public function getMaxFleetOrders($colonyId)
-    {
-        return $this->_getMaxOrders('fleet', $colonyId);
-    }
-
-    /**
-     * Get the maximum amount of diplomats.
-     *
-     * @param  integer $colonyId
-     * @return integer
-     */
-    public function getMaxDiplomacyOrders($userId)
-    {
-        $galaxyGw = new \Galaxy\Model\Gateway();
-        try {
-            $colony =  $galaxyGw->getColonyByUserId($userId);
-            return $this->_getMaxOrders('diplomacy', $colony->id);
-        } catch (\Galaxy\Model\Exception $e) {
-            return 0;
-        }
-    }
-
-    /**
-     *
-     * @param numeric $userId
-     * @return numeric
-     */
-    public function getMaxSpyActions($userId)
-    {
-        $galaxyGw = new \Galaxy\Model\Gateway();
-        try {
-            $colony = $galaxyGw->getColonyByUserId($userId);
-            return $this->_getMaxOrders('spy', $colony->id);
-        } catch (\Galaxy\Model\Exception $e) {
-            return 0;
-        }
-    }
-
-    /**
-     *
-     * @param  string  $type
-     * @param  integer $colonyId
-     * @return number|number
-     */
-    protected function getTotalActionPoints($type, $colonyId)
-    {
-        $this->_validateId($colonyId);
-
         switch (strtolower($type)) {
             case 'building':  $techId = self::ADVISOR_ENGINEER_TECHID; break;
             case 'research':  $techId = self::ADVISOR_SCIENTIST_TECHID; break;
@@ -675,10 +715,21 @@ class Gateway extends \Nouron\Service\Gateway
             case 'spy':       $techId = self::ADVISOR_CHIEFOFINTELLIGENCE; break;
             default:  $techId = self::ADVISOR_ENGINEER_TECHID; break;
         }
+        return $techId;
+    }
 
-        $level = $this->getLevelByTechnologyId($techId, $colonyId);
-
-        return ( $level+1 );
+    /**
+     *
+     * @param  string  $type
+     * @param  integer $colonyId
+     * @return number
+     */
+    public function getTotalActionPoints($type, $colonyId)
+    {
+        $this->_validateId($colonyId);
+        $personellTechId = $this->_getPersonellIdByTechType($type);
+        $level = $this->getLevelByTechnologyId($personellTechId, $colonyId);
+        return ( $level * self::DEFAULT_ACTIONPOINTS + self::DEFAULT_ACTIONPOINTS );
     }
 
     /**
@@ -686,31 +737,40 @@ class Gateway extends \Nouron\Service\Gateway
      *
      * @param  string  $type
      * @param  integer $colonyId
-     * @return number|number
+     * @return number
      */
-    protected function getAvailableActionPoints($type, $colonyId)
+    public function getAvailableActionPoints($type, $colonyId)
     {
         $this->_validateId($colonyId);
 
         $totalAP = $this->getTotalActionPoints($type, $colonyId);
+        $techId  = $this->_getPersonellIdByTechType($type);
 
-        $orders = $this->getTable('order')->fetchAll(array('tick'=>$this->tick,'colony_id'=>$colonyId));
+        $data = array(
+                    'tick' => $this->tick,
+                    'colony_id' => $colonyId,
+                    'personell_tech_id' => $techId
+                );
 
-        $usedAP = 0;
-        foreach ($orders as $order) {
-            $usedAP += $order->ap_ordered;
+        $loggedActionpoints = $this->getTable('log_actionpoints')
+                                   ->getEntity($data);
+
+        if ( empty($loggedActionpoints) ) {
+            $loggedActionpoints = new \Techtree\Entity\ActionPoint($data);
         }
 
-        return ( $totalAP-$usedAP+1 );
+        $usedAP = $loggedActionpoints->spend_ap;
+
+        return ( $totalAP - $usedAP);
     }
 
     /**
      *
-     * @param  numeric $userId
+     * @param  integer $userId
      * @return array
      */
-    public function countTechsByType($userId) {
-
+    public function countTechsByType($userId)
+    {
         $result = array(
             'buildings' => 0,
             'research' => 0,
@@ -722,10 +782,10 @@ class Gateway extends \Nouron\Service\Gateway
 
         while ($possessions->valid()) {
             switch ($possessions->type) {
-                case 'building': $result['buildings'] += $possessions->count; break;
-                case 'research': $result['research']  += $possessions->count; break;
-                case 'ships':    $result['ships']     += $possessions->count; break;
-                case 'advisor':  $result['advisors']  += $possessions->count; break;
+                case 'building': $result['buildings'] += $possessions->level; break;
+                case 'research': $result['research']  += $possessions->level; break;
+                case 'ships':    $result['ships']     += $possessions->level; break;
+                case 'advisor':  $result['advisors']  += $possessions->level; break;
                 default: break;
             }
             $possessions->next();
@@ -737,10 +797,11 @@ class Gateway extends \Nouron\Service\Gateway
 
     /**
      *
-     * @param  numeric $userId
+     * @param  integer $userId
      * @return array
      */
-    public function countTechsByPurpose($userId) {
+    public function countTechsByPurpose($userId)
+    {
         $result = array(
             'civil' => 0,
             'industry' => 0,
@@ -753,11 +814,11 @@ class Gateway extends \Nouron\Service\Gateway
 
         while ($possessions->valid()) {
             switch ($possessions->purpose) {
-                case 'civil':     $result['civil']    += $possessions->count; break;
-                case 'industry':  $result['industry'] += $possessions->count; break;
-                case 'economy':   $result['economy']  += $possessions->count; break;
-                case 'politics':  $result['politics'] += $possessions->count; break;
-                case 'military':  $result['military'] += $possessions->count; break;
+                case 'civil':     $result['civil']    += $possessions->level; break;
+                case 'industry':  $result['industry'] += $possessions->level; break;
+                case 'economy':   $result['economy']  += $possessions->level; break;
+                case 'politics':  $result['politics'] += $possessions->level; break;
+                case 'military':  $result['military'] += $possessions->level; break;
                 default: break;
             }
             $possessions->next();
@@ -766,94 +827,94 @@ class Gateway extends \Nouron\Service\Gateway
         return $result;
     }
 
-    /**
-     *
-     * @param numeric $userId
-     * @param numeric $sinceTick
-     */
-    public function getProcessedOrders($userId, $sinceTick = null)
-    {
-        $this->_validateId($userId);
+//     /**
+//      *
+//      * @param integer $userId
+//      * @param integer $sinceTick
+//      */
+//     public function getProcessedOrders($userId, $sinceTick = null)
+//     {
+//         $this->_validateId($userId);
 
-        $lastTick = $this->tick - 1;
+//         $lastTick = $this->tick - 1;
 
-        if ( !is_numeric($sinceTick) ) {
-            $sinceTick = $lastTick;
-        }
+//         if ( !is_numeric($sinceTick) ) {
+//             $sinceTick = $lastTick;
+//         }
 
-        $galaxyGateway = new \Galaxy\Model\Gateway();
-        $colonies = $galaxyGateway->getColoniesByUserId($userId);
+//         $galaxyGateway = new \Galaxy\Model\Gateway();
+//         $colonies = $galaxyGateway->getColoniesByUserId($userId);
 
-        if ($colonies->count() == 1) {
-            $whereColo = "colony_id = $colonies->id";
-        } else {
-            while ($colonies->valid()) {
-                $colonyIds[] = $colonies->id;
-                $colonies->next();
-            }
-            $colonyIds = implode($colonyIds, ',');
-            $whereColo = "colony_id IN ($colonyIds)";
-        }
+//         if ($colonies->count() == 1) {
+//             $whereColo = "colony_id = $colonies->id";
+//         } else {
+//             while ($colonies->valid()) {
+//                 $colonyIds[] = $colonies->id;
+//                 $colonies->next();
+//             }
+//             $colonyIds = implode($colonyIds, ',');
+//             $whereColo = "colony_id IN ($colonyIds)";
+//         }
 
-        return $this->getOrders("$whereColo AND tick >= $sinceTick AND tick <= $lastTick AND is_final_step = 1 AND was_processed");
-    }
+//         return $this->getOrders("$whereColo AND tick >= $sinceTick AND tick <= $lastTick AND is_final_step = 1 AND was_processed");
+//     }
 
-    /**
-     * Find all processed orders and notify innn and eventDispatcher about them.
-     * Set is_notified to true to avoid a double notification.
-     *
-     * - set innn events
-     * - set event dispatcher events
-     *
-     * @param numeric $userId
-     */
-    public function notifyAboutProcessedOrders($userId)
-    {
-        $this->_validateId($userId);
+//     /**
+//      * Find all processed orders and notify innn and eventDispatcher about them.
+//      * Set is_notified to true to avoid a double notification.
+//      *
+//      * - set innn events
+//      * - set event dispatcher events
+//      *
+//      * @param integer $userId
+//      */
+//     public function notifyAboutProcessedOrders($userId)
+//     {
+//         $this->_validateId($userId);
 
 
-        $innnGw = new \Innn\Model\Gateway();
-        $orders = $this->getProcessedOrders($userId);
+//         $innnGw = new \Innn\Model\Gateway();
+//         $orders = $this->getProcessedOrders($userId);
 
-        $tick = $this->tick;
-//         $cache = $this->getServiceLocator()->get('cache');
+//         $tick = $this->tick;
+// //         $cache = $this->getServiceLocator()->get('cache');
 
-        while ( $orders->valid() ) {
+//         while ( $orders->valid() ) {
 
-            if ( $orders->is_notified == 0 ) {
+//             if ( $orders->is_notified == 0 ) {
 
-                $order = $orders->current();
+//                 $order = $orders->current();
 
-                if ( $order->order == 'sub' ) {
-                    $event = 'techtree.level_down_finished';
-                } else {
-                    $event = 'techtree.level_up_finished';
-                }
+//                 if ( $order->order == 'sub' ) {
+//                     $event = 'techtree.level_down_finished';
+//                 } else {
+//                     $event = 'techtree.level_up_finished';
+//                 }
 
-                // set innn event:
-                $data = array(
-                    'user_id' => $userId,
-                    'tick' => $tick,
-                    'event' => $event,
-                    'parameters' => serialize(array('tech_id' => $order->tech_id, 'colony_id' => $order->colony_id))
-                );
+//                 // set innn event:
+//                 $data = array(
+//                     'user_id' => $userId,
+//                     'tick' => $tick,
+//                     'event' => $event,
+//                     'parameters' => serialize(array('tech_id' => $order->tech_id, 'colony_id' => $order->colony_id))
+//                 );
 
-                $innnEvent = $innnGw->createEvent($data);
-                $innnEvent->save();
+//                 $innnEvent = $innnGw->createEvent($data);
+//                 $innnEvent->save();
 
-                // notify event dispatcher:
-                $event = new sfEvent($this, $event );
-                $dispatcher = $this->getServiceLocator()->get('eventDispatcher');
-                $dispatcher->notify($event);
+//                 // notify event dispatcher:
+//                 $event = new sfEvent($this, $event );
+//                 $dispatcher = $this->getServiceLocator()->get('eventDispatcher');
+//                 $dispatcher->notify($event);
 
-                $order->is_notified = 1;
-                $order->save();
+//                 $order->is_notified = 1;
+//                 $order->save();
 
-                //$cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
-            }
-            $orders->next();
-        }
-    }
+//                 //$cache->clean(Zend_Cache::CLEANING_MODE_MATCHING_TAG, array('techtree','orders'));
+//             }
+//             $orders->next();
+//         }
+//     }
 
     /**
      *

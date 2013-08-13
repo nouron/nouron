@@ -10,10 +10,10 @@ $(document).ready(function(){
      function draw_requirement(src, trgt, type, required_tech_count, tech_count)
      {
          fullfilled = false;
-         if (tech_count && tech_count >= required_tech_count) {
+         if (parseInt(tech_count) >= parseInt(required_tech_count)) {
              fullfilled = true;
          }
-       
+
          var srcid = src.parent().attr('id').replace('grid-','');
          var trgtid = trgt.parent().attr('id').replace('grid-','');
          var srcpos = src.position();
@@ -37,57 +37,66 @@ $(document).ready(function(){
          target_height = trgt.outerHeight();
        
          ya = source_top + source_height;
-         yb = source_top + source_height+10;
+         yb = source_top + source_height + 20;
          yc = target_top - target_height;
-         yd = target_top-20;
+         yd = target_top - 20;
          ye = target_top;
 
-         xa = source_left + Math.round(source_width/6) * target_x;
+         xa = source_left + Math.round(source_width/2);
          xe = target_left + Math.round(target_width/2);
 
-         unique_positioner = (source_x*2+target_x*2+source_y+target_y);
+         unique_positioner = Math.abs(source_y-1)*6 + source_x + source_y + target_x*3 + target_y*3;
          
-         if (target_x <= source_x ) {
-             xb = xc = target_left + target_width  + unique_positioner - 50;
-         } else {
-             xb = xc = target_left - unique_positioner  - 50;
-         }
+         xb = xc = target_left + target_width  + unique_positioner;
 
          switch (type) {
-             case 'building': stroke_color = fullfilled ? '#669' : '#99f';
+             case 'building': stroke_color = '#99d';
                               break;
-             case 'research': stroke_color = fullfilled ? '#696' : '#9f9';
+             case 'research': stroke_color = '#9d9';
                               break;
-             case 'ship': stroke_color = fullfilled ? '#bb5' : '#dd7';
+             case 'ship': stroke_color = '#cc7';
                           break;
-             default: stroke_color = fullfilled ? '#666' : '#aaa';
+             default: stroke_color = '#666';
                       break;
          }
 
          var group = makeSVG('g', {title: src.attr('id') + ' to ' + trgt.attr('id')});
-         
-         x_modifier = Math.round(source_width / 6) - 3;
-         //xa = xb = xc = source_left + target_x * x_modifier;
-         xd = xe = target_left + source_x * x_modifier + unique_positioner;
+         xd = xe = target_left + unique_positioner;
 
-         if (source_y == target_y-1) {
-             if (source_x != target_x) {
-                 d1 = xa + ',' + ya;
-                 d2 = xe + ',' + yb;
-                 d3 = xe + ',' + ye;
-                 d = d1 + ' ' + d2 + ' ' + d3;
-                 group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
-             } else {
-                 group.appendChild(makeSVG('line', {x1:xe, y1:ya, x2:xe, y2:ye, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
+         if (source_x == target_x && source_y == target_y-1) {
+             xe = target_left + Math.round(target_width/2);
+             var params = {
+                     x1:xe,
+                     y1:ya,
+                     x2:xe,
+                     y2:ye,
+                     stroke: stroke_color,
+                     'stroke-width': '3px',
+                     'fill-opacity':'0',
+                     'class':type
+             };
+             if (fullfilled == false) {
+                 params['stroke-dasharray'] = '5 5';
+                 params['stroke-width'] = '2px';
              }
+             group.appendChild(makeSVG('line', params));
          } else {
              d1 = xa + ',' + ya;
-             d2 = xb + ',' + yb;
-             d3 = xc + ',' + yc;
-             d4 = xd + ',' + yd;
-             d5 = xe + ',' + ye;
-             d = d1 + ' ' + d2 + ' ' + d3 + ' ' + d4 + ' ' + d5;
-             group.appendChild(makeSVG('polyline', {points: d, stroke: stroke_color, 'fill-opacity':'0', 'class':type}));
+             d2 = xe + ',' + yb;
+             d3 = xe + ',' + ye;
+             d = d1 + ' ' + d2 + ' ' + d3;
+             var params = {
+                 points: d,
+                 stroke: stroke_color,
+                 'stroke-width': '3px',
+                 'fill-opacity':'0',
+                 'class':type
+             };
+             if (fullfilled == false) {
+                 params['stroke-dasharray'] = '5 5';
+                 params['stroke-width'] = '2px';
+             }
+             group.appendChild(makeSVG('polyline', params));
          }
          
          d1 = String(xe-4) + ',' + String(ye-8);
@@ -97,17 +106,8 @@ $(document).ready(function(){
          
          group.appendChild(makeSVG('polyline', {points: d, fill: stroke_color, 'class':type}));
 
-         text = makeSVG('text', {x:xe+5, y:ye-8,'font-size': '12px', fill: '#666', 'class':type}, required_tech_count);
+         text = makeSVG('text', {x:xe-12, y:ye-8,'font-size': '12px', fill: '#666', 'class':type}, required_tech_count);
          group.appendChild(text);
-
-//         test = makeSVG('rect', {x:0,y:0,'height':10, 'width':10, 'stroke':"black"});
-//         group.appendChild(test);
-//         test = makeSVG('rect', {x:300,y:0,'height':10, 'width':10, 'stroke':"black"});
-//         group.appendChild(test);
-//         test = makeSVG('rect', {x:600,y:0,'height':10, 'width':10, 'stroke':"black"});
-//         group.appendChild(test);
-//         test = makeSVG('rect', {x:900,y:0,'height':10, 'width':10, 'stroke':"black"});
-//         group.appendChild(test);
          
          document.getElementById('grid-svg').appendChild(group);
      }
@@ -123,20 +123,29 @@ $(document).ready(function(){
                      class_ = 'research';
                  } else if ($(this).hasClass( 'ship' )) {
                      class_ = 'ship';
+                 } else {
+                     class_ = 'advisor';
                  }
                  data = $(this).html().trim().split('-');
-                 techId = data[0];
-                 requiredTechId = data[1];
-                 req_count = data[2];
-                 count = data[3];
+                 techId = parseInt(data[0]);
+                 requiredTechId = parseInt(data[1]);
+                 req_count = parseInt(data[2]);
+                 count = parseInt(data[3]);
                  domSourceElem = $('#tech-' + requiredTechId);
                  domTargetElem = $('#tech-' + techId);
                  if (domSourceElem && domTargetElem) {
                      draw_requirement(domSourceElem, domTargetElem, class_, req_count, count);
                  }
              });
-         }, 300);
+         }, 100);
      }
+     
+    function reset_colors_for_bar_buttons() {
+        $('#techModal .progress a.bar i').parent().css({
+            'background-image': 'none',
+            'background-color': '#eee'
+        });
+    }
      
     /* moving technology divs to correct spots */
     $('.techdata').each(function(index) {
@@ -155,31 +164,45 @@ $(document).ready(function(){
         draw_requirements();
     });
     
-    $('#visualTechtree a.btn').click(function(e){
+    $('#visualTechtree a').live('click', function(e) {
         e.preventDefault();
-        techId = $(this).attr('id').replace('tech-','');
-        //$('#techModal').load('/techtree/tech/'+techId, null, function(){console.log("techModal loaded :D");});
+        if (!$(this).hasClass('disabled')) {
+            tmp = $(this).attr('id').split('|');
+            techId = tmp[0].replace('tech-','');
+            var url = '/techtree/tech/'+techId;
+            if ( tmp.length > 1) {
+                var order = tmp[1].split('-');
+                url = url + '/' + order[0];
+                if (order.length > 1) {
+                    url = url + '/' + order[1];
+                }
+            }
+            $('#techModal').load(url, null, function() {
+                console.log("techModal loaded :D");
+                reset_colors_for_bar_buttons();
+            });
+        }
     });
     
-    $('.modal-footer a').live('click', function(e) {
-        e.preventDefault();
-        $.getJSON(
-            $(this).attr('href'),
-            function(data) {
-                if (!data.result) {
-                    $('.modal-body').append('<p class="text-error">' + data.error + '</p>');
-
-                    $('.modal').modal({show:true});
-                } else {
-                    $('.modal').modal({show:false});
-                }
-            },
-            function(data) {
-                console.log('error in json request');
-            }
-        );
-
-    });
+//    $('.modal-footer a').live('click', function(e) {
+//        e.preventDefault();
+//        $.getJSON(
+//            $(this).attr('href'),
+//            function(data) {
+//                if (!data.result) {
+//                    $('.modal-body').append('<p class="text-error">' + data.error + '</p>');
+//
+//                    $('.modal').modal({show:true});
+//                } else {
+//                    $('.modal').modal({show:false});
+//                }
+//            },
+//            function(data) {
+//                console.log('error in json request');
+//            }
+//        );
+//
+//    });
     
     $('.grid-cell').click(function(e){
         if ($(this).html()=='') {
@@ -200,5 +223,38 @@ $(document).ready(function(){
         }
     });
     
-
+    /** levelup action points */
+    /** update action points only visually as a preview */
+    $('#techModal .progress.ap_spend a.bar').live('mouseover', function(e) {
+        $(this).prevAll('.bar-info').removeClass('bar-info').addClass('bar-success');
+        $(this).removeClass('bar-info').addClass('bar-success');
+        $(this).nextAll('.bar-success').removeClass('bar-success').addClass('bar-info');
+        reset_colors_for_bar_buttons();
+    });
+    /** remove the 'preview' action points */
+    $('#techModal .progress.ap_spend').live('mouseout', function(e) {
+        $('#techModal .progress a.bar-success').removeClass('bar-success').addClass('bar-info');
+        reset_colors_for_bar_buttons();
+    });
+    
+    /** status points */
+    /** update action points only visually as a preview */
+    $('#techModal .progress.status_points a.bar').live('mouseover', function(e) {
+        if ($(this).hasClass('bar-info')) {
+            $(this).prevAll('a.bar-info').removeClass('bar-info').addClass('bar-warning');
+            $(this).removeClass('bar-info').addClass('bar-warning');
+            $(this).nextAll('.bar-warning').removeClass('bar-warning').addClass('bar-info');
+        } else {
+            $(this).prevAll('a.bar-danger').removeClass('bar-danger').addClass('bar-warning');
+            $(this).removeClass('bar-danger').addClass('bar-warning');
+            $(this).nextAll('a.bar-warning').removeClass('bar-warning').addClass('bar-danger');
+        }
+        reset_colors_for_bar_buttons();
+    });
+    /** remove the 'preview' action points */
+    $('#techModal .progress.status_points').live('mouseout', function(e) {
+        $('#techModal .progress a.bar-danger').removeClass('bar-danger').addClass('bar-warning');
+        reset_colors_for_bar_buttons();
+    });
+    
 });

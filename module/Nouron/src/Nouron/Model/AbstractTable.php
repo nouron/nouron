@@ -134,6 +134,7 @@ abstract class AbstractTable extends TableGateway
         // update if data set is in table,
         // else insert the new data to the table
         $result = $this->fetchAll($where)->getArrayCopy();
+
         if (!empty( $result ) && !isset($missingPrimaryKey)) {
             // if check is not empty the record set exists and has to be updated
             $result = $this->update($data, $where);

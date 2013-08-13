@@ -8,6 +8,7 @@ use Nouron\Model\AbstractTable,
 class User extends AbstractTable
 {
     protected $table  = 'res_user_resources';
+    protected $primary = 'user_id';
 
     public function __construct(Adapter $adapter)
     {

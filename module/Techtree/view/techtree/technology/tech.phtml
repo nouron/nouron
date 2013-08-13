@@ -2,47 +2,43 @@
 <div id="techModal" class="modal hide fade in" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel"><?= $this->translate($tech->name) ?>
+        <h3 id="myModalLabel"><?= $this->translate($tech->name) ?> (<?= $level ?>)
             <small>(<?= $this->translate('types_' . $tech->type) ?>/<?= $this->translate('purposes_' . $tech->purpose) ?>)</small></h3>
     </div>
     <div class="modal-body">
         <!-- Description -->
         <p><?= $this->translate('desc_'.$tech->name)?></p>
-
+        freie AP: <?= $ap_available ?>
         <!-- Data -->
-        <table class="table">
-            <tr>
-                <td><?= $this->translate('decay') ?>/<?= $this->translate('tick') ?>: <?= $tech->decay ?></td>
-                <td><?= ($tech->max_level > 0) ? ($this->translate('max_level') . ': '. $tech->max_level) : '' ?></td>
-            </tr>
-            <tr>
-                <td><?= ($tech->type == 'ship') ? $this->translate('moving_speed') . ': '. $tech->moving_speed : '' ?></td>
-                <td><?= ($tech->tradeable) ? '<i class="icon-ok"></i> ' . $this->translate('tradeable') : '' ?></td>
-            </tr>
-        </table>
+        <?= ($tech->max_level > 0) ? '<span class="label">' . $this->translate('max_level') . ': '. $tech->max_level . '</span>' : '' ?>
+        <?= ($tech->type == 'ship') ? '<span class="label">' . $this->translate('moving_speed') . ': '. $tech->moving_speed . '</span>' : '' ?>
+        <?= ($tech->tradeable) ? '<span class="label">' . $this->translate('tradeable') . '</span>' : '' ?>
 
         <!-- Costs -->
         <h4><?= $this->translate('costs and requirements') ?></h4>
 
         <table class="table">
-        <tr><td colspan="2">
-        <?php if ($tech->ap_for_levelup > 0): ?>
-        <a data-placement="bottom" rel="tooltip" href="#" data-original-title="benötigte AP für nächstes Level">AP <?= $tech->ap_for_levelup ?></a>
-        <?php endif;
+        <? if (!empty($costs)): ?>
+        <tr>
+        <td><i class="<?= ($required_resources_check==true)? 'icon-ok' : 'icon-remove' ?>"></i></td>
+        <td>
+        <?php
         foreach ($costs as $cost):
-            $resource = $resources[ $cost->resource_id ];
+            $resource = $resources[ $cost['resource_id'] ];
             $name = $resource['name'];
             $abbreviation =  $resource['abbreviation'];
-            $class =  $resource['icon'];
-            $amount  = $cost['amount'];
+            $class  = $resource['icon'];
+            $amount = $cost['amount'];
             if ($amount > 0):
                 echo '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$name.'">';
                 echo '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
             endif;
         endforeach;
         ?>
-        </td></tr>
-        <?php foreach ($requirements as $req):
+        </td>
+        </tr>
+        <? endif;
+        foreach ($requirements as $req):
             if (isset($possessions[ $req->required_tech_id ]) && $possessions[ $req->required_tech_id ]['level'] >= $req->required_tech_level):
                 $fullfilled = '<i class="icon-ok"></i>';
             else:
@@ -50,31 +46,85 @@
             endif;
         ?>
         <tr>
-            <td><?= $this->translate($techs[ $req->required_tech_id ]['name']) ?></td>
-            <td><?= ' Level ' . $req->required_tech_level . ' ' . $fullfilled ?></td>
+            <td><?= $fullfilled ?></td>
+            <td><?= $this->translate( $techs[ $req->required_tech_id ]['name'] ) ?> (<?= $req->required_tech_level ?>)</td>
         </tr>
-        <?php endforeach ?>
+        <?php endforeach;
+        if ($tech->type != 'advisor'):
+            if (array_key_exists($tech->id, $possessions) and $possessions[$tech->id]['level'] > 0):
+                $status = $possessions[ $tech->id ]['status_points'];
+                $width  = round(100 / ($tech->max_status_points + 2));
+            ?>
+           <tr>
+           <td colspan="2"><div class="progress status_points" rel="tooltip" data-placement="top" data-original-title="">
+            <a id="tech-<?= $tech->id ?>|remove-1" class="bar <?= ($status_points<=0)?'disabled':''?>" style="width:<?= $width ?>%;"><i class="icon-minus"></i></a>
+            <?
+            for ($i = 1; $i <= $status; $i++):
+                $n = $status-$i;
+                if ($i<$status && $n <= $ap_available):
+                    echo '<a id="tech-'.$tech->id.'|remove-'.$n.'" class="bar bar-warning" style="width:'.$width.'%;">&nbsp;</a>';
+                else:
+                    $txt = ($i==$status) ? $i : '&nbsp;';
+                    echo '<span class="bar bar-warning" style="width:'.$width.'%;">'.$txt.'</span>';
+                endif;
+            endfor;
+            for ($j = $i; $j <= ($tech->max_status_points); $j++):
+                if ($j == $status):
+                    echo '<span class="bar" style="width:'.$percent_per_ap.'%;">'.$j.'</span>';
+                else:
+                    echo '<a id="tech-'.$tech->id.'|repair-'.($j-$status).'" class="bar bar-danger" style="width:'.$width.'%;">&nbsp;</a>';
+                endif;
+            endfor;
+            ?>
+            <a id="tech-<?= $tech->id ?>|repair-1" class="bar" style="width:<?= $width ?>%;"><i class="icon-wrench"></i></a>
+           </div>
+           <? $class = ($status_points == 0 && $level > 0) ? 'btn-danger': 'disabled';?>
+           <a id="tech-<?= $tech->id ?>|leveldown"  class="btn <?= $class ?>" >abreißen</a>
+           </td>
+           </tr>
+           <? else: ?>
+           <tr>
+               <td></td>
+               <td><div class="progress status_points" rel="tooltip" data-placement="top" data-original-title=""></div></td>
+            </tr>
+           <? endif; ?>
+
+        <tr>
+            <td colspan="2">
+            <? $width = round(100 / ($tech->ap_for_levelup+1)) ?>
+            <div class="progress ap_spend" rel="tooltip" data-placement="top" data-original-title="eingesetzt: <?= $ap_spend ?>|benötigt:<?= $tech->ap_for_levelup ?>">
+                <? for ($i = 1; $i <= $ap_spend; $i++):
+                    echo '<span class="bar bar-success" style="width:'.$width.'%;">'.$i.'</span>';
+                endfor;
+                for ($j = $i; $j <= ($tech->ap_for_levelup); $j++):
+                    if (($j-$i+1) <= $ap_available):
+                        echo '<a id="tech-'.$tech->id.'|add-'.($j-$i+1).'" class="bar bar-info" style="width:'.$width.'%;">'.$j.'</a>';
+                    else:
+                        echo '<span class="bar bar-info" style="width:'.$width.'%;">'.$j.'</span>';
+                    endif;
+                endfor; ?>
+                <a id="tech-<?= $tech->id ?>|add-1" class="bar" style="width:<?= $width ?>%;"><i class="icon-plus"></i></a>
+            </div>
+            <? $class = ($ap_spend >= $tech->ap_for_levelup) ? 'btn-success': 'disabled';?>
+            <a id="tech-<?= $tech->id ?>|levelup" class="btn <?= $class ?>" >ausbauen</a>
+            </td>
+        </tr>
+        <? else:?>
+        <tr>
+            <td colspan="2">
+                <? if (($required_techs_check || $required_resources_check || $ap_spend_check) == false):?>
+                <a id="tech-<?= $tech->id ?>|levelup" class="btn disabled">anheuern</a>
+                <? else: ?>
+                <a id="tech-<?= $tech->id ?>|levelup" class="btn btn-success">anheuern</a>
+                <? endif; ?>
+                <a id="tech-<?= $tech->id ?>|leveldown" class="btn btn-danger">feuern</a>
+            </td>
+        </tr>
+        <? endif;?>
+
         </table>
-        <?php if ($tech->type != 'advisor'): ?>
-        <?= $tick ?>
-        <div class="progress progress-striped" rel="tooltip" data-placement="top" data-original-title="eingesetzt: <?= $ap_spend ?>|beauftragt: <?= $ap_ordered ?>|benötigt:<?= $tech->ap_for_levelup ?>">
-            <div class="bar bar-success" style="width: <?= $percentage_completed ?>%;"><?= $ap_spend ?></div>
-            <div class="bar bar-warning" style="width: <?= $percentage_gain ?>%;"><?= $ap_ordered ?></div>
-        </div>
-        <?php endif; ?>
     </div>
-    <div class="modal-footer">
-        <?php foreach ($urls as $key => $url):
-            switch ($key) {
-                case 'add':    $button_text = '<i class="icon-plus"></i>'; break;
-                case 'remove': $button_text = '<i class="icon-minus"></i>'; break;
-                //case 'repair': $button_text = '<i class="icon-wrench"></i> Reparieren'; break;
-                case 'cancel': $button_text = 'Reset'; break;
-            }
-        ?>
-        <a href="<?= $url ? $url : '#' ?>" class="btn <?= $url ? '' : 'disabled'?>" data-dismiss="modal" aria-hidden="true"><?= $button_text ?></a>
-        <?php endforeach; ?>
-        <a href="javascript::void()" class="btn" data-dismiss="modal" aria-hidden="true"><i class="icon-remove"></i> Close</a>
-        <!--<button class="btn btn-primary">Save changes</button>-->
-    </div>
+    <!--<div class="modal-footer">
+        <button class="btn btn-primary">Save changes</button>
+    </div>-->
 </div>

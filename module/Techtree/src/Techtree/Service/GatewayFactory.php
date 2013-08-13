@@ -17,16 +17,19 @@ class GatewayFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
+        $tables = array();
         $tables['technology']  = new \Techtree\Table\Technology($db);
         $tables['possession']  = new \Techtree\Table\Possession($db);
         $tables['requirement'] = new \Techtree\Table\Requirement($db);
-        $tables['order'] = new \Techtree\Table\Order($db);
+        #$tables['order'] = new \Techtree\Table\Order($db);
         $tables['cost']  = new \Techtree\Table\Cost($db);
+        $tables['log_actionpoints'] = new \Techtree\Table\ActionPoint($db);
 
-        $gateways['resources'] = $serviceLocator->get('Resources\Service\Gateway');
-        $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
+        $services = array();
+        $services['resources'] = $serviceLocator->get('Resources\Service\Gateway');
+        $services['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
 
-        $techtreeGateway = new Gateway($tick, $tables, $gateways);
+        $techtreeGateway = new Gateway($tick, $tables, $services);
         $techtreeGateway->setLogger($logger);
         return $techtreeGateway;
     }

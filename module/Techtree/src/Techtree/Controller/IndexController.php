@@ -24,13 +24,11 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $techtree = $gw->getTechtreeByColonyId($colonyId);
         //$costs = $gw->getTechCosts();
-        $orders = $gw->getOrders();
 
         $model =  new ViewModel(array(
                 'techs' => $techs,
                 'techtree' => $techtree,
                 'requirements' => $requirements,
-                'orders' => $orders,
                 'possessions' => $this->resources()
         ));
 

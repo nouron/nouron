@@ -26,7 +26,7 @@ class GetSelected extends AbstractPlugin
             case 'colony': $idKey = 'cid'; break;
             case 'fleet':  $idKey = 'fid'; break;
             case 'tech':   $idKey = 'tid'; break;
-            default: return null;
+            default:       $idKey = 'id';  break;
         }
 
         $itemType = ucfirst(strtolower($itemType));

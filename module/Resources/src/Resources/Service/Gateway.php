@@ -153,8 +153,9 @@ class Gateway extends \Nouron\Service\Gateway
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
             if ($cost->amount > $possession) {
 
-                print($cost->resource_id . " " . $cost->amount . ' >' . $possession);
-                print("<br />/n");
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::INFO,
+                    'cost check failed: ' . $cost->resource_id . " " . $cost->amount . ' >' . $possession);
 
                 $result = false;
                 break;
@@ -173,8 +174,11 @@ class Gateway extends \Nouron\Service\Gateway
     public function payCosts($costs, $colonyId)
     {
         $this->_validateId($colonyId);
+        if (is_object($costs)) {
+            $costs = $costs->getArrayCopy('resource_id');
+        }
         foreach ($costs as $cost) {
-            $this->decreaseAmount($colonyId, $cost->resource_id, $cost->amount);
+            $this->decreaseAmount($colonyId, $cost['resource_id'], $cost['amount']);
         }
     }
 
@@ -190,7 +194,7 @@ class Gateway extends \Nouron\Service\Gateway
         $this->_validateId($resId);
         $amount = (int) $amount;
 
-        if ( in_array($resId, array(self::RES_CREDITS,self::RES_SUPPLY)) AND $forceUserResToBeColRes !== true) {
+        if ( in_array($resId, array(self::RES_CREDITS, self::RES_SUPPLY)) AND $forceUserResToBeColRes !== true) {
 
             // user resources
 
@@ -199,69 +203,58 @@ class Gateway extends \Nouron\Service\Gateway
             $userId = $colony->user_id;
             $row = $table->fetchRow("user_id = $userId");
 
-            if ( !empty($row) ){
-                //update
-
-                $row = $row->getArrayCopy();
-                switch ( $resId) {
-                    case self::RES_CREDITS :
-                        $row['credits'] = $row['credits'] + $amount;
-                        break;
-                    case self::RES_SUPPLY :
-                        $row['supply'] = $row['supply'] + $amount;
-                        break;
-                    default:
-                        break;
-                }
-
-                $where = "user_id = " . $userId;
-                return $table->update($row, $where);
-            }
-            else {
-                //insert
+            if (empty($row)) {
                 $row = array(
-                    'user_id'    => $userId,
+                    'user_id' => $userId,
                     'credits' => 0,
-                    'supply'  => 0
+                    'supply' => 0
                 );
-
-                switch ( $resId) {
-                    case self::RES_CREDITS :
-                        $row['credits'] = $amount;
-                        break;
-                    case self::RES_SUPPLY :
-                        $row['supply'] = $amount;
-                        break;
-                    default:
-                        break;
-                }
-                return $table->insert($row);
+            } else {
+                $row = $row->getArrayCopy();
             }
+
+            $this->getLogger()->log(\Zend\Log\Logger::INFO,
+                "$colonyId  $resId  $amount  $forceUserResToBeColRes");
+
+            switch ( $resId) {
+                case self::RES_CREDITS :
+//                     $this->getLogger()->log(\Zend\Log\Logger::INFO,
+//                         "{$row['credits']} + $amount");
+                    $row['credits'] = $row['credits'] + $amount;
+                    break;
+                case self::RES_SUPPLY :
+//                     $this->getLogger()->log(\Zend\Log\Logger::INFO,
+//                         "{$row['supply']} + $amount");
+                    $row['supply'] = $row['supply'] + $amount;
+                    break;
+                default:
+                    break;
+            }
+
+            return $table->save($row);
 
         } else {
 
             // colony resources
 
             $table = $this->getTable('colonyresources');
-            $row = $table->fetchRow("colony_id = $colonyId AND resource_id = $resId");
+            $row   = $table->getEntity(array(
+                        'colony_id' => $colonyId,
+                        'resource_id' => $resId
+                    ));
 
-            if ( !empty($row) ){
-                //update
-                $row = $row->getArrayCopy();
-                $data = $row['amount'] + $amount;
-                $data  = array('amount' => $data);
-                $where = array('colony_id = ' .$colonyId, 'resource_id = ' . $resId);
-                return $table->update($data, $where);
-            }
-            else {
-                //insert
-                $data = array(
-                    'colony'   => $colonyId,
-                    'resource' => $resId,
-                    'amount'    => $amount
+            if ( empty($row)) {
+                $row = array(
+                    'colony_id'   => $colonyId,
+                    'resource_id' => $resId,
+                    'amount'      => 0
                 );
-                return $table->insert($data);
+            } else {
+                $row = $row->getArrayCopy();
             }
+
+            $row['amount'] += $amount;
+            return $table->save($row);
         }
     }
 

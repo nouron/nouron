@@ -40,14 +40,14 @@
         </span>
         <?php endforeach;
 
-        foreach ($requirements as $reqId => $req):
-            foreach ($req as $toId => $val):
-                $key =  $reqId . '-' . $toId;
-                $tech_count = $techtree[ $reqId]['level'];
+        foreach ($requirements as $toId => $req):
+            foreach ($req as $fromId => $val):
+                $key =  $fromId . '-' . $toId;
+                $tech_count = $techtree[ $fromId]['level'];
                 $required_tech_count = $val['required_tech_level'];
         ?>
 
-        <div class="requirementsdata <?= $techtree[$reqId]['type'] ?>" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s",  $reqId, $toId, $required_tech_count, $tech_count) ?></div>
+        <div class="requirementsdata <?= $techtree[$fromId]['type'] ?>" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s", $toId, $fromId, $required_tech_count, $tech_count) ?></div>
         <?php endforeach;
         endforeach; ?>
   </div>

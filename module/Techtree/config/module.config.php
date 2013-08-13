@@ -53,10 +53,11 @@ return array(
                         # Example-Url:  http://dev.nouron.de/techtree/tech/35/add
                         'type' => 'Segment',
                         'options' => array(
-                            'route' => '/tech/:id/:order',
+                            'route' => '/tech/:id/:order[/:ap]',
                             'constraints' => array(
                                 'id' => '[0-9]+',
-                                'order' => '[a-z]+'
+                                'order' => '[a-z]+',
+                                'ap' => '[0-9]+'
                             ),
                             'defaults' => array(
                                 'controller' => 'Technology',

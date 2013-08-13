@@ -7,38 +7,47 @@ use Techtree\Service\Gateway;
 
 class TechnologyController extends \Nouron\Controller\IngameController
 {
-    /**
-     *
-     * @return \Zend\View\Model\JsonModel
-     */
+
+    // add ap for leveldown
+    // add ap for repair
+    // add ap for levelup
+    // levelup
+    // leveldown
     public function orderAction()
     {
         try {
-            $colonyId = 0; // TODO: take from Session
+            $colonyId = $this->getActive('colony');
             $techId = $this->params()->fromRoute('id');
             $order  = $this->params()->fromRoute('order');
-            if (!in_array($order,array('add','remove','repair','cancel'))) {
-                //$this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::ERR, 'Invalid order type.');
+            $ap     = $this->params()->fromRoute('ap');
+            $available_orders = array('add', 'remove', 'repair',
+                                      'levelup', 'leveldown');
+            if (!in_array($order, $available_orders)) {
+                $this->getServiceLocator()
+                     ->get('logger')
+                     ->log(\Zend\Log\Logger::ERR, 'Invalid order type.');
                 throw new \Techtree\Service\Exception('Invalid order type.');
             }
 
             $sm = $this->getServiceLocator();
             $techtreeGw = $sm->get('Techtree\Service\Gateway');
 
-            $ap = 1;
             $result = $techtreeGw->order($colonyId, $techId, $order, $ap);
             $error = null;
             // TODO : OK-Nachricht
         } catch (\Techtree\Service\Exception $e) {
             // TODO : Error-Nachricht
-            $this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::ERR, $e->getMessage());
+            $this->getServiceLocator()
+                 ->get('logger')
+                 ->log(\Zend\Log\Logger::ERR, $e->getMessage());
             $result = false;
             $error = $e->getMessage();
         }
-        return new JsonModel(array(
-            'result' => $result,
-            'error'  => $error
-        ));
+
+        return $this->forward()->dispatch(
+            'Techtree\Controller\Technology',
+            array('action' => 'tech', 'id'=>$techId)
+        );
     }
 
     /**
@@ -76,15 +85,9 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $resourcesGw = $sm->get('Resources\Service\Gateway');
         $techtreeGw = $sm->get('Techtree\Service\Gateway');
 
-        $addActionPointsUrl    = $this->url()->fromRoute('techtree/order', array('id' => $techId, 'order'=>'add'));
-        $removeActionPointsUrl = $this->url()->fromRoute('techtree/order', array('id' => $techId, 'order'=>'remove'));
-        //$levelRepairUrl = $this->url()->fromRoute('techtree/order', array('id' => $techId, 'order'=>'repair'));
-        $cancelActionPointsUrl = $this->url()->fromRoute('techtree/order', array('id' => $techId, 'order'=>'cancel'));
-
         $tech = $techtreeGw->getTechnology($techId);
-        //$sm->get('logger')->log(\Zend\Log\Logger::INFO, serialize($tech));
 
-        $colonyId = 0;
+        $colonyId = $this->getActive('colony');
         $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);
         $requiredResourcesCheck = $techtreeGw->checkRequiredResourcesByTechId($techId, $colonyId);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($requiredTechsCheck,$requiredResourcesCheck));
@@ -93,53 +96,32 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         if (array_key_exists($techId, $possessions)) {
             $level    = $possessions[$techId]['level'];
+            $status_points   = $possessions[$techId]['status_points'];
             $ap_spend = $possessions[$techId]['ap_spend'];
         } else {
             $level = 0;
+            $status_points = null;
             $ap_spend = 0;
         }
 
-        $order = $techtreeGw->getOrderByTechnologyId($techId, $colonyId);
-        $ap_ordered = $order ? $order->ap_ordered : 0;
-
-        $urls = array(
-            'add' => null,
-            'remove' => null,
-            'cancel' => null
-        );
-        if ((!$order || $order->order == 'add') && $requiredTechsCheck && $requiredResourcesCheck) {
-            $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'a');
-            $urls['add'] = $addActionPointsUrl;
-        }
-        if ((!$order || $order->order == 'remove') && $level > 0) {
-            $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'b');
-            $urls['remove'] = $removeActionPointsUrl;
-        }
-
-        if ($order && $ap_spend > 0) {
-            $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'c');
-            $urls['cancel'] = $cancelActionPointsUrl;
-        }
         $tech = $techtreeGw->getTechnology($techId);
-        $percentage_completed = round(($ap_spend / $techs[$techId]['ap_for_levelup']) * 100);
-        $percentage_gain      = round(($ap_ordered / $techs[$techId]['ap_for_levelup']) * 100);
 
         $result = new ViewModel(
             array(
                 'tick' => (string) $sm->get('Nouron\Service\Tick'),
                 'tech' => $tech,
+                'required_techs_check' => $requiredTechsCheck,
+                'required_resources_check' => $requiredResourcesCheck,
                 'requirements' => $techtreeGw->getRequirementsByTechnologyId($techId),
-                'costs' => $techtreeGw->getCostsByTechnologyId($techId),
+                'costs' => $techtreeGw->getCostsByTechnologyId($techId)->getArrayCopy(),
                 #'resource-possessions' => $resourceGw->getPossessions($colonyId),
-                'order' => $order,
                 'possessions' => $possessions,
                 'techs' => $techs,
                 'resources' => $resourcesGw->getResources()->getArrayCopy('id'),
-                'urls' => $urls,
-                'percentage_completed' => $percentage_completed,
-                'percentage_gain' => $percentage_gain,
                 'ap_spend' => $ap_spend,
-                'ap_ordered' => $ap_ordered
+                'ap_available' => $techtreeGw->getAvailableActionPoints($tech->type, $colonyId),
+                'status_points' => $status_points,
+                'level' => $level,
             )
         );
 
