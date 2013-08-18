@@ -8,6 +8,6 @@ class User extends \Nouron\Service\Gateway
      */
     public function getUserByName($username)
     {
-        return $this->getTable('user')->fetchRow("username = '$username'");
+        return $this->getTable('user')->fetchAll("username = '$username'")->current();
     }
 }

@@ -241,13 +241,17 @@ $(document).ready(function(){
     /** update action points only visually as a preview */
     $('#techModal .progress.status_points a.bar').live('mouseover', function(e) {
         if ($(this).hasClass('bar-info')) {
-            $(this).prevAll('a.bar-info').removeClass('bar-info').addClass('bar-warning');
+            $(this).prevAll('.bar-info').removeClass('bar-info').addClass('bar-warning');
+            $(this).prevAll('.bar-info').text('');
             $(this).removeClass('bar-info').addClass('bar-warning');
+            $(this).text('test');
+            $(this).nextAll('.bar-info').text('');
             $(this).nextAll('.bar-warning').removeClass('bar-warning').addClass('bar-info');
         } else {
-            $(this).prevAll('a.bar-danger').removeClass('bar-danger').addClass('bar-warning');
+            $(this).prevAll('.bar-danger').removeClass('bar-danger').addClass('bar-warning');
+            $(this).text('');
             $(this).removeClass('bar-danger').addClass('bar-warning');
-            $(this).nextAll('a.bar-warning').removeClass('bar-warning').addClass('bar-danger');
+            $(this).nextAll('.bar-warning').removeClass('bar-warning').addClass('bar-danger');
         }
         reset_colors_for_bar_buttons();
     });

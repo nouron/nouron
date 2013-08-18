@@ -67,14 +67,15 @@ class Gateway extends \Nouron\Service\Gateway
     }
 
     /**
+     * Get the costs of the given technology.
      *
-     * @param integer $techId
+     * @param  integer $techId
      * @return ResultSet
      */
-    public function getCostsForTechnology($techId)
+    public function getCostsByTechnologyId($techId)
     {
         $this->_validateId($techId);
-        return $this->getTable('cost')->fetchAll(array('tech_id' => $techId));
+        return $this->getTable("cost")->fetchAll("tech_id = $techId");
     }
 
     /**
@@ -142,18 +143,6 @@ class Gateway extends \Nouron\Service\Gateway
     {
         $this->_validateId($techId);
         return $this->getTable('requirement')->fetchAll("tech_id = $techId");
-    }
-
-    /**
-     * Get the costs of the given technology.
-     *
-     * @param  integer $techId
-     * @return ResultSet
-     */
-    public function getCostsByTechnologyId($techId)
-    {
-        $this->_validateId($techId);
-        return $this->getTable("Cost")->fetchAll("tech_id = $techId");
     }
 
     /**
@@ -294,7 +283,7 @@ class Gateway extends \Nouron\Service\Gateway
                            colony $colonyId with $ap action points");
 
         $ap = abs((int) $ap);
-        $costs = $this->getCostsForTechnology($techId);
+        $costs = $this->getCostsByTechnologyId($techId);
         $result = $this->_changeStatus($colonyId, $techId, $ap, $costs);
 
         return (bool) $result;
@@ -334,7 +323,7 @@ class Gateway extends \Nouron\Service\Gateway
 
                 # pay Costs (only if repair -> that means positive action points)
                 if ($ap > 0) {
-                    $costs = $this->getCostsForTechnology($techId);
+                    $costs = $this->getCostsByTechnologyId($techId);
                     if (!empty($costs)) {
                         $costs = $costs->getArrayCopy('resource_id');
                         $repairCosts = $costs;

@@ -33,7 +33,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
             $techtreeGw = $sm->get('Techtree\Service\Gateway');
 
             $result = $techtreeGw->order($colonyId, $techId, $order, $ap);
-            $error = null;
+            $message = array('success', $order . ' successfull');
             // TODO : OK-Nachricht
         } catch (\Techtree\Service\Exception $e) {
             // TODO : Error-Nachricht
@@ -42,11 +42,12 @@ class TechnologyController extends \Nouron\Controller\IngameController
                  ->log(\Zend\Log\Logger::ERR, $e->getMessage());
             $result = false;
             $error = $e->getMessage();
+            $message = array('error', $error);
         }
 
         return $this->forward()->dispatch(
             'Techtree\Controller\Technology',
-            array('action' => 'tech', 'id'=>$techId)
+            array('action' => 'tech', 'id'=>$techId, 'message'=>$message)
         );
     }
 
@@ -80,6 +81,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
     public function techAction()
     {
         $techId = $this->params()->fromRoute('id');
+        $message = $this->params('message');
 
         $sm = $this->getServiceLocator();
         $resourcesGw = $sm->get('Resources\Service\Gateway');
@@ -112,7 +114,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
                 'tech' => $tech,
                 'required_techs_check' => $requiredTechsCheck,
                 'required_resources_check' => $requiredResourcesCheck,
-                'requirements' => $techtreeGw->getRequirementsByTechnologyId($techId),
+                'requirements' => $techtreeGw->getRequirementsByTechnologyId($techId)->getArrayCopy(),
                 'costs' => $techtreeGw->getCostsByTechnologyId($techId)->getArrayCopy(),
                 #'resource-possessions' => $resourceGw->getPossessions($colonyId),
                 'possessions' => $possessions,
@@ -122,6 +124,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
                 'ap_available' => $techtreeGw->getAvailableActionPoints($tech->type, $colonyId),
                 'status_points' => $status_points,
                 'level' => $level,
+                'message' => $message,
             )
         );
 

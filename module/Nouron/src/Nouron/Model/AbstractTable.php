@@ -76,10 +76,10 @@ abstract class AbstractTable extends TableGateway
     {
         if (is_array($this->primary)) {
             $this->_validateId($id, $this->primary);
-            $rowset = $this->select($id);
+            $rowset = $this->fetchAll($id);
         } else {
             $this->_validateId($id);
-            $rowset = $this->select("id = $id");
+            $rowset = $this->fetchAll("id = $id");
         }
 
         $row = $rowset->current();

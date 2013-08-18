@@ -5,7 +5,7 @@ namespace Techtree\Service;
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class GatewayTest extends \PHPUnit_Framework_TestCase  implements ServiceLocatorAwareInterface
+class GatewayTest extends \PHPUnit_Framework_TestCase implements ServiceLocatorAwareInterface
 {
     /**
      * @var Gateway
@@ -40,7 +40,7 @@ class GatewayTest extends \PHPUnit_Framework_TestCase  implements ServiceLocator
         parent::setUp();
 
         $serviceLocator = $this->getServiceLocator();
-        $this->gateway = $serviceLocator->get("Techtree\Service\GatewayTest");
+        $this->gateway = $serviceLocator->get("Techtree\Service\Gateway");
     }
 
     function tearDown()

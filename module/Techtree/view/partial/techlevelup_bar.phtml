@@ -1,0 +1,23 @@
+<?
+if ($ap_spend < $tech->ap_for_levelup):
+    $width = round(100 / ($tech->ap_for_levelup+1));
+else:
+    $width = round(100 / $tech->ap_for_levelup);
+endif;
+?>
+<div class="progress ap_spend" rel="tooltip" data-placement="top" data-original-title="eingesetzt: <?= $ap_spend ?>|benötigt:<?= $tech->ap_for_levelup ?>">
+    <? for ($i = 1; $i <= $ap_spend; $i++):
+        echo '<span class="bar bar-success" style="width:'.$width.'%;">'.$i.'</span>';
+    endfor;
+    for ($j = $i; $j <= ($tech->ap_for_levelup); $j++):
+        if (($j-$i+1) <= $ap_available):
+            echo '<a id="tech-'.$tech->id.'|add-'.($j-$i+1).'" class="bar bar-info" style="width:'.$width.'%;">'.$j.'</a>';
+        else:
+            echo '<span class="bar bar-info" style="width:'.$width.'%;">'.$j.'</span>';
+        endif;
+    endfor;
+    if ($ap_spend < $tech->ap_for_levelup):
+    ?>
+    <a id="tech-<?= $tech->id ?>|add-1" class="bar" style="width:<?= $width ?>%;"><i class="icon-plus"></i></a>
+    <? endif; ?>
+</div>

@@ -201,7 +201,7 @@ class Gateway extends \Nouron\Service\Gateway
             $colony = $this->getService('galaxy')->getColony($colonyId);
             $table = $this->getTable('userresources');
             $userId = $colony->user_id;
-            $row = $table->fetchRow("user_id = $userId");
+            $row = $table->fetchAll("user_id = $userId")->current();
 
             if (empty($row)) {
                 $row = array(

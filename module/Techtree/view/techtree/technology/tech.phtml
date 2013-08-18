@@ -39,7 +39,7 @@
         </tr>
         <? endif;
         foreach ($requirements as $req):
-            if (isset($possessions[ $req->required_tech_id ]) && $possessions[ $req->required_tech_id ]['level'] >= $req->required_tech_level):
+            if (isset($possessions[ $req['required_tech_id'] ]) && $possessions[ $req['required_tech_id'] ]['level'] >= $req['required_tech_level']):
                 $fullfilled = '<i class="icon-ok"></i>';
             else:
                 $fullfilled = '<i class="icon-remove"></i>';
@@ -47,64 +47,21 @@
         ?>
         <tr>
             <td><?= $fullfilled ?></td>
-            <td><?= $this->translate( $techs[ $req->required_tech_id ]['name'] ) ?> (<?= $req->required_tech_level ?>)</td>
+            <td><?= $this->translate( $techs[ $req['required_tech_id'] ]['name'] ) ?> (<?= $req['required_tech_level'] ?>)</td>
         </tr>
         <?php endforeach;
-        if ($tech->type != 'advisor'):
-            if (array_key_exists($tech->id, $possessions) and $possessions[$tech->id]['level'] > 0):
-                $status = $possessions[ $tech->id ]['status_points'];
-                $width  = round(100 / ($tech->max_status_points + 2));
-            ?>
-           <tr>
-           <td colspan="2"><div class="progress status_points" rel="tooltip" data-placement="top" data-original-title="">
-            <a id="tech-<?= $tech->id ?>|remove-1" class="bar <?= ($status_points<=0)?'disabled':''?>" style="width:<?= $width ?>%;"><i class="icon-minus"></i></a>
-            <?
-            for ($i = 1; $i <= $status; $i++):
-                $n = $status-$i;
-                if ($i<$status && $n <= $ap_available):
-                    echo '<a id="tech-'.$tech->id.'|remove-'.$n.'" class="bar bar-warning" style="width:'.$width.'%;">&nbsp;</a>';
-                else:
-                    $txt = ($i==$status) ? $i : '&nbsp;';
-                    echo '<span class="bar bar-warning" style="width:'.$width.'%;">'.$txt.'</span>';
-                endif;
-            endfor;
-            for ($j = $i; $j <= ($tech->max_status_points); $j++):
-                if ($j == $status):
-                    echo '<span class="bar" style="width:'.$percent_per_ap.'%;">'.$j.'</span>';
-                else:
-                    echo '<a id="tech-'.$tech->id.'|repair-'.($j-$status).'" class="bar bar-danger" style="width:'.$width.'%;">&nbsp;</a>';
-                endif;
-            endfor;
-            ?>
-            <a id="tech-<?= $tech->id ?>|repair-1" class="bar" style="width:<?= $width ?>%;"><i class="icon-wrench"></i></a>
-           </div>
+        if ($tech->type != 'advisor'):?>
+        <tr>
+           <td colspan="2">
+           <?php $poss = array_key_exists($tech->id, $possessions ) ? $possessions[$tech->id] : null; ?>
+           <?= $this->partial('partial/techstatus_bar', array('tech'=>$tech, 'poss'=>$poss, 'ap_spend'=> $ap_spend, 'ap_available'=> $ap_available)) ?>
            <? $class = ($status_points == 0 && $level > 0) ? 'btn-danger': 'disabled';?>
            <a id="tech-<?= $tech->id ?>|leveldown"  class="btn <?= $class ?>" >abreißen</a>
            </td>
-           </tr>
-           <? else: ?>
-           <tr>
-               <td></td>
-               <td><div class="progress status_points" rel="tooltip" data-placement="top" data-original-title=""></div></td>
-            </tr>
-           <? endif; ?>
-
+        </tr>
         <tr>
             <td colspan="2">
-            <? $width = round(100 / ($tech->ap_for_levelup+1)) ?>
-            <div class="progress ap_spend" rel="tooltip" data-placement="top" data-original-title="eingesetzt: <?= $ap_spend ?>|benötigt:<?= $tech->ap_for_levelup ?>">
-                <? for ($i = 1; $i <= $ap_spend; $i++):
-                    echo '<span class="bar bar-success" style="width:'.$width.'%;">'.$i.'</span>';
-                endfor;
-                for ($j = $i; $j <= ($tech->ap_for_levelup); $j++):
-                    if (($j-$i+1) <= $ap_available):
-                        echo '<a id="tech-'.$tech->id.'|add-'.($j-$i+1).'" class="bar bar-info" style="width:'.$width.'%;">'.$j.'</a>';
-                    else:
-                        echo '<span class="bar bar-info" style="width:'.$width.'%;">'.$j.'</span>';
-                    endif;
-                endfor; ?>
-                <a id="tech-<?= $tech->id ?>|add-1" class="bar" style="width:<?= $width ?>%;"><i class="icon-plus"></i></a>
-            </div>
+            <?= $this->partial('partial/techlevelup_bar', array('tech'=>$tech, 'ap_spend'=> $ap_spend, 'ap_available'=> $ap_available)) ?>
             <? $class = ($ap_spend >= $tech->ap_for_levelup) ? 'btn-success': 'disabled';?>
             <a id="tech-<?= $tech->id ?>|levelup" class="btn <?= $class ?>" >ausbauen</a>
             </td>
@@ -123,7 +80,14 @@
         <? endif;?>
 
         </table>
+        <?php if (is_array($message)): ?>
+        <div class="alert alert-<?= $message[0] ?>">
+            <p><i class="icon icon-error"></i><?= $message[1] ?></p>
+        </div>
+        <?php endif;?>
+
     </div>
+
     <!--<div class="modal-footer">
         <button class="btn btn-primary">Save changes</button>
     </div>-->

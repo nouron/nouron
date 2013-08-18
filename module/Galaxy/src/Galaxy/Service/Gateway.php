@@ -950,7 +950,7 @@ class Gateway extends \Nouron\Service\Gateway
         $x = $coords[0];
         $y = $coords[1];
         $table = $this->getTable('systemobject');
-        return $table->fetchRow("X = $x AND Y = $y");
+        return $table->fetchAll("X = $x AND Y = $y")->current();
     }
 
     /**
@@ -1004,7 +1004,7 @@ class Gateway extends \Nouron\Service\Gateway
         #$cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
         #if (!($result = $cache->load($cacheName))) {
             $table = $this->getTable('fleetorder');
-            $result = $table->fetchAll($where, $order, $count, $offset);
+            $result = $table->fetchAll($where);
             #$cache->save($result, $cacheName, array('fleets', 'orders'));
         #}
         return $result;
