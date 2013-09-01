@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Cost implements EntityInterface
+class Cost extends AbstractEntity
 {
     public $tech_id;
     public $resource_id;

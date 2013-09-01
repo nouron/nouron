@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Order implements EntityInterface
+class Order extends AbstractEntity
 {
     public $tick;
     public $colony_id;
@@ -14,9 +14,5 @@ class Order implements EntityInterface
     public $was_progressed;
     public $has_notified;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

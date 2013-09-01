@@ -18,6 +18,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
                 'hostname' => 'localhost'
             )
         );
+
         $tableMocks = array();
         $tableMocks['technology'] = new \Techtree\Table\Technology($dbAdapter);
         #$tableMocks['resources']  = new \Resources\Table\R($dbAdapter);
@@ -118,7 +119,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
     public function testGetTechnology()
     {
         $object = $this->_gateway->getTechnology(35);
-        $this->assertEquals('\Zend\Db\RowGatway\RowGateway', get_class($object));
+        $this->assertEquals('Techtree\Entity\Technology', get_class($object));
 
         $this->markTestIncomplete();
     }

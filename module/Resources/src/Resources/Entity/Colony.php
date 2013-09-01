@@ -1,17 +1,13 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Colony implements EntityInterface
+class Colony extends AbstractEntity
 {
     public $resource_id;
     public $colony_id;
     public $amount;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

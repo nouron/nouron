@@ -36,6 +36,14 @@ return array(
             'Resources' => 'Resources\Controller\Plugin\Resources',
         )
     ),
+    'view_manager' => array(
+        'template_path_stack' => array(
+            'resources' => __DIR__ . '/../view',
+        ),
+        'strategies' => array(
+            'ViewJsonStrategy',
+        ),
+    ),
     'view_helpers' => array(
         'invokables' => array(
             'resources' => 'Resources\View\Helper\Resources',

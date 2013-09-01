@@ -1,9 +1,9 @@
 <?php
 namespace Trade\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Resource implements EntityInterface
+class Resource extends AbstractEntity
 {
     public $colony_id;
     public $direction;
@@ -12,9 +12,5 @@ class Resource implements EntityInterface
     public $price;
     public $restriction;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

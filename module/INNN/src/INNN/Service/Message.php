@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Service;
 
-class Message extends \Nouron\Service\Gateway
+class Message extends \Nouron\Service\AbstractService
 {
     /**
      *

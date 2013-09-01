@@ -9,7 +9,7 @@ return array(
     'User\Controller\UserControllerFactory'     => __DIR__ . '/src/User/Controller/UserControllerFactory.php',
     'User\Entity\User'                          => __DIR__ . '/src/User/Entity/User.php',
     'User\Service\User'                         => __DIR__ . '/src/User/Service/User.php',
-    'INNN\Service\EventFactory'                 => __DIR__ . '/src/User/Service/UserFactory.php',
+    'User\Service\UserFactory'                  => __DIR__ . '/src/User/Service/UserFactory.php',
     'User\Table\User'                           => __DIR__ . '/src/User/Table/User.php',
     'User\View\Helper\UserNameLink'             => __DIR__ . '/src/User/View/Helper/UserNameLink.php',
 );

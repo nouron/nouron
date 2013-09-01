@@ -1,0 +1,5 @@
+<?php
+    if ($this->zfcUserIdentity() && isset($possessions)):
+        echo $this->resources($possessions);
+    endif;
+?>

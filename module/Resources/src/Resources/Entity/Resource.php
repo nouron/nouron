@@ -1,9 +1,9 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Resource implements EntityInterface
+class Resource extends AbstractEntity
 {
     public $id;
     public $name;
@@ -13,9 +13,5 @@ class Resource implements EntityInterface
     public $start_amount;
     public $icon;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

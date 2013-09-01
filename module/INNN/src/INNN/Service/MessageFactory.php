@@ -4,6 +4,13 @@ namespace INNN\Service;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+use INNN\Table\MessageTable;
+use INNN\Table\MessageView;
+use User\Table\UserTable;
+
+use INNN\Entity\Message;
+use User\Entity\User;
+
 class MessageFactory implements FactoryInterface
 {
     /**
@@ -16,9 +23,9 @@ class MessageFactory implements FactoryInterface
         $db   = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick = $serviceLocator->get('Nouron\Service\Tick');
 
-        $tables['message'] = new \INNN\Table\Message($db);
-        $tables['message_view'] = new \INNN\Table\MessageView($db);
-        $tables['user'] = new \User\Table\User($db);
+        $tables['message'] = new MessageTable($db, new Message());
+        $tables['message_view'] = new MessageView($db, new Message());
+        $tables['user'] = new UserTable($db, new User());
 
         $service   = new Message($tick, $tables);
         return $service;

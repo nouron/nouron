@@ -4,7 +4,7 @@ namespace Nouron\Model;
 use Zend\Db\ResultSet\Exception;
 use ArrayObject;
 
-class ResultSet extends \Zend\Db\ResultSet\ResultSet
+class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
 {
     /**
      * Return the rowset as array:
@@ -34,7 +34,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
             if (is_array($columnAsIndex) && count($columnAsIndex) == 2) {
                 // compound primary key
                 foreach ($this as $row) {
-                    $tmp = $this->convert($row);
+                    $tmp = $row->getArrayCopy();
                     if ( !isset($result[$tmp[$columnAsIndex[0]]]) ) {
                         $result[$tmp[$columnAsIndex[0]]] = array();
                     }
@@ -44,7 +44,7 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
             } elseif (is_string($columnAsIndex)) {
                 // primary key is given
                 foreach ($this as $row) {
-                    $tmp = $this->convert($row);
+                    $tmp = $row->getArrayCopy();
                     $result[ $tmp[$columnAsIndex] ] = $tmp;
                 }
 
@@ -53,35 +53,41 @@ class ResultSet extends \Zend\Db\ResultSet\ResultSet
                 try {
                     // try to take 'id' as primary key
                     foreach ($this as $row) {
-                        $tmp = $this->convert($row);
+                        $tmp = $row->getArrayCopy();
                         $result[ $tmp['id'] ] = $tmp;
                     }
                 } catch (Exception $e) {
                     // 'id' doesn't work, so just convert to array
                     //$this->log(\Zend\Log\Loger::INFO, 'getArrayCopy(): could not determine primary key');
-                    $result = parent::getArrayCopy();
+                    $result = array();
+                    foreach ($this as $row) {
+                        $result[] = $row->getArrayCopy();
+                    }
                 }
             }
 
         } else {
-            $result = parent::toArray();
+            $result = array();
+            foreach ($this as $row) {
+                $result[] = $row->getArrayCopy();
+            }
         }
 
         return $result;
     }
 
-    private function convert($row) {
+    private function convert($row)
+    {
         if (is_array($row)) {
             $tmp = $row;
-        } elseif (method_exists($row, 'toArray')) {
-            $tmp = $row->getArrayCopy();
-        } elseif ($row instanceof ArrayObject) {
+        } elseif (method_exists($row, 'getArrayCopy')) {
             $tmp = $row->getArrayCopy();
         } else {
             throw new Exception\RuntimeException(
                 'Rows as part of this DataSource, with type ' . gettype($row) . ' cannot be cast to an array'
             );
         }
+
         return $tmp;
     }
 

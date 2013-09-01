@@ -106,8 +106,8 @@ class JsonController extends \Nouron\Controller\IngameController
         $isCargo = (int) $this->params()->fromQuery('isCargo');
 
         //get Colony Id
-        $colonyId = 0;
-
+        //$colonyId = 0
+        $colonyId = $this->getActive('colony');
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Techtree\Service\Gateway');
         $transferred = $gw->transferTechnology($colonyId, $fleetId, $techId, $amount, $isCargo);

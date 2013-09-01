@@ -1,11 +1,5 @@
 <?= $this->partial('partial/_switch_tech_display') ?>
 <hr />
-<style>
-    line:hover,
-    polyline:hover {
-        opacity: 0.5;
-    }
-</style>
 <div class="row-fluid"  id="colony">
   <div id="visualTechtree" class="row-fluid" style="position:relative">
       <div id="storage-tech-id" class="hidden"></div>
@@ -27,28 +21,19 @@
     </div>
 
     <div class="hidden">
-        <?php foreach ($techtree as $id => $tech) :
-        $grid_y = $tech['row'];
-        $grid_x = $tech['column'];
-        $key = $grid_y . '-' . $grid_x;
-        ?>
-        <span class="techdata" id="techsource-<?= $key ?>">
-            <a id="tech-<?= $id ?>" class="btn btn-block technology <?= $tech['type'] ?>" href="#techModal" data-toggle="modal">
-                <?= $this->translate($tech['name'], null, 'de_DE') . ' ' . $tech['level']  ?>
-            </a>
-            <span class="hidden data"><?= json_encode($tech) ?></span>
-        </span>
-        <?php endforeach;
+        <?php
+        foreach ($techtree as $id => $tech) :
+            echo $this->partial("partial/_techdata", array('tech'=>$tech));
+        endforeach;
 
         foreach ($requirements as $toId => $req):
             foreach ($req as $fromId => $val):
-                $key =  $fromId . '-' . $toId;
-                $tech_count = $techtree[ $fromId]['level'];
-                $required_tech_count = $val['required_tech_level'];
-        ?>
-
-        <div class="requirementsdata <?= $techtree[$fromId]['type'] ?>" id="requirementsource-<?= $key ?>"><?= sprintf("%s-%s-%s-%s", $toId, $fromId, $required_tech_count, $tech_count) ?></div>
-        <?php endforeach;
+                echo $this->partial("partial/_techrequirement", array(
+                        'fromTech'=>$techtree[$fromId],
+                        'toTech'=>$techtree[$toId],
+                        'required_tech_count'=>$val['required_tech_count']
+                ));
+            endforeach;
         endforeach; ?>
   </div>
 

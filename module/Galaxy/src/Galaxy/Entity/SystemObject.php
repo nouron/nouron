@@ -1,9 +1,9 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class SystemObject implements EntityInterface
+class SystemObject extends AbstractEntity
 {
     public $id;
     public $name;
@@ -16,9 +16,5 @@ class SystemObject implements EntityInterface
     public $type;
     public $image_url;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

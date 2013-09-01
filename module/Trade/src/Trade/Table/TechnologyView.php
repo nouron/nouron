@@ -1,7 +1,7 @@
 <?php
 namespace Trade\Table;
 
-class TechnologyView extends Technology
+class TechnologyView extends TechnologyTable
 {
     protected $table  = 'v_trade_techs';
 

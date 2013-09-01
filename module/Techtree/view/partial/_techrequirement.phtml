@@ -1,0 +1,8 @@
+<?php
+$id = 'requirementsource-' . $fromTech['id'] . '-' . $toTech['id'];
+$class = 'requirementsdata ' . $fromTech['type'];
+$tech_count = $fromTech['level'];
+?>
+<div class="<?= $class ?>" id="<?= $id ?>">
+<?= sprintf("%s-%s-%s-%s", $toTech['id'], $fromTech['id'], $required_tech_count, $tech_count) ?>
+</div>

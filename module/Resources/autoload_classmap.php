@@ -13,8 +13,8 @@ return array(
     'Resources\Service\Exception'               => __DIR__ . '/src/Resources/Service/Exception.php',
     'Resources\Service\Gateway'                 => __DIR__ . '/src/Resources/Service/Gateway.php',
     'Resources\Service\GatewayFactory'          => __DIR__ . '/src/Resources/Service/GatewayFactory.php',
-    'Resources\Table\Colony'                    => __DIR__ . '/src/Resources/Table/Colony.php',
-    'Resources\Table\Resource'                  => __DIR__ . '/src/Resources/Table/Resource.php',
-    'Resources\Table\User'                      => __DIR__ . '/src/Resources/Table/User.php',
+    'Resources\Table\ColonyTable'               => __DIR__ . '/src/Resources/Table/ColonyTable.php',
+    'Resources\Table\ResourceTable'             => __DIR__ . '/src/Resources/Table/TechnologyTable.php',
+    'Resources\Table\UserTable'                 => __DIR__ . '/src/Resources/Table/UserTable.php',
     'Resources\View\Helper\Resources'           => __DIR__ . '/src/Resources/View/Helper/Resources.php',
 );

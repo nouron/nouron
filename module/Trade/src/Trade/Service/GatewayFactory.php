@@ -3,6 +3,13 @@ namespace Trade\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Trade\Table\TechnologyTable;
+use Trade\Table\TechnologyView;
+use Trade\Table\ResourceTable;
+use Trade\Table\ResourceView;
+
+use Trade\Entity\Technology;
+use Trade\Entity\Resource;
 
 class GatewayFactory implements FactoryInterface
 {
@@ -17,10 +24,10 @@ class GatewayFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
-        $tables['technology']  = new \Trade\Table\Technology($db);
-        $tables['technology_view'] = new \Trade\Table\TechnologyView($db);
-        $tables['resources']   = new \Trade\Table\Resource($db);
-        $tables['resources_view']  = new \Trade\Table\ResourceView($db);
+        $tables['technology']      = new TechnologyTable($db, new Technology());
+        $tables['technology_view'] = new TechnologyView($db, new Technology());
+        $tables['resources']       = new ResourceTable($db, new Resource());
+        $tables['resources_view']  = new ResourceView($db, new Resource());
 
         $gateways['resources'] = $serviceLocator->get('Resources\Service\Gateway');
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');

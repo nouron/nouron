@@ -1,17 +1,14 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
+use Zend\Stdlib\Hydrator\ObjectProperty;
 
-class User implements EntityInterface
+class User extends AbstractEntity
 {
     public $user_id;
     public $credits;
     public $supply;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

@@ -4,6 +4,14 @@ namespace Resources\Service;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
+use Resources\Table\ResourceTable;
+use Resources\Table\ColonyTable;
+use Resources\Table\UserTable;
+
+use Resources\Entity\Resource;
+use Resources\Entity\Colony;
+use Resources\Entity\User;
+
 class GatewayFactory implements FactoryInterface
 {
     /**
@@ -17,9 +25,9 @@ class GatewayFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
-        $tables['resource'] = new \Resources\Table\Resource($db);
-        $tables['colonyresources'] = new \Resources\Table\Colony($db);
-        $tables['userresources'] = new \Resources\Table\User($db);
+        $tables['resource'] = new ResourceTable($db, new Resource());
+        $tables['colonyresources'] = new ColonyTable($db, new Colony());
+        $tables['userresources'] = new UserTable($db, new User());
 
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
 

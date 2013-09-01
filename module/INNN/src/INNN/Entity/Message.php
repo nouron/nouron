@@ -1,9 +1,9 @@
 <?php
 namespace INNN\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Message implements EntityInterface
+class Message extends AbstractEntity
 {
     public $id;
     public $sender;
@@ -17,9 +17,5 @@ class Message implements EntityInterface
     public $archived;
     public $deleted;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

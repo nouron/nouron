@@ -1,16 +1,21 @@
 <?php
 namespace Techtree\Entity;
 
+use Zend\Db\ResultSet\HydratingResultSet;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Db\TableGateway\TableGateway;
 
 class TechnologyFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        #$table     = $serviceLocator->get('Techtree\Table\Technology');
         $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new Technology(new \Techtree\Table\Technology($db));
+        $resultSetPrototype = new HydratingResultSet(
+            new ReflectionHydrator, new Technology()
+        );
+        $table  = new TableGateway('technology', $db, null, $resultSetPrototype);
+        $mapper = new Technology($table);
         return $mapper;
     }
 }

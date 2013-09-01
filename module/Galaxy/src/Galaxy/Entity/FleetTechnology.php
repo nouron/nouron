@@ -1,18 +1,13 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class FleetTechnology implements EntityInterface
+class FleetTechnology extends AbstractEntity
 {
     public $fleet_id;
     public $tech_id;
     public $count;
     public $is_cargo;
-
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

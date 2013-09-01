@@ -1,9 +1,9 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Fleet implements EntityInterface
+class Fleet extends AbstractEntity
 {
     public $id;
     public $name;
@@ -12,9 +12,5 @@ class Fleet implements EntityInterface
     public $y;
     public $spot;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

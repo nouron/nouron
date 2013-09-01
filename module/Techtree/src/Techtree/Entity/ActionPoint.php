@@ -1,18 +1,14 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
+use Zend\Stdlib\Hydrator\ArraySerializable;
 
-class ActionPoint implements EntityInterface
+class ActionPoint extends AbstractEntity
 {
     public $tick;
     public $colony_id;
     public $personell_tech_id;
     public $spend_ap;
-
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

@@ -1,9 +1,9 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class ColonyTechnology implements EntityInterface
+class ColonyTechnology extends AbstractEntity
 {
     public $colony_id;
     public $tech_id;
@@ -12,9 +12,5 @@ class ColonyTechnology implements EntityInterface
     public $age;
     public $slot;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

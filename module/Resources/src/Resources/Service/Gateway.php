@@ -1,7 +1,7 @@
 <?php
 namespace Resources\Service;
 
-class Gateway extends \Nouron\Service\Gateway
+class Gateway extends \Nouron\Service\AbstractService
 {
     const RES_CREDITS = 1;
     const RES_SUPPLY = 2;
@@ -87,7 +87,7 @@ class Gateway extends \Nouron\Service\Gateway
         $colony = $galaxyGw->getColony($colonyId);
 
         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
-        $userResources = $this->getUserResources('user_id = ' . $colony['user_id']);
+        $userResources = $this->getUserResources('user_id = ' . $colony->user_id);
         foreach ($userResources as $t) {
             $add = array(
                 self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t['credits']),
@@ -149,13 +149,13 @@ class Gateway extends \Nouron\Service\Gateway
 
         // check costs
         foreach ($costs as $cost) {
-            $resourceId = $cost->resource_id;
+            $resourceId = $cost['resource_id'];
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
-            if ($cost->amount > $possession) {
+            if ($cost['amount'] > $possession) {
 
                 $this->getLogger()->log(
                     \Zend\Log\Logger::INFO,
-                    'cost check failed: ' . $cost->resource_id . " " . $cost->amount . ' >' . $possession);
+                    'cost check failed: ' . $cost['resource_id'] . " " . $cost['amount'] . ' >' . $possession);
 
                 $result = false;
                 break;

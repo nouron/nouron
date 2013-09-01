@@ -199,37 +199,39 @@ class IndexController extends \Nouron\Controller\IngameController
         $colonyId = $sm->get('colonyId');
         $tick     = $sm->get('Nouron\Service\Tick');
 
-        $gw = $sm->get('Trade\Service\Gateway');
-
         $resourceService = $sm->get('Resources\Service\Gateway');
         $resources = $resourceService->getResources();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
-        $resources = $resources->getArrayCopy('id');
-        $searchForm = new \Trade\Form\SearchForm('resources', $resources);
-        $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
 
-        $where = array();
-        $request = $this->getRequest();
-        if ($request->isPost()) {
-            $post = $request->getPost();
-            if ($post['form_name'] == 'search') {
-                $searchForm->setData($request->getPost());
-                if ($searchForm->isValid()) {
-                    print_r('valid');
-                    $where['direction'] = $post['direction'];
-                    if (!empty($post['item_id'])) {
-                        $where['resource_id'] = $post['item_id'];
-                    }
-                } else {
-                    print_r($searchForm->getMessages());
-                }
-            }
-         }
+//         $resources = $resources->getArrayCopy('id');
+//         $searchForm = new \Trade\Form\SearchForm('resources', $resources);
+//         $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
 
+//         $where = array();
+//         $request = $this->getRequest();
+//         if ($request->isPost()) {
+//             $post = $request->getPost();
+//             if ($post['form_name'] == 'search') {
+//                 $searchForm->setData($request->getPost());
+//                 if ($searchForm->isValid()) {
+//                     print_r('valid');
+//                     $where['direction'] = $post['direction'];
+//                     if (!empty($post['item_id'])) {
+//                         $where['resource_id'] = $post['item_id'];
+//                     }
+//                 } else {
+//                     print_r($searchForm->getMessages());
+//                 }
+//             }
+//          }
 
-        $resourceOffers = $gw->getResources($where);
+//         $resourceOffers = $tradeService->getResources($where);
+        $resourceOffers = $tradeService->getResources();
+        var_dump($resourceOffers->current());
+        print_r($resourceOffers->getArrayCopy());
+        exit();
 
         return new ViewModel( array(
             'user_id' => $this->getActive('user'),

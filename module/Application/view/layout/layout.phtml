@@ -79,7 +79,7 @@ echo $this->doctype();
         $ourView  = $children[0];
 
         if ($this->zfcUserIdentity() && isset($ourView->possessions)):
-            echo $this->resources($ourView->possessions); ?>
+            echo '<div id="resource-bar">'.$this->resources($ourView->possessions).'</div>'; ?>
         <hr />
         <? endif; ?>
 

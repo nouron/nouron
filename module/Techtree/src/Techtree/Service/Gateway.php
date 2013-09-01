@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Service;
 
-class Gateway extends \Nouron\Service\Gateway
+class Gateway extends \Nouron\Service\AbstractService
 {
     const ADVISOR_ENGINEER_TECHID = 35;
     const ADVISOR_SCIENTIST_TECHID = 36;
@@ -99,7 +99,11 @@ class Gateway extends \Nouron\Service\Gateway
         $this->_validateId($colonyId);
 
         // Technologien-Stammdaten holen
-        $techs = $this->getTechnologies()->getArrayCopy('id');
+        $techs = $this->getTechnologies();
+        #$techs = $techs->getArrayCopy('id');
+
+        var_dump($techs->current());
+        exit();
 
         // Besitz holen
         $poss = $this->getPossessionsByColonyId($colonyId);
@@ -513,7 +517,7 @@ class Gateway extends \Nouron\Service\Gateway
                 $poss->status_points = $tech->max_status_points; # reset status points
                 $result = $table->save($poss);
 
-                $costs = $this->getCostsForTechnology($techId);
+                $costs = $this->getCostsByTechnologyId($techId);
                 $resourcesGw = $this->getService('resources');
 
                 $resourcesGw->payCosts($costs, $colonyId);
@@ -623,8 +627,8 @@ class Gateway extends \Nouron\Service\Gateway
 
         // compare possession with requirements:
         foreach ($rqrmnts as $rq) {
-            $id = $rq->required_tech_id;
-            if ( !isset($poss[$id]) || $rq->required_tech_level > $poss[$id]['level']) {
+            $id = $rq['required_tech_id'];
+            if ( !isset($poss[$id]) || $rq['required_tech_level'] > $poss[$id]['level']) {
                 // if not enough techs in possess return false
                 return false;
             }

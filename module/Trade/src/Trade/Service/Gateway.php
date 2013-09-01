@@ -1,7 +1,7 @@
 <?php
 namespace Trade\Service;
 
-class Gateway extends \Nouron\Service\Gateway
+class Gateway extends \Nouron\Service\AbstractService
 {
     public function getTechnologies($where = null)
     {

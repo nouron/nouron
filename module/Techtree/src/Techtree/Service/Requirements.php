@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Service;
 
-class Requirements extends \Nouron\Service\Gateway
+class Requirements extends \Nouron\Service\AbstractService
 {
     /**
      * get Requirements as array in the form:

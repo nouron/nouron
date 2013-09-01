@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Possession implements EntityInterface
+class Possession extends AbstractEntity
 {
     public $colony_id;
     public $tech_id;
@@ -13,10 +13,5 @@ class Possession implements EntityInterface
     public $ap_spend;
     //public $ap_spend_for_remove;
     public $slot;
-
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

@@ -15,7 +15,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
 
-        $colonyId = $sm->get('colonyId');
+        $colonyId = $this->getActive('colony');
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Techtree\Service\Gateway');
@@ -23,6 +23,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $requirements = $gw->getRequirementsAsArray(null, "zindex_priority DESC");
 
         $techtree = $gw->getTechtreeByColonyId($colonyId);
+
         //$costs = $gw->getTechCosts();
 
         $model =  new ViewModel(array(

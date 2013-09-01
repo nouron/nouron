@@ -252,6 +252,9 @@ return array(
             'Galaxy\Entity\FleetTechnology' => 'Galaxy\Entity\FleetTechnologyFactory',
             'Galaxy\Entity\FleetResource' => 'Galaxy\Entity\FleetResourceFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
+
+            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
+            'Galaxy\Table\FleetTable'  => 'Galaxy\Table\FleetTableFactory',
         ),
     ),
 

@@ -18,20 +18,20 @@
         <th></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
-        <tr id="offer-<?= $offer['colony_id']?>-<?= $offer['resource_id']?>">
-            <? if ($offer['user_id'] != $user_id): ?>
-            <td><?= $offer['colony']?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username']?></a>)</td>
+        <tr id="offer-<?= $offer->colony_id ?>-<?= $offer->resource_id ?>">
+            <? if ($offer->user_id != $user_id): ?>
+            <td><?= $offer->colony?> (<a href=""><i class="icon-envelope"></i> <?= $offer->username?></a>)</td>
             <? else: ?>
-            <td><?= $offer['colony']?></td>
+            <td><?= $offer->colony?></td>
             <?php endif ?>
-            <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
-            <td><?php $resName = $this->translate($resources[$offer['resource_id']]['name']) ?>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?= $resName ?>"><i class="<?= $resources[$offer['resource_id']]['icon'] ?>"></i> <?= $resName ?></a>
+            <td><?= ($offer->direction) ? 'Verkauf' : 'Kauf' ?></td>
+            <td><?php $resName = $this->translate($resources[$offer->resource_id]['name']) ?>
+            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?= $resName ?>"><i class="<?= $resources[$offer->resource_id]['icon'] ?>"></i> <?= $resName ?></a>
             </td>
-            <td><?= $offer['amount']?></td>
-            <td><?= $offer['price']?></td>
-            <td><?= $offer['restriction']?></td>
-            <? if ($offer['user_id'] == $user_id): ?>
+            <td><?= $offer->amount ?></td>
+            <td><?= $offer->price ?></td>
+            <td><?= $offer->restriction ?></td>
+            <? if ($offer->user_id == $user_id): ?>
             <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="icon-remove"></i></a></td>
             <? else: ?>
             <td></td>

@@ -40,5 +40,25 @@ class JsonController extends \Nouron\Controller\IngameController
 
         return new JsonModel($resources);
     }
+
+    /**
+     *
+     */
+    public function reloadresourcebarAction()
+    {
+
+        $sm = $this->getServiceLocator();
+        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $colonyId = $this->getActive('colony'); # for correct service init
+        $result = new ViewModel(
+            array(
+                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'possessions' => $this->resources(),
+            )
+        );
+
+        $result->setTerminal(true);
+        return $result;
+    }
 }
 

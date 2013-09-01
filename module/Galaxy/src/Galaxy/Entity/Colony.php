@@ -1,9 +1,9 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Colony implements EntityInterface
+class Colony extends AbstractEntity
 {
     public $id;
     public $name;
@@ -13,9 +13,5 @@ class Colony implements EntityInterface
     public $since_tick;
     public $is_primary;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

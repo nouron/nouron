@@ -1,9 +1,9 @@
 <?php
 namespace INNN\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class Event implements EntityInterface
+class Event extends AbstractEntity
 {
     public $id;
     public $user_id;
@@ -12,9 +12,5 @@ class Event implements EntityInterface
     public $area;
     public $parameters;
 
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

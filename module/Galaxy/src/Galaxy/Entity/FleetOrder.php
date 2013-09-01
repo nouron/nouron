@@ -1,9 +1,9 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Model\EntityInterface;
+use Nouron\Entity\AbstractEntity;
 
-class FleetOrder implements EntityInterface
+class FleetOrder extends AbstractEntity
 {
     public $tick;
     public $fleet_id;
@@ -12,10 +12,5 @@ class FleetOrder implements EntityInterface
     public $data;
     public $was_processed;
     public $has_notified;
-
-    public function getArrayCopy()
-    {
-        return get_object_vars($this);
-    }
 }
 

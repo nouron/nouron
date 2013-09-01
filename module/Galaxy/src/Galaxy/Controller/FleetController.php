@@ -95,11 +95,11 @@ class FleetController extends \Nouron\Controller\IngameController
 
         if ($fleet && $fleet->user_id == $userId) {
             // own fleet
-            $colony = $gw->getColonyByCoords(array($fleet['x'],$fleet['y'],$fleet['spot']));
+            $colony = $gw->getColonyByCoords(array($fleet->x, $fleet->y, $fleet->spot));
             if ($colony) {
                 $fleetIsInColonyOrbit = true;
                 //get Colony Id
-                $colonyId = $colony['id'];
+                $colonyId = $colony->id;
             }
             #$commands = $fleet->getOrders();
         }

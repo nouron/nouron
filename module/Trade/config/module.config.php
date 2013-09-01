@@ -67,10 +67,14 @@ return array(
         ),
     ),
     'service_manager' => array(
+//         'invokables' => array(
+//             'Trade\Entity\Resource' => 'Trade\Entity\
+//         ),
         'factories' => array(
             'Trade\Entity\Technology' => 'Trade\Entity\TechnologyFactory',
             'Trade\Entity\Resource'   => 'Trade\Entity\ResourceFactory',
             'Trade\Service\Gateway'   => 'Trade\Service\GatewayFactory',
+            'Trade\Table\Resource'    => 'Trade\Table\ResourceFactory',
         ),
     )
 );

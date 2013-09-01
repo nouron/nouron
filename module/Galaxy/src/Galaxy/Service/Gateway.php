@@ -1,7 +1,7 @@
 <?php
 namespace Galaxy\Service;
 
-class Gateway extends \Nouron\Service\Gateway
+class Gateway extends \Nouron\Service\AbstractService
 {
     /**
      * Get all systems.
@@ -968,7 +968,7 @@ class Gateway extends \Nouron\Service\Gateway
             $colos = $this->getColoniesBySystemObjectId($planetary->id);
             foreach ($colos as $colo) {
                 // compare colony coords with given coords
-                if (serialize(array($colo['x'],$colo['y'],$colo['spot']) == serialize($coords))) {
+                if (serialize(array($colo->x, $colo->y, $colo->spot) == serialize($coords))) {
                     return $colo;
                 }
             }
