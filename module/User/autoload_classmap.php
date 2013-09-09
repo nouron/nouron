@@ -10,6 +10,6 @@ return array(
     'User\Entity\User'                          => __DIR__ . '/src/User/Entity/User.php',
     'User\Service\User'                         => __DIR__ . '/src/User/Service/User.php',
     'User\Service\UserFactory'                  => __DIR__ . '/src/User/Service/UserFactory.php',
-    'User\Table\User'                           => __DIR__ . '/src/User/Table/User.php',
+    'User\Table\UserTable'                      => __DIR__ . '/src/User/Table/UserTable.php',
     'User\View\Helper\UserNameLink'             => __DIR__ . '/src/User/View/Helper/UserNameLink.php',
 );

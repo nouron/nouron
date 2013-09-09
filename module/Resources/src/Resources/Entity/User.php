@@ -10,5 +10,47 @@ class User extends AbstractEntity
     public $credits;
     public $supply;
 
+
+    /**
+     * Sets the value of user_id.
+     *
+     * @param mixed $user_id the user_id
+     *
+     * @return self
+     */
+    public function setUser_id($user_id)
+    {
+        $this->user_id = $user_id;
+
+        return $this;
+    }
+
+    /**
+     * Sets the value of credits.
+     *
+     * @param mixed $credits the credits
+     *
+     * @return self
+     */
+    public function setCredits($credits)
+    {
+        $this->credits = $credits;
+
+        return $this;
+    }
+
+    /**
+     * Sets the value of supply.
+     *
+     * @param mixed $supply the supply
+     *
+     * @return self
+     */
+    public function setSupply($supply)
+    {
+        $this->supply = $supply;
+
+        return $this;
+    }
 }
 

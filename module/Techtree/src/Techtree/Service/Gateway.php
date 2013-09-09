@@ -100,10 +100,7 @@ class Gateway extends \Nouron\Service\AbstractService
 
         // Technologien-Stammdaten holen
         $techs = $this->getTechnologies();
-        #$techs = $techs->getArrayCopy('id');
-
-        var_dump($techs->current());
-        exit();
+        $techs = $techs->getArrayCopy('id');
 
         // Besitz holen
         $poss = $this->getPossessionsByColonyId($colonyId);

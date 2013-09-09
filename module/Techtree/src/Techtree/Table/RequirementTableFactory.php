@@ -8,7 +8,7 @@ class RequirementTableFactory implements FactoryInterface{
     public function createService(ServiceLocatorInterface $serviceLocator) {
         $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $entity = $serviceLocator->get('Techtree\Entity\Requirement');
-        $table = new Requirement($adapter, $entity);
+        $table = new RequirementTable($adapter, $entity);
         return $table;
     }
 }

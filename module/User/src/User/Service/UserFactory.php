@@ -16,7 +16,7 @@ class UserFactory implements FactoryInterface
         $db   = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick = $serviceLocator->get('Nouron\Service\Tick');
 
-        $tables['user'] = new \User\Table\User($db);
+        $tables['user'] = new \User\Table\UserTable($db, new \User\Entity\User());
 
         $service   = new User($tick, $tables);
         return $service;

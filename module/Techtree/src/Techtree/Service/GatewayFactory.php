@@ -5,7 +5,6 @@ use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Db\ResultSet\HydratingResultSet;
 use Zend\Db\TableGateway\TableGateway;
-use Zend\Stdlib\Hydrator\Reflection as ReflectionHydrator;
 
 use Techtree\Table\TechnologyTable;
 use Techtree\Table\PossessionTable;
@@ -39,8 +38,8 @@ class GatewayFactory implements FactoryInterface
         $tables['technology']  = new TechnologyTable($db, new Technology());
         $tables['possession']  = new PossessionTable($db, new Possession());
         $tables['requirement'] = new RequirementTable($db, new Requirement());
-        #$tables['order'] = new OrderTable($db, new Order);
-        $tables['cost']  = new CostTable($db, new Cost());
+        #$tables['order']      = new OrderTable($db, new Order());
+        $tables['cost']        = new CostTable($db, new Cost());
         $tables['log_actionpoints'] = new ActionPointTable($db, new ActionPoint());
 
         $services = array();
