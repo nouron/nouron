@@ -36,7 +36,7 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setColony_id($colony_id)
+    public function setColonyId($colony_id)
     {
         $this->colony_id = $colony_id;
 
@@ -50,7 +50,7 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setTech_id($tech_id)
+    public function setTechId($tech_id)
     {
         $this->tech_id = $tech_id;
 
@@ -78,7 +78,7 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setAp_ordered($ap_ordered)
+    public function setApOrdered($ap_ordered)
     {
         $this->ap_ordered = $ap_ordered;
 
@@ -92,7 +92,7 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setIs_final_step($is_final_step)
+    public function setIsFinalStep($is_final_step)
     {
         $this->is_final_step = $is_final_step;
 
@@ -106,7 +106,7 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setWas_progressed($was_progressed)
+    public function setWasProgressed($was_progressed)
     {
         $this->was_progressed = $was_progressed;
 
@@ -120,11 +120,91 @@ class Order extends AbstractEntity
      *
      * @return self
      */
-    public function setHas_notified($has_notified)
+    public function setHasNotified($has_notified)
     {
         $this->has_notified = $has_notified;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
+
+    /**
+     * Gets the value of colony_id.
+     *
+     * @return mixed
+     */
+    public function getColonyId()
+    {
+        return $this->colony_id;
+    }
+
+    /**
+     * Gets the value of tech_id.
+     *
+     * @return mixed
+     */
+    public function getTechId()
+    {
+        return $this->tech_id;
+    }
+
+    /**
+     * Gets the value of order.
+     *
+     * @return mixed
+     */
+    public function getOrder()
+    {
+        return $this->order;
+    }
+
+    /**
+     * Gets the value of ap_ordered.
+     *
+     * @return mixed
+     */
+    public function getApOrdered()
+    {
+        return $this->ap_ordered;
+    }
+
+    /**
+     * Gets the value of is_final_step.
+     *
+     * @return mixed
+     */
+    public function getIsFinalStep()
+    {
+        return $this->is_final_step;
+    }
+
+    /**
+     * Gets the value of was_progressed.
+     *
+     * @return mixed
+     */
+    public function getWasProgressed()
+    {
+        return $this->was_progressed;
+    }
+
+    /**
+     * Gets the value of has_notified.
+     *
+     * @return mixed
+     */
+    public function getHasNotified()
+    {
+        return $this->has_notified;
     }
 }
 

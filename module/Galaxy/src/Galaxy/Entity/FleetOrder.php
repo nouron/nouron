@@ -34,7 +34,7 @@ class FleetOrder extends AbstractEntity
      *
      * @return self
      */
-    public function setFleet_id($fleet_id)
+    public function setFleetId($fleet_id)
     {
         $this->fleet_id = $fleet_id;
 
@@ -90,7 +90,7 @@ class FleetOrder extends AbstractEntity
      *
      * @return self
      */
-    public function setWas_processed($was_processed)
+    public function setWasProcessed($was_processed)
     {
         $this->was_processed = $was_processed;
 
@@ -104,11 +104,81 @@ class FleetOrder extends AbstractEntity
      *
      * @return self
      */
-    public function setHas_notified($has_notified)
+    public function setHasNotified($has_notified)
     {
         $this->has_notified = $has_notified;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
+
+    /**
+     * Gets the value of fleet_id.
+     *
+     * @return mixed
+     */
+    public function getFleetId()
+    {
+        return $this->fleet_id;
+    }
+
+    /**
+     * Gets the value of order.
+     *
+     * @return mixed
+     */
+    public function getOrder()
+    {
+        return $this->order;
+    }
+
+    /**
+     * Gets the value of coordinates.
+     *
+     * @return mixed
+     */
+    public function getCoordinates()
+    {
+        return $this->coordinates;
+    }
+
+    /**
+     * Gets the value of data.
+     *
+     * @return mixed
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * Gets the value of was_processed.
+     *
+     * @return mixed
+     */
+    public function getWasProcessed()
+    {
+        return $this->was_processed;
+    }
+
+    /**
+     * Gets the value of has_notified.
+     *
+     * @return mixed
+     */
+    public function getHasNotified()
+    {
+        return $this->has_notified;
     }
 }
 

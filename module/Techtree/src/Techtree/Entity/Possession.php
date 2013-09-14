@@ -21,7 +21,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setColony_id($colony_id)
+    public function setColonyId($colony_id)
     {
         $this->colony_id = $colony_id;
 
@@ -35,7 +35,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setTech_id($tech_id)
+    public function setTechId($tech_id)
     {
         $this->tech_id = $tech_id;
 
@@ -49,7 +49,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setDisplay_name($display_name)
+    public function setDisplayName($display_name)
     {
         $this->display_name = $display_name;
 
@@ -77,7 +77,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setStatus_points($status_points)
+    public function setStatusPoints($status_points)
     {
         $this->status_points = $status_points;
 
@@ -91,7 +91,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setAp_spend($ap_spend)
+    public function setApSpend($ap_spend)
     {
         $this->ap_spend = $ap_spend;
 
@@ -105,7 +105,7 @@ class Possession extends AbstractEntity
      *
      * @return self
      */
-    public function setAp_spend_for_remove($ap_spend_for_remove)
+    public function setApSpendForRemove($ap_spend_for_remove)
     {
         $this->ap_spend_for_remove = $ap_spend_for_remove;
 
@@ -124,6 +124,86 @@ class Possession extends AbstractEntity
         $this->slot = $slot;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of colony_id.
+     *
+     * @return mixed
+     */
+    public function getColonyId()
+    {
+        return $this->colony_id;
+    }
+
+    /**
+     * Gets the value of tech_id.
+     *
+     * @return mixed
+     */
+    public function getTechId()
+    {
+        return $this->tech_id;
+    }
+
+    /**
+     * Gets the value of display_name.
+     *
+     * @return mixed
+     */
+    public function getDisplayName()
+    {
+        return $this->display_name;
+    }
+
+    /**
+     * Gets the value of level.
+     *
+     * @return mixed
+     */
+    public function getLevel()
+    {
+        return $this->level;
+    }
+
+    /**
+     * Gets the value of status_points.
+     *
+     * @return mixed
+     */
+    public function getStatusPoints()
+    {
+        return $this->status_points;
+    }
+
+    /**
+     * Gets the value of ap_spend.
+     *
+     * @return mixed
+     */
+    public function getApSpend()
+    {
+        return $this->ap_spend;
+    }
+
+    /**
+     * Gets the value of ap_spend_for_remove.
+     *
+     * @return mixed
+     */
+    public function getApSpendForRemove()
+    {
+        return $this->ap_spend_for_remove;
+    }
+
+    /**
+     * Gets the value of slot.
+     *
+     * @return mixed
+     */
+    public function getSlot()
+    {
+        return $this->slot;
     }
 }
 

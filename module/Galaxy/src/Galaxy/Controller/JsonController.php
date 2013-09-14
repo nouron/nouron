@@ -25,7 +25,7 @@ class JsonController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
         $colony = $gw->getCurrentColony();
-        $colonyId = (int) $colony['id'];
+        $colonyId = (int) $colony->id;
 
         if (strtolower($itemType) == 'tech') {
             $transferred = $gw->transferTechnology($colonyId, $fleetId, $itemId, $amount, $isCargo);

@@ -96,5 +96,65 @@ class Event extends AbstractEntity
 
         return $this;
     }
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Gets the value of user_id.
+     *
+     * @return mixed
+     */
+    public function getUser_id()
+    {
+        return $this->user_id;
+    }
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
+
+    /**
+     * Gets the value of event.
+     *
+     * @return mixed
+     */
+    public function getEvent()
+    {
+        return $this->event;
+    }
+
+    /**
+     * Gets the value of area.
+     *
+     * @return mixed
+     */
+    public function getArea()
+    {
+        return $this->area;
+    }
+
+    /**
+     * Gets the value of parameters.
+     *
+     * @return mixed
+     */
+    public function getParameters()
+    {
+        return $this->parameters;
+    }
 }
 

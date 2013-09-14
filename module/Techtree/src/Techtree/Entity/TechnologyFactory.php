@@ -13,10 +13,10 @@ class TechnologyFactory implements FactoryInterface
     {
         $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
 
-//         $resultSetPrototype = new HydratingResultSet(
-//             new ReflectionHydrator, new Technology()
-//         );
-        $table  = new TableGateway('technology', $db);
+        $resultSetPrototype = new HydratingResultSet(
+            new ReflectionHydrator, new Technology()
+        );
+        $table  = new TableGateway('technology', $db, null, $resultSetPrototype);
         $mapper = new Technology($table);
         return $mapper;
     }

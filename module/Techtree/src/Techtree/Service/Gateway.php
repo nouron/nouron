@@ -624,8 +624,8 @@ class Gateway extends \Nouron\Service\AbstractService
 
         // compare possession with requirements:
         foreach ($rqrmnts as $rq) {
-            $id = $rq['required_tech_id'];
-            if ( !isset($poss[$id]) || $rq['required_tech_level'] > $poss[$id]['level']) {
+            $id = $rq->required_tech_id;
+            if ( !isset($poss[$id]) || $rq->required_tech_level > $poss[$id]['level']) {
                 // if not enough techs in possess return false
                 return false;
             }

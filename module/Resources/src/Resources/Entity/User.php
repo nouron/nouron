@@ -18,7 +18,7 @@ class User extends AbstractEntity
      *
      * @return self
      */
-    public function setUser_id($user_id)
+    public function setUserId($user_id)
     {
         $this->user_id = $user_id;
 
@@ -51,6 +51,36 @@ class User extends AbstractEntity
         $this->supply = $supply;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of user_id.
+     *
+     * @return mixed
+     */
+    public function getUserId()
+    {
+        return $this->user_id;
+    }
+
+    /**
+     * Gets the value of credits.
+     *
+     * @return mixed
+     */
+    public function getCredits()
+    {
+        return $this->credits;
+    }
+
+    /**
+     * Gets the value of supply.
+     *
+     * @return mixed
+     */
+    public function getSupply()
+    {
+        return $this->supply;
     }
 }
 

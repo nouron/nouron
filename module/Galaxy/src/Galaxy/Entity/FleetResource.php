@@ -18,7 +18,7 @@ class FleetResource extends AbstractEntity
      *
      * @return self
      */
-    public function setFleet_id($fleet_id)
+    public function setFleetId($fleet_id)
     {
         $this->fleet_id = $fleet_id;
 
@@ -32,7 +32,7 @@ class FleetResource extends AbstractEntity
      *
      * @return self
      */
-    public function setResource_id($resource_id)
+    public function setResourceId($resource_id)
     {
         $this->resource_id = $resource_id;
 
@@ -60,11 +60,51 @@ class FleetResource extends AbstractEntity
      *
      * @return self
      */
-    public function setIs_cargo($is_cargo)
+    public function setIsCargo($is_cargo)
     {
         $this->is_cargo = $is_cargo;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of fleet_id.
+     *
+     * @return mixed
+     */
+    public function getFleetId()
+    {
+        return $this->fleet_id;
+    }
+
+    /**
+     * Gets the value of resource_id.
+     *
+     * @return mixed
+     */
+    public function getResourceId()
+    {
+        return $this->resource_id;
+    }
+
+    /**
+     * Gets the value of amount.
+     *
+     * @return mixed
+     */
+    public function getAmount()
+    {
+        return $this->amount;
+    }
+
+    /**
+     * Gets the value of is_cargo.
+     *
+     * @return mixed
+     */
+    public function getIsCargo()
+    {
+        return $this->is_cargo;
     }
 }
 

@@ -14,7 +14,21 @@ class System extends AbstractEntity
     public $sight;
     public $density;
     public $radiation;
+    public $class;
+    public $size;
+    public $icon_url;
+    public $image_url;
 
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
     /**
      * Sets the value of id.
@@ -28,6 +42,16 @@ class System extends AbstractEntity
         $this->id = $id;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of name.
+     *
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**
@@ -45,6 +69,16 @@ class System extends AbstractEntity
     }
 
     /**
+     * Gets the value of x.
+     *
+     * @return mixed
+     */
+    public function getX()
+    {
+        return $this->x;
+    }
+
+    /**
      * Sets the value of x.
      *
      * @param mixed $x the x
@@ -56,6 +90,16 @@ class System extends AbstractEntity
         $this->x = $x;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of y.
+     *
+     * @return mixed
+     */
+    public function getY()
+    {
+        return $this->y;
     }
 
     /**
@@ -73,17 +117,37 @@ class System extends AbstractEntity
     }
 
     /**
+     * Gets the value of type_id.
+     *
+     * @return mixed
+     */
+    public function getTypeId()
+    {
+        return $this->type_id;
+    }
+
+    /**
      * Sets the value of type_id.
      *
      * @param mixed $type_id the type_id
      *
      * @return self
      */
-    public function setType_id($type_id)
+    public function setTypeId($type_id)
     {
         $this->type_id = $type_id;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of background_image_url.
+     *
+     * @return mixed
+     */
+    public function getBackgroundImageUrl()
+    {
+        return $this->background_image_url;
     }
 
     /**
@@ -93,11 +157,21 @@ class System extends AbstractEntity
      *
      * @return self
      */
-    public function setBackground_image_url($background_image_url)
+    public function setBackgroundImageUrl($background_image_url)
     {
         $this->background_image_url = $background_image_url;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of sight.
+     *
+     * @return mixed
+     */
+    public function getSight()
+    {
+        return $this->sight;
     }
 
     /**
@@ -115,6 +189,16 @@ class System extends AbstractEntity
     }
 
     /**
+     * Gets the value of density.
+     *
+     * @return mixed
+     */
+    public function getDensity()
+    {
+        return $this->density;
+    }
+
+    /**
      * Sets the value of density.
      *
      * @param mixed $density the density
@@ -126,6 +210,16 @@ class System extends AbstractEntity
         $this->density = $density;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of radiation.
+     *
+     * @return mixed
+     */
+    public function getRadiation()
+    {
+        return $this->radiation;
     }
 
     /**
@@ -141,5 +235,100 @@ class System extends AbstractEntity
 
         return $this;
     }
-}
 
+    /**
+     * Gets the value of class.
+     *
+     * @return mixed
+     */
+    public function getClass()
+    {
+        return $this->class;
+    }
+
+    /**
+     * Sets the value of class.
+     *
+     * @param mixed $class the class
+     *
+     * @return self
+     */
+    public function setClass($class)
+    {
+        $this->class = $class;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of size.
+     *
+     * @return mixed
+     */
+    public function getSize()
+    {
+        return $this->size;
+    }
+
+    /**
+     * Sets the value of size.
+     *
+     * @param mixed $size the size
+     *
+     * @return self
+     */
+    public function setSize($size)
+    {
+        $this->size = $size;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of icon_url.
+     *
+     * @return mixed
+     */
+    public function getIconUrl()
+    {
+        return $this->icon_url;
+    }
+
+    /**
+     * Sets the value of icon_url.
+     *
+     * @param mixed $icon_url the icon_url
+     *
+     * @return self
+     */
+    public function setIconUrl($icon_url)
+    {
+        $this->icon_url = $icon_url;
+
+        return $this;
+    }
+
+    /**
+     * Gets the value of image_url.
+     *
+     * @return mixed
+     */
+    public function getImageUrl()
+    {
+        return $this->image_url;
+    }
+
+    /**
+     * Sets the value of image_url.
+     *
+     * @param mixed $image_url the image_url
+     *
+     * @return self
+     */
+    public function setImageUrl($image_url)
+    {
+        $this->image_url = $image_url;
+
+        return $this;
+    }
+}

@@ -17,7 +17,7 @@ class Colony extends AbstractEntity
      *
      * @return self
      */
-    public function setResource_id($resource_id)
+    public function setResourceId($resource_id)
     {
         $this->resource_id = $resource_id;
 
@@ -31,7 +31,7 @@ class Colony extends AbstractEntity
      *
      * @return self
      */
-    public function setColony_id($colony_id)
+    public function setColonyId($colony_id)
     {
         $this->colony_id = $colony_id;
 
@@ -50,6 +50,36 @@ class Colony extends AbstractEntity
         $this->amount = $amount;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of resource_id.
+     *
+     * @return mixed
+     */
+    public function getResourceId()
+    {
+        return $this->resource_id;
+    }
+
+    /**
+     * Gets the value of colony_id.
+     *
+     * @return mixed
+     */
+    public function getColonyId()
+    {
+        return $this->colony_id;
+    }
+
+    /**
+     * Gets the value of amount.
+     *
+     * @return mixed
+     */
+    public function getAmount()
+    {
+        return $this->amount;
     }
 }
 

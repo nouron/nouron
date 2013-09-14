@@ -90,8 +90,8 @@ class Gateway extends \Nouron\Service\AbstractService
         $userResources = $this->getUserResources('user_id = ' . $colony->user_id);
         foreach ($userResources as $t) {
             $add = array(
-                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t['credits']),
-                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY,  'amount'=>$t['supply']),
+                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->credits),
+                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY,  'amount'=>$t->supply),
             );
             $possessions += $add;
         }
@@ -149,13 +149,13 @@ class Gateway extends \Nouron\Service\AbstractService
 
         // check costs
         foreach ($costs as $cost) {
-            $resourceId = $cost['resource_id'];
+            $resourceId = $cost->resource_id;
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
-            if ($cost['amount'] > $possession) {
+            if ($cost->amount > $possession) {
 
                 $this->getLogger()->log(
                     \Zend\Log\Logger::INFO,
-                    'cost check failed: ' . $cost['resource_id'] . " " . $cost['amount'] . ' >' . $possession);
+                    'cost check failed: ' . $cost->resource_id . " " . $cost->amount . ' >' . $possession);
 
                 $result = false;
                 break;

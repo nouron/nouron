@@ -7,10 +7,10 @@ $radius  = round($config['range']/2); ?>
 <div id="system">
 <?= $this->partial('galaxy/_switch_layer_display') ?>
 <div class="hidden">
-    <div id="data_xMin"><?= $system['x'] - $radius;?></div>
-    <div id="data_xMax"><?= $system['x'] + $radius;?></div>
-    <div id="data_yMin"><?= $system['y'] - $radius;?></div>
-    <div id="data_yMax"><?= $system['y'] + $radius;?></div>
+    <div id="data_xMin"><?= $system->x - $radius;?></div>
+    <div id="data_xMax"><?= $system->x + $radius;?></div>
+    <div id="data_yMin"><?= $system->y - $radius;?></div>
+    <div id="data_yMax"><?= $system->y + $radius;?></div>
     <div id="data_offset"><?= $offset?></div>
     <div id="data_range"><?= $config['range']?></div>
     <div id="data_scale"><?= $scale?></div>
@@ -34,7 +34,7 @@ $radius  = round($config['range']/2); ?>
             if ($fleet['user_id'] != $userId):
         ?>
         <li id="fid-<?= $fleet['id']?>">
-            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['slot']?>)" href="#"><i class="icon-plane"></i> <?= $fleet['fleet'] ?></a>
+            <a title="(<?= $fleet['x'].','.$fleet['y'].','.$fleet['spot']?>)" href="#"><i class="icon-plane"></i> <?= $fleet['fleet'] ?></a>
         </li>
         <? endif;
         endforeach; ?>
@@ -49,20 +49,20 @@ $radius  = round($config['range']/2); ?>
 <div class="span6">
 
 <div id="parallax">
-    <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/image/<?= $system['background_image_url'] ?>);"></div>
+    <div id="systemBackground" class="parallax-layer" style="width:<?= $max ?>px;height:<?= $max ?>px;background-image: url(/image/<?= $system->background_image_url ?>);"></div>
     <div id="gridLayer" class="parallax-layer" style="width:<?= $max+200 ?>px;height:<?= $max+200 ?>px;background-image: url(/img/grid.gif)">
 <?php
 $m = $config['range'];
 $r = round($m/2);
 
-    $label = $system['x'] - $radius;
+    $label = $system->x - $radius;
     for ($x=$offset; $x <=$max+$offset; $x=$x+$scale):
     if ($x%50 == 0):
     echo '<p class="debug" style="left: '.$x.'px; top:'.$offset.'px; border: 1px dotted grey;">'.$label.'</p>';
     $label = $label + 5;
     endif;
     endfor;
-    $label = $system['y'] + $label%5;
+    $label = $system->y + $label%5;
     for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
     if ($y%50 == 0):
     $label = $label + 5;
@@ -91,7 +91,7 @@ $r = round($m/2);
 
         <div class="hidden">
         <?php foreach ($fleetOrders as $key => $order) :
-            echo '<div id="'.$order['fleet_id'].'-'.$order['tick'].'" class="fleetorder">' . $order['coordinates'] . '</div>';
+            echo '<div id="'.$order->fleet_id.'-'.$order->tick.'" class="fleetorder">' . $order->coordinates . '</div>';
         endforeach;
         ?>
         </span>

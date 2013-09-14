@@ -45,8 +45,8 @@ class FleetController extends \Nouron\Controller\IngameController
             //$entity = $gw->getSystemObject($colonyId);
         }
 
-        $x = isset($entity) ? $entity['x'] : $x;
-        $y = isset($entity) ? $entity['y'] : $y;
+        $x = isset($entity) ? $entity->x : $x;
+        $y = isset($entity) ? $entity->y : $y;
 
         return new ViewModel(
             array(

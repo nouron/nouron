@@ -5,8 +5,8 @@
 <?= $this->partial('partial/_switch_tech_display') ?>
 
 <div id="fleet">
-    <div class="hidden" id="fleet_id"><?= $fleet['id']?></div>
-    <div class="hidden" id="colony_id"><?= $colony['id']?></div>
+    <div class="hidden" id="fleet_id"><?= $fleet->id ?></div>
+    <div class="hidden" id="colony_id"><?= $colony->id ?></div>
     <div class="row-fluid">
         <div class="span6" style="text-align: center"><h3><?= $this->translate('colony') ?></h3></div>
         <div class="span3"><h3><?= $this->translate('fleet') ?></h3></div>

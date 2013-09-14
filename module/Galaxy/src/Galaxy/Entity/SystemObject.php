@@ -80,7 +80,7 @@ class SystemObject extends AbstractEntity
      *
      * @return self
      */
-    public function setType_id($type_id)
+    public function setTypeId($type_id)
     {
         $this->type_id = $type_id;
 
@@ -150,11 +150,111 @@ class SystemObject extends AbstractEntity
      *
      * @return self
      */
-    public function setImage_url($image_url)
+    public function setImageUrl($image_url)
     {
         $this->image_url = $image_url;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Gets the value of name.
+     *
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Gets the value of x.
+     *
+     * @return mixed
+     */
+    public function getX()
+    {
+        return $this->x;
+    }
+
+    /**
+     * Gets the value of y.
+     *
+     * @return mixed
+     */
+    public function getY()
+    {
+        return $this->y;
+    }
+
+    /**
+     * Gets the value of type_id.
+     *
+     * @return mixed
+     */
+    public function getTypeId()
+    {
+        return $this->type_id;
+    }
+
+    /**
+     * Gets the value of sight.
+     *
+     * @return mixed
+     */
+    public function getSight()
+    {
+        return $this->sight;
+    }
+
+    /**
+     * Gets the value of density.
+     *
+     * @return mixed
+     */
+    public function getDensity()
+    {
+        return $this->density;
+    }
+
+    /**
+     * Gets the value of radiation.
+     *
+     * @return mixed
+     */
+    public function getRadiation()
+    {
+        return $this->radiation;
+    }
+
+    /**
+     * Gets the value of type.
+     *
+     * @return mixed
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Gets the value of image_url.
+     *
+     * @return mixed
+     */
+    public function getImageUrl()
+    {
+        return $this->image_url;
     }
 }
 

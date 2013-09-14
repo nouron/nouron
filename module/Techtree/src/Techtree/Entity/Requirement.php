@@ -15,7 +15,7 @@ class Requirement extends AbstractEntity
      *
      * @return mixed
      */
-    public function getTech_id()
+    public function getTechid()
     {
         return $this->tech_id;
     }
@@ -25,7 +25,7 @@ class Requirement extends AbstractEntity
      *
      * @return mixed
      */
-    public function getRequired_tech_id()
+    public function getRequiredTechId()
     {
         return $this->required_tech_id;
     }
@@ -35,7 +35,7 @@ class Requirement extends AbstractEntity
      *
      * @return mixed
      */
-    public function getRequired_tech_level()
+    public function getRequiredTechLevel()
     {
         return $this->required_tech_level;
     }
@@ -45,9 +45,65 @@ class Requirement extends AbstractEntity
      *
      * @return mixed
      */
-    public function getZindex_priority()
+    public function getZIndexPriority()
     {
         return $this->zindex_priority;
+    }
+
+    /**
+     * Sets the value of tech_id.
+     *
+     * @param mixed $tech_id the tech_id
+     *
+     * @return self
+     */
+    public function setTechId($tech_id)
+    {
+        $this->tech_id = $tech_id;
+
+        return $this;
+    }
+
+    /**
+     * Sets the value of required_tech_id.
+     *
+     * @param mixed $required_tech_id the required_tech_id
+     *
+     * @return self
+     */
+    public function setRequiredTechId($required_tech_id)
+    {
+        $this->required_tech_id = $required_tech_id;
+
+        return $this;
+    }
+
+    /**
+     * Sets the value of required_tech_level.
+     *
+     * @param mixed $required_tech_level the required_tech_level
+     *
+     * @return self
+     */
+    public function setRequiredTechLevel($required_tech_level)
+    {
+        $this->required_tech_level = $required_tech_level;
+
+        return $this;
+    }
+
+    /**
+     * Sets the value of zindex_priority.
+     *
+     * @param mixed $zindex_priority the zindex_priority
+     *
+     * @return self
+     */
+    public function setZIndexPriority($zindex_priority)
+    {
+        $this->zindex_priority = $zindex_priority;
+
+        return $this;
     }
 }
 

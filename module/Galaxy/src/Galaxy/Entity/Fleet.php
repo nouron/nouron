@@ -6,7 +6,7 @@ use Nouron\Entity\AbstractEntity;
 class Fleet extends AbstractEntity
 {
     public $id;
-    public $name;
+    public $fleet;
     public $user_id;
     public $x;
     public $y;
@@ -34,9 +34,9 @@ class Fleet extends AbstractEntity
      *
      * @return self
      */
-    public function setName($name)
+    public function setFleet($name)
     {
-        $this->name = $name;
+        $this->fleet = $name;
 
         return $this;
     }
@@ -48,7 +48,7 @@ class Fleet extends AbstractEntity
      *
      * @return self
      */
-    public function setUser_id($user_id)
+    public function setUserId($user_id)
     {
         $this->user_id = $user_id;
 
@@ -95,6 +95,66 @@ class Fleet extends AbstractEntity
         $this->spot = $spot;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Gets the value of name.
+     *
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Gets the value of user_id.
+     *
+     * @return mixed
+     */
+    public function getUserId()
+    {
+        return $this->user_id;
+    }
+
+    /**
+     * Gets the value of x.
+     *
+     * @return mixed
+     */
+    public function getX()
+    {
+        return $this->x;
+    }
+
+    /**
+     * Gets the value of y.
+     *
+     * @return mixed
+     */
+    public function getY()
+    {
+        return $this->y;
+    }
+
+    /**
+     * Gets the value of spot.
+     *
+     * @return mixed
+     */
+    public function getSpot()
+    {
+        return $this->spot;
     }
 }
 

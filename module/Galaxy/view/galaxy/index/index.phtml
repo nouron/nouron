@@ -22,7 +22,7 @@
             $imgSize = $system['size'];
         ?>
             <span class="tooltip_trigger " style="position:absolute;left:<?= $left ?>px;top:<?= $top ?>px">
-        <?  $tooltip_text = "<b>{$system['name']}</b> ({$system['x']}/{$system['y']})<br />{$this->translate($system['class'])}";
+        <?  $tooltip_text = "{$system['name']} ({$system['x']}/{$system['y']}) {$this->translate($system['class'])}";
             echo '<a data-placement="bottom" rel="tooltip" href="'.$this->url('galaxy/system', array('sid' => $sid)).'" data-original-title="'.$tooltip_text.'"><img class="icon" src="/img/'.$system['icon_url'] .'" width="'.$imgSize .'" height="'.$imgSize.'" /></a>';?>
             </span>
         <? endforeach; ?>

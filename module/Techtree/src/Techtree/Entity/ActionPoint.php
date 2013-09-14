@@ -32,7 +32,7 @@ class ActionPoint extends AbstractEntity
      *
      * @return self
      */
-    public function setColony_id($colony_id)
+    public function setColonyId($colony_id)
     {
         $this->colony_id = $colony_id;
 
@@ -46,7 +46,7 @@ class ActionPoint extends AbstractEntity
      *
      * @return self
      */
-    public function setPersonell_tech_id($personell_tech_id)
+    public function setPersonellTechId($personell_tech_id)
     {
         $this->personell_tech_id = $personell_tech_id;
 
@@ -60,11 +60,51 @@ class ActionPoint extends AbstractEntity
      *
      * @return self
      */
-    public function setSpend_ap($spend_ap)
+    public function setSpendAp($spend_ap)
     {
         $this->spend_ap = $spend_ap;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
+
+    /**
+     * Gets the value of colony_id.
+     *
+     * @return mixed
+     */
+    public function getColonyId()
+    {
+        return $this->colony_id;
+    }
+
+    /**
+     * Gets the value of personell_tech_id.
+     *
+     * @return mixed
+     */
+    public function getPersonellTechId()
+    {
+        return $this->personell_tech_id;
+    }
+
+    /**
+     * Gets the value of spend_ap.
+     *
+     * @return mixed
+     */
+    public function getSpendAp()
+    {
+        return $this->spend_ap;
     }
 }
 

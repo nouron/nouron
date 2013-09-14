@@ -120,7 +120,7 @@ class IndexController extends \Nouron\Controller\IngameController
      * @param array $offers
      * @return \Zend\Paginator\Paginator
      */
-    private function _initPaginator(array $offers)
+    private function _initPaginator($offers)
     {
         \Zend\Paginator\Paginator::setDefaultScrollingStyle('Sliding');
         \Zend\View\Helper\PaginationControl::setDefaultViewPartial(
@@ -129,7 +129,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $page = $this->params()->fromRoute('page');
         $page = $page ? $page : 1;
-        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers));
+        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers->getArrayCopy()));
         $paginator->setCurrentPageNumber($page);
         return $paginator;
     }
@@ -181,7 +181,7 @@ class IndexController extends \Nouron\Controller\IngameController
             'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
-            'paginator' => $this->_initPaginator($techOffers->getArrayCopy()),
+            'paginator' => $this->_initPaginator($techOffers),
             'technologies' => $techs,
         ));
     }
@@ -205,39 +205,33 @@ class IndexController extends \Nouron\Controller\IngameController
         $tradeService = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
 
-//         $resources = $resources->getArrayCopy('id');
-//         $searchForm = new \Trade\Form\SearchForm('resources', $resources);
-//         $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
-
-//         $where = array();
-//         $request = $this->getRequest();
-//         if ($request->isPost()) {
-//             $post = $request->getPost();
-//             if ($post['form_name'] == 'search') {
-//                 $searchForm->setData($request->getPost());
-//                 if ($searchForm->isValid()) {
-//                     print_r('valid');
-//                     $where['direction'] = $post['direction'];
-//                     if (!empty($post['item_id'])) {
-//                         $where['resource_id'] = $post['item_id'];
-//                     }
-//                 } else {
-//                     print_r($searchForm->getMessages());
-//                 }
-//             }
-//          }
-
-//         $resourceOffers = $tradeService->getResources($where);
-        $resourceOffers = $tradeService->getResources();
-        var_dump($resourceOffers->current());
-        print_r($resourceOffers->getArrayCopy());
-        exit();
+        $resources = $resources->getArrayCopy('id');
+        $searchForm = new \Trade\Form\SearchForm('resources', $resources);
+        $newOfferForm = new \Trade\Form\NewOfferForm('resources', $resources);
+        $where = array();
+        $request = $this->getRequest();
+        if ($request->isPost()) {
+            $post = $request->getPost();
+            if ($post['form_name'] == 'search') {
+                $searchForm->setData($request->getPost());
+                if ($searchForm->isValid()) {
+                    print_r('valid');
+                    $where['direction'] = $post['direction'];
+                    if (!empty($post['item_id'])) {
+                        $where['resource_id'] = $post['item_id'];
+                    }
+                } else {
+                    print_r($searchForm->getMessages());
+                }
+            }
+         }
+        $resourceOffers = $tradeService->getResources($where);
 
         return new ViewModel( array(
             'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
-            'paginator' => $this->_initPaginator($resourceOffers->getArrayCopy()),
+            'paginator' => $this->_initPaginator($resourceOffers),
             'resources' => $resources,
         ));
     }

@@ -30,8 +30,8 @@ abstract class AbstractTable extends TableGateway
      */
     public function __construct(AdapterInterface $adapter, EntityInterface $entity)
     {
-        $resultSet = new \Nouron\Model\ResultSet();
-        $resultSet->setObjectPrototype($entity);
+        $hydrator  = new \Zend\Stdlib\Hydrator\ClassMethods;
+        $resultSet = new \Nouron\Model\ResultSet($hydrator, $entity);
 
         parent::__construct($this->table,
             $adapter,

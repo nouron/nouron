@@ -88,7 +88,7 @@ class Gateway extends \Nouron\Service\AbstractService
         }
 
         $entity = $table->getEntity($id);
-        return $this->getByCoordinates('fleets', array($entity['x'],$entity['y']))->getArrayCopy();
+        return $this->getByCoordinates('fleets', array($entity->x,$entity->y))->getArrayCopy();
     }
 
     /**
@@ -148,9 +148,9 @@ class Gateway extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $colonies = $this->getColoniesByUserId((int) $userId);
         foreach ($colonies as $colony) {
-            if ( $colony['is_primary'] || count($colonies) == 1) {
-                if (!$colony['is_primary']) {
-                    $colony['is_primary'] = 1; /* set as prime colony*/
+            if ( $colony->is_primary || count($colonies) == 1) {
+                if (!$colony->is_primary) {
+                    $colony->is_primary = 1; /* set as prime colony*/
                     // TODO: $colony->save()
                 }
                 return $colony;
@@ -241,7 +241,7 @@ class Gateway extends \Nouron\Service\AbstractService
     {
         $this->_validateId($systemId);
         $system = $this->getSystem($systemId);
-        $coords = array($system['x'], $system['y']);
+        $coords = array($system->x, $system->y);
 
         return $this->getByCoordinates('objects', $coords);
     }
@@ -647,13 +647,13 @@ class Gateway extends \Nouron\Service\AbstractService
             $fleet = $this->getFleet($fleet);
         }
 
-        $colonyCoords = array($colony['x'],$colony['y']);#,$colony['spot']);
-        $fleetCoords = array($fleet['x'],$fleet['y']);#,$fleet['spot']);
+        $colonyCoords = array($colony->x, $colony->y);#,$colony['spot']);
+        $fleetCoords = array($fleet->x, $fleet->y);#,$fleet['spot']);
 
         if (serialize($colonyCoords) == serialize($fleetCoords)) {
 
             if ( !$isTradeOffer ) {
-                $techOnColony = $this->getColonyTechnology(array('colony_id' => $colony['id'], 'tech_id' => $techId));
+                $techOnColony = $this->getColonyTechnology(array('colony_id' => $colony->id, 'tech_id' => $techId));
             } else {
 //                 $tradeGw      = new Trade\Service\Gateway();
 //                 $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
@@ -662,28 +662,28 @@ class Gateway extends \Nouron\Service\AbstractService
 //                 }
             }
 
-            $techInFleet  = $this->getFleetTechnology(array('fleet_id' => $fleet['id'], 'tech_id' => $techId, 'is_cargo' => $isCargo));
+            $techInFleet  = $this->getFleetTechnology(array('fleet_id' => $fleet->id, 'tech_id' => $techId, 'is_cargo' => $isCargo));
 
             if ($amount >= 0 ) {
                 // check if there are enough techs on the colony:
-                if ($amount > $techOnColony['level']) {
+                if ($amount > $techOnColony->level) {
                     // only remove the count of techs that really exists on the colony;
-                    $amount = $techOnColony['level'];
+                    $amount = $techOnColony->level;
                 }
             } else {
                 // check if there are enough techs in the fleet:
-                if ($amount < -$techInFleet['count']) {
+                if ($amount < -$techInFleet->count) {
                     // only remove the count of techs that really exists in the fleet:
-                    $amount = -$techInFleet['count'];
+                    $amount = -$techInFleet->count;
                 }
             }
 
             try {
                 $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
-                $techOnColony['level'] = $techOnColony['level'] - $amount;
+                $techOnColony->level = $techOnColony->level - $amount;
                 $this->getTable('colonytechnology')->save($techOnColony);
-                $techInFleet['count'] = $techInFleet['count'] + $amount;
+                $techInFleet->count = $techInFleet->count + $amount;
                 $this->getTable('fleettechnology')->save($techInFleet);
                 $db->commit();
 

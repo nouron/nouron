@@ -21,7 +21,7 @@ class Cost extends AbstractEntity
      *
      * @return self
      */
-    public function setTech_id($tech_id)
+    public function setTechId($tech_id)
     {
         $this->tech_id = $tech_id;
 
@@ -35,7 +35,7 @@ class Cost extends AbstractEntity
      *
      * @return self
      */
-    public function setResource_id($resource_id)
+    public function setResourceId($resource_id)
     {
         $this->resource_id = $resource_id;
 
@@ -54,6 +54,36 @@ class Cost extends AbstractEntity
         $this->amount = $amount;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of tech_id.
+     *
+     * @return mixed
+     */
+    public function getTechId()
+    {
+        return $this->tech_id;
+    }
+
+    /**
+     * Gets the value of resource_id.
+     *
+     * @return mixed
+     */
+    public function getResourceId()
+    {
+        return $this->resource_id;
+    }
+
+    /**
+     * Gets the value of amount.
+     *
+     * @return mixed
+     */
+    public function getAmount()
+    {
+        return $this->amount;
     }
 }
 

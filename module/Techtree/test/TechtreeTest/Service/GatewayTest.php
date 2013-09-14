@@ -4,6 +4,12 @@ namespace TechtreeTest\Service;
 use Techtree\Service\Gateway;
 use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
+use Techtree\Table\TechnologyTable;
+use Techtree\Table\CostTable;
+use Techtree\Table\RequirementTable;
+use Techtree\Entity\Technology;
+use Techtree\Entity\Cost;
+use Techtree\Entity\Requirement;
 
 class GatewayTest extends PHPUnit_Framework_TestCase
 {
@@ -20,13 +26,13 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         );
 
         $tableMocks = array();
-        $tableMocks['technology'] = new \Techtree\Table\Technology($dbAdapter);
+        $tableMocks['technology'] = new TechnologyTable($dbAdapter, new Technology());
         #$tableMocks['resources']  = new \Resources\Table\R($dbAdapter);
-        $tableMocks['cost']       = new \Techtree\Table\Cost($dbAdapter);
-        $tableMocks['possession'] = $this->getMockBuilder('Techtree\Table\Possession')
+        $tableMocks['cost']       = new CostTable($dbAdapter, new Cost());
+        $tableMocks['possession'] = $this->getMockBuilder('Techtree\Table\PossessionTable')
                                          ->disableOriginalConstructor()
                                          ->getMock();
-        $tableMocks['requirement'] = new \Techtree\Table\Requirement($dbAdapter);
+        $tableMocks['requirement'] = new \Techtree\Table\RequirementTable($dbAdapter, new Requirement());
 
         $tick   = $this->getMockBuilder('Nouron\Service\Tick')
                        ->disableOriginalConstructor()
@@ -59,6 +65,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         $objects = $this->_gateway->getCosts();
         $this->assertTrue(!empty($objects));
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\Cost', get_class($objects->current()));
         #$this->markTestIncomplete();
     }
 
@@ -67,6 +74,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         $objects = $this->_gateway->getCostsByTechnologyId(25);
         $this->assertTrue(!empty($objects));
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\Cost', get_class($objects->current()));
         #$this->markTestIncomplete();
     }
 
@@ -96,6 +104,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         $objects = $this->_gateway->getRequirements();
         $this->assertTrue(!empty($objects));
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\Requirement', get_class($objects->current()));
         #$this->markTestIncomplete();
     }
 
@@ -113,6 +122,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
     {
         $objects = $this->_gateway->getTechnologies();
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\Technology', get_class($objects->current()));
         #$this->markTestIncomplete();
     }
 

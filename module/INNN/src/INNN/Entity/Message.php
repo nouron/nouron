@@ -171,5 +171,115 @@ class Message extends AbstractEntity
 
         return $this;
     }
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Gets the value of sender.
+     *
+     * @return mixed
+     */
+    public function getSender()
+    {
+        return $this->sender;
+    }
+
+    /**
+     * Gets the value of attitude.
+     *
+     * @return mixed
+     */
+    public function getAttitude()
+    {
+        return $this->attitude;
+    }
+
+    /**
+     * Gets the value of recipient.
+     *
+     * @return mixed
+     */
+    public function getRecipient()
+    {
+        return $this->recipient;
+    }
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
+
+    /**
+     * Gets the value of type.
+     *
+     * @return mixed
+     */
+    public function getType()
+    {
+        return $this->type;
+    }
+
+    /**
+     * Gets the value of subject.
+     *
+     * @return mixed
+     */
+    public function getSubject()
+    {
+        return $this->subject;
+    }
+
+    /**
+     * Gets the value of text.
+     *
+     * @return mixed
+     */
+    public function getText()
+    {
+        return $this->text;
+    }
+
+    /**
+     * Gets the value of read.
+     *
+     * @return mixed
+     */
+    public function getRead()
+    {
+        return $this->read;
+    }
+
+    /**
+     * Gets the value of archived.
+     *
+     * @return mixed
+     */
+    public function getArchived()
+    {
+        return $this->archived;
+    }
+
+    /**
+     * Gets the value of deleted.
+     *
+     * @return mixed
+     */
+    public function getDeleted()
+    {
+        return $this->deleted;
+    }
 }
 

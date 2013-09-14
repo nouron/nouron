@@ -77,7 +77,7 @@ class Resource extends AbstractEntity
      *
      * @return self
      */
-    public function setIs_tradeable($is_tradeable)
+    public function setIsTradeable($is_tradeable)
     {
         $this->is_tradeable = $is_tradeable;
 
@@ -91,7 +91,7 @@ class Resource extends AbstractEntity
      *
      * @return self
      */
-    public function setStart_amount($start_amount)
+    public function setStartAmount($start_amount)
     {
         $this->start_amount = $start_amount;
 
@@ -110,6 +110,76 @@ class Resource extends AbstractEntity
         $this->icon = $icon;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of id.
+     *
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * Gets the value of name.
+     *
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Gets the value of abbreviation.
+     *
+     * @return mixed
+     */
+    public function getAbbreviation()
+    {
+        return $this->abbreviation;
+    }
+
+    /**
+     * Gets the value of trigger.
+     *
+     * @return mixed
+     */
+    public function getTrigger()
+    {
+        return $this->trigger;
+    }
+
+    /**
+     * Gets the value of is_tradeable.
+     *
+     * @return mixed
+     */
+    public function getIsTradeable()
+    {
+        return $this->is_tradeable;
+    }
+
+    /**
+     * Gets the value of start_amount.
+     *
+     * @return mixed
+     */
+    public function getStartAmount()
+    {
+        return $this->start_amount;
+    }
+
+    /**
+     * Gets the value of icon.
+     *
+     * @return mixed
+     */
+    public function getIcon()
+    {
+        return $this->icon;
     }
 }
 

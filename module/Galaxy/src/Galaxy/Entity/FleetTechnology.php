@@ -17,7 +17,7 @@ class FleetTechnology extends AbstractEntity
      *
      * @return self
      */
-    public function setFleet_id($fleet_id)
+    public function setFleetId($fleet_id)
     {
         $this->fleet_id = $fleet_id;
 
@@ -31,7 +31,7 @@ class FleetTechnology extends AbstractEntity
      *
      * @return self
      */
-    public function setTech_id($tech_id)
+    public function setTechId($tech_id)
     {
         $this->tech_id = $tech_id;
 
@@ -59,11 +59,51 @@ class FleetTechnology extends AbstractEntity
      *
      * @return self
      */
-    public function setIs_cargo($is_cargo)
+    public function setIsCargo($is_cargo)
     {
         $this->is_cargo = $is_cargo;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of fleet_id.
+     *
+     * @return mixed
+     */
+    public function getFleetId()
+    {
+        return $this->fleet_id;
+    }
+
+    /**
+     * Gets the value of tech_id.
+     *
+     * @return mixed
+     */
+    public function getTechId()
+    {
+        return $this->tech_id;
+    }
+
+    /**
+     * Gets the value of count.
+     *
+     * @return mixed
+     */
+    public function getCount()
+    {
+        return $this->count;
+    }
+
+    /**
+     * Gets the value of is_cargo.
+     *
+     * @return mixed
+     */
+    public function getIsCargo()
+    {
+        return $this->is_cargo;
     }
 }
 
