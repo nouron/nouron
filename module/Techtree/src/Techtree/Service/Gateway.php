@@ -663,8 +663,8 @@ class Gateway extends \Nouron\Service\AbstractService
         $this->_validateId($techId);
         $this->_validateId($colonyId);
 
-        $dbTable = $this->getTable('possession');
-        $rowset = $dbTable->fetchAll("tech_id = $techId AND colony_id = $colonyId");
+        $table = $this->getTable('possession');
+        $rowset = $table->fetchAll("tech_id = $techId AND colony_id = $colonyId");
         if ($rowset->valid() and $rowset->count() > 0) {
             return $rowset->current();
         }
@@ -742,7 +742,7 @@ class Gateway extends \Nouron\Service\AbstractService
                     'personell_tech_id' => $techId
                 );
 
-        $loggedActionpoints = $this->getTable('log_actionpoints')
+        $loggedActionpoints = $this->getTable('locked_actionpoints')
                                    ->getEntity($data);
 
         if ( empty($loggedActionpoints) ) {

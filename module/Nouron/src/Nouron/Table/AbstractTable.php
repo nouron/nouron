@@ -54,8 +54,7 @@ abstract class AbstractTable extends TableGateway
         if ($order) {
             $select->order($order);
         }
-        $resultSet = $this->selectWith($select);
-        return $resultSet;
+        return $this->selectWith($select);
     }
 
     /**
@@ -180,7 +179,7 @@ abstract class AbstractTable extends TableGateway
             if (!is_numeric($id) || $id < 0) {
                 print_r($id);
                 print_r($this->primary);
-                throw new Exception('Parameter is not a valid id.');
+                throw new \Exception('Parameter is not a valid id.');
             }
         } else {
             $idArray = $id;
@@ -200,7 +199,7 @@ abstract class AbstractTable extends TableGateway
                 $error = true;
             }
             if ($error) {
-                throw new Exception('Parameter is not a valid compound id.');
+                throw new \Exception('Parameter is not a valid compound id.');
             }
         }
     }

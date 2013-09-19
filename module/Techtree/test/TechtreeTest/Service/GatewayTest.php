@@ -7,9 +7,13 @@ use PHPUnit_Framework_TestCase;
 use Techtree\Table\TechnologyTable;
 use Techtree\Table\CostTable;
 use Techtree\Table\RequirementTable;
+use Techtree\Table\PossessionTable;
+use Techtree\Table\ActionPointTable;
 use Techtree\Entity\Technology;
 use Techtree\Entity\Cost;
 use Techtree\Entity\Requirement;
+use Techtree\Entity\Possession;
+use Techtree\Entity\ActionPoint;
 
 class GatewayTest extends PHPUnit_Framework_TestCase
 {
@@ -29,15 +33,18 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         $tableMocks['technology'] = new TechnologyTable($dbAdapter, new Technology());
         #$tableMocks['resources']  = new \Resources\Table\R($dbAdapter);
         $tableMocks['cost']       = new CostTable($dbAdapter, new Cost());
-        $tableMocks['possession'] = $this->getMockBuilder('Techtree\Table\PossessionTable')
-                                         ->disableOriginalConstructor()
-                                         ->getMock();
+        $tableMocks['possession'] = new PossessionTable($dbAdapter, new Possession());
+                                    #$this->getMockBuilder('Techtree\Table\PossessionTable')
+                                    #     ->disableOriginalConstructor()
+                                    #     ->getMock();
         $tableMocks['requirement'] = new \Techtree\Table\RequirementTable($dbAdapter, new Requirement());
+        $tableMocks['locked_actionpoints']  = new ActionPointTable($dbAdapter, new ActionPoint());
 
-        $tick   = $this->getMockBuilder('Nouron\Service\Tick')
-                       ->disableOriginalConstructor()
-                       ->getMock();
-        $tick->setTickCount(1234);
+        $tick = new \Nouron\Service\Tick(1234);
+            # = $this->getMockBuilder('Nouron\Service\Tick')
+            #        ->disableOriginalConstructor()
+            #        ->getMock();
+        #$tick->setTickCount(1234);
 
         $serviceMocks = array();
         $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\Gateway')
@@ -57,6 +64,15 @@ class GatewayTest extends PHPUnit_Framework_TestCase
 
     public function testGetAvailableActionPoints()
     {
+        $colonyId = 0;
+        $tmp = $this->_gateway->getAvailableActionPoints('building', $colonyId);
+        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
+        $tmp = $this->_gateway->getAvailableActionPoints('ship', $colonyId);
+        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
+        $tmp = $this->_gateway->getAvailableActionPoints('research', $colonyId);
+        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
+        $tmp = $this->_gateway->getAvailableActionPoints('advisor', $colonyId);
+        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
         $this->markTestIncomplete();
     }
 
