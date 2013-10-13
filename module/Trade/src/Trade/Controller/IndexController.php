@@ -20,7 +20,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $userService = $sm->get('User\Service\User');
 
         $techOffers = $gw->getTechnologies();
-        $technologyService = $sm->get('Techtree\Service\Gateway');
+        $technologyService = $sm->get('Techtree\Service\BuildingService');
         $techs = $technologyService->getTechnologies();
         $techs = $techs->getArrayCopy('id');
         $form = new \Trade\Form\NewOfferForm('technologies', $techs);
@@ -61,7 +61,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $userService = $sm->get('User\Service\User');
 
         $resourceOffers = $gw->getResources();
-        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
         $resources = $resources->getArrayCopy('id');
         $form = new \Trade\Form\NewOfferForm('resources', $resources);
@@ -141,14 +141,14 @@ class IndexController extends \Nouron\Controller\IngameController
     public function technologiesAction()
     {
         $sm = $this->getServiceLocator();
-        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 
         $colonyId = $sm->get('colonyId');
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
 
-        $techtreeService = $sm->get('Techtree\Service\Gateway');
+        $techtreeService = $sm->get('Techtree\Service\BuildingService');
         $techs = $techtreeService->getTechnologies();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
@@ -194,12 +194,12 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
 
-        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 
         $colonyId = $sm->get('colonyId');
         $tick     = $sm->get('Nouron\Service\Tick');
 
-        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
@@ -256,7 +256,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
 //         if ($newOfferForm->isValid()) {
 //             $sm = $this->getServiceLocator();
-//             $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+//             $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 //             $gw = $sm->get('Trade\Service\Gateway');
 //             $result = $gw->storeNewOffer($data);
 //         }

@@ -894,12 +894,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "20057d4202148ac7524144c20aeb5ed7e83acd56"
+                "reference": "e430d7416327a93be77b3c4844c191a10cc8c1c7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/20057d4202148ac7524144c20aeb5ed7e83acd56",
-                "reference": "20057d4202148ac7524144c20aeb5ed7e83acd56",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/e430d7416327a93be77b3c4844c191a10cc8c1c7",
+                "reference": "e430d7416327a93be77b3c4844c191a10cc8c1c7",
                 "shasum": ""
             },
             "require": {
@@ -938,7 +938,7 @@
             ],
             "description": "Symfony Console Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2013-09-25 06:04:58"
         },
         {
             "name": "symfony/css-selector",
@@ -989,12 +989,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/DependencyInjection.git",
-                "reference": "6f398011850f6f2656640e3ea8dbafdf35cf63c5"
+                "reference": "14eb184da96129ba5a0304f8cb202b83fc2e375a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/DependencyInjection/zipball/6f398011850f6f2656640e3ea8dbafdf35cf63c5",
-                "reference": "6f398011850f6f2656640e3ea8dbafdf35cf63c5",
+                "url": "https://api.github.com/repos/symfony/DependencyInjection/zipball/14eb184da96129ba5a0304f8cb202b83fc2e375a",
+                "reference": "14eb184da96129ba5a0304f8cb202b83fc2e375a",
                 "shasum": ""
             },
             "require": {
@@ -1037,7 +1037,7 @@
             ],
             "description": "Symfony DependencyInjection Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 11:00:34"
+            "time": "2013-09-21 18:20:49"
         },
         {
             "name": "symfony/dom-crawler",
@@ -1148,12 +1148,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Filesystem.git",
-                "reference": "1c5d286a849f302ac64a574d94caea32eb81effd"
+                "reference": "e558fd5d593ebe083dca199f52aed5374ab7b57a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Filesystem/zipball/1c5d286a849f302ac64a574d94caea32eb81effd",
-                "reference": "1c5d286a849f302ac64a574d94caea32eb81effd",
+                "url": "https://api.github.com/repos/symfony/Filesystem/zipball/e558fd5d593ebe083dca199f52aed5374ab7b57a",
+                "reference": "e558fd5d593ebe083dca199f52aed5374ab7b57a",
                 "shasum": ""
             },
             "require": {
@@ -1186,7 +1186,7 @@
             ],
             "description": "Symfony Filesystem Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2013-09-27 14:57:51"
         },
         {
             "name": "symfony/finder",
@@ -1279,12 +1279,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Translation.git",
-                "reference": "13bd39d060cc85de0686a0f16d515e6a53c2ed4a"
+                "reference": "d7e84f71f1856f75025618aca6cdaf074ab84220"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Translation/zipball/13bd39d060cc85de0686a0f16d515e6a53c2ed4a",
-                "reference": "13bd39d060cc85de0686a0f16d515e6a53c2ed4a",
+                "url": "https://api.github.com/repos/symfony/Translation/zipball/d7e84f71f1856f75025618aca6cdaf074ab84220",
+                "reference": "d7e84f71f1856f75025618aca6cdaf074ab84220",
                 "shasum": ""
             },
             "require": {
@@ -1325,7 +1325,7 @@
             ],
             "description": "Symfony Translation Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2013-09-27 13:28:11"
         },
         {
             "name": "symfony/yaml",
@@ -1334,12 +1334,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Yaml.git",
-                "reference": "d39a0808db5ae9eb81f462753f5d84baf7eecaa3"
+                "reference": "ef4878bcca171ebe7466be0505b85a710818d788"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Yaml/zipball/d39a0808db5ae9eb81f462753f5d84baf7eecaa3",
-                "reference": "d39a0808db5ae9eb81f462753f5d84baf7eecaa3",
+                "url": "https://api.github.com/repos/symfony/Yaml/zipball/ef4878bcca171ebe7466be0505b85a710818d788",
+                "reference": "ef4878bcca171ebe7466be0505b85a710818d788",
                 "shasum": ""
             },
             "require": {
@@ -1372,7 +1372,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2013-09-22 18:04:51"
         },
         {
             "name": "zendframework/zend-developer-tools",
@@ -1661,12 +1661,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcRbac.git",
-                "reference": "f07d49afe10e769ad7ab7a0ae3af6b3eca1a12f0"
+                "reference": "a5d5f2639e61638631606aa554f4d93620006a6a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/f07d49afe10e769ad7ab7a0ae3af6b3eca1a12f0",
-                "reference": "f07d49afe10e769ad7ab7a0ae3af6b3eca1a12f0",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/a5d5f2639e61638631606aa554f4d93620006a6a",
+                "reference": "a5d5f2639e61638631606aa554f4d93620006a6a",
                 "shasum": ""
             },
             "require": {
@@ -1696,7 +1696,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-09-18 19:54:23"
+            "time": "2013-09-25 12:55:29"
         },
         {
             "name": "zf-commons/zfc-user",

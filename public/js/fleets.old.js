@@ -24,7 +24,7 @@ fleets = {
                             $("#colo_category_ships ul.list_ships").append(colonyItemHtml + html);
                             $("#fleet_category_ships ul.list_ships").append(fleetItemHtml + html);
                             break;
-                        case 'advisor':
+                        case 'personell':
                             $("#colo_category_crew ul.list_crew").append(colonyItemHtml + html);
                             $("#fleet_category_crew ul.list_crew").append(fleetItemHtml + html);
                             // @todo list_passenger

@@ -3,7 +3,7 @@ namespace Techtree\Controller;
 
 use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
-use Techtree\Service\Gateway;
+use Techtree\Service\BuildingService;
 
 class TechnologyController extends \Nouron\Controller\IngameController
 {
@@ -15,26 +15,42 @@ class TechnologyController extends \Nouron\Controller\IngameController
     // leveldown
     public function orderAction()
     {
+        $colonyId = $this->getActive('colony');
+        $type   = $this->params()->fromRoute('entitytype');
+        $techId = $this->params()->fromRoute('id');
+        $order  = $this->params()->fromRoute('order');
+        $ap     = $this->params()->fromRoute('ap');
+        $sm = $this->getServiceLocator();
+        switch (strtolower($type)) {
+            case 'building': $service = $sm->get('Techtree\Service\BuildingService');
+                             break;
+            case 'research': $service = $sm->get('Techtree\Service\ResearchService');
+                             break;
+            case 'ship':     $service = $sm->get('Techtree\Service\ShipService');
+                             break;
+            case 'personell':$service = $sm->get('Techtree\Service\PersonellService');
+                             break;
+        }
+
         try {
-            $colonyId = $this->getActive('colony');
-            $techId = $this->params()->fromRoute('id');
-            $order  = $this->params()->fromRoute('order');
-            $ap     = $this->params()->fromRoute('ap');
-            $available_orders = array('add', 'remove', 'repair',
-                                      'levelup', 'leveldown');
-            if (!in_array($order, $available_orders)) {
+            if (in_array($order, array('add','remove','repair'))) {
+                $result = $service->invest($colonyId, $techId, $order, $ap);
+                $message = array('success', $order . ' successfull');
+                // TODO : OK-Nachricht
+            } else if ($order == 'levelup') {
+                $result = $service->levelup($colonyId, $techId);
+                $message = array('success', 'levelup successfull');
+                // TODO : OK-Nachricht
+            } else if ($order == 'leveldown') {
+                $result = $service->leveldown($colonyId, $techId);
+                $message = array('success', 'leveldown successfull');
+                // TODO : OK-Nachricht
+            } else {
                 $this->getServiceLocator()
                      ->get('logger')
                      ->log(\Zend\Log\Logger::ERR, 'Invalid order type.');
                 throw new \Techtree\Service\Exception('Invalid order type.');
             }
-
-            $sm = $this->getServiceLocator();
-            $techtreeGw = $sm->get('Techtree\Service\Gateway');
-
-            $result = $techtreeGw->order($colonyId, $techId, $order, $ap);
-            $message = array('success', $order . ' successfull');
-            // TODO : OK-Nachricht
         } catch (\Techtree\Service\Exception $e) {
             // TODO : Error-Nachricht
             $this->getServiceLocator()
@@ -47,83 +63,206 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         return $this->forward()->dispatch(
             'Techtree\Controller\Technology',
-            array('action' => 'tech', 'id'=>$techId, 'message'=>$message)
+            array('action' => $type, 'id'=>$techId, 'message'=>$message)
         );
     }
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel
+     * @return \Zend\View\Model\ViewModel
      */
-    public function repositionAction()
+    public function buildingAction()
     {
-        /**
-         * TODO: allow this only to admins!
-         */
-        $techId = $this->params('id');
-        $row = $this->params('row');
-        $column = $this->params('column');
-        $sm = $this->getServiceLocator();
-        $techtreeGw = $sm->get('Techtree\Service\Gateway');
-        $result = false;
-        if (!empty($techId)) {
-            $result = $techtreeGw->setGridPosition($techId, $row, $column);
-        }
-
-        return new JsonModel(array(
-            'result' => $result,
-        ));
-    }
-
-    /**
-     *
-     */
-    public function techAction()
-    {
-        $techId = $this->params()->fromRoute('id');
+        $buildingId = $this->params()->fromRoute('id');
         $message = $this->params('message');
 
-        $sm = $this->getServiceLocator();
-        $resourcesGw = $sm->get('Resources\Service\Gateway');
-        $techtreeGw = $sm->get('Techtree\Service\Gateway');
-
-        $tech = $techtreeGw->getTechnology($techId);
-
         $colonyId = $this->getActive('colony');
-        $requiredTechsCheck = $techtreeGw->checkRequiredTechsByTechId($techId, $colonyId);
-        $requiredResourcesCheck = $techtreeGw->checkRequiredResourcesByTechId($techId, $colonyId);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($requiredTechsCheck,$requiredResourcesCheck));
-        $possessions = $techtreeGw->getPossessionsByColonyId($colonyId)->getArrayCopy('tech_id');
-        $techs = $techtreeGw->getTechnologies()->getArrayCopy('id');
+        $sm = $this->getServiceLocator();
+        $resourcesService = $sm->get('Resources\Service\ResourcesService');
+        $buildingService  = $sm->get('Techtree\Service\BuildingService');
+        $personellService = $sm->get('Techtree\Service\PersonellService');
+        $colonyService = $sm->get('Techtree\Service\ColonyService');
+        $colonyService->setColonyId($colonyId);
+        $techtree = $colonyService->getTechtree();
+        $building = $techtree['buildings'][$buildingId];
 
-        if (array_key_exists($techId, $possessions)) {
-            $level    = $possessions[$techId]['level'];
-            $status_points   = $possessions[$techId]['status_points'];
-            $ap_spend = $possessions[$techId]['ap_spend'];
+        $requiredBuildingsCheck = $buildingService->checkRequiredBuildingsByEntityId($colonyId, $buildingId);
+        $costs = $buildingService->getEntityCosts($buildingId);
+        $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $buildings = $buildingService->getEntities()->getArrayCopy('id');
+
+        if (array_key_exists($buildingId, $possessions)) {
+            $level    = $possessions[$buildingId]['level'];
+            $status_points   = $possessions[$buildingId]['status_points'];
+            $ap_spend = $possessions[$buildingId]['ap_spend'];
         } else {
             $level = 0;
             $status_points = null;
             $ap_spend = 0;
         }
 
-        $tech = $techtreeGw->getTechnology($techId);
+        $result = new ViewModel(
+            array(
+                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'building' => $building,
+                'required_buildings_check' => $requiredBuildingsCheck,
+                'required_resources_check' => $requiredResourcesCheck,
+                'costs' => $buildingService->getEntityCosts($buildingId),
+                'possessions' => $possessions,
+                'buildings' => $buildings,
+                'resources' => $resourcesService->getResources()->getArrayCopy('id'),
+                'ap_available' => $personellService->getAvailableActionPoints('construction', $colonyId),
+                'status_points' => $status_points,
+                'message' => $message,
+            )
+        );
+
+        $result->setTerminal(true);
+        return $result;
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
+    public function researchAction()
+    {
+        $researchId = $this->params()->fromRoute('id');
+        $message = $this->params('message');
+
+        $colonyId = $this->getActive('colony');
+        $sm = $this->getServiceLocator();
+        $resourcesService = $sm->get('Resources\Service\ResourcesService');
+        $buildingService  = $sm->get('Techtree\Service\BuildingService');
+        $researchService  = $sm->get('Techtree\Service\ResearchService');
+        $personellService = $sm->get('Techtree\Service\PersonellService');
+        $colonyService = $sm->get('Techtree\Service\ColonyService');
+        $colonyService->setColonyId($colonyId);
+        $techtree = $colonyService->getTechtree();
+        $research = $techtree['researches'][$researchId];
+
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($colonyId, $researchId));
+
+        $requiredBuildingsCheck = $researchService->checkRequiredBuildingsByEntityId($colonyId, $researchId);
+        $costs = $researchService->getEntityCosts($researchId);
+        $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $buildings  = $buildingService->getEntities()->getArrayCopy('id');
+        $researches = $researchService->getEntities()->getArrayCopy('id');
 
         $result = new ViewModel(
             array(
                 'tick' => (string) $sm->get('Nouron\Service\Tick'),
-                'tech' => $tech,
-                'required_techs_check' => $requiredTechsCheck,
+                'research' => $research,
+                'required_buildings_check' => $requiredBuildingsCheck,
                 'required_resources_check' => $requiredResourcesCheck,
-                'requirements' => $techtreeGw->getRequirementsByTechnologyId($techId)->getArrayCopy(),
-                'costs' => $techtreeGw->getCostsByTechnologyId($techId)->getArrayCopy(),
-                #'resource-possessions' => $resourceGw->getPossessions($colonyId),
+                'buildings' => $buildings,
+                'costs' => $researchService->getEntityCosts($researchId),
                 'possessions' => $possessions,
-                'techs' => $techs,
-                'resources' => $resourcesGw->getResources()->getArrayCopy('id'),
-                'ap_spend' => $ap_spend,
-                'ap_available' => $techtreeGw->getAvailableActionPoints($tech->type, $colonyId),
-                'status_points' => $status_points,
-                'level' => $level,
+                'researches' => $researches,
+                'resources' => $resourcesService->getResources()->getArrayCopy('id'),
+                'ap_available' => $personellService->getAvailableActionPoints('research', $colonyId),
+                'message' => $message,
+            )
+        );
+
+        $result->setTerminal(true);
+        return $result;
+    }
+
+
+    public function shipAction()
+    {
+        $shipId = $this->params()->fromRoute('id');
+        $message = $this->params('message');
+
+        $colonyId = $this->getActive('colony');
+        $sm = $this->getServiceLocator();
+        $resourcesService = $sm->get('Resources\Service\ResourcesService');
+        $buildingService  = $sm->get('Techtree\Service\BuildingService');
+        $researchesService= $sm->get('Techtree\Service\ResearchService');
+        $personellService = $sm->get('Techtree\Service\PersonellService');
+        $shipService   = $sm->get('Techtree\Service\ShipService');
+        $colonyService = $sm->get('Techtree\Service\ColonyService');
+        $colonyService->setColonyId($colonyId);
+        $techtree = $colonyService->getTechtree();
+        $ship = $techtree['ships'][$shipId];
+
+        $requiredBuildingsCheck  = $shipService->checkRequiredBuildingsByEntityId($colonyId, $shipId);
+        $requiredResearchesCheck = $shipService->checkRequiredResearchesByEntityId($colonyId, $shipId);
+        $costs = $shipService->getEntityCosts($shipId);
+        $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required researches check : ' . $requiredResearchesCheck);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $buildings   = $buildingService->getEntities()->getArrayCopy('id');
+        $researches  = $researchesService->getEntities()->getArrayCopy('id');
+        $resources   = $resourcesService->getResources()->getArrayCopy('id');
+
+        $result = new ViewModel(
+            array(
+                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'ship' => $ship,
+                'required_buildings_check' => $requiredBuildingsCheck,
+                'required_resources_check' => $requiredResourcesCheck,
+                'costs' => $personellService->getEntityCosts($shipId),
+                'possessions' => $possessions,
+                'buildings' => $buildings,
+                'researches' => $researches,
+                'resources' => $resources,
+                'ap_available' => $personellService->getAvailableActionPoints('construction', $colonyId),
+                'message' => $message,
+            )
+        );
+
+        $result->setTerminal(true);
+        return $result;
+    }
+
+    /**
+     *
+     * @return \Zend\View\Model\ViewModel
+     */
+    public function personellAction()
+    {
+        $entityId = $this->params()->fromRoute('id');
+        $message = $this->params('message');
+
+        $colonyId = $this->getActive('colony');
+        $sm = $this->getServiceLocator();
+        $resourcesService = $sm->get('Resources\Service\ResourcesService');
+        $buildingService  = $sm->get('Techtree\Service\BuildingService');
+        $personellService = $sm->get('Techtree\Service\PersonellService');
+        $colonyService = $sm->get('Techtree\Service\ColonyService');
+        $colonyService->setColonyId($colonyId);
+        $techtree = $colonyService->getTechtree();
+        $personell = $techtree['personell'][$entityId];
+
+        $requiredBuildingsCheck = $personellService->checkRequiredBuildingsByEntityId($colonyId, $entityId);
+        $costs = $personellService->getEntityCosts($entityId);
+        $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $buildings   = $buildingService->getEntities()->getArrayCopy('id');
+        $resources   = $resourcesService->getResources()->getArrayCopy('id');
+
+        $result = new ViewModel(
+            array(
+                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'personell' => $personell,
+                'required_buildings_check' => $requiredBuildingsCheck,
+                'required_resources_check' => $requiredResourcesCheck,
+                'costs' => $personellService->getEntityCosts($entityId),
+                'possessions' => $possessions,
+                'buildings' => $buildings,
+                'resources' => $resources,
                 'message' => $message,
             )
         );

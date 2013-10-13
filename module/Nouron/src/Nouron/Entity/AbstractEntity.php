@@ -14,7 +14,10 @@ abstract class AbstractEntity implements EntityInterface
             if (empty($value)) {
                 continue;
             }
-            $method = 'set'.ucfirst($key);
+            $method = 'set';
+            foreach (explode('_', $key) as $part) {
+                $method .= ucfirst($part);
+            }
             if (!method_exists($this, $method)) {
                 continue;
             }

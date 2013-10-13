@@ -10,7 +10,7 @@ return array(
 'action_ok' => 'Ok',
 'action_on' => 'An',
 'action_submit' => 'Absenden',
-'advisors' => 'Berater',
+'personells' => 'Berater',
 'age' => 'Alter',
 'alliance' => 'Allianz',
 'alliances' => 'Allianzen',

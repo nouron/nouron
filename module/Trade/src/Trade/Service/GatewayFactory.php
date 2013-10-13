@@ -29,7 +29,7 @@ class GatewayFactory implements FactoryInterface
         $tables['resources']       = new ResourceTable($db, new Resource());
         $tables['resources_view']  = new ResourceView($db, new Resource());
 
-        $gateways['resources'] = $serviceLocator->get('Resources\Service\Gateway');
+        $gateways['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
 
         $techtreeGateway = new Gateway($tick, $tables, $gateways);

@@ -5,7 +5,7 @@ use Nouron\Table\AbstractTable;
 
 class ResourceTable extends AbstractTable
 {
-    protected $table  = 'res_resources';
+    protected $table  = 'resources';
 
 }
 

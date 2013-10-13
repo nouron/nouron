@@ -37,7 +37,7 @@ class GetActive extends AbstractPlugin
                 $itemId = 3;
             } elseif ($itemType == 'Colony') {
                 // getActiveColony
-                $itemId = 0;
+                $itemId = 1;
             } elseif ($itemType == 'Fleet') {
                 // getActiveFleet
             }

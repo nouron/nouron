@@ -13,7 +13,7 @@ $(document).ready(function(){
              if (parseInt(tech_count) >= parseInt(required_tech_count)) {
                  fullfilled = true;
              }
-    
+             
              var srcid = src.parent().attr('id').replace('grid-','');
              var trgtid = trgt.parent().attr('id').replace('grid-','');
              var srcpos = src.position();
@@ -117,23 +117,27 @@ $(document).ready(function(){
                  /* Take requirements data to draw the lines into techtree */
                  $('.requirementsdata').each(function() {
                      if ($(this).hasClass( 'building' )) {
-                         class_ = 'building';
+                         from_class = 'building';
+                         to_class = 'building';
                      } else if ($(this).hasClass( 'research' )) {
-                         class_ = 'research';
+                         from_class = 'building';
+                         to_class = 'research';
                      } else if ($(this).hasClass( 'ship' )) {
-                         class_ = 'ship';
+                         from_class = 'research';
+                         to_class = 'ship';
                      } else {
-                         class_ = 'advisor';
+                         from_class = 'building';
+                         to_class = 'personell';
                      }
                      data = $(this).html().trim().split('-');
                      techId = parseInt(data[0]);
                      requiredTechId = parseInt(data[1]);
                      req_count = parseInt(data[2]);
                      count = parseInt(data[3]);
-                     domSourceElem = $('#tech-' + requiredTechId);
-                     domTargetElem = $('#tech-' + techId);
+                     domSourceElem = $('#'+from_class+'-' + requiredTechId);
+                     domTargetElem = $('#'+to_class+'-' + techId);
                      if (domSourceElem && domTargetElem) {
-                         techtree.draw_requirement(domSourceElem, domTargetElem, class_, req_count, count);
+                         techtree.draw_requirement(domSourceElem, domTargetElem, to_class, req_count, count);
                      }
                  });
              }, 100);
@@ -179,8 +183,10 @@ $(document).ready(function(){
         e.preventDefault();
         if (!$(this).hasClass('disabled')) {
             tmp = $(this).attr('id').split('|');
-            techId = tmp[0].replace('tech-','');
-            var url = '/techtree/tech/'+techId;
+            tech = tmp[0].split('-');
+            type = tech[0];
+            techId = tech[1];
+            var url = '/techtree/'+type+'/'+techId;
             if ( tmp.length > 1) {
                 var order = tmp[1].split('-');
                 url = url + '/' + order[0];
@@ -196,25 +202,25 @@ $(document).ready(function(){
         }
     });
     
-    /* click and drop solution for repositioning techs (only for admin use, temporary solution) */
-    $('.grid-cell').click(function(e){
-        if ($(this).html()=='') {
-            techId = $('#storage-tech-id').html();
-            domId = $(this).attr('id').split('-');
-            console.log(domId);
-            row = domId[1];
-            column = domId[2];
-            $.getJSON(
-                '/techtree/tech/'+techId+'/reposition/'+row+'/'+column,
-                function(data) {
-                    console.log($('#storage').html());
-                    $(this).html($('#storage').html());
-                },
-                function(data) {
-                }
-            );
-        }
-    });
+//    /* click and drop solution for repositioning techs (only for admin use, temporary solution) */
+//    $('.grid-cell').click(function(e){
+//        if ($(this).html()=='') {
+//            techId = $('#storage-tech-id').html();
+//            domId = $(this).attr('id').split('-');
+//            console.log(domId);
+//            row = domId[1];
+//            column = domId[2];
+//            $.getJSON(
+//                '/techtree/tech/'+techId+'/reposition/'+row+'/'+column,
+//                function(data) {
+//                    console.log($('#storage').html());
+//                    $(this).html($('#storage').html());
+//                },
+//                function(data) {
+//                }
+//            );
+//        }
+//    });
     
     /** levelup action points */
     /** update action points only visually as a preview */

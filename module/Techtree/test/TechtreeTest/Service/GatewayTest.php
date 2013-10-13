@@ -1,7 +1,7 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\Gateway;
+use Techtree\Service\BuildingService;
 use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
 use Techtree\Table\TechnologyTable;
@@ -47,7 +47,7 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();
-        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\Gateway')
+        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
                                           ->disableOriginalConstructor()
                                           ->getMock();
         $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
@@ -65,13 +65,9 @@ class GatewayTest extends PHPUnit_Framework_TestCase
     public function testGetAvailableActionPoints()
     {
         $colonyId = 0;
-        $tmp = $this->_gateway->getAvailableActionPoints('building', $colonyId);
-        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
-        $tmp = $this->_gateway->getAvailableActionPoints('ship', $colonyId);
+        $tmp = $this->_gateway->getAvailableActionPoints('construction', $colonyId);
         $this->assertTrue(is_numeric($tmp) && $tmp > 1);
         $tmp = $this->_gateway->getAvailableActionPoints('research', $colonyId);
-        $this->assertTrue(is_numeric($tmp) && $tmp > 1);
-        $tmp = $this->_gateway->getAvailableActionPoints('advisor', $colonyId);
         $this->assertTrue(is_numeric($tmp) && $tmp > 1);
         $this->markTestIncomplete();
     }
