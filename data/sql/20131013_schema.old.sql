@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS `innn_messages` (
   KEY `sender_id` (`sender_id`),
   KEY `recipient_id` (`recipient_id`),
   KEY `type` (`type`)
-) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=23 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=24 ;
 
 CREATE TABLE IF NOT EXISTS `innn_message_types` (
   `id` tinyint(2) NOT NULL,
@@ -155,26 +155,12 @@ CREATE TABLE IF NOT EXISTS `innn_news` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `rbac_permission` (
-  `perm_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `perm_name` varchar(32) DEFAULT NULL,
-  PRIMARY KEY (`perm_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-
-CREATE TABLE IF NOT EXISTS `rbac_role` (
-  `role_id` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_role_id` int(11) unsigned DEFAULT NULL,
-  `role_name` varchar(32) DEFAULT NULL,
-  PRIMARY KEY (`role_id`),
-  KEY `parent_role_id` (`parent_role_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
-
-CREATE TABLE IF NOT EXISTS `rbac_role_permission` (
-  `role_id` int(11) unsigned NOT NULL,
-  `perm_id` int(11) unsigned NOT NULL,
-  PRIMARY KEY (`role_id`,`perm_id`),
-  KEY `perm_id` (`perm_id`),
-  KEY `role_id` (`role_id`)
+CREATE TABLE IF NOT EXISTS `locked_actionpoints` (
+  `tick` int(10) unsigned NOT NULL,
+  `colony_id` int(10) unsigned NOT NULL,
+  `personell_tech_id` int(10) unsigned NOT NULL,
+  `spend_ap` int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`tick`,`colony_id`,`personell_tech_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS `res_colony_resources` (
@@ -229,6 +215,7 @@ CREATE TABLE IF NOT EXISTS `tech_possessions` (
   `tech_id` int(3) unsigned NOT NULL,
   `display_name` varchar(255) DEFAULT NULL COMMENT 'a user defined, but not used yet name',
   `level` int(2) unsigned NOT NULL DEFAULT '0',
+  `status_points` int(2) unsigned NOT NULL DEFAULT '10',
   `ap_spend` int(2) unsigned NOT NULL DEFAULT '0' COMMENT 'already spended build ap for this tech',
   `slot` int(2) unsigned DEFAULT NULL COMMENT 'position where a building stands, but not used yet!',
   PRIMARY KEY (`colony_id`,`tech_id`),
@@ -255,7 +242,7 @@ CREATE TABLE IF NOT EXISTS `tech_technologies` (
   `column` int(1) unsigned NOT NULL,
   `max_level` int(2) unsigned DEFAULT NULL,
   `ap_for_levelup` int(2) unsigned NOT NULL DEFAULT '1' COMMENT 'ticks needed to build or research this tech',
-  `decay` int(2) unsigned DEFAULT NULL COMMENT 'decay per tick',
+  `max_status_points` int(2) unsigned DEFAULT NULL,
   `tradeable` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `moving_speed` int(5) unsigned DEFAULT NULL COMMENT 'moving speed per tick (primarily for ships)',
   PRIMARY KEY (`id`),
@@ -263,14 +250,13 @@ CREATE TABLE IF NOT EXISTS `tech_technologies` (
   UNIQUE KEY `row` (`row`,`column`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS `trade_res` (
+CREATE TABLE IF NOT EXISTS `trade_resources` (
   `colony_id` int(10) unsigned NOT NULL,
   `direction` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `resource_id` tinyint(2) unsigned NOT NULL,
   `amount` bigint(20) unsigned NOT NULL DEFAULT '0',
   `price` tinyint(4) unsigned NOT NULL DEFAULT '0',
   `restriction` int(10) unsigned NOT NULL DEFAULT '0',
-  PRIMARY KEY (`colony_id`,`resource_id`),
   KEY `colony_id` (`colony_id`),
   KEY `resource_id` (`resource_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -375,6 +361,35 @@ CREATE TABLE IF NOT EXISTS `v_glx_colonies` (
 ,`isDeleted` int(1) unsigned
 ,`sender` varchar(255)
 ,`recipient` varchar(255)
+);CREATE TABLE IF NOT EXISTS `v_tech_requirements` (
+`required_tech_id` int(3) unsigned
+,`tech_id` int(3) unsigned
+,`required_tech_level` int(2) unsigned
+,`zindex_priority` bigint(13) unsigned
+);CREATE TABLE IF NOT EXISTS `v_trade_resources` (
+`colony_id` int(10) unsigned
+,`direction` tinyint(1) unsigned
+,`resource_id` tinyint(2) unsigned
+,`amount` bigint(20) unsigned
+,`price` tinyint(4) unsigned
+,`restriction` int(10) unsigned
+,`colony` char(20)
+,`username` varchar(255)
+,`user_id` int(10) unsigned
+,`race_id` tinyint(2) unsigned
+,`faction_id` smallint(3) unsigned
+);CREATE TABLE IF NOT EXISTS `v_trade_techs` (
+`colony_id` int(10) unsigned
+,`direction` tinyint(1) unsigned
+,`tech_id` int(10) unsigned
+,`amount` bigint(20) unsigned
+,`price` tinyint(4) unsigned
+,`restriction` int(10) unsigned
+,`colony` char(20)
+,`username` varchar(255)
+,`user_id` int(10) unsigned
+,`race_id` tinyint(2) unsigned
+,`faction_id` smallint(3) unsigned
 );DROP TABLE IF EXISTS `v_glx_colonies`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_glx_colonies` AS select `c`.`id` AS `id`,`c`.`name` AS `name`,`c`.`system_object_id` AS `system_object_id`,`c`.`spot` AS `spot`,`c`.`user_id` AS `user_id`,`c`.`since_tick` AS `since_tick`,`c`.`is_primary` AS `is_primary`,`o`.`name` AS `system_object_name`,`o`.`x` AS `x`,`o`.`y` AS `y`,`o`.`type_id` AS `type_id`,`o`.`sight` AS `sight`,`o`.`density` AS `density`,`o`.`radiation` AS `radiation` from (`glx_colonies` `c` join `glx_system_objects` `o`) where (`c`.`system_object_id` = `o`.`id`);
@@ -390,6 +405,15 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 DROP TABLE IF EXISTS `v_innn_messages`;
 
 CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_innn_messages` AS select `m`.`id` AS `id`,`m`.`sender_id` AS `sender_id`,`m`.`attitude` AS `attitude`,`m`.`recipient_id` AS `recipient_id`,`m`.`tick` AS `tick`,`m`.`type` AS `type`,`m`.`subject` AS `subject`,`m`.`text` AS `text`,`m`.`isRead` AS `isRead`,`m`.`isArchived` AS `isArchived`,`m`.`isDeleted` AS `isDeleted`,`sender`.`username` AS `sender`,`recipient`.`username` AS `recipient` from ((`innn_messages` `m` join `user` `sender`) join `user` `recipient`) where ((`sender`.`user_id` = `m`.`sender_id`) and (`recipient`.`user_id` = `m`.`recipient_id`));
+DROP TABLE IF EXISTS `v_tech_requirements`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_tech_requirements` AS select `r`.`required_tech_id` AS `required_tech_id`,`r`.`tech_id` AS `tech_id`,`r`.`required_tech_level` AS `required_tech_level`,((`t2`.`row` * 10) + `t2`.`column`) AS `zindex_priority` from ((`tech_requirements` `r` join `tech_technologies` `t1`) join `tech_technologies` `t2`) where ((`r`.`required_tech_id` = `t1`.`id`) and (`r`.`tech_id` = `t2`.`id`));
+DROP TABLE IF EXISTS `v_trade_resources`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_trade_resources` AS select `tr`.`colony_id` AS `colony_id`,`tr`.`direction` AS `direction`,`tr`.`resource_id` AS `resource_id`,`tr`.`amount` AS `amount`,`tr`.`price` AS `price`,`tr`.`restriction` AS `restriction`,`col`.`name` AS `colony`,`u`.`username` AS `username`,`u`.`user_id` AS `user_id`,`u`.`race_id` AS `race_id`,`u`.`faction_id` AS `faction_id` from ((`trade_resources` `tr` join `glx_colonies` `col`) join `user` `u`) where ((`tr`.`colony_id` = `col`.`id`) and (`col`.`user_id` = `u`.`user_id`));
+DROP TABLE IF EXISTS `v_trade_techs`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_trade_techs` AS select `tr`.`colony_id` AS `colony_id`,`tr`.`direction` AS `direction`,`tr`.`tech_id` AS `tech_id`,`tr`.`amount` AS `amount`,`tr`.`price` AS `price`,`tr`.`restriction` AS `restriction`,`col`.`name` AS `colony`,`u`.`username` AS `username`,`u`.`user_id` AS `user_id`,`u`.`race_id` AS `race_id`,`u`.`faction_id` AS `faction_id` from ((`trade_techs` `tr` join `glx_colonies` `col`) join `user` `u`) where ((`tr`.`colony_id` = `col`.`id`) and (`col`.`user_id` = `u`.`user_id`));
 
 
 ALTER TABLE `glx_colonies`
@@ -404,13 +428,6 @@ ALTER TABLE `glx_system_objects`
 ALTER TABLE `innn_events`
   ADD CONSTRAINT `innn_events_ibfk_1` FOREIGN KEY (`user`) REFERENCES `usr_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `rbac_role`
-  ADD CONSTRAINT `rbac_role_ibfk_1` FOREIGN KEY (`parent_role_id`) REFERENCES `rbac_role` (`role_id`);
-
-ALTER TABLE `rbac_role_permission`
-  ADD CONSTRAINT `rbac_role_permission_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `rbac_role` (`role_id`),
-  ADD CONSTRAINT `rbac_role_permission_ibfk_2` FOREIGN KEY (`perm_id`) REFERENCES `rbac_permission` (`perm_id`);
-
 ALTER TABLE `res_colony_resources`
   ADD CONSTRAINT `res_colony_resources_ibfk_1` FOREIGN KEY (`resource_id`) REFERENCES `res_resources` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `res_colony_resources_ibfk_2` FOREIGN KEY (`colony_id`) REFERENCES `glx_colonies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -419,8 +436,7 @@ ALTER TABLE `res_user_resources`
   ADD CONSTRAINT `res_user_resources_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `tech_costs`
-  ADD CONSTRAINT `tech_costs_ibfk_1` FOREIGN KEY (`tech_id`) REFERENCES `tech_technologies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `tech_costs_ibfk_2` FOREIGN KEY (`resource_id`) REFERENCES `tech_technologies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+  ADD CONSTRAINT `tech_costs_ibfk_1` FOREIGN KEY (`tech_id`) REFERENCES `tech_technologies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `tech_possessions`
   ADD CONSTRAINT `tech_possessions_ibfk_1` FOREIGN KEY (`colony_id`) REFERENCES `glx_colonies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -430,9 +446,9 @@ ALTER TABLE `tech_requirements`
   ADD CONSTRAINT `tech_requirements_ibfk_1` FOREIGN KEY (`required_tech_id`) REFERENCES `tech_technologies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `tech_requirements_ibfk_2` FOREIGN KEY (`tech_id`) REFERENCES `tech_technologies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE `trade_res`
-  ADD CONSTRAINT `trade_res_ibfk_5` FOREIGN KEY (`colony_id`) REFERENCES `glx_colonies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `trade_res_ibfk_6` FOREIGN KEY (`resource_id`) REFERENCES `res_resources` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE `trade_resources`
+  ADD CONSTRAINT `trade_resources_ibfk_5` FOREIGN KEY (`colony_id`) REFERENCES `glx_colonies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `trade_resources_ibfk_6` FOREIGN KEY (`resource_id`) REFERENCES `res_resources` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `trade_techs`
   ADD CONSTRAINT `trade_techs_ibfk_1` FOREIGN KEY (`colony_id`) REFERENCES `glx_colonies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
