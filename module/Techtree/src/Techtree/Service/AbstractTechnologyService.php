@@ -93,9 +93,10 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
         if (empty($requiredBuildingId)) {
             return True;
         } else if (!isset($colonyBuildings[$requiredBuildingId])) {
-            $this->getLogger()->log(\Zend\Log\Logger::INFO, $requiredBuildingId);
-            $this->getLogger()->log(\Zend\Log\Logger::INFO, $colonyBuildings);
-
+            $this->getLogger()->log(
+                \Zend\Log\Logger::ERR,
+                array('required buildings check failed', $requiredBuildingId, $colonyBuildings)
+            );
             return False;
         } else {
             $requiredBuilding = $colonyBuildings[$requiredBuildingId];
@@ -104,6 +105,12 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
     }
 
     /**
+     *
+     *
+     * @param numeric $entityId
+     * @param numeric $colonyId
+     * @return boolean
+     * @throws \Techtree\Model\Exception if invalid parameter(s)
      * (non-PHPdoc)
      * @see \Techtree\Service\TechnologyServiceInterface::checkRequiredResearchesByEntityId()
      */
@@ -131,24 +138,95 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
 
     /**
      *
-     * 'repair' : set change mode to 'status_ap' and set a positive $cp number
-     * 'destroy': set change mode to 'status_ap' and set a negative $cp number
-     * 'levelup': set change mode to 'level_ap' and set positive $cp number
+     * @param numeric $entityId
+     * @param numeric $colonyId
+     * @return boolean
+     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     */
+    public function checkRequiredActionPoints($colonyId, $entityId)
+    {
+        $this->_validateId($entityId);
+        $this->_validateId($colonyId);
+
+        if ($this->getEntityIdName() == 'personell_id') {
+            return true;
+        } else {
+            $entity = $this->getEntity($entityId);
+            $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+            if ($colonyEntity->getApSpend() >= $entity->getApForLevelup()) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    /**
+     *
+     * @param numeric $entityId
+     * @param numeric $colonyId
+     * @return boolean
+     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     */
+    public function checkLevelUpLimit($colonyId, $entityId)
+    {
+        $this->_validateId($entityId);
+        $this->_validateId($colonyId);
+
+        if ($this->getEntityIdName() == 'building_id') {
+            $entity = $this->getEntity($entityId);
+            $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+            if ($entity->getMaxLevel() >0 && $colonyEntity->getLevel() >= $entity->getMaxLevel()) {
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     *
+     * @param numeric $entityId
+     * @param numeric $colonyId
+     * @return boolean
+     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     */
+    public function checkLevelDownLimit($colonyId, $entityId)
+    {
+        $this->_validateId($entityId);
+        $this->_validateId($colonyId);
+
+        $entity = $this->getEntity($entityId);
+        $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+        if ($colonyEntity->getLevel() <= 0) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     *
+     * 'repair' : set change mode to 'status' and set a positive $points number
+     * 'destroy': set change mode to 'status' and set a negative $points number
+     * 'levelup': set change mode to 'progress' and set positive $points number
      *
      * @param string  $pointsType  'construction_points'|'research_points'
      * @param numeric $entityId
      * @param numeric $colonyId
-     * @param numeric $cp Construction points to invest
+     * @param numeric $points Points to invest
      * @param string  $changeMode 'status'|'progress'
      */
-    protected function _invest($pointsType, $colonyId, $entityId, $changeMode='status', $cp=1)
+    protected function _invest($pointsType, $colonyId, $entityId, $changeMode='add', $points=1)
     {
         $this->_validateId($colonyId);
         $this->_validateId($entityId);
 
         $this->getLogger()->log(
             \Zend\Log\Logger::INFO,
-            "$changeMode cp to building $entityId on colony $colonyId"
+            "$changeMode $points $pointsType to technology $entityId on colony $colonyId"
         );
 
         $result = false;
@@ -159,20 +237,17 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
             $availableAP = $this->getService('personell')->getConstructionPoints($colonyId);
         }
 
-        if ($availableAP >= abs($cp)) {
+        if ($availableAP >= abs($points)) {
             $table = $this->getTable($this->getColonyEntitiesTableName());
             try {
                 # start transaction
                 $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
 
                 # save new possession level
-                $this->getLogger()->log(\Zend\Log\Logger::INFO, array($colonyId, $entityId));
-                $this->getLogger()->log(\Zend\Log\Logger::INFO, $this->getColonyEntitiesTableName());
-
                 $poss = $this->getColonyEntity($colonyId, $entityId);
                 $status_before = $poss->getStatusPoints();
-                $building = $this->getEntity($entityId);
-                if (!$building) {
+                $entity = $this->getEntity($entityId);
+                if (!$entity) {
                     $poss = array(
                         'colony_id' => $colonyId,
                         $this->getEntityIdName() => $entityId,
@@ -184,29 +259,29 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
                     $poss = $poss->getArrayCopy();
                 }
 
-                if (strtolower($changeMode) == 'progress') {
-                    $points = max($poss['ap_spend']+abs($cp), $building->getApForLevelup());
+                if (strtolower($changeMode) == 'add') {
+                    $points = min($poss['ap_spend']+abs($points), $entity->getApForLevelup());
                     $poss['ap_spend'] = $points;
+                } else if (strtolower($changeMode) == 'repair') {
+                    $points = min($poss['status_points']+abs($points), $entity->getMaxStatusPoints());
+                    $poss['status_points'] = $points;
+                } else if (strtolower($changeMode) == 'remove') {
+                    $points = max($poss['status_points']-abs($points), 0);
+                    $poss['status_points'] = $points;
                 } else {
-                    if ($cp > 0) {
-                        $points = max($poss['status_points']+abs($cp), $building->getMaxStatusPoints());
-                        $poss['status_points'] = $points;
-                    } else {
-                        $points = min($poss['status_points']-abs($cp), 0);
-                        $poss['status_points'] = $points;
-                    }
+                    throw new Exception('Invalid change mode.');
                 }
-                
+
                 $result = $table->save($poss);
-                $status_after = $poss->getStatusPoints();
+                $status_after = $poss['status_points'];
                 # pay Costs (only if repair -> that means positive action points)
-                if (strtolower($changeMode) == 'status' && $cp > 0) {
+                if (strtolower($changeMode) == 'repair') {
                     $costs = $this->getEntityCosts($entityId);
                     if (!empty($costs)) {
                         $costs = $costs->getArrayCopy('resource_id');
                         $repairCosts = $costs;
                         foreach ($costs as $resId => $cost) {
-                            $repairCosts[$resId]['amount'] = floor($cost['amount']/$tech->getMaxStatusPoints());
+                            $repairCosts[$resId]['amount'] = floor($cost['amount']/$entity->getMaxStatusPoints());
                         }
                         $this->getLogger()->log(
                             \Zend\Log\Logger::INFO,
@@ -219,7 +294,6 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
                 $effective_spend_ap = abs($status_before-$status_after);
                 if ($effective_spend_ap > 0 ) {
                     # lock action points
-
                     if ($pointsType == 'research_points') {
                         $this->getService('personell')->lockActionPoints('research', $colonyId, $effective_spend_ap);
                     } else {
@@ -241,24 +315,132 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
         return (bool) $result;
     }
 
+    /**
+     * levelup an colony entity (like building, research, ship) if requirements are fullfilled
+     *
+     * @param numeric $colonyId
+     * @param numeric $entityId
+     */
     public function levelup($colonyId, $entityId)
     {
-        # check invested ap
         # check required buildings
-        $required_buildings_check = $this->checkRequiredBuildingsByEntityId($entityId, $colonyId);
+        $required_buildings_check     = $this->checkRequiredBuildingsByEntityId($colonyId, $entityId);
         # check required resources
-        $required_resources_check = $this->checkRequiredResourcesByBuildingId($entityId, $colonyId);
-        # reduce resources
-        # remove one tech level
+        $required_resources_check     = $this->checkRequiredResourcesByEntityId($colonyId, $entityId);
+        # check required researches
+        $required_researches_check    = $this->checkRequiredResearchesByEntityId($colonyId, $entityId);
+        # check invested ap
+        $required_action_points_check = $this->checkRequiredActionPoints($colonyId, $entityId);
+        # check if maximum ist not reached yet
+        $levelup_limit_check          = $this->checkLevelUpLimit($colonyId, $entityId);
 
-        # TODO
+        if ($required_buildings_check && $required_resources_check &&
+            $required_researches_check && $required_action_points_check &&
+            $levelup_limit_check)
+        {
+            $table = $this->getTable($this->getColonyEntitiesTableName());
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+
+                # reduce resources
+                $costs = $this->getEntityCosts($entityId);
+                $this->getService('resources')->payCosts($costs, $colonyId);
+
+                # add one tech level
+                $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+                $entity       = $this->getEntity($entityId);
+                $poss = array(
+                    'colony_id' => $colonyId,
+                    $this->getEntityIdName() => $entityId,
+                    'status_points' => $entity->getMaxStatusPoints(), // reset to max
+                    'level'    => ($colonyEntity ? $colonyEntity->getLevel() + 1 : 1),
+                );
+
+                if ($this->getEntityIdName() != 'personell_id') {
+                    $poss['ap_spend'] = 0; // reset to none (ignored when entity type = personnell)
+                }
+
+                $result = $table->save($poss);
+
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::INFO,
+                    'Add ' . $entityId . ' on colony ' . $colonyId . ' failed'
+                );
+                # rollback transaction
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+            }
+        } else {
+            $this->getLogger()->log(\Zend\Log\Logger::ERR, 'at least one levelup requirements check failed');
+            $this->getLogger()->log(\Zend\Log\Logger::INFO, array($required_buildings_check,$required_resources_check,
+                $required_researches_check,$required_action_points_check, $levelup_limit_check));
+        }
+
     }
 
+    /**
+     * leveldown an colony entity (like building, research, ship) if requirements are fullfilled
+     *
+     * @param numeric $colonyId
+     * @param numeric $entityId
+     */
     public function leveldown($colonyId, $entityId)
     {
+        # check required buildings
+        $required_buildings_check     = $this->checkRequiredBuildingsByEntityId($colonyId, $entityId);
+        # check required resources
+        $required_resources_check     = $this->checkRequiredResourcesByEntityId($colonyId, $entityId);
+        # check required researches
+        $required_researches_check    = $this->checkRequiredResearchesByEntityId($colonyId, $entityId);
         # check invested ap
-        # leveldown
+        $required_action_points_check = $this->checkRequiredActionPoints($colonyId, $entityId);
+        # check if minimum
+        $leveldown_limit_check        = $this->checkLevelDownLimit($colonyId, $entityId);
 
-        # TODO
+        if ($required_buildings_check && $required_resources_check &&
+            $required_researches_check && $required_action_points_check &&
+            $leveldown_limit_check)
+        {
+
+            $table = $this->getTable($this->getColonyEntitiesTableName());
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+
+                # reduce resources
+                $costs = $this->getEntityCosts($entityId);
+                $this->getService('resources')->payCosts($costs, $colonyId);
+
+                # remove one tech level
+                $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+                $entity       = $this->getEntity($entityId);
+                $poss = array(
+                    'colony_id' => $colonyId,
+                    $this->getEntityIdName() => $entityId,
+                    'status_points' => $entity->getMaxStatusPoints(), // reset to max
+                    'level'    => $colonyEntity->getLevel() - 1
+                );
+                if ($this->getEntityIdName() != 'personell_id') {
+                    $poss['ap_spend'] = 0; // reset to none (ignored when entity type = personnell)
+                }
+                $result = $table->save($poss);
+
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::INFO,
+                    'Remove ' . $entityId . ' on colony ' . $colonyId . ' failed'
+                );
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+            }
+
+        } else {
+            $this->getLogger()->log(\Zend\Log\Logger::INFO, 'at least one leveldown requirements check failed');
+        }
     }
+
 }

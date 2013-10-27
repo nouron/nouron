@@ -22,18 +22,22 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $ap     = $this->params()->fromRoute('ap');
         $sm = $this->getServiceLocator();
         switch (strtolower($type)) {
-            case 'building': $service = $sm->get('Techtree\Service\BuildingService');
-                             break;
-            case 'research': $service = $sm->get('Techtree\Service\ResearchService');
-                             break;
-            case 'ship':     $service = $sm->get('Techtree\Service\ShipService');
-                             break;
-            case 'personell':$service = $sm->get('Techtree\Service\PersonellService');
-                             break;
+            case 'building':
+                $service = $sm->get('Techtree\Service\BuildingService');
+                break;
+            case 'research': 
+                $service = $sm->get('Techtree\Service\ResearchService');
+                break;
+            case 'ship':     
+                $service = $sm->get('Techtree\Service\ShipService');
+                break;
+            case 'personell':
+                $service = $sm->get('Techtree\Service\PersonellService');
+                break;
         }
 
         try {
-            if (in_array($order, array('add','remove','repair'))) {
+            if (in_array($order, array('add', 'remove', 'repair'))) {
                 $result = $service->invest($colonyId, $techId, $order, $ap);
                 $message = array('success', $order . ' successfull');
                 // TODO : OK-Nachricht
@@ -151,7 +155,8 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
-        $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $colonyBuildings  = $colonyService->getBuildings()->getArrayCopy('building_id');
+        $colonyResearches = $colonyService->getResearches()->getArrayCopy('research_id');
         $buildings  = $buildingService->getEntities()->getArrayCopy('id');
         $researches = $researchService->getEntities()->getArrayCopy('id');
 
@@ -163,7 +168,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
                 'required_resources_check' => $requiredResourcesCheck,
                 'buildings' => $buildings,
                 'costs' => $researchService->getEntityCosts($researchId),
-                'possessions' => $possessions,
+                'possessions' => $colonyResearches,
                 'researches' => $researches,
                 'resources' => $resourcesService->getResources()->getArrayCopy('id'),
                 'ap_available' => $personellService->getAvailableActionPoints('research', $colonyId),

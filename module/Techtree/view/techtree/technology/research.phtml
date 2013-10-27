@@ -3,7 +3,8 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
         <h3 id="myModalLabel"><?= $this->translate($research['name']) ?> (<?= $research['level'] ?>)
-            <small>(<?= $this->translate('types_' . 'research') ?>/<?= $this->translate('purposes_' . $research['purpose']) ?>)</small></h3>
+            <small>(<?= $this->translate('types_' . 'research') ?>/<?= $this->translate('purposes_' . $research['purpose']) ?>)</small>
+        </h3>
     </div>
     <div class="modal-body">
         <!-- Description -->
@@ -65,10 +66,5 @@
             <p><i class="icon icon-error"></i><?= $message[1] ?></p>
         </div>
         <?php endif;?>
-
     </div>
-
-    <!--<div class="modal-footer">
-        <button class="btn btn-primary">Save changes</button>
-    </div>-->
 </div>

@@ -148,8 +148,8 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $gw = $sm->get('Trade\Service\Gateway');
 
-        $techtreeService = $sm->get('Techtree\Service\BuildingService');
-        $techs = $techtreeService->getTechnologies();
+        $buildingService = $sm->get('Techtree\Service\BuildingService');
+        $techs = $buildingService->getEntities();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');

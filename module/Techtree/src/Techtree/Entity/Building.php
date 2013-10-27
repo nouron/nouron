@@ -47,7 +47,7 @@ class Building extends AbstractTechnology
      */
     public function setMaxLevel($max_level)
     {
-        $this->max_level = $max_level;
+        $this->max_level = (int) $max_level;
         return $this;
     }
 }

@@ -5,6 +5,11 @@ class ColonyPersonell extends AbstractColonyEntity
 {
     public $personell_id;
 
+    public function __create()
+    {
+        unset($this->ap_spend);
+    }
+
     /**
      * Gets the value of personell_id.
      *
@@ -26,6 +31,16 @@ class ColonyPersonell extends AbstractColonyEntity
         $this->personell_id = abs($personell_id);
 
         return $this;
+    }
+
+    public function getApSpend()
+    {
+        return 0;
+    }
+
+    public function setApSpend($ap_spend)
+    {
+        pass;
     }
 }
 

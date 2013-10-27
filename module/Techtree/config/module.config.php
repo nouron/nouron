@@ -21,74 +21,6 @@ return array(
                 ),
                 'may_terminate' => true,
                 'child_routes' => array(
-                    'default' => array(
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/[:controller[/:action[/:id]]]',
-                            'constraints' => array(
-                                'controller' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
-                                'id' => '[0-9]+',
-                            ),
-                            'defaults' => array()
-                        )
-                    ),
-                    'building' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/building/:id',
-                            'constraints' => array(
-                                'id' => '[0-9]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'building'
-                            )
-                        )
-                    ),
-                    'research' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/research/:id',
-                            'constraints' => array(
-                                'id' => '[0-9]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'research'
-                            )
-                        )
-                    ),
-                    'ship' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/ship/:id',
-                            'constraints' => array(
-                                'id' => '[0-9]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'ship'
-                            )
-                        )
-                    ),
-                    'personell' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/personell/:id',
-                            'constraints' => array(
-                                'id' => '[0-9]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'personell'
-                            )
-                        )
-                    ),
                     'order' => array(
                         # Example-Url:  http://dev.nouron.de/techtree/building/35/add
                         'type' => 'Segment',
@@ -104,6 +36,74 @@ return array(
                                 'controller' => 'Technology',
                                 'action' => 'order'
                             )
+                        )
+                    ),
+                    'building' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/building/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/building/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'building'
+                            )
+                        )
+                    ),
+                    'research' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/research/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/research/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'research'
+                            )
+                        )
+                    ),
+                    'ship' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/ship/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/ship/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'ship'
+                            )
+                        )
+                    ),
+                    'personell' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/personell/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/personell/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'personell'
+                            )
+                        )
+                    ),
+                    'default' => array(
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/[:controller[/:action[/:id]]]',
+                            'constraints' => array(
+                                'controller' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'action' => '[a-zA-Z][a-zA-Z0-9_-]*',
+                                'id' => '[0-9]+',
+                            ),
+                            'defaults' => array()
                         )
                     ),
                     // 'reposition' => array(
@@ -160,18 +160,7 @@ return array(
         ),
     ),
     'service_manager' => array(
-//        'invokables' => array(
-//            'Techtree\Table\Technology' => 'Techtree\Table\Technology',
-//            'Techtree\Table\Possession' => 'Techtree\Table\Possession',
-//        ),
         'factories' => array(
-            // 'Techtree\Entity\Building' => 'Techtree\Entity\BuildingFactory',
-            // 'Techtree\Entity\BuildingCost' =>  'Techtree\Entity\BuildingCostFactory',
-            // 'Techtree\Entity\ColonyBuilding' => 'Techtree\Entity\ColonyBuildingFactory',
-            // 'Techtree\Entity\Research' => 'Techtree\Entity\ResearchFactory',
-            // 'Techtree\Entity\ResearchCost' =>  'Techtree\Entity\ResearchCostFactory',
-            // 'Techtree\Entity\Ship' => 'Techtree\Entity\ShipFactory',
-            // 'Techtree\Entity\Personell' => 'Techtree\Entity\PersonellFactory',
             'Resources\Service\ResourcesService' => 'Resources\Service\ResourcesServiceFactory',
             'Techtree\Service\BuildingService' => 'Techtree\Service\BuildingServiceFactory',
             'Techtree\Service\ResearchService' => 'Techtree\Service\ResearchServiceFactory',

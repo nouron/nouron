@@ -237,7 +237,7 @@ $(document).ready(function(){
     });
     
     /** status points */
-    /** update action points only visually as a preview */
+    /** update action points only visually as a preview 
     $('#techModal .progress.status_points a.bar').live('mouseover', function(e) {
         if ($(this).hasClass('bar-info')) {
             $(this).prevAll('.bar-info').removeClass('bar-info').addClass('bar-warning');
@@ -254,10 +254,10 @@ $(document).ready(function(){
         }
         techtree.reset_colors_for_bar_buttons();
     });
-    /** remove the 'preview' action points */
+    /** remove the 'preview' action points 
     $('#techModal .progress.status_points').live('mouseout', function(e) {
         $('#techModal .progress a.bar-danger').removeClass('bar-danger').addClass('bar-warning');
         techtree.reset_colors_for_bar_buttons();
-    });
+    });*/
     
 });
