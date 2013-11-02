@@ -59,14 +59,14 @@ $(document).ready(function(){
                 e.preventDefault();
                 var href= $(this).attr('href');
                 var id = $(this).parent().parent().attr('id');
-                var offerType = $(this).hasClass('resource') ? 'resource' : 'technology';
+                var offerType = $(this).hasClass('resource') ? 'resource' : 'research';
                 bootbox.confirm("Are you sure?", function(result) {
                     if (result == true) {
                         data = id.split("-",3);
                         if (offerType == 'resource') {
                             data = {'colony_id': data[1], 'resource_id': data[2]}
                         } else {
-                            data = {'colony_id': data[1], 'tech_id': data[2]}
+                            data = {'colony_id': data[1], 'research_id': data[2]}
                         }
                         $.post(
                             href,

@@ -3,11 +3,11 @@ namespace Trade\Entity;
 
 use Nouron\Entity\AbstractEntity;
 
-class Technology extends AbstractEntity
+class Research extends AbstractEntity
 {
     public $colony_id;
     public $direction;
-    public $tech_id;
+    public $research_id;
     public $amount;
     public $price;
     public $restriction;
@@ -68,25 +68,25 @@ class Technology extends AbstractEntity
     }
 
     /**
-     * Gets the value of tech_id.
+     * Gets the value of research_id.
      *
      * @return mixed
      */
-    public function getTechId()
+    public function getResearchId()
     {
-        return $this->tech_id;
+        return $this->research_id;
     }
 
     /**
-     * Sets the value of tech_id.
+     * Sets the value of research_id.
      *
-     * @param mixed $tech_id the tech_id
+     * @param mixed $research_id the research_id
      *
      * @return self
      */
-    public function setTechId($tech_id)
+    public function setResearchId($research_id)
     {
-        $this->tech_id = $tech_id;
+        $this->research_id = $research_id;
 
         return $this;
     }

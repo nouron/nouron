@@ -1,8 +1,8 @@
 <?php
 return array (
     # general
-    'technology' => 'Technologie',
-    'technologies' => 'Technologien',
+    'research' => 'Forschung',
+    'researches' => 'Forschungen',
     'resource' => 'Ressource',
     'resources' => 'Ressourcen',
 

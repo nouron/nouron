@@ -5,7 +5,7 @@ class Gateway extends \Nouron\Service\AbstractService
 {
     public function getTechnologies($where = null)
     {
-        return $this->getTable('technology_view')->fetchAll($where);
+        return $this->getTable('researches_view')->fetchAll($where);
     }
 
     public function getResources($where = null)
