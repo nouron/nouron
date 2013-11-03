@@ -19,9 +19,9 @@ class IndexController extends \Nouron\Controller\IngameController
         $gw = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
 
-        $techOffers = $gw->getTechnologies();
+        #$techOffers = $gw->getResearches();
         $researchService = $sm->get('Techtree\Service\ResearchService');
-        $researches = $researchService->getResearches();
+        $researches = $researchService->getEntities();
         $researches = $researches->getArrayCopy('id');
         $form = new \Trade\Form\NewOfferForm('researches', $researches);
 
@@ -104,7 +104,7 @@ class IndexController extends \Nouron\Controller\IngameController
             $data = (array) $request->getPost();
             if (isset($data['resource_id'])) {
                 $result = $gw->removeResourceOffer($data);
-            } elseif (isset($data['tech_id'])) {
+            } elseif (isset($data['research_id'])) {
                 $result = $gw->removeResearchOffer($data);
             } else {
                 $result = false;
@@ -175,13 +175,13 @@ class IndexController extends \Nouron\Controller\IngameController
             }
          }
 
-        $techOffers = $gw->getTechnologies($where);
+        $researchOffers = $gw->getResearches($where);
 
         return new ViewModel( array(
             'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
-            'paginator' => $this->_initPaginator($techOffers),
+            'paginator' => $this->_initPaginator($researchOffers),
             'researches' => $researches,
         ));
     }

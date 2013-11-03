@@ -19,7 +19,7 @@
         <th></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
-        <tr id="offer-<?= $offer['colony_id'] ?>-<?= $offer['tech_id'] ?>">
+        <tr id="offer-research-<?= $offer['colony_id'] ?>-<?= $offer['research_id'] ?>">
             <? if ($offer['user_id'] != $user_id): ?>
             <td><?= $offer['colony'] ?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username'] ?></a>)</td>
             <? else: ?>
