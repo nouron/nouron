@@ -35,8 +35,8 @@ return array (
     'innn_event_colony_research_finish' => "Erforschung von %1s auf Kolonie %2s wurde erfolgreich beendet.",
     'innn_event_colony_ship_start ' => "Bau von Raumschifftyp %s begonnen.",
     'innn_event_colony_ship_finish' => "Bau von Schiffstyp %s auf Kolonie wurde fertig gestellt.",
-    'innn_event_colony_advisor_start ' => "%s wurde angeheuert.",
-    'innn_event_colony_advisor_finish' => "%s wurde gefeuert.",
+    'innn_event_colony_personell_start ' => "%s wurde angeheuert.",
+    'innn_event_colony_personell_finish' => "%s wurde gefeuert.",
 
     # Templates für Vertraege:
     #'innn_message_diplomacy_treaty_war' => ""

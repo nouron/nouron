@@ -7,7 +7,7 @@ class NewOfferForm extends AbstractTradeForm
 {
     /**
      *
-     * @param String $offerType 'resources' or 'technologies'
+     * @param String $offerType 'resources' or 'researches'
      * @param array  $items
      * @param int    $range OPTIONAL (default=0: only offers on own planet)
      */
@@ -22,7 +22,7 @@ class NewOfferForm extends AbstractTradeForm
         if ($offerType == 'resources') {
             $this->setAttribute('action', '/trade/add-resource-offer');
         } else {
-            $this->setAttribute('action', '/trade/add-technology-offer');
+            $this->setAttribute('action', '/trade/add-research-offer');
         }
 
         $this->add(array(

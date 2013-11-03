@@ -20,24 +20,60 @@ abstract class AbstractTable extends TableGateway
     protected $table   = null;
 
     /**
-     * @var string
+     * @var string|array
      */
     protected $primary = 'id'; // default
 
     /**
+     * @var EntityInterface
+     */
+    protected $entityPrototype = null;
+
+    /**
+     * @return string
+     */
+    public function getTableName() {
+        return $this->table;
+    }
+
+    /**
+     * @return string|array
+     */
+    public function getPrimary() {
+        return $this->primary;
+    }
+
+
+
+    /**
      *
      * @param \Zend\Db\Adapter\Adapter $adapter
+     * @param EntityInterface $enitity
      */
     public function __construct(AdapterInterface $adapter, EntityInterface $entity)
     {
         $hydrator  = new \Zend\Stdlib\Hydrator\ClassMethods;
         $resultSet = new \Nouron\Model\ResultSet($hydrator, $entity);
+        $this->entityPrototype = $entity;
 
-        parent::__construct($this->table,
+        parent::__construct($this->getTableName(),
             $adapter,
             null,
             $resultSet
         );
+    }
+
+    /**
+     * @param array $array
+     * @return Entity
+     */
+    public function createEntity($array)
+    {
+        $this->_validateId($array, $this->primary);
+        $entity = $this->entityPrototype;
+        $row = new $entity();
+        $row->exchangeArray($array);
+        return $row;
     }
 
     /**
@@ -75,8 +111,8 @@ abstract class AbstractTable extends TableGateway
      */
     public function getEntity($id)
     {
-        if (is_array($this->primary)) {
-            $this->_validateId($id, $this->primary);
+        if (is_array($this->getPrimary())) {
+            $this->_validateId($id, $this->getPrimary());
             $rowset = $this->fetchAll($id);
         } else {
             $this->_validateId($id);
@@ -84,9 +120,10 @@ abstract class AbstractTable extends TableGateway
         }
 
         $row = $rowset->current();
-//         if (!$row) {
-//             throw new \Exception("Could not find row $id");
-//         }
+        if (!$row) {
+            #throw new \Exception("Could not find row $id");
+            $row = $this->createEntity($id);
+        }
 
         return $row;
     }
@@ -112,7 +149,7 @@ abstract class AbstractTable extends TableGateway
             throw new \Exception('Invalid parameter type for save(): ' . get_class($entity));
         }
 
-        $primary = (array) $this->primary;
+        $primary = (array) $this->getPrimary();
         // primary is now an array so we can handle scalar and compound keys the same way:
 
         $where = array();
@@ -155,7 +192,7 @@ abstract class AbstractTable extends TableGateway
     public function deleteEntity($id)
     {
         if (is_array($id)) {
-            $this->_validateId($id, $this->primary);
+            $this->_validateId($id, $this->getPrimary());
             $this->delete($id);
         } else {
             $this->_validateId($id);
@@ -178,7 +215,7 @@ abstract class AbstractTable extends TableGateway
         if (empty($compoundKey)) {
             if (!is_numeric($id) || $id < 0) {
                 print_r($id);
-                print_r($this->primary);
+                print_r($this->getPrimary());
                 throw new \Exception('Parameter is not a valid id.');
             }
         } else {

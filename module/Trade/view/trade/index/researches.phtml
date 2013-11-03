@@ -1,0 +1,60 @@
+<div class="row-fluid" id="trade">
+    <div class="span10">
+    <?= $this->formTwb($searchForm->prepare(), 'inline'); ?>
+    </div>
+    <div class="span2">
+        <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="icon-plus"></i> Angebot erstellen</a>
+    </div>
+
+    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
+
+    <table class="table">
+    <tr>
+        <th><?= $this->translate('colony') ?></th>
+        <th><?= $this->translate('offer-type') ?></th>
+        <th><?= $this->translate('research') ?></th>
+        <th><?= $this->translate('count') ?></th>
+        <th><?= $this->translate('price per unit') ?></th>
+        <th><?= $this->translate('restriction') ?></th>
+        <th></th>
+    </tr>
+    <?php foreach ($paginator as $offer): ?>
+        <tr id="offer-research-<?= $offer['colony_id'] ?>-<?= $offer['research_id'] ?>">
+            <? if ($offer['user_id'] != $user_id): ?>
+            <td><?= $offer['colony'] ?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username'] ?></a>)</td>
+            <? else: ?>
+            <td><?= $offer['colony'] ?></td>
+            <?php endif ?>
+            <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
+            <td><?= $offer['research_id'] ?></td>
+            <td><?= $offer['amount'] ?></td>
+            <td><?= $offer['price'] ?></td>
+            <td><?= $offer['restriction'] ?></td>
+            <? if ($offer['user_id'] == $user_id): ?>
+            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="icon-remove"></i></a></td>
+            <? else: ?>
+            <td></td>
+            <? endif; ?>
+        </tr>
+    <?php endforeach; ?>
+    </table>
+
+
+    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
+
+</div>
+
+<!-- Modal -->
+<!-- this Modal is filled with html data from json request -->
+<div id="newTradeOfferModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="newTradeOfferModalLabel"><?= $this->translate("new-offer") ?></h3>
+    </div>
+    <div class="modal-body">
+        <?= $this->formTwb($newOfferForm->prepare()); ?>
+    </div>
+    <!-- <div class="modal-footer">
+
+    </div> -->
+</div>

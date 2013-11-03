@@ -1,18 +1,11 @@
 <?php
-
-$grid_y = $tech['row'];
-$grid_x = $tech['column'];
-$key = $grid_y . '-' . $grid_x;
-
-if (empty($tech['level'])):
-    $class = $tech['type'] . ' notexists';
-else:
-    $class = $tech['type'];
-endif;
+$key = $tech['row'] . '-' . $tech['column'];
+$level = isset($tech['level']) ? $tech['level'] : 0;
+$class = empty($tech['level']) ? $type . ' notexists' : $type;
 ?>
 <span class="techdata" id="techsource-<?= $key ?>">
-    <a id="tech-<?= $tech['id'] ?>" class="btn btn-block technology <?= $class ?>" href="#techModal" data-toggle="modal">
-        <?= $this->translate($tech['name']) . ' ' . $tech['level']  ?>
+    <a id="<?= $type ?>-<?= $tech['id'] ?>" class="btn btn-block technology <?= $class ?>" href="#techModal" data-toggle="modal">
+        <?= $this->translate($tech['name']) . ' ' . $level  ?>
     </a>
     <span class="hidden data"><?= json_encode($tech) ?></span>
 </span>

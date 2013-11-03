@@ -130,7 +130,7 @@ class Gateway extends \Nouron\Service\AbstractService
         if (is_numeric($colony)) {
             $colony = $this->getColony($colony);
         }
-        if ($colony['user_id'] == $userId) {
+        if ($colony->getUserId() == $userId) {
             return true;
         } else {
             return false;

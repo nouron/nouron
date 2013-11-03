@@ -28,7 +28,7 @@ return array(
      ),
     'service_manager' => array(
         'factories' => array(
-            'Resources\Service\Gateway' => 'Resources\Service\GatewayFactory',
+            'Resources\Service\ResourcesService' => 'Resources\Service\ResourcesServiceFactory',
         ),
     ),
     'controller_plugins' => array(

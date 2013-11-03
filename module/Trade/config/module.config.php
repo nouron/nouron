@@ -42,15 +42,15 @@ return array(
                 'action' => 'resources',
                 'order' => 4,
                 'pages' => array(
-                    'techs' => array(
+                    'resources' => array(
                         'label' => 'resources',
                         'route' => 'trade',
                         'action'=> 'resources'
                     ),
-                    'resources' => array(
-                        'label' => 'technologies',
+                    'researches' => array(
+                        'label' => 'researches',
                         'route' => 'trade',
-                        'action'=> 'technologies'
+                        'action'=> 'researches'
                     ),
                 )
             )

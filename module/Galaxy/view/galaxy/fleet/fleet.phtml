@@ -14,12 +14,11 @@
     </div>
 <? if ($fleetIsInColonyOrbit):
     foreach ($techs as $techId => $tech):
-        if ($tech["tradeable"] == 1):
+        #if ($tech["tradeable"] == 1):
 ?>
     <div class="row-fluid item tech <?= $tech['type'] ?>" id="tech-<?= $techId ?>">
-        <div class="span3" style="text-align: right"><?= $this->translate($tech["name"]) ?> <div class="tech <?= $tech['type']?>" style="display:inline-block;height:0.9em;width:0.9em;border:1px solid #222;"> </div></div>
+        <div class="span3" style="text-align: right"><?= $this->translate($tech["name"]) ?> <div class="tech research" style="display:inline-block;height:0.9em;width:0.9em;border:1px solid #222;"> </div></div>
         <div class="span1 countOnColony" id="techOnColony-<?= $techId ?>">0</div>
-        <? if ( in_array(strtolower($tech['type']), array('ship', 'advisor')) ): ?>
         <div class="span1 countInFleet"  id="techInFleet-<?= $techId ?>">0</div>
         <div class="span3">
             <a class="btn btn-small btn-warning transfer">-10</a>
@@ -29,9 +28,6 @@
             <a class="btn btn-small btn-success transfer">+5</a>
             <a class="btn btn-small btn-success transfer">+10</a>
         </div>
-        <? else: ?>
-        <div class="span4"></div>
-        <? endif; ?>
         <div class="span1 countInFleetCargo" id="techInFleetCargo-<?= $techId ?>">0</div>
         <div class="span3">
             <a class="btn btn-small btn-warning transfer cargo">-10</a>
@@ -42,7 +38,7 @@
             <a class="btn btn-small btn-success transfer cargo">+10</a>
         </div>
     </div>
-<?      endif;
+<?      #endif;
     endforeach;
 
     foreach ($resources as $resId => $resource):

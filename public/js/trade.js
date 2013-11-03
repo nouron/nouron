@@ -42,6 +42,12 @@ $(document).ready(function(){
                     $(this).serialize(),
                     function(html) {
                         if (html=='') {
+                            $.bootstrapGrowl("Trade offer created/updated!", {
+                                type: 'success',
+                                align: 'center',
+                                width: 'auto'
+                            });
+                            
                             $('.modal').modal({show:false});
                         } else {
                             $('.modal').modal({show:true});
@@ -59,19 +65,30 @@ $(document).ready(function(){
                 e.preventDefault();
                 var href= $(this).attr('href');
                 var id = $(this).parent().parent().attr('id');
-                var offerType = $(this).hasClass('resource') ? 'resource' : 'technology';
+                var data = id.split("-",4);
+                var offerType = data[1]
                 bootbox.confirm("Are you sure?", function(result) {
                     if (result == true) {
-                        data = id.split("-",3);
                         if (offerType == 'resource') {
-                            data = {'colony_id': data[1], 'resource_id': data[2]}
+                            data = {'colony_id': data[2], 'resource_id': data[3]}
                         } else {
-                            data = {'colony_id': data[1], 'tech_id': data[2]}
+                            data = {'colony_id': data[2], 'research_id': data[3]}
                         }
                         $.post(
                             href,
                             data,
-                            $("#"+id).remove()
+                            function(returnData) {
+                                if (returnData.result == true) {
+                                    $("#"+id).remove();
+                                } else {
+                                    console.log('removal failed');
+                                    $.bootstrapGrowl("removal failed!", {
+                                        type: 'error',
+                                        align: 'center',
+                                        width: 'auto'
+                                    });
+                                }
+                            }
                         );
                     }
                 }); 

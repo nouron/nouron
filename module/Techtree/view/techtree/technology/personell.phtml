@@ -1,0 +1,63 @@
+<!-- Modal -->
+<div id="techModal" class="modal hide fade in personell" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="myModalLabel"><?= $this->translate($personell['name']) ?> (<?= $personell['level'] ?>)
+            <small>(<?= $this->translate('types_personell') ?>/<?= $this->translate('purposes_' . $personell['purpose']) ?>)</small></h3>
+    </div>
+    <div class="modal-body">
+        <!-- Description -->
+        <p><?= $this->translate('desc_'.$personell['name'])?></p>
+        <!-- Data -->
+
+        <!-- Costs -->
+        <h4><?= $this->translate('costs and requirements') ?></h4>
+
+        <table class="table">
+            <tr>
+            <td><i class="<?= ($required_resources_check==true)? 'icon-ok' : 'icon-remove' ?>"></i></td>
+            <td>
+            <?php
+                foreach ($costs as $cost):
+                    $resource = $resources[ $cost->getResourceId() ];
+                    $name = $resource['name'];
+                    $abbreviation =  $resource['abbreviation'];
+                    $class  = $resource['icon'];
+                    $amount = $cost->getAmount();
+                    if ($amount > 0):
+                        echo '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$name.'">';
+                        echo '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
+                    endif;
+                endforeach;
+            ?>
+            </td>
+            </tr>
+            <?php if (!empty($personell['required_building_id'])): ?>
+            <tr>
+                <td><?= $required_buildings_check ? '<i class="icon-ok"></i>' : '<i class="icon-remove"></i>'; ?></td>
+                <td><?= $this->translate( $buildings[ $personell['required_building_id'] ]['name'] ) ?> (<?= $personell['required_building_level'] ?>)</td>
+            </tr>
+            <?php endif; ?>
+            <tr>
+                <td colspan="2">
+                    <? if (($required_buildings_check && $required_resources_check) == false):?>
+                    <a id="personell-<?= $personell['id'] ?>|levelup" class="btn disabled">anheuern</a>
+                    <? else:?>
+                    <a id="personell-<?= $personell['id'] ?>|levelup" class="btn btn-success">anheuern</a>
+                    <? endif;?>
+                    <a id="personell-<?= $personell['id'] ?>|leveldown" class="btn btn-danger">feuern</a>
+                </td>
+            </tr>
+        </table>
+        <?php if (is_array($message)): ?>
+        <div class="alert alert-<?= $message[0] ?>">
+            <p><i class="icon icon-error"></i><?= $message[1] ?></p>
+        </div>
+        <?php endif;?>
+
+    </div>
+
+    <!--<div class="modal-footer">
+        <button class="btn btn-primary">Save changes</button>
+    </div>-->
+</div>

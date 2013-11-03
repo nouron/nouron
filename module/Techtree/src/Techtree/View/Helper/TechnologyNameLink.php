@@ -37,7 +37,7 @@ class TechnologyNameLink extends AbstractHelper implements ServiceLocatorAwareIn
     {
         $sm = $this->getServiceLocator();
         \Zend\Debug\Debug::dump($sm->getRegisteredServices());
-        $gateway = $sm->get('Techtree\Service\Gateway');
+        $gateway = $sm->get('Techtree\Service\BuildingService');
         $tech = $gateway->getTechnology($techId);
         if (is_numeric($colonyId)) {
             $lvl = '(' . $gateway->getLevelByTechnologyId($techId, $colonyId) . ')';

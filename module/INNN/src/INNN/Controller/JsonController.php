@@ -3,7 +3,7 @@ namespace INNN\Controller;
 
 use Zend\View\Model\JsonModel;
 use Zend\View\Model\ViewModel;
-use Techtree\Service\Gateway;
+use Techtree\Service\BuildingService;
 
 class JsonController extends \Nouron\Controller\IngameController
 {

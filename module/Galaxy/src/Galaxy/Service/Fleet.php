@@ -312,7 +312,7 @@ class Gateway extends \Nouron\Service\AbstractService
         if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
 
             if ( !$isTradeOffer ) {
-                $resGw       = new Resources\Service\Gateway();
+                $resGw       = new Resources\Service\ResourcesService();
                 $resOnColony = $resGw->getColonyResource(array('colony_id' => $colony['id'], 'resource_id' => $resId));
             } else {
                 $tradeGw     = new Trade\Service\Gateway();

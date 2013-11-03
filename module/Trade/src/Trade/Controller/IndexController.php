@@ -4,7 +4,7 @@ namespace Trade\Controller;
 use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
 use Trade\Service\Gateway;
-use Techtree\Entity\Technology;
+use Techtree\Entity\Research;
 use Resources\Entity\Resource;
 
 class IndexController extends \Nouron\Controller\IngameController
@@ -13,17 +13,17 @@ class IndexController extends \Nouron\Controller\IngameController
      *
      * @return \Zend\View\Model\ViewModel
      */
-    public function addTechnologyOfferAction()
+    public function addResearchOfferAction()
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
 
-        $techOffers = $gw->getTechnologies();
-        $technologyService = $sm->get('Techtree\Service\Gateway');
-        $techs = $technologyService->getTechnologies();
-        $techs = $techs->getArrayCopy('id');
-        $form = new \Trade\Form\NewOfferForm('technologies', $techs);
+        #$techOffers = $gw->getResearches();
+        $researchService = $sm->get('Techtree\Service\ResearchService');
+        $researches = $researchService->getEntities();
+        $researches = $researches->getArrayCopy('id');
+        $form = new \Trade\Form\NewOfferForm('researches', $researches);
 
         $request = $this->getRequest();
         if ( $request->isPost() ) {
@@ -32,7 +32,7 @@ class IndexController extends \Nouron\Controller\IngameController
                 $data = (array) $request->getPost();
                 $data['user_id']   = $this->getActive('user');
                 $data['colony_id'] = $this->getActive('colony');
-                $result = $gw->addTechnologyOffer($data);
+                $result = $gw->addResearchOffer($data);
 
                 if ($result) {
                     $result = new ViewModel();
@@ -61,7 +61,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $userService = $sm->get('User\Service\User');
 
         $resourceOffers = $gw->getResources();
-        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
         $resources = $resources->getArrayCopy('id');
         $form = new \Trade\Form\NewOfferForm('resources', $resources);
@@ -104,8 +104,8 @@ class IndexController extends \Nouron\Controller\IngameController
             $data = (array) $request->getPost();
             if (isset($data['resource_id'])) {
                 $result = $gw->removeResourceOffer($data);
-            } elseif (isset($data['tech_id'])) {
-                $result = $gw->removeTechnologyOffer($data);
+            } elseif (isset($data['research_id'])) {
+                $result = $gw->removeResearchOffer($data);
             } else {
                 $result = false;
             }
@@ -138,24 +138,24 @@ class IndexController extends \Nouron\Controller\IngameController
      *
      * @return \Zend\View\Model\ViewModel
      */
-    public function technologiesAction()
+    public function researchesAction()
     {
         $sm = $this->getServiceLocator();
-        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 
         $colonyId = $sm->get('colonyId');
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
 
-        $techtreeService = $sm->get('Techtree\Service\Gateway');
-        $techs = $techtreeService->getTechnologies();
+        $buildingService = $sm->get('Techtree\Service\ResearchService');
+        $researches = $buildingService->getEntities();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
         $userService = $sm->get('User\Service\User');
-        $techs = $techs->getArrayCopy('id');
-        $searchForm = new \Trade\Form\SearchForm('technologies', $techs);
-        $newOfferForm = new \Trade\Form\NewOfferForm('technologies', $techs);
+        $researches = $researches->getArrayCopy('id');
+        $searchForm = new \Trade\Form\SearchForm('researches', $researches);
+        $newOfferForm = new \Trade\Form\NewOfferForm('researches', $researches);
 
         $where = array();
         $request = $this->getRequest();
@@ -175,14 +175,14 @@ class IndexController extends \Nouron\Controller\IngameController
             }
          }
 
-        $techOffers = $gw->getTechnologies($where);
+        $researchOffers = $gw->getResearches($where);
 
         return new ViewModel( array(
             'user_id' => $this->getActive('user'),
             'searchForm' => $searchForm,
             'newOfferForm' => $newOfferForm,
-            'paginator' => $this->_initPaginator($techOffers),
-            'technologies' => $techs,
+            'paginator' => $this->_initPaginator($researchOffers),
+            'researches' => $researches,
         ));
     }
 
@@ -194,12 +194,12 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
 
-        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 
         $colonyId = $sm->get('colonyId');
         $tick     = $sm->get('Nouron\Service\Tick');
 
-        $resourceService = $sm->get('Resources\Service\Gateway');
+        $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
@@ -256,7 +256,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
 //         if ($newOfferForm->isValid()) {
 //             $sm = $this->getServiceLocator();
-//             $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+//             $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 //             $gw = $sm->get('Trade\Service\Gateway');
 //             $result = $gw->storeNewOffer($data);
 //         }

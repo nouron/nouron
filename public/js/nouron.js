@@ -53,12 +53,12 @@ $(document).ready(function(){
     });
     
     $('#toggleAdvisors').toggle(function() {
-        $('.advisor').fadeOut('slow');
-        $('.line_advisor').fadeOut('slow');
+        $('.personell').fadeOut('slow');
+        $('.line_personell').fadeOut('slow');
         $('.category_crew').fadeOut('slow');
     }, function() {
-        $('.advisor').fadeIn('slow');
-        $('.line_advisor').fadeIn('slow');
+        $('.personell').fadeIn('slow');
+        $('.line_personell').fadeIn('slow');
         $('.category_crew').fadeIn('slow');
     });
     

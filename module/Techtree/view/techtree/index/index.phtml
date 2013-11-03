@@ -22,19 +22,51 @@
 
     <div class="hidden">
         <?php
-        foreach ($techtree as $id => $tech) :
-            echo $this->partial("partial/_techdata", array('tech'=>$tech));
-        endforeach;
-
-        foreach ($requirements as $toId => $req):
-            foreach ($req as $fromId => $val):
+        foreach ($techtree['buildings'] as $id => $tech) :
+            echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'building'));
+            if ($tech['required_building_id'] != null) {
                 echo $this->partial("partial/_techrequirement", array(
-                        'fromTech'=>$techtree[$fromId],
-                        'toTech'=>$techtree[$toId],
-                        'required_tech_count'=>$val['required_tech_count']
+                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
+                    'toTech'=>$techtree['buildings'][$id],
+                    'required_tech_count'=>$tech['required_building_level'],
+                    'type' => 'building'
                 ));
-            endforeach;
-        endforeach; ?>
+            }
+        endforeach;
+        foreach ($techtree['researches'] as $id => $tech) :
+            echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'research'));
+            if ($tech['required_building_id'] != null) {
+                echo $this->partial("partial/_techrequirement", array(
+                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
+                    'toTech'=>$techtree['researches'][$id],
+                    'required_tech_count'=>$tech['required_building_level'],
+                    'type' => 'research'
+                ));
+            }
+        endforeach;
+        foreach ($techtree['ships'] as $id => $tech) :
+            echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'ship'));
+            if ($tech['required_research_id'] != null) {
+                echo $this->partial("partial/_techrequirement", array(
+                    'fromTech'=>$techtree['researches'][$tech['required_research_id']],
+                    'toTech'=>$techtree['ship'][$id],
+                    'required_tech_count'=>$tech['required_research_level'],
+                    'type' => 'ship'
+                ));
+            }
+        endforeach;
+        foreach ($techtree['personell'] as $id => $tech) :
+            echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'personell'));
+            if ($tech['required_building_id'] != null) {
+                echo $this->partial("partial/_techrequirement", array(
+                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
+                    'toTech'=>$techtree['personell'][$id],
+                    'required_tech_count'=>$tech['required_building_level'],
+                    'type' => 'personell'
+                ));
+            }
+        endforeach;
+        ?>
   </div>
 
   <!-- Modal -->

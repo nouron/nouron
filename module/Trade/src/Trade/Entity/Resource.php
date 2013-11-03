@@ -5,6 +5,7 @@ use Nouron\Entity\AbstractEntity;
 
 class Resource extends AbstractEntity
 {
+    // attributes
     public $colony_id;
     public $direction;
     public $resource_id;
@@ -12,6 +13,7 @@ class Resource extends AbstractEntity
     public $price;
     public $restriction;
 
+    // additional attributes when using this entity with a view
     public $colony;
     public $username;
     public $user_id;

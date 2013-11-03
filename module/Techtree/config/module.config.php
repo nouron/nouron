@@ -21,6 +21,79 @@ return array(
                 ),
                 'may_terminate' => true,
                 'child_routes' => array(
+                    'order' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/building/35/add
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/:entitytype/:id/:order[/:ap]',
+                            'constraints' => array(
+                                'entitytype' => '[a-z]+',
+                                'id' => '[0-9]+',
+                                'order' => '[a-z]+',
+                                'ap' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'order'
+                            )
+                        )
+                    ),
+                    'building' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/building/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/building/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'building'
+                            )
+                        )
+                    ),
+                    'research' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/research/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/research/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'research'
+                            )
+                        )
+                    ),
+                    'ship' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/ship/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/ship/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'ship'
+                            )
+                        )
+                    ),
+                    'personell' => array(
+                        # Example-Url:  http://dev.nouron.de/techtree/personell/35
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/personell/:id',
+                            'constraints' => array(
+                                'id' => '[0-9]+'
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Technology',
+                                'action' => 'personell'
+                            )
+                        )
+                    ),
                     'default' => array(
                         'type' => 'Segment',
                         'options' => array(
@@ -33,55 +106,23 @@ return array(
                             'defaults' => array()
                         )
                     ),
-                    'tech' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/tech/:id',
-                            'constraints' => array(
-                                'action' => 'order',
-                                'id' => '[0-9]+',
-                                'order' => '[a-z]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'tech'
-                            )
-                        )
-                    ),
-                    'order' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35/add
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/tech/:id/:order[/:ap]',
-                            'constraints' => array(
-                                'id' => '[0-9]+',
-                                'order' => '[a-z]+',
-                                'ap' => '[0-9]+'
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'order'
-                            )
-                        )
-                    ),
-                    'reposition' => array(
-                        # Example-Url:  http://dev.nouron.de/techtree/tech/35/reposition/:row/:column
-                        'type' => 'Segment',
-                        'options' => array(
-                            'route' => '/tech/:id/reposition/:row/:column',
-                            'constraints' => array(
-                                'action' => 'order',
-                                'id' => '[0-9]+',
-                                'row' => '[0-9]+',
-                                'column' => '[0-9]+',
-                            ),
-                            'defaults' => array(
-                                'controller' => 'Technology',
-                                'action' => 'reposition'
-                            )
-                        )
-                    )
+                    // 'reposition' => array(
+                    //     # Example-Url:  http://dev.nouron.de/techtree/tech/35/reposition/:row/:column
+                    //     'type' => 'Segment',
+                    //     'options' => array(
+                    //         'route' => '/tech/:id/reposition/:row/:column',
+                    //         'constraints' => array(
+                    //             'action' => 'order',
+                    //             'id' => '[0-9]+',
+                    //             'row' => '[0-9]+',
+                    //             'column' => '[0-9]+',
+                    //         ),
+                    //         'defaults' => array(
+                    //             'controller' => 'Technology',
+                    //             'action' => 'reposition'
+                    //         )
+                    //     )
+                    // )
                 )
             ),
         )
@@ -119,18 +160,13 @@ return array(
         ),
     ),
     'service_manager' => array(
-//        'invokables' => array(
-//            'Techtree\Table\Technology' => 'Techtree\Table\Technology',
-//            'Techtree\Table\Possession' => 'Techtree\Table\Possession',
-//        ),
         'factories' => array(
-            'Techtree\Entity\Technology' => 'Techtree\Entity\TechnologyFactory',
-            'Techtree\Entity\Possession' => 'Techtree\Entity\PossessionFactory',
-            'Techtree\Entity\Requirement' => 'Techtree\Entity\RequirementFactory',
-            'Techtree\Entity\Order' => 'Techtree\Entity\RequirementFactory',
-            'Techtree\Entity\Cost' =>  'Techtree\Entity\CostFactory',
-            'Techtree\Service\Gateway' => 'Techtree\Service\GatewayFactory',
-            'Techtree\Service\GatewayTest' => 'Techtree\Service\GatewayTestFactory',
+            'Resources\Service\ResourcesService' => 'Resources\Service\ResourcesServiceFactory',
+            'Techtree\Service\BuildingService' => 'Techtree\Service\BuildingServiceFactory',
+            'Techtree\Service\ResearchService' => 'Techtree\Service\ResearchServiceFactory',
+            'Techtree\Service\ShipService' => 'Techtree\Service\ShipServiceFactory',
+            'Techtree\Service\PersonellService' => 'Techtree\Service\PersonellServiceFactory',
+            'Techtree\Service\ColonyService' => 'Techtree\Service\ColonyServiceFactory',
         ),
     )
 );

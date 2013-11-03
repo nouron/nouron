@@ -66,10 +66,10 @@ class FleetController extends \Nouron\Controller\IngameController
         $form = new \Galaxy\Form\Fleet();
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Galaxy\Service\Gateway');
-        $resourcesGw = $sm->get('Resources\Service\Gateway');
+        $resourcesGw = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourcesGw->getResources()->getArrayCopy('id');
-        $techtreeGw = $sm->get('Techtree\Service\Gateway');
-        $techs = $techtreeGw->getTechnologies()->getArrayCopy('id');
+        $researchService = $sm->get('Techtree\Service\ResearchService');
+        $techs = $researchService->getEntities()->getArrayCopy('id');
         if ($this->getRequest()->isPost()) {
             $form->setData($this->getRequest()->getPost());
             if ($form->isValid()) {
@@ -112,7 +112,7 @@ class FleetController extends \Nouron\Controller\IngameController
                 'techs' => $techs,
                 'fleetIsInColonyOrbit' => $fleetIsInColonyOrbit,
 //                 'ships' => $ships,
-//                 'advisors' => $advisors,
+//                 'personells' => $personells,
 //                 'techs' => $buildingsAndResearches,
                  'resources' => $resources,
 //                 'fleetShips' => $fleetShips,

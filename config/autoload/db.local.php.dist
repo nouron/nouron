@@ -1,9 +1,0 @@
-<?php
-return array(
-    'dbParams' => array(
-    'database' => '##',
-    'username' => '##',
-    'password' => '##',
-    'hostname' => '##',
-    )
-);

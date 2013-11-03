@@ -15,3 +15,11 @@ polyline:hover {
 .notexists {
     color: #777;
 }
+
+
+#techModal .progress.ap_spend a.bar {
+    display:hide;
+}
+#techModal .progress.ap_spend a.bar:hover {
+    display:block;
+}

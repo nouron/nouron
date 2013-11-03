@@ -29,7 +29,7 @@ class SystemController extends \Nouron\Controller\IngameController
 
         $userId = 3;
 
-        $sm->setService('colonyId', 0); // TODO: get colonyId via controller plugin or session
+        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
         $sm->setService('systemId', 1); // TODO: get systemId via controller plugin or session
 
         $tick     = $sm->get('Nouron\Service\Tick');

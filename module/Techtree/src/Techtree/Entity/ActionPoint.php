@@ -2,14 +2,25 @@
 namespace Techtree\Entity;
 
 use Nouron\Entity\AbstractEntity;
-use Zend\Stdlib\Hydrator\ArraySerializable;
 
 class ActionPoint extends AbstractEntity
 {
     public $tick;
     public $colony_id;
-    public $personell_tech_id;
+    public $personell_id;
     public $spend_ap;
+
+
+
+    /**
+     * Gets the value of tick.
+     *
+     * @return mixed
+     */
+    public function getTick()
+    {
+        return $this->tick;
+    }
 
     /**
      * Sets the value of tick.
@@ -23,6 +34,16 @@ class ActionPoint extends AbstractEntity
         $this->tick = $tick;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of colony_id.
+     *
+     * @return mixed
+     */
+    public function getColonyId()
+    {
+        return $this->colony_id;
     }
 
     /**
@@ -40,17 +61,37 @@ class ActionPoint extends AbstractEntity
     }
 
     /**
-     * Sets the value of personell_tech_id.
+     * Gets the value of personell_id.
      *
-     * @param mixed $personell_tech_id the personell_tech_id
+     * @return mixed
+     */
+    public function getPersonellId()
+    {
+        return $this->personell_id;
+    }
+
+    /**
+     * Sets the value of personell_id.
+     *
+     * @param mixed $personell_id the personell_id
      *
      * @return self
      */
-    public function setPersonellTechId($personell_tech_id)
+    public function setPersonellId($personell_id)
     {
-        $this->personell_tech_id = $personell_tech_id;
+        $this->personell_id = $personell_id;
 
         return $this;
+    }
+
+    /**
+     * Gets the value of spend_ap.
+     *
+     * @return mixed
+     */
+    public function getSpendAp()
+    {
+        return $this->spend_ap;
     }
 
     /**
@@ -66,45 +107,4 @@ class ActionPoint extends AbstractEntity
 
         return $this;
     }
-
-    /**
-     * Gets the value of tick.
-     *
-     * @return mixed
-     */
-    public function getTick()
-    {
-        return $this->tick;
-    }
-
-    /**
-     * Gets the value of colony_id.
-     *
-     * @return mixed
-     */
-    public function getColonyId()
-    {
-        return $this->colony_id;
-    }
-
-    /**
-     * Gets the value of personell_tech_id.
-     *
-     * @return mixed
-     */
-    public function getPersonellTechId()
-    {
-        return $this->personell_tech_id;
-    }
-
-    /**
-     * Gets the value of spend_ap.
-     *
-     * @return mixed
-     */
-    public function getSpendAp()
-    {
-        return $this->spend_ap;
-    }
 }
-
