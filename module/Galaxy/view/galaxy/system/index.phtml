@@ -5,7 +5,7 @@ $max = $scale * $config['range'];
 $radius  = round($config['range']/2); ?>
 
 <div id="system">
-<?= $this->partial('galaxy/_switch_layer_display') ?>
+<?= $this->partial('galaxy/partial/_switch_layer_display') ?>
 <div class="hidden">
     <div id="data_xMin"><?= $system->x - $radius;?></div>
     <div id="data_xMax"><?= $system->x + $radius;?></div>

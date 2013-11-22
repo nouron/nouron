@@ -39,19 +39,20 @@ class SystemController extends \Nouron\Controller\IngameController
         $objectId = $selectedIds['objectId'];
         $colonyId = $selectedIds['colonyId'];
 
-        $gw = $sm->get('Galaxy\Service\Gateway');
-        $system = $gw->getSystem($systemId);
+        $galaxyService = $sm->get('Galaxy\Service\Gateway');
+        $fleetService  = $sm->get('Fleet\Service\FleetService');
+        $system = $galaxyService->getSystem($systemId);
 
         $config = $sm->get('Config');
         $config = $config['system_view_config'];
 
-        $objects  = $gw->getSystemObjects($systemId)->getArrayCopy('id');
+        $objects  = $galaxyService->getSystemObjects($systemId)->getArrayCopy('id');
 
         $sysCoords = array($system->x, $system->y);
-        $colonies = $gw->getByCoordinates('colonies', $sysCoords)->getArrayCopy();
-        $fleets   = $gw->getByCoordinates('fleets', $sysCoords)->getArrayCopy('id');
+        $colonies = $galaxyService->getByCoordinates('colonies', $sysCoords)->getArrayCopy();
+        $fleets   = $galaxyService->getByCoordinates('fleets', $sysCoords)->getArrayCopy('id');
         $fleetIds = array_keys($fleets);
-        $fleetOrders = $gw->getFleetOrdersByFleetIds($fleetIds);
+        $fleetOrders = $fleetService->getFleetOrdersByFleetIds($fleetIds);
 
         return new ViewModel(
             array(

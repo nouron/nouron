@@ -57,21 +57,21 @@ class JsonController extends \Nouron\Controller\IngameController
     //     return $result;
     // }
 
-    // /**
-    //  *
-    //  */
-    // public function getTechtreeAction()
-    // {
-    //     $sm = $this->getServiceLocator();
-    //     $gw = $sm->get('Techtree\Service\BuildingService');
-
-    //     $colonyId = $this->params()->fromRoute('id');
-    //     if (empty($colonyId)) {
-    //         $colonyId = $this->getActive('colony');
-    //     }
-    //     $coloTechtree = $gw->getTechtreeByColonyId($colonyId);
-    //     return new JsonModel($coloTechtree);
-    // }
+    /**
+     *
+     */
+    public function getColonyTechnologiesAction()
+    {
+        $sm = $this->getServiceLocator();
+        $gw = $sm->get('Techtree\Service\ColonyService');
+        $colonyId = $this->params()->fromRoute('id');
+        if (empty($colonyId)) {
+            $colonyId = $this->getActive('colony');
+        }
+        $gw->setColonyId($colonyId);
+        $coloTechtree = $gw->getTechtree();
+        return new JsonModel($coloTechtree);
+    }
 
     // /**
     //  *

@@ -34,6 +34,7 @@ return array(
   'Techtree\Entity\ShipCost'                        => __DIR__ . '/src/Techtree/Entity/ShipCost.php',
   'Techtree\Entity\ShipCostFactory'                 => __DIR__ . '/src/Techtree/Entity/ShipCostFactory.php',
   'Techtree\Entity\ShipFactory'                     => __DIR__ . '/src/Techtree/Entity/ShipFactory.php',
+  'Techtree\Service\AbstractTechnologyService'      => __DIR__ . '/src/Techtree/Service/AbstractTechnologyService.php',
   'Techtree\Service\BuildingService'                => __DIR__ . '/src/Techtree/Service/BuildingService.php',
   'Techtree\Service\BuildingServiceFactory'         => __DIR__ . '/src/Techtree/Service/BuildingServiceFactory.php',
   'Techtree\Service\ColonyService'                  => __DIR__ . '/src/Techtree/Service/ColonyService.php',

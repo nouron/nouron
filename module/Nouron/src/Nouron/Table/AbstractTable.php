@@ -43,8 +43,6 @@ abstract class AbstractTable extends TableGateway
         return $this->primary;
     }
 
-
-
     /**
      *
      * @param \Zend\Db\Adapter\Adapter $adapter
@@ -69,7 +67,11 @@ abstract class AbstractTable extends TableGateway
      */
     public function createEntity($array)
     {
-        $this->_validateId($array, $this->primary);
+        if (is_array($this->getPrimary())) {
+            $this->_validateId($array, $this->getPrimary());
+        } else {
+            $this->_validateId($array[$this->getPrimary()]);
+        }
         $entity = $this->entityPrototype;
         $row = new $entity();
         $row->exchangeArray($array);
@@ -120,10 +122,10 @@ abstract class AbstractTable extends TableGateway
         }
 
         $row = $rowset->current();
-        if (!$row) {
+        /*if (!$row) {
             #throw new \Exception("Could not find row $id");
             $row = $this->createEntity($id);
-        }
+        }*/
 
         return $row;
     }

@@ -356,4 +356,12 @@ class Colony extends AbstractEntity
 
         return $this;
     }
+
+    public function getCoords()
+    {
+        return array(
+            0 => $this->getX(),
+            1 => $this->getY()
+        );
+    }
 }

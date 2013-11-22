@@ -101,7 +101,8 @@ echo $this->doctype();
     <?php echo $this->inlineScript(); ?>
     <script  type="text/javascript">
     $(document).ready(function() {
-        if ($('#fleet').length > 0)  {fleets.init(); }
+        if ($('#fleetlist').length > 0) {fleetlist.init(); }
+        if ($('#fleetconfig').length > 0)  {fleetconfig.init(); }
         if ($('#trade').length > 0)  {trade.init();  }
     });
     </script>

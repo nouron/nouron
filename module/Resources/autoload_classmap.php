@@ -14,7 +14,7 @@ return array(
   'Resources\Service\ResourcesService'        => __DIR__ . '/src/Resources/Service/ResourcesService.php',
   'Resources\Service\ResourcesServiceFactory' => __DIR__ . '/src/Resources/Service/ResourcesServiceFactory.php',
   'Resources\Table\ColonyTable'               => __DIR__ . '/src/Resources/Table/ColonyTable.php',
-  'Resources\Table\ResourceTable'             => __DIR__ . '/src/Resources/Table/TechnologyTable.php',
+  'Resources\Table\ResourceTable'             => __DIR__ . '/src/Resources/Table/ResourceTable.php',
   'Resources\Table\UserTable'                 => __DIR__ . '/src/Resources/Table/UserTable.php',
   'Resources\View\Helper\Resources'           => __DIR__ . '/src/Resources/View/Helper/Resources.php',
 );

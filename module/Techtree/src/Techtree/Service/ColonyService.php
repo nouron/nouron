@@ -78,8 +78,8 @@ class ColonyService extends \Nouron\Service\AbstractService
             default:        return array(); # TODO: Exception
                             break;
         }
-
         $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
+
         $colonyEntities = $this->$func()->getArrayCopy($id);
         foreach ($entities as $id => $entity) {
             $entities[$id]['level'] = 0;
@@ -104,9 +104,9 @@ class ColonyService extends \Nouron\Service\AbstractService
         $personell  = $this->_gatherTechtreeInformations('personell');
 
         $techtree = array(
-            'buildings'  => $buildings,
-            'researches' => $researches,
-            'ships'      => $ships,
+            'building'  => $buildings,
+            'research' => $researches,
+            'ship'      => $ships,
             'personell'  => $personell
         );
 

@@ -1,43 +1,33 @@
-fleets = {
+fleetlist = {
+    init : function() {}
+    
 
-    // Initialisierung
+}
+
+fleetconfig = {
     init : function() {
-
         var fleetId  = parseInt($("#fleet_id").html());
         var colonyId = parseInt($("#colony_id").html());
         
-        $("#fleet .tech .btn").hide();
-        $("#fleet .resource .btn").hide();
-        
         $("#fleet .item div").live("mouseover", function(e){
-            $(this).children(".btn").show();
+            $(this).children(".btn").removeClass('disabled');
         });
         $("#fleet .item div").live("mouseleave", function(e){
-            $(this).children(".btn").hide();
+            $(this).children(".btn").addClass('disabled');
         });
+
         /**
          * first get all available technologies
          */
         $.getJSON(
-            "/techtree/json/getTechnologies",
+            "/techtree/json/getColonyTechnologies",
             function(items) {
-                $.each(items, function(techId, tech) {
-
+                $.each(items, function(type, techs) {
+                    for (var techId in techs) {
+                        $('.'+type+'OnColony-'+techId).html(techs[techId].level);
+                    }
                 });
             });
-        
-        /**
-         * count for each technology on colony side the available amount and
-         * update the values
-         */
-        $.getJSON(
-            "/techtree/json/getTechtree",
-            function (items) {
-                $.each(items, function(techId, tech) {
-                    $('#techOnColony-'+techId).html(tech.level);
-                });
-            }
-        );
         
         /**
          * count for each technology on fleet side the available amount and
@@ -46,8 +36,14 @@ fleets = {
         $.getJSON(
             "/fleet/json/getFleetTechnologies/"+fleetId,
             function (items) {
-                $.each(items, function(techId, tech) {
-                    $('#techInFleet-'+techId).html(tech.count);
+                $.each(items, function(type, techs) {
+                    for (var techId in techs) {
+                        if (techs[techId].is_cargo) {
+                            $('.'+type+'InFleetCargo-'+techId).html(techs[techId].count);
+                        } else {
+                            $('.'+type+'InFleet-'+techId).html(techs[techId].count);
+                        }
+                    }
                 });
             }
         );
@@ -59,7 +55,7 @@ fleets = {
             "/resources/json/getColonyResources/"+colonyId,
             function (items) {
                 $.each(items, function(resId, res) {
-                    $('#resourceOnColony-'+resId).html(res.amount);
+                    $('.resourceOnColony-'+resId).html(res.amount);
                 });
             }
         );
@@ -72,7 +68,7 @@ fleets = {
             "/fleet/json/getFleetResources/"+fleetId,
             function (items) {
                 $.each(items, function(resId, res) {
-                    $('#resourceInFleetCargo-'+resId).html(res.amount);
+                    $('.resourceInFleetCargo-'+resId).html(res.amount);
                 });
             }
         );
@@ -84,19 +80,25 @@ fleets = {
             e.preventDefault();
             $(".item .btn").addClass('disabled');
             amount = parseInt($(this).html());
-            var item = $(this).parent().parent();
-            if (item.hasClass('tech')) {
-                cargo  = $(this).hasClass('cargo');
-                var itemId = item.attr('id').replace('tech-','');
-                fleets.addToFleet('tech', itemId, amount, cargo);
+            var item  = $(this).parent().parent();
+            var cargo = $(this).hasClass('cargo');
+            if (item.hasClass('ship')) {
+                var itemId = item.attr('id').replace('ship-','');
+                fleetconfig.addToFleet('ship', itemId, amount, cargo);
+            } else if (item.hasClass('research')) {
+                var itemId = item.attr('id').replace('research-','');
+                fleetconfig.addToFleet('research', itemId, amount, cargo);
+            } else if (item.hasClass('personell')) {
+                var itemId = item.attr('id').replace('personell-','');
+                fleetconfig.addToFleet('personell', itemId, amount, cargo);
             } else if (item.hasClass('resource')) {
                 var itemId = item.attr('id').replace('resource-','');
-                fleets.addToFleet('resource', itemId, amount, true);
+                fleetconfig.addToFleet('resource', itemId, amount, true);
             }
             $(".item .btn").removeClass('disabled');
         });
     },
-    
+
     /**
      * adds or removes the given amount to or from current fleet
      * 
@@ -105,41 +107,46 @@ fleets = {
      * @param boolean asCargo The tech is added to / removed from fleet cargo
      */
     addToFleet : function(itemType, itemId, amount, asCargo) {
-        fleetId = $("#fleet_id").html();
+        var fleetId = $("#fleet_id").html();
         
-        $.post("/fleet/json/addToFleet/"+fleetId, {
-            'id' : fleetId,
-            'itemType': itemType,
-            'itemId' : itemId,
-            'amount' : amount,
-            'isCargo' : asCargo
-        }, function(data) {
-            console.log(data);
-            if (data.transferred > 0 && amount > 0) {
-                fleets.updateAmounts(itemType, itemId, data.transferred, asCargo);
-            }
-            if (data.transferred > 0 && amount < 0) {
-                fleets.updateAmounts(itemType, itemId, -data.transferred, asCargo);
-            }            
-        }, 'json');
+        $.post(
+            "/fleet/json/addToFleet/"+fleetId,
+            {
+                'id' : fleetId,
+                'itemType': itemType,
+                'itemId' : itemId,
+                'amount' : amount,
+                'isCargo' : asCargo
+            },
+            function(data) {
+                console.log(data);
+                if (data.transferred > 0 && amount > 0) {
+                    fleetconfig.updateAmounts(itemType, itemId, data.transferred, asCargo);
+                }
+                if (data.transferred > 0 && amount < 0) {
+                    fleetconfig.updateAmounts(itemType, itemId, -data.transferred, asCargo);
+                }
+            },
+            'json'
+        );
     },
 
     /**
-     * update the tech amounts visually
+     * update the tech amounts ONLY visually
      */
     updateAmounts : function(itemType, itemId, delta, asCargo) {
         console.log(itemType+' '+itemId+' '+delta+' # ');
 
         if (itemId > 0 && !isNaN(delta) && delta != 0) {
-            selector = "#"+itemType+"OnColony-"+itemId;
-            oldColoAmount = parseInt($(selector).html());
+            var selector = "."+itemType+"OnColony-"+itemId;
+            var oldColoAmount = parseInt($(selector).html());
             if (oldColoAmount == NaN) {oldColoAmount=0;}
             $(selector).html(oldColoAmount - delta);
             
             if (asCargo == true) {
-                selector = "#"+itemType+"InFleetCargo-"+itemId;
+                selector = "."+itemType+"InFleetCargo-"+itemId;
             } else {
-                selector = "#"+itemType+"InFleet-"+itemId;
+                selector = "."+itemType+"InFleet-"+itemId;
             }
             oldFleetAmount = parseInt($(selector).html());
             if (oldFleetAmount == NaN) {oldFleetAmount=0;}

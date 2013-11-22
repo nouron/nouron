@@ -11,12 +11,12 @@ return array(
         'Galaxy',
         'Resources',
         'Techtree',
+        'Fleet',
         'Trade',
         'INNN',
-        /*'Fleets', /* maybe combine this with galaxy like in old version*/
         'DluTwBootstrap',
 //         'DluTwBootstrapDemo'
-//        'ZendDeveloperTools'
+        'ZendDeveloperTools'
     ),
     'module_listener_options' => array(
         'config_glob_paths'    => array(

@@ -6,18 +6,22 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 use Galaxy\Entity\Colony;
 use Galaxy\Entity\System;
 use Galaxy\Entity\SystemObject;
-use Galaxy\Entity\Fleet;
-use Galaxy\Entity\FleetTechnology;
-use Galaxy\Entity\FleetResource;
-use Galaxy\Entity\FleetOrder;
+use Fleet\Entity\Fleet;
+use Fleet\Entity\FleetShip;
+use Fleet\Entity\FleetPersonell;
+use Fleet\Entity\FleetResearch;
+use Fleet\Entity\FleetResource;
+use Fleet\Entity\FleetOrder;
 
 use Galaxy\Table\ColonyTable;
 use Galaxy\Table\SystemTable;
 use Galaxy\Table\SystemObjectTable;
-use Galaxy\Table\FleetTable;
-use Galaxy\Table\FleetTechnologyTable;
-use Galaxy\Table\FleetResourceTable;
-use Galaxy\Table\FleetOrderTable;
+use Fleet\Table\FleetTable;
+use Fleet\Table\FleetShipTable;
+use Fleet\Table\FleetPersonellTable;
+use Fleet\Table\FleetResearchTable;
+use Fleet\Table\FleetResourceTable;
+use Fleet\Table\FleetOrderTable;
 
 class GatewayFactory implements FactoryInterface
 {
@@ -36,10 +40,12 @@ class GatewayFactory implements FactoryInterface
         $tables['system'] = new SystemTable($db, new System());
         $tables['fleet']  = new FleetTable($db, new Fleet());
         $tables['systemobject']     = new SystemObjectTable($db, new SystemObject());
-        $tables['fleettechnology']  = new FleetTechnologyTable($db, new FleetTechnology());
+        $tables['fleetship']        = new FleetShipTable($db, new FleetShip());
+        $tables['fleetpersonell']   = new FleetPersonellTable($db, new FleetPersonell());
+        $tables['fleetresearch']    = new FleetResearchTable($db, new FleetResearch());
         $tables['fleetorder']       = new FleetOrderTable($db, new FleetOrder());
         $tables['fleetresource']    = new FleetResourceTable($db, new FleetResource());
-        $tables['colony_bulding'] = new \Techtree\Table\ColonyBuildingTable($db, new \Techtree\Entity\ColonyBuilding());
+        $tables['colonybuilding']   = new \Techtree\Table\ColonyBuildingTable($db, new \Techtree\Entity\ColonyBuilding());
         $tables['colonyresource']   = new \Resources\Table\ColonyTable($db, new \Resources\Entity\Colony());
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException

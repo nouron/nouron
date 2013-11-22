@@ -1,0 +1,63 @@
+<?php if ($this->success): ?>
+<div class="alert alert-success">Flotte wurde erstellt!</div>
+<?php endif; ?>
+
+<div id="fleetconfig">
+    <? if (!empty($fleet)): ?>
+    <div class="hidden" id="fleet_id"><?= $fleet->getId() ?></div>
+    <? endif; ?>
+    <? if (!empty($colony)): ?>
+    <div class="hidden" id="colony_id"><?= $colony->getId() ?></div>
+    <? endif; ?>
+<? if ($fleetIsInColonyOrbit): ?>
+    <div class="row-fluid">
+        <div class="span5" style="text-align: right"><h3><small>Schiffe auf</small> <?= $this->translate('colony') ?></h3></div>
+        <div class="span2"></div>
+        <div class="span5"><h3><small>Schiffe in</small> <?= $this->translate('fleet') ?></h3></div>
+    </div>
+    <?= $this->partial('fleet/partial/_fleet_entity_row', array('techs' => $ships, 'type' => 'ship')); ?>
+    <div class="row-fluid">
+        <div class="span5" style="text-align: right"><h3><small>Personal auf</small> <?= $this->translate('colony') ?></h3></div>
+        <div class="span2"></div>
+        <div class="span5"><h3><small>Personal als</small> <?= $this->translate('crew') ?></h3></div>
+    </div>
+    <?= $this->partial('fleet/partial/_fleet_entity_row', array('techs' => $personells, 'type' => 'personell')); ?>
+    <div class="row-fluid">
+        <div class="span5" style="text-align: right"><h3><small>Personal auf</small> <?= $this->translate('colony') ?></h3></div>
+        <div class="span2"></div>
+        <div class="span5"><h3><small>Personal als</small> <?= $this->translate('passenger') ?></h3></div>
+    </div>
+    <?= $this->partial('fleet/partial/_fleet_entity_cargo_row', array('techs' => $personells, 'type' => 'personell')); ?>
+    <div class="row-fluid">
+        <div class="span5" style="text-align: right"><h3><small>Forschungen auf</small> <?= $this->translate('colony') ?></h3></div>
+        <div class="span2"></div>
+        <div class="span5"><h3><small>Forschungen in</small> <?= $this->translate('fleet_cargo') ?></h3></div>
+    </div>
+    <?= $this->partial('fleet/partial/_fleet_entity_cargo_row', array('techs' => $researches, 'type' => 'research')); ?>
+    <div class="row-fluid">
+        <div class="span5" style="text-align: right"><h3><small>Ressourcen auf</small> <?= $this->translate('colony') ?></h3></div>
+        <div class="span2"></div>
+        <div class="span5"><h3><small>Ressourcen in</small> <?= $this->translate('fleet_cargo') ?></h3></div>
+    </div>
+<?  foreach ($resources as $resId => $resource):
+        if ($resource["is_tradeable"] == 1):
+?>
+    <div class="row-fluid item resource" id="resource-<?= $resId ?>">
+        <div class="span4" style="text-align: right">
+            <a class="btn  transfer cargo disabled">-100</a>
+            <a class="btn  transfer cargo disabled">-50</a>
+            <a class="btn  transfer cargo disabled">-10</a>
+        </div>
+        <div class="span1 countOnColony resourceOnColony-<?= $resId ?>" style="text-align: center">0</div>
+        <div class="span2" style="text-align: center"><?= $this->translate($resource["name"]) ?></div>
+        <div class="span1 countInFleetCargo resourceInFleetCargo-<?= $resId ?>" style="text-align: center">0</div>
+        <div class="span4">
+            <a class="btn  transfer cargo disabled">+10</a>
+            <a class="btn  transfer cargo disabled">+50</a>
+            <a class="btn  transfer cargo disabled">+100</a>
+        </div>
+    </div>
+<?      endif;
+    endforeach;
+endif; ?>
+</div>
