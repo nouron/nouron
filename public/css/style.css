@@ -58,7 +58,7 @@ body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #
 .dropdown-menu > .active > a > [class*=" resicon-"],
 .dropdown-submenu:hover > a > [class^="resicon-"],
 .dropdown-submenu:hover > a > [class*=" resicon-"] {
-    text-color: #fff;
+    color: #fff;
 }
 
 .resicon-credits {background-color: gold;}

@@ -4,37 +4,66 @@ $(document).ready(function(){
         return String(n) === str && n > 0;
     }
     trade = {
+        addOneUnit: function(name) {
+            value = parseInt($('#'+name).attr('value'));
+            value = (!isNaN(value)) ? value : 0 ;
+            $('#'+name).attr('value', value+1 );
+        },
+        removeOneUnit: function(name) {
+            value = parseInt($("#"+name).attr('value'));
+            value = (!isNaN(value)) ? value : 0 ;
+            if (value > 0) {
+                $('#'+name).attr('value', value-1 );
+            }
+        },
         addPlusMinusButtons: function(name) {
             input = $('input#'+name);
-            input.parent().addClass('input-prepend input-append');
-            input.before('<button id="'+name+'-minus-button" class="btn" type="button"><i class="icon-minus-sign"></i></button>');
-            input.after('<button id="'+name+'-plus-button" class="btn" type="button"><i class="icon-plus-sign"></i></button>');
-            input.live('keyup', function(e) {
+            input.parent().addClass('input-group ').addClass('col-xs-6');
+            input.before('<span id="'+name+'-minus-button" class="btn btn-default input-group-addon"><i class="glyphicon glyphicon-minus-sign"></i></span>');
+            input.after('<span id="'+name+'-plus-button" class="btn btn-default input-group-addon"><i class="glyphicon glyphicon-plus-sign"></i></span>');
+            $(document).on('keyup', 'input#'+name, function(e) {
                 if ( !isPositiveNumber(input.attr('value')) ) {
                     input.attr('value', 0);
                 }
             });
-            
-            $('#'+name+'-plus-button').live('click', function(e) {
-                value = parseInt($('#'+name).attr('value'));
-                value = (!isNaN(value)) ? value : 0 ;
-                $('#'+name).attr('value', value+1 );
+
+            var plusButtonTimeout, plusButton = $('#'+name+'-plus-button');
+            plusButton.mousedown(function(){
+                plusButtonTimeout = setInterval(function(){
+                    trade.addOneUnit(name);
+                }, 250);
+                return false;
+            })
+            .click(function(){
+                trade.addOneUnit(name);
+                return false;
             });
-            $('#'+name+'-minus-button').live("click", function(e){
-                value = parseInt($("#"+name).attr('value'));
-                value = (!isNaN(value)) ? value : 0 ;
-                if (value > 0) {
-                    $('#'+name).attr('value', value-1 );
-                }
+
+            var minusButtonTimeout, minusButton = $('#'+name+'-minus-button');
+            minusButton.mousedown(function(){
+                minusButtonTimeout = setInterval(function(){
+                    trade.removeOneUnit(name);
+                }, 250);
+                return false;
+            })
+            .click(function(){
+                trade.removeOneUnit(name);
+                return false;
             });
-        },        
+
+            $(document).mouseup(function(){
+                clearInterval(plusButtonTimeout);
+                clearInterval(minusButtonTimeout);
+                return false;
+            });
+        },
         // Initialisierung
         init : function() {
             console.log('trade.init()');
             trade.addPlusMinusButtons('price');
             trade.addPlusMinusButtons('amount');
-            
-            $(".modal form").live("submit", function(e){
+
+            $(document).on("submit", ".modal form", function(e){
                 e.preventDefault();
                 action = $(this).attr('action');
                 $.post(
@@ -47,7 +76,7 @@ $(document).ready(function(){
                                 align: 'center',
                                 width: 'auto'
                             });
-                            
+
                             $('.modal').modal({show:false});
                         } else {
                             $('.modal').modal({show:true});
@@ -59,9 +88,9 @@ $(document).ready(function(){
                     "html"
                 );
             });
-            
+
             /** click and confirm delete button => remove offer, update dom */
-            $('.removeOfferButton').live('click', function(e){
+            $(document).on('click', '.removeOfferButton', function(e){
                 e.preventDefault();
                 var href= $(this).attr('href');
                 var id = $(this).parent().parent().attr('id');
@@ -91,7 +120,7 @@ $(document).ready(function(){
                             }
                         );
                     }
-                }); 
+                });
             });
         }
     };

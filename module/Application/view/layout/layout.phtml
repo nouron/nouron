@@ -7,14 +7,15 @@ $basePath = $this->basePath();
 //Twitter Bootstrap styles
 $this->headLink()->appendStylesheet($basePath . '/css/bootstrap.min.css');
 //Twitter Bootstrap style override by DluTwBootstrap
-$this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
+//$this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
 //Add your own style here
 $this->headLink()->appendStylesheet($basePath . '/css/style.css');
 //Twitter Bootstrap responsive styles
-$this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
+//$this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
 
 //jQuery and Twitter Bootstrap JS libraries
-$this->inlineScript()->appendFile($basePath . '/js/jquery-1.8.2.min.js');
+$this->inlineScript()->appendFile('http://code.jquery.com/jquery-1.11.0.min.js');
+//$this->inlineScript()->appendFile($basePath . '/js/jquery-1.8.2.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/bootstrap.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/bootbox.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.bootstrap-growl.min.js');
@@ -42,34 +43,36 @@ echo $this->doctype();
   </head>
 
   <body>
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
+      <nav class="navbar navbar-inverse navbar-fixed-top">
         <div class="container">
-          <a class="brand" href="<?= $this->url('home') ?>"><?= $this->translate('Nouron') ?></a>
-          <div class="nav-collapse">
-              <? if ($this->zfcUserIdentity()): ?>
-              <?     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav'); ?>
-              <ul class="nav pull-right">
-                <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle" href="<?= $this->url('settings') ?>"><?= $this->zfcUserIdentity()->getUsername(); ?> <b class="caret"></b></a>
-                    <ul class="dropdown-menu">
-                        <li><a href="<?= $this->url('zfcuser/changepassword') ?>">Passwort ändern</a></li>
-                        <li><a href="<?= $this->url('zfcuser/changeemail') ?>">Email ändern</a></li>
-                    </ul>
-                </li>
-                <li><a href="<?= $this->url('zfcuser/logout') ?>"><i class="icon-off"></i> <?= $this->translate('logout') ?></a></li>
-              </ul>
-              <? else: ?>
-              <ul class="nav pull-right">
-                <li><a href="<?= $this->url('zfcuser/login') ?>"><?= $this->translate('Login') ?></a></li>
-                <li><a href="<?= $this->url('zfcuser/register') ?>"><?= $this->translate('Register') ?></a></li>
-              </ul>
-              <? endif; ?>
-          </div><!--/.nav-collapse -->
+          <div class="navbar-header">
+            <a class="navbar-brand" href="<?php echo $this->url('home') ?>"><?php echo $this->translate('Nouron') ?></a>
+          </div>
+          <?php if ($this->zfcUserIdentity()): ?>
+          <?php     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav navbar-nav'); ?>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle" href="<?php echo $this->url('settings') ?>"><?php echo $this->zfcUserIdentity()->getUsername(); ?> <b class="caret"></b></a>
+                  <ul class="dropdown-menu">
+                      <li><a href="<?php echo $this->url('zfcuser/changepassword') ?>">Passwort ändern</a></li>
+                      <li><a href="<?php echo $this->url('zfcuser/changeemail') ?>">Email ändern</a></li>
+                  </ul>
+              </li>
+              <li><a href="<?php echo $this->url('zfcuser/logout') ?>"><i class="glyphicon glyphicon-off"></i> <?php echo $this->translate('logout') ?></a></li>
+            </ul>
+          </div>
+          <?php else: ?>
+          <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+              <li><a href="<?php echo $this->url('zfcuser/login') ?>"><?php echo $this->translate('Login') ?></a></li>
+              <li><a href="<?php echo $this->url('zfcuser/register') ?>"><?php echo $this->translate('Register') ?></a></li>
+            </ul>
+          </div>
+          <?php endif; ?>
         </div>
-      </div>
-    </div>
+    </nav>
     <div class="container">
-        <?
+        <?php
         // flash messages if any
         // First get the viewmodel and all its children (ie the actions viewmodel)
         $children = $this->viewModel()
@@ -78,23 +81,24 @@ echo $this->doctype();
         $ourView  = $children[0];
 
         if ($this->zfcUserIdentity() && isset($ourView->possessions)):
-            echo '<div id="resource-bar">'.$this->resources($ourView->possessions).'</div>'; ?>
+            echo $this->resources($ourView->possessions); ?>
         <hr />
-        <? endif; ?>
+        <?php endif; ?>
 
         <div class="flashMessages" id="flashMessages">
-        <? if (isset($ourView->flashMessages) && count($ourView->flashMessages)) :
+        <?php if (isset($ourView->flashMessages) && count($ourView->flashMessages)) :
             foreach ($ourView->flashMessages as $message) : ?>
-            <div class="alert"><?= $message; ?></div>
-            <? endforeach;
+            <div class="alert"><?php echo $message; ?></div>
+            <?php endforeach;
         endif; ?>
         </div>
-        <? echo $this->navigation()->menu()
-                                   ->setUlClass('nav nav-tabs')
-                                   ->setOnlyActiveBranch(true)
-                                   ->setRenderParents(false)
-                                   ->setMinDepth(1)
-                                   ->setMaxDepth(1);
+        <?php echo $this->navigation()
+                        ->menu()
+                        ->setUlClass('nav nav-tabs')
+                        ->setOnlyActiveBranch(true)
+                        ->setRenderParents(false)
+                        ->setMinDepth(1)
+                        ->setMaxDepth(1);
         echo $this->content; ?>
         <hr />
     </div><!-- /container -->

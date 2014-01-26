@@ -18,7 +18,8 @@
 #fleet .countOnColony,
 #fleet .countInFleet,
 #fleet .countInFleetCargo {text-align:right}
+
 #fleet .tech.building,
 #fleet .tech.ship,
 #fleet .tech.research,
-#fleet .tech.personell, {background:transparent; background-image: none}
+#fleet .tech.personell {background:transparent; background-image: none}

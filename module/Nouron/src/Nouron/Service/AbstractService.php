@@ -45,7 +45,7 @@ abstract class AbstractService implements LoggerAwareInterface
      */
     public function setService($name, \Nouron\Service\AbstractService $Service)
     {
-        $this->services[$name] = $Service;
+        $this->services[strtolower($name)] = $Service;
     }
 
     /**
@@ -64,7 +64,7 @@ abstract class AbstractService implements LoggerAwareInterface
      */
     public function getService($name)
     {
-        return $this->services[ $name ];
+        return $this->services[ strtolower($name) ];
     }
 
     /**
@@ -100,7 +100,7 @@ abstract class AbstractService implements LoggerAwareInterface
      */
     public function setTable($name, \Nouron\Table\AbstractTable $table)
     {
-        $this->tables[$name] = $table;
+        $this->tables[strtolower($name)] = $table;
     }
 
     /**

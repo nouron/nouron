@@ -1,32 +1,34 @@
-<!--
-Siehe http://developer.yahoo.com/ypatterns/pattern.php?pattern=searchpagination
--->
-
 <?php if ($this->pageCount>1): ?>
-<div class="pagination">
-    <ul>
+<?php
+$urlhelperparams = array(
+    'action' => $this->action,
+    'page' => 1
+);
+?>
+<ul class="pagination">
     <!-- Vorheriger Seitenlink -->
     <?php if (isset($this->previous)): ?>
-        <li><a href="<?= $this->url($this->route, array('page' => $this->previous)); ?>">&lt; Zurück</a></li>
+        <?php $urlhelperparams['page'] = $this->previous; ?>
+        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>">&laquo; Zurück</a></li>
     <?php else: ?>
-        <li><span class="disabled">&lt; Zurück</span></li>
+        <li class="disabled"><span>&laquo; Zurück</span></li>
     <?php endif; ?>
 
     <!-- Anzahl an Seitenlinks -->
     <?php foreach ($this->pagesInRange as $page): ?>
       <?php if ($page != $this->current): ?>
-        <li><a href="<?= $this->url($this->route, array('page' => $page)); ?>"><?= $page; ?></a></li>
+        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>"><?php echo $page; ?></a></li>
       <?php else: ?>
-        <li><span class="disabled"><?= $page; ?></span></li>
+        <li class="active"><span ><?php echo $page; ?></span></li>
       <?php endif; ?>
     <?php endforeach; ?>
 
     <!-- Nächster Seitenlink -->
     <?php if (isset($this->next)): ?>
-        <li><a href="<?= $this->url($this->route, array('page' => $this->next)); ?>">Vor &gt;</a></li>
+        <?php $urlhelperparams['page'] = $this->next; ?>
+        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>">Vor  &raquo;</a></li>
     <?php else: ?>
-        <li><span class="disabled">Vor &gt;</span></li>
+        <li><span class="disabled">Vor &raquo;</span></li>
     <?php endif; ?>
-    </ul>
-</div>
+</ul>
 <?php endif; ?>

@@ -1,59 +1,60 @@
-<div class="row-fluid" id="trade">
-    <div class="span10">
-    <?= $this->formTwb($searchForm->prepare(), 'inline'); ?>
+<div class="row" id="trade">
+    <div class="col-md-10">
+    <?php echo $this->form($searchForm->prepare(), \TwbBundle\Form\View\Helper\TwbBundleForm::LAYOUT_INLINE); ?>
     </div>
-    <div class="span2">
-        <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="icon-plus"></i> Angebot erstellen</a>
+    <div class="col-md-2">
+        <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> Angebot erstellen</a>
     </div>
 
-    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
+    <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
     <table class="table">
     <tr>
-        <th><?= $this->translate('colony') ?></th>
-        <th><?= $this->translate('offer-type') ?></th>
-        <th><?= $this->translate('resource') ?></th>
-        <th><?= $this->translate('amount') ?></th>
-        <th><?= $this->translate('price per unit') ?></th>
-        <th><?= $this->translate('restriction') ?></th>
+        <th><?php echo $this->translate('colony') ?></th>
+        <th><?php echo $this->translate('offer-type') ?></th>
+        <th><?php echo $this->translate('resource') ?></th>
+        <th><?php echo $this->translate('amount') ?></th>
+        <th><?php echo $this->translate('price per unit') ?></th>
+        <th><?php echo $this->translate('restriction') ?></th>
         <th></th>
     </tr>
     <?php foreach ($paginator as $offer): ?>
-        <tr id="offer-resource-<?= $offer['colony_id'] ?>-<?= $offer['resource_id'] ?>">
-            <? if ($offer['user_id'] != $user_id): ?>
-            <td><?= $offer['colony']?> (<a href=""><i class="icon-envelope"></i> <?= $offer['username']?></a>)</td>
-            <? else: ?>
-            <td><?= $offer['colony']?></td>
+        <tr id="offer-resource-<?php echo $offer['colony_id'] ?>-<?php echo $offer['resource_id'] ?>">
+            <?php if ($offer['user_id'] != $user_id): ?>
+            <td><?php echo $offer['colony']?> (<a href=""><i class="glyphicon glyphicon-envelope"></i> <?php echo $offer['username']?></a>)</td>
+            <?php else: ?>
+            <td><?php echo $offer['colony']?></td>
             <?php endif ?>
-            <td><?= ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
+            <td><?php echo ($offer['direction']) ? 'Verkauf' : 'Kauf' ?></td>
             <td><?php $resName = $this->translate($resources[$offer['resource_id']]['name']) ?>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?= $resName ?>"><i class="<?= $resources[$offer['resource_id']]['icon'] ?>"></i> <?= $resName ?></a>
+            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="<?php echo $resName ?>"><i class="<?php echo $resources[$offer['resource_id']]['icon'] ?>"></i> <?php echo $resName ?></a>
             </td>
-            <td><?= $offer['amount'] ?></td>
-            <td><?= $offer['price'] ?></td>
-            <td><?= $offer['restriction'] ?></td>
-            <? if ($offer['user_id'] == $user_id): ?>
-            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="icon-remove"></i></a></td>
-            <? else: ?>
+            <td><?php echo $offer['amount'] ?></td>
+            <td><?php echo $offer['price'] ?></td>
+            <td><?php echo $offer['restriction'] ?></td>
+            <?php if ($offer['user_id'] == $user_id): ?>
+            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="glyphicon glyphicon-remove"></i></a></td>
+            <?php else: ?>
             <td></td>
-            <? endif; ?>
+            <?php endif; ?>
         </tr>
     <?php endforeach; ?>
     </table>
 
-    <?= $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
+    <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
 </div>
 
 <!-- Modal -->
 <!-- this Modal is filled with html data from json request -->
-<div id="newTradeOfferModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="newTradeOfferModalLabel"><?= $this->translate("new-offer") ?></h3>
+<div id="newTradeOfferModal" class="modal" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+            <h3 id="newTradeOfferModalLabel"><?php echo $this->translate("new-offer") ?></h3>
+        </div>
+        <div class="modal-body">
+            <?php echo $this->form($newOfferForm->prepare());#, \TwbBundle\Form\View\Helper\TwbBundleForm::LAYOUT_HORIZONTAL); ?>
+        </div>
     </div>
-    <div class="modal-body">
-        <?= $this->formTwb($newOfferForm->prepare()); ?>
-    </div>
-    <!-- <div class="modal-footer">
-
-    </div> -->
+  </div>
 </div>

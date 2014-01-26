@@ -2,21 +2,21 @@
 <div id="techModal" class="modal hide fade in ship" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel"><?= $this->translate($ship['name']) ?> (<?= $ship['level'] ?>)
-            <small>(<?= $this->translate('types_ship') ?>/<?= $this->translate('purposes_' . $ship['purpose']) ?>)</small></h3>
+        <h3 id="myModalLabel"><?php echo $this->translate($ship['name']) ?> (<?php echo $ship['level'] ?>)
+            <small>(<?php echo $this->translate('types_ship') ?>/<?php echo $this->translate('purposes_' . $ship['purpose']) ?>)</small></h3>
     </div>
     <div class="modal-body">
         <!-- Description -->
-        <p><?= $this->translate('desc_'.$ship['name'])?></p>
-        freie AP: <?= $ap_available ?>
+        <p><?php echo $this->translate('desc_'.$ship['name'])?></p>
+        freie AP: <?php echo $ap_available ?>
         <!-- Data -->
 
         <!-- Costs -->
-        <h4><?= $this->translate('costs and requirements') ?></h4>
+        <h4><?php echo $this->translate('costs and requirements') ?></h4>
 
         <table class="table">
             <tr>
-            <td><i class="<?= ($required_resources_check==true)? 'icon-ok' : 'icon-remove' ?>"></i></td>
+            <td><i class="<?php echo ($required_resources_check==true)? 'glyphicon glyphicon-ok' : 'glyphicon glyphicon-remove' ?>"></i></td>
             <td>
             <?php
                 foreach ($costs as $cost):
@@ -35,35 +35,35 @@
             </tr>
             <?php if (!empty($ship['required_building_id'])): ?>
             <tr>
-                <td><?= $required_buildings_check ? '<i class="icon-ok"></i>' : '<i class="icon-remove"></i>'; ?></td>
-                <td><?= $this->translate( $buildings[ $ship['required_building_id'] ]['name'] ) ?> (<?= $ship['required_building_level'] ?>)</td>
+                <td><?php echo $required_buildings_check ? '<i class="glyphicon glyphicon-ok"></i>' : '<i class="glyphicon glyphicon-remove"></i>'; ?></td>
+                <td><?php echo $this->translate( $buildings[ $ship['required_building_id'] ]['name'] ) ?> (<?php echo $ship['required_building_level'] ?>)</td>
             </tr>
             <?php endif; ?>
             <?php if (!empty($ship['required_research_id'])): ?>
             <tr>
-                <td><?= $required_researches_check ? '<i class="icon-ok"></i>' : '<i class="icon-remove"></i>'; ?></td>
-                <td><?= $this->translate( $researches[ $ship['required_research_id'] ]['name'] ) ?> (<?= $ship['required_researches_level'] ?>)</td>
+                <td><?php echo $required_researches_check ? '<i class="glyphicon glyphicon-ok"></i>' : '<i class="glyphicon glyphicon-remove"></i>'; ?></td>
+                <td><?php echo $this->translate( $researches[ $ship['required_research_id'] ]['name'] ) ?> (<?php echo $ship['required_researches_level'] ?>)</td>
             </tr>
             <?php endif; ?>
         <tr>
            <td colspan="2">
            <?php $poss = array_key_exists($ship['id'], $possessions ) ? $possessions[$ship['id']] : null; ?>
-           <?= $this->partial('partial/techstatus_bar', array('tech'=>$ship,  'type'=>'ship', 'poss'=>$poss, 'ap_spend'=> $ship['ap_spend'], 'ap_available'=> $ap_available)) ?>
-           <? $class = ($ship['status_points'] == 0 && $ship['level'] > 0) ? 'btn-danger': 'disabled';?>
-           <a id="ship-<?= $ship['id'] ?>|leveldown"  class="btn <?= $class ?>" >abreißen</a>
+           <?php echo $this->partial('partial/techstatus_bar', array('tech'=>$ship,  'type'=>'ship', 'poss'=>$poss, 'ap_spend'=> $ship['ap_spend'], 'ap_available'=> $ap_available)) ?>
+           <?php $class = ($ship['status_points'] == 0 && $ship['level'] > 0) ? 'btn-danger': 'disabled';?>
+           <a id="ship-<?php echo $ship['id'] ?>|leveldown"  class="btn <?php echo $class ?>" >abreißen</a>
            </td>
         </tr>
             <tr>
                 <td colspan="2">
-                <?= $this->partial('partial/techlevelup_bar', array('tech'=>$ship, 'type'=>'ship', 'ap_spend'=> $ship['ap_spend'], 'ap_available'=> $ap_available)) ?>
-                <? $class = ($ship['ap_spend'] >= $ship['ap_for_levelup']) ? 'btn-success': 'disabled';?>
-                <a id="ship-<?= $ship['id'] ?>|levelup" class="btn <?= $class ?>" >ausbauen</a>
+                <?php echo $this->partial('partial/techlevelup_bar', array('tech'=>$ship, 'type'=>'ship', 'ap_spend'=> $ship['ap_spend'], 'ap_available'=> $ap_available)) ?>
+                <?php $class = ($ship['ap_spend'] >= $ship['ap_for_levelup']) ? 'btn-success': 'disabled';?>
+                <a id="ship-<?php echo $ship['id'] ?>|levelup" class="btn <?php echo $class ?>" >ausbauen</a>
                 </td>
             </tr>
         </table>
         <?php if (is_array($message)): ?>
-        <div class="alert alert-<?= $message[0] ?>">
-            <p><i class="icon icon-error"></i><?= $message[1] ?></p>
+        <div class="alert alert-<?php echo $message[0] ?>">
+            <p><i class="icon glyphicon glyphicon-error"></i><?php echo $message[1] ?></p>
         </div>
         <?php endif;?>
 

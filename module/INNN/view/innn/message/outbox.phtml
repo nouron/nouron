@@ -1,29 +1,29 @@
-<div class="row-fluid">
+<div class="row">
     <div class="accordion" id="outbox-accordion">
-    <? foreach ($messages as $message): ?>
+    <?php foreach ($messages as $message): ?>
         <div class="accordion-group">
             <div class="accordion-heading row-fluid">
-                <span class="accordion-toggle" data-toggle="collapse" data-parent="#outbox-accordion" href="#collapse-message-<?= $message->id ?>">
-                    <span class="span1"><i class="icon-time"></i> <?= $message->tick ?></span>
-                    <span class="span1"><strong>an <a href="<?= $this->url("user", array('id'=>$message->recipient_id))?>"><?= $message->recipient ?></a>:</strong></span>
-                    <span class="span10"><?= $message->subject ?></span>
+                <span class="accordion-toggle" data-toggle="collapse" data-parent="#outbox-accordion" href="#collapse-message-<?php echo $message->id ?>">
+                    <span class="col-md-1"><i class="glyphicon glyphicon-time"></i> <?php echo $message->tick ?></span>
+                    <span class="col-md-1"><strong>an <a href="<?php echo $this->url("user", array('id'=>$message->recipient_id))?>"><?php echo $message->recipient ?></a>:</strong></span>
+                    <span class="col-md-10"><?php echo $message->subject ?></span>
                 </span>
             </div>
-            <div id="collapse-message-<?= $message->id ?>" class="accordion-body collapse row-fluid">
+            <div id="collapse-message-<?php echo $message->id ?>" class="accordion-body collapse row-fluid">
                 <div class="accordion-inner">
-                    <div class="span2">...</div>
-                    <div class="span10">
-                        <p><?= $message->text ?></p>
+                    <div class="col-md-2">...</div>
+                    <div class="col-md-10">
+                        <p><?php echo $message->text ?></p>
                         <br />
-                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive')?>"><i class="icon-thumbs-up"></i></a>
-                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_positive_and_answer')?>"><i class="icon-thumbs-up"></i> + <i class="icon-envelope"></i></a>
-                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_neutral_and_answer')?>"><i class="icon-envelope"></i></a>
-                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative')?>"><i class="icon-thumbs-down"></i></a>
-                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?= $this->translate('react_negative_and_answer')?>"><i class="icon-thumbs-down"></i> + <i class="icon-envelope"></i></a>
+                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
+                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
+                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_neutral_and_answer')?>"><i class="glyphicon glyphicon-envelope"></i></a>
+                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative')?>"><i class="glyphicon glyphicon-thumbs-down"></i></a>
+                        <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="glyphicon glyphicon-thumbs-down"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
                     </div>
                 </div>
             </div>
         </div>
-    <? endforeach ?>
+    <?php endforeach ?>
     </div>
 </div><!--/row-->

@@ -14,9 +14,10 @@ return array(
         'Fleet',
         'Trade',
         'INNN',
-        'DluTwBootstrap',
+        'TwbBundle',
+//        'DluTwBootstrap',
 //         'DluTwBootstrapDemo'
-        'ZendDeveloperTools'
+//        'ZendDeveloperTools'
     ),
     'module_listener_options' => array(
         'config_glob_paths'    => array(

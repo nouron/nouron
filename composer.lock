@@ -3,7 +3,7 @@
         "This file locks the dependencies of your project to a known state",
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file"
     ],
-    "hash": "ef7de67096ca2657d4bd3e54199cd452",
+    "hash": "662cd7c9b13d79b8f95a2ece54a48cc3",
     "packages": [
         {
             "name": "behat/behat",
@@ -401,121 +401,22 @@
             "time": "2013-07-25 02:55:43"
         },
         {
-            "name": "dlu/dlutwbootstrap",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap.git",
-                "reference": "843d123dbb8e2eba65d4ef58f7cdaf7f59b0d51d"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap/get/843d123dbb8e2eba65d4ef58f7cdaf7f59b0d51d.zip",
-                "reference": "843d123dbb8e2eba65d4ef58f7cdaf7f59b0d51d",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3.3",
-                "zendframework/zendframework": ">=2.1.0"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "DluTwBootstrap": "src/"
-                },
-                "classmap": [
-                    "./Module.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "New-BSD-License"
-            ],
-            "authors": [
-                {
-                    "name": "David Lukas",
-                    "homepage": "http://www.zfdaily.com"
-                }
-            ],
-            "description": "ZF2 module to generate Twitter Bootstrap UI - forms, navigation, etc.",
-            "homepage": "https://bitbucket.org/dlu/dlutwbootstrap",
-            "keywords": [
-                "dlutwbootstrap",
-                "module",
-                "twitter bootstrap",
-                "zend framework 2",
-                "zf2"
-            ],
-            "time": "2013-03-27 12:05:57"
-        },
-        {
-            "name": "dlu/dlutwbootstrapdemo",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo.git",
-                "reference": "ff2aff8631ba67cc97ac0e0f9ec395ebdaffdc73"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://bitbucket.org/dlu/dlutwbootstrap-demo/get/ff2aff8631ba67cc97ac0e0f9ec395ebdaffdc73.zip",
-                "reference": "ff2aff8631ba67cc97ac0e0f9ec395ebdaffdc73",
-                "shasum": ""
-            },
-            "require": {
-                "dlu/dlutwbootstrap": ">=0.1.1",
-                "php": ">=5.3.3",
-                "zendframework/zendframework": ">=2.0.5"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "DluTwBootstrapDemo": "src/"
-                },
-                "classmap": [
-                    "./Module.php"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "New-BSD-License"
-            ],
-            "authors": [
-                {
-                    "name": "David Lukas",
-                    "homepage": "http://www.zfdaily.com"
-                }
-            ],
-            "description": "ZF2 module to check & demonstrate the DluTwBootstrap module (Twitter Bootstrap UI - forms, navigation, etc.)",
-            "homepage": "https://bitbucket.org/dlu/dlutwbootstrap-demo",
-            "keywords": [
-                "demo",
-                "dlutwbootstrap",
-                "dlutwbootstrapdemo",
-                "module",
-                "twitter bootstrap",
-                "zend framework 2",
-                "zf2"
-            ],
-            "time": "2012-12-15 10:29:31"
-        },
-        {
             "name": "fabpot/goutte",
             "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/fabpot/Goutte.git",
-                "reference": "75c9f23c4122caf4ea3e87a42a00b471366e707f"
+                "reference": "e83f8f9d133dbf9b0254c2874f9c5c6287a3a8e0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/fabpot/Goutte/zipball/75c9f23c4122caf4ea3e87a42a00b471366e707f",
-                "reference": "75c9f23c4122caf4ea3e87a42a00b471366e707f",
+                "url": "https://api.github.com/repos/fabpot/Goutte/zipball/e83f8f9d133dbf9b0254c2874f9c5c6287a3a8e0",
+                "reference": "e83f8f9d133dbf9b0254c2874f9c5c6287a3a8e0",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
-                "guzzle/http": ">=3.0.5,<3.8-dev",
+                "guzzle/http": ">=3.0.5,<3.9-dev",
                 "php": ">=5.3.0",
                 "symfony/browser-kit": "~2.1",
                 "symfony/css-selector": "~2.1",
@@ -524,8 +425,8 @@
                 "symfony/process": "~2.1"
             },
             "require-dev": {
-                "guzzle/plugin-history": ">=3.0.5,<3.8-dev",
-                "guzzle/plugin-mock": ">=3.0.5,<3.8-dev"
+                "guzzle/plugin-history": ">=3.0.5,<3.9-dev",
+                "guzzle/plugin-mock": ">=3.0.5,<3.9-dev"
             },
             "type": "application",
             "extra": {
@@ -553,7 +454,7 @@
             "keywords": [
                 "scraper"
             ],
-            "time": "2013-08-16 06:03:22"
+            "time": "2014-01-18 19:09:49"
         },
         {
             "name": "firephp/firephp-core",
@@ -561,18 +462,21 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/firephp/firephp-core.git",
-                "reference": "fabad0f2503f9577fe8dd2cb1d1c7cd73ed2aacf"
+                "reference": "72493df5f36b0239adf7694240f91eca4bc25099"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/firephp/firephp-core/zipball/fabad0f2503f9577fe8dd2cb1d1c7cd73ed2aacf",
-                "reference": "fabad0f2503f9577fe8dd2cb1d1c7cd73ed2aacf",
+                "url": "https://api.github.com/repos/firephp/firephp-core/zipball/72493df5f36b0239adf7694240f91eca4bc25099",
+                "reference": "72493df5f36b0239adf7694240f91eca4bc25099",
                 "shasum": ""
             },
             "type": "library",
             "autoload": {
                 "classmap": [
                     "lib/FirePHPCore/FirePHP.class.php",
+                    "lib/FirePHPCore/fb.php"
+                ],
+                "files": [
                     "lib/FirePHPCore/fb.php"
                 ]
             },
@@ -589,21 +493,21 @@
             ],
             "description": "Traditional FirePHPCore library for sending PHP variables to the browser.",
             "homepage": "https://github.com/firephp/firephp-core",
-            "time": "2013-04-23 15:28:20"
+            "time": "2013-11-06 16:41:22"
         },
         {
             "name": "guzzle/common",
-            "version": "dev-master",
+            "version": "v3.8.0",
             "target-dir": "Guzzle/Common",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/common.git",
-                "reference": "bf73c87375f60861f8c7ccc7b95878023ade5306"
+                "reference": "eb4e34cac1b18583f0ee74bf6a9dda96bd771a1e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/common/zipball/bf73c87375f60861f8c7ccc7b95878023ade5306",
-                "reference": "bf73c87375f60861f8c7ccc7b95878023ade5306",
+                "url": "https://api.github.com/repos/guzzle/common/zipball/eb4e34cac1b18583f0ee74bf6a9dda96bd771a1e",
+                "reference": "eb4e34cac1b18583f0ee74bf6a9dda96bd771a1e",
                 "shasum": ""
             },
             "require": {
@@ -633,21 +537,21 @@
                 "event",
                 "exception"
             ],
-            "time": "2013-09-08 21:09:18"
+            "time": "2013-12-05 23:39:20"
         },
         {
             "name": "guzzle/http",
-            "version": "dev-master",
+            "version": "v3.8.0",
             "target-dir": "Guzzle/Http",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/http.git",
-                "reference": "1034125dfd906b73119e535f03153a62fccb1989"
+                "reference": "b497e6b6a5a85751ae0c6858d677f7c4857dd171"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/http/zipball/1034125dfd906b73119e535f03153a62fccb1989",
-                "reference": "1034125dfd906b73119e535f03153a62fccb1989",
+                "url": "https://api.github.com/repos/guzzle/http/zipball/b497e6b6a5a85751ae0c6858d677f7c4857dd171",
+                "reference": "b497e6b6a5a85751ae0c6858d677f7c4857dd171",
                 "shasum": ""
             },
             "require": {
@@ -690,21 +594,21 @@
                 "http",
                 "http client"
             ],
-            "time": "2013-09-06 11:34:26"
+            "time": "2013-12-04 22:21:25"
         },
         {
             "name": "guzzle/parser",
-            "version": "dev-master",
+            "version": "v3.8.0",
             "target-dir": "Guzzle/Parser",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/parser.git",
-                "reference": "a25c2ddda1c52fb69a4ee56eb530b13ddd9573c2"
+                "reference": "77cae6425bc3466e1e47bdf6d2eebc15a092dbcc"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/parser/zipball/a25c2ddda1c52fb69a4ee56eb530b13ddd9573c2",
-                "reference": "a25c2ddda1c52fb69a4ee56eb530b13ddd9573c2",
+                "url": "https://api.github.com/repos/guzzle/parser/zipball/77cae6425bc3466e1e47bdf6d2eebc15a092dbcc",
+                "reference": "77cae6425bc3466e1e47bdf6d2eebc15a092dbcc",
                 "shasum": ""
             },
             "require": {
@@ -734,11 +638,11 @@
                 "message",
                 "url"
             ],
-            "time": "2013-07-11 22:46:03"
+            "time": "2013-10-24 00:04:09"
         },
         {
             "name": "guzzle/stream",
-            "version": "dev-master",
+            "version": "v3.8.0",
             "target-dir": "Guzzle/Stream",
             "source": {
                 "type": "git",
@@ -788,6 +692,66 @@
                 "stream"
             ],
             "time": "2013-07-30 22:07:23"
+        },
+        {
+            "name": "neilime/zf2-twb-bundle",
+            "version": "dev-master",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/neilime/zf2-twb-bundle.git",
+                "reference": "f74400c46e3749abdb41c964eb8ee8108f35ffcb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/neilime/zf2-twb-bundle/zipball/f74400c46e3749abdb41c964eb8ee8108f35ffcb",
+                "reference": "f74400c46e3749abdb41c964eb8ee8108f35ffcb",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.3.3",
+                "zendframework/zendframework": "2.*@stable"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "3.*@stable",
+                "satooshi/php-coveralls": "0.*@stable"
+            },
+            "suggest": {
+                "neilime/zf2-assets-bundle": "Bundling & caching Twitter Bootstrap assets",
+                "twitter/bootstrap": "Twitter bootstrap assets"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.0-dev"
+                }
+            },
+            "autoload": {
+                "psr-0": {
+                    "TwbBundle": "src"
+                },
+                "classmap": [
+                    "Module.php"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Neilime",
+                    "homepage": "https://github.com/neilime",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Zend Framework 2 module for easy integration of Twitter Bootstrap",
+            "homepage": "http://neilime.github.io/zf2-twb-bundle/",
+            "keywords": [
+                "bundle",
+                "twitter bootstrap",
+                "zend framework 2"
+            ],
+            "time": "2014-01-19 15:57:17"
         },
         {
             "name": "symfony/browser-kit",
@@ -846,12 +810,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Config.git",
-                "reference": "9a3c831697349cf6e9b5302b7beb0b97e6cdac41"
+                "reference": "bde2f7192a52dfd07cf5484ad65d719da28effba"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Config/zipball/9a3c831697349cf6e9b5302b7beb0b97e6cdac41",
-                "reference": "9a3c831697349cf6e9b5302b7beb0b97e6cdac41",
+                "url": "https://api.github.com/repos/symfony/Config/zipball/bde2f7192a52dfd07cf5484ad65d719da28effba",
+                "reference": "bde2f7192a52dfd07cf5484ad65d719da28effba",
                 "shasum": ""
             },
             "require": {
@@ -861,7 +825,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -885,7 +849,7 @@
             ],
             "description": "Symfony Config Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2014-01-07 13:29:57"
         },
         {
             "name": "symfony/console",
@@ -894,12 +858,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Console.git",
-                "reference": "e430d7416327a93be77b3c4844c191a10cc8c1c7"
+                "reference": "47e82eadf64a81e0a778c7249c7292987f1bfcff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Console/zipball/e430d7416327a93be77b3c4844c191a10cc8c1c7",
-                "reference": "e430d7416327a93be77b3c4844c191a10cc8c1c7",
+                "url": "https://api.github.com/repos/symfony/Console/zipball/47e82eadf64a81e0a778c7249c7292987f1bfcff",
+                "reference": "47e82eadf64a81e0a778c7249c7292987f1bfcff",
                 "shasum": ""
             },
             "require": {
@@ -914,7 +878,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -938,7 +902,7 @@
             ],
             "description": "Symfony Console Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-25 06:04:58"
+            "time": "2014-01-24 14:36:35"
         },
         {
             "name": "symfony/css-selector",
@@ -989,12 +953,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/DependencyInjection.git",
-                "reference": "14eb184da96129ba5a0304f8cb202b83fc2e375a"
+                "reference": "26648a063db967e0a0510df14d22555f4afd898e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/DependencyInjection/zipball/14eb184da96129ba5a0304f8cb202b83fc2e375a",
-                "reference": "14eb184da96129ba5a0304f8cb202b83fc2e375a",
+                "url": "https://api.github.com/repos/symfony/DependencyInjection/zipball/26648a063db967e0a0510df14d22555f4afd898e",
+                "reference": "26648a063db967e0a0510df14d22555f4afd898e",
                 "shasum": ""
             },
             "require": {
@@ -1013,7 +977,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1037,7 +1001,7 @@
             ],
             "description": "Symfony DependencyInjection Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-21 18:20:49"
+            "time": "2014-01-07 13:29:57"
         },
         {
             "name": "symfony/dom-crawler",
@@ -1094,19 +1058,21 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/EventDispatcher.git",
-                "reference": "9b4fe5757870682eb2251e283228a66d938265a8"
+                "reference": "a37a9430e2eafb6a66de240ac13f91b45b4c3d37"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/9b4fe5757870682eb2251e283228a66d938265a8",
-                "reference": "9b4fe5757870682eb2251e283228a66d938265a8",
+                "url": "https://api.github.com/repos/symfony/EventDispatcher/zipball/a37a9430e2eafb6a66de240ac13f91b45b4c3d37",
+                "reference": "a37a9430e2eafb6a66de240ac13f91b45b4c3d37",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.3"
             },
             "require-dev": {
-                "symfony/dependency-injection": "~2.0"
+                "psr/log": "~1.0",
+                "symfony/dependency-injection": "~2.0",
+                "symfony/stopwatch": "~2.2"
             },
             "suggest": {
                 "symfony/dependency-injection": "",
@@ -1115,7 +1081,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1139,7 +1105,7 @@
             ],
             "description": "Symfony EventDispatcher Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-19 09:47:34"
+            "time": "2014-01-07 13:29:57"
         },
         {
             "name": "symfony/filesystem",
@@ -1148,12 +1114,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Filesystem.git",
-                "reference": "e558fd5d593ebe083dca199f52aed5374ab7b57a"
+                "reference": "e81f1b30eb9748c3f8e0de3a92ea210845cff0a9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Filesystem/zipball/e558fd5d593ebe083dca199f52aed5374ab7b57a",
-                "reference": "e558fd5d593ebe083dca199f52aed5374ab7b57a",
+                "url": "https://api.github.com/repos/symfony/Filesystem/zipball/e81f1b30eb9748c3f8e0de3a92ea210845cff0a9",
+                "reference": "e81f1b30eb9748c3f8e0de3a92ea210845cff0a9",
                 "shasum": ""
             },
             "require": {
@@ -1162,7 +1128,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1186,7 +1152,7 @@
             ],
             "description": "Symfony Filesystem Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-27 14:57:51"
+            "time": "2014-01-07 13:29:57"
         },
         {
             "name": "symfony/finder",
@@ -1279,12 +1245,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Translation.git",
-                "reference": "d7e84f71f1856f75025618aca6cdaf074ab84220"
+                "reference": "9c10bbce6bcd255661decff7ac61a03834b8f78d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Translation/zipball/d7e84f71f1856f75025618aca6cdaf074ab84220",
-                "reference": "d7e84f71f1856f75025618aca6cdaf074ab84220",
+                "url": "https://api.github.com/repos/symfony/Translation/zipball/9c10bbce6bcd255661decff7ac61a03834b8f78d",
+                "reference": "9c10bbce6bcd255661decff7ac61a03834b8f78d",
                 "shasum": ""
             },
             "require": {
@@ -1301,7 +1267,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1325,7 +1291,7 @@
             ],
             "description": "Symfony Translation Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-27 13:28:11"
+            "time": "2014-01-24 14:36:35"
         },
         {
             "name": "symfony/yaml",
@@ -1334,12 +1300,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/Yaml.git",
-                "reference": "ef4878bcca171ebe7466be0505b85a710818d788"
+                "reference": "9921872611710df49cf035c259e5a461ea2d0f8c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/Yaml/zipball/ef4878bcca171ebe7466be0505b85a710818d788",
-                "reference": "ef4878bcca171ebe7466be0505b85a710818d788",
+                "url": "https://api.github.com/repos/symfony/Yaml/zipball/9921872611710df49cf035c259e5a461ea2d0f8c",
+                "reference": "9921872611710df49cf035c259e5a461ea2d0f8c",
                 "shasum": ""
             },
             "require": {
@@ -1348,7 +1314,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.4-dev"
+                    "dev-master": "2.5-dev"
                 }
             },
             "autoload": {
@@ -1372,7 +1338,7 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "http://symfony.com",
-            "time": "2013-09-22 18:04:51"
+            "time": "2014-01-07 13:29:57"
         },
         {
             "name": "zendframework/zend-developer-tools",
@@ -1380,12 +1346,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/ZendDeveloperTools.git",
-                "reference": "9b9311311fdb562494f89e62eb4649d687b58364"
+                "reference": "9a8848612c0c6d9890dd6533b3dd5045745e1299"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/9b9311311fdb562494f89e62eb4649d687b58364",
-                "reference": "9b9311311fdb562494f89e62eb4649d687b58364",
+                "url": "https://api.github.com/repos/zendframework/ZendDeveloperTools/zipball/9a8848612c0c6d9890dd6533b3dd5045745e1299",
+                "reference": "9a8848612c0c6d9890dd6533b3dd5045745e1299",
                 "shasum": ""
             },
             "require": {
@@ -1433,7 +1399,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-07-08 19:52:34"
+            "time": "2014-01-02 17:27:54"
         },
         {
             "name": "zendframework/zendframework",
@@ -1441,12 +1407,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "3bd643acb98a5f6a9e5abd45785171f6685b4a3c"
+                "reference": "4fe2829353077239aafc9ffe39a15c07bba5b660"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/3bd643acb98a5f6a9e5abd45785171f6685b4a3c",
-                "reference": "3bd643acb98a5f6a9e5abd45785171f6685b4a3c",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/4fe2829353077239aafc9ffe39a15c07bba5b660",
+                "reference": "4fe2829353077239aafc9ffe39a15c07bba5b660",
                 "shasum": ""
             },
             "require": {
@@ -1507,6 +1473,7 @@
             },
             "require-dev": {
                 "doctrine/annotations": ">=1.0",
+                "fabpot/php-cs-fixer": "*@dev",
                 "ircmaxell/random-lib": "dev-master",
                 "ircmaxell/security-lib": "dev-master",
                 "ocramius/proxy-manager": "0.4.*",
@@ -1547,7 +1514,7 @@
                 "framework",
                 "zf2"
             ],
-            "time": "2013-09-08 09:22:44"
+            "time": "2014-01-17 10:38:18"
         },
         {
             "name": "zf-commons/zfc-admin",
@@ -1555,12 +1522,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcAdmin.git",
-                "reference": "85b4d647ba4d080f66d79b0a9deb986db093117c"
+                "reference": "7dab378720ddbb2ce7c8d505c4ef9e7701fa6a8d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcAdmin/zipball/85b4d647ba4d080f66d79b0a9deb986db093117c",
-                "reference": "85b4d647ba4d080f66d79b0a9deb986db093117c",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcAdmin/zipball/7dab378720ddbb2ce7c8d505c4ef9e7701fa6a8d",
+                "reference": "7dab378720ddbb2ce7c8d505c4ef9e7701fa6a8d",
                 "shasum": ""
             },
             "require": {
@@ -1600,7 +1567,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-04-23 09:31:59"
+            "time": "2013-10-16 14:50:58"
         },
         {
             "name": "zf-commons/zfc-base",
@@ -1657,16 +1624,16 @@
         },
         {
             "name": "zf-commons/zfc-rbac",
-            "version": "dev-master",
+            "version": "0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcRbac.git",
-                "reference": "a5d5f2639e61638631606aa554f4d93620006a6a"
+                "reference": "cdcaae0c77f8d5df3093db621bf05fdb31ac2b68"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/a5d5f2639e61638631606aa554f4d93620006a6a",
-                "reference": "a5d5f2639e61638631606aa554f4d93620006a6a",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcRbac/zipball/cdcaae0c77f8d5df3093db621bf05fdb31ac2b68",
+                "reference": "cdcaae0c77f8d5df3093db621bf05fdb31ac2b68",
                 "shasum": ""
             },
             "require": {
@@ -1696,7 +1663,7 @@
                 "module",
                 "zf2"
             ],
-            "time": "2013-09-25 12:55:29"
+            "time": "2013-10-16 14:49:44"
         },
         {
             "name": "zf-commons/zfc-user",
@@ -1704,12 +1671,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "fbbe5fdeabd9229bf7d1328358c2d95538a6081e"
+                "reference": "c5d6fe51643b8d774ac930389793ea629b3cce70"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/fbbe5fdeabd9229bf7d1328358c2d95538a6081e",
-                "reference": "fbbe5fdeabd9229bf7d1328358c2d95538a6081e",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/c5d6fe51643b8d774ac930389793ea629b3cce70",
+                "reference": "c5d6fe51643b8d774ac930389793ea629b3cce70",
                 "shasum": ""
             },
             "require": {
@@ -1762,7 +1729,7 @@
             "keywords": [
                 "zf2"
             ],
-            "time": "2013-07-17 15:48:13"
+            "time": "2014-01-14 16:59:51"
         }
     ],
     "packages-dev": [
@@ -1776,10 +1743,8 @@
         "zendframework/zend-developer-tools": 20,
         "zf-commons/zfc-user": 20,
         "zf-commons/zfc-admin": 20,
-        "zf-commons/zfc-rbac": 20,
         "bjyoungblood/bjy-profiler": 20,
-        "dlu/dlutwbootstrap": 20,
-        "dlu/dlutwbootstrapdemo": 20,
+        "neilime/zf2-twb-bundle": 20,
         "firephp/firephp-core": 20,
         "behat/behat": 0,
         "behat/mink": 0

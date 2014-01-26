@@ -1,24 +1,26 @@
 <!-- Modal -->
-<div id="techModal" class="modal hide fade in building" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1" style="display: block;">
+<!--<div id="techModal" class="modal fade in building" aria-hidden="false" aria-labelledby="myModalLabel" role="dialog" tabindex="-1">-->
+<div class="modal-dialog">
+  <div class="modal-content">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel"><?= $this->translate($building['name']) ?> (<?= $building['level'] ?>)
-            <small>(<?= $this->translate('types_building') ?>/<?= $this->translate('purposes_' . $building['purpose']) ?>)</small></h3>
+        <h3 id="myModalLabel"><?php echo $this->translate($building['name']) ?> (<?php echo $building['level'] ?>)
+            <small>(<?php echo $this->translate('types_building') ?>/<?php echo $this->translate('purposes_' . $building['purpose']) ?>)</small></h3>
     </div>
     <div class="modal-body">
         <!-- Description -->
-        <p><?= $this->translate('desc_'.$building['name'])?></p>
-        freie AP: <?= $ap_available ?>
+        <p><?php echo $this->translate('desc_'.$building['name'])?></p>
+        freie AP: <?php echo $ap_available ?>
         <!-- Data -->
-        <?= ($building['max_level'] > 0) ? '<span class="label">' . $this->translate('max_level') . ': '. $building['max_level'] . '</span>' : '' ?>
+        <?php echo ($building['max_level'] > 0) ? '<span class="label">' . $this->translate('max_level') . ': '. $building['max_level'] . '</span>' : '' ?>
 
         <!-- Costs -->
-        <h4><?= $this->translate('costs and requirements') ?></h4>
+        <h4><?php echo $this->translate('costs and requirements') ?></h4>
 
         <table class="table">
 
         <tr>
-        <td><i class="<?= ($required_resources_check==true)? 'icon-ok' : 'icon-remove' ?>"></i></td>
+        <td><i class="<?php echo ($required_resources_check==true)? 'glyphicon glyphicon-ok' : 'glyphicon glyphicon-remove' ?>"></i></td>
         <td>
         <?php
         foreach ($costs as $cost):
@@ -37,29 +39,29 @@
         </tr>
         <?php if (!empty($building['required_building_id'])): ?>
         <tr>
-            <td><?= $required_buildings_check ? '<i class="icon-ok"></i>' : '<i class="icon-remove"></i>'; ?></td>
-            <td><?= $this->translate( $buildings[ $building['required_building_id'] ]['name'] ) ?> (<?= $building['required_building_level'] ?>)</td>
+            <td><?php echo $required_buildings_check ? '<i class="glyphicon glyphicon-ok"></i>' : '<i class="glyphicon glyphicon-remove"></i>'; ?></td>
+            <td><?php echo $this->translate( $buildings[ $building['required_building_id'] ]['name'] ) ?> (<?php echo $building['required_building_level'] ?>)</td>
         </tr>
         <?php endif; ?>
         <tr>
            <td colspan="2">
            <?php $poss = array_key_exists($building['id'], $possessions ) ? $possessions[$building['id']] : null; ?>
-           <?= $this->partial('partial/techstatus_bar', array('tech'=>$building, 'type'=>'building', 'poss'=>$poss, 'ap_spend'=> $building['ap_spend'], 'ap_available'=> $ap_available)) ?>
-           <? $class = ($status_points == 0 && $building['level'] > 0) ? 'btn-danger': 'disabled';?>
-           <a id="building-<?= $building['id'] ?>|leveldown"  class="btn <?= $class ?>" >abreißen</a>
+           <?php echo $this->partial('partial/techstatus_bar', array('tech'=>$building, 'type'=>'building', 'poss'=>$poss, 'ap_spend'=> $building['ap_spend'], 'ap_available'=> $ap_available)) ?>
+           <?php $class = ($status_points == 0 && $building['level'] > 0) ? 'btn-danger': 'disabled';?>
+           <a id="building-<?php echo $building['id'] ?>|leveldown"  class="btn <?php echo $class ?>" >abreißen</a>
            </td>
         </tr>
         <tr>
             <td colspan="2">
-            <?= $this->partial('partial/techlevelup_bar', array('tech'=>$building, 'type'=>'building', 'ap_spend'=> $building['ap_spend'], 'ap_available'=> $ap_available)) ?>
-            <? $class = ($building['ap_spend'] >= $building['ap_for_levelup']) ? 'btn-success': 'disabled';?>
-            <a id="building-<?= $building['id'] ?>|levelup" class="btn <?= $class ?>" >ausbauen</a>
+            <?php echo $this->partial('partial/techlevelup_bar', array('tech'=>$building, 'type'=>'building', 'ap_spend'=> $building['ap_spend'], 'ap_available'=> $ap_available)) ?>
+            <?php $class = ($building['ap_spend'] >= $building['ap_for_levelup']) ? 'btn-success': 'disabled';?>
+            <a id="building-<?php echo $building['id'] ?>|levelup" class="btn <?php echo $class ?>" >ausbauen</a>
             </td>
         </tr>
         </table>
         <?php if (is_array($message)): ?>
-        <div class="alert alert-<?= $message[0] ?>">
-            <p><i class="icon icon-error"></i><?= $message[1] ?></p>
+        <div class="alert alert-<?php echo $message[0] ?>">
+            <p><i class="icon glyphicon glyphicon-error"></i><?php echo $message[1] ?></p>
         </div>
         <?php endif;?>
 
@@ -68,4 +70,6 @@
     <!--<div class="modal-footer">
         <button class="btn btn-primary">Save changes</button>
     </div>-->
+<!--</div>-->
+  </div>
 </div>

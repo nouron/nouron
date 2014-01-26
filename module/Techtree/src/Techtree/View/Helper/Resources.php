@@ -1,13 +1,13 @@
 <?php
 $resources = array(
-    0 => array('name' => 'tick', 'class'=> 'icon-time'),
-    1 => array('name' => 'tick', 'class'=> 'icon-time'),
-    2 => array('name' => 'tick', 'class'=> 'icon-time'),
-    3 => array('name' => 'tick', 'class'=> 'icon-time'),
-    4 => array('name' => 'tick', 'class'=> 'icon-time'),
-    5 => array('name' => 'tick', 'class'=> 'icon-time'),
-    6 => array('name' => 'tick', 'class'=> 'icon-time'),
-    7 => array('name' => 'tick', 'class'=> 'icon-time')
+    0 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    1 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    2 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    3 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    4 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    5 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    6 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time'),
+    7 => array('name' => 'tick', 'class'=> 'glyphicon glyphicon-time')
 );
 foreach ($costs as $cost):
     $name = $resources[ $cost['resource_id'] ]['name'];

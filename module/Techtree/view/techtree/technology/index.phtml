@@ -1,6 +1,6 @@
 <h1>Technologies</h1>
 <p>
-    <a href="<?= $this->url('techtree',array('controller'=>'technology','action'=>'add'));?>">Add new technology</a>
+    <a href="<?php echo $this->url('techtree',array('controller'=>'technology','action'=>'add'));?>">Add new technology</a>
 </p>
 
 <table class="table table-striped table-bordered">
@@ -22,19 +22,19 @@
 </tr>
 <?php foreach ($technologies as $tech) : ?>
 <tr>
-    <td><?= $this->escapeHtml($tech->id);?></td>
-    <td><?= $this->escapeHtml($tech->type);?></td>
-    <td><?= $this->escapeHtml($tech->purpose);?></td>
-    <td><?= $this->escapeHtml($tech->name);?></td>
-    <td><?= $this->escapeHtml($tech->prime_colony_only);?></td>
-    <td><?= $this->escapeHtml($tech->stage);?></td>
-    <td><?= $this->escapeHtml($tech->graph_row);?></td>
-    <td><?= $this->escapeHtml($tech->graph_column);?></td>
-    <td><?= $this->escapeHtml($tech->max_level);?></td>
-    <td><?= $this->escapeHtml($tech->build_time);?></td>
-    <td><?= $this->escapeHtml($tech->decay);?></td>
-    <td><?= $this->escapeHtml($tech->tradeable);?></td>
-    <td><?= $this->escapeHtml($tech->moving_speed);?></td>
+    <td><?php echo $this->escapeHtml($tech->id);?></td>
+    <td><?php echo $this->escapeHtml($tech->type);?></td>
+    <td><?php echo $this->escapeHtml($tech->purpose);?></td>
+    <td><?php echo $this->escapeHtml($tech->name);?></td>
+    <td><?php echo $this->escapeHtml($tech->prime_colony_only);?></td>
+    <td><?php echo $this->escapeHtml($tech->stage);?></td>
+    <td><?php echo $this->escapeHtml($tech->graph_row);?></td>
+    <td><?php echo $this->escapeHtml($tech->graph_column);?></td>
+    <td><?php echo $this->escapeHtml($tech->max_level);?></td>
+    <td><?php echo $this->escapeHtml($tech->build_time);?></td>
+    <td><?php echo $this->escapeHtml($tech->decay);?></td>
+    <td><?php echo $this->escapeHtml($tech->tradeable);?></td>
+    <td><?php echo $this->escapeHtml($tech->moving_speed);?></td>
     <td>
         <a href="<?php echo $this->url('techtree', array('action'=>'edit', 'id' => $tech->id));?>">Edit</a>
         <a href="<?php echo $this->url('techtree', array('action'=>'delete', 'id' => $tech->id));?>">Delete</a>

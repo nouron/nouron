@@ -1,17 +1,17 @@
-<? foreach ($techs as $techId => $tech): ?>
-<div class="row-fluid item <?= $type ?>" id="<?= $type . '-' . $techId ?>">
-    <div class="span4" style="text-align: right">
-        <a class="btn  transfer disabled">-10</a>
-        <a class="btn  transfer disabled">-5</a>
-        <a class="btn  transfer disabled">-1</a>
+<?php foreach ($techs as $techId => $tech): ?>
+<div class="row-fluid item <?php echo $type ?>" id="<?php echo $type . '-' . $techId ?>">
+    <div class="col-md-4 transferButtons" style="text-align: right">
+        <button class="btn btn-default" value="-10">10</button>
+        <button class="btn btn-default" value="-5">5</button>
+        <button class="btn btn-default" value="-1">1</button>
     </div>
-    <div class="span1 countOnColony <?= $type . 'OnColony-' . $techId ?>" style="text-align: center">0</div>
-    <div class="span2" style="text-align: center"><?= $this->translate($tech["name"]) ?></div>
-    <div class="span1 countInFleetCargo <?= $type . 'InFleetCargo-' . $techId ?>" style="text-align: center">0</div>
-    <div class="span4">
-        <a class="btn  transfer disabled">+1</a>
-        <a class="btn  transfer disabled">+5</a>
-        <a class="btn  transfer disabled">+10</a>
+    <div class="col-md-1 countOnColony <?php echo $type . 'OnColony-' . $techId ?>" style="text-align: center">0</div>
+    <div class="col-md-2" style="text-align: center"><?php echo $this->translate($tech["name"]) ?></div>
+    <div class="col-md-1 countInFleetCargo <?php echo $type . 'InFleetCargo-' . $techId ?>" style="text-align: center">0</div>
+    <div class="col-md-4 transferButtons">
+        <button class="btn btn-default" value="1">1</button>
+        <button class="btn btn-default" value="5">5</button>
+        <button class="btn btn-default" value="10">10</button>
     </div>
 </div>
-<?  endforeach; ?>
+<?php  endforeach; ?>

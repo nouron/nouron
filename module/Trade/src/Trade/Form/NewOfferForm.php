@@ -44,8 +44,8 @@ class NewOfferForm extends AbstractTradeForm
         $this->add(array(
             'type' => 'Zend\Form\Element\Select',
             'name' => 'direction',
-            'label' => 'offerType',
             'options' => array(
+                #'label' => 'offerType',
                 'id' => 'direction',
                 'value_options' => array(
                     0 => 'i search',
@@ -57,13 +57,24 @@ class NewOfferForm extends AbstractTradeForm
         $this->add(array(
             'type' => 'text',
             'name' => 'amount',
-//             'options' => array(
-//                 'label' => 'units'
-//              ),
+            'options' => array(
+                #'label' => 'units'
+            ),
             'attributes' => array(
+                'id' => 'amount',
                 'class' => 'input-small',
                 'placeholder' => 'units'
-            )
+            ),
+//            'twb' => array(
+//                'prepend' => array(
+//                    'type' => 'text',
+//                    'text' => 'Prepended text'
+//                ),
+//                'append' => array(
+//                    'type' => 'icon',
+//                    'icon' => 'glyphicon glyphicon-enveloppe' //icon class
+//                )
+//            )
         ));
 
         $this->add(array(
@@ -87,10 +98,11 @@ class NewOfferForm extends AbstractTradeForm
         $this->add(array(
             'type' => 'text',
             'name' => 'price',
-//             'options' => array(
-//                 'label' => 'price'
-//              ),
+            'options' => array(
+                #'label' => 'price'
+             ),
             'attributes' => array(
+                'id' => 'price',
                 'class' => 'input-small',
                 'placeholder' => 'price per unit'
             )
@@ -98,32 +110,32 @@ class NewOfferForm extends AbstractTradeForm
 
         # distance = $range * $system_size
 
-        $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
-            'name' => 'range',
-            'options' => array(
-                'id' => 'range',
-                'value_options' => $options,
-            )
-        ));
+#        $this->add(array(
+#            'type' => 'Zend\Form\Element\Select',
+#            'name' => 'range',
+#            'options' => array(
+#                'id' => 'range',
+#                'value_options' => $options,
+#            )
+#        ));
 
-        $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
-            'name' => 'restriction',
-            'options' => array(
-                'id' => 'restriction',
-                #'label' => 'restriction'
-                'value_options' => array(
-                    0 => 'no restriction',
-                    1 => 'only my group',
-                    2 => 'only my faction',
-                    3 => 'only my race',
-                )
-             ),
-//             'attributes' => array(
-//                 'disabled' => 'disabled'
-//             )
-        ));
+#        $this->add(array(
+#            'type' => 'Zend\Form\Element\Select',
+#            'name' => 'restriction',
+#            'options' => array(
+#                'id' => 'restriction',
+#                #'label' => 'restriction'
+#                'value_options' => array(
+#                    0 => 'no restriction',
+#                    1 => 'only my group',
+#                    2 => 'only my faction',
+#                    3 => 'only my race',
+#                )
+#             ),
+#//             'attributes' => array(
+#//                 'disabled' => 'disabled'
+#//             )
+#        ));
 
 
         $this->add(array(

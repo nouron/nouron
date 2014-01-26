@@ -1,11 +1,11 @@
-<div class="row-fluid">
-    <div class="span3">
+<div class="row">
+    <div class="col-md-3">
       <div class="well sidebar-nav">
         <ul id="systemList" class="nav nav-list itemList">
-          <li class="nav-header"><?= $this->translate('systems') ?></li>
-        <? foreach ($systems as $sid => $system): ?>
-            <li><a href="<?= $this->url('galaxy/system', array('sid' => $sid)); ?>"><i class="icon-globe"></i> <?= $system['name'] ?></a></li>
-        <? endforeach; ?>
+          <li class="nav-header"><?php echo $this->translate('systems') ?></li>
+        <?php foreach ($systems as $sid => $system): ?>
+            <li><a href="<?php echo $this->url('galaxy/system', array('sid' => $sid)); ?>"><i class="glyphicon glyphicon-globe"></i> <?php echo $system['name'] ?></a></li>
+        <?php endforeach; ?>
         </ul>
       </div><!--/.well -->
     </div><!--/span-->
@@ -15,20 +15,20 @@
         <div id="systemFrame" class="parallax-layer">
         </div>
         <div id="background2" class="parallax-layer">
-        <? foreach ($systems as $sid => $system):
+        <?php foreach ($systems as $sid => $system):
             $r = round ($system['size'] / 2);
             $left = round($system['x'] * $config['scale']) + $config['offset'] - $r;
             $top  = round($system['y'] * $config['scale']) + $config['offset'] - $r;
             $imgSize = $system['size'];
         ?>
-            <span class="tooltip_trigger " style="position:absolute;left:<?= $left ?>px;top:<?= $top ?>px">
-        <?  $tooltip_text = "{$system['name']} ({$system['x']}/{$system['y']}) {$this->translate($system['class'])}";
+            <span class="tooltip_trigger " style="position:absolute;left:<?php echo $left ?>px;top:<?php echo $top ?>px">
+        <?php  $tooltip_text = "{$system['name']} ({$system['x']}/{$system['y']}) {$this->translate($system['class'])}";
             echo '<a data-placement="bottom" rel="tooltip" href="'.$this->url('galaxy/system', array('sid' => $sid)).'" data-original-title="'.$tooltip_text.'"><img class="icon" src="/img/'.$system['icon_url'] .'" width="'.$imgSize .'" height="'.$imgSize.'" /></a>';?>
             </span>
-        <? endforeach; ?>
+        <?php endforeach; ?>
         </div>
     </div>
-    <div class="span3 well">
+    <div class="col-md-3 well">
 
     </div>
 </div><!--/row-->

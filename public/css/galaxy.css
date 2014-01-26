@@ -12,7 +12,7 @@
 /*#systemFrame {width: 502px;height: 502px;background-image: url("../img/layout/screenframe.png");}*/
 #system #systemBackground {width: 550px;height: 550px;}
 #system #systemLayer {top: -100px;left: -100px;}
-#system #systemLayer .dropdown{line-height:auto;}
+/*#system #systemLayer .dropdown{line-height:auto;}*/
 #system #systemLayer img {border: 1px solid transparent;}
 #system #systemLayer img.hover {cursor:pointer;border: 1px solid #900;}
 #system #systemLayer img.active {border: 1px solid #eee;}
@@ -35,4 +35,4 @@
 #system #gridLayer .debug{margin:0; padding: 0;border: 0; position:absolute;}
 #system #gridLayer hr.debug {display:block; border: 1px dotted #111;}
 
-#system #fleetsLayer .fleet {display:hidden; position:absolute; margin:-1px; padding:0; height:10px;width:10px;border: 1px solid transparent}
+#system #fleetsLayer .fleet {display:none; position:absolute; margin:-1px; padding:0; height:10px;width:10px;border: 1px solid transparent}

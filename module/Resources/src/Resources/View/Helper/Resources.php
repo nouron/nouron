@@ -38,7 +38,7 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
     {
         $sm = $this->getServiceLocator();
         $translate = $sm->get('translate');
-        $xhtml = '<div class="row-fluid resource-bar">';
+        $xhtml = '<div class="row resource-bar">';
         foreach ($possessions as $resId => $resource):
             $name = $resource['name'];
             $abbreviation =  $resource['abbreviation'];

@@ -1,5 +1,5 @@
 <?php if (!empty($form)): ?>
 <div class="modal-body">
-<?= $this->formTwb($form->prepare()); ?>
+<?php echo $this->form($form->prepare(), \TwbBundle\Form\View\Helper\TwbBundleForm::LAYOUT_HORIZONTAL); ?>
 </div>
 <?php endif; ?>

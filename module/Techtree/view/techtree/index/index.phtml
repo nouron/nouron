@@ -1,20 +1,20 @@
-<?= $this->partial('partial/_switch_tech_display') ?>
+<?php echo $this->partial('partial/_switch_tech_display') ?>
 <hr />
-<div class="row-fluid"  id="colony">
-  <div id="visualTechtree" class="row-fluid" style="position:relative">
-      <div id="storage-tech-id" class="hidden"></div>
-      <div id="storage" class="hidden"></div>
-    <svg class="grid-svg" id="grid-svg" height="100%" width="100%" >
+<div id="colony">
+  <div id="visualTechtree">
+    <div id="storage-tech-id" class="hidden"></div>
+    <div id="storage" class="hidden"></div>
+    <svg class="grid-svg" id="grid-svg" xmlns="http://www.w3.org/2000/svg">
         <rect x="0" y="0" height="10" width="10" stroke="black" />
-        <rect x="100" y="100" height="10" width="10" stroke="black" />
+        <rect x="100%" y="100%" height="10" width="10" stroke="black" />
         <!-- svg content via javascript -->
     </svg>
 
     <div class="grid">
     <?php for ($row=0; $row<=15; $row++): ?>
-      <div class="row-fluid">
+      <div class="row">
           <?php for ($col=0; $col<=5; $col++): ?>
-          <span class="span2 grid-cell" id="<?= "grid-$row-$col"?>"></span>
+          <span class="col-md-2 grid-cell" id="<?php echo "grid-$row-$col"?>"></span>
           <?php endfor; ?>
       </div>
     <?php endfor; ?>
@@ -22,33 +22,33 @@
 
     <div class="hidden">
         <?php
-        foreach ($techtree['buildings'] as $id => $tech) :
+        foreach ($techtree['building'] as $id => $tech) :
             echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'building'));
             if ($tech['required_building_id'] != null) {
                 echo $this->partial("partial/_techrequirement", array(
-                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
-                    'toTech'=>$techtree['buildings'][$id],
+                    'fromTech'=>$techtree['building'][$tech['required_building_id']],
+                    'toTech'=>$techtree['building'][$id],
                     'required_tech_count'=>$tech['required_building_level'],
                     'type' => 'building'
                 ));
             }
         endforeach;
-        foreach ($techtree['researches'] as $id => $tech) :
+        foreach ($techtree['research'] as $id => $tech) :
             echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'research'));
             if ($tech['required_building_id'] != null) {
                 echo $this->partial("partial/_techrequirement", array(
-                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
-                    'toTech'=>$techtree['researches'][$id],
+                    'fromTech'=>$techtree['building'][$tech['required_building_id']],
+                    'toTech'=>$techtree['research'][$id],
                     'required_tech_count'=>$tech['required_building_level'],
                     'type' => 'research'
                 ));
             }
         endforeach;
-        foreach ($techtree['ships'] as $id => $tech) :
+        foreach ($techtree['ship'] as $id => $tech) :
             echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'ship'));
             if ($tech['required_research_id'] != null) {
                 echo $this->partial("partial/_techrequirement", array(
-                    'fromTech'=>$techtree['researches'][$tech['required_research_id']],
+                    'fromTech'=>$techtree['research'][$tech['required_research_id']],
                     'toTech'=>$techtree['ship'][$id],
                     'required_tech_count'=>$tech['required_research_level'],
                     'type' => 'ship'
@@ -59,7 +59,7 @@
             echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'personell'));
             if ($tech['required_building_id'] != null) {
                 echo $this->partial("partial/_techrequirement", array(
-                    'fromTech'=>$techtree['buildings'][$tech['required_building_id']],
+                    'fromTech'=>$techtree['building'][$tech['required_building_id']],
                     'toTech'=>$techtree['personell'][$id],
                     'required_tech_count'=>$tech['required_building_level'],
                     'type' => 'personell'
@@ -67,21 +67,36 @@
             }
         endforeach;
         ?>
-  </div>
+    </div>
 
   <!-- Modal -->
-  <!-- this Modal is filled with html data from json request -->
-  <div id="techModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-          <h3 id="myModalLabel">Loading...</h3>
-      </div>
-      <div class="modal-body">
-          <p>Loading...</p>
-          <hr />
-      </div>
-      <div class="modal-footer">
-
-      </div>
+  <!-- modals are filled with html data from json request -->
+<?php foreach ($techtree['building'] as $id => $tech) : ?>
+  <div id="buildingModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content"></div>
     </div>
+  </div>
+<?php endforeach;
+foreach ($techtree['research'] as $id => $tech) : ?>
+  <div id="researchModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content"></div>
+    </div>
+  </div>
+<?php endforeach;
+foreach ($techtree['ship'] as $id => $tech) : ?>
+  <div id="shipModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content"></div>
+    </div>
+  </div>
+<?php endforeach;
+foreach ($techtree['personell'] as $id => $tech) : ?>
+  <div id="personellModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content"></div>
+    </div>
+  </div>
+<?php endforeach; ?>
 </div>

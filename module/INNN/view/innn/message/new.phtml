@@ -1,4 +1,4 @@
-<div class="row-fluid">
+<div class="row">
     <div class="tabbable tabs-left">
       <ul class="nav nav-tabs" id="myTab">
         <li class="active"><a href="#msg-to-user" data-toggle="tab">... to User</a></li>
@@ -12,11 +12,7 @@
       <div class="tab-content">
 
         <div class="tab-pane active" id="msg-to-user">
-        <?
-        $form = $this->form;
-        $form->prepare();
-        echo $this->formTwb($form);
-        ?>
+        <?php echo $this->form($this->form->prepare()); ?>
         </div>
 
         <div class="tab-pane" id="msg-to-faction">

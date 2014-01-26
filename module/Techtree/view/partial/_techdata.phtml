@@ -3,9 +3,14 @@ $key = $tech['row'] . '-' . $tech['column'];
 $level = isset($tech['level']) ? $tech['level'] : 0;
 $class = empty($tech['level']) ? $type . ' notexists' : $type;
 ?>
-<span class="techdata" id="techsource-<?= $key ?>">
-    <a id="<?= $type ?>-<?= $tech['id'] ?>" class="btn btn-block technology <?= $class ?>" href="#techModal" data-toggle="modal">
-        <?= $this->translate($tech['name']) . ' ' . $level  ?>
-    </a>
-    <span class="hidden data"><?= json_encode($tech) ?></span>
+<span class="techdata" id="techsource-<?php echo $key ?>">
+    <?php printf(
+        '<a id="%s" class="%s" href="%s" data-toggle="modal" data-target="%s">%s</a>',
+        $type.'-'.$tech['id'],
+        'btn btn-block technology ' . $class,
+        '/techtree/building/' . $tech['id'],
+        '#' . $type . 'Modal-' . $tech['id'],
+        $this->translate($tech['name']) . ' ' . $level
+    ); ?>
+    <span class="hidden data"><?php echo json_encode($tech) ?></span>
 </span>

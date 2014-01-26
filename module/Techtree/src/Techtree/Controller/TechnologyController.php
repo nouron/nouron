@@ -25,10 +25,10 @@ class TechnologyController extends \Nouron\Controller\IngameController
             case 'building':
                 $service = $sm->get('Techtree\Service\BuildingService');
                 break;
-            case 'research': 
+            case 'research':
                 $service = $sm->get('Techtree\Service\ResearchService');
                 break;
-            case 'ship':     
+            case 'ship':
                 $service = $sm->get('Techtree\Service\ShipService');
                 break;
             case 'personell':
@@ -77,6 +77,9 @@ class TechnologyController extends \Nouron\Controller\IngameController
      */
     public function buildingAction()
     {
+        $sm = $this->getServiceLocator();
+        $sm->get('logger')->log(\Zend\Log\Logger::ERR, 'testtesttes');
+
         $buildingId = $this->params()->fromRoute('id');
         $message = $this->params('message');
 
@@ -88,7 +91,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $colonyService = $sm->get('Techtree\Service\ColonyService');
         $colonyService->setColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
-        $building = $techtree['buildings'][$buildingId];
+        $building = $techtree['building'][$buildingId];
 
         $requiredBuildingsCheck = $buildingService->checkRequiredBuildingsByEntityId($colonyId, $buildingId);
         $costs = $buildingService->getEntityCosts($buildingId);
@@ -124,7 +127,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
             )
         );
 
-        $result->setTerminal(true);
+        $result->setTerminal($this->getRequest()->isXmlHttpRequest());
         return $result;
     }
 
@@ -146,7 +149,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $colonyService = $sm->get('Techtree\Service\ColonyService');
         $colonyService->setColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
-        $research = $techtree['researches'][$researchId];
+        $research = $techtree['research'][$researchId];
 
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($colonyId, $researchId));
 
@@ -196,7 +199,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $colonyService = $sm->get('Techtree\Service\ColonyService');
         $colonyService->setColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
-        $ship = $techtree['ships'][$shipId];
+        $ship = $techtree['ship'][$shipId];
 
         $requiredBuildingsCheck  = $shipService->checkRequiredBuildingsByEntityId($colonyId, $shipId);
         $requiredResearchesCheck = $shipService->checkRequiredResearchesByEntityId($colonyId, $shipId);
