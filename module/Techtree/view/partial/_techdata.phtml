@@ -8,7 +8,7 @@ $class = empty($tech['level']) ? $type . ' notexists' : $type;
         '<a id="%s" class="%s" href="%s" data-toggle="modal" data-target="%s">%s</a>',
         $type.'-'.$tech['id'],
         'btn btn-block technology ' . $class,
-        '/techtree/building/' . $tech['id'],
+        '/techtree/' . $type . '/' . $tech['id'],
         '#' . $type . 'Modal-' . $tech['id'],
         $this->translate($tech['name']) . ' ' . $level
     ); ?>
