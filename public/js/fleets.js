@@ -9,62 +9,95 @@ fleetconfig = {
         var fleetId  = parseInt($("#fleet_id").html());
         var colonyId = parseInt($("#colony_id").html());
 
-        /**
-         * first get all available technologies
-         */
-        $.getJSON(
-            "/techtree/json/getColonyTechnologies",
-            function(items) {
-                $.each(items, function(type, techs) {
-                    for (var techId in techs) {
-                        $('.'+type+'OnColony-'+techId).html(techs[techId].level);
-                    }
-                });
-            });
+        $('.transferButtons .btn').addClass('disabled');
+        console.log('transferButtons locked');
 
-        /**
-         * count for each technology on fleet side the available amount and
-         * update the values
-         */
-        $.getJSON(
-            "/fleet/json/getFleetTechnologies/"+fleetId,
-            function (items) {
-                $.each(items, function(type, techs) {
-                    for (var techId in techs) {
-                        if (techs[techId].is_cargo) {
-                            $('.'+type+'InFleetCargo-'+techId).html(techs[techId].count);
-                        } else {
-                            $('.'+type+'InFleet-'+techId).html(techs[techId].count);
+        setTimeout(function() {
+            /**
+             * first get all available technologies
+             */
+            $.getJSON(
+                "/techtree/json/getColonyTechnologies",
+                function(items) {
+                    $.each(items, function(type, techs) {
+                        for (var techId in techs) {
+                            $('.'+type+'OnColony-'+techId).html(techs[techId].level);
                         }
-                    }
-                });
-            }
-        );
+                    });
+                    $('.research .countOnColony').prev().children().removeClass('disabled');
+                    $('.ship .countOnColony').prev().children().removeClass('disabled');
+                    $('.personell .countOnColony').prev().children().removeClass('disabled');
+                }
+            )
+            .done(function(){console.info('Requesting colony technologies successfull.')})
+            .fail(function(){console.error('Requesting colony technologies failed.')});
+         }, 500);
 
-        /**
-         *
-         */
-        $.getJSON(
-            "/resources/json/getColonyResources/"+colonyId,
-            function (items) {
-                $.each(items, function(resId, res) {
-                    $('.resourceOnColony-'+resId).html(res.amount);
-                });
-            }
-        );
+         setTimeout(function() {
+            /**
+             * count for each technology on fleet side the available amount and
+             * update the values
+             */
+            $.getJSON(
+                "/fleet/json/getFleetTechnologies/"+fleetId,
+                function (items) {
+                    $.each(items, function(type, techs) {
+                        for (var techId in techs) {
+                            if (techs[techId].is_cargo) {
+                                $('.'+type+'InFleetCargo-'+techId).html(techs[techId].count);
+                            } else {
+                                $('.'+type+'InFleet-'+techId).html(techs[techId].count);
+                            }
+                        }
+                    });
+                    $('.research .countInFleet').next().children().removeClass('disabled');
+                    $('.research .countInFleetCargo').next().children().removeClass('disabled');
+                    $('.ship .countInFleet').next().children().removeClass('disabled');
+                    $('.ship .countInFleetCargo').next().children().removeClass('disabled');
+                    $('.personell .countInFleet').next().children().removeClass('disabled');
+                    $('.personell .countInFleetCargo').next().children().removeClass('disabled');
+                }
+            )
+            .done(function(){console.info('Requesting fleet technologies successfull.')})
+            .fail(function(){console.error('Requesting fleet technologies failed.')});
+        }, 1000);
 
-        /**
-         * count for each technology on fleet side the available amount and
-         * update the values
-         */
-        $.getJSON(
-            "/fleet/json/getFleetResources/"+fleetId,
-            function (items) {
-                $.each(items, function(resId, res) {
-                    $('.resourceInFleetCargo-'+resId).html(res.amount);
-                });
-            }
-        );
+        setTimeout(function() {
+            /**
+             *
+             */
+            $.getJSON(
+                "/resources/json/getColonyResources/"+colonyId,
+                function (items) {
+                    $.each(items, function(resId, res) {
+                        $('.resourceOnColony-'+resId).html(res.amount);
+                    });
+                    $('.resource .countOnColony').prev().children().removeClass('disabled');
+                }
+            )
+            .done(function(){console.info('Requesting colony resources successfull.')})
+            .fail(function(){console.error('Requesting colony resoures failed.')});
+         }, 1500);
+
+        setTimeout(function() {
+            /**
+             * count for each technology on fleet side the available amount and
+             * update the values
+             */
+            $.getJSON(
+                "/fleet/json/getFleetResources/"+fleetId,
+                function (items) {
+                    $.each(items, function(resId, res) {
+                        $('.resourceInFleetCargo-'+resId).html(res.amount);
+
+                    });
+                    $('.resource .countInFleetCargo').next().children().removeClass('disabled');
+                }
+            )
+            .done(function(){console.info('Requesting fleet resources successfull.')})
+            .fail(function(){console.error('Requesting fleet resoures failed.')});
+
+        }, 2000);
 
         /*
          * add to Fleet - Click-Actions:
