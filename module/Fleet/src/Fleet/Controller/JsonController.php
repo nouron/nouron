@@ -19,7 +19,7 @@ class JsonController extends \Nouron\Controller\IngameController
         $itemType = $this->params()->fromPost('itemType');
         $itemId   = (int) $this->params()->fromPost('itemId');
         $amount   = (int) $this->params()->fromPost('amount');
-        $isCargo  = (int) $this->params()->fromPost('isCargo');
+        $isCargo  = (bool) $this->params()->fromPost('isCargo');
 
         //get Colony Id
         $sm = $this->getServiceLocator();
@@ -53,7 +53,7 @@ class JsonController extends \Nouron\Controller\IngameController
     }
 
     /**
-     *
+     * @return \Zend\View\Model\JsonModel
      */
     public function getFleetTechnologiesAction()
     {
@@ -102,7 +102,6 @@ class JsonController extends \Nouron\Controller\IngameController
         $fleetResArray = $fleetRes->getArrayCopy('resource_id');
 
         foreach ($fleetResArray as $resId => $tmp) {
-            #$tmp['type'] = $techs[$resId]['type'];
             $tmp['name'] = $sm->get('translator')->translate($resources[$resId]['name']);
             $fleetResArray[$resId] = $tmp;
         }

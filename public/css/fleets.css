@@ -6,14 +6,6 @@
 #fleet .well hr {border-bottom: 1px dotted grey;}
 #fleet .well ul {display:block;padding: 2px;margin:0}
 #fleet .well ul li {list-style: none;display: block;float: left;padding: 1px;margin: 2px;background-image: url("../images/layout/gradient_light.png");}
-/*#fleet .well a {padding:1px;border: 1px solid transparent;}
-  #fleet .well li:hover {color: #000;border: 1px solid #000;background-color: #FF9;}*/
-/*#fleet div#addToFleetLinks,*/
-/*#fleet div#addToFleetCargoLinks,*/
-/*#fleet div#addToColonyLinks {text-align:center;display: none;}*/
-/*#fleet div#addToFleetLinks span,*/
-/*#fleet div#addToFleetCargoLinks span,*/
-/*#fleet div#addToColonyLinks span {display: none;}*/
 
 #fleetconfig .countOnColony,
 #fleetconfig .countInFleet,

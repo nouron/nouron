@@ -42,11 +42,14 @@ fleetconfig = {
                 "/fleet/json/getFleetTechnologies/"+fleetId,
                 function (items) {
                     $.each(items, function(type, techs) {
-                        for (var techId in techs) {
-                            if (techs[techId].is_cargo) {
-                                $('.'+type+'InFleetCargo-'+techId).html(techs[techId].count);
+                        //console.log(techs);
+                        for (var i in techs) {
+                            if (techs[i].is_cargo == 1) {
+                                //console.log('a', type, techs[i].is_cargo);
+                                $('.'+type+'InFleetCargo-'+techs[i][type+'_id']).html(techs[i].count);
                             } else {
-                                $('.'+type+'InFleet-'+techId).html(techs[techId].count);
+                                //console.log('b', type, techs[i].is_cargo);
+                                $('.'+type+'InFleet-'+techs[i][type+'_id']).html(techs[i].count);
                             }
                         }
                     });
@@ -137,6 +140,7 @@ fleetconfig = {
     addToFleet : function(itemType, itemId, amount, asCargo) {
         var fleetId = $("#fleet_id").html();
 
+        console.log("fleet: "+fleetId, "itemType: "+itemType, "itemId: "+itemId, "amount: "+amount, "asCargo: "+asCargo);
         $.post(
             "/fleet/json/addToFleet/"+fleetId,
             {
@@ -147,7 +151,7 @@ fleetconfig = {
                 'isCargo' : asCargo
             },
             function(data) {
-                console.log(data);
+                console.info("addToFleet", data);
                 if (data.transferred > 0 && amount > 0) {
                     fleetconfig.updateAmounts(itemType, itemId, data.transferred, asCargo);
                 }
@@ -156,14 +160,16 @@ fleetconfig = {
                 }
             },
             'json'
-        );
+        )
+        .done(function(){console.info('Adding item to fleet successfull.')})
+        .fail(function(){console.error('Adding item to fleet failed.')});
     },
 
     /**
      * update the tech amounts ONLY visually
      */
     updateAmounts : function(itemType, itemId, delta, asCargo) {
-        console.log('type: '+itemType+' | itemId: '+itemId+' | delta: '+delta);
+        console.info('updateAmounts()', 'type: '+itemType+' | itemId: '+itemId+' | delta: '+delta);
 
         if (itemId > 0 && !isNaN(delta) && delta != 0) {
             var selector = "."+itemType+"OnColony-"+itemId;
@@ -181,4 +187,6 @@ fleetconfig = {
             $(selector).html(oldFleetAmount + delta);
         }
     }
+
+
 }

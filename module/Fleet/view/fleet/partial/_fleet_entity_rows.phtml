@@ -1,0 +1,17 @@
+<?php foreach ($techs as $techId => $tech): ?>
+<div class="row-fluid item <?php echo $type ?>" id="<?php echo $type . '-' . $techId ?>">
+    <div class="col-md-4 transferButtons" style="text-align: right">
+        <button class="btn btn-default" value="-10">10</button>
+        <button class="btn btn-default" value="-5">5</button>
+        <button class="btn btn-default" value="-1">1</button>
+    </div>
+    <div class="col-md-1 countOnColony <?php echo $type . 'OnColony-' . $techId ?>">0</div>
+    <div class="col-md-2" style="text-align: center"><?php echo $this->translate($tech["name"]) ?></div>
+    <div class="col-md-1 countInFleet <?php echo $type . 'InFleet-' . $techId ?>">0</div>
+    <div class="col-md-4 transferButtons">
+        <button class="btn btn-default" value="1">1</button>
+        <button class="btn btn-default" value="5">5</button>
+        <button class="btn btn-default" value="10">10</button>
+    </div>
+</div>
+<?php  endforeach; ?>

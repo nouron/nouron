@@ -178,7 +178,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         return $this->transferTechnology('ship', $colony, $fleet, $shipId, $amount, $isCargo);
     }
 
-    public function transferResearch($colony, $fleet, $researchId, $amount, $isCargo = false)
+    public function transferResearch($colony, $fleet, $researchId, $amount, $isCargo = true)
     {
         return $this->transferTechnology('research', $colony, $fleet, $researchId, $amount, $isCargo);
     }
@@ -264,8 +264,6 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                 $techOnColony = $result->getArrayCopy();
             }
 
-
-            #$techInFleet  = $this->getFleetTechnology($type, array('fleet_id' => $fleet->getId(), $typeKey => $techId, 'is_cargo' => $isCargo));
             $techsInFleet = $this->_gatherFleetTechnologyInformations($fleet->getId(), $type);
             $techInFleet  = $techsInFleet[$techId];
             if ($amount >= 0 ) {
@@ -407,10 +405,13 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         return $this->getTable('fleetship')->select($where);
     }
 
-    public function getFleetShipsByFleetId($fleetId, $isCargo = false)
+    public function getFleetShipsByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
-        $where = array('fleet_id' => $fleetId, 'is_cargo' => $isCargo);
+        $where = array('fleet_id' => $fleetId);
+        if ($isCargo != null) {
+            $where['is_cargo'] = (bool) $isCargo;
+        }
         return $this->getFleetShips($where);
     }
 
@@ -419,10 +420,13 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         return $this->getTable('fleetresearch')->select($where);
     }
 
-    public function getFleetResearchesByFleetId($fleetId, $isCargo = false)
+    public function getFleetResearchesByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
-        $where = array('fleet_id'=> $fleetId, 'is_cargo' => $isCargo);
+        $where = array('fleet_id'=> $fleetId);
+        if ($isCargo != null) {
+            $where['is_cargo'] = (bool) $isCargo;
+        }
         return $this->getFleetResearches($where);
     }
 
@@ -431,10 +435,13 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         return $this->getTable('fleetpersonell')->select($where);
     }
 
-    public function getFleetPersonellByFleetId($fleetId, $isCargo = false)
+    public function getFleetPersonellByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
-        $where = array('fleet_id' => $fleetId, 'is_cargo' => $isCargo);
+        $where = array('fleet_id' => $fleetId);
+        if ($isCargo != null) {
+            $where['is_cargo'] = (bool) $isCargo;
+        }
         return $this->getTable('fleetpersonell')->select($where);
     }
 
@@ -492,7 +499,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         return $result;
     }
 
-        /**
+    /**
      *
      * @param  string $type
      * @return array
@@ -519,18 +526,17 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                 return array(); # TODO: Exception
                 break;
         }
-        $entities  = $this->getTable($table)->fetchAll()->getArrayCopy($id);
-
-        $fleetEntities = $this->$func($fleetId)->getArrayCopy($id);
-        foreach ($entities as $id => $entity) {
-            $entities[$id]['level'] = 0;
-            $entities[$id]['status_points'] = 0;
-            $entities[$id]['ap_spend'] = 0;
-            if (array_key_exists($id, $fleetEntities)) {
-                $entities[$id] = $entity + $fleetEntities[$id];
+        $entities  = $this->getTable($table)->fetchAll('fleet_id = ' . $fleetId)->getArrayCopy();
+        $fleetEntities = $this->$func($fleetId)->getArrayCopy();
+        $results = array();
+        foreach ($entities as $entity) {
+            foreach ($fleetEntities as $fleetEntity) {
+                if ($entity['fleet_id'] == $fleetEntity['fleet_id'] && $entity['is_cargo'] == $fleetEntity['is_cargo']) {
+                    $results[] = $entity + $fleetEntity;
+                }
             }
         }
-        return $entities;
+        return $results;
     }
 
     /**
@@ -540,16 +546,17 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     public function getFleetTechnologies($fleetId)
     {
         $this->_validateId($fleetId);
+
         $researches = $this->_gatherFleetTechnologyInformations($fleetId, 'research');
         $ships      = $this->_gatherFleetTechnologyInformations($fleetId, 'ship');
         $personell  = $this->_gatherFleetTechnologyInformations($fleetId, 'personell');
 
-        $techtree = array(
+        $fleetTechnologies = array(
             'research'  => $researches,
             'ship'      => $ships,
             'personell' => $personell
         );
 
-        return $techtree;
+        return $fleetTechnologies;
     }
 }
