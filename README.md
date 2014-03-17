@@ -40,7 +40,7 @@ Authors and Supporters
 Copyright and license
 ---------------------
 
-Copyright 2012 Mario Gehnke
+Copyright 2012-2014 Mario Gehnke
 
 The sourcecode is licensed unter the conditions of GNU General Public License V3. See:
 * LICENSE.txt
