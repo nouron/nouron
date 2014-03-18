@@ -1,53 +1,55 @@
+
 <div class="row">
-    <div class="accordion" id="inbox-accordion">
-      <?php foreach ($messages as $message): ?>
-        <div id="message-<?php echo $message['id']?>" class="accordion-group">
-            <div class="accordion-heading row-fluid">
-                <span class="accordion-toggle" data-toggle="collapse" data-parent="#inbox-accordion" href="#collapse-message-<?php echo $message['id'] ?>">
-                    <span class="col-md-1"><i class="glyphicon glyphicon-time"></i> <?php echo $message['tick'] ?></span>
-                    <span class="col-md-1"><strong><a href="<?php echo $this->url("user", array('id' => $message['sender_id']))?>"><?php echo $message['sender'] ?></a>:</strong></span>
-                    <span class="col-md-10"><?php if (!$message['isRead']): ?><i id="glyphicon glyphicon-envelope-<?php echo $message['id']?>" class="glyphicon glyphicon-envelope new-inbox-message"></i><?php endif; ?> <?php echo $message['subject'] ?></span>
-                </span>
+    <div class="panel-group col-md-12" id="inbox-accordion">
+        <?php foreach ($messages as $message): ?>
+        <div id="message-<?php echo $message->getId()?>" class="panel panel-default">
+            <div class="panel-heading">
+              <h4 class="panel-title">
+                  <i class="glyphicon glyphicon-time"></i> <?php echo $message->getTick() ?>
+                  <strong><a href="<?php echo $this->url("user", array('id' => $message->getSenderId()))?>"><?php echo $message->getSender() ?></a>:</strong>
+                  <a data-toggle="collapse" data-parent="#inbox-accordion" href="#collapse-message-<?php echo $message->getId() ?>">
+                    <?php if (!$message->getRead()): ?>
+                    <i id="glyphicon glyphicon-envelope-<?php echo $message->getId()?>" class="glyphicon glyphicon-envelope new-inbox-message"></i>
+                    <?php endif; ?> <?php echo $message->getSubject() ?>
+                  </a>
+              </h4>
             </div>
-            <div id="collapse-message-<?php echo $message['id'] ?>" class="accordion-body collapse row-fluid">
-                <div class="accordion-inner">
-                    <div class="col-md-2">...</div>
-                    <div class="col-md-10">
-                      <p><?php echo $message['text'] ?></p>
-                      <?php echo print_r($message) ?>
+            <div id="collapse-message-<?php echo $message->getId() ?>" class="accordion-body collapse row-fluid">
+                <div class="panel-body">
+                      <p><?php echo $message->getText() ?></p>
                       <br />
-                      <span class="message-options" id="message-<?php echo $message['id']?>-options">
-                      <?php if (!$message['isRead']): ?>
-                      <a href="<?php echo $this->url('messages', array('action' => 'react', 'id' => $message['id'], 'type' => 'positive'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message['id'], 'type' => 'positive'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message['id']))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_neutral')?>"><i class="glyphicon glyphicon-envelope"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'react', 'id' => $message['id'], 'type' => 'negative'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="glyphicon glyphicon-thumbs-down"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message['id'], 'type' => 'negative'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative')?>"><i class="glyphicon glyphicon-thumbs-down"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'remove', 'id' => $message['id']))?>"  class="btn hidden secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="glyphicon glyphicon-remove"></i> löschen</a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'archive', 'id' => $message['id']))?>" class="btn hidden secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="archivieren">archivieren</a>
+                      <span class="message-options" id="message-<?php echo $message->getId()?>-options">
+                      <?php if (!$message->getRead()): ?>
+                      <a href="<?php echo $this->url('messages', array('action' => 'react', 'id' => $message->getId(), 'type' => 'positive'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message->getId(), 'type' => 'positive'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message->getId()))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_neutral')?>"><i class="glyphicon glyphicon-envelope"></i></a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'react', 'id' => $message->getId(), 'type' => 'negative'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="glyphicon glyphicon-thumbs-down"></i></a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'respond', 'id' => $message->getId(), 'type' => 'negative'))?>" class="btn" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative')?>"><i class="glyphicon glyphicon-thumbs-down"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'remove', 'id' => $message->getId()))?>"  class="btn hidden secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="glyphicon glyphicon-remove"></i> löschen</a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'archive', 'id' => $message->getId()))?>" class="btn hidden secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="archivieren">archivieren</a>
                       <?php else: ?>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_neutral_and_answer')?>"><i class="glyphicon glyphicon-envelope"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative')?>"><i class="glyphicon glyphicon-thumbs-down"></i></a>
                       <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="glyphicon glyphicon-thumbs-down"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'remove', 'id' => $message['id']))?>"  class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="glyphicon glyphicon-remove"></i> löschen</a>
-                      <a href="<?php echo $this->url('messages', array('action' => 'archive', 'id' => $message['id']))?>" class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="archivieren">archivieren</a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'remove', 'id' => $message->getId()))?>"  class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="löschen"><i class="glyphicon glyphicon-remove"></i> löschen</a>
+                      <a href="<?php echo $this->url('messages', array('action' => 'archive', 'id' => $message->getId()))?>" class="btn secondary-nav" data-placement="bottom" rel="tooltip" data-original-title="archivieren">archivieren</a>
                       <?php endif; ?>
                       </span>
-                    </div>
                 </div>
             </div>
         </div>
-      <?php endforeach; ?>
+        <?php endforeach; ?>
     </div>
-
-    <ul class="pagination">
-        <li><a href="#">&laquo;</a></li>
-        <li><a href="#">1</a></li>
-        <li><a href="#">2</a></li>
-        <li><a href="#">3</a></li>
-        <li><a href="#">4</a></li>
-        <li><a href="#">&raquo;</a></li>
-    </ul>
+    <div class="col-md-12">
+        <ul class="pagination">
+            <li><a href="#">&laquo;</a></li>
+            <li><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">&raquo;</a></li>
+        </ul>
+    </div>
 </div><!--/row-->

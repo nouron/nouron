@@ -7,8 +7,10 @@ class Message extends AbstractEntity
 {
     public $id;
     public $sender;
+    public $sender_id;
     public $attitude;
     public $recipient;
+    public $recipient_id;
     public $tick;
     public $type;
     public $subject;
@@ -46,6 +48,13 @@ class Message extends AbstractEntity
         return $this;
     }
 
+    public function setSenderId($senderId)
+    {
+        $this->sender_id = $senderId;
+
+        return $this;
+    }
+
     /**
      * Sets the value of attitude.
      *
@@ -70,6 +79,13 @@ class Message extends AbstractEntity
     public function setRecipient($recipient)
     {
         $this->recipient = $recipient;
+
+        return $this;
+    }
+
+    public function setRecipientId($recipientId)
+    {
+        $this->recipient_id = $recipientId;
 
         return $this;
     }
@@ -192,6 +208,11 @@ class Message extends AbstractEntity
         return $this->sender;
     }
 
+    public function getSenderId()
+    {
+        return $this->sender_id;
+    }
+
     /**
      * Gets the value of attitude.
      *
@@ -210,6 +231,11 @@ class Message extends AbstractEntity
     public function getRecipient()
     {
         return $this->recipient;
+    }
+
+    public function getRecipientId()
+    {
+        return $this->recipient_id;
     }
 
     /**

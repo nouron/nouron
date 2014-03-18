@@ -5,9 +5,11 @@
     <div class="col-md-2">
         <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> Angebot erstellen</a>
     </div>
-
+</div>
+<div class="row">
+    <div class="col-md-12">
     <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
-    <table class="table">
+    <table class="table col-md-12">
     <tr>
         <th><?php echo $this->translate('colony') ?></th>
         <th><?php echo $this->translate('offer-type') ?></th>

@@ -5,7 +5,9 @@
     <div class="col-md-2">
         <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> Angebot erstellen</a>
     </div>
-
+</div>
+<div class="row">
+    <div class="col-md-12">
     <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
 
     <table class="table">
@@ -41,7 +43,7 @@
 
 
     <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade', 'action' => 'researches')); ?>
-
+    </div>
 </div>
 
 <!-- Modal -->

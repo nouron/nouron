@@ -164,7 +164,6 @@ class IndexController extends \Nouron\Controller\IngameController
             if ($post['form_name'] == 'search') {
                 $searchForm->setData($request->getPost());
                 if ($searchForm->isValid()) {
-                    print_r('valid');
                     $where['direction'] = $post['direction'];
                     if (!empty($post['item_id'])) {
                         $where['tech_id'] = $post['item_id'];
@@ -215,7 +214,6 @@ class IndexController extends \Nouron\Controller\IngameController
             if ($post['form_name'] == 'search') {
                 $searchForm->setData($request->getPost());
                 if ($searchForm->isValid()) {
-                    print_r('valid');
                     $where['direction'] = $post['direction'];
                     if (!empty($post['item_id'])) {
                         $where['resource_id'] = $post['item_id'];
