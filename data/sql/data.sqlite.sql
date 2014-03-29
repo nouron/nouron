@@ -1,12 +1,12 @@
-SET FOREIGN_KEY_CHECKS=0;
-SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
-SET time_zone = "+00:00";
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!40101 SET NAMES utf8 */;
-
+INSERT INTO `user` (`user_id`, `username`, `display_name`, `role`, `password`, `email`, `state`, `race_id`, `faction_id`, `description`, `note`, `disabled`, `activated`, `activation_key`, `first_time_login`, `last_activity`, `registration`, `theme`, `tooltips_enabled`) VALUES
+(0, 'Homer', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'homer@nouron.de', NULL, 1, 7, 'dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung !"�$%&/()=?`*''_:>><<|��{[]]\\~\r\n', '', 0, 0, 'adsfsdfsf', 0, '2012-03-05 10:08:37', '0000-00-00 00:00:00', 'darkred', 1),
+(1, 'Marge', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'marge@nouron.de', NULL, 3, 6, '', '', 0, 0, 'gaqx2hwrf4env5i3', 1, '2011-09-18 09:49:10', '2009-12-23 14:00:00', 'darkred', 1),
+(2, 'Lisa', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'lisa@nouron.de', NULL, 1, 1, '', '', 0, 0, 'abcdefg', 1, '2011-09-18 13:39:26', '0000-00-00 00:00:00', 'darkred', 1),
+(3, 'Bart', '', 'admin', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'bart@nouron.de', NULL, 2, 4, '', '', 0, 0, '', 1, '2013-01-05 19:25:03', '0000-00-00 00:00:00', 'darkgreen', 1),
+(4, 'Maggy', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'maggy@nouron.de', NULL, 1, 2, '', '', 0, 1, 'abcdefg', 0, '2012-12-27 11:46:30', '0000-00-00 00:00:00', '0', 1),
+(5, 'Moe', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'moe@nouron.de', NULL, 3, 5, '', '', 0, 1, 'abcdefg', 0, '2012-12-27 11:46:30', '0000-00-00 00:00:00', '0', 1),
+(18, 'Lenny', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'lenny@nouron.de', NULL, 0, 0, '', '', 0, 0, '', 1, '2012-12-27 11:46:30', '0000-00-00 00:00:00', 'darkred', 1),
+(19, 'Carl', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'carl@nouron.de', NULL, 1, 1, '', '', 0, 0, '', 1, '2012-12-27 11:46:30', '0000-00-00 00:00:00', 'darkred', 1);
 
 INSERT INTO `buildings` (`id`, `purpose`, `name`, `required_building_id`, `required_building_level`, `prime_colony_only`, `row`, `column`, `max_level`, `ap_for_levelup`, `max_status_points`) VALUES
 (25, 'civil', 'techs_commandCenter', NULL, NULL, 0, 0, 2, 10, 10, 20),
@@ -34,6 +34,27 @@ INSERT INTO `buildings` (`id`, `purpose`, `name`, `required_building_id`, `requi
 (66, 'military', 'techs_secretOps', NULL, NULL, 0, 11, 1, NULL, 10, 10),
 (68, 'military', 'techs_militarySpaceyard', 44, 5, 0, 7, 5, NULL, 10, 10),
 (70, 'economy', 'techs_bank', NULL, NULL, 0, 11, 3, NULL, 10, 10);
+
+INSERT INTO `resources` (`id`, `name`, `abbreviation`, `trigger`, `is_tradeable`, `start_amount`, `icon`) VALUES
+(1, 'res_credits', 'Cr', 'Event', 0, 3000, 'resicon-credits'),
+(2, 'res_supply', 'Sup', 'Event', 0, 200, 'resicon-supply'),
+(3, 'res_water', 'W', 'Level', 1, 500, 'resicon-water'),
+(4, 'res_ferum', 'E', 'Level', 1, 500, 'resicon-iron'),
+(5, 'res_silicates', 'S', 'Level', 1, 500, 'resicon-silicates'),
+(6, 'res_ena', 'ENrg', 'Constant', 1, 100, 'resicon-ena'),
+(8, 'res_lho', 'LNrg', 'Constant', 1, 100, 'resicon-lho'),
+(10, 'res_aku', 'ANrg', 'Constant', 1, 100, 'resicon-aku'),
+(12, 'res_moral', 'M', 'Event', 0, 0, 'resicon-moral');
+
+INSERT INTO `ships` (`id`, `purpose`, `name`, `required_building_id`, `required_building_level`, `required_research_id`, `required_research_level`, `prime_colony_only`, `row`, `column`, `ap_for_levelup`, `max_status_points`, `moving_speed`) VALUES
+(29, 'military', 'techs_frigate1', NULL, NULL, NULL, NULL, 0, 10, 5, 15, 10, 500),
+(37, 'military', 'techs_fighter1', NULL, NULL, NULL, NULL, 0, 8, 5, 15, 10, 500),
+(47, 'economy', 'techs_smallTransporter', NULL, NULL, NULL, NULL, 0, 7, 4, 15, 10, 500),
+(49, 'military', 'techs_battlecruiser1', NULL, NULL, NULL, NULL, 0, 12, 5, 15, 10, 500),
+(83, 'economy', 'techs_mediumTransporter', NULL, NULL, NULL, NULL, 0, 9, 4, 15, 10, 500),
+(84, 'economy', 'techs_largeTransporter', NULL, NULL, NULL, NULL, 0, 11, 4, 15, 10, 500),
+(88, 'civil', 'techs_colonyShip', NULL, NULL, NULL, NULL, 0, 13, 4, 50, 10, 500);
+
 
 INSERT INTO `building_costs` (`building_id`, `resource_id`, `amount`) VALUES
 (25, 1, 100),
@@ -463,135 +484,6 @@ INSERT INTO `research_costs` (`research_id`, `resource_id`, `amount`) VALUES
 (33, 12, 5000),
 (39, 1, 5000);
 
-INSERT INTO `resources` (`id`, `name`, `abbreviation`, `trigger`, `is_tradeable`, `start_amount`, `icon`) VALUES
-(1, 'res_credits', 'Cr', 'Event', 0, 3000, 'resicon-credits'),
-(2, 'res_supply', 'Sup', 'Event', 0, 200, 'resicon-supply'),
-(3, 'res_water', 'W', 'Level', 1, 500, 'resicon-water'),
-(4, 'res_ferum', 'E', 'Level', 1, 500, 'resicon-iron'),
-(5, 'res_silicates', 'S', 'Level', 1, 500, 'resicon-silicates'),
-(6, 'res_ena', 'ENrg', 'Constant', 1, 100, 'resicon-ena'),
-(8, 'res_lho', 'LNrg', 'Constant', 1, 100, 'resicon-lho'),
-(10, 'res_aku', 'ANrg', 'Constant', 1, 100, 'resicon-aku'),
-(12, 'res_moral', 'M', 'Event', 0, 0, 'resicon-moral');
-
-INSERT INTO `ships` (`id`, `purpose`, `name`, `required_building_id`, `required_building_level`, `required_research_id`, `required_research_level`, `prime_colony_only`, `row`, `column`, `ap_for_levelup`, `max_status_points`, `moving_speed`) VALUES
-(29, 'military', 'techs_frigate1', NULL, NULL, NULL, NULL, 0, 10, 5, 15, 10, 500),
-(37, 'military', 'techs_fighter1', NULL, NULL, NULL, NULL, 0, 8, 5, 15, 10, 500),
-(47, 'economy', 'techs_smallTransporter', NULL, NULL, NULL, NULL, 0, 7, 4, 15, 10, 500),
-(49, 'military', 'techs_battlecruiser1', NULL, NULL, NULL, NULL, 0, 12, 5, 15, 10, 500),
-(83, 'economy', 'techs_mediumTransporter', NULL, NULL, NULL, NULL, 0, 9, 4, 15, 10, 500),
-(84, 'economy', 'techs_largeTransporter', NULL, NULL, NULL, NULL, 0, 11, 4, 15, 10, 500),
-(88, 'civil', 'techs_colonyShip', NULL, NULL, NULL, NULL, 0, 13, 4, 50, 10, 500);
-
-INSERT INTO `tech_requirements` (`required_tech_id`, `tech_id`, `required_tech_level`) VALUES
-(25, 27, 1),
-(25, 28, 3),
-(25, 31, 4),
-(25, 35, 5),
-(25, 41, 1),
-(25, 42, 1),
-(25, 43, 5),
-(27, 30, 3),
-(27, 31, 5),
-(27, 64, 20),
-(28, 32, 30),
-(28, 45, 15),
-(28, 46, 15),
-(28, 48, 7),
-(28, 50, 20),
-(28, 53, 30),
-(28, 54, 30),
-(28, 56, 20),
-(31, 33, 1),
-(31, 36, 1),
-(31, 39, 4),
-(31, 51, 4),
-(31, 73, 3),
-(31, 74, 2),
-(33, 52, 1),
-(33, 65, 5),
-(33, 72, 3),
-(34, 79, 5),
-(34, 80, 2),
-(39, 44, 1),
-(39, 68, 5),
-(41, 30, 3),
-(41, 64, 25),
-(42, 30, 3),
-(43, 76, 3),
-(43, 92, 1),
-(44, 47, 1),
-(44, 68, 5),
-(44, 83, 5),
-(44, 84, 20),
-(44, 88, 10),
-(44, 89, 1),
-(46, 72, 1),
-(51, 34, 1),
-(64, 65, 3),
-(68, 29, 5),
-(68, 37, 1),
-(68, 49, 15),
-(68, 81, 1),
-(73, 44, 1),
-(73, 68, 5),
-(74, 52, 1),
-(74, 65, 5),
-(74, 72, 3),
-(76, 70, 1),
-(79, 66, 5),
-(80, 55, 3),
-(81, 29, 5),
-(81, 49, 10);
-
-INSERT INTO `tech_technologies` (`id`, `type`, `purpose`, `name`, `prime_colony_only`, `row`, `column`, `max_level`, `ap_for_levelup`, `max_status_points`, `tradeable`, `moving_speed`) VALUES
-(25, 'building', 'civil', 'techs_commandCenter', 0, 0, 2, 10, 10, 20, 0, NULL),
-(27, 'building', 'industry', 'techs_oremine', 0, 1, 2, NULL, 10, 10, 0, NULL),
-(28, 'building', 'civil', 'techs_housingComplex', 1, 1, 1, 200, 10, 10, 0, NULL),
-(29, 'ship', 'military', 'techs_frigate1', 0, 10, 5, NULL, 15, 10, 1, 500),
-(30, 'building', 'industry', 'techs_depot', 0, 2, 5, NULL, 10, 10, 0, NULL),
-(31, 'building', 'civil', 'techs_sciencelab', 0, 2, 2, NULL, 10, 10, 0, NULL),
-(32, 'building', 'civil', 'techs_temple', 0, 13, 0, NULL, 10, 10, 0, NULL),
-(33, 'research', 'civil', 'techs_biology', 1, 3, 3, NULL, 25, 10, 1, NULL),
-(34, 'research', 'politics', 'techs_languages', 1, 8, 1, NULL, 25, 10, 1, NULL),
-(35, 'advisor', 'industry', 'techs_engineer', 1, 1, 0, NULL, 0, 10, 1, NULL),
-(36, 'advisor', 'civil', 'techs_scientist', 1, 3, 1, NULL, 0, 10, 1, NULL),
-(37, 'ship', 'military', 'techs_fighter1', 0, 8, 5, NULL, 15, 10, 1, 500),
-(39, 'research', 'civil', 'techs_mathematics', 1, 5, 5, NULL, 25, 10, 1, NULL),
-(41, 'building', 'industry', 'techs_silicatemine', 0, 1, 3, NULL, 10, 10, 0, NULL),
-(42, 'building', 'industry', 'techs_waterextractor', 0, 1, 4, NULL, 10, 10, 0, NULL),
-(43, 'building', 'economy', 'techs_tradecenter', 0, 6, 2, NULL, 10, 10, 0, NULL),
-(44, 'building', 'civil', 'techs_civilianSpaceyard', 0, 6, 3, NULL, 10, 10, 0, NULL),
-(45, 'building', 'civil', 'techs_parc', 0, 5, 0, NULL, 10, 10, 0, NULL),
-(46, 'building', 'civil', 'techs_hospital', 0, 4, 1, NULL, 10, 10, 1, NULL),
-(47, 'ship', 'economy', 'techs_smallTransporter', 0, 7, 4, NULL, 15, 10, 1, 500),
-(48, 'building', 'civil', 'techs_public_security', 0, 3, 0, NULL, 10, 10, 0, NULL),
-(49, 'ship', 'military', 'techs_battlecruiser1', 0, 12, 5, NULL, 15, 10, 1, 500),
-(50, 'building', 'civil', 'techs_denkmal', 0, 9, 0, NULL, 20, 10, 1, NULL),
-(51, 'building', 'civil', 'techs_university', 0, 6, 1, NULL, 10, 10, 0, NULL),
-(52, 'building', 'civil', 'techs_bar', 0, 4, 3, NULL, 10, 10, 0, NULL),
-(53, 'building', 'civil', 'techs_stadium', 0, 15, 0, NULL, 10, 10, 0, NULL),
-(54, 'building', 'civil', 'techs_casino', 0, 11, 0, NULL, 10, 10, 0, NULL),
-(55, 'building', 'civil', 'techs_prison', 0, 11, 2, NULL, 10, 10, 0, NULL),
-(56, 'building', 'civil', 'techs_museum', 0, 7, 0, NULL, 10, 10, 0, NULL),
-(64, 'building', 'civil', 'techs_wastedisposal', 0, 3, 4, NULL, 10, 10, 0, NULL),
-(65, 'building', 'civil', 'techs_recyclingStation', 0, 4, 4, NULL, 10, 10, 0, NULL),
-(66, 'building', 'military', 'techs_secretOps', 0, 11, 1, NULL, 10, 10, 0, NULL),
-(68, 'building', 'military', 'techs_militarySpaceyard', 0, 7, 5, NULL, 10, 10, 0, NULL),
-(70, 'building', 'economy', 'techs_bank', 0, 11, 3, NULL, 10, 10, 0, NULL),
-(72, 'research', 'civil', 'techs_medicalScience', 1, 5, 2, NULL, 25, 10, 1, NULL),
-(73, 'research', 'civil', 'techs_physics', 1, 5, 3, NULL, 25, 10, 0, NULL),
-(74, 'research', 'civil', 'techs_chemistry', 1, 3, 2, NULL, 25, 10, 1, NULL),
-(76, 'research', 'economy', 'techs_economicScience', 1, 10, 3, NULL, 25, 10, 1, NULL),
-(79, 'research', 'politics', 'techs_diplomacy', 1, 10, 1, NULL, 25, 10, 1, NULL),
-(80, 'research', 'politics', 'techs_politicalScience', 1, 10, 2, NULL, 25, 10, 0, NULL),
-(81, 'research', 'military', 'techs_military', 1, 9, 5, NULL, 25, 10, 1, NULL),
-(83, 'ship', 'economy', 'techs_mediumTransporter', 0, 9, 4, NULL, 15, 10, 1, 500),
-(84, 'ship', 'economy', 'techs_largeTransporter', 0, 11, 4, NULL, 15, 10, 1, 500),
-(88, 'ship', 'civil', 'techs_colonyShip', 0, 13, 4, NULL, 50, 10, 1, 500),
-(89, 'advisor', 'military', 'techs_pilot', 1, 7, 3, NULL, 0, 10, 1, NULL),
-(92, 'advisor', 'economy', 'techs_trader', 1, 7, 2, NULL, 0, 10, 1, NULL);
-
 INSERT INTO `trade_researches` (`colony_id`, `direction`, `research_id`, `amount`, `price`, `restriction`) VALUES
 (1, 1, 25, 123456, 11, NULL),
 (1, 0, 35, 12345, 11, NULL),
@@ -611,20 +503,5 @@ INSERT INTO `trade_resources` (`colony_id`, `direction`, `resource_id`, `amount`
 (1, 0, 8, 1, 2, 0),
 (1, 0, 10, 4, 3, 0);
 
-INSERT INTO `user` (`user_id`, `username`, `display_name`, `role`, `password`, `email`, `state`, `race_id`, `faction_id`, `description`, `note`, `disabled`, `activated`, `activation_key`, `first_time_login`, `last_activity`, `registration`, `theme`, `tooltips_enabled`) VALUES
-(0, 'Homer', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'homer@nouron.de', NULL, 1, 7, 'dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung !"�$%&/()=?`*''_:>><<|��{[]]\\~\r\n', '', 0, 0, 'adsfsdfsf', 0, '2012-03-05 10:08:37', '0000-00-00 00:00:00', 'darkred', 1),
-(1, 'Marge', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'marge@nouron.de', NULL, 3, 6, '', '', 0, 0, 'gaqx2hwrf4env5i3', 1, '2011-09-18 09:49:10', '2009-12-23 14:00:00', 'darkred', 1),
-(2, 'Lisa', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'lisa@nouron.de', NULL, 1, 1, '', '', 0, 0, 'abcdefg', 1, '2011-09-18 13:39:26', '0000-00-00 00:00:00', 'darkred', 1),
-(3, 'Bart', '', 'admin', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'bart@nouron.de', NULL, 2, 4, '', '', 0, 0, '', 1, '2013-01-05 19:25:03', '0000-00-00 00:00:00', 'darkgreen', 1),
-(4, 'Maggy', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'maggy@nouron.de', NULL, 1, 2, '', '', 0, 1, 'abcdefg', 0, '2012-12-27 11:46:30', '0000-00-00 00:00:00', '0', 1),
-(5, 'Moe', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'moe@nouron.de', NULL, 3, 5, '', '', 0, 1, 'abcdefg', 0, '2012-12-27 11:46:30', '0000-00-00 00:00:00', '0', 1),
-(18, 'Lenny', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'lenny@nouron.de', NULL, 0, 0, '', '', 0, 0, '', 1, '2012-12-27 11:46:30', '0000-00-00 00:00:00', 'darkred', 1),
-(19, 'Carl', '', 'player', '$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e', 'carl@nouron.de', NULL, 1, 1, '', '', 0, 0, '', 1, '2012-12-27 11:46:30', '0000-00-00 00:00:00', 'darkred', 1);
-
 INSERT INTO `user_resources` (`user_id`, `credits`, `supply`) VALUES
 (3, 49615, 1938);
-SET FOREIGN_KEY_CHECKS=1;
-
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;

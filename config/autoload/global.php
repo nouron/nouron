@@ -13,11 +13,13 @@
 
 return array(
     'db' => array(
-        'driver'         => 'Pdo',
-        'dsn'            => 'mysql:dbname=nouronzf2_dev2;host=localhost',
-        'driver_options' => array(
-            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
-        ),
+        'driver' => 'Pdo_Sqlite',
+        'database' => 'data/db/nouron.db'
+#        'driver'         => 'Pdo',
+#        'dsn'            => 'mysql:dbname=nouronzf2_dev2;host=localhost',
+#        'driver_options' => array(
+#            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
+#        ),
     ),
     'service_manager' => array(
         'factories' => array(

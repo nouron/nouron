@@ -1,0 +1,4 @@
+DO NOT DELETE OR ALTER DATABASES UNLESS YOU KNOW WHAT YOU DO!!!
+
+nouron.db - primary database for development
+test.db - database for unittests
