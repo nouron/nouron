@@ -1,0 +1,776 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE buildings (
+  id INTEGER  NOT NULL,
+  purpose TEXT NOT NULL,
+  name TEXT UNIQUE NOT NULL,
+  required_building_id INTEGER  DEFAULT NULL REFERENCES buildings(id),
+  required_building_level INTEGER  DEFAULT NULL,
+  prime_colony_only INTEGER  NOT NULL DEFAULT '0',
+  row INTEGER  NOT NULL,
+  column INTEGER  NOT NULL,
+  max_level INTEGER  DEFAULT NULL,
+  ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
+  max_status_points INTEGER  DEFAULT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT row_column UNIQUE (row,column)
+);
+INSERT INTO "buildings" VALUES(25,'civil','techs_commandCenter',NULL,NULL,0,0,2,10,10,20);
+INSERT INTO "buildings" VALUES(27,'industry','techs_oremine',25,1,0,1,2,NULL,10,10);
+INSERT INTO "buildings" VALUES(28,'civil','techs_housingComplex',25,3,1,1,1,200,10,10);
+INSERT INTO "buildings" VALUES(30,'industry','techs_depot',27,3,0,2,5,NULL,10,10);
+INSERT INTO "buildings" VALUES(31,'civil','techs_sciencelab',25,4,0,2,2,NULL,10,10);
+INSERT INTO "buildings" VALUES(32,'civil','techs_temple',28,30,0,13,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(41,'industry','techs_silicatemine',25,1,0,1,3,NULL,10,10);
+INSERT INTO "buildings" VALUES(42,'industry','techs_waterextractor',25,1,0,1,4,NULL,10,10);
+INSERT INTO "buildings" VALUES(43,'economy','techs_tradecenter',25,5,0,6,2,NULL,10,10);
+INSERT INTO "buildings" VALUES(44,'civil','techs_civilianSpaceyard',NULL,NULL,0,6,3,NULL,10,10);
+INSERT INTO "buildings" VALUES(45,'civil','techs_parc',28,15,0,5,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(46,'civil','techs_hospital',28,15,0,4,1,NULL,10,10);
+INSERT INTO "buildings" VALUES(48,'civil','techs_public_security',28,7,0,3,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(50,'civil','techs_denkmal',28,20,0,9,0,NULL,20,10);
+INSERT INTO "buildings" VALUES(51,'civil','techs_university',31,4,0,6,1,NULL,10,10);
+INSERT INTO "buildings" VALUES(52,'civil','techs_bar',NULL,NULL,0,4,3,NULL,10,10);
+INSERT INTO "buildings" VALUES(53,'civil','techs_stadium',28,30,0,15,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(54,'civil','techs_casino',28,30,0,11,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(55,'civil','techs_prison',NULL,NULL,0,11,2,NULL,10,10);
+INSERT INTO "buildings" VALUES(56,'civil','techs_museum',28,20,0,7,0,NULL,10,10);
+INSERT INTO "buildings" VALUES(64,'civil','techs_wastedisposal',27,20,0,3,4,NULL,10,10);
+INSERT INTO "buildings" VALUES(65,'civil','techs_recyclingStation',64,3,0,4,4,NULL,10,10);
+INSERT INTO "buildings" VALUES(66,'military','techs_secretOps',NULL,NULL,0,11,1,NULL,10,10);
+INSERT INTO "buildings" VALUES(68,'military','techs_militarySpaceyard',44,5,0,7,5,NULL,10,10);
+INSERT INTO "buildings" VALUES(70,'economy','techs_bank',NULL,NULL,0,11,3,NULL,10,10);
+CREATE TABLE building_costs (
+  building_id  INTEGER(3)  NOT NULL REFERENCES buildings(id),
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount INTEGER  NOT NULL,
+  CONSTRAINT building_resource UNIQUE (building_id,resource_id)
+);
+INSERT INTO "building_costs" VALUES(25,1,100);
+INSERT INTO "building_costs" VALUES(25,2,15);
+INSERT INTO "building_costs" VALUES(25,3,25);
+INSERT INTO "building_costs" VALUES(25,4,20);
+INSERT INTO "building_costs" VALUES(27,2,10);
+INSERT INTO "building_costs" VALUES(27,3,10);
+INSERT INTO "building_costs" VALUES(27,4,1);
+INSERT INTO "building_costs" VALUES(27,5,10);
+INSERT INTO "building_costs" VALUES(28,1,100);
+INSERT INTO "building_costs" VALUES(28,3,25);
+INSERT INTO "building_costs" VALUES(28,4,25);
+INSERT INTO "building_costs" VALUES(28,5,25);
+INSERT INTO "building_costs" VALUES(30,2,5);
+INSERT INTO "building_costs" VALUES(30,3,5);
+INSERT INTO "building_costs" VALUES(30,4,5);
+INSERT INTO "building_costs" VALUES(31,1,50);
+INSERT INTO "building_costs" VALUES(31,2,5);
+INSERT INTO "building_costs" VALUES(31,3,5);
+INSERT INTO "building_costs" VALUES(31,4,5);
+INSERT INTO "building_costs" VALUES(31,5,5);
+INSERT INTO "building_costs" VALUES(32,1,100);
+INSERT INTO "building_costs" VALUES(32,2,10);
+INSERT INTO "building_costs" VALUES(41,1,50);
+INSERT INTO "building_costs" VALUES(41,2,10);
+INSERT INTO "building_costs" VALUES(41,3,25);
+INSERT INTO "building_costs" VALUES(41,4,25);
+INSERT INTO "building_costs" VALUES(42,1,50);
+INSERT INTO "building_costs" VALUES(42,2,10);
+INSERT INTO "building_costs" VALUES(42,4,25);
+INSERT INTO "building_costs" VALUES(42,5,25);
+INSERT INTO "building_costs" VALUES(43,1,100);
+INSERT INTO "building_costs" VALUES(43,2,10);
+INSERT INTO "building_costs" VALUES(44,1,100);
+INSERT INTO "building_costs" VALUES(44,2,10);
+INSERT INTO "building_costs" VALUES(45,1,100);
+INSERT INTO "building_costs" VALUES(45,2,10);
+INSERT INTO "building_costs" VALUES(46,1,100);
+INSERT INTO "building_costs" VALUES(46,2,10);
+INSERT INTO "building_costs" VALUES(48,1,100);
+INSERT INTO "building_costs" VALUES(48,2,10);
+INSERT INTO "building_costs" VALUES(50,1,100);
+INSERT INTO "building_costs" VALUES(50,2,10);
+INSERT INTO "building_costs" VALUES(51,1,100);
+INSERT INTO "building_costs" VALUES(51,2,10);
+INSERT INTO "building_costs" VALUES(52,1,100);
+INSERT INTO "building_costs" VALUES(52,2,10);
+INSERT INTO "building_costs" VALUES(53,1,100);
+INSERT INTO "building_costs" VALUES(53,2,10);
+INSERT INTO "building_costs" VALUES(54,1,100);
+INSERT INTO "building_costs" VALUES(54,2,10);
+INSERT INTO "building_costs" VALUES(55,1,100);
+INSERT INTO "building_costs" VALUES(55,2,10);
+INSERT INTO "building_costs" VALUES(56,1,100);
+INSERT INTO "building_costs" VALUES(56,2,10);
+INSERT INTO "building_costs" VALUES(64,1,100);
+INSERT INTO "building_costs" VALUES(64,2,10);
+INSERT INTO "building_costs" VALUES(65,1,100);
+INSERT INTO "building_costs" VALUES(65,2,10);
+INSERT INTO "building_costs" VALUES(66,1,100);
+INSERT INTO "building_costs" VALUES(66,2,10);
+INSERT INTO "building_costs" VALUES(68,1,100);
+INSERT INTO "building_costs" VALUES(68,2,10);
+INSERT INTO "building_costs" VALUES(70,1,100);
+CREATE TABLE colony_buildings (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  building_id INTEGER  NOT NULL REFERENCES glx_colonies(id), 
+  level INTEGER  NOT NULL DEFAULT '0',
+  status_points INTEGER  NOT NULL DEFAULT '10',
+  ap_spend INTEGER  NOT NULL DEFAULT '0',
+  CONSTRAINT colony_building UNIQUE (colony_id,building_id)
+);
+INSERT INTO "colony_buildings" VALUES(1,25,10,16,1);
+INSERT INTO "colony_buildings" VALUES(1,27,5,11,3);
+INSERT INTO "colony_buildings" VALUES(1,28,2,10,0);
+INSERT INTO "colony_buildings" VALUES(1,30,19,10,10);
+INSERT INTO "colony_buildings" VALUES(1,31,19,11,1);
+INSERT INTO "colony_buildings" VALUES(1,32,19,10,1);
+INSERT INTO "colony_buildings" VALUES(1,41,8,10,4);
+INSERT INTO "colony_buildings" VALUES(1,42,1,7,5);
+INSERT INTO "colony_buildings" VALUES(1,44,11,1,0);
+INSERT INTO "colony_buildings" VALUES(1,46,18,9,1);
+INSERT INTO "colony_buildings" VALUES(1,50,19,9,9);
+INSERT INTO "colony_buildings" VALUES(1,52,1,10,0);
+INSERT INTO "colony_buildings" VALUES(1,65,0,11,4);
+INSERT INTO "colony_buildings" VALUES(1,68,0,10,10);
+INSERT INTO "colony_buildings" VALUES(2,25,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,27,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,28,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,30,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,31,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,32,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,41,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,42,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,43,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,44,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,45,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,46,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,50,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,52,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,53,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,54,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,55,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,56,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,64,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,65,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,66,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,68,19,10,1);
+INSERT INTO "colony_buildings" VALUES(2,70,19,10,1);
+CREATE TABLE colony_personell (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  personell_id INTEGER  NOT NULL REFERENCES personell(id),
+  level INTEGER  NOT NULL DEFAULT '0',
+  status_points INTEGER  NOT NULL DEFAULT '10',
+  PRIMARY KEY (colony_id,personell_id)
+);
+INSERT INTO "colony_personell" VALUES(1,35,9,10);
+INSERT INTO "colony_personell" VALUES(1,36,2,10);
+INSERT INTO "colony_personell" VALUES(1,89,0,10);
+INSERT INTO "colony_personell" VALUES(1,92,17,10);
+INSERT INTO "colony_personell" VALUES(2,35,19,10);
+INSERT INTO "colony_personell" VALUES(2,36,19,10);
+INSERT INTO "colony_personell" VALUES(2,89,19,10);
+INSERT INTO "colony_personell" VALUES(2,92,19,10);
+CREATE TABLE colony_researches (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  research_id INTEGER  NOT NULL REFERENCES researches(id),
+  level INTEGER  NOT NULL DEFAULT '0',
+  status_points INTEGER  NOT NULL DEFAULT '10',
+  ap_spend INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (colony_id,research_id)
+);
+INSERT INTO "colony_researches" VALUES(1,33,2,20,27);
+INSERT INTO "colony_researches" VALUES(1,34,9,0,1);
+INSERT INTO "colony_researches" VALUES(1,39,19,10,0);
+INSERT INTO "colony_researches" VALUES(1,72,17,11,1);
+INSERT INTO "colony_researches" VALUES(1,73,0,13,7);
+INSERT INTO "colony_researches" VALUES(1,74,17,11,1);
+INSERT INTO "colony_researches" VALUES(1,76,17,10,1);
+INSERT INTO "colony_researches" VALUES(1,79,17,10,1);
+INSERT INTO "colony_researches" VALUES(1,81,16,10,1);
+INSERT INTO "colony_researches" VALUES(2,33,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,34,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,39,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,72,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,73,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,74,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,76,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,79,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,80,19,10,1);
+INSERT INTO "colony_researches" VALUES(2,81,19,10,1);
+CREATE TABLE colony_resources (
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  amount INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (resource_id,colony_id)
+);
+INSERT INTO "colony_resources" VALUES(3,1,4115);
+INSERT INTO "colony_resources" VALUES(4,1,18598);
+INSERT INTO "colony_resources" VALUES(5,1,6335);
+INSERT INTO "colony_resources" VALUES(6,1,9400);
+INSERT INTO "colony_resources" VALUES(8,1,9400);
+INSERT INTO "colony_resources" VALUES(10,1,9400);
+INSERT INTO "colony_resources" VALUES(12,1,9500);
+CREATE TABLE colony_ships (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  ship_id INTEGER  NOT NULL REFERENCES ships(id),
+  level INTEGER  NOT NULL DEFAULT '0',
+  status_points INTEGER  NOT NULL DEFAULT '10',
+  ap_spend INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (colony_id,ship_id)
+);
+INSERT INTO "colony_ships" VALUES(1,29,0,10,1);
+INSERT INTO "colony_ships" VALUES(1,37,9,10,1);
+INSERT INTO "colony_ships" VALUES(1,49,12,10,1);
+INSERT INTO "colony_ships" VALUES(1,83,17,10,1);
+INSERT INTO "colony_ships" VALUES(1,84,16,10,1);
+INSERT INTO "colony_ships" VALUES(1,88,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,29,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,37,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,47,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,49,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,83,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,84,19,10,1);
+INSERT INTO "colony_ships" VALUES(2,88,19,10,1);
+CREATE TABLE fleets (
+  id INTEGER  NOT NULL,
+  fleet TEXT NOT NULL,
+  user_id INTEGER  NOT NULL REFERENCES user(user_id),
+  artefact INTEGER  DEFAULT NULL,
+  x INTEGER  NOT NULL,
+  y INTEGER  NOT NULL,
+  spot INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);
+INSERT INTO "fleets" VALUES(8,'B. Flotte 1',18,NULL,6828,3016,0);
+INSERT INTO "fleets" VALUES(9,'B. Flotte 2',18,NULL,6818,3006,0);
+INSERT INTO "fleets" VALUES(10,'Test Flotte 1',3,NULL,6828,3016,0);
+INSERT INTO "fleets" VALUES(11,'Test Flotte 2',3,NULL,6827,3014,0);
+INSERT INTO "fleets" VALUES(12,'Test Flotte 3',3,NULL,56828,316,0);
+INSERT INTO "fleets" VALUES(13,'Test Flotte 4',3,NULL,628,6916,0);
+INSERT INTO "fleets" VALUES(14,'Test Flotte 5',3,NULL,5828,4016,0);
+INSERT INTO "fleets" VALUES(15,'test',0,NULL,6828,3016,0);
+INSERT INTO "fleets" VALUES(16,'Test Flotte 6',3,NULL,6828,3016,0);
+INSERT INTO "fleets" VALUES(17,'Test Flotte 7',3,NULL,6828,3016,0);
+CREATE TABLE fleet_orders (
+  tick INTEGER  NOT NULL,
+  fleet_id INTEGER  NOT NULL REFERENCES fleets(id),
+  'order' TEXT NOT NULL,
+  coordinates TEXT NOT NULL,
+  data TEXT,
+  was_processed INTEGER  NOT NULL DEFAULT '0',
+  has_notified INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (tick,fleet_id)
+);
+INSERT INTO "fleet_orders" VALUES(14988,16,'move','[6800,3000,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14989,16,'trade','[6808,3006,1]','{"colony":1,"direction":1,"resource_id":3,"amount":9,"price":255,"restriction":0,"colony":"Brasows Kolonie","user_id":0,"resource":"res_water","icon":"res res_water","is_tradeable":1}',0,0);
+INSERT INTO "fleet_orders" VALUES(14989,17,'move','[2000,2000,1]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14990,17,'move','[2500,2105,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14991,17,'move','[3000,2210,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14992,17,'move','[3500,2316,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14993,17,'move','[4000,2421,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14994,17,'move','[4500,2526,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14995,17,'move','[5000,2631,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14996,17,'move','[5500,2737,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14997,17,'move','[6000,2842,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14998,17,'move','[6500,2947,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(14999,17,'move','[6828,3016,1]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15219,14,'move','[5828,4016,1]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15220,14,'move','[5928,3916,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15221,14,'move','[6028,3816,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15222,14,'move','[6128,3716,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15223,14,'move','[6228,3616,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15224,14,'move','[6328,3516,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15225,14,'move','[6428,3416,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15226,14,'move','[6528,3316,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15227,14,'move','[6628,3216,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15228,14,'move','[6728,3116,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15229,14,'move','[6828,3016,2]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15404,10,'trade','[6828,3016,1]','{"colony_id":1,"direction":1,"resource_id":3,"amount":9,"price":255,"restriction":0,"colony":"Brasows Kolonie","user_id":0,"resource":"res_water","icon":"res res_water","is_tradeable":1}',1,1);
+INSERT INTO "fleet_orders" VALUES(15760,10,'move','[6828,3016,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15761,10,'move','[6828,3015,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15762,10,'move','[6829,3014,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15763,10,'move','[6829,3013,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15764,10,'move','[6829,3012,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15765,10,'move','[6830,3011,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15766,10,'move','[6830,3010,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15767,10,'move','[6831,3009,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15768,10,'move','[6831,3008,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15769,10,'move','[6831,3007,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15770,10,'move','[6832,3006,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15771,10,'move','[6832,3005,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15772,10,'move','[6832,3004,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15773,10,'move','[6833,3003,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15774,10,'move','[6833,3002,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15775,10,'move','[6834,3001,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15776,10,'move','[6834,3000,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15777,10,'move','[6834,2999,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15778,10,'move','[6835,2998,0]',NULL,0,0);
+INSERT INTO "fleet_orders" VALUES(15779,10,'move','[6835,2997,0]','a:0:{}',0,0);
+CREATE TABLE fleet_personell (
+  fleet_id INTEGER  NOT NULL REFERENCES fleets(id),
+  personell_id INTEGER  NOT NULL REFERENCES personell(id),
+  count INTEGER  NOT NULL,
+  is_cargo INTEGER  NOT NULL DEFAULT '0',
+  CONSTRAINT nFlee2 UNIQUE (fleet_id, personell_id, is_cargo)
+);
+INSERT INTO "fleet_personell" VALUES(10,35,4,0);
+INSERT INTO "fleet_personell" VALUES(10,36,2,0);
+INSERT INTO "fleet_personell" VALUES(10,89,1,0);
+INSERT INTO "fleet_personell" VALUES(11,92,1,0);
+INSERT INTO "fleet_personell" VALUES(12,35,33,0);
+INSERT INTO "fleet_personell" VALUES(12,36,55,0);
+INSERT INTO "fleet_personell" VALUES(16,35,0,0);
+INSERT INTO "fleet_personell" VALUES(16,36,1,0);
+INSERT INTO "fleet_personell" VALUES(17,35,14,0);
+INSERT INTO "fleet_personell" VALUES(17,89,8,0);
+INSERT INTO "fleet_personell" VALUES(17,92,2,0);
+CREATE TABLE fleet_researches (
+  fleet_id INTEGER  NOT NULL REFERENCES fleets(id),
+  research_id INTEGER  NOT NULL REFERENCES researches(id),
+  count INTEGER  NOT NULL,
+  is_cargo INTEGER  NOT NULL DEFAULT '0',
+  CONSTRAINT nFlee2 UNIQUE (fleet_id,research_id,is_cargo)
+);
+INSERT INTO "fleet_researches" VALUES(10,33,10,0);
+INSERT INTO "fleet_researches" VALUES(10,34,11,0);
+INSERT INTO "fleet_researches" VALUES(10,39,1,0);
+INSERT INTO "fleet_researches" VALUES(10,72,2,0);
+INSERT INTO "fleet_researches" VALUES(10,74,2,0);
+INSERT INTO "fleet_researches" VALUES(10,76,2,0);
+INSERT INTO "fleet_researches" VALUES(10,79,2,0);
+INSERT INTO "fleet_researches" VALUES(10,81,1,0);
+INSERT INTO "fleet_researches" VALUES(11,81,1,0);
+INSERT INTO "fleet_researches" VALUES(16,34,0,0);
+INSERT INTO "fleet_researches" VALUES(17,33,7,0);
+INSERT INTO "fleet_researches" VALUES(17,34,1,0);
+INSERT INTO "fleet_researches" VALUES(17,81,2,0);
+CREATE TABLE fleet_resources (
+  fleet_id INTEGER  NOT NULL REFERENCES fleets(id),
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount INTEGER  NOT NULL,
+  PRIMARY KEY (fleet_id, resource_id)
+);
+INSERT INTO "fleet_resources" VALUES(8,3,0);
+INSERT INTO "fleet_resources" VALUES(8,5,0);
+INSERT INTO "fleet_resources" VALUES(8,6,0);
+INSERT INTO "fleet_resources" VALUES(8,8,790);
+INSERT INTO "fleet_resources" VALUES(10,3,100);
+INSERT INTO "fleet_resources" VALUES(10,4,420);
+INSERT INTO "fleet_resources" VALUES(10,5,10);
+INSERT INTO "fleet_resources" VALUES(10,6,100);
+INSERT INTO "fleet_resources" VALUES(10,8,100);
+INSERT INTO "fleet_resources" VALUES(10,10,100);
+INSERT INTO "fleet_resources" VALUES(11,3,10);
+INSERT INTO "fleet_resources" VALUES(11,4,1000);
+INSERT INTO "fleet_resources" VALUES(17,3,10);
+INSERT INTO "fleet_resources" VALUES(17,4,588);
+INSERT INTO "fleet_resources" VALUES(17,5,1);
+CREATE TABLE fleet_ships (
+  fleet_id INTEGER  NOT NULL REFERENCES fleets(id),
+  ship_id INTEGER  NOT NULL REFERENCES ships(id),
+  count INTEGER  NOT NULL,
+  is_cargo INTEGER  NOT NULL DEFAULT '0',
+  CONSTRAINT nFlee2 UNIQUE (fleet_id, ship_id, is_cargo)
+);
+INSERT INTO "fleet_ships" VALUES(8,29,20,0);
+INSERT INTO "fleet_ships" VALUES(8,37,5,0);
+INSERT INTO "fleet_ships" VALUES(10,29,19,0);
+INSERT INTO "fleet_ships" VALUES(10,37,7,0);
+INSERT INTO "fleet_ships" VALUES(10,49,5,0);
+INSERT INTO "fleet_ships" VALUES(10,83,1,0);
+INSERT INTO "fleet_ships" VALUES(10,88,1,0);
+INSERT INTO "fleet_ships" VALUES(11,37,4,0);
+INSERT INTO "fleet_ships" VALUES(11,49,1,0);
+INSERT INTO "fleet_ships" VALUES(12,29,17,0);
+INSERT INTO "fleet_ships" VALUES(17,29,1,0);
+INSERT INTO "fleet_ships" VALUES(17,49,2,0);
+INSERT INTO "fleet_ships" VALUES(17,83,6,0);
+INSERT INTO "fleet_ships" VALUES(17,84,3,0);
+INSERT INTO "fleet_ships" VALUES(17,88,0,0);
+CREATE TABLE glx_colonies (
+  id INTEGER  NOT NULL,
+  name TEXT NOT NULL DEFAULT 'Colony',
+  system_object_id INTEGER  NOT NULL REFERENCES glx_system_objects(id),
+  spot INTEGER  NOT NULL,
+  user_id INTEGER  DEFAULT NULL REFERENCES user(user_id),
+  since_tick INTEGER  NOT NULL,
+  is_primary INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);
+INSERT INTO "glx_colonies" VALUES(1,'Springfield',1,1,3,0,1);
+INSERT INTO "glx_colonies" VALUES(2,'Shelbyville',1,2,0,0,1);
+CREATE TABLE glx_systems (
+  id INTEGER  NOT NULL,
+  x INTEGER  NOT NULL,
+  y INTEGER  NOT NULL,
+  name TEXT NOT NULL,
+  type_id INTEGER  NOT NULL REFERENCES glx_system_types(id),
+  background_image_url TEXT NOT NULL,
+  sight INTEGER  NOT NULL DEFAULT '9',
+  density INTEGER  NOT NULL DEFAULT '0',
+  radiation INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);
+INSERT INTO "glx_systems" VALUES(1,6800,3000,'test',1,'starfields/starfield1.png',9,0,0);
+INSERT INTO "glx_systems" VALUES(2,2400,2400,'Raani',5,'starfields/starfield_blue.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(4,6600,4400,'Adoran',2,'starfields/starfield_magenta.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(5,3400,5800,'Heely',3,'starfields/starfield_green.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(6,8000,2400,'Desgod',4,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(8,6600,800,'Suyegar',6,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(11,6200,2600,'Welfort',3,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(12,1200,4800,'Dilur',4,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(14,3000,1800,'Syird',2,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(15,7400,8000,'Endar',9,'',9,0,0);
+INSERT INTO "glx_systems" VALUES(16,6800,6800,'Tesva',1,'starfields/starfield_yellow.jpg',9,0,0);
+INSERT INTO "glx_systems" VALUES(17,9200,8000,'Blackhole 1',13,'',9,0,0);
+INSERT INTO "glx_systems" VALUES(18,5000,5200,'Nouron',9,'starfields/starfield_yellow.jpg',9,0,0);
+CREATE TABLE glx_system_objects (
+  id INTEGER  NOT NULL,
+  x INTEGER  NOT NULL,
+  y INTEGER  NOT NULL,
+  name TEXT NOT NULL,
+  type_id INTEGER  NOT NULL REFERENCES glx_system_object_types(id),
+  sight INTEGER  NOT NULL DEFAULT '9',
+  density INTEGER  NOT NULL DEFAULT '0',
+  radiation INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);
+INSERT INTO "glx_system_objects" VALUES(1,6828,3016,'test',1,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(2,6801,2998,'test2',2,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(3,6572,4361,'test3',3,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(4,6820,3020,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(5,6800,2950,'test 4',7,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(10,6805,2966,'test7',5,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(11,6788,3034,'test8',8,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(12,9190,7790,'Blackhole',13,0,9,0);
+INSERT INTO "glx_system_objects" VALUES(13,6820,3021,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(14,6821,3021,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(15,6821,3022,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(16,6822,3022,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(17,6822,3023,'Asteroiden',9,9,0,0);
+INSERT INTO "glx_system_objects" VALUES(18,6750,2950,'TESTTESTTEST',2,9,0,0);
+CREATE TABLE glx_system_object_types (
+  id INTEGER  NOT NULL,
+  type TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO "glx_system_object_types" VALUES(1,'planetary_type_jungle','planetaries/1.png');
+INSERT INTO "glx_system_object_types" VALUES(2,'planetary_type_ice','planetaries/2.png');
+INSERT INTO "glx_system_object_types" VALUES(3,'planetary_type_desert','planetaries/3.png');
+INSERT INTO "glx_system_object_types" VALUES(4,'planetary_type_earth','planetaries/4.png');
+INSERT INTO "glx_system_object_types" VALUES(5,'planetary_type_crater','planetaries/5.png');
+INSERT INTO "glx_system_object_types" VALUES(6,'planetary_type_vulcano','planetaries/7.png');
+INSERT INTO "glx_system_object_types" VALUES(7,'planetary_type_gasgiant','planetaries/11.png');
+INSERT INTO "glx_system_object_types" VALUES(8,'planetary_type_water','planetaries/8.png');
+INSERT INTO "glx_system_object_types" VALUES(9,'planetary_type_asteroidfield','galaxy/field_asteroids.png');
+INSERT INTO "glx_system_object_types" VALUES(10,'planetary_type_minefield','planetaries/10.png');
+INSERT INTO "glx_system_object_types" VALUES(11,'planetary_type_shipgraveyard','planetaries/p_grey.png');
+INSERT INTO "glx_system_object_types" VALUES(12,'planetary_type_rockgiant','planetaries/p_grey.png');
+INSERT INTO "glx_system_object_types" VALUES(13,'planetary_type_icegiant','planetaries/p_white.png');
+CREATE TABLE glx_system_types (
+  id INTEGER  NOT NULL,
+  class TEXT NOT NULL,
+  size INTEGER NOT NULL DEFAULT '5',
+  icon_url TEXT DEFAULT NULL,
+  image_url TEXT DEFAULT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO "glx_system_types" VALUES(1,'stellar_class_A',8,'stellars/s_white.png','stellars/s_white_quarter.png');
+INSERT INTO "glx_system_types" VALUES(2,'stellar_class_O',12,'stellars/s_blue.png','stellars/s_blue_quarter.png');
+INSERT INTO "glx_system_types" VALUES(3,'stellar_class_B',11,'stellars/s_cyan.png','stellars/s_cyan_quarter.png');
+INSERT INTO "glx_system_types" VALUES(4,'stellar_class_F',9,'stellars/s_green.png','stellars/s_green_quarter.png');
+INSERT INTO "glx_system_types" VALUES(5,'stellar_class_G',8,'stellars/s_yellow.png','stellars/s_yellow_quarter.png');
+INSERT INTO "glx_system_types" VALUES(6,'stellar_class_K',12,'stellars/s_orange.png','stellars/s_red_quarter.png');
+INSERT INTO "glx_system_types" VALUES(7,'stellar_class_M',8,'stellars/s_red.png','stellars/s_red_quarter.png');
+INSERT INTO "glx_system_types" VALUES(8,'stellar_double',9,'stellars/s_double.png','');
+INSERT INTO "glx_system_types" VALUES(9,'stellar_neutron',10,'stellars/s_pulsar.png','');
+INSERT INTO "glx_system_types" VALUES(10,'stellar_novae',9,'stellars/novae.png','');
+INSERT INTO "glx_system_types" VALUES(11,'stellar_supernovae',11,'stellars/supernovae.png','');
+INSERT INTO "glx_system_types" VALUES(12,'stellar_nebula',11,'stellars/nebula.png','');
+INSERT INTO "glx_system_types" VALUES(13,'stellar_black_hole',10,'stellars/s_blackhole.png','');
+CREATE TABLE innn_events (
+  id INTEGER  NOT NULL,
+  user INTEGER  NOT NULL,
+  tick INTEGER  NOT NULL,
+  event TEXT NOT NULL,
+  area TEXT NOT NULL,
+  parameters text NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','a:2:{s:7:"colony_id";i:0;s:11:"tech_id";i:27;}');
+INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','a:1:{s:7:"colony_id";i:1;}');
+CREATE TABLE innn_messages (
+  id INTEGER  NOT NULL,
+  sender_id INTEGER  NOT NULL REFERENCES user(user_id),
+  attitude TEXT NOT NULL,
+  recipient_id INTEGER  NOT NULL REFERENCES user(user_id),
+  tick INTEGER  NOT NULL,
+  type INTEGER NOT NULL,
+  subject TEXT NOT NULL,
+  'text' TEXT NOT NULL,
+  isRead INTEGER  NOT NULL DEFAULT '0',
+  isArchived INTEGER  NOT NULL DEFAULT '0',
+  isDeleted INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);
+INSERT INTO "innn_messages" VALUES(22,3,'mood_factual',0,15836,0,'Nachricht von Bart an Homer','test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1',0,0,0);
+INSERT INTO "innn_messages" VALUES(23,3,'mood_friendly',0,15865,0,'2134567','dfghjk',0,0,0);
+CREATE TABLE innn_message_types (
+  id INTEGER NOT NULL,
+  type TEXT UNIQUE NOT NULL,
+  relationship_effect INTEGER NOT NULL DEFAULT '0',
+  points INTEGER  NOT NULL DEFAULT '1',
+  PRIMARY KEY (id)
+);
+INSERT INTO "innn_message_types" VALUES(0,'subject_none',0,1);
+INSERT INTO "innn_message_types" VALUES(1,'subject_information',1,1);
+INSERT INTO "innn_message_types" VALUES(2,'subject_instruction',-1,1);
+INSERT INTO "innn_message_types" VALUES(3,'subject_threat',-15,1);
+INSERT INTO "innn_message_types" VALUES(4,'subject_praise',3,1);
+INSERT INTO "innn_message_types" VALUES(6,'subject_gift',8,1);
+INSERT INTO "innn_message_types" VALUES(7,'subject_trade_off',5,1);
+INSERT INTO "innn_message_types" VALUES(8,'subject_trade',5,1);
+INSERT INTO "innn_message_types" VALUES(9,'subject_comm_treaty',5,1);
+INSERT INTO "innn_message_types" VALUES(10,'subject_pact',39,1);
+INSERT INTO "innn_message_types" VALUES(11,'subject_peace_treaty',25,1);
+INSERT INTO "innn_message_types" VALUES(12,'subject_declaration_of_war',-49,1);
+INSERT INTO "innn_message_types" VALUES(13,'subject_nap',10,1);
+CREATE TABLE innn_news (
+  id INTEGER  NOT NULL,
+  tick INTEGER  NOT NULL,
+  icon TEXT NOT NULL,
+  topic TEXT CHECK( topic IN ('economy','politics','diplomacy','culture','sports','misc') ) NOT NULL,
+  headline TEXT NOT NULL,
+  text text NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO "innn_news" VALUES(1,12345,'innn_black','economy','test_headline','test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text ');
+CREATE TABLE locked_actionpoints (
+  tick INTEGER  NOT NULL,
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  personell_id INTEGER  NOT NULL REFERENCES personell(id),
+  spend_ap INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (tick,colony_id,personell_id)
+);
+INSERT INTO "locked_actionpoints" VALUES(15930,1,35,22);
+INSERT INTO "locked_actionpoints" VALUES(15930,1,36,3);
+INSERT INTO "locked_actionpoints" VALUES(15934,1,35,20);
+INSERT INTO "locked_actionpoints" VALUES(15935,1,35,1);
+INSERT INTO "locked_actionpoints" VALUES(15942,1,35,26);
+INSERT INTO "locked_actionpoints" VALUES(15947,1,35,8);
+INSERT INTO "locked_actionpoints" VALUES(15962,1,35,3);
+INSERT INTO "locked_actionpoints" VALUES(15983,1,35,5);
+INSERT INTO "locked_actionpoints" VALUES(15990,1,35,3);
+INSERT INTO "locked_actionpoints" VALUES(15990,1,36,5);
+INSERT INTO "locked_actionpoints" VALUES(15991,1,36,1);
+INSERT INTO "locked_actionpoints" VALUES(15997,1,35,37);
+INSERT INTO "locked_actionpoints" VALUES(15997,1,36,0);
+INSERT INTO "locked_actionpoints" VALUES(15998,1,35,1);
+INSERT INTO "locked_actionpoints" VALUES(16005,1,35,9);
+CREATE TABLE personell (
+  id INTEGER  NOT NULL,
+  purpose TEXT NOT NULL,
+  name TEXT UNIQUE NOT NULL,
+  required_building_id INTEGER  DEFAULT NULL REFERENCES buildings(id),
+  required_building_level INTEGER  DEFAULT NULL,
+  row INTEGER  NOT NULL,
+  column INTEGER  NOT NULL,
+  max_status_points INTEGER  DEFAULT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT row UNIQUE (row,column)
+);
+INSERT INTO "personell" VALUES(35,'industry','techs_engineer',25,5,1,0,10);
+INSERT INTO "personell" VALUES(36,'civil','techs_scientist',31,1,3,1,10);
+INSERT INTO "personell" VALUES(89,'military','techs_pilot',44,1,7,3,10);
+INSERT INTO "personell" VALUES(92,'economy','techs_trader',43,1,7,2,10);
+CREATE TABLE personell_costs (
+  personell_id INTEGER  NOT NULL REFERENCES personell(id),
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount INTEGER  NOT NULL
+);
+INSERT INTO "personell_costs" VALUES(35,1,2500);
+INSERT INTO "personell_costs" VALUES(36,1,5000);
+INSERT INTO "personell_costs" VALUES(89,1,5000);
+INSERT INTO "personell_costs" VALUES(92,1,2000);
+INSERT INTO "personell_costs" VALUES(35,2,2);
+INSERT INTO "personell_costs" VALUES(36,2,2);
+INSERT INTO "personell_costs" VALUES(89,2,2);
+INSERT INTO "personell_costs" VALUES(92,2,2);
+CREATE TABLE researches (
+  id INTEGER  NOT NULL,
+  purpose TEXT NOT NULL,
+  name TEXT UNIQUE NOT NULL,
+  required_building_id INTEGER  DEFAULT NULL REFERENCES buildings(id),
+  required_building_level INTEGER  DEFAULT NULL,
+  row INTEGER  NOT NULL,
+  column INTEGER  NOT NULL,
+  ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
+  max_status_points INTEGER  DEFAULT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT row UNIQUE (row,column)
+);
+INSERT INTO "researches" VALUES(33,'civil','techs_biology',31,1,3,3,25,10);
+INSERT INTO "researches" VALUES(34,'politics','techs_languages',51,1,8,1,25,10);
+INSERT INTO "researches" VALUES(39,'civil','techs_mathematics',31,4,5,5,25,10);
+INSERT INTO "researches" VALUES(72,'civil','techs_medicalScience',46,1,5,2,25,10);
+INSERT INTO "researches" VALUES(73,'civil','techs_physics',31,3,5,3,25,10);
+INSERT INTO "researches" VALUES(74,'civil','techs_chemistry',31,2,3,2,25,10);
+INSERT INTO "researches" VALUES(76,'economy','techs_economicScience',43,3,10,3,25,10);
+INSERT INTO "researches" VALUES(79,'politics','techs_diplomacy',NULL,NULL,10,1,25,10);
+INSERT INTO "researches" VALUES(80,'politics','techs_politicalScience',NULL,NULL,10,2,25,10);
+INSERT INTO "researches" VALUES(81,'military','techs_military',68,1,9,5,25,10);
+CREATE TABLE research_costs (
+  research_id INTEGER  NOT NULL REFERENCES researches(id),
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount INTEGER  NOT NULL,
+  PRIMARY KEY (research_id,resource_id)
+);
+INSERT INTO "research_costs" VALUES(33,1,5000);
+INSERT INTO "research_costs" VALUES(33,2,5000);
+INSERT INTO "research_costs" VALUES(33,3,5000);
+INSERT INTO "research_costs" VALUES(33,4,5000);
+INSERT INTO "research_costs" VALUES(33,5,5000);
+INSERT INTO "research_costs" VALUES(33,6,5000);
+INSERT INTO "research_costs" VALUES(33,8,5000);
+INSERT INTO "research_costs" VALUES(33,10,5000);
+INSERT INTO "research_costs" VALUES(33,12,5000);
+INSERT INTO "research_costs" VALUES(39,1,5000);
+INSERT INTO "research_costs" VALUES(74,1,5000);
+INSERT INTO "research_costs" VALUES(79,1,5000);
+INSERT INTO "research_costs" VALUES(76,1,5000);
+INSERT INTO "research_costs" VALUES(34,1,5000);
+INSERT INTO "research_costs" VALUES(72,1,5000);
+INSERT INTO "research_costs" VALUES(81,1,5000);
+INSERT INTO "research_costs" VALUES(73,1,5000);
+INSERT INTO "research_costs" VALUES(80,1,5000);
+CREATE TABLE resources (
+  id INTEGER  NOT NULL,
+  name TEXT NOT NULL,
+  abbreviation TEXT NOT NULL,
+  trigger TEXT NOT NULL,
+  is_tradeable INTEGER  NOT NULL DEFAULT '1',
+  start_amount INTEGER NOT NULL DEFAULT '0',
+  icon TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+INSERT INTO "resources" VALUES(1,'res_credits','Cr','Event',0,3000,'resicon-credits');
+INSERT INTO "resources" VALUES(2,'res_supply','Sup','Event',0,200,'resicon-supply');
+INSERT INTO "resources" VALUES(3,'res_water','W','Level',1,500,'resicon-water');
+INSERT INTO "resources" VALUES(4,'res_ferum','E','Level',1,500,'resicon-iron');
+INSERT INTO "resources" VALUES(5,'res_silicates','S','Level',1,500,'resicon-silicates');
+INSERT INTO "resources" VALUES(6,'res_ena','ENrg','Constant',1,100,'resicon-ena');
+INSERT INTO "resources" VALUES(8,'res_lho','LNrg','Constant',1,100,'resicon-lho');
+INSERT INTO "resources" VALUES(10,'res_aku','ANrg','Constant',1,100,'resicon-aku');
+INSERT INTO "resources" VALUES(12,'res_moral','M','Event',0,0,'resicon-moral');
+CREATE TABLE ships (
+  id INTEGER  NOT NULL,
+  purpose TEXT NOT NULL,
+  name TEXT UNIQUE NOT NULL,
+  required_building_id INTEGER  DEFAULT NULL REFERENCES buildings(id),
+  required_building_level INTEGER  DEFAULT NULL,
+  required_research_id INTEGER  DEFAULT NULL REFERENCES researches(id),
+  required_research_level INTEGER  DEFAULT NULL,
+  prime_colony_only INTEGER  NOT NULL DEFAULT '0',
+  row INTEGER  NOT NULL,
+  column INTEGER  NOT NULL,
+  ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
+  max_status_points INTEGER  DEFAULT NULL,
+  moving_speed INTEGER  DEFAULT NULL,
+  PRIMARY KEY (id),
+  CONSTRAINT row UNIQUE(row,column)
+);
+INSERT INTO "ships" VALUES(29,'military','techs_frigate1',NULL,NULL,NULL,NULL,0,10,5,15,10,500);
+INSERT INTO "ships" VALUES(37,'military','techs_fighter1',NULL,NULL,NULL,NULL,0,8,5,15,10,500);
+INSERT INTO "ships" VALUES(47,'economy','techs_smallTransporter',NULL,NULL,NULL,NULL,0,7,4,15,10,500);
+INSERT INTO "ships" VALUES(49,'military','techs_battlecruiser1',NULL,NULL,NULL,NULL,0,12,5,15,10,500);
+INSERT INTO "ships" VALUES(83,'economy','techs_mediumTransporter',NULL,NULL,NULL,NULL,0,9,4,15,10,500);
+INSERT INTO "ships" VALUES(84,'economy','techs_largeTransporter',NULL,NULL,NULL,NULL,0,11,4,15,10,500);
+INSERT INTO "ships" VALUES(88,'civil','techs_colonyShip',NULL,NULL,NULL,NULL,0,13,4,50,10,500);
+CREATE TABLE ship_costs (
+  ship_id INTEGER  NOT NULL REFERENCES ships(id),
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount INTEGER  NOT NULL,
+  PRIMARY KEY (ship_id,resource_id)
+);
+INSERT INTO "ship_costs" VALUES(37,1,10000);
+INSERT INTO "ship_costs" VALUES(49,1,10000);
+INSERT INTO "ship_costs" VALUES(88,1,10000);
+INSERT INTO "ship_costs" VALUES(29,1,10000);
+INSERT INTO "ship_costs" VALUES(84,1,10000);
+INSERT INTO "ship_costs" VALUES(83,1,10000);
+INSERT INTO "ship_costs" VALUES(47,1,10000);
+CREATE TABLE trade_researches (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  direction INTEGER  NOT NULL DEFAULT '0',
+  research_id INTEGER  NOT NULL REFERENCES researches(id),
+  amount bigINTEGER  NOT NULL DEFAULT '0',
+  price INTEGER  NOT NULL DEFAULT '0',
+  restriction INTEGER  DEFAULT NULL,
+  PRIMARY KEY (colony_id,research_id)
+);
+INSERT INTO "trade_researches" VALUES(1,1,25,123456,11,NULL);
+INSERT INTO "trade_researches" VALUES(1,0,35,12345,11,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,27,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,28,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,29,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,30,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,31,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,32,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,33,1,1,NULL);
+INSERT INTO "trade_researches" VALUES(2,0,34,1,1,NULL);
+CREATE TABLE trade_resources (
+  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  direction INTEGER  NOT NULL DEFAULT '0',
+  resource_id INTEGER  NOT NULL REFERENCES resources(id),
+  amount bigINTEGER  NOT NULL DEFAULT '0',
+  price INTEGER  NOT NULL DEFAULT '0',
+  restriction INTEGER  NOT NULL DEFAULT '0'
+);
+INSERT INTO "trade_resources" VALUES(2,0,3,11,11,0);
+INSERT INTO "trade_resources" VALUES(2,1,5,123,32,0);
+INSERT INTO "trade_resources" VALUES(2,0,6,45,45,0);
+INSERT INTO "trade_resources" VALUES(1,0,8,1,2,0);
+INSERT INTO "trade_resources" VALUES(1,0,10,4,3,0);
+CREATE TABLE user (
+  user_id INTEGER  NOT NULL REFERENCES user(user_id),
+  username TEXT UNIQUE NOT NULL,
+  display_name TEXT NOT NULL,
+  role TEXT NOT NULL,
+  password TEXT NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  state smallINTEGER DEFAULT NULL,
+  race_id INTEGER  DEFAULT NULL,
+  faction_id smallINTEGER  DEFAULT NULL,
+  description text,
+  note tinytext,
+  disabled INTEGER  NOT NULL DEFAULT '0',
+  activated INTEGER  NOT NULL DEFAULT '0',
+  activation_key TEXT NOT NULL,
+  first_time_login INTEGER  NOT NULL DEFAULT '1',
+  last_activity timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  registration timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
+  theme TEXT NOT NULL DEFAULT 'darkred',
+  tooltips_enabled INTEGER  NOT NULL DEFAULT '1',
+  PRIMARY KEY (user_id)
+);
+INSERT INTO "user" VALUES(0,'Homer','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','homer@nouron.de',NULL,1,7,'dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung dies ist eine Testbeschreibung !"�$%&/()=?`*''_:>><<|��{[]]\\~\r\n','',0,0,'adsfsdfsf',0,'2012-03-05 10:08:37','0000-00-00 00:00:00','darkred',1);
+INSERT INTO "user" VALUES(1,'Marge','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','marge@nouron.de',NULL,3,6,'','',0,0,'gaqx2hwrf4env5i3',1,'2011-09-18 09:49:10','2009-12-23 14:00:00','darkred',1);
+INSERT INTO "user" VALUES(2,'Lisa','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','lisa@nouron.de',NULL,1,1,'','',0,0,'abcdefg',1,'2011-09-18 13:39:26','0000-00-00 00:00:00','darkred',1);
+INSERT INTO "user" VALUES(3,'Bart','','admin','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','bart@nouron.de',NULL,2,4,'','',0,0,'',1,'2013-01-05 19:25:03','0000-00-00 00:00:00','darkgreen',1);
+INSERT INTO "user" VALUES(4,'Maggy','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','maggy@nouron.de',NULL,1,2,'','',0,1,'abcdefg',0,'2012-12-27 11:46:30','0000-00-00 00:00:00','0',1);
+INSERT INTO "user" VALUES(5,'Moe','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','moe@nouron.de',NULL,3,5,'','',0,1,'abcdefg',0,'2012-12-27 11:46:30','0000-00-00 00:00:00','0',1);
+INSERT INTO "user" VALUES(18,'Lenny','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','lenny@nouron.de',NULL,0,0,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1);
+INSERT INTO "user" VALUES(19,'Carl','','player','$2y$14$nFApucgOokdP66.LfoskBOoyek5wTo3XrMwYvngTjMiIXw5YJ918e','carl@nouron.de',NULL,1,1,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1);
+CREATE TABLE user_resources (
+  user_id INTEGER  UNIQUE NOT NULL,
+  credits INTEGER NOT NULL,
+  supply INTEGER  NOT NULL
+);
+INSERT INTO "user_resources" VALUES(3,49615,1938);
+CREATE VIEW v_glx_colonies AS select c.id AS id,c.name AS name,c.system_object_id AS system_object_id,c.spot AS spot,c.user_id AS user_id,c.since_tick AS since_tick,c.is_primary AS is_primary,o.name AS system_object_name,o.x AS x,o.y AS y,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation from (glx_colonies c join glx_system_objects o) where (c.system_object_id = o.id);
+CREATE VIEW v_glx_systems AS select s.id AS id,s.x AS x,s.y AS y,s.name AS name,s.type_id AS type_id,s.background_image_url AS background_image_url,s.sight AS sight,s.density AS density,s.radiation AS radiation,t.class AS class,t.size AS size,t.icon_url AS icon_url,t.image_url AS image_url from (glx_systems s join glx_system_types t) where (s.type_id = t.id);
+CREATE VIEW v_glx_system_objects AS select o.id AS id,o.x AS x,o.y AS y,o.name AS name,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation,t.type AS type,t.image_url AS image_url from (glx_system_objects o join glx_system_object_types t) where (o.type_id = t.id);
+CREATE VIEW v_innn_messages AS select m.id AS id,m.sender_id AS sender_id,m.attitude AS attitude,m.recipient_id AS recipient_id,m.tick AS tick,m.type AS type,m.subject AS subject,m.text AS text,m.isRead AS isRead,m.isArchived AS isArchived,m.isDeleted AS isDeleted,sender.username AS sender,recipient.username AS recipient from ((innn_messages m join user sender) join user recipient) where ((sender.user_id = m.sender_id) and (recipient.user_id = m.recipient_id));
+CREATE VIEW v_trade_researches AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.research_id AS research_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_researches tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));
+CREATE VIEW v_trade_resources AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.resource_id AS resource_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_resources tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));
+COMMIT;

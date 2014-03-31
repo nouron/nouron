@@ -28,8 +28,6 @@ DELETE FROM research_costs WHERE 1;
 DELETE FROM resources WHERE 1;
 DELETE FROM ships WHERE 1;
 DELETE FROM ship_costs WHERE 1;
-DELETE FROM tech_requirements WHERE 1;
-DELETE FROM tech_technologies WHERE 1;
 DELETE FROM trade_researches WHERE 1;
 DELETE FROM trade_resources WHERE 1;
 DELETE FROM user_resources WHERE 1;
