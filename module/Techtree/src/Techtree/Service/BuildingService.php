@@ -7,17 +7,17 @@ class BuildingService extends AbstractTechnologyService
     {
         return 'buildings';
     }
-    
+
     protected function getColonyEntitiesTableName()
     {
         return 'colony_buildings';
     }
-    
+
     protected function getEntityCostsTableName()
     {
         return 'building_costs';
     }
-    
+
     protected function getEntityIdName()
     {
         return 'building_id';

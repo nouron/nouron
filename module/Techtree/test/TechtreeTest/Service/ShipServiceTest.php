@@ -1,26 +1,20 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\BuildingService;
+use Techtree\Service\ShipService;
 use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
-use Techtree\Table\BuildingTable;
-use Techtree\Table\BuildingCostTable;
-use Techtree\Table\ColonyBuildingTable;
-use Techtree\Entity\Building;
-use Techtree\Entity\BuildingCost;
-use Techtree\Entity\ColonyBuilding;
+use Techtree\Table\ShipTable;
+use Techtree\Table\ShipCostTable;
+use Techtree\Table\ColonyShipTable;
+use Techtree\Entity\Ship;
+use Techtree\Entity\ShipCost;
+use Techtree\Entity\ColonyShip;
 
-class BuildingServiceTest extends PHPUnit_Framework_TestCase
+class ShipServiceTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $basePath = __DIR__ . '/../../../../../';
-
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/drop_all.sql");
-        #$rr = exec("sqlite3 ../../../data/db/test.db < ../../../sql/truncate_all.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/dump");
-
         $dbAdapter = new \Zend\Db\Adapter\Adapter(
             array(
                 'driver' => 'Pdo_Sqlite',
@@ -29,9 +23,9 @@ class BuildingServiceTest extends PHPUnit_Framework_TestCase
         );
 
         $tableMocks = array();
-        $tableMocks['buildings'] = new BuildingTable($dbAdapter, new Building());
-        $tableMocks['building_costs']   = new BuildingCostTable($dbAdapter, new BuildingCost());
-        $tableMocks['colony_buildings'] = new ColonyBuildingTable($dbAdapter, new ColonyBuilding());
+        $tableMocks['ships'] = new ShipTable($dbAdapter, new Ship());
+        $tableMocks['ship_costs']   = new ShipCostTable($dbAdapter, new ShipCost());
+        $tableMocks['colony_ships'] = new ColonyShipTable($dbAdapter, new ColonyShip());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);
@@ -44,10 +38,10 @@ class BuildingServiceTest extends PHPUnit_Framework_TestCase
                                           ->disableOriginalConstructor()
                                           ->getMock();
 
-        $this->_service = new BuildingService($tick, $tableMocks, $serviceMocks);
+        $this->_service = new ShipService($tick, $tableMocks, $serviceMocks);
 
         // default test parameters
-        $this->_entityId = 27;
+        $this->_entityId = 37;
         $this->_colonyId = 1;
     }
 
@@ -64,13 +58,13 @@ class BuildingServiceTest extends PHPUnit_Framework_TestCase
         $objects = $this->_service->getEntityCosts($this->_entityId);
         $this->assertTrue(!empty($objects));
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
-        $this->assertEquals('Techtree\Entity\BuildingCost', get_class($objects->current()));
+        $this->assertEquals('Techtree\Entity\ShipCost', get_class($objects->current()));
     }
 
     public function testColonyEntity()
     {
         $possess = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
-        $this->assertEquals(5, $possess->getLevel());
+        $this->assertEquals(9, $possess->getLevel());
     }
 
     public function testGetColonyEntities()
@@ -78,20 +72,20 @@ class BuildingServiceTest extends PHPUnit_Framework_TestCase
         $objects = $this->_service->getColonyEntities($this->_colonyId);
         $this->assertTrue(!empty($objects));
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
-        $this->assertEquals('Techtree\Entity\ColonyBuilding', get_class($objects->current()));
+        $this->assertEquals('Techtree\Entity\ColonyShip', get_class($objects->current()));
     }
 
     public function testGetEntities()
     {
         $objects = $this->_service->getEntities();
         $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
-        $this->assertEquals('Techtree\Entity\Building', get_class($objects->current()));
+        $this->assertEquals('Techtree\Entity\Ship', get_class($objects->current()));
     }
 
     public function testGetEntity()
     {
         $object = $this->_service->getEntity($this->_entityId);
-        $this->assertEquals('Techtree\Entity\Building', get_class($object));
+        $this->assertEquals('Techtree\Entity\Ship', get_class($object));
         $this->markTestIncomplete();
     }
 

@@ -20,7 +20,6 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
     public function getEntity($entityId)
     {
         $this->_validateId($entityId);
-        #$where = array('id' => $entityId);
         return $this->getTable($this->getEntitiesTableName())->getEntity($entityId);
     }
 
@@ -137,10 +136,11 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
     }
 
     /**
+     * Check if required action points are fullfilled
      *
      * @param numeric $entityId
      * @param numeric $colonyId
-     * @return boolean
+     * @return boolean  True if all required action points were spend else False
      * @throws \Techtree\Model\Exception if invalid parameter(s)
      */
     public function checkRequiredActionPoints($colonyId, $entityId)

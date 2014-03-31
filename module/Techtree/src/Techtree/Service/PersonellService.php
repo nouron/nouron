@@ -15,17 +15,17 @@ class PersonellService extends AbstractTechnologyService
     {
         return 'personell';
     }
-    
+
     protected function getColonyEntitiesTableName()
     {
         return 'colony_personell';
     }
-    
+
     protected function getEntityCostsTableName()
     {
         return 'personell_costs';
     }
-    
+
     protected function getEntityIdName()
     {
         return 'personell_id';
@@ -99,7 +99,7 @@ class PersonellService extends AbstractTechnologyService
         switch (strtolower($type)) {
             case 'construction': $entityId = self::PERSONELL_ID_ENGINEER; break;
             case 'research':     $entityId = self::PERSONELL_ID_SCIENTIST; break;
-            #case 'navigation':   $entityId = self::PERSONELL_ID_PILOT; break;
+            case 'navigation':   $entityId = self::PERSONELL_ID_PILOT; break;
             default: return 0;
         }
 

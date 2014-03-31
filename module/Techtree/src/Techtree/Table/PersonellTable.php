@@ -5,7 +5,7 @@ use Nouron\Table\AbstractTable;
 
 class PersonellTable extends AbstractTable
 {
-    protected $table  = 'Personell';
+    protected $table  = 'personell';
 
 }
 
