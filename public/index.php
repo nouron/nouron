@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Europe/Berlin');
 define('REQUEST_MICROTIME', microtime(true));
 /**
  * This makes our life easier when dealing with paths. Everything is relative
