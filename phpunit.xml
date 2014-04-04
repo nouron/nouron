@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="Bootstrap.php" colors="false">
+<phpunit bootstrap="./module/Techtree/test/Bootstrap.php" colors="false">
     <testsuites>
         <testsuite name="techtree">
             <directory>./module/Techtree/test/TechtreeTest</directory>
