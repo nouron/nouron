@@ -69,7 +69,7 @@ class SelectedIds extends AbstractPlugin
      * Set the session manager
      *
      * @param  Manager $manager
-     * @return FlashMessenger
+     * @return SelectedIds
      */
     public function setSessionManager(Manager $manager)
     {

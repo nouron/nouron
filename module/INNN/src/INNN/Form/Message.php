@@ -2,7 +2,6 @@
 namespace INNN\Form;
 
 use Zend\Form\Form;
-use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\InputFilterProviderInterface;
 
 class Message extends Form implements InputFilterProviderInterface

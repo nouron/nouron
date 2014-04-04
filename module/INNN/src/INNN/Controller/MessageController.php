@@ -135,7 +135,6 @@ class MessageController extends \Nouron\Controller\IngameController
      *
      * @param string|null $type  'positive' OR 'negative'
      * @param numeric $messageId
-     * @param string $respond
      */
     public function react($type=null, $messageId)
     {

@@ -3,11 +3,9 @@ namespace Resources\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Resources\Table\ResourceTable;
 use Resources\Table\ColonyTable;
 use Resources\Table\UserTable;
-
 use Resources\Entity\Resource;
 use Resources\Entity\Colony;
 use Resources\Entity\User;
@@ -17,7 +15,7 @@ class ResourcesServiceFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return User
+     * @return ResourcesService
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

@@ -3,7 +3,6 @@ namespace Fleet\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Fleet\Entity\Fleet;
 use Fleet\Entity\FleetShip;
 use Fleet\Entity\FleetPersonell;
@@ -16,12 +15,10 @@ use Fleet\Table\FleetPersonellTable;
 use Fleet\Table\FleetResearchTable;
 use Fleet\Table\FleetResourceTable;
 use Fleet\Table\FleetOrderTable;
-
 use Galaxy\Entity\System;
 use Galaxy\Entity\Colony;
 use Galaxy\Table\SystemTable;
 use Galaxy\Table\ColonyTable;
-
 use Techtree\Entity\ColonyShip;
 use Techtree\Entity\ColonyPersonell;
 use Techtree\Entity\ColonyResearch;

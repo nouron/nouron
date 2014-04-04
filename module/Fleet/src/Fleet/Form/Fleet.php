@@ -2,7 +2,6 @@
 namespace Fleet\Form;
 
 use Zend\Form\Form;
-use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\InputFilterProviderInterface;
 
 class Fleet extends Form implements InputFilterProviderInterface

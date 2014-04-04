@@ -2,7 +2,6 @@
 namespace Trade\Form;
 
 use Zend\Form\Form;
-use Zend\InputFilter\InputFilterInterface;
 use Zend\InputFilter\InputFilterProviderInterface;
 
 abstract class AbstractTradeForm extends Form implements InputFilterProviderInterface

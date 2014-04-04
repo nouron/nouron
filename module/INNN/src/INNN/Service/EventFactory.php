@@ -9,7 +9,7 @@ class EventFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return User
+     * @return Event
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

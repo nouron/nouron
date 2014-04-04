@@ -33,7 +33,7 @@ class Resources extends AbstractPlugin
      * Set the session manager
      *
      * @param  Manager $manager
-     * @return FlashMessenger
+     * @return Resources
      */
     public function setSessionManager(Manager $manager)
     {

@@ -1,8 +1,6 @@
 <?php
 namespace User;
 
-use Zend\Mvc\MvcEvent;
-
 class Module
 {
     public function getAutoloaderConfig()

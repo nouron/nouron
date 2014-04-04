@@ -90,7 +90,6 @@ class PersonellService extends AbstractTechnologyService
      * get available action points for current tick
      *
      * @param  string  $type
-     * @param  integer $colonyId
      * @return integer
      */
     public function getAvailableActionPoints($type, $scopeId)
@@ -179,8 +178,7 @@ class PersonellService extends AbstractTechnologyService
      *
      * @param numeric $entityId
      * @param numeric $colonyId
-     * @param numeric $cp
-     * @param string $for 'repair'|'remove'
+     * @param integer $cp
      */
     public function invest($colonyId, $entityId, $action='add', $cp=1)
     {

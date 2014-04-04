@@ -11,7 +11,7 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
      * Set the service locator.
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return TechnologyNameLink
+     * @return Resources
      */
     public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
     {
@@ -30,8 +30,6 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
     }
 
     /**
-     * @param  int $techId
-     * @param  int $colonyId OPTIONAL
      * @return string
      */
     public function __invoke($possessions)

@@ -12,7 +12,6 @@ use Fleet\Entity\FleetPersonell;
 use Fleet\Entity\FleetResearch;
 use Fleet\Entity\FleetResource;
 use Fleet\Entity\FleetOrder;
-
 use Galaxy\Table\ColonyTable;
 use Galaxy\Table\SystemTable;
 use Galaxy\Table\SystemObjectTable;

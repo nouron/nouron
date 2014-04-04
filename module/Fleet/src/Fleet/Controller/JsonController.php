@@ -2,7 +2,6 @@
 namespace Fleet\Controller;
 
 use Zend\View\Model\JsonModel;
-use Zend\View\Model\ViewModel;
 
 class JsonController extends \Nouron\Controller\IngameController
 {

@@ -1,8 +1,6 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
-
 class ColonyShip extends AbstractColonyEntity
 {
     public $ship_id;

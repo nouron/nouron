@@ -65,7 +65,7 @@ class Gateway extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @param  numeric $userId
+     * @param  integer $userId
      * @return Galaxy\Entity\Colony|null
      * @throws Exception if no main colony was found
      */
@@ -97,7 +97,7 @@ class Gateway extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @return \Galaxy\Entity\Colony|null
+     * @return Galaxy\Entity\Colony|null
      */
     public function getCurrentColony()
     {
@@ -120,6 +120,7 @@ class Gateway extends \Nouron\Service\AbstractService
     /**
      *
      * @param  array $coords
+     * @param string $objectType
      * @return ResultSet
      */
     public function getByCoordinates($objectType, array $coords)
@@ -160,7 +161,6 @@ class Gateway extends \Nouron\Service\AbstractService
      * Get planetaries that surrounding a system
      *
      * @param   integer  $systemId
-     * @param   string   $order      OPTIONAL: sql order string
      * @return  \Galaxy\Entity\SystemObject
      */
     public function getSystemObjects($systemId)
@@ -463,7 +463,7 @@ class Gateway extends \Nouron\Service\AbstractService
      * @param  integer|array|string|\Galaxy\Entity\Colony|\Galaxy\Entity\Fleet
      *                  $destination     The Id or Coords of a colony or fleet
      * @param  array    $additionalData  OPTIONAL array with optional target data like trade orders etc.
-     * @return boolean
+     * @return boolean|null
      * @throws \Exception
      */
     public function addOrder($fleet, $order, $destination, $additionalData = null)
@@ -532,6 +532,7 @@ class Gateway extends \Nouron\Service\AbstractService
     /**
      *
      * @param array $path
+     * @param string $order
      * @throws Galaxy_Model_Exception
      */
     protected function _storePathInDb($fleetId, $path, $order, $additionalData)

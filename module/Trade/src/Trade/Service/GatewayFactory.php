@@ -7,7 +7,6 @@ use Trade\Table\ResearchTable;
 use Trade\Table\ResearchView;
 use Trade\Table\ResourceTable;
 use Trade\Table\ResourceView;
-
 use Trade\Entity\Research;
 use Trade\Entity\Resource;
 

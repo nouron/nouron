@@ -37,7 +37,7 @@ abstract class AbstractColonyEntity extends AbstractEntity
     /**
      * Gets the value of level.
      *
-     * @return mixed
+     * @return integer
      */
     public function getLevel()
     {
@@ -63,7 +63,7 @@ abstract class AbstractColonyEntity extends AbstractEntity
     /**
      * Gets the value of status_points.
      *
-     * @return mixed
+     * @return integer
      */
     public function getStatusPoints()
     {
@@ -89,7 +89,7 @@ abstract class AbstractColonyEntity extends AbstractEntity
     /**
      * Gets the value of ap_spend.
      *
-     * @return mixed
+     * @return integer
      */
     public function getApSpend()
     {

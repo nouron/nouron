@@ -47,7 +47,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @param  mixed    $where
+     * @param  string    $where
      * @param  string   $order
      * @param  integer  $offset
      * @param  integer  $limit
@@ -61,7 +61,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @param  mixed    $where
+     * @param  string    $where
      * @param  string   $order
      * @param  integer  $offset
      * @param  integer  $limit
@@ -135,7 +135,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
     /**
      * check if enough resources are on a colony
      *
-     * @param  ResultSet  $costs
+     * @param  \Zend\Db\ResultSet\ResultSetInterface  $costs
      * @param  integer    $colonyId
      * @return boolean
      */
@@ -262,7 +262,6 @@ class ResourcesService extends \Nouron\Service\AbstractService
      * Verringere den ResourcenBesitz
      *
      * @param int $colonyId
-     * @param int $techId
      */
     public function decreaseAmount($colonyId, $resId, $amount)
     {

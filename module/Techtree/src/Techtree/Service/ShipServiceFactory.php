@@ -3,13 +3,11 @@ namespace Techtree\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Techtree\Table\ShipTable;
 use Techtree\Table\ShipCostTable;
 use Techtree\Table\ColonyBuildingTable;
 use Techtree\Table\ColonyResearchTable;
 use Techtree\Table\ColonyShipTable;
-
 use Techtree\Entity\Ship;
 use Techtree\Entity\ShipCost;
 use Techtree\Entity\ColonyBuilding;

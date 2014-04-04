@@ -2,8 +2,6 @@
 namespace Techtree\Controller;
 
 use Zend\View\Model\JsonModel;
-use Zend\View\Model\ViewModel;
-use Techtree\Service\BuildingService;
 
 /**
  *

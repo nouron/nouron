@@ -25,6 +25,7 @@ class Tick
     /**
      *
      * @param string $tick
+     * @param integer $config
      */
     public function __construct($config, $tick = null)
     {
@@ -115,7 +116,7 @@ class Tick
      *
      * (unix timestamp - 4h) / 24 hours = days since 1970-01-01 = current tick
      *
-     * @param date/time/datetime $date
+     * @param integer $time
      */
     public function getTickFromTimestamp($time)
     {

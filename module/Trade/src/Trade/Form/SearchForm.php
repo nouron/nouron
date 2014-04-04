@@ -7,7 +7,6 @@ class SearchForm extends AbstractTradeForm
 {
     /**
      *
-     * @param String $offerType 'resources' or 'technologies'
      * @param array  $items
      * @param int    $range OPTIONAL (default=0: only offers on own planet)
      */

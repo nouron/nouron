@@ -2,7 +2,6 @@
 namespace TechtreeTest\Service;
 
 use Techtree\Service\PersonellService;
-use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
 use Techtree\Table\PersonellTable;
 use Techtree\Table\PersonellCostTable;

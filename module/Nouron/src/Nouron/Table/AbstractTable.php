@@ -2,7 +2,6 @@
 namespace Nouron\Table;
 
 use Zend\Db\TableGateway\TableGateway;
-use Zend\Db\TableGateway\Feature\RowGatewayFeature;
 use Nouron\Entity\EntityInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\ResultSet\ResultSet;
@@ -46,7 +45,7 @@ abstract class AbstractTable extends TableGateway
     /**
      *
      * @param \Zend\Db\Adapter\Adapter $adapter
-     * @param EntityInterface $enitity
+     * @param EntityInterface $entity
      */
     public function __construct(AdapterInterface $adapter, EntityInterface $entity)
     {
@@ -81,7 +80,7 @@ abstract class AbstractTable extends TableGateway
     /**
      *
      * @param string|array $where
-     * @return Ambigous <\Zend\Db\ResultSet\ResultSet, NULL, \Zend\Db\ResultSet\ResultSetInterface>
+     * @return ResultSet <\Zend\Db\ResultSet\ResultSet, NULL, \Zend\Db\ResultSet\ResultSetInterface>
      */
     public function fetchAll($where = null, $order = null)
     {
@@ -138,7 +137,7 @@ abstract class AbstractTable extends TableGateway
      * TODO find a general solution for return type
      *       (now: update returns number of lines, insert return pk)
      *
-     * @return integer|array The primary key
+     * @return integer The primary key
      */
     public function save($entity)
     {

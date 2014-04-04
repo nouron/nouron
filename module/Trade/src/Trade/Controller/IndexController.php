@@ -4,8 +4,6 @@ namespace Trade\Controller;
 use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
 use Trade\Service\Gateway;
-use Techtree\Entity\Research;
-use Resources\Entity\Resource;
 
 class IndexController extends \Nouron\Controller\IngameController
 {

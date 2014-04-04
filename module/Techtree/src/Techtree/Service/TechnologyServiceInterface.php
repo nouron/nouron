@@ -13,15 +13,32 @@ interface TechnologyServiceInterface
 
     public function getEntityCosts($entityId = null);
 
+    /**
+     * @param integer $entityId
+     *
+     * @return boolean
+     */
     public function checkRequiredBuildingsByEntityId($colonyId, $entityId);
 
+    /**
+     * @return boolean
+     */
     public function checkRequiredResearchesByEntityId($colonyId, $entityId);
 
+    /**
+     * @return boolean
+     */
     public function checkRequiredResourcesByEntityId($colonyId, $entityId);
 
     public function invest($colonyId, $entityId, $action='add', $points=1);
 
+    /**
+     * @return void
+     */
     public function levelup($colonyId, $entityId);
 
+    /**
+     * @return void
+     */
     public function leveldown($colonyId, $entityId);
 }

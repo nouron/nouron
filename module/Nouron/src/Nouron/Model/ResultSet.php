@@ -2,7 +2,6 @@
 namespace Nouron\Model;
 
 use Zend\Db\ResultSet\Exception;
-use ArrayObject;
 
 class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
 {

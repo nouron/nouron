@@ -4,10 +4,19 @@ namespace Techtree\Service;
 abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService implements TechnologyServiceInterface
 {
 
+    /**
+     * @return string
+     */
     abstract protected function getEntitiesTableName();
 
+    /**
+     * @return string
+     */
     abstract protected function getColonyEntitiesTableName();
 
+    /**
+     * @return string
+     */
     abstract protected function getEntityCostsTableName();
 
     abstract protected function getEntityIdName();
@@ -49,7 +58,6 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
 
     /**
      * @see \Techtree\Service\TechnologyServiceInterface::getColonyEntities()
-     * @param  numeric|null $entityId OPTIONAL
      * @return ResultSet
      */
     public function getColonyEntities($colonyId = null)
@@ -216,7 +224,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param string  $pointsType  'construction_points'|'research_points'
      * @param numeric $entityId
      * @param numeric $colonyId
-     * @param numeric $points Points to invest
+     * @param integer $points Points to invest
      * @param string  $changeMode 'status'|'progress'
      */
     protected function _invest($pointsType, $colonyId, $entityId, $changeMode='add', $points=1)

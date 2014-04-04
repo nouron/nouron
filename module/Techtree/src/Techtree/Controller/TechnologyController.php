@@ -2,7 +2,6 @@
 namespace Techtree\Controller;
 
 use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
 
 class TechnologyController extends \Nouron\Controller\IngameController
 {

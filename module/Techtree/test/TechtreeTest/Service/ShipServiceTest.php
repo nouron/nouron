@@ -2,7 +2,6 @@
 namespace TechtreeTest\Service;
 
 use Techtree\Service\ShipService;
-use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
 use Techtree\Table\ShipTable;
 use Techtree\Table\ShipCostTable;

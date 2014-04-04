@@ -3,11 +3,9 @@ namespace INNN\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use INNN\Table\MessageTable;
 use INNN\Table\MessageView;
 use User\Table\UserTable;
-
 use User\Entity\User;
 
 class MessageFactory implements FactoryInterface
@@ -15,7 +13,7 @@ class MessageFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return User
+     * @return Message
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

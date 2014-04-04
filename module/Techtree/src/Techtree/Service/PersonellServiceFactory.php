@@ -3,13 +3,11 @@ namespace Techtree\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Techtree\Table\ActionPointTable;
 use Techtree\Table\PersonellTable;
 use Techtree\Table\PersonellCostTable;
 use Techtree\Table\ColonyBuildingTable;
 use Techtree\Table\ColonyPersonellTable;
-
 use Techtree\Entity\ActionPoint;
 use Techtree\Entity\Personell;
 use Techtree\Entity\PersonellCost;

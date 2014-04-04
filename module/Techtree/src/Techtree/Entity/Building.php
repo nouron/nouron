@@ -31,7 +31,7 @@ class Building extends AbstractTechnology
     /**
      * Gets the value of max_level.
      *
-     * @return mixed
+     * @return integer
      */
     public function getMaxLevel()
     {

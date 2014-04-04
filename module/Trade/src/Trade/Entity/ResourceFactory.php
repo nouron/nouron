@@ -2,7 +2,6 @@
 namespace Trade\Entity;
 
 use Trade\Table\Resource;
-
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 

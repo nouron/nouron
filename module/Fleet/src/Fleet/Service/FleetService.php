@@ -4,7 +4,7 @@ namespace Fleet\Service;
 class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractService
 {
     /**
-     * @return \Fleets\Entity\Fleet
+     * @return string
      */
     public function getFleet($fleetId)
     {
@@ -45,8 +45,6 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     /**
      * Get all fleets from coordinates of an colony, system object or system entity.
      *
-     * @param  string  $entityType
-     * @param  integer $id
      * @return ResultSet
      */
     public function getFleetOrdersByFleetIds(array $fleetIds)
@@ -64,7 +62,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
      * @param  integer|array|string|\Galaxy\Entity\Colony|\Fleet\Entity\Fleet
      *                  $destination     The Id or Coords of a colony or fleet
      * @param  array    $additionalData  OPTIONAL array with optional target data like trade orders etc.
-     * @return boolean
+     * @return boolean|null
      * @throws \Exception
      */
     public function addOrder($fleet, $order, $destination, $additionalData = null)
@@ -133,6 +131,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     /**
      *
      * @param array $path
+     * @param string $order
      * @throws Galaxy_Model_Exception
      */
     protected function _storePathInDb($fleetId, $path, $order, $additionalData)
@@ -198,6 +197,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
      * @param  integer      $amount
      * @param  boolean      $isCargo       OPTIONAL set true if use fleet cargo (not fleet itself)
      * @param  boolean      $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
+     * @param string $type
      *
      * @return int          Count of transfered Technologies
      */

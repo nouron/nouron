@@ -3,12 +3,10 @@ namespace Techtree\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Techtree\Table\ResearchTable;
 use Techtree\Table\ResearchCostTable;
 use Techtree\Table\ColonyBuildingTable;
 use Techtree\Table\ColonyResearchTable;
-
 use Techtree\Entity\Research;
 use Techtree\Entity\ResearchCost;
 use Techtree\Entity\ColonyBuilding;
@@ -20,7 +18,7 @@ class ResearchServiceFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return \Techtree\Service\BuildingService
+     * @return ResearchService
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

@@ -3,11 +3,9 @@ namespace Techtree\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-
 use Techtree\Table\BuildingTable;
 use Techtree\Table\BuildingCostTable;
 use Techtree\Table\ColonyBuildingTable;
-
 use Techtree\Entity\Building;
 use Techtree\Entity\BuildingCost;
 use Techtree\Entity\ColonyBuilding;

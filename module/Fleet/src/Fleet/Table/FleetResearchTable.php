@@ -1,9 +1,7 @@
 <?php
 namespace Fleet\Table;
 
-use Nouron\Table\AbstractTable,
-    Nouron\Model\ResultSet,
-    Zend\Db\Adapter\Adapter;
+use Nouron\Table\AbstractTable;
 
 class FleetResearchTable extends AbstractTable
 {

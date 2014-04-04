@@ -2,7 +2,6 @@
 namespace TechtreeTest\Service;
 
 use Techtree\Service\BuildingService;
-use TechtreeTest\Bootstrap;
 use PHPUnit_Framework_TestCase;
 use Techtree\Table\BuildingTable;
 use Techtree\Table\BuildingCostTable;
