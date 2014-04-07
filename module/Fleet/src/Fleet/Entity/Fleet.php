@@ -108,16 +108,6 @@ class Fleet extends AbstractEntity
     }
 
     /**
-     * Gets the value of name.
-     *
-     * @return mixed
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
      * Gets the value of user_id.
      *
      * @return mixed

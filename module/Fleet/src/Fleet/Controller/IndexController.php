@@ -3,6 +3,11 @@ namespace Fleet\Controller;
 
 use Zend\View\Model\ViewModel;
 
+ /**
+  * @method integer getActive(String $itemType)
+  * @method integer getSelected(String $itemType)
+  * @method array selectedIds()
+  */
 class IndexController extends \Nouron\Controller\IngameController
 {
     public function indexAction()
@@ -63,6 +68,7 @@ class IndexController extends \Nouron\Controller\IngameController
     public function createAction()
     {
         if ($this->getRequest()->isPost()) {
+            $sm = $this->getServiceLocator();
             $galaxyService = $sm->get('Galaxy\Service\Gateway');
             $fleetService = $sm->get('Fleet\Service\FleetService');
 
@@ -70,7 +76,6 @@ class IndexController extends \Nouron\Controller\IngameController
             $colony = $galaxyService->getColony($this->getActive('colony'));
 
             \Zend\Debug\Debug::dump($colony);
-            exit();
 
             # Flotten nur auf eigenen Kolonien erstellen!
             if ($this->getRequest()->isPost()) {

@@ -18,20 +18,17 @@ class GetActive extends AbstractPlugin
     public function __invoke($itemType)
     {
         $sm = $this->getController()->getServiceLocator();
-
         switch (strtolower($itemType)) {
             case 'user':   $idKey = 'uid'; break;
             case 'colony': $idKey = 'cid'; break;
             case 'fleet':  $idKey = 'fid'; break;
             default: return null;
         }
-
         $itemType = ucfirst(strtolower($itemType));
-
+        $itemId = $this->getController()->params()->fromRoute($idKey);
         if (isset($_SESSION[$itemType+'Id'])) {
             $itemId = $_SESSION[$itemType+'Id'];
         } else {
-
             if ($itemType == 'User') {
                 // getActiveUser/getLoggedInUser
                 $itemId = 3;
@@ -40,10 +37,10 @@ class GetActive extends AbstractPlugin
                 $itemId = 1;
             } elseif ($itemType == 'Fleet') {
                 // getActiveFleet
+                $itemId = 10;
             }
         }
         $_SESSION[$itemType.'Id'] = $itemId;
-
         return $itemId;
     }
 

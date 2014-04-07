@@ -34,9 +34,9 @@ class GetSelected extends AbstractPlugin
         $itemId = $this->getController()->params()->fromRoute($idKey);
         if (!$itemId && isset($_SESSION['selected'.$itemType.'Id'])) {
             $itemId = $_SESSION['selected'.$itemType.'Id'];
-        } else
-        $_SESSION['selected'.$itemType.'Id'] = $itemId;
-
+        } else {
+            $_SESSION['selected'.$itemType.'Id'] = $itemId;
+        }
         return $itemId;
     }
 
