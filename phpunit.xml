@@ -2,9 +2,9 @@
 
 <phpunit bootstrap="./test/Bootstrap.php" colors="false">
     <testsuites>
-        <!--<testsuite name="techtree">
+        <testsuite name="techtree">
             <directory>./module/Techtree/test/TechtreeTest</directory>
-        </testsuite>-->
+        </testsuite>
         <!--<testsuite name="galaxy">
             <directory>./module/Galaxy/test/GalaxyTest</directory>
         </testsuite>-->
