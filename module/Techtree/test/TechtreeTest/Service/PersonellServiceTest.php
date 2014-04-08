@@ -19,7 +19,7 @@ class PersonellServiceTest extends PHPUnit_Framework_TestCase
         $dbAdapter = new \Zend\Db\Adapter\Adapter(
             array(
                 'driver' => 'Pdo_Sqlite',
-                'database' => '../../../data/db/test.db'
+                'database' => '../data/db/test.db'
             )
         );
 

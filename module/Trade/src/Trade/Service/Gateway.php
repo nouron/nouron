@@ -120,7 +120,7 @@ class Gateway extends \Nouron\Service\AbstractService
             throw new Exception('invalid trade offer type');
         }
 
-        $result = $table->delete($primaryKey);
+        $result = $table->deleteEntity($primaryKey);
         return (bool) $result;
     }
 }

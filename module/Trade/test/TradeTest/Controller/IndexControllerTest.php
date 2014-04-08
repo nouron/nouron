@@ -10,16 +10,29 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
 
     public function setUp()
     {
+        $basePath = __DIR__ . '/../../../../../';
         $this->setApplicationConfig(
-            #include '../../../../../config/application.config.php'
-            include 'd:/htdocs/nouron/nouron/config/application.config.php'
+            include $basePath . 'config/application.config.php'
         );
         parent::setUp();
     }
 
-    public function testTechnologiesActionCanBeAccessed()
+    public function testResearchesActionCanBeAccessed()
     {
-        $this->dispatch('/trade/technologies');
+        $this->dispatch('/trade/researches');
+
+        $this->markTestSkipped();
+//         $this->assertResponseStatusCode(200);
+
+//         $this->assertModuleName('Trade');
+//         $this->assertControllerName('Trade\Controller\Index');
+//         $this->assertControllerClass('IndexController');
+//         $this->assertMatchedRouteName('trade');
+    }
+
+    public function testResourcesActionCanBeAccessed()
+    {
+        $this->dispatch('/trade/resources');
 
         $this->markTestSkipped();
 //         $this->assertResponseStatusCode(200);

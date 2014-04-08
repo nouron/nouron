@@ -14,7 +14,7 @@ abstract class AbstractService implements LoggerAwareInterface
     /**
      * @var array
      */
-    protected $tables;
+    public $tables;
 
     /**
      * @var array

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="./module/Techtree/test/Bootstrap.php" colors="false">
+<phpunit bootstrap="./test/Bootstrap.php" colors="false">
     <testsuites>
-        <testsuite name="techtree">
+        <!--<testsuite name="techtree">
             <directory>./module/Techtree/test/TechtreeTest</directory>
+        </testsuite>-->
+        <!--<testsuite name="galaxy">
+            <directory>./module/Galaxy/test/GalaxyTest</directory>
+        </testsuite>-->
+        <testsuite name="trade">
+            <directory>./module/Trade/test/TradeTest</directory>
         </testsuite>
     </testsuites>
 </phpunit>
