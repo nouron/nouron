@@ -10,7 +10,7 @@ class FleetOrderFactory implements FactoryInterface
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new FleetOrder(new FleetOrderTable($db));
+        $mapper    = new FleetOrder(new \Fleet\Table\FleetOrderTable($db));
         return $mapper;
     }
 }

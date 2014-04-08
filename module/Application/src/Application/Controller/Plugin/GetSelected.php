@@ -3,6 +3,7 @@
 namespace Application\Controller\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
+use Zend\Session\SessionManager;
 
 class GetSelected extends AbstractPlugin
 {
@@ -17,7 +18,7 @@ class GetSelected extends AbstractPlugin
      */
     public function __invoke($itemType)
     {
-        $sm = $this->getController()->getServiceLocator();
+        #$sm = $this->getController()->getServiceLocator();
 
         switch (strtolower($itemType)) {
             case 'user':   $idKey = 'uid'; break;
@@ -43,10 +44,10 @@ class GetSelected extends AbstractPlugin
     /**
      * Set the session manager
      *
-     * @param  Manager $manager
+     * @param  SessionManager $manager
      * @return GetSelected
      */
-    public function setSessionManager(Manager $manager)
+    public function setSessionManager(SessionManager $manager)
     {
         $this->session = $manager;
         return $this;
@@ -61,7 +62,7 @@ class GetSelected extends AbstractPlugin
      */
     public function getSessionManager()
     {
-        if (!$this->session instanceof Manager) {
+        if (!$this->session instanceof SessionManager) {
             $this->setSessionManager(new SessionManager());
         }
         return $this->session;
