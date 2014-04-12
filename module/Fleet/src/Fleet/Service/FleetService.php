@@ -96,8 +96,8 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                     case 'defend': $object = $this->getFleet($destination);  break;
                     case 'attack': $object = $this->getFleet($destination);  break;
                     case 'join':   $object = $this->getFleet($destination);  break;
-                    case 'devide': break; // nothing
-                    default:       break; // nothing
+                    #case 'devide': break; // nothing
+                    default:       $object = $this->getFleet($destination);  break;
                 }
 
                 $destinationCoords = $object->getCoords();
@@ -341,10 +341,10 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                 }
             }
 
+            $db = $fleetresourceTable->getAdapter()->getDriver()->getConnection();
             try {
                 $colonyresourceTable = $this->getTable('colonyresource');
                 $fleetresourceTable  = $this->getTable('fleetresource');
-                $db = $fleetresourceTable->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
                 $resOnColony['amount'] = $resOnColony['amount'] - $amount;
                 $colonyresourceTable->save($resOnColony);

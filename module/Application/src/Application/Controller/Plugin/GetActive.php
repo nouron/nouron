@@ -25,13 +25,16 @@ class GetActive extends AbstractPlugin
         #$itemType = ucfirst(strtolower($itemType));
         $itemId = $this->getController()->params()->fromRoute($idKey);
 
-        $identifier = $itemType+'Id';
-        $session = new Container('activeIds');
-        $itemId = $session->$identifier;
+        if (!$itemId) {
+            $identifier = $itemType+'Id';
+            $session = new Container('activeIds');
+            $itemId = $session->$identifier;
+        }
 
         if (!$itemId) {
             if ($itemType == 'colony') {
                 // getActiveColony
+                $session = new Container('activeIds');
                 $userId = $session->userId;
                 $galaxyService = $sm->get('Galaxy\Service\Gateway');
                 $colony = $galaxyService->getPrimeColony($userId);

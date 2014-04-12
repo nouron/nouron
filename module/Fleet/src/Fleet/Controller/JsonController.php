@@ -3,6 +3,9 @@ namespace Fleet\Controller;
 
 use Zend\View\Model\JsonModel;
 
+/**
+ * @method string getActive(String $itemType)
+ */
 class JsonController extends \Nouron\Controller\IngameController
 {
     /**
@@ -12,21 +15,18 @@ class JsonController extends \Nouron\Controller\IngameController
     {
         $fleetId = (int) $this->params()->fromPost('id');
         if (empty($fleetId)) {
-            $fleetId = $_SESSION['fleetId'];
+            $fleetId = $this->getActive('fleet');
         }
+
+        $colonyId = $this->getActive('colony');
 
         $itemType = $this->params()->fromPost('itemType');
         $itemId   = (int) $this->params()->fromPost('itemId');
         $amount   = (int) $this->params()->fromPost('amount');
         $isCargo  = (bool) $this->params()->fromPost('isCargo');
 
-        //get Colony Id
         $sm = $this->getServiceLocator();
-        $gw = $sm->get('Galaxy\Service\Gateway');
         $fleetService = $sm->get('Fleet\Service\FleetService');
-        $colony = $gw->getCurrentColony();
-        $colonyId = (int) $colony->id;
-
         if (strtolower($itemType) == 'ship') {
             $transferred = $fleetService->transferShip($colony, $fleetId, $itemId, $amount, $isCargo);
         } elseif (strtolower($itemType) == 'research') {
@@ -76,13 +76,13 @@ class JsonController extends \Nouron\Controller\IngameController
         return new JsonModel($fleetTechs);
     }
 
-    /**
-     * @return \Zend\View\Model\JsonModel
-     */
-    public function getFleetShipsAction()
-    {
-        return $this->getFleetEntitiesAction('ship');
-    }
+#    /**
+#     * @return \Zend\View\Model\JsonModel
+#     */
+#    public function getFleetShipsAction()
+#    {
+#        return $this->getFleetEntitiesAction('ship');
+#    }
 
     /**
      * @return \Zend\View\Model\JsonModel
@@ -91,17 +91,19 @@ class JsonController extends \Nouron\Controller\IngameController
     {
         $fleetId = (int) $this->params()->fromRoute('id');
         if (empty($fleetId)) {
-            $fleetId = $_SESSION['fleetId'];
+            $fleetId = $this->getActive('fleet');
         }
+
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Fleet\Service\FleetService');
         $resGw = $sm->get('Resources\Service\ResourcesService');
         $resources = $resGw->getResources()->getArrayCopy('id');
-        $fleetRes = $gw->getFleetResources("fleet_id = $fleetId");
+        $fleetRes  = $gw->getFleetResources("fleet_id = $fleetId");
         $fleetResArray = $fleetRes->getArrayCopy('resource_id');
 
         foreach ($fleetResArray as $resId => $tmp) {
-            $tmp['name'] = $sm->get('translator')->translate($resources[$resId]['name']);
+            $tmp['name'] = $sm->get('translator')
+                              ->translate($resources[$resId]['name']);
             $fleetResArray[$resId] = $tmp;
         }
 

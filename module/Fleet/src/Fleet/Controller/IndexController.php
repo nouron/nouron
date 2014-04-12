@@ -16,7 +16,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $userId = $this->getActive('user');
 
-        $tick     = $sm->get('Nouron\Service\Tick');
+        #$tick     = $sm->get('Nouron\Service\Tick');
 
         # params from route
         $selectedIds = $this->selectedIds();
@@ -79,6 +79,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
             # Flotten nur auf eigenen Kolonien erstellen!
             if ($this->getRequest()->isPost()) {
+                $form = new \Galaxy\Form\Fleet();
                 $form->setData($this->getRequest()->getPost());
                 if ($form->isValid()) {
                     $newEntity = $form->getData();
@@ -89,8 +90,7 @@ class IndexController extends \Nouron\Controller\IngameController
                     $newEntity['spot'] = $colony->getSpot();
                     $newEntity['user_id'] = $colony->getUserId();
                     $fid = $fleetService->saveFleet($newEntity);
-                    $form = new \Galaxy\Form\Fleet();
-                    $success = true;
+                    #$success = true;
                     \Zend\Debug\Debug::dump($fid);
                 } else {
                     \Zend\Debug\Debug::dump($form);

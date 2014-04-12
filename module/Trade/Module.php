@@ -16,8 +16,6 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
         \Zend\Validator\AbstractValidator::setDefaultTranslator(
             new \Zend\Mvc\I18n\Translator($translator)
         );
-
-        $em = $e->getApplication()->getEventManager();
     }
 
     public function getAutoloaderConfig()

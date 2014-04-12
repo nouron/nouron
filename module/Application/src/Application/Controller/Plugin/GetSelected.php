@@ -14,7 +14,7 @@ class GetSelected extends AbstractPlugin
      */
     public function __invoke($itemType)
     {
-        $sm = $this->getController()->getServiceLocator();
+        #$sm = $this->getController()->getServiceLocator();
         $itemType = strtolower($itemType);
         switch ($itemType) {
             case 'user':   $idKey = 'uid'; break;
