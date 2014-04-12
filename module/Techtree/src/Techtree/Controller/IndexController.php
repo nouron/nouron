@@ -7,14 +7,12 @@ use Techtree\Service\BuildingService;
 class IndexController extends \Nouron\Controller\IngameController
 {
     /**
-     * Zeigt den Techtree an und ermoeglicht das Bauen und Forschen mithilfe der Techtree-Build-Optionen
+     * Zeigt den Techtree an und ermoeglicht das Bauen und Forschen mithilfe
+     * der Techtree-Build-Optionen
      */
     public function indexAction()
     {
         $sm = $this->getServiceLocator();
-
-        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
-
         $colonyId = $this->getActive('colony');
         $tick     = $sm->get('Nouron\Service\Tick');
 

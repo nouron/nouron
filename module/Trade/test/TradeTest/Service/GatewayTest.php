@@ -41,30 +41,17 @@ class GatewayTest extends PHPUnit_Framework_TestCase
                                           ->disableOriginalConstructor()
                                           ->getMock();
 
-        $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
-
-#        $tableMocks = array();
-#        $tableMocks['researches'] = $this->getMockBuilder('Trade\Table\Research')
-#                                         ->disableOriginalConstructor()
-#                                         ->getMock();
-#        $tableMocks['resources']  = $this->getMockBuilder('Trade\Table\Resource')
-#                                         ->disableOriginalConstructor()
-#                                         ->getMock();
-#
-#        $tick   = $this->getMockBuilder('Nouron\Service\Tick')
-#                       ->disableOriginalConstructor()
-#                       ->getMock();
-#        $tick->setTickCount(1234);
-#
-#        $serviceMocks = array();
-#        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
-#                                          ->disableOriginalConstructor()
-#                                          ->getMock();
-#        $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
-#                                          ->disableOriginalConstructor()
-#                                          ->getMock();
+        $paramsMap = array(
+            array(1,99, false),
+            array(1,3, true)
+        );
+        $galaxyService = $this->getMockBuilder('Galaxy\Service\Gateway')
+                              ->disableOriginalConstructor()
+                              ->getMock();
+        $galaxyService->expects($this->any())
+                      ->method('checkColonyOwner')
+                      ->will($this->returnValueMap($paramsMap));
+        $serviceMocks['galaxy'] = $galaxyService;
 
         $this->_gateway = new Gateway($tick, $tables, $serviceMocks);
         $logger = $this->getMockBuilder('Zend\Log\Logger')
@@ -117,50 +104,89 @@ class GatewayTest extends PHPUnit_Framework_TestCase
         $objects = $this->_gateway->getResources();
     }
 
-    public function testAddOffer()
+    public function testAddResourceOffer()
     {
-        # alter mocks
-        $galaxyService = $this->_gateway->getService( 'galaxy');
-        $galaxyService->expects($this->once())
-                      ->method('checkColonyOwner')
-                      ->will($this->returnValue(true));
-        $this->_gateway->setService('galaxy', $galaxyService);
-
-        $resourcesTable = $this->getMockBuilder('Trade\Table\ResourcesTable')
-                              ->disableOriginalConstructor()
-                              ->getMock();
-
-        $resourcesTable->expects($this->once())
-                      ->method('getEntity')
-                      ->will($this->returnValue(array(
-                            'colony_id' => 0,
-                            'direction' => 1,
-                            'resource_id' => 3
-                      )));
-        $resourcesTable->expects($this->once())
-                      ->method('save')
-                      ->will($this->returnValue(true));
-        $this->_gateway->setTable('resources', $resourcesTable);
-        # end of alter mocks
-
         $data = array(
-            'item_type'=>'resource',
-            'item_id' => 3,
-            'colony_id' => 0,
+            'colony_id' => 1,
             'direction' => 1,
+            'resource_id' => 3,
             'amount' => 100,
             'price' => 50,
             'restriction' => 0,
         );
-        $result = $this->_gateway->addOffer($data);
+        $result = $this->_gateway->addResourceOffer($data);
+        $this->assertFalse($result); // missing user id
+
+        $data['user_id'] = 99;
+        $result = $this->_gateway->addResourceOffer($data);
+        $this->assertFalse($result); // user is not owner of colony
+
+        $data['user_id'] = 3;
+        $result = $this->_gateway->addResourceOffer($data);
+        $this->assertTrue($result);
+
+    }
+
+    public function testAddResearchOffer()
+    {
+        $data = array(
+            'colony_id' => 1,
+            'direction' => 1,
+            'research_id' => 27,
+            'amount' => 2,
+            'price' => 50,
+            'restriction' => 0,
+        );
+        $result = $this->_gateway->addResearchOffer($data);
+        $this->assertFalse($result); // missing user id
+
+        $data['user_id'] = 99;
+        $result = $this->_gateway->addResearchOffer($data);
+        $this->assertFalse($result); // user is not owner of colony
+
+        $data['user_id'] = 3;
+        $result = $this->_gateway->addResearchOffer($data);
+        $this->assertTrue($result);
+
+    }
+
+    public function testRemoveResourceOffer()
+    {
+        $data = array(
+            'colony_id' => 1,
+            'resource_id' => 8,
+            'direction' => 0
+        );
+
+        $result = $this->_gateway->removeResourceOffer($data);
+        $this->assertFalse($result); // missing user id
+
+        $data['user_id'] = 99;
+        $result = $this->_gateway->removeResourceOffer($data);
+        $this->assertFalse($result); // user is not owner of colony
+
+        $data['user_id'] = 3;
+        $result = $this->_gateway->removeResourceOffer($data);
         $this->assertTrue($result);
     }
 
-    public function testRemoveOffer()
+    public function testRemoveResearchOffer()
     {
-        $data = array();
-        $this->_gateway->removeResourceOffer($data);
-        $this->_gateway->removeResearchOffer($data);
-        $this->markTestIncomplete();
+        $data = array(
+            'colony_id' => 1,
+            'research_id' => 35,
+            'direction' => 0
+        );
+
+        $result = $this->_gateway->removeResearchOffer($data);
+        $this->assertFalse($result); // missing user id
+
+        $data['user_id'] = 99;
+        $result = $this->_gateway->removeResearchOffer($data);
+        $this->assertFalse($result); // user is not owner of colony
+
+        $data['user_id'] = 3;
+        $result = $this->_gateway->removeResearchOffer($data);
+        $this->assertTrue($result);
     }
 }

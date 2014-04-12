@@ -194,10 +194,10 @@ abstract class AbstractTable extends TableGateway
     {
         if (is_array($id)) {
             $this->_validateId($id, $this->getPrimary());
-            $this->delete($id);
+            return $this->delete($id);
         } else {
             $this->_validateId($id);
-            $this->delete(array('id' => $id));
+            return $this->delete(array('id' => $id));
         }
     }
 

@@ -17,7 +17,7 @@ class SelectedIds extends AbstractPlugin
      */
     public function __invoke()
     {
-        $sm = $this->getController()->getServiceLocator();
+        #$sm = $this->getController()->getServiceLocator();
 
         $userId = $this->getController()->params()->fromRoute('uid');
         if (!$userId && isset($_SESSION['userId'])) {

@@ -9,12 +9,9 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
 
     public function onBootstrap($e)
     {
-        $sm = $e->getApplication()->getServiceManager();
-
         \Locale::setDefault('de_DE');
-        $translator = $e->getApplication()
-                        ->getServiceManager()
-                        ->get('translator');
+        $sm = $e->getApplication()->getServiceManager();
+        $translator = $sm->get('translator');
 
         \Zend\Validator\AbstractValidator::setDefaultTranslator(
             new \Zend\Mvc\I18n\Translator($translator)

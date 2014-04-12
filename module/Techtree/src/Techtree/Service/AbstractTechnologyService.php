@@ -19,6 +19,9 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      */
     abstract protected function getEntityCostsTableName();
 
+    /**
+     * @return string
+     */
     abstract protected function getEntityIdName();
 
     /**

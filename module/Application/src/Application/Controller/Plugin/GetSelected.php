@@ -3,24 +3,20 @@
 namespace Application\Controller\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
-use Zend\Session\SessionManager;
+use Zend\Session\Container;
 
 class GetSelected extends AbstractPlugin
 {
     /**
-     * @var Manager
-     */
-    protected $session;
-
-    /**
      *
-     * @return multitype:unknown
+     * @param string $itemType
+     * @return integer|null
      */
     public function __invoke($itemType)
     {
-        #$sm = $this->getController()->getServiceLocator();
-
-        switch (strtolower($itemType)) {
+        $sm = $this->getController()->getServiceLocator();
+        $itemType = strtolower($itemType);
+        switch ($itemType) {
             case 'user':   $idKey = 'uid'; break;
             case 'system': $idKey = 'sid'; break;
             case 'object': $idKey = 'oid'; break;
@@ -30,41 +26,14 @@ class GetSelected extends AbstractPlugin
             default:       $idKey = 'id';  break;
         }
 
-        $itemType = ucfirst(strtolower($itemType));
-
         $itemId = $this->getController()->params()->fromRoute($idKey);
-        if (!$itemId && isset($_SESSION['selected'.$itemType.'Id'])) {
-            $itemId = $_SESSION['selected'.$itemType.'Id'];
-        } else {
-            $_SESSION['selected'.$itemType.'Id'] = $itemId;
+        if (!$itemId) {
+            $identifier = $itemType+'Id';
+            $session = new Container('selectedIds');
+            $itemId = $session->$identifier;
         }
+
+        $session->$identifier = $itemId;
         return $itemId;
-    }
-
-    /**
-     * Set the session manager
-     *
-     * @param  SessionManager $manager
-     * @return GetSelected
-     */
-    public function setSessionManager(SessionManager $manager)
-    {
-        $this->session = $manager;
-        return $this;
-    }
-
-    /**
-     * Retrieve the session manager
-     *
-     * If none composed, lazy-loads a SessionManager instance
-     *
-     * @return Manager
-     */
-    public function getSessionManager()
-    {
-        if (!$this->session instanceof SessionManager) {
-            $this->setSessionManager(new SessionManager());
-        }
-        return $this->session;
     }
 }

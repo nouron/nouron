@@ -3,72 +3,50 @@
 namespace Application\Controller\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
-use Zend\Session\SessionManager;
+use Zend\Session\Container;
 
 class GetActive extends AbstractPlugin
 {
     /**
-     * @var Manager
-     */
-    protected $session;
-
-    /**
      *
-     * @return multitype:unknown
+     * @param string $itemType
+     * @return integer|null
      */
     public function __invoke($itemType)
     {
-        #$sm = $this->getController()->getServiceLocator();
-        switch (strtolower($itemType)) {
+        $sm = $this->getController()->getServiceLocator();
+        $itemType = strtolower($itemType);
+        switch ($itemType) {
             case 'user':   $idKey = 'uid'; break;
             case 'colony': $idKey = 'cid'; break;
             case 'fleet':  $idKey = 'fid'; break;
             default: return null;
         }
-        $itemType = ucfirst(strtolower($itemType));
+        #$itemType = ucfirst(strtolower($itemType));
         $itemId = $this->getController()->params()->fromRoute($idKey);
-        if (isset($_SESSION[$itemType+'Id'])) {
-            $itemId = $_SESSION[$itemType+'Id'];
-        } else {
-            if ($itemType == 'User') {
-                // getActiveUser/getLoggedInUser
-                $itemId = 3;
-            } elseif ($itemType == 'Colony') {
+
+        $identifier = $itemType+'Id';
+        $session = new Container('activeIds');
+        $itemId = $session->$identifier;
+
+        if (!$itemId) {
+            if ($itemType == 'colony') {
                 // getActiveColony
-                $itemId = 1;
-            } elseif ($itemType == 'Fleet') {
+                $userId = $session->userId;
+                $galaxyService = $sm->get('Galaxy\Service\Gateway');
+                $colony = $galaxyService->getPrimeColony($userId);
+                $itemId = $colony->getId();
+            } elseif ($itemType == 'fleet') {
                 // getActiveFleet
-                $itemId = 10;
+                $itemId = 10; // TODO: get real value
+            } elseif ($itemType == 'user') {
+                // userId has to be set in Module::onBootstrap() after checking authentification!
+                throw new Exception('userId was not set!');
+            } else {
+                return null; //unsupported yet
             }
         }
-        $_SESSION[$itemType.'Id'] = $itemId;
+        $session->$identifier = $itemId;
         return $itemId;
-    }
-
-    /**
-     * Set the session manager
-     *
-     * @param  SessionManager $manager
-     * @return GetActive
-     */
-    public function setSessionManager(SessionManager $manager)
-    {
-        $this->session = $manager;
-        return $this;
-    }
-
-    /**
-     * Retrieve the session manager
-     *
-     * If none composed, lazy-loads a SessionManager instance
-     *
-     * @return Manager
-     */
-    public function getSessionManager()
-    {
-        if (!$this->session instanceof SessionManager) {
-            $this->setSessionManager(new SessionManager());
-        }
-        return $this->session;
     }
 }

@@ -4,16 +4,22 @@ namespace Techtree\Service;
 class ColonyService extends \Nouron\Service\AbstractService
 {
     /**
-     *
+     * @var integer
      */
     private $_colony_id = null;
 
+    /**
+     * @param integer
+     */
     public function setColonyId($id)
     {
         $this->_validateId($id);
         $this->_colony_id = (int) $id;
     }
 
+    /**
+     * @return integer
+     */
     public function getColonyId()
     {
         return $this->_colony_id;
@@ -24,7 +30,8 @@ class ColonyService extends \Nouron\Service\AbstractService
      */
     public function getBuildings()
     {
-        return $this->getTable('colony_buildings')->fetchAll('colony_id = ' . $this->getColonyId());
+        return $this->getTable('colony_buildings')
+                    ->fetchAll('colony_id = ' . $this->getColonyId());
     }
 
     /**
@@ -32,7 +39,8 @@ class ColonyService extends \Nouron\Service\AbstractService
      */
     public function getResearches()
     {
-        return $this->getTable('colony_researches')->fetchAll('colony_id = ' . $this->getColonyId());
+        return $this->getTable('colony_researches')
+                    ->fetchAll('colony_id = ' . $this->getColonyId());
     }
 
     /**
@@ -40,7 +48,8 @@ class ColonyService extends \Nouron\Service\AbstractService
      */
     public function getShips()
     {
-        return $this->getTable('colony_ships')->fetchAll('colony_id = ' . $this->getColonyId());
+        return $this->getTable('colony_ships')
+                    ->fetchAll('colony_id = ' . $this->getColonyId());
     }
 
     /**
@@ -48,7 +57,8 @@ class ColonyService extends \Nouron\Service\AbstractService
      */
     public function getPersonell()
     {
-        return $this->getTable('colony_personell')->fetchAll('colony_id = ' . $this->getColonyId());
+        return $this->getTable('colony_personell')
+                    ->fetchAll('colony_id = ' . $this->getColonyId());
     }
 
     /**

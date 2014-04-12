@@ -51,7 +51,13 @@ class Gateway extends \Nouron\Service\AbstractService
         if (isset($this->logger)) {
             $this->logger->log(\Zend\Log\Logger::INFO, "store new Offer");
         }
-        $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $data['user_id']);
+
+        if (isset($data['user_id'])) {
+            // not the best solution but works for now
+            $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $data['user_id']);
+        } else {
+            $ownerCheck = false;
+        }
 
         if ($ownerCheck) {
             $offer = array(
@@ -63,10 +69,10 @@ class Gateway extends \Nouron\Service\AbstractService
             );
 
             if ($type == 'research') {
-                $offer['research_id'] = $data['item_id'];
+                $offer['research_id'] = $data['research_id'];
                 $table = $this->getTable('researches');
             } elseif ($type == 'resource') {
-                $offer['resource_id'] = $data['item_id'];
+                $offer['resource_id'] = $data['resource_id'];
                 $table = $this->getTable('resources');
             } else {
                 throw new Exception('invalid trade offer type');
@@ -74,8 +80,11 @@ class Gateway extends \Nouron\Service\AbstractService
 
             $result = $table->save($offer);
             return (bool) $result;
+
         } else {
-            $this->logger->log(\Zend\Log\Logger::ERR, "add offer failed: user is not owner of selected colony");
+            if (isset($this->logger)) {
+                $this->logger->log(\Zend\Log\Logger::ERR, "add offer failed: user not given or not owner of selected colony");
+            }
             return false;
         }
     }
@@ -87,7 +96,6 @@ class Gateway extends \Nouron\Service\AbstractService
      */
     public function removeResourceOffer(array $primaryKey)
     {
-        $this->logger->log(\Zend\Log\Logger::INFO, $primaryKey);
         return $this->_removeOffer('resource', $primaryKey);
     }
 
@@ -103,24 +111,42 @@ class Gateway extends \Nouron\Service\AbstractService
 
     /**
      * @param  string $type
-     * @param  array $primaryKey
+     * @param  array $data   ATTENTION: this consists of the primary key (colony_id, item_id, direction) PLUS user_id (for owner check)
      * @return boolean
      */
-    private function _removeOffer($type, array $primaryKey)
+    private function _removeOffer($type, array $data)
     {
+
         if (isset($this->logger)) {
             $this->logger->log(\Zend\Log\Logger::INFO, "remove $type offer");
+            $this->logger->log(\Zend\Log\Logger::INFO, $data);
         }
 
-        if ($type == 'research') {
-            $table = $this->getTable('researches');
-        } elseif ($type == 'resource') {
-            $table = $this->getTable('resources');
+        if (isset($data['user_id'])) {
+            // not the best solution but works for now
+            $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $data['user_id']);
         } else {
-            throw new Exception('invalid trade offer type');
+            $ownerCheck = false;
         }
 
-        $result = $table->deleteEntity($primaryKey);
-        return (bool) $result;
+        if ($ownerCheck) {
+            if ($type == 'research') {
+                $table = $this->getTable('researches');
+            } elseif ($type == 'resource') {
+                $table = $this->getTable('resources');
+            } else {
+                throw new Exception('invalid trade offer type');
+            }
+
+            unset($data['user_id']);
+            $affectedRows = $table->deleteEntity($data);
+            return (bool) $affectedRows;
+
+        } else {
+            if (isset($this->logger)) {
+                $this->logger->log(\Zend\Log\Logger::ERR, "remove offer failed: user not given or not owner of selected colony");
+            }
+            return false;
+        }
     }
 }
