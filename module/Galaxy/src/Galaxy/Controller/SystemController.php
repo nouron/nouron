@@ -143,10 +143,10 @@ class SystemController extends \Nouron\Controller\IngameController
 
             $sm = $this->getServiceLocator();
             $galaxyService = $sm->get('Galaxy\Service\Gateway');
-            $fleet = $this->galaxyGateway->getFleet($fleetId);
+            $fleet = $galaxyService->getFleet($fleetId);
 
             if ( $fleet->getUserId() == $this->getActive('user') ) {
-                $this->galaxyGateway->addOrder($order, $fleet, $destination);
+                $galaxyService->addOrder($order, $fleet, $destination);
                 #$this->_flashMessenger->setNamespace('success')->addMessage('order_confirmed');
             } else {
                 #$this->_flashMessenger->setNamespace('error')->addMessage('order_denied');
