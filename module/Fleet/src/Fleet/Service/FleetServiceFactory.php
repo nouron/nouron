@@ -35,7 +35,7 @@ class FleetServiceFactory implements FactoryInterface
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return
+     * @return FleetService
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {

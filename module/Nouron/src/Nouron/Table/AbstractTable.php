@@ -2,10 +2,11 @@
 namespace Nouron\Table;
 
 use Zend\Db\TableGateway\TableGateway;
-use Nouron\Entity\EntityInterface;
 use Zend\Db\Adapter\AdapterInterface;
-use Zend\Db\ResultSet\ResultSet;
-use Zend\Db\ResultSet\ResultSetInterface;
+#use Zend\Db\ResultSet\ResultSet;
+#use Zend\Db\ResultSet\ResultSetInterface;
+use Nouron\Entity\EntityInterface;
+use Nouron\Model\ResultSet;
 
 /**
  * This is the abstract class for all table classes. It implements all standard
@@ -45,13 +46,13 @@ abstract class AbstractTable extends TableGateway
 
     /**
      *
-     * @param \Zend\Db\Adapter\Adapter $adapter
+     * @param AdapterInterface $adapter
      * @param EntityInterface $entity
      */
     public function __construct(AdapterInterface $adapter, EntityInterface $entity)
     {
         $hydrator  = new \Zend\Stdlib\Hydrator\ClassMethods;
-        $resultSet = new \Nouron\Model\ResultSet($hydrator, $entity);
+        $resultSet = new ResultSet($hydrator, $entity);
         $this->entityPrototype = $entity;
 
         parent::__construct($this->getTableName(),

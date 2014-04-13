@@ -229,6 +229,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $colonyId
      * @param integer $points Points to invest
      * @param string  $changeMode 'status'|'progress'
+     * @return boolean
      */
     protected function _invest($pointsType, $colonyId, $entityId, $changeMode='add', $points=1)
     {

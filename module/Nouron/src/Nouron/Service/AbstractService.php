@@ -28,7 +28,7 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /**
      *
-     * @param numeric $tick
+     * @param numeric|object $tick
      * @param array $tables
      * @param array $services OPTIONAL
      */

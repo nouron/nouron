@@ -50,7 +50,7 @@ class Gateway extends \Nouron\Service\AbstractService
     }
 
     /**
-     * @param numeric|Galaxy\Entity\Colony $colony
+     * @param numeric|\Galaxy\Entity\Colony $colony
      * @param numeric $userId
      * @return boolean
      */
@@ -69,7 +69,7 @@ class Gateway extends \Nouron\Service\AbstractService
     /**
      *
      * @param  integer $userId
-     * @return Galaxy\Entity\Colony|null
+     * @return \Galaxy\Entity\Colony|null
      * @throws Exception if no main colony was found
      */
     public function getPrimeColony($userId)

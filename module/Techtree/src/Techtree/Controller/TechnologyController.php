@@ -32,20 +32,34 @@ class TechnologyController extends \Nouron\Controller\IngameController
             case 'personell':
                 $service = $sm->get('Techtree\Service\PersonellService');
                 break;
+            default:
+                throw new \Exception('unknown techtree service');
         }
 
         try {
             if (in_array($order, array('add', 'remove', 'repair'))) {
                 $result = $service->invest($colonyId, $techId, $order, $ap);
-                $message = array('success', $order . ' successfull');
+                if ($result) {
+                    $message = array('success', $order . ' successfull');
+                } else {
+                    $message = array('error', $order . ' failed');
+                }
                 // TODO : OK-Nachricht
             } else if ($order == 'levelup') {
                 $result = $service->levelup($colonyId, $techId);
-                $message = array('success', 'levelup successfull');
+                if ($result) {
+                    $message = array('success', 'levelup successfull');
+                } else {
+                    $message = array('error', 'levelup failed');
+                }
                 // TODO : OK-Nachricht
             } else if ($order == 'leveldown') {
                 $result = $service->leveldown($colonyId, $techId);
-                $message = array('success', 'leveldown successfull');
+                if ($result) {
+                    $message = array('success', 'leveldown successfull');
+                } else {
+                    $message = array('error', 'leveldown failed');
+                }
                 // TODO : OK-Nachricht
             } else {
                 $this->getServiceLocator()
@@ -100,13 +114,13 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $buildings = $buildingService->getEntities()->getArrayCopy('id');
 
         if (array_key_exists($buildingId, $possessions)) {
-            $level    = $possessions[$buildingId]['level'];
+            #$level    = $possessions[$buildingId]['level'];
             $status_points   = $possessions[$buildingId]['status_points'];
-            $ap_spend = $possessions[$buildingId]['ap_spend'];
+            #$ap_spend = $possessions[$buildingId]['ap_spend'];
         } else {
-            $level = 0;
+            #$level = 0;
             $status_points = null;
-            $ap_spend = 0;
+            #$ap_spend = 0;
         }
 
         $result = new ViewModel(
@@ -156,7 +170,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
         $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
-        $colonyBuildings  = $colonyService->getBuildings()->getArrayCopy('building_id');
+        #$colonyBuildings  = $colonyService->getBuildings()->getArrayCopy('building_id');
         $colonyResearches = $colonyService->getResearches()->getArrayCopy('research_id');
         $buildings  = $buildingService->getEntities()->getArrayCopy('id');
         $researches = $researchService->getEntities()->getArrayCopy('id');
