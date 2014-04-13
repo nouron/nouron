@@ -5,6 +5,11 @@ use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
 use Trade\Service\Gateway;
 
+/**
+ * @method integer getActive(String $itemType)
+ * @method integer getSelected(String $itemType)
+ * @method array selectedIds()
+ */
 class IndexController extends \Nouron\Controller\IngameController
 {
     /**
@@ -15,7 +20,7 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
-        $userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\User');
 
         #$techOffers = $gw->getResearches();
         $researchService = $sm->get('Techtree\Service\ResearchService');
@@ -56,9 +61,9 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
-        $userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\User');
 
-        $resourceOffers = $gw->getResources();
+        #$resourceOffers = $gw->getResources();
         $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
         $resources = $resources->getArrayCopy('id');
@@ -115,7 +120,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
     /**
      *
-     * @param array $offers
+     * @param array|object $offers
      * @return \Zend\Paginator\Paginator
      */
     private function _initPaginator($offers)
@@ -127,7 +132,10 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $page = $this->params()->fromRoute('page');
         $page = $page ? $page : 1;
-        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers->getArrayCopy()));
+        if (is_object($offers)) {
+            $offers = $offers->getArrayCopy();
+        }
+        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers));
         $paginator->setCurrentPageNumber($page);
         return $paginator;
     }
@@ -139,18 +147,17 @@ class IndexController extends \Nouron\Controller\IngameController
     public function researchesAction()
     {
         $sm = $this->getServiceLocator();
-        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
 
-        $colonyId = $sm->get('colonyId');
-        $tick     = $sm->get('Nouron\Service\Tick');
+        #$colonyId = $sm->get('colonyId');
+        #$tick     = $sm->get('Nouron\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
 
-        $buildingService = $sm->get('Techtree\Service\ResearchService');
-        $researches = $buildingService->getEntities();
+        $researchService = $sm->get('Techtree\Service\ResearchService');
+        $researches = $researchService->getEntities();
 
-        $tradeService = $sm->get('Trade\Service\Gateway');
-        $userService = $sm->get('User\Service\User');
+        #$tradeService = $sm->get('Trade\Service\Gateway');
+        #$userService = $sm->get('User\Service\User');
         $researches = $researches->getArrayCopy('id');
         $searchForm = new \Trade\Form\SearchForm('researches', $researches);
         $newOfferForm = new \Trade\Form\NewOfferForm('researches', $researches);
@@ -164,7 +171,7 @@ class IndexController extends \Nouron\Controller\IngameController
                 if ($searchForm->isValid()) {
                     $where['direction'] = $post['direction'];
                     if (!empty($post['item_id'])) {
-                        $where['tech_id'] = $post['item_id'];
+                        $where['research_id'] = $post['item_id'];
                     }
                 } else {
                     print_r($searchForm->getMessages());
@@ -190,11 +197,8 @@ class IndexController extends \Nouron\Controller\IngameController
     public function resourcesAction()
     {
         $sm = $this->getServiceLocator();
-
-        $sm->setService('colonyId', 1); // TODO: get colonyId via controller plugin or session
-
-        $colonyId = $sm->get('colonyId');
-        $tick     = $sm->get('Nouron\Service\Tick');
+        #$colonyId = $sm->get('colonyId');
+        #$tick     = $sm->get('Nouron\Service\Tick');
 
         $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();
