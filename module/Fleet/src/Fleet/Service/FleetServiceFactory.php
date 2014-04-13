@@ -3,6 +3,7 @@ namespace Fleet\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Session\Container;
 use Fleet\Entity\Fleet;
 use Fleet\Entity\FleetShip;
 use Fleet\Entity\FleetPersonell;
@@ -26,7 +27,6 @@ use Techtree\Entity\ColonyResearch;
 use Techtree\Table\ColonyShipTable;
 use Techtree\Table\ColonyPersonellTable;
 use Techtree\Table\ColonyResearchTable;
-
 #use Resources\Table\ColonyResourceTable;
 use Resources\Entity\Colony as ColonyResource;
 
@@ -43,6 +43,7 @@ class FleetServiceFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
+        $tables = array();
         $tables['colony'] = new ColonyTable($db, new Colony());
         $tables['system'] = new SystemTable($db, new System());
         $tables['fleet']  = new FleetTable($db, new Fleet());
@@ -60,8 +61,9 @@ class FleetServiceFactory implements FactoryInterface
 
         $service = new FleetService($tick, $tables, array());
         $service->setLogger($logger);
-        if (isset($_SESSION['fleetId'])) {
-            $service->setFleetId($_SESSION['fleet_id']);
+        $session = new Container('activeIds');
+        if (isset($session->fleetId)) {
+            $service->setFleetId($session->fleetId);
         }
         return $service;
     }

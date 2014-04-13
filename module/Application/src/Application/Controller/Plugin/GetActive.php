@@ -30,9 +30,7 @@ class GetActive extends AbstractPlugin
             return $session->userId;
         }
 
-        $sm = $this->getController()->getServiceLocator();
         // first we try to get item id from url param and check if it is user property
-
         $itemId = $this->_getItemIdFromUrlParameterAndCheckOwner($itemType);
 
         // ok, item id not found or given id is not property of user
@@ -63,6 +61,8 @@ class GetActive extends AbstractPlugin
      */
     private function _getItemIdFromUrlParameterAndCheckOwner($itemType)
     {
+        $session = new Container('activeIds');
+        $userId = $session->userId;
         $sm = $this->getController()->getServiceLocator();
         switch (strtolower($itemType)) {
             case 'colony':

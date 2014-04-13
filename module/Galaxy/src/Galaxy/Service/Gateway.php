@@ -1,6 +1,8 @@
 <?php
 namespace Galaxy\Service;
 
+use Zend\Session\Container;
+
 class Gateway extends \Nouron\Service\AbstractService
 {
     /**
@@ -26,6 +28,7 @@ class Gateway extends \Nouron\Service\AbstractService
     }
 
     /**
+     * @param integer $colonyId
      * @return \Galaxy\Entity\Colony
      */
     public function getColony($colonyId)
@@ -47,7 +50,7 @@ class Gateway extends \Nouron\Service\AbstractService
     }
 
     /**
-     * @param numeric|array $colony
+     * @param numeric|Galaxy\Entity\Colony $colony
      * @param numeric $userId
      * @return boolean
      */
@@ -97,24 +100,14 @@ class Gateway extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @return Galaxy\Entity\Colony|null
-     */
-    public function getCurrentColony()
-    {
-        if (!isset($_SESSION['colony'])) {
-            $userId = 3; // TODO: get userId
-            $_SESSION['colony'] = $this->getPrimeColony($userId);
-        }
-        return $_SESSION['colony'];
-    }
-
-    /**
-     *
-     * @param unknown $newColonyId
+     * @param integer $newColonyId
      */
     public function switchCurrentColony($newColonyId)
     {
-        $_SESSION['colony'] = $this->getColony((int) $newColonyId);
+        $session = new Container('activeIds');
+        if ($this->checkColonyOwner($newColonyId, $session->userId)) {
+            $session->colonyId = $newColonyId;
+        }
     }
 
     /**

@@ -4,6 +4,11 @@ namespace INNN\Controller;
 use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
 
+/**
+ * @method integer getActive(String $itemType)
+ * @method integer getSelected(String $itemType)
+ * @method array selectedIds()
+ */
 class MessageController extends \Nouron\Controller\IngameController
 {
     /**
@@ -14,13 +19,11 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Event');
-        $messages = $messageService->getEvents($_SESSION['userId']);
+        $messages = $messageService->getEvents($this->getActive('user'));
 
-        return new ViewModel(
-            array(
-                'messages' => $messages
-            )
-        );
+        return new ViewModel(array(
+            'messages' => $messages
+        ));
     }
 
     /**
@@ -31,13 +34,11 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getInboxMessages($_SESSION['userId']);
+        $messages = $messageService->getInboxMessages($this->getActive('user'));
 
-        return new ViewModel(
-            array(
-                'messages' => $messages
-            )
-        );
+        return new ViewModel(array(
+            'messages' => $messages
+        ));
     }
 
     /**
@@ -48,13 +49,11 @@ class MessageController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $messageService = $sm->get('INNN\Service\Message');
-        $messages = $messageService->getOutboxMessages($_SESSION['userId']);
+        $messages = $messageService->getOutboxMessages($this->getActive('user'));
 
-        return new ViewModel(
-            array(
-                'messages' => $messages
-            )
-        );
+        return new ViewModel(array(
+            'messages' => $messages
+        ));
     }
 
     /**
@@ -95,8 +94,7 @@ class MessageController extends \Nouron\Controller\IngameController
             }
         }
 
-        return new ViewModel(
-            array(
+        return new ViewModel(array(
                 'form' => $form,
                 'flashMessages' => $this->flashMessenger()->getMessages()
             )

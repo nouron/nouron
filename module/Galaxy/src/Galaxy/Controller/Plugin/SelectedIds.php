@@ -3,6 +3,7 @@
 namespace Galaxy\Controller\Plugin;
 
 use Zend\Mvc\Controller\Plugin\AbstractPlugin;
+use Zend\Session\Container;
 
 class SelectedIds extends AbstractPlugin
 {
@@ -19,41 +20,42 @@ class SelectedIds extends AbstractPlugin
     {
         #$sm = $this->getController()->getServiceLocator();
 
+        $session = new Container('selectedIds');
         $userId = $this->getController()->params()->fromRoute('uid');
-        if (!$userId && isset($_SESSION['userId'])) {
-            $userId = $_SESSION['userId'];
+        if (!$userId && isset($session->userId)) {
+            $userId = $session->userId;
         }
-        $_SESSION['userId'] = $userId;
+        $session->userId = $userId;
 
         $systemId = $this->getController()->params()->fromRoute('sid');
-        if (!$systemId && isset($_SESSION['systemId'])) {
-            $systemId = $_SESSION['systemId'];
+        if (!$systemId && isset($session->systemId)) {
+            $systemId = $session->systemId;
         }
-        $_SESSION['systemId'] = $systemId;
+        $session->systemId = $systemId;
 
         $objectId = $this->getController()->params()->fromRoute('pid');
-        if (!$objectId && isset($_SESSION['objectId'])) {
-            $objectId = $_SESSION['objectId'];
+        if (!$objectId && isset($session->objectId)) {
+            $objectId = $session->objectId;
         }
-        $_SESSION['objectId'] = $objectId;
+        $session->objectId = $objectId;
 
         $colonyId = $this->getController()->params()->fromRoute('cid');
-        if (!$colonyId && isset($_SESSION['colonyId'])) {
-            $colonyId = $_SESSION['colonyId'];
+        if (!$colonyId && isset($session->colonyId)) {
+            $colonyId = $session->colonyId;
         }
-        $_SESSION['colonyId'] = $colonyId;
+        $session->colonyId = $colonyId;
 
         $fleetId = $this->getController()->params()->fromRoute('fid');
-        if (!$fleetId && isset($_SESSION['fleetId'])) {
-            $fleetId = $_SESSION['fleetId'];
+        if (!$fleetId && isset($session->fleetId)) {
+            $fleetId = $session->fleetId;
         }
-        $_SESSION['fleetId'] = $fleetId;
+        $session->fleetId = $fleetId;
 
         $techId = $this->getController()->params()->fromRoute('tid');
-        if (!$techId && isset($_SESSION['techId'])) {
-            $techId = $_SESSION['techId'];
+        if (!$techId && isset($session->techId)) {
+            $techId = $session->techId;
         }
-        $_SESSION['techId'] = $techId;
+        $session->techId = $techId;
 
         return array (
             'userId'   => $userId,
@@ -63,32 +65,5 @@ class SelectedIds extends AbstractPlugin
             'fleetId'  => $fleetId,
             'techId'   => $techId,
         );
-    }
-
-    /**
-     * Set the session manager
-     *
-     * @param  Manager $manager
-     * @return SelectedIds
-     */
-    public function setSessionManager(Manager $manager)
-    {
-        $this->session = $manager;
-        return $this;
-    }
-
-    /**
-     * Retrieve the session manager
-     *
-     * If none composed, lazy-loads a SessionManager instance
-     *
-     * @return Manager
-     */
-    public function getSessionManager()
-    {
-        if (!$this->session instanceof Manager) {
-            $this->setSessionManager(new SessionManager());
-        }
-        return $this->session;
     }
 }

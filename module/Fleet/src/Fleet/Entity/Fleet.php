@@ -16,8 +16,7 @@ class Fleet extends AbstractEntity
     /**
      * Sets the value of id.
      *
-     * @param mixed $id the id
-     *
+     * @param integer
      * @return self
      */
     public function setId($id)
@@ -30,8 +29,7 @@ class Fleet extends AbstractEntity
     /**
      * Sets the value of name.
      *
-     * @param mixed $name the name
-     *
+     * @param string $name the name
      * @return self
      */
     public function setFleet($name)
@@ -44,8 +42,7 @@ class Fleet extends AbstractEntity
     /**
      * Sets the value of user_id.
      *
-     * @param mixed $user_id the user_id
-     *
+     * @param integer
      * @return self
      */
     public function setUserId($user_id)
@@ -58,49 +55,43 @@ class Fleet extends AbstractEntity
     /**
      * Sets the value of x.
      *
-     * @param mixed $x the x
-     *
+     * @param integer
      * @return self
      */
     public function setX($x)
     {
         $this->x = $x;
-
         return $this;
     }
 
     /**
      * Sets the value of y.
      *
-     * @param mixed $y the y
-     *
+     * @param integer
      * @return self
      */
     public function setY($y)
     {
         $this->y = $y;
-
         return $this;
     }
 
     /**
      * Sets the value of spot.
      *
-     * @param mixed $spot the spot
-     *
+     * @param integer
      * @return self
      */
     public function setSpot($spot)
     {
         $this->spot = $spot;
-
         return $this;
     }
 
     /**
      * Gets the value of id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getId()
     {
@@ -110,7 +101,7 @@ class Fleet extends AbstractEntity
     /**
      * Gets the value of user_id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getUserId()
     {
@@ -120,7 +111,7 @@ class Fleet extends AbstractEntity
     /**
      * Gets the value of x.
      *
-     * @return mixed
+     * @return integer
      */
     public function getX()
     {
@@ -130,7 +121,7 @@ class Fleet extends AbstractEntity
     /**
      * Gets the value of y.
      *
-     * @return mixed
+     * @return integer
      */
     public function getY()
     {
@@ -140,13 +131,16 @@ class Fleet extends AbstractEntity
     /**
      * Gets the value of spot.
      *
-     * @return mixed
+     * @return integer
      */
     public function getSpot()
     {
         return $this->spot;
     }
 
+    /**
+     * @return array
+     */
     public function getCoords()
     {
         return array(

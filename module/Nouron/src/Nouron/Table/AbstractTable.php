@@ -6,6 +6,7 @@ use Nouron\Entity\EntityInterface;
 use Zend\Db\Adapter\AdapterInterface;
 use Zend\Db\ResultSet\ResultSet;
 use Zend\Db\ResultSet\ResultSetInterface;
+
 /**
  * This is the abstract class for all table classes. It implements all standard
  * methods for table classes so they are 'ready-to-use' for new table classes.

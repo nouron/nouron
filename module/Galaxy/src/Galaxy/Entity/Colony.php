@@ -72,7 +72,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of system_object_id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getSystemObjectId()
     {
@@ -82,8 +82,7 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of system_object_id.
      *
-     * @param mixed $system_object_id the system_object_id
-     *
+     * @param integer $system_object_id the system_object_id
      * @return self
      */
     public function setSystemObjectId($system_object_id)
@@ -96,7 +95,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of spot.
      *
-     * @return mixed
+     * @return integer
      */
     public function getSpot()
     {
@@ -106,21 +105,20 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of spot.
      *
-     * @param mixed $spot the spot
+     * @param integer $spot the spot
      *
      * @return self
      */
     public function setSpot($spot)
     {
-        $this->spot = $spot;
-
+        $this->spot = (int) $spot;
         return $this;
     }
 
     /**
      * Gets the value of user_id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getUserId()
     {
@@ -130,7 +128,7 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of user_id.
      *
-     * @param mixed $user_id the user_id
+     * @param integer $user_id the user_id
      *
      * @return self
      */
@@ -144,7 +142,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of since_tick.
      *
-     * @return mixed
+     * @return integer
      */
     public function getSinceTick()
     {
@@ -154,13 +152,12 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of since_tick.
      *
-     * @param mixed $since_tick the since_tick
-     *
+     * @param integer $since_tick the since_tick
      * @return self
      */
     public function setSinceTick($since_tick)
     {
-        $this->since_tick = $since_tick;
+        $this->since_tick = (int) $since_tick;
 
         return $this;
     }
@@ -168,7 +165,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of is_primary.
      *
-     * @return mixed
+     * @return boolean
      */
     public function getIsPrimary()
     {
@@ -178,13 +175,12 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of is_primary.
      *
-     * @param mixed $is_primary the is_primary
-     *
+     * @param boolean $is_primary
      * @return self
      */
     public function setIsPrimary($is_primary)
     {
-        $this->is_primary = $is_primary;
+        $this->is_primary = (bool) $is_primary;
 
         return $this;
     }
@@ -192,7 +188,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of system_object_name.
      *
-     * @return mixed
+     * @return string
      */
     public function getSystemObjectName()
     {
@@ -202,8 +198,7 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of system_object_name.
      *
-     * @param mixed $system_object_name the system_object_name
-     *
+     * @param string $system_object_name the system_object_name
      * @return self
      */
     public function setSystemObjectName($system_object_name)
@@ -226,21 +221,19 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of x.
      *
-     * @param mixed $x the x
-     *
+     * @param integer $x
      * @return self
      */
     public function setX($x)
     {
-        $this->x = $x;
-
+        $this->x = (int) $x;
         return $this;
     }
 
     /**
      * Gets the value of y.
      *
-     * @return mixed
+     * @return integer
      */
     public function getY()
     {
@@ -250,8 +243,7 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of y.
      *
-     * @param mixed $y the y
-     *
+     * @param integer $y
      * @return self
      */
     public function setY($y)
@@ -264,7 +256,7 @@ class Colony extends AbstractEntity
     /**
      * Gets the value of type_id.
      *
-     * @return mixed
+     * @return integer
      */
     public function getTypeId()
     {
@@ -274,21 +266,19 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of type_id.
      *
-     * @param mixed $type_id the type_id
-     *
+     * @param integer $type_id
      * @return self
      */
     public function setTypeId($type_id)
     {
-        $this->type_id = $type_id;
-
+        $this->type_id = (int) $type_id;
         return $this;
     }
 
     /**
      * Gets the value of sight.
      *
-     * @return mixed
+     * @return integer
      */
     public function getSight()
     {
@@ -298,21 +288,19 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of sight.
      *
-     * @param mixed $sight the sight
-     *
+     * @param integer $sight
      * @return self
      */
     public function setSight($sight)
     {
-        $this->sight = $sight;
-
+        $this->sight = (int) $sight;
         return $this;
     }
 
     /**
      * Gets the value of density.
      *
-     * @return mixed
+     * @return integer
      */
     public function getDensity()
     {
@@ -322,21 +310,19 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of density.
      *
-     * @param mixed $density the density
-     *
+     * @param integer
      * @return self
      */
     public function setDensity($density)
     {
-        $this->density = $density;
-
+        $this->density = (int) $density;
         return $this;
     }
 
     /**
      * Gets the value of radiation.
      *
-     * @return mixed
+     * @return integer
      */
     public function getRadiation()
     {
@@ -346,17 +332,18 @@ class Colony extends AbstractEntity
     /**
      * Sets the value of radiation.
      *
-     * @param mixed $radiation the radiation
-     *
+     * @param integer $radiation
      * @return self
      */
     public function setRadiation($radiation)
     {
         $this->radiation = $radiation;
-
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getCoords()
     {
         return array(
