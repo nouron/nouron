@@ -500,6 +500,35 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     }
 
     /**
+     * Get all fleets from coordinates of an colony, system object or system entity.
+     *
+     * @param  string  $entityType
+     * @param  integer $id
+     * @return ResultSet
+     */
+    public function getFleetsByEntityId($entityType, $id)
+    {
+        $this->_validateId($id);
+
+        switch (strtolower($entityType)) {
+            case 'colony':
+                $table = $this->getTable('colony');
+                break;
+            case 'object':
+                $table = $this->getTable('systemobject');
+                break;
+            case 'system':
+                $table = $this->getTable('system');
+                break;
+            default:
+                return array();
+        }
+
+        $entity = $table->getEntity($id);
+        return $this->getByCoordinates('fleets', array($entity->getX(), $entity->getY()))->getArrayCopy();
+    }
+
+    /**
      *
      * @param  string $type
      * @return array

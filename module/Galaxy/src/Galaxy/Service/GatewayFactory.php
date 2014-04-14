@@ -35,6 +35,7 @@ class GatewayFactory implements FactoryInterface
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
+        $tables = array();
         $tables['colony'] = new ColonyTable($db, new Colony());
         $tables['system'] = new SystemTable($db, new System());
         $tables['fleet']  = new FleetTable($db, new Fleet());

@@ -204,7 +204,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $resources = $resourceService->getResources();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
-        $userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\User');
 
         $resources = $resources->getArrayCopy('id');
         $searchForm = new \Trade\Form\SearchForm('resources', $resources);

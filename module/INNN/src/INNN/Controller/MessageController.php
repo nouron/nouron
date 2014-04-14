@@ -3,6 +3,7 @@ namespace INNN\Controller;
 
 use Zend\View\Model\ViewModel;
 use Zend\View\Model\JsonModel;
+use Zend\Session\Container;
 
 /**
  * @method integer getActive(String $itemType)
@@ -81,8 +82,9 @@ class MessageController extends \Nouron\Controller\IngameController
                     $this->flashMessenger()->setNamespace('error')->addMessage('Error: Recipient not found.');
                     return $this->redirect()->toRoute('messages', array('action'=>'new'));
                 }
+                $session = new Container('activeIds');
                 $data['recipient_id'] = $user['user_id'];
-                $data['sender_id']    = $_SESSION['userId'];
+                $data['sender_id']    = $session->userId;
                 $result = $messageService->sendMessage($data);
                 if ( $result ) {
                     $this->flashMessenger()->setNamespace('success')->addMessage('Successfull!');
@@ -103,8 +105,8 @@ class MessageController extends \Nouron\Controller\IngameController
 
     public function reactAction()
     {
-        $messageId = $this->params('id');
-        $reactionType = $this->params('type');
+        $messageId = $this->params()->fromQuey('id');
+        $reactionType = $this->params()->fromQuey('type');
         $result = $this->react($reactionType, $messageId, false);
         return new JsonModel(array(
             'result' => $result,
@@ -114,13 +116,19 @@ class MessageController extends \Nouron\Controller\IngameController
 
     public function respondAction()
     {
-        $messageId = $this->params('id');
-        $reactionType = $this->params('type');
-        $result = $this->react($reactionType, $messageId, true);
+        $messageId = $this->params()->fromQuey('id');
+        $reactionType = $this->params()->fromQuey('type');
+        $result = $this->react($reactionType, $messageId);
 
+        $sm = $this->getServiceLocator();
+        $messageService = $sm->get('INNN\Service\Message');
+        $message = $messageService->getMessage($messageId);
         if ($result) {
             // redirect to messages//new with given recipient id
-            $this->redirect()->toRoute('messages/', array('action'=>'new', 'recipient_id' => $message['sender_id']));
+            $this->redirect()->toRoute('messages/', array(
+                'action'=>'new',
+                'recipient_id' => $message->getSenderId()
+            ));
         } else {
             return new JsonModel(array(
                 'result' => $result,
@@ -147,7 +155,7 @@ class MessageController extends \Nouron\Controller\IngameController
      */
     public function archiveAction()
     {
-        $messageId = $this->params('id');
+        $messageId = $this->params()->fromQuey('id');
         if (!empty($messageId)) {
             // archive the given message
             return new JsonModel(array(
@@ -171,7 +179,7 @@ class MessageController extends \Nouron\Controller\IngameController
      */
     public function removeAction()
     {
-        $messageId = $this->params('id');
+        $messageId = $this->params()->fromQuey('id');
         return new JsonModel(array(
             'result' => $this->setMessageStatus($messageId, 'deleted'),
             'status' => 'deleted'

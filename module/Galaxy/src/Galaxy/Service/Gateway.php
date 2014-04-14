@@ -95,7 +95,7 @@ class Gateway extends \Nouron\Service\AbstractService
      */
     public function getMainColony($userId)
     {
-        return $this->getPrimeColony();
+        return $this->getPrimeColony($userId);
     }
 
     /**
@@ -127,10 +127,17 @@ class Gateway extends \Nouron\Service\AbstractService
         $y2 = $coords[1] + $radius;
 
         switch (strtolower($objectType)) {
-            case 'fleets':  $table = $this->getTable('fleet'); break;
-            case 'colonies':$table = $this->getTable('colony');break;
-            case 'objects': $table = $this->getTable('systemobject');break;
-            default: return null;break;
+            case 'fleets':
+                $table = $this->getTable('fleet');
+                break;
+            case 'colonies':
+                $table = $this->getTable('colony');
+                break;
+            case 'objects':
+                $table = $this->getTable('systemobject');
+                break;
+            default:
+                return null;
         }
 
         $where = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
@@ -298,57 +305,35 @@ class Gateway extends \Nouron\Service\AbstractService
         return $this->getSystemObject($planetaryId);
     }
 
-    /**
-     * Get all fleets from coordinates of an colony, system object or system entity.
-     *
-     * @param  string  $entityType
-     * @param  integer $id
-     * @return ResultSet
-     */
-    public function getFleetsByEntityId($entityType, $id)
-    {
-        $this->_validateId($id);
+     /**
+      * Get Distance between two coordinates.
+      *
+      * @todo this is not checked yet; what happens at grid borders or negative inputs?
+      *
+      * @param  array $coordsA
+      * @param  array $coordsB
+      * @return int
+      */
+     public function getDistance(array $coordsA, array $coordsB)
+     {
+         $a = $coordsA;
+         $b = $coordsB;
+         return ( abs($a[0] - $b[0]) + abs($a[1] - $b[1]) );
+     }
 
-        switch (strtolower($entityType)) {
-            case 'colony': $table = $this->getTable('colony'); break;
-            case 'object': $table = $this->getTable('systemobject'); break;
-            case 'system': $table = $this->getTable('system'); break;
-            default: return array(); break;
-        }
-
-        $entity = $table->getEntity($id);
-        return $this->getByCoordinates('fleets', array($entity->getX(), $entity->getY()))->getArrayCopy();
-    }
-
-//     /**
-//      * Get Distance between two coordinates.
-//      *
-//      * @todo this is not checked yet; what happens at grid borders or negative inputs?
-//      *
-//      * @param  array $coordsA
-//      * @param  array $coordsB
-//      * @return int
-//      */
-//     public function getDistance(array $coordsA, array $coordsB)
-//     {
-//         $a = $coordsA;
-//         $b = $coordsB;
-//         return ( abs($a[0] - $b[0]) + abs($a[1] - $b[1]) );
-//     }
-
-//     /**
-//      * Get the distance from a to b in ticks.
-//      * ATTENTION: It is assumed that one field in coords system takes 1 tick to travel,
-//      * but that is a temporary convention and can be changed in future!
-//      *
-//      * @param   array   $coordsA   Source position
-//      * @param   array   $coordsB   Target position
-//      * @return  integer
-//      */
-//     public function getDistanceTicks(array $coordsA, array $coordsB)
-//     {
-//         return ( $this->getDistance($coordsA, $coordsB) + 1);
-//     }
+     /**
+      * Get the distance from a to b in ticks.
+      * ATTENTION: It is assumed that one field in coords system takes 1 tick to travel,
+      * but that is a temporary convention and can be changed in future!
+      *
+      * @param   array   $coordsA   Source position
+      * @param   array   $coordsB   Target position
+      * @return  integer
+      */
+     public function getDistanceTicks(array $coordsA, array $coordsB)
+     {
+         return ( $this->getDistance($coordsA, $coordsB) + 1);
+     }
 
     /**
      * Get the path from A to B depending on the given speed.
@@ -445,125 +430,6 @@ class Gateway extends \Nouron\Service\AbstractService
         }
 
         return $path;
-    }
-
-    /**
-     * Add a fleet Order.
-     *
-     * @todo: just move is working now - implement all the order types!
-     *
-     * @param  string   $order
-     * @param  integer|array|string|\Galaxy\Entity\Colony|\Galaxy\Entity\Fleet
-     *                  $destination     The Id or Coords of a colony or fleet
-     * @param  array    $additionalData  OPTIONAL array with optional target data like trade orders etc.
-     * @return boolean|null
-     * @throws \Exception
-     */
-    public function addOrder($fleet, $order, $destination, $additionalData = null)
-    {
-        // check the parameter '$fleet':
-        if ( is_numeric($fleet) ) {
-            $fleetId = (int) $fleet;
-            $fleet = $this->getFleet($fleetId);
-        } else {
-            $fleetId = $fleet['id'];
-        }
-
-        // check the parameter $order:
-        if ( !in_array($order, array('move','trade','hold','convoy','defend','attack','join','devide')) ) {
-            throw new \Exception('Unknown command given: ' . $order);
-        }
-
-
-        // get coordinates:
-        if ( !(is_array($destination) && (array_keys($destination) == array(0,1,2) )) ){
-
-            if (is_numeric($destination)) {
-
-                //destination is a fleet id or colony id
-                $destination = (int) $destination;
-                switch (strtolower($order)) {
-                    case 'move':   $object = $this->getColony($destination); break;
-                    case 'trade':  $object = $this->getColony($destination); break;
-                    case 'hold':   $object = $this->getColony($destination); break;
-                    case 'convoy': $object = $this->getFleet($destination);  break;
-                    case 'defend': $object = $this->getFleet($destination);  break;
-                    case 'attack': $object = $this->getFleet($destination);  break;
-                    case 'join':   $object = $this->getFleet($destination);  break;
-                    case 'devide': break; // nothing
-                    default:       break; // nothing
-                }
-
-                $destinationCoords = $object->getCoords();
-
-            } elseif ( $destination instanceof \Galaxy\Entity\Colony || $destination instanceof \Galaxy\Entity\Fleet ) {
-                // destination is an object:
-                $destinationCoords = $destination->getCoords();
-            } elseif ( is_array(@unserialize($destination)) ) {
-                // destination is a serialized coords array:
-                $destinationCoords = unserialize($destination);
-            } elseif ( is_array(@json_decode($destination)) ) {
-                // destination is a json encoded coords array:
-                $destinationCoords = json_decode($destination);
-            } else {
-                throw new \Galaxy\Entity\Exception('Invalid variable type of $destination. $destination has to be an id, object or 3-dimensional array.');
-            }
-
-            $destination = $destinationCoords;
-            unset($destinationCoords);
-        }
-
-        // get coords of fleet and destination coords:
-        $coords = array($fleet['x'], $fleet['y'], $fleet['spot']);
-
-        // if not, then get the paths and add the movement steps:
-        $path = $this->getPath( $coords, $destination, 1); #$fleet->getTravelSpeed() );
-        $this->_storePathInDb($fleetId, $path, $order, $additionalData);
-
-    }
-
-    /**
-     *
-     * @param array $path
-     * @param string $order
-     * @throws Galaxy_Model_Exception
-     */
-    protected function _storePathInDb($fleetId, $path, $order, $additionalData)
-    {
-        try {
-            $db = $this->getTable('fleetorder')->getAdapter()->getDriver()->getConnection();
-            $db->beginTransaction();
-
-            // first remove the currently set future orders:
-            $where = "fleet_id = {$fleetId} AND tick >= {$this->tick}";
-            $ordersTable = $this->getTable('fleetorder');
-            $ordersTable->delete($where);
-
-            // set the new path
-            $i = 1;
-            foreach ($path as $tickNr => $tmpCoords) {
-                // create a move order for one tick and save to db
-                $tmpOrder = ($i == count($path)) ? $order : 'move';
-                $cmdArray = array(
-                    'fleet_id' => $fleetId,
-                    'tick'  => $tickNr,
-                    'order' => strtolower($tmpOrder),
-                    'coordinates' => serialize($tmpCoords),
-                );
-
-                if ($i == count($path) && is_array($additionalData)) {
-                    $cmdArray['data'] = serialize($additionalData);
-                }
-
-                $result = $ordersTable->save($cmdArray);
-                unset($cmd);
-                $i++;
-            }
-            $db->commit();
-        } catch (Exception $e) {
-            $db->rollBack();
-            throw new \Galaxy\Service\Exception($e->getMessage());
-        }
     }
 
 /*    /**
