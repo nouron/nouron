@@ -1,6 +1,6 @@
 <?php
 
-namespace TechtreeTest;
+namespace INNNTest;
 
 use Zend\Loader\AutoloaderFactory;
 use Zend\Mvc\Service\ServiceManagerConfig;
@@ -41,9 +41,6 @@ class Bootstrap
                 'ZfcUser',
                 'Nouron',
                 'User',
-                'Galaxy',
-                'Techtree',
-                'Trade',
                 'INNN'
             )
         );

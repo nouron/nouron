@@ -17,8 +17,8 @@ class BuildingServiceTest extends PHPUnit_Framework_TestCase
         $basePath = __DIR__ . '/../../../../../';
 
         $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/drop_all.sql");
-        #$rr = exec("sqlite3 ../../../data/db/test.db < ../../../sql/truncate_all.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/dump");
+        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/schema.sqlite.sql");
+        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/testdata.sqlite.sql");
 
         $dbAdapter = new \Zend\Db\Adapter\Adapter(
             array(

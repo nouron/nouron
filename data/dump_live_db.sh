@@ -7,5 +7,6 @@ sqlite3 db/nouron.db .sch > sql/schema.sqlite.sql
 # dump full db (schema+data) to temporary dump file:
 sqlite3 db/nouron.db .dump > /tmp/nouron.db.dump
 # extract only data from dump file and store to sql script:
-grep -v -f sql/schema.sqlite.sql /tmp/nouron.db.dump > sql/data.sqlite.sql
+cat /tmp/nouron.db.dump | grep '^INSERT INTO' > sql/data.sqlite.sql
+
 
