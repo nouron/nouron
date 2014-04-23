@@ -161,7 +161,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                     $cmdArray['data'] = serialize($additionalData);
                 }
 
-                $result = $ordersTable->save($cmdArray);
+                $ordersTable->save($cmdArray);
                 unset($cmd);
                 $i++;
             }
@@ -201,7 +201,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
      *
      * @return int          Count of transfered Technologies
      */
-    public function transferTechnology($type, $colony, $fleet, $techId, $amount, $isCargo = false, $isTradeOffer = false)
+    public function transferTechnology($type, $colony, $fleet, $techId, $amount)
     {
         if (is_numeric($colony)) {
             $colony = $this->getColony($colony);
@@ -230,7 +230,6 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                 break;
             default:
                 throw new Exception("Invalid parameter 'type' for transferTechnology.");
-                break;
         }
 
         $colonyCoords = $colony->getCoords();#array($colony['x'],$colony['y']);#,$colony['spot']);
@@ -309,7 +308,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
      * @param  boolean     $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
      * @return int    Count of transfered res
      */
-    public function transferResource($colony, $fleet, $resId, $amount, $isTradeOffer = false)
+    public function transferResource($colony, $fleet, $resId, $amount)
     {
         if (is_numeric($fleet)) {
             $fleet = $this->getFleet($fleet);
@@ -341,10 +340,10 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
                 }
             }
 
+            $colonyresourceTable = $this->getTable('colonyresource');
+            $fleetresourceTable  = $this->getTable('fleetresource');
             $db = $fleetresourceTable->getAdapter()->getDriver()->getConnection();
             try {
-                $colonyresourceTable = $this->getTable('colonyresource');
-                $fleetresourceTable  = $this->getTable('fleetresource');
                 $db->beginTransaction();
                 $resOnColony['amount'] = $resOnColony['amount'] - $amount;
                 $colonyresourceTable->save($resOnColony);
@@ -538,22 +537,21 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         switch (strtolower($type)) {
             case 'research':
                 $table = 'fleetresearch';
-                $id    = 'research_id';
+                #$id    = 'research_id';
                 $func  = 'getFleetResearchesByFleetId';
                 break;
             case 'ship':
                 $table = 'fleetship';
-                $id    = 'ship_id';
+                #$id    = 'ship_id';
                 $func  = 'getFleetShipsByFleetId';
                 break;
             case 'personell':
                 $table = 'fleetpersonell';
-                $id    = 'personell_id';
+                #$id    = 'personell_id';
                 $func  = 'getFleetPersonellByFleetId';
                 break;
             default:
                 return array(); # TODO: Exception
-                break;
         }
         $entities  = $this->getTable($table)->fetchAll('fleet_id = ' . $fleetId)->getArrayCopy();
         $fleetEntities = $this->$func($fleetId)->getArrayCopy();
