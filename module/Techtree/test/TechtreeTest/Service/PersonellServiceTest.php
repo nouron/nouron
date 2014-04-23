@@ -1,8 +1,9 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\PersonellService;
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
+use Techtree\Service\PersonellService;
 use Techtree\Table\PersonellTable;
 use Techtree\Table\PersonellCostTable;
 use Techtree\Table\ColonyPersonellTable;
@@ -12,22 +13,17 @@ use Techtree\Entity\PersonellCost;
 use Techtree\Entity\ColonyPersonell;
 use Techtree\Entity\ActionPoint;
 
-class PersonellServiceTest extends PHPUnit_Framework_TestCase
+class PersonellServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
 
         $tableMocks = array();
-        $tableMocks['personell'] = new PersonellTable($dbAdapter, new Personell());
-        $tableMocks['personell_costs']   = new PersonellCostTable($dbAdapter, new PersonellCost());
-        $tableMocks['colony_personell'] = new ColonyPersonellTable($dbAdapter, new ColonyPersonell());
-        $tableMocks['locked_actionpoints'] = new ActionPointTable($dbAdapter, new ActionPoint());
+        $tableMocks['personell'] = new PersonellTable($this->dbAdapter, new Personell());
+        $tableMocks['personell_costs']   = new PersonellCostTable($this->dbAdapter, new PersonellCost());
+        $tableMocks['colony_personell'] = new ColonyPersonellTable($this->dbAdapter, new ColonyPersonell());
+        $tableMocks['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);

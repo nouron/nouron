@@ -11,4 +11,5 @@ return array(
     'Nouron\Service\Exception'           => __DIR__ . '/src/Nouron/Service/Exception.php',
     'Nouron\Service\Tick'                => __DIR__ . '/src/Nouron/Service/Tick.php',
     'Nouron\Table\AbstractTable'         => __DIR__ . '/src/Nouron/Table/AbstractTable.php',
+    'NouronTest\Service\AbstractServiceTest' => __DIR__ . '/test/NouronTest/Service/AbstractServiceTest.php'
 );

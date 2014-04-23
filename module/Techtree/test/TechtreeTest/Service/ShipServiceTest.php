@@ -1,8 +1,9 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\ShipService;
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
+use Techtree\Service\ShipService;
 use Techtree\Table\ShipTable;
 use Techtree\Table\ShipCostTable;
 use Techtree\Table\ColonyShipTable;
@@ -10,21 +11,16 @@ use Techtree\Entity\Ship;
 use Techtree\Entity\ShipCost;
 use Techtree\Entity\ColonyShip;
 
-class ShipServiceTest extends PHPUnit_Framework_TestCase
+class ShipServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
 
         $tableMocks = array();
-        $tableMocks['ships'] = new ShipTable($dbAdapter, new Ship());
-        $tableMocks['ship_costs']   = new ShipCostTable($dbAdapter, new ShipCost());
-        $tableMocks['colony_ships'] = new ColonyShipTable($dbAdapter, new ColonyShip());
+        $tableMocks['ships'] = new ShipTable($this->dbAdapter, new Ship());
+        $tableMocks['ship_costs']   = new ShipCostTable($this->dbAdapter, new ShipCost());
+        $tableMocks['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);

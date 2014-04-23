@@ -1,8 +1,9 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\BuildingService;
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
+use Techtree\Service\BuildingService;
 use Techtree\Table\BuildingTable;
 use Techtree\Table\BuildingCostTable;
 use Techtree\Table\ColonyBuildingTable;
@@ -10,27 +11,16 @@ use Techtree\Entity\Building;
 use Techtree\Entity\BuildingCost;
 use Techtree\Entity\ColonyBuilding;
 
-class BuildingServiceTest extends PHPUnit_Framework_TestCase
+class BuildingServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $basePath = __DIR__ . '/../../../../../';
-
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/drop_all.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/schema.sqlite.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/testdata.sqlite.sql");
-
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
 
         $tableMocks = array();
-        $tableMocks['buildings'] = new BuildingTable($dbAdapter, new Building());
-        $tableMocks['building_costs']   = new BuildingCostTable($dbAdapter, new BuildingCost());
-        $tableMocks['colony_buildings'] = new ColonyBuildingTable($dbAdapter, new ColonyBuilding());
+        $tableMocks['buildings'] = new BuildingTable($this->dbAdapter, new Building());
+        $tableMocks['building_costs']   = new BuildingCostTable($this->dbAdapter, new BuildingCost());
+        $tableMocks['colony_buildings'] = new ColonyBuildingTable($this->dbAdapter, new ColonyBuilding());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);

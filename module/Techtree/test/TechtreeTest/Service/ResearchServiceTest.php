@@ -1,8 +1,9 @@
 <?php
 namespace TechtreeTest\Service;
 
-use Techtree\Service\ResearchService;
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
+use Techtree\Service\ResearchService;
 use Techtree\Table\ResearchTable;
 use Techtree\Table\ResearchCostTable;
 use Techtree\Table\ColonyResearchTable;
@@ -10,21 +11,16 @@ use Techtree\Entity\Research;
 use Techtree\Entity\ResearchCost;
 use Techtree\Entity\ColonyResearch;
 
-class ResearchServiceTest extends PHPUnit_Framework_TestCase
+class ResearchServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
 
         $tableMocks = array();
-        $tableMocks['researches'] = new ResearchTable($dbAdapter, new Research());
-        $tableMocks['research_costs']   = new ResearchCostTable($dbAdapter, new ResearchCost());
-        $tableMocks['colony_researches'] = new ColonyResearchTable($dbAdapter, new ColonyResearch());
+        $tableMocks['researches'] = new ResearchTable($this->dbAdapter, new Research());
+        $tableMocks['research_costs']   = new ResearchCostTable($this->dbAdapter, new ResearchCost());
+        $tableMocks['colony_researches'] = new ColonyResearchTable($this->dbAdapter, new ColonyResearch());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);

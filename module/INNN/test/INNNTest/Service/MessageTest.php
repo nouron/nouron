@@ -2,6 +2,7 @@
 namespace INNNTest\Service;
 
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
 use INNN\Service\Message as MessageService;
 use INNN\Table\MessageTable;
 use INNN\Table\MessageView;
@@ -9,26 +10,16 @@ use INNN\Entity\Message;
 #use User\Table\UserTable;
 #use User\Entity\User;
 
-class MessageTest extends PHPUnit_Framework_TestCase
+class MessageTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $basePath = __DIR__ . '/../../../../../';
-
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/drop_all.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/schema.sqlite.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/testdata.sqlite.sql");
-
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
+        $this->initDatabase();
 
         $tables = array();
-        $tables['message'] = new MessageTable($dbAdapter, new \INNN\Entity\Message());
-        $tables['message_view'] = new MessageView($dbAdapter, new \INNN\Entity\Message());
+        $tables['message'] = new MessageTable($this->dbAdapter, new \INNN\Entity\Message());
+        $tables['message_view'] = new MessageView($this->dbAdapter, new \INNN\Entity\Message());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
         $tick = new \Nouron\Service\Tick(1234);

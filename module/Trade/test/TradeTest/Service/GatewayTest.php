@@ -2,6 +2,7 @@
 namespace TradeTest\Service;
 
 use PHPUnit_Framework_TestCase;
+use NouronTest\Service\AbstractServiceTest;
 use Trade\Service\Gateway;
 use Trade\Table\ResearchTable;
 use Trade\Table\ResearchView;
@@ -10,28 +11,17 @@ use Trade\Table\ResourceView;
 use Trade\Entity\Research;
 use Trade\Entity\Resource;
 
-class GatewayTest extends PHPUnit_Framework_TestCase
+class GatewayTest extends AbstractServiceTest
 {
     public function setUp()
     {
-        $basePath = __DIR__ . '/../../../../../';
-
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/sql/drop_all.sql");
-        #$rr = exec("sqlite3 ../../../data/db/test.db < ../../../sql/truncate_all.sql");
-        $rr = exec("sqlite3 " . $basePath . "data/db/test.db < " . $basePath . "data/dump");
-
-        $dbAdapter = new \Zend\Db\Adapter\Adapter(
-            array(
-                'driver' => 'Pdo_Sqlite',
-                'database' => '../data/db/test.db'
-            )
-        );
+        $this->initDatabaseAdapter();
 
         $tables = array();
-        $tables['researches']      = new ResearchTable($dbAdapter, new Research());
-        $tables['researches_view'] = new ResearchView($dbAdapter, new Research());
-        $tables['resources']       = new ResourceTable($dbAdapter, new Resource());
-        $tables['resources_view']  = new ResourceView($dbAdapter, new Resource());
+        $tables['researches']      = new ResearchTable($this->dbAdapter, new Research());
+        $tables['researches_view'] = new ResearchView($this->dbAdapter, new Research());
+        $tables['resources']       = new ResourceTable($this->dbAdapter, new Resource());
+        $tables['resources_view']  = new ResourceView($this->dbAdapter, new Resource());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);

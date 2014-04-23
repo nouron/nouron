@@ -338,12 +338,10 @@ INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','a:2
 INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','a:1:{s:7:"colony_id";i:1;}');
 INSERT INTO "innn_messages" VALUES(22,3,'mood_factual',0,15836,0,'Nachricht von Bart an Homer','test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1 test test Testnachricht1',0,0,0);
 INSERT INTO "innn_messages" VALUES(23,3,'mood_friendly',0,15865,0,'2134567','dfghjk',0,0,0);
-INSERT INTO "innn_messages" VALUES(30,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',1,1,1);
-INSERT INTO "innn_messages" VALUES(31,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',1,1,1);
-INSERT INTO "innn_messages" VALUES(32,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',1,1,0);
-INSERT INTO "innn_messages" VALUES(33,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',0,0,0);
-INSERT INTO "innn_messages" VALUES(34,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',0,0,0);
-INSERT INTO "innn_messages" VALUES(35,0,'mood_factual',3,16000,0,'Test Betreff','Text Text Text',0,0,0);
+INSERT INTO "innn_messages" VALUES(30,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
+INSERT INTO "innn_messages" VALUES(31,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
+INSERT INTO "innn_messages" VALUES(32,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
+INSERT INTO "innn_messages" VALUES(33,0,'mood_friendly',3,16000,0,'test','text text text',1,1,0);
 INSERT INTO "innn_message_types" VALUES(0,'subject_none',0,1);
 INSERT INTO "innn_message_types" VALUES(1,'subject_information',1,1);
 INSERT INTO "innn_message_types" VALUES(2,'subject_instruction',-1,1);
