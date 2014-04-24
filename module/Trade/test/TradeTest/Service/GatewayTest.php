@@ -1,7 +1,6 @@
 <?php
 namespace TradeTest\Service;
 
-use PHPUnit_Framework_TestCase;
 use NouronTest\Service\AbstractServiceTest;
 use Trade\Service\Gateway;
 use Trade\Table\ResearchTable;

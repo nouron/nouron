@@ -1,13 +1,11 @@
 <?php
 
-namespace Test;
+namespace ResourcesTest;
 
 use Zend\Loader\AutoloaderFactory;
 use Zend\Mvc\Service\ServiceManagerConfig;
 use Zend\ServiceManager\ServiceManager;
 use RuntimeException;
-
-date_default_timezone_set("Europe/Berlin");
 
 error_reporting(E_ALL | E_STRICT);
 chdir(__DIR__);
@@ -41,10 +39,7 @@ class Bootstrap
                 'ZfcUser',
                 'Nouron',
                 'User',
-                'Galaxy',
-                'Techtree',
-                'Trade',
-                'INNN'
+                'Galaxy'
             )
         );
 

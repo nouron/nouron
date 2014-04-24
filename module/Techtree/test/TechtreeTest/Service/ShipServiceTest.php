@@ -1,7 +1,6 @@
 <?php
 namespace TechtreeTest\Service;
 
-use PHPUnit_Framework_TestCase;
 use NouronTest\Service\AbstractServiceTest;
 use Techtree\Service\ShipService;
 use Techtree\Table\ShipTable;

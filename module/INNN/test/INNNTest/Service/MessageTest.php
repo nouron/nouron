@@ -1,7 +1,6 @@
 <?php
 namespace INNNTest\Service;
 
-use PHPUnit_Framework_TestCase;
 use NouronTest\Service\AbstractServiceTest;
 use INNN\Service\Message as MessageService;
 use INNN\Table\MessageTable;

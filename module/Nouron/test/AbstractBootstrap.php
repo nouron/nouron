@@ -15,11 +15,11 @@ chdir(__DIR__);
 /**
  * Test bootstrap, for setting up autoloading
  */
-class Bootstrap
+abstract class AbstractBootstrap
 {
     protected static $serviceManager;
 
-    public static function init()
+    public static function init(array $modules)
     {
         $zf2ModulePaths = array(dirname(dirname(__DIR__)));
         if (($path = static::findParentPath('vendor'))) {
@@ -36,14 +36,7 @@ class Bootstrap
             'module_listener_options' => array(
                 'module_paths' => $zf2ModulePaths,
             ),
-            'modules' => array(
-                'ZfcBase',
-                'ZfcUser',
-                'Nouron',
-                'User',
-                'Galaxy',
-                'Techtree'
-            )
+            'modules' => $modules
         );
 
         $serviceManager = new ServiceManager(new ServiceManagerConfig());
