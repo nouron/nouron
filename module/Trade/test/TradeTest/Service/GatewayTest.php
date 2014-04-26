@@ -141,6 +141,7 @@ class GatewayTest extends AbstractServiceTest
 
     public function testRemoveResourceOffer()
     {
+        $this->initDatabase();
         $data = array(
             'colony_id' => 1,
             'resource_id' => 8,
@@ -161,6 +162,7 @@ class GatewayTest extends AbstractServiceTest
 
     public function testRemoveResearchOffer()
     {
+        $this->initDatabase();
         $data = array(
             'colony_id' => 1,
             'research_id' => 35,

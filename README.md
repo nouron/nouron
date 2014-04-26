@@ -1,8 +1,20 @@
 [nouron - a free space opera browsergame](http://www.nouron.de.vu)
 ================
 
-more informations will be follow...
+Quickstart
+----------
+Nouron currently uses an SQLite database that is delivered with the project (located under data/db). So for quick testing you can start Nouron out of the box! However: the used database engine for production can and will be changed in the future.
 
+```bash
+# after cloning run composer update
+(project_root)$ php composer.phar update
+
+# start local testserver
+(project_root)$ php -S localhost:10000 -t public/
+
+# (optional) run unittests
+(project_root)$ phpunit
+```
 
 
 Versioning
@@ -56,4 +68,4 @@ The project uses code of frameworks or libraries which have their own licenses. 
 * Bootstrap
 * JQuery
 * JParallax
-* 
+*
