@@ -44,7 +44,8 @@ class Bootstrap
                 'Galaxy',
                 'Techtree',
                 'Trade',
-                'INNN'
+                'INNN',
+                'Resources'
             )
         );
 

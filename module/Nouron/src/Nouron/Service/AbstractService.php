@@ -69,16 +69,16 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /**
      *
-     * @return numeric
+     * @return integer
      */
     public function getTick()
     {
-        return $this->tick;
+        return (int) $this->tick;
     }
 
     /**
      *
-     * @param numeric $tick
+     * @param numeric|\Nouron\Service\Tick $tick
      */
     public function setTick($tick) {
         $this->tick = (string) $tick;

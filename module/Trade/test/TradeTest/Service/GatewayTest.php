@@ -22,8 +22,7 @@ class GatewayTest extends AbstractServiceTest
         $tables['resources']       = new ResourceTable($this->dbAdapter, new Resource());
         $tables['resources_view']  = new ResourceView($this->dbAdapter, new Resource());
 
-        $tick = new \Nouron\Service\Tick(1234);
-        #$tick->setTickCount(1234);
+        $tick = new \Nouron\Service\Tick(16000);
 
         $serviceMocks = array();
         $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
@@ -52,91 +51,121 @@ class GatewayTest extends AbstractServiceTest
 
     public function testGatewayInitialState()
     {
-        $tableMocks = array();
-        $tableMocks['researches'] = $this->getMockBuilder('Trade\Table\Research')
-                                         ->disableOriginalConstructor()
-                                         ->getMock();
-        $tableMocks['researches_view'] = $this->getMockBuilder('Trade\Table\ResearchView')
-                                         ->disableOriginalConstructor()
-                                         ->getMock();
-        $tableMocks['resources']  = $this->getMockBuilder('Trade\Table\Resource')
-                                         ->disableOriginalConstructor()
-                                         ->getMock();
-        $tableMocks['resources_view']  = $this->getMockBuilder('Trade\Table\ResourceView')
-                                         ->disableOriginalConstructor()
-                                         ->getMock();
-
-        $tick   = $this->getMockBuilder('Nouron\Service\Tick')
-                       ->disableOriginalConstructor()
-                       ->getMock();
-        $tick->setTickCount(1234);
-
-        $serviceMocks = array();
-        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
-        $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
-
-        $gw = new Gateway($tick, $tableMocks, $serviceMocks);
-
-        $this->assertEquals('Trade\Service\Gateway', get_class($gw));
-
-        $this->markTestIncomplete();
-
+        $this->assertInstanceOf('Trade\Service\Gateway', $this->_gateway);
+        $this->assertInstanceOf('Trade\Table\ResearchTable', $this->_gateway->getTable('researches'));
+        $this->assertInstanceOf('Trade\Table\ResearchView', $this->_gateway->getTable('researches_view'));
+        $this->assertInstanceOf('Trade\Table\ResourceTable', $this->_gateway->getTable('resources'));
+        $this->assertInstanceOf('Trade\Table\ResourceView', $this->_gateway->getTable('resources_view'));
+        #$this->assertEquals('Resource\Service\ResourcesService', get_class($this->_gateway->getService('resources')));
+        #$this->assertEquals('Galaxy\Service\Gateway', get_class($this->_gateway->getTable('galaxy')));
+        $this->assertEquals('integer', gettype($this->_gateway->getTick()));
     }
 
     public function testGetObjects()
     {
-        $objects = $this->_gateway->getResearches();
-        $objects = $this->_gateway->getResources();
+        $offers = $this->_gateway->getResources();
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals('Trade\Entity\Resource', get_class($offers->current()));
+
+        $offers = $this->_gateway->getResearches();
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals('Trade\Entity\Research', get_class($offers->current()));
+
+        $this->markTestIncomplete();
     }
 
     public function testAddResourceOffer()
     {
+        $this->initDatabase();
         $data = array(
             'colony_id' => 1,
             'direction' => 1,
-            'resource_id' => 3,
-            'amount' => 100,
-            'price' => 50,
-            'restriction' => 0,
+            'resource_id' => 3
         );
-        $result = $this->_gateway->addResourceOffer($data);
-        $this->assertFalse($result); // missing user id
 
+        // will fail because of missing user id
+        $result = $this->_gateway->addResourceOffer($data);
+        $this->assertFalse($result);
+
+        // will fail because of user is not owner of colony
         $data['user_id'] = 99;
         $result = $this->_gateway->addResourceOffer($data);
-        $this->assertFalse($result); // user is not owner of colony
+        $this->assertFalse($result);
 
+        // change to real owner
         $data['user_id'] = 3;
-        $result = $this->_gateway->addResourceOffer($data);
-        $this->assertTrue($result);
 
+        // resource offer doesn't exist, add new resource offer
+        $offers = $this->_gateway->getResources($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(0, $offers->count());
+        $dataToAdd = $data + array(
+            'amount' => 100,
+            'price' => 50,
+            'restriction' => 0
+        );
+        $result = $this->_gateway->addResourceOffer($dataToAdd);
+        $this->assertTrue($result);
+        $offers = $this->_gateway->getResources($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(1, $offers->count());
+        $this->assertEquals(100, $offers->current()->getAmount());
+
+        // resource offer exists, update this offer with new amount
+        $dataToAdd['amount'] = 500;
+        $result = $this->_gateway->addResourceOffer($dataToAdd);
+        $this->assertTrue($result);
+        $offers = $this->_gateway->getResources($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(1, $offers->count());
+        $this->assertEquals(500, $offers->current()->getAmount());
     }
 
     public function testAddResearchOffer()
     {
+        $this->initDatabase();
         $data = array(
             'colony_id' => 1,
             'direction' => 1,
-            'research_id' => 27,
-            'amount' => 2,
-            'price' => 50,
-            'restriction' => 0,
+            'research_id' => 27
         );
-        $result = $this->_gateway->addResearchOffer($data);
-        $this->assertFalse($result); // missing user id
 
+        // will fail because of missing user id
+        $result = $this->_gateway->addResearchOffer($data);
+        $this->assertFalse($result);
+
+        // will fail because of user is not owner of colony
         $data['user_id'] = 99;
         $result = $this->_gateway->addResearchOffer($data);
-        $this->assertFalse($result); // user is not owner of colony
+        $this->assertFalse($result);
 
+        // change to real owner
         $data['user_id'] = 3;
-        $result = $this->_gateway->addResearchOffer($data);
-        $this->assertTrue($result);
 
+        // resource offer doesn't exist, add new resource offer
+        $offers = $this->_gateway->getResearches($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(0, $offers->count());
+        $dataToAdd = $data + array(
+            'amount' => 2,
+            'price' => 50,
+            'restriction' => 0
+        );
+        $result = $this->_gateway->addResearchOffer($dataToAdd);
+        $this->assertTrue($result);
+        $offers = $this->_gateway->getResearches($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(1, $offers->count());
+        $this->assertEquals(2, $offers->current()->getAmount());
+
+        // resource offer exists, update this offer with new amount
+        $dataToAdd['amount'] = 5;
+        $result = $this->_gateway->addResearchOffer($dataToAdd);
+        $this->assertTrue($result);
+        $offers = $this->_gateway->getResearches($data);
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals(1, $offers->count());
+        $this->assertEquals(5, $offers->current()->getAmount());
     }
 
     public function testRemoveResourceOffer()
@@ -156,8 +185,12 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($result); // user is not owner of colony
 
         $data['user_id'] = 3;
+        $offers = $this->_gateway->getResources($data);
+        $this->assertEquals(1, $offers->count());
         $result = $this->_gateway->removeResourceOffer($data);
         $this->assertTrue($result);
+        $offers = $this->_gateway->getResources($data);
+        $this->assertEquals(0, $offers->count());
     }
 
     public function testRemoveResearchOffer()
@@ -177,7 +210,11 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($result); // user is not owner of colony
 
         $data['user_id'] = 3;
+        $offers = $this->_gateway->getResearches($data);
+        $this->assertEquals(1, $offers->count());
         $result = $this->_gateway->removeResearchOffer($data);
         $this->assertTrue($result);
+        $offers = $this->_gateway->getResearches($data);
+        $this->assertEquals(0, $offers->count());
     }
 }

@@ -16,23 +16,23 @@ class BuildingServiceTest extends AbstractServiceTest
     {
         $this->initDatabaseAdapter();
 
-        $tableMocks = array();
-        $tableMocks['buildings'] = new BuildingTable($this->dbAdapter, new Building());
-        $tableMocks['building_costs']   = new BuildingCostTable($this->dbAdapter, new BuildingCost());
-        $tableMocks['colony_buildings'] = new ColonyBuildingTable($this->dbAdapter, new ColonyBuilding());
+        $tables = array();
+        $tables['buildings'] = new BuildingTable($this->dbAdapter, new Building());
+        $tables['building_costs']   = new BuildingCostTable($this->dbAdapter, new BuildingCost());
+        $tables['colony_buildings'] = new ColonyBuildingTable($this->dbAdapter, new ColonyBuilding());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
-        $serviceMocks = array();
-        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
+        $services = array();
+        $services['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
                                           ->disableOriginalConstructor()
                                           ->getMock();
-        $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
+        $services['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
                                           ->disableOriginalConstructor()
                                           ->getMock();
 
-        $this->_service = new BuildingService($tick, $tableMocks, $serviceMocks);
+        $this->_service = new BuildingService($tick, $tables, $services);
 
         // default test parameters
         $this->_entityId = 27;

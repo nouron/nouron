@@ -77,7 +77,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
      * return colony resources from given colony plus user resources from colony owner
      *
      * @param  integer $colonyId
-     * @return ResultSet
+     * @return array
      */
     public function getPossessionsByColonyId($colonyId)
     {
@@ -100,39 +100,6 @@ class ResourcesService extends \Nouron\Service\AbstractService
     }
 
     /**
-     * return user resources from given user plus all resources from all his colonies
-     *
-     * @param  numeric $userId
-     * @return ResultSet
-     */
-    public function getPossessionsByUserId($userId)
-    {
-//         $this->_validateId($userId);
-
-//         $colonies = $this->getService('galaxy')->getColoniesByUserId($userId);
-
-//         foreach ($colonies as $col) {
-//             $coloIds[] = $col->id;
-//         }
-//         $coloIds = implode($coloIds, ',');
-//         $colResources = $this->getColonyResources("colony_id IN ($coloIds)")->getArrayCopy('resource_id');
-
-
-// //         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
-// //         $tmp  = $this->getUserResources('user_id = ' . $colony->user_id);
-// //         foreach ($tmp as $t) {
-// //             $add = array(
-// //                     self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->credits),
-// //                     self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY, 'amount'=>$t->supply),
-// //             );
-// //             $possessions += $add;
-// //         }
-
-
-//         return $possessions;
-    }
-
-    /**
      * check if enough resources are on a colony
      *
      * @param  \Zend\Db\ResultSet\ResultSetInterface  $costs
@@ -142,21 +109,16 @@ class ResourcesService extends \Nouron\Service\AbstractService
     public function check(\Zend\Db\ResultSet\ResultSetInterface $costs, $colonyId)
     {
         $this->_validateId($colonyId);
-
-        $result = true;
-
         $poss = $this->getPossessionsByColonyId($colonyId);
-
         // check costs
+        $result = true;
         foreach ($costs as $cost) {
             $resourceId = $cost->resource_id;
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
             if ($cost->amount > $possession) {
-
                 $this->getLogger()->log(
                     \Zend\Log\Logger::INFO,
                     'cost check failed: ' . $cost->resource_id . " " . $cost->amount . ' >' . $possession);
-
                 $result = false;
                 break;
             }
@@ -177,16 +139,31 @@ class ResourcesService extends \Nouron\Service\AbstractService
         if (is_object($costs)) {
             $costs = $costs->getArrayCopy('resource_id');
         }
-        foreach ($costs as $cost) {
-            $this->decreaseAmount($colonyId, $cost['resource_id'], $cost['amount']);
+        $db = $this->getTable('userresources')->getAdapter()->getDriver()->getConnection();
+        try {
+            $db->beginTransaction();
+            foreach ($costs as $cost) {
+                $result = (bool) $this->decreaseAmount($colonyId, $cost['resource_id'], $cost['amount']);
+                if ($result == false) {
+                    throw new Exception("payCosts() failed due to an error in decreaseAmount({$colonyId}, {$cost['resource_id']}, {$cost['amount']})");
+                }
+            }
+            $db->commit();
+            return true;
+        } catch (Exception $e) {
+            $db->rollBack();
+            $this->getLogger()->log(\Zend\Log\Logger::INFO, $e->getMessage());
+            return false;
         }
     }
 
     /**
-     * Erhoehe den ResourcenBesitz
+     * Increase resource possession
      *
      * @param int $colonyId
      * @param int $resId
+     * @param int $amount
+     * @param boolean $forceUserResToBeColRes
      */
     public function increaseAmount($colonyId, $resId, $amount, $forceUserResToBeColRes = false)
     {
