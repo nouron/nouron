@@ -52,6 +52,10 @@ class ResourcesServiceTest extends AbstractServiceTest
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
+
+
+        $this->_entityId = 52;
+        $this->_colonyId = 1;
     }
 
     public function testGatewayInitialState()
@@ -77,30 +81,27 @@ class ResourcesServiceTest extends AbstractServiceTest
         $this->assertInstanceOf('Resources\Entity\User', $results->current());
     }
 
-    public function getPossessionsByColonyId()
+    public function testGetPossessionsByColonyId()
     {
-        $result = $this->_service->getPossessionsByColonyId($colonyId);
+        $result = $this->_service->getPossessionsByColonyId($this->_colonyId);
         $this->assertTrue(is_array($result));
+        $this->assertEquals(9, count($result));
     }
 
     public function testCheck()
     {
-        $entityId = 52;
-        $colonyId = 1;
         $buildingCostsTable = new BuildingCostTable($this->dbAdapter, new BuildingCost());
-        $costs =  $buildingCostsTable->fetchAll(array('building_id' => $entityId));
-        $result = $this->_service->check($costs, $colonyId);
+        $costs =  $buildingCostsTable->fetchAll(array('building_id' => $this->_entityId));
+        $result = $this->_service->check($costs, $this->_colonyId);
         $this->assertTrue($result);
     }
 
     public function testPayCosts()
     {
         $this->initDatabase();
-        $entityId = 52;
-        $colonyId = 1;
         $buildingCostsTable = new BuildingCostTable($this->dbAdapter, new BuildingCost());
-        $costs =  $buildingCostsTable->fetchAll(array('building_id' => $entityId));
-        $result = $this->_service->payCosts($costs, $colonyId);
+        $costs =  $buildingCostsTable->fetchAll(array('building_id' => $this->_entityId));
+        $result = $this->_service->payCosts($costs, $this->_colonyId);
         $this->assertTrue($result);
         $this->markTestIncomplete();
     }
@@ -108,11 +109,10 @@ class ResourcesServiceTest extends AbstractServiceTest
     public function testIncreaseAmount()
     {
         $this->initDatabase();
-        $colonyId = 1;
         $resId = 2;
         $amount = 100;
         $forceUserResToBeColRes = false;
-        $result = $this->_service->increaseAmount($colonyId, $resId, $amount, $forceUserResToBeColRes);
+        $result = $this->_service->increaseAmount($this->_colonyId, $resId, $amount, $forceUserResToBeColRes);
         $this->assertTrue(is_numeric($result));
         $this->markTestIncomplete();
     }
@@ -120,10 +120,9 @@ class ResourcesServiceTest extends AbstractServiceTest
     public function testDecreaseAmount()
     {
         $this->initDatabase();
-        $colonyId = 1;
         $resId = 2;
         $amount = 100;
-        $result = $this->_service->decreaseAmount($colonyId, $resId, $amount);
+        $result = $this->_service->decreaseAmount($this->_colonyId, $resId, $amount);
         $this->assertTrue(is_numeric($result));
         $this->markTestIncomplete();
     }

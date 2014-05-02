@@ -2,6 +2,7 @@
 namespace NouronTest\Service;
 
 use PHPUnit_Framework_TestCase;
+use TechtreeTest\Bootstrap;
 
 abstract class AbstractServiceTest extends PHPUnit_Framework_TestCase
 {
@@ -27,7 +28,7 @@ abstract class AbstractServiceTest extends PHPUnit_Framework_TestCase
             $this->dbAdapter = new \Zend\Db\Adapter\Adapter(
                 array(
                     'driver' => 'Pdo_Sqlite',
-                    'database' => '../data/db/test.db'
+                    'database' => __DIR__ . '/../../../../../data/db/test.db'
                 )
             );
         }

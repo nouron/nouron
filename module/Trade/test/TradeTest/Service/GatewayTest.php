@@ -46,7 +46,6 @@ class GatewayTest extends AbstractServiceTest
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_gateway->setLogger($logger);
-
     }
 
     public function testGatewayInitialState()
