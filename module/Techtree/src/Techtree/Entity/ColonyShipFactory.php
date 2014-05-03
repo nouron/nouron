@@ -8,8 +8,6 @@ class ColonyShipFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new ColonyShip(new \Techtree\Table\ColonyShipTable($db));
-        return $mapper;
+        return new ColonyShip();
     }
 }

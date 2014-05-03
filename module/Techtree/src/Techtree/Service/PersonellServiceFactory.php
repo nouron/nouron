@@ -3,17 +3,6 @@ namespace Techtree\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Techtree\Table\ActionPointTable;
-use Techtree\Table\PersonellTable;
-use Techtree\Table\PersonellCostTable;
-use Techtree\Table\ColonyBuildingTable;
-use Techtree\Table\ColonyPersonellTable;
-use Techtree\Entity\ActionPoint;
-use Techtree\Entity\Personell;
-use Techtree\Entity\PersonellCost;
-use Techtree\Entity\ColonyBuilding;
-use Techtree\Entity\ColonyPersonell;
-
 
 class PersonellServiceFactory implements FactoryInterface
 {
@@ -29,12 +18,12 @@ class PersonellServiceFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['personell']  = new PersonellTable($db, new Personell());
-        $tables['personell_costs']  = new PersonellCostTable($db, new PersonellCost());
-        $tables['colony_personell'] = new ColonyPersonellTable($db, new ColonyPersonell());
-        $tables['colony_buildings'] = new ColonyBuildingTable($db, new ColonyBuilding());
-        $tables['locked_actionpoints'] = new ActionPointTable($db, new ActionPoint());
-        $tables['colonies'] = new \Galaxy\Table\ColonyTable($db, new \Galaxy\Entity\Colony());
+        $tables['personell']        = $serviceLocator->get('Techtree\Table\PersonellTable');
+        $tables['personell_costs']  = $serviceLocator->get('Techtree\Table\PersonellCostTable');
+        $tables['colony_personell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colony_buildings'] = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
+        $tables['locked_actionpoints'] = $serviceLocator->get('Techtree\Table\ActionPointTable');
+        $tables['colonies'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
 
         $services = array();
         $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');

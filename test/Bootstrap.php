@@ -7,8 +7,6 @@ use Zend\Mvc\Service\ServiceManagerConfig;
 use Zend\ServiceManager\ServiceManager;
 use RuntimeException;
 
-date_default_timezone_set("Europe/Berlin");
-
 error_reporting(E_ALL | E_STRICT);
 chdir(__DIR__);
 
@@ -26,6 +24,9 @@ class Bootstrap
             $zf2ModulePaths[] = $path;
         }
         if (($path = static::findParentPath('module')) !== $zf2ModulePaths[0]) {
+            $zf2ModulePaths[] = $path;
+        }
+        if (($path = static::findParentPath('test')) !== $zf2ModulePaths[0]) {
             $zf2ModulePaths[] = $path;
         }
 
@@ -55,6 +56,12 @@ class Bootstrap
         static::$serviceManager = $serviceManager;
     }
 
+    public static function chroot()
+    {
+        $rootPath = dirname(static::findParentPath('module'));
+        chdir($rootPath);
+    }
+
     public static function getServiceManager()
     {
         return static::$serviceManager;
@@ -63,10 +70,6 @@ class Bootstrap
     protected static function initAutoloader()
     {
         $vendorPath = static::findParentPath('vendor');
-
-        if (is_readable($vendorPath . '/autoload.php')) {
-            include $vendorPath . '/autoload.php';
-        }
 
         $zf2Path = getenv('ZF2_PATH');
         if (!$zf2Path) {
@@ -80,7 +83,14 @@ class Bootstrap
         }
 
         if (!$zf2Path) {
-            throw new RuntimeException('Unable to load ZF2. Run `php composer.phar install` or define a ZF2_PATH environment variable.');
+            throw new RuntimeException(
+                'Unable to load ZF2. Run `php composer.phar install` or'
+                . ' define a ZF2_PATH environment variable.'
+            );
+        }
+
+        if (file_exists($vendorPath . '/autoload.php')) {
+            include $vendorPath . '/autoload.php';
         }
 
         include $zf2Path . '/Zend/Loader/AutoloaderFactory.php';
@@ -94,16 +104,15 @@ class Bootstrap
         ));
     }
 
-    /**
-     * @param string $path
-     */
     protected static function findParentPath($path)
     {
         $dir = __DIR__;
         $previousDir = '.';
         while (!is_dir($dir . '/' . $path)) {
             $dir = dirname($dir);
-            if ($previousDir === $dir) return false;
+            if ($previousDir === $dir) {
+                return false;
+            }
             $previousDir = $dir;
         }
         return $dir . '/' . $path;
@@ -111,3 +120,4 @@ class Bootstrap
 }
 
 Bootstrap::init();
+Bootstrap::chroot();

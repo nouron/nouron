@@ -29,20 +29,18 @@ class ColonyServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db     = $serviceLocator->get("Zend\Db\Adapter\Adapter");
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['buildings']  = new BuildingTable($db, new Building());
-        $tables['researches'] = new ResearchTable($db, new Research());
-        $tables['ships']      = new ShipTable($db, new Ship());
-        $tables['personell']  = new PersonellTable($db, new Personell());
+        $tables['buildings']  = $serviceLocator->get('Techtree\Table\BuildingTable');
+        $tables['researches'] = $serviceLocator->get('Techtree\Table\ResearchTable');
+        $tables['ships']      = $serviceLocator->get('Techtree\Table\ShipTable');
+        $tables['personell']  = $serviceLocator->get('Techtree\Table\PersonellTable');
 
-        $tables['colony_buildings']  = new ColonyBuildingTable($db, new ColonyBuilding());
-        $tables['colony_researches'] = new ColonyResearchTable($db, new ColonyResearch());
-        $tables['colony_ships']      = new ColonyShipTable($db, new ColonyShip());
-        $tables['colony_personell']  = new ColonyPersonellTable($db, new ColonyPersonell());
+        $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
+        $tables['colony_ships']      = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
 
         $services = array();
 

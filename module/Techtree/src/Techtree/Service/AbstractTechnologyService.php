@@ -87,7 +87,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param  integer  $entityId
      * @param  integer  $colonyId
      * @return boolean
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      */
     public function checkRequiredBuildingsByEntityId( $colonyId, $entityId)
     {
@@ -120,7 +120,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $entityId
      * @param numeric $colonyId
      * @return boolean
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      * (non-PHPdoc)
      * @see \Techtree\Service\TechnologyServiceInterface::checkRequiredResearchesByEntityId()
      */
@@ -135,7 +135,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $entityId
      * @param numeric $colonyId
      * @return boolean
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      */
     public function checkRequiredResourcesByEntityId($colonyId, $entityId)
     {
@@ -152,7 +152,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $entityId
      * @param numeric $colonyId
      * @return boolean  True if all required action points were spend else False
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      */
     public function checkRequiredActionPoints($colonyId, $entityId)
     {
@@ -177,7 +177,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $entityId
      * @param numeric $colonyId
      * @return boolean
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      */
     public function checkLevelUpLimit($colonyId, $entityId)
     {
@@ -202,7 +202,7 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
      * @param numeric $entityId
      * @param numeric $colonyId
      * @return boolean
-     * @throws \Techtree\Model\Exception if invalid parameter(s)
+     * @throws \Techtree\Service\Exception if invalid parameter(s)
      */
     public function checkLevelDownLimit($colonyId, $entityId)
     {
@@ -411,6 +411,13 @@ abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService
         $required_action_points_check = $this->checkRequiredActionPoints($colonyId, $entityId);
         # check if minimum
         $leveldown_limit_check        = $this->checkLevelDownLimit($colonyId, $entityId);
+
+        var_dump($required_buildings_check);
+        var_dump($required_resources_check);
+        var_dump($required_researches_check);
+        var_dump($required_action_points_check);
+        var_dump($leveldown_limit_check);
+
 
         if ($required_buildings_check && $required_resources_check &&
             $required_researches_check && $required_action_points_check &&
