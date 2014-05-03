@@ -3,6 +3,7 @@ namespace TechtreeTest\Service;
 
 use PHPUnit_Framework_TestCase;
 use TechtreeTest\Bootstrap;
+use Techtree\Service\ColonyServiceFactory;
 
 class ColonyServiceFactoryTest extends PHPUnit_Framework_TestCase
 {
@@ -43,9 +44,12 @@ class ColonyServiceFactoryTest extends PHPUnit_Framework_TestCase
 
     public function testCreateService()
     {
+        $factory = new ColonyServiceFactory();
+        $entity  = $factory->createService($this->sm);
+
         $this->assertInstanceOf(
             "Techtree\Service\ColonyService",
-            $this->sm->get('Techtree\Service\ColonyService')
+            $entity
         );
     }
 }

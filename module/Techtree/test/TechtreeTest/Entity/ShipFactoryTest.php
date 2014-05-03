@@ -3,9 +3,9 @@ namespace TechtreeTest\Entity;
 
 use PHPUnit_Framework_TestCase;
 use TechtreeTest\Bootstrap;
-use Techtree\Entity\BuildingFactory;
+use Techtree\Entity\ShipFactory;
 
-class BuildingFactoryTest extends PHPUnit_Framework_TestCase
+class ShipFactoryTest extends PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
@@ -15,9 +15,9 @@ class BuildingFactoryTest extends PHPUnit_Framework_TestCase
 
     public function testCreateService()
     {
-        $factory = new BuildingFactory();
+        $factory = new ShipFactory();
         $this->assertInstanceOf(
-            "Techtree\Entity\Building",
+            "Techtree\Entity\Ship",
             $factory->createService($this->sm)
         );
     }

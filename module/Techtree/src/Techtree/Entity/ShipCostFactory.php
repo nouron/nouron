@@ -8,8 +8,6 @@ class ShipCostFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $mapper    = new ShipCost(new \Techtree\Table\ShipCost($db));
-        return $mapper;
+        return new ShipCost();
     }
 }

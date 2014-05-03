@@ -3,6 +3,7 @@ namespace TechtreeTest\Service;
 
 use PHPUnit_Framework_TestCase;
 use TechtreeTest\Bootstrap;
+use Techtree\Service\BuildingServiceFactory;
 
 class BuildingServiceFactoryTest extends PHPUnit_Framework_TestCase
 {
@@ -12,6 +13,7 @@ class BuildingServiceFactoryTest extends PHPUnit_Framework_TestCase
         $this->sm->setAllowOverride(true);
 
         $servicesToMock = array(
+            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
             'Nouron\Service\Tick' => 'Nouron\Service\Tick',
             'logger' => 'Zend\Log\Logger',
             'Techtree\Table\BuildingTable' => 'Techtree\Table\BuildingTable',
@@ -37,9 +39,12 @@ class BuildingServiceFactoryTest extends PHPUnit_Framework_TestCase
 
     public function testCreateService()
     {
+        $factory = new BuildingServiceFactory();
+        $entity  = $factory->createService($this->sm);
+
         $this->assertInstanceOf(
             "Techtree\Service\BuildingService",
-            $this->sm->get('Techtree\Service\BuildingService')
+            $entity
         );
     }
 }
