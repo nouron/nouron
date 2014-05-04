@@ -1,0 +1,36 @@
+<?php
+namespace TradeTest\Table;
+
+use NouronTest\Table\AbstractTableTest;
+use PHPUnit_Framework_TestCase;
+use TechtreeTest\Bootstrap;
+use Trade\Table\ResearchTableFactory;
+
+class ResearchTableFactoryTest extends AbstractTableTest
+{
+    public function setUp()
+    {
+        $this->initDatabaseAdapter();
+
+        $this->sm = Bootstrap::getServiceManager();
+        $this->sm->setAllowOverride(true);
+        $this->sm->setService(
+            'Trade\Entity\Research',
+            new \Techtree\Entity\Research()
+        );
+        $this->sm->setService(
+            'Zend\Db\Adapter\Adapter',
+            $this->dbAdapter
+        );
+    }
+
+    public function testCreateService()
+    {
+        $tableFactory = new ResearchTableFactory();
+        $this->assertInstanceOf(
+            "Trade\Table\ResearchTable",
+            $tableFactory->createService($this->sm)
+        );
+    }
+
+}
