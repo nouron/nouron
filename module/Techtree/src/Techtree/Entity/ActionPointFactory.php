@@ -4,7 +4,7 @@ namespace Techtree\Entity;
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class BuildingFactory implements FactoryInterface
+class ActionPointFactory implements FactoryInterface
 {
     /**
      *
@@ -13,6 +13,6 @@ class BuildingFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new Building();
+        return new ActionPoint();
     }
 }

@@ -1,7 +1,9 @@
 <?php
 namespace Techtree\Service;
 
-abstract class AbstractTechnologyService extends \Nouron\Service\AbstractService implements TechnologyServiceInterface
+use Nouron\Service\AbstractService;
+
+abstract class AbstractTechnologyService extends AbstractService implements TechnologyServiceInterface
 {
 
     /**

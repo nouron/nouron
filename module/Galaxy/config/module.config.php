@@ -138,7 +138,7 @@ return array(
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
 
             'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
-            'Galaxy\Table\FleetTable'  => 'Galaxy\Table\FleetTableFactory',
+            #'Galaxy\Table\FleetTable'  => 'Galaxy\Table\FleetTableFactory',
         ),
     ),
 
