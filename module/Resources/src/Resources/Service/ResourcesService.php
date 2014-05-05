@@ -86,12 +86,17 @@ class ResourcesService extends \Nouron\Service\AbstractService
         $galaxyGw = $this->getService('galaxy');
         $colony = $galaxyGw->getColony($colonyId);
 
-        $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
-        $userResources = $this->getUserResources('user_id = ' . $colony->user_id);
+        $results = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
+        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
+        $possessions = array();
+        foreach ($results as $id => $entity) {
+            $possessions[$id] = $hydrator->extract($entity);
+        }
+        $userResources = $this->getUserResources('user_id = ' . $colony->getUserId());
         foreach ($userResources as $t) {
             $add = array(
-                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->credits),
-                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY,  'amount'=>$t->supply),
+                self::RES_CREDITS => array('resource_id' => self::RES_CREDITS, 'amount'=>$t->getCredits()),
+                self::RES_SUPPLY  => array('resource_id' => self::RES_SUPPLY,  'amount'=>$t->getSupply()),
             );
             $possessions += $add;
         }
@@ -113,12 +118,12 @@ class ResourcesService extends \Nouron\Service\AbstractService
         // check costs
         $result = true;
         foreach ($costs as $cost) {
-            $resourceId = $cost->resource_id;
+            $resourceId = $cost->getResourceId();
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
-            if ($cost->amount > $possession) {
+            if ($cost->getAmount() > $possession) {
                 $this->getLogger()->log(
                     \Zend\Log\Logger::INFO,
-                    'cost check failed: ' . $cost->resource_id . " " . $cost->amount . ' >' . $possession);
+                    'cost check failed: ' . $cost->getResourceId() . " " . $cost->getAmount() . ' >' . $possession);
                 $result = false;
                 break;
             }
@@ -136,14 +141,14 @@ class ResourcesService extends \Nouron\Service\AbstractService
     public function payCosts($costs, $colonyId)
     {
         $this->_validateId($colonyId);
-        if (is_object($costs)) {
+        if ($costs instanceof ResulSet) {
             $costs = $costs->getArrayCopy('resource_id');
         }
         $db = $this->getTable('userresources')->getAdapter()->getDriver()->getConnection();
         try {
             $db->beginTransaction();
             foreach ($costs as $cost) {
-                $result = (bool) $this->decreaseAmount($colonyId, $cost['resource_id'], $cost['amount']);
+                $result = (bool) $this->decreaseAmount($colonyId, $cost->getResourceId(), $cost->getAmount());
                 if ($result == false) {
                     throw new Exception("payCosts() failed due to an error in decreaseAmount({$colonyId}, {$cost['resource_id']}, {$cost['amount']})");
                 }
@@ -177,7 +182,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
 
             $colony = $this->getService('galaxy')->getColony($colonyId);
             $table = $this->getTable('userresources');
-            $userId = $colony->user_id;
+            $userId = $colony->getUserId();
             $row = $table->fetchAll("user_id = $userId")->current();
 
             if (empty($row)) {
@@ -187,7 +192,11 @@ class ResourcesService extends \Nouron\Service\AbstractService
                     'supply' => 0
                 );
             } else {
-                $row = $row->getArrayCopy();
+                $row = array(
+                    'user_id' => $row->getUserId(),
+                    'credits' => $row->getCredits(),
+                    'supply'  => $row->getSupply()
+                );
             }
 
             $this->getLogger()->log(\Zend\Log\Logger::INFO,

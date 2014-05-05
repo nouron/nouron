@@ -19,13 +19,12 @@ class ResourcesServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db     = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
-        $tables['resource'] = new ResourceTable($db, new Resource());
-        $tables['colonyresources'] = new ColonyTable($db, new Colony());
-        $tables['userresources'] = new UserTable($db, new User());
+        $tables['resource'] = $serviceLocator->get('Resources\Table\ResourceTable');
+        $tables['colonyresources'] = $serviceLocator->get('Resources\Table\ColonyTable');
+        $tables['userresources'] = $serviceLocator->get('Resources\Table\UserTable');
 
         $gateways['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
 

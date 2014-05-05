@@ -3,7 +3,7 @@ namespace Techtree\Entity;
 
 class ColonyResearch extends AbstractColonyEntity
 {
-    public $research_id;
+    private $research_id;
 
     /**
      * Gets the value of research_id.

@@ -29,8 +29,8 @@ class ColonyServiceFactory implements FactoryInterface
 
         $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
         $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colony_personell']  = $serviceLocator->get('Techtree\Table\ColonyShipTable');
-        $tables['colony_ships']      = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colony_ships']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
+        $tables['colony_personell']  = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
 
         $services = array();
 

@@ -5,9 +5,9 @@ use Nouron\Entity\AbstractEntity;
 
 class PersonellCost extends AbstractEntity
 {
-    public $personell_id;
-    public $resource_id;
-    public $amount;
+    private $personell_id;
+    private $resource_id;
+    private $amount;
 
     /**
      * Gets the value of personell_id.

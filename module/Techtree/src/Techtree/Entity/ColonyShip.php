@@ -3,7 +3,7 @@ namespace Techtree\Entity;
 
 class ColonyShip extends AbstractColonyEntity
 {
-    public $ship_id;
+    private $ship_id;
 
     /**
      * Gets the value of ship_id.

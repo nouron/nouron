@@ -5,9 +5,9 @@ use Nouron\Entity\AbstractEntity;
 
 class ShipCost extends AbstractEntity
 {
-    public $ship_id;
-    public $resource_id;
-    public $amount;
+    private $ship_id;
+    private $resource_id;
+    private $amount;
 
 
     /**

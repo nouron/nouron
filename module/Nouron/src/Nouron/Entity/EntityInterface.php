@@ -2,8 +2,8 @@
 namespace Nouron\Entity;
 
 use Zend\Stdlib\ArraySerializableInterface;
-
-interface EntityInterface extends ArraySerializableInterface
+#extends ArraySerializableInterface
+interface EntityInterface
 {
 
 }

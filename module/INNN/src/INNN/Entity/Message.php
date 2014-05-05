@@ -1,24 +1,23 @@
 <?php
 namespace INNN\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Message extends AbstractEntity
+class Message implements EntityInterface
 {
-    public $id;
-    public $sender;
-    public $sender_id;
-    public $attitude;
-    public $recipient;
-    public $recipient_id;
-    public $tick;
-    public $type;
-    public $subject;
-    public $text;
-    public $read;
-    public $archived;
-    public $deleted;
-
+    private $id;
+    private $sender;
+    private $sender_id;
+    private $attitude;
+    private $recipient;
+    private $recipient_id;
+    private $tick;
+    private $type;
+    private $subject;
+    private $text;
+    private $read;
+    private $archived;
+    private $deleted;
 
     /**
      * Sets the value of id.

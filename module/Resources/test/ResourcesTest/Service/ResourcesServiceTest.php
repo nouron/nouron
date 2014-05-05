@@ -14,16 +14,20 @@ use Resources\Entity\User;
 use Techtree\Table\BuildingCostTable;
 use Techtree\Entity\BuildingCost;
 
+use TechtreeTest\Bootstrap;
+
 class ResourcesServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
         $this->initDatabaseAdapter();
-
+        $this->sm = Bootstrap::getServiceManager();
+        $this->sm->setAllowOverride(true);
+        $this->sm->setService('Zend\Db\Adapter\Adapter', $this->dbAdapter);
         $tables = array();
-        $tables['resource'] = new ResourceTable($this->dbAdapter, new Resource());
-        $tables['colonyresources'] = new ColonyTable($this->dbAdapter, new Colony());
-        $tables['userresources'] = new UserTable($this->dbAdapter, new User());
+        $tables['resource'] = $this->sm->get('Resources\Table\ResourceTable');
+        $tables['colonyresources'] = $this->sm->get('Resources\Table\ColonyTable');
+        $tables['userresources'] = $this->sm->get('Resources\Table\UserTable');
 
         $tick = new Tick(16000);
 

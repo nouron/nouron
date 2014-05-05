@@ -1,17 +1,16 @@
 <?php
 namespace INNN\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Event extends AbstractEntity
+class Event implements EntityInterface
 {
-    public $id;
-    public $user_id;
-    public $tick;
-    public $event;
-    public $area;
-    public $parameters;
-
+    private $id;
+    private $user_id;
+    private $tick;
+    private $event;
+    private $area;
+    private $parameters;
 
     /**
      * Sets the value of id.

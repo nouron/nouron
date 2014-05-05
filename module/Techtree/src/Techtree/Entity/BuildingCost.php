@@ -5,9 +5,9 @@ use Nouron\Entity\AbstractEntity;
 
 class BuildingCost extends AbstractEntity
 {
-    public $building_id;
-    public $resource_id;
-    public $amount;
+    private $building_id;
+    private $resource_id;
+    private $amount;
 
 
     /**

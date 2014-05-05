@@ -3,8 +3,8 @@ namespace Techtree\Entity;
 
 class Ship extends AbstractTechnology
 {
-    public $required_research_id;
-    public $required_research_level;
+    private $required_research_id;
+    private $required_research_level;
 
     /**
      * Gets the value of required_building_id.

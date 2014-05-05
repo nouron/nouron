@@ -5,12 +5,10 @@ use Nouron\Entity\AbstractEntity;
 
 class ActionPoint extends AbstractEntity
 {
-    public $tick;
-    public $colony_id;
-    public $personell_id;
-    public $spend_ap;
-
-
+    private $tick;
+    private $colony_id;
+    private $personell_id;
+    private $spend_ap;
 
     /**
      * Gets the value of tick.

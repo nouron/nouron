@@ -8,27 +8,27 @@
         <testsuite name="techtree">
             <directory>./module/Techtree/test/TechtreeTest</directory>
         </testsuite>
-        <!--<testsuite name="galaxy">
-            <directory>./module/Galaxy/test/GalaxyTest</directory>
-        </testsuite>-->
-        <!--<testsuite name="fleet">
-            <directory>./module/Fleet/test/GalaxyTest</directory>
-        </testsuite>-->
         <testsuite name="trade">
             <directory>./module/Trade/test/TradeTest</directory>
         </testsuite>
         <testsuite name="resources">
             <directory>./module/Resources/test/ResourcesTest</directory>
         </testsuite>
+        <!--<testsuite name="galaxy">
+            <directory>./module/Galaxy/test/GalaxyTest</directory>
+        </testsuite>-->
+        <!--<testsuite name="fleet">
+            <directory>./module/Fleet/test/GalaxyTest</directory>
+        </testsuite>-->
     </testsuites>
     <filter>
         <whitelist addUncoveredFilesFromWhitelist="true">
           <directory suffix=".php">./module/Techtree/src</directory>
           <directory suffix=".php">./module/Resources/src</directory>
-          <!--<directory suffix=".php">./module/Galaxy/src</directory>-->
-          <!--<directory suffix=".php">./module/Fleet/src</directory>-->
           <directory suffix=".php">./module/Trade/src</directory>
           <directory suffix=".php">./module/INNN/src</directory>
+          <!--<directory suffix=".php">./module/Galaxy/src</directory>-->
+          <!--<directory suffix=".php">./module/Fleet/src</directory>-->
         </whitelist>
     </filter>
 </phpunit>

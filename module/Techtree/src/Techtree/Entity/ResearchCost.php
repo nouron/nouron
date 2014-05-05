@@ -5,9 +5,9 @@ use Nouron\Entity\AbstractEntity;
 
 class ResearchCost extends AbstractEntity
 {
-    public $research_id;
-    public $resource_id;
-    public $amount;
+    private $research_id;
+    private $resource_id;
+    private $amount;
 
     /**
      * Gets the value of research_id.

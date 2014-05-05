@@ -1,17 +1,17 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Resource extends AbstractEntity
+class Resource implements EntityInterface
 {
-    public $id;
-    public $name;
-    public $abbreviation;
-    public $trigger;
-    public $is_tradeable;
-    public $start_amount;
-    public $icon;
+    private $id;
+    private $name;
+    private $abbreviation;
+    private $trigger;
+    private $is_tradeable;
+    private $start_amount;
+    private $icon;
 
 
     /**

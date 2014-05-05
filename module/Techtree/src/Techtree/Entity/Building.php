@@ -3,8 +3,8 @@ namespace Techtree\Entity;
 
 class Building extends AbstractTechnology
 {
-    public $prime_colony_only;
-    public $max_level;
+    private $prime_colony_only;
+    private $max_level;
 
     /**
      * Gets the value of prime_colony_only.

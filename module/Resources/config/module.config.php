@@ -29,6 +29,12 @@ return array(
     'service_manager' => array(
         'factories' => array(
             'Resources\Service\ResourcesService' => 'Resources\Service\ResourcesServiceFactory',
+            'Resources\Entity\Resource' => 'Resources\Entity\ResourceFactory',
+            'Resources\Entity\Colony' => 'Resources\Entity\ColonyFactory',
+            'Resources\Entity\User' => 'Resources\Entity\UserFactory',
+            'Resources\Table\ResourceTable' => 'Resources\Table\ResourceTableFactory',
+            'Resources\Table\ColonyTable' => 'Resources\Table\ColonyTableFactory',
+            'Resources\Table\UserTable' => 'Resources\Table\UserTableFactory'
         ),
     ),
     'controller_plugins' => array(

@@ -1,14 +1,13 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Colony extends AbstractEntity
+class Colony implements EntityInterface
 {
-    public $resource_id;
-    public $colony_id;
-    public $amount;
-
+    private $resource_id;
+    private $colony_id;
+    private $amount;
 
     /**
      * Sets the value of resource_id.

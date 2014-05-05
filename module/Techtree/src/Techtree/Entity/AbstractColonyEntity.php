@@ -2,13 +2,14 @@
 namespace Techtree\Entity;
 
 use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-abstract class AbstractColonyEntity extends AbstractEntity
+abstract class AbstractColonyEntity implements EntityInterface
 {
-    public $colony_id;
-    public $level;
-    public $status_points;
-    public $ap_spend;
+    private $colony_id;
+    private $level;
+    private $status_points;
+    private $ap_spend;
 
     /**
      * Gets the value of colony_id.

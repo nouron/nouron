@@ -1,14 +1,13 @@
 <?php
 namespace Resources\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class User extends AbstractEntity
+class User implements EntityInterface
 {
-    public $user_id;
-    public $credits;
-    public $supply;
-
+    private $user_id;
+    private $credits;
+    private $supply;
 
     /**
      * Sets the value of user_id.

@@ -28,23 +28,33 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
      */
     public function getArrayCopy($columnAsIndex = null)
     {
+
         if (!empty($columnAsIndex)) {
+
             $result = array();
             if (is_array($columnAsIndex) && count($columnAsIndex) == 2) {
+
+                $attr1 = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex[0])));
+                $attr2 = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex[1])));
+
                 // compound primary key
                 foreach ($this as $row) {
-                    $tmp = $row->getArrayCopy();
-                    if ( !isset($result[$tmp[$columnAsIndex[0]]]) ) {
-                        $result[$tmp[$columnAsIndex[0]]] = array();
+
+                    $getattr1 = 'get' . $attr1;
+                    $getattr2 = 'get' . $attr2;
+
+                    if ( !isset($result[$row->$getattr1()]) ) {
+                        $result[$row->$getattr1()] = array();
                     }
-                    $result[ $tmp[$columnAsIndex[0]] ][ $tmp[$columnAsIndex[1]] ] = $tmp;
+                    $result[ $row->$getattr1() ][ $row->$getattr2() ] = $tmp;
                 }
 
             } elseif (is_string($columnAsIndex)) {
                 // primary key is given
+                $attr = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex)));
                 foreach ($this as $row) {
-                    $tmp = $row->getArrayCopy();
-                    $result[ $tmp[$columnAsIndex] ] = $tmp;
+                    $func = 'get' . $attr;
+                    $result[ $row->$func() ] = $row;
                 }
 
             } else {
@@ -52,47 +62,34 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
                 try {
                     // try to take 'id' as primary key
                     foreach ($this as $row) {
-                        $tmp = $row->getArrayCopy();
-                        $result[ $tmp['id'] ] = $tmp;
+                        $result[ $tmp->getId() ] = $row;
                     }
                 } catch (Exception $e) {
                     // 'id' doesn't work, so just convert to array
                     //$this->log(\Zend\Log\Loger::INFO, 'getArrayCopy(): could not determine primary key');
-                    $result = array();
-                    foreach ($this as $row) {
-                        $result[] = $row->getArrayCopy();
-                    }
+                    $result = $this->toArray();
                 }
             }
-
         } else {
-            $result = array();
-            foreach ($this as $row) {
-                $result[] = $row->getArrayCopy();
-            }
+            $result = $this->toArray();
         }
 
         return $result;
     }
 
-    private function convert($row)
-    {
-        if (is_array($row)) {
-            $tmp = $row;
-        } elseif (method_exists($row, 'getArrayCopy')) {
-            $tmp = $row->getArrayCopy();
-        } else {
-            throw new Exception\RuntimeException(
-                'Rows as part of this DataSource, with type ' . gettype($row) . ' cannot be cast to an array'
-            );
-        }
+#    private function convert($row)
+#    {
+#        if (is_array($row)) {
+#            $tmp = $row;
+#        } elseif (is_object($row)) {
+#            $tmp = get_object_vars($row); #<-- TODO: this can't work anymore!!
+#        } else {
+#            throw new Exception\RuntimeException(
+#                'Rows as part of this DataSource, with type ' . gettype($row) . ' cannot be cast to an array'
+#            );
+#        }
+#
+#        return $tmp;
+#    }
 
-        return $tmp;
-    }
-
-//    public function log($type, $message)
-//    {
-//
-//        $this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::INFO, 'message');
-//    }
 }

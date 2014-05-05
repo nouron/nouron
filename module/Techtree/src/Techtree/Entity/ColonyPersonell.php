@@ -3,7 +3,7 @@ namespace Techtree\Entity;
 
 class ColonyPersonell extends AbstractColonyEntity
 {
-    public $personell_id;
+    private $personell_id;
 
     public function __create()
     {

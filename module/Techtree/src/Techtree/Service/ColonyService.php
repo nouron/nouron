@@ -88,18 +88,27 @@ class ColonyService extends \Nouron\Service\AbstractService
             default:        return array(); # TODO: Exception
                             break;
         }
-        $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
+
+        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
 
         $colonyEntities = $this->$func()->getArrayCopy($id);
+        $colonyObjects = array();
+        foreach ($colonyEntities as $id => $entity) {
+            $colonyObjects[$id] = $hydrator->extract($entity);
+        }
+
+        $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
+        $objects = array();
         foreach ($entities as $id => $entity) {
-            $entities[$id]['level'] = 0;
-            $entities[$id]['status_points'] = 0;
-            $entities[$id]['ap_spend'] = 0;
-            if (array_key_exists($id, $colonyEntities)) {
-                $entities[$id] = $entity + $colonyEntities[$id];
+            $objects[$id] = $hydrator->extract($entity);
+            $objects[$id]['level'] = 0;
+            $objects[$id]['status_points'] = 0;
+            $objects[$id]['ap_spend'] = 0;
+            if (array_key_exists($id, $colonyObjects)) {
+                $objects[$id] = $objects[$id] + $colonyObjects[$id];
             }
         }
-        return $entities;
+        return $objects;
     }
 
     /**

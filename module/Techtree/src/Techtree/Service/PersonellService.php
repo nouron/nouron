@@ -122,7 +122,7 @@ class PersonellService extends AbstractTechnologyService
                 $loggedActionpoints = new \Techtree\Entity\ActionPoint($data);
             }
 
-            $usedAP = $loggedActionpoints->spend_ap;
+            $usedAP = $loggedActionpoints->getSpendAp();
             return ( $totalAP - $usedAP);
         }
     }
