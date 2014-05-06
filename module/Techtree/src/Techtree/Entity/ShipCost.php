@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class ShipCost extends AbstractEntity
+class ShipCost implements EntityInterface
 {
     private $ship_id;
     private $resource_id;

@@ -63,35 +63,44 @@ class ColonyServiceTest extends AbstractServiceTest
     /**
      * @return integer
      */
-    public function getColonyId() {
+    public function getColonyId()
+    {
         $this->markTestIncomplete();
     }
 
     /**
      * @return ResultSet
      */
-    public function getBuildings() {
+    public function getBuildings()
+    {
+        $this->assertInstanceOf(
+            "Nouron\Model\ResultSet",
+            $this->_service->getBuildings($this->_colonyId)
+        );
         $this->markTestIncomplete();
     }
 
     /**
      * @return ResultSet
      */
-    public function getResearches() {
+    public function getResearches()
+    {
         $this->markTestIncomplete();
     }
 
     /**
      * @return ResultSet
      */
-    public function getShips() {
+    public function getShips()
+    {
         $this->markTestIncomplete();
     }
 
     /**
      * @return ResultSet
      */
-    public function getPersonell() {
+    public function getPersonell()
+    {
         $this->markTestIncomplete();
     }
 

@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-abstract class AbstractTechnology extends AbstractEntity
+abstract class AbstractTechnology implements EntityInterface
 {
     public $id;
     public $purpose;

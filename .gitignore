@@ -12,6 +12,7 @@ vendor/
 bin/**
 tmp/**
 tmp/**/*
+test/report/*
 *.tmp
 *.bak
 *.swp

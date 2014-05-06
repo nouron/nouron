@@ -83,45 +83,45 @@ class BuildingServiceTest extends AbstractServiceTest
         $this->assertEquals('Techtree\Entity\BuildingCost', get_class($objects->current()));
     }
 
-#    public function testColonyEntity()
-#    {
-#        $possess = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
-#        $this->assertEquals(5, $possess->getLevel());
-#    }
-#
-#    public function testGetColonyEntities()
-#    {
-#        $objects = $this->_service->getColonyEntities($this->_colonyId);
-#        $this->assertTrue(!empty($objects));
-#        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
-#        $this->assertEquals('Techtree\Entity\ColonyBuilding', get_class($objects->current()));
-#    }
-#
-#    public function testGetEntities()
-#    {
-#        $objects = $this->_service->getEntities();
-#        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
-#        $this->assertEquals('Techtree\Entity\Building', get_class($objects->current()));
-#    }
-#
-#    public function testGetEntity()
-#    {
-#        $object = $this->_service->getEntity($this->_entityId);
-#        $this->assertEquals('Techtree\Entity\Building', get_class($object));
-#        $this->markTestIncomplete();
-#    }
-#
-#    public function testLevelup()
-#    {
-#        // TODO: test successfull level up
-#        // TODO: test failed checks for level up
-#        // TODO: test error case
-#
-#        $this->initDatabase();
-#        $result = $this->_service->levelup($this->_colonyId, $this->_entityId);
-#        $this->markTestIncomplete();
-#    }
-#
+    public function testColonyEntity()
+    {
+        $possess = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
+        $this->assertEquals(5, $possess->getLevel());
+    }
+
+    public function testGetColonyEntities()
+    {
+        $objects = $this->_service->getColonyEntities($this->_colonyId);
+        $this->assertTrue(!empty($objects));
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\ColonyBuilding', get_class($objects->current()));
+    }
+
+    public function testGetEntities()
+    {
+        $objects = $this->_service->getEntities();
+        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Techtree\Entity\Building', get_class($objects->current()));
+    }
+
+    public function testGetEntity()
+    {
+        $object = $this->_service->getEntity($this->_entityId);
+        $this->assertEquals('Techtree\Entity\Building', get_class($object));
+        $this->markTestIncomplete();
+    }
+
+    public function testLevelup()
+    {
+        // TODO: test successfull level up
+        // TODO: test failed checks for level up
+        // TODO: test error case
+
+        $this->initDatabase();
+        $result = $this->_service->levelup($this->_colonyId, $this->_entityId);
+        $this->markTestIncomplete();
+    }
+
 #    public function testLeveldown()
 #    {
 #        // TODO: test successfull level down

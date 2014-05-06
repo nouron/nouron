@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class PersonellCost extends AbstractEntity
+class PersonellCost implements EntityInterface
 {
     private $personell_id;
     private $resource_id;

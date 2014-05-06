@@ -16,14 +16,7 @@ class Resources extends AbstractPlugin
         $colonyId = $this->getController()->getActive('colony');
         $sm = $this->getController()->getServiceLocator();
         $gw = $sm->get('Resources/Service/ResourcesService');
-        $results = $gw->getResources()->getArrayCopy('id');
-
-        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
-        $resources = array();
-        foreach ($results as $id => $entity) {
-            $resources[$id] = $hydrator->extract($entity);
-        }
-
+        $resources = $gw->getResources()->getArrayCopy('id');
         $possessions = $gw->getPossessionsByColonyId($colonyId);
         foreach ($possessions as $resId => $poss) {
             $possessions[$resId] += $resources[$resId];

@@ -29,32 +29,26 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
     public function getArrayCopy($columnAsIndex = null)
     {
 
+        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
+
         if (!empty($columnAsIndex)) {
 
             $result = array();
             if (is_array($columnAsIndex) && count($columnAsIndex) == 2) {
-
-                $attr1 = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex[0])));
-                $attr2 = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex[1])));
-
                 // compound primary key
                 foreach ($this as $row) {
-
-                    $getattr1 = 'get' . $attr1;
-                    $getattr2 = 'get' . $attr2;
-
-                    if ( !isset($result[$row->$getattr1()]) ) {
-                        $result[$row->$getattr1()] = array();
+                    $tmp = is_object($row) ? $hydrator->extract($row) : $row;
+                    if ( !isset($result[$tmp[$columnAsIndex[0]]]) ) {
+                        $result[$tmp[$columnAsIndex[0]]] = array();
                     }
-                    $result[ $row->$getattr1() ][ $row->$getattr2() ] = $tmp;
+                    $result[ $tmp[$columnAsIndex[0]] ][ $tmp[$columnAsIndex[1]] ] = $tmp;
                 }
 
             } elseif (is_string($columnAsIndex)) {
                 // primary key is given
-                $attr = str_replace(' ', '', ucwords(str_replace('_', ' ', $columnAsIndex)));
                 foreach ($this as $row) {
-                    $func = 'get' . $attr;
-                    $result[ $row->$func() ] = $row;
+                    $tmp = is_object($row) ? $hydrator->extract($row) : $row;
+                    $result[ $tmp[$columnAsIndex] ] = $tmp;
                 }
 
             } else {
@@ -62,7 +56,8 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
                 try {
                     // try to take 'id' as primary key
                     foreach ($this as $row) {
-                        $result[ $tmp->getId() ] = $row;
+                        $tmp = is_object($row) ? $hydrator->extract($row) : $row;
+                        $result[ $tmp['id'] ] = $tmp;
                     }
                 } catch (Exception $e) {
                     // 'id' doesn't work, so just convert to array

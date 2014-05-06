@@ -86,12 +86,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
         $galaxyGw = $this->getService('galaxy');
         $colony = $galaxyGw->getColony($colonyId);
 
-        $results = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
-        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
-        $possessions = array();
-        foreach ($results as $id => $entity) {
-            $possessions[$id] = $hydrator->extract($entity);
-        }
+        $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
         $userResources = $this->getUserResources('user_id = ' . $colony->getUserId());
         foreach ($userResources as $t) {
             $add = array(
