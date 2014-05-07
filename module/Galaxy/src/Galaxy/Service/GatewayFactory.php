@@ -3,24 +3,6 @@ namespace Galaxy\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
-use Galaxy\Entity\Colony;
-use Galaxy\Entity\System;
-use Galaxy\Entity\SystemObject;
-use Fleet\Entity\Fleet;
-use Fleet\Entity\FleetShip;
-use Fleet\Entity\FleetPersonell;
-use Fleet\Entity\FleetResearch;
-use Fleet\Entity\FleetResource;
-use Fleet\Entity\FleetOrder;
-use Galaxy\Table\ColonyTable;
-use Galaxy\Table\SystemTable;
-use Galaxy\Table\SystemObjectTable;
-use Fleet\Table\FleetTable;
-use Fleet\Table\FleetShipTable;
-use Fleet\Table\FleetPersonellTable;
-use Fleet\Table\FleetResearchTable;
-use Fleet\Table\FleetResourceTable;
-use Fleet\Table\FleetOrderTable;
 
 class GatewayFactory implements FactoryInterface
 {
@@ -36,17 +18,17 @@ class GatewayFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['colony'] = new ColonyTable($db, new Colony());
-        $tables['system'] = new SystemTable($db, new System());
-        $tables['fleet']  = new FleetTable($db, new Fleet());
-        $tables['systemobject']     = new SystemObjectTable($db, new SystemObject());
-        $tables['fleetship']        = new FleetShipTable($db, new FleetShip());
-        $tables['fleetpersonell']   = new FleetPersonellTable($db, new FleetPersonell());
-        $tables['fleetresearch']    = new FleetResearchTable($db, new FleetResearch());
-        $tables['fleetorder']       = new FleetOrderTable($db, new FleetOrder());
-        $tables['fleetresource']    = new FleetResourceTable($db, new FleetResource());
-        $tables['colonybuilding']   = new \Techtree\Table\ColonyBuildingTable($db, new \Techtree\Entity\ColonyBuilding());
-        $tables['colonyresource']   = new \Resources\Table\ColonyTable($db, new \Resources\Entity\Colony());
+        $tables['colony'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
+        $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
+        #$tables['fleet']  = $serviceLocator->get('Galaxy\Table\FleetTable');
+        $tables['systemobject']     = $serviceLocator->get('Galaxy\Table\SystemObjectTable');
+        #$tables['fleetship']        = $serviceLocator->get('Fleet\Table\FleetShipTable');
+        #$tables['fleetpersonell']   = $serviceLocator->get('Fleet\Table\FleetPersonellTable');
+        #$tables['fleetresearch']    = $serviceLocator->get('Fleet\Table\FleetResearchTable');
+        #$tables['fleetorder']       = $serviceLocator->get('Fleet\Table\FleetOrderTable');
+        #$tables['fleetresource']    = $serviceLocator->get('Fleet\Table\FleetResourceTable');
+        $tables['colonybuilding']   = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colonyresource']   = $serviceLocator->get('Resources\Table\ColonyTable');
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
         $gateway = new Gateway($tick, $tables, array());

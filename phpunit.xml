@@ -17,9 +17,9 @@
         <testsuite name="fleet">
             <directory>./module/Fleet/test/FleetTest</directory>
         </testsuite>
-        <!--<testsuite name="galaxy">
+        <testsuite name="galaxy">
             <directory>./module/Galaxy/test/GalaxyTest</directory>
-        </testsuite>-->
+        </testsuite>
     </testsuites>
     <filter>
         <whitelist addUncoveredFilesFromWhitelist="true">
@@ -28,7 +28,7 @@
           <directory suffix=".php">./module/Trade/src</directory>
           <directory suffix=".php">./module/INNN/src</directory>
           <directory suffix=".php">./module/Fleet/src</directory>
-          <!--<directory suffix=".php">./module/Galaxy/src</directory>-->
+          <directory suffix=".php">./module/Galaxy/src</directory>
         </whitelist>
     </filter>
 </phpunit>

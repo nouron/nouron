@@ -3,6 +3,7 @@
 return array(
   'Galaxy\Module'                             => __DIR__ . '/Module.php',
   'GalaxyTest\Bootstrap'                      => __DIR__ . '/test/Bootstrap.php',
+  'GalaxyTest\Service\GatewayFactoryTest'     => __DIR__ . '/test/GalaxyTest/Service/GatewayFactoryTest.php',
   'GalaxyTest\Service\GatewayTest'            => __DIR__ . '/test/GalaxyTest/Service/GatewayTest.php',
   'GalaxyTest\Controller\IndexControllerTest' => __DIR__ . '/test/GalaxyTest/Controller/IndexControllerTest.php',
   'Galaxy\Service\Exception'                  => __DIR__ . '/src/Galaxy/Service/Exception.php',
