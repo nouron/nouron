@@ -20,7 +20,6 @@ class FleetResearch implements EntityInterface
     public function setFleetId($fleet_id)
     {
         $this->fleet_id = $fleet_id;
-
         return $this;
     }
 
@@ -34,7 +33,6 @@ class FleetResearch implements EntityInterface
     public function setResearchId($research_id)
     {
         $this->research_id = $research_id;
-
         return $this;
     }
 
@@ -48,7 +46,6 @@ class FleetResearch implements EntityInterface
     public function setCount($count)
     {
         $this->count = $count;
-
         return $this;
     }
 
@@ -62,7 +59,6 @@ class FleetResearch implements EntityInterface
     public function setIsCargo($is_cargo)
     {
         $this->is_cargo = $is_cargo;
-
         return $this;
     }
 

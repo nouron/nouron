@@ -51,6 +51,10 @@ class FleetServiceFactoryTest extends PHPUnit_Framework_TestCase
             'Fleet\Table\FleetOrderTable' => 'Fleet\Table\FleetOrderTable',
             'Fleet\Table\FleetResourceTable' => 'Fleet\Table\FleetResourceTable',
 
+            'Techtree\Table\ShipTable' =>  'Techtree\Table\ShipTable',
+            'Techtree\Table\PersonellTable' =>  'Techtree\Table\PersonellTable',
+            'Techtree\Table\ResearchTable' =>  'Techtree\Table\ResearchTable',
+
             'Techtree\Table\ColonyShipTable' => 'Techtree\Table\ColonyShipTable',
             'Techtree\Table\ColonyPersonellTable' => 'Techtree\Table\ColonyPersonellTable',
             'Techtree\Table\ColonyResearchTable' => 'Techtree\Table\ColonyResearchTable',

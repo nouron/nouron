@@ -52,6 +52,10 @@ class FleetServiceFactory implements FactoryInterface
         $tables['fleetorder']     = $serviceLocator->get('Fleet\Table\FleetOrderTable');
         $tables['fleetresource']  = $serviceLocator->get('Fleet\Table\FleetResourceTable');
 
+        $tables['ship'] = $serviceLocator->get('Techtree\Table\ShipTable');
+        $tables['personell'] = $serviceLocator->get('Techtree\Table\PersonellTable');
+        $tables['research']  = $serviceLocator->get('Techtree\Table\ResearchTable');
+
         $tables['colonyship']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
         $tables['colonypersonell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
         $tables['colonyresearch']  = $serviceLocator->get('Techtree\Table\ColonyResearchTable');

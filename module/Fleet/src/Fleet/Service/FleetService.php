@@ -2,6 +2,10 @@
 namespace Fleet\Service;
 
 use Fleet\Entity\Fleet;
+use Fleet\Entity\FleetPersonell;
+use Fleet\Entity\FleetShip;
+use Fleet\Entity\FleetResearch;
+use Fleet\Entity\FleetResource;
 use Nouron\Model\ResultSet;
 
 class FleetService extends \Galaxy\Service\Gateway
@@ -354,40 +358,42 @@ class FleetService extends \Galaxy\Service\Gateway
     /**
      * Get one specific technology from a fleet specified by given compound primary key.
      * One technology from a fleet - not more!
-     * ATTENTION: This function allways return a fleetstechnology object even if the
-     * tech is not in the fleet!
+     * ATTENTION: This function allways return an entity even if the
+     * entity is not in the fleet!
      *
-     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
-     * @return \Fleet\Entity\FleetTechnology | array
+     * @param  array $key  The compound primary key in form: array('fleet_id' => 1, 'tech_id' => 2)
+     * @param  boolean $forceResultEntity  create Entity even if result is empty
+     * @return FleetShip
      */
-    public function getFleetShip(array $keys)
+    public function getFleetShip(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetship')->select($keys)->current();
-        if (empty($result)) {
-            return array(
-                'fleet_id' => $keys['fleet_id'],
-                'ship_id'  => $keys['ship_id'],
-                'count'    => 0,
-                'is_cargo' => $keys['is_cargo'],
-            );
-        } else {
-            return $result;
+        $result = $this->getTable('fleetship')->select($key)->current();
+        if (empty($result) && $forceResultEntity) {
+            $result = new FleetShip();
+            $result->setFleetId($key['fleet_id']);
+            $result->setShipId($key['ship_id']);
+            $result->setCount(0);
         }
+        return $result;
     }
 
-    public function getFleetResearch(array $keys)
+    /**
+     * similar to getFleetShip()
+     *
+     * @param  array $key  The compound primary key in form: array('fleet_id' => 1, 'research_id' => 2)
+     * @param  boolean $forceResultEntity  create Entity even if result is empty
+     * @return FleetResearch
+     */
+    public function getFleetResearch(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetresearch')->select($keys)->current();
-        if (empty($result)) {
-            return array(
-                'fleet_id' => $keys['fleet_id'],
-                'research_id'  => $keys['research_id'],
-                'count'    => 0,
-                'is_cargo' => $keys['is_cargo'],
-            );
-        } else {
-            return $result;
+        $result = $this->getTable('fleetresearch')->select($key)->current();
+        if (empty($result) && $forceResultEntity) {
+            $result = new FleetResearch();
+            $result->setFleetId($key['fleet_id']);
+            $result->setResearchId($key['research_id']);
+            $result->setCount(0);
         }
+        return $result;
     }
 
     public function getFleetShips($where)
@@ -405,6 +411,12 @@ class FleetService extends \Galaxy\Service\Gateway
         return $this->getFleetShips($where);
     }
 
+    /**
+     * similar to getFleetShip()
+     *
+     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'research_id' => 2)
+     * @return FleetResearch
+     */
     public function getFleetResearches($where)
     {
         return $this->getTable('fleetresearch')->select($where);
@@ -420,6 +432,12 @@ class FleetService extends \Galaxy\Service\Gateway
         return $this->getFleetResearches($where);
     }
 
+    /**
+     * similar to getFleetShip()
+     *
+     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'research_id' => 2)
+     * @return FleetResearch
+     */
     public function getFleetPersonell($where)
     {
         return $this->getTable('fleetpersonell')->select($where);
@@ -539,35 +557,36 @@ class FleetService extends \Galaxy\Service\Gateway
     {
         switch (strtolower($type)) {
             case 'research':
-                $table = 'fleetresearch';
-                #$id    = 'research_id';
+                $table = 'research';
+                $id    = 'research_id';
                 $func  = 'getFleetResearchesByFleetId';
                 break;
             case 'ship':
-                $table = 'fleetship';
-                #$id    = 'ship_id';
+                $table = 'ship';
+                $id    = 'ship_id';
                 $func  = 'getFleetShipsByFleetId';
                 break;
             case 'personell':
-                $table = 'fleetpersonell';
-                #$id    = 'personell_id';
+                $table = 'personell';
+                $id    = 'personell_id';
                 $func  = 'getFleetPersonellByFleetId';
                 break;
             default:
                 return array(); # TODO: Exception
         }
-        $entities  = $this->getTable($table)->fetchAll('fleet_id = ' . $fleetId)->getArrayCopy('id');
-        $fleetEntities = $this->$func($fleetId)->getArrayCopy('id');
+
+        $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
+        $fleetEntities = $this->$func($fleetId)->getArrayCopy(array('fleet_id', $id));
         $results = array();
         foreach ($entities as $id => $entity) {
-            if (array_key_exists($id, $fleetEntities)) {
-                $entities[$id] = $entities[$id] + $fleetEntities[$id];
+            if (array_key_exists($id, $fleetEntities[$fleetId])) {
+                $entities[$id] = $entities[$id] + $fleetEntities[$fleetId][$id];
             }
-#             else {
-#                $entities[$id]['level'] = 0;
-#                $entities[$id]['status_points'] = 0;
-#                $entities[$id]['ap_spend'] = 0;
-#            }
+            else {
+                $entities[$id]['level'] = 0;
+                $entities[$id]['status_points'] = 0;
+                $entities[$id]['ap_spend'] = 0;
+            }
         }
         return $entities;
 
