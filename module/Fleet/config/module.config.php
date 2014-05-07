@@ -139,7 +139,7 @@ return array(
                                 'action' => 'json',
                             )
                         ),
-                        
+
                     ),
                 ),
              ),
@@ -253,12 +253,16 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
-            'Fleet\Entity\System' => 'Fleet\Entity\SystemFactory',
-            'Fleet\Entity\SystemObject' => 'Fleet\Entity\SystemObjectFactory',
-            'Fleet\Entity\Colony' => 'Fleet\Entity\ColonyFactory',
-            'Fleet\Entity\ColonyTechnology' => 'Fleet\Entity\ColonyTechnologyFactory',
+            'Techtree\Entity\Colony' => 'Techtree\Entity\ColonyFactory',
+            'Fleet\Entity\ColonyShip' => 'Fleet\Entity\ColonyShipFactory',
+            'Fleet\Entity\ColonyPersonell' => 'Fleet\Entity\ColonyPersonellFactory',
+            'Fleet\Entity\ColonyResearch' => 'Fleet\Entity\ColonyResearchFactory',
+            'Fleet\Entity\ResourceResearch' => 'Fleet\Entity\ColonyReResourceFactory',
             'Fleet\Entity\Fleet' => 'Fleet\Entity\FleetFactory',
             'Fleet\Entity\FleetTechnology' => 'Fleet\Entity\FleetTechnologyFactory',
+            'Fleet\Entity\FleetShip' => 'Fleet\Entity\FleetShipFactory',
+            'Fleet\Entity\FleetPersonell' => 'Fleet\Entity\FleetPersonellFactory',
+            'Fleet\Entity\FleetResearch' => 'Fleet\Entity\FleetResearchFactory',
             'Fleet\Entity\FleetResource' => 'Fleet\Entity\FleetResourceFactory',
             'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',

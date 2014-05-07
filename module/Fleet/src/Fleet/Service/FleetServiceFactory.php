@@ -39,25 +39,23 @@ class FleetServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db     = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick   = $serviceLocator->get('Nouron\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['colony'] = new ColonyTable($db, new Colony());
-        $tables['system'] = new SystemTable($db, new System());
-        $tables['fleet']  = new FleetTable($db, new Fleet());
-        $tables['fleet']     = new FleetTable($db, new Fleet());
-        $tables['fleetship'] = new FleetShipTable($db, new FleetShip());
-        $tables['fleetpersonell'] = new FleetPersonellTable($db, new FleetPersonell());
-        $tables['fleetresearch']  = new FleetResearchTable($db, new FleetResearch());
-        $tables['fleetorder']     = new FleetOrderTable($db, new FleetOrder());
-        $tables['fleetresource']  = new FleetResourceTable($db, new FleetResource());
+        $tables['colony'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
+        $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
+        $tables['fleet']     = $serviceLocator->get('Fleet\Table\FleetTable');
+        $tables['fleetship'] = $serviceLocator->get('Fleet\Table\FleetShipTable');
+        $tables['fleetpersonell'] = $serviceLocator->get('Fleet\Table\FleetPersonellTable');
+        $tables['fleetresearch']  = $serviceLocator->get('Fleet\Table\FleetResearchTable');
+        $tables['fleetorder']     = $serviceLocator->get('Fleet\Table\FleetOrderTable');
+        $tables['fleetresource']  = $serviceLocator->get('Fleet\Table\FleetResourceTable');
 
-        $tables['colonyship']      = new ColonyShipTable($db, new ColonyShip());
-        $tables['colonypersonell'] = new ColonyPersonellTable($db, new ColonyPersonell());
-        $tables['colonyresearch']  = new ColonyResearchTable($db, new ColonyResearch());
-        $tables['colonyresource']  = new \Resources\Table\ColonyTable($db, new ColonyResource());
+        $tables['colonyship']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
+        $tables['colonypersonell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colonyresearch']  = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
+        $tables['colonyresource']  = $serviceLocator->get('Resources\Table\ColonyTable');
 
         $service = new FleetService($tick, $tables, array());
         $service->setLogger($logger);

@@ -1,6 +1,6 @@
 <?php
 
-namespace Test;
+namespace FleetTest;
 
 use Zend\Loader\AutoloaderFactory;
 use Zend\Mvc\Service\ServiceManagerConfig;
@@ -26,9 +26,6 @@ class Bootstrap
         if (($path = static::findParentPath('module')) !== $zf2ModulePaths[0]) {
             $zf2ModulePaths[] = $path;
         }
-        if (($path = static::findParentPath('test')) !== $zf2ModulePaths[0]) {
-            $zf2ModulePaths[] = $path;
-        }
 
         static::initAutoloader();
 
@@ -44,8 +41,6 @@ class Bootstrap
                 'User',
                 'Galaxy',
                 'Techtree',
-                'Trade',
-                'INNN',
                 'Resources',
                 'Fleet'
             )

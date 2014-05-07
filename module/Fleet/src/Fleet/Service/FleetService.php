@@ -1,6 +1,9 @@
 <?php
 namespace Fleet\Service;
 
+use Fleet\Entity\Fleet;
+use Nouron\Model\ResultSet;
+
 class FleetService extends \Galaxy\Service\Gateway
 {
     /**
@@ -14,7 +17,7 @@ class FleetService extends \Galaxy\Service\Gateway
 
     /**
      *
-     * @param \Fleet\Entity\Fleet $entity
+     * @param Fleet $entity;
      */
     public function saveFleet($entity)
     {
@@ -23,7 +26,7 @@ class FleetService extends \Galaxy\Service\Gateway
 
     /**
      *
-     * @param \Fleet\Entity\Fleet $entity
+     * @param Fleet $entity;
      */
     public function saveFleetOrder($entity)
     {

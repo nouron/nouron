@@ -2,7 +2,7 @@
 
 <phpunit bootstrap="./test/Bootstrap.php" colors="false">
     <testsuites>
-        <testsuite name="innn">
+        <!--<testsuite name="innn">
             <directory>./module/INNN/test/INNNTest</directory>
         </testsuite>
         <testsuite name="techtree">
@@ -13,13 +13,13 @@
         </testsuite>
         <testsuite name="resources">
             <directory>./module/Resources/test/ResourcesTest</directory>
-        </testsuite>
+        </testsuite>-->
         <!--<testsuite name="galaxy">
             <directory>./module/Galaxy/test/GalaxyTest</directory>
         </testsuite>-->
-        <!--<testsuite name="fleet">
-            <directory>./module/Fleet/test/GalaxyTest</directory>
-        </testsuite>-->
+        <testsuite name="fleet">
+            <directory>./module/Fleet/test/FleetTest</directory>
+        </testsuite>
     </testsuites>
     <filter>
         <whitelist addUncoveredFilesFromWhitelist="true">
@@ -28,7 +28,7 @@
           <directory suffix=".php">./module/Trade/src</directory>
           <directory suffix=".php">./module/INNN/src</directory>
           <!--<directory suffix=".php">./module/Galaxy/src</directory>-->
-          <!--<directory suffix=".php">./module/Fleet/src</directory>-->
+          <directory suffix=".php">./module/Fleet/src</directory>
         </whitelist>
     </filter>
 </phpunit>
