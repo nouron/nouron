@@ -92,7 +92,6 @@ class ColonyService extends \Nouron\Service\AbstractService
         $colonyEntities = $this->$func()->getArrayCopy($id);
         $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
         foreach ($entities as $id => $entity) {
-
             if (array_key_exists($id, $colonyEntities)) {
                 $entities[$id] = $entities[$id] + $colonyEntities[$id];
             } else {

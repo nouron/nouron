@@ -17,26 +17,26 @@
                     <th></th>
                 </tr>
             <?php
-            foreach ($fleets as $fleet):
-            if ($fleet['user_id'] == $userId): ?>
+            foreach ($ownFleets as $fleet):
+            if ($fleet->getUserId() == $userId): ?>
             <tr class="">
-                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet['id'])) ?>"><i class="glyphicon glyphicon-search"></i><?php echo $fleet['fleet'] ?></a></td>
+                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet->getId())) ?>"><i class="glyphicon glyphicon-search"></i><?php echo $fleet->getFleet() ?></a></td>
                 <?php
-                if (isset($colony) && $colony['x'] == $fleet['x'] && $colony['y'] == $fleet['y'] ): ?>
+                if (isset($colony) && $colony->getX() == $fleet->getX() && $colony->getY() == $fleet->getY() ): ?>
                 <td>angedockt</td>
                 <td><?php
-                if (isset($myFleetOrders[$fleet['id']])):
-                    $myOrders = $myFleetOrders[$fleet['id']]['order'];
-                    echo $myFleetOrders[$fleet['id']]['order'];
+                if (isset($myFleetOrders[$fleet->getId()])):
+                    $myOrders = $myFleetOrders[$fleet->getId()]['order'];
+                    echo $myFleetOrders[$fleet->getId()]['order'];
                 else:
                     echo 'leer';
                 endif; ?></td>
                 <td>
                     <?php echo ($trade) ? '<a class="button" href="#">Auftrag zuweisen</a>' : 'befehligen' ?>
                 </td>
-                <td><a class="btn btn-default" href="/fleet/delete/<?php echo $fleet['id']?>"><i class="glyphicon glyphicon-remove"></i></a></td>
+                <td><a class="btn btn-default" href="/fleet/delete/<?php echo $fleet->getId()?>"><i class="glyphicon glyphicon-remove"></i></a></td>
                 <?php else:?>
-                <td><?php echo $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['spot'] ?></td>
+                <td><?php echo $fleet->getX() . ','. $fleet->getY() . ',' . $fleet->getSpot() ?></td>
                 <td></td>
                 <td><a class="btn btn-default disabled"><i class="glyphicon glyphicon-remove"></i></a></td>
                 <?php endif;?>
@@ -65,11 +65,12 @@
                     <th></th>
                     <th></th>
                 </tr>
-            <?php foreach ($fleets as $fleet):
-                if ( $fleet['user_id'] != $userId): ?>
+            <?php foreach ($foreignFleets as $fleet):
+                if ( $fleet->getUserId() != $userId):
+                    ?>
                 <tr>
-                    <td><?php echo $fleet['fleet'] ?></td>
-                    <td><?php echo $fleet['x'] . ','. $fleet['y'] . ',' . $fleet['spot'] ?></td>
+                    <td><?php echo $fleet->getFleet() ?></td>
+                    <td><?php echo $fleet->getX() . ','. $fleet->getY() . ',' . $fleet->getSpot() ?></td>
                     <td></td>
                 </tr>
                 <?php endif;

@@ -6,6 +6,7 @@ use Nouron\Table\AbstractTable;
 class PersonellTable extends AbstractTable
 {
     protected $table  = 'personell';
+    protected $primary = 'id';
 
 }
 

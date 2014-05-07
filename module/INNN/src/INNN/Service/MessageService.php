@@ -1,11 +1,14 @@
 <?php
 namespace INNN\Service;
 
-class Message extends \Nouron\Service\AbstractService
+use Nouron\Model\ResultSet;
+
+class MessageService extends \Nouron\Service\AbstractService
 {
     /**
      *
      * @param numeric $id
+     * @return \INNN\Message\Entity
      */
     public function getMessage($id)
     {
@@ -62,6 +65,7 @@ class Message extends \Nouron\Service\AbstractService
     /**
      *
      * @param \INNN\Entity\Message $entity
+     * @return boolean
      */
     public function sendMessage($entity)
     {
@@ -88,6 +92,7 @@ class Message extends \Nouron\Service\AbstractService
      *
      * @param numeric $entity_id
      * @param string  $entity_id  'read'|'archived'|'deleted'
+     * @return boolean
      */
     public function setMessageStatus($entity_id, $status)
     {

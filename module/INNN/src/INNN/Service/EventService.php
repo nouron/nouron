@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Service;
 
-class Event extends \Nouron\Service\AbstractService
+class EventService extends \Nouron\Service\AbstractService
 {
     /**
      * @return ResultSet

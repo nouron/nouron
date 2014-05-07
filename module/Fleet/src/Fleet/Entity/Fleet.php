@@ -1,16 +1,16 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Fleet extends AbstractEntity
+class Fleet implements EntityInterface
 {
-    public $id;
-    public $fleet;
-    public $user_id;
-    public $x;
-    public $y;
-    public $spot;
+    private $id;
+    private $fleet;
+    private $user_id;
+    private $x;
+    private $y;
+    private $spot;
 
 
     /**
@@ -106,6 +106,11 @@ class Fleet extends AbstractEntity
     public function getUserId()
     {
         return $this->user_id;
+    }
+
+    public function getFleet()
+    {
+        return $this->fleet;
     }
 
     /**

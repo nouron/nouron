@@ -34,18 +34,23 @@ class IndexController extends \Nouron\Controller\IngameController
 
         if ($x && $y) {
             $entity = array('x' => $x, 'y' => $y);
-            $fleets = $fleetService->getByCoordinates('fleets', array($x,$y));
+            $ownFleets = $fleetService->getByCoordinates('fleets', array($x,$y));
+            $foreignFleets = $fleetService->getByCoordinates('fleets', array($x,$y));
         } elseif ( $colonyId ) {
             $entity = $fleetService->getColony($colonyId);
-            $fleets = $fleetService->getFleetsByEntityId('colony', $colonyId);
+            $ownFleets = $fleetService->getFleetsByEntityId('colony', $colonyId);
+            $foreignFleets = $fleetService->getFleetsByEntityId('colony', $colonyId);
         } elseif ( $objectId ) {
             $entity = $fleetService->getSystemObject($objectId);
-            $fleets = $fleetService->getFleetsByEntityId('object', $objectId);
+            $ownFleets = $fleetService->getFleetsByEntityId('object', $objectId);
+            $foreignFleets = $fleetService->getFleetsByEntityId('object', $objectId);
         } elseif ( $systemId) {
             $entity = $fleetService->getSystem($systemId);
-            $fleets = $fleetService->getFleetsByEntityId('system', $systemId);
+            $ownFleets = $fleetService->getFleetsByEntityId('system', $systemId);
+            $foreignFleets = $fleetService->getFleetsByEntityId('system', $systemId);
         } else {
-            $fleets = $fleetService->getFleetsByUserId($userId);
+            $ownFleets = $fleetService->getFleetsByUserId($userId);
+            $foreignFleets = $fleetService->getFleetsByUserId($userId);
             //$entity = $gw->getSystemObject($colonyId);
         }
 
@@ -54,7 +59,8 @@ class IndexController extends \Nouron\Controller\IngameController
 
         return new ViewModel(
             array(
-                'fleets' => $fleets,
+                'ownFleets' => $ownFleets,
+                'foreignFleets' => $foreignFleets,
                 'userId' => $userId,
                 'x' => $x,
                 'y' => $y,

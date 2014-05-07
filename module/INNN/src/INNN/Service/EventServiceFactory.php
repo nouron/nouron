@@ -1,24 +1,20 @@
 <?php
-namespace User\Service;
+namespace INNN\Service;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class UserFactory implements FactoryInterface
+class EventServiceFactory implements FactoryInterface
 {
     /**
      *
      * @param ServiceLocatorInterface $serviceLocator
-     * @return User
+     * @return EventService
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db   = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick = $serviceLocator->get('Nouron\Service\Tick');
-
-        $tables['user'] = new \User\Table\UserTable($db, new \User\Entity\User());
-
-        $service   = new User($tick, $tables);
-        return $service;
+        $tables['event'] = $serviceLocator->get('INNN\Table\EventTable');
+        return new EventService($tick, $tables);
     }
 }

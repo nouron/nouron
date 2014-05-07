@@ -1,17 +1,17 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class FleetOrder extends AbstractEntity
+class FleetOrder implements EntityInterface
 {
-    public $tick;
-    public $fleet_id;
-    public $order;
-    public $coordinates;
-    public $data;
-    public $was_processed;
-    public $has_notified;
+    private $tick;
+    private $fleet_id;
+    private $order;
+    private $coordinates;
+    private $data;
+    private $was_processed;
+    private $has_notified;
 
     /**
      * Sets the value of tick.

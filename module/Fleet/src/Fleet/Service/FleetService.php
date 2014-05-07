@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Service;
 
-class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractService
+class FleetService extends \Galaxy\Service\Gateway
 {
     /**
      * @return string
@@ -28,18 +28,6 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     public function saveFleetOrder($entity)
     {
         return $this->getTable('fleetorder')->save($entity);
-    }
-
-    /**
-     * Get all fleets from a user.
-     *
-     * @param  integer    $userId
-     * @return ResultSet
-     */
-    public function getFleetsByUserId($userId)
-    {
-        $this->_validateId($userId);
-        return $this->getTable('fleet')->fetchAll('user_id = ' . $userId)->getArrayCopy();
     }
 
     /**
@@ -499,6 +487,18 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
     }
 
     /**
+     * Get all fleets from a user.
+     *
+     * @param  integer    $userId
+     * @return ResultSet
+     */
+    public function getFleetsByUserId($userId)
+    {
+        $this->_validateId($userId);
+        return $this->getTable('fleet')->fetchAll('user_id = ' . $userId);
+    }
+
+    /**
      * Get all fleets from coordinates of an colony, system object or system entity.
      *
      * @param  string  $entityType
@@ -524,7 +524,7 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
         }
 
         $entity = $table->getEntity($id);
-        return $this->getByCoordinates('fleets', array($entity->getX(), $entity->getY()))->getArrayCopy();
+        return $this->getByCoordinates('fleets', array($entity->getX(), $entity->getY()));
     }
 
     /**
@@ -553,17 +553,22 @@ class FleetService extends \Galaxy\Service\Gateway #\Nouron\Service\AbstractServ
             default:
                 return array(); # TODO: Exception
         }
-        $entities  = $this->getTable($table)->fetchAll('fleet_id = ' . $fleetId)->getArrayCopy();
-        $fleetEntities = $this->$func($fleetId)->getArrayCopy();
+        $entities  = $this->getTable($table)->fetchAll('fleet_id = ' . $fleetId)->getArrayCopy('id');
+        $fleetEntities = $this->$func($fleetId)->getArrayCopy('id');
         $results = array();
-        foreach ($entities as $entity) {
-            foreach ($fleetEntities as $fleetEntity) {
-                if ($entity['fleet_id'] == $fleetEntity['fleet_id'] && $entity['is_cargo'] == $fleetEntity['is_cargo']) {
-                    $results[] = $entity + $fleetEntity;
-                }
+        foreach ($entities as $id => $entity) {
+            if (array_key_exists($id, $fleetEntities)) {
+                $entities[$id] = $entities[$id] + $fleetEntities[$id];
             }
+#             else {
+#                $entities[$id]['level'] = 0;
+#                $entities[$id]['status_points'] = 0;
+#                $entities[$id]['ap_spend'] = 0;
+#            }
         }
-        return $results;
+        return $entities;
+
+
     }
 
     /**

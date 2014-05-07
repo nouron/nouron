@@ -94,8 +94,12 @@ return array(
         'factories' => array(
             'INNN\Entity\Message'  => 'INNN\Entity\MessageFactory',
             'INNN\Entity\Event'    => 'INNN\Entity\EventFactory',
-            'INNN\Service\Message' => 'INNN\Service\MessageFactory',
-            'INNN\Service\Event'   => 'INNN\Service\EventFactory',
+            'INNN\Table\MessageTable' => 'INNN\Table\MessageTableFactory',
+            'INNN\Table\MessageView'  => 'INNN\Table\MessageViewFactory',
+            'INNN\Table\EventTable'   => 'INNN\Table\EventTableFactory',
+            'INNN\Service\MessageService' => 'INNN\Service\MessageServiceFactory',
+            'INNN\Service\EventService'   => 'INNN\Service\EventServiceFactory',
+            'User\Table\UserTable' => 'User\Table\UserTableFactory'
         ),
     )
 );

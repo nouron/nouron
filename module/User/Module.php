@@ -1,8 +1,22 @@
 <?php
 namespace User;
 
-class Module
+use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
+use Zend\ModuleManager\Feature\ConfigProviderInterface;
+
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface
 {
+    public function onBootstrap($e)
+    {
+        \Locale::setDefault('de_DE');
+        $sm = $e->getApplication()->getServiceManager();
+        $translator = $sm->get('translator');
+
+        \Zend\Validator\AbstractValidator::setDefaultTranslator(
+            new \Zend\Mvc\I18n\Translator($translator)
+        );
+    }
+
     public function getAutoloaderConfig()
     {
         return array(

@@ -1,13 +1,13 @@
 <?php
-namespace Fleet\Entity;
+namespace INNN\Entity;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class FleetResourceFactory implements FactoryInterface
+class EventFactory implements FactoryInterface
 {
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        return new FleetResource();
+        return new Event();
     }
 }

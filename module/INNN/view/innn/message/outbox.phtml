@@ -6,13 +6,13 @@
             <h4 class="panel-title">
             <i class="glyphicon glyphicon-time"></i> <?php echo $message->getTick() ?>
                 <strong>an <a href="<?php echo $this->url("user", array('id'=>$message->getRecipientId() )) ?>"><?php echo $message->getRecipient() ?></a>:</strong>
-            <a data-toggle="collapse" data-parent="#accordion" href="#collapse-message-<?php echo $message->getid() ?>"><?php echo $message->subject ?>
+            <a data-toggle="collapse" data-parent="#accordion" href="#collapse-message-<?php echo $message->getid() ?>"><?php echo $message->getSubject() ?>
             </a>
             </h4>
         </div>
         <div id="collapse-message-<?php echo $message->getid() ?>" class="panel-collapse collapse">
             <div class="panel-body">
-                <p><?php echo $message->text ?></p>
+                <p><?php echo $message->getText() ?></p>
                 <br />
                 <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
                 <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>

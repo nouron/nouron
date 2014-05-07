@@ -20,7 +20,7 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
-        #$userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\UserService');
 
         #$techOffers = $gw->getResearches();
         $researchService = $sm->get('Techtree\Service\ResearchService');
@@ -61,7 +61,7 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Trade\Service\Gateway');
-        #$userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\UserService');
 
         #$resourceOffers = $gw->getResources();
         $resourceService = $sm->get('Resources\Service\ResourcesService');
@@ -157,7 +157,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $researches = $researchService->getEntities();
 
         #$tradeService = $sm->get('Trade\Service\Gateway');
-        #$userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\UserService');
         $researches = $researches->getArrayCopy('id');
         $searchForm = new \Trade\Form\SearchForm('researches', $researches);
         $newOfferForm = new \Trade\Form\NewOfferForm('researches', $researches);
@@ -204,7 +204,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $resources = $resourceService->getResources();
 
         $tradeService = $sm->get('Trade\Service\Gateway');
-        #$userService = $sm->get('User\Service\User');
+        #$userService = $sm->get('User\Service\UserService');
 
         $resources = $resources->getArrayCopy('id');
         $searchForm = new \Trade\Form\SearchForm('resources', $resources);

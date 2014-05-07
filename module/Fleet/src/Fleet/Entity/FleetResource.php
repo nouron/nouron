@@ -1,15 +1,14 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class FleetResource extends AbstractEntity
+class FleetResource implements EntityInterface
 {
-    public $fleet_id;
-    public $resource_id;
-    public $amount;
+    private $fleet_id;
+    private $resource_id;
+    private $amount;
     #public $is_cargo;
-
 
     /**
      * Sets the value of fleet_id.

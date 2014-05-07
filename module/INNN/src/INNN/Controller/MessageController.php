@@ -19,7 +19,7 @@ class MessageController extends \Nouron\Controller\IngameController
     public function eventsAction()
     {
         $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\Event');
+        $messageService = $sm->get('INNN\Service\EventService');
         $messages = $messageService->getEvents($this->getActive('user'));
 
         return new ViewModel(array(
@@ -34,7 +34,7 @@ class MessageController extends \Nouron\Controller\IngameController
     public function inboxAction()
     {
         $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\Message');
+        $messageService = $sm->get('INNN\Service\MessageService');
         $messages = $messageService->getInboxMessages($this->getActive('user'));
 
         return new ViewModel(array(
@@ -49,7 +49,7 @@ class MessageController extends \Nouron\Controller\IngameController
     public function outboxAction()
     {
         $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\Message');
+        $messageService = $sm->get('INNN\Service\MessageService');
         $messages = $messageService->getOutboxMessages($this->getActive('user'));
 
         return new ViewModel(array(
@@ -68,8 +68,8 @@ class MessageController extends \Nouron\Controller\IngameController
         #$form->setAttribute('action', '/messages/new');
         $form->setAttribute('method', 'post');
 
-        $messageService = $sm->get('INNN\Service\Message');
-        $userService = $sm->get('User\Service\User');
+        $messageService = $sm->get('INNN\Service\MessageService');
+        $userService = $sm->get('User\Service\UserService');
 
         if ($this->getRequest()->isPost()) {
             $data = $this->getRequest()->getPost();
@@ -121,7 +121,7 @@ class MessageController extends \Nouron\Controller\IngameController
         $result = $this->react($reactionType, $messageId);
 
         $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\Message');
+        $messageService = $sm->get('INNN\Service\MessageService');
         $message = $messageService->getMessage($messageId);
         if ($result) {
             // redirect to messages//new with given recipient id
@@ -165,7 +165,7 @@ class MessageController extends \Nouron\Controller\IngameController
         } else {
             // show archived messages
             $sm = $this->getServiceLocator();
-            $messageService = $sm->get('INNN\Service\Message');
+            $messageService = $sm->get('INNN\Service\MessageService');
             $messages = $messageService->getArchivedMessages($_SESSION['userId']);
             return new ViewModel(array(
                 'messages' => $messages
@@ -195,12 +195,12 @@ class MessageController extends \Nouron\Controller\IngameController
     protected function setMessageStatus($messageId, $status)
     {
         $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\Message');
+        $messageService = $sm->get('INNN\Service\MessageService');
 
         $result = false;
         if (!empty($messageId)) {
             $message = $messageService->getMessage($messageId);
-            if ($message && $message['recipient_id'] == $_SESSION['userId']) {
+            if ($message && $message->getRecipientId() == $_SESSION['userId']) {
                 // setting message status is only allowed for recipient
                 $result = $messageService->setMessageStatus($messageId, $status);
             }

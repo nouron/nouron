@@ -2,14 +2,14 @@
 namespace INNNTest\Service;
 
 use NouronTest\Service\AbstractServiceTest;
-use INNN\Service\Message as MessageService;
+use INNN\Service\MessageService;
 use INNN\Table\MessageTable;
 use INNN\Table\MessageView;
 use INNN\Entity\Message;
 #use User\Table\UserTable;
 #use User\Entity\User;
 
-class MessageTest extends AbstractServiceTest
+class MessageServiceTest extends AbstractServiceTest
 {
     public function setUp()
     {
@@ -17,8 +17,8 @@ class MessageTest extends AbstractServiceTest
         $this->initDatabase();
 
         $tables = array();
-        $tables['message'] = new MessageTable($this->dbAdapter, new \INNN\Entity\Message());
-        $tables['message_view'] = new MessageView($this->dbAdapter, new \INNN\Entity\Message());
+        $tables['message'] = new MessageTable($this->dbAdapter, new Message());
+        $tables['message_view'] = new MessageView($this->dbAdapter, new Message());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
         $tick = new \Nouron\Service\Tick(1234);

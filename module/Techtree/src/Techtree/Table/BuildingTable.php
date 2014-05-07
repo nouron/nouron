@@ -6,6 +6,7 @@ use Nouron\Table\AbstractTable;
 class BuildingTable extends AbstractTable
 {
     protected $table  = 'buildings';
+    protected $primary = 'id';
 
 }
 

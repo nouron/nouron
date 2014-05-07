@@ -6,6 +6,7 @@ use Nouron\Table\AbstractTable;
 class ResearchTable extends AbstractTable
 {
     protected $table  = 'researches';
+    protected $primary = 'id';
 
 }
 
