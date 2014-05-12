@@ -5,6 +5,13 @@ use Zend\Session\Container;
 
 class Gateway extends \Nouron\Service\AbstractService
 {
+    public function __construct($tick, array $tables, array $services = array(), array $config)
+    {
+        parent::__construct($tick, $tables, $services);
+        $this->config = $config;
+    }
+
+
     /**
      * Get all systems.
      *
@@ -59,7 +66,7 @@ class Gateway extends \Nouron\Service\AbstractService
         if (is_numeric($colony)) {
             $colony = $this->getColony($colony);
         }
-        if ($colony->getUserId() == $userId) {
+        if ($colony && $colony->getUserId() == $userId) {
             return true;
         } else {
             return false;
@@ -183,8 +190,8 @@ class Gateway extends \Nouron\Service\AbstractService
 
     /**
      *
-     * @param  \Galaxy\Entity\Colony | integer  $colony
-     * @return \Galaxy\Entity\System
+     * @param  \Galaxy\Entity\Colony | integer  $colony object or id
+     * @return \Galaxy\Entity\System | false
      */
     public function getSystemBySystemObject($object)
     {
@@ -192,11 +199,15 @@ class Gateway extends \Nouron\Service\AbstractService
             $object = $this->getSystemObject($object);
         }
 
-        if (!($object instanceof \Galaxy\Entity\SystemObject)) {
-            throw new \Exception('Not a valid colony.');
+        if (!is_object($object)) {
+            return false;
         }
 
-        return $this->getSystemByObjectCoords(array($object['x'],$object['y']));
+#        if (!($object instanceof \Galaxy\Entity\SystemObject)) {
+#            throw new \Exception('Not a valid colony.');
+#        }
+
+        return $this->getSystemByObjectCoords(array($object->getX(), $object->getY()));
     }
 
 //     /**
@@ -217,36 +228,32 @@ class Gateway extends \Nouron\Service\AbstractService
 //         return $this->getSystemByObjectCoords($colony->getCoords());
 //     }
 
-//     /**
-//      *
-//      * @param  array  $object
-//      * @return \Galaxy\Entity\System | null
-//      */
-//     public function getSystemByObjectCoords(array $coords)
-//     {
-//         $x = $coords[0];
-//         $y = $coords[1];
+     /**
+      *
+      * @param  array  $coords with x and y coordinates
+      * @return \Galaxy\Entity\System | false
+      */
+     public function getSystemByObjectCoords(array $coords)
+     {
+         $x = $coords[0];
+         $y = $coords[1];
 
-//         $systems = $this->getSystems();
-//         $config = $this->getConfig();
-//         $radius = round($config->system->range / 2);
+         $systems = $this->getSystems();
+         $config = $this->config['system_view_config'];
+         $radius = round($config['range'] / 2);
 
-//         while ( $systems->valid() )
-//         {
-//             $sysCoords = $systems->getCoords();
+         foreach ($systems as $system) {
+             $x1 = $system->getX() - $radius;
+             $x2 = $system->getX() + $radius;
+             $y1 = $system->getY() - $radius;
+             $y2 = $system->getY() + $radius;
 
-//             $x1 = $sysCoords[0] - $radius;
-//             $x2 = $sysCoords[0] + $radius;
-//             $y1 = $sysCoords[1] - $radius;
-//             $y2 = $sysCoords[1] + $radius;
-
-//             if ($x >= $x1 && $x <= $x2 && $y >= $y1 && $y <= $y2) {
-//                 return $systems->current();
-//             }
-
-//             $systems->next();
-//         }
-//     }
+             if ($x >= $x1 && $x <= $x2 && $y >= $y1 && $y <= $y2) {
+                 return $system;
+             }
+         }
+         return false;
+     }
 
 //     /**
 //      *

@@ -10,6 +10,11 @@ use Nouron\Model\ResultSet;
 
 class FleetService extends \Galaxy\Service\Gateway
 {
+    public function __construct($tick, array $tables, array $services = array())
+    {
+        parent::__construct($tick, $tables, $services, array());
+    }
+
     /**
      * @return string
      */

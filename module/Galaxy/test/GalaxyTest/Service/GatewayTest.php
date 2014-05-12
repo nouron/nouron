@@ -47,12 +47,35 @@ class GatewayTest extends AbstractServiceTest
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
+        # TODO: temporary solution, dirty => make it better; load real config
+        $config = array(
+            'galaxy_view_config' => array(
+                'range'  => 10000,
+                'offset' => 0,
+                'scale'  => 0.05,
+                'systemSize' => 3
+            ),
+            'system_view_config' => array(
+                'range'  => 100,
+                'offset' => 100,
+                'scale'  => 10,//15,
+                'planetSize' => 10,//20,
+                'slotSize' => 10,//25
+            )
+        );
+
+
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
-        $this->_gateway = new Gateway($tick, $tables, array());
+        $this->_service = new Gateway($tick, $tables, array(), $config);
         $logger = $this->getMockBuilder('Zend\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
-        $this->_gateway->setLogger($logger);
+        $this->_service->setLogger($logger);
+
+        $this->systemId = 1;
+        $this->planetaryId = 1;
+        $this->colonyId = 1;
+        $this->userId = 3;
 
     }
 
@@ -63,32 +86,63 @@ class GatewayTest extends AbstractServiceTest
 
     public function testGetSystems()
     {
-        $this->markTestSkipped();
+        $objects = $this->_service->getSystems();
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Galaxy\Entity\System', $objects->current());
     }
 
     public function testGetColonies()
     {
-        $this->markTestSkipped();
+        $objects = $this->_service->getColonies();
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
     }
 
     public function testGetColony()
     {
-        $this->markTestSkipped();
+        $object = $this->_service->getColony($this->colonyId);
+        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
+        $object = $this->_service->getColony(99);
+        $this->assertFalse($object);
+
+        $this->setExpectedException('Nouron\Service\Exception');
+        $objects = $this->_service->getColony(-1);
     }
 
     public function testGetColoniesByUserId()
     {
-        $this->markTestSkipped();
+        $objects = $this->_service->getColoniesByUserId($this->userId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
+
+        $objects = $this->_service->getColoniesByUserId(99);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertFalse($objects->current());
+
+        $this->setExpectedException('Nouron\Service\Exception');
+        $objects = $this->_service->getColoniesByUserId(-1);
     }
 
     public function testCheckColonyOwner()
     {
-        $this->markTestSkipped();
+        $check = $this->_service->checkColonyOwner($this->colonyId, $this->userId);
+        $this->assertTrue($check);
+
+        $check = $this->_service->checkColonyOwner(99, $this->userId);
+        $this->assertFalse($check);
+
+        $check = $this->_service->checkColonyOwner($this->colonyId, 99);
+        $this->assertFalse($check);
+
+        $this->markTestIncomplete();
+
     }
 
     public function testGetPrimeColony()
     {
-        $this->markTestSkipped();
+        $object = $this->_service->getPrimeColony($this->userId);
+        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
+        $this->assertTrue($object->getIsPrimary());
     }
 
     public function testSwitchCurrentColony()
@@ -98,22 +152,46 @@ class GatewayTest extends AbstractServiceTest
 
     public function testGetByCoordinates()
     {
-        $this->markTestSkipped();
+        $results = $this->_service->getByCoordinates('fleets', array(6800,3000));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $results = $this->_service->getByCoordinates('colonies', array(6800,3000));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $results = $this->_service->getByCoordinates('objects', array(6800,3000));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->markTestIncomplete();
     }
 
     public function testGetSystem()
     {
-        $this->markTestSkipped();
+        $object = $this->_service->getSystem($this->systemId);
+        $this->assertInstanceOf('Galaxy\Entity\System', $object);
+
+        $object = $this->_service->getSystem(99);
+        $this->assertFalse($object);
+
+        $this->setExpectedException('Nouron\Service\Exception');
+        $this->_service->getSystem(-1);
     }
 
     public function testGetSystemObjects()
     {
-        $this->markTestSkipped();
+        $objects = $this->_service->getSystemObjects($this->systemId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Galaxy\Entity\SystemObject', $objects->current());
     }
 
     public function testGetSystemByPlanetary()
     {
-        $this->markTestSkipped();
+        $object = $this->_service->getSystemByPlanetary($this->planetaryId);
+        $this->assertInstanceOf('Galaxy\Entity\System', $object);
+
+        $object = $this->_service->getSystemByPlanetary(99);
+        $this->assertFalse($object);
+
+        $this->setExpectedException('Nouron\Service\Exception');
+        $this->_service->getSystemByPlanetary(-1);
+
+        $this->markTestIncomplete();
     }
 
     public function testGetSystemBySystemObject()

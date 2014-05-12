@@ -25,8 +25,8 @@ class GatewayFactoryTest extends PHPUnit_Framework_TestCase
             'Fleet\Table\FleetResearchTable'  => 'Fleet\Table\FleetResearchTable',
             'Fleet\Table\FleetOrderTable'     => 'Fleet\Table\FleetOrderTable',
             'Fleet\Table\FleetResourceTable'  => 'Fleet\Table\FleetResourceTable',
-            'Techtree\Table\ColonyBuildingTable' => 'Techtree\Entity\ColonyBuilding',
-            'Resources\Table\ColonyTable' => 'Resources\Entity\Colony',
+            'Techtree\Table\ColonyBuildingTable' => 'Techtree\Entity\ColonyBuildingTable',
+            'Resources\Table\ColonyTable' => 'Resources\Entity\ColonyTable',
         );
         foreach ($servicesToMock as $key => $serviceName) {
             $this->sm->setService(

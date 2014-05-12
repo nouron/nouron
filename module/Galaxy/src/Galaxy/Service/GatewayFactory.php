@@ -31,7 +31,7 @@ class GatewayFactory implements FactoryInterface
         $tables['colonyresource']   = $serviceLocator->get('Resources\Table\ColonyTable');
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
-        $gateway = new Gateway($tick, $tables, array());
+        $gateway = new Gateway($tick, $tables, array(), array());
         $gateway->setLogger($logger);
         return $gateway;
     }

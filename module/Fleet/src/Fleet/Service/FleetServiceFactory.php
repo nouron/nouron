@@ -36,7 +36,7 @@ class FleetServiceFactory implements FactoryInterface
         $tables['colonyresearch']  = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
         $tables['colonyresource']  = $serviceLocator->get('Resources\Table\ColonyTable');
 
-        $service = new FleetService($tick, $tables, array());
+        $service = new FleetService($tick, $tables);
         $service->setLogger($logger);
         $session = new Container('activeIds');
         if (isset($session->fleetId)) {
