@@ -24,7 +24,6 @@ class FleetServiceTest extends AbstractServiceTest
     public function setUp()
     {
         $this->initDatabaseAdapter();
-        $this->initDatabase();
 
         $tables = array();
         $tables['fleet']  = new FleetTable($this->dbAdapter, new Fleet());
@@ -39,6 +38,7 @@ class FleetServiceTest extends AbstractServiceTest
         $tables['ship']  = new \Techtree\Table\ShipTable($this->dbAdapter, new \Techtree\Entity\Ship());
         $tables['colony'] = new \Galaxy\Table\ColonyTable($this->dbAdapter, new \Galaxy\Entity\Colony());
         $tables['system'] = new \Galaxy\Table\SystemTable($this->dbAdapter, new \Galaxy\Entity\System());
+        $tables['systemobject'] = new \Galaxy\Table\SystemObjectTable($this->dbAdapter, new \Galaxy\Entity\SystemObject());
         $tables['colonyship']      = new \Techtree\Table\ColonyShipTable($this->dbAdapter, new \Techtree\Entity\ColonyShip());
         $tables['colonypersonell'] = new \Techtree\Table\ColonyPersonellTable($this->dbAdapter, new \Techtree\Entity\ColonyPersonell());
         $tables['colonyresearch']  = new \Techtree\Table\ColonyResearchTable($this->dbAdapter, new \Techtree\Entity\ColonyResearch());
@@ -52,6 +52,12 @@ class FleetServiceTest extends AbstractServiceTest
         $this->fleetId = 10;
         $this->shipId = 29;
         $this->researchId = 33;
+        $this->resourceId = 3;
+        $this->objectId = 1;
+        $this->systemId = 1;
+        $this->colonyId = 1;
+        $this->userId = 3;
+
     }
 
     public function testGetFleet()
@@ -65,11 +71,16 @@ class FleetServiceTest extends AbstractServiceTest
     public function testSaveFleet()
     {
         $this->markTestIncomplete();
+
+
+        $this->initDatabase();
     }
 
     public function testSaveFleetOrder()
     {
         $this->markTestIncomplete();
+
+        $this->initDatabase();
     }
 
     public function testGetFleetOrdersByFleetIds()
@@ -79,31 +90,41 @@ class FleetServiceTest extends AbstractServiceTest
 
     public function testAddOrder()
     {
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
     public function testTransferShip()
     {
+
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
     public function testTransferResearch()
     {
+
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
     public function testTransferPersonell()
     {
+
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
     public function testTransferTechnology()
     {
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
     public function testTransferResource()
     {
+
+        $this->initDatabase();
         $this->markTestIncomplete();
     }
 
@@ -186,21 +207,54 @@ class FleetServiceTest extends AbstractServiceTest
 
     public function testGetFleetResource()
     {
-        $this->markTestIncomplete();
+        $result = $this->_service->getFleetResource(array('fleet_id' => $this->fleetId, 'resource_id' => $this->resourceId));
+        $this->assertInstanceOf('Fleet\Entity\FleetResource', $result);
+
+        $result = $this->_service->getFleetResource(array('fleet_id' => $this->fleetId, 'resource_id' => 99));
+        $this->assertFalse($result);
+
+        $result = $this->_service->getFleetResource(array('fleet_id' => 99, 'resource_id' => $this->resourceId));
+        $this->assertFalse($result);
+
+        $this->setExpectedException('Exception');
+        $this->_service->getFleetResource(-1);
     }
 
     public function testGetOrders()
     {
+        $result = $this->_service->getOrders(array('fleet_id' => $this->fleetId));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\FleetOrder', $result->current());
         $this->markTestIncomplete();
     }
 
     public function testGetFleetsByUserId()
     {
-        $this->markTestIncomplete();
+        $result = $this->_service->getFleetsByUserId($this->userId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
+
+        $result = $this->_service->getFleetsByUserId(99);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertFalse($result->current());
+
+        $this->setExpectedException('Nouron\Service\Exception');
+        $this->_service->getFleetsByUserId(-1);
     }
 
     public function testGetFleetsByEntityId()
     {
+        $result = $this->_service->getFleetsByEntityId('colony', $this->colonyId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
+
+        $result = $this->_service->getFleetsByEntityId('object', $this->objectId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
+
+        $result = $this->_service->getFleetsByEntityId('system', $this->systemId);
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
         $this->markTestIncomplete();
     }
@@ -210,7 +264,10 @@ class FleetServiceTest extends AbstractServiceTest
         $result = $this->_service->getFleetTechnologies($this->fleetId);
         $this->assertTrue(is_array($result));
         $this->assertArrayHasKey('research', $result);
+        $this->assertTrue(is_array($result['research']));
         $this->assertArrayHasKey('personell', $result);
+        $this->assertTrue(is_array($result['personell']));
         $this->assertArrayHasKey('ship', $result);
+        $this->assertTrue(is_array($result['ship']));
     }
 }

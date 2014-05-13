@@ -476,20 +476,19 @@ class FleetService extends \Galaxy\Service\Gateway
      * tech is not in the fleet!
      *
      * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'resource_id' => 2)
+     * @return boolean $forceResultEntity
      * @return \Fleet\Entity\FleetResource | array
      */
-    public function getFleetResource(array $keys)
+    public function getFleetResource(array $keys, $forceResultEntity = false)
     {
         $result = $this->getTable('fleetresource')->select($keys)->current();
-        if (empty($result)) {
-            return array(
-                'fleet_id' => $keys['fleet_id'],
-                'resource_id'  => $keys['resource_id'],
-                'amount'    => 0,
-            );
-        } else {
-            return $result->getArrayCopy();
+        if (empty($result) && $forceResultEntity) {
+            $result = new FleetResource();
+            $result->setFleetId($key['fleet_id']);
+            $result->setResourceId($key['resource_id']);
+            $result->setAmount(0);
         }
+        return $result;
     }
 
     /**
