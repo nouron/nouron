@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @package   Nouron_Core
+ * @category  Entity
+ */
+
 namespace Nouron\Entity;
 
 abstract class AbstractEntity implements EntityInterface

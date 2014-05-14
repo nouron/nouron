@@ -1,10 +1,14 @@
 <?php
+
+/**
+ * @package   Nouron_Core
+ * @category  Table
+ */
+
 namespace Nouron\Table;
 
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Db\Adapter\AdapterInterface;
-#use Zend\Db\ResultSet\ResultSet;
-#use Zend\Db\ResultSet\ResultSetInterface;
 use Nouron\Entity\EntityInterface;
 use Nouron\Model\ResultSet;
 use Zend\Stdlib\Hydrator;
@@ -100,7 +104,7 @@ abstract class AbstractTable extends TableGateway
     /**
      *
      * @param string|array $where
-     * @return Ambigous <multitype:, ArrayObject, NULL, \ArrayObject, unknown>
+     * @return EntityInterface
      */
     public function fetchRow($where)
     {
@@ -109,7 +113,7 @@ abstract class AbstractTable extends TableGateway
 
     /**
      *
-     * @param numeric|array $id
+     * @param  integer|string|array $id
      * @throws \Exception
      * @return Ambigous <multitype:, ArrayObject, NULL, \ArrayObject, unknown>
      */

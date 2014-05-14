@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @package   Nouron_Core
+ * @category  Controller
+ */
+
 namespace Nouron\Controller;
 
 use Zend\EventManager\EventManagerInterface;

@@ -1,4 +1,10 @@
 <?php
+
+/**
+ * @package   Nouron_Core
+ * @category  Service
+ */
+
 namespace Nouron\Service;
 
 use Zend\Log\LoggerInterface;

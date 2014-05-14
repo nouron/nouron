@@ -1,12 +1,12 @@
 <?php
 
+/**
+ * @package   Nouron_Core
+ * @category  Service
+ */
+
 namespace Nouron\Service;
 
-
-/**
- * @category   Nouron
- * @package    Nouron_Tick
- */
 class Tick
 {
     /**

@@ -1,8 +1,12 @@
 <?php
+
+/**
+ * @package   Nouron_Core
+ * @category  Entity
+ */
+
 namespace Nouron\Entity;
 
-use Zend\Stdlib\ArraySerializableInterface;
-#extends ArraySerializableInterface
 interface EntityInterface
 {
 

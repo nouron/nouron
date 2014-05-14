@@ -177,7 +177,7 @@ class FleetService extends \Galaxy\Service\Gateway
         return $this->transferTechnology('ship', $colony, $fleet, $shipId, $amount);
     }
 
-    public function transferResearch($colony, $fleet, $researchId, $amoun)
+    public function transferResearch($colony, $fleet, $researchId, $amount)
     {
         return $this->transferTechnology('research', $colony, $fleet, $researchId, $amount);
     }
