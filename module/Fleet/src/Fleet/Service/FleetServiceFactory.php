@@ -38,10 +38,6 @@ class FleetServiceFactory implements FactoryInterface
 
         $service = new FleetService($tick, $tables);
         $service->setLogger($logger);
-        $session = new Container('activeIds');
-        if (isset($session->fleetId)) {
-            $service->setFleetId($session->fleetId);
-        }
         return $service;
     }
 }

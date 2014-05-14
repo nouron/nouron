@@ -172,19 +172,19 @@ class FleetService extends \Galaxy\Service\Gateway
         }
     }
 
-    public function transferShip($colony, $fleet, $shipId, $amount, $isCargo = false)
+    public function transferShip($colony, $fleet, $shipId, $amount)
     {
-        return $this->transferTechnology('ship', $colony, $fleet, $shipId, $amount, $isCargo);
+        return $this->transferTechnology('ship', $colony, $fleet, $shipId, $amount);
     }
 
-    public function transferResearch($colony, $fleet, $researchId, $amount, $isCargo = true)
+    public function transferResearch($colony, $fleet, $researchId, $amoun)
     {
-        return $this->transferTechnology('research', $colony, $fleet, $researchId, $amount, $isCargo);
+        return $this->transferTechnology('research', $colony, $fleet, $researchId, $amount);
     }
 
-    public function transferPersonell($colony, $fleet, $personellId, $amount, $isCargo = false)
+    public function transferPersonell($colony, $fleet, $personellId, $amount)
     {
-        return $this->transferTechnology('personell', $colony, $fleet, $personellId, $amount, $isCargo);
+        return $this->transferTechnology('personell', $colony, $fleet, $personellId, $amount);
     }
 
     /**
@@ -195,7 +195,6 @@ class FleetService extends \Galaxy\Service\Gateway
      * @param  int|object   $fleet
      * @param  integer      $techId
      * @param  integer      $amount
-     * @param  boolean      $isCargo       OPTIONAL set true if use fleet cargo (not fleet itself)
      * @param  boolean      $isTradeOffer  OPTIONAL set true to fullfill an existing trade offer
      * @param string $type
      *
@@ -401,11 +400,21 @@ class FleetService extends \Galaxy\Service\Gateway
         return $result;
     }
 
+    /**
+     * @param  array $where in form: array('fleet_id' => 1, 'ship_id' => 2)
+     * @return ResultSet
+     */
     public function getFleetShips($where)
     {
         return $this->getTable('fleetship')->select($where);
     }
 
+    /**
+     *
+     * @param integer $fleetId
+     * @param null|boolean $isCargo
+     * @return ResultSet
+     */
     public function getFleetShipsByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
@@ -419,14 +428,20 @@ class FleetService extends \Galaxy\Service\Gateway
     /**
      * similar to getFleetShip()
      *
-     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'research_id' => 2)
-     * @return FleetResearch
+     * @param  array $where  in form: array('fleet_id' => 1, 'research_id' => 2)
+     * @return ResultSet
      */
     public function getFleetResearches($where)
     {
         return $this->getTable('fleetresearch')->select($where);
     }
 
+    /**
+     *
+     * @param integer $fleetId
+     * @param null|boolean $isCargo
+     * @return ResultSet
+     */
     public function getFleetResearchesByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
@@ -440,14 +455,20 @@ class FleetService extends \Galaxy\Service\Gateway
     /**
      * similar to getFleetShip()
      *
-     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'research_id' => 2)
-     * @return FleetResearch
+     * @param  array $where  in form: array('fleet_id' => 1, 'personell_id' => 2)
+     * @return ResultSet
      */
     public function getFleetPersonell($where)
     {
         return $this->getTable('fleetpersonell')->select($where);
     }
 
+    /**
+     *
+     * @param integer $fleetId
+     * @param null|boolean $isCargo
+     * @return ResultSet
+     */
     public function getFleetPersonellByFleetId($fleetId, $isCargo = null)
     {
         $this->_validateId($fleetId);
@@ -458,11 +479,23 @@ class FleetService extends \Galaxy\Service\Gateway
         return $this->getTable('fleetpersonell')->select($where);
     }
 
+    /**
+     * similar to getFleetShip()
+     *
+     * @param  array $where  in form: array('fleet_id' => 1, 'resource_id' => 2)
+     * @return ResultSet
+     */
     public function getFleetResources($where)
     {
         return $this->getTable('fleetresource')->select($where);
     }
 
+    /**
+     *
+     * @param integer $fleetId
+     * @param null|boolean $isCargo
+     * @return ResultSet
+     */
     public function getFleetResourcesByFleetId($fleetId)
     {
         $this->_validateId($fleetId);
@@ -475,13 +508,13 @@ class FleetService extends \Galaxy\Service\Gateway
      * ATTENTION: This function allways return a fleetresource object even if the
      * tech is not in the fleet!
      *
-     * @param  array $keys  The compound primary key in form: array('fleet_id' => 1, 'resource_id' => 2)
+     * @param  array $key  The compound primary key in form: array('fleet_id' => 1, 'resource_id' => 2)
      * @return boolean $forceResultEntity
      * @return \Fleet\Entity\FleetResource | array
      */
-    public function getFleetResource(array $keys, $forceResultEntity = false)
+    public function getFleetResource(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetresource')->select($keys)->current();
+        $result = $this->getTable('fleetresource')->select($key)->current();
         if (empty($result) && $forceResultEntity) {
             $result = new FleetResource();
             $result->setFleetId($key['fleet_id']);
@@ -554,6 +587,7 @@ class FleetService extends \Galaxy\Service\Gateway
 
     /**
      *
+     * @param  integer $fleetId
      * @param  string $type
      * @return array
      */
@@ -581,7 +615,6 @@ class FleetService extends \Galaxy\Service\Gateway
 
         $entities  = $this->getTable($table)->fetchAll()->getArrayCopy('id');
         $fleetEntities = $this->$func($fleetId)->getArrayCopy(array('fleet_id', $id));
-        $results = array();
         foreach ($entities as $id => $entity) {
             if (array_key_exists($id, $fleetEntities[$fleetId])) {
                 $entities[$id] = $entities[$id] + $fleetEntities[$fleetId][$id];
@@ -598,7 +631,7 @@ class FleetService extends \Galaxy\Service\Gateway
     }
 
     /**
-     *
+     * @param  integer $fleetId
      * @return array
      */
     public function getFleetTechnologies($fleetId)

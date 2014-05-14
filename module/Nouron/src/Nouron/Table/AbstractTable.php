@@ -7,6 +7,7 @@ use Zend\Db\Adapter\AdapterInterface;
 #use Zend\Db\ResultSet\ResultSetInterface;
 use Nouron\Entity\EntityInterface;
 use Nouron\Model\ResultSet;
+use Zend\Stdlib\Hydrator;
 
 /**
  * This is the abstract class for all table classes. It implements all standard
@@ -145,9 +146,10 @@ abstract class AbstractTable extends TableGateway
     {
         // make a copy of row data (to avoid changing original data):
         if ($entity instanceof EntityInterface) {
-            $data = $entity->getArrayCopy();
-        } elseif (is_array($entity) or is_object($entity)) {
-            $data = (array) $entity;
+            $hydrator = new Hydrator\ClassMethods();
+            $data = $hydrator->extract($entity);
+        } elseif (is_array($entity)) {
+            $data = $entity;
         } else {
             throw new \Exception('Invalid parameter type for save(): ' . get_class($entity));
         }
@@ -174,9 +176,8 @@ abstract class AbstractTable extends TableGateway
 
         // update if data set is in table,
         // else insert the new data to the table
-        $result = $this->fetchAll($where)->getArrayCopy();
-
-        if (!empty( $result ) && !isset($missingPrimaryKey)) {
+        $check = $this->fetchAll($where)->count();
+        if ($check > 0 && !isset($missingPrimaryKey)) {
             // if check is not empty the record set exists and has to be updated
             $result = $this->update($data, $where);
         } else {
@@ -208,8 +209,8 @@ abstract class AbstractTable extends TableGateway
      * In case of an compound primary key the parameter $compoundKey holds the
      * indezes of the ids.
      *
-     * @param  mixed       $id           the id (primary key)
-     * @param  null|array  $compoundKey  OPTIONAL the indezes in case of an compoundKey
+     * @param  string|array $id           the id (primary key)
+     * @param  null|array   $compoundKey  OPTIONAL the indezes in case of an compoundKey
      * @throws Nouron\Model\Exception    if id is invalid
      */
     protected function _validateId($id, $compoundKey = null)
@@ -217,9 +218,7 @@ abstract class AbstractTable extends TableGateway
         $error = false;
         if (empty($compoundKey)) {
             if (!is_numeric($id) || $id < 0) {
-                print_r($id);
-                print_r($this->getPrimary());
-                throw new \Exception('Parameter is not a valid id.');
+                throw new Exception('Parameter is not a valid id.');
             }
         } else {
             $idArray = $id;
@@ -239,7 +238,7 @@ abstract class AbstractTable extends TableGateway
                 $error = true;
             }
             if ($error) {
-                throw new \Exception('Parameter is not a valid compound id.');
+                throw new Exception('Parameter is not a valid compound id.');
             }
         }
     }
