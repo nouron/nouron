@@ -1,6 +1,6 @@
 <?php
-namespace Nouron\Model;
 
+namespace Nouron\Model;
 
 class Exception extends \Exception
 {

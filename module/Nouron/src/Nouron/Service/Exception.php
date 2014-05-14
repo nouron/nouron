@@ -2,6 +2,7 @@
 
 namespace Nouron\Service;
 
-class Exception extends \Exception {
+class Exception extends \Exception
+{
 
 }
