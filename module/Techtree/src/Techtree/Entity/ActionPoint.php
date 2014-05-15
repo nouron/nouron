@@ -24,13 +24,15 @@ class ActionPoint implements EntityInterface
      * Sets the value of tick.
      *
      * @param mixed $tick the tick
-     *
      * @return self
      */
     public function setTick($tick)
     {
-        $this->tick = $tick;
+        if (!is_numeric($tick) || $tick < 0) {
+            throw new \Nouron\Entity\Exception('invalid tick format');
+        }
 
+        $this->tick = $tick;
         return $this;
     }
 
@@ -48,13 +50,14 @@ class ActionPoint implements EntityInterface
      * Sets the value of colony_id.
      *
      * @param mixed $colony_id the colony_id
-     *
      * @return self
      */
     public function setColonyId($colony_id)
     {
+        if (!is_numeric($colony_id) || $colony_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid colony id');
+        }
         $this->colony_id = $colony_id;
-
         return $this;
     }
 
@@ -77,8 +80,10 @@ class ActionPoint implements EntityInterface
      */
     public function setPersonellId($personell_id)
     {
+        if (!is_numeric($personell_id) || $personell_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid personell id');
+        }
         $this->personell_id = $personell_id;
-
         return $this;
     }
 
@@ -96,13 +101,14 @@ class ActionPoint implements EntityInterface
      * Sets the value of spend_ap.
      *
      * @param mixed $spend_ap the spend_ap
-     *
      * @return self
      */
     public function setSpendAp($spend_ap)
     {
+        if (!is_numeric($spend_ap) || $spend_ap < 0) {
+            throw new \Nouron\Entity\Exception('invalid spend ap');
+        }
         $this->spend_ap = $spend_ap;
-
         return $this;
     }
 }

@@ -5,16 +5,16 @@ use Nouron\Entity\EntityInterface;
 
 abstract class AbstractTechnology implements EntityInterface
 {
-    public $id;
-    public $purpose;
-    public $name;
-    public $decay;
-    public $row;
-    public $column;
-    public $max_status_points;
-    public $ap_for_levelup;
-    public $required_building_id;
-    public $required_building_level;
+    private $id;
+    private $purpose;
+    private $name;
+    private $decay;
+    private $row;
+    private $column;
+    private $max_status_points;
+    private $ap_for_levelup;
+    private $required_building_id;
+    private $required_building_level;
 
     /**
      * Gets the value of id.

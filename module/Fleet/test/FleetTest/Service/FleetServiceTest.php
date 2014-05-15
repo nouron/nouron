@@ -96,23 +96,77 @@ class FleetServiceTest extends AbstractServiceTest
 
     public function testTransferShip()
     {
-
         $this->initDatabase();
-        $this->markTestIncomplete();
+
+        $fleetentityTable  = $this->_service->getTable('fleetship');
+        $fleetentityPK = array('fleet_id'=> $this->fleetId, 'ship_id'=>37);
+        $fleetentity = $fleetentityTable->getEntity($fleetentityPK);
+        $entityCountInFleetBefore = !empty($fleetentity) ? $fleetentity->getCount() : 0;
+
+        $colonyentityTable = $this->_service->getTable('colonyship');
+        $colonyentityPK = array('colony_id'=> $this->colonyId, 'ship_id'=>37);
+        $colonyentity = $colonyentityTable->getEntity($colonyentityPK);
+        $entityCountOnColonyBefore = !empty($colonyentity) ? $colonyentity->getLevel() : 0;
+
+        $transferedItemCount = $this->_service->transferShip($this->colonyId, $this->fleetId, 37, 6);
+        $this->assertEquals(6, $transferedItemCount);
+
+        $fleetentity = $fleetentityTable->getEntity($fleetentityPK);
+        $entityCountInFleetAfter = !empty($fleetentity) ? $fleetentity->getCount() : 0;
+
+        $colonyentity = $colonyentityTable->getEntity($colonyentityPK);
+        $entityCountOnColonyAfter = !empty($colonyentity) ? $colonyentity->getLevel() : 0;
+
+        $this->assertTrue($entityCountOnColonyBefore == $entityCountOnColonyAfter + 6);
+        $this->assertTrue($entityCountInFleetBefore + 6 == $entityCountInFleetAfter);
+
+        $transferedItemCount = $this->_service->transferShip($this->colonyId, $this->fleetId, 37, 5);
+        $this->assertEquals(3, $transferedItemCount);
+
+        $fleetentity = $fleetentityTable->getEntity($fleetentityPK);
+        $entityCountInFleetAfter = !empty($fleetentity) ? $fleetentity->getCount() : 0;
+
+        $colonyentity = $colonyentityTable->getEntity($colonyentityPK);
+        $entityCountOnColonyAfter = !empty($colonyentity) ? $colonyentity->getLevel() : 0;
+
+        $this->assertTrue($entityCountOnColonyBefore == $entityCountOnColonyAfter + 9);
+        $this->assertTrue($entityCountInFleetBefore + 9 == $entityCountInFleetAfter);
+
     }
 
     public function testTransferResearch()
     {
-
         $this->initDatabase();
-        $this->markTestIncomplete();
+
+        // initial personell count for research id 81 on colony id 1 is 16
+
+        $transferedItemCount = $this->_service->transferResearch($this->colonyId, $this->fleetId, 81, 5);
+        $this->assertEquals(5, $transferedItemCount);
+
+        $transferedItemCount = $this->_service->transferResearch($this->colonyId, $this->fleetId, 81, 15);
+        $this->assertEquals(11, $transferedItemCount);
+
+        $transferedItemCount = $this->_service->transferResearch($this->colonyId, $this->fleetId, 81, -16);
+        $this->assertEquals(16, $transferedItemCount);
+
     }
 
     public function testTransferPersonell()
     {
 
         $this->initDatabase();
-        $this->markTestIncomplete();
+
+        // initial personell count for personell id 36 on colony id 1 is 2
+        // initial personell count for personell id 36 on fleet id 10 is 2
+
+        $transferedItemCount = $this->_service->transferPersonell($this->colonyId, $this->fleetId, 36, -5);
+        $this->assertEquals(2, $transferedItemCount);
+
+        $transferedItemCount = $this->_service->transferPersonell($this->colonyId, $this->fleetId, 36, 10);
+        $this->assertEquals(4, $transferedItemCount);
+
+        $transferedItemCount = $this->_service->transferPersonell($this->colonyId, $this->fleetId, 36, -2);
+        $this->assertEquals(2, $transferedItemCount);
     }
 
     public function testTransferTechnology()
@@ -124,8 +178,22 @@ class FleetServiceTest extends AbstractServiceTest
     public function testTransferResource()
     {
 
-        $this->initDatabase();
-        $this->markTestIncomplete();
+#        $this->initDatabase();
+#
+#        // initial resource amount for resource id 12 on colony id 1 is 9500
+#
+#        $transferedItemCount = $this->_service->transferResource($this->colonyId, $this->fleetId, 12, -20000);
+#        $this->assertEquals(9500, $transferedItemCount);
+#
+#        $transferedItemCount = $this->_service->transferResource($this->colonyId, $this->fleetId, 12, 5000);
+#        $this->assertEquals(5000, $transferedItemCount);
+#
+#        $transferedItemCount = $this->_service->transferResource($this->colonyId, $this->fleetId, 12, 5000);
+#        $this->assertEquals(4500, $transferedItemCount);
+
+        // TODO: it seems that update on existing rows fails with duplicate key errors
+
+        $this->markTestSkipped();
     }
 
     public function testGetFleetShip()

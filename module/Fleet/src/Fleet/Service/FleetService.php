@@ -130,9 +130,9 @@ class FleetService extends \Galaxy\Service\Gateway
 
     /**
      *
-     * @param array $path
-     * @param string $order
-     * @throws Galaxy_Model_Exception
+     * @param  array  $path
+     * @param  string $order
+     * @throws Galaxy\Service\Exception
      */
     protected function _storePathInDb($fleetId, $path, $order, $additionalData)
     {
@@ -172,16 +172,46 @@ class FleetService extends \Galaxy\Service\Gateway
         }
     }
 
+    /**
+     * Transfer an amount of ships from colony to fleet.
+     * (Vice versa when amount is negative!)
+     *
+     * @param  int|object   $colony
+     * @param  int|object   $fleet
+     * @param  integer      $shipId
+     * @param  integer      $amount
+     * @return int          amount of transfered ships
+     */
     public function transferShip($colony, $fleet, $shipId, $amount)
     {
         return $this->transferTechnology('ship', $colony, $fleet, $shipId, $amount);
     }
 
+    /**
+     * Transfer an amount of researches from colony to fleet.
+     * (Vice versa when amount is negative!)
+     *
+     * @param  int|object   $colony
+     * @param  int|object   $fleet
+     * @param  integer      $researchId
+     * @param  integer      $amount
+     * @return int          amount of transfered researches
+     */
     public function transferResearch($colony, $fleet, $researchId, $amount)
     {
         return $this->transferTechnology('research', $colony, $fleet, $researchId, $amount);
     }
 
+    /**
+     * Transfer an amount of personell from colony to fleet.
+     * (Vice versa when amount is negative!)
+     *
+     * @param  int|object   $colony
+     * @param  int|object   $fleet
+     * @param  integer      $personellId
+     * @param  integer      $amount
+     * @return int          amount of transfered personell
+     */
     public function transferPersonell($colony, $fleet, $personellId, $amount)
     {
         return $this->transferTechnology('personell', $colony, $fleet, $personellId, $amount);
@@ -210,6 +240,7 @@ class FleetService extends \Galaxy\Service\Gateway
             $fleet = $this->getFleet($fleet);
         }
 
+
         $type = strtolower($type);
         switch ( $type ) {
             case 'ship':
@@ -231,25 +262,15 @@ class FleetService extends \Galaxy\Service\Gateway
                 throw new Exception("Invalid parameter 'type' for transferTechnology.");
         }
 
-        $colonyCoords = $colony->getCoords();#array($colony['x'],$colony['y']);#,$colony['spot']);
-        $fleetCoords  = $fleet->getCoords();#array($fleet['x'],$fleet['y']);#,$fleet['spot']);
+        $colonyCoords = $colony->getCoords();
+        $fleetCoords  = $fleet->getCoords();
 
-        if (serialize($colonyCoords) == serialize($fleetCoords)) {
-
-/*            if ( !$isTradeOffer ) {
-                $techOnColony = $this->getColonyTechnology($type, array('colony_id' => $colony->getId(), $typeKey => $techId));
-            } else {
-//                 $tradeGw      = new Trade\Service\Gateway();
-//                 $techOnColony = $tradeGw->getTechnologyOffer($colony['id'], $techId);
-//                 if ( $techOnColony == null) {
-//                     return 0;
-//                 }
-            }*/
-
+        if ($colonyCoords[0] == $fleetCoords[0] && $colonyCoords[1] == $fleetCoords[1]) {
             $keys = array(
                 'colony_id' => $colony->getId(),
                 $typeKey => $techId
             );
+
             $table = $this->getTable($colonyTypeTablename);
             $result = $table->fetchAll($keys)->current();
             if (empty($result)) {
@@ -259,11 +280,27 @@ class FleetService extends \Galaxy\Service\Gateway
                     'level' => 0,
                 );
             } else {
-                $techOnColony = $result->getArrayCopy();
+                $hydrator = new \Zend\StdLib\Hydrator\ClassMethods();
+                $techOnColony = $hydrator->extract($result);
             }
 
-            $techsInFleet = $this->_gatherFleetTechnologyInformations($fleet->getId(), $type);
-            $techInFleet  = $techsInFleet[$techId];
+            $keys = array(
+                'fleet_id' => $fleet->getId(),
+                $typeKey => $techId
+            );
+            $table = $this->getTable($fleetTypeTablename);
+            $result = $table->fetchAll($keys)->current();
+            if (empty($result)) {
+                $techInFleet = array(
+                    'fleet_id' => $keys['fleet_id'],
+                    $typeKey => $keys[$typeKey],
+                    'count' => 0,
+                );
+            } else {
+                $hydrator = new \Zend\StdLib\Hydrator\ClassMethods();
+                $techInFleet = $hydrator->extract($result);
+            }
+
             if ($amount >= 0 ) {
                 // check if there are enough techs on the colony:
                 if ($amount > $techOnColony['level']) {
@@ -282,6 +319,9 @@ class FleetService extends \Galaxy\Service\Gateway
                 $db = $this->getTable('fleet')->getAdapter()->getDriver()->getConnection();
                 $db->beginTransaction();
                 $techOnColony['level'] = $techOnColony['level'] - $amount;
+                if ($type == 'personell') {
+                    unset($techOnColony['ap_spend']); // TODO: this is ugly; instead make sure to ignore not existing attributes when saving to table!
+                }
                 $this->getTable($colonyTypeTablename)->save($techOnColony);
                 $techInFleet['count'] = $techInFleet['count'] + $amount;
                 $this->getTable($fleetTypeTablename)->save($techInFleet);

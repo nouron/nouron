@@ -55,7 +55,7 @@ class ShipServiceTest extends AbstractServiceTest
         $this->assertEquals('Techtree\Entity\ShipCost', get_class($objects->current()));
     }
 
-    public function testColonyEntity()
+    public function testGetColonyEntity()
     {
         $possess = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
         $this->assertEquals(9, $possess->getLevel());

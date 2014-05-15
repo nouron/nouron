@@ -155,7 +155,7 @@ abstract class AbstractTable extends TableGateway
         } elseif (is_array($entity)) {
             $data = $entity;
         } else {
-            throw new \Exception('Invalid parameter type for save(): ' . get_class($entity));
+            throw new Exception('Invalid parameter type for save(): ' . get_class($entity));
         }
 
         $primary = (array) $this->getPrimary();

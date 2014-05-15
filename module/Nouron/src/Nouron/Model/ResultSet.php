@@ -78,19 +78,4 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
         return $result;
     }
 
-#    private function convert($row)
-#    {
-#        if (is_array($row)) {
-#            $tmp = $row;
-#        } elseif (is_object($row)) {
-#            $tmp = get_object_vars($row); #<-- TODO: this can't work anymore!!
-#        } else {
-#            throw new Exception\RuntimeException(
-#                'Rows as part of this DataSource, with type ' . gettype($row) . ' cannot be cast to an array'
-#            );
-#        }
-#
-#        return $tmp;
-#    }
-
 }
