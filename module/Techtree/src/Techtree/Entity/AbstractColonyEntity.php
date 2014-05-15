@@ -1,7 +1,6 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
 use Nouron\Entity\EntityInterface;
 
 abstract class AbstractColonyEntity implements EntityInterface

@@ -19,8 +19,10 @@ class FleetResource implements EntityInterface
      */
     public function setFleetId($fleet_id)
     {
+        if (!is_numeric($fleet_id) || $fleet_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid fleet id');
+        }
         $this->fleet_id = $fleet_id;
-
         return $this;
     }
 
@@ -33,8 +35,10 @@ class FleetResource implements EntityInterface
      */
     public function setResourceId($resource_id)
     {
+        if (!is_numeric($resource_id) || $resource_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid resource id');
+        }
         $this->resource_id = $resource_id;
-
         return $this;
     }
 
@@ -47,22 +51,10 @@ class FleetResource implements EntityInterface
      */
     public function setAmount($amount)
     {
+        if (!is_numeric($amount) || $amount < 0) {
+            throw new \Nouron\Entity\Exception('invalid amount');
+        }
         $this->amount = $amount;
-
-        return $this;
-    }
-
-    /**
-     * Sets the value of is_cargo.
-     *
-     * @param mixed $is_cargo the is_cargo
-     *
-     * @return self
-     */
-    public function setIsCargo($is_cargo)
-    {
-        $this->is_cargo = $is_cargo;
-
         return $this;
     }
 
@@ -96,14 +88,5 @@ class FleetResource implements EntityInterface
         return $this->amount;
     }
 
-    /**
-     * Gets the value of is_cargo.
-     *
-     * @return mixed
-     */
-    public function getIsCargo()
-    {
-        return $this->is_cargo;
-    }
 }
 

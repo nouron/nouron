@@ -213,9 +213,9 @@ abstract class AbstractTable extends TableGateway
      * In case of an compound primary key the parameter $compoundKey holds the
      * indezes of the ids.
      *
-     * @param  string|array $id           the id (primary key)
+     * @param  integer|array $id          the id (primary key)
      * @param  null|array   $compoundKey  OPTIONAL the indezes in case of an compoundKey
-     * @throws Nouron\Model\Exception    if id is invalid
+     * @throws Nouron\Model\Exception     if id is invalid
      */
     protected function _validateId($id, $compoundKey = null)
     {

@@ -1,9 +1,10 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
+use Nouron\Entity\MapEntityInterface;
 
-class Colony extends AbstractEntity
+class Colony implements EntityInterface, MapEntityInterface
 {
     public $id;
     public $name;
@@ -348,7 +349,18 @@ class Colony extends AbstractEntity
     {
         return array(
             0 => $this->getX(),
-            1 => $this->getY()
+            1 => $this->getY(),
+            2 => 0
         );
+    }
+
+    /**
+     * @param arrray $coords
+     * @return null
+     */
+    public function setCoords(array $coords)
+    {
+        $this->setX($coords[0]);
+        $this->setY($coords[1]);
     }
 }

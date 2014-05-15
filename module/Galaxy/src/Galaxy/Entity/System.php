@@ -1,9 +1,10 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
+use Nouron\Entity\MapEntityInterface;
 
-class System extends AbstractEntity
+class System implements EntityInterface, MapEntityInterface
 {
     public $id;
     public $name;
@@ -18,7 +19,6 @@ class System extends AbstractEntity
     public $size;
     public $icon_url;
     public $image_url;
-
 
     /**
      * Gets the value of id.
@@ -40,7 +40,6 @@ class System extends AbstractEntity
     public function setId($id)
     {
         $this->id = $id;
-
         return $this;
     }
 
@@ -64,7 +63,6 @@ class System extends AbstractEntity
     public function setName($name)
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -88,7 +86,6 @@ class System extends AbstractEntity
     public function setX($x)
     {
         $this->x = $x;
-
         return $this;
     }
 
@@ -112,7 +109,6 @@ class System extends AbstractEntity
     public function setY($y)
     {
         $this->y = $y;
-
         return $this;
     }
 
@@ -136,7 +132,6 @@ class System extends AbstractEntity
     public function setTypeId($type_id)
     {
         $this->type_id = $type_id;
-
         return $this;
     }
 
@@ -160,7 +155,6 @@ class System extends AbstractEntity
     public function setBackgroundImageUrl($background_image_url)
     {
         $this->background_image_url = $background_image_url;
-
         return $this;
     }
 
@@ -184,7 +178,6 @@ class System extends AbstractEntity
     public function setSight($sight)
     {
         $this->sight = $sight;
-
         return $this;
     }
 
@@ -202,13 +195,11 @@ class System extends AbstractEntity
      * Sets the value of density.
      *
      * @param mixed $density the density
-     *
      * @return self
      */
     public function setDensity($density)
     {
         $this->density = $density;
-
         return $this;
     }
 
@@ -226,13 +217,11 @@ class System extends AbstractEntity
      * Sets the value of radiation.
      *
      * @param mixed $radiation the radiation
-     *
      * @return self
      */
     public function setRadiation($radiation)
     {
         $this->radiation = $radiation;
-
         return $this;
     }
 
@@ -250,13 +239,11 @@ class System extends AbstractEntity
      * Sets the value of class.
      *
      * @param mixed $class the class
-     *
      * @return self
      */
     public function setClass($class)
     {
         $this->class = $class;
-
         return $this;
     }
 
@@ -274,13 +261,11 @@ class System extends AbstractEntity
      * Sets the value of size.
      *
      * @param mixed $size the size
-     *
      * @return self
      */
     public function setSize($size)
     {
         $this->size = $size;
-
         return $this;
     }
 
@@ -298,13 +283,11 @@ class System extends AbstractEntity
      * Sets the value of icon_url.
      *
      * @param mixed $icon_url the icon_url
-     *
      * @return self
      */
     public function setIconUrl($icon_url)
     {
         $this->icon_url = $icon_url;
-
         return $this;
     }
 
@@ -322,13 +305,33 @@ class System extends AbstractEntity
      * Sets the value of image_url.
      *
      * @param mixed $image_url the image_url
-     *
      * @return self
      */
     public function setImageUrl($image_url)
     {
         $this->image_url = $image_url;
-
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCoords()
+    {
+        return array(
+            0 => $this->getX(),
+            1 => $this->getY(),
+            2 => 0
+        );
+    }
+
+    /**
+     * @param arrray $coords
+     * @return null
+     */
+    public function setCoords(array $coords)
+    {
+        $this->setX($coords[0]);
+        $this->setY($coords[1]);
     }
 }

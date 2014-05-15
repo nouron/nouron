@@ -2,10 +2,10 @@
 
 /**
  * @package   Nouron_Core
- * @category  Entity
+ * @category  Cońtroller
  */
 
-namespace Nouron\Entity;
+namespace Nouron\Controller;
 
 class Exception extends \Exception
 {

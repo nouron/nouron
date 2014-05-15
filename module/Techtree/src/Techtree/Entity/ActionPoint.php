@@ -1,9 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class ActionPoint extends AbstractEntity
+class ActionPoint implements EntityInterface
 {
     private $tick;
     private $colony_id;

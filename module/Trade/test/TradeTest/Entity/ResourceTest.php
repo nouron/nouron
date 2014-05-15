@@ -17,10 +17,4 @@ class ResourceTest extends PHPUnit_Framework_TestCase
         $this->assertNull($resource->restriction, '"restriction" should initially be null');
     }
 
-    public function testGetArrayCopy()
-    {
-        $resource = new Resource();
-        #$this->assertType('Array', $resource->getArrayCopy(), 'expected array is not an array');
-        $this->assertArrayHasKey('colony_id', $resource->getArrayCopy());
-    }
 }

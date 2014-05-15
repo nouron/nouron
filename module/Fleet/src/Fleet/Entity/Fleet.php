@@ -2,8 +2,9 @@
 namespace Fleet\Entity;
 
 use Nouron\Entity\EntityInterface;
+use Nouron\Entity\MapEntityInterface;
 
-class Fleet implements EntityInterface
+class Fleet implements EntityInterface, MapEntityInterface
 {
     private $id;
     private $fleet;
@@ -11,7 +12,6 @@ class Fleet implements EntityInterface
     private $x;
     private $y;
     private $spot;
-
 
     /**
      * Sets the value of id.
@@ -21,8 +21,10 @@ class Fleet implements EntityInterface
      */
     public function setId($id)
     {
+        if (!is_numeric($id) || $id < 0) {
+            throw new \Nouron\Entity\Exception('invalid id');
+        }
         $this->id = $id;
-
         return $this;
     }
 
@@ -35,7 +37,6 @@ class Fleet implements EntityInterface
     public function setFleet($name)
     {
         $this->fleet = $name;
-
         return $this;
     }
 
@@ -47,8 +48,10 @@ class Fleet implements EntityInterface
      */
     public function setUserId($user_id)
     {
+        if (!is_numeric($user_id) || $user_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid user id');
+        }
         $this->user_id = $user_id;
-
         return $this;
     }
 
@@ -60,7 +63,10 @@ class Fleet implements EntityInterface
      */
     public function setX($x)
     {
-        $this->x = $x;
+        if (!is_numeric($x)) {
+            throw new \Nouron\Entity\Exception('invalid value for x coordinate');
+        }
+        $this->x = (int) $x;
         return $this;
     }
 
@@ -72,7 +78,10 @@ class Fleet implements EntityInterface
      */
     public function setY($y)
     {
-        $this->y = $y;
+        if (!is_numeric($y)) {
+            throw new \Nouron\Entity\Exception('invalid value for y coordinate');
+        }
+        $this->y = (int) $y;
         return $this;
     }
 
@@ -84,7 +93,10 @@ class Fleet implements EntityInterface
      */
     public function setSpot($spot)
     {
-        $this->spot = $spot;
+        if (!is_numeric($spot) || $spot <0 || $spot > 9) {
+            throw new \Nouron\Entity\Exception('invalid value for spot');
+        }
+        $this->spot = (int) $spot;
         return $this;
     }
 
@@ -150,8 +162,20 @@ class Fleet implements EntityInterface
     {
         return array(
             0 => $this->getX(),
-            1 => $this->getY()
+            1 => $this->getY(),
+            2 => $this->getSpot()
         );
+    }
+
+    /**
+     * @param arrray $coords
+     * @return null
+     */
+    public function setCoords(array $coords)
+    {
+        $this->setX($coords[0]);
+        $this->setY($coords[1]);
+        $this->setSpot($coords[2]);
     }
 }
 

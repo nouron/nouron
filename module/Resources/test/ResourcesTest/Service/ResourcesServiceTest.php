@@ -43,7 +43,8 @@ class ResourcesServiceTest extends AbstractServiceTest
                         )));
 
         $colonyEntity = new \Galaxy\Entity\Colony();
-        $colonyEntity->exchangeArray(array('id'=>1,'user_id'=>3));
+        $colonyEntity->setId(1);
+        $colonyEntity->setUserId(3);
         $galaxyService->expects($this->any())
                       ->method('getColony')
                       ->will($this->returnValueMap(array(

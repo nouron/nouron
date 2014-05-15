@@ -17,10 +17,4 @@ class ResearchTest extends PHPUnit_Framework_TestCase
         $this->assertNull($tech->restriction, '"restriction" should initially be null');
     }
 
-    public function testGetArrayCopy()
-    {
-        $tech = new Research();
-        #$this->assertType('Array', $resource->getArrayCopy(), 'expected array is not an array');
-        $this->assertArrayHasKey('colony_id', $tech->getArrayCopy());
-    }
 }

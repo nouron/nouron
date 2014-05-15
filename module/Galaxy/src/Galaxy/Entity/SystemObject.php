@@ -1,9 +1,10 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
+use Nouron\Entity\MapEntityInterface;
 
-class SystemObject extends AbstractEntity
+class SystemObject implements EntityInterface, MapEntityInterface
 {
     public $id;
     public $name;
@@ -255,6 +256,28 @@ class SystemObject extends AbstractEntity
     public function getImageUrl()
     {
         return $this->image_url;
+    }
+
+    /**
+     * @return array
+     */
+    public function getCoords()
+    {
+        return array(
+            0 => $this->getX(),
+            1 => $this->getY(),
+            2 => 0
+        );
+    }
+
+    /**
+     * @param arrray $coords
+     * @return null
+     */
+    public function setCoords(array $coords)
+    {
+        $this->setX($coords[0]);
+        $this->setY($coords[1]);
     }
 }
 

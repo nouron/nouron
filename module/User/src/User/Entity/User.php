@@ -1,11 +1,11 @@
 <?php
 namespace User\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 use ZfcRbac\Identity\IdentityInterface;
 use ZfcUser\Entity\UserInterface;
 
-class User extends AbstractEntity implements IdentityInterface, UserInterface
+class User implements EntityInterface, IdentityInterface, UserInterface
 {
     protected $tableName  = 'user';
 

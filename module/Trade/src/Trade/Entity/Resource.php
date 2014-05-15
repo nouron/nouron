@@ -1,9 +1,9 @@
 <?php
 namespace Trade\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Resource extends AbstractEntity
+class Resource implements EntityInterface
 {
     // attributes
     public $colony_id;
@@ -19,8 +19,6 @@ class Resource extends AbstractEntity
     public $user_id;
     public $race_id;
     public $faction_id;
-
-
 
     /**
      * Gets the value of colony_id.

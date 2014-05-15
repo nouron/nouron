@@ -1,9 +1,9 @@
 <?php
 namespace Trade\Entity;
 
-use Nouron\Entity\AbstractEntity;
+use Nouron\Entity\EntityInterface;
 
-class Research extends AbstractEntity
+class Research implements EntityInterface
 {
     public $colony_id;
     public $direction;
@@ -11,7 +11,7 @@ class Research extends AbstractEntity
     public $amount;
     public $price;
     public $restriction;
-    
+
     public $colony;
     public $username;
     public $user_id;
