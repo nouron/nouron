@@ -6,19 +6,19 @@ use Nouron\Entity\MapEntityInterface;
 
 class System implements EntityInterface, MapEntityInterface
 {
-    public $id;
-    public $name;
-    public $x;
-    public $y;
-    public $type_id;
-    public $background_image_url;
-    public $sight;
-    public $density;
-    public $radiation;
-    public $class;
-    public $size;
-    public $icon_url;
-    public $image_url;
+    private $id;
+    private $name;
+    private $x;
+    private $y;
+    private $type_id;
+    private $background_image_url;
+    private $sight;
+    private $density;
+    private $radiation;
+    private $class;
+    private $size;
+    private $icon_url;
+    private $image_url;
 
     /**
      * Gets the value of id.
@@ -34,11 +34,13 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of id.
      *
      * @param mixed $id the id
-     *
      * @return self
      */
     public function setId($id)
     {
+        if (!is_numeric($id) || $id < 0) {
+            throw new \Nouron\Entity\Exception('invalid id');
+        }
         $this->id = $id;
         return $this;
     }
@@ -57,7 +59,6 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of name.
      *
      * @param mixed $name the name
-     *
      * @return self
      */
     public function setName($name)
@@ -80,11 +81,13 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of x.
      *
      * @param mixed $x the x
-     *
      * @return self
      */
     public function setX($x)
     {
+        if (!is_numeric($x) || $x < 0) {
+            throw new \Nouron\Entity\Exception('invalid x value');
+        }
         $this->x = $x;
         return $this;
     }
@@ -103,11 +106,13 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of y.
      *
      * @param mixed $y the y
-     *
      * @return self
      */
     public function setY($y)
     {
+        if (!is_numeric($y) || $y < 0) {
+            throw new \Nouron\Entity\Exception('invalid y value');
+        }
         $this->y = $y;
         return $this;
     }
@@ -126,11 +131,13 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of type_id.
      *
      * @param mixed $type_id the type_id
-     *
      * @return self
      */
     public function setTypeId($type_id)
     {
+        if (!is_numeric($type_id) || $type_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid type id');
+        }
         $this->type_id = $type_id;
         return $this;
     }
@@ -149,7 +156,6 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of background_image_url.
      *
      * @param mixed $background_image_url the background_image_url
-     *
      * @return self
      */
     public function setBackgroundImageUrl($background_image_url)
@@ -172,11 +178,13 @@ class System implements EntityInterface, MapEntityInterface
      * Sets the value of sight.
      *
      * @param mixed $sight the sight
-     *
      * @return self
      */
     public function setSight($sight)
     {
+        if (!is_numeric($sight) || $sight < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for sight');
+        }
         $this->sight = $sight;
         return $this;
     }
@@ -199,6 +207,9 @@ class System implements EntityInterface, MapEntityInterface
      */
     public function setDensity($density)
     {
+        if (!is_numeric($density) || $density < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for density');
+        }
         $this->density = $density;
         return $this;
     }
@@ -221,6 +232,9 @@ class System implements EntityInterface, MapEntityInterface
      */
     public function setRadiation($radiation)
     {
+        if (!is_numeric($radiation) || $radiation < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for radiation');
+        }
         $this->radiation = $radiation;
         return $this;
     }
@@ -265,6 +279,9 @@ class System implements EntityInterface, MapEntityInterface
      */
     public function setSize($size)
     {
+        if (!is_numeric($size) || $size < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for size');
+        }
         $this->size = $size;
         return $this;
     }

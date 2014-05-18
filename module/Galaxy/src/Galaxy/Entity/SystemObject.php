@@ -6,17 +6,16 @@ use Nouron\Entity\MapEntityInterface;
 
 class SystemObject implements EntityInterface, MapEntityInterface
 {
-    public $id;
-    public $name;
-    public $x;
-    public $y;
-    public $type_id;
-    public $sight;
-    public $density;
-    public $radiation;
-    public $type;
-    public $image_url;
-
+    private $id;
+    private $name;
+    private $x;
+    private $y;
+    private $type_id;
+    private $sight;
+    private $density;
+    private $radiation;
+    private $type;
+    private $image_url;
 
     /**
      * Sets the value of id.

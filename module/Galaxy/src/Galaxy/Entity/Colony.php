@@ -6,21 +6,20 @@ use Nouron\Entity\MapEntityInterface;
 
 class Colony implements EntityInterface, MapEntityInterface
 {
-    public $id;
-    public $name;
-    public $system_object_id;
-    public $spot;
-    public $user_id;
-    public $since_tick;
-    public $is_primary;
-    public $system_object_name;
-    public $x;
-    public $y;
-    public $type_id;
-    public $sight;
-    public $density;
-    public $radiation;
-
+    private $id;
+    private $name;
+    private $system_object_id;
+    private $spot;
+    private $user_id;
+    private $since_tick;
+    private $is_primary;
+    private $system_object_name;
+    private $x;
+    private $y;
+    private $type_id;
+    private $sight;
+    private $density;
+    private $radiation;
 
     /**
      * Gets the value of id.
@@ -41,8 +40,10 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setId($id)
     {
+        if (!is_numeric($id) || $id < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for id');
+        }
         $this->id = $id;
-
         return $this;
     }
 
@@ -60,13 +61,11 @@ class Colony implements EntityInterface, MapEntityInterface
      * Sets the value of name.
      *
      * @param mixed $name the name
-     *
      * @return self
      */
     public function setName($name)
     {
         $this->name = $name;
-
         return $this;
     }
 
@@ -88,8 +87,10 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setSystemObjectId($system_object_id)
     {
+        if (!is_numeric($system_object_id) || $system_object_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for system_object_id');
+        }
         $this->system_object_id = $system_object_id;
-
         return $this;
     }
 
@@ -112,6 +113,9 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setSpot($spot)
     {
+        if (!is_numeric($spot) || $spot < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for spot');
+        }
         $this->spot = (int) $spot;
         return $this;
     }
@@ -135,8 +139,10 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setUserId($user_id)
     {
+        if (!is_numeric($user_id) || $user_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for user_id');
+        }
         $this->user_id = $user_id;
-
         return $this;
     }
 
@@ -158,8 +164,10 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setSinceTick($since_tick)
     {
+        if (!is_numeric($since_tick) || $since_tick < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for since_tick');
+        }
         $this->since_tick = (int) $since_tick;
-
         return $this;
     }
 
@@ -182,7 +190,6 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setIsPrimary($is_primary)
     {
         $this->is_primary = (bool) $is_primary;
-
         return $this;
     }
 
@@ -205,7 +212,6 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setSystemObjectName($system_object_name)
     {
         $this->system_object_name = $system_object_name;
-
         return $this;
     }
 
@@ -227,6 +233,9 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setX($x)
     {
+        if (!is_numeric($x) || $x < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for x');
+        }
         $this->x = (int) $x;
         return $this;
     }
@@ -249,8 +258,10 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setY($y)
     {
+        if (!is_numeric($y) || $y < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for y');
+        }
         $this->y = $y;
-
         return $this;
     }
 
@@ -272,6 +283,9 @@ class Colony implements EntityInterface, MapEntityInterface
      */
     public function setTypeId($type_id)
     {
+        if (!is_numeric($type_id) || $type_id < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for type_id');
+        }
         $this->type_id = (int) $type_id;
         return $this;
     }
@@ -279,7 +293,7 @@ class Colony implements EntityInterface, MapEntityInterface
     /**
      * Gets the value of sight.
      *
-     * @return integer
+     * @return mixed
      */
     public function getSight()
     {
@@ -289,19 +303,22 @@ class Colony implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of sight.
      *
-     * @param integer $sight
+     * @param mixed $sight the sight
      * @return self
      */
     public function setSight($sight)
     {
-        $this->sight = (int) $sight;
+        if (!is_numeric($sight) || $sight < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for sight');
+        }
+        $this->sight = $sight;
         return $this;
     }
 
     /**
      * Gets the value of density.
      *
-     * @return integer
+     * @return mixed
      */
     public function getDensity()
     {
@@ -311,19 +328,22 @@ class Colony implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of density.
      *
-     * @param integer
+     * @param mixed $density the density
      * @return self
      */
     public function setDensity($density)
     {
-        $this->density = (int) $density;
+        if (!is_numeric($density) || $density < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for density');
+        }
+        $this->density = $density;
         return $this;
     }
 
     /**
      * Gets the value of radiation.
      *
-     * @return integer
+     * @return mixed
      */
     public function getRadiation()
     {
@@ -333,11 +353,14 @@ class Colony implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of radiation.
      *
-     * @param integer $radiation
+     * @param mixed $radiation the radiation
      * @return self
      */
     public function setRadiation($radiation)
     {
+        if (!is_numeric($radiation) || $radiation < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for radiation');
+        }
         $this->radiation = $radiation;
         return $this;
     }

@@ -6,8 +6,8 @@ class PersonellService extends AbstractTechnologyService
     const PERSONELL_ID_ENGINEER = 35;
     const PERSONELL_ID_SCIENTIST = 36;
     const PERSONELL_ID_PILOT = 89;
-    const PERSONELL_ID_DIPLOMAT = 90;
-    const PERSONELL_ID_AGENT = 94;
+    #const PERSONELL_ID_DIPLOMAT = 90;
+    #const PERSONELL_ID_AGENT = 94;
 
     const DEFAULT_ACTIONPOINTS = 5;
 

@@ -3,14 +3,26 @@ namespace TechtreeTest\Service;
 
 use NouronTest\Service\AbstractServiceTest;
 use Techtree\Service\PersonellService;
-use Techtree\Table\PersonellTable;
-use Techtree\Table\PersonellCostTable;
-use Techtree\Table\ColonyPersonellTable;
 use Techtree\Table\ActionPointTable;
+use Techtree\Table\BuildingTable;
+use Techtree\Table\ResearchTable;
+use Techtree\Table\PersonellTable;
+use Techtree\Table\ShipTable;
+use Techtree\Table\PersonellCostTable;
+use Techtree\Table\ColonyBuildingTable;
+use Techtree\Table\ColonyResearchTable;
+use Techtree\Table\ColonyPersonellTable;
+use Techtree\Table\ColonyShipTable;
+use Techtree\Entity\ActionPoint;
+use Techtree\Entity\Building;
+use Techtree\Entity\Research;
+use Techtree\Entity\Ship;
 use Techtree\Entity\Personell;
 use Techtree\Entity\PersonellCost;
+use Techtree\Entity\ColonyBuilding;
+use Techtree\Entity\ColonyResearch;
 use Techtree\Entity\ColonyPersonell;
-use Techtree\Entity\ActionPoint;
+use Techtree\Entity\ColonyShip;
 
 class PersonellServiceTest extends AbstractServiceTest
 {
@@ -18,28 +30,37 @@ class PersonellServiceTest extends AbstractServiceTest
     {
         $this->initDatabaseAdapter();
 
-        $tableMocks = array();
-        $tableMocks['personell'] = new PersonellTable($this->dbAdapter, new Personell());
-        $tableMocks['personell_costs']   = new PersonellCostTable($this->dbAdapter, new PersonellCost());
-        $tableMocks['colony_personell'] = new ColonyPersonellTable($this->dbAdapter, new ColonyPersonell());
-        $tableMocks['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
+        // default test parameters
+        $this->_entityId = 35;
+        $this->_colonyId = 1;
+
+        $tables = array();
+        $tables['buildings'] = new BuildingTable($this->dbAdapter, new Building());
+        $tables['researches'] = new ResearchTable($this->dbAdapter, new Research());
+        $tables['ships'] = new ShipTable($this->dbAdapter, new Ship());
+        $tables['personell'] = new PersonellTable($this->dbAdapter, new Personell());
+        $tables['personell_costs']   = new PersonellCostTable($this->dbAdapter, new PersonellCost());
+        $tables['colony_buildings'] = new ColonyBuildingTable($this->dbAdapter, new ColonyBuilding());
+        $tables['colony_researches'] = new ColonyResearchTable($this->dbAdapter, new ColonyResearch());
+        $tables['colony_personell'] = new ColonyPersonellTable($this->dbAdapter, new ColonyPersonell());
+        $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
+        $tables['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
 
         $tick = new \Nouron\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();
-        $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
-                                          ->disableOriginalConstructor()
-                                          ->getMock();
         $serviceMocks['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
                                           ->disableOriginalConstructor()
                                           ->getMock();
+        $resourcesService = $this->getMockBuilder('Resources\Service\ResourcesService')
+                                          ->disableOriginalConstructor()
+                                          ->getMock();
+        $resourcesService->expects($this->any())->method('check')->will($this->returnValue(true));
+        $serviceMocks['resources'] = $resourcesService;
 
-        $this->_service = new PersonellService($tick, $tableMocks, $serviceMocks);
+        $this->_service = new PersonellService($tick, $tables, $serviceMocks);
 
-        // default test parameters
-        $this->_entityId = 35;
-        $this->_colonyId = 1;
     }
 
     public function testCheckRequiredActionPoints()
@@ -135,11 +156,43 @@ class PersonellServiceTest extends AbstractServiceTest
 
     public function testHire()
     {
+#        $this->initDatabase();
+#
+#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
+#        $this->assertTrue($result);
+
+        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
+        #$this->assertTrue($result);
+
+        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
+        #$this->assertTrue($result);
+
         $this->markTestIncomplete();
     }
 
     public function testFire()
     {
+#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
+#        $this->assertTrue($result);
+#
+#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
+#        $this->assertTrue($result);
+#
         $this->markTestIncomplete();
     }
 

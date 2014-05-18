@@ -84,9 +84,9 @@ class Gateway extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $colonies = $this->getColoniesByUserId((int) $userId);
         foreach ($colonies as $colony) {
-            if ( $colony->is_primary || count($colonies) == 1) {
-                if (!$colony->is_primary) {
-                    $colony->is_primary = 1; /* set as prime colony*/
+            if ( $colony->getIsPrimary() || count($colonies) == 1) {
+                if (!$colony->getIsPrimary()) {
+                    $colony->setIsPrimary(true); /* set as prime colony*/
                     // TODO: $colony->save()
                 }
                 return $colony;
@@ -174,7 +174,7 @@ class Gateway extends \Nouron\Service\AbstractService
     {
         $this->_validateId($systemId);
         $system = $this->getSystem($systemId);
-        $coords = array($system->x, $system->y);
+        $coords = array($system->getX(), $system->getY());
 
         return $this->getByCoordinates('objects', $coords);
     }
