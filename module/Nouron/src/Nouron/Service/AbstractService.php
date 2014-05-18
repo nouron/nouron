@@ -132,6 +132,13 @@ abstract class AbstractService implements LoggerAwareInterface
      */
     public function getLogger()
     {
+        if (!($this->logger instanceof LoggerInterface)) {
+            # set standard logger
+            $this->logger = new \Zend\Log\Logger();
+            #$this->logger->addWriter('FirePhp');
+            #$this->logger->addWriter('Stream');
+            $this->logger->addWriter('Null');
+        }
         return $this->logger;
     }
 

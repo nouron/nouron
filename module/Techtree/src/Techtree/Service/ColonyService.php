@@ -6,23 +6,33 @@ class ColonyService extends \Nouron\Service\AbstractService
     /**
      * @var integer
      */
-    private $_colony_id = null;
+    private $scopeColonyId = null;
+
+    public function __construct($tick, $tables, $services, $scopeColonyId = null)
+    {
+        parent::__construct($tick, $tables, $services);
+        if (!empty($scopeColonyId)) {
+            $this->setScopeColonyId($scopeColonyId);
+        } else {
+            $this->getLogger()->log(\Zend\Log\Logger::WARN, 'Missing scope colony id. Some methods can fail unexpectedly!');
+        }
+    }
 
     /**
      * @param integer
      */
-    public function setColonyId($id)
+    public function setScopeColonyId($colonyId)
     {
-        $this->_validateId($id);
-        $this->_colony_id = (int) $id;
+        $this->_validateId($colonyId);
+        $this->scopeColonyId = (int) $colonyId;
     }
 
     /**
      * @return integer
      */
-    public function getColonyId()
+    public function getScopeColonyId()
     {
-        return $this->_colony_id;
+        return $this->scopeColonyId;
     }
 
     /**
@@ -31,7 +41,7 @@ class ColonyService extends \Nouron\Service\AbstractService
     public function getBuildings()
     {
         return $this->getTable('colony_buildings')
-                    ->fetchAll('colony_id = ' . $this->getColonyId());
+                    ->fetchAll('colony_id = ' . $this->getScopeColonyId());
     }
 
     /**
@@ -40,7 +50,7 @@ class ColonyService extends \Nouron\Service\AbstractService
     public function getResearches()
     {
         return $this->getTable('colony_researches')
-                    ->fetchAll('colony_id = ' . $this->getColonyId());
+                    ->fetchAll('colony_id = ' . $this->getScopeColonyId());
     }
 
     /**
@@ -49,7 +59,7 @@ class ColonyService extends \Nouron\Service\AbstractService
     public function getShips()
     {
         return $this->getTable('colony_ships')
-                    ->fetchAll('colony_id = ' . $this->getColonyId());
+                    ->fetchAll('colony_id = ' . $this->getScopeColonyId());
     }
 
     /**
@@ -58,7 +68,7 @@ class ColonyService extends \Nouron\Service\AbstractService
     public function getPersonell()
     {
         return $this->getTable('colony_personell')
-                    ->fetchAll('colony_id = ' . $this->getColonyId());
+                    ->fetchAll('colony_id = ' . $this->getScopeColonyId());
     }
 
     /**
@@ -116,9 +126,9 @@ class ColonyService extends \Nouron\Service\AbstractService
 
         $techtree = array(
             'building'  => $buildings,
-            'research' => $researches,
+            'research'  => $researches,
             'ship'      => $ships,
-            'personell'  => $personell
+            'personell' => $personell
         );
 
         return $techtree;

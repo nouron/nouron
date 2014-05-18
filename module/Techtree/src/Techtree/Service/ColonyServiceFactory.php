@@ -18,9 +18,6 @@ class ColonyServiceFactory implements FactoryInterface
 
         $sm = $serviceLocator->get('servicemanager');
 
-        #var_dump(get_class_methods($serviceLocator));
-        #var_dump($sm->getRegisteredServices());
-
         $tables = array();
         $tables['buildings']  = $serviceLocator->get('Techtree\Table\BuildingTable');
         $tables['researches'] = $serviceLocator->get('Techtree\Table\ResearchTable');
