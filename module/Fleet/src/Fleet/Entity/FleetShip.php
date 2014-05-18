@@ -14,13 +14,11 @@ class FleetShip implements EntityInterface
      * Sets the value of fleet_id.
      *
      * @param mixed $fleet_id the fleet_id
-     *
      * @return self
      */
     public function setFleetId($fleet_id)
     {
         $this->fleet_id = $fleet_id;
-
         return $this;
     }
 
@@ -28,13 +26,11 @@ class FleetShip implements EntityInterface
      * Sets the value of ship_id.
      *
      * @param mixed $ship_id the ship_id
-     *
      * @return self
      */
     public function setShipId($ship_id)
     {
         $this->ship_id = $ship_id;
-
         return $this;
     }
 
@@ -42,13 +38,11 @@ class FleetShip implements EntityInterface
      * Sets the value of count.
      *
      * @param mixed $count the count
-     *
      * @return self
      */
     public function setCount($count)
     {
         $this->count = $count;
-
         return $this;
     }
 
@@ -56,13 +50,11 @@ class FleetShip implements EntityInterface
      * Sets the value of is_cargo.
      *
      * @param mixed $is_cargo the is_cargo
-     *
      * @return self
      */
     public function setIsCargo($is_cargo)
     {
         $this->is_cargo = $is_cargo;
-
         return $this;
     }
 

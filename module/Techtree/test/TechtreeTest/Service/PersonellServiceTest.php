@@ -156,16 +156,16 @@ class PersonellServiceTest extends AbstractServiceTest
 
     public function testHire()
     {
-#        $this->initDatabase();
-#
-#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
-#        $this->assertTrue($result);
+        $this->initDatabase();
+
+        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
+        $this->assertTrue($result);
+
+        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
+        $this->assertTrue($result);
+
+        $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
+        $this->assertTrue($result);
 
         #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
         #$this->assertTrue($result);
@@ -178,6 +178,7 @@ class PersonellServiceTest extends AbstractServiceTest
 
     public function testFire()
     {
+        $this->initDatabase();
 #        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
 #        $this->assertTrue($result);
 #

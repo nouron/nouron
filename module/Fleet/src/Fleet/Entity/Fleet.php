@@ -16,7 +16,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of id.
      *
-     * @param integer
+     * @param integer $id
      * @return self
      */
     public function setId($id)
@@ -43,7 +43,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of user_id.
      *
-     * @param integer
+     * @param integer $user_id
      * @return self
      */
     public function setUserId($user_id)
@@ -58,7 +58,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of x.
      *
-     * @param integer
+     * @param integer $x
      * @return self
      */
     public function setX($x)
@@ -73,7 +73,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of y.
      *
-     * @param integer
+     * @param integer $y
      * @return self
      */
     public function setY($y)
@@ -88,7 +88,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     /**
      * Sets the value of spot.
      *
-     * @param integer
+     * @param integer $spot
      * @return self
      */
     public function setSpot($spot)
@@ -120,6 +120,9 @@ class Fleet implements EntityInterface, MapEntityInterface
         return $this->user_id;
     }
 
+    /**
+     * @return string
+     */
     public function getFleet()
     {
         return $this->fleet;

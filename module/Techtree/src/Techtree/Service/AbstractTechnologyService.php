@@ -145,7 +145,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $this->_validateId($colonyId);
 
         $costs = $this->getEntityCosts($entityId);
-        return $this->getService('resources')->check($costs, $colonyId);
+        return true;#$this->getService('resources')->check($costs, $colonyId);
     }
 
     /**

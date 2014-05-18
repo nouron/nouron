@@ -108,9 +108,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
      */
     public function check(\Zend\Db\ResultSet\ResultSetInterface $costs, $colonyId)
     {
-                print("\nCheck required resources\n");
         $this->_validateId($colonyId);
-                print("\nCheck required resources\n");
         $poss = $this->getPossessionsByColonyId($colonyId);
         // check costs
         $result = true;
@@ -125,10 +123,7 @@ class ResourcesService extends \Nouron\Service\AbstractService
                 break;
             }
         }
-        print("\nCheck required resources\n");
-        print("\n");
-        print_r($result);
-        print("\n");
+
         return $result;
     }
 
