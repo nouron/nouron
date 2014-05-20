@@ -137,10 +137,11 @@ return array(
             'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTableFactory',
             'Galaxy\Table\SystemTable' => 'Galaxy\Table\SystemTableFactory',
-            'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
             'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
-            #'Galaxy\Table\FleetTable'  => 'Galaxy\Table\FleetTableFactory',
+
+            'Fleet\Table\FleetTable'  => 'Fleet\Table\FleetTableFactory',
+            'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
         ),
     ),
 

@@ -7,10 +7,10 @@ $radius  = round($config['range']/2); ?>
 <div id="system">
 <?php echo $this->partial('galaxy/partial/_switch_layer_display') ?>
 <div class="hidden">
-    <div id="data_xMin"><?php echo $system->x - $radius;?></div>
-    <div id="data_xMax"><?php echo $system->x + $radius;?></div>
-    <div id="data_yMin"><?php echo $system->y - $radius;?></div>
-    <div id="data_yMax"><?php echo $system->y + $radius;?></div>
+    <div id="data_xMin"><?php echo $system->getX() - $radius;?></div>
+    <div id="data_xMax"><?php echo $system->getX() + $radius;?></div>
+    <div id="data_yMin"><?php echo $system->getY() - $radius;?></div>
+    <div id="data_yMax"><?php echo $system->getY() + $radius;?></div>
     <div id="data_offset"><?php echo $offset?></div>
     <div id="data_range"><?php echo $config['range']?></div>
     <div id="data_scale"><?php echo $scale?></div>
@@ -49,20 +49,20 @@ $radius  = round($config['range']/2); ?>
 <div class="col-md-6">
 
 <div id="parallax">
-    <div id="systemBackground" class="parallax-layer" style="width:<?php echo $max ?>px;height:<?php echo $max ?>px;background-image: url(/image/<?php echo $system->background_image_url ?>);"></div>
+    <div id="systemBackground" class="parallax-layer" style="width:<?php echo $max ?>px;height:<?php echo $max ?>px;background-image: url(/image/<?php echo $system->getBackgroundImageUrl() ?>);"></div>
     <div id="gridLayer" class="parallax-layer" style="width:<?php echo $max+200 ?>px;height:<?php echo $max+200 ?>px;background-image: url(/img/grid.gif)">
 <?php
 $m = $config['range'];
 $r = round($m/2);
 
-    $label = $system->x - $radius;
+    $label = $system->getX() - $radius;
     for ($x=$offset; $x <=$max+$offset; $x=$x+$scale):
     if ($x%50 == 0):
     echo '<p class="debug" style="left: '.$x.'px; top:'.$offset.'px; border: 1px dotted grey;">'.$label.'</p>';
     $label = $label + 5;
     endif;
     endfor;
-    $label = $system->y + $label%5;
+    $label = $system->getY() + $label%5;
     for ($y=$offset; $y<=$max+$offset; $y=$y+$scale):
     if ($y%50 == 0):
     $label = $label + 5;
@@ -91,7 +91,7 @@ $r = round($m/2);
 
         <div class="hidden">
         <?php foreach ($fleetOrders as $key => $order) :
-            echo '<div id="'.$order->fleet_id.'-'.$order->tick.'" class="fleetorder">' . $order->coordinates . '</div>';
+            echo '<div id="'.$order->getFleetId().'-'.$order->getTick().'" class="fleetorder">' . $order->getCoordinates() . '</div>';
         endforeach;
         ?>
         </span>

@@ -101,7 +101,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $buildingService  = $sm->get('Techtree\Service\BuildingService');
         $personellService = $sm->get('Techtree\Service\PersonellService');
         $colonyService = $sm->get('Techtree\Service\ColonyService');
-        $colonyService->setColonyId($colonyId);
+        $colonyService->setScopeColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
         $building = $techtree['building'][$buildingId];
 
@@ -159,7 +159,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $researchService  = $sm->get('Techtree\Service\ResearchService');
         $personellService = $sm->get('Techtree\Service\PersonellService');
         $colonyService = $sm->get('Techtree\Service\ColonyService');
-        $colonyService->setColonyId($colonyId);
+        $colonyService->setScopeColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
         $research = $techtree['research'][$researchId];
 
@@ -209,7 +209,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $personellService = $sm->get('Techtree\Service\PersonellService');
         $shipService   = $sm->get('Techtree\Service\ShipService');
         $colonyService = $sm->get('Techtree\Service\ColonyService');
-        $colonyService->setColonyId($colonyId);
+        $colonyService->setScopeColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
         $ship = $techtree['ship'][$shipId];
 
@@ -260,7 +260,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
         $buildingService  = $sm->get('Techtree\Service\BuildingService');
         $personellService = $sm->get('Techtree\Service\PersonellService');
         $colonyService = $sm->get('Techtree\Service\ColonyService');
-        $colonyService->setColonyId($colonyId);
+        $colonyService->setScopeColonyId($colonyId);
         $techtree = $colonyService->getTechtree();
         $personell = $techtree['personell'][$entityId];
 

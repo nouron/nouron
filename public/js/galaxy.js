@@ -1,9 +1,5 @@
 // Run once the DOM is ready
 $(document).ready(function () {
-    // Declare parallax on layers
-    jQuery('.parallax-layer').parallax({
-        mouseport: "#parallax"
-    });
 
     var offset = parseInt( $('#system #data_offset').text() );
     var scale = parseInt( $('#system #data_scale').text() );

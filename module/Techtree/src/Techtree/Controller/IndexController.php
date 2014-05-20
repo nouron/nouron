@@ -17,7 +17,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $tick     = $sm->get('Nouron\Service\Tick');
 
         $colonyService   = $sm->get('Techtree\Service\ColonyService');
-        $colonyService->setColonyId($colonyId);
+        $colonyService->setScopeColonyId($colonyId);
 
         $buildingService = $sm->get('Techtree\Service\BuildingService');
         $buildings       = $buildingService->getEntities();

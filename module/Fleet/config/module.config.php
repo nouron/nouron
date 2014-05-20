@@ -264,11 +264,17 @@ return array(
             'Fleet\Entity\FleetPersonell' => 'Fleet\Entity\FleetPersonellFactory',
             'Fleet\Entity\FleetResearch' => 'Fleet\Entity\FleetResearchFactory',
             'Fleet\Entity\FleetResource' => 'Fleet\Entity\FleetResourceFactory',
+            'Fleet\Entity\FleetOrder' => 'Fleet\Entity\FleetOrderFactory',
             'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
 
             'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
             'Fleet\Table\FleetTable'  => 'Fleet\Table\FleetTableFactory',
+            'Fleet\Table\FleetShipTable'  => 'Fleet\Table\FleetShipTableFactory',
+            'Fleet\Table\FleetPersonellTable'  => 'Fleet\Table\FleetPersonellTableFactory',
+            'Fleet\Table\FleetResearchTable'  => 'Fleet\Table\FleetResearchTableFactory',
+            'Fleet\Table\FleetResourceTable'  => 'Fleet\Table\FleetResourceTableFactory',
+            'Fleet\Table\FleetOrderTable'  => 'Fleet\Table\FleetOrderTableFactory',
         ),
     ),
 );

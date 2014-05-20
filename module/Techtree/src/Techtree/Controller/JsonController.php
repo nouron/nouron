@@ -66,7 +66,7 @@ class JsonController extends \Nouron\Controller\IngameController
         if (empty($colonyId)) {
             $colonyId = $this->getActive('colony');
         }
-        $gw->setColonyId($colonyId);
+        $gw->setScopeColonyId($colonyId);
         $coloTechtree = $gw->getTechtree();
         return new JsonModel($coloTechtree);
     }

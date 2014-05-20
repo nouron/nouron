@@ -39,7 +39,7 @@ class SystemController extends \Nouron\Controller\IngameController
 
         $objects  = $galaxyService->getSystemObjects($systemId)->getArrayCopy('id');
 
-        $sysCoords = array($system->x, $system->y);
+        $sysCoords = array($system->getX(), $system->getY());
         $colonies = $galaxyService->getByCoordinates('colonies', $sysCoords)->getArrayCopy();
         $fleets   = $galaxyService->getByCoordinates('fleets', $sysCoords)->getArrayCopy('id');
         $fleetIds = array_keys($fleets);

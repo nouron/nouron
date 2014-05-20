@@ -3,32 +3,32 @@
     display:block; position:absolute; top: 50%; left: 50%; margin-left: -50%; margin-top: -50%; outline: 1px solid black; overflow: hidden; background-color: #111;
 }
 
-.grid-svg {
+.ngm .grid-svg {
     position:absolute; top: 50%; left: 50%; display: block; outline: 1px solid #888; background-color: #111;
 }
 
-.ngm-grid-layer {z-index: 0}
-.ngm-planets-layer{z-index: 1000}
-.ngm-misc-layer {z-index:500}
+.ngm .ngm-grid-layer {z-index: 0}
+.ngm .ngm-planets-layer{z-index: 1000}
+.ngm .ngm-misc-layer {z-index:500}
 
-.misc {z-index:500;}
-.planet {z-index:1022;}
-.planet:hover,
-.misc:hover {
+.ngm .misc {z-index:500;}
+.ngm .planet {z-index:1022;}
+.ngm .planet:hover,
+.ngm .misc:hover {
     cursor: pointer; outline: 1px solid white;
 }
 
-.grid-push {
+.ngm .grid-push {
     display:block; position:absolute; border: 1px solid #555; height: 5%; width: 5%; background-color: #333; color: #fff; font-size: 1.5em; text-align: center; margin:0; padding:0; z-index: 1023;
 }
-.grid-push:hover { cursor: pointer; background-color: #444;}
+.ngm .grid-push:hover { cursor: pointer; background-color: #444;}
 
-.grid-push-north{top: 0; left:50%;margin-left:-10%;width:20%; border-radius: 0 0 10px 10px;}
-.grid-push-west{top: 50%; left:0;margin-top:-10%; border-radius: 0 10px 10px 0;line-height:100%; padding: 10% 0;}
-.grid-push-east{top: 50%; left:100%;margin-top:-10%;margin-left:-5%; border-radius: 10px 0 0 10px;line-height:100%; padding:10% 0;}
-.grid-push-south{top: 100%; left:50%;margin-top:-5%;margin-left:-10%;width:20%; border-radius: 10px 10px 0 0;}
+.ngm .grid-push-north{top: 0; left:50%;margin-left:-10%;width:20%; border-radius: 0 0 10px 10px;}
+.ngm .grid-push-west{top: 50%; left:0;margin-top:-10%; border-radius: 0 10px 10px 0;line-height:100%; padding: 10% 0;}
+.ngm .grid-push-east{top: 50%; left:100%;margin-top:-10%;margin-left:-5%; border-radius: 10px 0 0 10px;line-height:100%; padding:10% 0;}
+.ngm .grid-push-south{top: 100%; left:50%;margin-top:-5%;margin-left:-10%;width:20%; border-radius: 10px 10px 0 0;}
 
-#field-selector {display:block; position:absolute;border:1px dotted #eee;z-index:1025;}
+.ngm #field-selector {display:block; position:absolute;border:1px dotted #eee;z-index:1025;}
 
 /** EDITOR **/
 
@@ -38,5 +38,5 @@
 
 #ngm-editor .object.selected{outline:2px solid red;}
 
-.planet {background-repeat:no-repeat;background-size: 100%;}
-.planetary-1 {background-image: url(planetaries/1.png);}
+.ngm .planet {background-repeat:no-repeat;background-size: 100%;}
+.ngm .planetary-1 {background-image: url(planetaries/1.png);}
