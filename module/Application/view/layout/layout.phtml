@@ -10,6 +10,7 @@ $this->headLink()->appendStylesheet($basePath . '/css/bootstrap.min.css');
 //$this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
 //Add your own style here
 $this->headLink()->appendStylesheet($basePath . '/css/style.css');
+$this->headLink()->appendStylesheet($basePath . '/css/ngm.css');
 //Twitter Bootstrap responsive styles
 //$this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
 
@@ -20,6 +21,7 @@ $this->inlineScript()->appendFile($basePath . '/js/bootstrap.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/bootbox.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.bootstrap-growl.min.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.parallax.min.js');
+$this->inlineScript()->appendFile($basePath . '/js/ngm.js');
 $this->inlineScript()->appendFile($basePath . '/js/nouron.js');
 $this->inlineScript()->appendFile($basePath . '/js/techtree.js');
 $this->inlineScript()->appendFile($basePath . '/js/innn.js');
@@ -108,6 +110,33 @@ echo $this->doctype();
         if ($('#fleetlist').length > 0) {fleetlist.init(); }
         if ($('#fleetconfig').length > 0)  {fleetconfig.init(); }
         if ($('#trade').length > 0)  {trade.init();  }
+
+        if ($('#ngm-map').length > 0)  {
+            ngm.init({
+                // the local dummydata.json file is for simple test cases but only works in firefox!
+                // it is recommended to set a url here which returns json data:
+                'dataSourceUri': "data/dummydata.json",
+                // the jquery selector for the container dom element
+                'selector': '#ngm-map',
+                //
+                'width': '700px',
+                'height': '700px',
+                // center coordinates - all other coordinates are calculated on
+                // these values as base
+                'center' : [1225, 1225],
+                //
+                'scale' : 10, // pix width of one field unit
+                //
+                'range' : 50,
+                //
+                'layers': [
+                    {'name': 'misc', 'class': 'ngm-misc-layer', 'objectDefaultShape': 'square'},
+                    {'name': 'planets', 'class': 'ngm-planets-layer', 'objectDefaultShape': 'circle'},
+                    {'name': 'stations', 'class': 'ngm-stations-layer', 'objectDefaultShape': 'square'},
+                    {'name': 'ships', 'class': 'ngm-ships-layer', 'objectDefaultShape': 'triangle'}
+                ]
+            });
+        }
     });
     </script>
   </body>
