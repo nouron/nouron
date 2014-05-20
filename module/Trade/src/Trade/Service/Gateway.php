@@ -118,8 +118,7 @@ class Gateway extends \Nouron\Service\AbstractService
     {
 
         if (isset($this->logger)) {
-            $this->logger->info("remove $type offer");
-            $this->logger->info($data);
+            $this->logger->info("remove $type offer", $data);
         }
 
         if (isset($data['user_id'])) {

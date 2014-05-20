@@ -26,10 +26,10 @@ class GetSelected extends AbstractPlugin
             default:       $idKey = 'id';  break;
         }
 
+        $session = new Container('selectedIds');
+        $identifier = $itemType+'Id';
         $itemId = $this->getController()->params()->fromRoute($idKey);
         if (!$itemId) {
-            $identifier = $itemType+'Id';
-            $session = new Container('selectedIds');
             $itemId = $session->$identifier;
         }
 

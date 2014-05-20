@@ -7,8 +7,6 @@
 
 namespace Nouron\Model;
 
-use Zend\Db\ResultSet\Exception;
-
 class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
 {
     /**

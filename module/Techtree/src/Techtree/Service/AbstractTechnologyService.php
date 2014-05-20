@@ -145,7 +145,11 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $this->_validateId($colonyId);
 
         $costs = $this->getEntityCosts($entityId);
-        return true;#$this->getService('resources')->check($costs, $colonyId);
+
+        # TODO: this is outcommented because it causes locked db errors in unittests - FIX THIS!!
+        # return $this->getService('resources')->check($costs, $colonyId);
+
+        return true;
     }
 
     /**
@@ -211,7 +215,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $this->_validateId($entityId);
         $this->_validateId($colonyId);
 
-        $entity = $this->getEntity($entityId);
+        #$entity = $this->getEntity($entityId);
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
         if ($colonyEntity->getLevel() <= 0) {
             return false;
@@ -408,8 +412,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
 #            );
 #        }
 #
-#        return (bool) $result;
-        return true;
+        return (bool) $result;
     }
 
     /**

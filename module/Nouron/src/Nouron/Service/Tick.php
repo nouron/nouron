@@ -15,6 +15,11 @@ class Tick
     protected $tick = null;
 
     /**
+     * @var array
+     */
+    protected $config = array();
+
+    /**
      *
      */
     public function __toString()

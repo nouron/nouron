@@ -7,6 +7,9 @@ use Zend\ServiceManager\ServiceLocatorInterface;
 
 class TechnologyNameLink extends AbstractHelper implements ServiceLocatorAwareInterface
 {
+    // @var ServiceLocatorInterface
+    protected $serviceLocator;
+
     /**
      * Set the service locator.
      *
@@ -36,7 +39,7 @@ class TechnologyNameLink extends AbstractHelper implements ServiceLocatorAwareIn
     public function __invoke($techId, $colonyId = null)
     {
         $sm = $this->getServiceLocator();
-        \Zend\Debug\Debug::dump($sm->getRegisteredServices());
+        #\Zend\Debug\Debug::dump($sm->getRegisteredServices());
         $gateway = $sm->get('Techtree\Service\BuildingService');
         $tech = $gateway->getTechnology($techId);
         if (is_numeric($colonyId)) {
