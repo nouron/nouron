@@ -49,7 +49,7 @@ class Gateway extends \Nouron\Service\AbstractService
     private function _addOffer($type, array $data)
     {
         if (isset($this->logger)) {
-            $this->logger->log(\Zend\Log\Logger::INFO, "store new Offer");
+            $this->logger->info("store new Offer");
         }
 
         if (isset($data['user_id'])) {
@@ -83,7 +83,7 @@ class Gateway extends \Nouron\Service\AbstractService
 
         } else {
             if (isset($this->logger)) {
-                $this->logger->log(\Zend\Log\Logger::ERR, "add offer failed: user not given or not owner of selected colony");
+                $this->logger->err("add offer failed: user not given or not owner of selected colony");
             }
             return false;
         }
@@ -118,8 +118,8 @@ class Gateway extends \Nouron\Service\AbstractService
     {
 
         if (isset($this->logger)) {
-            $this->logger->log(\Zend\Log\Logger::INFO, "remove $type offer");
-            $this->logger->log(\Zend\Log\Logger::INFO, $data);
+            $this->logger->info("remove $type offer");
+            $this->logger->info($data);
         }
 
         if (isset($data['user_id'])) {
@@ -144,7 +144,7 @@ class Gateway extends \Nouron\Service\AbstractService
 
         } else {
             if (isset($this->logger)) {
-                $this->logger->log(\Zend\Log\Logger::ERR, "remove offer failed: user not given or not owner of selected colony");
+                $this->logger->err("remove offer failed: user not given or not owner of selected colony");
             }
             return false;
         }

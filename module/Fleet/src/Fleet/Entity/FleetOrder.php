@@ -62,7 +62,7 @@ class FleetOrder implements EntityInterface
     /**
      * Sets the value of coordinates.
      *
-     * @param  json|array $coordinates the coordinates as json string or array
+     * @param  string|array $coordinates the coordinates as json string or array
      * @return self
      */
     public function setCoordinates($coordinates)
@@ -81,7 +81,7 @@ class FleetOrder implements EntityInterface
     /**
      * Sets the value of data.
      *
-     * @param  json|array $data the data
+     * @param  string|array $data the data
      * @return self
      */
     public function setData($data)
@@ -112,7 +112,7 @@ class FleetOrder implements EntityInterface
     /**
      * Sets the value of has_notified.
      *
-     * @param  boolean $has_notified the has_notified
+     * @param  mixed $has_notified the has_notified
      * @return self
      */
     public function setHasNotified($has_notified)

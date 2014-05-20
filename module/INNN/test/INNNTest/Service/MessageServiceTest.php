@@ -45,7 +45,7 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test exception
         $this->setExpectedException('Nouron\Service\Exception');
-        $object = $this->_service->getMessage(null);
+        $this->_service->getMessage(null);
 
     }
 
@@ -68,7 +68,7 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test exception
         $this->setExpectedException('Nouron\Service\Exception');
-        $object = $this->_service->getInboxMessages(null);
+        $this->_service->getInboxMessages(null);
     }
 
     public function testGetOutboxMessages()
@@ -112,16 +112,18 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test exception
         $this->setExpectedException('Nouron\Service\Exception');
-        $object = $this->_service->getArchivedMessages(null);
+        $this->_service->getArchivedMessages(null);
     }
 
     public function testSendMessage()
     {
-        $entity['sender_id'] = $this->_userA_Id;
-        $entity['recipient_id'] = $this->_userA_Id;
-        $entity['attitude'] = 'mood_friendly';
-        $entity['subject'] = 'test';
-        $entity['text'] = 'test';
+        $entity = array(
+            'sender_id' => $this->_userA_Id,
+            'recipient_id' => $this->_userA_Id,
+            'attitude' => 'mood_friendly',
+            'subject' => 'test',
+            'text' => 'test'
+        );
 
         $this->markTestIncomplete();
 
