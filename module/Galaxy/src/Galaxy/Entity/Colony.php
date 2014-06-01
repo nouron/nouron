@@ -261,7 +261,7 @@ class Colony implements EntityInterface, MapEntityInterface
         if (!is_numeric($y) || $y < 0) {
             throw new \Nouron\Entity\Exception('invalid value for y');
         }
-        $this->y = $y;
+        $this->y =(int) $y;
         return $this;
     }
 

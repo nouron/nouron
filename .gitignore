@@ -4,6 +4,7 @@ README.txt
 demos/
 extras/documentation
 vendor/
+bower_components/
 .svn/
 
 *.pydevproject

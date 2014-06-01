@@ -46,34 +46,6 @@ class SystemObject implements EntityInterface, MapEntityInterface
     }
 
     /**
-     * Sets the value of x.
-     *
-     * @param mixed $x the x
-     *
-     * @return self
-     */
-    public function setX($x)
-    {
-        $this->x = $x;
-
-        return $this;
-    }
-
-    /**
-     * Sets the value of y.
-     *
-     * @param mixed $y the y
-     *
-     * @return self
-     */
-    public function setY($y)
-    {
-        $this->y = $y;
-
-        return $this;
-    }
-
-    /**
      * Sets the value of type_id.
      *
      * @param mixed $type_id the type_id
@@ -178,26 +150,6 @@ class SystemObject implements EntityInterface, MapEntityInterface
     }
 
     /**
-     * Gets the value of x.
-     *
-     * @return mixed
-     */
-    public function getX()
-    {
-        return $this->x;
-    }
-
-    /**
-     * Gets the value of y.
-     *
-     * @return mixed
-     */
-    public function getY()
-    {
-        return $this->y;
-    }
-
-    /**
      * Gets the value of type_id.
      *
      * @return mixed
@@ -255,6 +207,56 @@ class SystemObject implements EntityInterface, MapEntityInterface
     public function getImageUrl()
     {
         return $this->image_url;
+    }
+
+    /**
+     * Gets the value of x.
+     *
+     * @return mixed
+     */
+    public function getX()
+    {
+        return $this->x;
+    }
+
+    /**
+     * Sets the value of x.
+     *
+     * @param integer $x
+     * @return self
+     */
+    public function setX($x)
+    {
+        if (!is_numeric($x) || $x < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for x');
+        }
+        $this->x = (int) $x;
+        return $this;
+    }
+
+    /**
+     * Gets the value of y.
+     *
+     * @return integer
+     */
+    public function getY()
+    {
+        return $this->y;
+    }
+
+    /**
+     * Sets the value of y.
+     *
+     * @param integer $y
+     * @return self
+     */
+    public function setY($y)
+    {
+        if (!is_numeric($y) || $y < 0) {
+            throw new \Nouron\Entity\Exception('invalid value for y');
+        }
+        $this->y =(int) $y;
+        return $this;
     }
 
     /**

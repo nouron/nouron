@@ -5,24 +5,20 @@ $this->headTitle()->setSeparator(' - ')
 $basePath = $this->basePath();
 
 //Twitter Bootstrap styles
-$this->headLink()->appendStylesheet($basePath . '/css/bootstrap.min.css');
-//Twitter Bootstrap style override by DluTwBootstrap
-//$this->headLink()->appendStylesheet($basePath . '/css/dlu-tw-bootstrap.css');
+$this->headLink()->appendStylesheet($basePath . '/vendor/bootstrap/dist/css/bootstrap.min.css');
+
+$this->headLink()->appendStylesheet($basePath . '/vendor/ngm/css/ngm.css');
 //Add your own style here
 $this->headLink()->appendStylesheet($basePath . '/css/style.css');
-$this->headLink()->appendStylesheet($basePath . '/css/ngm.css');
-//Twitter Bootstrap responsive styles
-//$this->headLink()->appendStylesheet($basePath . '/css/bootstrap-responsive.min.css');
 
 //jQuery and Twitter Bootstrap JS libraries
-$this->inlineScript()->appendFile('http://code.jquery.com/jquery-1.11.0.min.js');
-//$this->inlineScript()->appendFile($basePath . '/js/jquery-1.8.2.min.js');
-$this->inlineScript()->appendFile($basePath . '/js/bootstrap.min.js');
-$this->inlineScript()->appendFile($basePath . '/js/bootbox.min.js');
+$this->inlineScript()->appendFile($basePath . '/vendor/jquery/dist/jquery.min.js');
+$this->inlineScript()->appendFile($basePath . '/vendor/bootstrap/dist/js/bootstrap.min.js');
+#$this->inlineScript()->appendFile($basePath . '/vendor/bootbox/bootbox.js');
+$this->inlineScript()->appendFile($basePath . '/vendor/ngm/js/ngm.js');
 $this->inlineScript()->appendFile($basePath . '/js/jquery.bootstrap-growl.min.js');
-$this->inlineScript()->appendFile($basePath . '/js/ngm.js');
-$this->inlineScript()->appendFile($basePath . '/js/nouron.js');
 $this->inlineScript()->appendFile($basePath . '/js/techtree.js');
+$this->inlineScript()->appendFile($basePath . '/js/nouron.js');
 $this->inlineScript()->appendFile($basePath . '/js/innn.js');
 $this->inlineScript()->appendFile($basePath . '/js/galaxy.js');
 $this->inlineScript()->appendFile($basePath . '/js/fleets.js');
@@ -106,15 +102,14 @@ echo $this->doctype();
     <?php echo $this->inlineScript(); ?>
     <script  type="text/javascript">
     $(document).ready(function() {
+        if ($('#colony').length > 0) {techtree.init(); }
         if ($('#fleetlist').length > 0) {fleetlist.init(); }
         if ($('#fleetconfig').length > 0)  {fleetconfig.init(); }
         if ($('#trade').length > 0)  {trade.init();  }
 
         if ($('#ngm-map').length > 0)  {
             ngm.init({
-                // the local dummydata.json file is for simple test cases but only works in firefox!
-                // it is recommended to set a url here which returns json data:
-                'dataSourceUri': "data/dummydata.json",
+                'dataSourceUri': "/galaxy/json/getmapdata/<?= $ourView->x . '/' . $ourView->y ?>",
                 // the jquery selector for the container dom element
                 'selector': '#ngm-map',
                 //
@@ -122,7 +117,7 @@ echo $this->doctype();
                 'height': '700px',
                 // center coordinates - all other coordinates are calculated on
                 // these values as base
-                'center' : [1225, 1225],
+                'center' : [<?= $ourView->x ?>,<?= $ourView->y ?>],
                 //
                 'scale' : 10, // pix width of one field unit
                 //

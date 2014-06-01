@@ -1,5 +1,46 @@
 $(document).ready(function(){
+
+    function makeSVG(tag, attribs, value)
+    {
+        if (attribs === null) {
+            attribs = {};
+        }
+
+        var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+        for (var k in attribs) {
+            el.setAttribute(k, attribs[k]);
+        }
+
+        if (value) {
+            value = document.createTextNode(value);
+            el.appendChild(value);
+        }
+        return el;
+    }
+
     techtree = {
+
+        init: function()
+        {
+            /* after init: moving technology divs to correct spots */
+            $('.techdata').each(function(index) {
+                var key = $(this).attr('id');
+                var html = $(this).html();
+                key = key.replace('techsource','grid');
+                if ($("#"+key)){
+                    $("#"+key).html(html);
+                }
+            });
+
+            /* draw svg lines for requirements between techs. Have to be redrawn when
+             * screen size is changing..
+             */
+            techtree.draw_requirements();
+            $(window).resize(function() {
+                techtree.draw_requirements();
+            });
+        },
+
          /**
           *
           * @param object src A jquery object which serves as source point for the requirment line
@@ -160,75 +201,12 @@ $(document).ready(function(){
             });
         }
     };
-    /* after init: moving technology divs to correct spots */
-    $('.techdata').each(function(index) {
-        var key = $(this).attr('id');
-        var html = $(this).html();
-        key = key.replace('techsource','grid');
-        if ($("#"+key)){
-            $("#"+key).html(html);
-        }
-    });
-
-    /* draw svg lines for requirements between techs. Have to be redrawn when
-     * screen size is changing..
-     */
-    techtree.draw_requirements();
-    $(window).resize(function() {
-        techtree.draw_requirements();
-    });
-
-//    /* ajax load modal content */
-//    $(document).on('click', '#visualTechtree a', function(e) {
-//        e.preventDefault();
-//        if (!$(this).hasClass('disabled')) {
-//            tmp = $(this).attr('id').split('|');
-//            tech = tmp[0].split('-');
-//            type = tech[0];
-//            techId = tech[1];
-//            var url = '/techtree/'+type+'/'+techId;
-//            if ( tmp.length > 1) {
-//                var order = tmp[1].split('-');
-//                url = url + '/' + order[0];
-//                if (order.length > 1) {
-//                    url = url + '/' + order[1];
-//                }
-//            }
-//            $('.techModal').load(url, null, function(data) {
-//                e.preventDefault();
-//                console.log(url);
-//                console.log("techModal loaded :D");
-//                techtree.reset_colors_for_bar_buttons();
-//                techtree.refresh_resource_bar();
-//            });
-//        }
-//    });
 
     $('.techModal').on('shown.bs.modal', function () {
         console.log("techModal loaded :D");
         techtree.reset_colors_for_bar_buttons();
         techtree.refresh_resource_bar();
     });
-
-//    /* click and drop solution for repositioning techs (only for admin use, temporary solution) */
-//    $('.grid-cell').click(function(e){
-//        if ($(this).html()=='') {
-//            techId = $('#storage-tech-id').html();
-//            domId = $(this).attr('id').split('-');
-//            console.log(domId);
-//            row = domId[1];
-//            column = domId[2];
-//            $.getJSON(
-//                '/techtree/tech/'+techId+'/reposition/'+row+'/'+column,
-//                function(data) {
-//                    console.log($('#storage').html());
-//                    $(this).html($('#storage').html());
-//                },
-//                function(data) {
-//                }
-//            );
-//        }
-//    });
 
     /** levelup action points */
     /** update action points only visually as a preview */

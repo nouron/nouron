@@ -54,6 +54,20 @@ return array(
                                 'action' => 'index'
                             )
                         )
+                    ),
+                    'json' => array(
+                        'type' => 'Segment',
+                        'options' => array(
+                            'route' => '/json/getmapdata/:x/:y',
+                            'constraints' => array(
+                                'x' => '[0-9]+',
+                                'y' => '[0-9]+',
+                            ),
+                            'defaults' => array(
+                                'controller' => 'Json',
+                                'action' => 'getmapdata'
+                            )
+                        )
                     )
                 )
             ),

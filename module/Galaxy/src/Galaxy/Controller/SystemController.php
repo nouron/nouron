@@ -47,6 +47,8 @@ class SystemController extends \Nouron\Controller\IngameController
 
         return new ViewModel(
             array(
+                'x' => $system->getX(),
+                'y' => $system->getY(),
                 'userId'  => $userId,
                 'system'  => $system,
                 'objects' => $objects,
