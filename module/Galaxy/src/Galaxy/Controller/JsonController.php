@@ -31,40 +31,31 @@ class JsonController extends \Nouron\Controller\IngameController
             $galaxyService = $sm->get('Galaxy\Service\Gateway');
 
             $fleets   = $galaxyService->getByCoordinates('fleets', array($x, $y));
-            #$colonies = $galaxyService->getByCoordinates('colonies', array($x, $y));
             $objects  = $galaxyService->getByCoordinates('objects', array($x, $y));
 
             $data = array();
 
-            $data[] = array();
-
-#            foreach ($colonies as $colony) {
-#                $data[] = array(
-#                    "layer" => 1,
-#                    "x" => $colony->getX(),
-#                    "y" => $colony->getY(),
-#                    "attribs" => array(
-#                        "title" => $colony->getName(),
-#                        "class" => ""
-#                    )
-#                );
-#            }
-
             foreach ($objects as $object) {
+                if ($object->getTypeId() == 9) {
+                    $layer = 0;
+                } else {
+                    $layer = 1;
+                }
                 $data[] = array(
-                    "layer" => 0,
+                    "layer" => $layer,
                     "x" => $object->getX(),
                     "y" => $object->getY(),
                     "attribs" => array(
                         "title" => $object->getName(),
-                        "class" => ""
+                        "class" => $object->getType(),
+                        "image_url" => $object->getImageUrl()
                     )
                 );
             }
 
             foreach ($fleets as $fleet) {
                 $data[] = array(
-                    "layer" => 2,
+                    "layer" => 3,
                     "x" => $fleet->getX(),
                     "y" => $fleet->getY(),
                     "attribs" => array(
@@ -73,6 +64,7 @@ class JsonController extends \Nouron\Controller\IngameController
                     )
                 );
             }
+
 
             return new JsonModel($data);
         }
