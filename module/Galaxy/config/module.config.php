@@ -61,7 +61,7 @@ return array(
                             'route' => '/json/getmapdata/:x/:y',
                             'constraints' => array(
                                 'x' => '[0-9]+',
-                                'y' => '[0-9]+',
+                                'y' => '[0-9]+'
                             ),
                             'defaults' => array(
                                 'controller' => 'Json',

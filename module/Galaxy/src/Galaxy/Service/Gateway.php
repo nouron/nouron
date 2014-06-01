@@ -126,7 +126,7 @@ class Gateway extends \Nouron\Service\AbstractService
     public function getByCoordinates($objectType, array $coords)
     {
         //$config = $this->getConfig();
-        $radius = round(100 / 2);
+        $radius = round(50 / 2);
 
         $x1 = $coords[0] - $radius;
         $x2 = $coords[0] + $radius;

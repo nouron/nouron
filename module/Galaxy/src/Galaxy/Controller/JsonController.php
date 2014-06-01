@@ -11,6 +11,8 @@ class JsonController extends \Nouron\Controller\IngameController
         try {
             $x = $this->params()->fromRoute('x');
             $y = $this->params()->fromRoute('y');
+            $x2 = $this->params()->fromRoute('x2');
+            $y2 = $this->params()->fromRoute('y2');
 
             if (!is_numeric($x) || !is_numeric($y)) {
                 return new JsonModel(array(
@@ -20,38 +22,33 @@ class JsonController extends \Nouron\Controller\IngameController
                 ));
             }
 
+            if (is_numeric($x2, $y2)) {
+                $x = round(($x+$x2)/2);
+                $y = round(($y+$y2)/2);
+            }
+
             $sm = $this->getServiceLocator();
             $galaxyService = $sm->get('Galaxy\Service\Gateway');
 
             $fleets   = $galaxyService->getByCoordinates('fleets', array($x, $y));
-            $colonies = $galaxyService->getByCoordinates('colonies', array($x, $y));
+            #$colonies = $galaxyService->getByCoordinates('colonies', array($x, $y));
             $objects  = $galaxyService->getByCoordinates('objects', array($x, $y));
 
             $data = array();
 
-            foreach ($fleets as $fleet) {
-                $data[] = array(
-                    "layer" => 2,
-                    "x" => $fleet->getX(),
-                    "y" => $fleet->getY(),
-                    "attribs" => array(
-                        "title" => $fleet->getFleet(),
-                        "class" => ""
-                    )
-                );
-            }
+            $data[] = array();
 
-            foreach ($colonies as $colony) {
-                $data[] = array(
-                    "layer" => 1,
-                    "x" => $colony->getX(),
-                    "y" => $colony->getY(),
-                    "attribs" => array(
-                        "title" => $colony->getName(),
-                        "class" => ""
-                    )
-                );
-            }
+#            foreach ($colonies as $colony) {
+#                $data[] = array(
+#                    "layer" => 1,
+#                    "x" => $colony->getX(),
+#                    "y" => $colony->getY(),
+#                    "attribs" => array(
+#                        "title" => $colony->getName(),
+#                        "class" => ""
+#                    )
+#                );
+#            }
 
             foreach ($objects as $object) {
                 $data[] = array(
@@ -60,6 +57,18 @@ class JsonController extends \Nouron\Controller\IngameController
                     "y" => $object->getY(),
                     "attribs" => array(
                         "title" => $object->getName(),
+                        "class" => ""
+                    )
+                );
+            }
+
+            foreach ($fleets as $fleet) {
+                $data[] = array(
+                    "layer" => 2,
+                    "x" => $fleet->getX(),
+                    "y" => $fleet->getY(),
+                    "attribs" => array(
+                        "title" => $fleet->getFleet(),
                         "class" => ""
                     )
                 );
