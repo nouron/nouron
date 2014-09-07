@@ -12,7 +12,7 @@
     "jquery": ">=1.11",
     "bootstrap": "~3.1",
     "pace": "master",
-    "ngm": "tector/ngm#master",
+    "ngm": "tector/map#master",
     "bootbox": "master"
   },
   "private": true
