@@ -71,10 +71,13 @@ return array(
 //             'Trade\Entity\Resource' => 'Trade\Entity\
 //         ),
         'factories' => array(
+            'Trade\Service\Gateway' => 'Trade\Service\GatewayFactory',
+            'Trade\Table\ResearchTable'  => 'Trade\Table\ResearchTableFactory',
+            'Trade\Table\ResourceTable'  => 'Trade\Table\ResourceTableFactory',
+            'Trade\Table\ResearchView'  => 'Trade\Table\ResearchViewFactory',
+            'Trade\Table\ResourceView'  => 'Trade\Table\ResourceViewFactory',
             'Trade\Entity\Research' => 'Trade\Entity\ResearchFactory',
             'Trade\Entity\Resource' => 'Trade\Entity\ResourceFactory',
-            'Trade\Service\Gateway' => 'Trade\Service\GatewayFactory',
-            'Trade\Table\Resource'  => 'Trade\Table\ResourceFactory',
         ),
     )
 );

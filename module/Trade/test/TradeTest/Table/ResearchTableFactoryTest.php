@@ -16,7 +16,7 @@ class ResearchTableFactoryTest extends AbstractTableTest
         $this->sm->setAllowOverride(true);
         $this->sm->setService(
             'Trade\Entity\Research',
-            new \Techtree\Entity\Research()
+            new \Trade\Entity\Research()
         );
         $this->sm->setService(
             'Zend\Db\Adapter\Adapter',

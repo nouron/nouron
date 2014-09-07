@@ -23,13 +23,13 @@ class GatewayFactory implements FactoryInterface
             'resources_view'  => $serviceLocator->get('Trade\Table\ResourceView')
         );
 
-        $gateways = array(
+        $services = array(
             'resources' => $serviceLocator->get('Resources\Service\ResourcesService'),
             'galaxy'    => $serviceLocator->get('Galaxy\Service\Gateway')
         );
 
-        $techtreeGateway = new Gateway($tick, $tables, $gateways);
-        $techtreeGateway->setLogger($logger);
-        return $techtreeGateway;
+        $service = new Gateway($tick, $tables, $services);
+        $service->setLogger($logger);
+        return $service;
     }
 }

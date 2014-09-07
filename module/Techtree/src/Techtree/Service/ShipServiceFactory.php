@@ -17,11 +17,11 @@ class ShipServiceFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['ships']             =  $serviceLocator->get('Techtree\Table\ShipTable');
-        $tables['ship_costs']        =  $serviceLocator->get('Techtree\Table\ShipCostTable');
-        $tables['colony_buildings']  =  $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
-        $tables['colony_researches'] =  $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colony_ships']      =  $serviceLocator->get('Techtree\Table\ColonyShipTable');
+        $tables['ships']             = $serviceLocator->get('Techtree\Table\ShipTable');
+        $tables['ship_costs']        = $serviceLocator->get('Techtree\Table\ShipCostTable');
+        $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
+        $tables['colony_ships']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
         $tables['colonies']          = $serviceLocator->get('Galaxy\Table\ColonyTable');
 
         $services = array();
