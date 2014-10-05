@@ -152,10 +152,10 @@ return array(
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTableFactory',
             'Galaxy\Table\SystemTable' => 'Galaxy\Table\SystemTableFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
-            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
 
+            #'Fleet\Entity\Fleet' => 'Fleet\Entity\FleetFactory',
             'Fleet\Table\FleetTable'  => 'Fleet\Table\FleetTableFactory',
-            'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
+            #'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
         ),
     ),
 

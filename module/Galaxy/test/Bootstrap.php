@@ -39,6 +39,7 @@ class Bootstrap
                 'ZfcUser',
                 'Nouron',
                 'User',
+                'Fleet',
                 'Galaxy'
             )
         );

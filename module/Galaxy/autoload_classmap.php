@@ -6,6 +6,12 @@ return array(
   'GalaxyTest\Service\GatewayFactoryTest'     => __DIR__ . '/test/GalaxyTest/Service/GatewayFactoryTest.php',
   'GalaxyTest\Service\GatewayTest'            => __DIR__ . '/test/GalaxyTest/Service/GatewayTest.php',
   'GalaxyTest\Controller\IndexControllerTest' => __DIR__ . '/test/GalaxyTest/Controller/IndexControllerTest.php',
+  'GalaxyTest\Table\ColonyTableFactoryTest'   => __DIR__ . '/test/GalaxyTest/Table/ColonyTableFactoryTest.php',
+  'GalaxyTest\Table\SystemObjectTableFactoryTest'   => __DIR__ . '/test/GalaxyTest/Table/SystemObjectTableFactoryTest.php',
+  'GalaxyTest\Table\SystemTableFactoryTest'   => __DIR__ . '/test/GalaxyTest/Table/SystemTableFactoryTest.php',
+  'GalaxyTest\Entity\ColonyFactoryTest'       => __DIR__ . '/test/GalaxyTest/Entity/ColonyFactoryTest.php',
+  'GalaxyTest\Entity\SystemObjectFactoryTest' => __DIR__ . '/test/GalaxyTest/Entity/SystemObjectFactoryTest.php',
+  'GalaxyTest\Entity\SystemFactoryTest'       => __DIR__ . '/test/GalaxyTest/Entity/SystemFactoryTest.php',
   'Galaxy\Service\Exception'                  => __DIR__ . '/src/Galaxy/Service/Exception.php',
   'Galaxy\Service\GatewayFactory'             => __DIR__ . '/src/Galaxy/Service/GatewayFactory.php',
   'Galaxy\Service\Gateway'                    => __DIR__ . '/src/Galaxy/Service/Gateway.php',
@@ -29,4 +35,5 @@ return array(
   'Galaxy\Controller\IndexController'         => __DIR__ . '/src/Galaxy/Controller/IndexController.php',
   'Galaxy\Controller\SystemController'        => __DIR__ . '/src/Galaxy/Controller/SystemController.php',
   'Galaxy\Controller\SystemControllerFactory' => __DIR__ . '/src/Galaxy/Controller/SystemControllerFactory.php',
+
 );

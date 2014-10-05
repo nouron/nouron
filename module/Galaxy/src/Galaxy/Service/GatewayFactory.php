@@ -20,8 +20,8 @@ class GatewayFactory implements FactoryInterface
         $tables = array();
         $tables['colony'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
         $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
+        $tables['systemobject'] = $serviceLocator->get('Galaxy\Table\SystemObjectTable');
         $tables['fleet']  = $serviceLocator->get('Fleet\Table\FleetTable');
-        $tables['systemobject']     = $serviceLocator->get('Galaxy\Table\SystemObjectTable');
         #$tables['fleetship']        = $serviceLocator->get('Fleet\Table\FleetShipTable');
         #$tables['fleetpersonell']   = $serviceLocator->get('Fleet\Table\FleetPersonellTable');
         #$tables['fleetresearch']    = $serviceLocator->get('Fleet\Table\FleetResearchTable');

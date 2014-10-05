@@ -42,12 +42,12 @@ class Bootstrap
                 'ZfcUser',
                 'Nouron',
                 'User',
+                'Fleet',
                 'Galaxy',
                 'Techtree',
                 'Trade',
                 'INNN',
-                'Resources',
-                'Fleet'
+                'Resources'
             )
         );
 
