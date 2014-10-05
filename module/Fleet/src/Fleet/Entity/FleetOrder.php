@@ -91,7 +91,7 @@ class FleetOrder implements EntityInterface
         }
         $data = json_decode($data);
         if (empty($data)) {
-            #throw new \Nouron\Entity\Exception('invalid data format');
+            throw new \Nouron\Entity\Exception('invalid data format');
         }
         $this->data = $data;
         return $this;

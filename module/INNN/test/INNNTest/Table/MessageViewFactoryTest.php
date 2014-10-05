@@ -26,7 +26,7 @@ class MessageViewFactoryTest extends AbstractTableTest
 
     public function testCreateService()
     {
-        $tableFactory = new MessageTableFactory();
+        $tableFactory = new MessageViewFactory();
         $this->assertInstanceOf(
             "INNN\Table\MessageView",
             $tableFactory->createService($this->sm)

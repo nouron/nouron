@@ -4,6 +4,17 @@ namespace INNN\Service;
 class EventService extends \Nouron\Service\AbstractService
 {
     /**
+     *
+     * @param numeric $id
+     * @return \INNN\Message\Entity
+     */
+    public function getEvent($id)
+    {
+        $this->_validateId($id);
+        return $this->getTable('event')->getEntity($id);
+    }
+
+    /**
      * @return ResultSet
      */
     public function getEvents($userId)
