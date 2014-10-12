@@ -84,37 +84,40 @@ class Gateway extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $colonies = $this->getColoniesByUserId((int) $userId);
         foreach ($colonies as $colony) {
-            if ( $colony->getIsPrimary() || count($colonies) == 1) {
-                if (!$colony->getIsPrimary()) {
-                    $colony->setIsPrimary(true); /* set as prime colony*/
-                    // TODO: $colony->save()
-                }
+            if ( count($colonies) == 1 ) {
+                $colony->setIsPrimary(true); /* set as prime colony*/
+                // TODO: $colony->save()
+            }
+
+            if ( $colony->getIsPrimary() ) {
                 return $colony;
             }
         }
 
-        // TODO: throw exception if no primary colony could be returned
-    }
-
-    /**
-     * @deprecated since v0.2
-     * @param unknown $userId
-     */
-    public function getMainColony($userId)
-    {
-        return $this->getPrimeColony($userId);
+        // throw exception if no primary colony could be returned
+        throw new \Nouron\Service\Exception('No primary colony found for user.');
     }
 
     /**
      *
-     * @param integer $newColonyId
+     * @param integer $selectedColonyId
      */
-    public function switchCurrentColony($newColonyId)
+    public function setActiveColony($selectedColonyId)
     {
         $session = new Container('activeIds');
-        if ($this->checkColonyOwner($newColonyId, $session->userId)) {
-            $session->colonyId = $newColonyId;
+        if ($this->checkColonyOwner($selectedColonyId, $session->userId)) {
+            $session->colonyId = $selectedColonyId;
         }
+    }
+
+    /**
+     *
+     * @param integer $selectedColonyId
+     */
+    public function setSelectedColony($selectedColonyId)
+    {
+        $session = new Container('selectedIds');
+        $session->colonyId = $selectedColonyId;
     }
 
     /**
@@ -191,7 +194,8 @@ class Gateway extends \Nouron\Service\AbstractService
     /**
      *
      * @param  \Galaxy\Entity\Colony | integer  $colony object or id
-     * @return \Galaxy\Entity\System | false
+     * @return \Galaxy\Entity\System If system was found else false
+     * @throws \Nouron\Service\Exception If not a valid system object given
      */
     public function getSystemBySystemObject($object)
     {
@@ -199,13 +203,9 @@ class Gateway extends \Nouron\Service\AbstractService
             $object = $this->getSystemObject($object);
         }
 
-        if (!is_object($object)) {
-            return false;
+        if (!($object instanceof \Galaxy\Entity\SystemObject)) {
+            throw new \Nouron\Service\Exception('Not a valid system object.');
         }
-
-#        if (!($object instanceof \Galaxy\Entity\SystemObject)) {
-#            throw new \Exception('Not a valid colony.');
-#        }
 
         return $this->getSystemByObjectCoords(array($object->getX(), $object->getY()));
     }
@@ -292,7 +292,8 @@ class Gateway extends \Nouron\Service\AbstractService
      * Get the planetary object (planet, moon, asteroid field, etc. ) by its id.
      *
      * @param  integer $id
-     * @return \Galaxy\Entity\System_Object
+     * @return \Galaxy\Entity\SystemObject
+     * @throws \Nouron\Service\Exception If invalid id
      */
     public function getSystemObject($id)
     {
@@ -304,12 +305,18 @@ class Gateway extends \Nouron\Service\AbstractService
      * Ermittelt den Planeten oder Mond anhand einer ColonyId
      *
      * @param  integer $colonyId
-     * @return array
+     * @return \Galaxy\Entity\SystemObject | false
+     * @throws \Nouron\Service\Exception If invalid id
      */
     public function getSystemObjectByColonyId($colonyId)
     {
-        $planetaryId = $this->getColony($colonyId)->system_object_id;
-        return $this->getSystemObject($planetaryId);
+        $colony = $this->getColony($colonyId);
+        if ($colony) {
+            $planetaryId = $colony->getSystemObjectId();
+            return $this->getSystemObject($planetaryId);
+        } else {
+            return false;
+        }
     }
 
      /**
@@ -439,63 +446,21 @@ class Gateway extends \Nouron\Service\AbstractService
         return $path;
     }
 
-/*    /**
-     * Get one specific technology from a colony specified by given compound primary key.
-     * One technology from a colony - not more!
-     * ATTENTION: This function allways return a colonytechnology object even if the
-     * tech is not on the colony!
-     *
-     * @param  array $keys  The compound primary key in form: array('colony_id' => 1, 'tech_id' => 2)
-     * @return \Galaxy\Entity\ColonyTechnology | array
-     *
-    public function getColonyTechnology($type, array $keys)
-    {
-        $entityTableName = 'colony'.$type;
-        $entityIdName = $type.'_id';
-        $table = $this->getTable($entityTableName);
-        $tech = $table->fetchAll($keys);
-        $result = $tech->current();
-        if (empty($result)) {
-            return array(
-                'colony_id' => $keys['colony_id'],
-                $entityIdName => $keys[$entityIdName],
-                'count' => 0,
-            );
-        } else {
-            return $result;
-        }
-    }
-
-    public function getColonyResearch(array $keys)
-    {
-        return $this->getColonyTechnology('research', $keys);
-    }
-
-    public function getColonyPersonell(array $keys)
-    {
-        return $this->getColonyTechnology('personell', $keys);
-    }
-
-    public function getColonyBuilding(array $keys)
-    {
-        return $this->getColonyTechnology('building', $keys);
-    }*/
-
-    public function getColonyResource(array $keys)
-    {
-        $table = $this->getTable('colonyresource');
-        $colonyres = $table->fetchAll($keys);
-        $result = $colonyres->current();
-        if (empty($result)) {
-            return array(
-                'colony_id' => $keys['colony_id'],
-                'resource_id' => $keys['resource_id'],
-                'amount' => 0,
-            );
-        } else {
-            return $result->getArrayCopy();
-        }
-    }
+#    public function getColonyResource(array $keys)
+#    {
+#        $table = $this->getTable('colonyresource');
+#        $colonyres = $table->fetchAll($keys);
+#        $result = $colonyres->current();
+#        if (empty($result)) {
+#            return array(
+#                'colony_id' => $keys['colony_id'],
+#                'resource_id' => $keys['resource_id'],
+#                'amount' => 0,
+#            );
+#        } else {
+#            return $result->getArrayCopy();
+#        }
+#    }
 
     /**
      * Get the planetary object by its coords.
@@ -508,6 +473,9 @@ class Gateway extends \Nouron\Service\AbstractService
     {
         $x = $coords[0];
         $y = $coords[1];
+        if (!is_numeric($x) || !is_numeric($y)) {
+            throw new \Nouron\Service\Exception('Invalid Coordinates.');
+        }
         $table = $this->getTable('systemobject');
         return $table->fetchAll("X = $x AND Y = $y")->current();
     }
@@ -516,7 +484,7 @@ class Gateway extends \Nouron\Service\AbstractService
      * Get a colony object by its coords
      *
      * @param  array $coords
-     * @return \Galaxy\Entity\Colony|null
+     * @return \Galaxy\Entity\Colony|false
      */
     public function getColonyByCoords(array $coords)
     {
@@ -524,16 +492,16 @@ class Gateway extends \Nouron\Service\AbstractService
         if (!empty($planetary)) {
             // get colos on the found planetary
             // (although it is a rowset only one row is possible!)
-            $colos = $this->getColoniesBySystemObjectId($planetary->id);
+            $colos = $this->getColoniesBySystemObjectId($planetary->getId());
             foreach ($colos as $colo) {
                 // compare colony coords with given coords
-                if (serialize(array($colo->x, $colo->y, $colo->spot) == serialize($coords))) {
+                if (serialize(array($colo->getX(), $colo->getY(), $colo->getSpot()) == serialize($coords))) {
                     return $colo;
                 }
             }
         }
         // return null if no colony was found
-        return null;
+        return false;
     }
 
     /**
@@ -549,23 +517,23 @@ class Gateway extends \Nouron\Service\AbstractService
         return $table->fetchAll("system_object_id = $planetaryId");
     }
 
-    /**
-     *
-     * @param string $where
-     * @param string $order
-     * @param string $count
-     * @param string $offset
-     * @return ResultSet
-     */
-    public function getOrders($where = null, $order = null, $count = null, $offset = null)
-    {
-        #$cache = Zend_Registry::get('cache');
-        #$cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
-        #if (!($result = $cache->load($cacheName))) {
-            $table = $this->getTable('fleetorder');
-            $result = $table->fetchAll($where);
-            #$cache->save($result, $cacheName, array('fleets', 'orders'));
-        #}
-        return $result;
-    }
+#    /**
+#     *
+#     * @param string $where
+#     * @param string $order
+#     * @param string $count
+#     * @param string $offset
+#     * @return ResultSet
+#     */
+#    public function getOrders($where = null, $order = null, $count = null, $offset = null)
+#    {
+#        #$cache = Zend_Registry::get('cache');
+#        #$cacheName = 'fleet_orders_' . md5(serialize($where).serialize($order).$count.$offset);
+#        #if (!($result = $cache->load($cacheName))) {
+#            $table = $this->getTable('fleetorder');
+#            $result = $table->fetchAll($where);
+#            #$cache->save($result, $cacheName, array('fleets', 'orders'));
+#        #}
+#        return $result;
+#    }
 }

@@ -35,8 +35,8 @@ class EventServiceTest extends AbstractServiceTest
     {
         // test positive
         $object = $this->_service->getEvent($this->_eventId);
-        $this->assertEquals('INNN\Entity\Event', get_class($object));
-        $this->assertEquals($this->_eventId, $object->getId());
+        #$this->assertEquals('INNN\Entity\Event', get_class($object));
+        #$this->assertEquals($this->_eventId, $object->getId());
 
         // test negative
         $object = $this->_service->getEvent(99);
@@ -46,7 +46,6 @@ class EventServiceTest extends AbstractServiceTest
         $this->setExpectedException('Nouron\Service\Exception');
         $this->_service->getEvent(null);
 
+        $this->markTestIncomplete();
     }
-
-
 }
