@@ -12,7 +12,7 @@
         "zendframework/zendframework": "2.3.*",
         "zendframework/zend-developer-tools": "dev-master",
         "zf-commons/zfc-base": "0.1.*",
-        "zf-commons/zfc-user": "dev-master",
+        "zf-commons/zfc-user": "1.*",
         "zf-commons/zfc-admin": "dev-master",
         "zf-commons/zfc-rbac": "0.2.2",
         "bjyoungblood/bjy-profiler": "dev-master",

@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "fc849b008896af11c8b5570899ccbb17",
+    "hash": "4a3ee99e341a4abdeadf0b304bc77c10",
     "packages": [
         {
             "name": "bjyoungblood/bjy-profiler",
@@ -99,17 +99,28 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/neilime/zf2-twb-bundle.git",
-                "reference": "796a50c5fa92285e302d858326110481d91fb898"
+                "reference": "12b2650216be3657937de632c073cec293e97a1c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neilime/zf2-twb-bundle/zipball/796a50c5fa92285e302d858326110481d91fb898",
-                "reference": "796a50c5fa92285e302d858326110481d91fb898",
+                "url": "https://api.github.com/repos/neilime/zf2-twb-bundle/zipball/12b2650216be3657937de632c073cec293e97a1c",
+                "reference": "12b2650216be3657937de632c073cec293e97a1c",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.2",
-                "zendframework/zendframework": "2.3.*@stable"
+                "zendframework/zend-config": "2.3.*@stable",
+                "zendframework/zend-escaper": "2.3.*@stable",
+                "zendframework/zend-form": "2.3.*@stable",
+                "zendframework/zend-i18n": "2.3.*@stable",
+                "zendframework/zend-loader": "2.3.*@stable",
+                "zendframework/zend-log": "2.3.*@stable",
+                "zendframework/zend-modulemanager": "2.3.*@stable",
+                "zendframework/zend-mvc": "2.3.*@stable",
+                "zendframework/zend-serializer": "2.3.*@stable",
+                "zendframework/zend-servicemanager": "2.3.*@stable",
+                "zendframework/zend-stdlib": "2.3.*@stable",
+                "zendframework/zend-view": "2.3.*@stable"
             },
             "require-dev": {
                 "phpunit/phpunit": "4.*@stable",
@@ -151,7 +162,7 @@
                 "twitter bootstrap",
                 "zend framework 2"
             ],
-            "time": "2014-09-08 21:07:48"
+            "time": "2014-10-12 12:47:42"
         },
         {
             "name": "zendframework/zend-developer-tools",
@@ -220,12 +231,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/zendframework/zf2.git",
-                "reference": "c9404f2c62031ef1e7ca4b9a58cc6c927c7e134a"
+                "reference": "3e6936d75c7fcb4220a9a547d78c6c217a746060"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/zendframework/zf2/zipball/c9404f2c62031ef1e7ca4b9a58cc6c927c7e134a",
-                "reference": "c9404f2c62031ef1e7ca4b9a58cc6c927c7e134a",
+                "url": "https://api.github.com/repos/zendframework/zf2/zipball/3e6936d75c7fcb4220a9a547d78c6c217a746060",
+                "reference": "3e6936d75c7fcb4220a9a547d78c6c217a746060",
                 "shasum": ""
             },
             "require": {
@@ -330,7 +341,7 @@
                 "framework",
                 "zf2"
             ],
-            "time": "2014-10-10 21:04:48"
+            "time": "2014-10-13 11:10:18"
         },
         {
             "name": "zendframework/zendxml",
@@ -528,16 +539,16 @@
         },
         {
             "name": "zf-commons/zfc-user",
-            "version": "dev-master",
+            "version": "1.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/ZF-Commons/ZfcUser.git",
-                "reference": "d65fac77a8ffbae36a18bc20e48cc022cf17ccd9"
+                "reference": "e868d11e1d95b94685a6dfbc5d1bdb984ec79b04"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/d65fac77a8ffbae36a18bc20e48cc022cf17ccd9",
-                "reference": "d65fac77a8ffbae36a18bc20e48cc022cf17ccd9",
+                "url": "https://api.github.com/repos/ZF-Commons/ZfcUser/zipball/e868d11e1d95b94685a6dfbc5d1bdb984ec79b04",
+                "reference": "e868d11e1d95b94685a6dfbc5d1bdb984ec79b04",
                 "shasum": ""
             },
             "require": {
@@ -555,16 +566,21 @@
                 "zendframework/zend-stdlib": "~2.1",
                 "zendframework/zend-validator": "~2.1",
                 "zendframework/zend-view": "~2.1",
-                "zf-commons/zfc-base": "~0.1.0"
+                "zf-commons/zfc-base": "0.*"
             },
             "require-dev": {
+                "phpmd/phpmd": "1.4.*",
                 "phpunit/phpunit": ">=3.7,<4",
-                "squizlabs/php_codesniffer": "1.4.*"
+                "squizlabs/php_codesniffer": "1.4.*",
+                "zendframework/zend-captcha": "~2.1"
+            },
+            "suggest": {
+                "zendframework/zend-captcha": "Zend\\Captcha if you want to use the captcha component"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "2.0.x-dev"
+                    "dev-master": "0.1.x-dev"
                 }
             },
             "autoload": {
@@ -589,20 +605,14 @@
                     "name": "Evan Coury",
                     "email": "me@evancoury.com",
                     "homepage": "http://blog.evan.pro/"
-                },
-                {
-                    "name": "Daniel Strøm",
-                    "email": "ds@eye4web.dk",
-                    "homepage": "http://eye4web.dk/"
                 }
             ],
-            "description": "A generic user registration and authentication module for ZF2. Supports multiple adapters with built-in support for Zend\\Db.",
+            "description": "A generic user registration and authentication module for ZF2. Supports Zend\\Db and Doctrine2.",
             "homepage": "https://github.com/ZF-Commons/ZfcUser",
             "keywords": [
-                "Authentication",
                 "zf2"
             ],
-            "time": "2014-10-04 21:29:45"
+            "time": "2014-10-04 21:08:48"
         }
     ],
     "packages-dev": [
@@ -1072,23 +1082,26 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://github.com/guzzle/guzzle-ring.git",
-                "reference": "f343221de73af899381150a51ec600eb4eedcaf0"
+                "url": "https://github.com/guzzle/RingPHP.git",
+                "reference": "bbf23555a557fc91fb5ef6edbd23a1f17188cd4b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle-ring/zipball/f343221de73af899381150a51ec600eb4eedcaf0",
-                "reference": "f343221de73af899381150a51ec600eb4eedcaf0",
+                "url": "https://api.github.com/repos/guzzle/RingPHP/zipball/bbf23555a557fc91fb5ef6edbd23a1f17188cd4b",
+                "reference": "bbf23555a557fc91fb5ef6edbd23a1f17188cd4b",
                 "shasum": ""
             },
             "require": {
-                "guzzlehttp/streams": "3.0.*@dev",
+                "guzzlehttp/streams": "~3.0",
                 "php": ">=5.4.0",
                 "react/promise": "~2.0"
             },
             "require-dev": {
                 "ext-curl": "*",
                 "phpunit/phpunit": "~4.0"
+            },
+            "suggest": {
+                "ext-curl": "Guzzle will use specific adapters if cURL is present"
             },
             "type": "library",
             "extra": {
@@ -1112,20 +1125,20 @@
                     "homepage": "https://github.com/mtdowling"
                 }
             ],
-            "time": "2014-10-10 07:28:06"
+            "time": "2014-10-15 20:34:26"
         },
         {
             "name": "guzzlehttp/streams",
-            "version": "3.0.x-dev",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/streams.git",
-                "reference": "3de3ee5dac6973cba9798d3802d58d3d75918435"
+                "reference": "48be63a56ea8a98ec620eb59ef76bcab77feba55"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/streams/zipball/3de3ee5dac6973cba9798d3802d58d3d75918435",
-                "reference": "3de3ee5dac6973cba9798d3802d58d3d75918435",
+                "url": "https://api.github.com/repos/guzzle/streams/zipball/48be63a56ea8a98ec620eb59ef76bcab77feba55",
+                "reference": "48be63a56ea8a98ec620eb59ef76bcab77feba55",
                 "shasum": ""
             },
             "require": {
@@ -1156,26 +1169,26 @@
                     "homepage": "https://github.com/mtdowling"
                 }
             ],
-            "description": "Provides a simple abstraction over streams of data (Guzzle 4+)",
+            "description": "Provides a simple abstraction over streams of data",
             "homepage": "http://guzzlephp.org/",
             "keywords": [
                 "Guzzle",
                 "stream"
             ],
-            "time": "2014-10-09 19:33:11"
+            "time": "2014-10-12 19:45:36"
         },
         {
             "name": "react/promise",
-            "version": "dev-master",
+            "version": "v2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/reactphp/promise.git",
-                "reference": "f1e10638e9fa06c5ae901f6af8a2a73b96d4cdcb"
+                "reference": "937b04f1b0ee8f6d180e75a0830aac778ca4bcd6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/reactphp/promise/zipball/f1e10638e9fa06c5ae901f6af8a2a73b96d4cdcb",
-                "reference": "f1e10638e9fa06c5ae901f6af8a2a73b96d4cdcb",
+                "url": "https://api.github.com/repos/reactphp/promise/zipball/937b04f1b0ee8f6d180e75a0830aac778ca4bcd6",
+                "reference": "937b04f1b0ee8f6d180e75a0830aac778ca4bcd6",
                 "shasum": ""
             },
             "require": {
@@ -1206,7 +1219,7 @@
                 }
             ],
             "description": "A lightweight implementation of CommonJS Promises/A for PHP",
-            "time": "2014-10-05 19:47:05"
+            "time": "2014-10-15 20:05:57"
         },
         {
             "name": "symfony/browser-kit",
@@ -1819,7 +1832,6 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "zendframework/zend-developer-tools": 20,
-        "zf-commons/zfc-user": 20,
         "zf-commons/zfc-admin": 20,
         "bjyoungblood/bjy-profiler": 20,
         "neilime/zf2-twb-bundle": 20,
