@@ -92,6 +92,7 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
+            'INNN\Entity\MessageView'  => 'INNN\Entity\MessageViewFactory',
             'INNN\Entity\Message'  => 'INNN\Entity\MessageFactory',
             'INNN\Entity\Event'    => 'INNN\Entity\EventFactory',
             'INNN\Table\MessageTable' => 'INNN\Table\MessageTableFactory',

@@ -26,8 +26,8 @@ class MessageService extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'recipient_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 0
+            'is_deleted' => 0,
+            'is_archived' => 0
         );
         return $this->getTable('message_view')->fetchAll($where, "tick DESC");
     }
@@ -41,8 +41,8 @@ class MessageService extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'sender_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 0
+            'is_deleted' => 0,
+            'is_archived' => 0
         );
         return $this->getTable('message_view')->fetchAll($where);
     }
@@ -56,8 +56,8 @@ class MessageService extends \Nouron\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'recipient_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 1
+            'is_deleted' => 0,
+            'is_archived' => 1
         );
         return $this->getTable('message_view')->fetchAll($where);
     }
@@ -69,20 +69,19 @@ class MessageService extends \Nouron\Service\AbstractService
      */
     public function sendMessage($entity)
     {
-        print_r($entity);
         $this->_validateId($entity['sender_id']);
         $this->_validateId($entity['recipient_id']);
         $data = array(
             'sender_id' => $entity['sender_id'], // current logged in user
-            'attitude'  => $entity['mood'],
+            'attitude'  => $entity['attitude'],
             'recipient_id' => $entity['recipient_id'],
             'tick' => $this->getTick(),
             'type' => 0,
             'subject' => $entity['subject'],
             'text'   => $entity['text'],
-            'isRead' => 0,
-            'isArchived' => 0,
-            'isDeleted'  => 0
+            'is_read' => 0,
+            'is_archived' => 0,
+            'is_deleted'  => 0
         );
 
         return $this->getTable('message')->save($data);
@@ -99,10 +98,11 @@ class MessageService extends \Nouron\Service\AbstractService
         $this->_validateId($entity_id);
         $table = $this->getTable('message');
         $entity = $table->getEntity($entity_id);
+
         switch ($status) {
-            case 'read':     $entity->isRead = 1; break;
-            case 'archived': $entity->isArchived = 1; break;
-            case 'deleted':  $entity->isDeleted = 1; break;
+            case 'read':     $entity->setIsRead(1); break;
+            case 'archived': $entity->setIsArchived(1); break;
+            case 'deleted':  $entity->setIsDeleted(1); break;
             default: return false; break;
         }
         return $table->save($entity);

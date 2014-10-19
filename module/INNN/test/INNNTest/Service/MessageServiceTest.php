@@ -117,22 +117,61 @@ class MessageServiceTest extends AbstractServiceTest
 
     public function testSendMessage()
     {
-        $entity = array(
+        $msgFromUserAToUserB = array(
             'sender_id' => $this->_userA_Id,
+            'recipient_id' => $this->_userB_Id,
+            'attitude' => 'mood_friendly',
+            'subject' => 'test',
+            'text' => 'test'
+        );
+
+        $userA_outbox_before = $this->_service->getOutboxMessages($this->_userA_Id)->count();
+        $userB_inbox_before  = $this->_service->getInboxMessages($this->_userB_Id)->count();
+        $this->_service->sendMessage($msgFromUserAToUserB);
+        $userA_outbox_after = $this->_service->getOutboxMessages($this->_userA_Id)->count();
+        $userB_inbox_after  = $this->_service->getInboxMessages($this->_userB_Id)->count();
+
+        $this->assertEquals($userA_outbox_after, $userA_outbox_before + 1);
+        $this->assertEquals($userB_inbox_after, $userB_inbox_before + 1);
+
+        $msgFromUserBToUserA = array(
+            'sender_id' => $this->_userB_Id,
             'recipient_id' => $this->_userA_Id,
             'attitude' => 'mood_friendly',
             'subject' => 'test',
             'text' => 'test'
         );
 
-        $this->markTestIncomplete();
+        $userA_inbox_before  = $this->_service->getInboxMessages($this->_userA_Id)->count();
+        $userB_outbox_before = $this->_service->getOutboxMessages($this->_userB_Id)->count();
+        $this->_service->sendMessage($msgFromUserBToUserA);
+        $userA_inbox_after  = $this->_service->getInboxMessages($this->_userA_Id)->count();
+        $userB_outbox_after = $this->_service->getOutboxMessages($this->_userB_Id)->count();
+
+        $this->assertEquals($userB_outbox_after, $userB_outbox_before + 1);
+        $this->assertEquals($userA_inbox_after, $userA_inbox_before + 1);
 
     }
 
 
     public function testSetMessageStatus()
     {
-        $this->markTestIncomplete();
+        $entityId = 22;
+        $entity = $this->_service->getMessage($entityId);
+        $this->assertEquals(0, $entity->getIsRead());
+        $this->assertEquals(0, $entity->getIsArchived());
+        $this->assertEquals(0, $entity->getIsDeleted());
+
+        $result = $this->_service->setMessageStatus($entityId, 'read');
+        $this->assertEquals(1, $result);
+        $result = $this->_service->setMessageStatus($entityId, 'archived');
+        $this->assertEquals(1, $result);
+        $result = $this->_service->setMessageStatus($entityId, 'deleted');
+        $this->assertEquals(1, $result);
+
+        $result = $this->_service->setMessageStatus($entityId, 'unknown');
+        $this->assertFalse($result);
+
     }
 
 }

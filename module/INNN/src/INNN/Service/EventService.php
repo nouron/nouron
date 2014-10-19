@@ -20,7 +20,7 @@ class EventService extends \Nouron\Service\AbstractService
     public function getEvents($userId)
     {
         $this->_validateId($userId);
-        return $this->getTable('event')->fetchAll("id = $userId");
+        return $this->getTable('event')->fetchAll("user = $userId");
     }
 
     /**

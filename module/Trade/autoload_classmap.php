@@ -6,6 +6,8 @@ return array(
   'TradeTest\Service\GatewayTest'            => __DIR__ . '/test/TradeTest/Service/GatewayTest.php',
   'TradeTest\Table\ResearchTableFactoryTest' => __DIR__ . '/test/TradeTest/Table/ResearchTableFactoryTest.php',
   'TradeTest\Table\ResourceTableFactoryTest' => __DIR__ . '/test/TradeTest/Table/ResourceTableFactoryTest.php',
+  'TradeTest\Table\ResearchViewFactoryTest'  => __DIR__ . '/test/TradeTest/Table/ResearchViewFactoryTest.php',
+  'TradeTest\Table\ResourceViewFactoryTest'  => __DIR__ . '/test/TradeTest/Table/ResourceViewFactoryTest.php',
   'TradeTest\Entity\ResearchTest'            => __DIR__ . '/test/TradeTest/Entity/ResearchTest.php',
   'TradeTest\Entity\ResourceTest'            => __DIR__ . '/test/TradeTest/Entity/ResourceTest.php',
   'TradeTest\Entity\ResourceFactoryTest'     => __DIR__ . '/test/TradeTest/Entity/ResourceFactoryTest.php',

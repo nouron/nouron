@@ -10,7 +10,7 @@ class ResourceViewFactory implements FactoryInterface
     {
         $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $entity = $serviceLocator->get('Trade\Entity\Resource');
-        $table = new ResourceTable($adapter, $entity);
+        $table = new ResourceView($adapter, $entity);
         return $table;
     }
 }

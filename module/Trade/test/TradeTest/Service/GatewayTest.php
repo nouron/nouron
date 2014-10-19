@@ -63,14 +63,14 @@ class GatewayTest extends AbstractServiceTest
     public function testGetObjects()
     {
         $offers = $this->_gateway->getResources();
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
-        $this->assertEquals('Trade\Entity\Resource', get_class($offers->current()));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Trade\Entity\Resource', $offers->current());
 
         $offers = $this->_gateway->getResearches();
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
-        $this->assertEquals('Trade\Entity\Research', get_class($offers->current()));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Trade\Entity\Research', $offers->current());
 
-        $this->markTestIncomplete();
+        #this->markTestIncomplete();
     }
 
     public function testAddResourceOffer()
@@ -143,7 +143,7 @@ class GatewayTest extends AbstractServiceTest
 
         // resource offer doesn't exist, add new resource offer
         $offers = $this->_gateway->getResearches($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
         $this->assertEquals(0, $offers->count());
         $dataToAdd = $data + array(
             'amount' => 2,
@@ -153,7 +153,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResearchOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResearches($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(2, $offers->current()->getAmount());
 
@@ -162,7 +162,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResearchOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResearches($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(5, $offers->current()->getAmount());
     }

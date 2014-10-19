@@ -26,7 +26,7 @@ class EventServiceTest extends AbstractServiceTest
         $this->_service = new EventService($tick, $tables);
 
         // default test parameters
-        $this->_eventId = 22; // TODO: test existing event id
+        $this->_eventId = 16;
         $this->_userA_Id = 0;
         $this->_userB_Id = 3;
     }
@@ -35,8 +35,8 @@ class EventServiceTest extends AbstractServiceTest
     {
         // test positive
         $object = $this->_service->getEvent($this->_eventId);
-        #$this->assertEquals('INNN\Entity\Event', get_class($object));
-        #$this->assertEquals($this->_eventId, $object->getId());
+        $this->assertInstanceOf('INNN\Entity\Event', $object);
+        $this->assertEquals($this->_eventId, $object->getId());
 
         // test negative
         $object = $this->_service->getEvent(99);
@@ -46,6 +46,33 @@ class EventServiceTest extends AbstractServiceTest
         $this->setExpectedException('Nouron\Service\Exception');
         $this->_service->getEvent(null);
 
-        $this->markTestIncomplete();
+        #$this->markTestIncomplete();
+    }
+
+    public function testGetEvents()
+    {
+        $objects = $this->_service->getEvents($this->_userA_Id);
+        $this->assertInstanceOf("Nouron\Model\ResultSet", $objects);
+        $this->assertEquals(0, $objects->count());
+
+        $objects = $this->_service->getEvents($this->_userB_Id);
+        $this->assertInstanceOf("Nouron\Model\ResultSet", $objects);
+        $this->assertEquals(2, $objects->count());
+    }
+
+    public function testCreateEvent()
+    {
+        $entity = array(
+            'user' => 3,
+            'tick' => 12345,
+            'event' => 'techtree.level_up_finished',
+            'area' => 'colony',
+            'parameters' => '{"colony_id":0,"tech_id":27}'
+        );
+
+        $primaryKey = $this->_service->createEvent($entity);
+        $this->assertTrue(is_integer($primaryKey));
+
+
     }
 }

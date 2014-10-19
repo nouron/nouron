@@ -6,18 +6,18 @@ use Nouron\Entity\EntityInterface;
 class Message implements EntityInterface
 {
     private $id;
-    private $sender;
+    #private $sender;
     private $sender_id;
     private $attitude;
-    private $recipient;
+    #private $recipient;
     private $recipient_id;
     private $tick;
     private $type;
     private $subject;
     private $text;
-    private $read;
-    private $archived;
-    private $deleted;
+    private $is_read;
+    private $is_archived;
+    private $is_deleted;
 
     /**
      * Sets the value of id.
@@ -29,20 +29,6 @@ class Message implements EntityInterface
     public function setId($id)
     {
         $this->id = $id;
-
-        return $this;
-    }
-
-    /**
-     * Sets the value of sender.
-     *
-     * @param mixed $sender the sender
-     *
-     * @return self
-     */
-    public function setSender($sender)
-    {
-        $this->sender = $sender;
 
         return $this;
     }
@@ -64,20 +50,6 @@ class Message implements EntityInterface
     public function setAttitude($attitude)
     {
         $this->attitude = $attitude;
-
-        return $this;
-    }
-
-    /**
-     * Sets the value of recipient.
-     *
-     * @param mixed $recipient the recipient
-     *
-     * @return self
-     */
-    public function setRecipient($recipient)
-    {
-        $this->recipient = $recipient;
 
         return $this;
     }
@@ -152,9 +124,9 @@ class Message implements EntityInterface
      *
      * @return self
      */
-    public function setRead($read)
+    public function setIsRead($is_read)
     {
-        $this->read = $read;
+        $this->is_read = $is_read;
 
         return $this;
     }
@@ -166,9 +138,9 @@ class Message implements EntityInterface
      *
      * @return self
      */
-    public function setArchived($archived)
+    public function setIsArchived($is_archived)
     {
-        $this->archived = $archived;
+        $this->is_archived = $is_archived;
 
         return $this;
     }
@@ -180,9 +152,9 @@ class Message implements EntityInterface
      *
      * @return self
      */
-    public function setDeleted($deleted)
+    public function setIsDeleted($is_deleted)
     {
-        $this->deleted = $deleted;
+        $this->is_deleted = $is_deleted;
 
         return $this;
     }
@@ -195,16 +167,6 @@ class Message implements EntityInterface
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Gets the value of sender.
-     *
-     * @return mixed
-     */
-    public function getSender()
-    {
-        return $this->sender;
     }
 
     public function getSenderId()
@@ -220,16 +182,6 @@ class Message implements EntityInterface
     public function getAttitude()
     {
         return $this->attitude;
-    }
-
-    /**
-     * Gets the value of recipient.
-     *
-     * @return mixed
-     */
-    public function getRecipient()
-    {
-        return $this->recipient;
     }
 
     public function getRecipientId()
@@ -282,9 +234,9 @@ class Message implements EntityInterface
      *
      * @return mixed
      */
-    public function getRead()
+    public function getIsRead()
     {
-        return $this->read;
+        return $this->is_read;
     }
 
     /**
@@ -292,9 +244,9 @@ class Message implements EntityInterface
      *
      * @return mixed
      */
-    public function getArchived()
+    public function getIsArchived()
     {
-        return $this->archived;
+        return $this->is_archived;
     }
 
     /**
@@ -302,9 +254,9 @@ class Message implements EntityInterface
      *
      * @return mixed
      */
-    public function getDeleted()
+    public function getIsDeleted()
     {
-        return $this->deleted;
+        return $this->is_deleted;
     }
 }
 
