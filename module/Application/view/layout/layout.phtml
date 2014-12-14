@@ -119,10 +119,10 @@ echo $this->doctype();
                 // these values as base
               'center' : [<?= $ourView->x ?>,<?= $ourView->y ?>],
               'layers': [
-                  {'name': 'misc', 'class': 'ngm-misc-layer', 'objectDefaultShape': 'square', 'cache':'enabled'},
-                  {'name': 'planets', 'class': 'ngm-planets-layer', 'objectDefaultShape': 'circle', 'cache': 'enabled'},
-                  {'name': 'stations', 'class': 'ngm-stations-layer', 'objectDefaultShape': 'square', 'cache': 'enabled'},
-                  {'name': 'ships', 'class': 'ngm-ships-layer', 'objectDefaultShape': 'triangle'}
+                  {'name': 'misc', 'class': 'ngm-misc-layer', 'objectDefaultShape': 'square'},
+                  {'name': 'planets', 'class': 'ngm-planets-layer', 'objectDefaultShape': 'circle'},
+                  {'name': 'stations', 'class': 'ngm-stations-layer', 'objectDefaultShape': 'square'},
+                  {'name': 'ships', 'class': 'ngm-ships-layer', 'objectDefaultShape': 'triangle', 'cache': 'disabled'}
               ],
               'borderWidth': '1px',
               'borderColor': '#999',
