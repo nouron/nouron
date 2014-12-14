@@ -108,30 +108,41 @@ echo $this->doctype();
         if ($('#trade').length > 0)  {trade.init();  }
 
         if ($('#ngm-map').length > 0)  {
-            ngm.init({
-                'dataSourceUri': "/galaxy/json/getmapdata/%s/%s",
-                // the jquery selector for the container dom element
-                'selector': '#ngm-map',
-                //
-                'width': '700px',
-                'height': '700px',
+
+            var config = {
+              'dataSourceUri': "/galaxy/json/getmapdata/%s/%s",
+              'selector': '#ngm-map',
+              'eventCallbacks': {
+                  'fieldSelect': displayFieldInformations,
+              },
                 // initial center coordinates - all other coordinates are calculated on
                 // these values as base
-                'center' : [<?= $ourView->x ?>,<?= $ourView->y ?>],
-                //
-                'scale' : 10, // pix width of one field unit
-                //
-                'range' : 50,
-                //
-                'layers': [
-                    {'name': 'misc', 'class': 'ngm-misc-layer', 'objectDefaultShape': 'square'},
-                    {'name': 'planets', 'class': 'ngm-planets-layer', 'objectDefaultShape': 'circle'},
-                    {'name': 'stations', 'class': 'ngm-stations-layer', 'objectDefaultShape': 'square'},
-                    {'name': 'fleets', 'class': 'ngm-fleets-layer', 'objectDefaultShape': 'triangle'}
-                ]
-            });
+              'center' : [<?= $ourView->x ?>,<?= $ourView->y ?>],
+              'layers': [
+                  {'name': 'misc', 'class': 'ngm-misc-layer', 'objectDefaultShape': 'square', 'cache':'enabled'},
+                  {'name': 'planets', 'class': 'ngm-planets-layer', 'objectDefaultShape': 'circle', 'cache': 'enabled'},
+                  {'name': 'stations', 'class': 'ngm-stations-layer', 'objectDefaultShape': 'square', 'cache': 'enabled'},
+                  {'name': 'ships', 'class': 'ngm-ships-layer', 'objectDefaultShape': 'triangle'}
+              ],
+              'borderWidth': '1px',
+              'borderColor': '#999',
+              'backgroundImageUrl': '/img/starfields/starfield_blue.jpg'
+            };
+
+            ngm.configurate(config);
+            ngm.init();
+
+            window.onresize = function(event) {
+                console.log("resize");
+                ngm.init();
+            };
+
+            function displayFieldInformations(event) {
+
+            }
         }
     });
+
     </script>
   </body>
 </html>
