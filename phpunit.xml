@@ -11,9 +11,9 @@
         <testsuite name="trade">
             <directory>./module/Trade/test/TradeTest</directory>
         </testsuite>
-        <testsuite name="resources">
+        <!--<testsuite name="resources">
             <directory>./module/Resources/test/ResourcesTest</directory>
-        </testsuite>
+        </testsuite>-->
         <testsuite name="fleet">
             <directory>./module/Fleet/test/FleetTest</directory>
         </testsuite>

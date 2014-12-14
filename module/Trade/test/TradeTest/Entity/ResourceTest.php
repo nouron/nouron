@@ -9,12 +9,17 @@ class ResourceTest extends PHPUnit_Framework_TestCase
     public function testResourceInitialState()
     {
         $resource = new Resource();
-        $this->assertNull($resource->colony_id, '"id" should initially be null');
-        $this->assertNull($resource->direction, '"name" should initially be null');
-        $this->assertNull($resource->resource_id, '"resource_id" should initially be null');
-        $this->assertNull($resource->amount, '"amount" should initially be null');
-        $this->assertNull($resource->price, '"price" should initially be null');
-        $this->assertNull($resource->restriction, '"restriction" should initially be null');
+        $this->assertNull($resource->getColonyId());
+        $this->assertNull($resource->getDirection());
+        $this->assertNull($resource->getResourceId());
+        $this->assertNull($resource->getAmount());
+        $this->assertNull($resource->getPrice());
+        $this->assertNull($resource->getRestriction());
+        $this->assertNull($resource->getColony());
+        $this->assertNull($resource->getUsername());
+        $this->assertNull($resource->getUserId());
+        $this->assertNull($resource->getRaceId());
+        $this->assertNull($resource->getFactionId());
     }
 
 }

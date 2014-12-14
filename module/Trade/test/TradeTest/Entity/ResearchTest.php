@@ -8,13 +8,18 @@ class ResearchTest extends PHPUnit_Framework_TestCase
 {
     public function testResourceInitialState()
     {
-        $tech = new Research();
-        $this->assertNull($tech->colony_id, '"id" should initially be null');
-        $this->assertNull($tech->direction, '"name" should initially be null');
-        $this->assertNull($tech->research_id, '"research_id" should initially be null');
-        $this->assertNull($tech->amount, '"amount" should initially be null');
-        $this->assertNull($tech->price, '"price" should initially be null');
-        $this->assertNull($tech->restriction, '"restriction" should initially be null');
+        $research = new Research();
+        $this->assertNull($research->getColonyId());
+        $this->assertNull($research->getDirection());
+        $this->assertNull($research->getResearchId());
+        $this->assertNull($research->getAmount());
+        $this->assertNull($research->getPrice());
+        $this->assertNull($research->getRestriction());
+        $this->assertNull($research->getColony());
+        $this->assertNull($research->getUsername());
+        $this->assertNull($research->getUserId());
+        $this->assertNull($research->getRaceId());
+        $this->assertNull($research->getFactionId());
     }
 
 }

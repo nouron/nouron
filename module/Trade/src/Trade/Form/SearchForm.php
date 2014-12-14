@@ -6,15 +6,15 @@ use \Trade\Form\AbstractTradeForm;
 class SearchForm extends AbstractTradeForm
 {
     /**
-     *
-     * @param array  $items
-     * @param int    $range OPTIONAL (default=0: only offers on own planet)
+     * @param String $search  Search item type
+     * @param array  $items   Items to fill select options
+     * @param int    $range   OPTIONAL (default=0: only offers on own planet)
      */
     public function __construct($search = 'resources', $items, $range=0)
     {
         if (empty($search)) return false;
 
-        parent::__construct('search-'.$search);
+        parent::__construct('search-' . $search);
 
         $this->setAttribute('method', 'post');
         $this->setAttribute('name', 'searchForm');
