@@ -14,7 +14,7 @@ class MessageServiceFactoryTest extends PHPUnit_Framework_TestCase
 
         $servicesToMock = array(
             'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
-            'Nouron\Service\Tick' => 'Nouron\Service\Tick',
+            'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
             'INNN\Table\MessageTable' => 'INNN\Table\MessageTable',
             'INNN\Table\MessageView' => 'INNN\Table\MessageView',

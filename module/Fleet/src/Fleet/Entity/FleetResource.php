@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class FleetResource implements EntityInterface
 {
@@ -20,7 +20,7 @@ class FleetResource implements EntityInterface
     public function setFleetId($fleet_id)
     {
         if (!is_numeric($fleet_id) || $fleet_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid fleet id');
+            throw new \Core\Entity\Exception('invalid fleet id');
         }
         $this->fleet_id = $fleet_id;
         return $this;
@@ -36,7 +36,7 @@ class FleetResource implements EntityInterface
     public function setResourceId($resource_id)
     {
         if (!is_numeric($resource_id) || $resource_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid resource id');
+            throw new \Core\Entity\Exception('invalid resource id');
         }
         $this->resource_id = $resource_id;
         return $this;
@@ -52,7 +52,7 @@ class FleetResource implements EntityInterface
     public function setAmount($amount)
     {
         if (!is_numeric($amount) || $amount < 0) {
-            throw new \Nouron\Entity\Exception('invalid amount');
+            throw new \Core\Entity\Exception('invalid amount');
         }
         $this->amount = $amount;
         return $this;

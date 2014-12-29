@@ -5,7 +5,7 @@
  * @category  Model
  */
 
-namespace Nouron\Model;
+namespace Core\Model;
 
 class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
 {

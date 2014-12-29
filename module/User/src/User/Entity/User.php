@@ -1,7 +1,7 @@
 <?php
 namespace User\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 use ZfcRbac\Identity\IdentityInterface;
 use ZfcUser\Entity\UserInterface;
 

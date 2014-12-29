@@ -1,7 +1,7 @@
 <?php
 namespace Trade\Service;
 
-class Gateway extends \Nouron\Service\AbstractService
+class Gateway extends \Core\Service\AbstractService
 {
     /**
      * @param string|array $where

@@ -10,7 +10,7 @@ use Trade\Service\Gateway;
  * @method integer getSelected(String $itemType)
  * @method array selectedIds()
  */
-class IndexController extends \Nouron\Controller\IngameController
+class IndexController extends \Core\Controller\IngameController
 {
     /**
      *
@@ -149,7 +149,7 @@ class IndexController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
 
         #$colonyId = $sm->get('colonyId');
-        #$tick     = $sm->get('Nouron\Service\Tick');
+        #$tick     = $sm->get('Core\Service\Tick');
 
         $gw = $sm->get('Trade\Service\Gateway');
 
@@ -198,7 +198,7 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         #$colonyId = $sm->get('colonyId');
-        #$tick     = $sm->get('Nouron\Service\Tick');
+        #$tick     = $sm->get('Core\Service\Tick');
 
         $resourceService = $sm->get('Resources\Service\ResourcesService');
         $resources = $resourceService->getResources();

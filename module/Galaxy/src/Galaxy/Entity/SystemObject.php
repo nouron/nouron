@@ -1,8 +1,8 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\EntityInterface;
-use Nouron\Entity\MapEntityInterface;
+use Core\Entity\EntityInterface;
+use Core\Entity\MapEntityInterface;
 
 class SystemObject implements EntityInterface, MapEntityInterface
 {
@@ -228,7 +228,7 @@ class SystemObject implements EntityInterface, MapEntityInterface
     public function setX($x)
     {
         if (!is_numeric($x) || $x < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for x');
+            throw new \Core\Entity\Exception('invalid value for x');
         }
         $this->x = (int) $x;
         return $this;
@@ -253,7 +253,7 @@ class SystemObject implements EntityInterface, MapEntityInterface
     public function setY($y)
     {
         if (!is_numeric($y) || $y < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for y');
+            throw new \Core\Entity\Exception('invalid value for y');
         }
         $this->y =(int) $y;
         return $this;

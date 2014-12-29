@@ -19,7 +19,7 @@ class ResourcesServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $tick   = $serviceLocator->get('Nouron\Service\Tick');
+        $tick   = $serviceLocator->get('Core\Service\Tick');
         $logger = $serviceLocator->get('logger');
 
         $tables['resource'] = $serviceLocator->get('Resources\Table\ResourceTable');

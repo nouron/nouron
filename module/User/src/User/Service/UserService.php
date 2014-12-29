@@ -1,7 +1,7 @@
 <?php
 namespace User\Service;
 
-class UserService extends \Nouron\Service\AbstractService
+class UserService extends \Core\Service\AbstractService
 {
     /**
      * @return ResultSet

@@ -1,6 +1,6 @@
 <?php
 
-namespace Nouron\Table;
+namespace Core\Table;
 
 class Exception extends \Exception
 {

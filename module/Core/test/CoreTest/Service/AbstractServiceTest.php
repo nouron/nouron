@@ -1,5 +1,5 @@
 <?php
-namespace NouronTest\Service;
+namespace CoreTest\Service;
 
 use PHPUnit_Framework_TestCase;
 use TechtreeTest\Bootstrap;

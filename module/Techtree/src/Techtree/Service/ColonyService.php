@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Service;
 
-class ColonyService extends \Nouron\Service\AbstractService
+class ColonyService extends \Core\Service\AbstractService
 {
     /**
      * @var integer

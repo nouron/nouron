@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class PersonellCostTable extends AbstractTable
 {

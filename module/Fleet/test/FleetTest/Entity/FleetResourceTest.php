@@ -22,7 +22,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setFleetId(99);
         $this->assertEquals(99, $fleetResource->getFleetId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetResource->setFleetId('a');
     }
 
@@ -34,7 +34,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setResourceId(99);
         $this->assertEquals(99, $fleetResource->getResourceId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetResource->setResourceId('a');
     }
 
@@ -46,7 +46,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setAmount(99);
         $this->assertEquals(99, $fleetResource->getAmount());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetResource->setAmount('a');
     }
 

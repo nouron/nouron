@@ -1,7 +1,7 @@
 <?php
 namespace INNNTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use INNN\Service\EventService;
 use INNN\Table\EventTable;
 use INNN\Table\EventView;
@@ -20,7 +20,7 @@ class EventServiceTest extends AbstractServiceTest
         $tables['event'] = new EventTable($this->dbAdapter, new Event());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new EventService($tick, $tables);
@@ -43,7 +43,7 @@ class EventServiceTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getEvent(null);
 
         #$this->markTestIncomplete();
@@ -52,11 +52,11 @@ class EventServiceTest extends AbstractServiceTest
     public function testGetEvents()
     {
         $objects = $this->_service->getEvents($this->_userA_Id);
-        $this->assertInstanceOf("Nouron\Model\ResultSet", $objects);
+        $this->assertInstanceOf("Core\Model\ResultSet", $objects);
         $this->assertEquals(0, $objects->count());
 
         $objects = $this->_service->getEvents($this->_userB_Id);
-        $this->assertInstanceOf("Nouron\Model\ResultSet", $objects);
+        $this->assertInstanceOf("Core\Model\ResultSet", $objects);
         $this->assertEquals(2, $objects->count());
     }
 

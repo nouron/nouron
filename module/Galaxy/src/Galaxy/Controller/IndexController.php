@@ -3,13 +3,13 @@ namespace Galaxy\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class IndexController extends \Nouron\Controller\IngameController
+class IndexController extends \Core\Controller\IngameController
 {
     public function indexAction()
     {
         $sm = $this->getServiceLocator();
 
-        $tick     = $sm->get('Nouron\Service\Tick');
+        $tick     = $sm->get('Core\Service\Tick');
 
         $gw = $sm->get('Galaxy\Service\Gateway');
         $systems = $gw->getSystems()->getArrayCopy('id');

@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class FleetResourceTable extends AbstractTable
 {

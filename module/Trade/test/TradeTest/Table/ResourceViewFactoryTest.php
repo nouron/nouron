@@ -1,7 +1,7 @@
 <?php
 namespace TradeTest\Table;
 
-use NouronTest\Table\AbstractTableTest;
+use CoreTest\Table\AbstractTableTest;
 use PHPUnit_Framework_TestCase;
 use TechtreeTest\Bootstrap;
 use Trade\Table\ResourceViewFactory;

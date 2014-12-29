@@ -1,8 +1,8 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\EntityInterface;
-use Nouron\Entity\MapEntityInterface;
+use Core\Entity\EntityInterface;
+use Core\Entity\MapEntityInterface;
 
 class System implements EntityInterface, MapEntityInterface
 {
@@ -39,7 +39,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setId($id)
     {
         if (!is_numeric($id) || $id < 0) {
-            throw new \Nouron\Entity\Exception('invalid id');
+            throw new \Core\Entity\Exception('invalid id');
         }
         $this->id = $id;
         return $this;
@@ -86,7 +86,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setX($x)
     {
         if (!is_numeric($x) || $x < 0) {
-            throw new \Nouron\Entity\Exception('invalid x value');
+            throw new \Core\Entity\Exception('invalid x value');
         }
         $this->x = $x;
         return $this;
@@ -111,7 +111,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setY($y)
     {
         if (!is_numeric($y) || $y < 0) {
-            throw new \Nouron\Entity\Exception('invalid y value');
+            throw new \Core\Entity\Exception('invalid y value');
         }
         $this->y = $y;
         return $this;
@@ -136,7 +136,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setTypeId($type_id)
     {
         if (!is_numeric($type_id) || $type_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid type id');
+            throw new \Core\Entity\Exception('invalid type id');
         }
         $this->type_id = $type_id;
         return $this;
@@ -183,7 +183,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setSight($sight)
     {
         if (!is_numeric($sight) || $sight < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for sight');
+            throw new \Core\Entity\Exception('invalid value for sight');
         }
         $this->sight = $sight;
         return $this;
@@ -208,7 +208,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setDensity($density)
     {
         if (!is_numeric($density) || $density < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for density');
+            throw new \Core\Entity\Exception('invalid value for density');
         }
         $this->density = $density;
         return $this;
@@ -233,7 +233,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setRadiation($radiation)
     {
         if (!is_numeric($radiation) || $radiation < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for radiation');
+            throw new \Core\Entity\Exception('invalid value for radiation');
         }
         $this->radiation = $radiation;
         return $this;
@@ -280,7 +280,7 @@ class System implements EntityInterface, MapEntityInterface
     public function setSize($size)
     {
         if (!is_numeric($size) || $size < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for size');
+            throw new \Core\Entity\Exception('invalid value for size');
         }
         $this->size = $size;
         return $this;

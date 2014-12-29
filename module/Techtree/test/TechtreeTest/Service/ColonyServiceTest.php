@@ -1,7 +1,7 @@
 <?php
 namespace TechtreeTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use Techtree\Service\ColonyService;
 use Techtree\Table\BuildingTable;
 use Techtree\Table\ResearchTable;
@@ -48,7 +48,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $tables['colony_personell'] = new ColonyPersonellTable($this->dbAdapter, new ColonyPersonell());
         $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $services = array();
@@ -69,19 +69,19 @@ class ColonyServiceTest extends AbstractServiceTest
 
     public function testSetScopeColonyId()
     {
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         $service = new ColonyService($tick, array(), array(), $this->_colonyId);
         $service->setScopeColonyId(99);
         $this->assertEquals(99, $service->getScopeColonyId());
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $service->setScopeColonyId('abc');
     }
 
     public function getBuildings()
     {
         $resultset = $this->_service->getBuildings();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $resultset);
+        $this->assertInstanceOf('Core\Model\ResultSet', $resultset);
         $this->assertInstanceOf('Techtree\Entity\Research', $resultset->current());
         $this->markTestIncomplete();
     }
@@ -89,7 +89,7 @@ class ColonyServiceTest extends AbstractServiceTest
     public function getResearches()
     {
         $resultset = $this->_service->getResearches();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $resultset);
+        $this->assertInstanceOf('Core\Model\ResultSet', $resultset);
         $this->assertInstanceOf('Techtree\Entity\Research', $resultset->current());
         $this->markTestIncomplete();
     }
@@ -97,7 +97,7 @@ class ColonyServiceTest extends AbstractServiceTest
     public function getShips()
     {
         $resultset = $this->_service->getShips();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $resultset);
+        $this->assertInstanceOf('Core\Model\ResultSet', $resultset);
         $this->assertInstanceOf('Techtree\Entity\Ship', $resultset->current());
         $this->markTestIncomplete();
     }
@@ -105,7 +105,7 @@ class ColonyServiceTest extends AbstractServiceTest
     public function getPersonell()
     {
         $resultset = $this->_service->getPersonell();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $resultset);
+        $this->assertInstanceOf('Core\Model\ResultSet', $resultset);
         $this->assertInstanceOf('Techtree\EntitPersonell', $resultset->current());
         $this->markTestIncomplete();
     }

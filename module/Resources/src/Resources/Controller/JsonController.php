@@ -10,7 +10,7 @@ use Resources\Service\ResourcesService;
  * @author tt
  *
  */
-class JsonController extends \Nouron\Controller\IngameController
+class JsonController extends \Core\Controller\IngameController
 {
     /**
      *
@@ -52,7 +52,7 @@ class JsonController extends \Nouron\Controller\IngameController
         $colonyId = $this->getActive('colony'); # for correct service init
         $result = new ViewModel(
             array(
-                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'tick' => (string) $sm->get('Core\Service\Tick'),
                 'possessions' => $this->resources(),
             )
         );

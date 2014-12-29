@@ -5,7 +5,7 @@
  * @category  Entity
  */
 
-namespace Nouron\Entity;
+namespace Core\Entity;
 
 interface MapEntityInterface
 {

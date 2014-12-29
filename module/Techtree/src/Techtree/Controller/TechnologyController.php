@@ -3,7 +3,7 @@ namespace Techtree\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class TechnologyController extends \Nouron\Controller\IngameController
+class TechnologyController extends \Core\Controller\IngameController
 {
 
     // add ap for leveldown
@@ -125,7 +125,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         $result = new ViewModel(
             array(
-                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'tick' => (string) $sm->get('Core\Service\Tick'),
                 'building' => $building,
                 'required_buildings_check' => $requiredBuildingsCheck,
                 'required_resources_check' => $requiredResourcesCheck,
@@ -177,7 +177,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         $result = new ViewModel(
             array(
-                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'tick' => (string) $sm->get('Core\Service\Tick'),
                 'research' => $research,
                 'required_buildings_check' => $requiredBuildingsCheck,
                 'required_resources_check' => $requiredResourcesCheck,
@@ -227,7 +227,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         $result = new ViewModel(
             array(
-                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'tick' => (string) $sm->get('Core\Service\Tick'),
                 'ship' => $ship,
                 'required_buildings_check' => $requiredBuildingsCheck,
                 'required_resources_check' => $requiredResourcesCheck,
@@ -275,7 +275,7 @@ class TechnologyController extends \Nouron\Controller\IngameController
 
         $result = new ViewModel(
             array(
-                'tick' => (string) $sm->get('Nouron\Service\Tick'),
+                'tick' => (string) $sm->get('Core\Service\Tick'),
                 'personell' => $personell,
                 'required_buildings_check' => $requiredBuildingsCheck,
                 'required_resources_check' => $requiredResourcesCheck,

@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class Event implements EntityInterface
 {

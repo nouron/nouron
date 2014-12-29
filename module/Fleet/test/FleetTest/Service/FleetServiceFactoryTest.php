@@ -14,7 +14,7 @@ class FleetServiceFactoryTest extends PHPUnit_Framework_TestCase
 
         $servicesToMock = array(
             'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
-            'Nouron\Service\Tick' => 'Nouron\Service\Tick',
+            'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
             'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTable',
             'Galaxy\Table\SystemTable' => 'Galaxy\Table\SystemTable',

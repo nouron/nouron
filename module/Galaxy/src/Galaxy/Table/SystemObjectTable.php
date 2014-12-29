@@ -1,7 +1,7 @@
 <?php
 namespace Galaxy\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class SystemObjectTable extends AbstractTable
 {

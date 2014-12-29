@@ -1,7 +1,7 @@
 <?php
 namespace FleetTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use Fleet\Service\FleetService;
 
 use Fleet\Table\FleetTable;
@@ -44,7 +44,7 @@ class FleetServiceTest extends AbstractServiceTest
         $tables['colonyresearch']  = new \Techtree\Table\ColonyResearchTable($this->dbAdapter, new \Techtree\Entity\ColonyResearch());
         $tables['colonyresource']  = new \Resources\Table\ColonyTable($this->dbAdapter, new \Resources\Entity\Resource());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new FleetService($tick, $tables);
@@ -220,56 +220,56 @@ class FleetServiceTest extends AbstractServiceTest
     public function testGetFleetShips()
     {
         $result = $this->_service->getFleetShips(array('fleet_id' => $this->fleetId));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 5);
     }
 
     public function testGetFleetShipsByFleetId()
     {
         $result = $this->_service->getFleetShipsByFleetId($this->fleetId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 5);
     }
 
     public function testGetFleetResearches()
     {
         $result = $this->_service->getFleetResearches(array('fleet_id' => $this->fleetId));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 8);
     }
 
     public function testGetFleetResearchesByFleetId()
     {
         $result = $this->_service->getFleetResearchesByFleetId($this->fleetId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 8);
     }
 
     public function testGetFleetPersonell()
     {
         $result = $this->_service->getFleetPersonell(array('fleet_id' => $this->fleetId));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 3);
     }
 
     public function testGetFleetPersonellByFleetId()
     {
         $result = $this->_service->getFleetPersonellByFleetId($this->fleetId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 3);
     }
 
     public function testGetFleetResources()
     {
         $result = $this->_service->getFleetResources(array('fleet_id' => $this->fleetId));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 6);
     }
 
     public function testGetFleetResourcesByFleetId()
     {
         $result = $this->_service->getFleetResourcesByFleetId($this->fleetId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertTrue($result->count() == 6);
     }
 
@@ -291,7 +291,7 @@ class FleetServiceTest extends AbstractServiceTest
     public function testGetOrders()
     {
         $result = $this->_service->getOrders(array('fleet_id' => $this->fleetId));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\FleetOrder', $result->current());
         $this->markTestIncomplete();
     }
@@ -299,29 +299,29 @@ class FleetServiceTest extends AbstractServiceTest
     public function testGetFleetsByUserId()
     {
         $result = $this->_service->getFleetsByUserId($this->userId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
         $result = $this->_service->getFleetsByUserId(99);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertFalse($result->current());
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getFleetsByUserId(-1);
     }
 
     public function testGetFleetsByEntityId()
     {
         $result = $this->_service->getFleetsByEntityId('colony', $this->colonyId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
         $result = $this->_service->getFleetsByEntityId('object', $this->objectId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
         $result = $this->_service->getFleetsByEntityId('system', $this->systemId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $result);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
         $this->markTestIncomplete();

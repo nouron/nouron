@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class FleetPersonell implements EntityInterface
 {

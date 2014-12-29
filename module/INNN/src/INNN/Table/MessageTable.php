@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class MessageTable extends AbstractTable
 {

@@ -5,7 +5,7 @@
  * @category  Service
  */
 
-namespace Nouron\Service;
+namespace Core\Service;
 
 use Zend\Log\LoggerInterface;
 use Zend\Log\LoggerAwareInterface;
@@ -47,9 +47,9 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /*
      * @param String $name
-     * @param \Nouron\Service\Service $Service
+     * @param \Core\Service\Service $Service
      */
-    public function setService($name, \Nouron\Service\AbstractService $Service)
+    public function setService($name, \Core\Service\AbstractService $Service)
     {
         $this->services[strtolower($name)] = $Service;
     }
@@ -66,7 +66,7 @@ abstract class AbstractService implements LoggerAwareInterface
     /**
      *
      * @param String $name
-     * @return \Nouron\Service\Service
+     * @return \Core\Service\Service
      */
     public function getService($name)
     {
@@ -84,7 +84,7 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /**
      *
-     * @param numeric|\Nouron\Service\Tick $tick
+     * @param numeric|\Core\Service\Tick $tick
      */
     public function setTick($tick) {
         $this->tick = (string) $tick;
@@ -102,9 +102,9 @@ abstract class AbstractService implements LoggerAwareInterface
     /**
      *
      * @param String $name
-     * @param \Nouron\Table\AbstractTable $table
+     * @param \Core\Table\AbstractTable $table
      */
-    public function setTable($name, \Nouron\Table\AbstractTable $table)
+    public function setTable($name, \Core\Table\AbstractTable $table)
     {
         $this->tables[strtolower($name)] = $table;
     }

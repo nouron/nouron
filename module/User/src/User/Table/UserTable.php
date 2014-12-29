@@ -1,7 +1,7 @@
 <?php
 namespace User\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class UserTable extends AbstractTable
 {

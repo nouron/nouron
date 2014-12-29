@@ -39,7 +39,7 @@ class Bootstrap
             'modules' => array(
                 'ZfcBase',
                 'ZfcUser',
-                'Nouron',
+                'Core',
                 'User',
                 'INNN'
             )

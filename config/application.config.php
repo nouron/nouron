@@ -7,7 +7,7 @@ return array(
         'ZfcAdmin',
         'User', /* based on ZfcUser */
         /*'ZfcRbac',*/
-        'Nouron',
+        'Core',
         'Galaxy',
         'Resources',
         'Techtree',

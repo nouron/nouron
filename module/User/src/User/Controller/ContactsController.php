@@ -3,7 +3,7 @@ namespace User\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class ContactsController extends \Nouron\Controller\IngameController
+class ContactsController extends \Core\Controller\IngameController
 {
     public function indexAction()
     {

@@ -1,7 +1,7 @@
 <?php
 namespace TradeTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use Trade\Service\Gateway;
 use Trade\Table\ResearchTable;
 use Trade\Table\ResearchView;
@@ -22,7 +22,7 @@ class GatewayTest extends AbstractServiceTest
         $tables['resources']       = new ResourceTable($this->dbAdapter, new Resource());
         $tables['resources_view']  = new ResourceView($this->dbAdapter, new Resource());
 
-        $tick = new \Nouron\Service\Tick(16000);
+        $tick = new \Core\Service\Tick(16000);
 
         $serviceMocks = array();
         $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
@@ -63,11 +63,11 @@ class GatewayTest extends AbstractServiceTest
     public function testGetObjects()
     {
         $offers = $this->_gateway->getResources();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Core\Model\ResultSet', $offers);
         $this->assertInstanceOf('Trade\Entity\Resource', $offers->current());
 
         $offers = $this->_gateway->getResearches();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Core\Model\ResultSet', $offers);
         $this->assertInstanceOf('Trade\Entity\Research', $offers->current());
 
         #this->markTestIncomplete();
@@ -96,7 +96,7 @@ class GatewayTest extends AbstractServiceTest
 
         // resource offer doesn't exist, add new resource offer
         $offers = $this->_gateway->getResources($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals('Core\Model\ResultSet', get_class($offers));
         $this->assertEquals(0, $offers->count());
         $dataToAdd = $data + array(
             'amount' => 100,
@@ -106,7 +106,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResourceOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResources($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals('Core\Model\ResultSet', get_class($offers));
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(100, $offers->current()->getAmount());
 
@@ -115,7 +115,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResourceOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResources($data);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($offers));
+        $this->assertEquals('Core\Model\ResultSet', get_class($offers));
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(500, $offers->current()->getAmount());
     }
@@ -143,7 +143,7 @@ class GatewayTest extends AbstractServiceTest
 
         // resource offer doesn't exist, add new resource offer
         $offers = $this->_gateway->getResearches($data);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Core\Model\ResultSet', $offers);
         $this->assertEquals(0, $offers->count());
         $dataToAdd = $data + array(
             'amount' => 2,
@@ -153,7 +153,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResearchOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResearches($data);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Core\Model\ResultSet', $offers);
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(2, $offers->current()->getAmount());
 
@@ -162,7 +162,7 @@ class GatewayTest extends AbstractServiceTest
         $result = $this->_gateway->addResearchOffer($dataToAdd);
         $this->assertTrue($result);
         $offers = $this->_gateway->getResearches($data);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $offers);
+        $this->assertInstanceOf('Core\Model\ResultSet', $offers);
         $this->assertEquals(1, $offers->count());
         $this->assertEquals(5, $offers->current()->getAmount());
     }

@@ -1,7 +1,7 @@
 <?php
 namespace FleetTest\Table;
 
-use NouronTest\Table\AbstractTableTest;
+use CoreTest\Table\AbstractTableTest;
 use PHPUnit_Framework_TestCase;
 use FleetTest\Bootstrap;
 use Fleet\Table\FleetResourceTableFactory;

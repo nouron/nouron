@@ -1,7 +1,7 @@
 <?php
 namespace Trade\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class ResearchTable extends AbstractTable
 {

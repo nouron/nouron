@@ -1,7 +1,7 @@
 <?php
 namespace GalaxyTest\Table;
 
-use NouronTest\Table\AbstractTableTest;
+use CoreTest\Table\AbstractTableTest;
 use PHPUnit_Framework_TestCase;
 use GalaxyTest\Bootstrap;
 use Galaxy\Table\ColonyTableFactory;

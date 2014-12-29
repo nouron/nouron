@@ -1,7 +1,7 @@
 <?php
 namespace GalaxyTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use Galaxy\Entity\Colony;
 use Galaxy\Entity\System;
 use Galaxy\Entity\SystemObject;
@@ -46,7 +46,7 @@ class GatewayTest extends AbstractServiceTest
         $tables['colonybuilding']   = new \Techtree\Table\ColonyBuildingTable($this->dbAdapter, new \Techtree\Entity\ColonyBuilding());
         $tables['colonyresource']   = new \Resources\Table\ColonyTable($this->dbAdapter, new \Resources\Entity\Colony());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         # TODO: temporary solution, dirty => make it better; load real config
@@ -89,14 +89,14 @@ class GatewayTest extends AbstractServiceTest
     public function testGetSystems()
     {
         $objects = $this->_service->getSystems();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\System', $objects->current());
     }
 
     public function testGetColonies()
     {
         $objects = $this->_service->getColonies();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
     }
 
@@ -107,21 +107,21 @@ class GatewayTest extends AbstractServiceTest
         $object = $this->_service->getColony(99);
         $this->assertFalse($object);
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $objects = $this->_service->getColony(-1);
     }
 
     public function testGetColoniesByUserId()
     {
         $objects = $this->_service->getColoniesByUserId($this->userId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
 
         $objects = $this->_service->getColoniesByUserId(99);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertFalse($objects->current());
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $objects = $this->_service->getColoniesByUserId(-1);
     }
 
@@ -151,7 +151,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertTrue($object->getIsPrimary());
 
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getPrimeColony(19);
     }
 
@@ -195,11 +195,11 @@ class GatewayTest extends AbstractServiceTest
         $x = 6800;
         $y = 3000;
         $results = $this->_service->getByCoordinates('fleets', array($x, $y));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
         $results = $this->_service->getByCoordinates('colonies', array($x, $y));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
         $results = $this->_service->getByCoordinates('objects', array($x, $y));
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
         $this->markTestIncomplete();
     }
 
@@ -211,7 +211,7 @@ class GatewayTest extends AbstractServiceTest
         $object = $this->_service->getSystem(99);
         $this->assertFalse($object);
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getSystem(-1);
     }
 
@@ -227,7 +227,7 @@ class GatewayTest extends AbstractServiceTest
     public function testGetSystemObjects()
     {
         $objects = $this->_service->getSystemObjects($this->systemId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\SystemObject', $objects->current());
     }
 
@@ -239,7 +239,7 @@ class GatewayTest extends AbstractServiceTest
         #$object = $this->_service->getSystemByPlanetary(99);
         #$this->assertFalse($object);
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getSystemByPlanetary(-1);
 
         $this->markTestIncomplete();
@@ -265,7 +265,7 @@ class GatewayTest extends AbstractServiceTest
         $system = $this->_service->getSystemBySystemObject($blackhole_id);
         $this->assertFalse($system);
 
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getSystemBySystemObject('a');
 
     }
@@ -282,7 +282,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // expect Exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getSystemObjectByColonyId('a');
     }
 
@@ -348,7 +348,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $coords = array('a', 'b');
         $this->_service->getSystemObjectByCoords($coords);
 
@@ -368,7 +368,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $coords = array('a', 'b');
         $this->_service->getColonyByCoords($coords);
     }
@@ -377,16 +377,16 @@ class GatewayTest extends AbstractServiceTest
     {
         // test positive
         $objects = $this->_service->getColoniesBySystemObjectId($this->planetaryId);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
 
         // test negative
         $objects = $this->_service->getColoniesBySystemObjectId(99);
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $objects);
+        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertFalse($objects->current());
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getColoniesBySystemObjectId('a');
     }
 

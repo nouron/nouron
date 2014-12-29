@@ -3,7 +3,7 @@ namespace User\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class SettingsController extends \Nouron\Controller\IngameController
+class SettingsController extends \Core\Controller\IngameController
 {
     public function indexAction()
     {

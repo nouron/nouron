@@ -33,10 +33,10 @@ return array(
                     $logger->addWriter('FirePhp');
                 return $logger;
             },
-            'Nouron\Service\Tick' => function($sl) {
+            'Core\Service\Tick' => function($sl) {
                 $config = $sl->get('Config');
                 $config = $config['tick'];
-                return new \Nouron\Service\Tick($config);
+                return new \Core\Service\Tick($config);
             }
         ),
     ),

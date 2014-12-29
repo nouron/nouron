@@ -12,8 +12,8 @@ class ShipServiceFactoryTest extends PHPUnit_Framework_TestCase
         $this->sm->setAllowOverride(true);
 
         $this->sm->setService(
-            'Nouron\Service\Tick',
-            $this->getMockBuilder('Nouron\Service\Tick')
+            'Core\Service\Tick',
+            $this->getMockBuilder('Core\Service\Tick')
                   ->disableOriginalConstructor()
                   ->getMock()
         );

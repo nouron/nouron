@@ -26,7 +26,7 @@ class FleetOrderTest extends PHPUnit_Framework_TestCase
         $fleetOrder->setTick(99);
         $this->assertEquals(99, $fleetOrder->getTick());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetOrder->setTick('a');
     }
 
@@ -38,7 +38,7 @@ class FleetOrderTest extends PHPUnit_Framework_TestCase
         $fleetOrder->setFleetId(99);
         $this->assertEquals(99, $fleetOrder->getFleetId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetOrder->setFleetId('a');
     }
 
@@ -51,7 +51,7 @@ class FleetOrderTest extends PHPUnit_Framework_TestCase
         $fleetOrder->setOrder('attack');
         $this->assertEquals('attack', $fleetOrder->getOrder());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetOrder->setOrder(99);
     }
 
@@ -63,7 +63,7 @@ class FleetOrderTest extends PHPUnit_Framework_TestCase
         $fleetOrder->setCoordinates('[1,2,3]');
         $this->assertEquals(array(1,2,3), $fleetOrder->getCoordinates());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetOrder->setCoordinates('abc');
     }
 
@@ -75,7 +75,7 @@ class FleetOrderTest extends PHPUnit_Framework_TestCase
         $fleetOrder->setData('[1,2,3]');
         $this->assertEquals(array(1,2,3), $fleetOrder->getData());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleetOrder->setData('abc');
     }
 

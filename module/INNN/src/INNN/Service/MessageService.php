@@ -1,9 +1,9 @@
 <?php
 namespace INNN\Service;
 
-use Nouron\Model\ResultSet;
+use Core\Model\ResultSet;
 
-class MessageService extends \Nouron\Service\AbstractService
+class MessageService extends \Core\Service\AbstractService
 {
     /**
      *

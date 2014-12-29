@@ -1,5 +1,5 @@
 <?php
-namespace NouronTest\Table;
+namespace CoreTest\Table;
 
 use PHPUnit_Framework_TestCase;
 

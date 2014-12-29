@@ -3,7 +3,7 @@ namespace INNN\Controller;
 
 use Zend\View\Model\JsonModel;
 
-class JsonController extends \Nouron\Controller\IngameController
+class JsonController extends \Core\Controller\IngameController
 {
     public function getMessagesAction()
     {

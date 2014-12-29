@@ -26,7 +26,7 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setId(99);
         $this->assertEquals(99, $fleet->getId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleet->setId('a');
 
         $this->markTestIncomplete();
@@ -51,7 +51,7 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setUserId(99);
         $this->assertEquals(99, $fleet->getUserId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleet->setUserId('a');
 
         $this->markTestIncomplete();
@@ -68,7 +68,7 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setX(-99);
         $this->assertEquals(-99, $fleet->getX());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleet->setX('a');
 
         // TODO: test edge cases
@@ -86,7 +86,7 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setY(-99);
         $this->assertEquals(-99, $fleet->getY());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleet->setY('a');
 
         // TODO: test edge cases
@@ -100,7 +100,7 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setSpot(9);
         $this->assertEquals(9, $fleet->getSpot());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $fleet->setSpot('a');
 
         // TODO: test edge cases

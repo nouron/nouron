@@ -1,8 +1,8 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\EntityInterface;
-use Nouron\Entity\MapEntityInterface;
+use Core\Entity\EntityInterface;
+use Core\Entity\MapEntityInterface;
 
 class Fleet implements EntityInterface, MapEntityInterface
 {
@@ -22,7 +22,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     public function setId($id)
     {
         if (!is_numeric($id) || $id < 0) {
-            throw new \Nouron\Entity\Exception('invalid id');
+            throw new \Core\Entity\Exception('invalid id');
         }
         $this->id = $id;
         return $this;
@@ -49,7 +49,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     public function setUserId($user_id)
     {
         if (!is_numeric($user_id) || $user_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid user id');
+            throw new \Core\Entity\Exception('invalid user id');
         }
         $this->user_id = $user_id;
         return $this;
@@ -64,7 +64,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     public function setX($x)
     {
         if (!is_numeric($x)) {
-            throw new \Nouron\Entity\Exception('invalid value for x coordinate');
+            throw new \Core\Entity\Exception('invalid value for x coordinate');
         }
         $this->x = (int) $x;
         return $this;
@@ -79,7 +79,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     public function setY($y)
     {
         if (!is_numeric($y)) {
-            throw new \Nouron\Entity\Exception('invalid value for y coordinate');
+            throw new \Core\Entity\Exception('invalid value for y coordinate');
         }
         $this->y = (int) $y;
         return $this;
@@ -94,7 +94,7 @@ class Fleet implements EntityInterface, MapEntityInterface
     public function setSpot($spot)
     {
         if (!is_numeric($spot) || $spot <0 || $spot > 9) {
-            throw new \Nouron\Entity\Exception('invalid value for spot');
+            throw new \Core\Entity\Exception('invalid value for spot');
         }
         $this->spot = (int) $spot;
         return $this;

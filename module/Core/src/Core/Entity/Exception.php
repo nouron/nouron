@@ -5,9 +5,9 @@
  * @category  Entity
  */
 
-namespace Nouron\Entity;
+namespace Core\Entity;
 
-interface EntityInterface
+class Exception extends \Exception
 {
 
 }

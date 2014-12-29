@@ -13,7 +13,7 @@ class MessageServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $tick = $serviceLocator->get('Nouron\Service\Tick');
+        $tick = $serviceLocator->get('Core\Service\Tick');
 
         $tables['message'] = $serviceLocator->get('INNN\Table\MessageTable');
         $tables['message_view'] = $serviceLocator->get('INNN\Table\MessageView');

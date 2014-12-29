@@ -1,5 +1,5 @@
 <?php
-namespace Nouron;
+namespace Core;
 
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;

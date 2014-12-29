@@ -6,7 +6,7 @@ use Zend\View\Model\JsonModel;
 /**
  * @method string getActive(String $itemType)
  */
-class JsonController extends \Nouron\Controller\IngameController
+class JsonController extends \Core\Controller\IngameController
 {
     /**
      * @return \Zend\View\Model\JsonModel

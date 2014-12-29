@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class ActionPoint implements EntityInterface
 {
@@ -29,7 +29,7 @@ class ActionPoint implements EntityInterface
     public function setTick($tick)
     {
         if (!is_numeric($tick) || $tick < 0) {
-            throw new \Nouron\Entity\Exception('invalid tick format');
+            throw new \Core\Entity\Exception('invalid tick format');
         }
 
         $this->tick = $tick;
@@ -55,7 +55,7 @@ class ActionPoint implements EntityInterface
     public function setColonyId($colony_id)
     {
         if (!is_numeric($colony_id) || $colony_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid colony id');
+            throw new \Core\Entity\Exception('invalid colony id');
         }
         $this->colony_id = $colony_id;
         return $this;
@@ -81,7 +81,7 @@ class ActionPoint implements EntityInterface
     public function setPersonellId($personell_id)
     {
         if (!is_numeric($personell_id) || $personell_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid personell id');
+            throw new \Core\Entity\Exception('invalid personell id');
         }
         $this->personell_id = $personell_id;
         return $this;
@@ -106,7 +106,7 @@ class ActionPoint implements EntityInterface
     public function setSpendAp($spend_ap)
     {
         if (!is_numeric($spend_ap) || $spend_ap < 0) {
-            throw new \Nouron\Entity\Exception('invalid spend ap');
+            throw new \Core\Entity\Exception('invalid spend ap');
         }
         $this->spend_ap = $spend_ap;
         return $this;

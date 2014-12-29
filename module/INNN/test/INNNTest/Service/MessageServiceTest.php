@@ -1,7 +1,7 @@
 <?php
 namespace INNNTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use INNN\Service\MessageService;
 use INNN\Table\MessageTable;
 use INNN\Table\MessageView;
@@ -21,7 +21,7 @@ class MessageServiceTest extends AbstractServiceTest
         $tables['message_view'] = new MessageView($this->dbAdapter, new Message());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new MessageService($tick, $tables);
@@ -44,7 +44,7 @@ class MessageServiceTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getMessage(null);
 
     }
@@ -53,7 +53,7 @@ class MessageServiceTest extends AbstractServiceTest
     {
         // test positive
         $object = $this->_service->getInboxMessages($this->_userA_Id);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(2, count($results) );
@@ -61,13 +61,13 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test negative
         $object = $this->_service->getInboxMessages(99);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getInboxMessages(null);
     }
 
@@ -75,7 +75,7 @@ class MessageServiceTest extends AbstractServiceTest
     {
         // test positive
         $object = $this->_service->getOutboxMessages($this->_userA_Id);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(3, count($results) );
@@ -83,13 +83,13 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test negative
         $object = $this->_service->getOutboxMessages(99);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $object = $this->_service->getOutboxMessages(null);
     }
 
@@ -97,7 +97,7 @@ class MessageServiceTest extends AbstractServiceTest
     {
         // test positive
         $object = $this->_service->getArchivedMessages($this->_userB_Id);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(1, count($results) );
@@ -105,13 +105,13 @@ class MessageServiceTest extends AbstractServiceTest
 
         // test negative
         $object = $this->_service->getArchivedMessages(99);
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($object));
+        $this->assertEquals('Core\Model\ResultSet', get_class($object));
         $results = $object->getArrayCopy();
         $this->assertTrue(is_array($results));
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Nouron\Service\Exception');
+        $this->setExpectedException('Core\Service\Exception');
         $this->_service->getArchivedMessages(null);
     }
 

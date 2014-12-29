@@ -10,7 +10,7 @@ use Zend\Session\Container;
  * @method integer getSelected(String $itemType)
  * @method array selectedIds()
  */
-class MessageController extends \Nouron\Controller\IngameController
+class MessageController extends \Core\Controller\IngameController
 {
     /**
      *

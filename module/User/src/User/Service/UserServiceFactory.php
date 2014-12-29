@@ -13,7 +13,7 @@ class UserServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $tick = $serviceLocator->get('Nouron\Service\Tick');
+        $tick = $serviceLocator->get('Core\Service\Tick');
 
         $tables['user'] = $serviceLocator->get('User\Table\UserTable');
 

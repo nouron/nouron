@@ -2,6 +2,6 @@
 
 namespace Resources\Service;
 
-class Exception extends \Nouron\Service\Exception {
+class Exception extends \Core\Service\Exception {
 
 }

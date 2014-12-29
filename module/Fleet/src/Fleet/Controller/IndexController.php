@@ -8,7 +8,7 @@ use Zend\View\Model\ViewModel;
   * @method integer getSelected(String $itemType)
   * @method array selectedIds()
   */
-class IndexController extends \Nouron\Controller\IngameController
+class IndexController extends \Core\Controller\IngameController
 {
     public function indexAction()
     {
@@ -16,7 +16,7 @@ class IndexController extends \Nouron\Controller\IngameController
 
         $userId = $this->getActive('user');
 
-        #$tick     = $sm->get('Nouron\Service\Tick');
+        #$tick     = $sm->get('Core\Service\Tick');
 
         # params from route
         $selectedIds = $this->selectedIds();

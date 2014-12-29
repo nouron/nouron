@@ -3,7 +3,7 @@ namespace Galaxy\Service;
 
 use Zend\Session\Container;
 
-class Gateway extends \Nouron\Service\AbstractService
+class Gateway extends \Core\Service\AbstractService
 {
     public function __construct($tick, array $tables, array $services = array(), array $config)
     {
@@ -95,7 +95,7 @@ class Gateway extends \Nouron\Service\AbstractService
         }
 
         // throw exception if no primary colony could be returned
-        throw new \Nouron\Service\Exception('No primary colony found for user.');
+        throw new \Core\Service\Exception('No primary colony found for user.');
     }
 
     /**
@@ -195,7 +195,7 @@ class Gateway extends \Nouron\Service\AbstractService
      *
      * @param  \Galaxy\Entity\Colony | integer  $colony object or id
      * @return \Galaxy\Entity\System If system was found else false
-     * @throws \Nouron\Service\Exception If not a valid system object given
+     * @throws \Core\Service\Exception If not a valid system object given
      */
     public function getSystemBySystemObject($object)
     {
@@ -204,7 +204,7 @@ class Gateway extends \Nouron\Service\AbstractService
         }
 
         if (!($object instanceof \Galaxy\Entity\SystemObject)) {
-            throw new \Nouron\Service\Exception('Not a valid system object.');
+            throw new \Core\Service\Exception('Not a valid system object.');
         }
 
         return $this->getSystemByObjectCoords(array($object->getX(), $object->getY()));
@@ -293,7 +293,7 @@ class Gateway extends \Nouron\Service\AbstractService
      *
      * @param  integer $id
      * @return \Galaxy\Entity\SystemObject
-     * @throws \Nouron\Service\Exception If invalid id
+     * @throws \Core\Service\Exception If invalid id
      */
     public function getSystemObject($id)
     {
@@ -306,7 +306,7 @@ class Gateway extends \Nouron\Service\AbstractService
      *
      * @param  integer $colonyId
      * @return \Galaxy\Entity\SystemObject | false
-     * @throws \Nouron\Service\Exception If invalid id
+     * @throws \Core\Service\Exception If invalid id
      */
     public function getSystemObjectByColonyId($colonyId)
     {
@@ -474,7 +474,7 @@ class Gateway extends \Nouron\Service\AbstractService
         $x = $coords[0];
         $y = $coords[1];
         if (!is_numeric($x) || !is_numeric($y)) {
-            throw new \Nouron\Service\Exception('Invalid Coordinates.');
+            throw new \Core\Service\Exception('Invalid Coordinates.');
         }
         $table = $this->getTable('systemobject');
         return $table->fetchAll("X = $x AND Y = $y")->current();

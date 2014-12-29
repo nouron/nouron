@@ -18,7 +18,7 @@ class ColonyServiceFactoryTest extends PHPUnit_Framework_TestCase
         $this->sm->setAllowOverride(true);
 
         $servicesToMock = array(
-            'Nouron\Service\Tick' => 'Nouron\Service\Tick',
+            'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
             'Techtree\Table\BuildingTable' => 'Techtree\Table\BuildingTable',
             'Techtree\Table\BuildingCostTable' => 'Techtree\Table\BuildingCostTable',

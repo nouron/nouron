@@ -1,7 +1,7 @@
 <?php
 namespace Resources\Table;
 
-use Nouron\Table\AbstractTable;
+use Core\Table\AbstractTable;
 
 class ResourceTable extends AbstractTable
 {

@@ -3,7 +3,7 @@ namespace INNN\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class EventController extends \Nouron\Controller\IngameController
+class EventController extends \Core\Controller\IngameController
 {
     public function indexAction()
     {

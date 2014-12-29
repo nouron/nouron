@@ -1,7 +1,7 @@
 <?php
 namespace Resources\Service;
 
-class ResourcesService extends \Nouron\Service\AbstractService
+class ResourcesService extends \Core\Service\AbstractService
 {
     const RES_CREDITS = 1;
     const RES_SUPPLY = 2;

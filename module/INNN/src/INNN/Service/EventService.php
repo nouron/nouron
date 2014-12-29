@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Service;
 
-class EventService extends \Nouron\Service\AbstractService
+class EventService extends \Core\Service\AbstractService
 {
     /**
      *

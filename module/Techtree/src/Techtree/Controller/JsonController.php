@@ -8,7 +8,7 @@ use Zend\View\Model\JsonModel;
  * @author tt
  *
  */
-class JsonController extends \Nouron\Controller\IngameController
+class JsonController extends \Core\Controller\IngameController
 {
     // /**
     //  *

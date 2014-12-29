@@ -4,7 +4,7 @@ namespace Techtree\Controller;
 use Zend\View\Model\ViewModel;
 use Techtree\Service\BuildingService;
 
-class IndexController extends \Nouron\Controller\IngameController
+class IndexController extends \Core\Controller\IngameController
 {
     /**
      * Zeigt den Techtree an und ermoeglicht das Bauen und Forschen mithilfe
@@ -14,7 +14,7 @@ class IndexController extends \Nouron\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $colonyId = $this->getActive('colony');
-        $tick     = $sm->get('Nouron\Service\Tick');
+        $tick     = $sm->get('Core\Service\Tick');
 
         $colonyService   = $sm->get('Techtree\Service\ColonyService');
         $colonyService->setScopeColonyId($colonyId);

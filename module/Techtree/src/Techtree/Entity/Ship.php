@@ -25,7 +25,7 @@ class Ship extends AbstractTechnology
     public function setRequiredResearchId($required_research_id)
     {
         if (!empty($required_research_id) && (!is_numeric($required_research_id) || $required_research_id < 0)) {
-            throw new \Nouron\Entity\Exception('invalid required research id');
+            throw new \Core\Entity\Exception('invalid required research id');
         }
         $this->required_research_id = $required_research_id;
         return $this;
@@ -50,7 +50,7 @@ class Ship extends AbstractTechnology
     public function setRequiredResearchLevel($required_research_level)
     {
         if (!empty($required_research_id) && (!is_numeric($required_research_level) || $required_research_level < 0)) {
-            throw new \Nouron\Entity\Exception('invalid required research level');
+            throw new \Core\Entity\Exception('invalid required research level');
         }
         $this->required_research_level = $required_research_level;
         return $this;

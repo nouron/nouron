@@ -1,7 +1,7 @@
 <?php
 namespace TechtreeTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
+use CoreTest\Service\AbstractServiceTest;
 use Techtree\Service\PersonellService;
 use Techtree\Table\ActionPointTable;
 use Techtree\Table\BuildingTable;
@@ -46,7 +46,7 @@ class PersonellServiceTest extends AbstractServiceTest
         $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
         $tables['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
 
-        $tick = new \Nouron\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();
@@ -73,7 +73,7 @@ class PersonellServiceTest extends AbstractServiceTest
     {
         $objects = $this->_service->getEntityCosts($this->_entityId);
         $this->assertTrue(!empty($objects));
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Core\Model\ResultSet', get_class($objects));
         $this->assertEquals('Techtree\Entity\PersonellCost', get_class($objects->current()));
     }
 
@@ -87,14 +87,14 @@ class PersonellServiceTest extends AbstractServiceTest
     {
         $objects = $this->_service->getColonyEntities($this->_colonyId);
         $this->assertTrue(!empty($objects));
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Core\Model\ResultSet', get_class($objects));
         $this->assertEquals('Techtree\Entity\ColonyPersonell', get_class($objects->current()));
     }
 
     public function testGetEntities()
     {
         $objects = $this->_service->getEntities();
-        $this->assertEquals('Nouron\Model\ResultSet', get_class($objects));
+        $this->assertEquals('Core\Model\ResultSet', get_class($objects));
         $this->assertEquals('Techtree\Entity\Personell', get_class($objects->current()));
     }
 

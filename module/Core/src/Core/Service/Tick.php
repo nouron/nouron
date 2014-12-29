@@ -5,7 +5,7 @@
  * @category  Service
  */
 
-namespace Nouron\Service;
+namespace Core\Service;
 
 class Tick
 {

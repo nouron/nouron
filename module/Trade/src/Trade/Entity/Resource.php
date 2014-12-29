@@ -1,7 +1,7 @@
 <?php
 namespace Trade\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class Resource implements EntityInterface
 {

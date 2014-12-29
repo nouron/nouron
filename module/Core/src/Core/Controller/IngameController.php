@@ -5,7 +5,7 @@
  * @category  Controller
  */
 
-namespace Nouron\Controller;
+namespace Core\Controller;
 
 use Zend\EventManager\EventManagerInterface;
 use Zend\Mvc\Controller\AbstractActionController;

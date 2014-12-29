@@ -6,7 +6,7 @@ use Fleet\Entity\FleetPersonell;
 use Fleet\Entity\FleetShip;
 use Fleet\Entity\FleetResearch;
 use Fleet\Entity\FleetResource;
-use Nouron\Model\ResultSet;
+use Core\Model\ResultSet;
 
 class FleetService extends \Galaxy\Service\Gateway
 {

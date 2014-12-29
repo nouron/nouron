@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Test\Table;
 
-use NouronTest\Table\AbstractTableTest;
+use CoreTest\Table\AbstractTableTest;
 use PHPUnit_Framework_TestCase;
 use INNNTest\Bootstrap;
 use INNN\Table\EventTableFactory;

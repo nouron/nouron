@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Entity;
 
-use Nouron\Entity\EntityInterface;
+use Core\Entity\EntityInterface;
 
 class FleetOrder implements EntityInterface
 {
@@ -22,7 +22,7 @@ class FleetOrder implements EntityInterface
     public function setTick($tick)
     {
         if (!is_numeric($tick) || $tick < 0) {
-            throw new \Nouron\Entity\Exception('invalid tick');
+            throw new \Core\Entity\Exception('invalid tick');
         }
         $this->tick = (int) $tick;
         return $this;
@@ -37,7 +37,7 @@ class FleetOrder implements EntityInterface
     public function setFleetId($fleet_id)
     {
         if (!is_numeric($fleet_id) || $fleet_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid fleet id');
+            throw new \Core\Entity\Exception('invalid fleet id');
         }
         $this->fleet_id = (int) $fleet_id;
         return $this;
@@ -53,7 +53,7 @@ class FleetOrder implements EntityInterface
     {
         if (!in_array($order, array('move', 'attack', 'join', 'trade', 'hold', 'convoy', 'defend')))
         {
-            throw new \Nouron\Entity\Exception('invalid order command');
+            throw new \Core\Entity\Exception('invalid order command');
         }
         $this->order = (string) $order;
         return $this;
@@ -72,7 +72,7 @@ class FleetOrder implements EntityInterface
         }
         $coords = json_decode($coordinates);
         if (empty($coords)) {
-            throw new \Nouron\Entity\Exception('invalid coordinates format');
+            throw new \Core\Entity\Exception('invalid coordinates format');
         }
         $this->coordinates = $coords;
         return $this;
@@ -91,7 +91,7 @@ class FleetOrder implements EntityInterface
         }
         $data = json_decode($data);
         if (empty($data)) {
-            throw new \Nouron\Entity\Exception('invalid data format');
+            throw new \Core\Entity\Exception('invalid data format');
         }
         $this->data = $data;
         return $this;

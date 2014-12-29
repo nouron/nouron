@@ -3,7 +3,7 @@ namespace User\Controller;
 
 use Zend\View\Model\ViewModel;
 
-class UserController extends \Nouron\Controller\IngameController
+class UserController extends \Core\Controller\IngameController
 {
     public function userAction()
     {

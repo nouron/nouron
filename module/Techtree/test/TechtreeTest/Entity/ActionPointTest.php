@@ -22,7 +22,7 @@ class ActionPointTest extends PHPUnit_Framework_TestCase
         $entity->setTick(12345);
         $this->assertEquals(12345, $entity->getTick());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $entity->setTick(-12345);
     }
 
@@ -34,7 +34,7 @@ class ActionPointTest extends PHPUnit_Framework_TestCase
         $entity->setColonyId(99);
         $this->assertEquals(99, $entity->getColonyId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $entity->setColonyId('a');
     }
 
@@ -46,7 +46,7 @@ class ActionPointTest extends PHPUnit_Framework_TestCase
         $entity->setPersonellId(99);
         $this->assertEquals(99, $entity->getPersonellId());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $entity->setPersonellId('a');
     }
 
@@ -57,7 +57,7 @@ class ActionPointTest extends PHPUnit_Framework_TestCase
         $entity->setSpendAp(12345);
         $this->assertEquals(12345, $entity->getSpendAp());
 
-        $this->setExpectedException('Nouron\Entity\Exception');
+        $this->setExpectedException('Core\Entity\Exception');
         $entity->setSpendAp(-12345);
     }
 

@@ -9,7 +9,7 @@ use Zend\View\Model\JsonModel;
  * @method integer getSelected(String $itemType)
  * @method array selectedIds()
  */
-class SystemController extends \Nouron\Controller\IngameController
+class SystemController extends \Core\Controller\IngameController
 {
     /**
      * Show the selected system, its planetary objects and fleets in orbit..
@@ -23,7 +23,7 @@ class SystemController extends \Nouron\Controller\IngameController
         $sm = $this->getServiceLocator();
 
         $userId = $this->getActive('user');
-        #$tick     = $sm->get('Nouron\Service\Tick');
+        #$tick     = $sm->get('Core\Service\Tick');
 
         $selectedIds = $this->selectedIds();
         $systemId = $selectedIds['systemId'];

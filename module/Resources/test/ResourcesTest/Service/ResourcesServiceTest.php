@@ -1,8 +1,8 @@
 <?php
 namespace ResourcesTest\Service;
 
-use NouronTest\Service\AbstractServiceTest;
-use Nouron\Service\Tick;
+use CoreTest\Service\AbstractServiceTest;
+use Core\Service\Tick;
 use Resources\Service\ResourcesService;
 use Resources\Table\ResourceTable;
 use Resources\Table\ColonyTable;
@@ -75,14 +75,14 @@ class ResourcesServiceTest extends AbstractServiceTest
     public function testGetColonyResources()
     {
         $results = $this->_service->getColonyResources();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
         $this->assertInstanceOf('Resources\Entity\Colony', $results->current());
     }
 
     public function testGetUserResources()
     {
         $results = $this->_service->getUserResources();
-        $this->assertInstanceOf('Nouron\Model\ResultSet', $results);
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
         $this->assertInstanceOf('Resources\Entity\User', $results->current());
     }
 

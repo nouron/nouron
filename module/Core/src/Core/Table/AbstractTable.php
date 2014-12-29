@@ -5,12 +5,12 @@
  * @category  Table
  */
 
-namespace Nouron\Table;
+namespace Core\Table;
 
 use Zend\Db\TableGateway\TableGateway;
 use Zend\Db\Adapter\AdapterInterface;
-use Nouron\Entity\EntityInterface;
-use Nouron\Model\ResultSet;
+use Core\Entity\EntityInterface;
+use Core\Model\ResultSet;
 use Zend\Stdlib\Hydrator;
 
 /**
@@ -215,7 +215,7 @@ abstract class AbstractTable extends TableGateway
      *
      * @param  integer|array $id          the id (primary key)
      * @param  null|array   $compoundKey  OPTIONAL the indezes in case of an compoundKey
-     * @throws Nouron\Model\Exception     if id is invalid
+     * @throws Core\Model\Exception     if id is invalid
      */
     protected function _validateId($id, $compoundKey = null)
     {

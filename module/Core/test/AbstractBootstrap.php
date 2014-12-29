@@ -1,6 +1,6 @@
 <?php
 
-namespace NouronTest;
+namespace CoreTest;
 
 use Zend\Loader\AutoloaderFactory;
 use Zend\Mvc\Service\ServiceManagerConfig;

@@ -1,8 +1,8 @@
 <?php
 namespace Galaxy\Entity;
 
-use Nouron\Entity\EntityInterface;
-use Nouron\Entity\MapEntityInterface;
+use Core\Entity\EntityInterface;
+use Core\Entity\MapEntityInterface;
 
 class Colony implements EntityInterface, MapEntityInterface
 {
@@ -41,7 +41,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setId($id)
     {
         if (!is_numeric($id) || $id < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for id');
+            throw new \Core\Entity\Exception('invalid value for id');
         }
         $this->id = $id;
         return $this;
@@ -88,7 +88,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setSystemObjectId($system_object_id)
     {
         if (!is_numeric($system_object_id) || $system_object_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for system_object_id');
+            throw new \Core\Entity\Exception('invalid value for system_object_id');
         }
         $this->system_object_id = $system_object_id;
         return $this;
@@ -114,7 +114,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setSpot($spot)
     {
         if (!is_numeric($spot) || $spot < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for spot');
+            throw new \Core\Entity\Exception('invalid value for spot');
         }
         $this->spot = (int) $spot;
         return $this;
@@ -140,7 +140,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setUserId($user_id)
     {
         if (!is_numeric($user_id) || $user_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for user_id');
+            throw new \Core\Entity\Exception('invalid value for user_id');
         }
         $this->user_id = $user_id;
         return $this;
@@ -165,7 +165,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setSinceTick($since_tick)
     {
         if (!is_numeric($since_tick) || $since_tick < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for since_tick');
+            throw new \Core\Entity\Exception('invalid value for since_tick');
         }
         $this->since_tick = (int) $since_tick;
         return $this;
@@ -234,7 +234,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setX($x)
     {
         if (!is_numeric($x) || $x < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for x');
+            throw new \Core\Entity\Exception('invalid value for x');
         }
         $this->x = (int) $x;
         return $this;
@@ -259,7 +259,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setY($y)
     {
         if (!is_numeric($y) || $y < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for y');
+            throw new \Core\Entity\Exception('invalid value for y');
         }
         $this->y =(int) $y;
         return $this;
@@ -284,7 +284,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setTypeId($type_id)
     {
         if (!is_numeric($type_id) || $type_id < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for type_id');
+            throw new \Core\Entity\Exception('invalid value for type_id');
         }
         $this->type_id = (int) $type_id;
         return $this;
@@ -309,7 +309,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setSight($sight)
     {
         if (!is_numeric($sight) || $sight < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for sight');
+            throw new \Core\Entity\Exception('invalid value for sight');
         }
         $this->sight = $sight;
         return $this;
@@ -334,7 +334,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setDensity($density)
     {
         if (!is_numeric($density) || $density < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for density');
+            throw new \Core\Entity\Exception('invalid value for density');
         }
         $this->density = $density;
         return $this;
@@ -359,7 +359,7 @@ class Colony implements EntityInterface, MapEntityInterface
     public function setRadiation($radiation)
     {
         if (!is_numeric($radiation) || $radiation < 0) {
-            throw new \Nouron\Entity\Exception('invalid value for radiation');
+            throw new \Core\Entity\Exception('invalid value for radiation');
         }
         $this->radiation = $radiation;
         return $this;
