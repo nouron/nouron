@@ -27,100 +27,6 @@ class Gateway extends \Core\Service\AbstractService
     }
 
     /**
-     * @return ResultSet
-     */
-    public function getColonies()
-    {
-        return $this->getTable('colony')->fetchAll();
-    }
-
-    /**
-     * @param integer $colonyId
-     * @return \Galaxy\Entity\Colony
-     */
-    public function getColony($colonyId)
-    {
-        $this->_validateId($colonyId);
-        return $this->getTable('colony')->getEntity($colonyId);
-    }
-
-    /**
-     * Get all colonies from a user.
-     *
-     * @param  integer    $userId
-     * @return ResultSet
-     */
-    public function getColoniesByUserId($userId)
-    {
-        $this->_validateId($userId);
-        return $this->getTable('colony')->fetchAll('user_id = ' . $userId);
-    }
-
-    /**
-     * @param numeric|\Galaxy\Entity\Colony $colony
-     * @param numeric $userId
-     * @return boolean
-     */
-    public function checkColonyOwner($colony, $userId)
-    {
-        if (is_numeric($colony)) {
-            $colony = $this->getColony($colony);
-        }
-        if ($colony && $colony->getUserId() == $userId) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     *
-     * @param  integer $userId
-     * @return \Galaxy\Entity\Colony|null
-     * @throws Exception if no main colony was found
-     */
-    public function getPrimeColony($userId)
-    {
-        $this->_validateId($userId);
-        $colonies = $this->getColoniesByUserId((int) $userId);
-        foreach ($colonies as $colony) {
-            if ( count($colonies) == 1 ) {
-                $colony->setIsPrimary(true); /* set as prime colony*/
-                // TODO: $colony->save()
-            }
-
-            if ( $colony->getIsPrimary() ) {
-                return $colony;
-            }
-        }
-
-        // throw exception if no primary colony could be returned
-        throw new \Core\Service\Exception('No primary colony found for user.');
-    }
-
-    /**
-     *
-     * @param integer $selectedColonyId
-     */
-    public function setActiveColony($selectedColonyId)
-    {
-        $session = new Container('activeIds');
-        if ($this->checkColonyOwner($selectedColonyId, $session->userId)) {
-            $session->colonyId = $selectedColonyId;
-        }
-    }
-
-    /**
-     *
-     * @param integer $selectedColonyId
-     */
-    public function setSelectedColony($selectedColonyId)
-    {
-        $session = new Container('selectedIds');
-        $session->colonyId = $selectedColonyId;
-    }
-
-    /**
      *
      * @param  array $coords
      * @param string $objectType
@@ -310,7 +216,8 @@ class Gateway extends \Core\Service\AbstractService
      */
     public function getSystemObjectByColonyId($colonyId)
     {
-        $colony = $this->getColony($colonyId);
+        $this->_validateId($colonyId);
+        $colony = $this->getTable('colony')->getEntity($colonyId);
         if ($colony) {
             $planetaryId = $colony->getSystemObjectId();
             return $this->getSystemObject($planetaryId);
@@ -502,19 +409,6 @@ class Gateway extends \Core\Service\AbstractService
         }
         // return null if no colony was found
         return false;
-    }
-
-    /**
-     * Get all colonies from a planetary.
-     *
-     * @param  integer    $planetaryId
-     * @return \Galaxy\Entity\Colonies
-     */
-    public function getColoniesBySystemObjectId($planetaryId)
-    {
-        $this->_validateId($planetaryId);
-        $table = $this->getTable('colony');
-        return $table->fetchAll("system_object_id = $planetaryId");
     }
 
 #    /**

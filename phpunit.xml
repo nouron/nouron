@@ -2,18 +2,24 @@
 
 <phpunit bootstrap="./test/Bootstrap.php" colors="false">
     <testsuites>
+        <testsuite name="core">
+            <directory>./module/Core/test/CoreTest</directory>
+        </testsuite>
         <testsuite name="innn">
             <directory>./module/INNN/test/INNNTest</directory>
-        </testsuite>
+        </testsuite>-->
         <testsuite name="techtree">
             <directory>./module/Techtree/test/TechtreeTest</directory>
         </testsuite>
         <testsuite name="trade">
             <directory>./module/Trade/test/TradeTest</directory>
         </testsuite>
-        <!--<testsuite name="resources">
+        <testsuite name="resources">
             <directory>./module/Resources/test/ResourcesTest</directory>
-        </testsuite>-->
+        </testsuite>
+        <testsuite name="colony">
+            <directory>./module/Colony/test/ColonyTest</directory>
+        </testsuite>
         <testsuite name="fleet">
             <directory>./module/Fleet/test/FleetTest</directory>
         </testsuite>
@@ -28,6 +34,7 @@
           <directory suffix=".php">./module/Trade/src</directory>
           <directory suffix=".php">./module/INNN/src</directory>
           <directory suffix=".php">./module/Fleet/src</directory>
+          <directory suffix=".php">./module/Colony/src</directory>
           <directory suffix=".php">./module/Galaxy/src</directory>
         </whitelist>
     </filter>

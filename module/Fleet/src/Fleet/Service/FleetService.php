@@ -8,13 +8,10 @@ use Fleet\Entity\FleetResearch;
 use Fleet\Entity\FleetResource;
 use Core\Model\ResultSet;
 
-class FleetService extends \Galaxy\Service\Gateway
-{
-    public function __construct($tick, array $tables, array $services = array())
-    {
-        parent::__construct($tick, $tables, $services, array());
-    }
+use Core\Service\AbstractService;
 
+class FleetService extends AbstractService
+{
     /**
      * @return string
      */
@@ -89,12 +86,13 @@ class FleetService extends \Galaxy\Service\Gateway
                 //destination is a fleet id or colony id
                 $destination = (int) $destination;
                 switch (strtolower($order)) {
-                    case 'move':   $object = $this->getColony($destination); break;
-                    case 'trade':  $object = $this->getColony($destination); break;
-                    case 'hold':   $object = $this->getColony($destination); break;
-                    case 'convoy': $object = $this->getFleet($destination);  break;
-                    case 'defend': $object = $this->getFleet($destination);  break;
-                    case 'attack': $object = $this->getFleet($destination);  break;
+                    case 'move':   pass;
+                    case 'trade':  pass;
+                    case 'hold':   $colonyService = $this->getService('colony');
+                                   $object = $colonyService->getColony($destination); break;
+                    case 'convoy': pass;
+                    case 'defend': pass;
+                    case 'attack': pass;
                     case 'join':   $object = $this->getFleet($destination);  break;
                     #case 'devide': break; // nothing
                     default:       $object = $this->getFleet($destination);  break;
@@ -102,7 +100,7 @@ class FleetService extends \Galaxy\Service\Gateway
 
                 $destinationCoords = $object->getCoords();
 
-            } elseif ( $destination instanceof \Galaxy\Entity\Colony || $destination instanceof \Fleet\Entity\Fleet ) {
+            } elseif ( $destination instanceof \Colony\Entity\Colony || $destination instanceof \Fleet\Entity\Fleet ) {
                 // destination is an object:
                 $destinationCoords = $destination->getCoords();
             } elseif ( is_array(@unserialize($destination)) ) {
@@ -112,7 +110,7 @@ class FleetService extends \Galaxy\Service\Gateway
                 // destination is a json encoded coords array:
                 $destinationCoords = json_decode($destination);
             } else {
-                throw new \Galaxy\Entity\Exception('Invalid variable type of $destination. $destination has to be an id, object or 3-dimensional array.');
+                throw new \Fleet\Entity\Exception('Invalid variable type of $destination. $destination has to be an id, object or 3-dimensional array.');
             }
 
             $destination = $destinationCoords;
@@ -233,7 +231,11 @@ class FleetService extends \Galaxy\Service\Gateway
     public function transferTechnology($type, $colony, $fleet, $techId, $amount)
     {
         if (is_numeric($colony)) {
-            $colony = $this->getColony($colony);
+            #var_dump($colony);
+            $colonyService = $this->getService('colony');
+            #var_dump($colonyService);
+            $colony = $colonyService->getColony($colony);
+            #var_dump($colony);
         }
 
         if (is_numeric($fleet)) {
@@ -264,6 +266,9 @@ class FleetService extends \Galaxy\Service\Gateway
 
         $colonyCoords = $colony->getCoords();
         $fleetCoords  = $fleet->getCoords();
+
+#        var_dump($colonyCoords);
+#        var_dump($fleetCoords);
 
         if ($colonyCoords[0] == $fleetCoords[0] && $colonyCoords[1] == $fleetCoords[1]) {
             $keys = array(
@@ -622,7 +627,28 @@ class FleetService extends \Galaxy\Service\Gateway
         }
 
         $entity = $table->getEntity($id);
-        return $this->getByCoordinates('fleets', array($entity->getX(), $entity->getY()));
+        return $this->getFleetsByCoords( array($entity->getX(), $entity->getY()));
+    }
+
+    /**
+     * Get a fleet object by its coords
+     *
+     * @param  array $coords
+     * @return \Fleet\Entity\Fleet|false
+     */
+    public function getFleetsByCoords(array $coords)
+    {
+        $x = $coords[0];
+        $y = $coords[1];
+        if (!is_numeric($x) || !is_numeric($y)) {
+            throw new \Core\Service\Exception('Invalid Coordinates.');
+        }
+        $table = $this->getTable('fleet');
+        $fleets = $table->fetchAll("X = $x AND Y = $y");
+
+        return $fleets;
+        // return null if no colony was found
+        //return false;
     }
 
     /**

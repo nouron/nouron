@@ -2,7 +2,7 @@
 namespace FleetTest\Entity;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use FleetTest\Bootstrap;
 use Fleet\Entity\FleetFactory;
 
 class FleetFactoryTest extends PHPUnit_Framework_TestCase

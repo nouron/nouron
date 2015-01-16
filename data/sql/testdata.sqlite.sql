@@ -179,7 +179,7 @@ INSERT INTO "fleets" VALUES(13,'Test Flotte 4',3,NULL,628,6916,0);
 INSERT INTO "fleets" VALUES(14,'Test Flotte 5',3,NULL,5828,4016,0);
 INSERT INTO "fleets" VALUES(15,'test',0,NULL,6828,3016,0);
 INSERT INTO "fleets" VALUES(16,'Test Flotte 6',3,NULL,6828,3016,0);
-INSERT INTO "fleets" VALUES(17,'Test Flotte 7',3,NULL,6828,3016,0);
+INSERT INTO "fleets" VALUES(17,'Test Flotte 7',3,NULL,6800,3000,0);
 INSERT INTO "fleet_orders" VALUES(14988,16,'move','[6800,3000,0]',NULL,0,0);
 INSERT INTO "fleet_orders" VALUES(14989,16,'trade','[6808,3006,1]','{"colony":1,"direction":1,"resource_id":3,"amount":9,"price":255,"restriction":0,"colony":"Brasows Kolonie","user_id":0,"resource":"res_water","icon":"res res_water","is_tradeable":1}',0,0);
 INSERT INTO "fleet_orders" VALUES(14989,17,'move','[2000,2000,1]',NULL,0,0);

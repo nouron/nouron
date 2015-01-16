@@ -21,7 +21,7 @@ class ResearchServiceFactory implements FactoryInterface
         $tables['research_costs']    = $serviceLocator->get('Techtree\Table\ResearchCostTable');
         $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
         $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colonies']          = $serviceLocator->get('Galaxy\Table\ColonyTable');
+        $tables['colonies']          = $serviceLocator->get('Colony\Table\ColonyTable');
 
         $services = array();
         $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');

@@ -2,7 +2,7 @@
 namespace INNNTest\Form;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use INNNTest\Bootstrap;
 use INNN\Form\Message;
 
 class MessageTest extends PHPUnit_Framework_TestCase

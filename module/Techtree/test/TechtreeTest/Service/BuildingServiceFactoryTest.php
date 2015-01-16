@@ -24,7 +24,7 @@ class BuildingServiceFactoryTest extends PHPUnit_Framework_TestCase
             'Techtree\Table\ColonyTable' => 'Techtree\Table\ColonyTable',
             'Techtree\Table\PersonellTable' => 'Techtree\Table\PersonellTable',
             'Techtree\Table\PersonellCostTable' => 'Techtree\Table\PersonellCostTable',
-            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTable',
+            'Colony\Table\ColonyTable' => 'Colony\Table\ColonyTable',
             'Resources\Service\ResourcesService' => 'Resources\Service\ResourcesService'
         );
         foreach ($servicesToMock as $key => $serviceName) {

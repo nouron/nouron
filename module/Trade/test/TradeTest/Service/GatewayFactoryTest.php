@@ -2,7 +2,7 @@
 namespace TradeTest\Service;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use TradeTest\Bootstrap;
 use Trade\Service\GatewayFactory;
 
 class GatewayFactoryTest extends PHPUnit_Framework_TestCase
@@ -17,20 +17,20 @@ class GatewayFactoryTest extends PHPUnit_Framework_TestCase
             'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
             'Trade\Table\ResearchTable' => 'Trade\Table\ResearchTable',
-            'Trade\Table\ResearchView' => 'Trade\Table\ResearchView',
+            'Trade\Table\ResearchView'  => 'Trade\Table\ResearchView',
             'Trade\Table\ResourceTable' => 'Trade\Table\ResourceTable',
-            'Trade\Table\ResourceView' => 'Trade\Table\ResourceView',
+            'Trade\Table\ResourceView'  => 'Trade\Table\ResourceView',
 
             # TODO: check if all these dependencies are really necessary and
             #       get rid of them if not!
-            'Galaxy\Table\ColonyTable'       => 'Galaxy\Table\ColonyTable',
+            'Colony\Table\ColonyTable'       => 'Colony\Table\ColonyTable',
             'Galaxy\Table\SystemTable'       => 'Galaxy\Table\SystemTable',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTable',
-            'Fleet\Table\FleetTable'        => 'Fleet\Table\FleetTable',
+            'Fleet\Table\FleetTable'         => 'Fleet\Table\FleetTable',
             'Techtree\Table\ColonyBuildingTable' => 'Techtree\Table\ColonyBuildingTable',
-            'Resources\Table\ColonyTable' => 'Resources\Table\ColonyTable',
+            'Resources\Table\ColonyTable'   => 'Resources\Table\ColonyTable',
             'Resources\Table\ResourceTable' => 'Resources\Table\ResourceTable',
-            'Resources\Table\UserTable' => 'Resources\Table\UserTable',
+            'Resources\Table\UserTable'     => 'Resources\Table\UserTable',
         );
         foreach ($servicesToMock as $key => $serviceName) {
             $this->sm->setService(

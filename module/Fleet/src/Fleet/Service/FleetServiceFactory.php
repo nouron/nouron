@@ -18,7 +18,7 @@ class FleetServiceFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['colony'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
+        $tables['colony'] = $serviceLocator->get('Colony\Table\ColonyTable');
         $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
         $tables['fleet']     = $serviceLocator->get('Fleet\Table\FleetTable');
         $tables['fleetship'] = $serviceLocator->get('Fleet\Table\FleetShipTable');
@@ -36,7 +36,10 @@ class FleetServiceFactory implements FactoryInterface
         $tables['colonyresearch']  = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
         $tables['colonyresource']  = $serviceLocator->get('Resources\Table\ColonyTable');
 
-        $service = new FleetService($tick, $tables);
+        $services = array();
+        $services['colony'] = $serviceLocator->get('Colony\Service\ColonyService');
+
+        $service = new FleetService($tick, $tables, $services);
         $service->setLogger($logger);
         return $service;
     }

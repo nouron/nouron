@@ -18,20 +18,19 @@ class GatewayFactory implements FactoryInterface
         $logger = $serviceLocator->get('logger');
 
         $tables = array();
-        $tables['colony'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
         $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
         $tables['systemobject'] = $serviceLocator->get('Galaxy\Table\SystemObjectTable');
+
+        $tables['colony'] = $serviceLocator->get('Colony\Table\ColonyTable');
         $tables['fleet']  = $serviceLocator->get('Fleet\Table\FleetTable');
-        #$tables['fleetship']        = $serviceLocator->get('Fleet\Table\FleetShipTable');
-        #$tables['fleetpersonell']   = $serviceLocator->get('Fleet\Table\FleetPersonellTable');
-        #$tables['fleetresearch']    = $serviceLocator->get('Fleet\Table\FleetResearchTable');
-        #$tables['fleetorder']       = $serviceLocator->get('Fleet\Table\FleetOrderTable');
-        #$tables['fleetresource']    = $serviceLocator->get('Fleet\Table\FleetResourceTable');
         $tables['colonybuilding']   = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
         $tables['colonyresource']   = $serviceLocator->get('Resources\Table\ColonyTable');
 
+        $services = array();
+        #$services['colony'] = $serviceLocator->get('Colony\Service\ColonyService');
+
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
-        $gateway = new Gateway($tick, $tables, array(), array());
+        $gateway = new Gateway($tick, $tables, $services, array());
         $gateway->setLogger($logger);
         return $gateway;
     }

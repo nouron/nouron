@@ -2,7 +2,7 @@
 namespace FleetTest\Service;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use FleetTest\Bootstrap;
 use Fleet\Service\FleetServiceFactory;
 
 class FleetServiceFactoryTest extends PHPUnit_Framework_TestCase
@@ -16,7 +16,7 @@ class FleetServiceFactoryTest extends PHPUnit_Framework_TestCase
             'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
             'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
-            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTable',
+            'Colony\Table\ColonyTable' => 'Colony\Table\ColonyTable',
             'Galaxy\Table\SystemTable' => 'Galaxy\Table\SystemTable',
             'Fleet\Table\FleetTable' => 'Fleet\Table\FleetTable',
             'Fleet\Table\FleetTable' => 'Fleet\Table\FleetTable',

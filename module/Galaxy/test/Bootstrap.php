@@ -40,6 +40,7 @@ class Bootstrap
                 'Core',
                 'User',
                 'Fleet',
+                'Colony',
                 'Galaxy'
             )
         );

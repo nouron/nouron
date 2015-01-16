@@ -23,7 +23,7 @@ class PersonellServiceFactory implements FactoryInterface
         $tables['colony_personell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
         $tables['colony_buildings'] = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
         $tables['locked_actionpoints'] = $serviceLocator->get('Techtree\Table\ActionPointTable');
-        $tables['colonies'] = $serviceLocator->get('Galaxy\Table\ColonyTable');
+        $tables['colonies'] = $serviceLocator->get('Colony\Table\ColonyTable');
 
         $services = array();
         $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');

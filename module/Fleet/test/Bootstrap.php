@@ -39,6 +39,7 @@ class Bootstrap
                 'ZfcUser',
                 'Core',
                 'User',
+                'Colony',
                 'Galaxy',
                 'Techtree',
                 'Resources',

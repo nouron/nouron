@@ -1,5 +1,5 @@
 <?php
-namespace Galaxy\Table;
+namespace Colony\Table;
 
 use Core\Table\AbstractTable;
 

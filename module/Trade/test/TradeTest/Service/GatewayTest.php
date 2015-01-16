@@ -10,6 +10,8 @@ use Trade\Table\ResourceView;
 use Trade\Entity\Research;
 use Trade\Entity\Resource;
 
+use Colony\Service\ColonyService;
+
 class GatewayTest extends AbstractServiceTest
 {
     public function setUp()
@@ -30,18 +32,24 @@ class GatewayTest extends AbstractServiceTest
                                           ->getMock();
 
         $paramsMap = array(
-            array(1,99, false),
-            array(1,3, true)
+            array(1, 99, false),
+            array(1, 3, true)
         );
-        $galaxyService = $this->getMockBuilder('Galaxy\Service\Gateway')
+        $colonyService = $this->getMockBuilder('Colony\Service\ColonyService')
                               ->disableOriginalConstructor()
                               ->getMock();
-        $galaxyService->expects($this->any())
+
+        $colonyService->expects($this->any())
                       ->method('checkColonyOwner')
                       ->will($this->returnValueMap($paramsMap));
-        $serviceMocks['galaxy'] = $galaxyService;
+
+        $serviceMocks['colony'] = $colonyService;
 
         $this->_gateway = new Gateway($tick, $tables, $serviceMocks);
+
+        #var_dump($this->_gateway->getService('colony'));
+
+
         $logger = $this->getMockBuilder('Zend\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();

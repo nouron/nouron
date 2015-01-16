@@ -18,7 +18,6 @@ use Fleet\Entity\FleetResearch;
 use Fleet\Entity\FleetOrder;
 use Fleet\Entity\FleetResource;
 
-
 class FleetServiceTest extends AbstractServiceTest
 {
     public function setUp()
@@ -36,7 +35,7 @@ class FleetServiceTest extends AbstractServiceTest
         $tables['personell'] = new \Techtree\Table\PersonellTable($this->dbAdapter, new \Techtree\Entity\Personell());
         $tables['research']  = new \Techtree\Table\ResearchTable($this->dbAdapter, new \Techtree\Entity\Research());
         $tables['ship']  = new \Techtree\Table\ShipTable($this->dbAdapter, new \Techtree\Entity\Ship());
-        $tables['colony'] = new \Galaxy\Table\ColonyTable($this->dbAdapter, new \Galaxy\Entity\Colony());
+        $tables['colony'] = new \Colony\Table\ColonyTable($this->dbAdapter, new \Colony\Entity\Colony());
         $tables['system'] = new \Galaxy\Table\SystemTable($this->dbAdapter, new \Galaxy\Entity\System());
         $tables['systemobject'] = new \Galaxy\Table\SystemObjectTable($this->dbAdapter, new \Galaxy\Entity\SystemObject());
         $tables['colonyship']      = new \Techtree\Table\ColonyShipTable($this->dbAdapter, new \Techtree\Entity\ColonyShip());
@@ -44,10 +43,27 @@ class FleetServiceTest extends AbstractServiceTest
         $tables['colonyresearch']  = new \Techtree\Table\ColonyResearchTable($this->dbAdapter, new \Techtree\Entity\ColonyResearch());
         $tables['colonyresource']  = new \Resources\Table\ColonyTable($this->dbAdapter, new \Resources\Entity\Resource());
 
+        $serviceMocks = array();
+        $colonyService   = $this->getMockBuilder('Colony\Service\ColonyService')
+                                          ->disableOriginalConstructor()
+                                          ->getMock();
+
+        $colonyEntity = new \Colony\Entity\Colony();
+        $colonyEntity->setId(1);
+        $colonyEntity->setUserId(3);
+        $colonyEntity->setCoords( array(6828,3016));
+        $colonyService->expects($this->any())
+                      ->method('getColony')
+                      ->will($this->returnValueMap(array(
+                            array(1, $colonyEntity),
+                        )));
+
+        $serviceMocks['colony'] = $colonyService;
+
         $tick = new \Core\Service\Tick(1234);
         #$tick->setTickCount(1234);
 
-        $this->_service = new FleetService($tick, $tables);
+        $this->_service = new FleetService($tick, $tables, $serviceMocks);
 
         $this->fleetId = 10;
         $this->shipId = 29;
@@ -108,6 +124,8 @@ class FleetServiceTest extends AbstractServiceTest
         $colonyentity = $colonyentityTable->getEntity($colonyentityPK);
         $entityCountOnColonyBefore = !empty($colonyentity) ? $colonyentity->getLevel() : 0;
 
+        var_dump($this->colonyId);
+        var_dump($this->fleetId);
         $transferedItemCount = $this->_service->transferShip($this->colonyId, $this->fleetId, 37, 6);
         $this->assertEquals(6, $transferedItemCount);
 

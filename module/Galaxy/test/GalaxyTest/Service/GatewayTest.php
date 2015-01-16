@@ -2,26 +2,27 @@
 namespace GalaxyTest\Service;
 
 use CoreTest\Service\AbstractServiceTest;
-use Galaxy\Entity\Colony;
 use Galaxy\Entity\System;
 use Galaxy\Entity\SystemObject;
+use Galaxy\Table\SystemTable;
+use Galaxy\Table\SystemObjectTable;
+use Galaxy\Service\Gateway;
+
+use Colony\Entity\Colony;
+use Colony\Table\ColonyTable;
+
 use Fleet\Entity\Fleet;
 use Fleet\Entity\FleetShip;
 use Fleet\Entity\FleetPersonell;
 use Fleet\Entity\FleetResearch;
 use Fleet\Entity\FleetResource;
 use Fleet\Entity\FleetOrder;
-use Galaxy\Table\ColonyTable;
-use Galaxy\Table\SystemTable;
-use Galaxy\Table\SystemObjectTable;
 use Fleet\Table\FleetTable;
 use Fleet\Table\FleetShipTable;
 use Fleet\Table\FleetPersonellTable;
 use Fleet\Table\FleetResearchTable;
 use Fleet\Table\FleetResourceTable;
 use Fleet\Table\FleetOrderTable;
-
-use Galaxy\Service\Gateway;
 
 use Zend\Session\Container;
 
@@ -66,9 +67,10 @@ class GatewayTest extends AbstractServiceTest
             )
         );
 
+        $services = array();
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
-        $this->_service = new Gateway($tick, $tables, array(), $config);
+        $this->_service = new Gateway($tick, $tables, $services, $config);
         $logger = $this->getMockBuilder('Zend\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
@@ -91,103 +93,6 @@ class GatewayTest extends AbstractServiceTest
         $objects = $this->_service->getSystems();
         $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertInstanceOf('Galaxy\Entity\System', $objects->current());
-    }
-
-    public function testGetColonies()
-    {
-        $objects = $this->_service->getColonies();
-        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
-    }
-
-    public function testGetColony()
-    {
-        $object = $this->_service->getColony($this->colonyId);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
-        $object = $this->_service->getColony(99);
-        $this->assertFalse($object);
-
-        $this->setExpectedException('Core\Service\Exception');
-        $objects = $this->_service->getColony(-1);
-    }
-
-    public function testGetColoniesByUserId()
-    {
-        $objects = $this->_service->getColoniesByUserId($this->userId);
-        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
-
-        $objects = $this->_service->getColoniesByUserId(99);
-        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-        $this->assertFalse($objects->current());
-
-        $this->setExpectedException('Core\Service\Exception');
-        $objects = $this->_service->getColoniesByUserId(-1);
-    }
-
-    public function testCheckColonyOwner()
-    {
-        $check = $this->_service->checkColonyOwner($this->colonyId, $this->userId);
-        $this->assertTrue($check);
-
-        $check = $this->_service->checkColonyOwner(99, $this->userId);
-        $this->assertFalse($check);
-
-        $check = $this->_service->checkColonyOwner($this->colonyId, 99);
-        $this->assertFalse($check);
-
-        #$this->markTestIncomplete();
-
-    }
-
-    public function testGetPrimeColony()
-    {
-        $object = $this->_service->getPrimeColony($this->userId);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
-        $this->assertTrue($object->getIsPrimary());
-
-        $object = $this->_service->getPrimeColony(0);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
-        $this->assertTrue($object->getIsPrimary());
-
-
-        $this->setExpectedException('Core\Service\Exception');
-        $this->_service->getPrimeColony(19);
-    }
-
-    public function testSetActiveColony()
-    {
-        $session = new Container('activeIds');
-
-        // first test a successfull
-        $session->colonyId = null;
-        $session->userId = $this->userId;
-
-        $this->assertNull($session->colonyId);
-        $this->_service->setActiveColony(1);
-        $this->assertEquals(1, $session->colonyId);
-
-        // second: test a fail
-        $session->colonyId = null;
-        $session->userId = 19; // colony does not belong to user
-
-        $this->assertNull($session->colonyId);
-        $this->_service->setActiveColony(1);
-        $this->assertNull($session->colonyId);
-
-    }
-
-    public function testSetSelectedColony()
-    {
-        $session = new Container('selectedIds');
-        $this->assertNull($session->colonyId);
-
-        $this->_service->setSelectedColony(1);
-        $this->assertEquals(1, $session->colonyId);
-
-        $this->_service->setSelectedColony(2);
-        $this->assertEquals(2, $session->colonyId);
-
     }
 
     public function testGetByCoordinates()
@@ -354,40 +259,40 @@ class GatewayTest extends AbstractServiceTest
 
     }
 
-    public function testGetColonyByCoords()
-    {
-        // test positive
-        $coords = array(6828, 3016, 1);
-        $object = $this->_service->getColonyByCoords($coords);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
-        $this->assertEquals(1, $object->getId());
-
-        // test negative
-        $coords = array(9190, 7790, 99); // system object exists but no colony!
-        $object = $this->_service->getColonyByCoords($coords);
-        $this->assertFalse($object);
-
-        // test exception
-        $this->setExpectedException('Core\Service\Exception');
-        $coords = array('a', 'b');
-        $this->_service->getColonyByCoords($coords);
-    }
-
-    public function testGetColoniesBySystemObjectId()
-    {
-        // test positive
-        $objects = $this->_service->getColoniesBySystemObjectId($this->planetaryId);
-        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
-
-        // test negative
-        $objects = $this->_service->getColoniesBySystemObjectId(99);
-        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-        $this->assertFalse($objects->current());
-
-        // test exception
-        $this->setExpectedException('Core\Service\Exception');
-        $this->_service->getColoniesBySystemObjectId('a');
-    }
+#    public function testGetColonyByCoords()
+#    {
+#        // test positive
+#        $coords = array(6828, 3016, 1);
+#        $object = $this->_service->getColonyByCoords($coords);
+#        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
+#        $this->assertEquals(1, $object->getId());
+#
+#        // test negative
+#        $coords = array(9190, 7790, 99); // system object exists but no colony!
+#        $object = $this->_service->getColonyByCoords($coords);
+#        $this->assertFalse($object);
+#
+#        // test exception
+#        $this->setExpectedException('Core\Service\Exception');
+#        $coords = array('a', 'b');
+#        $this->_service->getColonyByCoords($coords);
+#    }
+#
+#    public function testGetColoniesBySystemObjectId()
+#    {
+#        // test positive
+#        $objects = $this->_service->getColoniesBySystemObjectId($this->planetaryId);
+#        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
+#        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
+#
+#        // test negative
+#        $objects = $this->_service->getColoniesBySystemObjectId(99);
+#        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
+#        $this->assertFalse($objects->current());
+#
+#        // test exception
+#        $this->setExpectedException('Core\Service\Exception');
+#        $this->_service->getColoniesBySystemObjectId('a');
+#    }
 
 }

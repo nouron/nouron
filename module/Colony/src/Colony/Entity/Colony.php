@@ -1,5 +1,5 @@
 <?php
-namespace Galaxy\Entity;
+namespace Colony\Entity;
 
 use Core\Entity\EntityInterface;
 use Core\Entity\MapEntityInterface;

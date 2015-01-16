@@ -143,12 +143,12 @@ return array(
         'factories' => array(
             'Galaxy\Entity\System' => 'Galaxy\Entity\SystemFactory',
             'Galaxy\Entity\SystemObject' => 'Galaxy\Entity\SystemObjectFactory',
-            'Galaxy\Entity\Colony' => 'Galaxy\Entity\ColonyFactory',
+            #'Galaxy\Entity\Colony' => 'Galaxy\Entity\ColonyFactory',
             #'Galaxy\Entity\ColonyTechnology' => 'Galaxy\Entity\ColonyTechnologyFactory',
             #'Galaxy\Entity\Fleet' => 'Galaxy\Entity\FleetFactory',
             #'Galaxy\Entity\FleetTechnology' => 'Galaxy\Entity\FleetTechnologyFactory',
             #'Galaxy\Entity\FleetResource' => 'Galaxy\Entity\FleetResourceFactory',
-            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
+            #'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTableFactory',
             'Galaxy\Table\SystemTable' => 'Galaxy\Table\SystemTableFactory',
             'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
@@ -156,6 +156,7 @@ return array(
             #'Fleet\Entity\Fleet' => 'Fleet\Entity\FleetFactory',
             'Fleet\Table\FleetTable'  => 'Fleet\Table\FleetTableFactory',
             #'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
+            'Colony\Table\ColonyTable' => 'Colony\Table\ColonyTableFactory'
         ),
     ),
 

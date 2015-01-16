@@ -3,7 +3,7 @@ namespace TradeTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use TradeTest\Bootstrap;
 use Trade\Table\ResourceTableFactory;
 
 class ResourceTableFactoryTest extends AbstractTableTest

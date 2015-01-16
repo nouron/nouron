@@ -54,7 +54,7 @@ class Gateway extends \Core\Service\AbstractService
 
         if (isset($data['user_id'])) {
             // not the best solution but works for now
-            $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $data['user_id']);
+            $ownerCheck = $this->getService('colony')->checkColonyOwner($data['colony_id'], $data['user_id']);
         } else {
             $ownerCheck = false;
         }
@@ -123,7 +123,7 @@ class Gateway extends \Core\Service\AbstractService
 
         if (isset($data['user_id'])) {
             // not the best solution but works for now
-            $ownerCheck = $this->getService('galaxy')->checkColonyOwner($data['colony_id'], $data['user_id']);
+            $ownerCheck = $this->getService('colony')->checkColonyOwner($data['colony_id'], $data['user_id']);
         } else {
             $ownerCheck = false;
         }

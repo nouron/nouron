@@ -2,7 +2,7 @@
 namespace TradeTest\Entity;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use TradeTest\Bootstrap;
 use Trade\Entity\ResearchFactory;
 
 class ResearchFactoryTest extends PHPUnit_Framework_TestCase

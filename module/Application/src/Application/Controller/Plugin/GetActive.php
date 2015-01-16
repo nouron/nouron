@@ -66,9 +66,9 @@ class GetActive extends AbstractPlugin
         $sm = $this->getController()->getServiceLocator();
         switch (strtolower($itemType)) {
             case 'colony':
-                $galaxyService = $sm->get('Galaxy\Service\Gateway');
+                $colonyService = $sm->get('Colony\Service\ColonyService');
                 $colonyId = $this->getController()->params()->fromRoute('cid');
-                if ($colonyId && $galaxyService->checkColonyOwner($colonyId, $userId)) {
+                if ($colonyId && $colonyService->checkColonyOwner($colonyId, $userId)) {
                     return $colonyId;
                 }
                 break;

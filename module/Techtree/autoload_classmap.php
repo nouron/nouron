@@ -3,7 +3,7 @@
 return array(
   'Techtree\Module'                                    => __DIR__ . '/Module.php',
   'TechtreeTest\Bootstrap'                             => __DIR__ . '/test/Bootstrap.php',
-  'FeatureContext'                                     => __DIR__ . '/test/functional/features/bootstrap/FeatureContext.php',
+  #'FeatureContext'                                     => __DIR__ . '/test/functional/features/bootstrap/FeatureContext.php',
   'TechtreeTest\Service\BuildingServiceFactoryTest'    => __DIR__ . '/test/TechtreeTest/Service/BuildingServiceFactoryTest.php',
   'TechtreeTest\Service\ResearchServiceTest'           => __DIR__ . '/test/TechtreeTest/Service/ResearchServiceTest.php',
   'TechtreeTest\Service\BuildingServiceTest'           => __DIR__ . '/test/TechtreeTest/Service/BuildingServiceTest.php',

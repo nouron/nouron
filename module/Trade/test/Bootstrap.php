@@ -37,6 +37,10 @@ class Bootstrap
             'modules' => array(
                 'ZfcBase',
                 'ZfcUser',
+                'Core',
+                'Colony',
+                'Resources',
+                'Galaxy',
                 'Trade'
             )
         );

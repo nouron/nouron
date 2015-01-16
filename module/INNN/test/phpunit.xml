@@ -2,8 +2,8 @@
 
 <phpunit bootstrap="Bootstrap.php" colors="false">
     <testsuites>
-        <testsuite name="techtree">
-            <directory>./TechtreeTest</directory>
+        <testsuite name="innn">
+            <directory>./INNNTest</directory>
         </testsuite>
     </testsuites>
 </phpunit>

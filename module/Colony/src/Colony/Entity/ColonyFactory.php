@@ -1,5 +1,5 @@
 <?php
-namespace Galaxy\Entity;
+namespace Colony\Entity;
 
 use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;

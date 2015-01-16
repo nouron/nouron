@@ -253,7 +253,7 @@ return array(
     ),
     'service_manager' => array(
         'factories' => array(
-            'Techtree\Entity\Colony' => 'Techtree\Entity\ColonyFactory',
+#            'Techtree\Entity\Colony' => 'Techtree\Entity\ColonyFactory',
             'Fleet\Entity\ColonyShip' => 'Fleet\Entity\ColonyShipFactory',
             'Fleet\Entity\ColonyPersonell' => 'Fleet\Entity\ColonyPersonellFactory',
             'Fleet\Entity\ColonyResearch' => 'Fleet\Entity\ColonyResearchFactory',
@@ -266,9 +266,9 @@ return array(
             'Fleet\Entity\FleetResource' => 'Fleet\Entity\FleetResourceFactory',
             'Fleet\Entity\FleetOrder' => 'Fleet\Entity\FleetOrderFactory',
             'Fleet\Service\FleetService' => 'Fleet\Service\FleetServiceFactory',
-            'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
+#            'Galaxy\Service\Gateway' => 'Galaxy\Service\GatewayFactory',
 
-            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
+#            'Galaxy\Table\ColonyTable' => 'Galaxy\Table\ColonyTableFactory',
             'Fleet\Table\FleetTable'  => 'Fleet\Table\FleetTableFactory',
             'Fleet\Table\FleetShipTable'  => 'Fleet\Table\FleetShipTableFactory',
             'Fleet\Table\FleetPersonellTable'  => 'Fleet\Table\FleetPersonellTableFactory',

@@ -2,7 +2,7 @@
 namespace GalaxyTest\Service;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use GalaxyTest\Bootstrap;
 use Galaxy\Service\GatewayFactory;
 
 class GatewayFactoryTest extends PHPUnit_Framework_TestCase
@@ -16,10 +16,11 @@ class GatewayFactoryTest extends PHPUnit_Framework_TestCase
             'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
             'Core\Service\Tick' => 'Core\Service\Tick',
             'logger' => 'Zend\Log\Logger',
-            'Galaxy\Table\ColonyTable'       => 'Galaxy\Table\ColonyTable',
             'Galaxy\Table\SystemTable'       => 'Galaxy\Table\SystemTable',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTable',
-            'Galaxy\Table\FleetTable'        => 'Galaxy\Table\FleetTable',
+            #'Galaxy\Table\FleetTable'        => 'Galaxy\Table\FleetTable',
+
+            'Colony\Table\ColonyTable'       => 'Colony\Table\ColonyTable',
             'Fleet\Table\FleetTable'         => 'Fleet\Table\FleetTable',
             'Fleet\Table\FleetShipTable'     => 'Fleet\Table\FleetShipTable',
             'Fleet\Table\FleetPersonellTable' => 'Fleet\Table\FleetPersonellTable',

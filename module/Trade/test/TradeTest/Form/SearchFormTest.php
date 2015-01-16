@@ -2,7 +2,7 @@
 namespace TradeTest\Form;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use TradeTest\Bootstrap;
 use Trade\Form\SearchForm;
 
 class SearchFormTest extends PHPUnit_Framework_TestCase

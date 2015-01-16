@@ -2,7 +2,7 @@
 namespace INNNTest\Entity;
 
 use PHPUnit_Framework_TestCase;
-use TechtreeTest\Bootstrap;
+use INNNTest\Bootstrap;
 use INNN\Entity\MessageFactory;
 
 class MassageFactoryTest extends PHPUnit_Framework_TestCase

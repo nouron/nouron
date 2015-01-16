@@ -14,7 +14,7 @@ use Resources\Entity\User;
 use Techtree\Table\BuildingCostTable;
 use Techtree\Entity\BuildingCost;
 
-use TechtreeTest\Bootstrap;
+use ResourcesTest\Bootstrap;
 
 class ResourcesServiceTest extends AbstractServiceTest
 {
@@ -32,7 +32,7 @@ class ResourcesServiceTest extends AbstractServiceTest
         $tick = new Tick(16000);
 
         $services = array();
-        $galaxyService = $this->getMockBuilder('Galaxy\Service\Gateway')
+        $galaxyService = $this->getMockBuilder('Colony\Service\ColonyService')
                               ->disableOriginalConstructor()
                               ->getMock();
         $galaxyService->expects($this->any())
@@ -42,7 +42,7 @@ class ResourcesServiceTest extends AbstractServiceTest
                             array(1,3, true)
                         )));
 
-        $colonyEntity = new \Galaxy\Entity\Colony();
+        $colonyEntity = new \Colony\Entity\Colony();
         $colonyEntity->setId(1);
         $colonyEntity->setUserId(3);
         $galaxyService->expects($this->any())
