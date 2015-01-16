@@ -15,3 +15,5 @@ tools:
     php_cpd: true
     php_loc: true
     php_pdepend: true
+    external_code_coverage:
+        timeout: 600

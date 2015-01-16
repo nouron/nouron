@@ -399,7 +399,8 @@ class Gateway extends \Core\Service\AbstractService
         if (!empty($planetary)) {
             // get colos on the found planetary
             // (although it is a rowset only one row is possible!)
-            $colos = $this->getColoniesBySystemObjectId($planetary->getId());
+            $colonyService = $this->getService('colony');
+            $colos = $colonyService->getColoniesBySystemObjectId($planetary->getId());
             foreach ($colos as $colo) {
                 // compare colony coords with given coords
                 if (serialize(array($colo->getX(), $colo->getY(), $colo->getSpot()) == serialize($coords))) {

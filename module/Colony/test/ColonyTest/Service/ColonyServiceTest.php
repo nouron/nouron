@@ -5,7 +5,6 @@ use CoreTest\Service\AbstractServiceTest;
 use Colony\Entity\Colony;
 use Colony\Table\ColonyTable;
 use Colony\Service\ColonyService;
-
 use Zend\Session\Container;
 
 class ColonyServiceTest extends AbstractServiceTest

@@ -13,7 +13,6 @@ class ColonyServiceFactory implements FactoryInterface
      */
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
-        $db     = $serviceLocator->get('Zend\Db\Adapter\Adapter');
         $tick   = $serviceLocator->get('Core\Service\Tick');
         $logger = $serviceLocator->get('logger');
 

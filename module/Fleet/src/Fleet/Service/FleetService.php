@@ -23,7 +23,7 @@ class FleetService extends AbstractService
 
     /**
      *
-     * @param Fleet $entity;
+     * @param Fleet $entity
      */
     public function saveFleet($entity)
     {
@@ -32,7 +32,7 @@ class FleetService extends AbstractService
 
     /**
      *
-     * @param Fleet $entity;
+     * @param Fleet $entity
      */
     public function saveFleetOrder($entity)
     {
