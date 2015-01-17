@@ -170,6 +170,11 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         } else {
             $entity = $this->getEntity($entityId);
             $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+            #print("\n");
+            #print('colo:     ' . $colonyId. "\n");
+            #print('tech:     ' . $entityId. "\n");
+            #print('ap spend: ' . $colonyEntity->getApSpend() . "\n");
+            #print('ap need:  ' . $entity->getApForLevelup() . "\n");
             if ($colonyEntity->getApSpend() >= $entity->getApForLevelup()) {
                 return true;
             } else {

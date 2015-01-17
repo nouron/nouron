@@ -20,38 +20,47 @@ class BuildingServiceTest extends AbstractServiceTest
 
         // default test parameters
         $this->_entityId = 27;
+        $this->_entityIdForPositiveAllChecks = 27;
+        $this->_entityIdForNegativeBuildingsCheck = 28;
+        $this->_entityIdForNegativeResearchesCheck = 28;
+        $this->_entityIdForNegativeResourcesCheck = 28;
+        $this->_entityIdForNegativeActionPointsCheck = 28;
+        $this->_entityIdForNegativeMinimumCheck = 28;
+        $this->_entityIdForNegativeMaximumCheck = 29;
+
         $this->_colonyId = 1;
+        $this->_negativeColonyId = 2;
 
         $tables = array();
         $tables['buildings'] = new BuildingTable($this->dbAdapter, new Building());
         $tables['building_costs']   = new BuildingCostTable($this->dbAdapter, new BuildingCost());
         $tables['colony_buildings'] = new ColonyBuildingTable($this->dbAdapter, new ColonyBuilding());
-        #$tables['personell'] = new PersonellTable($this->dbAdapter, new Personell());
-
-        $tick = new \Core\Service\Tick(1234);
-        #$tick->setTickCount(1234);
 
         $services = array();
         $services['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
                                       ->disableOriginalConstructor()
                                       ->getMock();
 
-        $services['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
-                                      ->disableOriginalConstructor()
-                                      ->getMock();
-        $personellService = $this->getMockBuilder('Techtree\Service\PersonellService')
-                                      ->disableOriginalConstructor()
-                                      ->getMock();
+#        $services['galaxy']    = $this->getMockBuilder('Galaxy\Service\Gateway')
+#                                      ->disableOriginalConstructor()
+#                                      ->getMock();
 
+        $personellService = $this->getMockBuilder('Techtree\Service\PersonellService')
+                                 ->disableOriginalConstructor()
+                                 ->getMock();
         $personellService->expects($this->any())
               ->method('getAvailableActionPoints')
               ->will($this->returnValueMap(array(
                     array('construction', $this->_colonyId, 50),
+                    array('construction', $this->_negativeColonyId, 0),
                     array('research', $this->_colonyId, 50),
+                    array('research', $this->_negativeColonyId, 0),
                     array('navigation', $this->_colonyId, 50),
+                    array('navigation', $this->_negativeColonyId, 0)
                 )));
-
         $services['personell'] = $personellService;
+
+        $tick = new \Core\Service\Tick(1234);
         $this->_service = new BuildingService($tick, $tables, $services);
         $logger = $this->getMockBuilder('Zend\Log\Logger')
                        ->disableOriginalConstructor()
@@ -61,18 +70,20 @@ class BuildingServiceTest extends AbstractServiceTest
 
     public function testCheckRequiredActionPoints()
     {
-        // mock object will deliver positive case
+        $this->initDatabase();
+
+        # positive
         $result = $this->_service->checkRequiredActionPoints($this->_colonyId, $this->_entityId);
+        $this->assertTrue($result);
+
+        # negatives
+        $result = $this->_service->checkRequiredActionPoints($this->_colonyId, $this->_entityIdForNegativeActionPointsCheck);
+        $this->assertFalse($result);
+        $result = $this->_service->checkRequiredActionPoints($this->_negativeColonyId, $this->_entityId);
         $this->assertFalse($result);
 
-        #$sm = Bootstrap::getServiceManager();
-        #$personellService = $sm->get('Techtree\Service\PersonellService');
-        #$this->_service->setService($personellService);
-        #$result = $this->_service->checkRequiredActionPoints($this->_colonyId, $this->_entityId);
-        #$this->assertFalse($result);
-
-        // TODO: check a positive case
-        $this->markTestIncomplete();
+        $this->setExpectedException('Core\Service\Exception');
+        $this->_service->checkRequiredActionPoints('x', 'x');
     }
 
     public function testGetEntityCosts()
@@ -85,6 +96,7 @@ class BuildingServiceTest extends AbstractServiceTest
 
     public function testColonyEntity()
     {
+        $this->initDatabase();
         $possess = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
         $this->assertEquals(5, $possess->getLevel());
     }
@@ -113,12 +125,32 @@ class BuildingServiceTest extends AbstractServiceTest
 
     public function testLevelup()
     {
-        // TODO: test successfull level up
+        $this->initDatabase();
+
+        $possessBefore = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
+
+        # test successfull level up
+        $result = $this->_service->levelup($this->_colonyId, $this->_entityId);
+        $this->assertTrue($result);
+
+        $possessAfter = $this->_service->getColonyEntity($this->_colonyId, $this->_entityId);
+        $this->assertTrue($possessAfter->getLevel() == $possessBefore->getLevel() + 1);
+
+        $result = $this->_service->levelup($this->_colonyId, $this->_entityIdForNegativeBuildingsCheck);
+        $this->assertFalse($result);
+
+        $result = $this->_service->levelup($this->_negativeColonyId, $this->_entityId);
+        $this->assertFalse($result); # not enough construction points
+
+        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
+        #$this->assertTrue($result);
+#
+        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
+        #$this->assertTrue($result);
+
         // TODO: test failed checks for level up
         // TODO: test error case
 
-        $this->initDatabase();
-        $result = $this->_service->levelup($this->_colonyId, $this->_entityId);
         $this->markTestIncomplete();
     }
 
@@ -148,11 +180,11 @@ class BuildingServiceTest extends AbstractServiceTest
 #        $this->markTestIncomplete();
 #    }
 #
-#    public function testInvest()
-#    {
-#        $this->initDatabase();
-#        $result = $this->_service->invest($this->_colonyId, $this->_entityId, 'add', 1);
-#        $this->markTestIncomplete();
-#    }
+    public function testInvest()
+    {
+        $this->initDatabase();
+        $result = $this->_service->invest($this->_colonyId, $this->_entityId, 'add', 1);
+        $this->markTestIncomplete();
+    }
 
 }

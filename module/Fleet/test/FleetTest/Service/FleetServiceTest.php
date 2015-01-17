@@ -124,8 +124,8 @@ class FleetServiceTest extends AbstractServiceTest
         $colonyentity = $colonyentityTable->getEntity($colonyentityPK);
         $entityCountOnColonyBefore = !empty($colonyentity) ? $colonyentity->getLevel() : 0;
 
-        var_dump($this->colonyId);
-        var_dump($this->fleetId);
+        #var_dump($this->colonyId);
+        #var_dump($this->fleetId);
         $transferedItemCount = $this->_service->transferShip($this->colonyId, $this->fleetId, 37, 6);
         $this->assertEquals(6, $transferedItemCount);
 

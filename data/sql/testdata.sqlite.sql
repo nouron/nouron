@@ -87,7 +87,7 @@ INSERT INTO "building_costs" VALUES(68,1,100);
 INSERT INTO "building_costs" VALUES(68,2,10);
 INSERT INTO "building_costs" VALUES(70,1,100);
 INSERT INTO "colony_buildings" VALUES(1,25,10,16,1);
-INSERT INTO "colony_buildings" VALUES(1,27,5,11,3);
+INSERT INTO "colony_buildings" VALUES(1,27,5,11,10);
 INSERT INTO "colony_buildings" VALUES(1,28,2,10,0);
 INSERT INTO "colony_buildings" VALUES(1,30,19,10,10);
 INSERT INTO "colony_buildings" VALUES(1,31,19,11,1);

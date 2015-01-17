@@ -387,31 +387,6 @@ class Gateway extends \Core\Service\AbstractService
         return $table->fetchAll("X = $x AND Y = $y")->current();
     }
 
-    /**
-     * Get a colony object by its coords
-     *
-     * @param  array $coords
-     * @return \Galaxy\Entity\Colony|false
-     */
-    public function getColonyByCoords(array $coords)
-    {
-        $planetary = $this->getSystemObjectByCoords($coords);
-        if (!empty($planetary)) {
-            // get colos on the found planetary
-            // (although it is a rowset only one row is possible!)
-            $colonyService = $this->getService('colony');
-            $colos = $colonyService->getColoniesBySystemObjectId($planetary->getId());
-            foreach ($colos as $colo) {
-                // compare colony coords with given coords
-                if (serialize(array($colo->getX(), $colo->getY(), $colo->getSpot()) == serialize($coords))) {
-                    return $colo;
-                }
-            }
-        }
-        // return null if no colony was found
-        return false;
-    }
-
 #    /**
 #     *
 #     * @param string $where

@@ -259,40 +259,4 @@ class GatewayTest extends AbstractServiceTest
 
     }
 
-#    public function testGetColonyByCoords()
-#    {
-#        // test positive
-#        $coords = array(6828, 3016, 1);
-#        $object = $this->_service->getColonyByCoords($coords);
-#        $this->assertInstanceOf('Galaxy\Entity\Colony', $object);
-#        $this->assertEquals(1, $object->getId());
-#
-#        // test negative
-#        $coords = array(9190, 7790, 99); // system object exists but no colony!
-#        $object = $this->_service->getColonyByCoords($coords);
-#        $this->assertFalse($object);
-#
-#        // test exception
-#        $this->setExpectedException('Core\Service\Exception');
-#        $coords = array('a', 'b');
-#        $this->_service->getColonyByCoords($coords);
-#    }
-#
-#    public function testGetColoniesBySystemObjectId()
-#    {
-#        // test positive
-#        $objects = $this->_service->getColoniesBySystemObjectId($this->planetaryId);
-#        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-#        $this->assertInstanceOf('Galaxy\Entity\Colony', $objects->current());
-#
-#        // test negative
-#        $objects = $this->_service->getColoniesBySystemObjectId(99);
-#        $this->assertInstanceOf('Core\Model\ResultSet', $objects);
-#        $this->assertFalse($objects->current());
-#
-#        // test exception
-#        $this->setExpectedException('Core\Service\Exception');
-#        $this->_service->getColoniesBySystemObjectId('a');
-#    }
-
 }

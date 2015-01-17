@@ -111,7 +111,7 @@ class IndexController extends \Core\Controller\IngameController
     {
         $sm = $this->getServiceLocator();
         $fleetService = $sm->get('Fleet\Service\FleetService');
-        $galaxyService = $sm->get('Galaxy\Service\Gateway');
+        $colonyService = $sm->get('Colony\Service\ColonyService');
 
         $resourcesService = $sm->get('Resources\Service\ResourcesService');
         $shipService      = $sm->get('Techtree\Service\ShipService');
@@ -130,7 +130,7 @@ class IndexController extends \Core\Controller\IngameController
         $fleetIsInColonyOrbit = false;
 
         if ($fleet) {
-            $colony = $galaxyService->getColonyByCoords(array($fleet->getX(), $fleet->getY(), $fleet->getSpot()));
+            $colony = $colonyService->getColonyByCoords(array($fleet->getX(), $fleet->getY(), $fleet->getSpot()));
         } else {
             $colony = null;
         }
