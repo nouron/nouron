@@ -33,6 +33,7 @@ class PersonellServiceTest extends AbstractServiceTest
         // default test parameters
         $this->_entityId = 35;
         $this->_colonyId = 1;
+        $this->_colonyId2 = 2;
 
         $tables = array();
         $tables['buildings'] = new BuildingTable($this->dbAdapter, new Building());
@@ -179,21 +180,24 @@ class PersonellServiceTest extends AbstractServiceTest
     public function testFire()
     {
         $this->initDatabase();
-#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
-#        $this->assertTrue($result);
-#
-#        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
-#        $this->assertTrue($result);
-#
+        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
+        $this->assertTrue($result);
+
+        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
+        $this->assertTrue($result);
+
+        $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
+        $this->assertFalse($result); #leveldownLimit
+
+        $result = $this->_service->fire($this->_colonyId2, PersonellService::PERSONELL_ID_PILOT);
+        $this->assertTrue($result);
+
+        #$result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
+        #$this->assertTrue($result);
+
+        #$result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
+        #$this->assertTrue($result);
+
         $this->markTestIncomplete();
     }
 

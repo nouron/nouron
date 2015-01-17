@@ -347,71 +347,74 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $required_buildings_check     = $this->checkRequiredBuildingsByEntityId($colonyId, $entityId);
         # check required resources
         $required_resources_check     = $this->checkRequiredResourcesByEntityId($colonyId, $entityId);
-#        # check required researches
-#        $required_researches_check    = $this->checkRequiredResearchesByEntityId($colonyId, $entityId);
-#        # check invested ap
-#        $required_action_points_check = $this->checkRequiredActionPoints($colonyId, $entityId);
-#        # check if maximum ist not reached yet
-#        $levelup_limit_check          = $this->checkLevelUpLimit($colonyId, $entityId);
-#
-#        print("\n");
-#        var_dump($required_buildings_check);
-#        var_dump($required_resources_check);
-#        var_dump($required_researches_check);
-#        var_dump($required_action_points_check);
-#        var_dump($levelup_limit_check);
-#        print("\n");
-#
-#        if ($required_buildings_check && $required_resources_check &&
-#            $required_researches_check && $required_action_points_check &&
-#            $levelup_limit_check)
-#        {
-#            $table = $this->getTable($this->getColonyEntitiesTableName());
-#            try {
-#                # start transaction
-#                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
-#
-#                # reduce resources
-#                $costs = $this->getEntityCosts($entityId);
-#                $this->getService('resources')->payCosts($costs, $colonyId);
-#
-#                # add one tech level
-#                $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-#                $entity       = $this->getEntity($entityId);
-#                $poss = array(
-#                    'colony_id' => $colonyId,
-#                    $this->getEntityIdName() => $entityId,
-#                    'status_points' => $entity->getMaxStatusPoints(), // reset to max
-#                    'level'    => ($colonyEntity ? $colonyEntity->getLevel() + 1 : 1),
-#                );
-#
-#                if ($this->getEntityIdName() != 'personell_id') {
-#                    $poss['ap_spend'] = 0; // reset to none (ignored when entity type = personnell)
-#                }
-#
-#                $result = $table->save($poss);
-#
-#                # commit transaction
-#                $table->getAdapter()->getDriver()->getConnection()->commit();
-#            } catch (Exception $e) {
-#                $this->getLogger()->log(
-#                    \Zend\Log\Logger::INFO,
-#                    'Add ' . $entityId . ' on colony ' . $colonyId . ' failed'
-#                );
-#                # rollback transaction
-#                $table->getAdapter()->getDriver()->getConnection()->rollback();
-#            }
-#        } else {
-#            $this->getLogger()->log(\Zend\Log\Logger::ERR, 'at least one levelup requirements check failed');
-#            $this->getLogger()->log(\Zend\Log\Logger::INFO, array(
-#                $required_buildings_check,
-#                $required_resources_check,
-#                $required_researches_check,
-#                $required_action_points_check,
-#                $levelup_limit_check)
-#            );
-#        }
-#
+        # check required researches
+        $required_researches_check    = $this->checkRequiredResearchesByEntityId($colonyId, $entityId);
+        # check invested ap
+        $required_action_points_check = $this->checkRequiredActionPoints($colonyId, $entityId);
+        # check if maximum ist not reached yet
+        $levelup_limit_check          = $this->checkLevelUpLimit($colonyId, $entityId);
+
+        #print("\n");
+        #var_dump(get_class($this));
+        #var_dump($colonyId);
+        #var_dump($entityId);
+        #var_dump($required_buildings_check);
+        #var_dump($required_resources_check);
+        #var_dump($required_researches_check);
+        #var_dump($required_action_points_check);
+        #var_dump($levelup_limit_check);
+        #print("\n");
+
+        if ($required_buildings_check && $required_resources_check &&
+            $required_researches_check && $required_action_points_check &&
+            $levelup_limit_check)
+        {
+            $table = $this->getTable($this->getColonyEntitiesTableName());
+            try {
+                # start transaction
+                $table->getAdapter()->getDriver()->getConnection()->beginTransaction();
+
+                # reduce resources
+                $costs = $this->getEntityCosts($entityId);
+                $this->getService('resources')->payCosts($costs, $colonyId);
+
+                # add one tech level
+                $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
+                $entity       = $this->getEntity($entityId);
+                $poss = array(
+                    'colony_id' => $colonyId,
+                    $this->getEntityIdName() => $entityId,
+                    'status_points' => $entity->getMaxStatusPoints(), // reset to max
+                    'level'    => ($colonyEntity ? $colonyEntity->getLevel() + 1 : 1),
+                );
+
+                if ($this->getEntityIdName() != 'personell_id') {
+                    $poss['ap_spend'] = 0; // reset to none (ignored when entity type = personnell)
+                }
+
+                $result = $table->save($poss);
+
+                # commit transaction
+                $table->getAdapter()->getDriver()->getConnection()->commit();
+            } catch (Exception $e) {
+                $this->getLogger()->log(
+                    \Zend\Log\Logger::INFO,
+                    'Add ' . $entityId . ' on colony ' . $colonyId . ' failed'
+                );
+                # rollback transaction
+                $table->getAdapter()->getDriver()->getConnection()->rollback();
+            }
+        } else {
+            $this->getLogger()->log(\Zend\Log\Logger::ERR, 'at least one levelup requirements check failed');
+            $this->getLogger()->log(\Zend\Log\Logger::INFO, array(
+                $required_buildings_check,
+                $required_resources_check,
+                $required_researches_check,
+                $required_action_points_check,
+                $levelup_limit_check)
+            );
+        }
+
         return (bool) $result;
     }
 
@@ -437,6 +440,9 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $leveldown_limit_check        = $this->checkLevelDownLimit($colonyId, $entityId);
 
         #print("\n");
+        #var_dump(get_class($this));
+        #var_dump($colonyId);
+        #var_dump($entityId);
         #var_dump($required_buildings_check);
         #var_dump($required_resources_check);
         #var_dump($required_researches_check);

@@ -5,6 +5,8 @@ use Zend\Session\Container;
 
 class ColonyService extends \Core\Service\AbstractService
 {
+    protected $config = array();
+
     public function __construct($tick, array $tables, array $services = array(), array $config)
     {
         parent::__construct($tick, $tables, $services);
