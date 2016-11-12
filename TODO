@@ -1,0 +1,6 @@
+- ColonyService aus Galaxy heraustrennen (-> Module: Galaxy, Techtree, Colony)
+
+- Namensgebung ändern:
+    - Gateway wird zu Service (Wenn ich keinen eindeutigen Service-Namen finde muss noch weiter aufgesplittet werden)
+    - 'Nouron' Module/Namespace in 'Core' umbenennen
+    - Dateinamenschemas vereinheitlichen

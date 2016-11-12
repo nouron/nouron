@@ -29,30 +29,6 @@ class SystemTest extends PHPUnit_Framework_TestCase
         $this->assertNull($entity->getImageUrl());
     }
 
-    public function testSetId()
-    {
-        $this->entity->setId(1);
-        $this->assertEquals(1, $this->entity->getId());
-    }
-
-    public function testSetName()
-    {
-        $this->entity->setName(1);
-        $this->assertEquals(1, $this->entity->getName());
-    }
-
-    public function testSetX()
-    {
-        $this->entity->setX(1);
-        $this->assertEquals(1, $this->entity->getX());
-    }
-
-    public function testSetY()
-    {
-        $this->entity->setY(1);
-        $this->assertEquals(1, $this->entity->getY());
-    }
-
     public function testSetTypeId()
     {
         $this->entity->setTypeId(1);

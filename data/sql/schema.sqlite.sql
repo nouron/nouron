@@ -21,7 +21,7 @@ CREATE TABLE building_costs (
 );
 CREATE TABLE colony_buildings (
   colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  building_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
+  building_id INTEGER  NOT NULL REFERENCES glx_colonies(id), 
   level INTEGER  NOT NULL DEFAULT '0',
   status_points INTEGER  NOT NULL DEFAULT '10',
   ap_spend INTEGER  NOT NULL DEFAULT '0',
@@ -55,16 +55,6 @@ CREATE TABLE colony_ships (
   status_points INTEGER  NOT NULL DEFAULT '10',
   ap_spend INTEGER  NOT NULL DEFAULT '0',
   PRIMARY KEY (colony_id,ship_id)
-);
-CREATE TABLE fleets (
-  id INTEGER  NOT NULL,
-  fleet TEXT NOT NULL,
-  user_id INTEGER  NOT NULL REFERENCES user(user_id),
-  artefact INTEGER  DEFAULT NULL,
-  x INTEGER  NOT NULL,
-  y INTEGER  NOT NULL,
-  spot INTEGER  NOT NULL DEFAULT '0',
-  PRIMARY KEY (id)
 );
 CREATE TABLE fleet_orders (
   tick INTEGER  NOT NULL,
@@ -168,9 +158,9 @@ CREATE TABLE innn_messages (
   type INTEGER NOT NULL,
   subject TEXT NOT NULL,
   'text' TEXT NOT NULL,
-  is_read INTEGER  NOT NULL DEFAULT '0',
-  is_archived INTEGER  NOT NULL DEFAULT '0',
-  is_deleted INTEGER  NOT NULL DEFAULT '0',
+  isRead INTEGER  NOT NULL DEFAULT '0',
+  isArchived INTEGER  NOT NULL DEFAULT '0',
+  isDeleted INTEGER  NOT NULL DEFAULT '0',
   PRIMARY KEY (id)
 );
 CREATE TABLE innn_message_types (
@@ -312,6 +302,16 @@ CREATE TABLE user_resources (
 CREATE VIEW v_glx_colonies AS select c.id AS id,c.name AS name,c.system_object_id AS system_object_id,c.spot AS spot,c.user_id AS user_id,c.since_tick AS since_tick,c.is_primary AS is_primary,o.name AS system_object_name,o.x AS x,o.y AS y,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation from (glx_colonies c join glx_system_objects o) where (c.system_object_id = o.id);
 CREATE VIEW v_glx_systems AS select s.id AS id,s.x AS x,s.y AS y,s.name AS name,s.type_id AS type_id,s.background_image_url AS background_image_url,s.sight AS sight,s.density AS density,s.radiation AS radiation,t.class AS class,t.size AS size,t.icon_url AS icon_url,t.image_url AS image_url from (glx_systems s join glx_system_types t) where (s.type_id = t.id);
 CREATE VIEW v_glx_system_objects AS select o.id AS id,o.x AS x,o.y AS y,o.name AS name,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation,t.type AS type,t.image_url AS image_url from (glx_system_objects o join glx_system_object_types t) where (o.type_id = t.id);
-CREATE VIEW v_innn_messages AS select m.id AS id,m.sender_id AS sender_id,m.attitude AS attitude,m.recipient_id AS recipient_id,m.tick AS tick,m.type AS type,m.subject AS subject,m.text AS text,m.is_read AS is_read,m.is_archived AS is_archived,m.is_deleted AS is_deleted,sender.username AS sender,recipient.username AS recipient from ((innn_messages m join user sender) join user recipient) where ((sender.user_id = m.sender_id) and (recipient.user_id = m.recipient_id));
+CREATE VIEW v_innn_messages AS select m.id AS id,m.sender_id AS sender_id,m.attitude AS attitude,m.recipient_id AS recipient_id,m.tick AS tick,m.type AS type,m.subject AS subject,m.text AS text,m.isRead AS isRead,m.isArchived AS isArchived,m.isDeleted AS isDeleted,sender.username AS sender,recipient.username AS recipient from ((innn_messages m join user sender) join user recipient) where ((sender.user_id = m.sender_id) and (recipient.user_id = m.recipient_id));
 CREATE VIEW v_trade_researches AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.research_id AS research_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_researches tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));
 CREATE VIEW v_trade_resources AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.resource_id AS resource_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_resources tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));
+CREATE TABLE fleets (
+  id INTEGER  NOT NULL,
+  name TEXT NOT NULL,
+  user_id INTEGER  NOT NULL REFERENCES user(user_id),
+  artefact INTEGER  DEFAULT NULL,
+  x INTEGER  NOT NULL,
+  y INTEGER  NOT NULL,
+  spot INTEGER  NOT NULL DEFAULT '0',
+  PRIMARY KEY (id)
+);

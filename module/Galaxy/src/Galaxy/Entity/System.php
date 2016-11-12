@@ -1,24 +1,19 @@
 <?php
 namespace Galaxy\Entity;
 
-use Core\Entity\EntityInterface;
-use Core\Entity\MapEntityInterface;
+use Galaxy\Entity\AbstractMapEntity;
 
-class System implements EntityInterface, MapEntityInterface
+class System extends AbstractMapEntity
 {
-    private $id;
-    private $name;
-    private $x;
-    private $y;
-    private $type_id;
-    private $background_image_url;
-    private $sight;
-    private $density;
-    private $radiation;
-    private $class;
-    private $size;
-    private $icon_url;
-    private $image_url;
+    protected $type_id;
+    protected $background_image_url;
+    protected $sight;
+    protected $density;
+    protected $radiation;
+    protected $class;
+    protected $size;
+    protected $icon_url;
+    protected $image_url;
 
     /**
      * Gets the value of id.

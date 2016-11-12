@@ -20,7 +20,7 @@
             foreach ($ownFleets as $fleet):
             if ($fleet->getUserId() == $userId): ?>
             <tr class="">
-                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet->getId())) ?>"><i class="glyphicon glyphicon-search"></i><?php echo $fleet->getFleet() ?></a></td>
+                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet->getId())) ?>"><i class="glyphicon glyphicon-search"></i><?php echo $fleet->getName() ?></a></td>
                 <?php
                 if (isset($colony) && $colony->getX() == $fleet->getX() && $colony->getY() == $fleet->getY() ): ?>
                 <td>angedockt</td>

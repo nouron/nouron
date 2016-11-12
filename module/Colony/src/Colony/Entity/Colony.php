@@ -1,21 +1,16 @@
 <?php
 namespace Colony\Entity;
 
-use Core\Entity\EntityInterface;
-use Core\Entity\MapEntityInterface;
+use Galaxy\Entity\AbstractMapEntity;
 
-class Colony implements EntityInterface, MapEntityInterface
+class Colony extends AbstractMapEntity
 {
-    private $id;
-    private $name;
     private $system_object_id;
     private $spot;
     private $user_id;
     private $since_tick;
     private $is_primary;
     private $system_object_name;
-    private $x;
-    private $y;
     private $type_id;
     private $sight;
     private $density;
@@ -44,28 +39,6 @@ class Colony implements EntityInterface, MapEntityInterface
             throw new \Core\Entity\Exception('invalid value for id');
         }
         $this->id = $id;
-        return $this;
-    }
-
-    /**
-     * Gets the value of name.
-     *
-     * @return mixed
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Sets the value of name.
-     *
-     * @param mixed $name the name
-     * @return self
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
         return $this;
     }
 
@@ -216,56 +189,6 @@ class Colony implements EntityInterface, MapEntityInterface
     }
 
     /**
-     * Gets the value of x.
-     *
-     * @return mixed
-     */
-    public function getX()
-    {
-        return $this->x;
-    }
-
-    /**
-     * Sets the value of x.
-     *
-     * @param integer $x
-     * @return self
-     */
-    public function setX($x)
-    {
-        if (!is_numeric($x) || $x < 0) {
-            throw new \Core\Entity\Exception('invalid value for x');
-        }
-        $this->x = (int) $x;
-        return $this;
-    }
-
-    /**
-     * Gets the value of y.
-     *
-     * @return integer
-     */
-    public function getY()
-    {
-        return $this->y;
-    }
-
-    /**
-     * Sets the value of y.
-     *
-     * @param integer $y
-     * @return self
-     */
-    public function setY($y)
-    {
-        if (!is_numeric($y) || $y < 0) {
-            throw new \Core\Entity\Exception('invalid value for y');
-        }
-        $this->y =(int) $y;
-        return $this;
-    }
-
-    /**
      * Gets the value of type_id.
      *
      * @return integer
@@ -363,27 +286,5 @@ class Colony implements EntityInterface, MapEntityInterface
         }
         $this->radiation = $radiation;
         return $this;
-    }
-
-    /**
-     * @return array
-     */
-    public function getCoords()
-    {
-        return array(
-            0 => $this->getX(),
-            1 => $this->getY(),
-            2 => 0
-        );
-    }
-
-    /**
-     * @param arrray $coords
-     * @return null
-     */
-    public function setCoords(array $coords)
-    {
-        $this->setX($coords[0]);
-        $this->setY($coords[1]);
     }
 }

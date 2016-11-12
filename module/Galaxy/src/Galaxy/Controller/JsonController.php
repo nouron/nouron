@@ -59,7 +59,7 @@ class JsonController extends \Core\Controller\IngameController
                     "x" => $fleet->getX(),
                     "y" => $fleet->getY(),
                     "attribs" => array(
-                        "title" => $fleet->getFleet(),
+                        "title" => $fleet->getName(),
                         "class" => ""
                     )
                 );
