@@ -1,8 +1,8 @@
 <?php
 namespace Galaxy\Controller;
 
-#use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
+#use Laminas\View\Model\ViewModel;
+use Laminas\View\Model\JsonModel;
 
 class JsonController extends \Core\Controller\IngameController
 {

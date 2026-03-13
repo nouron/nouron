@@ -1,12 +1,13 @@
 <?php
 return array(
     'modules' => array(
+        'Laminas\Mvc\Plugin\Prg',
+        'Laminas\Mvc\I18n',
         'Application',
-        'ZfcBase',
-        'ZfcUser',
-        'ZfcAdmin',
-        'User', /* based on ZfcUser */
-        /*'ZfcRbac',*/
+        'LmcUser',
+        /* 'ZfcAdmin', */ // No Laminas port available
+        'User', /* based on LmcUser */
+        /*'LmcRbacMvc',*/
         'Core',
         'Galaxy',
         'Resources',
@@ -14,9 +15,6 @@ return array(
         'Fleet',
         'Trade',
         'INNN',
-        'TwbBundle',
-//        'DluTwBootstrap',
-//         'DluTwBootstrapDemo'
 //        'ZendDeveloperTools'
     ),
     'module_listener_options' => array(
@@ -31,7 +29,7 @@ return array(
     'service_manager' => array(
         'use_defaults' => true,
         'factories' => array(
-            'navigation' => 'Zend\Navigation\Service\DefaultNavigationFactory',
+            'navigation' => 'Laminas\Navigation\Service\DefaultNavigationFactory',
         ),
     ),
 );

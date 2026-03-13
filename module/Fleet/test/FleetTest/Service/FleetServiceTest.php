@@ -20,7 +20,7 @@ use Fleet\Entity\FleetResource;
 
 class FleetServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -60,7 +60,7 @@ class FleetServiceTest extends AbstractServiceTest
 
         $serviceMocks['colony'] = $colonyService;
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new FleetService($tick, $tables, $serviceMocks);
@@ -302,7 +302,7 @@ class FleetServiceTest extends AbstractServiceTest
         $result = $this->_service->getFleetResource(array('fleet_id' => 99, 'resource_id' => $this->resourceId));
         $this->assertFalse($result);
 
-        $this->setExpectedException('Exception');
+        $this->expectException('Throwable');
         $this->_service->getFleetResource(-1);
     }
 
@@ -324,7 +324,7 @@ class FleetServiceTest extends AbstractServiceTest
         $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertFalse($result->current());
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getFleetsByUserId(-1);
     }
 

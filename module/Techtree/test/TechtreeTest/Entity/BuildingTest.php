@@ -2,9 +2,9 @@
 namespace TechtreeTest\Entity;
 
 use Techtree\Entity\Building;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class BuildingTest extends PHPUnit_Framework_TestCase
+class BuildingTest extends TestCase
 {
     public function testFleetInitialState()
     {

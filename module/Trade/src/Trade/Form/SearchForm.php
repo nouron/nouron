@@ -28,7 +28,7 @@ class SearchForm extends AbstractTradeForm
         ));
 
         $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
+            'type' => 'Laminas\Form\Element\Select',
             'name' => 'direction',
             'options' => array(
                 'id' => 'direction',
@@ -40,7 +40,7 @@ class SearchForm extends AbstractTradeForm
         ));
 
         $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
+            'type' => 'Laminas\Form\Element\Select',
             'name' => 'item_id',
             'options' => array(
                 'id' => 'item_id',
@@ -63,7 +63,7 @@ class SearchForm extends AbstractTradeForm
 
         # distance = $range * $system_size
         $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
+            'type' => 'Laminas\Form\Element\Select',
             'name' => 'range',
             'options' => array(
                 'id' => 'range',
@@ -83,7 +83,7 @@ class SearchForm extends AbstractTradeForm
 
     /**
      * (non-PHPdoc)
-     * @see \Zend\InputFilter\InputFilterProviderInterface::getInputFilterSpecification()
+     * @see \Laminas\InputFilter\InputFilterProviderInterface::getInputFilterSpecification()
      */
     public function getInputFilterSpecification()
     {

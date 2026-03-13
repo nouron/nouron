@@ -1,34 +1,17 @@
 <?php
 namespace Techtree\View\Helper;
 
-use Zend\View\Helper\AbstractHelper;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\View\Helper\AbstractHelper;
+use Techtree\Service\BuildingService;
 
-class TechnologyNameLink extends AbstractHelper implements ServiceLocatorAwareInterface
+class TechnologyNameLink extends AbstractHelper
 {
-    // @var ServiceLocatorInterface
-    protected $serviceLocator;
+    /** @var BuildingService */
+    protected $buildingService;
 
-    /**
-     * Set the service locator.
-     *
-     * @param ServiceLocatorInterface $serviceLocator
-     * @return TechnologyNameLink
-     */
-    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
+    public function __construct(BuildingService $buildingService)
     {
-        $this->serviceLocator = $serviceLocator;
-        return $this;
-    }
-    /**
-     * Get the service locator.
-     *
-     * @return \Zend\ServiceManager\ServiceLocatorInterface
-     */
-    public function getServiceLocator()
-    {
-        return $this->serviceLocator;
+        $this->buildingService = $buildingService;
     }
 
     /**
@@ -38,9 +21,7 @@ class TechnologyNameLink extends AbstractHelper implements ServiceLocatorAwareIn
      */
     public function __invoke($techId, $colonyId = null)
     {
-        $sm = $this->getServiceLocator();
-        #\Zend\Debug\Debug::dump($sm->getRegisteredServices());
-        $gateway = $sm->get('Techtree\Service\BuildingService');
+        $gateway = $this->buildingService;
         $tech = $gateway->getTechnology($techId);
         if (is_numeric($colonyId)) {
             $lvl = '(' . $gateway->getLevelByTechnologyId($techId, $colonyId) . ')';

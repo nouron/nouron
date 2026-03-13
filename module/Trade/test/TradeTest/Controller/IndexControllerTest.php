@@ -2,13 +2,13 @@
 
 namespace TradeTest\Controller;
 
-use Zend\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
+use Laminas\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
 
 class IndexControllerTest extends AbstractHttpControllerTestCase
 {
     protected $traceError = true;
 
-    public function setUp()
+    public function setUp(): void
     {
         $basePath = __DIR__ . '/../../../../../';
         $this->setApplicationConfig(

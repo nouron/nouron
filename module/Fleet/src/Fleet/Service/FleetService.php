@@ -285,7 +285,7 @@ class FleetService extends AbstractService
                     'level' => 0,
                 );
             } else {
-                $hydrator = new \Zend\StdLib\Hydrator\ClassMethods();
+                $hydrator = new \Laminas\Hydrator\ClassMethods();
                 $techOnColony = $hydrator->extract($result);
             }
 
@@ -302,7 +302,7 @@ class FleetService extends AbstractService
                     'count' => 0,
                 );
             } else {
-                $hydrator = new \Zend\StdLib\Hydrator\ClassMethods();
+                $hydrator = new \Laminas\Hydrator\ClassMethods();
                 $techInFleet = $hydrator->extract($result);
             }
 
@@ -416,7 +416,7 @@ class FleetService extends AbstractService
      */
     public function getFleetShip(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetship')->select($key)->current();
+        $result = $this->getTable('fleetship')->select($key)->current() ?: false;
         if (empty($result) && $forceResultEntity) {
             $result = new FleetShip();
             $result->setFleetId($key['fleet_id']);
@@ -435,7 +435,7 @@ class FleetService extends AbstractService
      */
     public function getFleetResearch(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetresearch')->select($key)->current();
+        $result = $this->getTable('fleetresearch')->select($key)->current() ?: false;
         if (empty($result) && $forceResultEntity) {
             $result = new FleetResearch();
             $result->setFleetId($key['fleet_id']);
@@ -559,7 +559,7 @@ class FleetService extends AbstractService
      */
     public function getFleetResource(array $key, $forceResultEntity = false)
     {
-        $result = $this->getTable('fleetresource')->select($key)->current();
+        $result = $this->getTable('fleetresource')->select($key)->current() ?: false;
         if (empty($result) && $forceResultEntity) {
             $result = new FleetResource();
             $result->setFleetId($key['fleet_id']);

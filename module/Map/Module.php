@@ -11,8 +11,8 @@ class Module extends CoreModule
         $sm = $e->getApplication()->getServiceManager();
         $translator = $sm->get('translator');
 
-        \Zend\Validator\AbstractValidator::setDefaultTranslator(
-            new \Zend\Mvc\I18n\Translator($translator)
+        \Laminas\Validator\AbstractValidator::setDefaultTranslator(
+            new \Laminas\Mvc\I18n\Translator($translator)
         );
     }
 

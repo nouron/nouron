@@ -1,41 +1,15 @@
 <?php
 namespace Resources\View\Helper;
 
-use Zend\View\Helper\AbstractHelper;
-use Zend\ServiceManager\ServiceLocatorAwareInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\View\Helper\AbstractHelper;
 
-class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
+class Resources extends AbstractHelper
 {
-    /**
-     * Set the service locator.
-     *
-     * @param ServiceLocatorInterface $serviceLocator
-     * @return Resources
-     */
-    public function setServiceLocator(ServiceLocatorInterface $serviceLocator)
-    {
-        $this->serviceLocator = $serviceLocator;
-        return $this;
-    }
-
-    /**
-     * Get the service locator.
-     *
-     * @return \Zend\ServiceManager\ServiceLocatorInterface
-     */
-    public function getServiceLocator()
-    {
-        return $this->serviceLocator;
-    }
-
     /**
      * @return string
      */
     public function __invoke($possessions)
     {
-        $sm = $this->getServiceLocator();
-        $translate = $sm->get('translate');
         $xhtml = '<div class="row resource-bar">';
         foreach ($possessions as $resId => $resource):
             $name = $resource['name'];
@@ -43,7 +17,7 @@ class Resources extends AbstractHelper implements ServiceLocatorAwareInterface
             $class =  $resource['icon'];
             $amount  = $possessions[ $resource['id'] ]['amount'];
             if ($amount > 0):
-                $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$translate($name).'">';
+                $xhtml .= '<a data-placement="bottom" rel="tooltip" href="#" data-original-title="'.$this->view->translate($name).'">';
                 $xhtml .= '<i class="'.$class.'">'.$abbreviation.'</i> '.$amount.'</a> ';
             endif;
         endforeach;

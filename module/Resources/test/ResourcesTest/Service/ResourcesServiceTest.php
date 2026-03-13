@@ -18,18 +18,18 @@ use ResourcesTest\Bootstrap;
 
 class ResourcesServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
         $this->sm = Bootstrap::getServiceManager();
         $this->sm->setAllowOverride(true);
-        $this->sm->setService('Zend\Db\Adapter\Adapter', $this->dbAdapter);
+        $this->sm->setService('Laminas\Db\Adapter\Adapter', $this->dbAdapter);
         $tables = array();
         $tables['resource'] = $this->sm->get('Resources\Table\ResourceTable');
         $tables['colonyresources'] = $this->sm->get('Resources\Table\ColonyTable');
         $tables['userresources'] = $this->sm->get('Resources\Table\UserTable');
 
-        $tick = new Tick(16000);
+        $tick = new Tick(['calculation' => ['start' => 3, 'end' => 4]], 16000);
 
         $services = array();
         $galaxyService = $this->getMockBuilder('Colony\Service\ColonyService')
@@ -53,7 +53,7 @@ class ResourcesServiceTest extends AbstractServiceTest
         $services['galaxy'] = $galaxyService;
 
         $this->_service = new ResourcesService($tick, $tables, $services);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);

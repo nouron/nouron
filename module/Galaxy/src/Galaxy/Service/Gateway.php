@@ -1,7 +1,7 @@
 <?php
 namespace Galaxy\Service;
 
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class Gateway extends \Core\Service\AbstractService
 {

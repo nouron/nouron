@@ -9,16 +9,16 @@
 
 namespace Application;
 
-use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
-use Zend\Mvc\ModuleRouteListener;
-use Zend\Db\Adapter\Adapter as DbAdapter;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Router\RouteMatch;
+use Laminas\Mvc\ModuleRouteListener;
+use Laminas\Db\Adapter\Adapter as DbAdapter;
 
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class Module
 {
-    protected $whitelist = array('index/index','zfcuser/login', 'user/login');
+    protected $whitelist = array('index/index','lmcuser/login', 'user/login');
 
     public function onBootstrap($e)
     {
@@ -29,7 +29,7 @@ class Module
         $sm  = $app->getServiceManager();
 
         $list = $this->whitelist;
-        $auth = $sm->get('zfcuser_auth_service');
+        $auth = $sm->get('lmcuser_auth_service');
 
         $em->attach(MvcEvent::EVENT_ROUTE, function($e) use ($list, $auth) {
             $match = $e->getRouteMatch();
@@ -48,7 +48,7 @@ class Module
             // User is authenticated
             if ($auth->hasIdentity()) {
                 $session = new Container('activeIds');
-                #\Zend\Debug\Debug::dump($auth->getIdentity());
+                #\Laminas\Debug\Debug::dump($auth->getIdentity());
                 $session->userId = $auth->getIdentity()->getId();
                 return;
             }
@@ -56,7 +56,7 @@ class Module
             // Redirect to the user login page, as an example
             $router   = $e->getRouter();
             $url      = $router->assemble(array(), array(
-                'name' => 'zfcuser/login'
+                'name' => 'lmcuser/login'
             ));
 
             $response = $e->getResponse();
@@ -70,8 +70,8 @@ class Module
                         ->getServiceManager()
                         ->get('translator');
 
-        \Zend\Validator\AbstractValidator::setDefaultTranslator(
-            new \Zend\Mvc\I18n\Translator($translator)
+        \Laminas\Validator\AbstractValidator::setDefaultTranslator(
+            new \Laminas\Mvc\I18n\Translator($translator)
         );
         $translator = $e->getApplication()->getServiceManager()->get('translator');
         #$translator->setLocale(\Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']))
@@ -91,7 +91,7 @@ class Module
     public function getAutoloaderConfig()
     {
         return array(
-            'Zend\Loader\StandardAutoloader' => array(
+            'Laminas\Loader\StandardAutoloader' => array(
                 'namespaces' => array(
                     __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
                 ),

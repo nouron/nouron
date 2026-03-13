@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
  /**
   * @method integer getActive(String $itemType)
@@ -81,7 +81,7 @@ class IndexController extends \Core\Controller\IngameController
             # get active colony id
             $colony = $galaxyService->getColony($this->getActive('colony'));
 
-            \Zend\Debug\Debug::dump($colony);
+            \Laminas\Debug\Debug::dump($colony);
 
             # Flotten nur auf eigenen Kolonien erstellen!
             if ($this->getRequest()->isPost()) {
@@ -97,9 +97,9 @@ class IndexController extends \Core\Controller\IngameController
                     $newEntity['user_id'] = $colony->getUserId();
                     $fid = $fleetService->saveFleet($newEntity);
                     #$success = true;
-                    \Zend\Debug\Debug::dump($fid);
+                    \Laminas\Debug\Debug::dump($fid);
                 } else {
-                    \Zend\Debug\Debug::dump($form);
+                    \Laminas\Debug\Debug::dump($form);
                 }
             }
         }

@@ -1,7 +1,7 @@
 <?php
 namespace User\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
 class ContactsController extends \Core\Controller\IngameController
 {

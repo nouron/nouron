@@ -7,8 +7,9 @@
 
 namespace Core\Controller;
 
-use Zend\EventManager\EventManagerInterface;
-use Zend\Mvc\Controller\AbstractActionController;
+use Laminas\EventManager\EventManagerInterface;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 /**
  * @method integer getActive(String $itemType)
@@ -17,6 +18,17 @@ use Zend\Mvc\Controller\AbstractActionController;
  */
 class IngameController extends AbstractActionController
 {
+    /**
+     * Compatibility shim: Laminas removed getServiceLocator() from AbstractController.
+     * Retrieve the service manager via the MVC event application.
+     *
+     * @return ServiceLocatorInterface
+     */
+    public function getServiceLocator()
+    {
+        return $this->getEvent()->getApplication()->getServiceManager();
+    }
+
 #    public function setEventManager(EventManagerInterface $events)
 #    {
 #        parent::setEventManager($events);

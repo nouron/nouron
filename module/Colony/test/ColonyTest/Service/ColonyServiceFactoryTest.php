@@ -1,21 +1,21 @@
 <?php
 namespace ColonyTest\Service;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use ColonyTest\Bootstrap;
 use Colony\Service\ColonyServiceFactory;
 
-class ColonyServiceFactoryTest extends PHPUnit_Framework_TestCase
+class ColonyServiceFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         $this->sm->setAllowOverride(true);
 
         $servicesToMock = array(
-            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\Adapter',
             'Core\Service\Tick' => 'Core\Service\Tick',
-            'logger' => 'Zend\Log\Logger',
+            'logger' => 'Laminas\Log\Logger',
             'Colony\Table\ColonyTable' => 'Colony\Table\ColonyTable',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTable',
             'Techtree\Table\ColonyBuildingTable' => 'Techtree\Table\ColonyBuildingTable',
@@ -34,7 +34,7 @@ class ColonyServiceFactoryTest extends PHPUnit_Framework_TestCase
     public function testCreateService()
     {
         $factory = new ColonyServiceFactory();
-        $entity  = $factory->createService($this->sm);
+        $entity  = $factory($this->sm, '', []);
 
         $this->assertInstanceOf(
             "Colony\Service\ColonyService",

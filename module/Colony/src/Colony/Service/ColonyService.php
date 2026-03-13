@@ -1,7 +1,7 @@
 <?php
 namespace Colony\Service;
 
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class ColonyService extends \Core\Service\AbstractService
 {

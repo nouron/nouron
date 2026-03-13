@@ -1,17 +1,18 @@
 <?php
 namespace Techtree\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ActionPointTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        // @var Zend\Db\Adapter\Adapter
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
+        // @var Laminas\Db\Adapter\Adapter
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
         // @var Techtree\Entity\ActionPoint
-        $entity = $serviceLocator->get('Techtree\Entity\ActionPoint');
+        $entity = $container->get('Techtree\Entity\ActionPoint');
         $table = new ActionPointTable($adapter, $entity);
         return $table;
     }

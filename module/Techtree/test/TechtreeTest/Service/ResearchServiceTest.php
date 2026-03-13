@@ -12,7 +12,7 @@ use Techtree\Entity\ColonyResearch;
 
 class ResearchServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -21,7 +21,7 @@ class ResearchServiceTest extends AbstractServiceTest
         $tableMocks['research_costs']   = new ResearchCostTable($this->dbAdapter, new ResearchCost());
         $tableMocks['colony_researches'] = new ColonyResearchTable($this->dbAdapter, new ColonyResearch());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();

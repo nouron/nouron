@@ -1,13 +1,13 @@
 <?php
 namespace TradeTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TradeTest\Bootstrap;
 use Trade\Entity\ResourceFactory;
 
-class ResourceFactoryTest extends PHPUnit_Framework_TestCase
+class ResourceFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class ResourceFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new ResourceFactory();
         $this->assertInstanceOf(
             "Trade\Entity\Resource",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

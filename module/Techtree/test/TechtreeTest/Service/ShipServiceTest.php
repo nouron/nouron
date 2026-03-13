@@ -12,7 +12,7 @@ use Techtree\Entity\ColonyShip;
 
 class ShipServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -21,7 +21,7 @@ class ShipServiceTest extends AbstractServiceTest
         $tableMocks['ship_costs']   = new ShipCostTable($this->dbAdapter, new ShipCost());
         $tableMocks['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();

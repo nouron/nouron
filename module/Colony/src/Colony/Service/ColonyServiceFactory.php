@@ -1,8 +1,9 @@
 <?php
 namespace Colony\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ColonyServiceFactory implements FactoryInterface
 {
@@ -11,13 +12,13 @@ class ColonyServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
-        $tables['colony'] = $serviceLocator->get('Colony\Table\ColonyTable');
+        $tables['colony'] = $container->get('Colony\Table\ColonyTable');
 
         $gateway = new ColonyService($tick, $tables, array(), array());
         $gateway->setLogger($logger);

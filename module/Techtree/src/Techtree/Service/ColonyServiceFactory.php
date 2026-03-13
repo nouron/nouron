@@ -1,8 +1,9 @@
 <?php
 namespace Techtree\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ColonyServiceFactory implements FactoryInterface
 {
@@ -11,23 +12,21 @@ class ColonyServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return ColonyService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
-
-        $sm = $serviceLocator->get('servicemanager');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
-        $tables['buildings']  = $serviceLocator->get('Techtree\Table\BuildingTable');
-        $tables['researches'] = $serviceLocator->get('Techtree\Table\ResearchTable');
-        $tables['ships']      = $serviceLocator->get('Techtree\Table\ShipTable');
-        $tables['personell']  = $serviceLocator->get('Techtree\Table\PersonellTable');
+        $tables['buildings']  = $container->get('Techtree\Table\BuildingTable');
+        $tables['researches'] = $container->get('Techtree\Table\ResearchTable');
+        $tables['ships']      = $container->get('Techtree\Table\ShipTable');
+        $tables['personell']  = $container->get('Techtree\Table\PersonellTable');
 
-        $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
-        $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colony_ships']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
-        $tables['colony_personell']  = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colony_buildings']  = $container->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colony_researches'] = $container->get('Techtree\Table\ColonyResearchTable');
+        $tables['colony_ships']      = $container->get('Techtree\Table\ColonyShipTable');
+        $tables['colony_personell']  = $container->get('Techtree\Table\ColonyPersonellTable');
 
         $services = array();
 

@@ -2,10 +2,9 @@
 namespace User\Entity;
 
 use Core\Entity\EntityInterface;
-use ZfcRbac\Identity\IdentityInterface;
-use ZfcUser\Entity\UserInterface;
+use LmcUser\Entity\UserInterface;
 
-class User implements EntityInterface, IdentityInterface, UserInterface
+class User implements EntityInterface, UserInterface
 {
     protected $tableName  = 'user';
 

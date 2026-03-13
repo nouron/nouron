@@ -1,13 +1,13 @@
 <?php
 namespace TechtreeTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Techtree\Entity\ResearchCostFactory;
 
-class ResearchCostFactoryTest extends PHPUnit_Framework_TestCase
+class ResearchCostFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class ResearchCostFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new ResearchCostFactory();
         $this->assertInstanceOf(
             "Techtree\Entity\ResearchCost",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

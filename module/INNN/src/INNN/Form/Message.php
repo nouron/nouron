@@ -1,8 +1,8 @@
 <?php
 namespace INNN\Form;
 
-use Zend\Form\Form;
-use Zend\InputFilter\InputFilterProviderInterface;
+use Laminas\Form\Form;
+use Laminas\InputFilter\InputFilterProviderInterface;
 
 class Message extends Form implements InputFilterProviderInterface
 {
@@ -39,7 +39,7 @@ class Message extends Form implements InputFilterProviderInterface
             )
         ));
         $this->add(array(
-            'type' => 'Zend\Form\Element\Select',
+            'type' => 'Laminas\Form\Element\Select',
             'name' => 'mood',
             'attributes' =>  array(
                 'id' => 'mood',
@@ -81,7 +81,7 @@ class Message extends Form implements InputFilterProviderInterface
 
     /**
      * (non-PHPdoc)
-     * @see \Zend\InputFilter\InputFilterProviderInterface::getInputFilterSpecification()
+     * @see \Laminas\InputFilter\InputFilterProviderInterface::getInputFilterSpecification()
      */
     public function getInputFilterSpecification()
     {

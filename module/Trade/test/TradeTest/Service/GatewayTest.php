@@ -14,7 +14,7 @@ use Colony\Service\ColonyService;
 
 class GatewayTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -24,7 +24,7 @@ class GatewayTest extends AbstractServiceTest
         $tables['resources']       = new ResourceTable($this->dbAdapter, new Resource());
         $tables['resources_view']  = new ResourceView($this->dbAdapter, new Resource());
 
-        $tick = new \Core\Service\Tick(16000);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 16000);
 
         $serviceMocks = array();
         $serviceMocks['resources'] = $this->getMockBuilder('Resources\Service\ResourcesService')
@@ -50,7 +50,7 @@ class GatewayTest extends AbstractServiceTest
         #var_dump($this->_gateway->getService('colony'));
 
 
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_gateway->setLogger($logger);

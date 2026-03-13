@@ -136,8 +136,8 @@ return array(
         ),
     ),
     'view_helpers' => array(
-        'invokables' => array(
-            'technologyNameLink' => 'Techtree\View\Helper\TechnologyNameLink',
+        'factories' => array(
+            'technologyNameLink' => 'Techtree\View\Helper\TechnologyNameLinkFactory',
         )
     ),
     'navigation' => array(

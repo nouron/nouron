@@ -1,9 +1,9 @@
 <?php
 namespace INNN\Controller;
 
-use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
-use Zend\Session\Container;
+use Laminas\View\Model\ViewModel;
+use Laminas\View\Model\JsonModel;
+use Laminas\Session\Container;
 
 /**
  * @method integer getActive(String $itemType)
@@ -14,7 +14,7 @@ class MessageController extends \Core\Controller\IngameController
 {
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function eventsAction()
     {
@@ -29,7 +29,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function inboxAction()
     {
@@ -44,7 +44,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function outboxAction()
     {
@@ -59,7 +59,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function newAction()
     {
@@ -151,7 +151,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel|\Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\JsonModel|\Laminas\View\Model\ViewModel
      */
     public function archiveAction()
     {
@@ -175,7 +175,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function removeAction()
     {

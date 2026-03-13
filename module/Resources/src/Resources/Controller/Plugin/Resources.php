@@ -2,8 +2,8 @@
 
 namespace Resources\Controller\Plugin;
 
-use Zend\Mvc\Controller\Plugin\AbstractPlugin;
-use Zend\Session\Container;
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
+use Laminas\Session\Container;
 
 class Resources extends AbstractPlugin
 {
@@ -21,7 +21,7 @@ class Resources extends AbstractPlugin
         foreach ($possessions as $resId => $poss) {
             $possessions[$resId] += $resources[$resId];
         }
-        //$sm->get('logger')->log(\Zend\Log\Logger::INFO, $possessions);
+        //$sm->get('logger')->log(\Laminas\Log\Logger::INFO, $possessions);
         return $possessions;
     }
 }

@@ -102,11 +102,11 @@ class ResourcesService extends \Core\Service\AbstractService
     /**
      * check if enough resources are on a colony
      *
-     * @param  \Zend\Db\ResultSet\ResultSetInterface  $costs
+     * @param  \Laminas\Db\ResultSet\ResultSetInterface  $costs
      * @param  integer    $colonyId
      * @return boolean
      */
-    public function check(\Zend\Db\ResultSet\ResultSetInterface $costs, $colonyId)
+    public function check(\Laminas\Db\ResultSet\ResultSetInterface $costs, $colonyId)
     {
         $this->_validateId($colonyId);
         $poss = $this->getPossessionsByColonyId($colonyId);
@@ -117,7 +117,7 @@ class ResourcesService extends \Core\Service\AbstractService
             $possession = isset($poss[$resourceId]['amount']) ? $poss[$resourceId]['amount'] : 0;
             if ($cost->getAmount() > $possession) {
                 $this->getLogger()->log(
-                    \Zend\Log\Logger::INFO,
+                    \Laminas\Log\Logger::INFO,
                     'cost check failed: ' . $cost->getResourceId() . " " . $cost->getAmount() . ' >' . $possession);
                 $result = false;
                 break;
@@ -152,7 +152,7 @@ class ResourcesService extends \Core\Service\AbstractService
             return true;
         } catch (Exception $e) {
             $db->rollBack();
-            $this->getLogger()->log(\Zend\Log\Logger::INFO, $e->getMessage());
+            $this->getLogger()->log(\Laminas\Log\Logger::INFO, $e->getMessage());
             return false;
         }
     }
@@ -194,17 +194,17 @@ class ResourcesService extends \Core\Service\AbstractService
                 );
             }
 
-            $this->getLogger()->log(\Zend\Log\Logger::INFO,
+            $this->getLogger()->log(\Laminas\Log\Logger::INFO,
                 "$colonyId  $resId  $amount  $forceUserResToBeColRes");
 
             switch ( $resId) {
                 case self::RES_CREDITS :
-//                     $this->getLogger()->log(\Zend\Log\Logger::INFO,
+//                     $this->getLogger()->log(\Laminas\Log\Logger::INFO,
 //                         "{$row['credits']} + $amount");
                     $row['credits'] = $row['credits'] + $amount;
                     break;
                 case self::RES_SUPPLY :
-//                     $this->getLogger()->log(\Zend\Log\Logger::INFO,
+//                     $this->getLogger()->log(\Laminas\Log\Logger::INFO,
 //                         "{$row['supply']} + $amount");
                     $row['supply'] = $row['supply'] + $amount;
                     break;

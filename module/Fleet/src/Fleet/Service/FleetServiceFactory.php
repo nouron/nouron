@@ -1,9 +1,10 @@
 <?php
 namespace Fleet\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\Session\Container;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
+use Laminas\Session\Container;
 
 class FleetServiceFactory implements FactoryInterface
 {
@@ -12,32 +13,32 @@ class FleetServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return FleetService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
-        $tables['colony'] = $serviceLocator->get('Colony\Table\ColonyTable');
-        $tables['system'] = $serviceLocator->get('Galaxy\Table\SystemTable');
-        $tables['fleet']     = $serviceLocator->get('Fleet\Table\FleetTable');
-        $tables['fleetship'] = $serviceLocator->get('Fleet\Table\FleetShipTable');
-        $tables['fleetpersonell'] = $serviceLocator->get('Fleet\Table\FleetPersonellTable');
-        $tables['fleetresearch']  = $serviceLocator->get('Fleet\Table\FleetResearchTable');
-        $tables['fleetorder']     = $serviceLocator->get('Fleet\Table\FleetOrderTable');
-        $tables['fleetresource']  = $serviceLocator->get('Fleet\Table\FleetResourceTable');
+        $tables['colony'] = $container->get('Colony\Table\ColonyTable');
+        $tables['system'] = $container->get('Galaxy\Table\SystemTable');
+        $tables['fleet']     = $container->get('Fleet\Table\FleetTable');
+        $tables['fleetship'] = $container->get('Fleet\Table\FleetShipTable');
+        $tables['fleetpersonell'] = $container->get('Fleet\Table\FleetPersonellTable');
+        $tables['fleetresearch']  = $container->get('Fleet\Table\FleetResearchTable');
+        $tables['fleetorder']     = $container->get('Fleet\Table\FleetOrderTable');
+        $tables['fleetresource']  = $container->get('Fleet\Table\FleetResourceTable');
 
-        $tables['ship'] = $serviceLocator->get('Techtree\Table\ShipTable');
-        $tables['personell'] = $serviceLocator->get('Techtree\Table\PersonellTable');
-        $tables['research']  = $serviceLocator->get('Techtree\Table\ResearchTable');
+        $tables['ship'] = $container->get('Techtree\Table\ShipTable');
+        $tables['personell'] = $container->get('Techtree\Table\PersonellTable');
+        $tables['research']  = $container->get('Techtree\Table\ResearchTable');
 
-        $tables['colonyship']      = $serviceLocator->get('Techtree\Table\ColonyShipTable');
-        $tables['colonypersonell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
-        $tables['colonyresearch']  = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colonyresource']  = $serviceLocator->get('Resources\Table\ColonyTable');
+        $tables['colonyship']      = $container->get('Techtree\Table\ColonyShipTable');
+        $tables['colonypersonell'] = $container->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colonyresearch']  = $container->get('Techtree\Table\ColonyResearchTable');
+        $tables['colonyresource']  = $container->get('Resources\Table\ColonyTable');
 
         $services = array();
-        $services['colony'] = $serviceLocator->get('Colony\Service\ColonyService');
+        $services['colony'] = $container->get('Colony\Service\ColonyService');
 
         $service = new FleetService($tick, $tables, $services);
         $service->setLogger($logger);

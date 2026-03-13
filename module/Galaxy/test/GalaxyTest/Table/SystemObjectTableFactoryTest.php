@@ -2,13 +2,13 @@
 namespace GalaxyTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use GalaxyTest\Bootstrap;
 use Galaxy\Table\SystemObjectTableFactory;
 
 class SystemObjectTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class SystemObjectTableFactoryTest extends AbstractTableTest
             new \Galaxy\Entity\SystemObject()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class SystemObjectTableFactoryTest extends AbstractTableTest
         $tableFactory = new SystemObjectTableFactory();
         $this->assertInstanceOf(
             'Galaxy\Table\SystemObjectTable',
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

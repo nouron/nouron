@@ -1,8 +1,9 @@
 <?php
 namespace Techtree\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class PersonellServiceFactory implements FactoryInterface
 {
@@ -11,23 +12,23 @@ class PersonellServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return \Techtree\Service\PersonellService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
-        $tables['personell']        = $serviceLocator->get('Techtree\Table\PersonellTable');
-        $tables['personell_costs']  = $serviceLocator->get('Techtree\Table\PersonellCostTable');
-        $tables['colony_personell'] = $serviceLocator->get('Techtree\Table\ColonyPersonellTable');
-        $tables['colony_buildings'] = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
-        $tables['locked_actionpoints'] = $serviceLocator->get('Techtree\Table\ActionPointTable');
-        $tables['colonies'] = $serviceLocator->get('Colony\Table\ColonyTable');
+        $tables['personell']        = $container->get('Techtree\Table\PersonellTable');
+        $tables['personell_costs']  = $container->get('Techtree\Table\PersonellCostTable');
+        $tables['colony_personell'] = $container->get('Techtree\Table\ColonyPersonellTable');
+        $tables['colony_buildings'] = $container->get('Techtree\Table\ColonyBuildingTable');
+        $tables['locked_actionpoints'] = $container->get('Techtree\Table\ActionPointTable');
+        $tables['colonies'] = $container->get('Colony\Table\ColonyTable');
 
         $services = array();
-        $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');
-        #$services['buildings'] = $serviceLocator->get('Techtree\Service\BuildingService');
-        #$services['galaxy']    = $serviceLocator->get('Galaxy\Service\Gateway');
+        $services['resources'] = $container->get('Resources\Service\ResourcesService');
+        #$services['buildings'] = $container->get('Techtree\Service\BuildingService');
+        #$services['galaxy']    = $container->get('Galaxy\Service\Gateway');
 
         $service = new PersonellService($tick, $tables, $services);
         $service->setLogger($logger);

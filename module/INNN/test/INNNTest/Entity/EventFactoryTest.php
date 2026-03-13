@@ -1,13 +1,13 @@
 <?php
 namespace INNNTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use INNNTest\Bootstrap;
 use INNN\Entity\EventFactory;
 
-class EventFactoryTest extends PHPUnit_Framework_TestCase
+class EventFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class EventFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new EventFactory();
         $this->assertInstanceOf(
             "INNN\Entity\Event",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

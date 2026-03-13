@@ -1,8 +1,8 @@
 <?php
 namespace Trade\Controller;
 
-use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\ViewModel;
+use Laminas\View\Model\JsonModel;
 use Trade\Service\Gateway;
 
 /**
@@ -14,7 +14,7 @@ class IndexController extends \Core\Controller\IngameController
 {
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function addResearchOfferAction()
     {
@@ -55,7 +55,7 @@ class IndexController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function addResourceOfferAction()
     {
@@ -95,7 +95,7 @@ class IndexController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function removeOfferAction()
     {
@@ -121,12 +121,12 @@ class IndexController extends \Core\Controller\IngameController
     /**
      *
      * @param array|object $offers
-     * @return \Zend\Paginator\Paginator
+     * @return \Laminas\Paginator\Paginator
      */
     private function _initPaginator($offers)
     {
-        \Zend\Paginator\Paginator::setDefaultScrollingStyle('Sliding');
-        \Zend\View\Helper\PaginationControl::setDefaultViewPartial(
+        \Laminas\Paginator\Paginator::setDefaultScrollingStyle('Sliding');
+        \Laminas\View\Helper\PaginationControl::setDefaultViewPartial(
             'layout/pagination_control.phtml'
         );
 
@@ -135,14 +135,14 @@ class IndexController extends \Core\Controller\IngameController
         if (is_object($offers)) {
             $offers = $offers->getArrayCopy();
         }
-        $paginator = new \Zend\Paginator\Paginator(new \Zend\Paginator\Adapter\ArrayAdapter($offers));
+        $paginator = new \Laminas\Paginator\Paginator(new \Laminas\Paginator\Adapter\ArrayAdapter($offers));
         $paginator->setCurrentPageNumber($page);
         return $paginator;
     }
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function researchesAction()
     {
@@ -192,7 +192,7 @@ class IndexController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function resourcesAction()
     {

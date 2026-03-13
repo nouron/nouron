@@ -1,15 +1,16 @@
 <?php
 namespace Fleet\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class FleetResearchTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $entity = $serviceLocator->get('Fleet\Entity\FleetResearch');
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
+        $entity = $container->get('Fleet\Entity\FleetResearch');
         $table = new FleetResearchTable($adapter, $entity);
         return $table;
     }

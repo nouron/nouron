@@ -1,16 +1,15 @@
 <?php
-namespace Galaxy\Controller;
+namespace Techtree\View\Helper;
 
 use Laminas\ServiceManager\Factory\FactoryInterface;
 use Psr\Container\ContainerInterface;
-use Laminas\ServiceManager\ServiceLocatorInterface;
 
-class IndexControllerFactory implements FactoryInterface
+class TechnologyNameLinkFactory implements FactoryInterface
 {
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $ctr = new IndexController();
-        return $ctr;
+        return new TechnologyNameLink(
+            $container->get('Techtree\Service\BuildingService')
+        );
     }
 }
-

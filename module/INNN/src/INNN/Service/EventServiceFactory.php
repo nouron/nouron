@@ -1,8 +1,9 @@
 <?php
 namespace INNN\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class EventServiceFactory implements FactoryInterface
 {
@@ -11,10 +12,10 @@ class EventServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return EventService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick = $serviceLocator->get('Core\Service\Tick');
-        $tables['event'] = $serviceLocator->get('INNN\Table\EventTable');
+        $tick = $container->get('Core\Service\Tick');
+        $tables['event'] = $container->get('INNN\Table\EventTable');
         return new EventService($tick, $tables);
     }
 }

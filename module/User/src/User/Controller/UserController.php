@@ -1,7 +1,7 @@
 <?php
 namespace User\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
 class UserController extends \Core\Controller\IngameController
 {

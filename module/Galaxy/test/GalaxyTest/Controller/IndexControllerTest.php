@@ -2,18 +2,18 @@
 
 namespace GalaxyTest\Controller;
 
-use Zend\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
+use Laminas\Test\PHPUnit\Controller\AbstractHttpControllerTestCase;
 use GalaxyTest\Bootstrap;
-use Zend\Http\Request;
-use Zend\Mvc\MvcEvent;
-use Zend\Mvc\Router\RouteMatch;
-use Zend\Mvc\Router\Http\TreeRouteStack as HttpRouter;
+use Laminas\Http\Request;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Router\RouteMatch;
+use Laminas\Router\Http\TreeRouteStack as HttpRouter;
 
 class IndexControllerTest extends AbstractHttpControllerTestCase
 {
     protected $traceError = true;
 
-    public function setUp()
+    public function setUp(): void
     {
         $basePath = __DIR__ . '/../../../../../';
         $this->setApplicationConfig(
@@ -32,16 +32,15 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
         $this->event->setRouter($router);
         $this->event->setRouteMatch($this->routeMatch);
         $this->controller->setEvent($this->event);
-        $this->controller->setServiceLocator($serviceManager);
-        $mockAuth = $this->getMock('ZfcUser\Entity\UserInterface');
+        $mockAuth = $this->createMock('LmcUser\Entity\UserInterface');
 
-        $ZfcUserMock = $this->getMock('User\Entity\User');
+        $LmcUserMock = $this->createMock('User\Entity\User');
 
-        $ZfcUserMock->expects($this->any())
+        $LmcUserMock->expects($this->any())
                     ->method('getId')
                     ->will($this->returnValue('3'));
 
-        $authMock = $this->getMock('ZfcUser\Controller\Plugin\ZfcUserAuthentication');
+        $authMock = $this->createMock('LmcUser\Controller\Plugin\LmcUserAuthentication');
 
         $authMock->expects($this->any())
                  ->method('hasIdentity')
@@ -49,9 +48,9 @@ class IndexControllerTest extends AbstractHttpControllerTestCase
 
         $authMock->expects($this->any())
                  ->method('getIdentity')
-                 ->will($this->returnValue($ZfcUserMock));
+                 ->will($this->returnValue($LmcUserMock));
 
-        $this->controller->getPluginManager()->setService('zfcUserAuthentication', $authMock);
+        $this->controller->getPluginManager()->setService('lmcUserAuthentication', $authMock);
 
         parent::setUp();
     }

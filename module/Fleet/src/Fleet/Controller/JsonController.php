@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Controller;
 
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  * @method string getActive(String $itemType)
@@ -9,7 +9,7 @@ use Zend\View\Model\JsonModel;
 class JsonController extends \Core\Controller\IngameController
 {
     /**
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function addtofleetAction()
     {
@@ -52,7 +52,7 @@ class JsonController extends \Core\Controller\IngameController
     }
 
     /**
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function getFleetTechnologiesAction()
     {
@@ -77,7 +77,7 @@ class JsonController extends \Core\Controller\IngameController
     }
 
 #    /**
-#     * @return \Zend\View\Model\JsonModel
+#     * @return \Laminas\View\Model\JsonModel
 #     */
 #    public function getFleetShipsAction()
 #    {
@@ -85,7 +85,7 @@ class JsonController extends \Core\Controller\IngameController
 #    }
 
     /**
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function getFleetResourcesAction()
     {

@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
 class TechnologyController extends \Core\Controller\IngameController
 {
@@ -64,14 +64,14 @@ class TechnologyController extends \Core\Controller\IngameController
             } else {
                 $this->getServiceLocator()
                      ->get('logger')
-                     ->log(\Zend\Log\Logger::ERR, 'Invalid order type.');
+                     ->log(\Laminas\Log\Logger::ERR, 'Invalid order type.');
                 throw new \Techtree\Service\Exception('Invalid order type.');
             }
         } catch (\Techtree\Service\Exception $e) {
             // TODO : Error-Nachricht
             $this->getServiceLocator()
                  ->get('logger')
-                 ->log(\Zend\Log\Logger::ERR, $e->getMessage());
+                 ->log(\Laminas\Log\Logger::ERR, $e->getMessage());
             $result = false;
             $error = $e->getMessage();
             $message = array('error', $error);
@@ -85,12 +85,12 @@ class TechnologyController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function buildingAction()
     {
         $sm = $this->getServiceLocator();
-        $sm->get('logger')->log(\Zend\Log\Logger::ERR, 'testtesttes');
+        $sm->get('logger')->log(\Laminas\Log\Logger::ERR, 'testtesttes');
 
         $buildingId = $this->params()->fromRoute('id');
         $message = $this->params('message');
@@ -108,8 +108,8 @@ class TechnologyController extends \Core\Controller\IngameController
         $requiredBuildingsCheck = $buildingService->checkRequiredBuildingsByEntityId($colonyId, $buildingId);
         $costs = $buildingService->getEntityCosts($buildingId);
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
         $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
         $buildings = $buildingService->getEntities()->getArrayCopy('id');
 
@@ -145,7 +145,7 @@ class TechnologyController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function researchAction()
     {
@@ -163,13 +163,13 @@ class TechnologyController extends \Core\Controller\IngameController
         $techtree = $colonyService->getTechtree();
         $research = $techtree['research'][$researchId];
 
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, array($colonyId, $researchId));
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, array($colonyId, $researchId));
 
         $requiredBuildingsCheck = $researchService->checkRequiredBuildingsByEntityId($colonyId, $researchId);
         $costs = $researchService->getEntityCosts($researchId);
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
         #$colonyBuildings  = $colonyService->getBuildings()->getArrayCopy('building_id');
         $colonyResearches = $colonyService->getResearches()->getArrayCopy('research_id');
         $buildings  = $buildingService->getEntities()->getArrayCopy('id');
@@ -217,9 +217,9 @@ class TechnologyController extends \Core\Controller\IngameController
         $requiredResearchesCheck = $shipService->checkRequiredResearchesByEntityId($colonyId, $shipId);
         $costs = $shipService->getEntityCosts($shipId);
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required researches check : ' . $requiredResearchesCheck);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required researches check : ' . $requiredResearchesCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
         $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
         $buildings   = $buildingService->getEntities()->getArrayCopy('id');
         $researches  = $researchesService->getEntities()->getArrayCopy('id');
@@ -247,7 +247,7 @@ class TechnologyController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function personellAction()
     {
@@ -267,8 +267,8 @@ class TechnologyController extends \Core\Controller\IngameController
         $requiredBuildingsCheck = $personellService->checkRequiredBuildingsByEntityId($colonyId, $entityId);
         $costs = $personellService->getEntityCosts($entityId);
         $requiredResourcesCheck = $resourcesService->check($costs, $colonyId);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
-        $sm->get('logger')->log(\Zend\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required buildings check : ' . $requiredBuildingsCheck);
+        $sm->get('logger')->log(\Laminas\Log\Logger::INFO, 'required resources check : ' . $requiredResourcesCheck);
         $possessions = $colonyService->getBuildings()->getArrayCopy('building_id');
         $buildings   = $buildingService->getEntities()->getArrayCopy('id');
         $resources   = $resourcesService->getResources()->getArrayCopy('id');

@@ -1,8 +1,8 @@
 <?php
 namespace Trade\Form;
 
-use Zend\Form\Form;
-use Zend\InputFilter\InputFilterProviderInterface;
+use Laminas\Form\Form;
+use Laminas\InputFilter\InputFilterProviderInterface;
 
 abstract class AbstractTradeForm extends Form implements InputFilterProviderInterface
 {

@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 use Techtree\Service\BuildingService;
 
 class IndexController extends \Core\Controller\IngameController

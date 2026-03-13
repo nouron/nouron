@@ -1,13 +1,13 @@
 <?php
 namespace TradeTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TradeTest\Bootstrap;
 use Trade\Entity\ResearchFactory;
 
-class ResearchFactoryTest extends PHPUnit_Framework_TestCase
+class ResearchFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class ResearchFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new ResearchFactory();
         $this->assertInstanceOf(
             "Trade\Entity\Research",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

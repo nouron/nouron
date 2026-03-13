@@ -2,13 +2,13 @@
 namespace TechtreeTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Techtree\Table\PersonellTableFactory;
 
 class PersonellTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class PersonellTableFactoryTest extends AbstractTableTest
             new \Techtree\Entity\Personell()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -27,7 +27,7 @@ class PersonellTableFactoryTest extends AbstractTableTest
     public function testCreateService()
     {
         $tableFactory = new PersonellTableFactory();
-        $entity = $tableFactory->createService($this->sm);
+        $entity = $tableFactory($this->sm, '', []);
         $this->assertInstanceOf(
             "Techtree\Table\PersonellTable",
             $entity

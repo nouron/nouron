@@ -29,7 +29,7 @@ class ColonyServiceTest extends AbstractServiceTest
      */
     private $_colonyId = null;
 
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -48,7 +48,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $tables['colony_personell'] = new ColonyPersonellTable($this->dbAdapter, new ColonyPersonell());
         $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $services = array();
@@ -61,7 +61,7 @@ class ColonyServiceTest extends AbstractServiceTest
 #                                      ->getMock();
 
         $this->_service = new ColonyService($tick, $tables, $services, $this->_colonyId);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
@@ -69,12 +69,12 @@ class ColonyServiceTest extends AbstractServiceTest
 
     public function testSetScopeColonyId()
     {
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         $service = new ColonyService($tick, array(), array(), $this->_colonyId);
         $service->setScopeColonyId(99);
         $this->assertEquals(99, $service->getScopeColonyId());
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $service->setScopeColonyId('abc');
     }
 

@@ -2,9 +2,9 @@
 namespace TradeTest\Entity;
 
 use Trade\Entity\Research;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class ResearchTest extends PHPUnit_Framework_TestCase
+class ResearchTest extends TestCase
 {
     public function testResourceInitialState()
     {

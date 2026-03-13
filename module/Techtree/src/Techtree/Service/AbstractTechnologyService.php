@@ -106,7 +106,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
             return True;
         } else if (!isset($colonyBuildings[$requiredBuildingId])) {
             $this->getLogger()->log(
-                \Zend\Log\Logger::ERR,
+                \Laminas\Log\Logger::ERR,
                 array('required buildings check failed', $requiredBuildingId, $colonyBuildings)
             );
             return False;
@@ -248,7 +248,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
         $this->_validateId($entityId);
 
         $this->getLogger()->log(
-            \Zend\Log\Logger::INFO,
+            \Laminas\Log\Logger::INFO,
             "$changeMode $points $pointsType to technology $entityId on colony $colonyId"
         );
 
@@ -307,7 +307,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
                             $repairCosts[$resId]['amount'] = floor($cost['amount']/$entity->getMaxStatusPoints());
                         }
                         $this->getLogger()->log(
-                            \Zend\Log\Logger::INFO,
+                            \Laminas\Log\Logger::INFO,
                             'Pay resources for repair: ' . serialize($repairCosts)
                         );
                         $this->getService('resources')->payCosts($repairCosts, $colonyId);
@@ -328,7 +328,7 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
                 $table->getAdapter()->getDriver()->getConnection()->commit();
             } catch (Exception $e) {
                 $this->getLogger()->log(
-                    \Zend\Log\Logger::INFO,
+                    \Laminas\Log\Logger::INFO,
                     'Change technology status for building ' . $entityId . ' on colony ' . $colonyId . ' failed'
                 );
                 $table->getAdapter()->getDriver()->getConnection()->rollback();
@@ -403,15 +403,15 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
                 $table->getAdapter()->getDriver()->getConnection()->commit();
             } catch (Exception $e) {
                 $this->getLogger()->log(
-                    \Zend\Log\Logger::INFO,
+                    \Laminas\Log\Logger::INFO,
                     'Add ' . $entityId . ' on colony ' . $colonyId . ' failed'
                 );
                 # rollback transaction
                 $table->getAdapter()->getDriver()->getConnection()->rollback();
             }
         } else {
-            $this->getLogger()->log(\Zend\Log\Logger::ERR, 'at least one levelup requirements check failed');
-            $this->getLogger()->log(\Zend\Log\Logger::INFO, array(
+            $this->getLogger()->log(\Laminas\Log\Logger::ERR, 'at least one levelup requirements check failed');
+            $this->getLogger()->log(\Laminas\Log\Logger::INFO, array(
                 $required_buildings_check,
                 $required_resources_check,
                 $required_researches_check,
@@ -488,14 +488,14 @@ abstract class AbstractTechnologyService extends AbstractService implements Tech
                 $table->getAdapter()->getDriver()->getConnection()->commit();
             } catch (Exception $e) {
                 $this->getLogger()->log(
-                    \Zend\Log\Logger::INFO,
+                    \Laminas\Log\Logger::INFO,
                     'Remove ' . $entityId . ' on colony ' . $colonyId . ' failed'
                 );
                 $table->getAdapter()->getDriver()->getConnection()->rollback();
             }
 
         } else {
-            $this->getLogger()->log(\Zend\Log\Logger::INFO, 'at least one leveldown requirements check failed');
+            $this->getLogger()->log(\Laminas\Log\Logger::INFO, 'at least one leveldown requirements check failed');
         }
 
         return (bool) $result;

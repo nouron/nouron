@@ -2,13 +2,13 @@
 namespace INNN\Test\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use INNNTest\Bootstrap;
 use INNN\Table\MessageTableFactory;
 
 class MessageTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class MessageTableFactoryTest extends AbstractTableTest
             new \INNN\Entity\Message()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class MessageTableFactoryTest extends AbstractTableTest
         $tableFactory = new MessageTableFactory();
         $this->assertInstanceOf(
             "INNN\Table\MessageTable",
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

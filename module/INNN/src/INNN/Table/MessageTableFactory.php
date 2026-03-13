@@ -1,15 +1,16 @@
 <?php
 namespace INNN\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class MessageTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $entity = $serviceLocator->get('INNN\Entity\Message');
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
+        $entity = $container->get('INNN\Entity\Message');
         $table = new MessageTable($adapter, $entity);
         return $table;
     }

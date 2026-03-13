@@ -26,7 +26,7 @@ use Techtree\Entity\ColonyShip;
 
 class PersonellServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -47,7 +47,7 @@ class PersonellServiceTest extends AbstractServiceTest
         $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
         $tables['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();

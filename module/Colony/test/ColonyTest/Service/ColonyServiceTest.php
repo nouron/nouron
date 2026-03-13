@@ -5,11 +5,11 @@ use CoreTest\Service\AbstractServiceTest;
 use Colony\Entity\Colony;
 use Colony\Table\ColonyTable;
 use Colony\Service\ColonyService;
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class ColonyServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -21,7 +21,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $tables['colonyresource'] = new \Resources\Table\ColonyTable($this->dbAdapter, new \Resources\Entity\Colony());
         $tables['systemobject']   = new \Galaxy\Table\SystemObjectTable($this->dbAdapter, new \Galaxy\Entity\SystemObject());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         # TODO: temporary solution, dirty => make it better; load real config
@@ -44,7 +44,7 @@ class ColonyServiceTest extends AbstractServiceTest
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
         $this->_service = new ColonyService($tick, $tables, array(), $config);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
@@ -75,7 +75,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $object = $this->_service->getColony(99);
         $this->assertFalse($object);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $objects = $this->_service->getColony(-1);
     }
 
@@ -89,7 +89,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $this->assertInstanceOf('Core\Model\ResultSet', $objects);
         $this->assertFalse($objects->current());
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $objects = $this->_service->getColoniesByUserId(-1);
     }
 
@@ -119,7 +119,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $this->assertTrue($object->getIsPrimary());
 
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getPrimeColony(19);
     }
 
@@ -181,7 +181,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $coords = array('a', 'b');
         $this->_service->getColonyByCoords($coords);
     }
@@ -199,7 +199,7 @@ class ColonyServiceTest extends AbstractServiceTest
         $this->assertFalse($objects->current());
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getColoniesBySystemObjectId('a');
     }
 

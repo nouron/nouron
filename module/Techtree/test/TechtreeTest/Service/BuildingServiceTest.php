@@ -14,7 +14,7 @@ use Techtree\Entity\Personell;
 
 class BuildingServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -60,9 +60,9 @@ class BuildingServiceTest extends AbstractServiceTest
                 )));
         $services['personell'] = $personellService;
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         $this->_service = new BuildingService($tick, $tables, $services);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
@@ -82,7 +82,7 @@ class BuildingServiceTest extends AbstractServiceTest
         $result = $this->_service->checkRequiredActionPoints($this->_negativeColonyId, $this->_entityId);
         $this->assertFalse($result);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->checkRequiredActionPoints('x', 'x');
     }
 

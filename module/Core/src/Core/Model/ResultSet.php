@@ -7,7 +7,7 @@
 
 namespace Core\Model;
 
-class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
+class ResultSet extends \Laminas\Db\ResultSet\HydratingResultSet
 {
     /**
      * Return the rowset as array:
@@ -30,10 +30,20 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
      * @param  string|null $columnAsIndex Name of the column that serves as array index.
      * @return array
      */
+    /**
+     * Override to return false instead of null for empty result (backward compat with ZF2).
+     *
+     * @return mixed
+     */
+    public function current(): mixed
+    {
+        return parent::current() ?? false;
+    }
+
     public function getArrayCopy($columnAsIndex = null)
     {
 
-        $hydrator = new \Zend\Stdlib\Hydrator\ClassMethods();
+        $hydrator = new \Laminas\Hydrator\ClassMethods();
 
         if (!empty($columnAsIndex)) {
 
@@ -65,7 +75,7 @@ class ResultSet extends \Zend\Db\ResultSet\HydratingResultSet
                     }
                 } catch (Exception $e) {
                     // 'id' doesn't work, so just convert to array
-                    //$this->log(\Zend\Log\Loger::INFO, 'getArrayCopy(): could not determine primary key');
+                    //$this->log(\Laminas\Log\Loger::INFO, 'getArrayCopy(): could not determine primary key');
                     $result = $this->toArray();
                 }
             }

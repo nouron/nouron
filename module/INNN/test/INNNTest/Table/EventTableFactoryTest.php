@@ -2,13 +2,13 @@
 namespace INNN\Test\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use INNNTest\Bootstrap;
 use INNN\Table\EventTableFactory;
 
 class EventTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class EventTableFactoryTest extends AbstractTableTest
             new \INNN\Entity\Event()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class EventTableFactoryTest extends AbstractTableTest
         $tableFactory = new EventTableFactory();
         $this->assertInstanceOf(
             "INNN\Table\EventTable",
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

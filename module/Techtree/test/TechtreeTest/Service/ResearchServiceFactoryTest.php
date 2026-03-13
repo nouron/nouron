@@ -1,12 +1,12 @@
 <?php
 namespace TechtreeTest\Service;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 
-class ResearchServiceFactoryTest extends PHPUnit_Framework_TestCase
+class ResearchServiceFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         $this->sm->setAllowOverride(true);
@@ -20,7 +20,7 @@ class ResearchServiceFactoryTest extends PHPUnit_Framework_TestCase
 
         $this->sm->setService(
             'logger',
-            $this->getMockBuilder('Zend\Log\Logger')
+            $this->getMockBuilder('Laminas\Log\Logger')
                   ->disableOriginalConstructor()
                   ->getMock()
         );

@@ -1,8 +1,9 @@
 <?php
 namespace Trade\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class GatewayFactory implements FactoryInterface
 {
@@ -11,21 +12,21 @@ class GatewayFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return \Trade\Service\Gateway
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array(
-            'researches'      => $serviceLocator->get('Trade\Table\ResearchTable'),
-            'researches_view' => $serviceLocator->get('Trade\Table\ResearchView'),
-            'resources'       => $serviceLocator->get('Trade\Table\ResourceTable'),
-            'resources_view'  => $serviceLocator->get('Trade\Table\ResourceView')
+            'researches'      => $container->get('Trade\Table\ResearchTable'),
+            'researches_view' => $container->get('Trade\Table\ResearchView'),
+            'resources'       => $container->get('Trade\Table\ResourceTable'),
+            'resources_view'  => $container->get('Trade\Table\ResourceView')
         );
 
         $services = array(
-            'resources' => $serviceLocator->get('Resources\Service\ResourcesService'),
-            'galaxy'    => $serviceLocator->get('Galaxy\Service\Gateway')
+            'resources' => $container->get('Resources\Service\ResourcesService'),
+            'galaxy'    => $container->get('Galaxy\Service\Gateway')
         );
 
         $service = new Gateway($tick, $tables, $services);
