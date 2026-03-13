@@ -83,7 +83,7 @@ class ResourcesService extends \Core\Service\AbstractService
     {
         $this->_validateId($colonyId);
 
-        $galaxyGw = $this->getService('galaxy');
+        $galaxyGw = $this->getService('colony');
         $colony = $galaxyGw->getColony($colonyId);
 
         $possessions = $this->getColonyResources('colony_id = ' . $colonyId)->getArrayCopy('resource_id');
@@ -175,7 +175,7 @@ class ResourcesService extends \Core\Service\AbstractService
 
             // user resources
 
-            $colony = $this->getService('galaxy')->getColony($colonyId);
+            $colony = $this->getService('colony')->getColony($colonyId);
             $table = $this->getTable('userresources');
             $userId = $colony->getUserId();
             $row = $table->fetchAll("user_id = $userId")->current();

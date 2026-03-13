@@ -3,7 +3,7 @@
 <?php
 $form = $this->loginForm;
 $form->prepare();
-$form->setAttribute('action', $this->url('zfcuser/login'));
+$form->setAttribute('action', $this->url('lmcuser/login'));
 $form->setAttribute('method', 'post');
 ?>
 
@@ -28,5 +28,5 @@ $form->setAttribute('method', 'post');
 <?php echo $this->form()->closeTag() ?>
 
 <?php if ($this->enableRegistration) : ?>
-Not registered? <a href="<?php echo $this->url('zfcuser/register') . ($this->redirect ? '?redirect='.$this->redirect : '') ?>">Sign up!</a>
+Not registered? <a href="<?php echo $this->url('lmcuser/register') . ($this->redirect ? '?redirect='.$this->redirect : '') ?>">Sign up!</a>
 <?php endif; ?>

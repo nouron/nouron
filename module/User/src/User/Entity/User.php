@@ -172,19 +172,15 @@ class User implements EntityInterface, UserInterface
     }
 
 
-    public function getArrayCopy()
+    public function getRole()
     {
-        return get_object_vars($this);
+        return $this->role;
     }
 
-    public function exchangeArray(array $array)
+    public function setRole($role)
     {
-
-    }
-
-    public function getRoles()
-    {
-        return array($this->role);
+        $this->role = $role;
+        return $this;
     }
 }
 

@@ -1,0 +1,14 @@
+{
+  "name": "nouron",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/copy-vendor.js",
+    "postinstall": "node scripts/copy-vendor.js"
+  },
+  "dependencies": {
+    "bootstrap": "^3.4.1",
+    "jquery": "^3.7.1",
+    "pace-js": "^1.2.4"
+  }
+}

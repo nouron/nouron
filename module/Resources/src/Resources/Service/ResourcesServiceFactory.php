@@ -28,6 +28,7 @@ class ResourcesServiceFactory implements FactoryInterface
         $tables['userresources'] = $container->get('Resources\Table\UserTable');
 
         $gateways['galaxy']    = $container->get('Galaxy\Service\Gateway');
+        $gateways['colony']    = $container->get('Colony\Service\ColonyService');
 
         $resourcesService = new ResourcesService($tick, $tables, $gateways);
         $resourcesService->setLogger($logger);

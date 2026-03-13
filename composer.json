@@ -35,7 +35,8 @@
         "laminas/laminas-mvc-i18n": "^1.5",
         "laminas/laminas-component-installer": "^3.3",
         "lm-commons/lmc-user": "^3.1",
-        "firephp/firephp-core": "dev-master"
+        "firephp/firephp-core": "dev-master",
+        "laminas/laminas-paginator": "^2.22"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.5",

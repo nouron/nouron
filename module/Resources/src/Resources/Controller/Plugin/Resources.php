@@ -15,7 +15,7 @@ class Resources extends AbstractPlugin
     {
         $colonyId = $this->getController()->getActive('colony');
         $sm = $this->getController()->getServiceLocator();
-        $gw = $sm->get('Resources/Service/ResourcesService');
+        $gw = $sm->get('Resources\Service\ResourcesService');
         $resources = $gw->getResources()->getArrayCopy('id');
         $possessions = $gw->getPossessionsByColonyId($colonyId);
         foreach ($possessions as $resId => $poss) {

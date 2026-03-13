@@ -23,7 +23,7 @@ class ShipServiceFactory implements FactoryInterface
         $tables['colony_buildings']  = $container->get('Techtree\Table\ColonyBuildingTable');
         $tables['colony_researches'] = $container->get('Techtree\Table\ColonyResearchTable');
         $tables['colony_ships']      = $container->get('Techtree\Table\ColonyShipTable');
-        $tables['colonies']          = $container->get('Galaxy\Table\ColonyTable');
+        $tables['colonies']          = $container->get('Colony\Table\ColonyTable');
 
         $services = array();
         $services['resources'] = $container->get('Resources\Service\ResourcesService');

@@ -149,6 +149,9 @@ abstract class AbstractTable extends TableGateway
         if ($entity instanceof EntityInterface) {
             $hydrator = new Hydrator\ClassMethods();
             $data = $hydrator->extract($entity);
+            // Remove non-scalar values (arrays, objects) - they are never DB columns.
+            // This filters out utility getters like getArrayCopy(), getCoords() etc.
+            $data = array_filter($data, fn($v) => is_scalar($v) || is_null($v));
         } elseif (is_array($entity)) {
             $data = $entity;
         } else {

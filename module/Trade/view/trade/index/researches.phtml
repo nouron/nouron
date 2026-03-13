@@ -1,6 +1,6 @@
 <div class="row" id="trade">
     <div class="col-md-10">
-    <?php echo $this->form($searchForm->prepare(), \TwbBundle\Form\View\Helper\TwbBundleForm::LAYOUT_INLINE); ?>
+    <?php echo $this->form($searchForm->prepare()); ?>
     </div>
     <div class="col-md-2">
         <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> Angebot erstellen</a>
@@ -56,7 +56,7 @@
             <h3 id="newTradeOfferModalLabel"><?php echo $this->translate("new-offer") ?></h3>
         </div>
         <div class="modal-body">
-            <?php echo $this->form($newOfferForm->prepare());#, \TwbBundle\Form\View\Helper\TwbBundleForm::LAYOUT_HORIZONTAL); ?>
+            <?php echo $this->form($newOfferForm->prepare());#); ?>
         </div>
     </div>
   </div>

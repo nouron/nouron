@@ -45,24 +45,24 @@ echo $this->doctype();
           <div class="navbar-header">
             <a class="navbar-brand" href="<?php echo $this->url('home') ?>"><?php echo $this->translate('Nouron') ?></a>
           </div>
-          <?php if ($this->zfcUserIdentity()): ?>
+          <?php if ($this->lmcUserIdentity()): ?>
           <?php     echo  $this->navigation('navigation')->menu()->setMaxDepth(0)->setUlClass('nav navbar-nav'); ?>
           <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-              <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle" href="<?php echo $this->url('settings') ?>"><?php echo $this->zfcUserIdentity()->getUsername(); ?> <b class="caret"></b></a>
+              <li class="dropdown"><a data-toggle="dropdown" class="dropdown-toggle" href="<?php echo $this->url('settings') ?>"><?php echo $this->lmcUserIdentity()->getUsername(); ?> <b class="caret"></b></a>
                   <ul class="dropdown-menu">
-                      <li><a href="<?php echo $this->url('zfcuser/changepassword') ?>">Passwort ändern</a></li>
-                      <li><a href="<?php echo $this->url('zfcuser/changeemail') ?>">Email ändern</a></li>
+                      <li><a href="<?php echo $this->url('lmcuser/changepassword') ?>">Passwort ändern</a></li>
+                      <li><a href="<?php echo $this->url('lmcuser/changeemail') ?>">Email ändern</a></li>
                   </ul>
               </li>
-              <li><a href="<?php echo $this->url('zfcuser/logout') ?>"><i class="glyphicon glyphicon-off"></i> <?php echo $this->translate('logout') ?></a></li>
+              <li><a href="<?php echo $this->url('lmcuser/logout') ?>"><i class="glyphicon glyphicon-off"></i> <?php echo $this->translate('logout') ?></a></li>
             </ul>
           </div>
           <?php else: ?>
           <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-              <li><a href="<?php echo $this->url('zfcuser/login') ?>"><?php echo $this->translate('Login') ?></a></li>
-              <li><a href="<?php echo $this->url('zfcuser/register') ?>"><?php echo $this->translate('Register') ?></a></li>
+              <li><a href="<?php echo $this->url('lmcuser/login') ?>"><?php echo $this->translate('Login') ?></a></li>
+              <li><a href="<?php echo $this->url('lmcuser/register') ?>"><?php echo $this->translate('Register') ?></a></li>
             </ul>
           </div>
           <?php endif; ?>
@@ -77,7 +77,7 @@ echo $this->doctype();
                          ->getChildren();
         $ourView  = $children[0];
 
-        if ($this->zfcUserIdentity() && isset($ourView->possessions)):
+        if ($this->lmcUserIdentity() && isset($ourView->possessions)):
             echo $this->resources($ourView->possessions); ?>
         <hr />
         <?php endif; ?>

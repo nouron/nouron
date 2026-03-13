@@ -48,7 +48,7 @@ class GetActive extends AbstractPlugin
         if (!empty($itemId)) {
             // store found id in session
             $session = new Container('activeIds');
-            $identifier = strtolower($itemType)+'Id';
+            $identifier = strtolower($itemType).'Id';
             $session->$identifier = $itemId;
         }
 
@@ -118,7 +118,7 @@ class GetActive extends AbstractPlugin
         switch (strtolower($itemType)) {
             case 'colony':
                 // getActiveColony
-                $galaxyService = $sm->get('Galaxy\Service\Gateway');
+                $galaxyService = $sm->get('Colony\Service\ColonyService');
                 $colony = $galaxyService->getPrimeColony($userId);
                 return $colony->getId();
             case 'fleet':
