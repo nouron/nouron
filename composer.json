@@ -69,6 +69,7 @@
             "ResourcesTest\\": "module/Resources/test/ResourcesTest/",
             "TechtreeTest\\": "module/Techtree/test/TechtreeTest/",
             "TradeTest\\": "module/Trade/test/TradeTest/",
+            "UserTest\\": "module/User/test/UserTest/",
             "Test\\": "test/"
         },
         "classmap": [
@@ -78,7 +79,8 @@
             "module/INNN/test/Bootstrap.php",
             "module/Resources/test/Bootstrap.php",
             "module/Techtree/test/Bootstrap.php",
-            "module/Trade/test/Bootstrap.php"
+            "module/Trade/test/Bootstrap.php",
+            "module/User/test/Bootstrap.php"
         ]
     },
     "config": {

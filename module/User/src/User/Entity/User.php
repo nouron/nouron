@@ -38,6 +38,11 @@ class User implements EntityInterface, UserInterface
      */
     protected $state;
 
+    /**
+     * @var string
+     */
+    protected $role;
+
 
     /**
      * Get id.
@@ -181,6 +186,22 @@ class User implements EntityInterface, UserInterface
     {
         $this->role = $role;
         return $this;
+    }
+
+    /**
+     * Alias for getId() — maps the DB column 'user_id' via ClassMethods hydrator.
+     */
+    public function getUserId()
+    {
+        return $this->getId();
+    }
+
+    /**
+     * Alias for setId() — maps the DB column 'user_id' via ClassMethods hydrator.
+     */
+    public function setUserId($id)
+    {
+        return $this->setId($id);
     }
 }
 
