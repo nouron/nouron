@@ -50,7 +50,7 @@ class ResourcesServiceTest extends AbstractServiceTest
                       ->will($this->returnValueMap(array(
                             array(1, $colonyEntity),
                         )));
-        $services['galaxy'] = $galaxyService;
+        $services['colony'] = $galaxyService;
 
         $this->_service = new ResourcesService($tick, $tables, $services);
         $logger = $this->getMockBuilder('Laminas\Log\Logger')
@@ -105,31 +105,51 @@ class ResourcesServiceTest extends AbstractServiceTest
     {
         $this->initDatabase();
         $buildingCostsTable = new BuildingCostTable($this->dbAdapter, new BuildingCost());
-        $costs =  $buildingCostsTable->fetchAll(array('building_id' => $this->_entityId));
+        $costs = $buildingCostsTable->fetchAll(array('building_id' => $this->_entityId));
+        // building 52 costs: resource_id=1 (Credits)=100, resource_id=2 (Supply)=10
+
+        $userBefore = $this->_service->getUserResources('user_id = 3')->current();
+        $creditsBefore = $userBefore->getCredits();
+        $supplyBefore  = $userBefore->getSupply();
+
         $result = $this->_service->payCosts($costs, $this->_colonyId);
         $this->assertTrue($result);
-        $this->markTestIncomplete();
+
+        $userAfter = $this->_service->getUserResources('user_id = 3')->current();
+        $this->assertEquals($creditsBefore - 100, $userAfter->getCredits());
+        $this->assertEquals($supplyBefore - 10,   $userAfter->getSupply());
     }
 
     public function testIncreaseAmount()
     {
         $this->initDatabase();
-        $resId = 2;
+        $resId  = 2; // supply (user resource)
         $amount = 100;
-        $forceUserResToBeColRes = false;
-        $result = $this->_service->increaseAmount($this->_colonyId, $resId, $amount, $forceUserResToBeColRes);
+
+        $before = $this->_service->getUserResources('user_id = 3')->current();
+        $supplyBefore = $before->getSupply();
+
+        $result = $this->_service->increaseAmount($this->_colonyId, $resId, $amount, false);
         $this->assertTrue(is_numeric($result));
-        $this->markTestIncomplete();
+
+        $after = $this->_service->getUserResources('user_id = 3')->current();
+        $this->assertEquals($supplyBefore + $amount, $after->getSupply());
     }
 
     public function testDecreaseAmount()
     {
         $this->initDatabase();
-        $resId = 2;
+        $resId  = 2; // supply (user resource)
         $amount = 100;
+
+        $before = $this->_service->getUserResources('user_id = 3')->current();
+        $supplyBefore = $before->getSupply();
+
         $result = $this->_service->decreaseAmount($this->_colonyId, $resId, $amount);
         $this->assertTrue(is_numeric($result));
-        $this->markTestIncomplete();
+
+        $after = $this->_service->getUserResources('user_id = 3')->current();
+        $this->assertEquals($supplyBefore - $amount, $after->getSupply());
     }
 
 }

@@ -160,11 +160,17 @@ class ColonyServiceTest extends AbstractServiceTest
 
     public function testGetColoniesByCoords()
     {
-        $x = 6800;
-        $y = 3000;
-        $results = $this->_service->getColoniesByCoords(array($x, $y));
+        // system_object_id=1 is at (6828, 3016); Springfield colony is on it.
+        // radius=25, so querying [6828, 3016] must include it.
+        $results = $this->_service->getColoniesByCoords(array(6828, 3016));
         $this->assertInstanceOf('Core\Model\ResultSet', $results);
-        $this->markTestIncomplete();
+        $this->assertEquals(2, $results->count()); // Springfield + Shelbyville both on system_object_id=1
+        $this->assertInstanceOf('Colony\Entity\Colony', $results->current());
+
+        // coords far away — no system objects and no colonies in range
+        $results = $this->_service->getColoniesByCoords(array(0, 0));
+        $this->assertInstanceOf('Core\Model\ResultSet', $results);
+        $this->assertEquals(0, $results->count());
     }
 
     public function testGetColonyByCoords()

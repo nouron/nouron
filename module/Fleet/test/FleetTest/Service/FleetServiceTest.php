@@ -86,28 +86,42 @@ class FleetServiceTest extends AbstractServiceTest
 
     public function testSaveFleet()
     {
-        $this->markTestIncomplete();
-
-
         $this->initDatabase();
+        $fleet = $this->_service->getFleet(8);
+        $this->assertInstanceOf('Fleet\Entity\Fleet', $fleet);
+
+        $fleet->setFleet('UpdatedFleetName');
+        $this->_service->saveFleet($fleet);
+
+        $reloaded = $this->_service->getFleet(8);
+        $this->assertEquals('UpdatedFleetName', $reloaded->getFleet());
     }
 
     public function testSaveFleetOrder()
     {
-        $this->markTestIncomplete();
-
-        $this->initDatabase();
+        $this->markTestSkipped(
+            'FleetOrder::getCoordinates() returns a decoded object which AbstractTable::save() filters out ' .
+            'as non-scalar, causing a NOT NULL constraint violation. Needs source fix (re-encode to JSON on save).'
+        );
     }
 
     public function testGetFleetOrdersByFleetIds()
     {
-        $this->markTestIncomplete();
+        $result = $this->_service->getFleetOrdersByFleetIds([$this->fleetId]);
+        $this->assertInstanceOf('Core\Model\ResultSet', $result);
+        $this->assertInstanceOf('Fleet\Entity\FleetOrder', $result->current());
+        $this->assertEquals(21, $result->count());
+
+        // fleet 11 exists but has 0 orders — total stays 21
+        $result = $this->_service->getFleetOrdersByFleetIds([10, 11]);
+        $this->assertEquals(21, $result->count());
     }
 
     public function testAddOrder()
     {
-        $this->initDatabase();
-        $this->markTestIncomplete();
+        $this->markTestSkipped(
+            'addOrder() contains invalid PHP syntax (bare `pass` statement) — needs source fix before testing.'
+        );
     }
 
     public function testTransferShip()
@@ -190,7 +204,20 @@ class FleetServiceTest extends AbstractServiceTest
     public function testTransferTechnology()
     {
         $this->initDatabase();
-        $this->markTestIncomplete();
+        // fleet 10 and colony 1 share coords (6828,3016) — transfer is allowed
+
+        // 'research' delegates to same logic tested in testTransferResearch
+        // initial level for research 81 on colony 1 is 16
+        $result = $this->_service->transferTechnology('research', $this->colonyId, $this->fleetId, 81, 5);
+        $this->assertEquals(5, $result);
+
+        // transfer back
+        $result = $this->_service->transferTechnology('research', $this->colonyId, $this->fleetId, 81, -5);
+        $this->assertEquals(5, $result);
+
+        // invalid type throws exception
+        $this->expectException(\Exception::class);
+        $this->_service->transferTechnology('invalid', $this->colonyId, $this->fleetId, 81, 1);
     }
 
     public function testTransferResource()
@@ -232,7 +259,6 @@ class FleetServiceTest extends AbstractServiceTest
         $this->assertFalse($result);
         $result = $this->_service->getFleetResearch(array('fleet_id' => $this->fleetId, 'research_id' => 0), true);
         $this->assertInstanceOf('Fleet\Entity\FleetResearch', $result);
-        $this->markTestIncomplete();
     }
 
     public function testGetFleetShips()
@@ -311,7 +337,6 @@ class FleetServiceTest extends AbstractServiceTest
         $result = $this->_service->getOrders(array('fleet_id' => $this->fleetId));
         $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\FleetOrder', $result->current());
-        $this->markTestIncomplete();
     }
 
     public function testGetFleetsByUserId()
@@ -342,7 +367,9 @@ class FleetServiceTest extends AbstractServiceTest
         $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\Fleet', $result->current());
 
-        $this->markTestIncomplete();
+        // exception: invalid id
+        $this->expectException('Core\Service\Exception');
+        $this->_service->getFleetsByEntityId('colony', -1);
     }
 
     public function testGetFleetTechnologies()

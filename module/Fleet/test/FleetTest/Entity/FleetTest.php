@@ -28,9 +28,6 @@ class FleetTest extends TestCase
 
         $this->expectException('Core\Entity\Exception');
         $fleet->setId('a');
-
-        $this->markTestIncomplete();
-
     }
 
     public function testSetFleet()
@@ -38,9 +35,8 @@ class FleetTest extends TestCase
         $fleet = new Fleet();
         $fleet->setFleet('Testfleet');
         $this->assertEquals('Testfleet', $fleet->getFleet());
-
-        $this->markTestIncomplete();
-
+        $fleet->setFleet('');
+        $this->assertEquals('', $fleet->getFleet());
     }
 
     public function testSetUserId()
@@ -53,9 +49,6 @@ class FleetTest extends TestCase
 
         $this->expectException('Core\Entity\Exception');
         $fleet->setUserId('a');
-
-        $this->markTestIncomplete();
-
     }
 
     public function testSetX()
@@ -70,10 +63,6 @@ class FleetTest extends TestCase
 
         $this->expectException('Core\Entity\Exception');
         $fleet->setX('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testSetY()
@@ -88,10 +77,6 @@ class FleetTest extends TestCase
 
         $this->expectException('Core\Entity\Exception');
         $fleet->setY('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testSetSpot()
@@ -99,13 +84,11 @@ class FleetTest extends TestCase
         $fleet = new Fleet();
         $fleet->setSpot(9);
         $this->assertEquals(9, $fleet->getSpot());
+        $fleet->setSpot(0);
+        $this->assertEquals(0, $fleet->getSpot());
 
         $this->expectException('Core\Entity\Exception');
         $fleet->setSpot('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testGetCoords()
@@ -117,8 +100,5 @@ class FleetTest extends TestCase
         $coords = $fleet->getCoords();
         $this->assertTrue(is_array($coords));
         $this->assertEquals(serialize(array(12345,-12345,9)), serialize($coords));
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
     }
 }
