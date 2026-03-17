@@ -1,6 +1,8 @@
 <?php
 return array(
     'modules' => array(
+        'Laminas\Db',
+        'Laminas\Router',
         'Laminas\Paginator',
         'Laminas\Mvc\Plugin\FlashMessenger',
         'Laminas\Mvc\Plugin\Prg',
@@ -15,6 +17,7 @@ return array(
         'Laminas\Session',
         'Laminas\Mvc\I18n',
         'Laminas\Navigation',
+        'Laminas\Cache\Storage\Adapter\Filesystem',
         'Application',
         'LmcUser',
         /* 'ZfcAdmin', */ // No Laminas port available

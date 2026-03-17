@@ -14,6 +14,8 @@ bin/**
 tmp/**
 tmp/**/*
 test/report/*
+.phpunit.result.cache
+data/db/test.db
 
 local.properties
 .classpath
