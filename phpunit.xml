@@ -26,5 +26,8 @@
         <testsuite name="galaxy">
             <directory>./module/Galaxy/test/GalaxyTest</directory>
         </testsuite>
+        <testsuite name="user">
+            <directory>./module/User/test/UserTest</directory>
+        </testsuite>
     </testsuites>
 </phpunit>
