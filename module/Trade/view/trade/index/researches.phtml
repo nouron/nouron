@@ -1,13 +1,13 @@
-<div class="row" id="trade">
+<div class="row mb-2" id="trade">
     <div class="col-md-10">
     <?php echo $this->form($searchForm->prepare()); ?>
     </div>
     <div class="col-md-2">
-        <a id="newOfferButton" class="btn" href="#newTradeOfferModal" data-toggle="modal"><i class="glyphicon glyphicon-plus"></i> Angebot erstellen</a>
+        <a id="newOfferButton" class="btn btn-secondary" href="#newTradeOfferModal" data-bs-toggle="modal"><i class="bi bi-plus"></i> Angebot erstellen</a>
     </div>
 </div>
 <div class="row">
-    <div class="col-md-12">
+    <div class="col-12">
     <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade')); ?>
 
     <table class="table">
@@ -23,7 +23,7 @@
     <?php foreach ($paginator as $offer): ?>
         <tr id="offer-research-<?php echo $offer['colony_id'] ?>-<?php echo $offer['research_id'] ?>">
             <?php if ($offer['user_id'] != $user_id): ?>
-            <td><?php echo $offer['colony'] ?> (<a href=""><i class="glyphicon glyphicon-envelope"></i> <?php echo $offer['username'] ?></a>)</td>
+            <td><?php echo $offer['colony'] ?> (<a href=""><i class="bi bi-envelope"></i> <?php echo $offer['username'] ?></a>)</td>
             <?php else: ?>
             <td><?php echo $offer['colony'] ?></td>
             <?php endif ?>
@@ -33,7 +33,7 @@
             <td><?php echo $offer['price'] ?></td>
             <td><?php echo $offer['restriction'] ?></td>
             <?php if ($offer['user_id'] == $user_id): ?>
-            <td><a href="/trade/remove-offer" class="btn removeOfferButton" title="Remove Offer"><i class="glyphicon glyphicon-remove"></i></a></td>
+            <td><a href="/trade/remove-offer" class="btn btn-sm btn-secondary removeOfferButton" title="Angebot entfernen"><i class="bi bi-x-lg"></i></a></td>
             <?php else: ?>
             <td></td>
             <?php endif; ?>
@@ -41,22 +41,20 @@
     <?php endforeach; ?>
     </table>
 
-
     <?php echo $this->paginationControl($paginator, null, null, array('route' => 'trade', 'action' => 'researches')); ?>
     </div>
 </div>
 
 <!-- Modal -->
-<!-- this Modal is filled with html data from json request -->
-<div id="newTradeOfferModal" class="modal" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
+<div id="newTradeOfferModal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="newTradeOfferModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
         <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-            <h3 id="newTradeOfferModalLabel"><?php echo $this->translate("new-offer") ?></h3>
+            <h3 class="modal-title" id="newTradeOfferModalLabel"><?php echo $this->translate("new-offer") ?></h3>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
         </div>
         <div class="modal-body">
-            <?php echo $this->form($newOfferForm->prepare());#); ?>
+            <?php echo $this->form($newOfferForm->prepare()); ?>
         </div>
     </div>
   </div>

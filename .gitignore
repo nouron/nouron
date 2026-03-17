@@ -8,6 +8,8 @@
 
 vendor/
 bower_components/
+node_modules/
+public/vendor/
 bin/**
 tmp/**
 tmp/**/*

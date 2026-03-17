@@ -10,7 +10,7 @@ class MessageViewFactory implements FactoryInterface
     public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         $adapter = $container->get('Laminas\Db\Adapter\Adapter');
-        $entity = $container->get('INNN\Entity\Message');
+        $entity = $container->get('INNN\Entity\MessageView');
         $table = new MessageView($adapter, $entity);
         return $table;
     }

@@ -359,28 +359,22 @@ class FleetService extends AbstractService
         }
 
         if (serialize($colony->getCoords()) == serialize($fleet->getCoords())) {
-        /*  if ( !$isTradeOffer ) {*/
-                $resOnColony = $this->getColonyResource(array('colony_id' => $colony->id, 'resource_id' => $resId));
-/*            } else {
-                $tradeGw     = new Trade\Service\Gateway();
-                $resOnColony = $tradeGw->getResourceOffer($colony['id'], $resId);
-                if ( $resOnColony == null) {
-                    return 0;
-                }
-            }*/
-            $resInFleet  = $this->getFleetResource(array('fleet_id' => $fleet->id, 'resource_id' => $resId));
+            $resOnColony = $this->getTable('colonyresource')->select(array('colony_id' => $colony->getId(), 'resource_id' => $resId))->current();
+            $resInFleet  = $this->getFleetResource(array('fleet_id' => $fleet->getId(), 'resource_id' => $resId));
 
-            if ($amount >= 0 ) {
+            if (!$resOnColony) {
+                return 0;
+            }
+
+            if ($amount >= 0) {
                 // check if there are enough res on the colony:
-                if ($amount > $resOnColony['amount']) {
-                    // only remove the count of res that really exists in the fleet:
-                    $amount = $resOnColony['amount'];
+                if ($amount > $resOnColony->getAmount()) {
+                    $amount = $resOnColony->getAmount();
                 }
             } else {
                 // check if there are enough res in the fleet:
-                if ($amount < -$resInFleet['amount']) {
-                    // only remove the count of res that really exists in the fleet:
-                    $amount = -$resInFleet['amount'];
+                if ($resInFleet && $amount < -$resInFleet->getAmount()) {
+                    $amount = -$resInFleet->getAmount();
                 }
             }
 
@@ -389,19 +383,21 @@ class FleetService extends AbstractService
             $db = $fleetresourceTable->getAdapter()->getDriver()->getConnection();
             try {
                 $db->beginTransaction();
-                $resOnColony['amount'] = $resOnColony['amount'] - $amount;
+                $resOnColony->setAmount($resOnColony->getAmount() - $amount);
                 $colonyresourceTable->save($resOnColony);
-                $resInFleet['amount']  = $resInFleet['amount'] + $amount;
-                $fleetresourceTable->save($resInFleet);
+                if ($resInFleet) {
+                    $resInFleet->setAmount($resInFleet->getAmount() + $amount);
+                    $fleetresourceTable->save($resInFleet);
+                }
                 $db->commit();
-
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 $db->rollBack();
-                throw new Exception( $e->getMessage() );
+                throw new \Exception($e->getMessage());
             }
 
             return abs($amount);
         }
+        return 0;
     }
 
     /**

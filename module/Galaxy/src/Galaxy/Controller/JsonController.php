@@ -22,7 +22,7 @@ class JsonController extends \Core\Controller\IngameController
                 ));
             }
 
-            if (is_numeric($x2, $y2)) {
+            if (is_numeric($x2) && is_numeric($y2)) {
                 $x = round(($x+$x2)/2);
                 $y = round(($y+$y2)/2);
             }
@@ -35,8 +35,11 @@ class JsonController extends \Core\Controller\IngameController
 
             $data = array();
 
+            // Field types (asteroid, minefield, nebula variants, graveyard) → misc layer (0)
+            // Solid bodies (planets, giants) → planets layer (1)
+            $fieldTypes = [9, 10, 11, 14, 15, 16];
             foreach ($objects as $object) {
-                if ($object->getTypeId() == 9) {
+                if (in_array($object->getTypeId(), $fieldTypes)) {
                     $layer = 0;
                 } else {
                     $layer = 1;
@@ -68,7 +71,7 @@ class JsonController extends \Core\Controller\IngameController
 
             return new JsonModel($data);
         }
-        catch (\Exception $e)
+        catch (\Throwable $e)
         {
             return new JsonModel(array('error' => $e->getMessage()));
         }

@@ -18,15 +18,19 @@ class JsonController extends \Core\Controller\IngameController
             $fleetId = $this->getActive('fleet');
         }
 
-        $colonyId = $this->getActive('colony');
-
         $itemType = $this->params()->fromPost('itemType');
         $itemId   = (int) $this->params()->fromPost('itemId');
         $amount   = (int) $this->params()->fromPost('amount');
         $isCargo  = (bool) $this->params()->fromPost('isCargo');
 
         $sm = $this->getServiceLocator();
-        $fleetService = $sm->get('Fleet\Service\FleetService');
+        $fleetService  = $sm->get('Fleet\Service\FleetService');
+        $colonyService = $sm->get('Colony\Service\ColonyService');
+
+        $fleet  = $fleetService->getFleet($fleetId);
+        $colony = $colonyService->getColonyByCoords($fleet->getCoords());
+        $colonyId = $colony ? $colony->getId() : null;
+
         if (strtolower($itemType) == 'ship') {
             $transferred = $fleetService->transferShip($colony, $fleetId, $itemId, $amount, $isCargo);
         } elseif (strtolower($itemType) == 'research') {
@@ -56,13 +60,6 @@ class JsonController extends \Core\Controller\IngameController
      */
     public function getFleetTechnologiesAction()
     {
-        $services = $this->getServiceLocator();
-
-        $router = $services->get('router');
-        $request = $services->get('request');
-
-        $routeMatch = $router->match($request);
-
         $sm = $this->getServiceLocator();
         $gw = $sm->get('Fleet\Service\FleetService');
         $fleetId = $this->params()->fromRoute('id');

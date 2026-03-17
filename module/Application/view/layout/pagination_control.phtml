@@ -9,26 +9,27 @@ $urlhelperparams = array(
     <!-- Vorheriger Seitenlink -->
     <?php if (isset($this->previous)): ?>
         <?php $urlhelperparams['page'] = $this->previous; ?>
-        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>">&laquo; Zurück</a></li>
+        <li class="page-item"><a class="page-link" href="<?php echo $this->url($this->route, $urlhelperparams); ?>">&laquo; Zurück</a></li>
     <?php else: ?>
-        <li class="disabled"><span>&laquo; Zurück</span></li>
+        <li class="page-item disabled"><span class="page-link">&laquo; Zurück</span></li>
     <?php endif; ?>
 
     <!-- Anzahl an Seitenlinks -->
     <?php foreach ($this->pagesInRange as $page): ?>
       <?php if ($page != $this->current): ?>
-        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>"><?php echo $page; ?></a></li>
+        <?php $urlhelperparams['page'] = $page; ?>
+        <li class="page-item"><a class="page-link" href="<?php echo $this->url($this->route, $urlhelperparams); ?>"><?php echo $page; ?></a></li>
       <?php else: ?>
-        <li class="active"><span ><?php echo $page; ?></span></li>
+        <li class="page-item active"><span class="page-link"><?php echo $page; ?></span></li>
       <?php endif; ?>
     <?php endforeach; ?>
 
     <!-- Nächster Seitenlink -->
     <?php if (isset($this->next)): ?>
         <?php $urlhelperparams['page'] = $this->next; ?>
-        <li><a href="<?php echo $this->url($this->route, $urlhelperparams); ?>">Vor  &raquo;</a></li>
+        <li class="page-item"><a class="page-link" href="<?php echo $this->url($this->route, $urlhelperparams); ?>">Vor &raquo;</a></li>
     <?php else: ?>
-        <li><span class="disabled">Vor &raquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">Vor &raquo;</span></li>
     <?php endif; ?>
 </ul>
 <?php endif; ?>

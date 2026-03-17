@@ -1,27 +1,31 @@
 <div class="row">
-<div class="panel-group col-md-12" id="accordion">
+<div class="accordion col-12" id="outbox-accordion">
+    <?php if (empty($messages) || count($messages) === 0): ?>
+    <p class="text-muted fst-italic">Keine Nachrichten im Ausgang.</p>
+    <?php endif; ?>
     <?php foreach ($messages as $message): ?>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h4 class="panel-title">
-            <i class="glyphicon glyphicon-time"></i> <?php echo $message->getTick() ?>
-                <strong>an <a href="<?php echo $this->url("user", array('id'=>$message->getRecipientId() )) ?>"><?php echo $message->getRecipient() ?></a>:</strong>
-            <a data-toggle="collapse" data-parent="#accordion" href="#collapse-message-<?php echo $message->getid() ?>"><?php echo $message->getSubject() ?>
-            </a>
-            </h4>
-        </div>
-        <div id="collapse-message-<?php echo $message->getid() ?>" class="panel-collapse collapse">
-            <div class="panel-body">
+    <div class="accordion-item">
+        <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#collapse-message-<?php echo $message->getid() ?>">
+                <i class="bi bi-clock me-1"></i> <?php echo $message->getTick() ?>
+                &nbsp;<strong>an <a href="<?php echo $this->url("user", array('id'=>$message->getRecipientId() )) ?>"><?php echo $message->getRecipient() ?></a>:</strong>&nbsp;
+                <?php echo $message->getSubject() ?>
+            </button>
+        </h2>
+        <div id="collapse-message-<?php echo $message->getid() ?>" class="accordion-collapse collapse">
+            <div class="accordion-body">
                 <p><?php echo $message->getText() ?></p>
-                <br />
-                <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive')?>"><i class="glyphicon glyphicon-thumbs-up"></i></a>
-                <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="glyphicon glyphicon-thumbs-up"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
-                <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_neutral_and_answer')?>"><i class="glyphicon glyphicon-envelope"></i></a>
-                <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative')?>"><i class="glyphicon glyphicon-thumbs-down"></i></a>
-                <a href="#" class="btn disabled" data-placement="bottom" rel="tooltip" data-original-title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="glyphicon glyphicon-thumbs-down"></i> + <i class="glyphicon glyphicon-envelope"></i></a>
+                <div class="d-flex gap-2 flex-wrap mt-2">
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled" data-bs-toggle="tooltip" title="<?php echo $this->translate('react_positive')?>"><i class="bi bi-hand-thumbs-up"></i></a>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled" data-bs-toggle="tooltip" title="<?php echo $this->translate('react_positive_and_answer')?>"><i class="bi bi-hand-thumbs-up"></i> + <i class="bi bi-envelope"></i></a>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled" data-bs-toggle="tooltip" title="<?php echo $this->translate('react_neutral_and_answer')?>"><i class="bi bi-envelope"></i></a>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled" data-bs-toggle="tooltip" title="<?php echo $this->translate('react_negative')?>"><i class="bi bi-hand-thumbs-down"></i></a>
+                <a href="#" class="btn btn-sm btn-outline-secondary disabled" data-bs-toggle="tooltip" title="<?php echo $this->translate('react_negative_and_answer')?>"><i class="bi bi-hand-thumbs-down"></i> + <i class="bi bi-envelope"></i></a>
+                </div>
             </div>
         </div>
     </div>
     <?php endforeach ?>
 </div>
-</div><!--/row-->
+</div>

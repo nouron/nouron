@@ -18,7 +18,8 @@ class ColonyServiceFactory implements FactoryInterface
         $logger = $container->get('logger');
 
         $tables = array();
-        $tables['colony'] = $container->get('Colony\Table\ColonyTable');
+        $tables['colony']       = $container->get('Colony\Table\ColonyTable');
+        $tables['systemobject'] = $container->get('Galaxy\Table\SystemObjectTable');
 
         $gateway = new ColonyService($tick, $tables, array(), array());
         $gateway->setLogger($logger);

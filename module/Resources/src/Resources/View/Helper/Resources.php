@@ -10,7 +10,7 @@ class Resources extends AbstractHelper
      */
     public function __invoke($possessions)
     {
-        $xhtml = '<div class="row resource-bar">';
+        $xhtml = '<div class="d-flex flex-wrap gap-2 justify-content-center resource-bar">';
         foreach ($possessions as $resId => $resource):
             $name = $resource['name'];
             $abbreviation =  $resource['abbreviation'];
