@@ -99,14 +99,23 @@ class FleetServiceTest extends AbstractServiceTest
 
     public function testSaveFleetOrder()
     {
-        $this->markTestSkipped(
-            'FleetOrder::getCoordinates() returns a decoded object which AbstractTable::save() filters out ' .
-            'as non-scalar, causing a NOT NULL constraint violation. Needs source fix (re-encode to JSON on save).'
-        );
+        $this->initDatabase();
+        $ordersBefore = $this->_service->getOrders(['fleet_id' => $this->fleetId])->count();
+
+        $order = new \Fleet\Entity\FleetOrder();
+        $order->setTick(99999);
+        $order->setFleetId($this->fleetId);
+        $order->setOrder('hold');
+        $order->setCoordinates('[6828,3016,0]');
+        $this->_service->saveFleetOrder($order);
+
+        $ordersAfter = $this->_service->getOrders(['fleet_id' => $this->fleetId])->count();
+        $this->assertEquals($ordersBefore + 1, $ordersAfter);
     }
 
     public function testGetFleetOrdersByFleetIds()
     {
+        $this->initDatabase();
         $result = $this->_service->getFleetOrdersByFleetIds([$this->fleetId]);
         $this->assertInstanceOf('Core\Model\ResultSet', $result);
         $this->assertInstanceOf('Fleet\Entity\FleetOrder', $result->current());
@@ -120,7 +129,8 @@ class FleetServiceTest extends AbstractServiceTest
     public function testAddOrder()
     {
         $this->markTestSkipped(
-            'addOrder() contains invalid PHP syntax (bare `pass` statement) — needs source fix before testing.'
+            'addOrder() delegates path-finding to getService("galaxy")->getPath() which requires ' .
+            'a Galaxy\Service\Gateway mock — not wired up in this test suite.'
         );
     }
 

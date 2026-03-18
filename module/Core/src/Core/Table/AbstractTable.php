@@ -148,10 +148,31 @@ abstract class AbstractTable extends TableGateway
         // make a copy of row data (to avoid changing original data):
         if ($entity instanceof EntityInterface) {
             $hydrator = new Hydrator\ClassMethods();
-            $data = $hydrator->extract($entity);
-            // Remove non-scalar values (arrays, objects) - they are never DB columns.
-            // This filters out utility getters like getArrayCopy(), getCoords() etc.
-            $data = array_filter($data, fn($v) => is_scalar($v) || is_null($v));
+            $allData = $hydrator->extract($entity);
+            // Remove non-scalar values (arrays, objects) and null values.
+            // Nulls are omitted so the DB can apply column defaults on INSERT;
+            // this also filters utility getters like getArrayCopy(), getCoords() etc.
+            $data = array_filter($allData, fn($v) => is_scalar($v) && !is_null($v));
+            // For fields filtered out due to non-scalar value, check if the entity
+            // provides a get{Field}Json() accessor that returns a serialisable string.
+            foreach ($allData as $field => $value) {
+                if (!array_key_exists($field, $data)) {
+                    $method = 'get' . str_replace(' ', '', ucwords(str_replace('_', ' ', $field))) . 'Json';
+                    if (method_exists($entity, $method)) {
+                        $data[$field] = $entity->$method();
+                    }
+                }
+            }
+            // Remove *_json helper keys — they are extracted by the hydrator from get{X}Json()
+            // methods and are not actual DB columns.
+            foreach (array_keys($data) as $key) {
+                if (str_ends_with($key, '_json')) {
+                    $method = 'get' . str_replace(' ', '', ucwords(str_replace('_', ' ', $key)));
+                    if (method_exists($entity, $method)) {
+                        unset($data[$key]);
+                    }
+                }
+            }
         } elseif (is_array($entity)) {
             $data = $entity;
         } else {

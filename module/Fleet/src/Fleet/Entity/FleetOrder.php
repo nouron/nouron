@@ -74,7 +74,7 @@ class FleetOrder implements EntityInterface
         if (empty($coords)) {
             throw new \Core\Entity\Exception('invalid coordinates format');
         }
-        $this->coordinates = $coords;
+        $this->coordinates = $coordinates; // store JSON string for persistence
         return $this;
     }
 
@@ -82,18 +82,17 @@ class FleetOrder implements EntityInterface
      * Sets the value of data.
      *
      * @param  string|array $data the data
-     * @return self
      */
     public function setData($data)
     {
         if (is_array($data)) {
             $data = json_encode($data);
         }
-        $data = json_decode($data);
-        if (empty($data)) {
+        $decoded = json_decode($data);
+        if (empty($decoded)) {
             throw new \Core\Entity\Exception('invalid data format');
         }
-        $this->data = $data;
+        $this->data = $data; // store JSON string for persistence
         return $this;
     }
 
@@ -152,21 +151,41 @@ class FleetOrder implements EntityInterface
     }
 
     /**
-     * Gets the value of coordinates.
+     * Gets coordinates as decoded array (for app logic).
      *
      * @return array
      */
     public function getCoordinates()
     {
+        return json_decode($this->coordinates, true);
+    }
+
+    /**
+     * Gets coordinates as JSON string (for DB persistence).
+     *
+     * @return string
+     */
+    public function getCoordinatesJson()
+    {
         return $this->coordinates;
     }
 
     /**
-     * Gets the value of data.
+     * Gets data as decoded array (for app logic).
      *
      * @return array
      */
     public function getData()
+    {
+        return json_decode($this->data, true);
+    }
+
+    /**
+     * Gets data as JSON string (for DB persistence).
+     *
+     * @return string
+     */
+    public function getDataJson()
     {
         return $this->data;
     }

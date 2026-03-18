@@ -86,13 +86,13 @@ class FleetService extends AbstractService
                 //destination is a fleet id or colony id
                 $destination = (int) $destination;
                 switch (strtolower($order)) {
-                    case 'move':   pass;
-                    case 'trade':  pass;
+                    case 'move':
+                    case 'trade':
                     case 'hold':   $colonyService = $this->getService('colony');
                                    $object = $colonyService->getColony($destination); break;
-                    case 'convoy': pass;
-                    case 'defend': pass;
-                    case 'attack': pass;
+                    case 'convoy':
+                    case 'defend':
+                    case 'attack':
                     case 'join':   $object = $this->getFleet($destination);  break;
                     #case 'devide': break; // nothing
                     default:       $object = $this->getFleet($destination);  break;
@@ -118,10 +118,10 @@ class FleetService extends AbstractService
         }
 
         // get coords of fleet and destination coords:
-        $coords = array($fleet['x'], $fleet['y'], $fleet['spot']);
+        $coords = $fleet->getCoords();
 
         // if not, then get the paths and add the movement steps:
-        $path = $this->getPath( $coords, $destination, 1); #$fleet->getTravelSpeed() );
+        $path = $this->getService('galaxy')->getPath( $coords, $destination, 1); #$fleet->getTravelSpeed() );
         $this->_storePathInDb($fleetId, $path, $order, $additionalData);
 
     }
