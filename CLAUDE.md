@@ -4,16 +4,56 @@
 
 **Nouron** ist ein Sci-Fi-Strategiespiel, aktiv entwickelt von ca. 2008–2014.
 - GitHub: https://github.com/nouron/nouron
-- Techstack: PHP, Zend Framework 2, SQLite, REST-API, jQuery/JS-Frontend
-- Status: Letzter aktiver Stand ca. 2014, soll jetzt wiederbelebt werden
+- Techstack: PHP, Laminas (migriert von ZF2), SQLite, REST-API, jQuery/JS-Frontend, Bootstrap 5
+- Status: Migration auf Laminas + Bootstrap 5 abgeschlossen (branch `laminas-migration`), App ist grundsätzlich lauffähig
 
-## Aktueller Auftrag
+## Aktueller Stand (Stand: März 2026)
 
-**Phase 1: ZF2 → Laminas Migration**
-Das Ziel ist, den bestehenden ZF2-Code auf Laminas (den offiziellen ZF2-Nachfolger) zu migrieren, damit der alte Stand wieder lauffähig wird. Die Business-Logik wurde nach Clean-Code-Prinzipien gebaut und sollte weitgehend 1:1 übernehmbar sein.
+**Phase 1: ZF2 → Laminas Migration — abgeschlossen**
 
-**Phase 2 (später): Neukonzeption "Nouron 2026"**
-Nach der Migration soll das Spiel stark vereinfacht und modernisiert werden:
+Folgende Arbeiten wurden bereits erledigt:
+
+### ZF2 → Laminas Migration
+- Alle Namespaces von `Zend\*` auf `Laminas\*` migriert
+- `composer.json` auf Laminas-Pakete umgestellt
+- PHP-8-Kompatibilität hergestellt (veraltete Konstrukte bereinigt)
+- Service-Locator-Shim in `IngameController` ergänzt (Laminas hat `getServiceLocator()` aus Controllern entfernt)
+- `Core\Model\ResultSet::current()` für Laminas-Kompatibilität angepasst
+- `AbstractTable::save()` überarbeitet (Hydrator-Extraktion, skalare Filterung)
+- Routing, Autoloading und Modul-Konfiguration auf Laminas-Standard gebracht
+
+### Bootstrap 3 → Bootstrap 5 Migration
+- Umstieg auf Bootstrap 5 per CDN (inkl. Bootstrap Icons, jQuery 3)
+- Alle Glyphicons durch Bootstrap Icons (`bi bi-*`) ersetzt (~50 Stellen)
+- Alle `data-toggle/data-dismiss/data-target` → `data-bs-*` Attribute aktualisiert
+- Accordion, Modal, Pagination, Navbar auf BS5-Struktur umgebaut
+- jQuery-Post-Processing im Layout für Laminas Navigation-Helper (fügt `nav-link`-Klassen hinzu)
+- Ressourcenleiste von `row`-Layout auf `d-flex` umgestellt
+- `form-group` per CSS wiederhergestellt (in BS5 entfernt), Inputs per jQuery mit `form-control` versehen
+
+### INNN (Nachrichten & Ereignisse)
+- `MessageViewFactory` korrigiert (falsche Entity-Klasse wurde eingebunden)
+- `MessageService` WHERE-Klauseln auf korrekte camelCase-Spaltennamen korrigiert
+- Tippfehler in Controller-Methoden behoben
+- Alle Nachrichtenaktionen gegen null-userId aus Session abgesichert
+- Ereignisse-View implementiert (war leeres Template)
+- Leere-Liste-Hinweise in allen INNN-Tabs ergänzt
+
+### Techtree
+- SVG-Overlay blockierte alle Klicks auf Tech-Buttons → `pointer-events: none` ergänzt
+- AJAX-Modal-Loading implementiert: Klick auf Tech öffnet Popup mit Serverinhalt
+- Klick-Handler für Aktions-Buttons (ausbauen, reparieren, abreißen, AP investieren)
+- Hover-Effekte für AP- und Status-Bars auf BS5-Klassennamen aktualisiert
+
+### Fleet
+- `fleets.js` für neue Config-UI neu geschrieben (click-to-select, Mengenbuttons)
+- 500-Fehler in `getFleetTechnologies` behoben (toter ZF2-Code entfernt)
+
+**Phase 2 (nächster Schritt): Spielablauf stabilisieren**
+- Tick-System, Aktionspunkte, Handelsrouten, Flottenoperationen testen und ggf. reparieren
+
+**Phase 3 (später): Neukonzeption "Nouron 2026"**
+Nach der Stabilisierung soll das Spiel stark vereinfacht und modernisiert werden:
 - Solo-basierte Spielweise mit Highscore (kein Online-Multiplayer mehr)
 - Nur eine menschliche Rasse (Fraktionen möglich, aber anders als ursprünglich)
 - Nur 2 Hauptressourcen: Credits und Aktionspunkte (statt 10+ Ressourcentypen)
@@ -122,19 +162,23 @@ composer.json
 composer.lock
 ```
 
-## Laminas-Migration: Strategische Hinweise
+## Bekannte offene Punkte / noch nicht getestet
 
-1. **Laminas ist der direkte ZF2-Nachfolger** — Namespace-Änderung von `Zend\*` → `Laminas\*`
-2. Es gibt ein offizielles Migrationstool: `laminas/laminas-migration`
-3. Schritte:
-   - `composer.json` analysieren: ZF2-Dependencies identifizieren
-   - `laminas-migration` Tool laufen lassen (automatischer Namespace-Tausch)
-   - `composer.json` aktualisieren (zendframework/* → laminas/*)
-   - Testen ob die App startet
-   - SQLite-Konfiguration prüfen/anpassen
-   - PHP-Version-Kompatibilität prüfen (Code war PHP 5.x/7.0, Laminas braucht 7.3+)
-4. Die Business-Logik (Services, Models) sollte framework-agnostisch sein und kaum Änderungen brauchen
-5. Controller und Config-Dateien werden die meisten Anpassungen brauchen
+- Tick-System und Spielfortschritt (fleet_orders Verarbeitung)
+- Aktionspunkte-Vergabe und -Verbrauch im Techtree vollständig
+- Handelsrouten (Trade-Modul)
+- Flottenoperationen (Bewegung, Kampf, Kolonisierung)
+- Login/Registrierung (Auth-System)
+- Flash-Messenger in Formularen
+
+## Technische Hinweise (gesammelt aus Migration)
+
+- `getServiceLocator()` in Controllern: via Shim in `Core\Controller\IngameController` verfügbar
+- `getActive('user')` liefert userId aus Laminas Session-Container `activeIds`
+- DB-Spaltennamen im `v_innn_messages`-View sind camelCase (`isRead`, `isDeleted`, etc.)
+- `AbstractTable::fetchAll()` akzeptiert String- oder Array-WHERE-Klauseln
+- `setTerminal(true)` in TechnologyController rendert ohne Layout (für AJAX-Calls)
+- Bootstrap 5: Navigation-Helper braucht jQuery-Post-Processing für `nav-link`-Klassen
 
 ## Vorhandene Dokumentation (im NOURON-Ordner)
 
