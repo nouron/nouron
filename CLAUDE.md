@@ -61,7 +61,10 @@ Nach der Stabilisierung soll das Spiel stark vereinfacht und modernisiert werden
 
 ## Wichtige Korrekturen / Klarstellungen
 
-- **Datenbank ist SQLite** (NICHT MySQL). Die DB-Datei liegt unter `data/db/nouron.db`
+- **Datenbank ist SQLite** (NICHT MySQL). Zwei separate DB-Dateien:
+  - `data/db/nouron.db` — Entwicklungsdatenbank (läuft mit dem Dev-Server)
+  - `data/db/test.db` — Testdatenbank (wird von den Unittests verwendet, per `data/sql/testdata.sqlite.sql` befüllt)
+  - Für die Produktivphase ist ein Umstieg auf eine robustere DB (z.B. MySQL/PostgreSQL) geplant, bis dahin bleibt es bei SQLite
 - Die Website ist eine **GitHub Page** im Repo (keine extra Sicherung nötig)
 - `Routen.txt` ist vermutlich out-of-date
 - `code/nouron_(pre_zend)/` ist stark veraltet und nicht mehr verwendbar
