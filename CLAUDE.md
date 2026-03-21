@@ -2,7 +2,7 @@
 
 ## Projekt-Überblick
 
-**Nouron** ist ein Sci-Fi-Strategiespiel, aktiv entwickelt von ca. 2008–2014.
+**Nouron** ist ein Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv aufgenommen.
 - GitHub: https://github.com/nouron/nouron
 - Techstack: PHP, Laminas (migriert von ZF2), SQLite, REST-API, jQuery/JS-Frontend, Bootstrap 5
 - Status: Migration auf Laminas + Bootstrap 5 abgeschlossen (branch `laminas-migration`), App ist grundsätzlich lauffähig
@@ -61,7 +61,7 @@ Nach der Stabilisierung soll das Spiel stark vereinfacht und modernisiert werden
 
 ## Wichtige Korrekturen / Klarstellungen
 
-- **Datenbank ist SQLite** (NICHT MySQL). Die DB-Datei `nouron.db.sqlite` liegt im Repo
+- **Datenbank ist SQLite** (NICHT MySQL). Die DB-Datei liegt unter `data/db/nouron.db`
 - Die Website ist eine **GitHub Page** im Repo (keine extra Sicherung nötig)
 - `Routen.txt` ist vermutlich out-of-date
 - `code/nouron_(pre_zend)/` ist stark veraltet und nicht mehr verwendbar
@@ -134,33 +134,42 @@ engineer (industry), scientist (civil), pilot (military), trader (economy)
 - **Rassen**: user.race_id (Werte 1, 3 in Testdaten)
 - **Koordinatensystem**: x, y für Systeme und Systemobjekte (z.B. 6800,3000)
 
-## Architektur-Erwartungen (ZF2)
+## Architektur (Laminas MVC)
 
-Typische ZF2-Projektstruktur:
+Tatsächliche Modulstruktur (11 Module):
 ```
 module/
-  Application/        -- Basis-Modul
-  NouronCore/         -- oder ähnlich, Kern-Spiellogik
-    config/
-    src/
-      Controller/     -- REST-Controller
-      Model/          -- Entities / Domain Models
-      Service/        -- Business Logic (Clean Code)
-      Mapper/         -- Data Mapper / Repository Pattern
-    view/
+  Application/        -- Layout, Navigation, Basis-Routing
+  Core/               -- Abstrakte Basisklassen (AbstractTable, AbstractService, IngameController)
+  Colony/             -- Kolonie-Verwaltung
+  Fleet/              -- Flottenoperationen und -konfiguration
+  Galaxy/             -- Sternensysteme, Karte
+  INNN/               -- Nachrichten, Ereignisse, News
+  Map/                -- Karten-Hilfsfunktionen
+  Resources/          -- Ressourcen-Tracking und -Anzeige
+  Techtree/           -- Gebäude, Forschung, Schiffe, Personal
+  Trade/              -- Handelsrouten
+  User/               -- Benutzerprofil, Einstellungen
 config/
+  application.config.php   -- Modulliste und Ladereihenfolge
   autoload/
-    global.php
-    local.php
+    global.php             -- DB-Adapter, Service-Factories, Tick-Config
+    lmcuser.global.php     -- Auth-Konfiguration
 public/
   index.php           -- Entry Point
-  js/, css/, img/
+  js/                 -- techtree.js, fleets.js, galaxy.js, trade.js, ...
 data/
-  nouron.db.sqlite    -- Spieldatenbank
+  db/nouron.db        -- SQLite-Spieldatenbank
 vendor/               -- Composer Dependencies
 composer.json
 composer.lock
 ```
+
+Schichtung pro Modul:
+```
+Controller → Service → Table (TableGateway) → Entity
+```
+Jede Klasse hat eine eigene Factory für Dependency Injection über den Laminas ServiceManager.
 
 ## Bekannte offene Punkte / noch nicht getestet
 
@@ -198,5 +207,18 @@ Die DB enthält Simpsons-Testcharaktere: Homer (ID 0), Marge (1), Bart (3), etc.
 ## Workflow-Hinweise
 
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
-- Claude Code wird für die eigentliche Migration verwendet
+- Claude Code wird für die Weiterentwicklung verwendet
 - Der Owner heißt Mario (tech.mario@outlook.de)
+
+## Changelog-Pflege
+
+Am Ende jeder Session, in der Code-Arbeit stattgefunden hat, wird ein Eintrag in `CHANGELOG.md` im Projekt-Root ergänzt. Format:
+
+```
+## YYYY-MM-DD
+
+- Kurze Beschreibung der erledigten Aufgaben (1–3 Sätze pro Thema)
+- ...
+```
+
+Der Changelog soll als Grundlage für Retrospektiven und Blog Posts dienen. Einträge werden auf Deutsch verfasst, prägnant und inhaltlich (was wurde gemacht, warum).
