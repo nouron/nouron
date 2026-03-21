@@ -26,8 +26,8 @@ class MessageService extends \Core\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'recipient_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 0
+            'is_deleted' => 0,
+            'is_archived' => 0
         );
         return $this->getTable('message_view')->fetchAll($where, "tick DESC");
     }
@@ -41,8 +41,8 @@ class MessageService extends \Core\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'sender_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 0
+            'is_deleted' => 0,
+            'is_archived' => 0
         );
         return $this->getTable('message_view')->fetchAll($where);
     }
@@ -56,8 +56,8 @@ class MessageService extends \Core\Service\AbstractService
         $this->_validateId($userId);
         $where = array(
             'recipient_id' => $userId,
-            'isDeleted' => 0,
-            'isArchived' => 1
+            'is_deleted' => 0,
+            'is_archived' => 1
         );
         return $this->getTable('message_view')->fetchAll($where);
     }
@@ -79,9 +79,9 @@ class MessageService extends \Core\Service\AbstractService
             'type' => 0,
             'subject' => $entity['subject'],
             'text'   => $entity['text'],
-            'isRead' => 0,
-            'isArchived' => 0,
-            'isDeleted'  => 0
+            'is_read' => 0,
+            'is_archived' => 0,
+            'is_deleted'  => 0
         );
 
         return $this->getTable('message')->save($data);
