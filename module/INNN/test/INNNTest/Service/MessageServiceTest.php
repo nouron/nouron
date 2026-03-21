@@ -11,7 +11,7 @@ use INNN\Entity\Message;
 
 class MessageServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
         $this->initDatabase();
@@ -21,7 +21,7 @@ class MessageServiceTest extends AbstractServiceTest
         $tables['message_view'] = new MessageView($this->dbAdapter, new Message());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new MessageService($tick, $tables);
@@ -44,7 +44,7 @@ class MessageServiceTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getMessage(null);
 
     }
@@ -67,7 +67,7 @@ class MessageServiceTest extends AbstractServiceTest
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getInboxMessages(null);
     }
 
@@ -89,7 +89,7 @@ class MessageServiceTest extends AbstractServiceTest
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $object = $this->_service->getOutboxMessages(null);
     }
 
@@ -111,7 +111,7 @@ class MessageServiceTest extends AbstractServiceTest
         $this->assertEquals(0, count($results) );
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getArchivedMessages(null);
     }
 

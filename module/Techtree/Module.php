@@ -1,8 +1,8 @@
 <?php
 namespace Techtree;
 
-use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
-use Zend\ModuleManager\Feature\ConfigProviderInterface;
+use Laminas\ModuleManager\Feature\AutoloaderProviderInterface;
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
 
 class Module implements AutoloaderProviderInterface, ConfigProviderInterface
 {
@@ -12,18 +12,18 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface
         $sm = $e->getApplication()->getServiceManager();
         $translator = $sm->get('translator');
 
-        \Zend\Validator\AbstractValidator::setDefaultTranslator(
-            new \Zend\Mvc\I18n\Translator($translator)
+        \Laminas\Validator\AbstractValidator::setDefaultTranslator(
+            new \Laminas\Mvc\I18n\Translator($translator)
         );
     }
 
     public function getAutoloaderConfig()
     {
         return array(
-            'Zend\Loader\ClassMapAutoloader' => array(
+            'Laminas\Loader\ClassMapAutoloader' => array(
                 __DIR__ . '/autoload_classmap.php',
             ),
-            'Zend\Loader\StandardAutoloader' => array(
+            'Laminas\Loader\StandardAutoloader' => array(
                 'namespaces' => array(
                     __NAMESPACE__ => __DIR__ . '/src/' . __NAMESPACE__,
                 ),

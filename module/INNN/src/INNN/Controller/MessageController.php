@@ -1,9 +1,9 @@
 <?php
 namespace INNN\Controller;
 
-use Zend\View\Model\ViewModel;
-use Zend\View\Model\JsonModel;
-use Zend\Session\Container;
+use Laminas\View\Model\ViewModel;
+use Laminas\View\Model\JsonModel;
+use Laminas\Session\Container;
 
 /**
  * @method integer getActive(String $itemType)
@@ -14,13 +14,17 @@ class MessageController extends \Core\Controller\IngameController
 {
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function eventsAction()
     {
-        $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\EventService');
-        $messages = $messageService->getEvents($this->getActive('user'));
+        $userId = $this->getActive('user');
+        $messages = [];
+        if (!empty($userId)) {
+            $sm = $this->getServiceLocator();
+            $messageService = $sm->get('INNN\Service\EventService');
+            $messages = $messageService->getEvents($userId);
+        }
 
         return new ViewModel(array(
             'messages' => $messages
@@ -29,13 +33,17 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function inboxAction()
     {
-        $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\MessageService');
-        $messages = $messageService->getInboxMessages($this->getActive('user'));
+        $userId = $this->getActive('user');
+        $messages = [];
+        if (!empty($userId)) {
+            $sm = $this->getServiceLocator();
+            $messageService = $sm->get('INNN\Service\MessageService');
+            $messages = $messageService->getInboxMessages($userId);
+        }
 
         return new ViewModel(array(
             'messages' => $messages
@@ -44,13 +52,17 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function outboxAction()
     {
-        $sm = $this->getServiceLocator();
-        $messageService = $sm->get('INNN\Service\MessageService');
-        $messages = $messageService->getOutboxMessages($this->getActive('user'));
+        $userId = $this->getActive('user');
+        $messages = [];
+        if (!empty($userId)) {
+            $sm = $this->getServiceLocator();
+            $messageService = $sm->get('INNN\Service\MessageService');
+            $messages = $messageService->getOutboxMessages($userId);
+        }
 
         return new ViewModel(array(
             'messages' => $messages
@@ -59,7 +71,7 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\ViewModel
      */
     public function newAction()
     {
@@ -105,8 +117,8 @@ class MessageController extends \Core\Controller\IngameController
 
     public function reactAction()
     {
-        $messageId = $this->params()->fromQuey('id');
-        $reactionType = $this->params()->fromQuey('type');
+        $messageId = $this->params()->fromQuery('id');
+        $reactionType = $this->params()->fromQuery('type');
         $result = $this->react($reactionType, $messageId, false);
         return new JsonModel(array(
             'result' => $result,
@@ -116,8 +128,8 @@ class MessageController extends \Core\Controller\IngameController
 
     public function respondAction()
     {
-        $messageId = $this->params()->fromQuey('id');
-        $reactionType = $this->params()->fromQuey('type');
+        $messageId = $this->params()->fromQuery('id');
+        $reactionType = $this->params()->fromQuery('type');
         $result = $this->react($reactionType, $messageId);
 
         $sm = $this->getServiceLocator();
@@ -151,11 +163,11 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel|\Zend\View\Model\ViewModel
+     * @return \Laminas\View\Model\JsonModel|\Laminas\View\Model\ViewModel
      */
     public function archiveAction()
     {
-        $messageId = $this->params()->fromQuey('id');
+        $messageId = $this->params()->fromQuery('id');
         if (!empty($messageId)) {
             // archive the given message
             return new JsonModel(array(
@@ -164,9 +176,13 @@ class MessageController extends \Core\Controller\IngameController
             ));
         } else {
             // show archived messages
-            $sm = $this->getServiceLocator();
-            $messageService = $sm->get('INNN\Service\MessageService');
-            $messages = $messageService->getArchivedMessages($_SESSION['userId']);
+            $userId = $this->getActive('user');
+            $messages = [];
+            if (!empty($userId)) {
+                $sm = $this->getServiceLocator();
+                $messageService = $sm->get('INNN\Service\MessageService');
+                $messages = $messageService->getArchivedMessages($userId);
+            }
             return new ViewModel(array(
                 'messages' => $messages
             ));
@@ -175,11 +191,11 @@ class MessageController extends \Core\Controller\IngameController
 
     /**
      *
-     * @return \Zend\View\Model\JsonModel
+     * @return \Laminas\View\Model\JsonModel
      */
     public function removeAction()
     {
-        $messageId = $this->params()->fromQuey('id');
+        $messageId = $this->params()->fromQuery('id');
         return new JsonModel(array(
             'result' => $this->setMessageStatus($messageId, 'deleted'),
             'status' => 'deleted'

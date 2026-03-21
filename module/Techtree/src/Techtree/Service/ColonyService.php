@@ -14,7 +14,7 @@ class ColonyService extends \Core\Service\AbstractService
         if (!empty($scopeColonyId)) {
             $this->setScopeColonyId($scopeColonyId);
         } else {
-            $this->getLogger()->log(\Zend\Log\Logger::WARN, 'Missing scope colony id. Some methods can fail unexpectedly!');
+            $this->getLogger()->log(\Laminas\Log\Logger::WARN, 'Missing scope colony id. Some methods can fail unexpectedly!');
         }
     }
 

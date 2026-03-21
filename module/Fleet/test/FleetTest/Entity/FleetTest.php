@@ -2,9 +2,9 @@
 namespace FleetTest\Entity;
 
 use Fleet\Entity\Fleet;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class FleetTest extends PHPUnit_Framework_TestCase
+class FleetTest extends TestCase
 {
     public function testFleetInitialState()
     {
@@ -26,11 +26,8 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setId(99);
         $this->assertEquals(99, $fleet->getId());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleet->setId('a');
-
-        $this->markTestIncomplete();
-
     }
 
     public function testSetFleet()
@@ -38,9 +35,8 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet = new Fleet();
         $fleet->setFleet('Testfleet');
         $this->assertEquals('Testfleet', $fleet->getFleet());
-
-        $this->markTestIncomplete();
-
+        $fleet->setFleet('');
+        $this->assertEquals('', $fleet->getFleet());
     }
 
     public function testSetUserId()
@@ -51,11 +47,8 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setUserId(99);
         $this->assertEquals(99, $fleet->getUserId());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleet->setUserId('a');
-
-        $this->markTestIncomplete();
-
     }
 
     public function testSetX()
@@ -68,12 +61,8 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setX(-99);
         $this->assertEquals(-99, $fleet->getX());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleet->setX('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testSetY()
@@ -86,12 +75,8 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet->setY(-99);
         $this->assertEquals(-99, $fleet->getY());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleet->setY('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testSetSpot()
@@ -99,13 +84,11 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $fleet = new Fleet();
         $fleet->setSpot(9);
         $this->assertEquals(9, $fleet->getSpot());
+        $fleet->setSpot(0);
+        $this->assertEquals(0, $fleet->getSpot());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleet->setSpot('a');
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
-
     }
 
     public function testGetCoords()
@@ -117,8 +100,5 @@ class FleetTest extends PHPUnit_Framework_TestCase
         $coords = $fleet->getCoords();
         $this->assertTrue(is_array($coords));
         $this->assertEquals(serialize(array(12345,-12345,9)), serialize($coords));
-
-        // TODO: test edge cases
-        $this->markTestIncomplete();
     }
 }

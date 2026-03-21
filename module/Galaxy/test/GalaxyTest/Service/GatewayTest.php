@@ -24,11 +24,11 @@ use Fleet\Table\FleetResearchTable;
 use Fleet\Table\FleetResourceTable;
 use Fleet\Table\FleetOrderTable;
 
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class GatewayTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -47,7 +47,7 @@ class GatewayTest extends AbstractServiceTest
         $tables['colonybuilding']   = new \Techtree\Table\ColonyBuildingTable($this->dbAdapter, new \Techtree\Entity\ColonyBuilding());
         $tables['colonyresource']   = new \Resources\Table\ColonyTable($this->dbAdapter, new \Resources\Entity\Colony());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         # TODO: temporary solution, dirty => make it better; load real config
@@ -71,7 +71,7 @@ class GatewayTest extends AbstractServiceTest
 
         //$gateways['techtree'] = $serviceLocator->get('Techtree\Service\BuildingService'); // causes circularDependancyException
         $this->_service = new Gateway($tick, $tables, $services, $config);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
@@ -116,7 +116,7 @@ class GatewayTest extends AbstractServiceTest
         $object = $this->_service->getSystem(99);
         $this->assertFalse($object);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getSystem(-1);
     }
 
@@ -125,7 +125,7 @@ class GatewayTest extends AbstractServiceTest
         $object = $this->_service->getSystemObject($this->planetaryId);
         $this->assertInstanceOf('Galaxy\Entity\SystemObject', $object);
 
-        $this->setExpectedException('Exception');
+        $this->expectException('Exception');
         $object = $this->_service->getSystemObject(-1);
     }
 
@@ -144,7 +144,7 @@ class GatewayTest extends AbstractServiceTest
         #$object = $this->_service->getSystemByPlanetary(99);
         #$this->assertFalse($object);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getSystemByPlanetary(-1);
 
         $this->markTestIncomplete();
@@ -170,7 +170,7 @@ class GatewayTest extends AbstractServiceTest
         $system = $this->_service->getSystemBySystemObject($blackhole_id);
         $this->assertFalse($system);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getSystemBySystemObject('a');
 
     }
@@ -187,7 +187,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // expect Exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getSystemObjectByColonyId('a');
     }
 
@@ -253,7 +253,7 @@ class GatewayTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $coords = array('a', 'b');
         $this->_service->getSystemObjectByCoords($coords);
 

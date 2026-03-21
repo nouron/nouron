@@ -1,13 +1,13 @@
 <?php
 namespace INNNTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use INNNTest\Bootstrap;
 use INNN\Entity\MessageViewFactory;
 
-class MassageViewFactoryTest extends PHPUnit_Framework_TestCase
+class MassageViewFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class MassageViewFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new MessageViewFactory();
         $this->assertInstanceOf(
             "INNN\Entity\Message",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

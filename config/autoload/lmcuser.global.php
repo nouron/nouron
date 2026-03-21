@@ -1,6 +1,6 @@
 <?php
 /**
- * ZfcUser Configuration
+ * LmcUser Configuration
  *
  * If you have a ./config/autoload/ directory set up for your project, you can
  * drop this config file in it and change the values as you wish.
@@ -10,17 +10,17 @@ $settings = array(
      * Zend\Db\Adapter\Adapter DI Alias
      *
      * Please specify the DI alias for the configured Zend\Db\Adapter\Adapter
-     * instance that ZfcUser should use.
+     * instance that LmcUser should use.
      */
-    'zend_db_adapter' => 'Zend\Db\Adapter\Adapter',
+    'zend_db_adapter' => 'Laminas\Db\Adapter\Adapter',
 
     /**
      * User Model Entity Class
      *
      * Name of Entity class to use. Useful for using your own entity class
-     * instead of the default one provided. Default is ZfcUser\Entity\User.
+     * instead of the default one provided. Default is LmcUser\Entity\User.
      */
-    //'user_entity_class' => 'ZfcUser\Entity\User',
+    //'user_entity_class' => 'LmcUser\Entity\User',
     'user_entity_class' => 'User\Entity\User',
 
     /**
@@ -142,11 +142,11 @@ $settings = array(
      *
      * Upon successful login the user will be redirected to the entered route
      *
-     * Default value: 'zfcuser'
+     * Default value: 'lmcuser'
      * Accepted values: A valid route name within your application
      *
      */
-    //'login_redirect_route' => 'zfcuser',
+    //'login_redirect_route' => 'lmcuser',
     'login_redirect_route' => 'techtree',
 
     /**
@@ -183,7 +183,7 @@ $settings = array(
     //'password_cost' => 14,
 
     /**
-     * End of ZfcUser configuration
+     * End of LmcUser configuration
      */
 );
 
@@ -191,10 +191,10 @@ $settings = array(
  * You do not need to edit below this line
  */
 return array(
-    'zfcuser' => $settings,
+    'lmcuser' => $settings,
     'service_manager' => array(
         'aliases' => array(
-            'zfcuser_zend_db_adapter' => (isset($settings['zend_db_adapter'])) ? $settings['zend_db_adapter']: 'Zend\Db\Adapter\Adapter',
+            'lmcuser_zend_db_adapter' => (isset($settings['zend_db_adapter'])) ? $settings['zend_db_adapter']: 'Laminas\Db\Adapter\Adapter',
         ),
     ),
 );

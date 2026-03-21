@@ -184,65 +184,128 @@ $(document).ready(function(){
              }, 100);
          },
 
-         /* little helper to reset colors in action points bar */
+        /* little helper to reset colors in action points bar */
         reset_colors_for_bar_buttons: function() {
             $('.techModal .progress a.progress-bar i').parent().css({
                 'background-image': 'none',
                 'background-color': '#eee'
             });
         },
-        /**
-         *
-         */
+
         refresh_resource_bar: function() {
             var url = '/resources/json/reloadresourcebar';
             $('#resource-bar').load(url, null, function() {
-                console.log("resource bar loaded :D");
+                console.log("resource bar loaded");
+            });
+        },
+
+        /**
+         * Load modal content from server via AJAX.
+         * @param {Element} modalEl  The .techModal DOM element
+         * @param {string}  url      URL to fetch (e.g. /techtree/building/25)
+         * @param {Function} done    Optional callback after content is injected
+         */
+        loadModalContent: function(modalEl, url, done) {
+            $(modalEl).find('.modal-content').html(
+                '<div class="modal-body text-center py-4">' +
+                '<div class="spinner-border text-secondary" role="status">' +
+                '<span class="visually-hidden">Laden...</span></div></div>'
+            );
+            $.ajax({
+                url: url,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function(html) {
+                    $(modalEl).find('.modal-dialog').replaceWith(html);
+                    /* re-init tooltips inside the freshly loaded modal */
+                    $(modalEl).find('[data-bs-toggle="tooltip"]').each(function() {
+                        new bootstrap.Tooltip(this);
+                    });
+                    if (typeof done === 'function') { done(); }
+                },
+                error: function() {
+                    $(modalEl).find('.modal-content').html(
+                        '<div class="modal-header"><h5 class="modal-title">Fehler</h5>' +
+                        '<button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>' +
+                        '<div class="modal-body">Inhalt konnte nicht geladen werden.</div>'
+                    );
+                }
             });
         }
     };
 
-    $('.techModal').on('shown.bs.modal', function () {
-        console.log("techModal loaded :D");
+    /* ------------------------------------------------------------------ */
+    /* Load modal content from the tech button's href when modal opens     */
+    /* ------------------------------------------------------------------ */
+    $(document).on('show.bs.modal', '.techModal', function(event) {
+        var trigger = event.relatedTarget;
+        if (!trigger) { return; }
+        var url = $(trigger).attr('href');
+        if (!url || url === '#') { return; }
+        techtree.loadModalContent(this, url);
+    });
+
+    /* After modal is shown: refresh resource bar */
+    $(document).on('shown.bs.modal', '.techModal', function() {
         techtree.reset_colors_for_bar_buttons();
         techtree.refresh_resource_bar();
     });
 
-    /** levelup action points */
-    /** update action points only visually as a preview */
-    $(document).on('mouseover', '#techModal .progress.ap_spend a.progress-bar', function(e) {
-        $(this).prevAll('.progress-bar-info').removeClass('progress-bar-info').addClass('progress-bar-success');
-        $(this).removeClass('progress-bar-info').addClass('progress-bar-success');
-        $(this).nextAll('.progress-bar-success').removeClass('progress-bar-success').addClass('progress-bar-info');
+    /* ------------------------------------------------------------------ */
+    /* Action buttons inside modals: levelup / leveldown / add-AP / repair */
+    /* Button id format:  "{type}-{techId}|{order}[-{ap}]"                */
+    /* e.g. "building-25|add-3"  "building-25|levelup"                    */
+    /* ------------------------------------------------------------------ */
+    $(document).on('click', '.techModal [id*="|"]', function(e) {
+        e.preventDefault();
+        var raw = this.id;                            // e.g. "building-25|add-3"
+        var halves = raw.split('|');                  // ["building-25", "add-3"]
+        var typeid  = halves[0].split('-');            // ["building", "25"]
+        var type    = typeid[0];
+        var techId  = typeid[1];
+        var orderparts = halves[1].split('-');         // ["add","3"] or ["levelup"]
+        var order   = orderparts[0];
+        var ap      = orderparts[1] || '';
+
+        var url = '/techtree/' + type + '/' + techId + '/' + order + (ap ? '/' + ap : '');
+        var modalEl = $(this).closest('.techModal')[0];
+
+        techtree.loadModalContent(modalEl, url, function() {
+            techtree.refresh_resource_bar();
+        });
+    });
+
+    /* ------------------------------------------------------------------ */
+    /* Hover preview: AP spend bar                                         */
+    /* ------------------------------------------------------------------ */
+    $(document).on('mouseover', '.techModal .progress.ap_spend a.progress-bar', function(e) {
+        $(this).prevAll('a.bg-info').removeClass('bg-info').addClass('bg-success');
+        $(this).removeClass('bg-info').addClass('bg-success');
+        $(this).nextAll('a.bg-success').removeClass('bg-success').addClass('bg-info');
         techtree.reset_colors_for_bar_buttons();
     });
-    /** remove the 'preview' action points */
-    $(document).on('mouseout', '#techModal .progress.ap_spend', function(e) {
-        $('#techModal .progress a.progress-bar-success').removeClass('progress-bar-success').addClass('progress-bar-info');
+    $(document).on('mouseout', '.techModal .progress.ap_spend', function(e) {
+        $(this).find('a.progress-bar.bg-success').removeClass('bg-success').addClass('bg-info');
         techtree.reset_colors_for_bar_buttons();
     });
 
-    /** status points */
-    /** update action points only visually as a preview */
-    $(document).on('mouseover', '.techModal .progress.status_points a.bar', function(e) {
-        if ($(this).hasClass('progress-bar-info')) {
-            $(this).prevAll('.progress-bar-info').removeClass('progress-bar-info').addClass('progress-bar-warning');
-            $(this).prevAll('.progress-bar-info').text('');
-            $(this).removeClass('progress-bar-info').addClass('progress-bar-warning');
-            $(this).text('test');
-            $(this).nextAll('.progress-bar-info').text('');
-            $(this).nextAll('.progress-bar-warning').removeClass('progress-bar-warning').addClass('progress-bar-info');
-        } else {
-            $(this).prevAll('.progress-bar-danger').removeClass('progress-bar-danger').addClass('progress-bar-warning');
-            $(this).text('');
-            $(this).removeClass('progress-bar-danger').addClass('progress-bar-warning');
-            $(this).nextAll('.progress-bar-warning').removeClass('progress-bar-warning').addClass('progress-bar-danger');
+    /* ------------------------------------------------------------------ */
+    /* Hover preview: status points / repair bar                           */
+    /* ------------------------------------------------------------------ */
+    $(document).on('mouseover', '.techModal .progress.status_points a.progress-bar', function(e) {
+        if ($(this).hasClass('bg-danger')) {
+            /* hovering a damaged slot — preview repairing up to here */
+            $(this).prevAll('a.bg-danger').removeClass('bg-danger').addClass('bg-warning');
+            $(this).removeClass('bg-danger').addClass('bg-warning');
+            $(this).nextAll('a.bg-warning').not('span').removeClass('bg-warning').addClass('bg-danger');
+        } else if ($(this).hasClass('bg-warning')) {
+            /* hovering a healthy slot — preview removing status down to here */
+            $(this).nextAll('a.bg-warning').removeClass('bg-warning').addClass('bg-danger');
         }
         techtree.reset_colors_for_bar_buttons();
     });
-    /** remove the 'preview' action points */
     $(document).on('mouseout', '.techModal .progress.status_points', function(e) {
-        $('.techModal .progress a.progress-bar-danger').removeClass('progress-bar-danger').addClass('progress-bar-warning');
+        /* restore: turn all preview-warning anchors back to danger */
+        $(this).find('a.progress-bar.bg-warning').removeClass('bg-warning').addClass('bg-danger');
         techtree.reset_colors_for_bar_buttons();
     });
 

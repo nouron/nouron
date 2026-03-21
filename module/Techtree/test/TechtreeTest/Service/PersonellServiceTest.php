@@ -26,7 +26,7 @@ use Techtree\Entity\ColonyShip;
 
 class PersonellServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -47,7 +47,7 @@ class PersonellServiceTest extends AbstractServiceTest
         $tables['colony_ships'] = new ColonyShipTable($this->dbAdapter, new ColonyShip());
         $tables['locked_actionpoints'] = new ActionPointTable($this->dbAdapter, new ActionPoint());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $serviceMocks = array();
@@ -103,7 +103,11 @@ class PersonellServiceTest extends AbstractServiceTest
     {
         $object = $this->_service->getEntity($this->_entityId);
         $this->assertEquals('Techtree\Entity\Personell', get_class($object));
-        $this->markTestIncomplete();
+        $this->assertEquals(35, $object->getId());
+        $this->assertFalse($this->_service->getEntity(99999));
+
+        $this->expectException('Core\Service\Exception');
+        $this->_service->getEntity(-1);
     }
 
     public function testGetTotalActionPoints()
@@ -147,58 +151,57 @@ class PersonellServiceTest extends AbstractServiceTest
 
     public function testLockActionPoints()
     {
-        $this->markTestIncomplete();
+        $this->initDatabase();
+        $before = $this->_service->getAvailableActionPoints('construction', $this->_colonyId);
+        $result = $this->_service->lockActionPoints('construction', $this->_colonyId, 3);
+        $this->assertTrue(is_numeric($result));
+        $after = $this->_service->getAvailableActionPoints('construction', $this->_colonyId);
+        $this->assertEquals($before - 3, $after);
     }
 
     public function testInvest()
     {
-        $this->markTestIncomplete();
+        // PersonellService::invest() always returns false — AP investment not applicable to personnel
+        $result = $this->_service->invest($this->_colonyId, $this->_entityId);
+        $this->assertFalse($result);
     }
 
     public function testHire()
     {
         $this->initDatabase();
 
+        $levelBefore = $this->_service->getColonyEntity($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER)->getLevel();
         $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
         $this->assertTrue($result);
+        $levelAfter = $this->_service->getColonyEntity($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER)->getLevel();
+        $this->assertEquals($levelBefore + 1, $levelAfter);
 
         $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
         $this->assertTrue($result);
 
         $result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
         $this->assertTrue($result);
-
-        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
-        #$this->assertTrue($result);
-
-        #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
-        #$this->assertTrue($result);
-
-        $this->markTestIncomplete();
     }
 
     public function testFire()
     {
         $this->initDatabase();
+
+        $levelBefore = $this->_service->getColonyEntity($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER)->getLevel();
         $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER);
         $this->assertTrue($result);
+        $levelAfter = $this->_service->getColonyEntity($this->_colonyId, PersonellService::PERSONELL_ID_ENGINEER)->getLevel();
+        $this->assertEquals($levelBefore - 1, $levelAfter);
 
         $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_SCIENTIST);
         $this->assertTrue($result);
 
+        // pilot at colony 1 is at level 0 — cannot fire further
         $result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
-        $this->assertFalse($result); #leveldownLimit
+        $this->assertFalse($result);
 
         $result = $this->_service->fire($this->_colonyId2, PersonellService::PERSONELL_ID_PILOT);
         $this->assertTrue($result);
-
-        #$result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_DIPLOMAT);
-        #$this->assertTrue($result);
-
-        #$result = $this->_service->fire($this->_colonyId, PersonellService::PERSONELL_ID_AGENT);
-        #$this->assertTrue($result);
-
-        $this->markTestIncomplete();
     }
 
 }

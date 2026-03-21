@@ -2,14 +2,14 @@
 
 namespace Application\Controller;
 
-use Zend\Mvc\Controller\AbstractActionController;
-use Zend\View\Model\ViewModel;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
 
 class IndexController extends AbstractActionController
 {
     public function indexAction()
     {
-//         $this->getServiceLocator()->get('logger')->log(\Zend\Log\Logger::INFO, 'message');
+//         $this->getServiceLocator()->get('logger')->log(\Laminas\Log\Logger::INFO, 'message');
         return new ViewModel();
     }
 

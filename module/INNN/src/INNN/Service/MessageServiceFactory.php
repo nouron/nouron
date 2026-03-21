@@ -1,8 +1,9 @@
 <?php
 namespace INNN\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class MessageServiceFactory implements FactoryInterface
 {
@@ -11,13 +12,13 @@ class MessageServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return MessageService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick = $serviceLocator->get('Core\Service\Tick');
+        $tick = $container->get('Core\Service\Tick');
 
-        $tables['message'] = $serviceLocator->get('INNN\Table\MessageTable');
-        $tables['message_view'] = $serviceLocator->get('INNN\Table\MessageView');
-        $tables['user'] = $serviceLocator->get('User\Table\UserTable');
+        $tables['message'] = $container->get('INNN\Table\MessageTable');
+        $tables['message_view'] = $container->get('INNN\Table\MessageView');
+        $tables['user'] = $container->get('User\Table\UserTable');
 
         return new MessageService($tick, $tables);
     }

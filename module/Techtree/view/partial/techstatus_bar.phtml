@@ -2,32 +2,28 @@
 if (!empty($poss) and $poss['level'] > 0):
     $status = $poss['status_points'];
     $width  = round(100 / ($tech['max_status_points'])); ?>
-<div class="progress status_points" rel="tooltip" data-placement="top" data-original-title="">
-<!--<a id="<?php echo $type?>-<?php echo $tech['id'] ?>|remove-1" class="bar <?php echo ($status<=0)?'disabled':''?>" style="width:<?php echo $width ?>%;">
-    <i class="glyphicon glyphicon-minus"></i>
-</a>-->
+<div class="progress status_points" data-bs-toggle="tooltip" data-bs-placement="top" title="">
 <?php
 for ($i=1; $i<=$tech['max_status_points']; $i++):
     $n = $status-$i;
     if ($i<$status):
         if ($n<=$ap_available):
-            echo '<a id="'.$type.'-'.$tech['id'].'|remove-'.$n.'" class="progress-bar progress-bar-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</a>';
+            echo '<a id="'.$type.'-'.$tech['id'].'|remove-'.$n.'" class="progress-bar bg-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</a>';
         else:
-            echo '<span class="progress-bar progress-bar-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
+            echo '<span class="progress-bar bg-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
         endif;
     elseif ($i==$status):
-        echo '<span class="progress-bar progress-bar-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
+        echo '<span class="progress-bar bg-warning" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
     else:
         if ($i <= $status+$ap_available):
-            echo '<a id="'.$type.'-'.$tech['id'].'|repair-'.($i-$status).'" class="progress-bar progress-bar-danger" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</a>';
+            echo '<a id="'.$type.'-'.$tech['id'].'|repair-'.($i-$status).'" class="progress-bar bg-danger" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</a>';
         else:
-            echo '<span class="progress-bar progress-bar-danger" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
+            echo '<span class="progress-bar bg-danger" style="width:'.$width.'%;" title="'.$i.'">'.$i.'</span>';
         endif;
     endif;
 endfor;
 ?>
-<!--<a id="<?php echo $type?>-<?php echo $tech['id'] ?>|repair-1" class="bar" style="width:<?php echo $width ?>%;"><i class="glyphicon glyphicon-wrench"></i></a>-->
 </div>
 <?php else : ?>
-<div class="progress status_points" rel="tooltip" data-placement="top" data-original-title=""></div>
+<div class="progress status_points"></div>
 <?php endif; ?>

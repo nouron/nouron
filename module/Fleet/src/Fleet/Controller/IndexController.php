@@ -1,7 +1,7 @@
 <?php
 namespace Fleet\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
  /**
   * @method integer getActive(String $itemType)
@@ -18,11 +18,10 @@ class IndexController extends \Core\Controller\IngameController
 
         #$tick     = $sm->get('Core\Service\Tick');
 
-        # params from route
-        $selectedIds = $this->selectedIds();
-        $systemId = $selectedIds['systemId'];
-        $objectId = $selectedIds['objectId'];
-        $colonyId = $selectedIds['colonyId'];
+        # params from route only (no session bleed — /fleets always shows all own fleets by default)
+        $systemId = $this->params()->fromRoute('sid');
+        $objectId = $this->params()->fromRoute('pid');
+        $colonyId = $this->params()->fromRoute('cid');
 
 //         $cid = $this->params()->fromRoute('cid');
 //         $pid = $this->params()->fromRoute('pid');
@@ -30,22 +29,24 @@ class IndexController extends \Core\Controller\IngameController
         $y = $this->params()->fromRoute('y');
         $x = $this->params()->fromRoute('x');
 
-        $fleetService = $sm->get('Fleet\Service\FleetService');
+        $fleetService  = $sm->get('Fleet\Service\FleetService');
+        $galaxyService = $sm->get('Galaxy\Service\Gateway');
+        $colonyService = $sm->get('Colony\Service\ColonyService');
 
         if ($x && $y) {
             $entity = array('x' => $x, 'y' => $y);
-            $ownFleets = $fleetService->getByCoordinates('fleets', array($x,$y));
-            $foreignFleets = $fleetService->getByCoordinates('fleets', array($x,$y));
+            $ownFleets = $fleetService->getFleetsByCoords(array($x, $y));
+            $foreignFleets = $fleetService->getFleetsByCoords(array($x, $y));
         } elseif ( $colonyId ) {
-            $entity = $fleetService->getColony($colonyId);
+            $entity = $colonyService->getColony($colonyId);
             $ownFleets = $fleetService->getFleetsByEntityId('colony', $colonyId);
             $foreignFleets = $fleetService->getFleetsByEntityId('colony', $colonyId);
         } elseif ( $objectId ) {
-            $entity = $fleetService->getSystemObject($objectId);
+            $entity = $galaxyService->getSystemObject($objectId);
             $ownFleets = $fleetService->getFleetsByEntityId('object', $objectId);
             $foreignFleets = $fleetService->getFleetsByEntityId('object', $objectId);
-        } elseif ( $systemId) {
-            $entity = $fleetService->getSystem($systemId);
+        } elseif ( $systemId ) {
+            $entity = $galaxyService->getSystem($systemId);
             $ownFleets = $fleetService->getFleetsByEntityId('system', $systemId);
             $foreignFleets = $fleetService->getFleetsByEntityId('system', $systemId);
         } else {
@@ -81,7 +82,7 @@ class IndexController extends \Core\Controller\IngameController
             # get active colony id
             $colony = $galaxyService->getColony($this->getActive('colony'));
 
-            \Zend\Debug\Debug::dump($colony);
+            \Laminas\Debug\Debug::dump($colony);
 
             # Flotten nur auf eigenen Kolonien erstellen!
             if ($this->getRequest()->isPost()) {
@@ -97,9 +98,9 @@ class IndexController extends \Core\Controller\IngameController
                     $newEntity['user_id'] = $colony->getUserId();
                     $fid = $fleetService->saveFleet($newEntity);
                     #$success = true;
-                    \Zend\Debug\Debug::dump($fid);
+                    \Laminas\Debug\Debug::dump($fid);
                 } else {
-                    \Zend\Debug\Debug::dump($form);
+                    \Laminas\Debug\Debug::dump($form);
                 }
             }
         }

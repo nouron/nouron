@@ -7,11 +7,11 @@
 
 namespace Core\Table;
 
-use Zend\Db\TableGateway\TableGateway;
-use Zend\Db\Adapter\AdapterInterface;
+use Laminas\Db\TableGateway\TableGateway;
+use Laminas\Db\Adapter\AdapterInterface;
 use Core\Entity\EntityInterface;
 use Core\Model\ResultSet;
-use Zend\Stdlib\Hydrator;
+use Laminas\Hydrator;
 
 /**
  * This is the abstract class for all table classes. It implements all standard
@@ -56,7 +56,7 @@ abstract class AbstractTable extends TableGateway
      */
     public function __construct(AdapterInterface $adapter, EntityInterface $entity)
     {
-        $hydrator  = new \Zend\Stdlib\Hydrator\ClassMethods;
+        $hydrator  = new \Laminas\Hydrator\ClassMethods;
         $resultSet = new ResultSet($hydrator, $entity);
         $this->entityPrototype = $entity;
 
@@ -87,7 +87,7 @@ abstract class AbstractTable extends TableGateway
     /**
      *
      * @param string|array $where
-     * @return ResultSet <\Zend\Db\ResultSet\ResultSet, NULL, \Zend\Db\ResultSet\ResultSetInterface>
+     * @return ResultSet <\Laminas\Db\ResultSet\ResultSet, NULL, \Laminas\Db\ResultSet\ResultSetInterface>
      */
     public function fetchAll($where = null, $order = null)
     {
@@ -128,12 +128,9 @@ abstract class AbstractTable extends TableGateway
         }
 
         $row = $rowset->current();
-        /*if (!$row) {
-            #throw new \Exception("Could not find row $id");
-            $row = $this->createEntity($id);
-        }*/
-
-        return $row;
+        // Laminas ResultSet::current() returns null for empty result;
+        // return false for backward compatibility with service layer
+        return $row ?? false;
     }
 
     /**
@@ -151,7 +148,31 @@ abstract class AbstractTable extends TableGateway
         // make a copy of row data (to avoid changing original data):
         if ($entity instanceof EntityInterface) {
             $hydrator = new Hydrator\ClassMethods();
-            $data = $hydrator->extract($entity);
+            $allData = $hydrator->extract($entity);
+            // Remove non-scalar values (arrays, objects) and null values.
+            // Nulls are omitted so the DB can apply column defaults on INSERT;
+            // this also filters utility getters like getArrayCopy(), getCoords() etc.
+            $data = array_filter($allData, fn($v) => is_scalar($v) && !is_null($v));
+            // For fields filtered out due to non-scalar value, check if the entity
+            // provides a get{Field}Json() accessor that returns a serialisable string.
+            foreach ($allData as $field => $value) {
+                if (!array_key_exists($field, $data)) {
+                    $method = 'get' . str_replace(' ', '', ucwords(str_replace('_', ' ', $field))) . 'Json';
+                    if (method_exists($entity, $method)) {
+                        $data[$field] = $entity->$method();
+                    }
+                }
+            }
+            // Remove *_json helper keys — they are extracted by the hydrator from get{X}Json()
+            // methods and are not actual DB columns.
+            foreach (array_keys($data) as $key) {
+                if (str_ends_with($key, '_json')) {
+                    $method = 'get' . str_replace(' ', '', ucwords(str_replace('_', ' ', $key)));
+                    if (method_exists($entity, $method)) {
+                        unset($data[$key]);
+                    }
+                }
+            }
         } elseif (is_array($entity)) {
             $data = $entity;
         } else {

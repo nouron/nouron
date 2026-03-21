@@ -2,8 +2,8 @@
 <hr />
 <div id="colony">
   <div id="visualTechtree">
-    <div id="storage-tech-id" class="hidden"></div>
-    <div id="storage" class="hidden"></div>
+    <div id="storage-tech-id" class="d-none"></div>
+    <div id="storage" class="d-none"></div>
     <svg class="grid-svg" id="grid-svg" xmlns="http://www.w3.org/2000/svg" fill="none">
         <rect x="0" y="0" height="10" width="10" stroke="black" />
         <rect x="100%" y="100%" height="10" width="10" stroke="black" />
@@ -14,13 +14,13 @@
     <?php for ($row=0; $row<=15; $row++): ?>
       <div class="row">
           <?php for ($col=0; $col<=5; $col++): ?>
-          <span class="col-md-2 grid-cell" id="<?php echo "grid-$row-$col"?>"></span>
+          <span class="col-2 grid-cell" id="<?php echo "grid-$row-$col"?>"></span>
           <?php endfor; ?>
       </div>
     <?php endfor; ?>
     </div>
 
-    <div class="hidden">
+    <div class="d-none">
         <?php
         foreach ($techtree['building'] as $id => $tech) :
             echo $this->partial("partial/_techdata", array('tech'=>$tech, 'type' => 'building'));
@@ -72,28 +72,28 @@
   <!-- Modal -->
   <!-- modals are filled with html data from json request -->
 <?php foreach ($techtree['building'] as $id => $tech) : ?>
-  <div id="buildingModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div id="buildingModal-<?php echo $id ?>" class="techModal modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content"></div>
     </div>
   </div>
 <?php endforeach;
 foreach ($techtree['research'] as $id => $tech) : ?>
-  <div id="researchModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div id="researchModal-<?php echo $id ?>" class="techModal modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content"></div>
     </div>
   </div>
 <?php endforeach;
 foreach ($techtree['ship'] as $id => $tech) : ?>
-  <div id="shipModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div id="shipModal-<?php echo $id ?>" class="techModal modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content"></div>
     </div>
   </div>
 <?php endforeach;
 foreach ($techtree['personell'] as $id => $tech) : ?>
-  <div id="personellModal-<?php echo $id ?>" class="techModal modal fade in" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
+  <div id="personellModal-<?php echo $id ?>" class="techModal modal fade" tabindex="-1" role="dialog" aria-labelledby="" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content"></div>
     </div>

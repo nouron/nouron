@@ -14,7 +14,7 @@ use Techtree\Entity\Personell;
 
 class BuildingServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -60,9 +60,9 @@ class BuildingServiceTest extends AbstractServiceTest
                 )));
         $services['personell'] = $personellService;
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         $this->_service = new BuildingService($tick, $tables, $services);
-        $logger = $this->getMockBuilder('Zend\Log\Logger')
+        $logger = $this->getMockBuilder('Laminas\Log\Logger')
                        ->disableOriginalConstructor()
                        ->getMock();
         $this->_service->setLogger($logger);
@@ -82,7 +82,7 @@ class BuildingServiceTest extends AbstractServiceTest
         $result = $this->_service->checkRequiredActionPoints($this->_negativeColonyId, $this->_entityId);
         $this->assertFalse($result);
 
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->checkRequiredActionPoints('x', 'x');
     }
 
@@ -120,7 +120,11 @@ class BuildingServiceTest extends AbstractServiceTest
     {
         $object = $this->_service->getEntity($this->_entityId);
         $this->assertEquals('Techtree\Entity\Building', get_class($object));
-        $this->markTestIncomplete();
+        $this->assertEquals(27, $object->getId());
+        $this->assertFalse($this->_service->getEntity(99999));
+
+        $this->expectException('Core\Service\Exception');
+        $this->_service->getEntity(-1);
     }
 
     public function testLevelup()
@@ -148,10 +152,8 @@ class BuildingServiceTest extends AbstractServiceTest
         #$result = $this->_service->hire($this->_colonyId, PersonellService::PERSONELL_ID_PILOT);
         #$this->assertTrue($result);
 
-        // TODO: test failed checks for level up
-        // TODO: test error case
-
-        $this->markTestIncomplete();
+        $this->expectException('Core\Service\Exception');
+        $this->_service->levelup(-1, $this->_entityId);
     }
 
 #    public function testLeveldown()
@@ -183,8 +185,13 @@ class BuildingServiceTest extends AbstractServiceTest
     public function testInvest()
     {
         $this->initDatabase();
+        // personell mock configures getAvailableActionPoints but not getConstructionPoints
+        // which is what _invest() calls → mock returns null → invest returns false
         $result = $this->_service->invest($this->_colonyId, $this->_entityId, 'add', 1);
-        $this->markTestIncomplete();
+        $this->assertFalse($result);
+
+        $this->expectException('Core\Service\Exception');
+        $this->_service->invest(-1, $this->_entityId);
     }
 
 }

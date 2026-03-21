@@ -1,13 +1,13 @@
 <?php
 namespace TechtreeTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Techtree\Entity\ActionPointFactory;
 
-class ActionPointFactoryTest extends PHPUnit_Framework_TestCase
+class ActionPointFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class ActionPointFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new ActionPointFactory();
         $this->assertInstanceOf(
             "Techtree\Entity\ActionPoint",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

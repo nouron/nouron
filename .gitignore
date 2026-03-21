@@ -8,10 +8,13 @@
 
 vendor/
 bower_components/
+node_modules/
+public/vendor/
 bin/**
 tmp/**
 tmp/**/*
 test/report/*
+.phpunit.result.cache
 
 local.properties
 .classpath

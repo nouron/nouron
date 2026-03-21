@@ -11,7 +11,7 @@ use INNN\Entity\Event;
 
 class EventServiceTest extends AbstractServiceTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
         $this->initDatabase();
@@ -20,7 +20,7 @@ class EventServiceTest extends AbstractServiceTest
         $tables['event'] = new EventTable($this->dbAdapter, new Event());
         #$tables['user'] = new UserTable($dbAdapter, new User());
 
-        $tick = new \Core\Service\Tick(1234);
+        $tick = new \Core\Service\Tick(['calculation' => ['start' => 3, 'end' => 4]], 1234);
         #$tick->setTickCount(1234);
 
         $this->_service = new EventService($tick, $tables);
@@ -43,7 +43,7 @@ class EventServiceTest extends AbstractServiceTest
         $this->assertFalse($object);
 
         // test exception
-        $this->setExpectedException('Core\Service\Exception');
+        $this->expectException('Core\Service\Exception');
         $this->_service->getEvent(null);
 
         #$this->markTestIncomplete();

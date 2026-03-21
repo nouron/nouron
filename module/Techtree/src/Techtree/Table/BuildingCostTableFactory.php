@@ -1,17 +1,18 @@
 <?php
 namespace Techtree\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class BuildingCostTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        // @var Zend\Db\Adapter\Adapter
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
+        // @var Laminas\Db\Adapter\Adapter
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
         // @var Techtree\Entity\BuildingCost
-        $entity  = $serviceLocator->get('Techtree\Entity\BuildingCost');
+        $entity  = $container->get('Techtree\Entity\BuildingCost');
         return new BuildingCostTable($adapter, $entity);
     }
 }

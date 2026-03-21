@@ -1,15 +1,16 @@
 <?php
 namespace Techtree\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ShipCostTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $entity = $serviceLocator->get('Techtree\Entity\ShipCost');
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
+        $entity = $container->get('Techtree\Entity\ShipCost');
         $table = new ShipCostTable($adapter, $entity);
         return $table;
     }

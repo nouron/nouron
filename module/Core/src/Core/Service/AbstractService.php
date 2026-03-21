@@ -7,8 +7,8 @@
 
 namespace Core\Service;
 
-use Zend\Log\LoggerInterface;
-use Zend\Log\LoggerAwareInterface;
+use Laminas\Log\LoggerInterface;
+use Laminas\Log\LoggerAwareInterface;
 
 abstract class AbstractService implements LoggerAwareInterface
 {
@@ -28,7 +28,7 @@ abstract class AbstractService implements LoggerAwareInterface
     protected $services;
 
     /**
-     * @var \Zend\Log\Logger
+     * @var \Laminas\Log\Logger
      */
     protected $logger;
 
@@ -119,7 +119,7 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /**
      *
-     * @param \Zend\Log\LoggerInterface $logger
+     * @param \Laminas\Log\LoggerInterface $logger
      */
     public function setLogger(LoggerInterface $logger)
     {
@@ -128,16 +128,14 @@ abstract class AbstractService implements LoggerAwareInterface
 
     /**
      *
-     * @return \Zend\Log\Logger
+     * @return \Laminas\Log\Logger
      */
     public function getLogger()
     {
         if (!($this->logger instanceof LoggerInterface)) {
             # set standard logger
-            $this->logger = new \Zend\Log\Logger();
-            #$this->logger->addWriter('FirePhp');
-            #$this->logger->addWriter('Stream');
-            $this->logger->addWriter('Null');
+            $this->logger = new \Laminas\Log\Logger();
+            $this->logger->addWriter(new \Laminas\Log\Writer\Noop());
         }
         return $this->logger;
     }

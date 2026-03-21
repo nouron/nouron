@@ -2,9 +2,9 @@
 namespace FleetTest\Entity;
 
 use Fleet\Entity\FleetResource;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class FleetResourceTest extends PHPUnit_Framework_TestCase
+class FleetResourceTest extends TestCase
 {
     public function testFleetInitialState()
     {
@@ -22,7 +22,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setFleetId(99);
         $this->assertEquals(99, $fleetResource->getFleetId());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleetResource->setFleetId('a');
     }
 
@@ -34,7 +34,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setResourceId(99);
         $this->assertEquals(99, $fleetResource->getResourceId());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleetResource->setResourceId('a');
     }
 
@@ -46,7 +46,7 @@ class FleetResourceTest extends PHPUnit_Framework_TestCase
         $fleetResource->setAmount(99);
         $this->assertEquals(99, $fleetResource->getAmount());
 
-        $this->setExpectedException('Core\Entity\Exception');
+        $this->expectException('Core\Entity\Exception');
         $fleetResource->setAmount('a');
     }
 

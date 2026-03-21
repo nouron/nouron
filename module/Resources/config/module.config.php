@@ -40,7 +40,10 @@ return array(
     'controller_plugins' => array(
         'invokables' => array(
             'Resources' => 'Resources\Controller\Plugin\Resources',
-        )
+        ),
+        'aliases' => array(
+            'resources' => 'Resources',
+        ),
     ),
     'view_manager' => array(
         'template_path_stack' => array(

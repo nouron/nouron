@@ -2,10 +2,9 @@
 namespace User\Entity;
 
 use Core\Entity\EntityInterface;
-use ZfcRbac\Identity\IdentityInterface;
-use ZfcUser\Entity\UserInterface;
+use LmcUser\Entity\UserInterface;
 
-class User implements EntityInterface, IdentityInterface, UserInterface
+class User implements EntityInterface, UserInterface
 {
     protected $tableName  = 'user';
 
@@ -38,6 +37,11 @@ class User implements EntityInterface, IdentityInterface, UserInterface
      * @var int
      */
     protected $state;
+
+    /**
+     * @var string
+     */
+    protected $role;
 
 
     /**
@@ -173,19 +177,31 @@ class User implements EntityInterface, IdentityInterface, UserInterface
     }
 
 
-    public function getArrayCopy()
+    public function getRole()
     {
-        return get_object_vars($this);
+        return $this->role;
     }
 
-    public function exchangeArray(array $array)
+    public function setRole($role)
     {
-
+        $this->role = $role;
+        return $this;
     }
 
-    public function getRoles()
+    /**
+     * Alias for getId() — maps the DB column 'user_id' via ClassMethods hydrator.
+     */
+    public function getUserId()
     {
-        return array($this->role);
+        return $this->getId();
+    }
+
+    /**
+     * Alias for setId() — maps the DB column 'user_id' via ClassMethods hydrator.
+     */
+    public function setUserId($id)
+    {
+        return $this->setId($id);
     }
 }
 

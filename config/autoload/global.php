@@ -1,43 +1,41 @@
 <?php
 /**
  * Global Configuration Override
- *
- * You can use this file for overridding configuration values from modules, etc.
- * You would place values in here that are agnostic to the environment and not
- * sensitive to security.
- *
- * @NOTE: In practice, this file will typically be INCLUDED in your source
- * control, so do not include passwords or other sensitive information in this
- * file.
  */
 
 return array(
     'db' => array(
         'driver' => 'Pdo_Sqlite',
-        'database' => 'data/db/nouron.db'
-#        'driver'         => 'Pdo',
-#        'dsn'            => 'mysql:dbname=nouronzf2_dev2;host=localhost',
-#        'driver_options' => array(
-#            PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES \'UTF8\''
-#        ),
+        'database' => 'data/db/nouron.db',
     ),
     'service_manager' => array(
         'factories' => array(
-            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\AdapterServiceFactory',
-            'logger' => function($sl) {
-                $logger = new \Zend\Log\Logger();
-                $config = $sl->get('Config');
-                if ($config['logger']['writer'] == 'ChromePhp')
-                    $logger->addWriter(new \Helloworld\Log\Writer\ChromePhp());
-                else
-                    $logger->addWriter('FirePhp');
+            // Router services (laminas-router has no Module.php, must register here)
+            'HttpRouter'                              => 'Laminas\Router\Http\HttpRouterFactory',
+            'Router'                                  => 'Laminas\Router\RouterFactory',
+            'RoutePluginManager'                      => 'Laminas\Router\RoutePluginManagerFactory',
+            \Laminas\Router\Http\TreeRouteStack::class => 'Laminas\Router\Http\HttpRouterFactory',
+            \Laminas\Router\RouteStackInterface::class => 'Laminas\Router\RouterFactory',
+            \Laminas\Router\RoutePluginManager::class  => 'Laminas\Router\RoutePluginManagerFactory',
+            // Translator
+            'translator' => 'Laminas\I18n\Translator\TranslatorServiceFactory',
+            'MvcTranslator' => 'Laminas\Mvc\I18n\TranslatorFactory',
+            // Database
+            'Laminas\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\AdapterServiceFactory',
+            'logger' => function($container) {
+                $logger = new \Laminas\Log\Logger();
+                $logger->addWriter(new \Laminas\Log\Writer\Noop());
                 return $logger;
             },
-            'Core\Service\Tick' => function($sl) {
-                $config = $sl->get('Config');
+            'Core\Service\Tick' => function($container) {
+                $config = $container->get('Config');
                 $config = $config['tick'];
                 return new \Core\Service\Tick($config);
             }
+        ),
+        'aliases' => array(
+            // Alias old Zend-style key for backwards compat within configs
+            'Zend\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\Adapter',
         ),
     ),
     'tick' => array(

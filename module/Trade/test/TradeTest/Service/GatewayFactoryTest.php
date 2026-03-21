@@ -1,21 +1,21 @@
 <?php
 namespace TradeTest\Service;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TradeTest\Bootstrap;
 use Trade\Service\GatewayFactory;
 
-class GatewayFactoryTest extends PHPUnit_Framework_TestCase
+class GatewayFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         $this->sm->setAllowOverride(true);
 
         $servicesToMock = array(
-            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\Adapter',
             'Core\Service\Tick' => 'Core\Service\Tick',
-            'logger' => 'Zend\Log\Logger',
+            'logger' => 'Laminas\Log\Logger',
             'Trade\Table\ResearchTable' => 'Trade\Table\ResearchTable',
             'Trade\Table\ResearchView'  => 'Trade\Table\ResearchView',
             'Trade\Table\ResourceTable' => 'Trade\Table\ResourceTable',
@@ -45,7 +45,7 @@ class GatewayFactoryTest extends PHPUnit_Framework_TestCase
     public function testCreateService()
     {
         $factory = new GatewayFactory();
-        $entity  = $factory->createService($this->sm);
+        $entity  = $factory($this->sm, '', []);
 
         $this->assertInstanceOf(
             "Trade\Service\Gateway",

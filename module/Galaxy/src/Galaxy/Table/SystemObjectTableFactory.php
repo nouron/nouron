@@ -1,15 +1,16 @@
 <?php
 namespace Galaxy\Table;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class SystemObjectTableFactory implements FactoryInterface
 {
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $adapter = $serviceLocator->get('Zend\Db\Adapter\Adapter');
-        $entity = $serviceLocator->get('Galaxy\Entity\SystemObject');
+        $adapter = $container->get('Laminas\Db\Adapter\Adapter');
+        $entity = $container->get('Galaxy\Entity\SystemObject');
         $table = new SystemObjectTable($adapter, $entity);
         return $table;
     }

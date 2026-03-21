@@ -1,14 +1,16 @@
 <div id="fleetlist">
     <?php if ($cid): ?>
-        <p style="text-align: center">Flotten auf der Kolonie und in der näheren Umgebung.</p>
+        <p class="text-center">Flotten auf der Kolonie und in der näheren Umgebung.</p>
     <?php elseif($pid): ?>
-        <p style="text-align: center">Flotten auf dem Planeten und in der näheren Umgebung.</p>
+        <p class="text-center">Flotten auf dem Planeten und in der näheren Umgebung.</p>
     <?php elseif($sid): ?>
-        <p style="text-align: center">Flotten im System.</p>
+        <p class="text-center">Flotten im System.</p>
     <?php endif; ?>
     <div class="row">
-        <div class="col-md-6 well">
-            <h4>eigene Flotten</h4>
+        <div class="col-md-6">
+            <div class="card mb-3">
+            <div class="card-body">
+            <h4 class="card-title">eigene Flotten</h4>
             <table class="table table-striped">
                 <tr>
                     <th>Flotte</th>
@@ -19,26 +21,25 @@
             <?php
             foreach ($ownFleets as $fleet):
             if ($fleet->getUserId() == $userId): ?>
-            <tr class="">
-                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet->getId())) ?>"><i class="glyphicon glyphicon-search"></i><?php echo $fleet->getFleet() ?></a></td>
+            <tr>
+                <td><a href="<?php echo $this->url('fleet/config', array('id' => $fleet->getId())) ?>"><i class="bi bi-search"></i> <?php echo $fleet->getFleet() ?></a></td>
                 <?php
                 if (isset($colony) && $colony->getX() == $fleet->getX() && $colony->getY() == $fleet->getY() ): ?>
                 <td>angedockt</td>
                 <td><?php
                 if (isset($myFleetOrders[$fleet->getId()])):
-                    $myOrders = $myFleetOrders[$fleet->getId()]['order'];
                     echo $myFleetOrders[$fleet->getId()]['order'];
                 else:
                     echo 'leer';
                 endif; ?></td>
                 <td>
-                    <?php echo ($trade) ? '<a class="button" href="#">Auftrag zuweisen</a>' : 'befehligen' ?>
+                    <?php echo ($trade) ? '<a class="btn btn-sm btn-secondary" href="#">Auftrag zuweisen</a>' : 'befehligen' ?>
                 </td>
-                <td><a class="btn btn-default" href="/fleet/delete/<?php echo $fleet->getId()?>"><i class="glyphicon glyphicon-remove"></i></a></td>
+                <td><a class="btn btn-sm btn-secondary" href="/fleet/delete/<?php echo $fleet->getId()?>"><i class="bi bi-x-lg"></i></a></td>
                 <?php else:?>
                 <td><?php echo $fleet->getX() . ','. $fleet->getY() . ',' . $fleet->getSpot() ?></td>
                 <td></td>
-                <td><a class="btn btn-default disabled"><i class="glyphicon glyphicon-remove"></i></a></td>
+                <td><a class="btn btn-sm btn-secondary disabled"><i class="bi bi-x-lg"></i></a></td>
                 <?php endif;?>
             </tr>
             <?php endif;
@@ -47,23 +48,24 @@
                 <td colspan="3">
                 <form action="<?php echo $this->url('fleet', array('action' => 'create'));?>" method="post" id="createFleetForm">
                     <input type="hidden" id="coords" name="coords" value="<?php echo "[$x, $y, 0]" ?>" />
-                    <input type="text" id="fleet" name="fleet" />
-                    <input class="btn btn-default" type="submit" value="Erstellen" id="submit" name="submit" />
+                    <input type="text" class="form-control form-control-sm d-inline w-auto" id="fleet" name="fleet" />
+                    <input class="btn btn-sm btn-secondary" type="submit" value="Erstellen" id="submit" name="submit" />
                 </form>
                 </td>
             </tr>
             </table>
+            </div>
+            </div>
         </div>
-        <?php #if ($cid || $pid || $sid): ?>
-        <div class="col-md-6 well">
-            <h4>fremde Flotten</h4>
+        <div class="col-md-6">
+            <div class="card mb-3">
+            <div class="card-body">
+            <h4 class="card-title">fremde Flotten</h4>
             <table class="table table-striped">
                 <tr>
                     <th>Flotte</th>
                     <th>Position</th>
                     <th>Aktion</th>
-                    <th></th>
-                    <th></th>
                 </tr>
             <?php foreach ($foreignFleets as $fleet):
                 if ( $fleet->getUserId() != $userId):
@@ -76,7 +78,8 @@
                 <?php endif;
             endforeach; ?>
             </table>
+            </div>
+            </div>
         </div>
-        <?php #endif; ?>
     </div>
 </div>

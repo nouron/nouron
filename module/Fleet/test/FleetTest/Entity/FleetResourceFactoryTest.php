@@ -1,13 +1,13 @@
 <?php
 namespace FleetTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Fleet\Entity\FleetResourceFactory;
 
-class FleetResourceFactoryTest extends PHPUnit_Framework_TestCase
+class FleetResourceFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class FleetResourceFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new FleetResourceFactory();
         $this->assertInstanceOf(
             "Fleet\Entity\FleetResource",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

@@ -2,13 +2,13 @@
 namespace TechtreeTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Techtree\Table\BuildingCostTableFactory;
 
 class BuildingCostTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class BuildingCostTableFactoryTest extends AbstractTableTest
             new \Techtree\Entity\BuildingCost()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class BuildingCostTableFactoryTest extends AbstractTableTest
         $tableFactory = new BuildingCostTableFactory();
         $this->assertInstanceOf(
             "Techtree\Table\BuildingCostTable",
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

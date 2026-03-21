@@ -2,13 +2,13 @@
 namespace FleetTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use FleetTest\Bootstrap;
 use Fleet\Table\FleetTableFactory;
 
 class FleetTableFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class FleetTableFactoryTest extends AbstractTableTest
             new \Fleet\Entity\Fleet()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class FleetTableFactoryTest extends AbstractTableTest
         $tableFactory = new FleetTableFactory();
         $this->assertInstanceOf(
             "Fleet\Table\FleetTable",
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

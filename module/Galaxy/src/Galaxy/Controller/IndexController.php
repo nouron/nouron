@@ -1,7 +1,7 @@
 <?php
 namespace Galaxy\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
 class IndexController extends \Core\Controller\IngameController
 {

@@ -166,7 +166,7 @@ class PersonellService extends AbstractTechnologyService
         $entity['spend_ap'] += abs((int) $ap);
 
         $this->getLogger()->log(
-            \Zend\Log\Logger::INFO,
+            \Laminas\Log\Logger::INFO,
             "$ap actionpoints locked: " . serialize($entity)
         );
 

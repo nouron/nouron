@@ -2,11 +2,11 @@
 namespace GalaxyTest\Entity;
 
 use Galaxy\Entity\SystemObject;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class SystemObjectTest extends PHPUnit_Framework_TestCase
+class SystemObjectTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->entity = new SystemObject();
     }

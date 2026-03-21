@@ -1,7 +1,7 @@
 <?php
 namespace Techtree\Controller;
 
-use Zend\View\Model\JsonModel;
+use Laminas\View\Model\JsonModel;
 
 /**
  *
@@ -12,7 +12,7 @@ class JsonController extends \Core\Controller\IngameController
 {
     // /**
     //  *
-    //  * @return \Zend\View\Model\JsonModel
+    //  * @return \Laminas\View\Model\JsonModel
     //  */
     // public function getRequirementsAction()
     // {
@@ -23,7 +23,7 @@ class JsonController extends \Core\Controller\IngameController
 
     // /**
     //  *
-    //  * @return \Zend\View\Model\JsonModel
+    //  * @return \Laminas\View\Model\JsonModel
     //  */
     // public function getRequirementsForTechnologyAction()
     // {
@@ -35,7 +35,7 @@ class JsonController extends \Core\Controller\IngameController
 
     // /**
     //  *
-    //  * @return \Zend\View\Model\ViewModel
+    //  * @return \Laminas\View\Model\ViewModel
     //  */
     // public function getCostsForTechnologyAction()
     // {

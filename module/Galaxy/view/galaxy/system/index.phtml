@@ -1,3 +1,47 @@
-<div class="row" style="height:500px"><!-- TODO: detect optimum height automatically (but take care of mobile devices too!)-->
-    <div id="ngm-map"></div>
-</div>
+<style>
+    .leaflet-container { background-color: transparent !important; }
+    .leaflet-control-attribution { display: none; }
+    .leaflet-control-zoom {
+        border: 1px solid rgba(80,130,220,0.35) !important;
+        background: rgba(2,8,20,0.92) !important;
+    }
+    .leaflet-control-zoom a {
+        color: #5577aa !important;
+        background: transparent !important;
+        border-bottom-color: rgba(80,130,220,0.2) !important;
+    }
+    .leaflet-control-zoom a:hover {
+        background: rgba(60,100,200,0.15) !important;
+        color: #99bbdd !important;
+    }
+    .system-star-outer {
+        filter: drop-shadow(0 0 10px rgba(255,230,100,1))
+                drop-shadow(0 0 25px rgba(255,190,40,0.7))
+                drop-shadow(0 0 55px rgba(255,140,20,0.35));
+    }
+    .fleet-marker { filter: drop-shadow(0 0 5px rgba(255,180,50,0.9)); }
+    .leaflet-tooltip {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #8aa8c8 !important;
+        font-family: "Courier New", monospace !important;
+        font-size: 9px !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase;
+        text-shadow: 0 0 10px rgba(80,140,220,0.9), 0 0 3px rgba(0,0,0,1) !important;
+        padding: 1px 0 !important;
+        white-space: nowrap;
+    }
+    .leaflet-tooltip::before { display: none !important; }
+    .star-label {
+        color: #ffe888 !important;
+        font-size: 10px !important;
+        letter-spacing: 2px !important;
+        text-shadow: 0 0 14px rgba(255,220,80,1), 0 0 3px rgba(0,0,0,1) !important;
+    }
+</style>
+<div id="galaxy-map"
+     data-system-name="<?= htmlspecialchars($system->name ?? '') ?>"
+     data-bg="<?= htmlspecialchars($system->getBackgroundImageUrl() ? '/img/' . $system->getBackgroundImageUrl() : '') ?>"
+     style="width:100%; height:calc(100vh - 130px);"></div>

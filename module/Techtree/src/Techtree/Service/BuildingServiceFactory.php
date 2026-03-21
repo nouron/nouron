@@ -1,8 +1,9 @@
 <?php
 namespace Techtree\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class BuildingServiceFactory implements FactoryInterface
 {
@@ -11,21 +12,21 @@ class BuildingServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return \Techtree\Service\BuildingService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
 
-        $tables['buildings']        = $serviceLocator->get('Techtree\Table\BuildingTable');
-        $tables['building_costs']   = $serviceLocator->get('Techtree\Table\BuildingCostTable');
-        $tables['colony_buildings'] = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
-        $tables['colonies']         = $serviceLocator->get('Colony\Table\ColonyTable');
+        $tables['buildings']        = $container->get('Techtree\Table\BuildingTable');
+        $tables['building_costs']   = $container->get('Techtree\Table\BuildingCostTable');
+        $tables['colony_buildings'] = $container->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colonies']         = $container->get('Colony\Table\ColonyTable');
 
         $services = array();
-        $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');
-        $services['personell'] = $serviceLocator->get('Techtree\Service\PersonellService');
+        $services['resources'] = $container->get('Resources\Service\ResourcesService');
+        $services['personell'] = $container->get('Techtree\Service\PersonellService');
 
         $service = new BuildingService($tick, $tables, $services);
         $service->setLogger($logger);

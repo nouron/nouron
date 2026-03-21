@@ -1,7 +1,7 @@
 <?php
 namespace INNN\Controller;
 
-use Zend\View\Model\ViewModel;
+use Laminas\View\Model\ViewModel;
 
 class EventController extends \Core\Controller\IngameController
 {

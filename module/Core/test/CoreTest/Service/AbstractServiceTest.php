@@ -1,13 +1,13 @@
 <?php
 namespace CoreTest\Service;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 
-abstract class AbstractServiceTest extends PHPUnit_Framework_TestCase
+abstract class AbstractServiceTest extends TestCase
 {
     /**
-     * @var \Zend\Db\Adapter\Adapter
+     * @var \Laminas\Db\Adapter\Adapter
      */
     protected $dbAdapter;
 
@@ -25,7 +25,7 @@ abstract class AbstractServiceTest extends PHPUnit_Framework_TestCase
     {
         if (!$this->dbAdapter) {
             #print("initDatabaseAdapter\n");
-            $this->dbAdapter = new \Zend\Db\Adapter\Adapter(
+            $this->dbAdapter = new \Laminas\Db\Adapter\Adapter(
                 array(
                     'driver' => 'Pdo_Sqlite',
                     'database' => __DIR__ . '/../../../../../data/db/test.db'

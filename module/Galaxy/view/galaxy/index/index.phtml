@@ -1,34 +1,38 @@
-<div class="row">
-    <div class="col-md-3">
-      <div class="well sidebar-nav">
-        <ul id="systemList" class="nav nav-list itemList">
-          <li class="nav-header"><?php echo $this->translate('systems') ?></li>
-        <?php foreach ($systems as $sid => $system): ?>
-            <li><a href="<?php echo $this->url('galaxy/system', array('sid' => $sid)); ?>"><i class="glyphicon glyphicon-globe"></i> <?php echo $system['name'] ?></a></li>
-        <?php endforeach; ?>
-        </ul>
-      </div><!--/.well -->
-    </div><!--/span-->
-    <div id="parallax" class="parallax-viewport span6">
-        <div id="background1" class="parallax-layer">
-        </div>
-        <div id="systemFrame" class="parallax-layer">
-        </div>
-        <div id="background2" class="parallax-layer">
-        <?php foreach ($systems as $sid => $system):
-            $r = round ($system['size'] / 2);
-            $left = round($system['x'] * $config['scale']) + $config['offset'] - $r;
-            $top  = round($system['y'] * $config['scale']) + $config['offset'] - $r;
-            $imgSize = $system['size'];
-        ?>
-            <span class="tooltip_trigger " style="position:absolute;left:<?php echo $left ?>px;top:<?php echo $top ?>px">
-        <?php  $tooltip_text = "{$system['name']} ({$system['x']}/{$system['y']}) {$this->translate($system['class'])}";
-            echo '<a data-placement="bottom" rel="tooltip" href="'.$this->url('galaxy/system', array('sid' => $sid)).'" data-original-title="'.$tooltip_text.'"><img class="icon" src="/img/'.$system['icon_url'] .'" width="'.$imgSize .'" height="'.$imgSize.'" /></a>';?>
-            </span>
-        <?php endforeach; ?>
-        </div>
-    </div>
-    <div class="col-md-3 well">
-
-    </div>
-</div><!--/row-->
+<?php
+$systemsJson = htmlspecialchars(json_encode(array_values($systems)), ENT_QUOTES, 'UTF-8');
+?>
+<style>
+    .leaflet-container { background: transparent !important; }
+    .leaflet-control-attribution { display: none; }
+    .leaflet-control-zoom {
+        border: 1px solid rgba(80,130,220,0.35) !important;
+        background: rgba(2,8,20,0.92) !important;
+    }
+    .leaflet-control-zoom a {
+        color: #5577aa !important;
+        background: transparent !important;
+        border-bottom-color: rgba(80,130,220,0.2) !important;
+    }
+    .leaflet-control-zoom a:hover {
+        background: rgba(60,100,200,0.15) !important;
+        color: #99bbdd !important;
+    }
+    .leaflet-tooltip {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        color: #8aa8c8 !important;
+        font-family: "Courier New", monospace !important;
+        font-size: 9px !important;
+        letter-spacing: 2px !important;
+        text-transform: uppercase;
+        text-shadow: 0 0 10px rgba(80,140,220,0.9), 0 0 3px rgba(0,0,0,1) !important;
+        padding: 1px 0 !important;
+        white-space: nowrap;
+    }
+    .leaflet-tooltip::before { display: none !important; }
+    .galaxy-star { cursor: pointer; }
+</style>
+<div id="galaxy-overview"
+     data-systems="<?= $systemsJson ?>"
+     style="width:100%; height:calc(100vh - 130px);"></div>

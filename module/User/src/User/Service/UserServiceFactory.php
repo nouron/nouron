@@ -1,8 +1,9 @@
 <?php
 namespace User\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class UserServiceFactory implements FactoryInterface
 {
@@ -11,11 +12,11 @@ class UserServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return User
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick = $serviceLocator->get('Core\Service\Tick');
+        $tick = $container->get('Core\Service\Tick');
 
-        $tables['user'] = $serviceLocator->get('User\Table\UserTable');
+        $tables['user'] = $container->get('User\Table\UserTable');
 
         $service   = new UserService($tick, $tables);
         return $service;

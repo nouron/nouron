@@ -1,21 +1,21 @@
 <?php
 namespace GalaxyTest\Service;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use GalaxyTest\Bootstrap;
 use Galaxy\Service\GatewayFactory;
 
-class GatewayFactoryTest extends PHPUnit_Framework_TestCase
+class GatewayFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         $this->sm->setAllowOverride(true);
 
         $servicesToMock = array(
-            'Zend\Db\Adapter\Adapter' => 'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\Adapter',
             'Core\Service\Tick' => 'Core\Service\Tick',
-            'logger' => 'Zend\Log\Logger',
+            'logger' => 'Laminas\Log\Logger',
             'Galaxy\Table\SystemTable'       => 'Galaxy\Table\SystemTable',
             'Galaxy\Table\SystemObjectTable' => 'Galaxy\Table\SystemObjectTable',
             #'Galaxy\Table\FleetTable'        => 'Galaxy\Table\FleetTable',
@@ -43,7 +43,7 @@ class GatewayFactoryTest extends PHPUnit_Framework_TestCase
     public function testCreateService()
     {
         $factory = new GatewayFactory();
-        $entity  = $factory->createService($this->sm);
+        $entity  = $factory($this->sm, '', []);
 
         $this->assertInstanceOf(
             "Galaxy\Service\Gateway",

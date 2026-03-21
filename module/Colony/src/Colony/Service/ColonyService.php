@@ -1,7 +1,7 @@
 <?php
 namespace Colony\Service;
 
-use Zend\Session\Container;
+use Laminas\Session\Container;
 
 class ColonyService extends \Core\Service\AbstractService
 {
@@ -122,9 +122,24 @@ class ColonyService extends \Core\Service\AbstractService
         $y1 = $coords[1] - $radius;
         $y2 = $coords[1] + $radius;
 
-        $table = $this->getTable('colony');
-        $where = "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2";
-        return $table->fetchAll($where);
+        // Colonies have no direct x/y — coordinates live on glx_system_objects.
+        // Find system objects in range first, then fetch colonies by system_object_id.
+        $systemObjects = $this->getTable('systemobject')->fetchAll(
+            "x BETWEEN $x1 AND $x2 AND y BETWEEN $y1 AND $y2"
+        );
+
+        $soIds = [];
+        foreach ($systemObjects as $so) {
+            $soIds[] = $so->getId();
+        }
+
+        if (empty($soIds)) {
+            return $this->getTable('colony')->fetchAll('1=0');
+        }
+
+        return $this->getTable('colony')->fetchAll(
+            'system_object_id IN (' . implode(',', $soIds) . ')'
+        );
     }
 
     /**

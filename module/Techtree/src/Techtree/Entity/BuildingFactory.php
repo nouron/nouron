@@ -1,8 +1,9 @@
 <?php
 namespace Techtree\Entity;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class BuildingFactory implements FactoryInterface
 {
@@ -11,7 +12,7 @@ class BuildingFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return \Techtree\Entity\Building
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
         return new Building();
     }

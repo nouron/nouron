@@ -1,8 +1,9 @@
 <?php
 namespace Techtree\Service;
 
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Factory\FactoryInterface;
+use Psr\Container\ContainerInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class ResearchServiceFactory implements FactoryInterface
 {
@@ -11,22 +12,22 @@ class ResearchServiceFactory implements FactoryInterface
      * @param ServiceLocatorInterface $serviceLocator
      * @return ResearchService
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $tick   = $serviceLocator->get('Core\Service\Tick');
-        $logger = $serviceLocator->get('logger');
+        $tick   = $container->get('Core\Service\Tick');
+        $logger = $container->get('logger');
 
         $tables = array();
-        $tables['researches']        = $serviceLocator->get('Techtree\Table\ResearchTable');
-        $tables['research_costs']    = $serviceLocator->get('Techtree\Table\ResearchCostTable');
-        $tables['colony_buildings']  = $serviceLocator->get('Techtree\Table\ColonyBuildingTable');
-        $tables['colony_researches'] = $serviceLocator->get('Techtree\Table\ColonyResearchTable');
-        $tables['colonies']          = $serviceLocator->get('Colony\Table\ColonyTable');
+        $tables['researches']        = $container->get('Techtree\Table\ResearchTable');
+        $tables['research_costs']    = $container->get('Techtree\Table\ResearchCostTable');
+        $tables['colony_buildings']  = $container->get('Techtree\Table\ColonyBuildingTable');
+        $tables['colony_researches'] = $container->get('Techtree\Table\ColonyResearchTable');
+        $tables['colonies']          = $container->get('Colony\Table\ColonyTable');
 
         $services = array();
-        $services['resources'] = $serviceLocator->get('Resources\Service\ResourcesService');
-        #$services['buildings']    = $serviceLocator->get('Techtree\Service\BuildingService');
-        $services['personell']    = $serviceLocator->get('Techtree\Service\PersonellService');
+        $services['resources'] = $container->get('Resources\Service\ResourcesService');
+        #$services['buildings']    = $container->get('Techtree\Service\BuildingService');
+        $services['personell']    = $container->get('Techtree\Service\PersonellService');
 
         $service = new ResearchService($tick, $tables, $services);
         $service->setLogger($logger);

@@ -2,13 +2,13 @@
 namespace TradeTest\Table;
 
 use CoreTest\Table\AbstractTableTest;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TradeTest\Bootstrap;
 use Trade\Table\ResourceViewFactory;
 
 class ResourceViewFactoryTest extends AbstractTableTest
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->initDatabaseAdapter();
 
@@ -19,7 +19,7 @@ class ResourceViewFactoryTest extends AbstractTableTest
             new \Trade\Entity\Resource()
         );
         $this->sm->setService(
-            'Zend\Db\Adapter\Adapter',
+            'Laminas\Db\Adapter\Adapter',
             $this->dbAdapter
         );
     }
@@ -29,7 +29,7 @@ class ResourceViewFactoryTest extends AbstractTableTest
         $tableFactory = new ResourceViewFactory();
         $this->assertInstanceOf(
             "Trade\Table\ResourceView",
-            $tableFactory->createService($this->sm)
+            $tableFactory($this->sm, '', [])
         );
     }
 

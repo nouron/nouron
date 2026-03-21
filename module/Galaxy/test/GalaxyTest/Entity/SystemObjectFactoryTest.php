@@ -1,13 +1,13 @@
 <?php
 namespace GalaxyTest\Entity;
 
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use TechtreeTest\Bootstrap;
 use Galaxy\Entity\SystemObjectFactory;
 
-class SystemObjectFactoryTest extends PHPUnit_Framework_TestCase
+class SystemObjectFactoryTest extends TestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         $this->sm = Bootstrap::getServiceManager();
         #$this->sm->setAllowOverride(true);
@@ -18,7 +18,7 @@ class SystemObjectFactoryTest extends PHPUnit_Framework_TestCase
         $factory = new SystemObjectFactory();
         $this->assertInstanceOf(
             "Galaxy\Entity\SystemObject",
-            $factory->createService($this->sm)
+            $factory($this->sm, '', [])
         );
     }
 

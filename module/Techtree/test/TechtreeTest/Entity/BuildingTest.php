@@ -2,9 +2,9 @@
 namespace TechtreeTest\Entity;
 
 use Techtree\Entity\Building;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 
-class BuildingTest extends PHPUnit_Framework_TestCase
+class BuildingTest extends TestCase
 {
     public function testFleetInitialState()
     {
@@ -22,10 +22,6 @@ class BuildingTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($entity->getPrimeColonyOnly());
         $entity->setPrimeColonyOnly(false);
         $this->assertFalse($entity->getPrimeColonyOnly());
-        #$entity->setPrimeColonyOnly(true);
-        #$this->assertTrue($entity->getPrimeColonyOnly());
-
-        $this->markTestIncomplete();
     }
 
     public function testSetMaxLevel()
@@ -34,8 +30,8 @@ class BuildingTest extends PHPUnit_Framework_TestCase
         $this->assertNull($entity->getMaxLevel());
         $entity->setMaxLevel(50);
         $this->assertEquals(50, $entity->getMaxLevel());
-
-        $this->markTestIncomplete();
+        $entity->setMaxLevel(0);
+        $this->assertEquals(0, $entity->getMaxLevel());
     }
 
 }

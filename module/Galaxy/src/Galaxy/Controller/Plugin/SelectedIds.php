@@ -2,8 +2,8 @@
 
 namespace Galaxy\Controller\Plugin;
 
-use Zend\Mvc\Controller\Plugin\AbstractPlugin;
-use Zend\Session\Container;
+use Laminas\Mvc\Controller\Plugin\AbstractPlugin;
+use Laminas\Session\Container;
 
 class SelectedIds extends AbstractPlugin
 {
