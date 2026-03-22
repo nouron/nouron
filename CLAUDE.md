@@ -49,15 +49,18 @@ Folgende Arbeiten wurden bereits erledigt:
 - `fleets.js` für neue Config-UI neu geschrieben (click-to-select, Mengenbuttons)
 - 500-Fehler in `getFleetTechnologies` behoben (toter ZF2-Code entfernt)
 
-**Phase 2 (nächster Schritt): Spielablauf stabilisieren**
+**Phase 1b (nächster Schritt): Laminas → Laravel Migration**
+Laravel ist deutlich populärer als Laminas, hat eine größere Community und senkt die Einstiegshürde für potenzielle Mitwirkende. Ziel ist eine saubere, schrittweise Migration (kein Big Bang):
+- Modul für Modul migrieren, Test-Suite muss vor und nach jedem Schritt grün sein
+- Eloquent als ORM-Ersatz für TableGateway/Hydrator-Pattern
+- Laravel Routing, Controller und Service Provider statt Laminas-Äquivalente
+- Blade-Templates statt `.phtml`-Dateien
+
+**Phase 2 (nach Laravel-Migration): Spielablauf stabilisieren**
 - Tick-System, Aktionspunkte, Handelsrouten, Flottenoperationen testen und ggf. reparieren
 
-**Phase 3 (später): Neukonzeption "Nouron 2026"**
-Nach der Stabilisierung soll das Spiel stark vereinfacht und modernisiert werden:
-- Solo-basierte Spielweise mit Highscore (kein Online-Multiplayer mehr)
-- Nur eine menschliche Rasse (Fraktionen möglich, aber anders als ursprünglich)
-- Nur 2 Hauptressourcen: Credits und Aktionspunkte (statt 10+ Ressourcentypen)
-- Kein Browsergame-MMO mehr, eher eine moderne Web-App
+**Phase 3 (später): Neukonzeption — noch zu definieren**
+Wird nach Abschluss von Phase 2 neu definiert.
 
 ## Wichtige Korrekturen / Klarstellungen
 

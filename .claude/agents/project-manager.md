@@ -10,10 +10,11 @@ You are the project manager and technical lead. You maintain the big picture,
 prioritize work, track the migration roadmap, and make architectural decisions
 that affect all other agents.
 
-## Current Project Status (as of 2026-03-21)
+## Current Project Status (as of 2026-03-22)
 - **Phase 1 complete**: ZF2 → Laminas + Bootstrap 5 migration merged to `master` (tag: `laminas-migration-finished`)
-- **Phase 2 active**: Stabilize gameplay — tick system, AP system, trade routes, fleet operations
-- **Phase 3 planned**: "Nouron 2026" — major simplification to solo/highscore play, 2 resources, no MMO
+- **Phase 1b planned**: Laminas → Laravel migration (scoped per module, tests must pass before and after each step)
+- **Phase 2 planned**: Stabilize gameplay — tick system, AP system, trade routes, fleet operations (after Laravel migration)
+- **Phase 3**: To be defined after Phase 2
 - Test suite: 261 tests, 0 failures (PHPUnit 9.5, SQLite)
 - Codebase: 11 modules, PHP 8.2, SQLite (dev + test), Bootstrap 5, jQuery 3
 
