@@ -23,9 +23,11 @@ return array(
             // Database
             'Laminas\Db\Adapter\Adapter' => 'Laminas\Db\Adapter\AdapterServiceFactory',
             'logger' => function($container) {
-                $logger = new \Laminas\Log\Logger();
-                $logger->addWriter(new \Laminas\Log\Writer\Noop());
-                return $logger;
+                // TODO: Laravel migration — replace with Laravel Log facade
+                return new class {
+                    public function log($level, $message, array $context = []) {}
+                    public function __call($method, $args) {}
+                };
             },
             'Core\Service\Tick' => function($container) {
                 $config = $container->get('Config');

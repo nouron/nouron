@@ -13,7 +13,6 @@ return array(
         'Laminas\Validator',
         'Laminas\Form',
         'Laminas\Cache',
-        'Laminas\Log',
         'Laminas\Session',
         'Laminas\Mvc\I18n',
         'Laminas\Navigation',

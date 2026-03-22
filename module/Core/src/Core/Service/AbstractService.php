@@ -7,10 +7,7 @@
 
 namespace Core\Service;
 
-use Laminas\Log\LoggerInterface;
-use Laminas\Log\LoggerAwareInterface;
-
-abstract class AbstractService implements LoggerAwareInterface
+abstract class AbstractService
 {
     /**
      * @var numeric
@@ -28,9 +25,9 @@ abstract class AbstractService implements LoggerAwareInterface
     protected $services;
 
     /**
-     * @var \Laminas\Log\Logger
+     * @var object|null  Noop logger (laminas-log removed)
      */
-    protected $logger;
+    protected $logger = null;
 
     /**
      *
@@ -118,24 +115,23 @@ abstract class AbstractService implements LoggerAwareInterface
     }
 
     /**
-     *
-     * @param \Laminas\Log\LoggerInterface $logger
+     * @param object $logger  // TODO: Laravel migration — inject PSR-3 logger
      */
-    public function setLogger(LoggerInterface $logger)
+    public function setLogger(object $logger): void
     {
         $this->logger = $logger;
     }
 
     /**
-     *
-     * @return \Laminas\Log\Logger
+     * @return object  Noop logger shim (laminas-log removed)
      */
-    public function getLogger()
+    public function getLogger(): object
     {
-        if (!($this->logger instanceof LoggerInterface)) {
-            # set standard logger
-            $this->logger = new \Laminas\Log\Logger();
-            $this->logger->addWriter(new \Laminas\Log\Writer\Noop());
+        if ($this->logger === null) {
+            $this->logger = new class {
+                public function log($level, $message, array $context = []) {}
+                public function __call($method, $args) {}
+            };
         }
         return $this->logger;
     }
