@@ -70,6 +70,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/",
             "ColonyTest\\": "module/Colony/test/ColonyTest/",
             "CoreTest\\": "module/Core/test/CoreTest/",
             "FleetTest\\": "module/Fleet/test/FleetTest/",

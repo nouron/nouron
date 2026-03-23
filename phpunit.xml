@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="./test/Bootstrap.php" colors="false">
+<phpunit bootstrap="./test/Bootstrap.php" colors="true">
+
+    <!-- ── Laravel feature/unit tests ──────────────────────────────────── -->
     <testsuites>
+        <testsuite name="laravel-feature">
+            <directory>./tests/Feature</directory>
+        </testsuite>
+        <testsuite name="laravel-unit">
+            <directory>./tests/Unit</directory>
+        </testsuite>
+
+        <!-- ── Laminas module tests (kept until each module is migrated) ── -->
         <testsuite name="core">
             <directory>./module/Core/test/CoreTest</directory>
         </testsuite>
@@ -30,4 +40,15 @@
             <directory>./module/User/test/UserTest</directory>
         </testsuite>
     </testsuites>
+
+    <php>
+        <env name="APP_ENV" value="testing"/>
+        <env name="BCRYPT_ROUNDS" value="4"/>
+        <env name="CACHE_STORE" value="array"/>
+        <env name="SESSION_DRIVER" value="array"/>
+        <!-- Laravel tests use a separate in-memory DB so test.db is not destroyed -->
+        <env name="DB_CONNECTION" value="sqlite"/>
+        <env name="DB_DATABASE" value=":memory:"/>
+    </php>
+
 </phpunit>

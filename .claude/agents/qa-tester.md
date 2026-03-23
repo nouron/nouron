@@ -11,7 +11,7 @@ You write tests, catch regressions, and think adversarially — like a player
 trying to break the game or exploit the economy.
 
 ## Tech Stack
-- PHPUnit 9.5 (backend unit & integration tests)
+- PHPUnit 11.5 (upgraded from 9.5 as part of Laravel 12 migration)
 - SQLite test database at `data/db/test.db` (populated from `data/sql/testdata.sqlite.sql`)
 - PHPUnit binary: `php vendor/phpunit/phpunit/phpunit` (not `vendor/bin/phpunit`)
 
