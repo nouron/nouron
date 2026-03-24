@@ -13,7 +13,11 @@ use Illuminate\Support\Facades\Route;
 
 // ── Public ───────────────────────────────────────────────────────────────────
 
-Route::get('/', fn() => redirect()->route('login'));
+Route::get('/', function () {
+    return auth()->check()
+        ? redirect()->route('galaxy.index')
+        : redirect()->route('login');
+});
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
@@ -87,7 +91,10 @@ Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('techtree')->name('techtree.')->group(function () {
-    Route::get('/',                   [TechtreeController::class, 'index'])->name('index');
-    Route::get('/{type}/{id}',        [TechtreeController::class, 'technology'])->name('technology');
-    Route::post('/{type}/{id}/order', [TechtreeController::class, 'order'])->name('order');
+    Route::get('/',                            [TechtreeController::class, 'index'])->name('index');
+    Route::get('/{type}/{id}',                 [TechtreeController::class, 'technology'])->name('technology');
+    // Action route called by techtree.js AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
+    Route::get('/{type}/{id}/{order}',         [TechtreeController::class, 'action'])->name('action');
+    Route::get('/{type}/{id}/{order}/{ap}',    [TechtreeController::class, 'action'])->name('action.ap');
+    Route::post('/{type}/{id}/order',          [TechtreeController::class, 'order'])->name('order');
 });

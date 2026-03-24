@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\ColonyService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -37,7 +38,17 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
-            return redirect()->intended(route('techtree.index'));
+
+            // Initialise activeIds in session (mirrors Laminas behaviour)
+            $userId = Auth::id();
+            try {
+                $primeColony = app(ColonyService::class)->getPrimeColony($userId);
+                $request->session()->put('activeIds.colonyId', $primeColony->id);
+            } catch (\Throwable) {
+                // User has no colony yet — leave session key unset
+            }
+
+            return redirect()->intended(route('galaxy.index'));
         }
 
         return back()->withErrors([

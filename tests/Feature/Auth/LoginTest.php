@@ -42,7 +42,7 @@ class LoginTest extends TestCase
         $this->post(route('login'), [
             'username' => 'testuser',
             'password' => 'secret123',
-        ])->assertRedirect(route('techtree.index'));
+        ])->assertRedirect(route('galaxy.index'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -57,7 +57,7 @@ class LoginTest extends TestCase
         $this->post(route('login'), [
             'username' => 'test@example.com',
             'password' => 'secret123',
-        ])->assertRedirect(route('techtree.index'));
+        ])->assertRedirect(route('galaxy.index'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -94,7 +94,7 @@ class LoginTest extends TestCase
             'email'                 => 'new@example.com',
             'password'              => 'secret1234',
             'password_confirmation' => 'secret1234',
-        ])->assertRedirect(route('techtree.index'));
+        ])->assertRedirect(route('galaxy.index'));
 
         $this->assertDatabaseHas('user', ['username' => 'newplayer']);
         $this->assertAuthenticated();

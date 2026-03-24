@@ -52,6 +52,29 @@
                     <div class="d-flex gap-2 flex-wrap mt-2">
                         <span class="text-muted small">Gesendet in Tick {{ $message->tick }}</span>
                     </div>
+                    {{-- Outbox action buttons are disabled (sender cannot react to own messages) --}}
+                    <div class="d-flex gap-2 flex-wrap mt-2">
+                        <a href="#" class="btn btn-sm btn-outline-secondary disabled"
+                           title="positiv reagieren">
+                            <i class="bi bi-hand-thumbs-up"></i>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-secondary disabled"
+                           title="positiv reagieren + antworten">
+                            <i class="bi bi-hand-thumbs-up"></i> + <i class="bi bi-envelope"></i>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-secondary disabled"
+                           title="antworten">
+                            <i class="bi bi-envelope"></i>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-secondary disabled"
+                           title="negativ reagieren">
+                            <i class="bi bi-hand-thumbs-down"></i>
+                        </a>
+                        <a href="#" class="btn btn-sm btn-outline-secondary disabled"
+                           title="negativ reagieren + antworten">
+                            <i class="bi bi-hand-thumbs-down"></i> + <i class="bi bi-envelope"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

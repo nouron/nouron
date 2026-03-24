@@ -53,9 +53,12 @@ class FleetController extends BaseController
         $colony = $this->colonyService->getColonyByCoords($fleet->getCoords());
         $fleetIsInColonyOrbit = $colony !== false;
 
-        $resources = $this->resourcesService->getResources()->keyBy('id');
+        $resources  = $this->resourcesService->getResources()->keyBy('id');
+        $ships      = \Illuminate\Support\Facades\DB::table('ships')->get()->keyBy('id');
+        $personells = \Illuminate\Support\Facades\DB::table('personell')->get()->keyBy('id');
+        $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
 
-        return view('fleet.config', compact('fleet', 'colony', 'fleetIsInColonyOrbit', 'resources'));
+        return view('fleet.config', compact('fleet', 'colony', 'fleetIsInColonyOrbit', 'resources', 'ships', 'personells', 'researches'));
     }
 
     // ── JSON endpoints ────────────────────────────────────────────────────────

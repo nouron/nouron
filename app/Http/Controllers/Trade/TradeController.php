@@ -43,10 +43,12 @@ class TradeController extends BaseController
      */
     public function resources(Request $request): View
     {
-        $where   = $this->buildResourceFilter($request);
-        $offers  = $this->tradeGateway->getResources($where ?: null);
+        $where     = $this->buildResourceFilter($request);
+        $offers    = $this->tradeGateway->getResources($where ?: null);
+        $resources = \Illuminate\Support\Facades\DB::table('resources')->get()->keyBy('id');
+        $user_id   = $this->getCurrentUserId();
 
-        return view('trade.resources', compact('offers'));
+        return view('trade.resources', compact('offers', 'resources', 'user_id'));
     }
 
     /**
@@ -56,10 +58,12 @@ class TradeController extends BaseController
      */
     public function researches(Request $request): View
     {
-        $where   = $this->buildResearchFilter($request);
-        $offers  = $this->tradeGateway->getResearches($where ?: null);
+        $where     = $this->buildResearchFilter($request);
+        $offers    = $this->tradeGateway->getResearches($where ?: null);
+        $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
+        $user_id   = $this->getCurrentUserId();
 
-        return view('trade.researches', compact('offers'));
+        return view('trade.researches', compact('offers', 'researches', 'user_id'));
     }
 
     // ── POST — Add Offers ─────────────────────────────────────────────────────

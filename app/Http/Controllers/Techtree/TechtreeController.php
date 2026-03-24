@@ -68,7 +68,39 @@ class TechtreeController extends BaseController
             'apAvailable'            => $this->personellService->getAvailableActionPoints($apType, $colonyId),
             'requiredBuildingsCheck' => $service->checkRequiredBuildingsByEntityId($colonyId, $id),
             'requiredResourcesCheck' => $this->resourcesService->check($service->getEntityCosts($id), $colonyId),
+            // Passed so the view can resolve required building/research names
+            'buildings'              => $techtree['building'],
+            'researches'             => $techtree['research'],
         ]);
+    }
+
+    /**
+     * Perform a techtree action via GET and return the refreshed technology partial.
+     *
+     * Called by techtree.js via AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
+     * e.g. /techtree/building/25/add/3   or   /techtree/building/25/levelup
+     */
+    public function action(string $type, int $id, string $order, int $ap = 1): \Illuminate\View\View
+    {
+        $colonyId = Session::get('activeIds.colonyId');
+
+        $service = match (strtolower($type)) {
+            'building'  => $this->buildingService,
+            'research'  => $this->researchService,
+            'ship'      => $this->shipService,
+            'personell' => $this->personellService,
+            default     => throw new \InvalidArgumentException("Unknown type: $type"),
+        };
+
+        match ($order) {
+            'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
+            'levelup'                 => $service->levelup($colonyId, $id),
+            'leveldown'               => $service->leveldown($colonyId, $id),
+            default                   => null,
+        };
+
+        // Re-render the technology partial so the modal reflects the updated state
+        return $this->technology($type, $id);
     }
 
     /**
