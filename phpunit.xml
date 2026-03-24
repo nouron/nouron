@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<phpunit bootstrap="./test/Bootstrap.php" colors="true">
+<phpunit bootstrap="vendor/autoload.php" colors="true">
 
-    <!-- ── Laravel feature/unit tests ──────────────────────────────────── -->
     <testsuites>
         <testsuite name="laravel-feature">
             <directory>./tests/Feature</directory>
@@ -11,34 +10,7 @@
             <directory>./tests/Unit</directory>
         </testsuite>
 
-        <!-- ── Laminas module tests (kept until each module is migrated) ── -->
-        <testsuite name="core">
-            <directory>./module/Core/test/CoreTest</directory>
-        </testsuite>
-        <testsuite name="innn">
-            <directory>./module/INNN/test/INNNTest</directory>
-        </testsuite>
-        <testsuite name="techtree">
-            <directory>./module/Techtree/test/TechtreeTest</directory>
-        </testsuite>
-        <testsuite name="trade">
-            <directory>./module/Trade/test/TradeTest</directory>
-        </testsuite>
-        <testsuite name="resources">
-            <directory>./module/Resources/test/ResourcesTest</directory>
-        </testsuite>
-        <testsuite name="colony">
-            <directory>./module/Colony/test/ColonyTest</directory>
-        </testsuite>
-        <testsuite name="fleet">
-            <directory>./module/Fleet/test/FleetTest</directory>
-        </testsuite>
-        <testsuite name="galaxy">
-            <directory>./module/Galaxy/test/GalaxyTest</directory>
-        </testsuite>
-        <testsuite name="user">
-            <directory>./module/User/test/UserTest</directory>
-        </testsuite>
+
     </testsuites>
 
     <php>
@@ -46,7 +18,6 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="SESSION_DRIVER" value="array"/>
-        <!-- Laravel tests use a separate in-memory DB so test.db is not destroyed -->
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
     </php>

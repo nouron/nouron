@@ -15,6 +15,8 @@ use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use App\Services\FleetService;
 use App\Services\TradeGateway;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -65,6 +67,20 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Inject resource bar data into the main layout for authenticated users
+        View::composer('layouts.app', function ($view) {
+            if (Auth::check()) {
+                $colonyId = session('activeIds.colonyId', 1);
+                $resourcesService = app(ResourcesService::class);
+                $possessions  = $resourcesService->getPossessionsByColonyId($colonyId);
+                $resourceTypes = $resourcesService->getResources()->keyBy('id');
+                foreach ($possessions as $resId => $poss) {
+                    if (isset($resourceTypes[$resId])) {
+                        $possessions[$resId] = array_merge($poss, $resourceTypes[$resId]->toArray());
+                    }
+                }
+                $view->with('resourceBarPossessions', $possessions ?? []);
+            }
+        });
     }
 }

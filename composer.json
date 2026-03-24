@@ -10,34 +10,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1",
-        "laminas/laminas-mvc": "^3.6",
-        "laminas/laminas-db": "^2.15",
-        "laminas/laminas-servicemanager": "^3.21",
-        "laminas/laminas-form": "^3.1",
-        "laminas/laminas-view": "^2.23",
-        "laminas/laminas-router": "^3.11",
-        "laminas/laminas-http": "^2.19",
-        "laminas/laminas-cache": "^3.10",
-        "laminas/laminas-cache-storage-adapter-filesystem": "^2.0",
-        "laminas/laminas-session": "^2.16",
-        "laminas/laminas-stdlib": "^3.13",
-        "laminas/laminas-i18n": "^2.25",
-        "laminas/laminas-navigation": "^2.16",
-        "laminas/laminas-eventmanager": "^3.12",
-        "laminas/laminas-modulemanager": "^2.12",
-        "laminas/laminas-inputfilter": "^2.26",
-        "laminas/laminas-validator": "^2.38",
-        "laminas/laminas-filter": "^2.34",
-        "laminas/laminas-hydrator": "^4.13",
-        "laminas/laminas-loader": "^2.9",
-        "laminas/laminas-config": "^3.8",
-        "laminas/laminas-math": "^3.6",
-        "laminas/laminas-mvc-i18n": "^1.5",
-        "laminas/laminas-component-installer": "^3.3",
-        "lm-commons/lmc-user": "^3.1",
-        "firephp/firephp-core": "dev-master",
-        "laminas/laminas-paginator": "^2.22"
+        "laravel/tinker": "^2.10.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -46,53 +19,21 @@
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.50",
-        "laminas/laminas-test": "^4.0"
+        "phpunit/phpunit": "^11.5.50"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "autoload": {
         "psr-4": {
-            "App\\": "app/",
-            "Application\\": "module/Application/src/Application/",
-            "Core\\": "module/Core/src/Core/",
-            "Colony\\": "module/Colony/src/Colony/",
-            "Fleet\\": "module/Fleet/src/Fleet/",
-            "Galaxy\\": "module/Galaxy/src/Galaxy/",
-            "INNN\\": "module/INNN/src/INNN/",
-            "Map\\": "module/Map/src/Map/",
-            "Resources\\": "module/Resources/src/Resources/",
-            "Techtree\\": "module/Techtree/src/Techtree/",
-            "Trade\\": "module/Trade/src/Trade/",
-            "User\\": "module/User/src/User/"
+            "App\\": "app/"
         }
     },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/",
-            "ColonyTest\\": "module/Colony/test/ColonyTest/",
-            "CoreTest\\": "module/Core/test/CoreTest/",
-            "FleetTest\\": "module/Fleet/test/FleetTest/",
-            "GalaxyTest\\": "module/Galaxy/test/GalaxyTest/",
-            "INNNTest\\": "module/INNN/test/INNNTest/",
-            "ResourcesTest\\": "module/Resources/test/ResourcesTest/",
-            "TechtreeTest\\": "module/Techtree/test/TechtreeTest/",
-            "TradeTest\\": "module/Trade/test/TradeTest/",
-            "UserTest\\": "module/User/test/UserTest/",
-            "Test\\": "test/"
-        },
-        "classmap": [
-            "module/Colony/test/Bootstrap.php",
-            "module/Fleet/test/Bootstrap.php",
-            "module/Galaxy/test/Bootstrap.php",
-            "module/INNN/test/Bootstrap.php",
-            "module/Resources/test/Bootstrap.php",
-            "module/Techtree/test/Bootstrap.php",
-            "module/Trade/test/Bootstrap.php",
-            "module/User/test/Bootstrap.php"
-        ]
+            "Database\\Seeders\\": "database/seeders/"
+        }
     },
     "scripts": {
         "post-autoload-dump": [
@@ -114,7 +55,6 @@
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
-            "laminas/laminas-component-installer": true,
             "pestphp/pest-plugin": true,
             "php-http/discovery": true
         }
