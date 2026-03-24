@@ -17,4 +17,21 @@ return [
         // Fixed tick number used in test cases
         'testcase' => 14479,
     ],
+
+    // Galaxy overview map (Laminas: galaxy_view_config)
+    'galaxy_view' => [
+        'range'      => 10000,
+        'offset'     => 0,
+        'scale'      => 0.05,
+        'systemSize' => 3,
+    ],
+
+    // System detail map (Laminas: system_view_config)
+    'system_view' => [
+        'range'      => 100,
+        'offset'     => 100,
+        'scale'      => 10,
+        'planetSize' => 10,
+        'slotSize'   => 10,
+    ],
 ];

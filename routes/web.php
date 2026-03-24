@@ -2,6 +2,11 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Galaxy\GalaxyController;
+use App\Http\Controllers\INNN\MessageController;
+use App\Http\Controllers\Resources\JsonController as ResourcesController;
+use App\Http\Controllers\Fleet\FleetController;
+use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,6 +32,55 @@ Route::post('/logout', [LoginController::class, 'logout'])
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::get('/',         [UserController::class, 'show'])->name('show');
     Route::get('/settings', [UserController::class, 'settings'])->name('settings');
+});
+
+// ── Resources (Schritt 5) ─────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('resources')->name('resources.')->group(function () {
+    Route::get('/',              [ResourcesController::class, 'getResources'])->name('index');
+    Route::get('/colony/{id}',   [ResourcesController::class, 'getColonyResources'])->name('colony');
+    Route::get('/resourcebar',   [ResourcesController::class, 'reloadResourceBar'])->name('resourcebar');
+});
+
+// ── Galaxy (Schritt 6) ────────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('galaxy')->name('galaxy.')->group(function () {
+    Route::get('/',               [GalaxyController::class, 'index'])->name('index');
+    Route::get('/system/{sid}',   [GalaxyController::class, 'showSystem'])->name('system')->where('sid', '[0-9]+');
+    Route::get('/json/mapdata',   [GalaxyController::class, 'getMapData'])->name('json.mapdata');
+});
+
+// ── INNN Messages (Schritt 7) ─────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('messages')->name('messages.')->group(function () {
+    Route::get('/',              [MessageController::class, 'inbox'])->name('inbox');
+    Route::get('/outbox',        [MessageController::class, 'outbox'])->name('outbox');
+    Route::get('/archive',       [MessageController::class, 'showArchive'])->name('archive');
+    Route::get('/new',           [MessageController::class, 'compose'])->name('compose');
+    Route::post('/send',         [MessageController::class, 'send'])->name('send');
+    Route::post('/react',        [MessageController::class, 'react'])->name('react');
+    Route::post('/archive/{id}', [MessageController::class, 'archiveMessage'])->name('archive.message');
+    Route::post('/remove/{id}',  [MessageController::class, 'remove'])->name('remove');
+});
+
+// ── Trade (Schritt 8) ─────────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
+    Route::match(['get', 'post'], '/resources',  [TradeController::class, 'resources'])->name('resources');
+    Route::match(['get', 'post'], '/researches', [TradeController::class, 'researches'])->name('researches');
+    Route::post('/offer/resource', [TradeController::class, 'addResourceOffer'])->name('offer.resource');
+    Route::post('/offer/research', [TradeController::class, 'addResearchOffer'])->name('offer.research');
+    Route::post('/offer/remove',   [TradeController::class, 'removeOffer'])->name('offer.remove');
+});
+
+// ── Fleet (Schritt 9) ─────────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
+    Route::get('/',                        [FleetController::class, 'index'])->name('index');
+    Route::get('/{id}/config',             [FleetController::class, 'config'])->name('config')->where('id', '[0-9]+');
+    Route::post('/addtofleet',             [FleetController::class, 'addToFleet'])->name('addtofleet');
+    Route::get('/{id}/technologies',       [FleetController::class, 'getFleetTechnologies'])->name('technologies')->where('id', '[0-9]+');
+    Route::get('/{id}/resources',          [FleetController::class, 'getFleetResources'])->name('resources')->where('id', '[0-9]+');
 });
 
 // ── Game (placeholder routes — filled in as modules are migrated) ────────────

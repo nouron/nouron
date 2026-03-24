@@ -15,11 +15,16 @@ trait ValidatesId
      *
      * @throws InvalidArgumentException
      */
+    /**
+     * Throw if $id is not a non-negative integer (allows 0 for legacy user IDs like Homer).
+     *
+     * @throws InvalidArgumentException
+     */
     protected function validateId(mixed $id): void
     {
-        if (!is_numeric($id) || (int) $id <= 0) {
+        if (!is_numeric($id) || (int) $id < 0) {
             throw new InvalidArgumentException(
-                sprintf('Invalid ID: "%s". Must be a positive integer.', $id)
+                sprintf('Invalid ID: "%s". Must be a non-negative integer.', $id)
             );
         }
     }
