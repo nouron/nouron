@@ -6,6 +6,7 @@ use App\Http\Controllers\Galaxy\GalaxyController;
 use App\Http\Controllers\INNN\MessageController;
 use App\Http\Controllers\Resources\JsonController as ResourcesController;
 use App\Http\Controllers\Fleet\FleetController;
+use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -83,9 +84,10 @@ Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
     Route::get('/{id}/resources',          [FleetController::class, 'getFleetResources'])->name('resources')->where('id', '[0-9]+');
 });
 
-// ── Game (placeholder routes — filled in as modules are migrated) ────────────
+// ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 
-Route::middleware('auth')->group(function () {
-    // Techtree — Schritt 10
-    Route::get('/techtree', fn() => abort(501, 'Not yet migrated'))->name('techtree.index');
+Route::middleware('auth')->prefix('techtree')->name('techtree.')->group(function () {
+    Route::get('/',                   [TechtreeController::class, 'index'])->name('index');
+    Route::get('/{type}/{id}',        [TechtreeController::class, 'technology'])->name('technology');
+    Route::post('/{type}/{id}/order', [TechtreeController::class, 'order'])->name('order');
 });
