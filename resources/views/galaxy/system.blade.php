@@ -64,6 +64,8 @@
 <div id="galaxy-map"
      data-system-id="{{ $system->id }}"
      data-system-name="{{ $system->name ?? '' }}"
+     data-x="{{ (int)($system->x ?? 0) }}"
+     data-y="{{ (int)($system->y ?? 0) }}"
      data-bg="{{ $system->background_image_url ? '/img/' . $system->background_image_url : '' }}"
      data-objects="{{ json_encode($objects->values()) }}"
      data-colonies="{{ json_encode($colonies->values()) }}"

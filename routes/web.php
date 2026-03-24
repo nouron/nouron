@@ -50,9 +50,11 @@ Route::middleware('auth')->prefix('resources')->name('resources.')->group(functi
 // ── Galaxy (Schritt 6) ────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('galaxy')->name('galaxy.')->group(function () {
-    Route::get('/',               [GalaxyController::class, 'index'])->name('index');
-    Route::get('/system/{sid}',   [GalaxyController::class, 'showSystem'])->name('system')->where('sid', '[0-9]+');
-    Route::get('/json/mapdata',   [GalaxyController::class, 'getMapData'])->name('json.mapdata');
+    Route::get('/',                          [GalaxyController::class, 'index'])->name('index');
+    Route::get('/system/{sid}',              [GalaxyController::class, 'showSystem'])->name('system')->where('sid', '[0-9]+');
+    Route::get('/{sid}',                     [GalaxyController::class, 'showSystem'])->where('sid', '[0-9]+');
+    Route::get('/json/mapdata',              [GalaxyController::class, 'getMapData'])->name('json.mapdata');
+    Route::get('/json/getmapdata/{x}/{y}',   [GalaxyController::class, 'getMapData'])->name('json.getmapdata');
 });
 
 // ── INNN Messages (Schritt 7) ─────────────────────────────────────────────────

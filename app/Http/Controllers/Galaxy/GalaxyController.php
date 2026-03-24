@@ -81,10 +81,10 @@ class GalaxyController extends BaseController
      * on layer 0 (misc layer); solid bodies (planets, giants) on layer 1.
      * Fleets go on layer 3 (not yet implemented — Fleet module pending).
      */
-    public function getMapData(Request $request): JsonResponse
+    public function getMapData(Request $request, mixed $x = null, mixed $y = null): JsonResponse
     {
-        $x  = $request->query('x');
-        $y  = $request->query('y');
+        $x  = $x  ?? $request->query('x');
+        $y  = $y  ?? $request->query('y');
         $x2 = $request->query('x2');
         $y2 = $request->query('y2');
 

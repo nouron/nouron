@@ -1,10 +1,13 @@
 @charset "UTF-8"
 
 #colony {/*background: url(../img/screens/city_light.gif) center center no-repeat;*/ min-height: 400px;}
-/*#colony #visualTechtree .grid a.btn {position: relative;z-index:255}*/
 #colony #visualTechtree {position:relative; width: 100%; height: 100%;}
-#colony #visualTechtree .col-md-2 {border: 1px dotted #ddd;padding: 1px;}
+#colony #visualTechtree .col-2 {border: 1px dotted #ddd;padding: 3px 5px;}
 #colony #visualTechtree .grid .row{ margin-bottom: 50px; }
+/* Buttons must sit above the SVG overlay */
+#colony #visualTechtree .grid-cell {position: relative; z-index: 1;}
+/* btn-block was removed in Bootstrap 5 — replicate it for tech buttons */
+#colony #visualTechtree a.technology.btn {display: block; width: 100%;}
 #colony #visualTechtree .grid-svg {position: absolute;z-index:0;height:100%;width:100%;top: 0;left: 0;pointer-events:none;}
 #colony #visualTechtree a.progress-bar:hover {cursor:pointer}
 

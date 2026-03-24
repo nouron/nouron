@@ -2,26 +2,26 @@
 @section('title', 'Techtree — Nouron')
 
 @section('content')
+<div class="row mb-2">
+    <div class="col-md-6 offset-md-3 d-flex gap-2 flex-wrap">
+        <a href="#" id="toggleBuildings"  class="btn btn-secondary btn-sm">Gebäude an/aus</a>
+        <a href="#" id="toggleResearches" class="btn btn-secondary btn-sm">Forschungen an/aus</a>
+        <a href="#" id="toggleShips"      class="btn btn-secondary btn-sm">Schiffe an/aus</a>
+        <a href="#" id="toggleAdvisors"   class="btn btn-secondary btn-sm">Berater an/aus</a>
+    </div>
+</div>
 <div id="colony">
     <div id="visualTechtree">
-        {{-- Hidden storage used by techtree.js to read the active tech ID --}}
+        {{-- Hidden storage used by techtree.js --}}
         <div id="storage-tech-id" class="d-none"></div>
         <div id="storage" class="d-none"></div>
 
-        {{-- SVG overlay for requirement lines; pointer-events:none keeps clicks on buttons --}}
-        <svg class="grid-svg" id="grid-svg" xmlns="http://www.w3.org/2000/svg" fill="none">
-            <rect x="0" y="0" height="10" width="10" stroke="black" />
-            <rect x="100%" y="100%" height="10" width="10" stroke="black" />
-        </svg>
-
-        {{-- 16 columns × 6 rows grid; techtree.js moves .techdata spans into matching cells --}}
+{{-- 16 rows × 6 cols grid; IDs match tech row/column from DB (0-based) --}}
         <div class="grid">
-            @for($row = 1; $row <= 6; $row++)
+            @for($row = 0; $row <= 15; $row++)
             <div class="row">
-                @for($col = 1; $col <= 16; $col++)
-                <div class="col-md-2">
-                    <span id="grid-{{ $row }}-{{ $col }}" class="grid-cell"></span>
-                </div>
+                @for($col = 0; $col <= 5; $col++)
+                <span class="col-2 grid-cell" id="grid-{{ $row }}-{{ $col }}"></span>
                 @endfor
             </div>
             @endfor
@@ -32,36 +32,55 @@
 
             @foreach(['building', 'research', 'ship', 'personell'] as $type)
             @foreach($techtree[$type] as $id => $tech)
-            <span class="techdata" id="techsource-{{ $tech['row'] ?? 1 }}-{{ $tech['column'] ?? 1 }}">
+            <span class="techdata" id="techsource-{{ $tech['row'] }}-{{ $tech['column'] }}">
                 <a id="{{ $type }}-{{ $id }}"
                    class="btn btn-block technology {{ $type }}{{ ($tech['level'] ?? 0) == 0 ? ' notexists' : '' }}"
                    href="{{ route('techtree.technology', [$type, $id]) }}"
                    data-bs-toggle="modal"
                    data-bs-target="#{{ $type }}Modal-{{ $id }}">
-                    {{ $tech['name'] }} {{ ($tech['level'] ?? 0) > 0 ? $tech['level'] : '' }}
+                    {{ $tech['name'] }}{{ ($tech['level'] ?? 0) > 0 ? ' ' . $tech['level'] : '' }}
                 </a>
-                {{-- JSON payload used by draw_requirements() to draw SVG dependency lines --}}
                 <span class="d-none data">{{ json_encode($tech) }}</span>
             </span>
             @endforeach
             @endforeach
 
-            {{-- Requirement data spans: techId-requiredTechId-requiredLevel-currentLevel --}}
-            @foreach(['building', 'research', 'ship', 'personell'] as $type)
-            @foreach($techtree[$type] as $id => $tech)
+            {{-- Requirements data for SVG dependency lines --}}
+            {{-- Buildings requiring other buildings --}}
+            @foreach($techtree['building'] as $id => $tech)
             @if(!empty($tech['required_building_id']))
-            <span class="requirementsdata {{ $type }}">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</span>
+            <div class="requirementsdata building">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
             @endif
             @endforeach
+
+            {{-- Researches requiring buildings --}}
+            @foreach($techtree['research'] as $id => $tech)
+            @if(!empty($tech['required_building_id']))
+            <div class="requirementsdata research">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
+            @endif
+            @endforeach
+
+            {{-- Ships requiring researches --}}
+            @foreach($techtree['ship'] as $id => $tech)
+            @if(!empty($tech['required_research_id']))
+            <div class="requirementsdata ship">{{ $id }}-{{ $tech['required_research_id'] }}-{{ $tech['required_research_level'] ?? 1 }}-{{ $techtree['research'][$tech['required_research_id']]['level'] ?? 0 }}</div>
+            @endif
+            @endforeach
+
+            {{-- Personell requiring buildings --}}
+            @foreach($techtree['personell'] as $id => $tech)
+            @if(!empty($tech['required_building_id']))
+            <div class="requirementsdata personell">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
+            @endif
             @endforeach
 
         </div>
 
-        {{-- One modal shell per tech; content is loaded via AJAX on open --}}
+        {{-- One modal shell per tech; content loaded via AJAX on open --}}
         @foreach(['building', 'research', 'ship', 'personell'] as $type)
         @foreach($techtree[$type] as $id => $tech)
-        <div id="{{ $type }}Modal-{{ $id }}" class="techModal modal fade" tabindex="-1" role="dialog">
-            <div class="modal-dialog" role="document">
+        <div id="{{ $type }}Modal-{{ $id }}" class="techModal modal fade" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog">
                 <div class="modal-content"></div>
             </div>
         </div>
@@ -71,3 +90,7 @@
     </div>{{-- #visualTechtree --}}
 </div>{{-- #colony --}}
 @endsection
+
+@push('scripts')
+<script>$(document).ready(function(){ if ($('#colony').length > 0) { techtree.init(); } });</script>
+@endpush

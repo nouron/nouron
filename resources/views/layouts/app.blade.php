@@ -67,7 +67,7 @@
 
 {{-- Resource bar --}}
 @if(!empty($resourceBarPossessions))
-<div class="bg-dark border-bottom border-secondary py-1 px-3" id="resourcebar-container">
+<div id="resourcebar-container">
     @include('resources.resourcebar', ['possessions' => $resourceBarPossessions])
 </div>
 @endif
@@ -103,6 +103,7 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/jquery.bootstrap-growl.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/leader-line/leader-line.min.js"></script>
 <script src="{{ asset('js/nouron.js') }}"></script>
 <script src="{{ asset('js/techtree.js') }}"></script>
 <script src="{{ asset('js/fleets.js') }}"></script>

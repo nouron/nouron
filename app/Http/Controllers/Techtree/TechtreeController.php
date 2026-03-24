@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
+use App\Services\ColonyService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
@@ -24,8 +25,22 @@ class TechtreeController extends BaseController
         private readonly PersonellService $personellService,
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly ResourcesService $resourcesService,
+        private readonly ColonyService $colonyService,
     ) {
         parent::__construct($tick);
+    }
+
+    private function resolveColonyId(): int
+    {
+        $colonyId = Session::get('activeIds.colonyId');
+        if ($colonyId) {
+            return (int) $colonyId;
+        }
+        $userId = $this->getCurrentUserId();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $id = $colony->id;
+        Session::put('activeIds.colonyId', $id);
+        return $id;
     }
 
     /**
@@ -33,7 +48,7 @@ class TechtreeController extends BaseController
      */
     public function index()
     {
-        $colonyId = Session::get('activeIds.colonyId');
+        $colonyId = $this->resolveColonyId();
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
         return view('techtree.index', compact('techtree', 'colonyId'));
     }
@@ -43,7 +58,7 @@ class TechtreeController extends BaseController
      */
     public function technology(string $type, int $id): \Illuminate\View\View
     {
-        $colonyId = Session::get('activeIds.colonyId');
+        $colonyId = $this->resolveColonyId();
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
         $service = match (strtolower($type)) {
@@ -82,7 +97,7 @@ class TechtreeController extends BaseController
      */
     public function action(string $type, int $id, string $order, int $ap = 1): \Illuminate\View\View
     {
-        $colonyId = Session::get('activeIds.colonyId');
+        $colonyId = $this->resolveColonyId();
 
         $service = match (strtolower($type)) {
             'building'  => $this->buildingService,
@@ -108,7 +123,7 @@ class TechtreeController extends BaseController
      */
     public function order(Request $request, string $type, int $id): JsonResponse
     {
-        $colonyId = Session::get('activeIds.colonyId');
+        $colonyId = $this->resolveColonyId();
         $order    = $request->input('order');
         $ap       = (int) $request->input('ap', 1);
 

@@ -1,188 +1,94 @@
 $(document).ready(function(){
 
-    function makeSVG(tag, attribs, value)
-    {
-        if (attribs === null) {
-            attribs = {};
-        }
-
-        var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-        for (var k in attribs) {
-            el.setAttribute(k, attribs[k]);
-        }
-
-        if (value) {
-            value = document.createTextNode(value);
-            el.appendChild(value);
-        }
-        return el;
-    }
+    var COLORS = {
+        building:  '#99d',
+        research:  '#9d9',
+        ship:      '#cc7',
+        personell: '#aaa',
+    };
 
     techtree = {
 
-        init: function()
-        {
-            /* after init: moving technology divs to correct spots */
-            $('.techdata').each(function(index) {
-                var key = $(this).attr('id');
-                var html = $(this).html();
-                key = key.replace('techsource','grid');
-                if ($("#"+key)){
-                    $("#"+key).html(html);
+        // Leader Line instances keyed by target type, for toggle support
+        lines: { building: [], research: [], ship: [], personell: [] },
+
+        init: function() {
+            // Move each .techdata span's content into the matching grid cell
+            $('.techdata').each(function() {
+                var key = $(this).attr('id').replace('techsource', 'grid');
+                var cell = $('#' + key);
+                if (cell.length) {
+                    cell.html($(this).html());
                 }
             });
 
-            /* draw svg lines for requirements between techs. Have to be redrawn when
-             * screen size is changing..
-             */
             techtree.draw_requirements();
-            $(window).resize(function() {
-                techtree.draw_requirements();
+
+            // Leader Line repositions automatically on scroll; reposition on resize
+            $(window).on('resize', function() {
+                ['building', 'research', 'ship', 'personell'].forEach(function(type) {
+                    techtree.lines[type].forEach(function(l) { l.position(); });
+                });
             });
         },
 
-         /**
-          *
-          * @param object src A jquery object which serves as source point for the requirment line
-          * @param object trgt A jquery object which serves as target point for the requirment line
-          * @param numeric count Required tech level to fullfill the requirement
-          * @param bool fullfilled OPTIONAL Is requirement fullfilled? (default = false)
-          */
-         draw_requirement: function(src, trgt, type, required_tech_count, tech_count)
-         {
-             fullfilled = false;
-             if (parseInt(tech_count) >= parseInt(required_tech_count)) {
-                 fullfilled = true;
-             }
+        draw_requirements: function() {
+            // Remove any existing lines first
+            ['building', 'research', 'ship', 'personell'].forEach(function(type) {
+                techtree.lines[type].forEach(function(l) { try { l.remove(); } catch(e) {} });
+                techtree.lines[type] = [];
+            });
 
-             var srcid = src.parent().attr('id').replace('grid-','');
-             var trgtid = trgt.parent().attr('id').replace('grid-','');
-             var srcpos = src.parent().position();
-             var trgtpos = trgt.parent().position();
+            $('.requirementsdata').each(function() {
+                var fromClass, toClass;
+                if      ($(this).hasClass('building'))  { fromClass = 'building';  toClass = 'building'; }
+                else if ($(this).hasClass('research'))  { fromClass = 'building';  toClass = 'research'; }
+                else if ($(this).hasClass('ship'))      { fromClass = 'research';  toClass = 'ship'; }
+                else                                    { fromClass = 'building';  toClass = 'personell'; }
 
-             source_grid_xy  = srcid.split('-');
-             target_grid_xy  = trgtid.split('-');
+                var parts        = $(this).text().trim().split('-');
+                var techId       = parseInt(parts[0]);
+                var reqTechId    = parseInt(parts[1]);
+                var reqLevel     = parseInt(parts[2]);
+                var currentLevel = parseInt(parts[3]);
+                var fulfilled    = currentLevel >= reqLevel;
 
-             source_y = parseInt(source_grid_xy[0]);
-             source_x = parseInt(source_grid_xy[1]);
-             source_left = srcpos.left;
-             source_top  = srcpos.top;
-             source_width  = src.outerWidth();
-             source_height = src.outerHeight();
+                var srcEl  = document.getElementById(fromClass + '-' + reqTechId);
+                var trgtEl = document.getElementById(toClass   + '-' + techId);
+                if (!srcEl || !trgtEl) { return; }
 
-             target_y = parseInt(target_grid_xy[0]);
-             target_x = parseInt(target_grid_xy[1]);
-             target_left = trgtpos.left;
-             target_top  = trgtpos.top;
-             target_width  = trgt.outerWidth();
-             target_height = trgt.outerHeight();
+                var options = {
+                    color:          COLORS[toClass],
+                    size:           fulfilled ? 2.5 : 1.5,
+                    path:           'fluid',
+                    startSocket:    'bottom',
+                    endSocket:      'top',
+                    endPlug:        'arrow3',
+                    endPlugSize:    1.5,
+                    startSocketGravity: 40,
+                    endSocketGravity:   40,
+                };
 
-             ya = source_top + source_height;
-             yb = source_top + source_height + 20;
-             yc = target_top - target_height;
-             yd = target_top - 20;
-             ye = target_top;
+                if (!fulfilled) {
+                    options.dash = { len: 6, gap: 4 };
+                    options.color = COLORS[toClass].replace(')', ', 0.55)').replace('rgb', 'rgba');
+                }
 
-             xa = source_left + Math.round(source_width/2);
-             xe = target_left + Math.round(target_width/2);
+                if (reqLevel > 1) {
+                    options.middleLabel = LeaderLine.captionLabel('Lv' + reqLevel, {
+                        color: '#999',
+                        fontSize: '10px',
+                    });
+                }
 
-             unique_positioner = Math.abs(source_y-1)*6 + source_x + source_y + target_x*3 + target_y*3;
-
-             xb = xc = target_left + target_width  + unique_positioner;
-
-             switch (type) {
-                 case 'building': stroke_color = '#99d';
-                                  break;
-                 case 'research': stroke_color = '#9d9';
-                                  break;
-                 case 'ship': stroke_color = '#cc7';
-                              break;
-                 default: stroke_color = '#666';
-                          break;
-             }
-
-             var group = makeSVG('g', {title: src.attr('id') + ' to ' + trgt.attr('id')});
-             xd = xe = target_left + unique_positioner;
-
-             if (source_x == target_x && source_y == target_y-1) {
-                 xe = target_left + Math.round(target_width/2);
-                 var params = {
-                         x1:xe,
-                         y1:ya,
-                         x2:xe,
-                         y2:ye,
-                         stroke: stroke_color,
-                         'stroke-width': '3px',
-                         'fill-opacity':'0',
-                         'class':type
-                 };
-                 if (fullfilled == false) {
-                     params['stroke-dasharray'] = '5 5';
-                     params['stroke-width'] = '2px';
-                 }
-                 group.appendChild(makeSVG('line', params));
-             } else {
-                 d1 = xa + ',' + ya;
-                 d2 = xe + ',' + yb;
-                 d3 = xe + ',' + ye;
-                 d = d1 + ' ' + d2 + ' ' + d3;
-                 var params = {
-                     points: d,
-                     stroke: stroke_color,
-                     'stroke-width': '3px',
-                     'fill-opacity':'0',
-                     'class':type
-                 };
-                 if (fullfilled == false) {
-                     params['stroke-dasharray'] = '5 5';
-                     params['stroke-width'] = '2px';
-                 }
-                 group.appendChild(makeSVG('polyline', params));
-             }
-
-             d1 = String(xe-4) + ',' + String(ye-8);
-             d2 = String(xe)   + ',' + String(ye);
-             d3 = String(xe+4) + ',' + String(ye-8);
-             d = d1 + ' ' + d2 + ' ' + d3;
-
-             group.appendChild(makeSVG('polyline', {points: d, fill: stroke_color, 'class':type}));
-
-             text = makeSVG('text', {x:xe-12, y:ye-8,'font-size': '12px', fill: '#666', 'class':type}, required_tech_count);
-             group.appendChild(text);
-
-             document.getElementById('grid-svg').appendChild(group);
-         },
-         draw_requirements: function() {
-             setTimeout(function() {
-                 $('svg *').remove();
-                 /* Take requirements data to draw the lines into techtree */
-                 $('.requirementsdata').each(function() {
-                     if ($(this).hasClass( 'building' )) {
-                         from_class = 'building';
-                         to_class = 'building';
-                     } else if ($(this).hasClass( 'research' )) {
-                         from_class = 'building';
-                         to_class = 'research';
-                     } else if ($(this).hasClass( 'ship' )) {
-                         from_class = 'research';
-                         to_class = 'ship';
-                     } else {
-                         from_class = 'building';
-                         to_class = 'personell';
-                     }
-                     data = $(this).html().trim().split('-');
-                     techId = parseInt(data[0]);
-                     requiredTechId = parseInt(data[1]);
-                     req_count = parseInt(data[2]);
-                     count = parseInt(data[3]);
-                     domSourceElem = $('#'+from_class+'-' + requiredTechId);
-                     domTargetElem = $('#'+to_class+'-' + techId);
-                     if (domSourceElem && domTargetElem) {
-                         techtree.draw_requirement(domSourceElem, domTargetElem, to_class, req_count, count);
-                     }
-                 });
-             }, 100);
-         },
+                try {
+                    var line = new LeaderLine(srcEl, trgtEl, options);
+                    techtree.lines[toClass].push(line);
+                } catch (e) {
+                    console.warn('LeaderLine:', e);
+                }
+            });
+        },
 
         /* little helper to reset colors in action points bar */
         reset_colors_for_bar_buttons: function() {
@@ -201,9 +107,6 @@ $(document).ready(function(){
 
         /**
          * Load modal content from server via AJAX.
-         * @param {Element} modalEl  The .techModal DOM element
-         * @param {string}  url      URL to fetch (e.g. /techtree/building/25)
-         * @param {Function} done    Optional callback after content is injected
          */
         loadModalContent: function(modalEl, url, done) {
             $(modalEl).find('.modal-content').html(
@@ -216,7 +119,6 @@ $(document).ready(function(){
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function(html) {
                     $(modalEl).find('.modal-dialog').replaceWith(html);
-                    /* re-init tooltips inside the freshly loaded modal */
                     $(modalEl).find('[data-bs-toggle="tooltip"]').each(function() {
                         new bootstrap.Tooltip(this);
                     });
@@ -253,20 +155,19 @@ $(document).ready(function(){
     /* ------------------------------------------------------------------ */
     /* Action buttons inside modals: levelup / leveldown / add-AP / repair */
     /* Button id format:  "{type}-{techId}|{order}[-{ap}]"                */
-    /* e.g. "building-25|add-3"  "building-25|levelup"                    */
     /* ------------------------------------------------------------------ */
     $(document).on('click', '.techModal [id*="|"]', function(e) {
         e.preventDefault();
-        var raw = this.id;                            // e.g. "building-25|add-3"
-        var halves = raw.split('|');                  // ["building-25", "add-3"]
-        var typeid  = halves[0].split('-');            // ["building", "25"]
-        var type    = typeid[0];
-        var techId  = typeid[1];
-        var orderparts = halves[1].split('-');         // ["add","3"] or ["levelup"]
-        var order   = orderparts[0];
-        var ap      = orderparts[1] || '';
+        var raw        = this.id;
+        var halves     = raw.split('|');
+        var typeid     = halves[0].split('-');
+        var type       = typeid[0];
+        var techId     = typeid[1];
+        var orderparts = halves[1].split('-');
+        var order      = orderparts[0];
+        var ap         = orderparts[1] || '';
 
-        var url = '/techtree/' + type + '/' + techId + '/' + order + (ap ? '/' + ap : '');
+        var url     = '/techtree/' + type + '/' + techId + '/' + order + (ap ? '/' + ap : '');
         var modalEl = $(this).closest('.techModal')[0];
 
         techtree.loadModalContent(modalEl, url, function() {
@@ -293,18 +194,15 @@ $(document).ready(function(){
     /* ------------------------------------------------------------------ */
     $(document).on('mouseover', '.techModal .progress.status_points a.progress-bar', function(e) {
         if ($(this).hasClass('bg-danger')) {
-            /* hovering a damaged slot — preview repairing up to here */
             $(this).prevAll('a.bg-danger').removeClass('bg-danger').addClass('bg-warning');
             $(this).removeClass('bg-danger').addClass('bg-warning');
             $(this).nextAll('a.bg-warning').not('span').removeClass('bg-warning').addClass('bg-danger');
         } else if ($(this).hasClass('bg-warning')) {
-            /* hovering a healthy slot — preview removing status down to here */
             $(this).nextAll('a.bg-warning').removeClass('bg-warning').addClass('bg-danger');
         }
         techtree.reset_colors_for_bar_buttons();
     });
     $(document).on('mouseout', '.techModal .progress.status_points', function(e) {
-        /* restore: turn all preview-warning anchors back to danger */
         $(this).find('a.progress-bar.bg-warning').removeClass('bg-warning').addClass('bg-danger');
         techtree.reset_colors_for_bar_buttons();
     });

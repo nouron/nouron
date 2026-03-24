@@ -1,24 +1,3 @@
-/**
- *
- */
- function makeSVG(tag, attribs, value)
- {
-     if (attribs == null) {
-         attribs = {};
-     }
-
-     var el = document.createElementNS('http://www.w3.org/2000/svg', tag);
-     for (var k in attribs) {
-         el.setAttribute(k, attribs[k]);
-     }
-
-     if (value) {
-         value = document.createTextNode(value);
-         el.appendChild(value);
-     }
-     return el;
- }
-
 $(document).ready(function(){
 
     /* enable tooltips */
@@ -27,49 +6,49 @@ $(document).ready(function(){
     // Techtree (Show/Hide Technologies)
     $('#toggleBuildings').on('click', function(e){
         e.preventDefault();
-        if ($('.building').css('display') != 'none') {
+        var visible = $('.building').is(':visible');
+        if (visible) {
             $('.building').fadeOut('slow');
-            $('.line_building').fadeOut('slow');
+            techtree.lines.building.forEach(function(l) { l.hide('fade'); });
         } else {
             $('.building').fadeIn('slow');
-            $('.line_building').fadeIn('slow');
+            techtree.lines.building.forEach(function(l) { l.show('fade'); });
         }
     });
 
     $('#toggleResearches').on('click', function(e) {
         e.preventDefault();
-        if ($('.research').css('display') != 'none') {
+        var visible = $('.research').is(':visible');
+        if (visible) {
             $('.research').fadeOut('slow');
-            $('.line_research').fadeOut('slow');
+            techtree.lines.research.forEach(function(l) { l.hide('fade'); });
         } else {
             $('.research').fadeIn('slow');
-            $('.line_research').fadeIn('slow');
+            techtree.lines.research.forEach(function(l) { l.show('fade'); });
         }
     });
 
     $('#toggleShips').on('click', function(e) {
         e.preventDefault();
-        if ($('.ship').css('display') != 'none') {
+        var visible = $('.ship').is(':visible');
+        if (visible) {
             $('.ship').fadeOut('slow');
-            $('.line_ship').fadeOut('slow');
-            $('.category_ships').fadeOut('slow');
+            techtree.lines.ship.forEach(function(l) { l.hide('fade'); });
         } else {
             $('.ship').fadeIn('slow');
-            $('.line_ship').fadeIn('slow');
-            $('.category_ships').fadeIn('slow');
+            techtree.lines.ship.forEach(function(l) { l.show('fade'); });
         }
     });
 
     $('#toggleAdvisors').on('click', function(e) {
         e.preventDefault();
-        if ($('.personell').css('display') != 'none') {
+        var visible = $('.personell').is(':visible');
+        if (visible) {
             $('.personell').fadeOut('slow');
-            $('.line_personell').fadeOut('slow');
-            $('.category_crew').fadeOut('slow');
+            techtree.lines.personell.forEach(function(l) { l.hide('fade'); });
         } else {
             $('.personell').fadeIn('slow');
-            $('.line_personell').fadeIn('slow');
-            $('.category_crew').fadeIn('slow');
+            techtree.lines.personell.forEach(function(l) { l.show('fade'); });
         }
     });
 
