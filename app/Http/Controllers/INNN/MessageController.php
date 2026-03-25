@@ -81,6 +81,19 @@ class MessageController extends BaseController
     }
 
     /**
+     * Events tab: game-generated notifications for the current user.
+     */
+    public function events(): View
+    {
+        $userId = $this->getCurrentUserId();
+        $events = $userId !== null
+            ? $this->eventService->getEvents($userId)
+            : collect();
+
+        return view('messages.events', compact('events'));
+    }
+
+    /**
      * Compose form — GET only.
      */
     public function compose(): View
