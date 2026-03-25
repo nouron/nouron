@@ -1,32 +1,110 @@
 @extends('layouts.app')
-
 @section('title', 'Flotten-Konfiguration — Nouron')
 
 @push('styles')
 <style>
-    #fleetconfig .fc-item { cursor: pointer; }
-    #fleetconfig .fc-item:hover { background-color: #f8f9fa; }
-    #fleetconfig .fc-item.selected { background-color: #d1ecf1; }
-    #fleetconfig .countOnColony,
-    #fleetconfig .countInFleet,
-    #fleetconfig .countInFleetCargo { text-align: center; }
-    #fleetconfig .tech.building,
-    #fleetconfig .tech.ship,
-    #fleetconfig .tech.research,
-    #fleetconfig .tech.personell { background: transparent; background-image: none; }
+#fc-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(5,15,30,0.95);
+    border: 1px solid rgba(80,130,220,0.25);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    position: sticky;
+    top: 96px;
+    z-index: 50;
+    flex-wrap: wrap;
+}
+#fc-qty { display: flex; gap: 4px; }
+.fc-qty-btn {
+    border: 1px solid rgba(80,130,220,0.4);
+    background: transparent;
+    color: #8aabcc;
+    padding: 3px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85em;
+}
+.fc-qty-btn.active {
+    background: rgba(80,130,220,0.3);
+    color: #cce0ff;
+    border-color: rgba(80,130,220,0.7);
+}
+.fc-transfer-btn {
+    border: 1px solid rgba(80,180,100,0.4);
+    background: transparent;
+    color: #88cc88;
+    padding: 3px 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 0.85em;
+    white-space: nowrap;
+}
+.fc-transfer-btn:disabled { opacity: 0.35; cursor: default; }
+.fc-transfer-btn:not(:disabled):hover { background: rgba(80,180,100,0.2); }
+#fc-label {
+    flex: 1;
+    text-align: center;
+    color: #aabbcc;
+    font-size: 0.85em;
+    font-style: italic;
+}
+
+.fc-header {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    padding: 4px 10px;
+    font-size: 0.75em;
+    color: rgba(80,130,220,0.6);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid rgba(80,130,220,0.15);
+}
+.fc-header .fc-colony { text-align: right; }
+.fc-header .fc-mid    { text-align: center; }
+.fc-header .fc-fleet  { text-align: left; padding-left: 8px; }
+
+.fc-section {
+    padding: 8px 10px 3px;
+    font-size: 0.72em;
+    color: rgba(80,130,220,0.7);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-top: 1px solid rgba(80,130,220,0.12);
+    margin-top: 4px;
+}
+.fc-section:first-of-type { border-top: none; margin-top: 0; }
+
+.fc-item {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    align-items: center;
+    padding: 7px 10px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    transition: background 0.1s;
+    user-select: none;
+}
+.fc-item:hover    { background: rgba(80,130,220,0.08); }
+.fc-item.selected { background: rgba(80,130,220,0.2); border-color: rgba(80,130,220,0.3); }
+
+.fc-colony { text-align: right; font-size: 0.9em; color: #9ab; padding-right: 8px; min-width: 40px; }
+.fc-mid    { text-align: center; font-size: 0.85em; color: #ccc; padding: 0 4px; }
+.fc-fleet  { text-align: left; font-size: 0.9em; color: #9ab; padding-left: 8px; min-width: 40px; }
+
+.fc-item.selected .fc-colony,
+.fc-item.selected .fc-fleet { color: #cce; }
+.fc-item.selected .fc-mid   { color: #fff; }
 </style>
 @endpush
 
 @section('content')
 <div id="fleetconfig">
 
-    @if(!$fleet)
-        <div class="alert alert-warning">Flotte nicht gefunden.</div>
-    @else
-
-    {{-- Hidden metadata read by fleets.js --}}
-    <span id="fleet_id" class="d-none">{{ $fleet->id }}</span>
-    <span id="colony_id" class="d-none">{{ $colony ? $colony->id : '' }}</span>
+    <span class="d-none" id="fleet_id">{{ $fleet->id }}</span>
+    <span class="d-none" id="colony_id">{{ $colony ? $colony->id : '' }}</span>
 
     <h2>
         <i class="bi bi-send"></i> {{ $fleet->fleet }}
@@ -36,218 +114,91 @@
     </h2>
 
     @if($fleetIsInColonyOrbit && $colony)
-    <div class="alert alert-info py-2">
+
+    <div class="alert alert-info py-2 mb-3">
         Flotte befindet sich in der Umlaufbahn von Kolonie
         <strong>{{ $colony->name }}</strong> (ID {{ $colony->id }}).
     </div>
+
+    <div id="fc-bar">
+        <div id="fc-qty">
+            <button class="fc-qty-btn active" data-qty="1">1</button>
+            <button class="fc-qty-btn" data-qty="5">5</button>
+            <button class="fc-qty-btn" data-qty="10">10</button>
+        </div>
+        <button id="fc-to-colony" class="fc-transfer-btn" disabled>&#8592; Kolonie</button>
+        <span id="fc-label">— Element auswählen —</span>
+        <button id="fc-to-fleet" class="fc-transfer-btn" disabled>Flotte &#8594;</button>
+    </div>
+
+    <div class="fc-header">
+        <div class="fc-colony">Kolonie</div>
+        <div class="fc-mid"></div>
+        <div class="fc-fleet">Flotte</div>
+    </div>
+
+    {{-- Schiffe --}}
+    <div class="fc-section">{{ __('techtree.types_ships') }}</div>
+    @foreach($ships as $id => $ship)
+    <div class="fc-item" data-type="ship" data-id="{{ $id }}" data-cargo="0">
+        <div class="fc-colony"><span class="shipOnColony-{{ $id }}">…</span></div>
+        <div class="fc-mid">{{ __('techtree.' . $ship->name) }}</div>
+        <div class="fc-fleet"><span class="shipInFleet-{{ $id }}">…</span></div>
+    </div>
+    @endforeach
+
+    {{-- Crew --}}
+    <div class="fc-section">Crew</div>
+    @foreach($personells as $id => $p)
+    <div class="fc-item" data-type="personell" data-id="{{ $id }}" data-cargo="0">
+        <div class="fc-colony"><span class="personellOnColony-{{ $id }}">…</span></div>
+        <div class="fc-mid">{{ __('techtree.' . $p->name) }}</div>
+        <div class="fc-fleet"><span class="personellInFleet-{{ $id }}">…</span></div>
+    </div>
+    @endforeach
+
+    {{-- Passagiere --}}
+    <div class="fc-section">Passagiere</div>
+    @foreach($personells as $id => $p)
+    <div class="fc-item" data-type="personell" data-id="{{ $id }}" data-cargo="1">
+        <div class="fc-colony"><span class="personellOnColony-{{ $id }}">…</span></div>
+        <div class="fc-mid">
+            {{ __('techtree.' . $p->name) }}
+            <small style="opacity:.6">(Passagier)</small>
+        </div>
+        <div class="fc-fleet"><span class="personellInFleetCargo-{{ $id }}">…</span></div>
+    </div>
+    @endforeach
+
+    {{-- Forschungen --}}
+    <div class="fc-section">{{ __('techtree.types_researchs') }}</div>
+    @foreach($researches as $id => $r)
+    <div class="fc-item" data-type="research" data-id="{{ $id }}" data-cargo="1">
+        <div class="fc-colony"><span class="researchOnColony-{{ $id }}">…</span></div>
+        <div class="fc-mid">{{ __('techtree.' . $r->name) }}</div>
+        <div class="fc-fleet"><span class="researchInFleetCargo-{{ $id }}">…</span></div>
+    </div>
+    @endforeach
+
+    {{-- Ressourcen --}}
+    <div class="fc-section">Ressourcen</div>
+    @foreach($resources as $res)
+    @if($res->is_tradeable)
+    <div class="fc-item" data-type="resource" data-id="{{ $res->id }}" data-cargo="1">
+        <div class="fc-colony"><span class="resourceOnColony-{{ $res->id }}">…</span></div>
+        <div class="fc-mid">{{ __('resources.' . $res->name) }}</div>
+        <div class="fc-fleet"><span class="resourceInFleetCargo-{{ $res->id }}">…</span></div>
+    </div>
     @endif
+    @endforeach
 
-    <div class="row mt-3">
+    @else
 
-        {{-- ── Left panel: Colony inventory ─────────────────────────────── --}}
-        <div class="col-md-6">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <i class="bi bi-building"></i>
-                    {{ $colony ? $colony->name : 'Keine Kolonie' }}
-                    — Bestand
-                </div>
-                <div class="card-body p-0">
+    <div class="alert alert-info mt-3">
+        Die Flotte befindet sich nicht im Orbit einer Kolonie. Transfer nicht möglich.
+    </div>
 
-                    {{-- Ships --}}
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th colspan="3">Schiffe</th>
-                            </tr>
-                            <tr>
-                                <th>Name</th>
-                                <th class="countOnColony">Kolonie</th>
-                                <th class="countInFleet">Flotte</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($ships ?? [] as $id => $ship)
-                            <tr class="fc-item tech ship"
-                                data-type="ship" data-id="{{ $id }}" data-cargo="0">
-                                <td class="fc-mid">{{ $ship['name'] }}</td>
-                                <td class="countOnColony">
-                                    <span class="shipOnColony-{{ $id }}">…</span>
-                                </td>
-                                <td class="countInFleet">
-                                    <span class="shipInFleet-{{ $id }}">…</span>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="3" class="text-muted small fst-italic">
-                                    Keine Schiffsdaten geladen.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-
-                    <hr class="my-0">
-
-                    {{-- Personell --}}
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th colspan="3">Personal</th>
-                            </tr>
-                            <tr>
-                                <th>Name</th>
-                                <th class="countOnColony">Kolonie</th>
-                                <th class="countInFleet">Flotte</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($personells ?? [] as $id => $personell)
-                            <tr class="fc-item tech personell"
-                                data-type="personell" data-id="{{ $id }}" data-cargo="0">
-                                <td class="fc-mid">{{ $personell['name'] }}</td>
-                                <td class="countOnColony">
-                                    <span class="personellOnColony-{{ $id }}">…</span>
-                                </td>
-                                <td class="countInFleet">
-                                    <span class="personellInFleet-{{ $id }}">…</span>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="3" class="text-muted small fst-italic">
-                                    Keine Personaldaten geladen.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-
-                    <hr class="my-0">
-
-                    {{-- Researches (cargo) --}}
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th colspan="3">Forschungen (Cargo)</th>
-                            </tr>
-                            <tr>
-                                <th>Name</th>
-                                <th class="countOnColony">Kolonie</th>
-                                <th class="countInFleetCargo">Fracht</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($researches ?? [] as $id => $research)
-                            <tr class="fc-item tech research"
-                                data-type="research" data-id="{{ $id }}" data-cargo="1">
-                                <td class="fc-mid">{{ __('techtree.' . $research['name']) }}</td>
-                                <td class="countOnColony">
-                                    <span class="researchOnColony-{{ $id }}">…</span>
-                                </td>
-                                <td class="countInFleetCargo">
-                                    <span class="researchInFleetCargo-{{ $id }}">…</span>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="3" class="text-muted small fst-italic">
-                                    Keine Forschungsdaten geladen.
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-
-                    <hr class="my-0">
-
-                    {{-- Resources --}}
-                    <table class="table table-sm table-hover mb-0">
-                        <thead class="table-secondary">
-                            <tr>
-                                <th colspan="3">Ressourcen</th>
-                            </tr>
-                            <tr>
-                                <th>Name</th>
-                                <th class="countOnColony">Kolonie</th>
-                                <th class="countInFleetCargo">Fracht</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($resources as $res)
-                            {{-- Only tradeable resources make sense as fleet cargo --}}
-                            @if(!in_array($res->id, [1, 2, 12]))
-                            <tr class="fc-item"
-                                data-type="resource" data-id="{{ $res->id }}" data-cargo="1">
-                                <td class="fc-mid">
-                                    <span class="resicon-{{ $res->abbreviation }}"
-                                          title="{{ __('resources.' . $res->name) }}">{{ $res->abbreviation }}</span>
-                                    {{ __('resources.' . $res->name) }}
-                                </td>
-                                <td class="countOnColony">
-                                    <span class="resourceOnColony-{{ $res->id }}">…</span>
-                                </td>
-                                <td class="countInFleetCargo">
-                                    <span class="resourceInFleetCargo-{{ $res->id }}">…</span>
-                                </td>
-                            </tr>
-                            @endif
-                            @endforeach
-                        </tbody>
-                    </table>
-
-                </div>{{-- .card-body --}}
-            </div>
-        </div>{{-- col-md-6 --}}
-
-        {{-- ── Right panel: Transfer controls ──────────────────────────── --}}
-        <div class="col-md-6">
-            <div class="card mb-3">
-                <div class="card-header">
-                    <i class="bi bi-arrow-left-right"></i> Übertragen
-                </div>
-                <div class="card-body">
-
-                    <p class="text-muted small mb-2">
-                        Zeile auswählen, Menge einstellen, dann Pfeil klicken.
-                    </p>
-
-                    {{-- Selected item label --}}
-                    <div class="mb-3">
-                        <span class="badge bg-secondary" id="fc-label">Kein Item gewählt</span>
-                    </div>
-
-                    {{-- Quantity buttons --}}
-                    <div class="btn-group mb-3" role="group" aria-label="Menge">
-                        @foreach([1, 5, 10, 25, 50, 100] as $qty)
-                        <button type="button"
-                                class="btn btn-sm btn-outline-secondary fc-qty-btn{{ $qty === 1 ? ' active' : '' }}"
-                                data-qty="{{ $qty }}">
-                            {{ $qty }}
-                        </button>
-                        @endforeach
-                    </div>
-
-                    {{-- Transfer direction buttons --}}
-                    <div class="d-flex gap-2">
-                        <button id="fc-to-fleet" class="btn btn-primary" disabled>
-                            <i class="bi bi-arrow-right-circle"></i>
-                            zur Flotte
-                        </button>
-                        <button id="fc-to-colony" class="btn btn-secondary" disabled>
-                            <i class="bi bi-arrow-left-circle"></i>
-                            zur Kolonie
-                        </button>
-                    </div>
-
-                </div>
-            </div>
-        </div>{{-- col-md-6 --}}
-
-    </div>{{-- .row --}}
-
-    @endif{{-- $fleet --}}
+    @endif
 
 </div>{{-- #fleetconfig --}}
 @endsection

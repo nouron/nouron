@@ -9,36 +9,66 @@
         @if($events->isEmpty())
             <p class="text-muted fst-italic">Keine Ereignisse vorhanden.</p>
         @else
-            <div class="accordion" id="events-accordion">
+            <div class="list-group">
                 @foreach($events as $event)
-                <div class="accordion-item">
-                    <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button"
-                                data-bs-toggle="collapse"
-                                data-bs-target="#collapse-event-{{ $event->id }}"
-                                aria-expanded="false">
-                            <i class="bi bi-clock me-2 text-muted"></i>
-                            <span class="me-2 text-muted small">Tick {{ $event->tick }}</span>
-                            <span class="badge bg-secondary me-2">{{ $event->area }}</span>
-                            {{ $event->event }}
-                        </button>
-                    </h2>
-                    <div id="collapse-event-{{ $event->id }}" class="accordion-collapse collapse">
-                        <div class="accordion-body">
-                            <dl class="row mb-0">
-                                <dt class="col-sm-2">Bereich</dt>
-                                <dd class="col-sm-10">{{ $event->area }}</dd>
-                                <dt class="col-sm-2">Ereignis</dt>
-                                <dd class="col-sm-10">{{ $event->event }}</dd>
-                                <dt class="col-sm-2">Tick</dt>
-                                <dd class="col-sm-10">{{ $event->tick }}</dd>
-                                @if($event->parameters)
-                                <dt class="col-sm-2">Parameter</dt>
-                                <dd class="col-sm-10"><code>{{ $event->parameters }}</code></dd>
-                                @endif
-                            </dl>
-                        </div>
-                    </div>
+                @php
+                    $params = [];
+                    if ($event->parameters) {
+                        $raw = @unserialize($event->parameters);
+                        if (is_array($raw)) {
+                            $params = $raw;
+                        }
+                    }
+
+                    $resolved = [];
+                    foreach ($params as $key => $value) {
+                        switch ($key) {
+                            case 'tech_id':
+                                $tech = \App\Models\Building::find((int) $value);
+                                $resolved['tech'] = $tech
+                                    ? '<strong>' . e(__('techtree.' . $tech->name)) . '</strong>'
+                                    : '<strong>Tech #' . $value . '</strong>';
+                                break;
+                            case 'research_id':
+                                $res = \App\Models\Research::find((int) $value);
+                                $resolved['research'] = $res
+                                    ? '<strong>' . e(__('techtree.' . $res->name)) . '</strong>'
+                                    : '<strong>Forschung #' . $value . '</strong>';
+                                break;
+                            case 'colony_id':
+                                $col = \App\Models\Colony::find((int) $value);
+                                $resolved['colony'] = '<strong>' . e($col ? $col->name : 'Kolonie #' . $value) . '</strong>';
+                                break;
+                            case 'fleet_id':
+                                $resolved['fleet'] = '<strong>Flotte #' . $value . '</strong>';
+                                break;
+                            case 'attacker_id':
+                                $attacker = \App\Models\User::find((int) $value);
+                                $resolved['attacker'] = '<strong>' . e($attacker ? $attacker->username : 'Spieler #' . $value) . '</strong>';
+                                break;
+                            case 'defender_id':
+                                $defender = \App\Models\User::find((int) $value);
+                                $resolved['defender'] = '<strong>' . e($defender ? $defender->username : 'Spieler #' . $value) . '</strong>';
+                                break;
+                            case 'coords':
+                                if (is_array($value) && count($value) >= 2) {
+                                    $resolved['coords'] = '<strong>' . $value[0] . '/' . $value[1] . '</strong>';
+                                }
+                                break;
+                        }
+                    }
+
+                    $langKey = 'events.' . str_replace('.', '_', $event->event);
+                    $text = __($langKey, $resolved);
+                    if ($text === $langKey) {
+                        $text = __('events.unknown', ['event' => e($event->event)]);
+                    }
+                @endphp
+                <div class="list-group-item">
+                    <i class="bi bi-clock me-2 text-muted"></i>
+                    <span class="me-2 text-muted small">Tick {{ $event->tick }}</span>
+                    <span class="badge bg-secondary me-2">{{ $event->area }}</span>
+                    {!! $text !!}
                 </div>
                 @endforeach
             </div>

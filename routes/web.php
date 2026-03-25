@@ -64,6 +64,7 @@ Route::middleware('auth')->prefix('messages')->name('messages.')->group(function
     Route::get('/outbox',        [MessageController::class, 'outbox'])->name('outbox');
     Route::get('/archive',       [MessageController::class, 'showArchive'])->name('archive');
     Route::get('/events',        [MessageController::class, 'events'])->name('events');
+    Route::get('/news',          [MessageController::class, 'news'])->name('news');
     Route::get('/new',           [MessageController::class, 'compose'])->name('compose');
     Route::post('/send',         [MessageController::class, 'send'])->name('send');
     Route::post('/react',        [MessageController::class, 'react'])->name('react');

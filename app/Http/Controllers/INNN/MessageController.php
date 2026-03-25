@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\INNN;
 
 use App\Http\Controllers\BaseController;
+use App\Models\InnnNews;
 use App\Services\EventService;
 use App\Services\MessageService;
 use App\Services\TickService;
@@ -91,6 +92,15 @@ class MessageController extends BaseController
             : collect();
 
         return view('messages.events', compact('events'));
+    }
+
+    /**
+     * INNN News tab: game-generated news visible to all players.
+     */
+    public function news(): View
+    {
+        $news = InnnNews::orderByDesc('tick')->get();
+        return view('messages.news', compact('news'));
     }
 
     /**
