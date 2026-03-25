@@ -142,7 +142,7 @@
                             @forelse($researches ?? [] as $id => $research)
                             <tr class="fc-item tech research"
                                 data-type="research" data-id="{{ $id }}" data-cargo="1">
-                                <td class="fc-mid">{{ $research['name'] }}</td>
+                                <td class="fc-mid">{{ __('techtree.' . $research['name']) }}</td>
                                 <td class="countOnColony">
                                     <span class="researchOnColony-{{ $id }}">…</span>
                                 </td>
@@ -182,8 +182,8 @@
                                 data-type="resource" data-id="{{ $res->id }}" data-cargo="1">
                                 <td class="fc-mid">
                                     <span class="resicon-{{ $res->abbreviation }}"
-                                          title="{{ $res->name }}">{{ $res->abbreviation }}</span>
-                                    {{ $res->name }}
+                                          title="{{ __('resources.' . $res->name) }}">{{ $res->abbreviation }}</span>
+                                    {{ __('resources.' . $res->name) }}
                                 </td>
                                 <td class="countOnColony">
                                     <span class="resourceOnColony-{{ $res->id }}">…</span>

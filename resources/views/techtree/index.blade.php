@@ -38,7 +38,7 @@
                    href="{{ route('techtree.technology', [$type, $id]) }}"
                    data-bs-toggle="modal"
                    data-bs-target="#{{ $type }}Modal-{{ $id }}">
-                    {{ $tech['name'] }}{{ ($tech['level'] ?? 0) > 0 ? ' ' . $tech['level'] : '' }}
+                    {{ __('techtree.' . $tech['name']) }}{{ ($tech['level'] ?? 0) > 0 ? ' ' . $tech['level'] : '' }}
                 </a>
                 <span class="d-none data">{{ json_encode($tech) }}</span>
             </span>

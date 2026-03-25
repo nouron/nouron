@@ -107,8 +107,8 @@
                         @if($res)
                             <span class="resicon-{{ $res->abbreviation }}"
                                   data-bs-toggle="tooltip"
-                                  title="{{ $res->name }}">{{ $res->abbreviation }}</span>
-                            {{ $res->name }}
+                                  title="{{ __('resources.' . $res->name) }}">{{ $res->abbreviation }}</span>
+                            {{ __('resources.' . $res->name) }}
                         @else
                             Res#{{ $offer->resource_id }}
                         @endif
@@ -160,7 +160,7 @@
                             <option value="">— bitte wählen —</option>
                             @foreach($resources ?? [] as $res)
                             @if(!in_array($res->id, [1, 2, 12]))
-                            <option value="{{ $res->id }}">{{ $res->name }}</option>
+                            <option value="{{ $res->id }}">{{ __('resources.' . $res->name) }}</option>
                             @endif
                             @endforeach
                         </select>

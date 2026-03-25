@@ -106,7 +106,8 @@
                     <td>
                         @if($res)
                             <i class="bi bi-flask text-secondary"></i>
-                            {{ $res['name'] ?? $res->name ?? 'Forschung #' . $offer->research_id }}
+                            @php $rn = $res['name'] ?? $res->name ?? ''; @endphp
+                            {{ $rn ? __('techtree.' . $rn) : 'Forschung #' . $offer->research_id }}
                         @else
                             Forschung #{{ $offer->research_id }}
                         @endif
@@ -158,7 +159,8 @@
                             <option value="">— bitte wählen —</option>
                             @foreach($researches ?? [] as $id => $research)
                             <option value="{{ $id }}">
-                                {{ $research['name'] ?? $research->name ?? 'Forschung #' . $id }}
+                                @php $rname = $research['name'] ?? $research->name ?? ''; @endphp
+                                {{ $rname ? __('techtree.' . $rname) : 'Forschung #' . $id }}
                             </option>
                             @endforeach
                         </select>

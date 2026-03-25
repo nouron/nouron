@@ -5,7 +5,7 @@
         @if(($resource['amount'] ?? 0) > 0)
             <span class="res-chip res-{{ $resource['abbreviation'] ?? 'x' }}"
                   data-bs-toggle="tooltip" data-bs-placement="bottom"
-                  title="{{ $resource['name'] ?? '' }}">
+                  title="{{ __('resources.' . ($resource['name'] ?? '')) }}">
                 <span class="res-abbr">{{ $resource['abbreviation'] ?? '' }}</span>
                 <span class="res-amount">{{ number_format($resource['amount'], 0, ',', '.') }}</span>
             </span>

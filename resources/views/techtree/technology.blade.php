@@ -34,9 +34,9 @@
 
         <div class="modal-header">
             <h3 class="modal-title">
-                {{ $tech['name'] ?? '—' }}
+                {{ __('techtree.' . ($tech['name'] ?? '')) }}
                 ({{ $level }})
-                <small class="text-muted fs-6">({{ $type }}{{ $purpose ? '/' . $purpose : '' }})</small>
+                <small class="text-muted fs-6">({{ __('techtree.types_' . $type) }}{{ $purpose ? ' / ' . __('techtree.purposes_' . $purpose) : '' }})</small>
             </h3>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
         </div>
@@ -78,7 +78,8 @@
                 {{-- Row 2: required building (buildings and researches only) --}}
                 @if($reqBldId && $type !== 'personell')
                 @php
-                    $reqBldName = $buildings[$reqBldId]['name'] ?? ('Gebäude #' . $reqBldId);
+                    $rawBldName = $buildings[$reqBldId]['name'] ?? '';
+                    $reqBldName = $rawBldName ? __('techtree.' . $rawBldName) : 'Gebäude #' . $reqBldId;
                     $reqBldCurrentLevel = $buildings[$reqBldId]['level'] ?? 0;
                     $reqBldMet = (int)$reqBldCurrentLevel >= $reqBldLv;
                 @endphp
@@ -99,7 +100,8 @@
                 {{-- Row 3: required research (ships only) --}}
                 @if($type === 'ship' && $reqResId)
                 @php
-                    $reqResName = ($researches[$reqResId]['name'] ?? ('Forschung #' . $reqResId));
+                    $rawResName = $researches[$reqResId]['name'] ?? '';
+                    $reqResName = $rawResName ? __('techtree.' . $rawResName) : 'Forschung #' . $reqResId;
                     $reqResLevel = $researches[$reqResId]['level'] ?? 0;
                     $reqResLv = (int)($tech['required_research_level'] ?? 1);
                     $reqResMet = (int)$reqResLevel >= $reqResLv;
