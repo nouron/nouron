@@ -3,6 +3,7 @@
 return [
     // Techtree events
     'techtree_level_up_finished'  => 'Gebäude :tech auf Kolonie :colony wurde ausgebaut.',
+    'techtree_level_down'         => 'Gebäude :tech auf Kolonie :colony ist durch Verfall um eine Stufe gesunken.',
     'techtree_research_finished'  => 'Forschung :research auf Kolonie :colony abgeschlossen.',
 
     // Galaxy / Fleet events
