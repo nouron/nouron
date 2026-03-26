@@ -12,11 +12,6 @@
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="ico/favicon.ico">
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="ico/apple-touch-icon-144-precomposed.png">
@@ -152,7 +147,7 @@
     <!-- Modal -->
     <div id="techModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
         <h3 id="myModalLabel">Modal header</h3>
       </div>
       <div class="modal-body">
@@ -181,15 +176,11 @@
       </div>
       <div class="modal-footer">
         <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-        <!--<button class="btn btn-primary">Save changes</button>-->
       </div>
     </div>
 
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <!-- Le javascript -->
+    <script src="https://code.jquery.com/jquery-latest.js"></script>
     <script src="js/bootstrap.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
@@ -244,16 +235,12 @@
         group.appendChild(makeSVG('line', {x1:xb, y1:yb, x2:xc, y2:yc, stroke: 'black'}));
         group.appendChild(makeSVG('line', {x1:xc, y1:yc, x2:xd, y2:yd, stroke: 'black'}));
         group.appendChild(makeSVG('rect', {x:xm, y:ym, height:'6%', width:'6%', fill: 'white'}));
-        //group.appendChild(makeSVG('text', {x1:xa, y1:ya, x2:xb, y2:yb, font-family:'Verdana'}));
         document.getElementById('stage1-svg').appendChild(group);
-
       }
 
       src = $('#a1 a');
       trgt = $('#b3 a');
       draw_requirement(src, trgt);
-
-
     });
     </script>
 
