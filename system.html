@@ -12,11 +12,6 @@
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="ico/favicon.ico">
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="ico/apple-touch-icon-144-precomposed.png">
@@ -68,7 +63,6 @@
 
       <hr />
       <div class="row-fluid">
-
         <ul class="nav nav-tabs">
           <li><a href="galaxy.html">Galaxy</a></li>
           <li class="active"><a href="system.html">System</a></li>
@@ -105,14 +99,9 @@
           </ul>
         </div><!--/span-->
         <div class="parallax-viewport span6">
-          <div id="layerA" class="parallax-layer">
-            redredredredredredredredredred
-          </div>
-          <div id="layerB" class="parallax-layer">
-            blue blueblueblueblueblueblueblue
-          </div>
-          <div id="layerC" class="parallax-layer">
-          </div>
+          <div id="layerA" class="parallax-layer">redredredredredredredredredred</div>
+          <div id="layerB" class="parallax-layer">blue blueblueblueblueblueblueblue</div>
+          <div id="layerC" class="parallax-layer"></div>
         </div>
         <div class="span3 well">
           <p>
@@ -135,7 +124,6 @@
             <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
             <div class="span6"><a href="#" class="btn btn-large btn-block">test</a></div>
           </div>
-
         </div>
       </div><!--/row-->
 
@@ -146,53 +134,13 @@
       </footer>
 
     </div><!--/.fluid-container-->
-     
-    <!-- Modal -->
-    <div id="techModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="myModalLabel">Modal header</h3>
-      </div>
-      <div class="modal-body">
-        <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>
-        <hr />
-        <div class="row">
-          <div class="span2">
-            <a class="btn btn-block" href="#">Bauen<br />sdf</a>
-            <a class="btn btn-block" href="#">Bauen</a>
-            <a class="btn btn-block" href="#">Bauen</a>
-            <a class="btn btn-block" href="#">Bauen</a>
-          </div>
-          <div class="span3">
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Ticks"><i class="icon-time"></i> 5 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Credits"><i class="icon-globe"></i> 123456 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Supply"><i class="icon-user"></i> 155/322 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Moral"><i class="icon-globe"></i> gut </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Eisen"><i class="icon-align-justify"></i> 12345 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Wasser"><i class="icon-tint"></i> 12345 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title="Silikate"><i class="icon-leaf"></i> 12345 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="icon-globe"></i> 12345 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="icon-globe"></i> 12345 </a>
-            <a data-placement="bottom" rel="tooltip" href="#" data-original-title=""><i class="icon-globe"></i> 12345 </a>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
-        <!--<button class="btn btn-primary">Save changes</button>-->
-      </div>
-    </div>
 
-
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <!-- Le javascript -->
+    <script src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
     <script src="js/bootstrap.js"></script>
     <script src="js/jquery.jparallax.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
-
       $('[rel=tooltip]').tooltip();
       $('.parallax-layer').parallax();
     });
