@@ -12,11 +12,6 @@
     <link href="css/bootstrap-responsive.css" rel="stylesheet">
     <link href="css/main.css" rel="stylesheet">
 
-    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
-    <!--[if lt IE 9]>
-      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
     <!-- Le fav and touch icons -->
     <link rel="shortcut icon" href="ico/favicon.ico">
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="ico/apple-touch-icon-144-precomposed.png">
@@ -79,7 +74,7 @@
           <thead>
             <tr>
               <th>Spieler <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
-              <th>Gebäude <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
+              <th>Geb&#228;ude <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
               <th>Forschung <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
               <th>Berater <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
               <th>Schiffe <i class="icon-arrow-up"> <i class="icon-arrow-down"></th>
@@ -125,7 +120,6 @@
           </tbody>
         </table>
 
-
         <div class="pagination">
           <ul>
             <li><a href="#">Prev</a></li>
@@ -146,31 +140,12 @@
 
     </div><!--/.fluid-container-->
 
-    <!-- Le javascript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <!-- Le javascript -->
+    <script src="https://code.jquery.com/jquery-latest.js"></script>
     <script src="js/bootstrap.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
       $('[rel=tooltip]').tooltip();
-
-      $('.new-inbox-message').bind('fade-cycle', function() {
-          $(this).fadeOut('slow', function() {
-              $(this).fadeIn('slow', function() {
-                  $(this).trigger('fade-cycle');
-              });
-          });
-      });
-
-      $('.new-inbox-message').each(function(index, elem) {
-          setTimeout(function() {
-              $(elem).trigger('fade-cycle');
-          }, index * 250);
-      });
-
-
-
     });
     </script>
 
