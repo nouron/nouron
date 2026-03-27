@@ -9,6 +9,7 @@
 ## Inhaltsverzeichnis
 
 1. [Spielkonzept](#1-spielkonzept)
+   - 1.1 [Designprinzipien](#11-designprinzipien)
 2. [Tick-System](#2-tick-system)
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
@@ -19,12 +20,62 @@
 9. [Kampfsystem (Combat)](#9-kampfsystem-combat)
 10. [Forschung](#10-forschung)
 11. [Handel (Trade)](#11-handel-trade)
+12. [Berater & Aktionspunkte (AP-System)](#12-berater--aktionspunkte-ap-system)
 
 ---
 
 ## 1. Spielkonzept
 
 Nouron ist ein rundenbasiertes Weltraum-Strategiespiel im Browser. Spieler bauen Kolonien auf, erforschen Technologien, bauen Flotten und interagieren mit anderen Spielern durch Handel und Kampf. Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tag global berechnet.
+
+---
+
+## 1.1 Designprinzipien
+
+### Militarismus ist teuer — bewusst
+
+**Kernprinzip: Militarische Aktionen kosten immer mehr AP als nicht-militarische.**
+
+Dies ist kein technisches Detail, sondern eine fundamentale Designentscheidung. Nouron ist kein Kriegsspiel. Die Kernphantasie ist der Aufbau eines florierenden Imperiums durch Handel, Infrastruktur und Forschung. Militarische Macht ist ein Mittel zur Absicherung, nicht das Ziel.
+
+### Warum dieses Prinzip
+
+Ohne Kostenasymmetrie dominiert in Strategie-Browserspielen erfahrungsgemass eine einzelne optimale Strategie: maximale Militarisierung, da Angriff die billigste Form der Ressourcengewinnung ist. Das zerstoert den Spielspass fur alle, die eine andere Spielweise bevorzugen.
+
+Indem militarische Aktionen strukturell teurer sind, wird Militarismus nicht verboten, aber er hat einen realen Opportunitatskostenfaktor. Ein Spieler, der standig angreift, hat weniger AP fur Aufbau, Forschung und Handel — und wachst dadurch langsamer als ein Spieler, der sich auf friedliche Entwicklung konzentriert.
+
+### Umsetzung im AP-System
+
+Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders ab — zivile wie militarische. Die Differenzierung erfolgt ausschliesslich uber die AP-Kosten je Order-Typ:
+
+| Order-Typ | Navigation-AP-Kosten |
+|-----------|----------------------|
+| move (Bewegung) | 1 |
+| trade (Handel) | 1 |
+| colonize (Kolonisierung) | 2 |
+| attack (Angriff) | 3 |
+
+Ein Pilot, der 15 AP pro Tick generiert, kann also entweder:
+- 15 Bewegungs- oder Handels-Orders erteilen, oder
+- 7 Kolonisierungs-Orders, oder
+- 5 Angriffs-Orders
+
+Die zivile Variante erzeugt dreimal so viele Aktionen wie die militarische bei gleicher AP-Basis.
+
+### Geltungsbereich: spielweites Prinzip
+
+Diese Asymmetrie gilt nicht nur fur Flottenorders. Sie muss in allen zukunftigen Mechaniken, die AP-Kosten oder andere Kosten haben, konsequent angewendet werden:
+
+- **Diplomatie / Vertrage**: Angriffs- oder Sanktionsvertrage kosten mehr als Handels- oder Beistandsvertrage.
+- **Politiksystem**: Kriegserklarungen und Embargos verbrauchen mehr politische AP als Allianzen oder Handelsabkommen.
+- **Spionage / Geheimdienstoperationen**: Sabotageaktionen kosten mehr als Informationssammlung.
+- **Neue Schiffstypen**: Kampfschiffe sind teurer in Bau-AP als zivile Schiffe vergleichbarer Grosse.
+
+> Jede neue Spielmechanik muss beim Design gepruft werden: Ist die militarische Variante teurer als die zivile? Wenn nicht, ist die Mechanik nicht balanciert im Sinne der Nouron-Vision.
+
+### Abgrenzung
+
+Das Prinzip bedeutet nicht, dass Militarismus unmoglich oder unrentabel ist. Ein hochspezialisierter Militarspieler, der alle Piloten auf maximales Level bringt, kann trotzdem erhebliche Kampfkapazitat aufbauen. Die Kostenadditionalitat stellt sicher, dass diese Spezialisierung eine echte Wahl ist — mit echten Opportunitatskosten — und nicht die einzig sinnvolle Strategie.
 
 ---
 
@@ -219,6 +270,19 @@ Decay erzwingt, dass Spieler regelmäßig Aktionspunkte in Reparaturen investier
 
 Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle gespeichert. Jede Order ist einem Tick zugewiesen und wird beim zugehörigen Tick genau einmal verarbeitet (`was_processed = 1` nach Ausführung).
 
+### Navigation-AP-Kosten je Order-Typ
+
+Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (siehe Abschnitt 12). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — militarische Orders sind teurer (siehe Abschnitt 1.1, Designprinzip "Militarismus ist teuer").
+
+| Order-Typ | Navigation-AP-Kosten | Kategorie |
+|-----------|----------------------|-----------|
+| move | 1 | zivil |
+| trade | 1 | zivil |
+| colonize | 2 | zivil |
+| attack | 3 | militarisch |
+
+> Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
+
 ### Move-Order
 
 Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]`.
@@ -335,6 +399,75 @@ Ressourcen und Forschungen können über Handelsrouten zwischen Spielern transfe
 Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
 
 *Vollständige Mechanik noch nicht dokumentiert — wird in Phase 2 ergänzt.*
+
+---
+
+---
+
+## 12. Berater & Aktionspunkte (AP-System)
+
+### Grundkonzept
+
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann. AP werden durch **Berater** (Personell) generiert — je mehr Berater einer Kolonie zugewiesen sind, desto mehr AP stehen zur Verfügung.
+
+### Die vier Berater-Typen
+
+| Berater | Personell-ID | Kategorie | AP-Typ | Verwendung |
+|---------|-------------|-----------|---------|------------|
+| Ingenieur | 35 | industry | construction | Gebäude ausbauen, Gebäude reparieren, Schiffsbau |
+| Wissenschaftler | 36 | civil | research | Forschungen vorantreiben |
+| Pilot | 89 | military | navigation | Flottenorders (bewegen, angreifen, handeln) |
+| Händler | 92 | economy | economy | Handelsangebote erstellen und pflegen |
+
+### AP-Formel
+
+```
+totalAP(level) = level × 5 + 5
+```
+
+Beispiele:
+- Ingenieur Level 0 → 5 Bau-AP pro Tick
+- Ingenieur Level 3 → 20 Bau-AP pro Tick
+- Wissenschaftler Level 2 → 15 Forschungs-AP pro Tick
+
+### Verfügbare AP
+
+```
+availableAP = totalAP − lockedAP(tick, colony_id, personell_id)
+```
+
+AP werden in der Tabelle `locked_actionpoints` pro (tick, colony_id, personell_id) gespeichert. Da sich die Tick-Nummer täglich ändert, verfallen alle Sperren automatisch zum nächsten Tick — der Pool wird also täglich vollständig erneuert.
+
+### AP-Verbrauch
+
+AP werden in zwei Szenarien verbraucht (gesperrt):
+
+1. **`invest('add')`** — Investition in ein Gebäude/Forschung/Schiff:
+   AP werden in Höhe der tatsächlich auf `ap_spend` angerechneten Punkte gesperrt.
+   `ap_spend` steigt bis zur Schwelle `ap_for_levelup`, danach kann ein Levelup ausgelöst werden.
+
+2. **`invest('repair')` / `invest('remove')`** — Reparatur oder Abbau eines Gebäudes:
+   AP werden in Höhe der tatsächlich veränderten `status_points` gesperrt.
+
+### Berater einstellen / entlassen
+
+Berater werden über `hire(colonyId, personellId)` eingestellt und via `fire()` entlassen — was intern `levelup()` bzw. `leveldown()` auf der `colony_personell`-Tabelle entspricht.
+
+AP-Investment ist für Personell nicht anwendbar (`invest()` gibt stets `false` zurück).
+
+### Kolonie-Scope
+
+Alle AP sind **koloniegebunden** — ein Ingenieur auf Kolonie A kann keine Gebäude auf Kolonie B ausbauen. Dasselbe gilt für Piloten (Flottenorders) und Händler (Handelsangebote): beide sind an die Kolonie gebunden, die die Flotte bzw. das Handelszentrum besitzt.
+
+### Implementierung
+
+- `app/Services/Techtree/PersonellService.php` — AP-Berechnung, Sperrung
+- `app/Services/Techtree/AbstractTechnologyService.php` — AP-Verbrauch beim Investieren
+- Tabelle `locked_actionpoints`: Spalten `tick`, `colony_id`, `personell_id`, `spend_ap`
+
+### Dev-Mode
+
+Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcenkosten für Levelups übersprungen. Das AP-System selbst ist auch im Dev-Mode aktiv, damit es korrekt getestet werden kann.
 
 ---
 

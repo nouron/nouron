@@ -12,8 +12,10 @@ use App\Models\FleetShip;
 use App\Models\GlxSystem;
 use App\Models\GlxSystemObject;
 use App\Services\Concerns\ValidatesId;
+use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 
 /**
@@ -24,9 +26,10 @@ class FleetService
     use ValidatesId;
 
     public function __construct(
-        private readonly ColonyService $colonyService,
-        private readonly GalaxyService $galaxyService,
-        private readonly TickService   $tickService,
+        private readonly ColonyService      $colonyService,
+        private readonly GalaxyService      $galaxyService,
+        private readonly TickService        $tickService,
+        private readonly ?PersonellService  $personellService = null,
     ) {}
 
     // ── Read ─────────────────────────────────────────────────────────────────
@@ -99,7 +102,30 @@ class FleetService
 
         $coords = $fleet->getCoords();
         $path   = $this->galaxyService->getPath($coords, $destination, 1);
+
+        // Navigation-AP check: each tick in the path costs (order_cost) AP.
+        // The final tick carries the actual $order; all preceding ticks are 'move'.
+        // Total AP cost = order_cost_for_move * (pathLength - 1) + order_cost_for_$order * 1.
+        $pathLength     = count($path);
+        $moveCost       = (int) config('game.fleet.order_costs.move', 1);
+        $finalOrderCost = (int) config('game.fleet.order_costs.' . $order, $moveCost);
+        $apCost         = $moveCost * max(0, $pathLength - 1) + $finalOrderCost;
+
+        if (config('game.dev_mode')) {
+            // TODO: Laravel migration — remove dev_mode bypass once AP system is fully tested
+            Log::debug("FleetService::addOrder() AP check skipped (dev_mode=true). "
+                . "fleet={$fleetId} order={$order} apCost={$apCost}");
+        } else {
+            $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;
+            if ($availableAP < $apCost) {
+                throw new \RuntimeException("Nicht genug Navigations-AP für diesen Befehl.");
+            }
+        }
+
         $this->_storePathInDb($fleetId, $path, $order, $additionalData);
+
+        // Lock the spent AP after successfully storing the orders.
+        $this->personellService?->lockActionPoints('navigation', $fleetId, $apCost);
     }
 
     protected function _storePathInDb(int $fleetId, array $path, string $order, ?array $additionalData): void

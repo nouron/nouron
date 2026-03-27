@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-03-27 (AP-System: Berater und Flottenkommandant)
+
+- **AP-System vervollständigt:** Alle vier Berater-Typen (Ingenieur, Wissenschaftler, Pilot/Kommandant, Händler) vollständig implementiert. Navigation-AP sind jetzt fleet-scoped statt colony-scoped — der Kommandant fliegt mit der Flotte.
+- **DB-Migration `locked_actionpoints`:** Schema von `(tick, colony_id, personell_id)` auf `(tick, scope_type, scope_id, personell_id)` umgestellt. `scope_type='colony'` für Bau/Forschung/Wirtschaft, `scope_type='fleet'` für Navigation.
+- **FleetService:** AP-Kosten-Check bei `addOrder()` integriert. Konfigurierbar in `config/game.php → fleet.order_costs`. Im Dev-Mode übersprungen.
+- **GDD Abschnitt 12:** Berater & Aktionspunkte dokumentiert (alle 4 Typen, Formel, Scope, Implementierung).
+- **GDD Abschnitt 1.1:** Neues Kapitel "Designprinzipien" — militärische Aktionen kosten immer mehr AP als zivile (Kernprinzip für das gesamte Spiel inkl. Verträge, Diplomatie).
+- **Offenes Designthema:** Das Berater-System (Berater als Gebäude mit Leveln) muss grundsätzlich überarbeitet werden — wird in einer eigenen Session angegangen.
+
 ## 2026-03-26 (GDD erstellt)
 
 - **Game Design Document:** `docs/GDD.md` neu angelegt. Dokumentiert alle bisher implementierten Spielmechaniken: Tick-System (Zeitberechnung, Berechnungsfenster, Schrittreihenfolge), Ressourcenproduktion, Supply-Generierung, Gebäude-Verfall, Flottenorders (Move/Trade), Kampfsystem. Alle Balancewerte mit Verweis auf `config/game.php`.
