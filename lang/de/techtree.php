@@ -64,7 +64,7 @@ return [
     // ── Personal ─────────────────────────────────────────────────────────
     'techs_engineer'          => 'Ingenieur',
     'techs_scientist'         => 'Forscher',
-    'techs_pilot'             => 'Pilot',
+    'techs_pilot'             => 'Kommandant',
     'techs_trader'            => 'Händler',
     'techs_diplomat'          => 'Diplomat',
     'techs_representative'    => 'Abgeordneter',
@@ -129,7 +129,7 @@ return [
     'desc_techs_secretOps'         => 'Das Geheimdienstzentrum ist die Grundlage aller Geheimdienstoperationen.',
     'desc_techs_engineer'          => 'Der Ingenieur kümmert sich um den Ausbau der Kolonie. Je mehr Ingenieure, desto mehr Bauaufträge können erteilt werden.',
     'desc_techs_scientist'         => 'Der Forscher kümmert sich um die Forschungsarbeit. Je mehr Forscher, desto mehr Forschungsaufträge.',
-    'desc_techs_pilot'             => 'Jedes Schiff braucht mindestens einen Piloten für den Flug.',
+    'desc_techs_pilot'             => 'Der Kommandant führt die Flotte an. Je höher seine Erfahrungsstufe, desto mehr Navigationsbefehle kann die Flotte pro Tick ausführen.',
     'desc_techs_trader'            => 'Händler erleichtern die Verwaltung von Angebot und Nachfrage.',
     'desc_techs_colonyShip'        => 'Das Kolonieschiff ermöglicht es dir auf fremden Planeten zu siedeln.',
     'desc_techs_fighter1'          => 'Ein kleines Kampfschiff. Schwache Bewaffnung, aber schnell und wendig.',

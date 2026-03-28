@@ -2,174 +2,227 @@
 
 namespace App\Services\Techtree;
 
+use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
-use App\Services\ResourcesService;
 use App\Services\TickService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * PersonellService — manages colony personell (engineers, scientists, pilots, traders).
+ * PersonellService — manages advisors and action points.
  *
- * Personell determines the available Action Points per tick:
- * - Engineers  → construction AP (used by buildings and ships)
- * - Scientists → research AP    (used by researches)
- * - Pilots     → navigation AP  (not yet implemented)
+ * Advisors are individual entities stored in the `advisors` table.
+ * Each advisor has a rank (1–3) that determines AP per tick:
+ *   Junior (1) = 4 AP, Senior (2) = 7 AP, Experte (3) = 12 AP
  *
- * Formula: totalAP = level * DEFAULT_ACTIONPOINTS + DEFAULT_ACTIONPOINTS
- * Available AP = totalAP − locked AP for the current tick.
- *
- * Personell cannot receive AP investments (invest() always returns false).
- * Use hire()/fire() which delegate to levelup()/leveldown().
- *
- * Migrated from Techtree\Service\PersonellService (Laminas).
+ * AP types and their scopes:
+ *   construction  — Ingenieur (35),       colony-scoped
+ *   research      — Wissenschaftler (36), colony-scoped
+ *   navigation    — Kommandant (89),      fleet-scoped (is_commander=true)
+ *   economy       — Händler (92),         colony-scoped
  */
-class PersonellService extends AbstractTechnologyService
+class PersonellService
 {
+    use ValidatesId;
+
     const PERSONELL_ID_ENGINEER  = 35;
     const PERSONELL_ID_SCIENTIST = 36;
-    const PERSONELL_ID_PILOT     = 89;
-    const DEFAULT_ACTIONPOINTS   = 5;
+    const PERSONELL_ID_PILOT     = 89;  // Kommandant
+    const PERSONELL_ID_TRADER    = 92;
 
-    protected function masterTable(): string  { return 'personell'; }
-    protected function colonyTable(): string  { return 'colony_personell'; }
-    protected function costsTable(): string   { return 'personell_costs'; }
-    protected function entityIdKey(): string  { return 'personell_id'; }
+    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP
 
-    /**
-     * AP investment is not applicable to personell.
-     */
-    public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1): bool
+    /** Cumulative active_ticks required for rank promotion. */
+    const RANK_UP_THRESHOLDS = [1 => 10, 2 => 30];
+
+    public function __construct(private readonly TickService $tickService) {}
+
+    // ── AP calculation ────────────────────────────────────────────────────────
+
+    public function getTotalActionPoints(string $type, int $scopeId): int
     {
-        return false;
-    }
-
-    /**
-     * Return the total AP for a given type based on the personell level.
-     * Formula: level * DEFAULT_ACTIONPOINTS + DEFAULT_ACTIONPOINTS
-     */
-    public function getTotalActionPoints(string $type, int $colonyId): int
-    {
-        $entityId = match (strtolower($type)) {
-            'construction' => self::PERSONELL_ID_ENGINEER,
-            'research'     => self::PERSONELL_ID_SCIENTIST,
-            'navigation'   => self::PERSONELL_ID_PILOT,
-            default        => null,
-        };
-
-        if (!$entityId) {
+        [$personellId, $scope] = $this->resolveType($type);
+        if (!$personellId) {
             return 0;
         }
 
-        $personell = $this->getColonyEntity($colonyId, $entityId);
-        $level     = $personell ? (int) $personell->level : 0;
+        $query = Advisor::where('personell_id', $personellId)
+            ->whereNull('unavailable_until_tick');
 
-        return $level * self::DEFAULT_ACTIONPOINTS + self::DEFAULT_ACTIONPOINTS;
+        if ($scope === 'fleet') {
+            $query->where('fleet_id', $scopeId)->where('is_commander', true);
+        } else {
+            $query->where('colony_id', $scopeId);
+        }
+
+        return $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
     }
 
-    /**
-     * Return available construction AP for a colony (engineers).
-     */
-    public function getConstructionPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('construction', $colonyId);
-    }
-
-    /**
-     * Return available research AP for a colony (scientists).
-     */
-    public function getResearchPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('research', $colonyId);
-    }
-
-    /**
-     * Navigation points are not yet implemented.
-     */
-    public function getNavigationPoints(int $colonyId): int
-    {
-        return 0;
-    }
-
-    /**
-     * Return available AP (total − locked in current tick) for a given type.
-     */
     public function getAvailableActionPoints(string $type, int $scopeId): int
     {
-        $this->validateId($scopeId);
-
-        if (strtolower($type) === 'navigation') {
+        [$personellId, $scope] = $this->resolveType($type);
+        if (!$personellId) {
             return 0;
         }
 
-        $entityId = match (strtolower($type)) {
-            'construction' => self::PERSONELL_ID_ENGINEER,
-            'research'     => self::PERSONELL_ID_SCIENTIST,
-            default        => null,
-        };
-
-        if (!$entityId) {
-            return 0;
-        }
-
-        $totalAP     = $this->getTotalActionPoints($type, $scopeId);
-        $currentTick = $this->tickService->getTickCount();
+        $total = $this->getTotalActionPoints($type, $scopeId);
+        $tick  = $this->tickService->getTickCount();
 
         $locked = DB::table('locked_actionpoints')
-            ->where('tick', $currentTick)
-            ->where('colony_id', $scopeId)
-            ->where('personell_id', $entityId)
+            ->where('tick', $tick)
+            ->where('scope_type', $scope)
+            ->where('scope_id', $scopeId)
+            ->where('personell_id', $personellId)
             ->value('spend_ap') ?? 0;
 
-        return $totalAP - (int) $locked;
+        return max(0, $total - (int) $locked);
     }
 
-    /**
-     * Lock (spend) AP for a colony in the current tick.
-     *
-     * Adds to any existing locked amount for the tick.
-     */
-    public function lockActionPoints(string $type, int $colonyId, int $ap): bool
+    public function lockActionPoints(string $type, int $scopeId, int $ap): bool
     {
-        $this->validateId($colonyId);
-
-        $tick     = $this->tickService->getTickCount();
-        $entityId = match (strtolower($type)) {
-            'construction' => self::PERSONELL_ID_ENGINEER,
-            'research'     => self::PERSONELL_ID_SCIENTIST,
-            default        => null,
-        };
-
-        if (!$entityId) {
+        [$personellId, $scope] = $this->resolveType($type);
+        if (!$personellId) {
             return false;
         }
 
+        $tick     = $this->tickService->getTickCount();
         $existing = DB::table('locked_actionpoints')
-            ->where(['tick' => $tick, 'colony_id' => $colonyId, 'personell_id' => $entityId])
-            ->first();
-
-        $currentSpend = $existing ? (int) $existing->spend_ap : 0;
+            ->where(['tick' => $tick, 'scope_type' => $scope, 'scope_id' => $scopeId, 'personell_id' => $personellId])
+            ->value('spend_ap') ?? 0;
 
         DB::table('locked_actionpoints')->updateOrInsert(
-            ['tick' => $tick, 'colony_id' => $colonyId, 'personell_id' => $entityId],
-            ['spend_ap' => $currentSpend + abs($ap)]
+            ['tick' => $tick, 'scope_type' => $scope, 'scope_id' => $scopeId, 'personell_id' => $personellId],
+            ['spend_ap' => $existing + abs($ap)]
         );
 
         return true;
     }
 
-    /**
-     * Hire a personell unit (levelup).
-     */
-    public function hire(int $colonyId, int $personellId): bool
+    // ── Convenience wrappers ──────────────────────────────────────────────────
+
+    public function getConstructionPoints(int $colonyId): int
     {
-        return $this->levelup($colonyId, $personellId);
+        return $this->getAvailableActionPoints('construction', $colonyId);
+    }
+
+    public function getResearchPoints(int $colonyId): int
+    {
+        return $this->getAvailableActionPoints('research', $colonyId);
+    }
+
+    public function getFleetNavigationPoints(int $fleetId): int
+    {
+        return $this->getAvailableActionPoints('navigation', $fleetId);
+    }
+
+    public function getEconomyPoints(int $colonyId): int
+    {
+        return $this->getAvailableActionPoints('economy', $colonyId);
+    }
+
+    // ── Hire / Fire / Assign ─────────────────────────────────────────────────
+
+    /**
+     * Hire a new advisor and assign them to a colony.
+     */
+    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor
+    {
+        $this->validateId($userId);
+        $this->validateId($colonyId);
+
+        return Advisor::create([
+            'user_id'      => $userId,
+            'personell_id' => $personellId,
+            'colony_id'    => $colonyId,
+            'fleet_id'     => null,
+            'is_commander' => false,
+            'rank'         => max(1, min(3, $rank)),
+            'active_ticks' => 0,
+        ]);
     }
 
     /**
-     * Fire a personell unit (leveldown).
+     * Fire an advisor — sets them unemployed (colony_id/fleet_id = null).
+     * The advisor record is NOT deleted and remains available for re-hire or trade.
      */
-    public function fire(int $colonyId, int $personellId): bool
+    public function fire(int $advisorId): bool
     {
-        return $this->leveldown($colonyId, $personellId);
+        return (bool) Advisor::where('id', $advisorId)->update([
+            'colony_id'    => null,
+            'fleet_id'     => null,
+            'is_commander' => false,
+        ]);
+    }
+
+    /**
+     * Assign a Kommandant to command a fleet.
+     * Only advisors with personell.can_command_fleet=true may be assigned.
+     *
+     * @throws \RuntimeException if the advisor type cannot command a fleet
+     */
+    public function assignToFleet(int $advisorId, int $fleetId): bool
+    {
+        $advisor = Advisor::find($advisorId);
+        if (!$advisor) {
+            return false;
+        }
+
+        $canCommand = DB::table('personell')
+            ->where('id', $advisor->personell_id)
+            ->value('can_command_fleet');
+
+        if (!$canCommand) {
+            throw new \RuntimeException('Nur Kommandanten können Flotten führen.');
+        }
+
+        $advisor->update([
+            'colony_id'    => null,
+            'fleet_id'     => $fleetId,
+            'is_commander' => true,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Unassign a Kommandant from a fleet and return them to a colony.
+     */
+    public function unassignFromFleet(int $advisorId, int $colonyId): bool
+    {
+        return (bool) Advisor::where('id', $advisorId)->update([
+            'fleet_id'     => null,
+            'colony_id'    => $colonyId,
+            'is_commander' => false,
+        ]);
+    }
+
+    // ── Queries ───────────────────────────────────────────────────────────────
+
+    public function getColonyAdvisors(int $colonyId): Collection
+    {
+        return Advisor::where('colony_id', $colonyId)->get();
+    }
+
+    public function getFleetCommander(int $fleetId): ?Advisor
+    {
+        return Advisor::where('fleet_id', $fleetId)
+            ->where('is_commander', true)
+            ->first();
+    }
+
+    // ── Internal ──────────────────────────────────────────────────────────────
+
+    /**
+     * Returns [personell_id, scope_type] for the given AP type string.
+     */
+    private function resolveType(string $type): array
+    {
+        return match (strtolower($type)) {
+            'construction' => [self::PERSONELL_ID_ENGINEER,  'colony'],
+            'research'     => [self::PERSONELL_ID_SCIENTIST, 'colony'],
+            'navigation'   => [self::PERSONELL_ID_PILOT,     'fleet'],
+            'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
+            default        => [null, null],
+        };
     }
 }

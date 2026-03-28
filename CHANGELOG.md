@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026-03-28 (Berater-System: advisors-Tabelle, Rang-System, Kommandant)
+
+- **Neue `advisors`-Tabelle:** Berater sind jetzt individuelle Einträge (id, user_id, rank, active_ticks) statt level-aggregierte Zeilen in colony_personell. Bestehende Daten aus colony_personell und fleet_personell wurden migriert.
+- **Rang-System implementiert:** Junior(1)=4 AP, Senior(2)=7 AP, Experte(3)=12 AP/Tick. Automatischer Rang-Aufstieg nach 10 bzw. 30 aktiven Ticks via GameTick.
+- **Kommandant fleet-assignable:** `assignToFleet()` / `unassignFromFleet()` — nur Kommandant-Typ erlaubt (personell.can_command_fleet=true). Prüfung auf DB-Ebene per Flag, Durchsetzung im Service.
+- **Arbeitslos-Zustand:** `fire()` löscht keine Berater mehr, setzt nur colony_id/fleet_id auf NULL. Vorbereitung für Berater-Handel zwischen Spielern (Phase 3).
+- **Passagier-Zustand:** fleet_id gesetzt + is_commander=false = Berater als Passagier auf Flotte (alle Typen erlaubt).
+- **PersonellService** komplett neu geschrieben auf advisors-Tabelle. `hire()` gibt Advisor-Instanz zurück.
+- **GDD Abschnitt 12** mit vollständigem Datenmodell und Zustandstabelle aktualisiert.
+
+## 2026-03-27 (AP-System: Berater und Flottenkommandant)
+
+- **AP-System vervollständigt:** Alle vier Berater-Typen (Ingenieur, Wissenschaftler, Pilot/Kommandant, Händler) vollständig implementiert. Navigation-AP sind jetzt fleet-scoped statt colony-scoped — der Kommandant fliegt mit der Flotte.
+- **DB-Migration `locked_actionpoints`:** Schema von `(tick, colony_id, personell_id)` auf `(tick, scope_type, scope_id, personell_id)` umgestellt. `scope_type='colony'` für Bau/Forschung/Wirtschaft, `scope_type='fleet'` für Navigation.
+- **FleetService:** AP-Kosten-Check bei `addOrder()` integriert. Konfigurierbar in `config/game.php → fleet.order_costs`. Im Dev-Mode übersprungen.
+- **GDD Abschnitt 12:** Berater & Aktionspunkte dokumentiert (alle 4 Typen, Formel, Scope, Implementierung).
+- **GDD Abschnitt 1.1:** Neues Kapitel "Designprinzipien" — militärische Aktionen kosten immer mehr AP als zivile (Kernprinzip für das gesamte Spiel inkl. Verträge, Diplomatie).
+- **Offenes Designthema:** Das Berater-System (Berater als Gebäude mit Leveln) muss grundsätzlich überarbeitet werden — wird in einer eigenen Session angegangen.
+
+## 2026-03-26 (GDD erstellt)
+
+- **Game Design Document:** `docs/GDD.md` neu angelegt. Dokumentiert alle bisher implementierten Spielmechaniken: Tick-System (Zeitberechnung, Berechnungsfenster, Schrittreihenfolge), Ressourcenproduktion, Supply-Generierung, Gebäude-Verfall, Flottenorders (Move/Trade), Kampfsystem. Alle Balancewerte mit Verweis auf `config/game.php`.
+
+## 2026-03-26 (Phase 2: Tick-System, Teil 2)
+
+- **Gebäude-Verfall:** Jeder Tick dekrementiert `status_points` um 1 pro Kolonie-Gebäude. Erreicht `status_points` 0, verliert das Gebäude ein Level und `status_points` wird auf `max_status_points` zurückgesetzt. INNN-Event `techtree.level_down` wird erzeugt. Rate konfigurierbar in `config/game.php → decay.rate`.
+- **Supply-Generierung:** Jeder Tick addiert Supply zu jedem User: `Σ(CommandCenter.Level × 5) + Σ(HousingComplex.Level × 10)` über alle Kolonien des Users. Rates konfigurierbar in `config/game.php → supply`.
+- **Kampfsystem (einfach):** Attack-Orders werden verarbeitet: Angreifer bewegt sich zu den Zielkoordinaten, gegnerische Flotten werden gesucht. Kampfstärke = `Σ(Schiffanzahl × Kampfwert)`. Verluste werden proportional zur gegnerischen Stärke berechnet (nicht-Kampfschiffe bleiben verschont). INNN-Events für beide Seiten. Kampfwerte konfigurierbar in `config/game.php → combat.ship_power`.
+- **lang/de/events.php:** Key `events.techtree_level_down` ergänzt für INNN-Anzeige.
+
+## 2026-03-26 (Phase 2: Tick-System)
+
+- **Tick-Processor:** `php artisan game:tick [--tick=N]` implementiert. Der Command verarbeitet für den angegebenen Tick: (1) Fleet-Move-Orders — Flotte wird auf die befohlenen Koordinaten gesetzt, `was_processed=1`; (2) Fleet-Trade-Orders — Ressourcentransfer zwischen Kolonie und Flotte (Kauf/Verkauf), `colony_id` als Schlüssel; (3) Ressourcengenerierung — alle Kolonien erhalten pro Industrie-Gebäude `level × rate` Ressourcen pro Tick (konfigurierbar in `config/game.php` unter `production`). Für jede verarbeitete Move- und Trade-Order wird ein INNN-Event erzeugt.
+- **config/game.php:** Produktionsraten ergänzt (`oremine→ferum: 10/Level`, `silicatemine→silicates: 10/Level`, `waterextractor→water: 10/Level`). Scheduling-Stub für `dailyAt('03:00')` als Kommentar hinterlegt.
+- **Diagnose:** Die in der DB vorhandene Trade-Order hatte einen JSON-Datenfehler (duplizierter `"colony"`-Key statt `"colony_id"`). Kein Designfehler — `trade.js` nutzt korrekt `colony_id`. Bestehende Test-Daten sind als `was_processed=1` markiert.
+
 ## 2026-03-24 (UI-Aufwertung & Bugfixes)
 
 - **Techtree:** Grid-Dimensionen korrigiert (war fälschlicherweise 6×16 statt 16×6). Leader Line ersetzt das manuelle SVG-Drawing — Abhängigkeitspfeile werden jetzt sauber mittig auf den Buttons gesetzt. Toggle-Buttons (Gebäude/Forschungen/Schiffe/Berater) wieder eingebaut, Toggles steuern auch Leader-Line-Instanzen.

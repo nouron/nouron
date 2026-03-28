@@ -135,12 +135,18 @@ abstract class AbstractTechnologyService
     /**
      * Check whether the colony can afford the entity costs.
      *
-     * NOTE: Always returns true to avoid SQLite locking issues during development.
-     * The actual cost deduction still happens in levelup()/leveldown().
+     * Bypassed when GAME_DEV_MODE=true (default) so techs can be tested freely
+     * without worrying about resource balances. Set GAME_DEV_MODE=false in .env
+     * to enforce this check in production.
      */
     public function checkRequiredResourcesByEntityId(int $colonyId, int $entityId): bool
     {
-        return true;
+        if (config('game.dev_mode')) {
+            return true;
+        }
+
+        $costs = $this->getEntityCosts($entityId);
+        return $costs->isEmpty() || $this->resourcesService->check($costs, $colonyId);
     }
 
     /**
@@ -289,11 +295,21 @@ abstract class AbstractTechnologyService
             'ap_spend'      => $newApSpend,
         ];
 
-        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $pointsType) {
+        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $pointsType) {
             DB::table($this->colonyTable())->updateOrInsert(
                 ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
                 $updateData
             );
+
+            $apType = ($pointsType === 'research_points') ? 'research' : 'construction';
+
+            if ($changeMode === 'add') {
+                // Lock the AP actually spent toward levelup so they cannot be reused in the same tick
+                $apSpent = $newApSpend - $currentApSpend;
+                if ($apSpent > 0 && $this->personellService !== null) {
+                    $this->personellService->lockActionPoints($apType, $colonyId, $apSpent);
+                }
+            }
 
             // For repair mode, deduct proportional costs per status point gained
             if ($changeMode === 'repair') {
@@ -315,10 +331,11 @@ abstract class AbstractTechnologyService
             }
 
             // Lock AP when status_points changed (repair or remove)
-            $effectiveAp = abs($newStatus - $statusBefore);
-            if ($effectiveAp > 0 && $this->personellService !== null) {
-                $apType = ($pointsType === 'research_points') ? 'research' : 'construction';
-                $this->personellService->lockActionPoints($apType, $colonyId, $effectiveAp);
+            if (in_array($changeMode, ['repair', 'remove'])) {
+                $effectiveAp = abs($newStatus - $statusBefore);
+                if ($effectiveAp > 0 && $this->personellService !== null) {
+                    $this->personellService->lockActionPoints($apType, $colonyId, $effectiveAp);
+                }
             }
         });
 
