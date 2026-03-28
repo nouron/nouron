@@ -408,7 +408,13 @@ Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
 
 ### Grundkonzept
 
-Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann. AP werden durch **Berater** (Personell) generiert — je mehr Berater einer Kolonie zugewiesen sind, desto mehr AP stehen zur Verfügung.
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann. AP werden durch **Berater** generiert.
+
+Berater sind **zählbare Ressourcen mit Rangunterschieden** — keine benannten Einzelpersonen. Eine Kolonie kann mehrere Berater desselben Typs beschäftigen; jeder gibt seinen AP-Beitrag pro Tick. Qualitätsunterschiede entstehen durch das Rang-System.
+
+> **Phase-3-Vorbehalt:** Benannte Chef-Berater (individuelle Charaktere mit Fähigkeiten) sind für Phase 3 geplant. Das aktuelle Pool-Modell ist bewusst als Fundament dafür ausgelegt.
+
+---
 
 ### Die vier Berater-Typen
 
@@ -416,58 +422,83 @@ Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen,
 |---------|-------------|-----------|---------|------------|
 | Ingenieur | 35 | industry | construction | Gebäude ausbauen, Gebäude reparieren, Schiffsbau |
 | Wissenschaftler | 36 | civil | research | Forschungen vorantreiben |
-| Pilot | 89 | military | navigation | Flottenorders (bewegen, angreifen, handeln) |
+| Kommandant | 89 | military | navigation | Flottenorders (bewegen, angreifen, handeln) |
 | Händler | 92 | economy | economy | Handelsangebote erstellen und pflegen |
 
-### AP-Formel
+> **Umbenennung:** "Pilot" heißt in der UI jetzt **Kommandant** (DB-Name `techs_pilot` bleibt intern erhalten).
 
-```
-totalAP(level) = level × 5 + 5
-```
+---
 
-Beispiele:
-- Ingenieur Level 0 → 5 Bau-AP pro Tick
-- Ingenieur Level 3 → 20 Bau-AP pro Tick
-- Wissenschaftler Level 2 → 15 Forschungs-AP pro Tick
+### Rang-System
+
+Jeder Berater hat einen Rang (1–3), der seine AP-Leistung bestimmt.
+
+| Rang | Bezeichnung | AP/Tick | Anwerbungskosten | Aufstieg |
+|------|-------------|---------|-----------------|----------|
+| 1 | Junior | 4 AP | 200 Cr | — |
+| 2 | Senior | 7 AP | +500 Cr | 10 Ticks aktiv |
+| 3 | Experte | 12 AP | +1000 Cr | 20 Ticks aktiv |
+
+- Aufstieg erfolgt automatisch nach ausreichend aktiven Ticks.
+- Optional: Aufstieg per Credits-Zahlung beschleunigen (halbe Zeit, doppelter Preis).
+- "Aktiv" = Berater war in diesem Tick beschäftigt und hat AP generiert.
+- Die konkreten Werte (AP, Kosten, Ticks) sind konfigurierbar und werden nach erstem Playtest angepasst.
+
+---
+
+### Supply-Kosten (VP — Versorgungspunkte)
+
+Supply ist die universelle Unterhaltsressource. **Alles kostet dauerhaft Supply:**
+
+| Was | Supply/Tick |
+|-----|-------------|
+| Berater (je) | 2 Supply |
+| Gebäude (je Level) | *noch zu definieren* |
+| Schiffe (je Einheit) | *noch zu definieren* |
+
+Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert. Das Hard-Cap liegt bei **200 Supply pro Kolonie**. Da pro Spieler nur eine Kolonie vorgesehen ist (Phase 3), ist Supply der einzige und ausreichende Kapazitätsdeckel für Berater.
+
+**Flotten und Supply:** Schiffe verbrauchen Supply über ihre **Heimatkolonie** — eine Flotte ist immer einem Heimathafen zugeordnet, der die laufenden Kosten trägt. *Details der Heimathafen-Mechanik werden in Phase 2 ausgearbeitet.*
+
+---
+
+### Kommandant: Kolonie vs. Flotte
+
+Der Kommandant ist der einzige Beratertyp, der seinen Koloniebezug verlieren kann:
+
+- **Kolonie-zugewiesen:** Gibt der Kolonie Navigation-AP (für das Erteilen neuer Flottenorders).
+- **Flotten-zugewiesen:** Gibt der Flotte direkt Navigation-AP; Koloniebezug aufgehoben.
+- **Rückkehr:** Beim Anlegen an der Heimatkolonie wird der Kommandant automatisch wieder der Kolonie zugewiesen.
+- **Flottenverlust im Kampf:** Der Kommandant ist für 2–3 Ticks nicht verfügbar (erholt sich), geht aber nicht dauerhaft verloren.
+
+---
 
 ### Verfügbare AP
 
 ```
-availableAP = totalAP − lockedAP(tick, colony_id, personell_id)
+availableAP = Σ(AP/Tick je Berater) − lockedAP(tick, scope_type, scope_id, personell_id)
 ```
 
-AP werden in der Tabelle `locked_actionpoints` pro (tick, colony_id, personell_id) gespeichert. Da sich die Tick-Nummer täglich ändert, verfallen alle Sperren automatisch zum nächsten Tick — der Pool wird also täglich vollständig erneuert.
+`scope_type = 'colony'` für Ingenieur/Wissenschaftler/Händler, `scope_type = 'fleet'` für Kommandant.
+
+AP-Locks verfallen automatisch zum nächsten Tick — der Pool wird täglich vollständig erneuert.
 
 ### AP-Verbrauch
 
-AP werden in zwei Szenarien verbraucht (gesperrt):
-
-1. **`invest('add')`** — Investition in ein Gebäude/Forschung/Schiff:
-   AP werden in Höhe der tatsächlich auf `ap_spend` angerechneten Punkte gesperrt.
-   `ap_spend` steigt bis zur Schwelle `ap_for_levelup`, danach kann ein Levelup ausgelöst werden.
-
-2. **`invest('repair')` / `invest('remove')`** — Reparatur oder Abbau eines Gebäudes:
-   AP werden in Höhe der tatsächlich veränderten `status_points` gesperrt.
-
-### Berater einstellen / entlassen
-
-Berater werden über `hire(colonyId, personellId)` eingestellt und via `fire()` entlassen — was intern `levelup()` bzw. `leveldown()` auf der `colony_personell`-Tabelle entspricht.
-
-AP-Investment ist für Personell nicht anwendbar (`invest()` gibt stets `false` zurück).
-
-### Kolonie-Scope
-
-Alle AP sind **koloniegebunden** — ein Ingenieur auf Kolonie A kann keine Gebäude auf Kolonie B ausbauen. Dasselbe gilt für Piloten (Flottenorders) und Händler (Handelsangebote): beide sind an die Kolonie gebunden, die die Flotte bzw. das Handelszentrum besitzt.
+1. **Bauen/Forschen/Handel:** AP werden beim Investieren gesperrt (`invest('add')`).
+2. **Reparatur/Abbau:** AP werden in Höhe der veränderten `status_points` gesperrt.
+3. **Flottenorder:** AP-Kosten abhängig von Order-Typ (siehe §1.1 und §8).
 
 ### Implementierung
 
 - `app/Services/Techtree/PersonellService.php` — AP-Berechnung, Sperrung
 - `app/Services/Techtree/AbstractTechnologyService.php` — AP-Verbrauch beim Investieren
-- Tabelle `locked_actionpoints`: Spalten `tick`, `colony_id`, `personell_id`, `spend_ap`
+- `app/Services/FleetService.php` — Navigation-AP-Check bei Order-Erstellung
+- Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_id, spend_ap)`
 
 ### Dev-Mode
 
-Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcenkosten für Levelups übersprungen. Das AP-System selbst ist auch im Dev-Mode aktiv, damit es korrekt getestet werden kann.
+Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP-Kosten übersprungen. Das AP-System selbst bleibt aktiv für Tests.
 
 ---
 
