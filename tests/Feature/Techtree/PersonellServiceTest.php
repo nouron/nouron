@@ -155,4 +155,386 @@ class PersonellServiceTest extends TestCase
         $this->assertTrue($commander->is_commander);
         $this->assertEquals(PersonellService::PERSONELL_ID_PILOT, $commander->personell_id);
     }
+
+    public function testGetFleetCommanderReturnsNullWhenNoCommander(): void
+    {
+        $result = $this->service->getFleetCommander(999999);
+        $this->assertNull($result);
+    }
+
+    // ── Advisor model: getApPerTick ───────────────────────────────────────────
+
+    public function testGetApPerTickRankOne(): void
+    {
+        $advisor = new Advisor(['rank' => 1]);
+        $this->assertEquals(4, $advisor->getApPerTick());
+    }
+
+    public function testGetApPerTickRankTwo(): void
+    {
+        $advisor = new Advisor(['rank' => 2]);
+        $this->assertEquals(7, $advisor->getApPerTick());
+    }
+
+    public function testGetApPerTickRankThree(): void
+    {
+        $advisor = new Advisor(['rank' => 3]);
+        $this->assertEquals(12, $advisor->getApPerTick());
+    }
+
+    public function testGetApPerTickUnknownRankFallsBackToDefault(): void
+    {
+        // rank 99 is not in AP_BY_RANK — should fall back to 4
+        $advisor = new Advisor(['rank' => 99]);
+        $this->assertEquals(4, $advisor->getApPerTick());
+    }
+
+    // ── Advisor model: isUnemployed ───────────────────────────────────────────
+
+    public function testIsUnemployedWhenBothNullReturnsTrue(): void
+    {
+        $advisor = new Advisor(['colony_id' => null, 'fleet_id' => null]);
+        $this->assertTrue($advisor->isUnemployed());
+    }
+
+    public function testIsUnemployedWhenColonySetReturnsFalse(): void
+    {
+        $advisor = new Advisor(['colony_id' => 1, 'fleet_id' => null]);
+        $this->assertFalse($advisor->isUnemployed());
+    }
+
+    public function testIsUnemployedWhenFleetSetReturnsFalse(): void
+    {
+        $advisor = new Advisor(['colony_id' => null, 'fleet_id' => 10]);
+        $this->assertFalse($advisor->isUnemployed());
+    }
+
+    // ── Advisor model: isAvailable ────────────────────────────────────────────
+
+    public function testIsAvailableWhenNoUnavailableTickSetAlwaysTrue(): void
+    {
+        $advisor = new Advisor(['unavailable_until_tick' => null]);
+        $this->assertTrue($advisor->isAvailable(null));
+        $this->assertTrue($advisor->isAvailable(99999));
+    }
+
+    public function testIsAvailableReturnsFalseWhenCurrentTickIsNull(): void
+    {
+        // unavailable_until_tick is set but we pass null — can't compare
+        $advisor = new Advisor(['unavailable_until_tick' => 100]);
+        $this->assertFalse($advisor->isAvailable(null));
+    }
+
+    public function testIsAvailableReturnsFalseWhenCurrentTickNotPastThreshold(): void
+    {
+        $advisor = new Advisor(['unavailable_until_tick' => 100]);
+        $this->assertFalse($advisor->isAvailable(100)); // must be strictly greater
+        $this->assertFalse($advisor->isAvailable(50));
+    }
+
+    public function testIsAvailableReturnsTrueWhenCurrentTickPastThreshold(): void
+    {
+        $advisor = new Advisor(['unavailable_until_tick' => 100]);
+        $this->assertTrue($advisor->isAvailable(101));
+    }
+
+    // ── getTotalActionPoints respects unavailable_until_tick ─────────────────
+
+    public function testTotalActionPointsExcludesUnavailableAdvisors(): void
+    {
+        // Add an engineer that is temporarily unavailable
+        Advisor::create([
+            'user_id'                => $this->userId,
+            'personell_id'           => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'              => $this->colonyId,
+            'rank'                   => 3,
+            'active_ticks'           => 10,
+            'unavailable_until_tick' => 99999,
+        ]);
+
+        // Total should still be 11 (rank2=7 + rank1=4); rank3 advisor is excluded
+        $this->assertEquals(11, $this->service->getTotalActionPoints('construction', $this->colonyId));
+    }
+
+    // ── hire(): rank clamping and validation ──────────────────────────────────
+
+    public function testHireWithRankBelowOneIsClampedToOne(): void
+    {
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId, 0);
+        $this->assertEquals(1, $advisor->rank);
+    }
+
+    public function testHireWithRankAboveThreeIsClampedToThree(): void
+    {
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId, 99);
+        $this->assertEquals(3, $advisor->rank);
+    }
+
+    public function testHireWithNegativeUserIdThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->hire(-1, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+    }
+
+    public function testHireWithNegativeColonyIdThrows(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, -5);
+    }
+
+    public function testHiredAdvisorStartsWithZeroActiveTicks(): void
+    {
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_SCIENTIST, $this->colonyId);
+        $this->assertEquals(0, $advisor->active_ticks);
+        $this->assertNull($advisor->unavailable_until_tick);
+        $this->assertFalse($advisor->is_commander);
+    }
+
+    // ── fire(): edge cases ────────────────────────────────────────────────────
+
+    public function testFireNonExistentAdvisorReturnsFalse(): void
+    {
+        $this->assertFalse($this->service->fire(999999));
+    }
+
+    public function testFireedAdvisorBecomesUnemployed(): void
+    {
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+        $this->service->fire($advisor->id);
+
+        $advisor->refresh();
+        $this->assertTrue($advisor->isUnemployed());
+    }
+
+    public function testFireCommanderClearsCommanderFlag(): void
+    {
+        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
+        $this->service->assignToFleet($commander->id, $this->fleetId);
+        $this->service->fire($commander->id);
+
+        $commander->refresh();
+        $this->assertFalse($commander->is_commander);
+        $this->assertNull($commander->fleet_id);
+    }
+
+    // ── assignToFleet(): edge cases ───────────────────────────────────────────
+
+    public function testAssignToFleetNonExistentAdvisorReturnsFalse(): void
+    {
+        $this->assertFalse($this->service->assignToFleet(999999, $this->fleetId));
+    }
+
+    public function testAssignToFleetThrowsRuntimeExceptionForNonPilot(): void
+    {
+        $scientist = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_SCIENTIST, $this->colonyId);
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Nur Kommandanten können Flotten führen.');
+        $this->service->assignToFleet($scientist->id, $this->fleetId);
+    }
+
+    public function testAssignedCommanderHasNoColonyId(): void
+    {
+        $pilot = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
+        $this->service->assignToFleet($pilot->id, $this->fleetId);
+        $pilot->refresh();
+        $this->assertNull($pilot->colony_id);
+        $this->assertNotNull($pilot->fleet_id);
+    }
+
+    // ── lockActionPoints(): accumulation and negative value sanitisation ──────
+
+    public function testLockActionPointsAccumulatesAcrossMultipleCalls(): void
+    {
+        $this->service->lockActionPoints('construction', $this->colonyId, 3);
+        $this->service->lockActionPoints('construction', $this->colonyId, 2);
+        // 11 total − 5 locked = 6
+        $this->assertEquals(6, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+    }
+
+    public function testLockActionPointsWithNegativeAmountIsSanitised(): void
+    {
+        // Passing a negative amount: abs() is applied inside the service, so it
+        // still reduces available AP (not increases it — no cheat possible).
+        $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+        $this->service->lockActionPoints('construction', $this->colonyId, -3);
+        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+    }
+
+    public function testGetAvailableActionPointsFloorsAtZeroWhenOverLocked(): void
+    {
+        // Lock more AP than exist — result must never go negative
+        $this->service->lockActionPoints('construction', $this->colonyId, 9999);
+        $this->assertEquals(0, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+    }
+
+    // ── getEconomyPoints() convenience wrapper ────────────────────────────────
+
+    public function testGetEconomyPointsReturnsZeroWithNoTraders(): void
+    {
+        $this->assertEquals(0, $this->service->getEconomyPoints($this->colonyId));
+    }
+
+    public function testGetEconomyPointsWithTrader(): void
+    {
+        Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 2,
+            'active_ticks' => 0,
+        ]);
+        $this->assertEquals(7, $this->service->getEconomyPoints($this->colonyId));
+    }
+
+    // ── incrementAdvisorTicks() via GameTick command ──────────────────────────
+
+    public function testIncrementAdvisorTicksCountsActiveColonyAdvisor(): void
+    {
+        $advisor = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 1,
+            'active_ticks' => 5,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $advisor->refresh();
+        $this->assertEquals(6, $advisor->active_ticks);
+    }
+
+    public function testIncrementAdvisorTicksCountsActiveCommander(): void
+    {
+        $commander = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_PILOT,
+            'fleet_id'     => $this->fleetId,
+            'is_commander' => true,
+            'rank'         => 1,
+            'active_ticks' => 0,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $commander->refresh();
+        $this->assertEquals(1, $commander->active_ticks);
+    }
+
+    public function testIncrementAdvisorTicksDoesNotCountUnemployedAdvisors(): void
+    {
+        $unemployed = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => null,
+            'fleet_id'     => null,
+            'rank'         => 1,
+            'active_ticks' => 3,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $unemployed->refresh();
+        $this->assertEquals(3, $unemployed->active_ticks); // unchanged
+    }
+
+    public function testIncrementAdvisorTicksDoesNotCountUnavailableAdvisors(): void
+    {
+        $unavailable = Advisor::create([
+            'user_id'                => $this->userId,
+            'personell_id'           => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'              => $this->colonyId,
+            'rank'                   => 1,
+            'active_ticks'           => 7,
+            'unavailable_until_tick' => 99999,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $unavailable->refresh();
+        $this->assertEquals(7, $unavailable->active_ticks); // unchanged
+    }
+
+    public function testIncrementAdvisorTicksDoesNotCountFleetPassenger(): void
+    {
+        // A pilot on a fleet but NOT is_commander — passenger, does not accumulate ticks
+        $passenger = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_PILOT,
+            'fleet_id'     => $this->fleetId,
+            'is_commander' => false,
+            'rank'         => 1,
+            'active_ticks' => 2,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $passenger->refresh();
+        $this->assertEquals(2, $passenger->active_ticks); // unchanged
+    }
+
+    public function testRankPromotionToTwoAtTenTicks(): void
+    {
+        $advisor = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 1,
+            'active_ticks' => 9,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $advisor->refresh();
+        $this->assertEquals(10, $advisor->active_ticks);
+        $this->assertEquals(2, $advisor->rank);
+    }
+
+    public function testRankPromotionToThreeAtThirtyTicks(): void
+    {
+        $advisor = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 2,
+            'active_ticks' => 29,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $advisor->refresh();
+        $this->assertEquals(30, $advisor->active_ticks);
+        $this->assertEquals(3, $advisor->rank);
+    }
+
+    public function testRankDoesNotPromoteAtRankThree(): void
+    {
+        $advisor = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 3,
+            'active_ticks' => 99,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $advisor->refresh();
+        $this->assertEquals(3, $advisor->rank); // stays at 3
+    }
+
+    public function testRankPromotion_ApPointsReflectNewRankAfterTick(): void
+    {
+        // Start with 1 engineer at rank 1, 9 ticks — after one tick it hits 10 and promotes
+        Advisor::where('colony_id', $this->colonyId)
+               ->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)
+               ->delete();
+
+        $advisor = Advisor::create([
+            'user_id'      => $this->userId,
+            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id'    => $this->colonyId,
+            'rank'         => 1,
+            'active_ticks' => 9,
+        ]);
+
+        $this->artisan('game:tick')->assertSuccessful();
+        $advisor->refresh();
+
+        // After promotion to rank 2, next AP query should return 7 (not 4)
+        $this->assertEquals(2, $advisor->rank);
+        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
+    }
 }
