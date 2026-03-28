@@ -50,21 +50,28 @@
                     Zurücksetzen
                 </a>
             </div>
+            @if($myColonies->isNotEmpty())
             <div class="col-auto ms-auto">
-                {{-- "Angebot erstellen" triggers the modal below --}}
                 <button type="button" class="btn btn-sm btn-success"
                         data-bs-toggle="modal" data-bs-target="#modal-create-resource-offer">
                     <i class="bi bi-plus-circle"></i> Angebot erstellen
                 </button>
             </div>
+            @endif
         </form>
     </div>
 </div>
 
-{{-- Result feedback --}}
-@if(isset($result) && $result !== null)
-<div class="alert alert-{{ $result ? 'success' : 'danger' }} alert-dismissible fade show" role="alert">
-    {{ $result ? 'Angebot gespeichert.' : 'Angebot konnte nicht gespeichert werden.' }}
+{{-- Flash messages --}}
+@if(session('success'))
+<div class="alert alert-success alert-dismissible fade show" role="alert">
+    {{ session('success') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
+@if(session('error'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ session('error') }}
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
@@ -105,9 +112,6 @@
                     </td>
                     <td>
                         @if($res)
-                            <span class="resicon-{{ $res->abbreviation }}"
-                                  data-bs-toggle="tooltip"
-                                  title="{{ __('resources.' . $res->name) }}">{{ $res->abbreviation }}</span>
                             {{ __('resources.' . $res->name) }}
                         @else
                             Res#{{ $offer->resource_id }}
@@ -117,14 +121,14 @@
                     <td>{{ $offer->price }}</td>
                     <td>{{ $offer->restriction }}</td>
                     <td>
-                        @if(isset($user_id) && $offer->user_id == $user_id)
-                        <form method="POST" action="{{ route('trade.offer.remove') }}" class="d-inline">
+                        @if(isset($user_id) && (int) $offer->user_id === $user_id)
+                        <form method="POST" action="{{ route('trade.offer.remove') }}" class="d-inline"
+                              onsubmit="return confirm('Angebot wirklich löschen?')">
                             @csrf
-                            <input type="hidden" name="offer_id" value="{{ $offer->id }}">
-                            <input type="hidden" name="offer_type" value="resource">
-                            <button type="submit" class="btn btn-sm btn-outline-danger"
-                                    title="Angebot löschen"
-                                    onclick="return confirm('Angebot wirklich löschen?')">
+                            <input type="hidden" name="colony_id"   value="{{ $offer->colony_id }}">
+                            <input type="hidden" name="direction"   value="{{ $offer->direction }}">
+                            <input type="hidden" name="resource_id" value="{{ $offer->resource_id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Angebot löschen">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
@@ -141,6 +145,7 @@
 </div>{{-- #trade --}}
 
 {{-- Modal: Angebot erstellen --}}
+@if($myColonies->isNotEmpty())
 <div class="modal fade" id="modal-create-resource-offer" tabindex="-1" role="dialog"
      aria-labelledby="modal-create-resource-offer-title">
     <div class="modal-dialog" role="document">
@@ -154,6 +159,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
+                    <input type="hidden" name="colony_id" value="{{ $myColonies->first()->id }}">
                     <div class="mb-3">
                         <label for="offer-resource-id" class="form-label">Rohstoff</label>
                         <select id="offer-resource-id" name="resource_id" class="form-select" required>
@@ -184,7 +190,7 @@
                     </div>
                     <div class="mb-3">
                         <label for="offer-restriction" class="form-label">Restriktion</label>
-                        <input type="text" id="offer-restriction" name="restriction"
+                        <input type="number" id="offer-restriction" name="restriction"
                                class="form-control" placeholder="optional">
                     </div>
                 </div>
@@ -198,4 +204,5 @@
         </div>
     </div>
 </div>
+@endif
 @endsection
