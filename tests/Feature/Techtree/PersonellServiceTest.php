@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Techtree;
 
+use App\Models\Advisor;
 use App\Services\Techtree\PersonellService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -12,64 +13,58 @@ class PersonellServiceTest extends TestCase
     use RefreshDatabase;
 
     protected PersonellService $service;
-    protected int $colonyId  = 1;
-    protected int $colonyId2 = 2;
-
-    /**
-     * Fleet ID 10 has a commander (personell_id=89) with count=1 in the test DB.
-     * Fleet ID 17 has a commander with count=8.
-     */
+    protected int $userId   = 3;   // Bart in test data
+    protected int $colonyId = 1;
     protected int $fleetId  = 10;
-    protected int $fleetId2 = 17;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
         $this->service = $this->app->make(PersonellService::class);
-    }
 
-    public function testGetEntities(): void
-    {
-        $this->assertTrue($this->service->getEntities()->isNotEmpty());
-    }
+        // Clear existing seeded advisors for our test colony/fleet so counts are predictable
+        Advisor::where('colony_id', $this->colonyId)->delete();
+        Advisor::where('fleet_id', $this->fleetId)->delete();
 
-    public function testGetEntity(): void
-    {
-        $result = $this->service->getEntity(PersonellService::PERSONELL_ID_ENGINEER);
-        $this->assertNotNull($result);
-        $this->assertEquals(35, $result->id);
-    }
-
-    public function testGetColonyEntity(): void
-    {
-        $result = $this->service->getColonyEntity($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER);
-        $this->assertEquals(9, $result->level);  // engineer level=9 on colony 1 per test data
+        // 2 engineers: rank 2 (7 AP) + rank 1 (4 AP) = 11 construction AP
+        Advisor::create([
+            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
+        ]);
+        Advisor::create([
+            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 2,
+        ]);
+        // 1 scientist: rank 1 = 4 research AP
+        Advisor::create([
+            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_SCIENTIST,
+            'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
+        ]);
+        // 1 Kommandant on fleet: rank 1 = 4 navigation AP
+        Advisor::create([
+            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_PILOT,
+            'fleet_id' => $this->fleetId, 'is_commander' => true, 'rank' => 1, 'active_ticks' => 0,
+        ]);
     }
 
     public function testGetTotalActionPoints(): void
     {
-        // engineer level=9 -> 9*5+5 = 50
-        $this->assertGreaterThan(
-            PersonellService::DEFAULT_ACTIONPOINTS,
-            $this->service->getTotalActionPoints('construction', $this->colonyId)
-        );
-        $this->assertGreaterThan(
-            PersonellService::DEFAULT_ACTIONPOINTS,
-            $this->service->getTotalActionPoints('research', $this->colonyId)
-        );
+        // 2 engineers: rank2(7) + rank1(4) = 11
+        $this->assertEquals(11, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // 1 scientist rank1 = 4
+        $this->assertEquals(4, $this->service->getTotalActionPoints('research', $this->colonyId));
+        // 1 commander rank1 on fleet = 4
+        $this->assertEquals(4, $this->service->getTotalActionPoints('navigation', $this->fleetId));
+        // unknown = 0
+        $this->assertEquals(0, $this->service->getTotalActionPoints('unknown', $this->colonyId));
+    }
 
-        // Navigation is now fleet-scoped: fleetId=10 has commander count=1 -> 1*5+5 = 10
-        $this->assertEquals(
-            10,
-            $this->service->getTotalActionPoints('navigation', $this->fleetId)
-        );
-
-        // fleetId=17 has commander count=8 -> 8*5+5 = 45
-        $this->assertEquals(
-            45,
-            $this->service->getTotalActionPoints('navigation', $this->fleetId2)
-        );
+    public function testGetAvailableActionPoints(): void
+    {
+        $this->assertEquals(11, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->assertEquals(4,  $this->service->getAvailableActionPoints('navigation', $this->fleetId));
+        $this->assertEquals(0,  $this->service->getAvailableActionPoints('unknown', $this->colonyId));
     }
 
     public function testGetConstructionPoints(): void
@@ -84,67 +79,80 @@ class PersonellServiceTest extends TestCase
 
     public function testGetFleetNavigationPoints(): void
     {
-        // fleetId=10, commander count=1 -> totalAP = 1*5+5 = 10, none locked -> available = 10
-        $this->assertEquals(10, $this->service->getFleetNavigationPoints($this->fleetId));
-
-        // fleetId=17, commander count=8 -> totalAP = 8*5+5 = 45
-        $this->assertEquals(45, $this->service->getFleetNavigationPoints($this->fleetId2));
-    }
-
-    public function testGetAvailableActionPoints(): void
-    {
-        $this->assertGreaterThan(0, $this->service->getAvailableActionPoints('construction', $this->colonyId));
-        $this->assertGreaterThan(0, $this->service->getAvailableActionPoints('research', $this->colonyId));
-
-        // Navigation is fleet-scoped: fleetId=10 has commander count=1 -> 1*5+5 = 10, none locked
-        $this->assertEquals(
-            10,
-            $this->service->getAvailableActionPoints('navigation', $this->fleetId)
-        );
-
-        // unknown type returns 0
-        $this->assertEquals(0, $this->service->getAvailableActionPoints('unknown_type', $this->colonyId));
+        $this->assertEquals(4, $this->service->getFleetNavigationPoints($this->fleetId));
     }
 
     public function testLockActionPoints(): void
     {
         $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
-        $this->service->lockActionPoints('construction', $this->colonyId, 3);
-        $after = $this->service->getAvailableActionPoints('construction', $this->colonyId);
-        $this->assertEquals($before - 3, $after);
+        $this->assertTrue($this->service->lockActionPoints('construction', $this->colonyId, 3));
+        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints('construction', $this->colonyId));
 
-        // Navigation AP are fleet-scoped: lock against fleetId, not colonyId
         $beforeNav = $this->service->getAvailableActionPoints('navigation', $this->fleetId);
-        $this->service->lockActionPoints('navigation', $this->fleetId, 2);
-        $afterNav = $this->service->getAvailableActionPoints('navigation', $this->fleetId);
-        $this->assertEquals($beforeNav - 2, $afterNav);
+        $this->assertTrue($this->service->lockActionPoints('navigation', $this->fleetId, 2));
+        $this->assertEquals($beforeNav - 2, $this->service->getAvailableActionPoints('navigation', $this->fleetId));
 
-        // unknown type returns false
-        $this->assertFalse($this->service->lockActionPoints('unknown_type', $this->colonyId, 1));
-    }
-
-    public function testInvest(): void
-    {
-        $result = $this->service->invest($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER);
-        $this->assertFalse($result);  // PersonellService::invest() always returns false
+        $this->assertFalse($this->service->lockActionPoints('unknown', $this->colonyId, 1));
     }
 
     public function testHire(): void
     {
-        $before = $this->service->getColonyEntity($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER)->level;
-        $this->assertTrue($this->service->hire($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER));
-        $after = $this->service->getColonyEntity($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER)->level;
-        $this->assertEquals($before + 1, $after);
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+        $this->assertInstanceOf(Advisor::class, $advisor);
+        $this->assertEquals($this->colonyId, $advisor->colony_id);
+        $this->assertEquals(1, $advisor->rank);
+        $this->assertNull($advisor->fleet_id);
     }
 
     public function testFire(): void
     {
-        $before = $this->service->getColonyEntity($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER)->level;
-        $this->assertTrue($this->service->fire($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER));
-        $after = $this->service->getColonyEntity($this->colonyId, PersonellService::PERSONELL_ID_ENGINEER)->level;
-        $this->assertEquals($before - 1, $after);
+        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+        $this->assertTrue($this->service->fire($advisor->id));
+        $advisor->refresh();
+        $this->assertNull($advisor->colony_id);
+        $this->assertNull($advisor->fleet_id);
+        $this->assertDatabaseHas('advisors', ['id' => $advisor->id]);  // still exists
+    }
 
-        // pilot at level 0 cannot be fired (colony_personell pilot level is 0)
-        $this->assertFalse($this->service->fire($this->colonyId, PersonellService::PERSONELL_ID_PILOT));
+    public function testAssignToFleet(): void
+    {
+        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
+        $this->assertTrue($this->service->assignToFleet($commander->id, $this->fleetId));
+        $commander->refresh();
+        $this->assertEquals($this->fleetId, $commander->fleet_id);
+        $this->assertTrue($commander->is_commander);
+        $this->assertNull($commander->colony_id);
+    }
+
+    public function testAssignToFleetFailsForNonCommander(): void
+    {
+        $engineer = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+        $this->expectException(\RuntimeException::class);
+        $this->service->assignToFleet($engineer->id, $this->fleetId);
+    }
+
+    public function testUnassignFromFleet(): void
+    {
+        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
+        $this->service->assignToFleet($commander->id, $this->fleetId);
+        $this->assertTrue($this->service->unassignFromFleet($commander->id, $this->colonyId));
+        $commander->refresh();
+        $this->assertEquals($this->colonyId, $commander->colony_id);
+        $this->assertNull($commander->fleet_id);
+        $this->assertFalse($commander->is_commander);
+    }
+
+    public function testGetColonyAdvisors(): void
+    {
+        $advisors = $this->service->getColonyAdvisors($this->colonyId);
+        $this->assertGreaterThan(0, $advisors->count());
+    }
+
+    public function testGetFleetCommander(): void
+    {
+        $commander = $this->service->getFleetCommander($this->fleetId);
+        $this->assertNotNull($commander);
+        $this->assertTrue($commander->is_commander);
+        $this->assertEquals(PersonellService::PERSONELL_ID_PILOT, $commander->personell_id);
     }
 }

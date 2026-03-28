@@ -68,6 +68,9 @@ class GameTick extends Command
 
             $n = $this->generateResources();
             $this->line("  Colonies with resources generated: {$n}");
+
+            $n = $this->incrementAdvisorTicks();
+            $this->line("  Advisors ticked:     {$n}");
         });
 
         $this->info("Tick {$tick} done.");
@@ -431,5 +434,26 @@ class GameTick extends Command
         }
 
         return $colonies->count();
+    }
+
+    // ── 7. Advisor ticks ─────────────────────────────────────────────────────
+
+    private function incrementAdvisorTicks(): int
+    {
+        $updated = DB::table('advisors')
+            ->whereNull('unavailable_until_tick')
+            ->where(function ($q) {
+                $q->whereNotNull('colony_id')
+                  ->orWhere(function ($q2) {
+                      $q2->whereNotNull('fleet_id')->where('is_commander', 1);
+                  });
+            })
+            ->increment('active_ticks');
+
+        // Rank promotions (cumulative thresholds)
+        DB::table('advisors')->where('rank', 1)->where('active_ticks', '>=', 10)->update(['rank' => 2]);
+        DB::table('advisors')->where('rank', 2)->where('active_ticks', '>=', 30)->update(['rank' => 3]);
+
+        return $updated;
     }
 }

@@ -410,9 +410,41 @@ Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
 
 Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann. AP werden durch **Berater** generiert.
 
-Berater sind **zählbare Ressourcen mit Rangunterschieden** — keine benannten Einzelpersonen. Eine Kolonie kann mehrere Berater desselben Typs beschäftigen; jeder gibt seinen AP-Beitrag pro Tick. Qualitätsunterschiede entstehen durch das Rang-System.
+Berater sind **individuelle Einträge mit Rang** — jeder Berater hat eine eigene ID und einen Zustand. Eine Kolonie kann mehrere Berater desselben Typs beschäftigen; jeder gibt seinen AP-Beitrag pro Tick. Qualitätsunterschiede entstehen durch das Rang-System.
 
-> **Phase-3-Vorbehalt:** Benannte Chef-Berater (individuelle Charaktere mit Fähigkeiten) sind für Phase 3 geplant. Das aktuelle Pool-Modell ist bewusst als Fundament dafür ausgelegt.
+> **Phase-3-Vorbehalt:** Benannte Chef-Berater (individuelle Charaktere mit Fähigkeiten und Namen) sind für Phase 3 geplant. Das aktuelle individuelle Eintrags-Modell ist bewusst als Fundament dafür ausgelegt.
+
+---
+
+### Datenmodell: `advisors`-Tabelle
+
+```
+advisors
+├── id                      ← eindeutige ID des Beraters
+├── user_id                 ← Eigentümer (immer gesetzt)
+├── personell_id            ← FK → personell (Typ)
+├── colony_id               ← nullable: aktiv auf dieser Kolonie
+├── fleet_id                ← nullable: auf dieser Flotte
+├── is_commander            ← boolean: führt die Flotte (nur Kommandant-Typ)
+├── rank                    ← 1/2/3 (Junior/Senior/Experte)
+├── active_ticks            ← für Rang-Aufstieg gezählt
+└── unavailable_until_tick  ← Erholung nach Kampfverlust (NULL = verfügbar)
+
+CHECK: colony_id IS NULL OR fleet_id IS NULL
+```
+
+**Mögliche Zustände eines Beraters:**
+
+| colony_id | fleet_id | is_commander | Bedeutung | Gilt für |
+|-----------|----------|--------------|-----------|----------|
+| gesetzt | NULL | false | Aktiv auf Kolonie, generiert AP | Alle Typen |
+| NULL | gesetzt | **true** | Führt Flotte, generiert Nav-AP | **Nur Kommandant** |
+| NULL | gesetzt | false | Passagier auf Flotte (Transport) | Alle Typen |
+| NULL | NULL | false | Arbeitslos — handelbar, re-assignierbar | Alle Typen |
+
+**Validierungsregel:** `is_commander = true` ist nur erlaubt wenn `personell.can_command_fleet = true`. Das Flag `can_command_fleet` steht in der `personell`-Mastertabelle und ist nur für den Kommandant-Typ gesetzt.
+
+**Entlassung** löscht keinen Berater — `colony_id` und `fleet_id` werden auf NULL gesetzt. Der Berater bleibt arbeitslos in der Tabelle und kann re-aktiviert oder an andere Spieler gehandelt werden.
 
 ---
 
