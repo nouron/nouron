@@ -39,5 +39,7 @@ class TestSeeder extends Seeder
         }
 
         DB::statement('PRAGMA foreign_keys = ON');
+
+        $this->call(MasterDataSeeder::class);
     }
 }

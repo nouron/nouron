@@ -14,7 +14,7 @@ return new class extends Migration
             $table->integer('colony_id');
             $table->integer('building_id');
             $table->integer('level')->default(0);
-            $table->integer('status_points')->default(10);
+            $table->double('status_points')->default(20);
             $table->integer('ap_spend')->default(0);
 
             $table->unique(['colony_id', 'building_id'], 'colony_building');

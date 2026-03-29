@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-29 (Decay- und Supply-Migrationen)
+
+- **Zwei neue Migrations:** `decay_rate REAL` und `supply_cost INTEGER` zu `buildings`, `ships`, `researches` hinzugefügt; `status_points REAL DEFAULT 20` zu `fleet_ships` (neu — Schiffe hatten bislang kein Status-Tracking).
+- **Original-Migrationen angepasst:** `colony_buildings` und `colony_researches` verwenden jetzt `double` für `status_points` (Voraussetzung für fraktionale Decay-Werte).
+- **MasterDataSeeder:** Befüllt alle neuen Felder mit den im GDD §6/§7 beschlossenen Werten (decay_rate 0.05–0.20, supply_cost 0–30). Wird automatisch vom TestSeeder aufgerufen.
+- **testdata.sqlite.sql aktualisiert:** Positionale INSERT-Statements um neue Spalten ergänzt (NULL-Platzhalter für Stammdaten, 20.0 für fleet_ships).
+
 ## 2026-03-28 (Trade-Modul repariert)
 
 - **Vier kritische Bugs behoben:** `withoutLayout()` existiert nicht in Laravel → durch Redirect+Flash ersetzt; Filter funktioniert jetzt per GET; Remove-Formular sendete falsche Felder (`offer_id`/`offer_type` statt Composite-Key); Create-Modal hatte kein `colony_id`-Feld.
