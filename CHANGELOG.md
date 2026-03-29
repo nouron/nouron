@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-03-28 (Trade-Modul repariert)
+
+- **Vier kritische Bugs behoben:** `withoutLayout()` existiert nicht in Laravel → durch Redirect+Flash ersetzt; Filter funktioniert jetzt per GET; Remove-Formular sendete falsche Felder (`offer_id`/`offer_type` statt Composite-Key); Create-Modal hatte kein `colony_id`-Feld.
+- **Validierung verbessert:** `amount`/`price` auf `min:1` angehoben (konsistent mit UI), `removeOffer`-Endpunkt validiert jetzt `colony_id` und `direction`, strict equality beim `user_id`-Vergleich in den Views.
+- **25 neue Tests:** HTTP-Controller-Tests für alle Trade-Endpunkte (GET-Filter, POST-Erstellen, POST-Löschen, Authentifizierung, Ownership-Checks, Upsert-Pfad).
+- **Offene Design-Fragen identifiziert:** Forschungshandel-Semantik (sinkt Level beim Verkauf?) und `restriction`-Feld (Bedeutung ungeklärt) — werden in der nächsten Session geklärt bevor der Acceptance-Flow implementiert wird.
+
 ## 2026-03-28 (Berater-System: advisors-Tabelle, Rang-System, Kommandant)
 
 - **Neue `advisors`-Tabelle:** Berater sind jetzt individuelle Einträge (id, user_id, rank, active_ticks) statt level-aggregierte Zeilen in colony_personell. Bestehende Daten aus colony_personell und fleet_personell wurden migriert.

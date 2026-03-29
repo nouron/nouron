@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Trade;
 
 use App\Http\Controllers\BaseController;
+use App\Services\ColonyService;
 use App\Services\TickService;
 use App\Services\TradeGateway;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -18,8 +20,8 @@ use Illuminate\View\View;
  * Routes (defined in routes/web.php under prefix /trade):
  *   GET|POST /resources          → resources()        — browse + filter resource offers
  *   GET|POST /researches         → researches()       — browse + filter research offers
- *   POST     /offer/resource     → addResourceOffer() — add/update resource offer (partial view)
- *   POST     /offer/research     → addResearchOffer() — add/update research offer (partial view)
+ *   POST     /offer/resource     → addResourceOffer() — add/update resource offer
+ *   POST     /offer/research     → addResearchOffer() — add/update research offer
  *   POST     /offer/remove       → removeOffer()      — remove offer (JSON)
  *
  * All routes require authentication.
@@ -29,6 +31,7 @@ class TradeController extends BaseController
     public function __construct(
         TickService $tick,
         private readonly TradeGateway $tradeGateway,
+        private readonly ColonyService $colonyService,
     ) {
         parent::__construct($tick);
     }
@@ -43,80 +46,44 @@ class TradeController extends BaseController
      */
     public function resources(Request $request): View
     {
-        $where     = $this->buildResourceFilter($request);
-        $offers    = $this->tradeGateway->getResources($where ?: null);
-        $resources = \Illuminate\Support\Facades\DB::table('resources')->get()->keyBy('id');
-        $user_id   = $this->getCurrentUserId();
+        $where      = $this->buildFilter($request);
+        $offers     = $this->tradeGateway->getResources($where ?: null);
+        $resources  = \Illuminate\Support\Facades\DB::table('resources')->get()->keyBy('id');
+        $user_id    = $this->getCurrentUserId();
+        $myColonies = $user_id ? $this->colonyService->getColoniesByUserId($user_id) : collect();
 
-        return view('trade.resources', compact('offers', 'resources', 'user_id'));
-    }
-
-    /**
-     * List research trade offers.
-     *
-     * On GET: shows all offers. On POST: applies search filter.
-     */
-    public function researches(Request $request): View
-    {
-        $where     = $this->buildResearchFilter($request);
-        $offers    = $this->tradeGateway->getResearches($where ?: null);
-        $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
-        $user_id   = $this->getCurrentUserId();
-
-        return view('trade.researches', compact('offers', 'researches', 'user_id'));
+        return view('trade.resources', compact('offers', 'resources', 'user_id', 'myColonies'));
     }
 
     // ── POST — Add Offers ─────────────────────────────────────────────────────
 
     /**
-     * Add or update a resource trade offer. Returns a partial view (no layout)
-     * suitable for embedding via AJAX.
+     * Add or update a resource trade offer.
      *
      * Required POST fields: colony_id, direction, resource_id, amount, price.
      * Optional: restriction.
      */
-    public function addResourceOffer(Request $request): View
+    public function addResourceOffer(Request $request): RedirectResponse
     {
         $data = $request->validate([
             'colony_id'   => ['required', 'integer', 'min:1'],
             'direction'   => ['required', 'integer', 'in:0,1'],
             'resource_id' => ['required', 'integer', 'min:1'],
-            'amount'      => ['required', 'integer', 'min:0'],
-            'price'       => ['required', 'integer', 'min:0'],
-            'restriction' => ['sometimes', 'integer'],
+            'amount'      => ['required', 'integer', 'min:1'],
+            'price'       => ['required', 'integer', 'min:1'],
+            'restriction' => ['sometimes', 'nullable', 'integer'],
         ]);
 
         $data['user_id'] = $this->getCurrentUserId();
         $result = $this->tradeGateway->addResourceOffer($data);
 
-        $offers = $this->tradeGateway->getResources(['colony_id' => $data['colony_id']]);
+        if ($result) {
+            return redirect()->route('trade.resources')
+                ->with('success', 'Angebot gespeichert.');
+        }
 
-        return view('trade.resources', compact('offers', 'result'))->withoutLayout();
-    }
-
-    /**
-     * Add or update a research trade offer. Returns a partial view (no layout).
-     *
-     * Required POST fields: colony_id, direction, research_id, amount, price.
-     * Optional: restriction.
-     */
-    public function addResearchOffer(Request $request): View
-    {
-        $data = $request->validate([
-            'colony_id'   => ['required', 'integer', 'min:1'],
-            'direction'   => ['required', 'integer', 'in:0,1'],
-            'research_id' => ['required', 'integer', 'min:1'],
-            'amount'      => ['required', 'integer', 'min:0'],
-            'price'       => ['required', 'integer', 'min:0'],
-            'restriction' => ['sometimes', 'integer'],
-        ]);
-
-        $data['user_id'] = $this->getCurrentUserId();
-        $result = $this->tradeGateway->addResearchOffer($data);
-
-        $offers = $this->tradeGateway->getResearches(['colony_id' => $data['colony_id']]);
-
-        return view('trade.researches', compact('offers', 'result'))->withoutLayout();
+        return redirect()->route('trade.resources')
+            ->with('error', 'Angebot konnte nicht gespeichert werden.');
     }
 
     // ── POST — Remove Offer ───────────────────────────────────────────────────
@@ -129,6 +96,11 @@ class TradeController extends BaseController
      */
     public function removeOffer(Request $request): JsonResponse
     {
+        $request->validate([
+            'colony_id' => ['required', 'integer', 'min:1'],
+            'direction'  => ['required', 'integer', 'in:0,1'],
+        ]);
+
         $userId = $this->getCurrentUserId();
 
         $data = array_merge(
@@ -149,30 +121,17 @@ class TradeController extends BaseController
 
     // ── Internal ──────────────────────────────────────────────────────────────
 
-    private function buildResourceFilter(Request $request): array
+    /**
+     * Extract filter conditions from either GET or POST parameters.
+     */
+    private function buildFilter(Request $request): array
     {
         $filter = [];
-        if ($request->isMethod('post')) {
-            if ($request->filled('colony_id')) {
-                $filter['colony_id'] = (int) $request->input('colony_id');
-            }
-            if ($request->filled('direction') && $request->input('direction') !== '') {
-                $filter['direction'] = (int) $request->input('direction');
-            }
+        if ($request->filled('colony_id')) {
+            $filter['colony_id'] = (int) $request->input('colony_id');
         }
-        return $filter;
-    }
-
-    private function buildResearchFilter(Request $request): array
-    {
-        $filter = [];
-        if ($request->isMethod('post')) {
-            if ($request->filled('colony_id')) {
-                $filter['colony_id'] = (int) $request->input('colony_id');
-            }
-            if ($request->filled('direction') && $request->input('direction') !== '') {
-                $filter['direction'] = (int) $request->input('direction');
-            }
+        if ($request->filled('direction') && $request->input('direction') !== '') {
+            $filter['direction'] = (int) $request->input('direction');
         }
         return $filter;
     }

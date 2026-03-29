@@ -10,6 +10,7 @@
 
 1. [Spielkonzept](#1-spielkonzept)
    - 1.1 [Designprinzipien](#11-designprinzipien)
+   - 1.2 [Alleinstellungsmerkmale (USPs)](#12-alleinstellungsmerkmale-usps)
 2. [Tick-System](#2-tick-system)
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
@@ -76,6 +77,48 @@ Diese Asymmetrie gilt nicht nur fur Flottenorders. Sie muss in allen zukunftigen
 ### Abgrenzung
 
 Das Prinzip bedeutet nicht, dass Militarismus unmoglich oder unrentabel ist. Ein hochspezialisierter Militarspieler, der alle Piloten auf maximales Level bringt, kann trotzdem erhebliche Kampfkapazitat aufbauen. Die Kostenadditionalitat stellt sicher, dass diese Spezialisierung eine echte Wahl ist — mit echten Opportunitatskosten — und nicht die einzig sinnvolle Strategie.
+
+---
+
+## 1.2 Alleinstellungsmerkmale (USPs)
+
+Nouron teilt sich das Genre "Browser-Strategiespiel" mit Dutzenden von Titeln. Was Nouron von ihnen unterscheidet, ist kein einzelnes Feature, sondern ein kohärentes Designprinzip: das Spiel ist für Spieler gebaut, die lieber nachdenken als klicken — und die Konsequenzen ihres Handelns über Tage und Wochen beobachten wollen.
+
+### Die sechs Merkmale
+
+**1. Verfall als durchgängiges Systemprinzip**
+Gebäude, Schiffe und Forschungen verfallen ohne aktive Pflege. Wer sein Imperium vernachlässigt, verliert es langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Tick zu einer echten Ressourcenentscheidung.
+
+**2. Tick-basiertes Spieltempo (1 Tick = 1 Tag)**
+Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich ausgeführt. Das Spiel passt sich dem Spieler an, nicht umgekehrt.
+
+**3. Nur eine Kolonie pro Spieler**
+Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Ein Spieler, eine Kolonie — Tiefe statt Breite.
+
+**4. Kleine, überschaubare Galaxie**
+Wenige Systeme, wenige Planeten. Jede Begegnung mit einem anderen Spieler hat Gewicht. Anonymität gibt es nicht.
+
+**5. Diplomatie und Politik als Kernmechanik**
+Während andere Spiele Diplomatie als Beiwerk behandeln, ist sie in Nouron ein gleichwertiger Spielpfad neben Handel und Forschung. Bündnisse, Verträge und politisches Kapital sind keine Optionen für Pazifisten — sie sind eine eigene Form von Macht.
+
+**6. Militär als Opportunitätskosten-Entscheidung**
+Krieg ist möglich, aber er kostet. Militärische Aktionen verbrauchen strukturell mehr AP als zivile. Wer ständig angreift, wächst langsamer als jemand, der baut, forscht und handelt. (Ausführlich in §1.1.)
+
+### Der Zusammenhang
+
+Diese Merkmale sind kein Zufall. Sie folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren Fokus bewusst setzen, langfristig planen und mit anderen interagieren — nicht durch Überrumpelung, sondern durch Überzeugung. Das Vorbild ist das klassische 4X-Genre (Master of Orion), übersetzt in ein Browserformat mit minimalem Zeitaufwand pro Tag.
+
+> Ein Spieler der acht Stunden täglich spielen will, hat keinen Vorteil gegenüber einem Spieler, der täglich fünf Minuten investiert — aber seine Entscheidungen sorgfältig trifft.
+
+### Vorbilder
+
+Die zentralen Inspirationsquellen sind klassische Strategiespiele aus der DOS-Ära:
+
+- **Reunion** (1994) — stärkster Einfluss auf das Einzelkolonie-Konzept: Ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite.
+- **Imperium Galactica II** (2000) — Vorbild für das Zusammenspiel von Kolonieverwaltung, Forschung und Diplomatie.
+- **Master of Orion** (1993) — Vorbild für das 4X-Grundgerüst, Fraktionen und die Kommandopunkte-Mechanik.
+
+Nouron ist kein Klon dieser Spiele, sondern eine Neuinterpretation ihrer Kernideen im Browserformat — mit modernem Spieltempo und dem Fokus auf eine einzige Kolonie wie in Reunion.
 
 ---
 
@@ -205,24 +248,71 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ---
 
-## 6. Supply-Generierung
+## 6. Supply-System (Cap-Modell)
 
-### Mechanik
+### Modell
 
-Supply ist eine User-Level-Ressource und repräsentiert die Versorgungskapazität des Imperiums. Sie steigt einmal pro Tick basierend auf den gebauten Infrastrukturgebäuden über alle Kolonien des Spielers.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude definieren ein Maximum. Schiffe, Berater, Gebäude (außer CC und Wohnkomplex) und Forschungen belegen Supply dauerhaft. Es gibt keine Tick-basierte Supply-Generierung.
 
 ```
-Supply-Zuwachs = Σ(CC-Level × CC-Rate) + Σ(Wohnkomplex-Level × Wohnkomplex-Rate)
+supply_cap    = 15 (CC, pauschal) + Anzahl-Wohnkomplexe × 8
+laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Berater × 2) + Σ(Gebäude-Kosten) + Σ(Forschungs-Kosten)
+freies_supply = supply_cap − laufende_last
 ```
 
-(Summe über alle Kolonien des Users)
+Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kosten der neuen Einheit`.
 
-### Konfigurierte Raten
+### Supply-Cap-Quellen
 
-| Gebäude | building_id | Rate pro Level |
-|---------|-------------|----------------|
-| CommandCenter | 25 | 5 Supply/Tick |
-| Wohnkomplex | 28 | 10 Supply/Tick |
+| Gebäude | building_id | Supply-Cap-Beitrag |
+|---------|-------------|-------------------|
+| CommandCenter | 25 | **15 Supply-Cap** (pauschal, nicht pro Level) |
+| Wohnkomplex | 28 | **8 Supply-Cap** pro Einheit (Level irrelevant) |
+
+**Startsituation:** CC = 15, 1 Wohnkomplex = 8 → Supply-Cap = **23**.
+**Hard-Cap:** 200 Supply.
+
+> **Designabsicht:** Das CC gibt einen Pauschalwert — Supply-Wachstum läuft fast vollständig über Wohnkomplexe. Wer mehr Schiffe oder Berater will, muss Wohnkomplexe bauen (Opportunitätskosten gegenüber anderen Gebäuden).
+
+### Supply-Kosten der Schiffstypen
+
+Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip: Militär kostet mehr, siehe §1.1).
+
+| Schiff | ship_id | Supply (Unterhalt) |
+|--------|---------|-------------------|
+| fighter1 | 37 | **8** |
+| frigate1 | 29 | **14** |
+| battlecruiser1 | 49 | **25** |
+| smallTransporter | 47 | 2 |
+| mediumTransporter | 83 | 4 |
+| largeTransporter | 84 | 7 |
+| Scout/Sonde (geplant) | — | 1 |
+
+> ⚠️ **Phase-3-Frage:** Ob Spieler als Verwalter einer kleinen Kolonie überhaupt Battlecruiser unterhalten können sollen (Supply-Cap 25 = mehr als ein frischer Spieler hat), wird bei der Phase-3-Konzeption entschieden.
+
+> **colonyShip entfällt.** Kolonisierung ist nicht Teil des Spielkonzepts — stattdessen gibt es Außenposten (Phase 3).
+
+### Supply-Kosten Berater, Gebäude, Forschungen
+
+| Entität | Supply (Unterhalt) |
+|---------|--------------------|
+| Berater (je, unabhängig von Rang) | 2 |
+| CommandCenter | 0 (Supply-Quelle, kein Verbraucher) |
+| Wohnkomplex | 0 (Supply-Quelle, kein Verbraucher) |
+| Alle anderen Gebäude | individuell (→ Google Sheet, noch zu definieren) |
+| Forschungen | individuell (→ Google Sheet, noch zu definieren) |
+
+### Decay für Schiffe und Forschungen
+
+Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die über Zeit abnehmen.
+
+| Entität | Decay-Rate | Besonderheit |
+|---------|-----------|--------------|
+| Gebäude | 1 SP/Tick | bereits implementiert |
+| Schiffe | moderat (TBD) | Gnadenfrist X Ticks nach Bau; im Kampf schneller |
+| Forschungen | sehr langsam (TBD) | kein Verlust durch Inaktivität, nur Verfall |
+
+> Konkrete Werte (SP/Tick, Gnadenfrist) werden bei Implementierung in `config/game.php → decay` festgelegt.
 
 ### Konfiguration
 
@@ -230,27 +320,97 @@ Supply-Zuwachs = Σ(CC-Level × CC-Rate) + Σ(Wohnkomplex-Level × Wohnkomplex-R
 
 ```php
 'supply' => [
-    'commandcenter_rate'  => 5,
-    'housingcomplex_rate' => 10,
+    'cap_commandcenter'  => 15,   // building_id 25 — pauschal, nicht pro Level
+    'cap_housingcomplex' => 8,    // building_id 28 — pro Einheit
+    'cap_max'            => 200,  // absolutes Hard-Cap
+    'cost_advisor'       => 2,    // Supply pro aktivem Berater
+    'ship_cost' => [
+        37 => 8,   // fighter1
+        29 => 14,  // frigate1
+        49 => 25,  // battlecruiser1
+        47 => 2,   // smallTransporter
+        83 => 4,   // mediumTransporter
+        84 => 7,   // largeTransporter
+    ],
 ],
 ```
 
+### Konsequenz für den Tick
+
+Die bisherige Tick-Phase "Supply Generation" (Schritt 5) **entfällt**. Supply ist eine Live-Berechnung, kein akkumulierter Pool.
+
+Das Feld `user_resources.supply` speichert künftig den **berechneten Supply-Cap** (gecacht für UI), nicht einen angesammelten Pool. Entscheidung ob gecacht oder live berechnet: bei Implementierung.
+
+### Abgrenzung der Unterhalts-Mechanismen
+
+| Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
+|-------------|----------------|--------------|---------------|
+| Supply-Cap | Anzahl Schiffe + Berater + Gebäude + Forschungen | permanent | mehr Wohnkomplexe bauen |
+| AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
+| Decay | Stand von Gebäuden, Schiffen, Forschungen | täglich | Reparatur-AP investieren |
+
+Diese drei Mechanismen sind bewusst unabhängig voneinander.
+
 ---
 
-## 7. Gebäude-Verfall (Decay)
+## 7. Verfall (Decay) — Gebäude, Schiffe, Forschungen
 
 ### Mechanik
 
-Gebäude verfallen ohne aktive Pflege. Einmal pro Tick verliert jedes aktive Koloniegebäude (Level > 0) einen festgelegten Betrag an `status_points`.
+Gebäude, Schiffe und Forschungen verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`, `ships`, `researches`) gespeichert sind.
 
-Erreichen die `status_points` den Wert 0 oder darunter:
-1. Das Gebäude verliert **ein Level** (`level -= 1`, Minimum: 0)
-2. Die `status_points` werden auf `max_status_points` zurückgesetzt (Wert aus `buildings`-Tabelle)
-3. Ein INNN-Ereignis `techtree.level_down` wird für den Koloniebesitzer erzeugt
+**Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Tick). Pro Tick wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
 
-### Designabsicht
+```
+Beispiel: max_status_points=5, decay_rate=0.3
+  Nach Tick 1: status_points = 4.70
+  Nach Tick 2: status_points = 4.40
+  Nach Tick 3: status_points = 4.10
+  Nach Tick 4: status_points = 3.80  ← erster ganzer SP verloren
+```
 
-Decay erzwingt, dass Spieler regelmäßig Aktionspunkte in Reparaturen investieren, um ihren Gebäudestand zu erhalten. Inaktive Spieler verlieren schrittweise ihre Infrastruktur.
+**Konsequenzen (wenn floor(SP) sinkt):**
+
+| Entität | Konsequenz |
+|---------|-----------|
+| Gebäude | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
+| Schiff | Einheit aus fleet_ships entfernt; INNN-Ereignis |
+| Forschung | Level − 1; INNN-Ereignis |
+
+### Kampf-Beschleunigung
+
+In einem Tick, in dem ein Schiff an Kampfhandlungen beteiligt ist, gilt **Faktor 2** auf die decay_rate:
+
+```
+decay_in_kampftick = decay_rate × 2
+```
+
+Diese Regel ist bewusst einfach gehalten — leicht zu erklären, leicht zu merken.
+
+### Richtwerte
+
+| Entität | max_status_points | decay_rate | Beschreibung |
+|---------|-------------------|-----------|--------------|
+| Kleine Gebäude (z.B. Park) | 5–10 | 0.1–0.2 | |
+| Große Gebäude (z.B. CC) | 20–50 | 0.05–0.1 | |
+| Fighter | 5 | 0.2 | schnell kaputt |
+| Frigate | 10 | 0.15 | |
+| Battlecruiser | 20 | 0.1 | robust |
+| Transporter | 8–12 | 0.1–0.15 | |
+| Forschungen | 20–50 | 0.05 | sehr langsamer Verfall |
+
+> Konkrete Werte pro Typ werden im Google Sheet definiert und per Migration in die Stammdaten-Tabellen eingetragen.
+
+**Minimum:** Jede Entität hat mindestens **5 max_status_points**.
+
+> ⚠️ **Gnadenfrist** (kein Decay für neue Schiffe/Gebäude für X Ticks): vorerst nicht implementiert. Kann in einer späteren Phase evaluiert werden.
+
+### Schema-Konsequenzen (noch nicht implementiert)
+
+- `buildings`, `ships`, `researches`: neue Spalten `max_status_points INTEGER` und `decay_rate REAL`
+- `colony_buildings.status_points`: auf `REAL` ändern (statt INTEGER)
+- `fleet_ships`: neue Spalte `status_points REAL`
+- `colony_researches`: neue Spalte `status_points REAL`
 
 ### Konfiguration
 
@@ -258,9 +418,14 @@ Decay erzwingt, dass Spieler regelmäßig Aktionspunkte in Reparaturen investier
 
 ```php
 'decay' => [
-    'rate' => 1,   // status_points-Verlust pro Tick
+    'rate'          => 1,    // Fallback-Rate (aktuell noch genutzt für Gebäude)
+    'combat_factor' => 2,    // Schiffs-Decay im Kampftick × 2
 ],
 ```
+
+### Designabsicht
+
+Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verlieren schrittweise Infrastruktur und Flotte. Die Kombination aus kleiner decay_rate und fraktionaler Akkumulation bedeutet: nichts bricht sofort — aber vernachlässigte Entitäten degradieren stetig.
 
 ---
 
