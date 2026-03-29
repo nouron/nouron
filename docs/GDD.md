@@ -126,7 +126,16 @@ Nouron ist kein Klon dieser Spiele, sondern eine Neuinterpretation ihrer Kernide
 
 ### Grundprinzip
 
-Ein **Tick** entspricht einem Spieltag. Alle periodischen Spielmechaniken (Ressourcenproduktion, Gebäudeverfall, Flottenorders) werden einmal pro Tick ausgeführt.
+Ein **Tick** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Flottenorders) werden einmal pro Tick ausgeführt.
+
+**Alle Spielwerte sind in Ticks ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Die Echtzeit-Dauer eines Ticks ist konfigurierbar (`config/game.php → tick.length`, aktuell 24 Stunden). Damit skalieren alle Spielmechaniken automatisch:
+
+| tick.length | 1 Tick entspricht | 100 Ticks ≈ |
+|-------------|------------------|-------------|
+| 24 h (Standard) | 1 Tag | 3,3 Monate |
+| 1 h | 1 Stunde | 4 Tage |
+
+> **Designentscheidung offen:** 1 Tick/Tag (aktuell) oder 24 Ticks/Tag werden evaluiert. Die Wahl ändert nur `tick.length` — alle Balancing-Werte bleiben in Ticks und skalieren automatisch.
 
 ### Zeitberechnung
 
@@ -294,13 +303,38 @@ Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip:
 
 ### Supply-Kosten Berater, Gebäude, Forschungen
 
-| Entität | Supply (Unterhalt) |
-|---------|--------------------|
-| Berater (je, unabhängig von Rang) | 2 |
-| CommandCenter | 0 (Supply-Quelle, kein Verbraucher) |
-| Wohnkomplex | 0 (Supply-Quelle, kein Verbraucher) |
-| Alle anderen Gebäude | individuell (→ Google Sheet, noch zu definieren) |
-| Forschungen | individuell (→ Google Sheet, noch zu definieren) |
+**Berater:** 2 Supply je aktivem Berater (unabhängig von Rang).
+
+**CommandCenter und Wohnkomplex:** kein Supply-Verbrauch (sie definieren den Cap).
+
+**Gebäude** (individuelle Supply-Kosten aus Technologie-Tabelle):
+
+| Gebäude | Supply |
+|---------|--------|
+| ore mine, silicate mine, hydrogen rig | 2 |
+| weatherstation | 3 |
+| bar, parc | 4 |
+| museum, temple | 5 |
+| recyclingstation, wastedisposal | 6 |
+| tradecenter | 7 |
+| sciencelab, firestation, policestation | 8 |
+| hospital | 10 |
+| memorial | 2 |
+| casino | 9 |
+| bank, stadium | 14 |
+| prison | 15 |
+| civilian shipyard | 20 |
+| secretops | 26 |
+| military shipyard | 30 |
+
+**Forschungen** (individuelle Supply-Kosten):
+
+| Forschung | Supply |
+|-----------|--------|
+| biology, chemistry, diplomacy, economics, languages, mathematics, medical_science, physics, politics | 5 |
+| military | 8 |
+
+> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe. Bei 1 Tick/Tag oder 24 Ticks/Tag ändert sich der belegte Cap-Anteil pro Einheit nicht.
 
 ### Decay für Schiffe und Forschungen
 
@@ -387,19 +421,36 @@ decay_in_kampftick = decay_rate × 2
 
 Diese Regel ist bewusst einfach gehalten — leicht zu erklären, leicht zu merken.
 
-### Richtwerte
+### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
-| Entität | max_status_points | decay_rate | Beschreibung |
-|---------|-------------------|-----------|--------------|
-| Kleine Gebäude (z.B. Park) | 5–10 | 0.1–0.2 | |
-| Große Gebäude (z.B. CC) | 20–50 | 0.05–0.1 | |
-| Fighter | 5 | 0.2 | schnell kaputt |
-| Frigate | 10 | 0.15 | |
-| Battlecruiser | 20 | 0.1 | robust |
-| Transporter | 8–12 | 0.1–0.15 | |
-| Forschungen | 20–50 | 0.05 | sehr langsamer Verfall |
+Die Technologie-Tabelle enthält für jede Entität einen "Ticks until lost"-Wert (ohne Wartung). Daraus leitet sich die `decay_rate` ab, wenn `max_status_points` standardisiert wird:
 
-> Konkrete Werte pro Typ werden im Google Sheet definiert und per Migration in die Stammdaten-Tabellen eingetragen.
+```
+decay_rate = max_status_points / ticks_until_lost
+```
+
+Mit `max_status_points = 20` als Standard ergeben sich z.B.:
+
+| Entität | Ticks until lost | decay_rate (bei SP=20) |
+|---------|-----------------|------------------------|
+| bar | 100 | 0.20 |
+| hospital | 100 | 0.20 |
+| sciencelab | 120 | 0.17 |
+| ore mine | 120 | 0.17 |
+| museum | 200 | 0.10 |
+| civilian shipyard | 166 | 0.12 |
+| military shipyard | 250 | 0.08 |
+| fighter | 133 | 0.15 |
+| frigate | 125 | 0.16 |
+| battlecruiser | 200 | 0.10 |
+| transporter (small) | 400 | 0.05 |
+| research (most) | 160 | 0.13 |
+
+Alle Werte liegen im definierten Bereich 0.05–0.3 ✓.
+
+> **Tick-Skalierung:** Bei 24 Ticks/Tag entspricht "133 Ticks" ~5,5 Echtzeit-Tagen. Bei 1 Tick/Tag sind es 133 Tage. Die Tick-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des tick-basierten Systems.
+
+> Konkrete Werte pro Typ per Migration in die Stammdaten-Tabellen (`buildings.decay_rate`, `ships.decay_rate`, `researches.decay_rate`).
 
 **Minimum:** Jede Entität hat mindestens **5 max_status_points**.
 
