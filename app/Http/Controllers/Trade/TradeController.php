@@ -55,20 +55,6 @@ class TradeController extends BaseController
         return view('trade.resources', compact('offers', 'resources', 'user_id', 'myColonies'));
     }
 
-    /**
-     * List research trade offers.
-     */
-    public function researches(Request $request): View
-    {
-        $where      = $this->buildFilter($request);
-        $offers     = $this->tradeGateway->getResearches($where ?: null);
-        $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
-        $user_id    = $this->getCurrentUserId();
-        $myColonies = $user_id ? $this->colonyService->getColoniesByUserId($user_id) : collect();
-
-        return view('trade.researches', compact('offers', 'researches', 'user_id', 'myColonies'));
-    }
-
     // ── POST — Add Offers ─────────────────────────────────────────────────────
 
     /**
@@ -97,35 +83,6 @@ class TradeController extends BaseController
         }
 
         return redirect()->route('trade.resources')
-            ->with('error', 'Angebot konnte nicht gespeichert werden.');
-    }
-
-    /**
-     * Add or update a research trade offer.
-     *
-     * Required POST fields: colony_id, direction, research_id, amount, price.
-     * Optional: restriction.
-     */
-    public function addResearchOffer(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'colony_id'   => ['required', 'integer', 'min:1'],
-            'direction'   => ['required', 'integer', 'in:0,1'],
-            'research_id' => ['required', 'integer', 'min:1'],
-            'amount'      => ['required', 'integer', 'min:1'],
-            'price'       => ['required', 'integer', 'min:1'],
-            'restriction' => ['sometimes', 'nullable', 'integer'],
-        ]);
-
-        $data['user_id'] = $this->getCurrentUserId();
-        $result = $this->tradeGateway->addResearchOffer($data);
-
-        if ($result) {
-            return redirect()->route('trade.researches')
-                ->with('success', 'Angebot gespeichert.');
-        }
-
-        return redirect()->route('trade.researches')
             ->with('error', 'Angebot konnte nicht gespeichert werden.');
     }
 

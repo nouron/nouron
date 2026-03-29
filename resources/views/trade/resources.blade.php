@@ -5,23 +5,6 @@
 @section('content')
 <div id="trade">
 
-{{-- Tab navigation --}}
-<div class="row mb-3">
-    <div class="col-12">
-        <ul class="nav nav-tabs">
-            <li class="nav-item">
-                <a class="nav-link active" href="{{ route('trade.resources') }}">
-                    <i class="bi bi-box-seam"></i> Rohstoffe
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('trade.researches') }}">
-                    <i class="bi bi-flask"></i> Forschungen
-                </a>
-            </li>
-        </ul>
-    </div>
-</div>
 
 {{-- Filter form --}}
 <div class="row mb-3">

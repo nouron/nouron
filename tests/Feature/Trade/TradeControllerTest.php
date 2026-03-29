@@ -90,41 +90,6 @@ class TradeControllerTest extends TestCase
         $this->assertTrue($offers->every(fn($o) => $o->direction === 0));
     }
 
-    // ── GET /trade/researches ─────────────────────────────────────────────────
-
-    public function test_researches_redirects_guest(): void
-    {
-        $this->get(route('trade.researches'))->assertRedirect(route('login'));
-    }
-
-    public function test_researches_loads_for_authenticated_user(): void
-    {
-        $this->actingAs($this->bart)
-            ->get(route('trade.researches'))
-            ->assertOk()
-            ->assertViewIs('trade.researches')
-            ->assertViewHas('offers')
-            ->assertViewHas('user_id', 3);
-    }
-
-    public function test_researches_shows_all_offers_by_default(): void
-    {
-        $response = $this->actingAs($this->bart)
-            ->get(route('trade.researches'));
-
-        $offers = $response->viewData('offers');
-        $this->assertCount(10, $offers);
-    }
-
-    public function test_researches_filters_by_colony_id(): void
-    {
-        $response = $this->actingAs($this->bart)
-            ->get(route('trade.researches', ['colony_id' => 2]));
-
-        $offers = $response->viewData('offers');
-        $this->assertCount(8, $offers);
-    }
-
     // ── POST /trade/offer/resource ────────────────────────────────────────────
 
     public function test_add_resource_offer_redirects_guest(): void
@@ -200,52 +165,6 @@ class TradeControllerTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    // ── POST /trade/offer/research ────────────────────────────────────────────
-
-    public function test_add_research_offer_redirects_guest(): void
-    {
-        $this->post(route('trade.offer.research'), [])->assertRedirect(route('login'));
-    }
-
-    public function test_add_research_offer_fails_validation_on_missing_fields(): void
-    {
-        $this->actingAs($this->bart)
-            ->post(route('trade.offer.research'), [])
-            ->assertSessionHasErrors(['colony_id', 'direction', 'research_id', 'amount', 'price']);
-    }
-
-    public function test_add_research_offer_succeeds_for_owner(): void
-    {
-        $this->actingAs($this->bart)
-            ->post(route('trade.offer.research'), [
-                'colony_id'   => 1,
-                'direction'   => 1,
-                'research_id' => 27,
-                'amount'      => 2,
-                'price'       => 10,
-            ])
-            ->assertRedirect(route('trade.researches'))
-            ->assertSessionHas('success');
-
-        $this->assertSame(1, DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
-            ->count());
-    }
-
-    public function test_add_research_offer_fails_for_non_owner(): void
-    {
-        $this->actingAs($this->bart)
-            ->post(route('trade.offer.research'), [
-                'colony_id'   => 2,
-                'direction'   => 0,
-                'research_id' => 27,
-                'amount'      => 1,
-                'price'       => 1,
-            ])
-            ->assertRedirect(route('trade.researches'))
-            ->assertSessionHas('error');
-    }
-
     // ── POST /trade/offer/remove ──────────────────────────────────────────────
 
     public function test_remove_offer_redirects_guest(): void
@@ -288,44 +207,6 @@ class TradeControllerTest extends TestCase
 
         $this->assertSame(1, DB::table('trade_resources')
             ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
-            ->count());
-    }
-
-    public function test_remove_research_offer_fails_for_non_owner(): void
-    {
-        // Homer tries to remove Bart's research offer
-        $response = $this->actingAs($this->homer)
-            ->postJson(route('trade.offer.remove'), [
-                'colony_id'   => 1,
-                'direction'   => 0,
-                'research_id' => 35,
-            ]);
-
-        $response->assertOk()->assertJson(['result' => false]);
-
-        $this->assertSame(1, DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 0)->where('research_id', 35)
-            ->count());
-    }
-
-    public function test_remove_research_offer_succeeds(): void
-    {
-        // Seed data: colony 1, direction=0, research_id=35 belongs to Bart
-        $this->assertSame(1, DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 0)->where('research_id', 35)
-            ->count());
-
-        $response = $this->actingAs($this->bart)
-            ->postJson(route('trade.offer.remove'), [
-                'colony_id'   => 1,
-                'direction'   => 0,
-                'research_id' => 35,
-            ]);
-
-        $response->assertOk()->assertJson(['result' => true]);
-
-        $this->assertSame(0, DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 0)->where('research_id', 35)
             ->count());
     }
 

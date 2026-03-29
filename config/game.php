@@ -31,17 +31,29 @@ return [
         // techs_powerstation not yet in DB — add entry here once available
     ],
 
-    // Supply production per tick per building level (user-level resource)
-    // supply += Σ(commandCenter.level × cc_rate) + Σ(housingComplex.level × housing_rate)
+    // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
+    // supply_cap = cap_commandcenter (flat) + count(housingComplex) × cap_housingcomplex
+    // Military ships cost significantly more than transporters (see GDD §1.1 and §6).
     'supply' => [
-        'commandcenter_rate'  => 5,   // building_id 25
-        'housingcomplex_rate' => 10,  // building_id 28
+        'cap_commandcenter'  => 15,   // building_id 25 — flat bonus, not per level
+        'cap_housingcomplex' => 8,    // building_id 28 — per unit (level irrelevant)
+        'cap_max'            => 200,  // absolute hard cap
+        'cost_advisor'       => 2,    // supply per active advisor
+        'ship_cost' => [
+            37 => 8,   // fighter1       — military
+            29 => 14,  // frigate1       — military
+            49 => 25,  // battlecruiser1 — military (Phase 3: TBD if buildable)
+            47 => 2,   // smallTransporter
+            83 => 4,   // mediumTransporter
+            84 => 7,   // largeTransporter
+        ],
     ],
 
     // Building decay: status_points decremented per tick per colony building.
     // When status_points hits 0 the building loses one level and status_points resets.
     'decay' => [
-        'rate' => 1,
+        'rate'          => 1,    // fallback rate (buildings, until per-type rates are migrated)
+        'combat_factor' => 2,    // ship decay multiplier in a combat tick
     ],
 
     // Navigation-AP cost per fleet order type.
@@ -66,7 +78,6 @@ return [
             47 => 0,   // smallTransporter
             83 => 0,   // mediumTransporter
             84 => 0,   // largeTransporter
-            88 => 0,   // colonyShip
         ],
     ],
 
