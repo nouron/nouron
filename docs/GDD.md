@@ -53,12 +53,10 @@ Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders a
 |-----------|----------------------|
 | move (Bewegung) | 1 |
 | trade (Handel) | 1 |
-| colonize (Kolonisierung) | 2 |
 | attack (Angriff) | 3 |
 
 Ein Pilot, der 15 AP pro Tick generiert, kann also entweder:
 - 15 Bewegungs- oder Handels-Orders erteilen, oder
-- 7 Kolonisierungs-Orders, oder
 - 5 Angriffs-Orders
 
 Die zivile Variante erzeugt dreimal so viele Aktionen wie die militarische bei gleicher AP-Basis.
@@ -299,8 +297,6 @@ Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip:
 
 > ⚠️ **Phase-3-Frage:** Ob Spieler als Verwalter einer kleinen Kolonie überhaupt Battlecruiser unterhalten können sollen (Supply-Cap 25 = mehr als ein frischer Spieler hat), wird bei der Phase-3-Konzeption entschieden.
 
-> **colonyShip entfällt.** Kolonisierung ist nicht Teil des Spielkonzepts — stattdessen gibt es Außenposten (Phase 3).
-
 ### Supply-Kosten Berater, Gebäude, Forschungen
 
 **Berater:** 2 Supply je aktivem Berater (unabhängig von Rang).
@@ -494,7 +490,6 @@ Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (
 |-----------|----------------------|-----------|
 | move | 1 | zivil |
 | trade | 1 | zivil |
-| colonize | 2 | zivil |
 | attack | 3 | militarisch |
 
 > Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
@@ -549,7 +544,6 @@ Kampfstärke einer Flotte = Σ(Schiffanzahl × Kampfwert des Schiffstyps)
 | Kleiner Transporter | 47 | 0 |
 | Mittlerer Transporter | 83 | 0 |
 | Großer Transporter | 84 | 0 |
-| Kolonisationsschiff | 88 | 0 |
 
 Schiffe mit Kampfwert 0 sind **nicht-kampffähig** und werden im Gefecht nicht zerstört.
 
@@ -584,7 +578,6 @@ Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein 
         47 => 0,   // smallTransporter
         83 => 0,   // mediumTransporter
         84 => 0,   // largeTransporter
-        88 => 0,   // colonyShip
     ],
 ],
 ```

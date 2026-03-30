@@ -120,9 +120,9 @@ Wichtige Gebäude mit Abhängigkeitskette:
 
 biology, languages, mathematics, medicalScience, physics, chemistry, economicScience, diplomacy, politicalScience, military
 
-### Schiffe (7 Typen)
+### Schiffe (6 Typen)
 
-fighter1, frigate1, battlecruiser1, smallTransporter, mediumTransporter, largeTransporter, colonyShip
+fighter1, frigate1, battlecruiser1, smallTransporter, mediumTransporter, largeTransporter
 
 ### Personal (4 Typen)
 
@@ -182,7 +182,7 @@ Jede Klasse hat eine eigene Factory für Dependency Injection über den Laminas 
 - Tick-System und Spielfortschritt (fleet_orders Verarbeitung)
 - Aktionspunkte-Vergabe und -Verbrauch im Techtree vollständig
 - Handelsrouten (Trade-Modul)
-- Flottenoperationen (Bewegung, Kampf, Kolonisierung)
+- Flottenoperationen (Bewegung, Kampf)
 - Login/Registrierung (Auth-System)
 - Flash-Messenger in Formularen
 

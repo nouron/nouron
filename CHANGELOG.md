@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-03-30 (colonyShip entfernt)
+
+- **colonyShip (id=88) vollständig entfernt:** Migration löscht ship aus DB; testdata.sqlite.sql bereinigt; MasterDataSeeder, GDD, CLAUDE.md, lang-Dateien aktualisiert. `colonize`-Order-Typ aus `config/game.php` entfernt.
+- Testreferenz angepasst: FleetServiceTest erwartet jetzt 4 statt 5 Schiffe in Fleet 10.
+
+## 2026-03-30 (Supply Cap und Decay im GameTick implementiert)
+
+- **Supply: Cap-Modell implementiert** — `calculateSupply()` setzt `user_resources.supply` jetzt als Kapazitäts-Cap (SET statt INCREMENT): `cap = CC_flat (15) + housing_level × 8`, max 200. Ohne CommandCenter → Supply = 0.
+- **Decay: per-Entity-Werte** — `processDecay()` aufgeteilt in `processBuildingDecay()`, `processShipDecay()` und `processResearchDecay()`. Alle drei nutzen die individuellen `decay_rate`-Werte aus den Stammdaten-Tabellen statt dem globalen Fallback-Wert. Decay ist fraktional (REAL).
+- **Schiff-Decay** — Schiffe in Kampf-Ticks erhalten Faktor 2 (`combat_factor`). Bei SP ≤ 0 wird der `fleet_ships`-Eintrag gelöscht (kein Level-Down, Schiff vernichtet). Fix: `DB::table()` statt Eloquent-Update bei Composite-Key-Tabellen.
+- **10 neue Tests** — Supply-Cap (CC-Pflicht, Housing-Skalierung, Max-Cap), Building-Decay (fraktional, Level-Down, Level-0-Skip), Ship-Decay (fraktional, Vernichtung), Research-Decay (fraktional, Level-Down).
+
 ## 2026-03-29 (Decay- und Supply-Migrationen)
 
 - **Zwei neue Migrations:** `decay_rate REAL` und `supply_cost INTEGER` zu `buildings`, `ships`, `researches` hinzugefügt; `status_points REAL DEFAULT 20` zu `fleet_ships` (neu — Schiffe hatten bislang kein Status-Tracking).

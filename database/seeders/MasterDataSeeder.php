@@ -75,7 +75,6 @@ class MasterDataSeeder extends Seeder
             49 => [20, 0.10, 25],  // battlecruiser1    — ticks_until_lost 200
             83 => [20, 0.07, 4],   // mediumTransporter — ticks_until_lost ~285
             84 => [20, 0.06, 7],   // largeTransporter  — ticks_until_lost 333
-            88 => [20, 0.05, 0],   // colonyShip        — not used, placeholder
         ];
 
         foreach ($data as $id => [$msp, $decayRate, $supplyCost]) {
