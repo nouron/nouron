@@ -125,10 +125,17 @@ class PersonellService
     /**
      * Hire a new advisor and assign them to a colony.
      */
-    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor
+    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor|false
     {
         $this->validateId($userId);
         $this->validateId($colonyId);
+
+        if (!config('game.dev_mode')) {
+            $cost = (int) config('game.supply.cost_advisor', 2);
+            if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
+                return false;
+            }
+        }
 
         return Advisor::create([
             'user_id'      => $userId,

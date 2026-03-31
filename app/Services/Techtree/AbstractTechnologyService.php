@@ -175,6 +175,27 @@ abstract class AbstractTechnologyService
     }
 
     /**
+     * Check whether the user has enough free supply to maintain one more level
+     * of the given entity.
+     *
+     * Supply is a capacity ceiling (SET each tick). Each entity level consumes
+     * supply_cost slots. Bypassed in dev_mode.
+     */
+    public function checkRequiredSupplyByEntityId(int $colonyId, int $entityId): bool
+    {
+        if (config('game.dev_mode')) {
+            return true;
+        }
+
+        $entity = DB::table($this->masterTable())->find($entityId);
+        if (!$entity || empty($entity->supply_cost) || (int) $entity->supply_cost === 0) {
+            return true;
+        }
+
+        return $this->resourcesService->getFreeSupply($colonyId) >= (int) $entity->supply_cost;
+    }
+
+    /**
      * Check that a levelup would not exceed the entity's max_level cap.
      * Only enforced for buildings; all other entity types return true.
      */
@@ -359,6 +380,9 @@ abstract class AbstractTechnologyService
             return false;
         }
         if (!$this->checkRequiredActionPoints($colonyId, $entityId)) {
+            return false;
+        }
+        if (!$this->checkRequiredSupplyByEntityId($colonyId, $entityId)) {
             return false;
         }
         if (!$this->checkLevelUpLimit($colonyId, $entityId)) {
