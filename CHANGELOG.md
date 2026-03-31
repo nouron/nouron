@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-03-31 (GDD Tick-Tabelle, Supply Enforcement, Rang-Schwellen in Config)
+
+- **Rang-Schwellen in config ausgelagert:** `RANK_UP_THRESHOLDS` (PersonellService) und `AP_BY_RANK` (Advisor) durch `config('game.advisor.rank_thresholds')` und `config('game.advisor.ap_per_rank')` ersetzt. Widerspruch zwischen GDD (Rang 3 bei 20 Ticks) und Code (30 Ticks) aufgelöst — config jetzt auf 20. Test entsprechend angepasst.
+
 ## 2026-03-31 (GDD Tick-Tabelle, Supply Enforcement)
 
 - **GDD §2 Tick-Tabelle:** Von 6 auf 9 Schritte aktualisiert — Ship Decay (5), Research Decay (6), Supply Cap (7, statt "Supply Generation"), Advisor Ticks (9) ergänzt. Beschreibungen präzisiert. Widersprüchlichen "Konsequenz für den Tick"-Abschnitt durch korrekten Text zum Cap-Modell ersetzt.

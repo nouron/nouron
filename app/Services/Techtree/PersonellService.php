@@ -30,10 +30,7 @@ class PersonellService
     const PERSONELL_ID_PILOT     = 89;  // Kommandant
     const PERSONELL_ID_TRADER    = 92;
 
-    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP
-
-    /** Cumulative active_ticks required for rank promotion. */
-    const RANK_UP_THRESHOLDS = [1 => 10, 2 => 30];
+    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
     public function __construct(private readonly TickService $tickService) {}
 

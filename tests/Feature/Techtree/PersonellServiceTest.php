@@ -484,19 +484,19 @@ class PersonellServiceTest extends TestCase
         $this->assertEquals(2, $advisor->rank);
     }
 
-    public function testRankPromotionToThreeAtThirtyTicks(): void
+    public function testRankPromotionToThreeAtTwentyTicks(): void
     {
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
             'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
             'colony_id'    => $this->colonyId,
             'rank'         => 2,
-            'active_ticks' => 29,
+            'active_ticks' => 19,
         ]);
 
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
-        $this->assertEquals(30, $advisor->active_ticks);
+        $this->assertEquals(20, $advisor->active_ticks);
         $this->assertEquals(3, $advisor->rank);
     }
 

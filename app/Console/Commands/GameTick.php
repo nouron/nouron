@@ -547,8 +547,13 @@ class GameTick extends Command
             })
             ->increment('active_ticks');
 
-        DB::table('advisors')->where('rank', 1)->where('active_ticks', '>=', 10)->update(['rank' => 2]);
-        DB::table('advisors')->where('rank', 2)->where('active_ticks', '>=', 30)->update(['rank' => 3]);
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        foreach ($thresholds as $fromRank => $ticks) {
+            DB::table('advisors')
+                ->where('rank', $fromRank)
+                ->where('active_ticks', '>=', $ticks)
+                ->update(['rank' => $fromRank + 1]);
+        }
 
         return $updated;
     }

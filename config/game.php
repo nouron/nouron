@@ -57,6 +57,13 @@ return [
     ],
 
     // Navigation-AP cost per fleet order type.
+    // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
+    // Configurable so balancing can be adjusted after first playtest (see GDD §8).
+    'advisor' => [
+        'rank_thresholds' => [1 => 10, 2 => 20],
+        'ap_per_rank'     => [1 => 4, 2 => 7, 3 => 12],
+    ],
+
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).
     // Rule: military AP cost >= civilian AP cost — never violate this ratio.
     'fleet' => [
