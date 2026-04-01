@@ -367,6 +367,51 @@ class PersonellServiceTest extends TestCase
         $this->assertEquals(0, $this->service->getAvailableActionPoints('construction', $this->colonyId));
     }
 
+    // ── E1: invest() locks AP (delta-locking) ────────────────────────────────
+
+    /**
+     * E1: Calling invest('add') reduces available AP by the amount actually spent.
+     *
+     * After investing 3 AP into oremine, the AP pool must decrease by exactly 3.
+     * This verifies that _invest() calls lockActionPoints() with the delta.
+     */
+    public function testInvestAddsLocksDeltaAp(): void
+    {
+        $buildingService = $this->app->make(\App\Services\Techtree\BuildingService::class);
+
+        // Testdata: oremine (27) on colony 1 has ap_spend=10 = ap_for_levelup → already maxed.
+        // Reset so there is room to invest.
+        \Illuminate\Support\Facades\DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
+            ->update(['ap_spend' => 0]);
+
+        $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+        $buildingService->invest($this->colonyId, 27, 'add', 3);
+        $after = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+
+        $this->assertEquals($before - 3, $after);
+    }
+
+    /**
+     * E2: AP locks are tick-scoped — after the tick advances the full pool is available again.
+     *
+     * Lock 5 AP in the current tick, then run game:tick to move to the next tick.
+     * The locked_actionpoints row belongs to the old tick and is no longer applied.
+     */
+    public function testApLocksExpireAfterTickAdvance(): void
+    {
+        $tickBefore = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+
+        $this->service->lockActionPoints('construction', $this->colonyId, 5);
+        $this->assertEquals($tickBefore - 5, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+
+        // Advance the tick — GameTick runs with the next tick number so the old lock no longer applies
+        $currentTick = $this->app->make(\App\Services\TickService::class)->getTickCount();
+        $this->artisan('game:tick', ['--tick' => $currentTick + 1])->assertSuccessful();
+
+        $this->assertEquals($tickBefore, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+    }
+
     // ── getEconomyPoints() convenience wrapper ────────────────────────────────
 
     public function testGetEconomyPointsReturnsZeroWithNoTraders(): void

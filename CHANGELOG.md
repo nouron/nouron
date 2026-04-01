@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-01 (Tests E1/E2/I4)
+
+- **Tests E1/E2 (AP-Delta-Locking):** `invest('add')` lockt korrekt die investierten AP (E1); AP-Locks sind tick-scoped und verfallen nach Tick-Advance (E2). In `PersonellServiceTest`.
+- **Test I4 (Cross-Colony-Exploit):** Neuer `TechtreeControllerTest` — verifiziert dass Controller-Aktionen immer nur die eigene Kolonie (session-basiert) betreffen und keine `colony_id` per URL injiziert werden kann.
+
 ## 2026-03-31 (GDD Tick-Tabelle, Supply Enforcement, Rang-Schwellen in Config)
 
 - **Rang-Schwellen in config ausgelagert:** `RANK_UP_THRESHOLDS` (PersonellService) und `AP_BY_RANK` (Advisor) durch `config('game.advisor.rank_thresholds')` und `config('game.advisor.ap_per_rank')` ersetzt. Widerspruch zwischen GDD (Rang 3 bei 20 Ticks) und Code (30 Ticks) aufgelöst — config jetzt auf 20. Test entsprechend angepasst.
