@@ -75,6 +75,29 @@ a:hover {color: #000; text-decoration: underline;}
 }
 .res-amount { font-variant-numeric: tabular-nums; }
 
+/* Primary resource chips — Credits and Supply: larger, bolder, always visible */
+.res-chip--primary {
+    font-size: 0.88rem;
+    padding: 3px 12px 3px 10px;
+    border-width: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+}
+.res-chip--primary .res-abbr {
+    font-size: 0.75rem;
+    opacity: 0.80;
+}
+
+/* Vertical rule separating primary from secondary resources */
+.res-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 1px;
+    margin: 0 2px;
+    align-self: center;
+}
+
 /* Per-resource accent colours */
 .res-Cr   { background: #fff8dc; border-color: #e6c84a; }
 .res-Sup  { background: #f0f0f0; border-color: #aaa; }

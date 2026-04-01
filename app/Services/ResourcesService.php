@@ -194,4 +194,48 @@ class ResourcesService
     {
         return $this->increaseAmount($colonyId, $resId, -$amount);
     }
+
+    /**
+     * Calculate free supply for the user owning the given colony.
+     *
+     * user_resources.supply stores the supply cap (SET each tick by GameTick).
+     * Free supply = cap − Σ(active entity levels × supply_cost).
+     */
+    public function getFreeSupply(int $colonyId): int
+    {
+        $colony = $this->colonyService->getColony($colonyId);
+        if (!$colony) {
+            return 0;
+        }
+
+        $userResource = $this->getUserResources(['user_id' => $colony->user_id])->first();
+        $cap = $userResource ? (int) $userResource->supply : 0;
+
+        $usedBuildings = (int) DB::table('colony_buildings as cb')
+            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $colonyId)
+            ->where('cb.level', '>', 0)
+            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+
+        $usedShips = (int) DB::table('colony_ships as cs')
+            ->join('ships as s', 's.id', '=', 'cs.ship_id')
+            ->where('cs.colony_id', $colonyId)
+            ->where('cs.level', '>', 0)
+            ->sum(DB::raw('cs.level * COALESCE(s.supply_cost, 0)'));
+
+        $usedResearches = (int) DB::table('colony_researches as cr')
+            ->join('researches as r', 'r.id', '=', 'cr.research_id')
+            ->where('cr.colony_id', $colonyId)
+            ->where('cr.level', '>', 0)
+            ->sum(DB::raw('cr.level * COALESCE(r.supply_cost, 0)'));
+
+        $advisorCount = (int) DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->count();
+        $usedAdvisors = $advisorCount * (int) config('game.supply.cost_advisor', 2);
+
+        $used = $usedBuildings + $usedShips + $usedResearches + $usedAdvisors;
+
+        return max(0, $cap - $used);
+    }
 }

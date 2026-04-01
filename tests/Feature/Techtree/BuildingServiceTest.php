@@ -97,4 +97,48 @@ class BuildingServiceTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->service->invest(-1, $this->entityId);
     }
+
+    /**
+     * Supply enforcement: levelup is blocked when free supply < supply_cost.
+     *
+     * Setup: zero all building supply_costs, set oremine supply_cost=2.
+     * Colony 1 oremine is level=5 → uses 10 supply.
+     * cap=100 → free=90 → levelup passes.
+     * cap=11  → free=1  → levelup blocked.
+     */
+    public function testLevelupBlockedWhenInsufficientSupply(): void
+    {
+        config(['game.dev_mode' => false]);
+
+        // Clear all supply costs, then set oremine=2
+        DB::table('buildings')->update(['supply_cost' => 0]);
+        DB::table('ships')->update(['supply_cost' => 0]);
+        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('buildings')->where('id', $this->entityId)->update(['supply_cost' => 2]);
+
+        // Level=5 × 2 = 10 supply used; cap=100 → free=90 ≥ 2 → should pass
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 100]);
+        $this->assertTrue($this->service->levelup($this->colonyId, $this->entityId));
+
+        // Reset ap_spend after levelup (now level=6); re-prep AP for next levelup
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
+            ->update(['ap_spend' => 10]);
+
+        // Now oremine is level=6 → uses 12 supply; cap=11 → free=max(0,11-12)=0 < 2 → blocked
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 11]);
+        $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
+    }
+
+    public function testLevelupAllowedInDevMode(): void
+    {
+        // dev_mode=true (default) bypasses supply check
+        config(['game.dev_mode' => true]);
+
+        DB::table('buildings')->update(['supply_cost' => 999]);
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
+
+        $result = $this->service->levelup($this->colonyId, $this->entityId);
+        $this->assertTrue($result);
+    }
 }

@@ -21,9 +21,6 @@ class Advisor extends Model
         'active_ticks' => 'integer',
     ];
 
-    /** AP per rank level. */
-    const AP_BY_RANK = [1 => 4, 2 => 7, 3 => 12];
-
     public function personell(): BelongsTo
     {
         return $this->belongsTo(Personell::class);
@@ -41,7 +38,8 @@ class Advisor extends Model
 
     public function getApPerTick(): int
     {
-        return self::AP_BY_RANK[$this->rank] ?? 4;
+        $map = config('game.advisor.ap_per_rank', [1 => 4, 2 => 7, 3 => 12]);
+        return $map[$this->rank] ?? 4;
     }
 
     public function isUnemployed(): bool

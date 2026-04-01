@@ -16,7 +16,8 @@ dein-projekt/
 │       ├── db-migration-agent.md
 │       ├── qa-tester.md
 │       ├── project-manager.md
-│       └── game-designer.md
+│       ├── game-designer.md
+│       └── content-writer.md
 ├── src/
 ├── public/
 └── ...
@@ -34,23 +35,25 @@ cp .claude/agents/*.md ~/.claude/agents/
 | Agent | Zuständig für | Invoke mit |
 |---|---|---|
 | `game-developer` | Game Mechanics, Game Loop, Server-side Logic | `@game-developer` |
-| `backend-coder` | PHP/Laminas, Controller, API, Laravel-Migration | `@backend-coder` |
-| `ui-specialist` | Bootstrap 5, jQuery, Templates, AJAX | `@ui-specialist` |
-| `db-migration-agent` | Schema, Migrations, SQLite→Prod, Laminas→Eloquent | `@db-migration-agent` |
+| `backend-coder` | PHP/Laravel, Controller, Services, API-Endpoints | `@backend-coder` |
+| `ui-specialist` | Bootstrap 5, jQuery, Blade-Templates, AJAX | `@ui-specialist` |
+| `db-migration-agent` | Schema, Migrations, SQLite, Seeders | `@db-migration-agent` |
 | `qa-tester` | Tests, Security, Regression, Cheat-Detection | `@qa-tester` |
-| `project-manager` | Roadmap, ADRs, Feature-Breakdown, Migration-Plan | `@project-manager` |
+| `project-manager` | Roadmap, ADRs, Feature-Breakdown, Phase 2/3 | `@project-manager` |
 | `game-designer` | GDD, Balancing, Mechanics Design, Fun Review | `@game-designer` |
+| `content-writer` | Lore, Beschreibungen, Tooltips, INNN-Events | `@content-writer` |
 
 ## Typischer Feature-Workflow
 
 ```
-1. @project-manager   → Feature in Tasks aufteilen, ADR falls nötig
-2. @game-designer     → GDD aktualisieren, Mechanic definieren, Balance-Werte
+1. @project-manager    → Feature in Tasks aufteilen, ADR falls nötig
+2. @game-designer      → GDD aktualisieren, Mechanic definieren, Balance-Werte
 3. @db-migration-agent → Schema-Änderungen + Migration schreiben
-4. @game-developer    → Game Logic / Service implementieren
-5. @backend-coder     → Controller + API Endpoint
-6. @ui-specialist     → Frontend View + AJAX
-7. @qa-tester         → Unit + Integration Tests schreiben
+4. @game-developer     → Game Logic / Service implementieren
+5. @backend-coder      → Controller + API Endpoint
+6. @ui-specialist      → Frontend View + AJAX
+7. @qa-tester          → Unit + Integration Tests schreiben
+8. @content-writer     → UI-Texte, Tooltips, Lore (falls neue Entitäten)
 ```
 
 ## Docs-Struktur (wird von Agenten erstellt)

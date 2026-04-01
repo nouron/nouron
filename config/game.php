@@ -57,19 +57,25 @@ return [
     ],
 
     // Navigation-AP cost per fleet order type.
+    // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
+    // Configurable so balancing can be adjusted after first playtest (see GDD §8).
+    'advisor' => [
+        'rank_thresholds' => [1 => 10, 2 => 20],
+        'ap_per_rank'     => [1 => 4, 2 => 7, 3 => 12],
+    ],
+
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).
     // Rule: military AP cost >= civilian AP cost — never violate this ratio.
     'fleet' => [
         'order_costs' => [
-            'move'     => 1,  // civilian — move fleet to coordinates
-            'trade'    => 1,  // civilian — execute trade at colony
-            'colonize' => 2,  // civilian — establish new colony (resource-intensive)
-            'attack'   => 3,  // military — attack enemy fleet/colony
+            'move'   => 1,  // civilian — move fleet to coordinates
+            'trade'  => 1,  // civilian — execute trade at colony
+            'attack' => 3,  // military — attack enemy fleet/colony
         ],
     ],
 
     // Combat power per ship type (ship_id => power value).
-    // Transports and colony ships have 0 combat power (non-combat).
+    // Transports have 0 combat power (non-combat).
     'combat' => [
         'ship_power' => [
             37 => 1,   // fighter1

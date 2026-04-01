@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Colony;
 use App\Models\ColonyBuilding;
+use App\Models\ColonyResearch;
 use App\Models\ColonyResource;
 use App\Models\Fleet;
 use App\Models\FleetOrder;
@@ -25,14 +26,20 @@ use Illuminate\Support\Facades\DB;
  *  1. Fleet move orders   — update fleet position to ordered coordinates
  *  2. Fleet trade orders  — transfer resources between fleet and colony
  *  3. Fleet combat orders — resolve combat between attacking and defending fleets
- *  4. Building decay      — decrement status_points; level-down at 0
- *  5. Supply generation   — add supply to users based on commandCenter + housingComplex levels
- *  6. Resource generation — produce colony resources per industry building level
+ *  4. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
+ *  5. Ship decay          — decrement fleet_ships.status_points; combat fleets × 2; remove at ≤ 0
+ *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
+ *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
+ *  8. Resource generation — produce colony resources per industry building level
+ *  9. Advisor ticks       — increment active_ticks, check rank promotions
  */
 class GameTick extends Command
 {
     protected $signature   = 'game:tick {--tick= : Override the tick number (default: current tick)}';
     protected $description = 'Process one game tick (fleet orders, decay, supply, resources)';
+
+    /** Fleet IDs that were involved in combat this tick — used for 2× ship decay. */
+    private array $combatFleetIds = [];
 
     public function __construct(
         private readonly TickService  $tickService,
@@ -52,25 +59,31 @@ class GameTick extends Command
 
         DB::transaction(function () use ($tick) {
             $n = $this->processMoveOrders($tick);
-            $this->line("  Fleet move orders:   {$n}");
+            $this->line("  Fleet move orders:        {$n}");
 
             $n = $this->processTradeOrders($tick);
-            $this->line("  Fleet trade orders:  {$n}");
+            $this->line("  Fleet trade orders:       {$n}");
 
             $n = $this->processCombatOrders($tick);
-            $this->line("  Fleet combat orders: {$n}");
+            $this->line("  Fleet combat orders:      {$n}");
 
-            $n = $this->processDecay();
-            $this->line("  Buildings decayed:   {$n}");
+            $n = $this->processBuildingDecay($tick);
+            $this->line("  Buildings levelled down:  {$n}");
+
+            $n = $this->processShipDecay($tick);
+            $this->line("  Ship entries destroyed:   {$n}");
+
+            $n = $this->processResearchDecay($tick);
+            $this->line("  Researches levelled down: {$n}");
 
             $n = $this->calculateSupply();
-            $this->line("  Users supply updated: {$n}");
+            $this->line("  Users supply updated:     {$n}");
 
             $n = $this->generateResources();
-            $this->line("  Colonies with resources generated: {$n}");
+            $this->line("  Colonies with resources:  {$n}");
 
             $n = $this->incrementAdvisorTicks();
-            $this->line("  Advisors ticked:     {$n}");
+            $this->line("  Advisors ticked:          {$n}");
         });
 
         $this->info("Tick {$tick} done.");
@@ -144,8 +157,6 @@ class GameTick extends Command
                 continue;
             }
 
-            // direction 0 = Kauf: colony sends resources to fleet
-            // direction 1 = Verkauf: fleet sends resources to colony
             $this->transferResource($colonyId, $order->fleet_id, $resourceId,
                 $direction === 0 ? $amount : -$amount);
 
@@ -206,7 +217,6 @@ class GameTick extends Command
                 continue;
             }
 
-            // Move attacker to target position first
             $attacker = Fleet::find($order->fleet_id);
             if (!$attacker) {
                 continue;
@@ -216,7 +226,6 @@ class GameTick extends Command
                 'x' => $coords[0], 'y' => $coords[1], 'spot' => $coords[2],
             ]);
 
-            // Find defending fleets at same coordinates, belonging to other users
             $defenders = Fleet::where('x', $coords[0])
                 ->where('y', $coords[1])
                 ->where('spot', $coords[2])
@@ -225,7 +234,6 @@ class GameTick extends Command
                 ->get();
 
             if ($defenders->isEmpty()) {
-                // No defenders — attacker arrives unchallenged
                 $order->update(['was_processed' => 1]);
                 $this->eventService->createEvent([
                     'user'       => $attacker->user_id,
@@ -238,59 +246,43 @@ class GameTick extends Command
                 continue;
             }
 
-            // Calculate combat powers
-            $attackerPower = $this->calcFleetPower($attacker->id, $shipPower);
-
-            // Sum all defending fleets into one power value
-            $defenderPower = 0;
+            $attackerPower    = $this->calcFleetPower($attacker->id, $shipPower);
             $defenderFleetIds = $defenders->pluck('id')->all();
-            foreach ($defenderFleetIds as $defId) {
-                $defenderPower += $this->calcFleetPower($defId, $shipPower);
-            }
+            $defenderPower    = array_sum(array_map(
+                fn($id) => $this->calcFleetPower($id, $shipPower),
+                $defenderFleetIds
+            ));
 
             $totalPower = $attackerPower + $defenderPower;
-            if ($totalPower === 0) {
-                // No combat-capable ships on either side
-                $order->update(['was_processed' => 1]);
-                $processed++;
-                continue;
-            }
+            if ($totalPower > 0) {
+                $this->applyShipLosses($attacker->id, $defenderPower / $totalPower, $shipPower);
+                foreach ($defenderFleetIds as $defId) {
+                    $this->applyShipLosses($defId, $attackerPower / $totalPower, $shipPower);
+                }
 
-            // Loss ratios: each side loses ships proportional to the opponent's share of total power
-            $attackerLossRatio = $defenderPower / $totalPower;
-            $defenderLossRatio = $attackerPower / $totalPower;
-
-            $this->applyShipLosses($attacker->id, $attackerLossRatio, $shipPower);
-            foreach ($defenderFleetIds as $defId) {
-                $this->applyShipLosses($defId, $defenderLossRatio, $shipPower);
+                // Record all combat participants for the ship decay step
+                $this->combatFleetIds[] = $attacker->id;
+                foreach ($defenderFleetIds as $defId) {
+                    $this->combatFleetIds[] = $defId;
+                }
             }
 
             $order->update(['was_processed' => 1]);
 
-            // Notify both sides
             $defenderUserId = $defenders->first()->user_id;
-            $this->eventService->createEvent([
-                'user'       => $attacker->user_id,
-                'tick'       => $tick,
-                'event'      => 'galaxy.combat',
-                'area'       => 'galaxy',
-                'parameters' => serialize([
-                    'attacker_id' => $attacker->user_id,
-                    'defender_id' => $defenderUserId,
-                    'colony_id'   => 0,
-                ]),
-            ]);
-            $this->eventService->createEvent([
-                'user'       => $defenderUserId,
-                'tick'       => $tick,
-                'event'      => 'galaxy.combat',
-                'area'       => 'galaxy',
-                'parameters' => serialize([
-                    'attacker_id' => $attacker->user_id,
-                    'defender_id' => $defenderUserId,
-                    'colony_id'   => 0,
-                ]),
-            ]);
+            foreach ([$attacker->user_id, $defenderUserId] as $uid) {
+                $this->eventService->createEvent([
+                    'user'       => $uid,
+                    'tick'       => $tick,
+                    'event'      => 'galaxy.combat',
+                    'area'       => 'galaxy',
+                    'parameters' => serialize([
+                        'attacker_id' => $attacker->user_id,
+                        'defender_id' => $defenderUserId,
+                        'colony_id'   => 0,
+                    ]),
+                ]);
+            }
 
             $processed++;
         }
@@ -309,12 +301,10 @@ class GameTick extends Command
     {
         $ships = FleetShip::where('fleet_id', $fleetId)->get();
         foreach ($ships as $ship) {
-            $power = $shipPower[$ship->ship_id] ?? 0;
-            if ($power === 0) {
+            if (($shipPower[$ship->ship_id] ?? 0) === 0) {
                 continue; // non-combat ships not destroyed in battle
             }
-            $losses = (int) ceil($ship->count * $lossRatio);
-            $remaining = max(0, $ship->count - $losses);
+            $remaining = max(0, $ship->count - (int) ceil($ship->count * $lossRatio));
             if ($remaining <= 0) {
                 $ship->delete();
             } else {
@@ -325,33 +315,33 @@ class GameTick extends Command
 
     // ── 4. Building decay ────────────────────────────────────────────────────
 
-    private function processDecay(): int
+    private function processBuildingDecay(int $tick): int
     {
-        $rate    = (int) config('game.decay.rate', 1);
-        $decayed = 0;
+        $fallbackRate = (float) config('game.decay.rate', 1);
+        $decayRates   = DB::table('buildings')->pluck('decay_rate', 'id');
+        $maxSPMap     = DB::table('buildings')->pluck('max_status_points', 'id');
+        $levelled     = 0;
 
         $buildings = ColonyBuilding::where('level', '>', 0)->get();
 
         foreach ($buildings as $cb) {
-            $newStatus = $cb->status_points - $rate;
-            $where = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
+            $rate      = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
+            $newStatus = (float) $cb->status_points - $rate;
+            $where     = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
 
             if ($newStatus <= 0) {
-                // Level-down: building loses one level, status_points reset to max
-                $maxStatus = DB::table('buildings')
-                    ->where('id', $cb->building_id)
-                    ->value('max_status_points') ?? 10;
-
+                $maxSP    = (int) ($maxSPMap[$cb->building_id] ?? 20);
                 $newLevel = max(0, $cb->level - 1);
+
                 DB::table('colony_buildings')->where($where)->update([
                     'level'         => $newLevel,
-                    'status_points' => $maxStatus,
+                    'status_points' => $maxSP,
                 ]);
 
                 $colony = Colony::find($cb->colony_id);
                 $this->eventService->createEvent([
                     'user'       => $colony?->user_id ?? 0,
-                    'tick'       => $this->tickService->getTickCount(),
+                    'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
                     'parameters' => serialize([
@@ -359,49 +349,156 @@ class GameTick extends Command
                         'tech_id'   => $cb->building_id,
                     ]),
                 ]);
-                $decayed++;
+                $levelled++;
             } else {
                 DB::table('colony_buildings')->where($where)
                     ->update(['status_points' => $newStatus]);
             }
         }
 
-        return $decayed;
+        return $levelled;
     }
 
-    // ── 5. Supply generation ─────────────────────────────────────────────────
+    // ── 5. Ship decay ────────────────────────────────────────────────────────
 
+    private function processShipDecay(int $tick): int
+    {
+        $fallbackRate  = (float) config('game.decay.rate', 1);
+        $combatFactor  = (float) config('game.decay.combat_factor', 2);
+        $decayRates    = DB::table('ships')->pluck('decay_rate', 'id');
+        $maxSPMap      = DB::table('ships')->pluck('max_status_points', 'id');
+        $destroyed     = 0;
+
+        $fleetShips = FleetShip::all();
+
+        foreach ($fleetShips as $fs) {
+            $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
+
+            if (in_array($fs->fleet_id, $this->combatFleetIds)) {
+                $rate *= $combatFactor;
+            }
+
+            $newStatus = (float) $fs->status_points - $rate;
+            $where     = ['fleet_id' => $fs->fleet_id, 'ship_id' => $fs->ship_id, 'is_cargo' => $fs->is_cargo];
+
+            if ($newStatus <= 0) {
+                // Ship fully decayed — remove from fleet
+                $fleet = Fleet::find($fs->fleet_id);
+                $this->eventService->createEvent([
+                    'user'       => $fleet?->user_id ?? 0,
+                    'tick'       => $tick,
+                    'event'      => 'techtree.level_down',
+                    'area'       => 'techtree',
+                    'parameters' => serialize([
+                        'colony_id' => 0,
+                        'tech_id'   => $fs->ship_id,
+                    ]),
+                ]);
+                DB::table('fleet_ships')->where($where)->delete();
+                $destroyed++;
+            } else {
+                DB::table('fleet_ships')->where($where)->update(['status_points' => $newStatus]);
+            }
+        }
+
+        return $destroyed;
+    }
+
+    // ── 6. Research decay ────────────────────────────────────────────────────
+
+    private function processResearchDecay(int $tick): int
+    {
+        $fallbackRate = (float) config('game.decay.rate', 1);
+        $decayRates   = DB::table('researches')->pluck('decay_rate', 'id');
+        $maxSPMap     = DB::table('researches')->pluck('max_status_points', 'id');
+        $levelled     = 0;
+
+        $researches = ColonyResearch::where('level', '>', 0)->get();
+
+        foreach ($researches as $cr) {
+            $rate      = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
+            $newStatus = (float) $cr->status_points - $rate;
+            $where     = ['colony_id' => $cr->colony_id, 'research_id' => $cr->research_id];
+
+            if ($newStatus <= 0) {
+                $maxSP    = (int) ($maxSPMap[$cr->research_id] ?? 20);
+                $newLevel = max(0, $cr->level - 1);
+
+                DB::table('colony_researches')->where($where)->update([
+                    'level'         => $newLevel,
+                    'status_points' => $maxSP,
+                ]);
+
+                $colony = Colony::find($cr->colony_id);
+                $this->eventService->createEvent([
+                    'user'       => $colony?->user_id ?? 0,
+                    'tick'       => $tick,
+                    'event'      => 'techtree.level_down',
+                    'area'       => 'techtree',
+                    'parameters' => serialize([
+                        'colony_id' => $cr->colony_id,
+                        'tech_id'   => $cr->research_id,
+                    ]),
+                ]);
+                $levelled++;
+            } else {
+                DB::table('colony_researches')->where($where)
+                    ->update(['status_points' => $newStatus]);
+            }
+        }
+
+        return $levelled;
+    }
+
+    // ── 7. Supply cap ────────────────────────────────────────────────────────
+
+    /**
+     * Recalculates and sets the supply cap for each user.
+     *
+     * Cap model (GDD §6):
+     *   cap = CC_flat (15) + housing_level × 8,  max 200
+     *
+     * CommandCenter must be level > 0. Without CC → cap = 0.
+     * The result is SET (not incremented) in user_resources.supply.
+     */
     private function calculateSupply(): int
     {
-        $ccRate      = (int) config('game.supply.commandcenter_rate', 5);
-        $housingRate = (int) config('game.supply.housingcomplex_rate', 10);
+        $capCC      = (int) config('game.supply.cap_commandcenter', 15);
+        $capHousing = (int) config('game.supply.cap_housingcomplex', 8);
+        $capMax     = (int) config('game.supply.cap_max', 200);
 
-        // Get all users that have at least one colony
         $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
-            $colonyIds = Colony::where('user_id', $userId)->pluck('id');
+            $colony = Colony::where('user_id', $userId)->first();
+            if (!$colony) {
+                continue;
+            }
 
-            $ccTotal = DB::table('colony_buildings')
-                ->whereIn('colony_id', $colonyIds)
-                ->where('building_id', 25) // commandCenter
-                ->sum('level');
+            $ccLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', 25)
+                ->value('level');
 
-            $housingTotal = DB::table('colony_buildings')
-                ->whereIn('colony_id', $colonyIds)
-                ->where('building_id', 28) // housingComplex
-                ->sum('level');
+            if ($ccLevel <= 0) {
+                UserResource::where('user_id', $userId)->update(['supply' => 0]);
+                continue;
+            }
 
-            $supplyGain = ($ccTotal * $ccRate) + ($housingTotal * $housingRate);
+            $housingLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', 28)
+                ->value('level');
 
-            UserResource::where('user_id', $userId)
-                ->increment('supply', $supplyGain);
+            $cap = min($capCC + ($housingLevel * $capHousing), $capMax);
+
+            UserResource::where('user_id', $userId)->update(['supply' => $cap]);
         }
 
         return $userIds->count();
     }
 
-    // ── 6. Resource generation ───────────────────────────────────────────────
+    // ── 8. Resource generation ───────────────────────────────────────────────
 
     private function generateResources(): int
     {
@@ -436,7 +533,7 @@ class GameTick extends Command
         return $colonies->count();
     }
 
-    // ── 7. Advisor ticks ─────────────────────────────────────────────────────
+    // ── 9. Advisor ticks ─────────────────────────────────────────────────────
 
     private function incrementAdvisorTicks(): int
     {
@@ -450,9 +547,13 @@ class GameTick extends Command
             })
             ->increment('active_ticks');
 
-        // Rank promotions (cumulative thresholds)
-        DB::table('advisors')->where('rank', 1)->where('active_ticks', '>=', 10)->update(['rank' => 2]);
-        DB::table('advisors')->where('rank', 2)->where('active_ticks', '>=', 30)->update(['rank' => 3]);
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        foreach ($thresholds as $fromRank => $ticks) {
+            DB::table('advisors')
+                ->where('rank', $fromRank)
+                ->where('active_ticks', '>=', $ticks)
+                ->update(['rank' => $fromRank + 1]);
+        }
 
         return $updated;
     }

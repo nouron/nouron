@@ -1,5 +1,39 @@
 # Changelog
 
+## 2026-04-01 (Tests E1/E2/I4)
+
+- **Tests E1/E2 (AP-Delta-Locking):** `invest('add')` lockt korrekt die investierten AP (E1); AP-Locks sind tick-scoped und verfallen nach Tick-Advance (E2). In `PersonellServiceTest`.
+- **Test I4 (Cross-Colony-Exploit):** Neuer `TechtreeControllerTest` — verifiziert dass Controller-Aktionen immer nur die eigene Kolonie (session-basiert) betreffen und keine `colony_id` per URL injiziert werden kann.
+
+## 2026-03-31 (GDD Tick-Tabelle, Supply Enforcement, Rang-Schwellen in Config)
+
+- **Rang-Schwellen in config ausgelagert:** `RANK_UP_THRESHOLDS` (PersonellService) und `AP_BY_RANK` (Advisor) durch `config('game.advisor.rank_thresholds')` und `config('game.advisor.ap_per_rank')` ersetzt. Widerspruch zwischen GDD (Rang 3 bei 20 Ticks) und Code (30 Ticks) aufgelöst — config jetzt auf 20. Test entsprechend angepasst.
+
+## 2026-03-31 (GDD Tick-Tabelle, Supply Enforcement)
+
+- **GDD §2 Tick-Tabelle:** Von 6 auf 9 Schritte aktualisiert — Ship Decay (5), Research Decay (6), Supply Cap (7, statt "Supply Generation"), Advisor Ticks (9) ergänzt. Beschreibungen präzisiert. Widersprüchlichen "Konsequenz für den Tick"-Abschnitt durch korrekten Text zum Cap-Modell ersetzt.
+
+## 2026-03-31 (Supply Enforcement)
+
+- **Supply Enforcement:** Beim Level-Up von Gebäuden, Schiffen und Forschungen wird jetzt geprüft, ob genügend freies Supply (Cap − aktuell genutztes Supply) vorhanden ist. Neue Methode `ResourcesService::getFreeSupply()` berechnet freies Supply aus Cap und Summe aller Entity-Supply-Kosten. `AbstractTechnologyService::checkRequiredSupplyByEntityId()` blockiert Level-Ups wenn Kapazität fehlt. `PersonellService::hire()` prüft supply_cost pro Berater (aus `config/game.php`). Alle Checks werden im dev_mode bypassed. 2 neue Tests in `BuildingServiceTest`.
+
+## 2026-03-30 (Agenten aktualisiert, Ressourcenleiste)
+
+- **Agenten-Updates:** `backend-coder` und `ui-specialist` auf Laravel/Blade aktualisiert; `project-manager` auf Phase 2/3-Stand gebracht; neuer `content-writer`-Agent für Lore, Beschreibungen und INNN-Texte; README.md aktualisiert.
+- **Ressourcenleiste:** Credits (ID 1) und Supply (ID 2) immer an erster Stelle und visuell hervorgehoben (größer, dickerer Rand, Box-Shadow). Optischer Trenner zwischen primären und sekundären Ressourcen.
+
+## 2026-03-30 (colonyShip entfernt)
+
+- **colonyShip (id=88) vollständig entfernt:** Migration löscht ship aus DB; testdata.sqlite.sql bereinigt; MasterDataSeeder, GDD, CLAUDE.md, lang-Dateien aktualisiert. `colonize`-Order-Typ aus `config/game.php` entfernt.
+- Testreferenz angepasst: FleetServiceTest erwartet jetzt 4 statt 5 Schiffe in Fleet 10.
+
+## 2026-03-30 (Supply Cap und Decay im GameTick implementiert)
+
+- **Supply: Cap-Modell implementiert** — `calculateSupply()` setzt `user_resources.supply` jetzt als Kapazitäts-Cap (SET statt INCREMENT): `cap = CC_flat (15) + housing_level × 8`, max 200. Ohne CommandCenter → Supply = 0.
+- **Decay: per-Entity-Werte** — `processDecay()` aufgeteilt in `processBuildingDecay()`, `processShipDecay()` und `processResearchDecay()`. Alle drei nutzen die individuellen `decay_rate`-Werte aus den Stammdaten-Tabellen statt dem globalen Fallback-Wert. Decay ist fraktional (REAL).
+- **Schiff-Decay** — Schiffe in Kampf-Ticks erhalten Faktor 2 (`combat_factor`). Bei SP ≤ 0 wird der `fleet_ships`-Eintrag gelöscht (kein Level-Down, Schiff vernichtet). Fix: `DB::table()` statt Eloquent-Update bei Composite-Key-Tabellen.
+- **10 neue Tests** — Supply-Cap (CC-Pflicht, Housing-Skalierung, Max-Cap), Building-Decay (fraktional, Level-Down, Level-0-Skip), Ship-Decay (fraktional, Vernichtung), Research-Decay (fraktional, Level-Down).
+
 ## 2026-03-29 (Decay- und Supply-Migrationen)
 
 - **Zwei neue Migrations:** `decay_rate REAL` und `supply_cost INTEGER` zu `buildings`, `ships`, `researches` hinzugefügt; `status_points REAL DEFAULT 20` zu `fleet_ships` (neu — Schiffe hatten bislang kein Status-Tracking).

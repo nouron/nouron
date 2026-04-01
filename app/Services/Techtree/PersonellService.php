@@ -30,10 +30,7 @@ class PersonellService
     const PERSONELL_ID_PILOT     = 89;  // Kommandant
     const PERSONELL_ID_TRADER    = 92;
 
-    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP
-
-    /** Cumulative active_ticks required for rank promotion. */
-    const RANK_UP_THRESHOLDS = [1 => 10, 2 => 30];
+    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
     public function __construct(private readonly TickService $tickService) {}
 
@@ -125,10 +122,17 @@ class PersonellService
     /**
      * Hire a new advisor and assign them to a colony.
      */
-    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor
+    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor|false
     {
         $this->validateId($userId);
         $this->validateId($colonyId);
+
+        if (!config('game.dev_mode')) {
+            $cost = (int) config('game.supply.cost_advisor', 2);
+            if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
+                return false;
+            }
+        }
 
         return Advisor::create([
             'user_id'      => $userId,

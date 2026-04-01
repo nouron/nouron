@@ -53,12 +53,10 @@ Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders a
 |-----------|----------------------|
 | move (Bewegung) | 1 |
 | trade (Handel) | 1 |
-| colonize (Kolonisierung) | 2 |
 | attack (Angriff) | 3 |
 
 Ein Pilot, der 15 AP pro Tick generiert, kann also entweder:
 - 15 Bewegungs- oder Handels-Orders erteilen, oder
-- 7 Kolonisierungs-Orders, oder
 - 5 Angriffs-Orders
 
 Die zivile Variante erzeugt dreimal so viele Aktionen wie die militarische bei gleicher AP-Basis.
@@ -169,12 +167,15 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 | Schritt | Beschreibung |
 |---------|-------------|
-| 1 | Fleet Move Orders — Flotten bewegen sich |
+| 1 | Fleet Move Orders — Flotten bewegen sich zu Zielkoordinaten |
 | 2 | Fleet Trade Orders — Ressourcentransfer Flotte ↔ Kolonie |
-| 3 | Fleet Combat Orders — Kampfauflösung |
-| 4 | Building Decay — Gebäude verlieren Status-Punkte |
-| 5 | Supply Generation — Supply für alle User berechnen |
-| 6 | Resource Generation — Rohstoffproduktion pro Kolonie |
+| 3 | Fleet Combat Orders — Kampfauflösung, Verluste werden berechnet |
+| 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 |
+| 5 | Ship Decay — Schiffe verlieren SP (×2 im Kampftick); Eintrag gelöscht bei SP ≤ 0 |
+| 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
+| 7 | Supply Cap — `user_resources.supply` wird auf Cap gesetzt (`CC_flat + housing × 8`) |
+| 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
+| 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
 
 ---
 
@@ -299,8 +300,6 @@ Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip:
 
 > ⚠️ **Phase-3-Frage:** Ob Spieler als Verwalter einer kleinen Kolonie überhaupt Battlecruiser unterhalten können sollen (Supply-Cap 25 = mehr als ein frischer Spieler hat), wird bei der Phase-3-Konzeption entschieden.
 
-> **colonyShip entfällt.** Kolonisierung ist nicht Teil des Spielkonzepts — stattdessen gibt es Außenposten (Phase 3).
-
 ### Supply-Kosten Berater, Gebäude, Forschungen
 
 **Berater:** 2 Supply je aktivem Berater (unabhängig von Rang).
@@ -369,11 +368,11 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
 ],
 ```
 
-### Konsequenz für den Tick
+### Supply im Tick (Schritt 7)
 
-Die bisherige Tick-Phase "Supply Generation" (Schritt 5) **entfällt**. Supply ist eine Live-Berechnung, kein akkumulierter Pool.
+`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 7 jedes Ticks neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
 
-Das Feld `user_resources.supply` speichert künftig den **berechneten Supply-Cap** (gecacht für UI), nicht einen angesammelten Pool. Entscheidung ob gecacht oder live berechnet: bei Implementierung.
+Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_level × supply_cost)`.
 
 ### Abgrenzung der Unterhalts-Mechanismen
 
@@ -494,7 +493,6 @@ Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (
 |-----------|----------------------|-----------|
 | move | 1 | zivil |
 | trade | 1 | zivil |
-| colonize | 2 | zivil |
 | attack | 3 | militarisch |
 
 > Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
@@ -549,7 +547,6 @@ Kampfstärke einer Flotte = Σ(Schiffanzahl × Kampfwert des Schiffstyps)
 | Kleiner Transporter | 47 | 0 |
 | Mittlerer Transporter | 83 | 0 |
 | Großer Transporter | 84 | 0 |
-| Kolonisationsschiff | 88 | 0 |
 
 Schiffe mit Kampfwert 0 sind **nicht-kampffähig** und werden im Gefecht nicht zerstört.
 
@@ -584,7 +581,6 @@ Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein 
         47 => 0,   // smallTransporter
         83 => 0,   // mediumTransporter
         84 => 0,   // largeTransporter
-        88 => 0,   // colonyShip
     ],
 ],
 ```

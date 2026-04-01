@@ -194,13 +194,13 @@ class FleetServiceTest extends TestCase
     public function testGetFleetShips(): void
     {
         $result = $this->service->getFleetShips(['fleet_id' => $this->fleetId]);
-        $this->assertEquals(5, $result->count());
+        $this->assertEquals(4, $result->count());
     }
 
     public function testGetFleetShipsByFleetId(): void
     {
         $result = $this->service->getFleetShipsByFleetId($this->fleetId);
-        $this->assertEquals(5, $result->count());
+        $this->assertEquals(4, $result->count());
     }
 
     public function testGetFleetResearches(): void
