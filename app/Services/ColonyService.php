@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Colony;
 use App\Services\Concerns\ValidatesId;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use InvalidArgumentException;
 use RuntimeException;
@@ -131,5 +132,28 @@ class ColonyService
     {
         $this->validateId($planetaryId);
         return Colony::where('system_object_id', $planetaryId)->get();
+    }
+
+    /**
+     * Create a new colony row in glx_colonies.
+     *
+     * glx_colonies uses a manual integer PK (not auto-increment).
+     * Writes go to the base table, not the v_glx_colonies view.
+     */
+    public function createColony(int $userId, int $systemObjectId, string $name, int $sinceTick = 0): Colony
+    {
+        $nextId = (int) DB::table('glx_colonies')->max('id') + 1;
+
+        DB::table('glx_colonies')->insert([
+            'id'               => $nextId,
+            'name'             => $name,
+            'system_object_id' => $systemObjectId,
+            'spot'             => 1,
+            'user_id'          => $userId,
+            'since_tick'       => $sinceTick,
+            'is_primary'       => 1,
+        ]);
+
+        return Colony::findOrFail($nextId);
     }
 }

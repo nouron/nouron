@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\OnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -14,6 +16,8 @@ use Illuminate\Support\Str;
  */
 class RegisterController extends Controller
 {
+    public function __construct(private readonly OnboardingService $onboardingService) {}
+
     public function showRegistrationForm()
     {
         return view('auth.register');
@@ -38,6 +42,16 @@ class RegisterController extends Controller
         ]);
 
         Auth::login($user);
+
+        try {
+            $colony = $this->onboardingService->setupNewPlayer(
+                $user->user_id,
+                $user->username . 's Kolonie'
+            );
+            $request->session()->put('activeIds.colonyId', $colony->id);
+        } catch (\Throwable $e) {
+            Log::error('Onboarding failed for user ' . $user->user_id . ': ' . $e->getMessage());
+        }
 
         return redirect()->route('galaxy.index');
     }
