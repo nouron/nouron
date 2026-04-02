@@ -51,8 +51,8 @@ class ColonyService
     /**
      * Returns the primary colony for $userId.
      *
-     * If the user has exactly one colony, it is treated as primary (matching
-     * the Laminas behaviour where is_primary was auto-set when only one exists).
+     * If the user has exactly one colony, it is treated as primary
+     * (is_primary is auto-set when only one colony exists).
      *
      * @throws RuntimeException when no primary colony is found
      */

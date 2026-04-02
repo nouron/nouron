@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<phpunit bootstrap="Bootstrap.php" colors="false">
-    <testsuites>
-        <testsuite name="user">
-            <directory>./UserTest</directory>
-        </testsuite>
-    </testsuites>
-</phpunit>

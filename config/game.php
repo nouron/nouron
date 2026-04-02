@@ -2,7 +2,6 @@
 
 /**
  * Nouron game-specific configuration.
- * Migrated from config/autoload/global.php (Laminas).
  */
 
 return [
@@ -87,7 +86,7 @@ return [
         ],
     ],
 
-    // Galaxy overview map (Laminas: galaxy_view_config)
+    // Galaxy overview map
     'galaxy_view' => [
         'range'      => 10000,
         'offset'     => 0,
@@ -95,7 +94,7 @@ return [
         'systemSize' => 3,
     ],
 
-    // System detail map (Laminas: system_view_config)
+    // System detail map
     'system_view' => [
         'range'      => 100,
         'offset'     => 100,

@@ -19,7 +19,7 @@ class FleetServiceTest extends TestCase
 
     protected FleetService $service;
 
-    // Test constants mirrored from Laminas FleetServiceTest
+    // Test constants matching the Simpsons fixture in TestSeeder
     protected int $fleetId    = 10;
     protected int $shipId     = 29;
     protected int $researchId = 33;

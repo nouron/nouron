@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-04-02 (Laminas/Zend-Reste entfernt)
+
+- **Komplettbereinigung:** `module/` (11 Module, ~200 PHP-Dateien), `config/autoload/` (LmcUser, ZfcRbac, global, local), `init_autoloader.php` und `test/Bootstrap.php` gelöscht — der gesamte alte Laminas-Modulbaum ist damit aus dem Repo entfernt.
+- **Kommentarbereinigung:** Laminas-Migrations-Annotationen aus 19 aktiven Laravel-Dateien entfernt.
+- **README aktualisiert:** Laminas → Laravel 12, PHP 8.0 → 8.2+, `phpunit` → `php artisan test`, Dev-Server auf `artisan serve`.
+
+## 2026-04-02 (Onboarding-Risiken behoben)
+
+- **Race Condition:** `OnboardingService::setupNewPlayer()` läuft jetzt in `DB::transaction()` — SQLite serialisiert Writes, sodass zwei simultane Registrierungen nicht denselben Planeten belegen können.
+- **spot=1 hardcoded:** `ColonyService::createColony()` berechnet den Spot jetzt dynamisch (`MAX(spot) + 1`), sodass mehrere Kolonien auf demselben Planeten korrekt auf verschiedene Spots verteilt werden.
+- **Kein freier Planet:** `RegisterController::register()` wickelt User-Erstellung und Onboarding atomar in einer Transaktion ab — bei vollem Universum wird kein verwaister Account angelegt, sondern eine Fehlermeldung im Registrierungsformular angezeigt.
+- **UNIQUE-Constraint** auf `(system_object_id, spot)` in `glx_colonies` als Datenbank-Safety-Net hinzugefügt.
+- **LoginTest:** `TestSeeder` in `setUp()` ergänzt. Neuer Test `test_registration_fails_when_no_free_planets`.
+
 ## 2026-04-01 (Onboarding nach Registrierung)
 
 - **OnboardingService:** Neuer Service `setupNewPlayer()` — sucht freien Planeten, erstellt Kolonie, setzt Startressourcen (3000 Cr, 15 Supply, 500/500/500/100/100/100 Kolonieressourcen) und platziert CommandCenter auf Level 1.

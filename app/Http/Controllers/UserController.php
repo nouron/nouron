@@ -6,8 +6,7 @@ use App\Services\TickService;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * User profile and settings.
- * Replaces User\Controller\UserController + SettingsController (Laminas).
+ * User profile and settings controller.
  */
 class UserController extends BaseController
 {

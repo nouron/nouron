@@ -1,22 +1,22 @@
 # Nouron — A Free Space Opera Browsergame
 
-Nouron is a sci-fi strategy browsergame built with PHP 8, Laminas MVC, SQLite and Bootstrap 5.
+Nouron is a sci-fi strategy browsergame built with PHP 8, Laravel 12, SQLite and Bootstrap 5.
 
 ## Quickstart
 
 Nouron uses an SQLite database delivered with the project (`data/db/nouron.db`), so no database setup is required for local testing.
 
-**Requirements:** PHP 8.0+, Composer
+**Requirements:** PHP 8.2+, Composer
 
 ```bash
 # After cloning, install dependencies
 composer install
 
 # Start local dev server
-php -S localhost:10000 -t public/
+php artisan serve
 
-# (Optional) Run unit tests
-./vendor/bin/phpunit
+# (Optional) Run tests
+php artisan test
 ```
 
 ## Bug Tracker
@@ -46,6 +46,6 @@ All graphics and texts are licensed (unless otherwise noted) under Creative Comm
 * (en) http://creativecommons.org/licenses/by-nc-sa/3.0/de/deed.en
 
 This project uses third-party frameworks and libraries with their own licenses:
-* [Laminas MVC](https://getlaminas.org/)
+* [Laravel](https://laravel.com/)
 * [Bootstrap 5](https://getbootstrap.com/)
 * [jQuery](https://jquery.com/)

@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Laravel port of Trade\Gateway\TradeGatewayTest (Laminas).
- *
  * Test data (Simpsons fixture via TestSeeder):
  *
  * trade_resources (5 rows):

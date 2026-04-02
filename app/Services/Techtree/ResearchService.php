@@ -8,7 +8,6 @@ namespace App\Services\Techtree;
  * Researches require research AP (scientists) to be invested before a
  * levelup can be triggered.
  *
- * Migrated from Techtree\Service\ResearchService (Laminas).
  */
 class ResearchService extends AbstractTechnologyService
 {

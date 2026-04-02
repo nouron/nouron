@@ -10,9 +10,7 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 /**
- * GalaxyService — Laravel port of Galaxy\Service\Gateway (Laminas).
- *
- * Provides read access to the star-system layer of the galaxy map.
+ * GalaxyService — provides read access to the star-system layer of the galaxy map.
  * Systems and their planetary objects are stored separately; the spatial
  * relationship between them is coordinate-based (proximity within the
  * system_view_config range), not a direct FK.
@@ -51,8 +49,6 @@ class GalaxyService
      * Return all planetary objects within the coordinate range of $systemId.
      *
      * The proximity radius is taken from config/game.php → system_view.range.
-     * The Laminas implementation used a hard-coded radius of 50/2 = 25 for
-     * getByCoordinates(); that constant has been moved to config.
      *
      * @throws InvalidArgumentException for non-positive IDs
      */
@@ -125,7 +121,7 @@ class GalaxyService
     /**
      * Return colonies within the proximity square around $coords.
      * Uses v_glx_colonies which includes x/y from the joined system object.
-     * Radius = 50 / 2 = 25 (matching Laminas Gateway::getByCoordinates).
+     * Radius = 50 / 2 = 25.
      */
     public function getColoniesByCoords(array $coords): Collection
     {
@@ -188,8 +184,7 @@ class GalaxyService
     /**
      * Manhattan distance between two coordinate pairs.
      *
-     * Note: behaviour at grid borders with large or negative coords is undefined
-     * (same limitation exists in the Laminas version).
+     * Note: behaviour at grid borders with large or negative coords is undefined.
      */
     public function getDistance(array $coordsA, array $coordsB): int
     {
@@ -289,7 +284,7 @@ class GalaxyService
     // ── Config helpers ────────────────────────────────────────────────────────
 
     /**
-     * Returns the system_view range from config (default 100 matching Laminas).
+     * Returns the system_view range from config (default 100).
      */
     private function getSystemViewRange(): int
     {

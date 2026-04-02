@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
  * Merges master data (buildings/researches/ships/personell) with colony-specific
  * data (level, status_points, ap_spend) into flat arrays suitable for views.
  *
- * Migrated from Techtree\Service\TechnologyColonyService (Laminas).
  */
 class TechtreeColonyService
 {
