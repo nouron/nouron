@@ -42,6 +42,8 @@ class TradeAcceptTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        // Bypass AP checks — test colonies have no traders (no economy AP).
+        config(['game.dev_mode' => true]);
         $this->gateway = $this->app->make(TradeGateway::class);
     }
 

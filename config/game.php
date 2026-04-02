@@ -102,4 +102,12 @@ return [
         'planetSize' => 10,
         'slotSize'   => 10,
     ],
+
+    // Trade marketplace — AP costs for Händler (economy AP).
+    // Creating an offer costs max(1, floor(amount × price / threshold)) AP.
+    // Accepting an offer costs 1 AP (paid by the acceptor/buyer).
+    // Removing an offer costs 0 AP.
+    'trade' => [
+        'ap_cost_threshold' => 1000,  // divisor: amount × price / threshold = AP cost
+    ],
 ];

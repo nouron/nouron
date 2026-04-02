@@ -36,7 +36,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GalaxyService::class, GalaxyService::class);
         $this->app->bind(MessageService::class, MessageService::class);
         $this->app->bind(ResourcesService::class, ResourcesService::class);
-        $this->app->bind(TradeGateway::class, TradeGateway::class);
+        $this->app->bind(TradeGateway::class, fn($app) => new TradeGateway(
+            $app->make(ColonyService::class),
+            $app->make(PersonellService::class),
+        ));
         $this->app->bind(FleetService::class, FleetService::class);
 
         // Techtree services — PersonellService has no dependency on itself

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TradeResearchView;
 use App\Models\TradeResourceView;
+use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -21,10 +22,20 @@ use Illuminate\Support\Facades\DB;
  *
  * Write operations target the base tables (trade_resources, trade_researches)
  * using updateOrInsert for upsert semantics.
+ *
+ * Economy AP costs (Händler):
+ *   - Creating an offer: max(1, floor(amount × price / threshold)) AP, where
+ *     threshold = config('game.trade.ap_cost_threshold', 1000).
+ *   - Accepting an offer: 1 AP, paid by the acceptor (buyer).
+ *   - Removing an offer: 0 AP.
+ * All AP checks are bypassed when config('game.dev_mode') is true.
  */
 class TradeGateway
 {
-    public function __construct(private readonly ColonyService $colonyService) {}
+    public function __construct(
+        private readonly ColonyService  $colonyService,
+        private readonly PersonellService $personellService,
+    ) {}
 
     // ── Read ─────────────────────────────────────────────────────────────────
 
@@ -70,12 +81,28 @@ class TradeGateway
      * Required keys in $data: colony_id, direction, resource_id, amount, price, user_id.
      * Optional key: restriction (defaults to 0).
      *
+     * AP cost: max(1, floor(amount × price / threshold)) economy AP, deducted from
+     * the posting colony. Bypassed in dev_mode.
+     *
      * Returns false when ownership check fails or user_id is missing.
+     * @throws \InvalidArgumentException when the colony lacks sufficient economy AP.
      */
     public function addResourceOffer(array $data): bool
     {
         if (!$this->ownershipCheck($data)) {
             return false;
+        }
+
+        $colonyId = (int) $data['colony_id'];
+        $apCost   = $this->calcOfferApCost((int) $data['amount'], (int) $data['price']);
+
+        if (!config('game.dev_mode')) {
+            $available = $this->personellService->getEconomyPoints($colonyId);
+            if ($available < $apCost) {
+                throw new \InvalidArgumentException(
+                    'Nicht genug Wirtschafts-AP, um dieses Angebot einzustellen.'
+                );
+            }
         }
 
         DB::table('trade_resources')->updateOrInsert(
@@ -90,6 +117,10 @@ class TradeGateway
                 'restriction' => $data['restriction'] ?? 0,
             ]
         );
+
+        if (!config('game.dev_mode')) {
+            $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+        }
 
         return true;
     }
@@ -186,6 +217,7 @@ class TradeGateway
      *   3 = same race   (buyer.race_id   == seller.race_id)
      * - After a successful transfer the offer row is deleted from trade_resources.
      * - A player may never accept their own offer.
+     * - AP cost: 1 economy AP charged to the acceptor (buyer). Bypassed in dev_mode.
      *
      * @param  int  $buyerUserId    Authenticated user who is accepting the offer.
      * @param  int  $buyerColonyId  Colony of the accepting user.
@@ -202,6 +234,17 @@ class TradeGateway
         int $direction,
         int $resourceId,
     ): bool {
+        // Economy-AP check: acceptor must have at least 1 economy AP.
+        // Performed before entering the transaction so the error surfaces immediately.
+        if (!config('game.dev_mode')) {
+            $available = $this->personellService->getEconomyPoints($buyerColonyId);
+            if ($available < 1) {
+                throw new \InvalidArgumentException(
+                    'Nicht genug Wirtschafts-AP, um dieses Angebot anzunehmen.'
+                );
+            }
+        }
+
         return DB::transaction(function () use (
             $buyerUserId, $buyerColonyId, $sellerColonyId, $direction, $resourceId
         ) {
@@ -380,7 +423,12 @@ class TradeGateway
                 }
             }
 
-            // 7. Delete the offer
+            // 7. Lock 1 economy AP for the acceptor (buyer).
+            if (!config('game.dev_mode')) {
+                $this->personellService->lockActionPoints('economy', $buyerColonyId, 1);
+            }
+
+            // 8. Delete the offer
             DB::table('trade_resources')
                 ->where('colony_id',   $sellerColonyId)
                 ->where('direction',   $direction)
@@ -406,5 +454,20 @@ class TradeGateway
             (int) $data['colony_id'],
             (int) $data['user_id']
         );
+    }
+
+    /**
+     * Calculate the economy AP cost for posting a trade offer.
+     *
+     * Formula: max(1, floor(amount × price / threshold))
+     * where threshold = config('game.trade.ap_cost_threshold', 1000).
+     *
+     * This ensures that cheap/small offers always cost at least 1 AP, and that
+     * high-value offers scale proportionally to limit market spam.
+     */
+    private function calcOfferApCost(int $amount, int $price): int
+    {
+        $threshold = (int) config('game.trade.ap_cost_threshold', 1000);
+        return max(1, (int) floor($amount * $price / $threshold));
     }
 }
