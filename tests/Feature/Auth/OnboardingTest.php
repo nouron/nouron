@@ -77,6 +77,44 @@ class OnboardingTest extends TestCase
         $this->assertEquals(1, $count);
     }
 
+    public function test_registration_fails_when_no_free_planets(): void
+    {
+        // Block all 14 system_objects with fake colonies.
+        // system_object_id=1 is already occupied by the TestSeeder (Springfield + Shelbyville).
+        // We insert one fake colony each for the remaining 13 objects (IDs 2–18).
+        $fakeColonyId = 100;
+        foreach ([2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18] as $systemObjectId) {
+            DB::table('glx_colonies')->insert([
+                'id'               => $fakeColonyId++,
+                'name'             => 'FakeColony_' . $systemObjectId,
+                'system_object_id' => $systemObjectId,
+                'spot'             => 1,
+                'user_id'          => null,
+                'since_tick'       => 0,
+                'is_primary'       => 0,
+            ]);
+        }
+
+        // Set Referer so that back() in the controller resolves to the register route,
+        // which is what a real browser would send after submitting the registration form.
+        $response = $this->withHeaders(['Referer' => route('register')])
+            ->post(route('register'), [
+                'username'              => 'blockedplayer',
+                'email'                 => 'blocked@example.com',
+                'password'              => 'secret1234',
+                'password_confirmation' => 'secret1234',
+            ]);
+
+        // Must not redirect to galaxy — expect redirect back to registration form
+        $response->assertRedirectContains(route('register'));
+
+        // An error must be present in the session
+        $response->assertSessionHasErrors('username');
+
+        // No user account must have been created (transaction rolled back)
+        $this->assertDatabaseMissing('user', ['username' => 'blockedplayer']);
+    }
+
     public function test_login_triggers_onboarding_for_user_without_colony(): void
     {
         // Create a user but no colony

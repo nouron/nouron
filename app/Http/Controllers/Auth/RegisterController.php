@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Services\OnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -31,27 +32,39 @@ class RegisterController extends Controller
             'password'  => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $user = User::create([
-            'username'        => $validated['username'],
-            'display_name'    => $validated['username'],
-            'email'           => $validated['email'],
-            'password'        => $validated['password'], // auto-hashed via cast
-            'role'            => 'player',
-            'activation_key'  => Str::random(32),
-            'activated'       => true, // no email verification yet
-        ]);
+        try {
+            [$user, $colony] = DB::transaction(function () use ($validated) {
+                $user = User::create([
+                    'username'        => $validated['username'],
+                    'display_name'    => $validated['username'],
+                    'email'           => $validated['email'],
+                    'password'        => $validated['password'], // auto-hashed via cast
+                    'role'            => 'player',
+                    'activation_key'  => Str::random(32),
+                    'activated'       => true, // no email verification yet
+                ]);
+
+                $colony = $this->onboardingService->setupNewPlayer(
+                    $user->user_id,
+                    $user->username . 's Kolonie'
+                );
+
+                return [$user, $colony];
+            });
+        } catch (\RuntimeException $e) {
+            if (str_contains($e->getMessage(), 'No free planets')) {
+                return back()->withErrors([
+                    'username' => 'Derzeit sind leider keine freien Planeten verfügbar. Bitte versuche es später erneut.',
+                ])->onlyInput('username', 'email');
+            }
+            Log::error('Registration failed: ' . $e->getMessage());
+            return back()->withErrors([
+                'username' => 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
+            ])->onlyInput('username', 'email');
+        }
 
         Auth::login($user);
-
-        try {
-            $colony = $this->onboardingService->setupNewPlayer(
-                $user->user_id,
-                $user->username . 's Kolonie'
-            );
-            $request->session()->put('activeIds.colonyId', $colony->id);
-        } catch (\Throwable $e) {
-            Log::error('Onboarding failed for user ' . $user->user_id . ': ' . $e->getMessage());
-        }
+        $request->session()->put('activeIds.colonyId', $colony->id);
 
         return redirect()->route('galaxy.index');
     }

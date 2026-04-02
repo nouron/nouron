@@ -25,23 +25,25 @@ class OnboardingService
      */
     public function setupNewPlayer(int $userId, string $colonyName = ''): Colony
     {
-        $name = $colonyName ?: 'Kolonie';
+        return DB::transaction(function () use ($userId, $colonyName) {
+            $name = $colonyName ?: 'Kolonie';
 
-        $freePlanet = DB::table('glx_system_objects')
-            ->whereNotIn('id', DB::table('glx_colonies')->pluck('system_object_id'))
-            ->value('id');
+            $freePlanet = DB::table('glx_system_objects')
+                ->whereNotIn('id', DB::table('glx_colonies')->pluck('system_object_id'))
+                ->value('id');
 
-        if (!$freePlanet) {
-            throw new \RuntimeException('No free planets available for new player.');
-        }
+            if (!$freePlanet) {
+                throw new \RuntimeException('No free planets available for new player.');
+            }
 
-        $tick   = $this->tickService->getTickCount();
-        $colony = $this->colonyService->createColony($userId, $freePlanet, $name, $tick);
+            $tick   = $this->tickService->getTickCount();
+            $colony = $this->colonyService->createColony($userId, $freePlanet, $name, $tick);
 
-        $this->seedResources($userId, $colony->id);
-        $this->seedStartingBuilding($colony->id);
+            $this->seedResources($userId, $colony->id);
+            $this->seedStartingBuilding($colony->id);
 
-        return $colony;
+            return $colony;
+        });
     }
 
     private function seedResources(int $userId, int $colonyId): void
