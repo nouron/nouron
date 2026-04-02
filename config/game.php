@@ -51,8 +51,9 @@ return [
     // Building decay: status_points decremented per tick per colony building.
     // When status_points hits 0 the building loses one level and status_points resets.
     'decay' => [
-        'rate'          => 1,    // fallback rate (buildings, until per-type rates are migrated)
-        'combat_factor' => 2,    // ship decay multiplier in a combat tick
+        'rate'           => 1,    // fallback rate (buildings, until per-type rates are migrated)
+        'combat_factor'  => 2,    // ship decay multiplier in a combat tick
+        'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
     ],
 
     // Navigation-AP cost per fleet order type.
