@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-01 (Onboarding nach Registrierung)
+
+- **OnboardingService:** Neuer Service `setupNewPlayer()` — sucht freien Planeten, erstellt Kolonie, setzt Startressourcen (3000 Cr, 15 Supply, 500/500/500/100/100/100 Kolonieressourcen) und platziert CommandCenter auf Level 1.
+- **RegisterController:** Ruft nach Login den Onboarding-Service auf und setzt `activeIds.colonyId` in der Session.
+- **LoginController:** Triggert Onboarding beim Login wenn User noch keine Kolonie hat (Legacy-Accounts).
+- **ColonyService:** Neue Methode `createColony()` für programmatische Kolonie-Erstellung.
+- 3 neue Tests in `OnboardingTest`.
+
 ## 2026-04-01 (Tests E1/E2/I4)
 
 - **Tests E1/E2 (AP-Delta-Locking):** `invest('add')` lockt korrekt die investierten AP (E1); AP-Locks sind tick-scoped und verfallen nach Tick-Advance (E2). In `PersonellServiceTest`.

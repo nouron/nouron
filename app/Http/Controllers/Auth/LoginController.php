@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Services\ColonyService;
+use App\Services\OnboardingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Handles login and logout.
@@ -39,13 +41,18 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Initialise activeIds in session (mirrors Laminas behaviour)
             $userId = Auth::id();
             try {
                 $primeColony = app(ColonyService::class)->getPrimeColony($userId);
                 $request->session()->put('activeIds.colonyId', $primeColony->id);
             } catch (\Throwable) {
-                // User has no colony yet — leave session key unset
+                // User has no colony — run onboarding (e.g. legacy account or seeding gap)
+                try {
+                    $colony = app(OnboardingService::class)->setupNewPlayer($userId);
+                    $request->session()->put('activeIds.colonyId', $colony->id);
+                } catch (\Throwable $e) {
+                    Log::error('Onboarding failed on login for user ' . $userId . ': ' . $e->getMessage());
+                }
             }
 
             return redirect()->intended(route('galaxy.index'));
