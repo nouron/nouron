@@ -169,6 +169,228 @@ class TradeGateway
         return (bool) $affected;
     }
 
+    // ── Write — Accept Resource Offer ────────────────────────────────────────
+
+    /**
+     * Accept a resource trade offer, transferring resources and credits atomically.
+     *
+     * Rules:
+     * - Sell offer (direction=1): buyer pays amount×price credits to the seller;
+     *   seller's colony loses the resource, buyer's colony gains it.
+     * - Buy offer (direction=0): the acceptor (seller) delivers the resource to the
+     *   offering colony and receives amount×price credits in return.
+     * - Restriction semantics:
+     *   0 = anyone may accept
+     *   1 = same group (treated as 0 until group module exists)
+     *   2 = same faction (buyer.faction_id == seller.faction_id)
+     *   3 = same race   (buyer.race_id   == seller.race_id)
+     * - After a successful transfer the offer row is deleted from trade_resources.
+     * - A player may never accept their own offer.
+     *
+     * @param  int  $buyerUserId    Authenticated user who is accepting the offer.
+     * @param  int  $buyerColonyId  Colony of the accepting user.
+     * @param  int  $sellerColonyId Colony that posted the offer.
+     * @param  int  $direction      0 = buy offer, 1 = sell offer.
+     * @param  int  $resourceId     Resource being traded.
+     * @return bool                 Always true on success.
+     * @throws \InvalidArgumentException on any validation failure.
+     */
+    public function acceptResourceOffer(
+        int $buyerUserId,
+        int $buyerColonyId,
+        int $sellerColonyId,
+        int $direction,
+        int $resourceId,
+    ): bool {
+        return DB::transaction(function () use (
+            $buyerUserId, $buyerColonyId, $sellerColonyId, $direction, $resourceId
+        ) {
+            // 1. Load the offer
+            $offer = DB::table('trade_resources')
+                ->where('colony_id',   $sellerColonyId)
+                ->where('direction',   $direction)
+                ->where('resource_id', $resourceId)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$offer) {
+                throw new \InvalidArgumentException('Angebot nicht gefunden.');
+            }
+
+            // 2. Resolve seller user_id via the colony
+            $sellerColony = DB::table('glx_colonies')
+                ->where('id', $sellerColonyId)
+                ->first();
+
+            if (!$sellerColony) {
+                throw new \InvalidArgumentException('Verkäufer-Kolonie nicht gefunden.');
+            }
+
+            $sellerUserId = (int) $sellerColony->user_id;
+
+            // 3. Prevent self-trade
+            if ($buyerUserId === $sellerUserId) {
+                throw new \InvalidArgumentException('Du kannst dein eigenes Angebot nicht annehmen.');
+            }
+
+            // 4. Restriction check
+            $restriction = (int) $offer->restriction;
+
+            if ($restriction === 2 || $restriction === 3) {
+                $buyerUser  = DB::table('user')->where('user_id', $buyerUserId)->first();
+                $sellerUser = DB::table('user')->where('user_id', $sellerUserId)->first();
+
+                if (!$buyerUser || !$sellerUser) {
+                    throw new \InvalidArgumentException('Benutzer nicht gefunden.');
+                }
+
+                if ($restriction === 2 && $buyerUser->faction_id !== $sellerUser->faction_id) {
+                    throw new \InvalidArgumentException('Dieses Angebot ist nur für Mitglieder der gleichen Fraktion verfügbar.');
+                }
+
+                if ($restriction === 3 && $buyerUser->race_id !== $sellerUser->race_id) {
+                    throw new \InvalidArgumentException('Dieses Angebot ist nur für Mitglieder der gleichen Rasse verfügbar.');
+                }
+            }
+
+            $amount    = (int) $offer->amount;
+            $totalCost = $amount * (int) $offer->price;
+
+            if ($direction === 1) {
+                // Sell offer: buyer pays credits, buyer receives resource from seller colony
+
+                // 5a. Check buyer credits
+                $buyerResources = DB::table('user_resources')
+                    ->where('user_id', $buyerUserId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$buyerResources || (int) $buyerResources->credits < $totalCost) {
+                    throw new \InvalidArgumentException(
+                        'Nicht genug Credits. Benötigt: ' . $totalCost . '.'
+                    );
+                }
+
+                // 5b. Check seller has the resource
+                $sellerStock = DB::table('colony_resources')
+                    ->where('colony_id',   $sellerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$sellerStock || (int) $sellerStock->amount < $amount) {
+                    throw new \InvalidArgumentException(
+                        'Verkäufer hat nicht genug Ressourcen auf Lager.'
+                    );
+                }
+
+                // 6a. Transfer credits: buyer → seller
+                DB::table('user_resources')
+                    ->where('user_id', $buyerUserId)
+                    ->decrement('credits', $totalCost);
+
+                $sellerHasResRow = DB::table('user_resources')->where('user_id', $sellerUserId)->exists();
+                if ($sellerHasResRow) {
+                    DB::table('user_resources')->where('user_id', $sellerUserId)->increment('credits', $totalCost);
+                } else {
+                    DB::table('user_resources')->insert(['user_id' => $sellerUserId, 'credits' => $totalCost, 'supply' => 0]);
+                }
+
+                // 6b. Transfer resource: seller colony → buyer colony
+                DB::table('colony_resources')
+                    ->where('colony_id',   $sellerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->decrement('amount', $amount);
+
+                $buyerHasResource = DB::table('colony_resources')
+                    ->where('colony_id', $buyerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->exists();
+
+                if ($buyerHasResource) {
+                    DB::table('colony_resources')
+                        ->where('colony_id',   $buyerColonyId)
+                        ->where('resource_id', $resourceId)
+                        ->increment('amount', $amount);
+                } else {
+                    DB::table('colony_resources')
+                        ->insert(['colony_id' => $buyerColonyId, 'resource_id' => $resourceId, 'amount' => $amount]);
+                }
+
+            } else {
+                // Buy offer (direction=0): acceptor (buyer) delivers resource to seller colony,
+                // seller pays the credits.
+
+                // 5a. Check acceptor has the resource
+                $acceptorStock = DB::table('colony_resources')
+                    ->where('colony_id',   $buyerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$acceptorStock || (int) $acceptorStock->amount < $amount) {
+                    throw new \InvalidArgumentException(
+                        'Du hast nicht genug Ressourcen, um dieses Kaufangebot zu bedienen.'
+                    );
+                }
+
+                // 5b. Check seller (offering party) has the credits
+                $sellerResources = DB::table('user_resources')
+                    ->where('user_id', $sellerUserId)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$sellerResources || (int) $sellerResources->credits < $totalCost) {
+                    throw new \InvalidArgumentException(
+                        'Der Anbieter hat nicht mehr genug Credits, um das Angebot zu erfüllen.'
+                    );
+                }
+
+                // 6a. Transfer credits: seller → acceptor (buyer)
+                DB::table('user_resources')
+                    ->where('user_id', $sellerUserId)
+                    ->decrement('credits', $totalCost);
+
+                $buyerHasResRow = DB::table('user_resources')->where('user_id', $buyerUserId)->exists();
+                if ($buyerHasResRow) {
+                    DB::table('user_resources')->where('user_id', $buyerUserId)->increment('credits', $totalCost);
+                } else {
+                    DB::table('user_resources')->insert(['user_id' => $buyerUserId, 'credits' => $totalCost, 'supply' => 0]);
+                }
+
+                // 6b. Transfer resource: acceptor colony → seller colony
+                DB::table('colony_resources')
+                    ->where('colony_id',   $buyerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->decrement('amount', $amount);
+
+                $sellerHasResource = DB::table('colony_resources')
+                    ->where('colony_id',   $sellerColonyId)
+                    ->where('resource_id', $resourceId)
+                    ->exists();
+
+                if ($sellerHasResource) {
+                    DB::table('colony_resources')
+                        ->where('colony_id',   $sellerColonyId)
+                        ->where('resource_id', $resourceId)
+                        ->increment('amount', $amount);
+                } else {
+                    DB::table('colony_resources')
+                        ->insert(['colony_id' => $sellerColonyId, 'resource_id' => $resourceId, 'amount' => $amount]);
+                }
+            }
+
+            // 7. Delete the offer
+            DB::table('trade_resources')
+                ->where('colony_id',   $sellerColonyId)
+                ->where('direction',   $direction)
+                ->where('resource_id', $resourceId)
+                ->delete();
+
+            return true;
+        });
+    }
+
     // ── Internal ─────────────────────────────────────────────────────────────
 
     /**

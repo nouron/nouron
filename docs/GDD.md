@@ -610,7 +610,23 @@ Ressourcen und Forschungen können über Handelsrouten zwischen Spielern transfe
 
 Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
 
-*Vollständige Mechanik noch nicht dokumentiert — wird in Phase 2 ergänzt.*
+### Restriktion (`restriction`)
+
+Das `restriction`-Feld steuert, welche Spieler ein Angebot annehmen dürfen:
+
+| Wert | Bedeutung |
+|------|-----------|
+| 0 | Keine Einschränkung — alle Spieler |
+| 1 | Nur Mitglieder derselben Gruppe (Gilde/Team, Zusammenschluss innerhalb einer Fraktion) |
+| 2 | Nur Mitglieder derselben Fraktion |
+| 3 | Nur Mitglieder derselben Rasse |
+
+> **Phase-3-Vorbehalt:** Rassen (`race_id`) werden in Phase 3 überarbeitet. Wert 3 bleibt im Datenmodell erhalten, wird aber erst nach der Überarbeitung vollständig durchgesetzt.
+> Gruppen/Gilden sind noch nicht im Datenmodell vorhanden — Wert 1 kann bis zur Implementierung des Gruppenmoduls wie Wert 0 behandelt werden (keine Einschränkung).
+
+### Forschungshandel
+
+Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle und Gateway-Methoden sind vorhanden), die genaue Mechanik (Level-Transfer, Wissenstransfer, Lizenz) wird in **Phase 3** definiert und implementiert. Im aktuellen Acceptance-Flow wird Forschungshandel nicht unterstützt.
 
 ---
 

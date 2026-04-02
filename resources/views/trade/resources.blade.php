@@ -58,6 +58,12 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 </div>
 @endif
+@if($errors->has('trade'))
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {{ $errors->first('trade') }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+@endif
 
 {{-- Offers table --}}
 <div class="row">
@@ -105,6 +111,7 @@
                     <td>{{ $offer->restriction }}</td>
                     <td>
                         @if(isset($user_id) && (int) $offer->user_id === $user_id)
+                        {{-- Own offer: show delete button only --}}
                         <form method="POST" action="{{ route('trade.offer.remove') }}" class="d-inline"
                               onsubmit="return confirm('Angebot wirklich löschen?')">
                             @csrf
@@ -115,6 +122,43 @@
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
+                        @elseif(isset($user_id))
+                        @php
+                            $restriction    = (int) $offer->restriction;
+                            $canAccept      = false;
+                            $restrictReason = '';
+
+                            if ($myColonies->isNotEmpty() && $restriction === 0) {
+                                $canAccept = true;
+                            } elseif ($myColonies->isNotEmpty() && $restriction === 1) {
+                                // Group not implemented yet — treat as open
+                                $canAccept = true;
+                            } elseif ($myColonies->isNotEmpty() && $restriction === 2) {
+                                $canAccept      = isset($currentUser) && $currentUser->faction_id == $offer->faction_id;
+                                $restrictReason = 'Nur für Mitglieder der gleichen Fraktion';
+                            } elseif ($myColonies->isNotEmpty() && $restriction === 3) {
+                                $canAccept      = isset($currentUser) && $currentUser->race_id == $offer->race_id;
+                                $restrictReason = 'Nur für Mitglieder der gleichen Rasse';
+                            }
+                        @endphp
+                        @if($canAccept)
+                        <form method="POST" action="{{ route('trade.offer.accept') }}" class="d-inline"
+                              onsubmit="return confirm('Angebot wirklich annehmen?')">
+                            @csrf
+                            <input type="hidden" name="seller_colony_id" value="{{ $offer->colony_id }}">
+                            <input type="hidden" name="direction"        value="{{ $offer->direction }}">
+                            <input type="hidden" name="resource_id"      value="{{ $offer->resource_id }}">
+                            <button type="submit" class="btn btn-sm btn-outline-success" title="Angebot annehmen">
+                                <i class="bi bi-cart-check"></i> Annehmen
+                            </button>
+                        </form>
+                        @else
+                        <button class="btn btn-sm btn-outline-secondary disabled"
+                                title="{{ $restrictReason ?: 'Keine Kolonie vorhanden' }}"
+                                data-bs-toggle="tooltip">
+                            <i class="bi bi-lock"></i>
+                        </button>
+                        @endif
                         @endif
                     </td>
                 </tr>
