@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-02 (Economy-AP für Händler)
+
+- **Händler-AP implementiert:** Trade-Aktionen verbrauchen jetzt Economy-AP. Angebot erstellen kostet `max(1, floor(amount × price / 1000))` AP — skaliert mit dem Handelswert. Angebot annehmen kostet 1 AP (Käufer). Angebot entfernen ist kostenlos.
+- **Konfigurierbar:** AP-Schwellenwert in `config/game.php` unter `trade.ap_cost_threshold = 1000`.
+- **DI:** `PersonellService` per Constructor-Injection in `TradeGateway` eingebunden, explizite Bindung in `AppServiceProvider`.
+- 6 neue Tests in `TradeApTest` (Skalierung, Locks, Exceptions, dev_mode-Bypass).
+
 ## 2026-04-02 (Trade Acceptance-Flow)
 
 - **Angebote annehmen:** Spieler können Ressourcen-Angebote anderer Spieler annehmen. Instant Transfer — Ressourcen und Credits wechseln sofort den Besitzer, kein physischer Transport. Komplettkauf only, Angebot wird nach Abschluss gelöscht.
