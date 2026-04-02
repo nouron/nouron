@@ -78,6 +78,7 @@ Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
     Route::match(['get', 'post'], '/resources',  [TradeController::class, 'resources'])->name('resources');
     Route::post('/offer/resource', [TradeController::class, 'addResourceOffer'])->name('offer.resource');
     Route::post('/offer/remove',   [TradeController::class, 'removeOffer'])->name('offer.remove');
+    Route::post('/offer/accept',   [TradeController::class, 'acceptResourceOffer'])->name('offer.accept');
 });
 
 // ── Fleet (Schritt 9) ─────────────────────────────────────────────────────────

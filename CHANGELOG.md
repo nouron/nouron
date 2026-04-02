@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-02 (Trade Acceptance-Flow)
+
+- **Angebote annehmen:** Spieler können Ressourcen-Angebote anderer Spieler annehmen. Instant Transfer — Ressourcen und Credits wechseln sofort den Besitzer, kein physischer Transport. Komplettkauf only, Angebot wird nach Abschluss gelöscht.
+- **Restriction durchgesetzt:** `restriction`-Feld wird server-seitig geprüft (0=alle, 2=gleiche Fraktion, 3=gleiche Rasse). Wert 1 (Gruppe) wird bis zur Implementierung des Gruppenmoduls wie 0 behandelt. Annehmen-Button im UI je nach Restriction ein-/ausgeblendet.
+- **Sicherheit:** Selbstkauf blockiert, Buyer-IDs aus Session (kein POST-Injection), alle Transfers atomar in `DB::transaction()`. 28 neue Tests inkl. Edge Cases und Rollback-Konsistenz.
+- **GDD §11** mit Acceptance-Flow und restriction-Semantik aktualisiert.
+
 ## 2026-04-02 (Laminas/Zend-Reste entfernt)
 
 - **Komplettbereinigung:** `module/` (11 Module, ~200 PHP-Dateien), `config/autoload/` (LmcUser, ZfcRbac, global, local), `init_autoloader.php` und `test/Bootstrap.php` gelöscht — der gesamte alte Laminas-Modulbaum ist damit aus dem Repo entfernt.
