@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * TradeController — Laravel port of Trade\Controller\TradeController (Laminas).
+ * TradeController — handles the player-facing trade board.
  *
  * Handles the player-facing trade board: listing buy/sell offers for resources
  * and researches, and allowing colony owners to add or remove their own offers.

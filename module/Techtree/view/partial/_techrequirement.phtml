@@ -1,8 +1,0 @@
-<?php
-$id = 'requirementsource-' . $fromTech['id'] . '-' . $toTech['id'];
-$class = 'requirementsdata ' . $type;
-$tech_count = isset($fromTech['level']) ? $fromTech['level'] : 0;
-echo '<div class="' . $class .'" id="'.$id.'">';
-echo sprintf("%s-%s-%s-%s", $toTech['id'], $fromTech['id'], $required_tech_count, $tech_count);
-echo '</div>'
-?>

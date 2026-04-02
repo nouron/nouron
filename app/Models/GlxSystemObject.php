@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * GlxSystemObject — Eloquent model for planetary/spatial objects.
  *
  * Reads from v_glx_system_objects, a view joining glx_system_objects with
- * glx_system_object_types. The view adds type string and image_url, which
- * were previously populated by SystemObjectFactory/SystemObjectTable in Laminas.
+ * glx_system_object_types. The view adds type string and image_url.
  *
  * Objects are spatially associated with a system via proximity (x/y within
  * system_view_config range). There is no system_id FK column.
@@ -46,7 +45,7 @@ class GlxSystemObject extends Model
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Returns [x, y, 0] matching the Laminas MapEntityInterface::getCoords() convention.
+     * Returns [x, y, 0] as a coordinate triple.
      */
     public function getCoords(): array
     {

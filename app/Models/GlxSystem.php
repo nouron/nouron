@@ -9,8 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * GlxSystem — Eloquent model for star systems.
  *
  * Reads from v_glx_systems, a view joining glx_systems with glx_system_types.
- * The view adds type attributes (class, size, icon_url, image_url) that were
- * previously populated by the SystemFactory/SystemTable in Laminas.
+ * The view adds type attributes (class, size, icon_url, image_url).
  */
 class GlxSystem extends Model
 {
@@ -45,7 +44,7 @@ class GlxSystem extends Model
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /**
-     * Returns [x, y, 0] matching the Laminas MapEntityInterface::getCoords() convention.
+     * Returns [x, y, 0] as a coordinate triple.
      */
     public function getCoords(): array
     {

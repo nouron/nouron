@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
  * Ships require construction AP (engineers) and may additionally require a
  * specific research to be at a minimum level before a levelup.
  *
- * Migrated from Techtree\Service\ShipService (Laminas).
  */
 class ShipService extends AbstractTechnologyService
 {

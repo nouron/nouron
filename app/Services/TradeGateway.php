@@ -8,9 +8,9 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * TradeGateway — Laravel port of Trade\Gateway\TradeGateway (Laminas).
+ * TradeGateway — manages trade offers for resources and researches.
  *
- * Manages trade offers for resources and researches. All mutating operations
+ * All mutating operations
  * (add/remove) require a valid user_id and colony ownership check to prevent
  * players from manipulating offers belonging to other users.
  *
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  * so callers receive colony name + username alongside the offer data.
  *
  * Write operations target the base tables (trade_resources, trade_researches)
- * using updateOrInsert for upsert semantics (matching the Laminas behaviour).
+ * using updateOrInsert for upsert semantics.
  */
 class TradeGateway
 {

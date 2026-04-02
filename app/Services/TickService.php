@@ -9,7 +9,6 @@ namespace App\Services;
  * from the Unix timestamp, anchored to the daily calculation window
  * (configured via config/game.php → tick.calculation.end).
  *
- * Migrated from Core\Service\Tick (Laminas).
  */
 class TickService
 {

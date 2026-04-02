@@ -7,7 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 /**
- * Eloquent User model — replaces User\Entity\User (Laminas) + LmcUser.
+ * Eloquent User model for Nouron player accounts.
  *
  * Maps to the `user` table which uses `user_id` as the primary key
  * and bcrypt passwords (compatible with Laravel's hashing out of the box).

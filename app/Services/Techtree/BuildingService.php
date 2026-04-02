@@ -8,7 +8,6 @@ namespace App\Services\Techtree;
  * Buildings require construction AP (engineers) to be invested before a
  * levelup can be triggered. Level is capped by building.max_level (if set).
  *
- * Migrated from Techtree\Service\BuildingService (Laminas).
  */
 class BuildingService extends AbstractTechnologyService
 {

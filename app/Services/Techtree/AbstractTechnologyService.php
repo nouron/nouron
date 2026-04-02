@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\DB;
  * personell: prerequisite checks, AP investment, levelup/leveldown and cost
  * payment. Each concrete subclass supplies its table names and entity-id key.
  *
- * Migrated from Techtree\Service\AbstractTechnologyService (Laminas).
- *
  * Rules:
  * - A levelup requires: required building, required research (ships only),
  *   sufficient resources, enough AP invested (ap_spend >= ap_for_levelup),

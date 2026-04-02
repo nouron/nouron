@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  *           buildings, researches, ships, resources, fleets, INNN messages, etc.
  *
  * Used by Laravel Feature tests via RefreshDatabase + $seeder = TestSeeder::class.
- * Keeps Laravel test data in sync with the Laminas test.db automatically.
+ * Keeps test data in sync with the migration schema automatically.
  */
 class TestSeeder extends Seeder
 {
