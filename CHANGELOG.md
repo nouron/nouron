@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-02 (Supply-Cap-Enforcement)
+
+- **Over-Cap-Decay:** Wenn eine Kolonie ihren Supply-Cap überschreitet, verfallen Gebäude und Forschungen mit 2× Decay-Rate. Spieler werden so zum Abbau gedrängt ohne erzwungene Zerstörung.
+- **Blockierung:** Neue Level-Ups und Hire-Aktionen bleiben geblockt solange die Kolonie Over-Cap ist (bestehende Logik via `checkRequiredSupplyByEntityId`).
+- **`getFreeSupply()`** gibt jetzt negative Werte zurück bei Over-Cap; neue Hilfsmethode `getOverCapColonyIds()` in `ResourcesService`.
+- `overcap_factor = 2.0` konfigurierbar in `config/game.php`. 7 neue Tests in `OverCapDecayTest`.
+
 ## 2026-04-02 (Economy-AP für Händler)
 
 - **Händler-AP implementiert:** Trade-Aktionen verbrauchen jetzt Economy-AP. Angebot erstellen kostet `max(1, floor(amount × price / 1000))` AP — skaliert mit dem Handelswert. Angebot annehmen kostet 1 AP (Käufer). Angebot entfernen ist kostenlos.
