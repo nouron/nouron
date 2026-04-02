@@ -83,9 +83,16 @@ class GameTickTest extends TestCase
     /**
      * Building status_points decreases by decay_rate each tick.
      * oremine (id 27): decay_rate=0.17; starting SP=11 → 11 - 0.17 = 10.83
+     *
+     * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
      */
     public function test_building_status_points_decrease_by_decay_rate(): void
     {
+        // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
+        DB::table('buildings')->update(['supply_cost' => 0]);
+        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('ships')->update(['supply_cost' => 0]);
+
         DB::table('colony_buildings')
             ->where('colony_id', 1)->where('building_id', 27)
             ->update(['status_points' => 11.0, 'level' => 5]);
@@ -181,9 +188,16 @@ class GameTickTest extends TestCase
     /**
      * Research status_points decreases by decay_rate each tick.
      * biology (id 33): decay_rate=0.13; level=2, SP=20 → 19.87
+     *
+     * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
      */
     public function test_research_status_points_decrease_by_decay_rate(): void
     {
+        // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
+        DB::table('buildings')->update(['supply_cost' => 0]);
+        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('ships')->update(['supply_cost' => 0]);
+
         DB::table('colony_researches')
             ->where('colony_id', 1)->where('research_id', 33)
             ->update(['status_points' => 20.0, 'level' => 2]);

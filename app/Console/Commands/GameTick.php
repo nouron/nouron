@@ -12,6 +12,7 @@ use App\Models\FleetResource;
 use App\Models\FleetShip;
 use App\Models\UserResource;
 use App\Services\EventService;
+use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -42,8 +43,9 @@ class GameTick extends Command
     private array $combatFleetIds = [];
 
     public function __construct(
-        private readonly TickService  $tickService,
-        private readonly EventService $eventService,
+        private readonly TickService      $tickService,
+        private readonly EventService     $eventService,
+        private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct();
     }
@@ -317,16 +319,21 @@ class GameTick extends Command
 
     private function processBuildingDecay(int $tick): int
     {
-        $fallbackRate = (float) config('game.decay.rate', 1);
-        $decayRates   = DB::table('buildings')->pluck('decay_rate', 'id');
-        $maxSPMap     = DB::table('buildings')->pluck('max_status_points', 'id');
-        $levelled     = 0;
+        $fallbackRate  = (float) config('game.decay.rate', 1);
+        $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
+        $decayRates    = DB::table('buildings')->pluck('decay_rate', 'id');
+        $maxSPMap      = DB::table('buildings')->pluck('max_status_points', 'id');
+        $levelled      = 0;
+
+        // Build the over-cap set once before iterating — O(colonies), not O(buildings).
+        $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         $buildings = ColonyBuilding::where('level', '>', 0)->get();
 
         foreach ($buildings as $cb) {
-            $rate      = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
-            $newStatus = (float) $cb->status_points - $rate;
+            $rate         = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
+            $overCapMult  = in_array($cb->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
+            $newStatus    = (float) $cb->status_points - ($rate * $overCapMult);
             $where     = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
 
             if ($newStatus <= 0) {
@@ -408,16 +415,21 @@ class GameTick extends Command
 
     private function processResearchDecay(int $tick): int
     {
-        $fallbackRate = (float) config('game.decay.rate', 1);
-        $decayRates   = DB::table('researches')->pluck('decay_rate', 'id');
-        $maxSPMap     = DB::table('researches')->pluck('max_status_points', 'id');
-        $levelled     = 0;
+        $fallbackRate  = (float) config('game.decay.rate', 1);
+        $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
+        $decayRates    = DB::table('researches')->pluck('decay_rate', 'id');
+        $maxSPMap      = DB::table('researches')->pluck('max_status_points', 'id');
+        $levelled      = 0;
+
+        // Build the over-cap set once before iterating — O(colonies), not O(researches).
+        $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         $researches = ColonyResearch::where('level', '>', 0)->get();
 
         foreach ($researches as $cr) {
-            $rate      = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
-            $newStatus = (float) $cr->status_points - $rate;
+            $rate        = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
+            $overCapMult = in_array($cr->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
+            $newStatus   = (float) $cr->status_points - ($rate * $overCapMult);
             $where     = ['colony_id' => $cr->colony_id, 'research_id' => $cr->research_id];
 
             if ($newStatus <= 0) {

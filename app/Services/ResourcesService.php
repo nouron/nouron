@@ -236,6 +236,24 @@ class ResourcesService
 
         $used = $usedBuildings + $usedShips + $usedResearches + $usedAdvisors;
 
-        return max(0, $cap - $used);
+        return $cap - $used;
+    }
+
+    /**
+     * Return all colony IDs where the owning user has consumed more supply than their cap.
+     *
+     * A negative free-supply value indicates over-cap status. These colonies receive
+     * the overcap_factor decay penalty every tick until supply usage drops back within cap.
+     *
+     * @return int[]  Colony IDs with getFreeSupply() < 0
+     */
+    public function getOverCapColonyIds(): array
+    {
+        $colonyIds = DB::table('glx_colonies')->pluck('id');
+
+        return $colonyIds
+            ->filter(fn($id) => $this->getFreeSupply((int) $id) < 0)
+            ->values()
+            ->all();
     }
 }
