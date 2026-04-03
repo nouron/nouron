@@ -85,10 +85,14 @@ Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
 
 Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
     Route::get('/',                        [FleetController::class, 'index'])->name('index');
+    Route::post('/',                       [FleetController::class, 'store'])->name('store');
+    Route::delete('/{id}',                 [FleetController::class, 'destroy'])->name('destroy')->where('id', '[0-9]+');
     Route::get('/{id}/config',             [FleetController::class, 'config'])->name('config')->where('id', '[0-9]+');
-    Route::post('/addtofleet',             [FleetController::class, 'addToFleet'])->name('addtofleet');
-    Route::get('/{id}/technologies',       [FleetController::class, 'getFleetTechnologies'])->name('technologies')->where('id', '[0-9]+');
-    Route::get('/{id}/resources',          [FleetController::class, 'getFleetResources'])->name('resources')->where('id', '[0-9]+');
+    Route::post('/{id}/orders',            [FleetController::class, 'storeOrder'])->name('orders.store')->where('id', '[0-9]+');
+    // JSON endpoints — path matches fleets.js expectations
+    Route::post('/json/addToFleet/{id}',   [FleetController::class, 'addToFleet'])->name('json.addtofleet')->where('id', '[0-9]+');
+    Route::get('/json/getFleetTechnologies/{id}', [FleetController::class, 'getFleetTechnologies'])->name('json.technologies')->where('id', '[0-9]+');
+    Route::get('/json/getFleetResources/{id}',    [FleetController::class, 'getFleetResources'])->name('json.resources')->where('id', '[0-9]+');
 });
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────

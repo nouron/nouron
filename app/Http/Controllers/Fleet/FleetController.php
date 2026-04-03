@@ -3,18 +3,28 @@
 namespace App\Http\Controllers\Fleet;
 
 use App\Http\Controllers\BaseController;
+use App\Models\Fleet;
+use App\Models\FleetOrder;
 use App\Services\ColonyService;
 use App\Services\FleetService;
+use App\Services\GalaxyService;
 use App\Services\ResourcesService;
+use App\Services\Techtree\PersonellService;
+use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class FleetController extends BaseController
 {
     public function __construct(
         private readonly FleetService     $fleetService,
         private readonly ColonyService    $colonyService,
+        private readonly GalaxyService    $galaxyService,
+        private readonly PersonellService $personellService,
         private readonly ResourcesService $resourcesService,
+        private readonly TickService      $tickService,
     ) {}
 
     public function index(Request $request)
@@ -38,7 +48,16 @@ class FleetController extends BaseController
             $ownFleets = $this->fleetService->getFleetsByUserId($userId);
         }
 
-        return view('fleet.index', compact('ownFleets', 'userId'));
+        $currentTick = $this->tickService->getTickCount();
+        $fleetIds    = $ownFleets->where('user_id', $userId)->pluck('id')->all();
+        $pendingOrders = FleetOrder::whereIn('fleet_id', $fleetIds)
+            ->where('tick', '>=', $currentTick)
+            ->where('was_processed', 0)
+            ->orderBy('tick')
+            ->get()
+            ->groupBy('fleet_id');
+
+        return view('fleet.index', compact('ownFleets', 'userId', 'pendingOrders', 'currentTick'));
     }
 
     public function config(int $id)
@@ -61,11 +80,158 @@ class FleetController extends BaseController
         return view('fleet.config', compact('fleet', 'colony', 'fleetIsInColonyOrbit', 'resources', 'ships', 'personells', 'researches'));
     }
 
+    // ── CRUD ─────────────────────────────────────────────────────────────────
+
+    public function store(Request $request)
+    {
+        $userId = $this->getCurrentUserId();
+        $request->validate([
+            'fleet' => 'required|string|max:50',
+        ]);
+
+        try {
+            $colony = $this->colonyService->getPrimeColony($userId);
+        } catch (\RuntimeException) {
+            return back()->withErrors(['fleet' => 'Keine Kolonie gefunden.']);
+        }
+
+        // Check that an available pilot advisor exists at this colony
+        $availableCommander = DB::table('advisors')
+            ->join('personell', 'personell.id', '=', 'advisors.personell_id')
+            ->where('advisors.user_id', $userId)
+            ->where('advisors.colony_id', $colony->id)
+            ->whereNull('advisors.fleet_id')
+            ->where('personell.can_command_fleet', 1)
+            ->where(function ($q) {
+                $tick = $this->tickService->getTickCount();
+                $q->whereNull('advisors.unavailable_until_tick')
+                  ->orWhere('advisors.unavailable_until_tick', '<=', $tick);
+            })
+            ->select('advisors.id')
+            ->first();
+
+        if (!$availableCommander) {
+            return back()->withErrors(['fleet' => 'Kein verfügbarer Kommandant. Stelle zuerst einen Piloten ein.']);
+        }
+
+        [$cx, $cy, $cs] = $colony->getCoords();
+        $fleet = Fleet::create([
+            'fleet'   => $request->input('fleet'),
+            'user_id' => $userId,
+            'x'       => $cx,
+            'y'       => $cy,
+            'spot'    => $cs,
+        ]);
+
+        $this->personellService->assignToFleet($availableCommander->id, $fleet->id);
+
+        return redirect()->route('fleet.index');
+    }
+
+    public function destroy(int $id)
+    {
+        $userId = $this->getCurrentUserId();
+        $fleet  = Fleet::where('id', $id)->where('user_id', $userId)->first();
+
+        if (!$fleet) {
+            abort(403, 'Zugriff verweigert.');
+        }
+
+        DB::transaction(function () use ($fleet, $userId) {
+            // Return commander to colony
+            $commander = DB::table('advisors')
+                ->where('fleet_id', $fleet->id)
+                ->where('is_commander', 1)
+                ->first();
+
+            if ($commander) {
+                $colony = $this->colonyService->getPrimeColony($userId);
+                if ($colony) {
+                    DB::table('advisors')->where('id', $commander->id)->update([
+                        'fleet_id'  => null,
+                        'colony_id' => $colony->id,
+                        'is_commander' => 0,
+                    ]);
+                }
+            }
+
+            // Cascade delete fleet data
+            DB::table('fleet_orders')->where('fleet_id', $fleet->id)->delete();
+            DB::table('fleet_ships')->where('fleet_id', $fleet->id)->delete();
+            DB::table('fleet_resources')->where('fleet_id', $fleet->id)->delete();
+            DB::table('fleet_personell')->where('fleet_id', $fleet->id)->delete();
+            DB::table('fleet_researches')->where('fleet_id', $fleet->id)->delete();
+            $fleet->delete();
+        });
+
+        return redirect()->route('fleet.index');
+    }
+
+    // ── Orders ────────────────────────────────────────────────────────────────
+
+    public function storeOrder(Request $request, int $id)
+    {
+        $userId = $this->getCurrentUserId();
+        $fleet  = Fleet::where('id', $id)->where('user_id', $userId)->first();
+
+        if (!$fleet) {
+            abort(403, 'Zugriff verweigert.');
+        }
+
+        $order = $request->validate(['order' => 'required|in:move,trade,attack'])['order'];
+
+        try {
+            if ($order === 'move') {
+                $request->validate([
+                    'destination_x' => 'required|integer',
+                    'destination_y' => 'required|integer',
+                ]);
+                $destX = (int) $request->input('destination_x');
+                $destY = (int) $request->input('destination_y');
+
+                // Phase 2: only within-system movement allowed
+                $fleetSystem = $this->galaxyService->getSystemByObjectCoords([$fleet->x, $fleet->y]);
+                $destSystem  = $this->galaxyService->getSystemByObjectCoords([$destX, $destY]);
+                if (!$fleetSystem || !$destSystem || $fleetSystem->id !== $destSystem->id) {
+                    return back()->withErrors(['order' => 'Interstellare Bewegung ist noch nicht verfügbar. Ziel muss im gleichen System liegen.']);
+                }
+
+                $this->fleetService->addOrder($fleet, 'move', [$destX, $destY, 0]);
+
+            } elseif ($order === 'trade') {
+                $request->validate([
+                    'colony_id'   => 'required|integer',
+                    'resource_id' => 'required|integer',
+                    'amount'      => 'required|integer|min:1',
+                    'direction'   => 'required|in:0,1',
+                ]);
+                $this->fleetService->addOrder($fleet, 'trade', (int) $request->input('colony_id'), [
+                    'colony_id'   => (int) $request->input('colony_id'),
+                    'resource_id' => (int) $request->input('resource_id'),
+                    'amount'      => (int) $request->input('amount'),
+                    'direction'   => (int) $request->input('direction'),
+                ]);
+
+            } elseif ($order === 'attack') {
+                $request->validate(['target_fleet_id' => 'required|integer']);
+                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                if (!$targetFleet) {
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                }
+                $this->fleetService->addOrder($fleet, 'attack', $targetFleet);
+            }
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['order' => $e->getMessage()]);
+        }
+
+        return redirect()->route('fleet.config', $id)->with('success', 'Befehl erteilt.');
+    }
+
     // ── JSON endpoints ────────────────────────────────────────────────────────
 
-    public function addToFleet(Request $request): JsonResponse
+    public function addToFleet(Request $request, int $id): JsonResponse
     {
-        $fleetId  = (int) $request->post('id', 0);
+        $fleetId  = $id;
         $itemType = $request->post('itemType');
         $itemId   = (int) $request->post('itemId', 0);
         $amount   = (int) $request->post('amount', 0);

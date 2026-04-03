@@ -499,10 +499,24 @@ Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (
 
 ### Move-Order
 
-Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]`.
+Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensystems.
 
-- Nach Ausführung wird die Position der Flotte (`fleets.x`, `fleets.y`, `fleets.spot`) aktualisiert
-- INNN-Ereignis `galaxy.fleet_arrived` wird für den Flottenbesitzer erzeugt
+**Bewegungs-Mechanik (Phase 2):**
+- Bewegung geschieht über mehrere Ticks — die Flotte teleportiert sich nicht sofort
+- Geschwindigkeit = `moving_speed` des langsamsten Schiffs in der Flotte (Fallback: 1 Einheit/Tick)
+- `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Tick auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
+- Pro Tick des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
+
+**Einschränkungen Phase 2:**
+- Ausschließlich innerhalb eines Sternensystems (gleiche `system_id`)
+- Interstellare Bewegung (zwischen Systemen) erfordert eine noch zu definierende Wurmloch-/Sternentor-Mechanik und ist für Phase 3 vorgesehen
+
+**Datenspeicherung:**
+- Koordinaten in `fleet_orders.coordinates` werden als JSON gespeichert (`json_encode`)
+- Zusatzdaten für Trade/Attack in `fleet_orders.data` ebenfalls als JSON
+
+Nach Ausführung wird die Position der Flotte (`fleets.x`, `fleets.y`, `fleets.spot`) aktualisiert.
+INNN-Ereignis `galaxy.fleet_arrived` wird für den Flottenbesitzer erzeugt.
 
 ### Trade-Order
 
@@ -718,18 +732,26 @@ Supply ist die universelle Unterhaltsressource. **Alles kostet dauerhaft Supply:
 
 Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert. Das Hard-Cap liegt bei **200 Supply pro Kolonie**. Da pro Spieler nur eine Kolonie vorgesehen ist (Phase 3), ist Supply der einzige und ausreichende Kapazitätsdeckel für Berater.
 
-**Flotten und Supply:** Schiffe verbrauchen Supply über ihre **Heimatkolonie** — eine Flotte ist immer einem Heimathafen zugeordnet, der die laufenden Kosten trägt. *Details der Heimathafen-Mechanik werden in Phase 2 ausgearbeitet.*
+**Flotten und Supply:** Da jeder Spieler genau eine Kolonie hat, tragen Supply-Kosten von Schiffen immer zu dieser Kolonie. Eine separate `home_colony_id` pro Flotte ist für Phase 3 vorgesehen (Außenposten-Mechanik).
+
+**Flottenname:** Das Feld `fleets.fleet` enthält den frei wählbaren Namen der Flotte (z.B. "Alpha-Flotte"). Er wird im UI angezeigt und bei der Erstellung vergeben.
+
+**Flottenanzahl:** Die maximale Flottenanzahl eines Spielers ist durch die Anzahl verfügbarer Kommandanten begrenzt. Pro Flotte wird genau ein Kommandant benötigt, der bei der Fleet-Erstellung automatisch zugewiesen wird.
 
 ---
 
 ### Kommandant: Kolonie vs. Flotte
 
-Der Kommandant ist der einzige Beratertyp, der seinen Koloniebezug verlieren kann:
+Der Kommandant ist der einzige Beratertyp, der seinen Koloniebezug verlieren kann.
+
+**Modell (Option A — Phase 2):** Nur die *Flotte* braucht einen Kommandanten. Einzelne Schiffe benötigen keine eigenen Piloten. Begründung: Das Supply-Budget reicht bei Phase-2-Werten nicht für piloten-pro-Schiff-Modelle; die Opportunitätskostenstruktur (Kommandant bei Kolonie vs. Flotte) liefert ausreichend strategische Tiefe ohne Micro-Management.
 
 - **Kolonie-zugewiesen:** Gibt der Kolonie Navigation-AP (für das Erteilen neuer Flottenorders).
 - **Flotten-zugewiesen:** Gibt der Flotte direkt Navigation-AP; Koloniebezug aufgehoben.
-- **Rückkehr:** Beim Anlegen an der Heimatkolonie wird der Kommandant automatisch wieder der Kolonie zugewiesen.
+- **Rückkehr:** Beim Löschen einer Flotte wird der Kommandant automatisch wieder der Kolonie zugewiesen.
 - **Flottenverlust im Kampf:** Der Kommandant ist für 2–3 Ticks nicht verfügbar (erholt sich), geht aber nicht dauerhaft verloren.
+
+*Phase 3:* Benannte Kommandanten mit individuellen Fähigkeiten (+Kampfbonus, -AP-Kosten) sind als Erweiterung von Option A vorgesehen, ohne das Supply-Budget zu belasten.
 
 ---
 

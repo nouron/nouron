@@ -200,5 +200,93 @@
 
     @endif
 
+    {{-- Order form --}}
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-terminal"></i> Befehl erteilen</h5>
+
+            @if(session('success'))
+                <div class="alert alert-success py-2">{{ session('success') }}</div>
+            @endif
+            @if($errors->has('order'))
+                <div class="alert alert-danger py-2">{{ $errors->first('order') }}</div>
+            @endif
+
+            <form method="POST" action="{{ route('fleet.orders.store', $fleet->id) }}" id="order-form">
+                @csrf
+                <div class="row g-2 align-items-end">
+                    <div class="col-auto">
+                        <label class="form-label small mb-1">Befehlstyp</label>
+                        <select name="order" id="order-type" class="form-select form-select-sm" onchange="updateOrderForm()">
+                            <option value="move">Bewegen</option>
+                            <option value="trade">Handeln</option>
+                            <option value="attack">Angreifen</option>
+                        </select>
+                    </div>
+
+                    {{-- Move fields --}}
+                    <div id="fields-move" class="col-auto">
+                        <label class="form-label small mb-1">Ziel X</label>
+                        <input type="number" name="destination_x" class="form-control form-control-sm" style="width:90px;"
+                               value="{{ old('destination_x') }}">
+                    </div>
+                    <div id="fields-move-y" class="col-auto">
+                        <label class="form-label small mb-1">Ziel Y</label>
+                        <input type="number" name="destination_y" class="form-control form-control-sm" style="width:90px;"
+                               value="{{ old('destination_y') }}">
+                    </div>
+
+                    {{-- Trade fields --}}
+                    <div id="fields-trade" class="col-auto d-none">
+                        <label class="form-label small mb-1">Kolonie-ID</label>
+                        <input type="number" name="colony_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('colony_id') }}">
+                    </div>
+                    <div id="fields-trade-res" class="col-auto d-none">
+                        <label class="form-label small mb-1">Ressource-ID</label>
+                        <input type="number" name="resource_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('resource_id') }}">
+                    </div>
+                    <div id="fields-trade-amt" class="col-auto d-none">
+                        <label class="form-label small mb-1">Menge</label>
+                        <input type="number" name="amount" class="form-control form-control-sm" style="width:90px;" min="1" value="{{ old('amount', 1) }}">
+                    </div>
+                    <div id="fields-trade-dir" class="col-auto d-none">
+                        <label class="form-label small mb-1">Richtung</label>
+                        <select name="direction" class="form-select form-select-sm">
+                            <option value="0">Kaufen (Kolonie → Flotte)</option>
+                            <option value="1">Verkaufen (Flotte → Kolonie)</option>
+                        </select>
+                    </div>
+
+                    {{-- Attack fields --}}
+                    <div id="fields-attack" class="col-auto d-none">
+                        <label class="form-label small mb-1">Ziel-Flotten-ID</label>
+                        <input type="number" name="target_fleet_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('target_fleet_id') }}">
+                    </div>
+
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-sm btn-warning mt-3">
+                            <i class="bi bi-play-fill"></i> Befehl erteilen
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
 </div>{{-- #fleetconfig --}}
+
+@push('scripts')
+<script>
+function updateOrderForm() {
+    const t = document.getElementById('order-type').value;
+    document.getElementById('fields-move').classList.toggle('d-none', t !== 'move');
+    document.getElementById('fields-move-y').classList.toggle('d-none', t !== 'move');
+    document.getElementById('fields-trade').classList.toggle('d-none', t !== 'trade');
+    document.getElementById('fields-trade-res').classList.toggle('d-none', t !== 'trade');
+    document.getElementById('fields-trade-amt').classList.toggle('d-none', t !== 'trade');
+    document.getElementById('fields-trade-dir').classList.toggle('d-none', t !== 'trade');
+    document.getElementById('fields-attack').classList.toggle('d-none', t !== 'attack');
+}
+</script>
+@endpush
 @endsection
