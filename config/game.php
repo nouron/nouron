@@ -111,4 +111,79 @@ return [
     'trade' => [
         'ap_cost_threshold' => 1000,  // divisor: amount × price / threshold = AP cost
     ],
+
+    // Moral system — all values used by MoralService::calculate() (see GDD §13).
+    // Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + tax + events, -100, +100)
+    'moral' => [
+        // Buildings: building_id => moral_per_level (only buildings with status_points > 0 count)
+        'buildings' => [
+            32 =>  2,   // temple
+            45 =>  2,   // parc
+            46 =>  3,   // hospital
+            48 =>  1,   // public_security
+            50 =>  2,   // denkmal
+            51 =>  2,   // university
+            53 =>  3,   // stadium
+            56 =>  2,   // museum
+            65 =>  1,   // recyclingStation
+            52 => -1,   // bar
+            54 => -2,   // casino
+            55 => -3,   // prison
+            64 => -1,   // wastedisposal
+            66 => -2,   // secretOps
+            68 => -1,   // militarySpaceyard
+        ],
+        // Researches: research_id => moral_per_level
+        'researches' => [
+            33 =>  1,   // biology
+            72 =>  2,   // medicalScience
+            79 =>  1,   // diplomacy
+            80 =>  1,   // politicalScience
+            81 => -2,   // military  (raised from -1: see GDD §13 rationale)
+            34 =>  1,   // languages
+        ],
+        // Ships: ship_id => moral_per_ship (applied to colony_ships.amount)
+        // Military ships cause unrest; economy/transport ships signal prosperity.
+        // The total ship contribution is capped at ±30 before entering the sum.
+        'ships' => [
+            37 => -1,   // fighter1        — military
+            29 => -2,   // frigate1        — military
+            49 => -4,   // battlecruiser1  — military
+            47 =>  1,   // smallTransporter  — economy
+            83 =>  1,   // mediumTransporter — economy
+            84 =>  2,   // largeTransporter  — economy
+        ],
+        // Hard cap for total ship moral contribution (before global clamp).
+        'ships_cap' => 30,
+        // Production multipliers by moral band (see GDD §13 "Effekte der Moral").
+        'production_multiplier' => [
+            ['min' =>  61, 'max' => 100, 'factor' => 1.20],
+            ['min' =>  21, 'max' =>  60, 'factor' => 1.10],
+            ['min' => -20, 'max' =>  20, 'factor' => 1.00],
+            ['min' => -60, 'max' => -21, 'factor' => 0.85],
+            ['min' => -100,'max' => -61, 'factor' => 0.70],
+        ],
+        // AP multipliers by moral band.
+        'ap_multiplier' => [
+            ['min' =>  61, 'max' => 100, 'factor' => 1.10],
+            ['min' =>  21, 'max' =>  60, 'factor' => 1.05],
+            ['min' => -20, 'max' =>  20, 'factor' => 1.00],
+            ['min' => -60, 'max' => -21, 'factor' => 0.90],
+            ['min' => -100,'max' => -61, 'factor' => 0.80],
+        ],
+        // Event moral effects (one-shot, active for exactly 1 tick).
+        // Multiple events of the same key in one tick do NOT stack — strongest wins.
+        'events' => [
+            'building_level_up'     =>  1,
+            'building_level_down'   => -3,
+            'research_level_up'     =>  2,
+            'trade_success'         =>  2,
+            'trade_blocked'         => -3,
+            'combat_won'            =>  2,
+            'combat_lost'           => -5,
+            'colony_attacked'       => -4,
+            'war_declared'          => -8,
+            'treaty_signed'         =>  3,
+        ],
+    ],
 ];

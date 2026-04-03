@@ -22,6 +22,7 @@
 10. [Forschung](#10-forschung)
 11. [Handel (Trade)](#11-handel-trade)
 12. [Berater & Aktionspunkte (AP-System)](#12-berater--aktionspunkte-ap-system)
+13. [Moralsystem](#13-moralsystem)
 
 ---
 
@@ -781,6 +782,277 @@ AP-Locks verfallen automatisch zum nächsten Tick — der Pool wird täglich vol
 ### Dev-Mode
 
 Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP-Kosten übersprungen. Das AP-System selbst bleibt aktiv für Tests.
+
+---
+
+---
+
+## 13. Moralsystem
+
+### Design-Absicht
+
+Moral ist das "weiche" Feedback-System der Kolonie. Sie reagiert auf die Entscheidungen des Spielers — welche Gebäude gebaut werden, wie militaristisch die Spielweise ist, welche Forschungen betrieben werden — und verstärkt oder schwächt die Kolonieleistung mit spürbaren, aber nicht spielentscheidenden Effekten.
+
+Moral ist kein zweites Ressourcenproblem, das der Spieler managen muss. Sie ist ein stiller Bewertungsparameter: Wer eine ausgewogene, zivil-orientierte Kolonie aufbaut, wird belohnt. Wer ausschließlich auf Militär setzt und Zivilinfrastruktur vernachlässigt, spürt das in einer moderaten Malus-Spirale.
+
+### Wertebereich
+
+```
+Moral: -100 bis +100
+Neutralwert: 0
+Startwert: 0
+```
+
+**Bedeutungsbereiche:**
+
+| Bereich | Bezeichnung | Anzeige (UI-Hinweis) |
+|---------|-------------|----------------------|
+| +61 bis +100 | Hochmoral | "Euphorisch" |
+| +21 bis +60 | Positive Stimmung | "Zufrieden" |
+| -20 bis +20 | Neutral | "Stabil" |
+| -21 bis -60 | Unzufriedenheit | "Unruhig" |
+| -61 bis -100 | Krise | "Aufruhr" |
+
+Der Wert -100 ist ein harter Boden (keine weitere Verschlechterung). Ebenso +100 als Deckel.
+
+### Berechnung (Tick-basiert)
+
+Moral wird einmal pro Tick **neu berechnet** — nicht akkumuliert. Die Moral eines Ticks ergibt sich aus der Summe aller aktiven Faktoren:
+
+```
+moral = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + steuerfaktor + ereigniseffekte, -100, +100)
+```
+
+`colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
+
+Der Wert wird in **Tick-Schritt 8** (nach Ressourcenproduktion) berechnet, da Moral die Produktionswerte desselben Ticks noch nicht beeinflusst — sie wirkt ab dem Folgetick.
+
+> **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer moralverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
+
+### Einflussfaktoren: Gebäude
+
+Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Level bei. Nur Gebäude mit `status_points > 0` zählen (verfallene Gebäude tragen nicht bei).
+
+**Positive Moralgebäude:**
+
+| Gebäude-ID | Bezeichner | Moral/Level |
+|------------|------------|-------------|
+| 32 | temple | +2 |
+| 45 | parc | +2 |
+| 46 | hospital | +3 |
+| 48 | public_security | +1 |
+| 50 | denkmal | +2 |
+| 51 | university | +2 |
+| 53 | stadium | +3 |
+| 56 | museum | +2 |
+| 65 | recyclingStation | +1 |
+
+**Negative Moralgebäude:**
+
+| Gebäude-ID | Bezeichner | Moral/Level |
+|------------|------------|-------------|
+| 52 | bar | -1 |
+| 54 | casino | -2 |
+| 55 | prison | -3 |
+| 64 | wastedisposal | -1 |
+| 66 | secretOps | -2 |
+| 68 | militarySpaceyard | -1 |
+
+**Rationale:** Kasino und Gefängnis degradieren aktiv die gesellschaftliche Stimmung. Das Gefängnis signalisiert soziale Kontrolle und Repression (-3/Level ist bewusst stark, um Prison-Spam zu bestrafen). Bar und Casino haben negative Effekte, aber nur moderat — sie sind ein bewusster Trade-off (Credits vs. Moral). Die Militärwerft hat einen kleinen Malus als Untermauerung des Kernprinzips "Militarismus hat Kosten".
+
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple Lv10 + hospital Lv10 + stadium Lv10 ...), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte getestet werden ob er zu schnell erreichbar ist ohne negative Gebäude.
+
+### Einflussfaktoren: Schiffe
+
+Schiffe tragen zur Moral bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Militärschiffe signalisieren der Bevölkerung Kriegsbereitschaft und erzeugen Unruhe; Transporter stehen für Handel und Wohlstand.
+
+**Militärische Schiffe (negative Moral):**
+
+| Schiff-ID | Bezeichner | Moral/Schiff |
+|-----------|------------|--------------|
+| 37 | fighter1 | -1 |
+| 29 | frigate1 | -2 |
+| 49 | battlecruiser1 | -4 |
+
+**Zivile/Transport-Schiffe (positive Moral):**
+
+| Schiff-ID | Bezeichner | Moral/Schiff |
+|-----------|------------|--------------|
+| 47 | smallTransporter | +1 |
+| 83 | mediumTransporter | +1 |
+| 84 | largeTransporter | +2 |
+
+**Rationale:** Militärschiffe verstärken das Prinzip "Militarismus hat Kosten" — wer eine starke Kriegsflotte in der Kolonie stationiert, zahlt mit Moralverlust. Der Malus ist absichtlich progressiv (Battlecruiser -4 > Frigate -2 > Fighter -1), um Massenansammlungen schwerer Schiffe spürbar zu bestrafen, ohne kleine Verteidigungsflotten zu ruinieren. Transportschiffe belohnen eine handelsorientierte Spielweise mit kleinen Moralgewinnen (+1/+2 pro Schiff).
+
+**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Moral-Summe eingeht:
+
+```
+ship_moral = clamp(Σ(ship_amount × moral_per_ship), -30, +30)
+```
+
+> ⚠️ BALANCE CONCERN: Der Cap von ±30 für Schiffe muss nach dem ersten Playtest evaluiert werden. Eine Kolonie mit 30 Fightern wäre bei -30 bereits am Cap — das könnte für frühe militärische Spieler zu früh einsetzen. Alternativ: Cap auf -20 für eine moderatere Wirkung.
+
+### Einflussfaktoren: Forschungen
+
+Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_points, da Forschungslevel persistenter sind).
+
+| Forschungs-ID | Bezeichner | Moral/Level |
+|---------------|------------|-------------|
+| 33 | biology | +1 |
+| 72 | medicalScience | +2 |
+| 79 | diplomacy | +1 |
+| 80 | politicalScience | +1 |
+| 81 | military | -2 |
+| 34 | languages | +1 |
+
+Alle anderen Forschungen (mathematics, physics, chemistry, economicScience) haben keinen direkten Moraleffekt — sie sind neutrale Werkzeuge.
+
+**Zur military-Forschung:** Der Wert wurde auf -2/Level angehoben (von -1). Da military-Forschung auf bis zu Level 10 steigen kann und Schiffe bereits einen separaten Malus erzeugen, soll die Forschung selbst ein deutlicheres Signal setzen. Ein vollständig militärisch ausgelegter Spieler (military Lv10 + schwere Schiffsflotte) sieht dadurch einen merklichen kombinierten Malus.
+
+> ⚠️ BALANCE CONCERN: military-Forschung auf -2/Level bedeutet bis zu -20 allein durch die Forschung. Zusammen mit Schiffs-Malus und militarySpaceyard kann ein Hardcore-Militärspieler tief in den negativen Moralbereich geraten. Das ist gewollt, aber der Spieler braucht ausreichend Kompensationsmöglichkeiten durch Zivilgebäude.
+
+### Einflussfaktoren: Steuern
+
+Das Steuersystem ist in Phase 2 noch nicht implementiert. Der Platzhalter in der Formel ist `steuerfaktor = 0`.
+
+Vorgesehene Mechanik (Phase 3):
+
+```
+steuerfaktor = -floor(steuersatz / 10)
+```
+
+Steuersatz 0–20%: Faktor 0 (kein Malus)
+Steuersatz 30%: Faktor -3
+Steuersatz 50%: Faktor -5
+Steuersatz 100%: Faktor -10
+
+> ⚠️ BALANCE CONCERN: Steuern als Moralsenke bedeuten, dass hohe Einnahmen immer mit Moralverlust erkauft werden. Das ist gewollt, aber der konkrete Faktor muss mit dem Produktionssystem zusammen kalibriert werden.
+
+### Einflussfaktoren: Ereignisse (Events)
+
+Events können Moral temporär verändern. Die Wirkung hält genau **1 Tick** an (danach wirken nur noch Dauereffekte). Event-Moralwerte werden nicht in `colony_resources` gespeichert, sondern bei der Tick-Berechnung addiert und am Ende des Ticks verworfen.
+
+Datenmodell: `innn_events` kann über das `data`-Feld bereits Moral-Deltas tragen. Kein Schemabedarf.
+
+**Geplante Event-Trigger und Moraleffekte:**
+
+Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden nach der Moral-Berechnung verworfen). Mehrere Events desselben Typs im selben Tick summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
+
+**Bauwesen / Forschung:**
+
+| Event-Key | Beschreibung | Moraleffekt |
+|-----------|-------------|-------------|
+| `building_level_up` | Gebäude fertiggestellt (Level-Up) | +1 |
+| `building_level_down` | Gebäude verfallen (Level-Down durch Decay) | -3 |
+| `research_level_up` | Forschung abgeschlossen (Level-Up) | +2 |
+
+**Handel:**
+
+| Event-Key | Beschreibung | Moraleffekt |
+|-----------|-------------|-------------|
+| `trade_success` | Handelsmission erfolgreich abgeschlossen | +2 |
+| `trade_blocked` | Handelsmission durch feindliche Flotte blockiert | -3 |
+
+**Kampf / Militär:**
+
+| Event-Key | Beschreibung | Moraleffekt |
+|-----------|-------------|-------------|
+| `combat_won` | Kampf gewonnen (feindliche Flotte vernichtet) | +2 |
+| `combat_lost` | Kampf verloren (eigene Einheiten zerstört) | -5 |
+| `colony_attacked` | Eigene Kolonie wurde angegriffen (unabhängig vom Ausgang) | -4 |
+| `war_declared` | Kriegserklärung empfangen | -8 |
+
+**Diplomatie:**
+
+| Event-Key | Beschreibung | Moraleffekt |
+|-----------|-------------|-------------|
+| `treaty_signed` | Diplomatischer Vertrag abgeschlossen | +3 |
+
+**Rationale für neue Events:**
+- `colony_attacked` (-4) ist von `combat_lost` (-5) getrennt, weil ein Angriff die Bevölkerung auch dann verunsichert, wenn die Verteidigung erfolgreich war. Beide Effekte können in einem Tick summieren (Angriff + Verlust = -9).
+- `trade_blocked` (-3) macht Handelsblockaden als Kriegsstrategie spürbar — nicht nur wirtschaftlich, sondern auch moralisch.
+
+> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_attacked` + `combat_lost` + `war_declared` in einem Tick summiert sich zu -17. Das kann eine neutrale Kolonie (0) direkt in den "Unruhig"-Bereich (-21) kippen. Das ist designtechnisch akzeptabel (Kriege sind moralische Katastrophen), aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
+
+> ⚠️ BALANCE CONCERN: Event-Moraleffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
+
+### Effekte der Moral auf die Kolonie
+
+Moral beeinflusst drei Spielparameter. Alle Effekte werden als **Multiplikatoren** auf die Basiswerte angewendet, nicht als additive Boni. Das verhindert, dass Moral zu einer dominanten Wachstumsstrategie wird.
+
+#### Ressourcenproduktion
+
+```
+produzierte_menge_effektiv = produzierte_menge × production_multiplier(moral)
+```
+
+| Moralbereich | Multiplikator |
+|--------------|---------------|
+| +61 bis +100 | 1.20 (+20%) |
+| +21 bis +60 | 1.10 (+10%) |
+| -20 bis +20 | 1.00 (neutral) |
+| -21 bis -60 | 0.85 (-15%) |
+| -61 bis -100 | 0.70 (-30%) |
+
+Angewendet auf alle Produktionsgebäude (oremine, silicatemine, waterextractor und zukünftige).
+
+#### AP-Multiplikator
+
+```
+AP_effektiv = AP_basis × ap_multiplier(moral)
+```
+
+| Moralbereich | Multiplikator |
+|--------------|---------------|
+| +61 bis +100 | 1.10 (+10%) |
+| +21 bis +60 | 1.05 (+5%) |
+| -20 bis +20 | 1.00 (neutral) |
+| -21 bis -60 | 0.90 (-10%) |
+| -61 bis -100 | 0.80 (-20%) |
+
+Der AP-Bonus bei hoher Moral ist bewusst kleiner als der Produktionsbonus — AP ist die knappste Ressource und soll nicht durch Moral-Stacking zu stark erhöht werden.
+
+> ⚠️ BALANCE CONCERN: Ein AP-Malus von -20% bei Aufruhr macht Krisensituationen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay → mehr Moral-Malus). Diese Spirale ist designtechnisch vertretbar (Entropie als Spielprinzip), aber es muss einen Ausweg geben. Der Ausweg ist der Bau von Moralgebäuden, der trotz AP-Malus möglich bleibt (die Malus-Grenze liegt bei 0.80, nicht bei 0).
+
+#### Supply-Cap
+
+Moral beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separater Constraint (Wohnkomplexe, CC) und soll nicht durch ein weiteres System kompliziert werden. Beide Systeme bleiben orthogonal.
+
+### Schema-Bedarf
+
+**Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Moralwert als Integer im Bereich -100 bis +100. Das ist ausreichend — Moral ist ein Zustand, keine akkumulierte Menge.
+
+**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `moral`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+
+### Tick-Integration
+
+Moral wird als neuer **Tick-Schritt 8b** nach der Ressourcenproduktion berechnet:
+
+| Schritt | Beschreibung |
+|---------|-------------|
+| 8 | Resource Generation — Rohstoffproduktion (mit altem Moral-Multiplikator) |
+| **8b** | **Moral Calculation** — Moral neu berechnen, `colony_resources` (res_id=12) aktualisieren |
+| 9 | Advisor Ticks |
+
+Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Moral-Wert von Tick N-1. Der neue Moralwert gilt erst ab Tick N+1. Das verhindert zirkuläre Abhängigkeiten.
+
+### Implementierungsschritte
+
+1. `config/game.php` — `moral`-Block hinzufügen (alle Werte aus obiger Tabelle)
+2. `app/Services/MoralService.php` — Service mit Methode `calculate(int $colonyId): int`
+3. `app/Services/ResourceService.php` (oder TickService) — `MoralService::calculate()` in Schritt 8b aufrufen und `colony_resources` (res_id=12) schreiben
+4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `moral_multiplier` erweitern
+5. Produktionslogik (`config/game.php → production`) — Moral-Multiplikator anwenden
+6. UI: Moral-Anzeige in der Ressourcenleiste (existiert als resource_id=12 bereits)
+
+### Abgrenzung zu Phase 3
+
+Das beschriebene System ist eine bewusst einfache Phase-2-Mechanik. In Phase 3 (Neukonzeption / Solo-Highscore) kann Moral weiterentwickelt werden zu:
+- Bevölkerungszufriedenheit mit eigenem Bevölkerungswert
+- Revolutionsrisiko bei anhaltender Krise
+- Fraktions-spezifische Moralmodifikatoren
+
+Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bis +100) in `colony_resources` stabil bleibt.
 
 ---
 

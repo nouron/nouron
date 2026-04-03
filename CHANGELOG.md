@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-03 (Flottenoperationen Phase 2)
+
+- **Fleet CRUD:** Flotten können jetzt erstellt (POST `/fleet`) und gelöscht (DELETE `/fleet/{id}`) werden. Erstellung erfordert einen verfügbaren Pilot-Advisor (Kommandant) — dieser wird automatisch zugewiesen. Beim Löschen kehrt der Kommandant zur Kolonie zurück.
+- **Order-Erstellung:** Spieler können Move-, Trade- und Attack-Orders über das Fleet-Config-UI erteilen (POST `/fleet/{id}/orders`). Move-Orders sind auf intra-System-Bewegung beschränkt (Phase-3-Vorbehalt für interstellare Reisen mit Wurmloch/Sternentor-Mechanik).
+- **Multi-Tick-Bewegung:** Flotten bewegen sich tick-basiert mit der Geschwindigkeit des langsamsten Schiffs. `FleetService::addOrder()` legt für jeden Tick des Weges eine Order an.
+- **Bug-Fixes:** serialize/json-Mismatch in `_storePathInDb()` behoben (Orders konnten nie verarbeitet werden); `startTick=0`-Fehler in `getPath()`-Aufruf korrigiert; Route-Inkonsistenz zwischen `fleets.js` und `web.php` behoben.
+- **Pending Orders** werden in der Fleet-Übersicht angezeigt. GDD §8 und §12 um Bewegungs-Mechanik und Kommandant-Modell (Option A) ergänzt. 17 neue Tests.
+
 ## 2026-04-02 (Supply-Cap-Enforcement)
 
 - **Over-Cap-Decay:** Wenn eine Kolonie ihren Supply-Cap überschreitet, verfallen Gebäude und Forschungen mit 2× Decay-Rate. Spieler werden so zum Abbau gedrängt ohne erzwungene Zerstörung.
