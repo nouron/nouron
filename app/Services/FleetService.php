@@ -100,8 +100,10 @@ class FleetService
             }
         }
 
-        $coords = $fleet->getCoords();
-        $path   = $this->galaxyService->getPath($coords, $destination, 1);
+        $coords      = $fleet->getCoords();
+        $speed       = $this->calcFleetSpeed($fleetId);
+        $currentTick = $this->tickService->getTickCount();
+        $path        = $this->galaxyService->getPath($coords, $destination, $speed, $currentTick + 1);
 
         // Navigation-AP check: each tick in the path costs (order_cost) AP.
         // The final tick carries the actual $order; all preceding ticks are 'move'.
@@ -146,10 +148,10 @@ class FleetService
                     'fleet_id'    => $fleetId,
                     'tick'        => $tickNr,
                     'order'       => strtolower($tmpOrder),
-                    'coordinates' => serialize($tmpCoords),
+                    'coordinates' => json_encode($tmpCoords),
                 ];
                 if ($i === $cnt && $additionalData !== null) {
-                    $row['data'] = serialize($additionalData);
+                    $row['data'] = json_encode($additionalData);
                 }
                 DB::table('fleet_orders')->insert($row);
                 $i++;
@@ -460,6 +462,24 @@ class FleetService
             'ship'      => $this->_gatherFleetTechnologyInformations($fleetId, 'ship'),
             'personell' => $this->_gatherFleetTechnologyInformations($fleetId, 'personell'),
         ];
+    }
+
+    /**
+     * Calculate the effective movement speed of a fleet.
+     *
+     * The fleet moves at the speed of its slowest ship (min moving_speed).
+     * Falls back to 1 if the fleet has no ships or all ships have null moving_speed.
+     */
+    private function calcFleetSpeed(int $fleetId): int
+    {
+        $minSpeed = DB::table('fleet_ships')
+            ->join('ships', 'ships.id', '=', 'fleet_ships.ship_id')
+            ->where('fleet_ships.fleet_id', $fleetId)
+            ->where('fleet_ships.is_cargo', 0)
+            ->whereNotNull('ships.moving_speed')
+            ->min('ships.moving_speed');
+
+        return max(1, (int) $minSpeed);
     }
 
     private function _gatherFleetTechnologyInformations(int $fleetId, string $type): array

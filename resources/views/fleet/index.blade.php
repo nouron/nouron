@@ -40,14 +40,29 @@
                                     @endif
                                 </td>
                                 <td>
-                                    {{-- TODO: show pending fleet orders here --}}
-                                    <span class="text-muted small">—</span>
+                                    @php $nextOrder = $pendingOrders->get($fleet->id)?->first() @endphp
+                                    @if($nextOrder)
+                                        <span class="text-muted small">
+                                            @if($nextOrder->order === 'move')
+                                                <i class="bi bi-arrow-right-circle"></i>
+                                                @php $c = json_decode($nextOrder->coordinates, true) @endphp
+                                                Bewegt sich → ({{ $c[0] ?? '?' }},{{ $c[1] ?? '?' }}) [Tick {{ $nextOrder->tick }}]
+                                            @elseif($nextOrder->order === 'trade')
+                                                <i class="bi bi-bag"></i> Handelt [Tick {{ $nextOrder->tick }}]
+                                            @elseif($nextOrder->order === 'attack')
+                                                <i class="bi bi-lightning"></i> Greift an [Tick {{ $nextOrder->tick }}]
+                                            @else
+                                                {{ ucfirst($nextOrder->order) }} [Tick {{ $nextOrder->tick }}]
+                                            @endif
+                                        </span>
+                                    @else
+                                        <span class="text-muted small">—</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    <form method="POST" action="{{ route('fleet.index') }}" class="d-inline">
+                                    <form method="POST" action="{{ route('fleet.destroy', $fleet->id) }}" class="d-inline">
                                         @csrf
                                         @method('DELETE')
-                                        <input type="hidden" name="fleet_id" value="{{ $fleet->id }}">
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
                                                 title="Flotte löschen"
                                                 onclick="return confirm('Flotte \'{{ addslashes($fleet->fleet) }}\' wirklich löschen?')">
@@ -62,13 +77,14 @@
                         <tfoot>
                             <tr>
                                 <td colspan="4">
-                                    {{-- Create new fleet form --}}
-                                    <form method="POST" action="{{ route('fleet.index') }}" class="d-flex gap-2 align-items-center flex-wrap">
+                                    @if($errors->has('fleet'))
+                                        <div class="alert alert-danger py-1 mb-2 small">{{ $errors->first('fleet') }}</div>
+                                    @endif
+                                    <form method="POST" action="{{ route('fleet.store') }}" class="d-flex gap-2 align-items-center flex-wrap">
                                         @csrf
-                                        {{-- Coords default to 0,0,0 — controller will use active colony coords --}}
-                                        <input type="hidden" name="coords" value="[0,0,0]">
                                         <input type="text" name="fleet" class="form-control form-control-sm"
-                                               placeholder="Name der neuen Flotte" style="max-width:200px;" required>
+                                               placeholder="Name der neuen Flotte" style="max-width:200px;" required
+                                               value="{{ old('fleet') }}">
                                         <button type="submit" class="btn btn-sm btn-primary">
                                             <i class="bi bi-plus-circle"></i> Neue Flotte
                                         </button>
