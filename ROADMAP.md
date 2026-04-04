@@ -293,12 +293,67 @@ tests/
 ## Phase 2: Spielablauf stabilisieren
 *(nach Abschluss Phase 1b)*
 
-- Tick-System und `fleet_orders`-Verarbeitung
-- AP-System vollständig testen und ggf. reparieren
-- Handelsrouten (Trade-Modul)
-- Flottenoperationen (Bewegung, Kampf, Kolonisierung)
-- Login/Registrierung und Auth-System
-- Flash-Messenger in Formularen
+**Designklarstellungen:**
+- Jeder Spieler hat genau **eine Kolonie** — kein Kolonisierungsfeature
+- Kämpfe finden ausschließlich als **PvP-Schiffskämpfe** statt (Schiffe vs. Schiffe)
+- Alle anderen Interaktionen (Gebäude, Forschung, Produktion, Handel) sind **PvE** (Player vs. Environment)
+- Es gibt keine Angriffe auf Kolonien
+
+---
+
+### Prio 1: Kritische Bugs beheben
+
+| Problem | Ort | Aufwand |
+|---|---|---|
+| `PersonellService::hire` — `$this->resourcesService` nicht deklariert → Fatal Error wenn `dev_mode=false` | `app/Services/Techtree/PersonellService.php` | Klein |
+
+---
+
+### Prio 2: Fehlende UI für vorhandene Services
+
+Die folgenden Services sind implementiert, aber ohne UI — Spieler können diese Funktionen nicht nutzen:
+
+- [ ] **Advisor-Management-UI** — Route `/advisors`, Controller, Blade-View für hire/fire/assign
+  - `PersonellService` (hire, fire, assignToFleet, unassignFromFleet) ist fertig
+- [ ] **Colony-UI** — Route `/colony`, Controller, Blade-View für Koloniewechsel und Umbenennung
+  - `ColonyService` ist fertig
+- [ ] **Forschungshandel-View** — Route `/trade/researches`, Controller-Methoden, Blade-View
+  - `TradeGateway::addResearchOffer/removeResearchOffer` ist fertig
+- [ ] **User-Profil / Einstellungen** — Passwort ändern, Display Name ändern
+  - aktuell nur TODO-Platzhalter in `resources/views/user/settings.blade.php`
+
+---
+
+### Prio 3: Spielmechaniken vervollständigen
+
+- [ ] **Laravel Scheduler einrichten** — `game:tick` Artisan-Command muss automatisch ausgeführt werden
+  - `app/Console/Kernel.php` um Schedule-Eintrag erweitern (täglich im Berechnungsfenster 3–4 Uhr)
+  - `TickService::calculationIsRunning()` ist bereits implementiert
+- [ ] **Interstellare Flottenbewegung freischalten** — aktuell explizit im `FleetController::storeOrder` gesperrt
+  - `GalaxyService::getPath` unterstützt systemübergreifende Pfadberechnung bereits
+- [ ] **Fleet-Orders im UI vervollständigen** — `hold`, `convoy`, `defend`, `join`, `devide` sind in `FleetService::addOrder` implementiert, aber `storeOrder`-Validator lässt nur `move|trade|attack` durch
+- [ ] **Flotten auf Galaxiekarte** — Layer 3 in `GalaxyController::getMapData` ist vorbereitet, aber nie befüllt
+
+---
+
+### Prio 4: Spielablauf testen & stabilisieren
+
+- [ ] Tick-System und `fleet_orders`-Verarbeitung End-to-End testen
+- [ ] AP-System vollständig testen (Vergabe, Verbrauch, Moral-Multiplikator)
+- [ ] Handelsrouten (Ressourcen + Forschungen)
+- [ ] Flottenoperationen (Bewegung, PvP-Schiffskampf)
+- [ ] Flash-Messenger in Formularen
+- [ ] Login/Registrierung und Auth-System
+
+---
+
+### Bekannte Lücken (kein Code vorhanden)
+
+| System | Beschreibung |
+|---|---|
+| **Politiksystem / Diplomatie** | `innn_message_types.relationship_effect` ist im Schema vorhanden, wird aber nirgends ausgewertet. Allianz/Krieg/Frieden: keine Logik. Moral-Events `war_declared` und `treaty_signed` sind in `config/game.php` definiert, aber nie gefeuert. |
+
+---
 
 ## Phase 3: Neukonzeption
 *(nach Phase 2, noch zu definieren)*
