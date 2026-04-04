@@ -12,6 +12,7 @@ use App\Models\FleetResource;
 use App\Models\FleetShip;
 use App\Models\UserResource;
 use App\Services\EventService;
+use App\Services\MoralService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Console\Command;
@@ -31,7 +32,8 @@ use Illuminate\Support\Facades\DB;
  *  5. Ship decay          — decrement fleet_ships.status_points; combat fleets × 2; remove at ≤ 0
  *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
  *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
- *  8. Resource generation — produce colony resources per industry building level
+ *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
+ *  8b. Moral calculation  — recalculate colony moral and store in colony_resources (resource_id=12)
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
  */
 class GameTick extends Command
@@ -45,6 +47,7 @@ class GameTick extends Command
     public function __construct(
         private readonly TickService      $tickService,
         private readonly EventService     $eventService,
+        private readonly MoralService     $moralService,
         private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct();
@@ -81,8 +84,11 @@ class GameTick extends Command
             $n = $this->calculateSupply();
             $this->line("  Users supply updated:     {$n}");
 
-            $n = $this->generateResources();
+            $n = $this->generateResources($tick);
             $this->line("  Colonies with resources:  {$n}");
+
+            $n = $this->calculateMoral($tick);
+            $this->line("  Colonies moral updated:   {$n}");
 
             $n = $this->incrementAdvisorTicks();
             $this->line("  Advisors ticked:          {$n}");
@@ -286,10 +292,37 @@ class GameTick extends Command
                 ]);
             }
 
+            // Fire moral events based on combat outcome
+            $attackerColonyId = $this->getColonyIdByUserId($attacker->user_id);
+            $defenderColonyId = $this->getColonyIdByUserId($defenderUserId);
+
+            if ($attackerColonyId) {
+                $this->moralService->fireEvent(
+                    $attackerColonyId,
+                    $attackerPower >= $defenderPower ? 'combat_won' : 'combat_lost',
+                    $tick
+                );
+            }
+            if ($defenderColonyId) {
+                $this->moralService->fireEvent($defenderColonyId, 'colony_attacked', $tick);
+                $this->moralService->fireEvent(
+                    $defenderColonyId,
+                    $defenderPower >= $attackerPower ? 'combat_won' : 'combat_lost',
+                    $tick
+                );
+            }
+
             $processed++;
         }
 
         return $processed;
+    }
+
+    private function getColonyIdByUserId(int $userId): ?int
+    {
+        return DB::table('glx_colonies')
+            ->where('user_id', $userId)
+            ->value('id');
     }
 
     private function calcFleetPower(int $fleetId, array $shipPower): int
@@ -512,7 +545,7 @@ class GameTick extends Command
 
     // ── 8. Resource generation ───────────────────────────────────────────────
 
-    private function generateResources(): int
+    private function generateResources(int $tick): int
     {
         $productionConfig = config('game.production', []);
         if (empty($productionConfig)) {
@@ -523,6 +556,11 @@ class GameTick extends Command
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
+            // Apply moral production multiplier based on the colony's CURRENT moral
+            // (stored from the previous tick's moral calculation — no circular dependency).
+            $moral      = $this->moralService->getMoral($colony->id);
+            $multiplier = $this->moralService->getProductionMultiplier($moral);
+
             foreach ($productionConfig as $buildingId => $outputs) {
                 $building = DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)
@@ -534,12 +572,25 @@ class GameTick extends Command
                 }
 
                 foreach ($outputs as $resourceId => $ratePerLevel) {
-                    $yield = $building->level * $ratePerLevel;
+                    $yield = (int) round($building->level * $ratePerLevel * $multiplier);
                     ColonyResource::where('colony_id', $colony->id)
                         ->where('resource_id', $resourceId)
                         ->update(['amount' => DB::raw("amount + {$yield}")]);
                 }
             }
+        }
+
+        return $colonies->count();
+    }
+
+    // ── 8b. Moral calculation ─────────────────────────────────────────────────
+
+    private function calculateMoral(int $tick): int
+    {
+        $colonies = Colony::all();
+
+        foreach ($colonies as $colony) {
+            $this->moralService->calculateAndStore($colony, $tick);
         }
 
         return $colonies->count();

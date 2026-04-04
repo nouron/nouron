@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-04 (Moralsystem Phase 2)
+
+- **MoralService:** Neuer Service berechnet Kolonial-Moral (-100..+100) aus statischen Faktoren (Gebäude, Forschungen, Schiffe) und One-Shot-Events (`moral_events`-Tabelle). Events desselben Typs im selben Tick stacken nicht — nur der stärkste Wert zählt.
+- **Produktionsmultiplikator:** `GameTick::generateResources()` wendet den Moral-Multiplikator an (0.70× Aufruhr .. 1.20× Euphorisch). Schritt 8b berechnet und speichert Moral nach der Ressourcengenerierung.
+- **AP-Multiplikator:** `PersonellService::getTotalActionPoints()` skaliert colony-scoped AP mit dem Moral-Multiplikator (0.80× .. 1.10×). Fleet-scoped Navigation-AP bleibt unverändert.
+- **Trade-Events:** `TradeGateway::acceptResourceOffer()` feuert `trade_success`-Event für Käufer und Verkäufer. Combat-Events (`combat_won`, `combat_lost`, `colony_attacked`) werden in `GameTick::processCombatOrders()` gefeuert.
+- **GDD §13** dokumentiert das vollständige Design inkl. Bänder, Einflussfaktoren, Balance-Entscheidungen (Schiffs-Cap ±30, Event-No-Stacking). `lang/de/moral.php` mit Band- und Event-Bezeichnungen. 53 neue Tests.
+
 ## 2026-04-03 (Flottenoperationen Phase 2)
 
 - **Fleet CRUD:** Flotten können jetzt erstellt (POST `/fleet`) und gelöscht (DELETE `/fleet/{id}`) werden. Erstellung erfordert einen verfügbaren Pilot-Advisor (Kommandant) — dieser wird automatisch zugewiesen. Beim Löschen kehrt der Kommandant zur Kolonie zurück.

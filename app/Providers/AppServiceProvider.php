@@ -6,6 +6,7 @@ use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\GalaxyService;
 use App\Services\MessageService;
+use App\Services\MoralService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
@@ -36,15 +37,20 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(GalaxyService::class, GalaxyService::class);
         $this->app->bind(MessageService::class, MessageService::class);
         $this->app->bind(ResourcesService::class, ResourcesService::class);
+        $this->app->bind(MoralService::class, fn($app) => new MoralService(
+            $app->make(TickService::class),
+        ));
         $this->app->bind(TradeGateway::class, fn($app) => new TradeGateway(
             $app->make(ColonyService::class),
+            $app->make(MoralService::class),
             $app->make(PersonellService::class),
         ));
         $this->app->bind(FleetService::class, FleetService::class);
 
-        // Techtree services — PersonellService has no dependency on itself
+        // Techtree services
         $this->app->bind(PersonellService::class, fn($app) => new PersonellService(
             $app->make(TickService::class),
+            $app->make(MoralService::class),
             $app->make(ResourcesService::class),
         ));
         $this->app->bind(BuildingService::class, fn($app) => new BuildingService(
