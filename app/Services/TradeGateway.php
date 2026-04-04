@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\TradeResearchView;
 use App\Models\TradeResourceView;
+use App\Services\MoralService;
 use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -33,7 +34,8 @@ use Illuminate\Support\Facades\DB;
 class TradeGateway
 {
     public function __construct(
-        private readonly ColonyService  $colonyService,
+        private readonly ColonyService    $colonyService,
+        private readonly MoralService     $moralService,
         private readonly PersonellService $personellService,
     ) {}
 
@@ -427,6 +429,10 @@ class TradeGateway
             if (!config('game.dev_mode')) {
                 $this->personellService->lockActionPoints('economy', $buyerColonyId, 1);
             }
+
+            // 7b. Fire moral events for both parties (scheduled for next tick).
+            $this->moralService->fireEvent($buyerColonyId,  'trade_success');
+            $this->moralService->fireEvent($sellerColonyId, 'trade_success');
 
             // 8. Delete the offer
             DB::table('trade_resources')

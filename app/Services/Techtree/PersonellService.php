@@ -4,6 +4,7 @@ namespace App\Services\Techtree;
 
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
+use App\Services\MoralService;
 use App\Services\TickService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,10 @@ class PersonellService
 
     const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
-    public function __construct(private readonly TickService $tickService) {}
+    public function __construct(
+        private readonly TickService  $tickService,
+        private readonly MoralService $moralService,
+    ) {}
 
     // ── AP calculation ────────────────────────────────────────────────────────
 
@@ -52,7 +56,16 @@ class PersonellService
             $query->where('colony_id', $scopeId);
         }
 
-        return $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
+        $baseAp = $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
+
+        // Apply moral AP multiplier for colony-scoped types.
+        if ($scope === 'colony') {
+            $moral      = $this->moralService->getMoral($scopeId);
+            $multiplier = $this->moralService->getApMultiplier($moral);
+            return (int) round($baseAp * $multiplier);
+        }
+
+        return $baseAp;
     }
 
     public function getAvailableActionPoints(string $type, int $scopeId): int
