@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-04 (INNN Ereignisse — Polishing)
+
+- **Platzhalter-Fix:** `tech_id` in Event-Parametern wird jetzt gegen Building → Research → Ship aufgelöst (vorher nur Building → "Tech #34" bei Forschungs-/Schiff-Events).
+- **Fleet-Name:** Fleet-Events zeigen jetzt den Fleet-Namen statt "Flotte #X".
+- **Null-Guards:** `colony_id=0`, `attacker_id=0`, `defender_id=0` zeigen "unbekannt" statt "#0". Alle Platzhalter haben Fallback-Defaults — `:placeholder` kann nie mehr roh erscheinen.
+- **Texte:** `techtree_level_down` sagt "Struktur" statt "Gebäude" (gilt auch für Schiff- und Forschungs-Verfall). `galaxy_combat` leicht umformuliert.
+- **Layout:** Desktop-Ansicht nutzt max. ~80% Seitenbreite (`col-md-10 col-xl-8`). Area-Badge durch kontextuelles Icon ersetzt.
+
 ## 2026-04-04 (Tech-Config-Refactoring)
 
 - **Zentrale Config-Dateien:** `config/buildings.php`, `config/ships.php`, `config/techs.php`, `config/advisors.php` eingeführt als einzige Quelle für alle per-Entity-Mechanik-Werte (Supply-Cost, Moral, Decay-Rate, Credits). Ersetzt die zersplitterten `game.moral.*`- und `game.supply.*`-Sektionen.
