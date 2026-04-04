@@ -352,8 +352,27 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 | System | Beschreibung |
 |---|---|
 | **Politiksystem / Diplomatie** | `innn_message_types.relationship_effect` ist im Schema vorhanden, wird aber nirgends ausgewertet. Allianz/Krieg/Frieden: keine Logik. Moral-Events `war_declared` und `treaty_signed` sind in `config/game.php` definiert, aber nie gefeuert. |
+| **Aktionslog** | Kein persistentes Log über Spieleraktionen (Gebäude gebaut, Flotte bewegt, Handel abgeschlossen etc.) — weder im Backend noch im UI. |
 
 ---
 
 ## Phase 3: Neukonzeption
 *(nach Phase 2, noch zu definieren)*
+
+### Vorgemerkte Themen für Phase 3
+
+Die folgenden Punkte sind bewusst noch nicht detailliert ausgearbeitet — sie erfordern entweder Konzeptarbeit oder setzen einen stabilen Spielablauf aus Phase 2 voraus.
+
+#### Content & Balancing
+
+- [ ] **Rework Gebäude & Forschungen** — Überprüfung und Überarbeitung von Kosten, Produktionswerten, Voraussetzungsketten und Balance aller 25 Gebäude und 10 Forschungen
+
+#### UI & Darstellung
+
+- [ ] **Frontend/UI-Umbau** — Grundsätzliche Überarbeitung der UI-Struktur und Navigation; konkrete Ziele noch zu definieren
+- [ ] **UI-Details & Artwork** — Icons, Illustrationen, Hintergrundgrafiken, Fraktions-/Rassen-Artwork; konkrete Assets noch zu definieren
+- [ ] **Ingame-Almanach** — Nachschlagewerk für Spielregeln, Gebäude, Forschungen, Einheiten, Fraktionen und Spielwelt-Lore; zugänglich aus dem Spiel heraus
+
+#### Onboarding
+
+- [ ] **Onboarding / Tutorial im UI** — Geführte Einführung für neue Spieler; erklärt Ressourcen, Techtree, Flotten und Handelsmechaniken schrittweise im Spiel; konkrete Form (interaktiv, Tooltip-gestützt, eigenständige Tour) noch zu entscheiden
