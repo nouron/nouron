@@ -508,8 +508,8 @@ class GameTick extends Command
      */
     private function calculateSupply(): int
     {
-        $capCC      = (int) config('game.supply.cap_commandcenter', 15);
-        $capHousing = (int) config('game.supply.cap_housingcomplex', 8);
+        $capCC      = (int) config('buildings.commandCenter.supply_cap', 15);
+        $capHousing = (int) config('buildings.housingComplex.supply_cap', 8);
         $capMax     = (int) config('game.supply.cap_max', 200);
 
         $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
