@@ -31,27 +31,16 @@ return [
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
-    // supply_cap = cap_commandcenter (flat) + count(housingComplex) × cap_housingcomplex
-    // Military ships cost significantly more than transporters (see GDD §1.1 and §6).
+    // Per-entity supply_cap and supply_cost values live in config/buildings.php,
+    // config/ships.php, config/techs.php and config/advisors.php.
     'supply' => [
-        'cap_commandcenter'  => 15,   // building_id 25 — flat bonus, not per level
-        'cap_housingcomplex' => 8,    // building_id 28 — per unit (level irrelevant)
-        'cap_max'            => 200,  // absolute hard cap
-        'cost_advisor'       => 2,    // supply per active advisor
-        'ship_cost' => [
-            37 => 8,   // fighter1       — military
-            29 => 14,  // frigate1       — military
-            49 => 25,  // battlecruiser1 — military (Phase 3: TBD if buildable)
-            47 => 2,   // smallTransporter
-            83 => 4,   // mediumTransporter
-            84 => 7,   // largeTransporter
-        ],
+        'cap_max'      => 200,  // absolute hard cap across the whole colony
+        'cost_advisor' => 2,    // supply per active advisor (same for all types)
     ],
 
-    // Building decay: status_points decremented per tick per colony building.
-    // When status_points hits 0 the building loses one level and status_points resets.
+    // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
+    // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'rate'           => 1,    // fallback rate (buildings, until per-type rates are migrated)
         'combat_factor'  => 2,    // ship decay multiplier in a combat tick
         'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
     ],
@@ -112,47 +101,11 @@ return [
         'ap_cost_threshold' => 1000,  // divisor: amount × price / threshold = AP cost
     ],
 
-    // Moral system — all values used by MoralService::calculate() (see GDD §13).
-    // Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + tax + events, -100, +100)
+    // Moral system — formula and multiplier bands (see GDD §13).
+    // Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + events, -100, +100)
+    // Per-entity moral_per_lv / moral_per_unit values live in config/buildings.php,
+    // config/techs.php and config/ships.php — MoralService reads from those files.
     'moral' => [
-        // Buildings: building_id => moral_per_level (only buildings with status_points > 0 count)
-        'buildings' => [
-            32 =>  2,   // temple
-            45 =>  2,   // parc
-            46 =>  3,   // hospital
-            48 =>  1,   // public_security
-            50 =>  2,   // denkmal
-            51 =>  2,   // university
-            53 =>  3,   // stadium
-            56 =>  2,   // museum
-            65 =>  1,   // recyclingStation
-            52 => -1,   // bar
-            54 => -2,   // casino
-            55 => -3,   // prison
-            64 => -1,   // wastedisposal
-            66 => -2,   // secretOps
-            68 => -1,   // militarySpaceyard
-        ],
-        // Researches: research_id => moral_per_level
-        'researches' => [
-            33 =>  1,   // biology
-            72 =>  2,   // medicalScience
-            79 =>  1,   // diplomacy
-            80 =>  1,   // politicalScience
-            81 => -2,   // military  (raised from -1: see GDD §13 rationale)
-            34 =>  1,   // languages
-        ],
-        // Ships: ship_id => moral_per_ship (applied to colony_ships.amount)
-        // Military ships cause unrest; economy/transport ships signal prosperity.
-        // The total ship contribution is capped at ±30 before entering the sum.
-        'ships' => [
-            37 => -1,   // fighter1        — military
-            29 => -2,   // frigate1        — military
-            49 => -4,   // battlecruiser1  — military
-            47 =>  1,   // smallTransporter  — economy
-            83 =>  1,   // mediumTransporter — economy
-            84 =>  2,   // largeTransporter  — economy
-        ],
         // Hard cap for total ship moral contribution (before global clamp).
         'ships_cap' => 30,
         // Production multipliers by moral band (see GDD §13 "Effekte der Moral").

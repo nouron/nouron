@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-04 (Tech-Config-Refactoring)
+
+- **Zentrale Config-Dateien:** `config/buildings.php`, `config/ships.php`, `config/techs.php`, `config/advisors.php` eingeführt als einzige Quelle für alle per-Entity-Mechanik-Werte (Supply-Cost, Moral, Decay-Rate, Credits). Ersetzt die zersplitterten `game.moral.*`- und `game.supply.*`-Sektionen.
+- **Decay-Kalibrierung:** Alle Decay-Raten neu kalibiert für 1 Tick = 24 Stunden. Bisherige Werte (1-Tick/Stunde-Auslegung) ergaben 100–400 Tage Verfallszyklen; neue Werte: 7 Tage (Bar/Kasino) bis 60 Tage (Kommandozentrale/Denkmal). Migration `2026_04_04_000001_recalibrate_decay_rates` aktualisiert DB-Tabellen.
+- **Lokalisierung:** `lang/de/buildings.php`, `ships.php`, `techs.php`, `advisors.php` mit deutschen Namen und Tooltip-Beschreibungen für alle Spielentitäten.
+- **MoralService-Refactoring:** Liest `moral_per_lv`/`moral_per_unit` jetzt aus den neuen Config-Dateien statt aus `game.moral.*`. `GameTick` referenziert Supply-Cap-Werte über `config('buildings.*.supply_cap')`.
+
 ## 2026-04-04 (Moralsystem Phase 2)
 
 - **MoralService:** Neuer Service berechnet Kolonial-Moral (-100..+100) aus statischen Faktoren (Gebäude, Forschungen, Schiffe) und One-Shot-Events (`moral_events`-Tabelle). Events desselben Typs im selben Tick stacken nicht — nur der stärkste Wert zählt.

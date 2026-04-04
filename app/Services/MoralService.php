@@ -145,7 +145,8 @@ class MoralService
 
     private function buildingContribution(int $colonyId): int
     {
-        $cfg = config('game.moral.buildings', []);
+        // Build [id => moral_per_lv] map from config/buildings.php
+        $cfg = collect(config('buildings', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
@@ -165,7 +166,8 @@ class MoralService
 
     private function researchContribution(int $colonyId): int
     {
-        $cfg = config('game.moral.researches', []);
+        // Build [id => moral_per_lv] map from config/techs.php
+        $cfg = collect(config('techs', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
@@ -184,7 +186,8 @@ class MoralService
 
     private function shipContribution(int $colonyId): int
     {
-        $cfg = config('game.moral.ships', []);
+        // Build [id => moral_per_unit] map from config/ships.php
+        $cfg = collect(config('ships', []))->pluck('moral_per_unit', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
