@@ -6,6 +6,7 @@ use App\Http\Controllers\Galaxy\GalaxyController;
 use App\Http\Controllers\INNN\MessageController;
 use App\Http\Controllers\Resources\JsonController as ResourcesController;
 use App\Http\Controllers\Fleet\FleetController;
+use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\UserController;
@@ -93,6 +94,14 @@ Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
     Route::post('/json/addToFleet/{id}',   [FleetController::class, 'addToFleet'])->name('json.addtofleet')->where('id', '[0-9]+');
     Route::get('/json/getFleetTechnologies/{id}', [FleetController::class, 'getFleetTechnologies'])->name('json.technologies')->where('id', '[0-9]+');
     Route::get('/json/getFleetResources/{id}',    [FleetController::class, 'getFleetResources'])->name('json.resources')->where('id', '[0-9]+');
+});
+
+// ── Advisors ──────────────────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function () {
+    Route::get('/',          [AdvisorController::class, 'index'])->name('index');
+    Route::post('/hire',     [AdvisorController::class, 'hire'])->name('hire');
+    Route::delete('/{id}',   [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
 });
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────

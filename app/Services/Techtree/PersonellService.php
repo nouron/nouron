@@ -5,6 +5,7 @@ namespace App\Services\Techtree;
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
 use App\Services\MoralService;
+use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -34,8 +35,9 @@ class PersonellService
     const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
     public function __construct(
-        private readonly TickService  $tickService,
-        private readonly MoralService $moralService,
+        private readonly TickService      $tickService,
+        private readonly MoralService     $moralService,
+        private readonly ResourcesService $resourcesService,
     ) {}
 
     // ── AP calculation ────────────────────────────────────────────────────────
