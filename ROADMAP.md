@@ -326,6 +326,8 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 
 ### Prio 3: Spielmechaniken vervollständigen
 
+- [x] **`moving_speed` für Schiffe gesetzt** — `config/ships.php` enthält nun Werte (4/3/2/3/2/1); `FleetService::calcFleetSpeed()` war bereits korrekt implementiert
+- [ ] **`game:sync-techs` implementieren** — Artisan-Command zum Synchronisieren von `config/ships.php` → `ships` DB-Tabelle (moving_speed, decay_rate, supply_cost); aktuell müssen Werte manuell in der DB gesetzt werden
 - [ ] **Laravel Scheduler einrichten** — `game:tick` Artisan-Command muss automatisch ausgeführt werden
   - `app/Console/Kernel.php` um Schedule-Eintrag erweitern (täglich im Berechnungsfenster 3–4 Uhr)
   - `TickService::calculationIsRunning()` ist bereits implementiert
@@ -333,6 +335,7 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
   - `GalaxyService::getPath` unterstützt systemübergreifende Pfadberechnung bereits
 - [ ] **Fleet-Orders im UI vervollständigen** — `hold`, `convoy`, `defend`, `join`, `devide` sind in `FleetService::addOrder` implementiert, aber `storeOrder`-Validator lässt nur `move|trade|attack` durch
 - [ ] **Flotten auf Galaxiekarte** — Layer 3 in `GalaxyController::getMapData` ist vorbereitet, aber nie befüllt
+- [ ] **Galaxy-Koordinaten-Skalierung prüfen** — bei 1 Tick/Tag muss der Geschwindigkeitsunterschied (speed 1 vs. 4) für Spieler spürbar sein; ggf. Distanzen oder Tick-Fenster anpassen
 
 ---
 
@@ -376,3 +379,13 @@ Die folgenden Punkte sind bewusst noch nicht detailliert ausgearbeitet — sie e
 #### Onboarding
 
 - [ ] **Onboarding / Tutorial im UI** — Geführte Einführung für neue Spieler; erklärt Ressourcen, Techtree, Flotten und Handelsmechaniken schrittweise im Spiel; konkrete Form (interaktiv, Tooltip-gestützt, eigenständige Tour) noch zu entscheiden
+
+---
+
+### Bewusste Design-Entscheidungen (nicht umsetzen)
+
+| Thema | Entscheidung | Begründung |
+|---|---|---|
+| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund — modulare Schiffe würden Spieleraufmerksamkeit in die falsche Richtung lenken. Die 6 Schiffstypen + 4 Attribute (moving_speed, supply, decay, combat_power) erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam und frustrierend. |
+| **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
+| **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
