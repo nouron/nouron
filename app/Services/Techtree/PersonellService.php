@@ -5,6 +5,7 @@ namespace App\Services\Techtree;
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
 use App\Services\MoralService;
+use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -34,8 +35,9 @@ class PersonellService
     const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
     public function __construct(
-        private readonly TickService  $tickService,
-        private readonly MoralService $moralService,
+        private readonly TickService      $tickService,
+        private readonly MoralService     $moralService,
+        private readonly ResourcesService $resourcesService,
     ) {}
 
     // ── AP calculation ────────────────────────────────────────────────────────
@@ -140,22 +142,24 @@ class PersonellService
         $this->validateId($userId);
         $this->validateId($colonyId);
 
-        if (!config('game.dev_mode')) {
-            $cost = (int) config('game.supply.cost_advisor', 2);
-            if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
-                return false;
+        return DB::transaction(function () use ($userId, $personellId, $colonyId, $rank) {
+            if (!config('game.dev_mode')) {
+                $cost = (int) config('game.supply.cost_advisor', 2);
+                if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
+                    return false;
+                }
             }
-        }
 
-        return Advisor::create([
-            'user_id'      => $userId,
-            'personell_id' => $personellId,
-            'colony_id'    => $colonyId,
-            'fleet_id'     => null,
-            'is_commander' => false,
-            'rank'         => max(1, min(3, $rank)),
-            'active_ticks' => 0,
-        ]);
+            return Advisor::create([
+                'user_id'      => $userId,
+                'personell_id' => $personellId,
+                'colony_id'    => $colonyId,
+                'fleet_id'     => null,
+                'is_commander' => false,
+                'rank'         => max(1, min(3, $rank)),
+                'active_ticks' => 0,
+            ]);
+        });
     }
 
     /**

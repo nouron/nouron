@@ -35,6 +35,10 @@
                        href="{{ route('techtree.index') }}"><i class="bi bi-diagram-3"></i> Techtree</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('advisors.*')) active @endif"
+                       href="{{ route('advisors.index') }}"><i class="bi bi-people"></i> Berater</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"
                        href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i> Handel</a>
                 </li>

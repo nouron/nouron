@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-05 (Spielsystemanalyse, Advisor-UI, Schiffsgeschwindigkeit)
+
+- **Systemanalyse:** Vollständige Bestandsaufnahme aller Module und Spielmechaniken. Roadmap Phase 2 mit konkreten Befunden, Prioritäten und Design-Klarstellungen (1 Kolonie/Spieler, nur PvP-Schiffskämpfe, keine Kolonisierung) aktualisiert. Phase 3 mit vorgemerkten Themen (UI-Umbau, Almanach, Onboarding, Gebäude-Rework) strukturiert. Design-Entscheidung gegen modulare Schiffe dokumentiert.
+- **Bugfix `PersonellService::hire`:** `ResourcesService` war nicht im Konstruktor deklariert — hätte bei `dev_mode=false` einen Fatal Error ausgelöst. Zudem Supply-Check jetzt in `DB::transaction()` eingebettet, um Race-Condition bei parallelen Requests zu verhindern.
+- **Advisor-UI:** Neue Seite `/advisors` mit AP-Übersicht (Konstruktion/Forschung/Wirtschaft), Beratertabelle (Typ, Rang, AP/Tick, Rang-Fortschritt, Status) und Hire/Fire-Funktion. Ownership-Check beim Entlassen (verhindert, dass fremde Berater entlassen werden können). Nav-Eintrag "Berater" ergänzt.
+- **Schiffsgeschwindigkeit:** `moving_speed` für alle 6 Schiffstypen in `config/ships.php` gesetzt (Fighter 4, Fregatte/Small Transporter 3, Battlecruiser/Medium Transporter 2, Large Transporter 1). `FleetService::calcFleetSpeed()` war bereits korrekt implementiert.
+
 ## 2026-04-04 (INNN Ereignisse — Polishing)
 
 - **Platzhalter-Fix:** `tech_id` in Event-Parametern wird jetzt gegen Building → Research → Ship aufgelöst (vorher nur Building → "Tech #34" bei Forschungs-/Schiff-Events).
