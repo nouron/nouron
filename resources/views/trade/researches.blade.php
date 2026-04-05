@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Rohstoff-Handel — Nouron')
+@section('title', 'Forschungs-Handel — Nouron')
 
 @section('content')
 <div id="trade">
@@ -10,7 +10,7 @@
 {{-- Filter form --}}
 <div class="row mb-3">
     <div class="col-12">
-        <form method="GET" action="{{ route('trade.resources') }}" class="row g-2 align-items-end">
+        <form method="GET" action="{{ route('trade.researches') }}" class="row g-2 align-items-end">
             <div class="col-auto">
                 <label for="colony_id" class="form-label">Kolonie-ID</label>
                 <input type="number" id="colony_id" name="colony_id" class="form-control form-control-sm"
@@ -30,14 +30,14 @@
                 </button>
             </div>
             <div class="col-auto">
-                <a href="{{ route('trade.resources') }}" class="btn btn-sm btn-outline-secondary">
+                <a href="{{ route('trade.researches') }}" class="btn btn-sm btn-outline-secondary">
                     Zurücksetzen
                 </a>
             </div>
             @if($myColonies->isNotEmpty())
             <div class="col-auto ms-auto">
                 <button type="button" class="btn btn-sm btn-success"
-                        data-bs-toggle="modal" data-bs-target="#modal-create-resource-offer">
+                        data-bs-toggle="modal" data-bs-target="#modal-create-research-offer">
                     <i class="bi bi-plus-circle"></i> Angebot erstellen
                 </button>
             </div>
@@ -70,7 +70,7 @@
 <div class="row">
     <div class="col-12">
         @if($offers->isEmpty())
-            <p class="text-muted fst-italic">Keine Rohstoff-Angebote gefunden.</p>
+            <p class="text-muted fst-italic">Keine Forschungs-Angebote gefunden.</p>
         @else
         <table class="table table-striped table-hover table-sm">
             <thead class="table-dark">
@@ -78,7 +78,7 @@
                     <th>Kolonie</th>
                     <th>Spieler</th>
                     <th>Richtung</th>
-                    <th>Rohstoff</th>
+                    <th>Forschung</th>
                     <th>Menge</th>
                     <th>Preis/Einheit</th>
                     <th>Restriktion</th>
@@ -88,7 +88,7 @@
             <tbody>
                 @foreach($offers as $offer)
                 @php
-                    $res = ($resources ?? [])[$offer->resource_id] ?? null;
+                    $res = ($researches ?? [])[$offer->research_id] ?? null;
                 @endphp
                 <tr>
                     <td>{{ $offer->colony }}</td>
@@ -102,9 +102,9 @@
                     </td>
                     <td>
                         @if($res)
-                            {{ __('resources.' . $res->name) }}
+                            {{ __('techtree.' . $res->name) }}
                         @else
-                            Res#{{ $offer->resource_id }}
+                            Forschung#{{ $offer->research_id }}
                         @endif
                     </td>
                     <td>{{ $offer->amount }}</td>
@@ -112,54 +112,16 @@
                     <td>{{ $offer->restriction }}</td>
                     <td>
                         @if(isset($user_id) && (int) $offer->user_id === $user_id)
-                        {{-- Own offer: show delete button only --}}
                         <form method="POST" action="{{ route('trade.offer.remove') }}" class="d-inline"
                               onsubmit="return confirm('Angebot wirklich löschen?')">
                             @csrf
                             <input type="hidden" name="colony_id"   value="{{ $offer->colony_id }}">
                             <input type="hidden" name="direction"   value="{{ $offer->direction }}">
-                            <input type="hidden" name="resource_id" value="{{ $offer->resource_id }}">
+                            <input type="hidden" name="research_id" value="{{ $offer->research_id }}">
                             <button type="submit" class="btn btn-sm btn-outline-danger" title="Angebot löschen">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
-                        @elseif(isset($user_id))
-                        @php
-                            $restriction    = (int) $offer->restriction;
-                            $canAccept      = false;
-                            $restrictReason = '';
-
-                            if ($myColonies->isNotEmpty() && $restriction === 0) {
-                                $canAccept = true;
-                            } elseif ($myColonies->isNotEmpty() && $restriction === 1) {
-                                // Group not implemented yet — treat as open
-                                $canAccept = true;
-                            } elseif ($myColonies->isNotEmpty() && $restriction === 2) {
-                                $canAccept      = isset($currentUser) && $currentUser->faction_id == $offer->faction_id;
-                                $restrictReason = 'Nur für Mitglieder der gleichen Fraktion';
-                            } elseif ($myColonies->isNotEmpty() && $restriction === 3) {
-                                $canAccept      = isset($currentUser) && $currentUser->race_id == $offer->race_id;
-                                $restrictReason = 'Nur für Mitglieder der gleichen Rasse';
-                            }
-                        @endphp
-                        @if($canAccept)
-                        <form method="POST" action="{{ route('trade.offer.accept') }}" class="d-inline"
-                              onsubmit="return confirm('Angebot wirklich annehmen?')">
-                            @csrf
-                            <input type="hidden" name="seller_colony_id" value="{{ $offer->colony_id }}">
-                            <input type="hidden" name="direction"        value="{{ $offer->direction }}">
-                            <input type="hidden" name="resource_id"      value="{{ $offer->resource_id }}">
-                            <button type="submit" class="btn btn-sm btn-outline-success" title="Angebot annehmen">
-                                <i class="bi bi-cart-check"></i> Annehmen
-                            </button>
-                        </form>
-                        @else
-                        <button class="btn btn-sm btn-outline-secondary disabled"
-                                title="{{ $restrictReason ?: 'Keine Kolonie vorhanden' }}"
-                                data-bs-toggle="tooltip">
-                            <i class="bi bi-lock"></i>
-                        </button>
-                        @endif
                         @endif
                     </td>
                 </tr>
@@ -174,28 +136,31 @@
 
 {{-- Modal: Angebot erstellen --}}
 @if($myColonies->isNotEmpty())
-<div class="modal fade" id="modal-create-resource-offer" tabindex="-1" role="dialog"
-     aria-labelledby="modal-create-resource-offer-title">
+<div class="modal fade" id="modal-create-research-offer" tabindex="-1" role="dialog"
+     aria-labelledby="modal-create-research-offer-title">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <form method="POST" action="{{ route('trade.offer.resource') }}">
+            <form method="POST" action="{{ route('trade.offer.research') }}">
                 @csrf
                 <div class="modal-header">
-                    <h5 class="modal-title" id="modal-create-resource-offer-title">
-                        Rohstoff-Angebot erstellen
+                    <h5 class="modal-title" id="modal-create-research-offer-title">
+                        Forschungs-Angebot erstellen
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i>
+                        Die genaue Forschungshandel-Mechanik (Level-Transfer, Wissenstransfer oder Lizenz-Modell)
+                        wird in Phase 3 definiert. Angebote können bereits jetzt eingestellt werden.
+                    </div>
                     <input type="hidden" name="colony_id" value="{{ $myColonies->first()->id }}">
                     <div class="mb-3">
-                        <label for="offer-resource-id" class="form-label">Rohstoff</label>
-                        <select id="offer-resource-id" name="resource_id" class="form-select" required>
+                        <label for="offer-research-id" class="form-label">Forschung</label>
+                        <select id="offer-research-id" name="research_id" class="form-select" required>
                             <option value="">— bitte wählen —</option>
-                            @foreach($resources ?? [] as $res)
-                            @if(!in_array($res->id, [1, 2, 12]))
-                            <option value="{{ $res->id }}">{{ __('resources.' . $res->name) }}</option>
-                            @endif
+                            @foreach($researches ?? [] as $research)
+                            <option value="{{ $research->id }}">{{ __('techtree.' . $research->name) }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -215,11 +180,6 @@
                         <label for="offer-price" class="form-label">Preis pro Einheit (Credits)</label>
                         <input type="number" id="offer-price" name="price"
                                class="form-control" min="1" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="offer-restriction" class="form-label">Restriktion</label>
-                        <input type="number" id="offer-restriction" name="restriction"
-                               class="form-control" placeholder="optional">
                     </div>
                 </div>
                 <div class="modal-footer">

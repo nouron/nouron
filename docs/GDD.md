@@ -641,7 +641,18 @@ Das `restriction`-Feld steuert, welche Spieler ein Angebot annehmen dürfen:
 
 ### Forschungshandel
 
-Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle und Gateway-Methoden sind vorhanden), die genaue Mechanik (Level-Transfer, Wissenstransfer, Lizenz) wird in **Phase 3** definiert und implementiert. Im aktuellen Acceptance-Flow wird Forschungshandel nicht unterstützt.
+Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle und Gateway-Methoden sind vorhanden), die genaue Mechanik wird in **Phase 3a** definiert und implementiert. Im aktuellen Acceptance-Flow wird Forschungshandel nicht unterstützt.
+
+**Offene Designoptionen (vor Phase 3a zu entscheiden — ADR erforderlich):**
+
+| Option | Beschreibung |
+|--------|-------------|
+| Level-Transfer | Käufer erhält +1 Level in der Forschung, Verkäufer verliert -1 Level |
+| Wissenstransfer | Käufer erhält +1 Level, Verkäufer behält seinen Stand |
+| Lizenz-Modell | Käufer erhält befristeten Bonus-Effekt, kein permanenter Level-Gewinn |
+| AP-Delegation | Wissenschaftler-AP werden an fremde Kolonie "verliehen" — Forscher arbeitet dort für X Ticks |
+
+> **Designidee (2026-04-06):** Statt Forschungen direkt zu handeln, könnten Spieler die AP ihrer Wissenschaftler an andere Kolonien "verleihen" — der Forscher arbeitet dann für eine bestimmte Anzahl Ticks auf der Fremdkolonie. Dieser Ansatz ist thematisch stimmiger (Wissen ist personengebunden) und passt gut zum AP-System. Würde das Berater-System und den Forschungshandel elegant verbinden. Zu evaluieren bei der Phase-3a-Konzeption.
 
 ---
 
