@@ -83,6 +83,15 @@ class AdvisorController extends BaseController
 
     public function fire(int $advisorId)
     {
+        $userId  = $this->getCurrentUserId();
+        $advisor = \App\Models\Advisor::where('id', $advisorId)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$advisor) {
+            abort(404);
+        }
+
         $this->personellService->fire($advisorId);
         return back()->with('success', 'Berater entlassen.');
     }
