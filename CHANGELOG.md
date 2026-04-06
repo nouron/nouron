@@ -9,6 +9,10 @@
 
 - **Colony-UI:** Neue Route `/colony` mit `ColonyController` und Blade-View. Zeigt Kolonienname, Position und Gründungs-Tick. Umbenennung über PATCH `/colony/name` mit Validierung (min 2, max 50 Zeichen). Schreibt direkt in `glx_colonies` (Colony-Model liest aus View `v_glx_colonies`).
 
+## 2026-04-06 (README überarbeitet)
+
+- **README:** Testaccounts-Tabelle (Bart/Homer/Marge), DB-Dateien-Übersicht (nouron.db vs. test.db), Artisan-Commands (`game:sync-techs`, `game:tick`), Scheduler-Cron-Snippet, WSL2-Hinweis für Windows-Entwickler, korrekter Test-Aufruf (`--testsuite=Feature`). Twitter-Link auf X aktualisiert, Facebook-Link auf HTTPS.
+
 ## 2026-04-06 (Granulare Bypass-Flags)
 
 - **`config/game.php`:** Neuer `bypass`-Block mit drei unabhängigen Flags: `ap_checks`, `resource_costs`, `supply_checks` (je per `.env` steuerbar). Ermöglicht gezieltes Testen einzelner Systeme — z.B. AP-Verhalten testen während Ressourcenkosten deaktiviert bleiben.
