@@ -316,8 +316,7 @@ tests/
 Die folgenden Services sind implementiert, aber ohne UI — Spieler können diese Funktionen nicht nutzen:
 
 - [x] **Advisor-Management-UI** — `/advisors` mit hire/fire, 4 Typ-Cards, AP-Summen, Supply-Kosten
-- [ ] **Colony-UI** — Route `/colony`, Controller, Blade-View für Koloniewechsel und Umbenennung
-  - `ColonyService` ist fertig
+- [x] **Colony-UI** — `/colony` mit Kolonie-Übersicht und Umbenennung (PATCH `/colony/name`)
 - [x] **Forschungshandel-View** — `/trade/researches` implementiert; Ressourcenhandel `/trade/resources` ebenfalls überarbeitet (Chips, Restriktions-Badges, Farbcodierung)
 - [x] **User-Profil / Einstellungen** — Passwort, Display Name und weitere Einstellungen implementiert
 

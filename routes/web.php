@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Galaxy\GalaxyController;
 use App\Http\Controllers\INNN\MessageController;
@@ -40,6 +41,13 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::get('/settings',            [UserController::class, 'settings'])->name('settings');
     Route::patch('/settings/name',     [UserController::class, 'updateDisplayName'])->name('update.displayname');
     Route::patch('/settings/password', [UserController::class, 'updatePassword'])->name('update.password');
+});
+
+// ── Colony ────────────────────────────────────────────────────────────────────
+
+Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () {
+    Route::get('/',       [ColonyController::class, 'index'])->name('index');
+    Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────
