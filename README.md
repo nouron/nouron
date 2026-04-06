@@ -12,12 +12,53 @@ Nouron uses an SQLite database delivered with the project (`data/db/nouron.db`),
 # After cloning, install dependencies
 composer install
 
+# Copy environment file and adjust as needed
+cp .env.example .env
+php artisan key:generate
+
 # Start local dev server
 php artisan serve
 
 # (Optional) Run tests
 php artisan test
 ```
+
+## Environment & Dev Settings
+
+Copy `.env.example` to `.env`. The most relevant settings for local development:
+
+### Game Bypass Flags
+
+These flags disable specific game rule checks so you can test individual systems freely. All default to `false` (rules enforced).
+
+| Flag | What it bypasses |
+|------|-----------------|
+| `GAME_BYPASS_AP=true` | Navigation, Economy and Construction AP checks |
+| `GAME_BYPASS_RESOURCES=true` | Resource cost checks when building/researching |
+| `GAME_BYPASS_SUPPLY=true` | Supply capacity checks for buildings, ships and advisors |
+
+**Common test scenarios:**
+
+```bash
+# Free-click everything (no checks at all) — fastest way to explore the game
+GAME_BYPASS_AP=true
+GAME_BYPASS_RESOURCES=true
+GAME_BYPASS_SUPPLY=true
+
+# Test AP behaviour with real checks active
+GAME_BYPASS_AP=false
+GAME_BYPASS_RESOURCES=true
+GAME_BYPASS_SUPPLY=true
+
+# Test Supply behaviour with real checks active
+GAME_BYPASS_AP=true
+GAME_BYPASS_RESOURCES=true
+GAME_BYPASS_SUPPLY=false
+```
+
+> **Note:** All bypass flags are blocked in production — the app will refuse to start if any flag is `true` when `APP_ENV=production`.
+
+> **Deprecated:** `GAME_DEV_MODE=true` still works as a shortcut (sets all three flags) but logs a deprecation warning. Use the individual flags instead.
 
 ## Bug Tracker
 
