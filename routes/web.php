@@ -36,8 +36,10 @@ Route::post('/logout', [LoginController::class, 'logout'])
 // ── User ─────────────────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
-    Route::get('/',         [UserController::class, 'show'])->name('show');
-    Route::get('/settings', [UserController::class, 'settings'])->name('settings');
+    Route::get('/',                    [UserController::class, 'show'])->name('show');
+    Route::get('/settings',            [UserController::class, 'settings'])->name('settings');
+    Route::patch('/settings/name',     [UserController::class, 'updateDisplayName'])->name('update.displayname');
+    Route::patch('/settings/password', [UserController::class, 'updatePassword'])->name('update.password');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────
@@ -77,7 +79,9 @@ Route::middleware('auth')->prefix('messages')->name('messages.')->group(function
 
 Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
     Route::match(['get', 'post'], '/resources',  [TradeController::class, 'resources'])->name('resources');
+    Route::match(['get', 'post'], '/researches', [TradeController::class, 'researches'])->name('researches');
     Route::post('/offer/resource', [TradeController::class, 'addResourceOffer'])->name('offer.resource');
+    Route::post('/offer/research', [TradeController::class, 'addResearchOffer'])->name('offer.research');
     Route::post('/offer/remove',   [TradeController::class, 'removeOffer'])->name('offer.remove');
     Route::post('/offer/accept',   [TradeController::class, 'acceptResourceOffer'])->name('offer.accept');
 });

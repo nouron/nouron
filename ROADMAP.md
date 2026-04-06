@@ -359,33 +359,83 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 
 ---
 
-## Phase 3: Neukonzeption
-*(nach Phase 2, noch zu definieren)*
+## Phase 3: "Das Spiel zeigen"
+*(nach Phase 2)*
 
-### Vorgemerkte Themen für Phase 3
+**Ziel:** Das Spiel ist für externe Spieler zugänglich, verständlich und rund.
 
-Die folgenden Punkte sind bewusst noch nicht detailliert ausgearbeitet — sie erfordern entweder Konzeptarbeit oder setzen einen stabilen Spielablauf aus Phase 2 voraus.
-
-#### Content & Balancing
-
-- [ ] **Rework Gebäude & Forschungen** — Überprüfung und Überarbeitung von Kosten, Produktionswerten, Voraussetzungsketten und Balance aller 25 Gebäude und 10 Forschungen
-
-#### UI & Darstellung
-
-- [ ] **Frontend/UI-Umbau** — Grundsätzliche Überarbeitung der UI-Struktur und Navigation; konkrete Ziele noch zu definieren
-- [ ] **UI-Details & Artwork** — Icons, Illustrationen, Hintergrundgrafiken, Fraktions-/Rassen-Artwork; konkrete Assets noch zu definieren
-- [ ] **Ingame-Almanach** — Nachschlagewerk für Spielregeln, Gebäude, Forschungen, Einheiten, Fraktionen und Spielwelt-Lore; zugänglich aus dem Spiel heraus
-
-#### Onboarding
-
-- [ ] **Onboarding / Tutorial im UI** — Geführte Einführung für neue Spieler; erklärt Ressourcen, Techtree, Flotten und Handelsmechaniken schrittweise im Spiel; konkrete Form (interaktiv, Tooltip-gestützt, eigenständige Tour) noch zu entscheiden
+Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabilisiert, Phase 3 aber das Spiel für Menschen lesbar und spielbar macht, die keinen Entwicklerhintergrund haben. Ohne diesen Schritt ist kein sinnvoller Playtest mit echten Spielern möglich — und ohne Playtest-Feedback sind Phase-4-Entscheidungen (Diplomatie, Rassen, Gruppen) zu unsicher, um sie zu committen.
 
 ---
 
-### Bewusste Design-Entscheidungen (nicht umsetzen)
+### Phase 3a: Content & Balancing + Kernmechaniken
+
+- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 25 Gebäude und 10 Forschungen auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
+- [ ] **Supply-Kosten auf Plausibilität testen** — offene Frage: kann ein Anfänger einen Battlecruiser unterhalten? Supply-Cap-Modell (CC_flat 15 + HousingLevel × 8, max 200) gegen Schiffskosten abgleichen
+- [ ] **Forschungshandel-Mechanik definieren und umsetzen** — Designfrage: Level-Transfer, Wissenstransfer oder Lizenz-Modell; ADR erforderlich vor Implementierung (`docs/adr/`)
+- [ ] **Interstellare Flottenbewegung freischalten** — aktuell in `FleetController::storeOrder` explizit gesperrt; Wurmloch/Sternentor-Mechanik designen (ADR erforderlich vor Implementierung); `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits
+
+---
+
+### Phase 3b: UI-Überarbeitung + Almanach
+
+- [ ] **Frontend-Überarbeitung** — Navigation, Hauptscreens, Ressourcenleiste; Klarheit vor Artwork
+- [ ] **Techtree visuell überarbeiten** — SVG-Baum ist schwer lesbar und nicht mobiloptimiert; Ziel: max. 3 Spalten, horizontales Scrollen, lesbarer auf kleinen Bildschirmen
+- [ ] **Nav-Label "Techtree" → "Kolonie"** + Status-Panel neben Grid (laufende Bauten, AP-Budget, Top-3-Produktion) — falls in Phase 2 noch nicht umgesetzt
+- [ ] **`/colony`-Screen als separater Bildschirm** — Aggregat-Übersicht (aktive Vorgänge, Planetenkontext), losgelöst vom Techtree-Grid
+- [ ] **Moralanzeige im UI** — Mechanik ist in Phase 2 vorhanden, UI fehlt noch
+- [ ] **Ingame-Almanach** — Nachschlagewerk für Gebäude, Forschungen, Schiffstypen und Spielregeln; initial einfache Blade-Seite mit Daten aus den Config-Dateien
+
+---
+
+### Phase 3c: Onboarding & Tutorial
+
+- [ ] **Geführte Einführung für neue Spieler** — Form noch offen: interaktive Tour oder Tooltip-gestützte Einführung
+- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht 25 leere Techtree-Kacheln ohne Orientierung; erster Schritt muss klar sein
+- [ ] **Visuelle Hervorhebung des "nächsten sinnvollen Schritts"** — für Anfänger ohne Spielerfahrung; kein Bevormunden für erfahrene Spieler
+
+---
+
+### Bewusste Designentscheidungen (nicht umsetzen in Phase 3)
 
 | Thema | Entscheidung | Begründung |
 |---|---|---|
-| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund — modulare Schiffe würden Spieleraufmerksamkeit in die falsche Richtung lenken. Die 6 Schiffstypen + 4 Attribute (moving_speed, supply, decay, combat_power) erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam und frustrierend. |
+| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 6 Schiffstypen + 4 Attribute erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
 | **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
 | **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
+| **Rassen-System** | Zurückstellen auf Phase 4 | `race_id` ist im Schema, wird nicht ausgewertet. Rassenspezifische Effekte zu definieren setzt Playtest-Daten voraus — sonst blind balancen. |
+| **Gruppen/Gilden** | Zurückstellen auf Phase 4 | Kein Datenmodell vorhanden. Soziale Mechaniken entfalten erst Wert wenn eine aktive Spielerbasis existiert. |
+| **Diplomatie** | Zurückstellen auf Phase 4 | `innn_message_types.relationship_effect` ist vorbereitet; vollständige Diplomatie setzt stabile Moral-Balance aus Phase 3 voraus. |
+| **Außenposten** | Zurückstellen auf Phase 5 | Ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird, lässt sich erst nach echtem Betrieb beurteilen. |
+| **Benannte Chef-Berater** | Zurückstellen auf Phase 4 | Aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12); individuelle Charaktere erst nach Phase-3-Playtest sinnvoll. |
+| **Steuersystem** | Zurückstellen auf Phase 4 | `steuerfaktor` in Moral-Formel ist Platzhalter (= 0). Implementierung setzt stabile Moral-Balance aus Phase 3 voraus. |
+
+---
+
+## Phase 4: "Das Spiel vertiefen"
+*(nach Phase 3)*
+
+**Ziel:** Spieler, die das Basisspiel kennen, bekommen neue Strategiepfade und Interaktionsebenen.
+
+**Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Rassen-Effekte, Steuersystem und Diplomatie-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
+
+- [ ] **Diplomatie-System** — `innn_message_types.relationship_effect` auswerten; diplomatische Zustände (Krieg, Frieden, Allianz, Neutralität); Moral-Events `war_declared`/`treaty_signed` aktivieren; AP-Kosten gemäß Designprinzip (Kriegserklärung teurer als Handelsvertrag)
+- [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
+- [ ] **Rassen-System überarbeiten** — `race_id` ist im Schema, wird nicht ausgewertet; rassenspezifische Effekte definieren; Designfrage erst nach Phase-3-Playtest beantwortbar
+- [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Phase 3 voraus
+- [ ] **Benannte Chef-Berater** — individuelle Charaktere mit Fähigkeiten und Namen; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12)
+- [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13)
+- [ ] **Handelsbeschränkungen vollständig durchsetzen** — `restriction`-Feld Werte 1/2/3 korrekt auswerten (aktuell ignoriert)
+
+---
+
+## Phase 5: "Das Spiel erweitern"
+*(nach Phase 4)*
+
+**Ziel:** Strukturelle Erweiterungen auf Basis von echtem Spieler-Feedback aus dem Betrieb.
+
+**Voraussetzung:** Phase-4-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 5 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
+
+- [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
+- [ ] **Neue Schiffstypen** — Scout/Sonde (Supply 1) und weitere; setzt stabiles Combat-Balancing aus Phase 4 voraus
+- [ ] **Galaktische Politik** — über bilaterale Diplomatie hinaus: galaktische Institutionen, Abstimmungen, Fraktionspolitik; nur auf Basis von echtem Spielerverhalten definierbar

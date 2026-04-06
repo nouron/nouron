@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-06 (UI-Polishing: Berater, Handel)
+
+- **Berater-Seite umgebaut:** Berater werden jetzt in 4 separaten Cards gruppiert (Ingenieure, Wissenschaftler, Händler, Kommandanten). Jede Card zeigt die eigene AP-Summe und Supply-Kosten im Footer. Auf Desktop 2 Cards nebeneinander. Flottenkommandanten werden mit Flottenname angezeigt; `AdvisorController` lädt jetzt zusätzlich alle `is_commander`-Advisors des Users über alle Flotten. AP-Gesamtübersicht durch kompakte Statuszeile ersetzt. Dicke Farbrahmen entfernt, neutrale Cards.
+- **Trade-Seiten:** Rohstoff-Spalte zeigt jetzt `res-chip` mit Kürzel + Tooltip statt plain Text. Preis-Spalte zeigt Credits-Chip. Restriktions-Spalte zeigt lesbare Badges (Alle/Gruppe/Fraktion/Rasse) statt roher Integers. Tabellenzeilen farblich nach Richtung (Kauf/Verkauf). `table-striped` entfernt.
+- **Shared Partial:** `resources/views/partials/res_chip.blade.php` — wiederverwendbarer Ressourcen-Chip, der dieselbe `.res-chip`-Klasse wie die Ressourcenleiste nutzt.
+
+## 2026-04-06 (Forschungshandel-View, User-Einstellungen, Roadmap Phase 3–5)
+
+- **Forschungshandel-View:** Neue Route `/trade/researches`, Controller-Methoden `researches()` und `addResearchOffer()` in `TradeController` ergänzt. View analog zu Rohstoff-Handel (Tabelle, Filter, Modal zum Erstellen). `TradeGateway::addResearchOffer/removeResearchOffer` war bereits vorhanden. Hinweis-Banner im Formular: Acceptance-Flow folgt in Phase 3 nach Entscheidung über Mechanik (Level-Transfer vs. Lizenz). Beide Trade-Seiten haben jetzt einen Tab-Header (Rohstoffe / Forschungen).
+- **User-Einstellungen:** `/user/settings` ist nun funktional — Anzeigename und Passwort können geändert werden. Zwei PATCH-Routen (`/user/settings/name`, `/user/settings/password`) mit Validierung und aktuellem-Passwort-Check.
+- **Roadmap Phase 3–5:** Phase 3 in 3a (Balancing/Kernmechaniken), 3b (UI/Almanach) und 3c (Onboarding) unterteilt. Phase 4 ("Das Spiel vertiefen": Diplomatie, Rassen, Gilden, Steuern, Berater) und Phase 5 ("Das Spiel erweitern": Außenposten, neue Schiffstypen, galaktische Politik) neu eingeführt. Alle bisher im GDD als "Phase 3" vermerkten Themen in die neue Struktur überführt.
+
 ## 2026-04-05 (Spielsystemanalyse, Advisor-UI, Schiffsgeschwindigkeit)
 
 - **Systemanalyse:** Vollständige Bestandsaufnahme aller Module und Spielmechaniken. Roadmap Phase 2 mit konkreten Befunden, Prioritäten und Design-Klarstellungen (1 Kolonie/Spieler, nur PvP-Schiffskämpfe, keine Kolonisierung) aktualisiert. Phase 3 mit vorgemerkten Themen (UI-Umbau, Almanach, Onboarding, Gebäude-Rework) strukturiert. Design-Entscheidung gegen modulare Schiffe dokumentiert.
