@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Galaxy;
 
 use App\Http\Controllers\BaseController;
+use App\Models\Fleet;
 use App\Services\GalaxyService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -114,6 +116,32 @@ class GalaxyController extends BaseController
                     'title'     => $object->name,
                     'class'     => $object->type ?? '',
                     'image_url' => $object->image_url ?? '',
+                ],
+            ];
+        }
+
+        // Layer 3 — fleets within the same bounding box as the system view
+        $radius  = (int) round(config('game.system_view.range', 100) / 2);
+        $cx      = (int) $x;
+        $cy      = (int) $y;
+        $userId  = Auth::id();
+
+        $fleets = Fleet::with('user')
+            ->whereBetween('x', [$cx - $radius, $cx + $radius])
+            ->whereBetween('y', [$cy - $radius, $cy + $radius])
+            ->get();
+
+        foreach ($fleets as $fleet) {
+            $owner    = $fleet->user?->username ?? '?';
+            $ownFleet = $fleet->user_id === $userId;
+            $data[] = [
+                'layer' => 3,
+                'x'     => $fleet->x,
+                'y'     => $fleet->y,
+                'attribs' => [
+                    'title'     => $fleet->fleet . ' (' . $owner . ')',
+                    'class'     => $ownFleet ? 'fleet-own' : 'fleet-foreign',
+                    'image_url' => '',
                 ],
             ];
         }

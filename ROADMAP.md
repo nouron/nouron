@@ -328,8 +328,8 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 - [x] **`game:sync-techs` implementiert** — `app/Console/Commands/SyncTechs.php`; synct moving_speed, decay_rate, supply_cost, max_status_points aus config in ships/buildings-Tabellen; `--dry-run` Option vorhanden
 - [x] **Laravel Scheduler eingerichtet** — `routes/console.php`: `Schedule::command('game:tick')->dailyAt('03:00')`
 - [x] **Fleet-Orders im UI vervollständigt** — `hold`, `convoy`, `defend`, `join` sind im Validator, Controller und Blade-View mit Lokalisierung implementiert; AP-Kosten in `config/game.php` ergänzt
-- [ ] **Flotten auf Galaxiekarte** — Layer 3 in `GalaxyController::getMapData` ist vorbereitet, aber nie befüllt
-- [ ] **Galaxy-Koordinaten-Skalierung prüfen** — bei 1 Tick/Tag muss der Geschwindigkeitsunterschied (speed 1 vs. 4) für Spieler spürbar sein; ggf. Distanzen oder Tick-Fenster anpassen
+- [x] **Flotten auf Galaxiekarte** — `getMapData()` liefert Layer-3-Einträge für alle Flotten im Sichtbereich; eigene Flotten grün, fremde gelb; galaxy.js rendert bereits korrekt
+- [x] **Galaxy-Koordinaten-Skalierung geprüft** — System-Radius 50 Einheiten; Speed 4 durchquert in ~12 Ticks, Speed 1 in ~50 Ticks — Unterschied ist für Spieler deutlich spürbar, keine Anpassung nötig
 
 ---
 
