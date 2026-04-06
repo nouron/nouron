@@ -53,7 +53,11 @@ Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders a
 | Order-Typ | Navigation-AP-Kosten |
 |-----------|----------------------|
 | move (Bewegung) | 1 |
+| hold (Halten) | 1 |
 | trade (Handel) | 1 |
+| join (Anschließen) | 1 |
+| convoy (Eskorte) | 1 |
+| defend (Verteidigen) | 2 |
 | attack (Angriff) | 3 |
 
 Ein Pilot, der 15 AP pro Tick generiert, kann also entweder:
@@ -176,6 +180,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
 | 7 | Supply Cap — `user_resources.supply` wird auf Cap gesetzt (`CC_flat + housing × 8`) |
 | 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
+| 8b | Moral Calculation — Moral neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §13) |
 | 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
 
 ---
@@ -456,12 +461,14 @@ Alle Werte liegen im definierten Bereich 0.05–0.3 ✓.
 
 > ⚠️ **Gnadenfrist** (kein Decay für neue Schiffe/Gebäude für X Ticks): vorerst nicht implementiert. Kann in einer späteren Phase evaluiert werden.
 
-### Schema-Konsequenzen (noch nicht implementiert)
+### Schema (implementiert)
 
-- `buildings`, `ships`, `researches`: neue Spalten `max_status_points INTEGER` und `decay_rate REAL`
-- `colony_buildings.status_points`: auf `REAL` ändern (statt INTEGER)
-- `fleet_ships`: neue Spalte `status_points REAL`
-- `colony_researches`: neue Spalte `status_points REAL`
+Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genutzt:
+
+- `buildings`, `ships`, `researches`: Spalten `max_status_points INTEGER` und `decay_rate REAL` — Werte aus `config/buildings.php`, `config/ships.php`, `config/techs.php`; Sync via `php artisan game:sync-techs`
+- `colony_buildings.status_points REAL` — aktueller Zustandswert des Gebäudes
+- `fleet_ships.status_points REAL` — aktueller Zustandswert des Schiffes
+- `colony_researches.status_points REAL` — aktueller Zustandswert der Forschung
 
 ### Konfiguration
 
@@ -493,7 +500,11 @@ Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (
 | Order-Typ | Navigation-AP-Kosten | Kategorie |
 |-----------|----------------------|-----------|
 | move | 1 | zivil |
+| hold | 1 | zivil |
 | trade | 1 | zivil |
+| join | 1 | zivil |
+| convoy | 1 | zivil |
+| defend | 2 | semi-militarisch |
 | attack | 3 | militarisch |
 
 > Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
@@ -739,8 +750,9 @@ Supply ist die universelle Unterhaltsressource. **Alles kostet dauerhaft Supply:
 | Was | Supply/Tick |
 |-----|-------------|
 | Berater (je) | 2 Supply |
-| Gebäude (je Level) | *noch zu definieren* |
-| Schiffe (je Einheit) | *noch zu definieren* |
+| Gebäude (je Instanz, nicht pro Level) | 0–30 Supply (je nach Typ, konfiguriert in `config/buildings.php`) |
+| Schiffe (je Einheit) | Fighter 8 / Fregatte 14 / Schlachtkreuzer 25 / Klein-Transporter 2 / Mittel 4 / Groß 7 (konfiguriert in `config/ships.php`) |
+| Forschungen (je Forschung mit Level > 0) | 5–8 Supply (je nach Typ, konfiguriert in `config/techs.php`) |
 
 Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert. Das Hard-Cap liegt bei **200 Supply pro Kolonie**. Da pro Spieler nur eine Kolonie vorgesehen ist (Phase 3), ist Supply der einzige und ausreichende Kapazitätsdeckel für Berater.
 

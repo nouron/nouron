@@ -2,6 +2,8 @@
 
 ## Phase 1b: Laminas → Laravel Migration
 
+> **Status: Abgeschlossen (April 2026)** — Die vollständige Migration von Laminas MVC auf Laravel 12 wurde durchgeführt. Alle Module, Services, Controller, Views und Tests wurden migriert. Die App läuft auf Laravel mit Eloquent, Blade und Laravel Auth. Der folgende Plan dient als historisches Referenzdokument.
+
 **Ziel:** Schrittweise Migration des gesamten Projekts von Laminas MVC auf Laravel.
 **Prinzip:** Modul für Modul, Test-Suite muss vor und nach jedem Schritt grün sein.
 **Kein Big Bang** — die App bleibt während der Migration lauffähig.
@@ -303,9 +305,9 @@ tests/
 
 ### Prio 1: Kritische Bugs beheben
 
-| Problem | Ort | Aufwand |
+| Problem | Ort | Status |
 |---|---|---|
-| `PersonellService::hire` — `$this->resourcesService` nicht deklariert → Fatal Error wenn `dev_mode=false` | `app/Services/Techtree/PersonellService.php` | Klein |
+| ~~`PersonellService::hire` — `$this->resourcesService` nicht deklariert → Fatal Error wenn `dev_mode=false`~~ | ~~`app/Services/Techtree/PersonellService.php`~~ | Behoben (PR #66) |
 
 ---
 
@@ -313,27 +315,20 @@ tests/
 
 Die folgenden Services sind implementiert, aber ohne UI — Spieler können diese Funktionen nicht nutzen:
 
-- [ ] **Advisor-Management-UI** — Route `/advisors`, Controller, Blade-View für hire/fire/assign
-  - `PersonellService` (hire, fire, assignToFleet, unassignFromFleet) ist fertig
+- [x] **Advisor-Management-UI** — `/advisors` mit hire/fire, 4 Typ-Cards, AP-Summen, Supply-Kosten
 - [ ] **Colony-UI** — Route `/colony`, Controller, Blade-View für Koloniewechsel und Umbenennung
   - `ColonyService` ist fertig
-- [ ] **Forschungshandel-View** — Route `/trade/researches`, Controller-Methoden, Blade-View
-  - `TradeGateway::addResearchOffer/removeResearchOffer` ist fertig
-- [ ] **User-Profil / Einstellungen** — Passwort ändern, Display Name ändern
-  - aktuell nur TODO-Platzhalter in `resources/views/user/settings.blade.php`
+- [x] **Forschungshandel-View** — `/trade/researches` implementiert; Ressourcenhandel `/trade/resources` ebenfalls überarbeitet (Chips, Restriktions-Badges, Farbcodierung)
+- [x] **User-Profil / Einstellungen** — Passwort, Display Name und weitere Einstellungen implementiert
 
 ---
 
 ### Prio 3: Spielmechaniken vervollständigen
 
 - [x] **`moving_speed` für Schiffe gesetzt** — `config/ships.php` enthält nun Werte (4/3/2/3/2/1); `FleetService::calcFleetSpeed()` war bereits korrekt implementiert
-- [ ] **`game:sync-techs` implementieren** — Artisan-Command zum Synchronisieren von `config/ships.php` → `ships` DB-Tabelle (moving_speed, decay_rate, supply_cost); aktuell müssen Werte manuell in der DB gesetzt werden
-- [ ] **Laravel Scheduler einrichten** — `game:tick` Artisan-Command muss automatisch ausgeführt werden
-  - `app/Console/Kernel.php` um Schedule-Eintrag erweitern (täglich im Berechnungsfenster 3–4 Uhr)
-  - `TickService::calculationIsRunning()` ist bereits implementiert
-- [ ] **Interstellare Flottenbewegung freischalten** — aktuell explizit im `FleetController::storeOrder` gesperrt
-  - `GalaxyService::getPath` unterstützt systemübergreifende Pfadberechnung bereits
-- [ ] **Fleet-Orders im UI vervollständigen** — `hold`, `convoy`, `defend`, `join`, `devide` sind in `FleetService::addOrder` implementiert, aber `storeOrder`-Validator lässt nur `move|trade|attack` durch
+- [x] **`game:sync-techs` implementiert** — `app/Console/Commands/SyncTechs.php`; synct moving_speed, decay_rate, supply_cost, max_status_points aus config in ships/buildings-Tabellen; `--dry-run` Option vorhanden
+- [x] **Laravel Scheduler eingerichtet** — `routes/console.php`: `Schedule::command('game:tick')->dailyAt('03:00')`
+- [x] **Fleet-Orders im UI vervollständigt** — `hold`, `convoy`, `defend`, `join` sind im Validator, Controller und Blade-View mit Lokalisierung implementiert; AP-Kosten in `config/game.php` ergänzt
 - [ ] **Flotten auf Galaxiekarte** — Layer 3 in `GalaxyController::getMapData` ist vorbereitet, aber nie befüllt
 - [ ] **Galaxy-Koordinaten-Skalierung prüfen** — bei 1 Tick/Tag muss der Geschwindigkeitsunterschied (speed 1 vs. 4) für Spieler spürbar sein; ggf. Distanzen oder Tick-Fenster anpassen
 

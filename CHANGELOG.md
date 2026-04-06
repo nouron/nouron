@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-06 (Roadmap, GDD und config/game.php abgeglichen)
+
+- **ROADMAP.md aktualisiert:** Phase 1b als abgeschlossen markiert (April 2026). Prio-1-Bug (PersonellService), alle Prio-2-Items (Advisor-UI, Forschungshandel, Einstellungen) und Prio-3-Items (game:sync-techs, Scheduler, Fleet-Orders) als erledigt markiert. Interstellare Flottenbewegung aus Phase 2 entfernt (nur in Phase 3a).
+- **GDD §7 (Decay):** Abschnitt "Schema-Konsequenzen (noch nicht implementiert)" entfernt und durch korrekte Beschreibung des implementierten Schemas ersetzt (max_status_points, decay_rate in Stammdaten; status_points in colony_buildings, fleet_ships, colony_researches).
+- **GDD §2 (Tick-Schritte):** Schritt 8b (Moral Calculation) in der Tick-Tabelle ergänzt — war im §13 bereits dokumentiert, fehlte aber in der zentralen Übersicht.
+- **GDD §8 (Fleet Orders):** AP-Kostentabelle um hold/join/convoy (je 1 AP), defend (2 AP) erweitert. Beide AP-Tabellen (§1.1 und §8) sind jetzt konsistent.
+- **GDD §12 (Supply-Kosten):** "noch zu definieren"-Platzhalter durch tatsächliche Werte aus `config/buildings.php`, `config/ships.php` und `config/techs.php` ersetzt.
+- **`config/game.php`:** `fleet.order_costs` um hold, join, convoy (1 AP), defend (2 AP) ergänzt (gemäß Designprinzip "Militarismus ist teuer").
+
 ## 2026-04-06 (Scheduler, game:sync-techs, Fleet-Orders vervollständigt)
 
 - **`game:sync-techs`:** Neuer Artisan-Command synchronisiert `config/ships.php` → `ships`-Tabelle (moving_speed, decay_rate, supply_cost, max_status_points) und `config/buildings.php` → `buildings`-Tabelle (decay_rate, supply_cost, max_status_points, max_level). Zeigt je geänderter Row "alt → neu". `--dry-run`-Option zum Vorschauen. Erster Lauf hat 6 Ships mit `moving_speed=500` (Altlast) auf korrekte Werte gesetzt.

@@ -57,9 +57,13 @@ return [
     // Rule: military AP cost >= civilian AP cost — never violate this ratio.
     'fleet' => [
         'order_costs' => [
-            'move'   => 1,  // civilian — move fleet to coordinates
-            'trade'  => 1,  // civilian — execute trade at colony
-            'attack' => 3,  // military — attack enemy fleet/colony
+            'move'    => 1,  // civilian — move fleet to coordinates
+            'hold'    => 1,  // civilian — hold position for one tick
+            'trade'   => 1,  // civilian — execute trade at colony
+            'join'    => 1,  // civilian — merge with target fleet
+            'convoy'  => 1,  // civilian — escort target fleet to its destination
+            'defend'  => 2,  // semi-military — move to target fleet's position to defend
+            'attack'  => 3,  // military — attack enemy fleet
         ],
     ],
 
