@@ -31,6 +31,10 @@
                        href="{{ route('fleet.index') }}"><i class="bi bi-send"></i> Flotte</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('colony.*')) active @endif"
+                       href="{{ route('colony.index') }}"><i class="bi bi-building"></i> Kolonie</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('techtree.*')) active @endif"
                        href="{{ route('techtree.index') }}"><i class="bi bi-diagram-3"></i> Techtree</a>
                 </li>
