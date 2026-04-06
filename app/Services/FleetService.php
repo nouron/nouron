@@ -115,9 +115,8 @@ class FleetService
 
         // AP check and lock must be atomic to prevent TOCTOU race conditions.
         DB::transaction(function () use ($fleetId, $path, $order, $additionalData, $apCost) {
-            if (config('game.dev_mode')) {
-                // TODO: remove dev_mode bypass once AP system is fully tested
-                Log::debug("FleetService::addOrder() AP check skipped (dev_mode=true). "
+            if (config('game.bypass.ap_checks')) {
+                Log::debug("FleetService::addOrder() AP check bypassed. "
                     . "fleet={$fleetId} order={$order} apCost={$apCost}");
             } else {
                 $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;

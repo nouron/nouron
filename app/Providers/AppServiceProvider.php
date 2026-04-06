@@ -17,6 +17,7 @@ use App\Services\TickService;
 use App\Services\FleetService;
 use App\Services\TradeGateway;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -76,6 +77,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->bootBypassFlags();
+
         // Inject resource bar data into the main layout for authenticated users
         View::composer('layouts.app', function ($view) {
             if (Auth::check()) {
@@ -91,5 +94,39 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('resourceBarPossessions', $possessions ?? []);
             }
         });
+    }
+
+    /**
+     * Handle game.bypass flags and the legacy game.dev_mode shortcut.
+     *
+     * - If game.dev_mode is true, expand it into all bypass flags (with a deprecation warning).
+     * - In production, throw if any bypass flag is active.
+     */
+    private function bootBypassFlags(): void
+    {
+        // Legacy dev_mode shortcut — expand to individual bypass flags and warn.
+        if (config('game.dev_mode')) {
+            trigger_error(
+                'config(\'game.dev_mode\') is deprecated. Use individual game.bypass.* flags instead '
+                . '(GAME_BYPASS_AP, GAME_BYPASS_RESOURCES, GAME_BYPASS_SUPPLY). '
+                . 'game.dev_mode will be removed in a future release.',
+                E_USER_DEPRECATED
+            );
+            Log::warning('[DEPRECATED] game.dev_mode is set — expanding to all game.bypass.* flags. '
+                . 'Switch to GAME_BYPASS_AP / GAME_BYPASS_RESOURCES / GAME_BYPASS_SUPPLY.');
+            config([
+                'game.bypass.ap_checks'      => true,
+                'game.bypass.resource_costs' => true,
+                'game.bypass.supply_checks'  => true,
+            ]);
+        }
+
+        // Production guard — bypass flags must never be active in production.
+        if ($this->app->isProduction() && array_filter(config('game.bypass', []))) {
+            $active = implode(', ', array_keys(array_filter(config('game.bypass', []))));
+            throw new \RuntimeException(
+                "Game bypass flags must not be active in production. Active: [{$active}]"
+            );
+        }
     }
 }

@@ -9,6 +9,14 @@
 
 - **Colony-UI:** Neue Route `/colony` mit `ColonyController` und Blade-View. Zeigt Kolonienname, Position und Gründungs-Tick. Umbenennung über PATCH `/colony/name` mit Validierung (min 2, max 50 Zeichen). Schreibt direkt in `glx_colonies` (Colony-Model liest aus View `v_glx_colonies`).
 
+## 2026-04-06 (Granulare Bypass-Flags)
+
+- **`config/game.php`:** Neuer `bypass`-Block mit drei unabhängigen Flags: `ap_checks`, `resource_costs`, `supply_checks` (je per `.env` steuerbar). Ermöglicht gezieltes Testen einzelner Systeme — z.B. AP-Verhalten testen während Ressourcenkosten deaktiviert bleiben.
+- **`dev_mode` deprecated:** Bleibt als Legacy-Shortcut erhalten, wirft aber `E_USER_DEPRECATED` + Laravel-Log-Warning und expandiert sich in alle drei Bypass-Flags. Wird in einer späteren Version entfernt.
+- **`AppServiceProvider::bootBypassFlags()`:** Verarbeitet Legacy-Expansion und enthält Production-Guard — aktive Bypass-Flags in Produktion werfen eine `RuntimeException`.
+- **Alle Verwendungsstellen** auf `game.bypass.*` umgestellt (`FleetService`, `AbstractTechnologyService`, `PersonellService`, `TradeGateway`).
+- **`.env`** nutzt jetzt `GAME_BYPASS_AP/RESOURCES/SUPPLY=true` statt `GAME_DEV_MODE=true`. **`.env.example`** dokumentiert alle Flags mit Test-Szenarien.
+
 ## 2026-04-06 (QA-Fixes Phase 2)
 
 - **CRIT-1** `addToFleet`: Ownership-Check ergänzt — fremde Fleet-IDs werden mit 403 abgewiesen.

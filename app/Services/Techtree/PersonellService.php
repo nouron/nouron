@@ -143,7 +143,7 @@ class PersonellService
         $this->validateId($colonyId);
 
         return DB::transaction(function () use ($userId, $personellId, $colonyId, $rank) {
-            if (!config('game.dev_mode')) {
+            if (!config('game.bypass.supply_checks')) {
                 $cost = (int) config('game.supply.cost_advisor', 2);
                 if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
                     return false;
