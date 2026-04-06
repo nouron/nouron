@@ -43,11 +43,27 @@ The in-game news/event system. Messages should feel like real dispatches:
 ### Tooltip Texts
 Ultra-short (max 1 sentence). Factual, no fluff.
 
+## Localization File Structure
+All player-facing text lives in `lang/de/<area>.php`. Complete list:
+| File | Content |
+|------|---------|
+| `techtree.php` | Building/ship/research names + descriptions (`desc_techs_*`) |
+| `buildings.php` | Building-specific labels |
+| `ships.php` | Ship names and descriptions |
+| `resources.php` | Resource names and abbreviations |
+| `events.php` | INNN event messages (`:placeholder` syntax) |
+| `fleet.php` | Fleet order names, field labels, order descriptions |
+| `trade.php` | Trade UI labels |
+| `advisors.php` | Advisor type names and descriptions |
+| `moral.php` | Moral event labels |
+| `techs.php` | Generic tech labels |
+
+New game entities always get entries in the matching file. New feature areas get a new file.
+
 ## Context Discovery
 When invoked, first check:
 - `docs/GDD.md` — game mechanics and setting details
-- `lang/de/techtree.php` — existing German UI texts
-- `lang/de/` — other language files
+- `lang/de/` — all language files (read before writing to avoid duplicates)
 - `resources/views/` — Blade templates to understand UI context
 
 ## Output Format

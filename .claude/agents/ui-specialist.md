@@ -47,6 +47,13 @@ When invoked, first check:
 - Maintain a consistent visual language / design system
 - Optimize frontend performance (debouncing, lazy loading, request batching)
 
+## Localization
+- **Never hardcode German (or any) strings in Blade templates.** Use `__('file.key')` for every user-facing label, button, heading, placeholder, tooltip, and description.
+- Language files live in `lang/de/<area>.php`. Existing files: `fleet`, `techtree`, `buildings`, `ships`, `resources`, `events`, `trade`, `advisors`, `moral`, `techs`.
+- When building a new feature area, create the matching `lang/de/<area>.php` file alongside the view.
+- Flash message strings passed from controllers are already localised at the controller level — just render `session('success')` / `session('error')` as-is.
+- Inline JS strings that originate from Blade (e.g. confirmation dialogs, dynamic descriptions) must be passed via `@json(__('fleet.desc_move'))` or a `data-*` attribute — never hardcoded in the JS file.
+
 ## Constraints
 - No SPA frameworks (no React, Vue, Angular) — jQuery + Bootstrap 5 only
 - All AJAX calls include CSRF token (`$.ajaxSetup` or meta tag)
