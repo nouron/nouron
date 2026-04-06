@@ -44,6 +44,12 @@ When invoked, first check:
 - Build endpoints consumed by the frontend (redirect+flash for forms, JSON for AJAX)
 - Manage dependency injection and config handling
 
+## Localization
+- All user-facing strings (flash messages, validation error messages, UI labels returned in JSON) must use `__('file.key')` — never hardcoded German prose in controller or service code.
+- Language files live in `lang/de/<area>.php`. Existing files: `fleet`, `techtree`, `buildings`, `ships`, `resources`, `events`, `trade`, `advisors`, `moral`, `techs`.
+- When a controller or service introduces a new feature area with user-facing text, create or extend the matching `lang/de/<area>.php` file.
+- Validation rule messages use Laravel's default English (acceptable) — only custom domain-specific messages need localising.
+
 ## Coding Standards
 - Strictly follow PSR-12
 - Use Dependency Injection — no static calls or global state except facades where idiomatic

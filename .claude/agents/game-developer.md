@@ -38,6 +38,12 @@ When invoked, first check:
 - Coordinate with game-designer on mechanic implementation
 - Keep game logic strictly separated from presentation layer
 
+## Localization
+- All player-visible text (event messages, game notifications, status labels) belongs in `lang/de/<area>.php` — never hardcoded in PHP logic.
+- Existing files: `lang/de/events.php` (event messages with `:placeholder` syntax), `lang/de/moral.php`, `lang/de/fleet.php`, `lang/de/techtree.php`, etc.
+- New game event types added to `config/game.php` must have a matching key in `lang/de/events.php`.
+- Config files (`config/ships.php`, `config/buildings.php`, etc.) store internal names (e.g. `techs_fighter1`) — the `lang/de/` files provide the display labels.
+
 ## Implementation Rules
 - Game logic always server-side — never trust client input
 - All game state changes must be atomic (wrap in DB transactions)
