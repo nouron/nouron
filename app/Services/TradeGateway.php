@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\DB;
  *     threshold = config('game.trade.ap_cost_threshold', 1000).
  *   - Accepting an offer: 1 AP, paid by the acceptor (buyer).
  *   - Removing an offer: 0 AP.
- * All AP checks are bypassed when config('game.dev_mode') is true.
+ * All AP checks are bypassed when config('game.bypass.ap_checks') is true.
  */
 class TradeGateway
 {
@@ -84,7 +84,7 @@ class TradeGateway
      * Optional key: restriction (defaults to 0).
      *
      * AP cost: max(1, floor(amount × price / threshold)) economy AP, deducted from
-     * the posting colony. Bypassed in dev_mode.
+     * the posting colony. Bypassed when game.bypass.ap_checks is true.
      *
      * Returns false when ownership check fails or user_id is missing.
      * @throws \InvalidArgumentException when the colony lacks sufficient economy AP.
@@ -98,7 +98,7 @@ class TradeGateway
         $colonyId = (int) $data['colony_id'];
         $apCost   = $this->calcOfferApCost((int) $data['amount'], (int) $data['price']);
 
-        if (!config('game.dev_mode')) {
+        if (!config('game.bypass.ap_checks')) {
             $available = $this->personellService->getEconomyPoints($colonyId);
             if ($available < $apCost) {
                 throw new \InvalidArgumentException(
@@ -120,7 +120,7 @@ class TradeGateway
             ]
         );
 
-        if (!config('game.dev_mode')) {
+        if (!config('game.bypass.ap_checks')) {
             $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
         }
 
@@ -165,6 +165,18 @@ class TradeGateway
             return false;
         }
 
+        $colonyId = (int) $data['colony_id'];
+        $apCost   = $this->calcOfferApCost((int) $data['amount'], (int) $data['price']);
+
+        if (!config('game.bypass.ap_checks')) {
+            $available = $this->personellService->getEconomyPoints($colonyId);
+            if ($available < $apCost) {
+                throw new \InvalidArgumentException(
+                    'Nicht genug Wirtschafts-AP, um dieses Angebot einzustellen.'
+                );
+            }
+        }
+
         DB::table('trade_researches')->updateOrInsert(
             [
                 'colony_id'   => $data['colony_id'],
@@ -177,6 +189,10 @@ class TradeGateway
                 'restriction' => $data['restriction'] ?? 0,
             ]
         );
+
+        if (!config('game.bypass.ap_checks')) {
+            $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+        }
 
         return true;
     }
@@ -219,7 +235,7 @@ class TradeGateway
      *   3 = same race   (buyer.race_id   == seller.race_id)
      * - After a successful transfer the offer row is deleted from trade_resources.
      * - A player may never accept their own offer.
-     * - AP cost: 1 economy AP charged to the acceptor (buyer). Bypassed in dev_mode.
+     * - AP cost: 1 economy AP charged to the acceptor (buyer). Bypassed when game.bypass.ap_checks is true.
      *
      * @param  int  $buyerUserId    Authenticated user who is accepting the offer.
      * @param  int  $buyerColonyId  Colony of the accepting user.
@@ -238,7 +254,7 @@ class TradeGateway
     ): bool {
         // Economy-AP check: acceptor must have at least 1 economy AP.
         // Performed before entering the transaction so the error surfaces immediately.
-        if (!config('game.dev_mode')) {
+        if (!config('game.bypass.ap_checks')) {
             $available = $this->personellService->getEconomyPoints($buyerColonyId);
             if ($available < 1) {
                 throw new \InvalidArgumentException(
@@ -426,7 +442,7 @@ class TradeGateway
             }
 
             // 7. Lock 1 economy AP for the acceptor (buyer).
-            if (!config('game.dev_mode')) {
+            if (!config('game.bypass.ap_checks')) {
                 $this->personellService->lockActionPoints('economy', $buyerColonyId, 1);
             }
 

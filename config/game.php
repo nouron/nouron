@@ -5,9 +5,25 @@
  */
 
 return [
-    // Set to false in production to enforce all game rules strictly.
-    // When true, resource checks are bypassed so techs can be tested freely.
-    'dev_mode' => (bool) env('GAME_DEV_MODE', true),
+    // ── Bypass flags ──────────────────────────────────────────────────────────
+    // Granular overrides for testing individual game systems in isolation.
+    // Each flag disables exactly one category of check — all default to false.
+    // NEVER set any of these to true in production (AppServiceProvider enforces this).
+    //
+    // .env presets for common test scenarios:
+    //   Test AP behaviour:      GAME_BYPASS_AP=false  (all flags false, real checks run)
+    //   Test Supply behaviour:  GAME_BYPASS_RESOURCES=true, rest false
+    //   Free-click everything:  all three true  (equivalent to old dev_mode=true)
+    'bypass' => [
+        'ap_checks'      => (bool) env('GAME_BYPASS_AP',        false),
+        'resource_costs' => (bool) env('GAME_BYPASS_RESOURCES', false),
+        'supply_checks'  => (bool) env('GAME_BYPASS_SUPPLY',    false),
+    ],
+
+    // @deprecated — use individual game.bypass.* flags instead.
+    // Legacy shortcut: when true, sets all bypass flags to true at boot (see AppServiceProvider).
+    // Will be removed in a future release.
+    'dev_mode' => (bool) env('GAME_DEV_MODE', false),
 
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)

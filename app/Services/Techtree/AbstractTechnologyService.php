@@ -139,7 +139,7 @@ abstract class AbstractTechnologyService
      */
     public function checkRequiredResourcesByEntityId(int $colonyId, int $entityId): bool
     {
-        if (config('game.dev_mode')) {
+        if (config('game.bypass.resource_costs')) {
             return true;
         }
 
@@ -181,7 +181,7 @@ abstract class AbstractTechnologyService
      */
     public function checkRequiredSupplyByEntityId(int $colonyId, int $entityId): bool
     {
-        if (config('game.dev_mode')) {
+        if (config('game.bypass.supply_checks')) {
             return true;
         }
 
