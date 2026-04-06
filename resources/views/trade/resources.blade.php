@@ -72,7 +72,7 @@
         @if($offers->isEmpty())
             <p class="text-muted fst-italic">Keine Rohstoff-Angebote gefunden.</p>
         @else
-        <table class="table table-striped table-hover table-sm">
+        <table class="table table-hover table-sm">
             <thead class="table-dark">
                 <tr>
                     <th>Kolonie</th>
@@ -90,7 +90,7 @@
                 @php
                     $res = ($resources ?? [])[$offer->resource_id] ?? null;
                 @endphp
-                <tr>
+                <tr class="{{ $offer->direction == 0 ? 'table-success bg-opacity-25' : 'table-primary bg-opacity-25' }}">
                     <td>{{ $offer->colony }}</td>
                     <td>{{ $offer->username }}</td>
                     <td>
@@ -102,14 +102,29 @@
                     </td>
                     <td>
                         @if($res)
-                            {{ __('resources.' . $res->name) }}
+                            @include('partials.res_chip', [
+                                'abbreviation' => $res->abbreviation,
+                                'amount'       => null,
+                                'title'        => __('resources.' . $res->name),
+                            ])
                         @else
                             Res#{{ $offer->resource_id }}
                         @endif
                     </td>
                     <td>{{ $offer->amount }}</td>
-                    <td>{{ $offer->price }}</td>
-                    <td>{{ $offer->restriction }}</td>
+                    <td>@include('partials.res_chip', ['abbreviation' => 'Cr', 'amount' => $offer->price])</td>
+                    <td>
+                        @php
+                            $restrictionLabel = match((int) $offer->restriction) {
+                                0       => ['Alle',     'bg-success'],
+                                1       => ['Gruppe',   'bg-secondary'],
+                                2       => ['Fraktion', 'bg-warning text-dark'],
+                                3       => ['Rasse',    'bg-info text-dark'],
+                                default => [(string) $offer->restriction, 'bg-secondary'],
+                            };
+                        @endphp
+                        <span class="badge {{ $restrictionLabel[1] }}">{{ $restrictionLabel[0] }}</span>
+                    </td>
                     <td>
                         @if(isset($user_id) && (int) $offer->user_id === $user_id)
                         {{-- Own offer: show delete button only --}}

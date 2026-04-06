@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
+use App\Models\Advisor;
 use App\Models\Personell;
 use App\Services\ColonyService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class AdvisorController extends BaseController
@@ -48,14 +50,23 @@ class AdvisorController extends BaseController
             PersonellService::PERSONELL_ID_TRADER,
         ])->get()->keyBy('id');
 
+        // Fleet commanders of this user (all fleets, not colony-scoped)
+        $userId = $this->getCurrentUserId();
+        $fleetCommanders = Advisor::where('user_id', $userId)
+            ->where('is_commander', true)
+            ->whereNotNull('fleet_id')
+            ->with(['personell', 'fleet'])
+            ->get();
+
         $apInfo = [
             'construction' => $this->personellService->getTotalActionPoints('construction', $colonyId),
             'research'     => $this->personellService->getTotalActionPoints('research', $colonyId),
             'economy'      => $this->personellService->getTotalActionPoints('economy', $colonyId),
+            'navigation'   => $fleetCommanders->sum(fn(Advisor $a) => $a->getApPerTick()),
         ];
 
         return view('advisors.index', compact(
-            'advisors', 'freeSupply', 'costPerAdvisor', 'personellTypes', 'apInfo', 'colonyId'
+            'advisors', 'fleetCommanders', 'freeSupply', 'costPerAdvisor', 'personellTypes', 'apInfo', 'colonyId'
         ));
     }
 

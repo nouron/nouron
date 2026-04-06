@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-06 (UI-Polishing: Berater, Handel)
+
+- **Berater-Seite umgebaut:** Berater werden jetzt in 4 separaten Cards gruppiert (Ingenieure, Wissenschaftler, Händler, Kommandanten). Jede Card zeigt die eigene AP-Summe und Supply-Kosten im Footer. Auf Desktop 2 Cards nebeneinander. Flottenkommandanten werden mit Flottenname angezeigt; `AdvisorController` lädt jetzt zusätzlich alle `is_commander`-Advisors des Users über alle Flotten. AP-Gesamtübersicht durch kompakte Statuszeile ersetzt. Dicke Farbrahmen entfernt, neutrale Cards.
+- **Trade-Seiten:** Rohstoff-Spalte zeigt jetzt `res-chip` mit Kürzel + Tooltip statt plain Text. Preis-Spalte zeigt Credits-Chip. Restriktions-Spalte zeigt lesbare Badges (Alle/Gruppe/Fraktion/Rasse) statt roher Integers. Tabellenzeilen farblich nach Richtung (Kauf/Verkauf). `table-striped` entfernt.
+- **Shared Partial:** `resources/views/partials/res_chip.blade.php` — wiederverwendbarer Ressourcen-Chip, der dieselbe `.res-chip`-Klasse wie die Ressourcenleiste nutzt.
+
 ## 2026-04-06 (Forschungshandel-View, User-Einstellungen, Roadmap Phase 3–5)
 
 - **Forschungshandel-View:** Neue Route `/trade/researches`, Controller-Methoden `researches()` und `addResearchOffer()` in `TradeController` ergänzt. View analog zu Rohstoff-Handel (Tabelle, Filter, Modal zum Erstellen). `TradeGateway::addResearchOffer/removeResearchOffer` war bereits vorhanden. Hinweis-Banner im Formular: Acceptance-Flow folgt in Phase 3 nach Entscheidung über Mechanik (Level-Transfer vs. Lizenz). Beide Trade-Seiten haben jetzt einen Tab-Header (Rohstoffe / Forschungen).
