@@ -40,7 +40,7 @@ class TradeApTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
 
         // Enforce AP rules — this is what distinguishes this suite from the others.
-        config(['game.dev_mode' => false]);
+        config(['game.bypass.ap_checks' => false]);
 
         $this->gateway          = $this->app->make(TradeGateway::class);
         $this->personellService = $this->app->make(PersonellService::class);
@@ -213,13 +213,12 @@ class TradeApTest extends TestCase
     // ── dev_mode bypasses AP checks ───────────────────────────────────────────
 
     /**
-     * With GAME_DEV_MODE=true (config('game.dev_mode')=true), addResourceOffer()
-     * must succeed even when the colony has zero economy AP.
+     * With game.bypass.ap_checks=true, addResourceOffer() must succeed
+     * even when the colony has zero economy AP.
      */
     public function test_dev_mode_bypasses_ap_check(): void
     {
-        // Flip to dev_mode — no traders set up, so AP would normally be 0.
-        config(['game.dev_mode' => true]);
+        config(['game.bypass.ap_checks' => true]);
 
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,

@@ -215,11 +215,22 @@ class GameTick extends Command
             ->where('resource_id', $resourceId)
             ->update(['amount' => DB::raw("MAX(0, amount - {$amount})")]);
 
-        $fleetRes = FleetResource::firstOrCreate(
-            ['fleet_id' => $fleetId, 'resource_id' => $resourceId],
-            ['amount'   => 0],
-        );
-        $fleetRes->increment('amount', $amount);
+        // FleetResource has a composite PK (fleet_id, resource_id) — Eloquent::increment()
+        // would generate WHERE id = null and silently do nothing. Use a raw UPDATE + INSERT
+        // pair instead.
+        $updated = DB::table('fleet_resources')
+            ->where('fleet_id', $fleetId)
+            ->where('resource_id', $resourceId)
+            ->update(['amount' => DB::raw("amount + {$amount}")]);
+
+        if ($updated === 0) {
+            // Row did not exist yet (new resource on this fleet)
+            DB::table('fleet_resources')->insert([
+                'fleet_id'    => $fleetId,
+                'resource_id' => $resourceId,
+                'amount'      => $amount,
+            ]);
+        }
     }
 
     // ── 3. Fleet: combat orders ──────────────────────────────────────────────
@@ -437,7 +448,7 @@ class GameTick extends Command
         $maxSPMap      = DB::table('ships')->pluck('max_status_points', 'id');
         $destroyed     = 0;
 
-        FleetShip::chunkById(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, $maxSPMap, &$destroyed, $tick) {
+        FleetShip::orderBy('fleet_id')->orderBy('ship_id')->chunk(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, $maxSPMap, &$destroyed, $tick) {
         foreach ($fleetShips as $fs) {
             $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
 

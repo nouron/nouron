@@ -108,7 +108,7 @@ class BuildingServiceTest extends TestCase
      */
     public function testLevelupBlockedWhenInsufficientSupply(): void
     {
-        config(['game.dev_mode' => false]);
+        config(['game.bypass.supply_checks' => false]);
 
         // Clear all supply costs, then set oremine=2
         DB::table('buildings')->update(['supply_cost' => 0]);
@@ -130,10 +130,10 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
     }
 
-    public function testLevelupAllowedInDevMode(): void
+    public function testLevelupAllowedWhenSupplyBypassed(): void
     {
-        // dev_mode=true (default) bypasses supply check
-        config(['game.dev_mode' => true]);
+        // supply_checks bypassed → levelup succeeds regardless of supply
+        config(['game.bypass.supply_checks' => true]);
 
         DB::table('buildings')->update(['supply_cost' => 999]);
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);

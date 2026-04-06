@@ -20,6 +20,12 @@
         <env name="SESSION_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Bypass all game rule checks by default in tests.
+             Tests that specifically test AP/resource/supply behaviour
+             override these via config(['game.bypass.ap_checks' => false]) in setUp(). -->
+        <env name="GAME_BYPASS_AP" value="true"/>
+        <env name="GAME_BYPASS_RESOURCES" value="true"/>
+        <env name="GAME_BYPASS_SUPPLY" value="true"/>
     </php>
 
 </phpunit>

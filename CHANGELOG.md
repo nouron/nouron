@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-06 (QA-Tests: Ownership, Trade-Clamp, Colony-Rename, Auth-Throttle)
+
+- **4 neue Feature-Testklassen** mit insgesamt 40 Tests für zuvor unabgedeckte Phase-2-QA-Befunde (CRIT-1, HIGH-2, HIGH-4, MED-3, LOW-1).
+- **CRIT-1 / HIGH-4 (`FleetTransferOwnershipTest`):** `addToFleet`-Endpoint liefert 403 für fremde Flotten; `convoy`/`join`-Orders auf fremde Zielflotten werden mit Validierungsfehler abgelehnt. Happy-Path (eigene Flotte) jeweils abgedeckt.
+- **HIGH-2 (`TradeOrderResourceClampTest`):** `game:tick` Trade-Orders clampen korrekt auf Quellbestand — Fleet gibt nicht mehr ab als vorhanden, Colony nicht mehr als sie hat. Dabei wurde ein Bug in `GameTick::transferResource` behoben: `FleetResource::increment()` schlug wegen fehlendem Einzel-PK (Composite-Key) lautlos fehl; ersetzt durch direktes `DB::table->update/insert`.
+- **MED-3 + Flash-Messenger (`ColonyRenameTest`):** HTML-Injection (Script-Tags, Angle-Brackets, Curly Braces) wird per Regex-Validierung abgelehnt; Grenzwerte (min 2, max 50) und Success-Flash-Message getestet.
+- **LOW-1 + Auth-Flow (`LoginFlowTest`):** Login-Throttle (`throttle:5,1`) blockiert ab dem 6. Versuch mit 429; korrektes Passwort nach Lockout ebenfalls geblockt. Erfolgreicher Login mit Username und Email je separat abgedeckt.
+
 ## 2026-04-06 (Flotten auf Galaxiekarte)
 
 - **Flotten auf Galaxiekarte:** `GalaxyController::getMapData()` liefert jetzt Layer-3-Einträge für alle Flotten im System-Sichtbereich (Radius 50). Eigene Flotten werden grün dargestellt, fremde gelb — galaxy.js war bereits vorbereitet, Farb-Logik per `obj.attribs.class` ergänzt. `Fleet`-Model um `user()`-Relation erweitert.
