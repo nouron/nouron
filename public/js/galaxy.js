@@ -350,10 +350,13 @@ $(document).ready(function () {
                 return m;
             }
             if (obj.layer === 3) {
+                var isOwn   = obj.attribs.class === 'fleet-own';
+                var fColor  = isOwn ? '#44cc88' : '#ffaa22';
+                var fBorder = isOwn ? '#22aa66' : '#ffcc44';
                 return L.circleMarker(latlng, {
-                    radius: 7, color: '#ffcc44', weight: 2,
-                    fillColor: '#ffaa22', fillOpacity: 0.85,
-                    className: 'fleet-marker',
+                    radius: 7, color: fBorder, weight: 2,
+                    fillColor: fColor, fillOpacity: 0.85,
+                    className: 'fleet-marker ' + (obj.attribs.class || ''),
                 }).bindTooltip(title);
             }
             var cm = L.circleMarker(latlng, {

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-06 (Flotten auf Galaxiekarte)
+
+- **Flotten auf Galaxiekarte:** `GalaxyController::getMapData()` liefert jetzt Layer-3-Einträge für alle Flotten im System-Sichtbereich (Radius 50). Eigene Flotten werden grün dargestellt, fremde gelb — galaxy.js war bereits vorbereitet, Farb-Logik per `obj.attribs.class` ergänzt. `Fleet`-Model um `user()`-Relation erweitert.
+- **Skalierungsprüfung:** System-Radius 50 Einheiten; Speed 4 ≈ 12 Ticks, Speed 1 ≈ 50 Ticks — kein Anpassungsbedarf.
+
 ## 2026-04-06 (Colony-UI)
 
 - **Colony-UI:** Neue Route `/colony` mit `ColonyController` und Blade-View. Zeigt Kolonienname, Position und Gründungs-Tick. Umbenennung über PATCH `/colony/name` mit Validierung (min 2, max 50 Zeichen). Schreibt direkt in `glx_colonies` (Colony-Model liest aus View `v_glx_colonies`).
