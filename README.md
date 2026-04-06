@@ -1,12 +1,14 @@
 # Nouron — A Free Space Opera Browsergame
 
-Nouron is a sci-fi strategy browsergame built with PHP 8, Laravel 12, SQLite and Bootstrap 5.
+Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite and Bootstrap 5.
 
 ## Quickstart
 
 Nouron uses an SQLite database delivered with the project (`data/db/nouron.db`), so no database setup is required for local testing.
 
 **Requirements:** PHP 8.2+, Composer
+
+> **Windows users:** The project runs under WSL2. Run all commands inside your WSL2 terminal.
 
 ```bash
 # After cloning, install dependencies
@@ -19,8 +21,56 @@ php artisan key:generate
 # Start local dev server
 php artisan serve
 
-# (Optional) Run tests
-php artisan test
+# Run tests (Feature suite)
+php artisan test --testsuite=Feature
+```
+
+### Test accounts
+
+The development database (`data/db/nouron.db`) contains Simpsons test characters:
+
+| Username | Password | Notes |
+|----------|----------|-------|
+| `Bart` | `test` | Colony "Springfield" |
+| `Homer` | `test` | |
+| `Marge` | `test` | |
+
+### Resetting game state
+
+To reset the development database to its original state:
+
+```bash
+cp data/db/nouron.db.bak data/db/nouron.db   # if a backup exists
+# or re-run the seed:
+php artisan db:seed --class=DevSeeder
+```
+
+### Database files
+
+| File | Purpose |
+|------|---------|
+| `data/db/nouron.db` | Development database (used by `php artisan serve`) |
+| `data/db/test.db` | Test database (used by the test suite, seeded automatically) |
+
+### Useful Artisan commands
+
+```bash
+# Sync ship/building values from config files to the database
+php artisan game:sync-techs
+
+# Preview changes without writing
+php artisan game:sync-techs --dry-run
+
+# Manually trigger a game tick (normally runs via scheduler)
+php artisan game:tick
+```
+
+### Scheduler setup
+
+The game tick runs once per day at 03:00. To activate the Laravel scheduler on your server, add one cron entry:
+
+```
+* * * * * cd /path/to/nouron && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 ## Environment & Dev Settings
@@ -64,10 +114,10 @@ GAME_BYPASS_SUPPLY=false
 
 https://github.com/nouron/nouron/issues
 
-## Blog and Social Media
+## Community
 
-* [Facebook](http://facebook.com/nouronbg)
-* [Twitter](http://twitter.com/_nouron)
+* [Facebook](https://facebook.com/nouronbg)
+* [X / Twitter](https://x.com/_nouron)
 
 ## Authors and Supporters
 
