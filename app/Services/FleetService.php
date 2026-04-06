@@ -73,7 +73,7 @@ class FleetService
      */
     public function addOrder(int|Fleet $fleet, string $order, mixed $destination, ?array $additionalData = null): void
     {
-        $validOrders = ['move', 'trade', 'hold', 'convoy', 'defend', 'attack', 'join', 'devide'];
+        $validOrders = ['move', 'trade', 'hold', 'convoy', 'defend', 'attack', 'join', 'divide'];
         if (!in_array($order, $validOrders)) {
             throw new \InvalidArgumentException("Unknown command: {$order}");
         }
@@ -113,21 +113,22 @@ class FleetService
         $finalOrderCost = (int) config('game.fleet.order_costs.' . $order, $moveCost);
         $apCost         = $moveCost * max(0, $pathLength - 1) + $finalOrderCost;
 
-        if (config('game.dev_mode')) {
-            // TODO: Laravel migration — remove dev_mode bypass once AP system is fully tested
-            Log::debug("FleetService::addOrder() AP check skipped (dev_mode=true). "
-                . "fleet={$fleetId} order={$order} apCost={$apCost}");
-        } else {
-            $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;
-            if ($availableAP < $apCost) {
-                throw new \RuntimeException("Nicht genug Navigations-AP für diesen Befehl.");
+        // AP check and lock must be atomic to prevent TOCTOU race conditions.
+        DB::transaction(function () use ($fleetId, $path, $order, $additionalData, $apCost) {
+            if (config('game.dev_mode')) {
+                // TODO: remove dev_mode bypass once AP system is fully tested
+                Log::debug("FleetService::addOrder() AP check skipped (dev_mode=true). "
+                    . "fleet={$fleetId} order={$order} apCost={$apCost}");
+            } else {
+                $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;
+                if ($availableAP < $apCost) {
+                    throw new \RuntimeException("Nicht genug Navigations-AP für diesen Befehl.");
+                }
+                $this->personellService?->lockActionPoints('navigation', $fleetId, $apCost);
             }
-        }
 
-        $this->_storePathInDb($fleetId, $path, $order, $additionalData);
-
-        // Lock the spent AP after successfully storing the orders.
-        $this->personellService?->lockActionPoints('navigation', $fleetId, $apCost);
+            $this->_storePathInDb($fleetId, $path, $order, $additionalData);
+        });
     }
 
     protected function _storePathInDb(int $fleetId, array $path, string $order, ?array $additionalData): void
@@ -406,8 +407,9 @@ class FleetService
         if ($where) {
             $query->where($where);
         }
-        if ($orderBy) {
-            $query->orderByRaw($orderBy);
+        $allowedOrderBy = ['tick', 'fleet_id', 'order', 'was_processed'];
+        if ($orderBy && in_array($orderBy, $allowedOrderBy, true)) {
+            $query->orderBy($orderBy);
         }
         if ($offset) {
             $query->skip($offset);

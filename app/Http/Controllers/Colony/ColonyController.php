@@ -24,7 +24,7 @@ class ColonyController extends BaseController
     public function rename(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|min:2|max:50',
+            'name' => ['required', 'string', 'min:2', 'max:50', 'regex:/^[^<>{}\[\]]*$/'],
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());

@@ -121,11 +121,11 @@ class GalaxyService
     /**
      * Return colonies within the proximity square around $coords.
      * Uses v_glx_colonies which includes x/y from the joined system object.
-     * Radius = 50 / 2 = 25.
+     * Radius = system_view range / 2.
      */
     public function getColoniesByCoords(array $coords): Collection
     {
-        $radius = (int) round(50 / 2);
+        $radius = (int) round($this->getSystemViewRange() / 2);
         [$cx, $cy] = $coords;
 
         return Colony::whereBetween('x', [$cx - $radius, $cx + $radius])
@@ -273,7 +273,7 @@ class GalaxyService
             if (($t % $speed) === 0 || ($x === $xend && $y === $yend)) {
                 $path[++$tick] = [$x, $y, 0];
                 if (isset($coordsB[2]) && $x === $xend && $y === $yend) {
-                    $path[$tick++][2] = $coordsB[2];
+                    $path[$tick][2] = $coordsB[2];
                 }
             }
         }

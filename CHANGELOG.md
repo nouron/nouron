@@ -9,6 +9,23 @@
 
 - **Colony-UI:** Neue Route `/colony` mit `ColonyController` und Blade-View. Zeigt Kolonienname, Position und Gründungs-Tick. Umbenennung über PATCH `/colony/name` mit Validierung (min 2, max 50 Zeichen). Schreibt direkt in `glx_colonies` (Colony-Model liest aus View `v_glx_colonies`).
 
+## 2026-04-06 (QA-Fixes Phase 2)
+
+- **CRIT-1** `addToFleet`: Ownership-Check ergänzt — fremde Fleet-IDs werden mit 403 abgewiesen.
+- **CRIT-2** AP-Check + AP-Lock in `FleetService::addOrder` in eine DB-Transaktion zusammengefasst (TOCTOU-Schutz).
+- **HIGH-1** Off-by-one in `GalaxyService::getPath()`: `$path[$tick++][2]` → `$path[$tick][2]` (Slot-Wert am Zielpunkt wurde den Tick-Zähler fälschlich weitersetzen).
+- **HIGH-2** `GameTick::transferResource()`: Menge wird jetzt auf verfügbaren Bestand der Quelle geklemmt, bevor DB-Updates erfolgen — verhindert Ressourcenerzeugung aus Luft.
+- **HIGH-3** `processShipDecay()`: `FleetShip::all()` durch `chunkById(200, …)` ersetzt.
+- **HIGH-4** `convoy`/`join` Orders: Zielflotte muss dem eigenen User gehören; `defend` bleibt offen (Allianz-Unterstützung legitim).
+- **MED-1** `addResearchOffer()`: AP-Check und AP-Lock analog zu `addResourceOffer()` ergänzt.
+- **MED-2** `config/game.php`: `dev_mode` Default auf `false` gesetzt; `.env` erhält `GAME_DEV_MODE=true` für die Dev-Umgebung.
+- **MED-3** Colony-Rename: Regex-Validierung blockiert HTML/Script-Zeichen (`<>{}[]`).
+- **MED-4** Combat-Events: Moral-Events und INNN-Events werden jetzt für alle beteiligten Defender-User gefeuert, nicht nur den ersten.
+- **LOW-1** Login: `throttle:5,1` Middleware auf POST `/login`.
+- **LOW-2** `getColoniesByCoords()`: hardcoded Radius 50 durch `getSystemViewRange()` ersetzt.
+- **LOW-3** Tippfehler `devide` → `divide` in `FleetService::$validOrders`.
+- **LOW-4** `getOrders()`: `orderByRaw()` durch Whitelist-geprüftes `orderBy()` ersetzt.
+
 ## 2026-04-06 (Roadmap, GDD und config/game.php abgeglichen)
 
 - **ROADMAP.md aktualisiert:** Phase 1b als abgeschlossen markiert (April 2026). Prio-1-Bug (PersonellService), alle Prio-2-Items (Advisor-UI, Forschungshandel, Einstellungen) und Prio-3-Items (game:sync-techs, Scheduler, Fleet-Orders) als erledigt markiert. Interstellare Flottenbewegung aus Phase 2 entfernt (nur in Phase 3a).

@@ -7,7 +7,7 @@
 return [
     // Set to false in production to enforce all game rules strictly.
     // When true, resource checks are bypassed so techs can be tested freely.
-    'dev_mode' => (bool) env('GAME_DEV_MODE', true),
+    'dev_mode' => (bool) env('GAME_DEV_MODE', false),
 
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)

@@ -192,6 +192,25 @@ class GameTick extends Command
      */
     private function transferResource(int $colonyId, int $fleetId, int $resourceId, int $amount): void
     {
+        // Clamp amount to what the source actually has to prevent creating resources from nothing.
+        if ($amount > 0) {
+            // Colony → Fleet: clamp to colony stock
+            $colonyStock = (int) ColonyResource::where('colony_id', $colonyId)
+                ->where('resource_id', $resourceId)
+                ->value('amount');
+            $amount = min($amount, $colonyStock);
+        } elseif ($amount < 0) {
+            // Fleet → Colony: clamp to fleet stock
+            $fleetStock = (int) FleetResource::where('fleet_id', $fleetId)
+                ->where('resource_id', $resourceId)
+                ->value('amount');
+            $amount = max($amount, -$fleetStock);
+        }
+
+        if ($amount === 0) {
+            return;
+        }
+
         ColonyResource::where('colony_id', $colonyId)
             ->where('resource_id', $resourceId)
             ->update(['amount' => DB::raw("MAX(0, amount - {$amount})")]);
@@ -201,9 +220,6 @@ class GameTick extends Command
             ['amount'   => 0],
         );
         $fleetRes->increment('amount', $amount);
-        if ($fleetRes->amount < 0) {
-            $fleetRes->update(['amount' => 0]);
-        }
     }
 
     // ── 3. Fleet: combat orders ──────────────────────────────────────────────
@@ -277,25 +293,20 @@ class GameTick extends Command
 
             $order->update(['was_processed' => 1]);
 
-            $defenderUserId = $defenders->first()->user_id;
-            foreach ([$attacker->user_id, $defenderUserId] as $uid) {
-                $this->eventService->createEvent([
-                    'user'       => $uid,
-                    'tick'       => $tick,
-                    'event'      => 'galaxy.combat',
-                    'area'       => 'galaxy',
-                    'parameters' => serialize([
-                        'attacker_id' => $attacker->user_id,
-                        'defender_id' => $defenderUserId,
-                        'colony_id'   => 0,
-                    ]),
-                ]);
-            }
+            // Notify attacker
+            $this->eventService->createEvent([
+                'user'       => $attacker->user_id,
+                'tick'       => $tick,
+                'event'      => 'galaxy.combat',
+                'area'       => 'galaxy',
+                'parameters' => serialize([
+                    'attacker_id' => $attacker->user_id,
+                    'defender_id' => $defenders->first()->user_id,
+                    'colony_id'   => 0,
+                ]),
+            ]);
 
-            // Fire moral events based on combat outcome
             $attackerColonyId = $this->getColonyIdByUserId($attacker->user_id);
-            $defenderColonyId = $this->getColonyIdByUserId($defenderUserId);
-
             if ($attackerColonyId) {
                 $this->moralService->fireEvent(
                     $attackerColonyId,
@@ -303,13 +314,30 @@ class GameTick extends Command
                     $tick
                 );
             }
-            if ($defenderColonyId) {
-                $this->moralService->fireEvent($defenderColonyId, 'colony_attacked', $tick);
-                $this->moralService->fireEvent(
-                    $defenderColonyId,
-                    $defenderPower >= $attackerPower ? 'combat_won' : 'combat_lost',
-                    $tick
-                );
+
+            // Notify each unique defender user
+            foreach ($defenders->unique('user_id') as $defFleet) {
+                $this->eventService->createEvent([
+                    'user'       => $defFleet->user_id,
+                    'tick'       => $tick,
+                    'event'      => 'galaxy.combat',
+                    'area'       => 'galaxy',
+                    'parameters' => serialize([
+                        'attacker_id' => $attacker->user_id,
+                        'defender_id' => $defFleet->user_id,
+                        'colony_id'   => 0,
+                    ]),
+                ]);
+
+                $defenderColonyId = $this->getColonyIdByUserId($defFleet->user_id);
+                if ($defenderColonyId) {
+                    $this->moralService->fireEvent($defenderColonyId, 'colony_attacked', $tick);
+                    $this->moralService->fireEvent(
+                        $defenderColonyId,
+                        $defenderPower >= $attackerPower ? 'combat_won' : 'combat_lost',
+                        $tick
+                    );
+                }
             }
 
             $processed++;
@@ -409,8 +437,7 @@ class GameTick extends Command
         $maxSPMap      = DB::table('ships')->pluck('max_status_points', 'id');
         $destroyed     = 0;
 
-        $fleetShips = FleetShip::all();
-
+        FleetShip::chunkById(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, $maxSPMap, &$destroyed, $tick) {
         foreach ($fleetShips as $fs) {
             $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
 
@@ -440,6 +467,7 @@ class GameTick extends Command
                 DB::table('fleet_ships')->where($where)->update(['status_points' => $newStatus]);
             }
         }
+        }); // end chunkById
 
         return $destroyed;
     }

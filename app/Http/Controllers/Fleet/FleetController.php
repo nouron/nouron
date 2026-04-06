@@ -225,16 +225,17 @@ class FleetController extends BaseController
                 $this->fleetService->addOrder($fleet, 'hold', [$fleet->x, $fleet->y, $fleet->spot]);
 
             } elseif ($order === 'convoy') {
-                // Fleet escorts/follows a target fleet to its destination.
+                // Fleet escorts/follows own target fleet to its destination.
                 $request->validate(['target_fleet_id' => 'required|integer']);
-                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                $targetFleet = Fleet::where('id', (int) $request->input('target_fleet_id'))
+                    ->where('user_id', $userId)->first();
                 if (!$targetFleet) {
-                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden oder gehört nicht dir.']);
                 }
                 $this->fleetService->addOrder($fleet, 'convoy', $targetFleet);
 
             } elseif ($order === 'defend') {
-                // Fleet moves to the position of the target fleet to defend it.
+                // Fleet moves to the position of the target fleet to defend it (may be any fleet).
                 $request->validate(['target_fleet_id' => 'required|integer']);
                 $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
                 if (!$targetFleet) {
@@ -243,11 +244,12 @@ class FleetController extends BaseController
                 $this->fleetService->addOrder($fleet, 'defend', $targetFleet);
 
             } elseif ($order === 'join') {
-                // Fleet moves to join (merge with) the target fleet.
+                // Fleet moves to merge with own target fleet.
                 $request->validate(['target_fleet_id' => 'required|integer']);
-                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                $targetFleet = Fleet::where('id', (int) $request->input('target_fleet_id'))
+                    ->where('user_id', $userId)->first();
                 if (!$targetFleet) {
-                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden oder gehört nicht dir.']);
                 }
                 $this->fleetService->addOrder($fleet, 'join', $targetFleet);
             }
@@ -262,13 +264,17 @@ class FleetController extends BaseController
 
     public function addToFleet(Request $request, int $id): JsonResponse
     {
+        $userId   = $this->getCurrentUserId();
         $fleetId  = $id;
         $itemType = $request->post('itemType');
         $itemId   = (int) $request->post('itemId', 0);
         $amount   = (int) $request->post('amount', 0);
 
-        $fleet  = $this->fleetService->getFleet($fleetId);
-        $colony = $fleet ? $this->colonyService->getColonyByCoords($fleet->getCoords()) : null;
+        $fleet = Fleet::where('id', $fleetId)->where('user_id', $userId)->first();
+        if (!$fleet) {
+            return response()->json(['error' => 'Zugriff verweigert.'], 403);
+        }
+        $colony = $this->colonyService->getColonyByCoords($fleet->getCoords());
 
         $transferred = match (strtolower((string) $itemType)) {
             'ship'     => $this->fleetService->transferShip($colony, $fleet, $itemId, $amount),

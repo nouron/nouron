@@ -165,6 +165,18 @@ class TradeGateway
             return false;
         }
 
+        $colonyId = (int) $data['colony_id'];
+        $apCost   = $this->calcOfferApCost((int) $data['amount'], (int) $data['price']);
+
+        if (!config('game.dev_mode')) {
+            $available = $this->personellService->getEconomyPoints($colonyId);
+            if ($available < $apCost) {
+                throw new \InvalidArgumentException(
+                    'Nicht genug Wirtschafts-AP, um dieses Angebot einzustellen.'
+                );
+            }
+        }
+
         DB::table('trade_researches')->updateOrInsert(
             [
                 'colony_id'   => $data['colony_id'],
@@ -177,6 +189,10 @@ class TradeGateway
                 'restriction' => $data['restriction'] ?? 0,
             ]
         );
+
+        if (!config('game.dev_mode')) {
+            $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+        }
 
         return true;
     }
