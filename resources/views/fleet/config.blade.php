@@ -203,7 +203,7 @@
     {{-- Order form --}}
     <div class="card mt-4">
         <div class="card-body">
-            <h5 class="card-title"><i class="bi bi-terminal"></i> Befehl erteilen</h5>
+            <h5 class="card-title"><i class="bi bi-terminal"></i> {{ __('fleet.order_form_title') }}</h5>
 
             @if(session('success'))
                 <div class="alert alert-success py-2">{{ session('success') }}</div>
@@ -218,54 +218,76 @@
                     <div class="col-auto">
                         <label class="form-label small mb-1">Befehlstyp</label>
                         <select name="order" id="order-type" class="form-select form-select-sm" onchange="updateOrderForm()">
-                            <option value="move">Bewegen</option>
-                            <option value="trade">Handeln</option>
-                            <option value="attack">Angreifen</option>
+                            <optgroup label="{{ __('fleet.order_group_movement') }}">
+                                <option value="move">{{ __('fleet.order_move') }}</option>
+                                <option value="hold">{{ __('fleet.order_hold') }}</option>
+                            </optgroup>
+                            <optgroup label="{{ __('fleet.order_group_cooperation') }}">
+                                <option value="trade">{{ __('fleet.order_trade') }}</option>
+                                <option value="convoy">{{ __('fleet.order_convoy') }}</option>
+                                <option value="defend">{{ __('fleet.order_defend') }}</option>
+                                <option value="join">{{ __('fleet.order_join') }}</option>
+                            </optgroup>
+                            <optgroup label="{{ __('fleet.order_group_combat') }}">
+                                <option value="attack">{{ __('fleet.order_attack') }}</option>
+                            </optgroup>
                         </select>
                     </div>
 
                     {{-- Move fields --}}
                     <div id="fields-move" class="col-auto">
-                        <label class="form-label small mb-1">Ziel X</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_dest_x') }}</label>
                         <input type="number" name="destination_x" class="form-control form-control-sm" style="width:90px;"
                                value="{{ old('destination_x') }}">
                     </div>
                     <div id="fields-move-y" class="col-auto">
-                        <label class="form-label small mb-1">Ziel Y</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_dest_y') }}</label>
                         <input type="number" name="destination_y" class="form-control form-control-sm" style="width:90px;"
                                value="{{ old('destination_y') }}">
                     </div>
 
                     {{-- Trade fields --}}
                     <div id="fields-trade" class="col-auto d-none">
-                        <label class="form-label small mb-1">Kolonie-ID</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_colony_id') }}</label>
                         <input type="number" name="colony_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('colony_id') }}">
                     </div>
                     <div id="fields-trade-res" class="col-auto d-none">
-                        <label class="form-label small mb-1">Ressource-ID</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_resource_id') }}</label>
                         <input type="number" name="resource_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('resource_id') }}">
                     </div>
                     <div id="fields-trade-amt" class="col-auto d-none">
-                        <label class="form-label small mb-1">Menge</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_amount') }}</label>
                         <input type="number" name="amount" class="form-control form-control-sm" style="width:90px;" min="1" value="{{ old('amount', 1) }}">
                     </div>
                     <div id="fields-trade-dir" class="col-auto d-none">
-                        <label class="form-label small mb-1">Richtung</label>
+                        <label class="form-label small mb-1">{{ __('fleet.field_direction') }}</label>
                         <select name="direction" class="form-select form-select-sm">
-                            <option value="0">Kaufen (Kolonie → Flotte)</option>
-                            <option value="1">Verkaufen (Flotte → Kolonie)</option>
+                            <option value="0">{{ __('fleet.direction_buy') }}</option>
+                            <option value="1">{{ __('fleet.direction_sell') }}</option>
                         </select>
                     </div>
 
-                    {{-- Attack fields --}}
-                    <div id="fields-attack" class="col-auto d-none">
-                        <label class="form-label small mb-1">Ziel-Flotten-ID</label>
+                    {{-- Target fleet (attack / convoy / defend / join) --}}
+                    <div id="fields-target-fleet" class="col-auto d-none">
+                        <label class="form-label small mb-1">{{ __('fleet.field_target_fleet') }}</label>
                         <input type="number" name="target_fleet_id" class="form-control form-control-sm" style="width:90px;" value="{{ old('target_fleet_id') }}">
                     </div>
 
+                    {{-- Hold: info only, no extra input --}}
+                    <div id="fields-hold" class="col-auto d-none">
+                        <span class="form-text text-muted small">
+                            <i class="bi bi-pause-circle"></i> {{ __('fleet.desc_hold') }}
+                        </span>
+                    </div>
+
+                    {{-- Order description hint --}}
+                    <div class="col-12 mt-1">
+                        <small id="order-desc" class="text-muted fst-italic"></small>
+                    </div>
+
                     <div class="col-auto">
-                        <button type="submit" class="btn btn-sm btn-warning mt-3">
-                            <i class="bi bi-play-fill"></i> Befehl erteilen
+                        <button type="submit" class="btn btn-sm btn-warning mt-2">
+                            <i class="bi bi-play-fill"></i> {{ __('fleet.order_submit') }}
                         </button>
                     </div>
                 </div>
@@ -277,16 +299,36 @@
 
 @push('scripts')
 <script>
+const ORDER_DESCS = @json([
+    'move'    => __('fleet.desc_move'),
+    'hold'    => __('fleet.desc_hold'),
+    'trade'   => __('fleet.desc_trade'),
+    'convoy'  => __('fleet.desc_convoy'),
+    'defend'  => __('fleet.desc_defend'),
+    'join'    => __('fleet.desc_join'),
+    'attack'  => __('fleet.desc_attack'),
+]);
+
+const FLEET_ORDERS = ['attack', 'convoy', 'defend', 'join'];
+
 function updateOrderForm() {
     const t = document.getElementById('order-type').value;
+
     document.getElementById('fields-move').classList.toggle('d-none', t !== 'move');
     document.getElementById('fields-move-y').classList.toggle('d-none', t !== 'move');
     document.getElementById('fields-trade').classList.toggle('d-none', t !== 'trade');
     document.getElementById('fields-trade-res').classList.toggle('d-none', t !== 'trade');
     document.getElementById('fields-trade-amt').classList.toggle('d-none', t !== 'trade');
     document.getElementById('fields-trade-dir').classList.toggle('d-none', t !== 'trade');
-    document.getElementById('fields-attack').classList.toggle('d-none', t !== 'attack');
+    document.getElementById('fields-target-fleet').classList.toggle('d-none', !FLEET_ORDERS.includes(t));
+    document.getElementById('fields-hold').classList.toggle('d-none', t !== 'hold');
+
+    const desc = document.getElementById('order-desc');
+    if (desc) desc.textContent = ORDER_DESCS[t] || '';
 }
+
+// Init on page load
+updateOrderForm();
 </script>
 @endpush
 @endsection

@@ -178,7 +178,7 @@ class FleetController extends BaseController
             abort(403, 'Zugriff verweigert.');
         }
 
-        $order = $request->validate(['order' => 'required|in:move,trade,attack'])['order'];
+        $order = $request->validate(['order' => 'required|in:move,trade,attack,hold,convoy,defend,join'])['order'];
 
         try {
             if ($order === 'move') {
@@ -219,6 +219,37 @@ class FleetController extends BaseController
                     return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
                 }
                 $this->fleetService->addOrder($fleet, 'attack', $targetFleet);
+
+            } elseif ($order === 'hold') {
+                // Fleet holds its current position for one tick — no movement.
+                $this->fleetService->addOrder($fleet, 'hold', [$fleet->x, $fleet->y, $fleet->spot]);
+
+            } elseif ($order === 'convoy') {
+                // Fleet escorts/follows a target fleet to its destination.
+                $request->validate(['target_fleet_id' => 'required|integer']);
+                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                if (!$targetFleet) {
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                }
+                $this->fleetService->addOrder($fleet, 'convoy', $targetFleet);
+
+            } elseif ($order === 'defend') {
+                // Fleet moves to the position of the target fleet to defend it.
+                $request->validate(['target_fleet_id' => 'required|integer']);
+                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                if (!$targetFleet) {
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                }
+                $this->fleetService->addOrder($fleet, 'defend', $targetFleet);
+
+            } elseif ($order === 'join') {
+                // Fleet moves to join (merge with) the target fleet.
+                $request->validate(['target_fleet_id' => 'required|integer']);
+                $targetFleet = Fleet::find((int) $request->input('target_fleet_id'));
+                if (!$targetFleet) {
+                    return back()->withErrors(['order' => 'Ziel-Flotte nicht gefunden.']);
+                }
+                $this->fleetService->addOrder($fleet, 'join', $targetFleet);
             }
         } catch (\RuntimeException $e) {
             return back()->withErrors(['order' => $e->getMessage()]);

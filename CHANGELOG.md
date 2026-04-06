@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-06 (Scheduler, game:sync-techs, Fleet-Orders vervollständigt)
+
+- **`game:sync-techs`:** Neuer Artisan-Command synchronisiert `config/ships.php` → `ships`-Tabelle (moving_speed, decay_rate, supply_cost, max_status_points) und `config/buildings.php` → `buildings`-Tabelle (decay_rate, supply_cost, max_status_points, max_level). Zeigt je geänderter Row "alt → neu". `--dry-run`-Option zum Vorschauen. Erster Lauf hat 6 Ships mit `moving_speed=500` (Altlast) auf korrekte Werte gesetzt.
+- **Laravel Scheduler aktiviert:** `routes/console.php` — `game:tick` läuft jetzt täglich um 03:00 Uhr automatisch (cron muss einmalig auf dem Server eingerichtet werden: `* * * * * php artisan schedule:run`).
+- **Fleet-Orders vervollständigt:** `storeOrder`-Validator akzeptiert jetzt `hold`, `convoy`, `defend`, `join` zusätzlich zu `move`, `trade`, `attack`. Jeder neue Order-Typ hat eigene Controller-Logik und UI-Felder im Flotten-Konfigurationsformular. Befehlstyp-Dropdown mit `<optgroup>`-Struktur. Order-Beschreibungszeile unter Formular (zeigt was der Befehl tut).
+- **Lokalisierung `lang/de/fleet.php`:** Neue Sprachdatei für alle Flotten-UI-Texte (Order-Namen, Feldbezeichnungen, Beschreibungen).
+
 ## 2026-04-06 (UI-Polishing: Berater, Handel)
 
 - **Berater-Seite umgebaut:** Berater werden jetzt in 4 separaten Cards gruppiert (Ingenieure, Wissenschaftler, Händler, Kommandanten). Jede Card zeigt die eigene AP-Summe und Supply-Kosten im Footer. Auf Desktop 2 Cards nebeneinander. Flottenkommandanten werden mit Flottenname angezeigt; `AdvisorController` lädt jetzt zusätzlich alle `is_commander`-Advisors des Users über alle Flotten. AP-Gesamtübersicht durch kompakte Statuszeile ersetzt. Dicke Farbrahmen entfernt, neutrale Cards.
