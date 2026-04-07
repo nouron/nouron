@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-07 (AP-0: DB-Reset und Test-Isolation)
+
+- **`php artisan db:reset`:** Neuer Artisan-Command (AP-0a) — löscht alle Tabellen, führt Migrations aus, befüllt mit Simpsons-Testdaten (via `TestSeeder`). Bestätigungsprompt schützt vor versehentlichem Aufruf; `--force` überspringt ihn.
+- **Test-Isolation fix (AP-0b):** `phpunit.xml` nutzte `DB_DATABASE=:memory:` ohne `force="true"` — `.env.testing` überschrieb den Wert mit `test.db` (Datei). Durch Ergänzung von `force="true"` laufen Tests jetzt korrekt gegen In-Memory-SQLite. `test.db` wird nach einem Testdurchlauf nicht mehr verändert.
+
 ## 2026-04-06 (QA-Tests: Ownership, Trade-Clamp, Colony-Rename, Auth-Throttle)
 
 - **4 neue Feature-Testklassen** mit insgesamt 40 Tests für zuvor unabgedeckte Phase-2-QA-Befunde (CRIT-1, HIGH-2, HIGH-4, MED-3, LOW-1).
