@@ -188,13 +188,12 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 ## 3. Ressourcen
 
-6 Ressourcentypen (Stand Phase 3):
+5 Ressourcentypen (Stand Phase 3):
 
 | ID | Name (DE) | Name (EN) | Kürzel | Ebene | Handelbar | Startwert |
 |----|-----------|-----------|--------|-------|-----------|-----------|
 | 1  | Credits | Credits | Cr | User | Nein | 3000 |
 | 2  | Versorgung | Supply | Sup | User | Nein | 200 |
-| 3  | Wasser | Water | W | Kolonie | Ja | 500 |
 | 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 500 |
 | 5  | Organika | Organics | Or | Kolonie | Ja | 500 |
 | 12 | Moral | Moral | M | Kolonie | Nein | 0 |
@@ -203,40 +202,43 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 ### Ressourcen-Semantik
 
-- **Wasser** — Flüssige Lebensgrundlage: Trinkwasser, Landwirtschaft, Kühlsysteme. Wird durch den Wasserextraktor gewonnen.
-- **Werkstoffe** — Industrielle Sammelressource: Metalle, Legierungen, Keramik, Polymere. Alles was gebaut, geschmiedet und verarbeitet wird. Produktionsgebäude: Industrial Mine (ersetzt Erzmine + Silikatmine).
-- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerungswachstum und Moral. Produktionsgebäude: Bio-Facility (neu, Phase 3).
-- **Versorgung** — Versorgungskapazität (Nahrung + Energie kombiniert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
+- **Werkstoffe** — Industrielle Sammelressource: Metalle, Legierungen, Keramik, Polymere. Alles was gebaut, geschmiedet und verarbeitet wird. Produktionsgebäude: Industriemine.
+- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerungswachstum und Moral. Produktionsgebäude: Agrardom.
+- **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
 - **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
 
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
-Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
+Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
 
 ### Abgekündigte Ressourcen (werden in Phase 3 entfernt)
 
-ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
+- Wasser (ID 3) — wird durch Versorgung (Supply) abstrahiert; kein eigenständiges Rohstoff-Modell nötig.
+- ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
 
 ---
 
 ## 4. Kolonien & Gebäude
 
-### Gebäude (Auswahl)
+### Gebäude (Phase 3 — vollständige Liste)
 
-| ID | Bezeichner | Max-Level | Voraussetzung |
-|----|-----------|-----------|---------------|
-| 25 | CommandCenter | 10 | — |
-| 27 | Erzmine (oremine) | — | CC Lv1 |
-| 28 | Wohnkomplex (housingComplex) | 200 | CC Lv3 |
-| 31 | Forschungslabor (sciencelab) | — | CC Lv4 |
-| 41 | Silikatmine (silicatemine) | — | CC Lv1 |
-| 42 | Wasserextraktor (waterextractor) | — | CC Lv1 |
-| 43 | Handelszentrum (tradecenter) | — | CC Lv5 |
-| 44 | Zivile Werft (civilianSpaceyard) | — | — |
-| 68 | Militärwerft (militarySpaceyard) | — | Zivile Werft Lv5 |
-| 70 | Bank | — | — |
+13 Gebäude, reduziert auf das Mini-4X-Kernsortiment:
 
-Vollständige Liste: CLAUDE.md, Abschnitt "Gebäude".
+| ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
+|----|------------|-----------|-----------|-----------|---------------|
+| 25 | commandCenter | Kommandozentrale | Command Center | 10 | — |
+| 28 | housingComplex | Wohnhabitat | Residential Habitat | 200 | CC Lv3 |
+| 27 | industrieMine | Industriemine | Industrial Mine | — | CC Lv1 |
+| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
+| 30 | depot | Lagerhalle | Warehouse | — | CC Lv1 |
+| 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv4 |
+| 43 | tradecenter | Handelsposten | Trading Post | — | CC Lv5 |
+| 44 | civilianSpaceyard | Raumwerft | Spaceyard | — | — |
+| 68 | militarySpaceyard | Kampfwerft | Combat Yard | — | Raumwerft Lv5 |
+| 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
+| 52 | bar | Cantina | Cantina | — | CC Lv1 |
+| 50 | denkmal | Kolonialdenkmal | Colonial Monument | — | — |
+| 32 | temple | Religiöse Stätte | Sacred Site | — | — |
 
 ### Status-Punkte
 
@@ -254,13 +256,12 @@ Einmal pro Tick produziert jedes aktive Produktionsgebäude in jeder Kolonie Roh
 produzierte Menge = Gebäude-Level × Rate
 ```
 
-### Produktionsgebäude (aktuell konfiguriert)
+### Produktionsgebäude (Phase 3)
 
 | Gebäude | building_id | Ressource | resource_id | Rate pro Level |
 |---------|-------------|-----------|-------------|----------------|
-| Erzmine | 27 | Ferum | 4 | 10 |
-| Silikatmine | 41 | Silikate | 5 | 10 |
-| Wasserextraktor | 42 | Wasser | 3 | 10 |
+| Industriemine | 27 | Werkstoffe | 4 | 10 |
+| Agrardom | 41 | Organika | 5 | 10 |
 
 ### Konfiguration
 
@@ -330,18 +331,15 @@ Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip:
 
 | Gebäude | Supply |
 |---------|--------|
-| ore mine, silicate mine, hydrogen rig | 2 |
-| weatherstation | 3 |
-| bar, parc | 4 |
-| museum, temple | 5 |
-| recyclingstation, wastedisposal | 6 |
-| tradecenter | 7 |
-| sciencelab, firestation, policestation | 8 |
-| hospital | 10 |
-| memorial | 2 |
-| casino | 9 |
-| bank, stadium | 14 |
-| prison | 15 |
+| Industriemine, Agrardom | 2 |
+| Kolonialdenkmal | 2 |
+| Lagerhalle | 3 |
+| Cantina, Religiöse Stätte | 4 (je) |
+| Handelsposten | 7 |
+| Analytik-Labor | 8 |
+| Krankenstation | 10 |
+| Raumwerft | 20 |
+| Kampfwerft | 30 |
 | civilian shipyard | 20 |
 | secretops | 26 |
 | military shipyard | 30 |

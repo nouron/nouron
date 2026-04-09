@@ -7,88 +7,50 @@ return [
     'commandCenter'      => 'Kommandozentrale',
     'commandCenter_desc' => 'Schaltzentrale der Kolonie. Ohne aktive Kommandozentrale ist kein Ausbau möglich.',
 
-    'housingComplex'      => 'Wohnkomplex',
-    'housingComplex_desc' => 'Bereitstellung von Wohnraum erhöht die Supply-Kapazität der Kolonie.',
+    'housingComplex'      => 'Wohnhabitat',
+    'housingComplex_desc' => 'Wohnmodule für die Kolonisten. Jede Einheit erhöht die Versorgungskapazität der Kolonie.',
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'oremine'      => 'Erzmine',
-    'oremine_desc' => 'Gewinnt Ferum aus dem Untergrund. Grundlage der Schwerindustrie.',
+    'industrieMine'      => 'Industriemine',
+    'industrieMine_desc' => 'Fördert und verarbeitet Rohstoffe aller Art — Metalle, Legierungen, Keramik, Polymere. Grundlage jeder Schwerindustrie.',
 
-    'silicatemine'      => 'Silikatmine',
-    'silicatemine_desc' => 'Fördert Silikat für den Einsatz in der Elektronik- und Baustoffproduktion.',
+    'bioFacility'      => 'Agrardom',
+    'bioFacility_desc' => 'Kontrollierte Biosphäre für Nahrungsproduktion, Medizin und organische Verbindungen. Versorgt die Kolonie mit Organika.',
 
-    'waterextractor'      => 'Wasserextraktor',
-    'waterextractor_desc' => 'Gewinnt Wasser aus unterirdischen Vorkommen oder der Atmosphäre.',
+    'depot'      => 'Lagerhalle',
+    'depot_desc' => 'Robuste Lagerinfrastruktur für Werkstoffe und Organika. Erhöht die maximale Lagerkapazität der Kolonie.',
 
-    'depot'      => 'Versorgungsdepot',
-    'depot_desc' => 'Lager für Ressourcen und Ausrüstung. Unterstützt die logistische Infrastruktur.',
+    // ── Science ───────────────────────────────────────────────────────────────
 
-    // ── Science / Education ───────────────────────────────────────────────────
-
-    'sciencelab'      => 'Wissenschaftslabor',
-    'sciencelab_desc' => 'Grundvoraussetzung für alle Forschungstätigkeiten in der Kolonie.',
-
-    'university'      => 'Universität',
-    'university_desc' => 'Ausbildungsstätte für Fachkräfte. Steigert die Koloniemoral durch Bildungsangebote.',
-
-    // ── Civil welfare ─────────────────────────────────────────────────────────
-
-    'temple'      => 'Tempel',
-    'temple_desc' => 'Religiöse oder spirituelle Stätte. Gibt der Bevölkerung Halt und stärkt den Zusammenhalt.',
-
-    'parc'      => 'Park',
-    'parc_desc' => 'Grünanlage zur Erholung. Verbessert spürbar die Lebensqualität in der Kolonie.',
-
-    'hospital'      => 'Krankenhaus',
-    'hospital_desc' => 'Medizinische Grundversorgung der Bevölkerung. Benötigt regelmäßige Wartung.',
-
-    'public_security'      => 'Öffentliche Sicherheit',
-    'public_security_desc' => 'Polizei- und Feuerwehrinfrastruktur. Schützt die Bevölkerung und Einrichtungen.',
-
-    'denkmal'      => 'Denkmal',
-    'denkmal_desc' => 'Erinnerung an bedeutende Ereignisse oder Personen. Dauerhaftes Symbol der Koloniegeschichte.',
-
-    'museum'      => 'Museum',
-    'museum_desc' => 'Bewahrt und präsentiert die Geschichte der Kolonie. Kultureller Ankerpunkt.',
-
-    'recyclingStation'      => 'Recyclingstation',
-    'recyclingStation_desc' => 'Verarbeitet Abfälle zu wiederverwendbaren Rohstoffen. Fördert das Umweltbewusstsein.',
-
-    'wastedisposal'      => 'Abfallentsorgung',
-    'wastedisposal_desc' => 'Notwendige Infrastruktur zur Abfallbeseitigung. Unbeliebt, aber unverzichtbar.',
-
-    // ── Entertainment ─────────────────────────────────────────────────────────
-
-    'stadium'      => 'Stadion',
-    'stadium_desc' => 'Austragungsort für Massenveranstaltungen. Hebt die Stimmung erheblich.',
-
-    'bar'      => 'Bar',
-    'bar_desc' => 'Treffpunkt und Unterhaltungsstätte. Kann bei Vernachlässigung zur Unruhequelle werden.',
-
-    'casino'      => 'Kasino',
-    'casino_desc' => 'Lukrative Einrichtung mit zweifelhaftem sozialen Einfluss auf die Koloniemoral.',
+    'sciencelab'      => 'Analytik-Labor',
+    'sciencelab_desc' => 'Forschungs- und Analysezentrum der Kolonie. Voraussetzung für alle Forschungsaktivitäten.',
 
     // ── Economy ───────────────────────────────────────────────────────────────
 
-    'tradecenter'      => 'Handelszentrum',
+    'tradecenter'      => 'Handelsposten',
     'tradecenter_desc' => 'Knotenpunkt für interkolonialen Handel. Voraussetzung für aktive Handelsrouten.',
 
-    'bank'      => 'Bank',
-    'bank_desc' => 'Kreditwirtschaftliche Infrastruktur. Erleichtert größere Investitionen.',
+    // ── Military ──────────────────────────────────────────────────────────────
 
-    // ── Military / Security ───────────────────────────────────────────────────
+    'civilianSpaceyard'      => 'Raumwerft',
+    'civilianSpaceyard_desc' => 'Baut Transport- und Erkundungsschiffe. Grundlage für alle Flottenoperationen.',
 
-    'civilianSpaceyard'      => 'Zivile Werft',
-    'civilianSpaceyard_desc' => 'Baut Transport- und Versorgungsschiffe. Grundlage für wirtschaftliche Flottenoperationen.',
+    'militarySpaceyard'      => 'Kampfwerft',
+    'militarySpaceyard_desc' => 'Baut Kampfschiffe. Die Bevölkerung nimmt die Aufrüstung wahr.',
 
-    'militarySpaceyard'      => 'Militärwerft',
-    'militarySpaceyard_desc' => 'Baut Kampfschiffe. Signalisiert der Bevölkerung militärische Aufrüstung.',
+    // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'prison'      => 'Gefängnis',
-    'prison_desc' => 'Notwendiges Übel zur Aufrechterhaltung der öffentlichen Ordnung.',
+    'hospital'      => 'Krankenstation',
+    'hospital_desc' => 'Medizinische Grundversorgung für die Kolonisten. Benötigt regelmäßige Wartung und Nachschub.',
 
-    'secretOps'      => 'Geheimdienstzentrale',
-    'secretOps_desc' => 'Koordiniert verdeckte Operationen. Erzeugt Misstrauen in der Bevölkerung.',
+    'bar'      => 'Cantina',
+    'bar_desc' => 'Der zentrale Treffpunkt der Kolonie. Hier entspannen die Kolonisten nach der Schicht, tauschen Klatsch aus und treffen Fremde. Wer hier zuhört, erfährt mehr als in jedem offiziellen Bericht.',
+
+    'denkmal'      => 'Kolonialdenkmal',
+    'denkmal_desc' => 'Erinnerung an die Gründungsgeschichte der Kolonie. Ein dauerhaftes Symbol des gemeinsamen Weges.',
+
+    'temple'      => 'Religiöse Stätte',
+    'temple_desc' => 'Spiritueller Anker für die Bevölkerung. Gibt Halt in einer unwirtlichen Welt fernab der Heimat.',
 
 ];
