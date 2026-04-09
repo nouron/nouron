@@ -23,6 +23,7 @@
 11. [Handel (Trade)](#11-handel-trade)
 12. [Berater & Aktionspunkte (AP-System)](#12-berater--aktionspunkte-ap-system)
 13. [Moralsystem](#13-moralsystem)
+14. [Run-Struktur (Roguelike-Modus)](#14-run-struktur-roguelike-modus)
 
 ---
 
@@ -187,21 +188,34 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 ## 3. Ressourcen
 
-9 Ressourcentypen, nicht-konsekutive IDs:
+6 Ressourcentypen (Stand Phase 3):
 
-| ID | Name | Kürzel | Ebene | Handelbar | Startwert |
-|----|------|--------|-------|-----------|-----------|
-| 1  | Credits | Cr | User | Nein | 3000 |
-| 2  | Supply | Sup | User | Nein | 200 |
-| 3  | Wasser | W | Kolonie | Ja | 500 |
-| 4  | Ferum | E | Kolonie | Ja | 500 |
-| 5  | Silikate | S | Kolonie | Ja | 500 |
-| 6  | Ena (elektr. Energie) | ENrg | Kolonie | Ja | 100 |
-| 8  | Lho (leichte Energie) | LNrg | Kolonie | Ja | 100 |
-| 10 | Aku (Akkuenergie) | ANrg | Kolonie | Ja | 100 |
-| 12 | Moral | M | Kolonie | Nein | 0 |
+| ID | Name (DE) | Name (EN) | Kürzel | Ebene | Handelbar | Startwert |
+|----|-----------|-----------|--------|-------|-----------|-----------|
+| 1  | Credits | Credits | Cr | User | Nein | 3000 |
+| 2  | Versorgung | Supply | Sup | User | Nein | 200 |
+| 3  | Wasser | Water | W | Kolonie | Ja | 500 |
+| 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 500 |
+| 5  | Organika | Organics | Or | Kolonie | Ja | 500 |
+| 12 | Moral | Moral | M | Kolonie | Nein | 0 |
 
 **Credits** und **Supply** werden auf User-Ebene (`user_resources`) geführt, alle anderen auf Kolonieebene (`colony_resources`).
+
+### Ressourcen-Semantik
+
+- **Wasser** — Flüssige Lebensgrundlage: Trinkwasser, Landwirtschaft, Kühlsysteme. Wird durch den Wasserextraktor gewonnen.
+- **Werkstoffe** — Industrielle Sammelressource: Metalle, Legierungen, Keramik, Polymere. Alles was gebaut, geschmiedet und verarbeitet wird. Produktionsgebäude: Industrial Mine (ersetzt Erzmine + Silikatmine).
+- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerungswachstum und Moral. Produktionsgebäude: Bio-Facility (neu, Phase 3).
+- **Versorgung** — Versorgungskapazität (Nahrung + Energie kombiniert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
+- **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
+
+### Zukünftiger Rohstoff (Phase 4+): Exotics
+
+Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
+
+### Abgekündigte Ressourcen (werden in Phase 3 entfernt)
+
+ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
 
 ---
 
@@ -673,11 +687,21 @@ Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle 
 
 ### Grundkonzept
 
-Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann. AP werden durch **Berater** generiert.
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann.
 
-Berater sind **individuelle Einträge mit Rang** — jeder Berater hat eine eigene ID und einen Zustand. Eine Kolonie kann mehrere Berater desselben Typs beschäftigen; jeder gibt seinen AP-Beitrag pro Tick. Qualitätsunterschiede entstehen durch das Rang-System.
+**5 AP-Typen — nicht mischbar:**
 
-> **Phase-3-Vorbehalt:** Benannte Chef-Berater (individuelle Charaktere mit Fähigkeiten und Namen) sind für Phase 3 geplant. Das aktuelle individuelle Eintrags-Modell ist bewusst als Fundament dafür ausgelegt.
+| AP-Typ | Berater | Verwendung |
+|--------|---------|-----------|
+| Konstruktion | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
+| Analyse | Analytiker | Forschungen vorantreiben, Wissenstransfer |
+| Navigation | Raumfahrer | Flottenbewegung, Fleet-Trade-Orders |
+| Strategie | Stratege | Kampforders, Verteidigung |
+| Handel | Konsul | Handelsangebote, Fraktionskontakte, Handelsabkommen |
+
+**Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
+
+**Berater** erhöhen den Grundwert ihres AP-Typs. Max. **5 Berater gleichzeitig**, einer pro Typ (Slot-System).
 
 ---
 
@@ -713,54 +737,46 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 
 ---
 
-### Die vier Berater-Typen
+### Die fünf Berater-Typen
 
-| Berater | Personell-ID | Kategorie | AP-Typ | Verwendung |
-|---------|-------------|-----------|---------|------------|
-| Ingenieur | 35 | industry | construction | Gebäude ausbauen, Gebäude reparieren, Schiffsbau |
-| Wissenschaftler | 36 | civil | research | Forschungen vorantreiben |
-| Kommandant | 89 | military | navigation | Flottenorders (bewegen, angreifen, handeln) |
-| Händler | 92 | economy | economy | Handelsangebote erstellen und pflegen |
-
-> **Umbenennung:** "Pilot" heißt in der UI jetzt **Kommandant** (DB-Name `techs_pilot` bleibt intern erhalten).
-
----
-
-### Rang-System
-
-Jeder Berater hat einen Rang (1–3), der seine AP-Leistung bestimmt.
-
-| Rang | Bezeichnung | AP/Tick | Anwerbungskosten | Aufstieg |
-|------|-------------|---------|-----------------|----------|
-| 1 | Junior | 4 AP | 200 Cr | — |
-| 2 | Senior | 7 AP | +500 Cr | 10 Ticks aktiv |
-| 3 | Experte | 12 AP | +1000 Cr | 20 Ticks aktiv |
-
-- Aufstieg erfolgt automatisch nach ausreichend aktiven Ticks.
-- Optional: Aufstieg per Credits-Zahlung beschleunigen (halbe Zeit, doppelter Preis).
-- "Aktiv" = Berater war in diesem Tick beschäftigt und hat AP generiert.
-- Die konkreten Werte (AP, Kosten, Ticks) sind konfigurierbar und werden nach erstem Playtest angepasst.
+| Berater | AP-Typ | Thematische Rolle |
+|---------|--------|------------------|
+| Baumeister | Konstruktion | Infrastruktur, Gebäude, Schiffsbau |
+| Analytiker | Analyse | Forschung, Technologie, Wissenstransfer |
+| Raumfahrer | Navigation | Flottenführung, Bewegung, Fleet-Trade |
+| Stratege | Strategie | Kampf, Verteidigung, taktische Planung |
+| Konsul | Handel | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
 
 ---
 
-### Supply-Kosten (VP — Versorgungspunkte)
+### Level-System
 
-Supply ist die universelle Unterhaltsressource. **Alles kostet dauerhaft Supply:**
+Jeder Berater hat ein Level (1–5). Level 4 ist der rationale Sweet Spot; Level 5 ist Prestige mit kaum höherem Effizienzgewinn.
 
-| Was | Supply/Tick |
-|-----|-------------|
-| Berater (je) | 2 Supply |
-| Gebäude (je Instanz, nicht pro Level) | 0–30 Supply (je nach Typ, konfiguriert in `config/buildings.php`) |
-| Schiffe (je Einheit) | Fighter 8 / Fregatte 14 / Schlachtkreuzer 25 / Klein-Transporter 2 / Mittel 4 / Groß 7 (konfiguriert in `config/ships.php`) |
-| Forschungen (je Forschung mit Level > 0) | 5–8 Supply (je nach Typ, konfiguriert in `config/techs.php`) |
+| Level | AP-Bonus | Gesamt-AP/Tick | Upkeep (Cr/Tick) | Steuern (Cr/Tick) | Netto |
+|-------|----------|---------------|-----------------|-------------------|-------|
+| 1 | +6 | 12 | 10 | ~3 | ~7 |
+| 2 | +10 | 16 | 25 | ~6 | ~19 |
+| 3 | +14 | 20 | 50 | ~10 | ~40 |
+| 4 | +18 | 24 | 90 | ~18 | ~72 ← Sweet Spot |
+| 5 | +20 | 26 | 160 | ~22 | ~138 ← Prestige |
 
-Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert. Das Hard-Cap liegt bei **200 Supply pro Kolonie**. Da pro Spieler nur eine Kolonie vorgesehen ist (Phase 3), ist Supply der einzige und ausreichende Kapazitätsdeckel für Berater.
+- **Upkeep** wird jeden Tick von den Credits abgezogen.
+- **Steuern** zahlt jeder Berater zurück (Credits-Einnahme für den Spieler) — Netto-Kosten sind immer günstiger als der Brutto-Upkeep.
+- **Level-Aufstieg:** automatisch nach ausreichend aktiven Ticks (konfigurierbar). Optional per Credits beschleunigbar.
+- Alle Werte sind in `config/game.php → advisors` konfiguriert und werden nach erstem Playtest kalibriert.
 
-**Flotten und Supply:** Da jeder Spieler genau eine Kolonie hat, tragen Supply-Kosten von Schiffen immer zu dieser Kolonie. Eine separate `home_colony_id` pro Flotte ist für Phase 3 vorgesehen (Außenposten-Mechanik).
+> **UI-Anforderung:** Berater-Verwaltung zeigt immer Brutto-Upkeep, Steuereinnahmen und Netto-Kosten als drei separate Zeilen — sonst wirkt Level 5 rein unattraktiv.
 
-**Flottenname:** Das Feld `fleets.fleet` enthält den frei wählbaren Namen der Flotte (z.B. "Alpha-Flotte"). Er wird im UI angezeigt und bei der Erstellung vergeben.
+---
 
-**Flottenanzahl:** Die maximale Flottenanzahl eines Spielers ist durch die Anzahl verfügbarer Kommandanten begrenzt. Pro Flotte wird genau ein Kommandant benötigt, der bei der Fleet-Erstellung automatisch zugewiesen wird.
+### Upkeep: Credits statt Supply
+
+Berater kosten **Credits pro Tick** (laufender Upkeep), nicht Supply. Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe — Personalkosten laufen über Credits. Das trennt zwei konzeptuell verschiedene Ressourcen sauber.
+
+Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert (Cap-Modell). Gebäude und Schiffe verbrauchen Supply; Berater nicht.
+
+**Flottenanzahl:** Die maximale Flottenanzahl wird durch eine Konfigurationsobergrenze oder das Raumfahrer-Slot-System begrenzt (Design-Entscheidung Phase 3 — aktuell: max Flotten = Anzahl aktiver Raumfahrer).
 
 ---
 
@@ -782,12 +798,10 @@ Der Kommandant ist der einzige Beratertyp, der seinen Koloniebezug verlieren kan
 ### Verfügbare AP
 
 ```
-availableAP = Σ(AP/Tick je Berater) − lockedAP(tick, scope_type, scope_id, personell_id)
+availableAP(type) = 6 (Grundwert) + Σ(AP/Tick je Berater dieses Typs) − lockedAP(tick, type)
 ```
 
-`scope_type = 'colony'` für Ingenieur/Wissenschaftler/Händler, `scope_type = 'fleet'` für Kommandant.
-
-AP-Locks verfallen automatisch zum nächsten Tick — der Pool wird täglich vollständig erneuert.
+AP-Locks verfallen automatisch zum nächsten Tick — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
 
 ### AP-Verbrauch
 
@@ -1076,6 +1090,119 @@ Das beschriebene System ist eine bewusst einfache Phase-2-Mechanik. In Phase 3 (
 - Fraktions-spezifische Moralmodifikatoren
 
 Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bis +100) in `colony_resources` stabil bleibt.
+
+---
+
+## 14. Run-Struktur (Roguelike-Modus)
+
+### Konzept
+
+Jede Partie von Nouron ist eine abgeschlossene **Expeditionsmission**. Es gibt kein Endlosspiel — ein Run hat einen definierten Anfang, ein Ziel und ein Ende. Das Roguelike-Prinzip: Nach jedem Run (Sieg oder Niederlage) startet der Spieler von vorne. Highscore entsteht durch Effizienz (wie schnell wurden die Aufgaben erfullt) und Restressourcen.
+
+---
+
+### Phasenstruktur
+
+**Empfehlung: 2 Phasen** — mehr Phasen wurden bei diesem Scope zu viel Struktur erzeugen und das FTL-artige Momentum bremsen.
+
+#### Phase 1 — "Kolonie stabilisieren" (Pflicht)
+
+Dauer: ~10–20 Ticks. Kann nicht ubersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
+
+**Abschlussbedingungen (ALLE drei mussen erfullt sein):**
+
+| Bedingung | Konkret |
+|-----------|---------|
+| Infrastruktur | CommandCenter Level 3 + mindestens 2 Produktionsgebäude auf Level >= 2 |
+| Versorgung | Supply > 0 fur 3 aufeinanderfolgende Ticks (kein Engpass) |
+| Personal | Mindestens 3 aktive Berater (beliebiger Typ) |
+
+Die drei Bedingungen decken alle Kernsysteme ab: Aufbau (Gebäude), Ressource (Supply) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
+
+Phase 1 endet automatisch, sobald alle drei Bedingungen gleichzeitig erfullt sind. Der Spieler erhält eine Benachrichtigung und Phase 2 beginnt.
+
+#### Phase 2 — "Expeditionsmission"
+
+Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 mussen bis Tick X erfullt werden.**
+
+**Runlänge gesamt:** 60–100 Ticks (konfigurierbar). Bei 1 Tag/Tick entspricht das 2–3 Monaten.
+
+---
+
+### Aufgabenpool
+
+10 Aufgabentypen. Alle Aufgaben sind ohne Militär erfullt werden (Kampf bleibt optional oder einer von mehreren Wegen). Jede Aufgabe passt zu einer der vorhandenen Spielmechaniken.
+
+| # | Aufgabe | Kernmechanik | Spielstil |
+|---|---------|-------------|-----------|
+| 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Tick uber Z Ticks aufrecht halten | Wirtschaft |
+| 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
+| 3 | **Kolonieblute** | Moral > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
+| 4 | **Selbstversorgung** | Alle 3 Grundressourcen (Water, Ferum, Silicates) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
+| 5 | **Aufklärer** | 3 verschiedene, bisher unbekannte Systeme mit einer Flotte angesteuert | Exploration |
+| 6 | **Kontaktnetz** | Gleichzeitig aktive Handelsrouten mit 3 verschiedenen KI-Fraktionen | Diplomatie |
+| 7 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
+| 8 | **Kreditimperium** | Credits-Bestand X Ticks uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
+| 9 | **Wissenschaftsnetzwerk** | Wissenschaftler-AP an mindestens 2 verschiedene KI-Kolonien ausgeliehen (je >= 10 Ticks) | Diplomatie |
+| 10 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Ticks (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
+
+> ⚠️ BALANCE CONCERN: Aufgaben 1 + 8 (beides Wirtschaft) sind strukturell leicht zusammen losbar. Aufgaben-Sets mussen so gezogen werden, dass sie mindestens 2 verschiedene Spielstilkategorien abdecken. Eine Kombo-Blacklist ist vor der Implementierung zu definieren.
+
+> ⚠️ BALANCE CONCERN: Aufgabe 10 (Effizienz) kollidiert strukturell mit gleichzeitigem massivem Bauen (Aufgaben 2, 7) — "AP-effizient" und "viel bauen" sind Gegensätze. Aufgabe 10 sollte nie zusammen mit Aufgabe 2 oder 7 gezogen werden.
+
+---
+
+### "2 von 3"-Mechanik
+
+**Bewertung: gut.** Die Mechanik gibt dem Spieler echte Wahlfreiheit, ohne den Run zu trivial zu machen. Eine verfehlte Aufgabe beendet den Run nicht — das reduziert Frustration und fuhrt zu mehr strategischen Entscheidungen ("Welche zwei lohnen sich fur meine aktuelle Ausgangslage?").
+
+**Milestones gegen zu fruhen Fokus-Verlust:**
+- Tick 30: Mindestens 1 Aufgabe muss zu > 50% erfullt sein. Sonst: Ereignis-Warnung im INNN-Feed ("Die Expedition gerät ins Stocken").
+- Tick 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Warnung mit Tick-Countdown.
+
+Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration.
+
+---
+
+### Fail States
+
+Genau 2 Fail States. Kein Fail durch Militarverlust (passt zur Designphilosophie §1.1).
+
+**Fail State 1 — Versorgungskollaps:**
+Supply faellt auf 0 und bleibt 3 aufeinanderfolgende Ticks bei 0.
+- Begründung: Supply ist der Lebensnerv der Kolonie. 3 Ticks Gnadenfrist gibt dem Spieler Zeit zu reagieren; wer nicht reagiert, hat die Kontrolle verloren.
+- Vorwarnung: INNN-Ereignis bei Supply = 0 (Tick 1 des Engpasses). Roter UI-Indikator ab Tick 2. Tick 3 = Run-Ende mit Meldung "Kolonie aufgegeben".
+
+**Fail State 2 — Zeitablauf:**
+Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfullt wurden.
+- Begründung: Sauberes, vorhersehbares Ende. Verhindert Endlos-Sessions ohne Ziel.
+- Tick-Limit: 100 Ticks (konfigurierbar in `config/game.php → run.tick_limit`).
+- Countdown im UI sichtbar ab Tick 80 ("Noch 20 Ticks bis Missionsende").
+
+---
+
+### Highscore-Berechnung (Entwurf)
+
+```
+score = (aufgaben_erfullt × 1000) + (tick_limit - erfullt_in_tick) × 10 + (credits_rest / 10) + (moral_at_end × 5)
+```
+
+Komponenten:
+- Aufgabenanzahl (2 oder 3) als Hauptfaktor
+- Geschwindigkeit (fruheres Erfullen = mehr Punkte)
+- Wohlstand (verbleibende Credits)
+- Koloniequalität (Moral am Ende)
+
+> ⚠️ BALANCE CONCERN: Highscore-Formel ist ein erster Entwurf. Gewichtung muss nach ersten Playtests kalibriert werden. Ziel: 3-von-3-Sieg sollte deutlich mehr Punkte ergeben als 2-von-3, aber ein schneller 2-von-3-Sieg kann einen langsamen 3-von-3-Sieg ubertrumpfen.
+
+---
+
+### Implementierungshinweise
+
+- Neue Tabellen benotigt: `run_objectives` (aktive Aufgaben des aktuellen Runs), `run_state` (Phase, Tick-Start, Tick-Limit, Fail-State-Tracking)
+- `config/game.php → run` — Tick-Limit, Aufgaben-Pool-Konfiguration, Score-Formel-Gewichte
+- Aufgaben-Fortschritt wird bei jedem Tick-Schritt gepruft (nach Schritt 9 "Advisor Ticks")
+- Phase-1-Check nach Tick-Schritt 4 (Gebäude-Decay) sinnvoll, da Gebäude-Level dann aktuell ist
 
 ---
 
