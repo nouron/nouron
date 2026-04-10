@@ -683,47 +683,55 @@ Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle 
 
 Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann.
 
+Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater hat einen eigenen Datensatz mit Rang, Aktivitätszähler und Verfügbarkeitsstatus. Der Spieler rekrutiert, benennt und entwickelt konkrete Individuen, keine abstrakten "Personal"-Stapel.
+
 **5 AP-Typen — nicht mischbar:**
 
-| AP-Typ | Berater | Verwendung |
-|--------|---------|-----------|
-| Konstruktion | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
-| Analyse | Analytiker | Forschungen vorantreiben, Wissenstransfer |
-| Navigation | Raumfahrer | Flottenbewegung, Fleet-Trade-Orders |
-| Strategie | Stratege | Kampforders, Verteidigung |
-| Handel | Konsul | Handelsangebote, Fraktionskontakte, Handelsabkommen |
+| AP-Typ (intern) | Beraterbezeichnung | Verwendung |
+|-----------------|-------------------|-----------|
+| `industry` | Ingenieur | Gebäude ausbauen, reparieren, Schiffsbau |
+| `science` | Wissenschaftler | Forschungen vorantreiben, Wissenstransfer |
+| `navigation` | Pilot / Kommandant | Flottenbewegung, Fleet-Trade-Orders |
+| `economy` | Händler | Handelsangebote, Fraktionskontakte, Handelsabkommen |
+| `strategy` | Stratege | Kampforders, Verteidigung, taktische Planung |
 
 **Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
 
-**Berater** erhöhen den Grundwert ihres AP-Typs. Max. **5 Berater gleichzeitig**, einer pro Typ (Slot-System).
+**Berater** erhöhen den Grundwert ihres AP-Typs. Max. **1 Berater pro Typ pro Kolonie** (Slot-System) — also maximal 5 gleichzeitig.
 
-**Berater-Cap durch CC-Level:** Die Kommandozentrale bestimmt wie viele Berater die Kolonie koordinieren kann:
+---
 
-| CC-Level | Max. aktive Berater |
-|----------|---------------------|
-| 1 | 1 |
-| 2 | 2 |
-| 3 | 3 |
-| 4 | 4 |
-| 5+ | 5 (Maximum) |
+### Slot-System: CC-Level als Gate
 
-Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt — wer alle 5 Berater will, braucht mindestens CC Lv5.
+Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren kann. Die Slots werden in der Reihenfolge ihrer Nützlichkeit freigeschaltet:
+
+| CC-Level | Freigeschalteter Slot | Beratertyp |
+|----------|-----------------------|-----------|
+| 1 | Slot 1 | Ingenieur |
+| 2 | Slot 2 | Wissenschaftler |
+| 3 | Slot 3 | Pilot / Kommandant |
+| 4 | Slot 4 | Händler |
+| 5+ | Slot 5 | Stratege |
+
+Wer alle 5 Berater will, braucht mindestens CC Lv5. Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt. Pro Typ und pro Kolonie kann immer nur genau **ein** Berater den Slot belegen — ein zweiter Ingenieur auf derselben Kolonie ist nicht möglich.
 
 ---
 
 ### Datenmodell: `advisors`-Tabelle
 
+Jeder Berater ist ein eigener Datensatz. Die Tabelle hat folgendes Schema:
+
 ```
 advisors
 ├── id                      ← eindeutige ID des Beraters
 ├── user_id                 ← Eigentümer (immer gesetzt)
-├── personell_id            ← FK → personell (Typ)
+├── personell_type          ← 'industry' | 'science' | 'navigation' | 'economy' | 'strategy'
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
 ├── fleet_id                ← nullable: auf dieser Flotte
-├── is_commander            ← boolean: führt die Flotte (nur Kommandant-Typ)
-├── rank                    ← 1/2/3 (Junior/Senior/Experte)
-├── active_ticks            ← für Rang-Aufstieg gezählt
-└── unavailable_until_tick  ← Erholung nach Kampfverlust (NULL = verfügbar)
+├── is_commander            ← boolean: führt die Flotte als Kommandant (nur navigation-Typ)
+├── rank                    ← 1 = Junior | 2 = Senior | 3 = Experte
+├── active_ticks            ← kumulierter Zähler für Rang-Aufstieg
+└── unavailable_until_tick  ← Erholungsphase nach Kampfverlust (NULL = verfügbar)
 
 CHECK: colony_id IS NULL OR fleet_id IS NULL
 ```
@@ -733,81 +741,87 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 | colony_id | fleet_id | is_commander | Bedeutung | Gilt für |
 |-----------|----------|--------------|-----------|----------|
 | gesetzt | NULL | false | Aktiv auf Kolonie, generiert AP | Alle Typen |
-| NULL | gesetzt | **true** | Führt Flotte, generiert Nav-AP | **Nur Kommandant** |
-| NULL | gesetzt | false | Passagier auf Flotte (Transport) | Alle Typen |
-| NULL | NULL | false | Arbeitslos — handelbar, re-assignierbar | Alle Typen |
+| NULL | gesetzt | **true** | Führt Flotte als Kommandant, generiert Navigation-AP | **Nur navigation-Typ** |
+| NULL | gesetzt | false | Passagier auf Flotte (Transport oder Begleitung) | Alle Typen |
+| NULL | NULL | false | Arbeitslos — re-assignierbar oder handelbar | Alle Typen |
 
-**Validierungsregel:** `is_commander = true` ist nur erlaubt wenn `personell.can_command_fleet = true`. Das Flag `can_command_fleet` steht in der `personell`-Mastertabelle und ist nur für den Kommandant-Typ gesetzt.
+**Validierungsregel:** `is_commander = true` ist nur erlaubt, wenn `personell_type = 'navigation'`. Das wird auf Service-Ebene erzwungen.
 
-**Entlassung** löscht keinen Berater — `colony_id` und `fleet_id` werden auf NULL gesetzt. Der Berater bleibt arbeitslos in der Tabelle und kann re-aktiviert oder an andere Spieler gehandelt werden.
+**Entlassung** löscht keinen Berater — `colony_id` und `fleet_id` werden auf NULL gesetzt. Der Berater bleibt als arbeitsloser Datensatz erhalten und kann erneut zugewiesen oder gehandelt werden. Rang und `active_ticks` bleiben erhalten.
 
 ---
 
 ### Die fünf Berater-Typen
 
-| Berater | AP-Typ | Thematische Rolle |
-|---------|--------|------------------|
-| Baumeister | Konstruktion | Infrastruktur, Gebäude, Schiffsbau |
-| Analytiker | Analyse | Forschung, Technologie, Wissenstransfer |
-| Raumfahrer | Navigation | Flottenführung, Bewegung, Fleet-Trade |
-| Stratege | Strategie | Kampf, Verteidigung, taktische Planung |
-| Konsul | Handel | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
+| Beratertyp | AP-Pool (intern) | Thematische Rolle |
+|------------|-----------------|------------------|
+| Ingenieur | `industry` | Infrastruktur, Gebäude, Schiffsbau |
+| Wissenschaftler | `science` | Forschung, Technologie, Wissenstransfer |
+| Pilot / Kommandant | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
+| Händler | `economy` | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
+| Stratege | `strategy` | Kampf, Verteidigung, taktische Befehle |
+
+Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
 
 ---
 
-### Level-System
+### Rang-System
 
-Jeder Berater hat ein Level (1–5). Level 4 ist der rationale Sweet Spot; Level 5 ist Prestige mit kaum höherem Effizienzgewinn.
+Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tick und den laufenden Upkeep in Credits.
 
-| Level | AP-Bonus | Gesamt-AP/Tick | Upkeep (Cr/Tick) | Steuern (Cr/Tick) | Netto |
-|-------|----------|---------------|-----------------|-------------------|-------|
-| 1 | +6 | 12 | 10 | ~3 | ~7 |
-| 2 | +10 | 16 | 25 | ~6 | ~19 |
-| 3 | +14 | 20 | 50 | ~10 | ~40 |
-| 4 | +18 | 24 | 90 | ~18 | ~72 ← Sweet Spot |
-| 5 | +20 | 26 | 160 | ~22 | ~138 ← Prestige |
+| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
+|------|-------------|---------------|---------------|------------------------|-------------------|
+| 1 | Junior | +6 | 12 | 50 | 10 |
+| 2 | Senior | +14 | 20 | 150 | 50 |
+| 3 | Experte | +20 | 26 | 400 | 160 |
 
-- **Upkeep** wird jeden Tick von den Credits abgezogen.
-- **Steuern** zahlt jeder Berater zurück (Credits-Einnahme für den Spieler) — Netto-Kosten sind immer günstiger als der Brutto-Upkeep.
-- **Level-Aufstieg:** automatisch nach ausreichend aktiven Ticks (konfigurierbar). Optional per Credits beschleunigbar.
-- Alle Werte sind in `config/game.php → advisors` konfiguriert und werden nach erstem Playtest kalibriert.
+- **Einstellungskosten** sind einmalig beim Rekrutieren fällig (Credits).
+- **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater colony_id oder fleet_id hat (also nicht arbeitslos ist).
+- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (Schwellwerte konfigurierbar). Optional per Credits beschleunigbar.
+- Alle Werte stehen in `config/game.php → advisors` und werden nach erstem Playtest kalibriert.
 
-> **UI-Anforderung:** Berater-Verwaltung zeigt immer Brutto-Upkeep, Steuereinnahmen und Netto-Kosten als drei separate Zeilen — sonst wirkt Level 5 rein unattraktiv.
+> ⚠️ BALANCE CONCERN: Die Einstellungskosten sind noch nicht gegen die Credits-Startmenge (3000 Cr) kalibriert. Testspiele nötig, um zu prüfen ob ein Junior-Ingenieur am Tag 1 erschwinglich ist, ohne das frühe Spiel auszuhöhlen.
+
+> **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Tick, laufender Upkeep (Cr/Tick) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
 
 ---
 
-### Upkeep: Credits statt Supply
+### Kosten: Credits — kein Supply
 
-Berater kosten **Credits pro Tick** (laufender Upkeep), nicht Supply. Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe — Personalkosten laufen über Credits. Das trennt zwei konzeptuell verschiedene Ressourcen sauber.
+Berater kosten ausschliesslich **Credits** — sowohl bei der Einstellung (einmalig) als auch im laufenden Upkeep (pro Tick). Supply ist nicht betroffen.
 
-Supply wird durch **Koloniezentrum** und **Wohnkomplex** generiert (Cap-Modell). Gebäude und Schiffe verbrauchen Supply; Berater nicht.
+Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Personalkosten laufen über Credits. Das trennt zwei konzeptuell verschiedene Ressourcen sauber:
 
-**Flottenanzahl:** Die maximale Flottenanzahl wird durch eine Konfigurationsobergrenze oder das Raumfahrer-Slot-System begrenzt (Design-Entscheidung Phase 3 — aktuell: max Flotten = Anzahl aktiver Raumfahrer).
+- **Supply** = physische Infrastrukturkapazität (Gebäude, Schiffe)
+- **Credits** = ökonomische Liquidität (Personal, Handel, Investitionen)
+
+Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berater verbrauchen kein Supply.
+
+**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt (Designentscheidung Phase 3, noch offen). Aktuell: kein Piloten-pro-Flotte-Pflichtmodell.
 
 ---
 
 ### Kommandant: Kolonie vs. Flotte
 
-Der Kommandant ist der einzige Beratertyp, der seinen Koloniebezug verlieren kann.
+Der Pilot / Kommandant ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann, um eine Flotte zu führen.
 
-**Modell (Option A — Phase 2):** Nur die *Flotte* braucht einen Kommandanten. Einzelne Schiffe benötigen keine eigenen Piloten. Begründung: Das Supply-Budget reicht bei Phase-2-Werten nicht für piloten-pro-Schiff-Modelle; die Opportunitätskostenstruktur (Kommandant bei Kolonie vs. Flotte) liefert ausreichend strategische Tiefe ohne Micro-Management.
+- **Kolonie-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
+- **Flotte-zugewiesen (Kommandant):** Generiert Navigation-AP direkt auf der Flotte; Kolonie-Slot ist leer bis zur Rückkehr.
+- **Rückkehr:** Beim Auflösen einer Flotte wird der Kommandant automatisch wieder der Kolonie zugewiesen (`colony_id` gesetzt, `fleet_id` = NULL, `is_commander` = false).
+- **Flottenverlust im Kampf:** Der Kommandant ist für 2–3 Ticks nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
+- **Einzelne Schiffe** brauchen keine eigenen Piloten. Nur die Flotte als Ganzes braucht einen Kommandanten.
 
-- **Kolonie-zugewiesen:** Gibt der Kolonie Navigation-AP (für das Erteilen neuer Flottenorders).
-- **Flotten-zugewiesen:** Gibt der Flotte direkt Navigation-AP; Koloniebezug aufgehoben.
-- **Rückkehr:** Beim Löschen einer Flotte wird der Kommandant automatisch wieder der Kolonie zugewiesen.
-- **Flottenverlust im Kampf:** Der Kommandant ist für 2–3 Ticks nicht verfügbar (erholt sich), geht aber nicht dauerhaft verloren.
-
-*Phase 3:* Benannte Kommandanten mit individuellen Fähigkeiten (+Kampfbonus, -AP-Kosten) sind als Erweiterung von Option A vorgesehen, ohne das Supply-Budget zu belasten.
+> **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Pilot-Berater nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert. Dieser Flow ist für Phase 2 vorgesehen und blockiert die Vollständigkeit des Flottenkommando-Systems.
 
 ---
 
 ### Verfügbare AP
 
 ```
-availableAP(type) = 6 (Grundwert) + Σ(AP/Tick je Berater dieses Typs) − lockedAP(tick, type)
+availableAP(type) = 6 (Grundwert) + AP_bonus(rank) − lockedAP(tick, type)
 ```
 
-AP-Locks verfallen automatisch zum nächsten Tick — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
+Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses Typs ist (0 wenn kein Berater im Slot). AP-Locks verfallen automatisch zum nächsten Tick — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
 
 ### AP-Verbrauch
 
@@ -820,7 +834,7 @@ AP-Locks verfallen automatisch zum nächsten Tick — jeder Pool wird täglich v
 - `app/Services/Techtree/PersonellService.php` — AP-Berechnung, Sperrung
 - `app/Services/Techtree/AbstractTechnologyService.php` — AP-Verbrauch beim Investieren
 - `app/Services/FleetService.php` — Navigation-AP-Check bei Order-Erstellung
-- Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_id, spend_ap)`
+- Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_type, spend_ap)`
 
 ### Dev-Mode
 

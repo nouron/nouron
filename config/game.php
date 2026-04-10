@@ -67,6 +67,9 @@ return [
     'advisor' => [
         'rank_thresholds' => [1 => 10, 2 => 20],
         'ap_per_rank'     => [1 => 4, 2 => 7, 3 => 12],
+        // Slot system: CC level = number of advisor slots (max 5).
+        // Formula: min(cc_level, max_slots)
+        'max_slots'       => 5,
     ],
 
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).
