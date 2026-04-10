@@ -340,12 +340,12 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 | secretops | 26 |
 | military shipyard | 30 |
 
-**Forschungen** (individuelle Supply-Kosten):
+**Kenntnisse** (individuelle Supply-Kosten):
 
-| Forschung | Supply |
-|-----------|--------|
-| biology, chemistry, diplomacy, economics, languages, mathematics, medical_science, physics, politics | 5 |
-| military | 8 |
+| Kenntnis | Supply |
+|----------|--------|
+| construction, cartography, geology, agronomy, health, trade | 5 |
+| defense | 8 |
 
 > Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe. Bei 1 Tick/Tag oder 24 Ticks/Tag ändert sich der belegte Cap-Anteil pro Einheit nicht.
 
@@ -620,13 +620,23 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 
 ---
 
-## 10. Forschung
+## 10. Kenntnisse (ehem. Forschung)
 
-10 Forschungsgebiete: biology, languages, mathematics, medicalScience, physics, chemistry, economicScience, diplomacy, politicalScience, military.
+7 Wissensgebiete — kein akademisches Studium, sondern praktisches Kolonialwissen, das durch Analyse-AP vorangetrieben wird:
 
-Forschung wird über Aktionspunkte (AP) vorangetrieben. Details zum AP-System sind im Techtree-Modul implementiert (`module/Techtree/`, in Laravel: `app/Services/`).
+| Key | Name (DE) | Name (EN) |
+|-----|-----------|-----------|
+| construction | Bautechnik & Materialverarbeitung | Construction & Materials Processing |
+| cartography | Kartografie & Erkundung | Cartography & Exploration |
+| geology | Geologie & Rohstoffgewinnung | Geology & Resource Extraction |
+| agronomy | Agronomie & Kultivierung | Agronomy & Cultivation |
+| health | Gesundheit & Wohlbefinden | Health & Wellbeing |
+| trade | Handel & Logistik | Trade & Logistics |
+| defense | Verteidigung & Überlebenstaktik | Defence & Survival Tactics |
 
-*Spielmechanik noch nicht vollständig dokumentiert — wird in Phase 2 ergänzt.*
+Kenntnisse werden über Aktionspunkte (AP) vorangetrieben. Details zum AP-System: §12.
+
+*Spielmechanik noch nicht vollständig dokumentiert — wird in Phase 3 ergänzt.*
 
 ---
 
