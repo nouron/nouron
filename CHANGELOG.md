@@ -1,6 +1,14 @@
 # Changelog
 
-## 2026-04-10 (Design-Sprint Phase 3: Gebäude, Schiffe, Kenntnisse, GDD-Review)
+## 2026-04-10
+
+- **Berater-System: Slot-System implementiert.** GDD §12 und Implementierung auf einen Stand gebracht: max. 1 Berater pro Typ pro Kolonie (UNIQUE INDEX), CC-Level schaltet Slots frei (CC Lv1 = 1 Slot, max. 5). Berater kosten jetzt korrekt Credits statt Supply — Bug in `PersonellService::hire()` behoben.
+- **Stratege als 5. Beratertyp eingeführt.** DB-Migration, Config-Eintrag (`strategy`-AP-Pool), `PersonellService::resolveType()` und View-Karte ergänzt.
+- **Kommandanten-UI:** Piloten können nun über die Berater-Seite Flotten zugewiesen und abberufen werden (`assignCommander`/`unassignCommander`). Die Service-Methoden existierten bereits, Route und UI fehlten noch.
+- **Testdaten bereinigt:** Von bis zu 19 Beratern pro Typ auf je 1 pro Typ reduziert (entspricht dem Slot-System). Stratege in beide Kolonien aufgenommen.
+- **GDD §12 aktualisiert** (game-designer): Individuen-Prinzip explizit formuliert, Typenbezeichnungen vereinheitlicht, Rang-Tabelle (Junior/Senior/Experte), Credits-Kosten, TODO Kommandanten-UI dokumentiert.
+
+
 
 - **Gebäude 25 → 12:** Stark reduziert auf Mini-4X-Kernsortiment. Neue Namen (Cantina, Agrardom, Industriemine, Kolonialdenkmal etc.). Raumwerft + Kampfwerft → **Hangar** (1 Gebäude = 1 Schiffsslot, Supply-begrenzt). Wasser als Ressource gestrichen (durch Versorgung abstrahiert), Wasserextraktor entfernt. Englische Sprachdateien (`lang/en/`) neu erstellt.
 - **Schiffe 6 → 3:** Sonde (unbemannt, kein Supply), Korvette (ex Fighter, 14 Supply), Frachter (ex Transporter, 6 Supply). Ship-Decay abgeschafft — Schiffe werden durch Kampf/Gefahren zerstört, nicht durch Verfall. Hangar-Decay ersetzt den Wartungsdruck.
