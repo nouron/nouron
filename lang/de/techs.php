@@ -1,41 +1,32 @@
 <?php
 
+/**
+ * Kenntnisse — 7 Forschungsgebiete der Kolonie.
+ * Keine akademische Wissenschaft, sondern praktisches Kolonialwissen.
+ *
+ * Localization: lang/en/techs.php
+ */
 return [
 
-    // ── Civil researches ─────────────────────────────────────────────────────
+    'construction'      => 'Bautechnik & Materialverarbeitung',
+    'construction_desc' => 'Methoden zur effizienten Errichtung und Instandhaltung von Koloniegebäuden. Vom Fundamentbau bis zur Verarbeitung lokaler Rohstoffe zu Baumaterialien.',
 
-    'biology'      => 'Biologie',
-    'biology_desc' => 'Erforschung lebender Systeme. Grundlage für medizinischen und ökologischen Fortschritt.',
+    'cartography'      => 'Kartografie & Erkundung',
+    'cartography_desc' => 'Systematische Erfassung der umliegenden Systeme und Raumkorridore. Grundlage für alle Flottenbewegungen und das Auffinden neuer Ressourcenquellen.',
 
-    'languages'      => 'Linguistik',
-    'languages_desc' => 'Studium von Sprache und Kommunikation. Verbessert diplomatische Kapazitäten.',
+    'geology'      => 'Geologie & Rohstoffgewinnung',
+    'geology_desc' => 'Kenntnis des lokalen Untergrunds und seiner Rohstoffvorkommen. Verbessert Effizienz und Ertrag der Industriemine.',
 
-    'mathematics'      => 'Mathematik',
-    'mathematics_desc' => 'Formale Grundlagenwissenschaft. Ermöglicht Fortschritte in Physik und Ingenieurwesen.',
+    'agronomy'      => 'Agronomie & Kultivierung',
+    'agronomy_desc' => 'Anbau von Nahrungsmitteln und organischen Rohstoffen unter kolonialen Bedingungen. Verbessert Ertrag des Agrardoms und stärkt die Koloniegesundheit.',
 
-    'medicalScience'      => 'Medizinwissenschaft',
-    'medicalScience_desc' => 'Erforschung von Krankheiten und Heilmethoden. Verbessert die Lebensqualität spürbar.',
+    'health'      => 'Gesundheit & Wohlbefinden',
+    'health_desc' => 'Praktisches Wissen zur Gesunderhaltung der Kolonisten — von der Wundversorgung bis zur Seuchenprävention. Eine gesunde Kolonie ist eine produktive Kolonie.',
 
-    'physics'      => 'Physik',
-    'physics_desc' => 'Grundlagenforschung zu Materie und Energie. Voraussetzung für viele Technologien.',
+    'trade'      => 'Handel & Logistik',
+    'trade_desc' => 'Verhandlungsführung, Routen- und Lagerplanung für den interkolonialen Warenverkehr. Bessere Konditionen, schnellere Abwicklung, weniger Verluste auf dem Weg.',
 
-    'chemistry'      => 'Chemie',
-    'chemistry_desc' => 'Erforschung von Stoffen und Reaktionen. Grundlage für Material- und Energiegewinnung.',
-
-    // ── Economy / Diplomacy ───────────────────────────────────────────────────
-
-    'economicScience'      => 'Wirtschaftswissenschaft',
-    'economicScience_desc' => 'Analyse und Optimierung wirtschaftlicher Abläufe. Verbessert Handelseffizienz.',
-
-    'diplomacy'      => 'Diplomatie',
-    'diplomacy_desc' => 'Lehre der Konfliktlösung und Verhandlungsführung. Stärkt den Zusammenhalt.',
-
-    'politicalScience'      => 'Politikwissenschaft',
-    'politicalScience_desc' => 'Erforschung von Herrschaft und Governance. Fördert gesellschaftliche Stabilität.',
-
-    // ── Military ─────────────────────────────────────────────────────────────
-
-    'military'      => 'Militärwissenschaft',
-    'military_desc' => 'Lehre von Strategie und Kampftaktik. Verbessert die Kampfkraft, erhöht aber den Militarismus in der Bevölkerung.',
+    'defense'      => 'Verteidigung & Überlebenstaktik',
+    'defense_desc' => 'Taktiken zum Schutz der Kolonie vor äußeren Bedrohungen. Von der Positionierung der Korvetten bis zum Verhalten der Zivilbevölkerung im Ernstfall.',
 
 ];

@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-04-10 (Design-Sprint Phase 3: Gebäude, Schiffe, Kenntnisse, GDD-Review)
+
+- **Gebäude 25 → 12:** Stark reduziert auf Mini-4X-Kernsortiment. Neue Namen (Cantina, Agrardom, Industriemine, Kolonialdenkmal etc.). Raumwerft + Kampfwerft → **Hangar** (1 Gebäude = 1 Schiffsslot, Supply-begrenzt). Wasser als Ressource gestrichen (durch Versorgung abstrahiert), Wasserextraktor entfernt. Englische Sprachdateien (`lang/en/`) neu erstellt.
+- **Schiffe 6 → 3:** Sonde (unbemannt, kein Supply), Korvette (ex Fighter, 14 Supply), Frachter (ex Transporter, 6 Supply). Ship-Decay abgeschafft — Schiffe werden durch Kampf/Gefahren zerstört, nicht durch Verfall. Hangar-Decay ersetzt den Wartungsdruck.
+- **Kenntnisse (ex Forschungen) 10 → 7:** Umbenennung von "Forschungen" zu "Kenntnisse" — praktisches Kolonialwissen statt akademische Wissenschaft. Doppelnamen: Bautechnik & Materialverarbeitung, Kartografie & Erkundung, Geologie & Rohstoffgewinnung, Agronomie & Kultivierung, Gesundheit & Wohlbefinden, Handel & Logistik, Verteidigung & Überlebenstaktik.
+- **GDD §1 neu geschrieben:** Singleplayer-Koloniekommandant mit Roguelike-Elementen. Vorbilder um FTL und Catan erweitert. Diplomatie/Politik als USP gestrichen.
+- **GDD-Review durch 3 Game-Designer-Agenten:** 15 Inkonsistenzen gefunden und behoben (§4–§14). Veraltete Schiffe, Gebäude, Ressourcen und Forschungs-Keys durchgehend ersetzt.
+- **Berater-Cap durch CC-Level:** CC Lv1–5 erlaubt 1–5 Berater. Berater kosten Credits, kein Supply — Widerspruch zwischen §6 und §12 aufgelöst.
+- **Phase-1-Bedingung "Supply > 0" entfernt** (trivial, da Supply nie spontan auf 0 fällt).
+
+## 2026-04-09 (Design-Sprint Phase 3: Berater- und AP-System)
+
+- **Berater-Redesign (GDD §12):** 4 Typen → 5 Typen. Neue Namen: Baumeister, Analytiker, Raumfahrer, Stratege (neu, MilitärAP), Konsul. Navigation und Militär wurden als separate AP-Typen aufgespalten; Handel und Diplomatie unter Konsul/Handel zusammengeführt.
+- **AP-System:** 5 Typen mit Kurznamen (Konstruktion, Analyse, Navigation, Strategie, Handel). Grundwert 6 AP/Tick auch ohne Berater. Max. 5 Berater (einer pro Typ). Level 1–5 mit Sweet Spot bei Level 4.
+- **Upkeep-Mechanik:** Berater kosten Credits/Tick statt Supply. Supply bleibt Kapazitätsdeckel für Gebäude und Schiffe — sauberere konzeptionelle Trennung.
+
+## 2026-04-08 (Design-Sprint Phase 3: Spielkonzept und Ressourcen)
+
+- **Spielkonzept neu ausgerichtet:** Nouron wird von einem 4X-Multiplayer-Online-Spiel zu einem Singleplayer-Roguelike-Mini-4X (FTL/Catan-Stil) umgebaut. Keine Rassen mehr — nur Fraktionen. Kein Battlecruiser/Kreuzer. Async Spielerinteraktion (Forge-of-Empires-Stil).
+- **Run-Struktur definiert (GDD §14):** Jeder Run = Expeditionsmission mit 2 Phasen. Phase 1: Kolonie stabilisieren (CC Lv3, Supply stabil, 3 Berater). Phase 2: 2 von 3 zufälligen Aufgaben aus einem 10er-Pool erfüllen (Tick-Limit 100). Fail States: Versorgungskollaps oder Zeitablauf.
+- **Ressourcenliste überarbeitet (GDD §3):** ENrg/LNrg/ANrg (rassenspezifisch) abgekündigt. Neue Liste: Credits (Cr), Versorgung (Sup), Wasser (W), Werkstoffe (Co), Organika (Or), Moral (M). Kürzel basieren auf englischen Namen für Sprachunabhängigkeit. Exotics als 4. handelbarer Rohstoff für Phase 4+ reserviert.
+
 ## 2026-04-07 (AP-0: DB-Reset und Test-Isolation)
 
 - **`php artisan db:reset`:** Neuer Artisan-Command (AP-0a) — löscht alle Tabellen, führt Migrations aus, befüllt mit Simpsons-Testdaten (via `TestSeeder`). Bestätigungsprompt schützt vor versehentlichem Aufruf; `--force` überspringt ihn.

@@ -2,26 +2,19 @@
 
 return [
 
-    // ── Military ships ────────────────────────────────────────────────────────
+    // ── Unmanned ──────────────────────────────────────────────────────────────
 
-    'fighter1'      => 'Jäger (Klasse I)',
-    'fighter1_desc' => 'Schnelles leichtes Kampfschiff für Patrouillen und taktische Angriffe. Hoher Wartungsaufwand.',
+    'sonde'      => 'Sonde',
+    'sonde_desc' => 'Unbemanntes Erkundungsfahrzeug. Schnell, günstig und ohne Besatzungsaufwand. Einsetzbar für Erkundung, Überwachung und wissenschaftliche Messungen. Kann durch Strahlungsfelder, Kampfhandlungen oder unbekannte Gefahren verloren gehen.',
 
-    'frigate1'      => 'Fregatte (Klasse I)',
-    'frigate1_desc' => 'Mittelschweres Kampfschiff mit ausgeglichenem Verhältnis aus Feuerkraft und Mobilität.',
+    // ── Military ──────────────────────────────────────────────────────────────
 
-    'battlecruiser1'      => 'Schlachtkreuzer (Klasse I)',
-    'battlecruiser1_desc' => 'Schweres Kampfschiff mit hoher Feuerkraft. Symbolisiert militärische Stärke — und schürt Misstrauen.',
+    'korvette'      => 'Korvette',
+    'korvette_desc' => 'Leichtes Kampfschiff für Patrouille und Kolonieverteidigung. Klein genug für eine junge Kolonie, stark genug um Bedrohungen abzuwehren. Benötigt einen eigenen Hangar.',
 
-    // ── Transport ships ───────────────────────────────────────────────────────
+    // ── Transport ─────────────────────────────────────────────────────────────
 
-    'smallTransporter'      => 'Kleiner Transporter',
-    'smallTransporter_desc' => 'Kompaktes Frachtschiff für kurze Handelsrouten. Günstig im Unterhalt.',
-
-    'mediumTransporter'      => 'Mittlerer Transporter',
-    'mediumTransporter_desc' => 'Vielseitiger Frachter für den interkolonialen Warenverkehr.',
-
-    'largeTransporter'      => 'Großer Transporter',
-    'largeTransporter_desc' => 'Schwerer Frachter mit hoher Ladekapazität. Sinnbild wirtschaftlichen Wohlstands.',
+    'frachter'      => 'Frachter',
+    'frachter_desc' => 'Zuverlässiges Transportschiff für Handelsrouten und Versorgungsläufe. Rückgrat der kolonialen Wirtschaft. Benötigt einen eigenen Hangar.',
 
 ];

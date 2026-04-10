@@ -20,7 +20,7 @@
  * Note: decay_rate, max_status_points and supply_cost are also stored in the `buildings` DB table.
  * After changing values here run: php artisan game:sync-techs (to be implemented)
  *
- * Localization: lang/de/buildings.php
+ * Localization: lang/de/buildings.php, lang/en/buildings.php
  */
 return [
 
@@ -50,7 +50,7 @@ return [
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'oremine' => [
+    'industrieMine' => [                // ex oremine (ID 27) — now produces Werkstoffe
         'id'                => 27,
         'supply_cost'       => 2,
         'moral_per_lv'      => 0,
@@ -60,7 +60,7 @@ return [
         'credits'           => 150,
     ],
 
-    'silicatemine' => [
+    'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id'                => 41,
         'supply_cost'       => 2,
         'moral_per_lv'      => 0,
@@ -68,16 +68,6 @@ return [
         'max_status_points' => 20,
         'max_level'         => null,
         'credits'           => 300,
-    ],
-
-    'waterextractor' => [
-        'id'                => 42,
-        'supply_cost'       => 2,
-        'moral_per_lv'      => 0,
-        'decay_rate'        => 0.95,
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 200,
     ],
 
     'depot' => [
@@ -90,7 +80,7 @@ return [
         'credits'           => 20_000,
     ],
 
-    // ── Science / Education ───────────────────────────────────────────────────
+    // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab' => [
         'id'                => 31,
@@ -100,130 +90,6 @@ return [
         'max_status_points' => 20,
         'max_level'         => null,
         'credits'           => 8_000,
-    ],
-
-    'university' => [
-        'id'                => 51,
-        'supply_cost'       => 8,
-        'moral_per_lv'      => 2,
-        'decay_rate'        => 0.95,
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 20_000,
-    ],
-
-    // ── Civil welfare ─────────────────────────────────────────────────────────
-
-    'temple' => [
-        'id'                => 32,
-        'supply_cost'       => 5,
-        'moral_per_lv'      => 2,
-        'decay_rate'        => 2.0,     // 10 days — needs regular upkeep
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 5_000,
-    ],
-
-    'parc' => [
-        'id'                => 45,
-        'supply_cost'       => 4,
-        'moral_per_lv'      => 2,
-        'decay_rate'        => 2.0,     // 10 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 5_000,
-    ],
-
-    'hospital' => [
-        'id'                => 46,
-        'supply_cost'       => 10,
-        'moral_per_lv'      => 3,
-        'decay_rate'        => 2.0,     // 10 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 12_000,
-    ],
-
-    'public_security' => [
-        'id'                => 48,
-        'supply_cost'       => 8,
-        'moral_per_lv'      => 1,
-        'decay_rate'        => 2.0,     // 10 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 2_000,
-    ],
-
-    'denkmal' => [
-        'id'                => 50,
-        'supply_cost'       => 2,
-        'moral_per_lv'      => 2,
-        'decay_rate'        => 0.33,    // 60 days — monuments are built to last
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 1_500,
-    ],
-
-    'museum' => [
-        'id'                => 56,
-        'supply_cost'       => 5,
-        'moral_per_lv'      => 2,
-        'decay_rate'        => 0.95,    // 21 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 1_200,
-    ],
-
-    'recyclingStation' => [
-        'id'                => 65,
-        'supply_cost'       => 6,
-        'moral_per_lv'      => 1,
-        'decay_rate'        => 0.95,
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 3_500,
-    ],
-
-    'wastedisposal' => [
-        'id'                => 64,
-        'supply_cost'       => 6,
-        'moral_per_lv'      => -1,
-        'decay_rate'        => 0.95,
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 2_800,
-    ],
-
-    // ── Entertainment ─────────────────────────────────────────────────────────
-
-    'stadium' => [
-        'id'                => 53,
-        'supply_cost'       => 14,
-        'moral_per_lv'      => 3,
-        'decay_rate'        => 0.95,    // 21 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 5_000,
-    ],
-
-    'bar' => [
-        'id'                => 52,
-        'supply_cost'       => 4,
-        'moral_per_lv'      => -1,
-        'decay_rate'        => 2.86,    // 7 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 500,
-    ],
-
-    'casino' => [
-        'id'                => 54,
-        'supply_cost'       => 9,
-        'moral_per_lv'      => -2,
-        'decay_rate'        => 2.86,    // 7 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 2_500,
     ],
 
     // ── Economy ───────────────────────────────────────────────────────────────
@@ -238,56 +104,58 @@ return [
         'credits'           => 20_000,
     ],
 
-    'bank' => [
-        'id'                => 70,
-        'supply_cost'       => 14,
-        'moral_per_lv'      => 0,
-        'decay_rate'        => 0.67,
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 18_000,
-    ],
+    // ── Fleet ─────────────────────────────────────────────────────────────────
 
-    // ── Military / Security ───────────────────────────────────────────────────
-
-    'civilianSpaceyard' => [
-        'id'                => 44,
-        'supply_cost'       => 20,
+    'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
+        'id'                => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
+        'supply_cost'       => 12,      // limits fleet naturally: 3 hangars = 36 supply
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 50_000,
+        'max_level'         => null,    // repeatable, supply-limited
+        'credits'           => 40_000,
     ],
 
-    'militarySpaceyard' => [
-        'id'                => 68,
-        'supply_cost'       => 30,
-        'moral_per_lv'      => -1,
-        'decay_rate'        => 0.44,    // 45 days
+    // ── Civil welfare ─────────────────────────────────────────────────────────
+
+    'hospital' => [
+        'id'                => 46,
+        'supply_cost'       => 10,
+        'moral_per_lv'      => 3,
+        'decay_rate'        => 2.0,     // 10 days
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 60_000,
+        'credits'           => 12_000,
     ],
 
-    'prison' => [
-        'id'                => 55,
-        'supply_cost'       => 15,
-        'moral_per_lv'      => -3,
-        'decay_rate'        => 0.95,    // 21 days
+    'bar' => [
+        'id'                => 52,
+        'supply_cost'       => 4,
+        'moral_per_lv'      => 2,       // social hub — leisure in an otherwise bleak colony life
+        'decay_rate'        => 2.86,    // 7 days — needs regular supplies
+        'max_status_points' => 20,
+        'max_level'         => null,
+        'credits'           => 500,
+    ],
+
+    'denkmal' => [
+        'id'                => 50,
+        'supply_cost'       => 2,
+        'moral_per_lv'      => 2,
+        'decay_rate'        => 0.33,    // 60 days — monuments are built to last
+        'max_status_points' => 20,
+        'max_level'         => null,
+        'credits'           => 1_500,
+    ],
+
+    'temple' => [
+        'id'                => 32,
+        'supply_cost'       => 4,
+        'moral_per_lv'      => 2,
+        'decay_rate'        => 2.0,     // 10 days — needs regular upkeep
         'max_status_points' => 20,
         'max_level'         => null,
         'credits'           => 5_000,
-    ],
-
-    'secretOps' => [
-        'id'                => 66,
-        'supply_cost'       => 26,
-        'moral_per_lv'      => -2,
-        'decay_rate'        => 0.67,    // 30 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 2_000,
     ],
 
 ];
