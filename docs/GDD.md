@@ -225,7 +225,7 @@ Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 ### Gebäude (Phase 3 — vollständige Liste)
 
-13 Gebäude, reduziert auf das Mini-4X-Kernsortiment:
+12 Gebäude, reduziert auf das Mini-4X-Kernsortiment:
 
 | ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
 |----|------------|-----------|-----------|-----------|---------------|
@@ -271,9 +271,8 @@ produzierte Menge = Gebäude-Level × Rate
 
 ```php
 'production' => [
-    27 => [4 => 10],   // oremine        → ferum      × 10/level
-    41 => [5 => 10],   // silicatemine   → silicates  × 10/level
-    42 => [3 => 10],   // waterextractor → water      × 10/level
+    27 => [4 => 10],   // industrieMine  → Werkstoffe × 10/level
+    41 => [5 => 10],   // bioFacility    → Organika   × 10/level
 ],
 ```
 
@@ -339,9 +338,6 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 | Analytik-Labor | 8 |
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
-| civilian shipyard | 20 |
-| secretops | 26 |
-| military shipyard | 30 |
 
 **Kenntnisse** (individuelle Supply-Kosten):
 
@@ -421,8 +417,9 @@ Beispiel: max_status_points=5, decay_rate=0.3
 | Entität | Konsequenz |
 |---------|-----------|
 | Gebäude | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
-| Schiff | Einheit aus fleet_ships entfernt; INNN-Ereignis |
-| Forschung | Level − 1; INNN-Ereignis |
+| Kenntnis | Level − 1; INNN-Ereignis |
+
+> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht durch den Hangar-Decay.
 
 ### Kampf-Beschleunigung
 
@@ -446,18 +443,17 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
 | Entität | Ticks until lost | decay_rate (bei SP=20) |
 |---------|-----------------|------------------------|
-| bar | 100 | 0.20 |
-| hospital | 100 | 0.20 |
-| sciencelab | 120 | 0.17 |
-| ore mine | 120 | 0.17 |
-| museum | 200 | 0.10 |
-| civilian shipyard | 166 | 0.12 |
-| military shipyard | 250 | 0.08 |
-| fighter | 133 | 0.15 |
-| frigate | 125 | 0.16 |
-| battlecruiser | 200 | 0.10 |
-| transporter (small) | 400 | 0.05 |
-| research (most) | 160 | 0.13 |
+| Cantina (bar) | 7 | 2.86 |
+| Religiöse Stätte (temple) | 10 | 2.0 |
+| Krankenstation (hospital) | 10 | 2.0 |
+| Industriemine, Agrardom | 21 | 0.95 |
+| Analytik-Labor (sciencelab) | 21 | 0.95 |
+| Lagerhalle (depot) | 30 | 0.67 |
+| Handelsposten (tradecenter) | 30 | 0.67 |
+| Hangar | 30 | 0.67 |
+| Wohnhabitat (housingComplex) | 45 | 0.44 |
+| Kommandozentrale, Kolonialdenkmal | 61 | 0.33 |
+| Kenntnisse (most) | ~150 | ~0.13 |
 
 Alle Werte liegen im definierten Bereich 0.05–0.3 ✓.
 
@@ -575,14 +571,11 @@ Kampfstärke einer Flotte = Σ(Schiffanzahl × Kampfwert des Schiffstyps)
 
 | Schiff | ship_id | Kampfwert |
 |--------|---------|-----------|
-| Fighter 1 | 37 | 1 |
-| Fregatte 1 | 29 | 3 |
-| Schlachtkreuzer 1 | 49 | 10 |
-| Kleiner Transporter | 47 | 0 |
-| Mittlerer Transporter | 83 | 0 |
-| Großer Transporter | 84 | 0 |
+| Sonde | 85 | 0 |
+| Korvette | 37 | 1 |
+| Frachter | 47 | 0 |
 
-Schiffe mit Kampfwert 0 sind **nicht-kampffähig** und werden im Gefecht nicht zerstört.
+Schiffe mit Kampfwert 0 sind **nicht-kampffähig** und werden im Gefecht nicht zerstört. Sonden können jedoch durch Kampfhandlungen in ihrer Nähe verloren gehen.
 
 ### Verlustberechnung
 
@@ -609,12 +602,9 @@ Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein 
 ```php
 'combat' => [
     'ship_power' => [
-        37 => 1,   // fighter1
-        29 => 3,   // frigate1
-        49 => 10,  // battlecruiser1
-        47 => 0,   // smallTransporter
-        83 => 0,   // mediumTransporter
-        84 => 0,   // largeTransporter
+        85 => 0,   // sonde
+        37 => 1,   // korvette
+        47 => 0,   // frachter
     ],
 ],
 ```
@@ -878,28 +868,16 @@ Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Leve
 
 | Gebäude-ID | Bezeichner | Moral/Level |
 |------------|------------|-------------|
-| 32 | temple | +2 |
-| 45 | parc | +2 |
-| 46 | hospital | +3 |
-| 48 | public_security | +1 |
-| 50 | denkmal | +2 |
-| 51 | university | +2 |
-| 53 | stadium | +3 |
-| 56 | museum | +2 |
-| 65 | recyclingStation | +1 |
+| 32 | temple (Religiöse Stätte) | +2 |
+| 46 | hospital (Krankenstation) | +3 |
+| 50 | denkmal (Kolonialdenkmal) | +2 |
+| 52 | bar (Cantina) | +2 |
 
 **Negative Moralgebäude:**
 
-| Gebäude-ID | Bezeichner | Moral/Level |
-|------------|------------|-------------|
-| 52 | bar | -1 |
-| 54 | casino | -2 |
-| 55 | prison | -3 |
-| 64 | wastedisposal | -1 |
-| 66 | secretOps | -2 |
-| 68 | militarySpaceyard | -1 |
+*(keine in Phase 3 — alle verbleibenden Gebäude sind neutral oder positiv)*
 
-**Rationale:** Kasino und Gefängnis degradieren aktiv die gesellschaftliche Stimmung. Das Gefängnis signalisiert soziale Kontrolle und Repression (-3/Level ist bewusst stark, um Prison-Spam zu bestrafen). Bar und Casino haben negative Effekte, aber nur moderat — sie sind ein bewusster Trade-off (Credits vs. Moral). Die Militärwerft hat einen kleinen Malus als Untermauerung des Kernprinzips "Militarismus hat Kosten".
+**Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
 > ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple Lv10 + hospital Lv10 + stadium Lv10 ...), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte getestet werden ob er zu schnell erreichbar ist ohne negative Gebäude.
 
@@ -907,23 +885,13 @@ Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Leve
 
 Schiffe tragen zur Moral bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Militärschiffe signalisieren der Bevölkerung Kriegsbereitschaft und erzeugen Unruhe; Transporter stehen für Handel und Wohlstand.
 
-**Militärische Schiffe (negative Moral):**
-
 | Schiff-ID | Bezeichner | Moral/Schiff |
 |-----------|------------|--------------|
-| 37 | fighter1 | -1 |
-| 29 | frigate1 | -2 |
-| 49 | battlecruiser1 | -4 |
+| 85 | sonde | 0 |
+| 37 | korvette | -1 |
+| 47 | frachter | +1 |
 
-**Zivile/Transport-Schiffe (positive Moral):**
-
-| Schiff-ID | Bezeichner | Moral/Schiff |
-|-----------|------------|--------------|
-| 47 | smallTransporter | +1 |
-| 83 | mediumTransporter | +1 |
-| 84 | largeTransporter | +2 |
-
-**Rationale:** Militärschiffe verstärken das Prinzip "Militarismus hat Kosten" — wer eine starke Kriegsflotte in der Kolonie stationiert, zahlt mit Moralverlust. Der Malus ist absichtlich progressiv (Battlecruiser -4 > Frigate -2 > Fighter -1), um Massenansammlungen schwerer Schiffe spürbar zu bestrafen, ohne kleine Verteidigungsflotten zu ruinieren. Transportschiffe belohnen eine handelsorientierte Spielweise mit kleinen Moralgewinnen (+1/+2 pro Schiff).
+**Rationale:** Die Korvette signalisiert Militärbereitschaft (-1/Schiff). Der Frachter steht für Handel und Wohlstand (+1/Schiff). Sonden sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion.
 
 **Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Moral-Summe eingeht:
 
@@ -937,20 +905,15 @@ ship_moral = clamp(Σ(ship_amount × moral_per_ship), -30, +30)
 
 Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_points, da Forschungslevel persistenter sind).
 
-| Forschungs-ID | Bezeichner | Moral/Level |
-|---------------|------------|-------------|
-| 33 | biology | +1 |
-| 72 | medicalScience | +2 |
-| 79 | diplomacy | +1 |
-| 80 | politicalScience | +1 |
-| 81 | military | -2 |
-| 34 | languages | +1 |
+| Kenntnis-Key | Bezeichner | Moral/Level |
+|--------------|------------|-------------|
+| agronomy | Agronomie & Kultivierung | +1 |
+| health | Gesundheit & Wohlbefinden | +2 |
+| defense | Verteidigung & Überlebenstaktik | -1 |
 
-Alle anderen Forschungen (mathematics, physics, chemistry, economicScience) haben keinen direkten Moraleffekt — sie sind neutrale Werkzeuge.
+Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Moraleffekt — sie sind neutrale Werkzeuge.
 
-**Zur military-Forschung:** Der Wert wurde auf -2/Level angehoben (von -1). Da military-Forschung auf bis zu Level 10 steigen kann und Schiffe bereits einen separaten Malus erzeugen, soll die Forschung selbst ein deutlicheres Signal setzen. Ein vollständig militärisch ausgelegter Spieler (military Lv10 + schwere Schiffsflotte) sieht dadurch einen merklichen kombinierten Malus.
-
-> ⚠️ BALANCE CONCERN: military-Forschung auf -2/Level bedeutet bis zu -20 allein durch die Forschung. Zusammen mit Schiffs-Malus und militarySpaceyard kann ein Hardcore-Militärspieler tief in den negativen Moralbereich geraten. Das ist gewollt, aber der Spieler braucht ausreichend Kompensationsmöglichkeiten durch Zivilgebäude.
+**Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis verbreitet ein Klima der Wachsamkeit, das die Stimmung leicht dämpft — analoges Signal zu den Korvetten.
 
 ### Einflussfaktoren: Steuern
 
@@ -1035,7 +998,7 @@ produzierte_menge_effektiv = produzierte_menge × production_multiplier(moral)
 | -21 bis -60 | 0.85 (-15%) |
 | -61 bis -100 | 0.70 (-30%) |
 
-Angewendet auf alle Produktionsgebäude (oremine, silicatemine, waterextractor und zukünftige).
+Angewendet auf alle Produktionsgebäude (Industriemine, Agrardom und zukünftige).
 
 #### AP-Multiplikator
 
@@ -1142,7 +1105,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Tick uber Z Ticks aufrecht halten | Wirtschaft |
 | 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
 | 3 | **Kolonieblute** | Moral > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
-| 4 | **Selbstversorgung** | Alle 3 Grundressourcen (Water, Ferum, Silicates) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
+| 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
 | 5 | **Aufklärer** | 3 verschiedene, bisher unbekannte Systeme mit einer Flotte angesteuert | Exploration |
 | 6 | **Kontaktnetz** | Gleichzeitig aktive Handelsrouten mit 3 verschiedenen KI-Fraktionen | Diplomatie |
 | 7 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
