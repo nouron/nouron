@@ -29,7 +29,13 @@
 
 ## 1. Spielkonzept
 
-Nouron ist ein rundenbasiertes Weltraum-Strategiespiel im Browser. Spieler bauen Kolonien auf, erforschen Technologien, bauen Flotten und interagieren mit anderen Spielern durch Handel und Kampf. Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tag global berechnet.
+Nouron ist ein rundenbasiertes Weltraum-Strategiespiel für Einzelspieler im Browser. Der Spieler übernimmt die Rolle eines Koloniekommandanten mit einem klaren Auftrag: eine kleine, ressourcenarme Kolonie auf Vordermann zu bringen — entweder eine frisch gestartete Siedlung oder eine heruntergekommene Anlage, die sich selbst überlassen wurde.
+
+Die Kolonie bleibt im gesamten Spielverlauf überschaubar. Es geht nicht darum, ein galaktisches Imperium aufzubauen, sondern darum, eine kleine Gemeinschaft unter schwierigen Bedingungen am Leben zu erhalten und gedeihen zu lassen.
+
+Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen variablen Verlauf und ein klares Ende — Erfolg oder Scheitern. Nouron enthält **Roguelike-Elemente**: variable Aufgaben je Run, zufällige Ereignisse und echte Konsequenzen für Fehlentscheidungen. Runs können wiederholt werden; jeder Run fühlt sich anders an.
+
+Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tag global berechnet.
 
 ---
 
@@ -86,43 +92,40 @@ Das Prinzip bedeutet nicht, dass Militarismus unmoglich oder unrentabel ist. Ein
 
 ## 1.2 Alleinstellungsmerkmale (USPs)
 
-Nouron teilt sich das Genre "Browser-Strategiespiel" mit Dutzenden von Titeln. Was Nouron von ihnen unterscheidet, ist kein einzelnes Feature, sondern ein kohärentes Designprinzip: das Spiel ist für Spieler gebaut, die lieber nachdenken als klicken — und die Konsequenzen ihres Handelns über Tage und Wochen beobachten wollen.
+Nouron teilt sich das Genre "Browser-Strategiespiel" mit Dutzenden von Titeln. Was Nouron von ihnen unterscheidet, ist kein einzelnes Feature, sondern ein kohärentes Designprinzip: das Spiel ist für Spieler gebaut, die lieber nachdenken als klicken — und die Konsequenzen ihres Handelns über Tage spüren wollen.
 
 ### Die sechs Merkmale
 
 **1. Verfall als durchgängiges Systemprinzip**
-Gebäude, Schiffe und Forschungen verfallen ohne aktive Pflege. Wer sein Imperium vernachlässigt, verliert es langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Tick zu einer echten Ressourcenentscheidung.
+Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer seine Kolonie vernachlässigt, verliert sie langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Tick zu einer echten Ressourcenentscheidung.
 
 **2. Tick-basiertes Spieltempo (1 Tick = 1 Tag)**
 Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich ausgeführt. Das Spiel passt sich dem Spieler an, nicht umgekehrt.
 
-**3. Nur eine Kolonie pro Spieler**
-Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Ein Spieler, eine Kolonie — Tiefe statt Breite.
+**3. Nur eine Kolonie — Tiefe statt Breite**
+Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Kommandant — alle Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
 
-**4. Kleine, überschaubare Galaxie**
-Wenige Systeme, wenige Planeten. Jede Begegnung mit einem anderen Spieler hat Gewicht. Anonymität gibt es nicht.
+**4. Roguelike-Elemente im Strategieformat**
+Jeder Run hat variable Aufgaben, zufällige Ereignisse und echte Konsequenzen. Das Scheitern ist möglich und lehrreich. Kein Run ist identisch — aber die Kolonie bleibt immer dieselbe Art von Ort.
 
-**5. Diplomatie und Politik als Kernmechanik**
-Während andere Spiele Diplomatie als Beiwerk behandeln, ist sie in Nouron ein gleichwertiger Spielpfad neben Handel und Forschung. Bündnisse, Verträge und politisches Kapital sind keine Optionen für Pazifisten — sie sind eine eigene Form von Macht.
+**5. Kleine, handverlesene Galaxie**
+Wenige Systeme, wenige Objekte. Jede Begegnung mit einer anderen Fraktion oder einem Ereignis hat Gewicht. Die Knappheit des Raums ist Teil des Designs.
 
 **6. Militär als Opportunitätskosten-Entscheidung**
-Krieg ist möglich, aber er kostet. Militärische Aktionen verbrauchen strukturell mehr AP als zivile. Wer ständig angreift, wächst langsamer als jemand, der baut, forscht und handelt. (Ausführlich in §1.1.)
+Verteidigung ist möglich und sinnvoll — aber Angriff kostet strukturell mehr AP als zivile Aktionen. Wer ständig kämpft, baut und wächst langsamer. (Ausführlich in §1.1.)
 
 ### Der Zusammenhang
 
-Diese Merkmale sind kein Zufall. Sie folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren Fokus bewusst setzen, langfristig planen und mit anderen interagieren — nicht durch Überrumpelung, sondern durch Überzeugung. Das Vorbild ist das klassische 4X-Genre (Master of Orion), übersetzt in ein Browserformat mit minimalem Zeitaufwand pro Tag.
+Diese Merkmale folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren Fokus bewusst setzen und mit begrenzten Mitteln das Beste herausholen. Das Vorbild ist nicht das klassische Imperium-4X, sondern das Frontier-Szenario — eine kleine Kolonie, ein begrenzter Horizont, echte Entscheidungen.
 
 > Ein Spieler der acht Stunden täglich spielen will, hat keinen Vorteil gegenüber einem Spieler, der täglich fünf Minuten investiert — aber seine Entscheidungen sorgfältig trifft.
 
 ### Vorbilder
 
-Die zentralen Inspirationsquellen sind klassische Strategiespiele aus der DOS-Ära:
-
-- **Reunion** (1994) — stärkster Einfluss auf das Einzelkolonie-Konzept: Ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite.
-- **Imperium Galactica II** (2000) — Vorbild für das Zusammenspiel von Kolonieverwaltung, Forschung und Diplomatie.
-- **Master of Orion** (1993) — Vorbild für das 4X-Grundgerüst, Fraktionen und die Kommandopunkte-Mechanik.
-
-Nouron ist kein Klon dieser Spiele, sondern eine Neuinterpretation ihrer Kernideen im Browserformat — mit modernem Spieltempo und dem Fokus auf eine einzige Kolonie wie in Reunion.
+- **Reunion** (1994) — stärkster Einfluss: Ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite. Die Cantina, der Alltag der Kolonie, das Gefühl von Ort.
+- **FTL: Faster Than Light** (2012) — Vorbild für die Run-Struktur: variables Ziel, zufällige Ereignisse, echtes Scheitern als Teil des Spiels.
+- **Catan** (1995) — Vorbild für das Ressourcenmanagement mit Knappheit: jede Ressource hat Gewicht, Tausch ist eine Kernmechanik.
+- **Master of Orion** (1993) — Vorbild für das Mini-4X-Grundgerüst und die Kommandopunkte-Mechanik.
 
 ---
 
