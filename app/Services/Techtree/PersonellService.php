@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\DB;
  *   research      — Wissenschaftler (36), colony-scoped
  *   navigation    — Kommandant (89),      fleet-scoped (is_commander=true)
  *   economy       — Händler (92),         colony-scoped
+ *   strategy      — Stratege (93),        colony-scoped
  */
 class PersonellService
 {
@@ -31,6 +32,7 @@ class PersonellService
     const PERSONELL_ID_SCIENTIST = 36;
     const PERSONELL_ID_PILOT     = 89;  // Kommandant
     const PERSONELL_ID_TRADER    = 92;
+    const PERSONELL_ID_STRATEGE  = 93;
 
     const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
 
@@ -132,21 +134,56 @@ class PersonellService
         return $this->getAvailableActionPoints('economy', $colonyId);
     }
 
+    public function getStrategyPoints(int $colonyId): int
+    {
+        return $this->getAvailableActionPoints('strategy', $colonyId);
+    }
+
     // ── Hire / Fire / Assign ─────────────────────────────────────────────────
 
     /**
      * Hire a new advisor and assign them to a colony.
+     *
+     * Returns the created Advisor on success, or one of these error strings:
+     *   'duplicate'            — an advisor of this type already exists on the colony
+     *   'slot_full'            — no free advisor slot (CC level too low)
+     *   'insufficient_credits' — not enough credits to pay the hire cost
      */
-    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor|false
+    public function hire(int $userId, int $personellId, int $colonyId, int $rank = 1): Advisor|string
     {
         $this->validateId($userId);
         $this->validateId($colonyId);
 
         return DB::transaction(function () use ($userId, $personellId, $colonyId, $rank) {
-            if (!config('game.bypass.supply_checks')) {
-                $cost = (int) config('game.supply.cost_advisor', 2);
-                if ($this->resourcesService->getFreeSupply($colonyId) < $cost) {
-                    return false;
+            // Duplicate check — slot system allows exactly 1 advisor per type per colony.
+            if (Advisor::where('colony_id', $colonyId)->where('personell_id', $personellId)->exists()) {
+                return 'duplicate';
+            }
+
+            // CC-Level gate — slots available = min(cc_level, max_slots).
+            $ccLevel  = (int) (DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', config('buildings.commandCenter.id'))
+                ->value('level') ?? 0);
+            $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
+            $usedSlots = Advisor::where('colony_id', $colonyId)->count();
+            if ($usedSlots >= $maxSlots) {
+                return 'slot_full';
+            }
+
+            // Credits check and deduction.
+            if (!config('game.bypass.resource_costs')) {
+                $advisorCfg  = collect(config('advisors'))->firstWhere('id', $personellId);
+                $creditsCost = (int) ($advisorCfg['credits'] ?? 0);
+                if ($creditsCost > 0) {
+                    $canAfford = $this->resourcesService->check(
+                        [['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $creditsCost]],
+                        $colonyId
+                    );
+                    if (!$canAfford) {
+                        return 'insufficient_credits';
+                    }
+                    $this->resourcesService->decreaseAmount($colonyId, ResourcesService::RES_CREDITS, $creditsCost);
                 }
             }
 
@@ -160,6 +197,28 @@ class PersonellService
                 'active_ticks' => 0,
             ]);
         });
+    }
+
+    /**
+     * Returns slot usage info for a colony's advisor panel.
+     *
+     * @return array{max: int, used: int, free: int, cc_level: int}
+     */
+    public function getAdvisorSlotInfo(int $colonyId): array
+    {
+        $ccLevel  = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', config('buildings.commandCenter.id'))
+            ->value('level') ?? 0);
+        $maxSlots  = min($ccLevel, (int) config('game.advisor.max_slots', 5));
+        $usedSlots = Advisor::where('colony_id', $colonyId)->count();
+
+        return [
+            'cc_level' => $ccLevel,
+            'max'      => $maxSlots,
+            'used'     => $usedSlots,
+            'free'     => max(0, $maxSlots - $usedSlots),
+        ];
     }
 
     /**
@@ -243,6 +302,7 @@ class PersonellService
             'research'     => [self::PERSONELL_ID_SCIENTIST, 'colony'],
             'navigation'   => [self::PERSONELL_ID_PILOT,     'fleet'],
             'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
+            'strategy'     => [self::PERSONELL_ID_STRATEGE,  'colony'],
             default        => [null, null],
         };
     }
