@@ -284,11 +284,11 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude definieren ein Maximum. Schiffe, Berater, Gebäude (außer CC und Wohnkomplex) und Forschungen belegen Supply dauerhaft. Es gibt keine Tick-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude definieren ein Maximum. Schiffe, Gebäude (außer CC und Wohnkomplex) und Kenntnisse belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
 
 ```
 supply_cap    = 15 (CC, pauschal) + Anzahl-Wohnkomplexe × 8
-laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Berater × 2) + Σ(Gebäude-Kosten) + Σ(Forschungs-Kosten)
+laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten) + Σ(Kenntnisse-Kosten)
 freies_supply = supply_cap − laufende_last
 ```
 
@@ -304,7 +304,7 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 **Startsituation:** CC = 15, 1 Wohnkomplex = 8 → Supply-Cap = **23**.
 **Hard-Cap:** 200 Supply.
 
-> **Designabsicht:** Das CC gibt einen Pauschalwert — Supply-Wachstum läuft fast vollständig über Wohnkomplexe. Wer mehr Schiffe oder Berater will, muss Wohnkomplexe bauen (Opportunitätskosten gegenüber anderen Gebäuden).
+> **Designabsicht:** Das CC gibt einen Pauschalwert — Supply-Wachstum läuft fast vollständig über Wohnhabitate. Wer mehr Schiffe will, muss Wohnhabitate bauen (Opportunitätskosten gegenüber anderen Gebäuden). Berater sind davon entkoppelt — sie kosten Credits, nicht Supply.
 
 ### Supply-Kosten der Schiffstypen
 
@@ -320,11 +320,11 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 **Schiffe verfallen nicht.** Sie sind entweder intakt oder zerstört (Kampf, Umgebungsgefahren). Wartungsdruck entsteht durch den Hangar-Decay, nicht durch Ship-Status-Points.
 
-### Supply-Kosten Berater, Gebäude, Forschungen
+### Supply-Kosten Gebäude und Kenntnisse
 
-**Berater:** 2 Supply je aktivem Berater (unabhängig von Rang).
+**Berater:** kein Supply-Verbrauch — Kosten laufen über Credits (siehe §12).
 
-**CommandCenter und Wohnkomplex:** kein Supply-Verbrauch (sie definieren den Cap).
+**CommandCenter und Wohnhabitat:** kein Supply-Verbrauch (sie definieren den Cap).
 
 **Gebäude** (individuelle Supply-Kosten aus Technologie-Tabelle):
 
@@ -369,7 +369,7 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
     'cap_commandcenter'  => 15,   // building_id 25 — pauschal, nicht pro Level
     'cap_housingcomplex' => 8,    // building_id 28 — pro Einheit
     'cap_max'            => 200,  // absolutes Hard-Cap
-    'cost_advisor'       => 2,    // Supply pro aktivem Berater
+    // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
     'ship_cost' => [
         85 => 0,   // sonde    — unbemannt
         37 => 14,  // korvette
@@ -388,7 +388,7 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
-| Supply-Cap | Anzahl Schiffe + Berater + Gebäude + Forschungen | permanent | mehr Wohnkomplexe bauen |
+| Supply-Cap | Anzahl Schiffe + Gebäude + Kenntnisse | permanent | mehr Wohnhabitate bauen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
 | Decay | Stand von Gebäuden, Schiffen, Forschungen | täglich | Reparatur-AP investieren |
 
@@ -696,6 +696,18 @@ Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen,
 **Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
 
 **Berater** erhöhen den Grundwert ihres AP-Typs. Max. **5 Berater gleichzeitig**, einer pro Typ (Slot-System).
+
+**Berater-Cap durch CC-Level:** Die Kommandozentrale bestimmt wie viele Berater die Kolonie koordinieren kann:
+
+| CC-Level | Max. aktive Berater |
+|----------|---------------------|
+| 1 | 1 |
+| 2 | 2 |
+| 3 | 3 |
+| 4 | 4 |
+| 5+ | 5 (Maximum) |
+
+Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt — wer alle 5 Berater will, braucht mindestens CC Lv5.
 
 ---
 
@@ -1076,15 +1088,14 @@ Jede Partie von Nouron ist eine abgeschlossene **Expeditionsmission**. Es gibt k
 
 Dauer: ~10–20 Ticks. Kann nicht ubersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
 
-**Abschlussbedingungen (ALLE drei mussen erfullt sein):**
+**Abschlussbedingungen (BEIDE mussen erfullt sein):**
 
 | Bedingung | Konkret |
 |-----------|---------|
 | Infrastruktur | CommandCenter Level 3 + mindestens 2 Produktionsgebäude auf Level >= 2 |
-| Versorgung | Supply > 0 fur 3 aufeinanderfolgende Ticks (kein Engpass) |
 | Personal | Mindestens 3 aktive Berater (beliebiger Typ) |
 
-Die drei Bedingungen decken alle Kernsysteme ab: Aufbau (Gebäude), Ressource (Supply) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
+Die zwei Bedingungen decken die Kernsysteme ab: Aufbau (Gebäude) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
 
 Phase 1 endet automatisch, sobald alle drei Bedingungen gleichzeitig erfullt sind. Der Spieler erhält eine Benachrichtigung und Phase 2 beginnt.
 

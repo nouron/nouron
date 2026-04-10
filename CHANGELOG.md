@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-10 (Design-Sprint Phase 3: Gebäude, Schiffe, Kenntnisse, GDD-Review)
+
+- **Gebäude 25 → 12:** Stark reduziert auf Mini-4X-Kernsortiment. Neue Namen (Cantina, Agrardom, Industriemine, Kolonialdenkmal etc.). Raumwerft + Kampfwerft → **Hangar** (1 Gebäude = 1 Schiffsslot, Supply-begrenzt). Wasser als Ressource gestrichen (durch Versorgung abstrahiert), Wasserextraktor entfernt. Englische Sprachdateien (`lang/en/`) neu erstellt.
+- **Schiffe 6 → 3:** Sonde (unbemannt, kein Supply), Korvette (ex Fighter, 14 Supply), Frachter (ex Transporter, 6 Supply). Ship-Decay abgeschafft — Schiffe werden durch Kampf/Gefahren zerstört, nicht durch Verfall. Hangar-Decay ersetzt den Wartungsdruck.
+- **Kenntnisse (ex Forschungen) 10 → 7:** Umbenennung von "Forschungen" zu "Kenntnisse" — praktisches Kolonialwissen statt akademische Wissenschaft. Doppelnamen: Bautechnik & Materialverarbeitung, Kartografie & Erkundung, Geologie & Rohstoffgewinnung, Agronomie & Kultivierung, Gesundheit & Wohlbefinden, Handel & Logistik, Verteidigung & Überlebenstaktik.
+- **GDD §1 neu geschrieben:** Singleplayer-Koloniekommandant mit Roguelike-Elementen. Vorbilder um FTL und Catan erweitert. Diplomatie/Politik als USP gestrichen.
+- **GDD-Review durch 3 Game-Designer-Agenten:** 15 Inkonsistenzen gefunden und behoben (§4–§14). Veraltete Schiffe, Gebäude, Ressourcen und Forschungs-Keys durchgehend ersetzt.
+- **Berater-Cap durch CC-Level:** CC Lv1–5 erlaubt 1–5 Berater. Berater kosten Credits, kein Supply — Widerspruch zwischen §6 und §12 aufgelöst.
+- **Phase-1-Bedingung "Supply > 0" entfernt** (trivial, da Supply nie spontan auf 0 fällt).
+
 ## 2026-04-09 (Design-Sprint Phase 3: Berater- und AP-System)
 
 - **Berater-Redesign (GDD §12):** 4 Typen → 5 Typen. Neue Namen: Baumeister, Analytiker, Raumfahrer, Stratege (neu, MilitärAP), Konsul. Navigation und Militär wurden als separate AP-Typen aufgespalten; Handel und Diplomatie unter Konsul/Handel zusammengeführt.
