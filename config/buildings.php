@@ -104,26 +104,16 @@ return [
         'credits'           => 20_000,
     ],
 
-    // ── Military ──────────────────────────────────────────────────────────────
+    // ── Fleet ─────────────────────────────────────────────────────────────────
 
-    'civilianSpaceyard' => [
-        'id'                => 44,
-        'supply_cost'       => 20,
+    'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
+        'id'                => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
+        'supply_cost'       => 12,      // limits fleet naturally: 3 hangars = 36 supply
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 50_000,
-    ],
-
-    'militarySpaceyard' => [
-        'id'                => 68,
-        'supply_cost'       => 30,
-        'moral_per_lv'      => -1,
-        'decay_rate'        => 0.44,    // 45 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 60_000,
+        'max_level'         => null,    // repeatable, supply-limited
+        'credits'           => 40_000,
     ],
 
     // ── Civil welfare ─────────────────────────────────────────────────────────

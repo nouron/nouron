@@ -6,91 +6,47 @@
  * Fields:
  *   id               — DB primary key in `ships` table
  *   moving_speed     — tiles per tick (fleet moves at slowest ship's speed)
- *   supply_cost      — supply consumed per ship unit in fleet
+ *   supply_cost      — supply consumed per ship unit (0 for unmanned craft)
  *   moral_per_unit   — moral change per ship in colony fleet (used by MoralService)
- *                      Total ship contribution is capped at ±30 before global clamp (game.moral.ships_cap).
- *   decay_rate       — status_points lost per tick per ship (also stored in DB)
- *   max_status_points — status_points reset value
  *   credits          — base build cost per unit in credits
  *
- * moving_speed rationale:
- *   Fleet speed = min(moving_speed) of all non-cargo ships.
- *   Military ships are fast (fighters) to slow (battlecruisers).
- *   Transporters determine convoy speed; mixing in fighters does not help if
- *   a large transporter is along for the ride.
+ * Ships do NOT decay. They are either intact or destroyed (combat, mission hazards).
+ * Maintenance pressure comes from the Hangar building decaying, not from the ships themselves.
  *
- * Decay reference: 10 d → 2.0 | 14 d → 1.43 | 21 d → 0.95 | 30 d → 0.67
+ * Fleet speed = min(moving_speed) of all ships in fleet.
  *
- * Note: moving_speed, decay_rate, max_status_points and supply_cost are also stored
- * in the `ships` DB table. After changing values here run:
- *   php artisan game:sync-techs   (to be implemented)
- *
- * Localization: lang/de/ships.php
+ * Localization: lang/de/ships.php, lang/en/ships.php
  */
 return [
 
-    // ── Military ships ────────────────────────────────────────────────────────
+    // ── Unmanned ──────────────────────────────────────────────────────────────
 
-    'fighter1' => [
-        'id'                => 37,
-        'moving_speed'      => 4,       // fastest — light interceptor
-        'supply_cost'       => 8,
-        'moral_per_unit'    => -1,
-        'decay_rate'        => 2.0,     // 10 days — light craft need frequent maintenance
-        'max_status_points' => 20,
-        'credits'           => 80_000,
+    'sonde' => [
+        'id'             => 85,         // new — DB record to be created in migration
+        'moving_speed'   => 5,          // fastest unit in the game
+        'supply_cost'    => 0,          // unmanned — no crew, no supply upkeep
+        'moral_per_unit' => 0,
+        'credits'        => 5_000,
     ],
 
-    'frigate1' => [
-        'id'                => 29,
-        'moving_speed'      => 3,       // balanced warship
-        'supply_cost'       => 14,
-        'moral_per_unit'    => -2,
-        'decay_rate'        => 1.43,    // 14 days
-        'max_status_points' => 20,
-        'credits'           => 500_000,
+    // ── Military ──────────────────────────────────────────────────────────────
+
+    'korvette' => [
+        'id'             => 37,         // ex fighter1
+        'moving_speed'   => 4,
+        'supply_cost'    => 14,         // high — limits fleet size organically
+        'moral_per_unit' => -1,
+        'credits'        => 150_000,
     ],
 
-    'battlecruiser1' => [
-        'id'                => 49,
-        'moving_speed'      => 2,       // heavy — slow but powerful
-        'supply_cost'       => 25,
-        'moral_per_unit'    => -4,
-        'decay_rate'        => 1.43,    // 14 days
-        'max_status_points' => 20,
-        'credits'           => 2_000_000,
-    ],
+    // ── Transport ─────────────────────────────────────────────────────────────
 
-    // ── Transport / Economy ships ─────────────────────────────────────────────
-
-    'smallTransporter' => [
-        'id'                => 47,
-        'moving_speed'      => 3,       // light freighter — reasonably quick
-        'supply_cost'       => 2,
-        'moral_per_unit'    => 1,
-        'decay_rate'        => 0.95,    // 21 days
-        'max_status_points' => 20,
-        'credits'           => 10_000,
-    ],
-
-    'mediumTransporter' => [
-        'id'                => 83,
-        'moving_speed'      => 2,       // standard freighter
-        'supply_cost'       => 4,
-        'moral_per_unit'    => 1,
-        'decay_rate'        => 0.95,    // 21 days
-        'max_status_points' => 20,
-        'credits'           => 20_000,
-    ],
-
-    'largeTransporter' => [
-        'id'                => 84,
-        'moving_speed'      => 1,       // bulk hauler — slowest in the game
-        'supply_cost'       => 7,
-        'moral_per_unit'    => 2,
-        'decay_rate'        => 0.67,    // 30 days
-        'max_status_points' => 20,
-        'credits'           => 40_000,
+    'frachter' => [
+        'id'             => 47,         // ex smallTransporter
+        'moving_speed'   => 3,
+        'supply_cost'    => 6,
+        'moral_per_unit' => 1,
+        'credits'        => 15_000,
     ],
 
 ];

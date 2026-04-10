@@ -233,8 +233,7 @@ Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv1 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv4 |
 | 43 | tradecenter | Handelsposten | Trading Post | — | CC Lv5 |
-| 44 | civilianSpaceyard | Raumwerft | Spaceyard | — | — |
-| 68 | militarySpaceyard | Kampfwerft | Combat Yard | — | Raumwerft Lv5 |
+| 44 | hangar | Hangar | Hangar | — | CC Lv2 |
 | 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
 | 52 | bar | Cantina | Cantina | — | CC Lv1 |
 | 50 | denkmal | Kolonialdenkmal | Colonial Monument | — | — |
@@ -307,19 +306,17 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 ### Supply-Kosten der Schiffstypen
 
-Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip: Militär kostet mehr, siehe §1.1).
+Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, siehe §1.1). Sonden kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
 
-| Schiff | ship_id | Supply (Unterhalt) |
-|--------|---------|-------------------|
-| fighter1 | 37 | **8** |
-| frigate1 | 29 | **14** |
-| battlecruiser1 | 49 | **25** |
-| smallTransporter | 47 | 2 |
-| mediumTransporter | 83 | 4 |
-| largeTransporter | 84 | 7 |
-| Scout/Sonde (geplant) | — | 1 |
+| Schiff | ship_id | Supply (Unterhalt) | Bemerkung |
+|--------|---------|-------------------|-----------|
+| sonde | 85 | **0** | unbemannt, kein Hangar nötig |
+| korvette | 37 | **14** | benötigt Hangar |
+| frachter | 47 | **6** | benötigt Hangar |
 
-> ⚠️ **Phase-3-Frage:** Ob Spieler als Verwalter einer kleinen Kolonie überhaupt Battlecruiser unterhalten können sollen (Supply-Cap 25 = mehr als ein frischer Spieler hat), wird bei der Phase-3-Konzeption entschieden.
+**Beispielrechnung:** 2 Korvetten + 2 Frachter = 28 + 12 = 40 Supply — bereits mehr als die Hälfte eines typischen Mid-Game-Caps.
+
+**Schiffe verfallen nicht.** Sie sind entweder intakt oder zerstört (Kampf, Umgebungsgefahren). Wartungsdruck entsteht durch den Hangar-Decay, nicht durch Ship-Status-Points.
 
 ### Supply-Kosten Berater, Gebäude, Forschungen
 
@@ -338,8 +335,7 @@ Militärische Schiffe sind bewusst deutlich teurer als Transporter (Kernprinzip:
 | Handelsposten | 7 |
 | Analytik-Labor | 8 |
 | Krankenstation | 10 |
-| Raumwerft | 20 |
-| Kampfwerft | 30 |
+| Hangar | 12 (je Instanz) |
 | civilian shipyard | 20 |
 | secretops | 26 |
 | military shipyard | 30 |
@@ -359,8 +355,8 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
 
 | Entität | Decay-Rate | Besonderheit |
 |---------|-----------|--------------|
-| Gebäude | 1 SP/Tick | bereits implementiert |
-| Schiffe | moderat (TBD) | Gnadenfrist X Ticks nach Bau; im Kampf schneller |
+| Gebäude | 1 SP/Tick | bereits implementiert; inkl. Hangar |
+| Schiffe | — | kein Decay; Verlust nur durch Kampf oder Umgebungsgefahren |
 | Forschungen | sehr langsam (TBD) | kein Verlust durch Inaktivität, nur Verfall |
 
 > Konkrete Werte (SP/Tick, Gnadenfrist) werden bei Implementierung in `config/game.php → decay` festgelegt.
@@ -376,12 +372,9 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
     'cap_max'            => 200,  // absolutes Hard-Cap
     'cost_advisor'       => 2,    // Supply pro aktivem Berater
     'ship_cost' => [
-        37 => 8,   // fighter1
-        29 => 14,  // frigate1
-        49 => 25,  // battlecruiser1
-        47 => 2,   // smallTransporter
-        83 => 4,   // mediumTransporter
-        84 => 7,   // largeTransporter
+        85 => 0,   // sonde    — unbemannt
+        37 => 14,  // korvette
+        47 => 6,   // frachter
     ],
 ],
 ```

@@ -31,13 +31,10 @@ return [
     'tradecenter'      => 'Trading Post',
     'tradecenter_desc' => 'Hub for inter-colony trade. Required for active trade routes.',
 
-    // ── Military ──────────────────────────────────────────────────────────────
+    // ── Fleet ─────────────────────────────────────────────────────────────────
 
-    'civilianSpaceyard'      => 'Spaceyard',
-    'civilianSpaceyard_desc' => 'Constructs transport and scout vessels. The foundation of all fleet operations.',
-
-    'militarySpaceyard'      => 'Combat Yard',
-    'militarySpaceyard_desc' => 'Constructs combat ships. The population notices the military build-up.',
+    'hangar'      => 'Hangar',
+    'hangar_desc' => 'Berth for a single ship — maintenance, refuelling, crew rotation. Each hangar holds exactly one corvette or freighter. Probes do not require a hangar.',
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 

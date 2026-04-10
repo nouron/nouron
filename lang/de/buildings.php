@@ -31,13 +31,10 @@ return [
     'tradecenter'      => 'Handelsposten',
     'tradecenter_desc' => 'Knotenpunkt für interkolonialen Handel. Voraussetzung für aktive Handelsrouten.',
 
-    // ── Military ──────────────────────────────────────────────────────────────
+    // ── Fleet ─────────────────────────────────────────────────────────────────
 
-    'civilianSpaceyard'      => 'Raumwerft',
-    'civilianSpaceyard_desc' => 'Baut Transport- und Erkundungsschiffe. Grundlage für alle Flottenoperationen.',
-
-    'militarySpaceyard'      => 'Kampfwerft',
-    'militarySpaceyard_desc' => 'Baut Kampfschiffe. Die Bevölkerung nimmt die Aufrüstung wahr.',
+    'hangar'      => 'Hangar',
+    'hangar_desc' => 'Unterstellplatz für ein Schiff — Wartung, Betankung, Besatzungswechsel. Jeder Hangar bietet Platz für genau eine Korvette oder einen Frachter. Sonden brauchen keinen eigenen Hangar.',
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
