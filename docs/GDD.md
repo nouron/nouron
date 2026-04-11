@@ -210,6 +210,19 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
 - **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
 
+### Credits-Einnahmen
+
+Credits werden durch vier Quellen erworben:
+
+| Quelle | Beschreibung |
+|--------|-------------|
+| Kolonistensteuern | Automatische Abgaben pro Tick — abhängig von der Koloniegröße (Wohnhabitat-Level) |
+| Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Tick (Arbeitstitel: Name noch offen) |
+| Handel | Einnahmen aus Handelsrouten beim Verkauf von Werkstoffen / Organika |
+| Events | Einmalige Gutschriften durch zufällige Ereignisse |
+
+Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten.
+
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
 Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
@@ -284,11 +297,11 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude definieren ein Maximum. Schiffe, Gebäude (außer CC und Wohnkomplex) und Kenntnisse belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude und Kenntnisse erhöhen den Cap. Schiffe und Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
 
 ```
-supply_cap    = 15 (CC, pauschal) + Anzahl-Wohnkomplexe × 8
-laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten) + Σ(Kenntnisse-Kosten)
+supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
+laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten)
 freies_supply = supply_cap − laufende_last
 ```
 
@@ -296,15 +309,16 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 ### Supply-Cap-Quellen
 
-| Gebäude | building_id | Supply-Cap-Beitrag |
-|---------|-------------|-------------------|
-| CommandCenter | 25 | **15 Supply-Cap** (pauschal, nicht pro Level) |
-| Wohnkomplex | 28 | **8 Supply-Cap** pro Einheit (Level irrelevant) |
+| Quelle | Supply-Cap-Beitrag |
+|--------|-------------------|
+| CommandCenter (25) | **10 pro Level** (max Lv5 → +50) |
+| Wohnhabitat (28) | **8 pro Einheit** (Level irrelevant, max 200 Einheiten) |
+| Kenntnisse | **nicht-linear pro Level** (siehe unten) |
 
-**Startsituation:** CC = 15, 1 Wohnkomplex = 8 → Supply-Cap = **23**.
+**Startsituation:** CC Lv1 = 10, 1 Wohnhabitat = 8 → Supply-Cap = **18**.
 **Hard-Cap:** 200 Supply.
 
-> **Designabsicht:** Das CC gibt einen Pauschalwert — Supply-Wachstum läuft fast vollständig über Wohnhabitate. Wer mehr Schiffe will, muss Wohnhabitate bauen (Opportunitätskosten gegenüber anderen Gebäuden). Berater sind davon entkoppelt — sie kosten Credits, nicht Supply.
+> **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung 200 schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
 
 ### Supply-Kosten der Schiffstypen
 
@@ -320,7 +334,7 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 **Schiffe verfallen nicht.** Sie sind entweder intakt oder zerstört (Kampf, Umgebungsgefahren). Wartungsdruck entsteht durch den Hangar-Decay, nicht durch Ship-Status-Points.
 
-### Supply-Kosten Gebäude und Kenntnisse
+### Supply-Kosten Gebäude
 
 **Berater:** kein Supply-Verbrauch — Kosten laufen über Credits (siehe §12).
 
@@ -339,14 +353,23 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
 
-**Kenntnisse** (individuelle Supply-Kosten):
+> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
-| Kenntnis | Supply |
-|----------|--------|
-| construction, cartography, geology, agronomy, health, trade | 5 |
-| defense | 8 |
+### Kenntnisse als Supply-Cap-Quelle
 
-> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe. Bei 1 Tick/Tag oder 24 Ticks/Tag ändert sich der belegte Cap-Anteil pro Einheit nicht.
+Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte).
+
+| Level | Cap-Bonus (dieses Level) | Kumuliert |
+|-------|--------------------------|-----------|
+| 1 | +3 | 3 |
+| 2 | +5 | 8 |
+| 3 | +5 | 13 |
+| 4 | +4 | 17 |
+| 5 | +3 | **20** |
+
+**Max aller 7 Kenntnisse:** 7 × 20 = **140 Cap-Bonus**. Zusammen mit CC max (50) und Wohnhabitaten ist der Hard-Cap von 200 erreichbar — aber nicht ohne signifikante Investition.
+
+**Strategische Implikation:** Level 2–3 liefern den besten Cap-pro-AP-Wert. Alle 7 Kenntnisse auf Lv3 (7 × 13 = 91 Bonus) schlägt 3 Kenntnisse auf Lv5 (3 × 20 = 60 Bonus) — Breite lohnt sich mehr als Tiefe.
 
 ### Decay für Schiffe und Forschungen
 
@@ -366,9 +389,11 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
 
 ```php
 'supply' => [
-    'cap_commandcenter'  => 15,   // building_id 25 — pauschal, nicht pro Level
+    'cap_commandcenter'  => 10,   // building_id 25 — pro Level (max Lv5 → 50)
     'cap_housingcomplex' => 8,    // building_id 28 — pro Einheit
     'cap_max'            => 200,  // absolutes Hard-Cap
+    // Kenntnisse: Cap-Bonus nicht-linear pro Level (+3/+5/+5/+4/+3 = 20 max je Kenntnis)
+    'knowledge_cap_per_level' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
     // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
     'ship_cost' => [
         85 => 0,   // sonde    — unbemannt
@@ -388,9 +413,9 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
-| Supply-Cap | Anzahl Schiffe + Gebäude + Kenntnisse | permanent | mehr Wohnhabitate bauen |
+| Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
-| Decay | Stand von Gebäuden, Schiffen, Forschungen | täglich | Reparatur-AP investieren |
+| Decay | Stand von Gebäuden und Forschungen | täglich | Reparatur-AP investieren |
 
 Diese drei Mechanismen sind bewusst unabhängig voneinander.
 
@@ -416,10 +441,13 @@ Beispiel: max_status_points=5, decay_rate=0.3
 
 | Entität | Konsequenz |
 |---------|-----------|
-| Gebäude | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
+| Gebäude (allgemein) | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
+| Hangar | Level − 1; zugewiesenes Schiff wird **unbrauchbar** (nicht zerstört); INNN-Ereignis |
 | Kenntnis | Level − 1; INNN-Ereignis |
 
-> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht durch den Hangar-Decay.
+> **Hangar-Decay-Detail:** Ein Schiff im verfallenen Hangar bleibt in der Datenbank erhalten — es ist nur deaktiviert (`active = false` o.ä.). Sobald der Hangar repariert wird (status_points > 0 nach Repair-AP), ist das Schiff wieder einsatzbereit. Das Schiff geht nie durch Decay verloren — nur durch Kampf oder Umgebungsgefahren.
+
+> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht indirekt durch den Hangar-Decay.
 
 ### Kampf-Beschleunigung
 
@@ -452,7 +480,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 | Handelsposten (tradecenter) | 30 | 0.67 |
 | Hangar | 30 | 0.67 |
 | Wohnhabitat (housingComplex) | 45 | 0.44 |
-| Kommandozentrale, Kolonialdenkmal | 61 | 0.33 |
+| Kommandozentrale (max Lv5), Kolonialdenkmal | 61 | 0.33 |
 | Kenntnisse (most) | ~150 | ~0.13 |
 
 Alle Werte liegen im definierten Bereich 0.05–0.3 ✓.
@@ -629,7 +657,21 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 
 Kenntnisse werden über Aktionspunkte (AP) vorangetrieben. Details zum AP-System: §12.
 
-*Spielmechanik noch nicht vollständig dokumentiert — wird in Phase 3 ergänzt.*
+### Supply-Cap-Bonus
+
+Jede Kenntnis erhöht den Supply-Cap nicht-linear pro Level (Glockenform):
+
+| Level | Cap-Bonus (dieses Level) | Kumuliert |
+|-------|--------------------------|-----------|
+| 1 | +3 | 3 |
+| 2 | +5 | 8 |
+| 3 | +5 | 13 |
+| 4 | +4 | 17 |
+| 5 | +3 | **20** |
+
+Konfiguration: `config/game.php → supply.knowledge_cap_per_level`. Details zur Supply-Formel: §6.
+
+*Weitere Spielmechanik (AP-Kosten, Voraussetzungen) — wird in Phase 3 ergänzt.*
 
 ---
 
@@ -905,7 +947,7 @@ Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Leve
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple Lv10 + hospital Lv10 + stadium Lv10 ...), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte getestet werden ob er zu schnell erreichbar ist ohne negative Gebäude.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + denkmal + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 

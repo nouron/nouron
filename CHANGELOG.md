@@ -1,6 +1,14 @@
 # Changelog
 
-## 2026-04-10
+## 2026-04-11 (AP-1: Balancing-Review — Supply-System, Kenntnisse, Credits)
+
+- **CC max_level 10 → 5:** Kommandozentrale hat Hard-Cap Level 5 (max. 50 Supply-Cap). GDD und config/buildings.php korrigiert.
+- **CC Supply-Formel: 10 pro Level** (statt pauschal 15): Startsituation CC Lv1 + 1 Wohnhabitat = 18 Supply-Cap (vorher 23). Engerer Einstieg, stärkerer Anreiz für CC-Ausbau.
+- **Kenntnisse als Supply-Cap-Quelle:** Kenntnisse kosten kein Supply mehr — sie erhöhen den Cap. Nicht-lineare Progression pro Level: +3/+5/+5/+4/+3 (total 20 pro Kenntnis, 7 × 20 = 140 max). Konfiguriert in `config/game.php → supply.knowledge_cap_per_level`. Hard-Cap 200 bleibt erreichbar, erfordert aber signifikante Investition in Breite (alle Kenntnisse Lv3 > wenige Kenntnisse Lv5).
+- **Credits-Einnahmen dokumentiert (GDD §3):** Vier Quellen: Kolonistensteuern, Galaktischer Rat (staatliche Subventionen, Name TBD), Handel, Events.
+- **Hangar-Decay-Konsequenz definiert (GDD §7):** Verfallener Hangar macht zugewiesenes Schiff unbrauchbar (nicht zerstört). Reparatur des Hangars reaktiviert das Schiff. Schiff bleibt in der DB erhalten.
+
+## 2026-04-10 (Berater-System: Slot-Implementierung, Stratege, Kommandanten-UI)
 
 - **Berater-System: Slot-System implementiert.** GDD §12 und Implementierung auf einen Stand gebracht: max. 1 Berater pro Typ pro Kolonie (UNIQUE INDEX), CC-Level schaltet Slots frei (CC Lv1 = 1 Slot, max. 5). Berater kosten jetzt korrekt Credits statt Supply — Bug in `PersonellService::hire()` behoben.
 - **Stratege als 5. Beratertyp eingeführt.** DB-Migration, Config-Eintrag (`strategy`-AP-Pool), `PersonellService::resolveType()` und View-Karte ergänzt.
@@ -8,7 +16,7 @@
 - **Testdaten bereinigt:** Von bis zu 19 Beratern pro Typ auf je 1 pro Typ reduziert (entspricht dem Slot-System). Stratege in beide Kolonien aufgenommen.
 - **GDD §12 aktualisiert** (game-designer): Individuen-Prinzip explizit formuliert, Typenbezeichnungen vereinheitlicht, Rang-Tabelle (Junior/Senior/Experte), Credits-Kosten, TODO Kommandanten-UI dokumentiert.
 
-
+## 2026-04-10 (Design-Sprint Phase 3: Gebäude, Schiffe, Kenntnisse, GDD-Review)
 
 - **Gebäude 25 → 12:** Stark reduziert auf Mini-4X-Kernsortiment. Neue Namen (Cantina, Agrardom, Industriemine, Kolonialdenkmal etc.). Raumwerft + Kampfwerft → **Hangar** (1 Gebäude = 1 Schiffsslot, Supply-begrenzt). Wasser als Ressource gestrichen (durch Versorgung abstrahiert), Wasserextraktor entfernt. Englische Sprachdateien (`lang/en/`) neu erstellt.
 - **Schiffe 6 → 3:** Sonde (unbemannt, kein Supply), Korvette (ex Fighter, 14 Supply), Frachter (ex Transporter, 6 Supply). Ship-Decay abgeschafft — Schiffe werden durch Kampf/Gefahren zerstört, nicht durch Verfall. Hangar-Decay ersetzt den Wartungsdruck.

@@ -28,12 +28,12 @@ return [
 
     'commandCenter' => [
         'id'                => 25,
-        'supply_cap'        => 15,      // flat cap bonus (not per level) — requires level > 0
+        'supply_cap'        => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
         'supply_cost'       => 0,
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.33,    // 60 days
         'max_status_points' => 20,
-        'max_level'         => 10,
+        'max_level'         => 5,
         'credits'           => 100_000,
     ],
 
