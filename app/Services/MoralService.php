@@ -166,8 +166,8 @@ class MoralService
 
     private function researchContribution(int $colonyId): int
     {
-        // Build [id => moral_per_lv] map from config/techs.php
-        $cfg = collect(config('techs', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
+        // Build [id => moral_per_lv] map from config/knowledge.php
+        $cfg = collect(config('knowledge', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }

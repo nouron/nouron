@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-04-12 (GDD-Review: Inkonsistenzen behoben, techs → knowledge umbenannt)
+
+- **CC max_level 10 → 5** in GDD §4 korrigiert (war nur noch dort veraltet).
+- **GDD §2 Tick-Schritt 7** vereinfacht: Formel durch Verweis auf §6 ersetzt (single source of truth).
+- **Wohnhabitat max_level 200 → 6** (max 6 Instanzen); Voraussetzung CC Lv3 → CC Lv1 (Tutorial-Schritt).
+- **Leveled vs. Instanced Buildings** als TODO in GDD §4 dokumentiert. Game-Designer-Evaluation: nur Wohnhabitat und Hangar sind Instanced, alle anderen Leveled.
+- **§7 Decay** bereinigt: Einleitungstext "Schiffe verfallen" entfernt; Instanced-Building-Konsequenz (sofortige Zerstörung statt Level-Down) dokumentiert; Hangar combat_factor korrekt auf Hangar-Decay (nicht Schiffs-Decay) umgestellt; Notreparatur (Credits statt AP) für CC/Wohnhabitat definiert.
+- **Fail State 1** neu definiert: "Kolonie unbewohnbar" (CC Lv0 oder alle Wohnhabitate zerstört) statt vagem "Supply = 0".
+- **Supply-Startwert** in §3 auf 10 korrigiert (CC Lv1, 0 Wohnhabitate); §6 Startsituation angepasst.
+- **`config/game.php`** bereinigt: `supply`-Block um `cap_commandcenter`, `cap_housingcomplex`, `knowledge_cap_per_level` ergänzt; `cost_advisor` entfernt; `combat.ship_power` auf 3 aktuelle Schiffstypen reduziert; `production`-Eintrag waterextractor entfernt; Kommentare aktualisiert.
+- **`config/advisors.php`**: `supply_cost`-Key entfernt (Berater kosten kein Supply); `credits` auf 50 Cr kalibriert.
+- **`config/buildings.php`**: Wohnhabitat `max_level` 200 → 6, Voraussetzung CC Lv1; Kommentare aktualisiert.
+- **techs → knowledge umbenannt**: `config/techs.php` → `config/knowledge.php` mit 7 neuen Kenntnissen (construction, cartography, geology, agronomy, health, trade, defense, IDs 90–96); `lang/de/techs.php` und `lang/en/techs.php` umbenannt; `SyncTechs.php` → `SyncKnowledge.php`, Command `game:sync-techs` → `game:sync-knowledge`; `MoralService` aktualisiert.
+- **GDD §11 Handel**: Restriktion vereinfacht — Handel ist immer öffentlich (nur Wert 0), Werte 1–3 abgekündigt.
+- **GDD §13**: Moralreferenz "Schritt 8" → "Schritt 8b" korrigiert; Querverweis auf Kenntnisse-Moraleffekte in §10 ergänzt.
+- **Sonderfall "Schiffe ohne Hangar"** als TODO in §6 notiert (Events/Handelsdeals als Roguelike-Element, Phase 4+).
+
 ## 2026-04-11 (AP-1: Balancing-Review — Supply-System, Kenntnisse, Credits)
 
 - **CC max_level 10 → 5:** Kommandozentrale hat Hard-Cap Level 5 (max. 50 Supply-Cap). GDD und config/buildings.php korrigiert.

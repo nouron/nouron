@@ -39,12 +39,12 @@ return [
 
     'housingComplex' => [
         'id'                => 28,
-        'supply_cap'        => 8,       // per unit (level), hard cap = 200
+        'supply_cap'        => 8,       // per unit (instance), max 6 units → +48 cap
         'supply_cost'       => 0,
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.44,    // 45 days
         'max_status_points' => 20,
-        'max_level'         => 200,
+        'max_level'         => 6,       // max 6 instances (instanced building)
         'credits'           => 5_000,
     ],
 

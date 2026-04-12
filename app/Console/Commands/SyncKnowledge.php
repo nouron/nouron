@@ -6,21 +6,22 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * SyncTechs — synchronises config/ships.php and config/buildings.php to the DB.
+ * SyncKnowledge — synchronises config/ships.php, config/buildings.php and config/knowledge.php to the DB.
  *
- * Run:            php artisan game:sync-techs
- * Preview only:   php artisan game:sync-techs --dry-run
+ * Run:            php artisan game:sync-knowledge
+ * Preview only:   php artisan game:sync-knowledge --dry-run
  *
  * Synced fields:
  *   ships     → moving_speed, decay_rate, supply_cost, max_status_points
  *   buildings → decay_rate, supply_cost, max_status_points, max_level
+ *   knowledge → decay_rate, max_status_points
  *
  * Only rows that actually differ are updated (safe to run repeatedly).
  */
-class SyncTechs extends Command
+class SyncKnowledge extends Command
 {
-    protected $signature   = 'game:sync-techs {--dry-run : Preview changes without writing to DB}';
-    protected $description = 'Sync config/ships.php and config/buildings.php values to the database';
+    protected $signature   = 'game:sync-knowledge {--dry-run : Preview changes without writing to DB}';
+    protected $description = 'Sync config/ships.php, config/buildings.php and config/knowledge.php values to the database';
 
     public function handle(): int
     {
