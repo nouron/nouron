@@ -40,24 +40,31 @@ return [
     // Resource production per tick: building_id => [resource_id => amount_per_level]
     // Each colony building produces (level × rate) units of the given resource per tick.
     'production' => [
-        27 => [4 => 10],   // oremine        → ferum      × 10/level
-        41 => [5 => 10],   // silicatemine   → silicates  × 10/level
-        42 => [3 => 10],   // waterextractor → water      × 10/level
-        // techs_powerstation not yet in DB — add entry here once available
+        27 => [4 => 10],   // industrieMine  → Werkstoffe (Compounds)  × 10/level
+        41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
-    // Per-entity supply_cap and supply_cost values live in config/buildings.php,
-    // config/ships.php, config/techs.php and config/advisors.php.
+    // Formula: CC-Level × cap_commandcenter + housing_units × cap_housingcomplex + Σ(knowledge_cap_per_level)
+    // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
+    // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
-        'cap_max'      => 200,  // absolute hard cap across the whole colony
-        'cost_advisor' => 2,    // supply per active advisor (same for all types)
+        'cap_max'             => 200,   // absolute hard cap across the whole colony
+        'cap_commandcenter'   => 10,    // supply cap per CC level (max Lv5 → 50)
+        'cap_housingcomplex'  => 8,     // supply cap per housing unit (max 6 units → 48)
+        'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
+            1 => 3,
+            2 => 5,
+            3 => 5,
+            4 => 4,
+            5 => 3,
+        ],
     ],
 
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'combat_factor'  => 2,    // ship decay multiplier in a combat tick
+        'combat_factor'  => 2,    // hangar decay multiplier when fleet was in combat (ships don't decay)
         'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
     ],
 
@@ -90,12 +97,9 @@ return [
     // Transports have 0 combat power (non-combat).
     'combat' => [
         'ship_power' => [
-            37 => 1,   // fighter1
-            29 => 3,   // frigate1
-            49 => 10,  // battlecruiser1
-            47 => 0,   // smallTransporter
-            83 => 0,   // mediumTransporter
-            84 => 0,   // largeTransporter
+            85 => 0,   // sonde     — unmanned probe, no weapons
+            37 => 3,   // korvette  — combat ship
+            47 => 0,   // frachter  — transport, no weapons
         ],
     ],
 

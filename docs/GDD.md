@@ -182,7 +182,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 |
 | 5 | Ship Decay — Schiffe verlieren SP (×2 im Kampftick); Eintrag gelöscht bei SP ≤ 0 |
 | 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
-| 7 | Supply Cap — `user_resources.supply` wird auf Cap gesetzt (`CC_flat + housing × 8`) |
+| 7 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
 | 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
 | 8b | Moral Calculation — Moral neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §13) |
 | 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
@@ -196,7 +196,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | ID | Name (DE) | Name (EN) | Kürzel | Ebene | Handelbar | Startwert |
 |----|-----------|-----------|--------|-------|-----------|-----------|
 | 1  | Credits | Credits | Cr | User | Nein | 3000 |
-| 2  | Versorgung | Supply | Sup | User | Nein | 200 |
+| 2  | Versorgung | Supply | Sup | User | Nein | 10 (CC Lv1, kein Wohnhabitat) |
 | 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 500 |
 | 5  | Organika | Organics | Or | Kolonie | Ja | 500 |
 | 12 | Moral | Moral | M | Kolonie | Nein | 0 |
@@ -209,6 +209,19 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 - **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerungswachstum und Moral. Produktionsgebäude: Agrardom.
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
 - **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
+
+### Credits-Einnahmen
+
+Credits werden durch vier Quellen erworben:
+
+| Quelle | Beschreibung |
+|--------|-------------|
+| Kolonistensteuern | Automatische Abgaben pro Tick — abhängig von der Koloniegröße (Wohnhabitat-Level) |
+| Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Tick (Arbeitstitel: Name noch offen) |
+| Handel | Einnahmen aus Handelsrouten beim Verkauf von Werkstoffen / Organika |
+| Events | Einmalige Gutschriften durch zufällige Ereignisse |
+
+Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten.
 
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
@@ -229,8 +242,8 @@ Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 | ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
 |----|------------|-----------|-----------|-----------|---------------|
-| 25 | commandCenter | Kommandozentrale | Command Center | 10 | — |
-| 28 | housingComplex | Wohnhabitat | Residential Habitat | 200 | CC Lv3 |
+| 25 | commandCenter | Kommandozentrale | Command Center | 5 | — |
+| 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
 | 27 | industrieMine | Industriemine | Industrial Mine | — | CC Lv1 |
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv1 |
@@ -245,6 +258,11 @@ Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 ### Status-Punkte
 
 Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Tick durch Verfall (siehe Abschnitt 7).
+
+> **TODO (Design):** Gebäude haben aktuell zwei konzeptionell unterschiedliche Betriebsmodi, die noch nicht formal unterschieden werden:
+> - **Leveled Buildings** — ein Gebäude, das stufenweise ausgebaut wird (z.B. Kommandozentrale Lv1→5, Industriemine).
+> - **Instanced Buildings** — mehrere Exemplare desselben Gebäudetyps werden unabhängig voneinander gebaut (z.B. Wohnhabitat: bis zu 6 Einheiten, Hangar: je 1 Schiffsslot).
+> In `config/buildings.php` und der DB wird beides über `max_level` abgebildet — semantisch aber verschieden. Für Phase 3b/3c: `building_type: leveled | instanced` einführen und UI/Logik entsprechend anpassen.
 
 ---
 
@@ -284,11 +302,11 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude definieren ein Maximum. Schiffe, Gebäude (außer CC und Wohnkomplex) und Kenntnisse belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude und Kenntnisse erhöhen den Cap. Schiffe und Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
 
 ```
-supply_cap    = 15 (CC, pauschal) + Anzahl-Wohnkomplexe × 8
-laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten) + Σ(Kenntnisse-Kosten)
+supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
+laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten)
 freies_supply = supply_cap − laufende_last
 ```
 
@@ -296,15 +314,16 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 ### Supply-Cap-Quellen
 
-| Gebäude | building_id | Supply-Cap-Beitrag |
-|---------|-------------|-------------------|
-| CommandCenter | 25 | **15 Supply-Cap** (pauschal, nicht pro Level) |
-| Wohnkomplex | 28 | **8 Supply-Cap** pro Einheit (Level irrelevant) |
+| Quelle | Supply-Cap-Beitrag |
+|--------|-------------------|
+| CommandCenter (25) | **10 pro Level** (max Lv5 → +50) |
+| Wohnhabitat (28) | **8 pro Einheit** (max 6 Einheiten → +48) |
+| Kenntnisse | **nicht-linear pro Level** (siehe unten) |
 
-**Startsituation:** CC = 15, 1 Wohnkomplex = 8 → Supply-Cap = **23**.
+**Startsituation:** CC Lv1 = 10, 0 Wohnhabitate → Supply-Cap = **10**. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap springt auf 18.
 **Hard-Cap:** 200 Supply.
 
-> **Designabsicht:** Das CC gibt einen Pauschalwert — Supply-Wachstum läuft fast vollständig über Wohnhabitate. Wer mehr Schiffe will, muss Wohnhabitate bauen (Opportunitätskosten gegenüber anderen Gebäuden). Berater sind davon entkoppelt — sie kosten Credits, nicht Supply.
+> **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung 200 schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
 
 ### Supply-Kosten der Schiffstypen
 
@@ -320,7 +339,9 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 **Schiffe verfallen nicht.** Sie sind entweder intakt oder zerstört (Kampf, Umgebungsgefahren). Wartungsdruck entsteht durch den Hangar-Decay, nicht durch Ship-Status-Points.
 
-### Supply-Kosten Gebäude und Kenntnisse
+> **TODO (Design, Phase 4+):** Sonderfall "Schiffe ohne Hangar" — durch Events, Handelsdeals oder andere Mechaniken könnte der Spieler Schiffe erwerben, die normalerweise nicht im Hangar baubar sind (z.B. erbeutete Fraktionsschiffe, Belohnungsschiffe aus Events). Diese wären per Run einzigartig und ein Roguelike-Element das jeden Durchlauf anders macht. Mechanik (Hangar-Pflicht? Supply-Kosten?) und Balance noch offen — für spätere Phase detailliert ausarbeiten.
+
+### Supply-Kosten Gebäude
 
 **Berater:** kein Supply-Verbrauch — Kosten laufen über Credits (siehe §12).
 
@@ -339,14 +360,23 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
 
-**Kenntnisse** (individuelle Supply-Kosten):
+> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
-| Kenntnis | Supply |
-|----------|--------|
-| construction, cartography, geology, agronomy, health, trade | 5 |
-| defense | 8 |
+### Kenntnisse als Supply-Cap-Quelle
 
-> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe. Bei 1 Tick/Tag oder 24 Ticks/Tag ändert sich der belegte Cap-Anteil pro Einheit nicht.
+Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte).
+
+| Level | Cap-Bonus (dieses Level) | Kumuliert |
+|-------|--------------------------|-----------|
+| 1 | +3 | 3 |
+| 2 | +5 | 8 |
+| 3 | +5 | 13 |
+| 4 | +4 | 17 |
+| 5 | +3 | **20** |
+
+**Max aller 7 Kenntnisse:** 7 × 20 = **140 Cap-Bonus**. Zusammen mit CC max (50) und Wohnhabitaten ist der Hard-Cap von 200 erreichbar — aber nicht ohne signifikante Investition.
+
+**Strategische Implikation:** Level 2–3 liefern den besten Cap-pro-AP-Wert. Alle 7 Kenntnisse auf Lv3 (7 × 13 = 91 Bonus) schlägt 3 Kenntnisse auf Lv5 (3 × 20 = 60 Bonus) — Breite lohnt sich mehr als Tiefe.
 
 ### Decay für Schiffe und Forschungen
 
@@ -366,9 +396,11 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
 
 ```php
 'supply' => [
-    'cap_commandcenter'  => 15,   // building_id 25 — pauschal, nicht pro Level
+    'cap_commandcenter'  => 10,   // building_id 25 — pro Level (max Lv5 → 50)
     'cap_housingcomplex' => 8,    // building_id 28 — pro Einheit
     'cap_max'            => 200,  // absolutes Hard-Cap
+    // Kenntnisse: Cap-Bonus nicht-linear pro Level (+3/+5/+5/+4/+3 = 20 max je Kenntnis)
+    'knowledge_cap_per_level' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
     // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
     'ship_cost' => [
         85 => 0,   // sonde    — unbemannt
@@ -388,19 +420,19 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
-| Supply-Cap | Anzahl Schiffe + Gebäude + Kenntnisse | permanent | mehr Wohnhabitate bauen |
+| Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
-| Decay | Stand von Gebäuden, Schiffen, Forschungen | täglich | Reparatur-AP investieren |
+| Decay | Stand von Gebäuden und Forschungen | täglich | Reparatur-AP investieren |
 
 Diese drei Mechanismen sind bewusst unabhängig voneinander.
 
 ---
 
-## 7. Verfall (Decay) — Gebäude, Schiffe, Forschungen
+## 7. Verfall (Decay) — Gebäude und Forschungen
 
 ### Mechanik
 
-Gebäude, Schiffe und Forschungen verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`, `ships`, `researches`) gespeichert sind.
+Gebäude und Forschungen verfallen ohne aktive Pflege. Schiffe verfallen nicht — sie gehen nur durch Kampf oder Umgebungsgefahren verloren (siehe §6). Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`, `researches`) gespeichert sind.
 
 **Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Tick). Pro Tick wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
 
@@ -412,24 +444,32 @@ Beispiel: max_status_points=5, decay_rate=0.3
   Nach Tick 4: status_points = 3.80  ← erster ganzer SP verloren
 ```
 
-**Konsequenzen (wenn floor(SP) sinkt):**
+**Konsequenzen nach Building-Typ:**
 
-| Entität | Konsequenz |
-|---------|-----------|
-| Gebäude | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
-| Kenntnis | Level − 1; INNN-Ereignis |
+| Entität | Typ | Konsequenz bei SP ≤ 0 |
+|---------|-----|----------------------|
+| Leveled Building (allgemein) | Leveled | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
+| Wohnhabitat | Instanced | **Instanz zerstört** (kein Level zum Abziehen); Supply-Cap sinkt um 8; INNN-Ereignis |
+| Hangar | Instanced | **Instanz zerstört**; zugewiesenes Schiff wird **unbrauchbar** (nicht zerstört); INNN-Ereignis |
+| Kenntnis | Leveled | Level − 1; INNN-Ereignis |
 
-> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht durch den Hangar-Decay.
+> **Instanced vs. Leveled:** Leveled Buildings verlieren ein Level und regenerieren SP — sie geben mehrere Chancen. Instanced Buildings (Wohnhabitat, Hangar) haben kein Level: Decay auf 0 zerstört die Instanz sofort. Das macht sie gefährlicher zu vernachlässigen, erlaubt aber bewusst riskantes Spiel (Repair-AP sparen auf eigene Gefahr).
 
-### Kampf-Beschleunigung
+> **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
-In einem Tick, in dem ein Schiff an Kampfhandlungen beteiligt ist, gilt **Faktor 2** auf die decay_rate:
+> **Hangar-Decay-Detail:** Ein Schiff im zerstörten Hangar bleibt in der Datenbank erhalten — es ist nur deaktiviert. Sobald ein neuer Hangar gebaut oder der alte repariert wird, ist das Schiff wieder einsatzbereit.
+
+> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht indirekt durch den Hangar-Decay.
+
+### Kampf-Beschleunigung (Hangar)
+
+In einem Tick, in dem eine Flotte an Kampfhandlungen beteiligt war, verfällt der zugeordnete **Hangar** mit **Faktor 2** auf die decay_rate:
 
 ```
-decay_in_kampftick = decay_rate × 2
+hangar_decay_in_kampftick = decay_rate × 2
 ```
 
-Diese Regel ist bewusst einfach gehalten — leicht zu erklären, leicht zu merken.
+**Designabsicht:** "Krieg verschleißt die Infrastruktur." Kampf erzeugt direkten Reparaturdruck auf den Hangar — wer offensiv agiert, muss anschließend AP in Wartung investieren. Die Regel ist bewusst einfach gehalten: ein Faktor, ein Gebäudetyp.
 
 ### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
@@ -452,10 +492,9 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 | Handelsposten (tradecenter) | 30 | 0.67 |
 | Hangar | 30 | 0.67 |
 | Wohnhabitat (housingComplex) | 45 | 0.44 |
-| Kommandozentrale, Kolonialdenkmal | 61 | 0.33 |
+| Kommandozentrale (max Lv5), Kolonialdenkmal | 61 | 0.33 |
 | Kenntnisse (most) | ~150 | ~0.13 |
 
-Alle Werte liegen im definierten Bereich 0.05–0.3 ✓.
 
 > **Tick-Skalierung:** Bei 24 Ticks/Tag entspricht "133 Ticks" ~5,5 Echtzeit-Tagen. Bei 1 Tick/Tag sind es 133 Tage. Die Tick-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des tick-basierten Systems.
 
@@ -480,8 +519,7 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 
 ```php
 'decay' => [
-    'rate'          => 1,    // Fallback-Rate (aktuell noch genutzt für Gebäude)
-    'combat_factor' => 2,    // Schiffs-Decay im Kampftick × 2
+    'combat_factor' => 2,    // Hangar-Decay im Kampftick × 2 (Schiffe verfallen nicht)
 ],
 ```
 
@@ -629,7 +667,23 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 
 Kenntnisse werden über Aktionspunkte (AP) vorangetrieben. Details zum AP-System: §12.
 
-*Spielmechanik noch nicht vollständig dokumentiert — wird in Phase 3 ergänzt.*
+### Supply-Cap-Bonus
+
+Jede Kenntnis erhöht den Supply-Cap nicht-linear pro Level (Glockenform):
+
+| Level | Cap-Bonus (dieses Level) | Kumuliert |
+|-------|--------------------------|-----------|
+| 1 | +3 | 3 |
+| 2 | +5 | 8 |
+| 3 | +5 | 13 |
+| 4 | +4 | 17 |
+| 5 | +3 | **20** |
+
+Konfiguration: `config/game.php → supply.knowledge_cap_per_level`. Details zur Supply-Formel: §6.
+
+Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy +1/Level, health +2/Level, defense -1/Level) — Details siehe §13.
+
+*Weitere Spielmechanik (AP-Kosten, Voraussetzungen) — wird in Phase 3 ergänzt.*
 
 ---
 
@@ -646,17 +700,9 @@ Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
 
 ### Restriktion (`restriction`)
 
-Das `restriction`-Feld steuert, welche Spieler ein Angebot annehmen dürfen:
+Handel ist in Phase 3 **immer öffentlich** — alle Angebote sind für alle Spieler sichtbar und annehmbar. Das `restriction`-Feld bleibt im Datenmodell erhalten (immer `0`), wird aber nicht ausgewertet.
 
-| Wert | Bedeutung |
-|------|-----------|
-| 0 | Keine Einschränkung — alle Spieler |
-| 1 | Nur Mitglieder derselben Gruppe (Gilde/Team, Zusammenschluss innerhalb einer Fraktion) |
-| 2 | Nur Mitglieder derselben Fraktion |
-| 3 | Nur Mitglieder derselben Rasse |
-
-> **Phase-3-Vorbehalt:** Rassen (`race_id`) werden in Phase 3 überarbeitet. Wert 3 bleibt im Datenmodell erhalten, wird aber erst nach der Überarbeitung vollständig durchgesetzt.
-> Gruppen/Gilden sind noch nicht im Datenmodell vorhanden — Wert 1 kann bis zur Implementierung des Gruppenmoduls wie Wert 0 behandelt werden (keine Einschränkung).
+Fraktionszugehörigkeit beeinflusst den Handel nicht über Restriktionen, sondern ggf. als Preis-Modifikator in späteren Phasen — offen für Phase 4+.
 
 ### Forschungshandel
 
@@ -882,7 +928,7 @@ moral = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffe
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
 
-Der Wert wird in **Tick-Schritt 8** (nach Ressourcenproduktion) berechnet, da Moral die Produktionswerte desselben Ticks noch nicht beeinflusst — sie wirkt ab dem Folgetick.
+Der Wert wird in **Tick-Schritt 8b** (nach Ressourcenproduktion) berechnet, da Moral die Produktionswerte desselben Ticks noch nicht beeinflusst — sie wirkt ab dem Folgetick.
 
 > **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer moralverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
 
@@ -905,7 +951,7 @@ Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Leve
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple Lv10 + hospital Lv10 + stadium Lv10 ...), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte getestet werden ob er zu schnell erreichbar ist ohne negative Gebäude.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + denkmal + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 
@@ -1111,7 +1157,9 @@ Dauer: ~10–20 Ticks. Kann nicht ubersprungen werden. Ziel ist eine lebensfähi
 
 Die zwei Bedingungen decken die Kernsysteme ab: Aufbau (Gebäude) und Handlungsfähigkeit (AP). Sie sind eindeutig messbar und fur Neuspieler verstandlich.
 
-Phase 1 endet automatisch, sobald alle drei Bedingungen gleichzeitig erfullt sind. Der Spieler erhält eine Benachrichtigung und Phase 2 beginnt.
+Phase 1 endet automatisch, sobald beide Bedingungen gleichzeitig erfüllt sind. Der Spieler erhält eine Benachrichtigung und Phase 2 beginnt.
+
+> **TODO (Design):** Optionale dritte Bedingung für Phase 1 — könnte pro Run variieren (Roguelike-Element). Beispiele: "erste Handelsroute etabliert", "eine Kenntnis auf Lv2", "erste Flotte entsandt". Das würde jeden Run-Einstieg leicht unterschiedlich anfühlen lassen. Bei Implementierung hier ergänzen.
 
 #### Phase 2 — "Expeditionsmission"
 
@@ -1160,10 +1208,11 @@ Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeit
 
 Genau 2 Fail States. Kein Fail durch Militarverlust (passt zur Designphilosophie §1.1).
 
-**Fail State 1 — Versorgungskollaps:**
-Supply faellt auf 0 und bleibt 3 aufeinanderfolgende Ticks bei 0.
-- Begründung: Supply ist der Lebensnerv der Kolonie. 3 Ticks Gnadenfrist gibt dem Spieler Zeit zu reagieren; wer nicht reagiert, hat die Kontrolle verloren.
-- Vorwarnung: INNN-Ereignis bei Supply = 0 (Tick 1 des Engpasses). Roter UI-Indikator ab Tick 2. Tick 3 = Run-Ende mit Meldung "Kolonie aufgegeben".
+**Fail State 1 — Kolonie unbewohnbar:**
+CC wird zerstört (Lv0) ODER alle Wohnhabitat-Instanzen verfallen auf 0.
+- Begründung: Ohne Kommandozentrale oder Unterkunft ist die Kolonie nicht überlebensfähig. Der Spieler hat das Scheitern kommen sehen (Gebäudestatus ist sichtbar) — es ist die Konsequenz kumulierter Vernachlässigung, nicht ein Zufallsereignis.
+- Valide Strategie: Repair-AP bewusst zu sparen ist erlaubt und riskant — genau das macht Roguelikes interessant. Die Notreparatur (Credits statt AP) gibt einen letzten Ausweg, aber nur wenn Credits vorhanden sind.
+- Vorwarnung: INNN-Ereignis wenn SP einer kritischen Struktur unter 30% fällt. Roter UI-Indikator bei SP < 15%. Notreparatur löst automatisch bei SP < 10% aus (kostet Credits). Run-Ende mit Meldung "Kolonie aufgegeben" wenn Struktur zerstört wird.
 
 **Fail State 2 — Zeitablauf:**
 Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfullt wurden.

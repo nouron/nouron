@@ -1,6 +1,31 @@
 # Changelog
 
-## 2026-04-10
+## 2026-04-12 (GDD-Review: Inkonsistenzen behoben, techs → knowledge umbenannt)
+
+- **CC max_level 10 → 5** in GDD §4 korrigiert (war nur noch dort veraltet).
+- **GDD §2 Tick-Schritt 7** vereinfacht: Formel durch Verweis auf §6 ersetzt (single source of truth).
+- **Wohnhabitat max_level 200 → 6** (max 6 Instanzen); Voraussetzung CC Lv3 → CC Lv1 (Tutorial-Schritt).
+- **Leveled vs. Instanced Buildings** als TODO in GDD §4 dokumentiert. Game-Designer-Evaluation: nur Wohnhabitat und Hangar sind Instanced, alle anderen Leveled.
+- **§7 Decay** bereinigt: Einleitungstext "Schiffe verfallen" entfernt; Instanced-Building-Konsequenz (sofortige Zerstörung statt Level-Down) dokumentiert; Hangar combat_factor korrekt auf Hangar-Decay (nicht Schiffs-Decay) umgestellt; Notreparatur (Credits statt AP) für CC/Wohnhabitat definiert.
+- **Fail State 1** neu definiert: "Kolonie unbewohnbar" (CC Lv0 oder alle Wohnhabitate zerstört) statt vagem "Supply = 0".
+- **Supply-Startwert** in §3 auf 10 korrigiert (CC Lv1, 0 Wohnhabitate); §6 Startsituation angepasst.
+- **`config/game.php`** bereinigt: `supply`-Block um `cap_commandcenter`, `cap_housingcomplex`, `knowledge_cap_per_level` ergänzt; `cost_advisor` entfernt; `combat.ship_power` auf 3 aktuelle Schiffstypen reduziert; `production`-Eintrag waterextractor entfernt; Kommentare aktualisiert.
+- **`config/advisors.php`**: `supply_cost`-Key entfernt (Berater kosten kein Supply); `credits` auf 50 Cr kalibriert.
+- **`config/buildings.php`**: Wohnhabitat `max_level` 200 → 6, Voraussetzung CC Lv1; Kommentare aktualisiert.
+- **techs → knowledge umbenannt**: `config/techs.php` → `config/knowledge.php` mit 7 neuen Kenntnissen (construction, cartography, geology, agronomy, health, trade, defense, IDs 90–96); `lang/de/techs.php` und `lang/en/techs.php` umbenannt; `SyncTechs.php` → `SyncKnowledge.php`, Command `game:sync-techs` → `game:sync-knowledge`; `MoralService` aktualisiert.
+- **GDD §11 Handel**: Restriktion vereinfacht — Handel ist immer öffentlich (nur Wert 0), Werte 1–3 abgekündigt.
+- **GDD §13**: Moralreferenz "Schritt 8" → "Schritt 8b" korrigiert; Querverweis auf Kenntnisse-Moraleffekte in §10 ergänzt.
+- **Sonderfall "Schiffe ohne Hangar"** als TODO in §6 notiert (Events/Handelsdeals als Roguelike-Element, Phase 4+).
+
+## 2026-04-11 (AP-1: Balancing-Review — Supply-System, Kenntnisse, Credits)
+
+- **CC max_level 10 → 5:** Kommandozentrale hat Hard-Cap Level 5 (max. 50 Supply-Cap). GDD und config/buildings.php korrigiert.
+- **CC Supply-Formel: 10 pro Level** (statt pauschal 15): Startsituation CC Lv1 + 1 Wohnhabitat = 18 Supply-Cap (vorher 23). Engerer Einstieg, stärkerer Anreiz für CC-Ausbau.
+- **Kenntnisse als Supply-Cap-Quelle:** Kenntnisse kosten kein Supply mehr — sie erhöhen den Cap. Nicht-lineare Progression pro Level: +3/+5/+5/+4/+3 (total 20 pro Kenntnis, 7 × 20 = 140 max). Konfiguriert in `config/game.php → supply.knowledge_cap_per_level`. Hard-Cap 200 bleibt erreichbar, erfordert aber signifikante Investition in Breite (alle Kenntnisse Lv3 > wenige Kenntnisse Lv5).
+- **Credits-Einnahmen dokumentiert (GDD §3):** Vier Quellen: Kolonistensteuern, Galaktischer Rat (staatliche Subventionen, Name TBD), Handel, Events.
+- **Hangar-Decay-Konsequenz definiert (GDD §7):** Verfallener Hangar macht zugewiesenes Schiff unbrauchbar (nicht zerstört). Reparatur des Hangars reaktiviert das Schiff. Schiff bleibt in der DB erhalten.
+
+## 2026-04-10 (Berater-System: Slot-Implementierung, Stratege, Kommandanten-UI)
 
 - **Berater-System: Slot-System implementiert.** GDD §12 und Implementierung auf einen Stand gebracht: max. 1 Berater pro Typ pro Kolonie (UNIQUE INDEX), CC-Level schaltet Slots frei (CC Lv1 = 1 Slot, max. 5). Berater kosten jetzt korrekt Credits statt Supply — Bug in `PersonellService::hire()` behoben.
 - **Stratege als 5. Beratertyp eingeführt.** DB-Migration, Config-Eintrag (`strategy`-AP-Pool), `PersonellService::resolveType()` und View-Karte ergänzt.
@@ -8,7 +33,7 @@
 - **Testdaten bereinigt:** Von bis zu 19 Beratern pro Typ auf je 1 pro Typ reduziert (entspricht dem Slot-System). Stratege in beide Kolonien aufgenommen.
 - **GDD §12 aktualisiert** (game-designer): Individuen-Prinzip explizit formuliert, Typenbezeichnungen vereinheitlicht, Rang-Tabelle (Junior/Senior/Experte), Credits-Kosten, TODO Kommandanten-UI dokumentiert.
 
-
+## 2026-04-10 (Design-Sprint Phase 3: Gebäude, Schiffe, Kenntnisse, GDD-Review)
 
 - **Gebäude 25 → 12:** Stark reduziert auf Mini-4X-Kernsortiment. Neue Namen (Cantina, Agrardom, Industriemine, Kolonialdenkmal etc.). Raumwerft + Kampfwerft → **Hangar** (1 Gebäude = 1 Schiffsslot, Supply-begrenzt). Wasser als Ressource gestrichen (durch Versorgung abstrahiert), Wasserextraktor entfernt. Englische Sprachdateien (`lang/en/`) neu erstellt.
 - **Schiffe 6 → 3:** Sonde (unbemannt, kein Supply), Korvette (ex Fighter, 14 Supply), Frachter (ex Transporter, 6 Supply). Ship-Decay abgeschafft — Schiffe werden durch Kampf/Gefahren zerstört, nicht durch Verfall. Hangar-Decay ersetzt den Wartungsdruck.
