@@ -19,10 +19,9 @@ use Tests\TestCase;
  *   (colony_id=1, direction=0, resource_id=10, amount=4,   price=3)
  *   (colony_id=1, direction=0, resource_id=8,  amount=100, price=50)
  *
- * trade_researches (10 rows):
- *   (colony_id=1, direction=1, research_id=25, amount=123456, price=11)
- *   (colony_id=2, direction=0, research_id=27..34, amount=1, price=1)  — 8 rows
- *   (colony_id=1, direction=0, research_id=35, amount=5, price=10000)
+ * trade_knowledge (2 rows):
+ *   (colony_id=1, direction=1, research_id=90, amount=5,   price=200)
+ *   (colony_id=2, direction=0, research_id=90, amount=3,   price=200)
  *
  * Colony 1 (Springfield) belongs to user_id=3 (Bart).
  */
@@ -69,7 +68,7 @@ class TradeGatewayTest extends TestCase
         $offers = $this->gateway->getResearches();
 
         $this->assertInstanceOf(Collection::class, $offers);
-        $this->assertCount(10, $offers);
+        $this->assertCount(2, $offers);
     }
 
     public function test_get_researches_filters_by_colony_id(): void
@@ -77,7 +76,7 @@ class TradeGatewayTest extends TestCase
         $offers = $this->gateway->getResearches(['colony_id' => 2]);
 
         $this->assertInstanceOf(Collection::class, $offers);
-        $this->assertCount(8, $offers);
+        $this->assertCount(1, $offers);
         $this->assertTrue($offers->every(fn($o) => $o->colony_id === 2));
     }
 
@@ -184,7 +183,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResearchOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'research_id' => 27,
+            'research_id' => 91,
             'amount'      => 2,
             'price'       => 5,
         ]);
@@ -197,7 +196,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResearchOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'research_id' => 27,
+            'research_id' => 91,
             'amount'      => 2,
             'price'       => 5,
             'user_id'     => 99,
@@ -210,17 +209,17 @@ class TradeGatewayTest extends TestCase
 
     public function test_add_research_offer_creates_new(): void
     {
-        // colony 1 + direction 1 + research 27 does not exist in seed data
-        // (seed has colony 1, direction 1, research 25 — and colony 2 has research 27)
-        $countBefore = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
+        // colony 1 + direction 1 + research 91 does not exist in seed data
+        // (seed has colony 1, direction 1, research 90 — and colony 2 has research 90)
+        $countBefore = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 91)
             ->count();
         $this->assertSame(0, $countBefore);
 
         $result = $this->gateway->addResearchOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'research_id' => 27,
+            'research_id' => 91,
             'amount'      => 2,
             'price'       => 5,
             'user_id'     => 3,
@@ -228,13 +227,13 @@ class TradeGatewayTest extends TestCase
 
         $this->assertTrue($result);
 
-        $countAfter = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
+        $countAfter = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 91)
             ->count();
         $this->assertSame(1, $countAfter);
 
-        $row = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
+        $row = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 91)
             ->first();
         $this->assertSame(2, (int) $row->amount);
     }
@@ -245,7 +244,7 @@ class TradeGatewayTest extends TestCase
         $this->gateway->addResearchOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'research_id' => 27,
+            'research_id' => 91,
             'amount'      => 2,
             'price'       => 5,
             'user_id'     => 3,
@@ -255,7 +254,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResearchOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'research_id' => 27,
+            'research_id' => 91,
             'amount'      => 999,
             'price'       => 5,
             'user_id'     => 3,
@@ -263,13 +262,13 @@ class TradeGatewayTest extends TestCase
 
         $this->assertTrue($result);
 
-        $count = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
+        $count = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 91)
             ->count();
         $this->assertSame(1, $count);
 
-        $row = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 27)
+        $row = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 91)
             ->first();
         $this->assertSame(999, (int) $row->amount);
     }
@@ -330,8 +329,8 @@ class TradeGatewayTest extends TestCase
     {
         $result = $this->gateway->removeResearchOffer([
             'colony_id'   => 1,
-            'direction'   => 0,
-            'research_id' => 35,
+            'direction'   => 1,
+            'research_id' => 90,
         ]);
 
         $this->assertFalse($result);
@@ -341,8 +340,8 @@ class TradeGatewayTest extends TestCase
     {
         $result = $this->gateway->removeResearchOffer([
             'colony_id'   => 1,
-            'direction'   => 0,
-            'research_id' => 35,
+            'direction'   => 1,
+            'research_id' => 90,
             'user_id'     => 99,
         ]);
 
@@ -353,23 +352,23 @@ class TradeGatewayTest extends TestCase
 
     public function test_remove_research_offer_succeeds(): void
     {
-        // Verify seed data: colony 1, buy (direction=0), research_id=35
-        $countBefore = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 0)->where('research_id', 35)
+        // Verify seed data: colony 1, sell (direction=1), research_id=90 (construction)
+        $countBefore = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 90)
             ->count();
         $this->assertSame(1, $countBefore);
 
         $result = $this->gateway->removeResearchOffer([
             'colony_id'   => 1,
-            'direction'   => 0,
-            'research_id' => 35,
+            'direction'   => 1,
+            'research_id' => 90,
             'user_id'     => 3,
         ]);
 
         $this->assertTrue($result);
 
-        $countAfter = DB::table('trade_researches')
-            ->where('colony_id', 1)->where('direction', 0)->where('research_id', 35)
+        $countAfter = DB::table('trade_knowledge')
+            ->where('colony_id', 1)->where('direction', 1)->where('research_id', 90)
             ->count();
         $this->assertSame(0, $countAfter);
     }

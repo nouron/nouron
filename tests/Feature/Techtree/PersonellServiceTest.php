@@ -27,14 +27,10 @@ class PersonellServiceTest extends TestCase
         Advisor::where('colony_id', $this->colonyId)->delete();
         Advisor::where('fleet_id', $this->fleetId)->delete();
 
-        // 2 engineers: rank 2 (7 AP) + rank 1 (4 AP) = 11 construction AP
+        // 1 engineer: rank 2 = 7 construction AP
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
-        ]);
-        Advisor::create([
-            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
-            'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 2,
         ]);
         // 1 scientist: rank 1 = 4 research AP
         Advisor::create([
@@ -50,10 +46,10 @@ class PersonellServiceTest extends TestCase
 
     public function testGetTotalActionPoints(): void
     {
-        // 2 engineers: rank2(7) + rank1(4) = 11
-        $this->assertEquals(11, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // 1 engineer rank2 = 7
+        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
         // 1 scientist rank1 = 4
-        $this->assertEquals(4, $this->service->getTotalActionPoints('research', $this->colonyId));
+        $this->assertEquals(4, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
         // 1 commander rank1 on fleet = 4
         $this->assertEquals(4, $this->service->getTotalActionPoints('navigation', $this->fleetId));
         // unknown = 0
@@ -62,7 +58,7 @@ class PersonellServiceTest extends TestCase
 
     public function testGetAvailableActionPoints(): void
     {
-        $this->assertEquals(11, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->assertEquals(7, $this->service->getAvailableActionPoints('construction', $this->colonyId));
         $this->assertEquals(4,  $this->service->getAvailableActionPoints('navigation', $this->fleetId));
         $this->assertEquals(0,  $this->service->getAvailableActionPoints('unknown', $this->colonyId));
     }
@@ -74,7 +70,7 @@ class PersonellServiceTest extends TestCase
 
     public function testGetResearchPoints(): void
     {
-        $this->assertGreaterThan(0, $this->service->getResearchPoints($this->colonyId));
+        $this->assertGreaterThan(0, $this->service->getKnowledgePoints($this->colonyId));
     }
 
     public function testGetFleetNavigationPoints(): void
@@ -97,6 +93,7 @@ class PersonellServiceTest extends TestCase
 
     public function testHire(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
         $this->assertInstanceOf(Advisor::class, $advisor);
         $this->assertEquals($this->colonyId, $advisor->colony_id);
@@ -106,6 +103,7 @@ class PersonellServiceTest extends TestCase
 
     public function testFire(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
         $this->assertTrue($this->service->fire($advisor->id));
         $advisor->refresh();
@@ -126,6 +124,7 @@ class PersonellServiceTest extends TestCase
 
     public function testAssignToFleetFailsForNonCommander(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $engineer = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
         $this->expectException(\RuntimeException::class);
         $this->service->assignToFleet($engineer->id, $this->fleetId);
@@ -242,30 +241,29 @@ class PersonellServiceTest extends TestCase
 
     public function testTotalActionPointsExcludesUnavailableAdvisors(): void
     {
-        // Add an engineer that is temporarily unavailable
-        Advisor::create([
-            'user_id'                => $this->userId,
-            'personell_id'           => PersonellService::PERSONELL_ID_ENGINEER,
-            'colony_id'              => $this->colonyId,
-            'rank'                   => 3,
-            'active_ticks'           => 10,
-            'unavailable_until_tick' => 99999,
-        ]);
+        // Mark the existing scientist as temporarily unavailable
+        Advisor::where('colony_id', $this->colonyId)
+               ->where('personell_id', PersonellService::PERSONELL_ID_SCIENTIST)
+               ->update(['unavailable_until_tick' => 99999]);
 
-        // Total should still be 11 (rank2=7 + rank1=4); rank3 advisor is excluded
-        $this->assertEquals(11, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // The unavailable scientist must not count: research AP = 0
+        $this->assertEquals(0, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
+        // The available engineer must still count: construction AP = 7 (rank 2)
+        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
     }
 
     // ── hire(): rank clamping and validation ──────────────────────────────────
 
     public function testHireWithRankBelowOneIsClampedToOne(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId, 0);
         $this->assertEquals(1, $advisor->rank);
     }
 
     public function testHireWithRankAboveThreeIsClampedToThree(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId, 99);
         $this->assertEquals(3, $advisor->rank);
     }
@@ -284,6 +282,7 @@ class PersonellServiceTest extends TestCase
 
     public function testHiredAdvisorStartsWithZeroActiveTicks(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_SCIENTIST)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_SCIENTIST, $this->colonyId);
         $this->assertEquals(0, $advisor->active_ticks);
         $this->assertNull($advisor->unavailable_until_tick);
@@ -299,6 +298,7 @@ class PersonellServiceTest extends TestCase
 
     public function testFireedAdvisorBecomesUnemployed(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
         $this->service->fire($advisor->id);
 
@@ -326,6 +326,7 @@ class PersonellServiceTest extends TestCase
 
     public function testAssignToFleetThrowsRuntimeExceptionForNonPilot(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_SCIENTIST)->delete();
         $scientist = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_SCIENTIST, $this->colonyId);
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Nur Kommandanten können Flotten führen.');
@@ -347,8 +348,8 @@ class PersonellServiceTest extends TestCase
     {
         $this->service->lockActionPoints('construction', $this->colonyId, 3);
         $this->service->lockActionPoints('construction', $this->colonyId, 2);
-        // 11 total − 5 locked = 6
-        $this->assertEquals(6, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        // 7 total − 5 locked = 2
+        $this->assertEquals(2, $this->service->getAvailableActionPoints('construction', $this->colonyId));
     }
 
     public function testLockActionPointsWithNegativeAmountIsSanitised(): void
@@ -440,6 +441,7 @@ class PersonellServiceTest extends TestCase
 
     public function testIncrementAdvisorTicksCountsActiveColonyAdvisor(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
             'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
@@ -487,6 +489,7 @@ class PersonellServiceTest extends TestCase
 
     public function testIncrementAdvisorTicksDoesNotCountUnavailableAdvisors(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $unavailable = Advisor::create([
             'user_id'                => $this->userId,
             'personell_id'           => PersonellService::PERSONELL_ID_ENGINEER,
@@ -520,6 +523,7 @@ class PersonellServiceTest extends TestCase
 
     public function testRankPromotionToTwoAtTenTicks(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
             'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
@@ -536,6 +540,7 @@ class PersonellServiceTest extends TestCase
 
     public function testRankPromotionToThreeAtTwentyTicks(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
             'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
@@ -552,6 +557,7 @@ class PersonellServiceTest extends TestCase
 
     public function testRankDoesNotPromoteAtRankThree(): void
     {
+        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
             'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,

@@ -70,7 +70,7 @@ class TechtreeController extends BaseController
         };
 
         $apType = match (strtolower($type)) {
-            'research' => 'research',
+            'research' => 'knowledge',
             default    => 'construction',
         };
 

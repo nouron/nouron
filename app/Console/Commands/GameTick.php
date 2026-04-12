@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\DB;
  *  4. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  5. Ship decay          — decrement fleet_ships.status_points; combat fleets × 2; remove at ≤ 0
  *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
+ *  7. Supply cap          — SET user_resources.supply = CC_level × 10 + housing_units × 8 (cap model)
  *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
  *  8b. Moral calculation  — recalculate colony moral and store in colony_resources (resource_id=12)
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
@@ -489,8 +489,8 @@ class GameTick extends Command
     {
         $fallbackRate  = (float) config('game.decay.rate', 1);
         $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
-        $decayRates    = DB::table('researches')->pluck('decay_rate', 'id');
-        $maxSPMap      = DB::table('researches')->pluck('max_status_points', 'id');
+        $decayRates    = DB::table('knowledge')->pluck('decay_rate', 'id');
+        $maxSPMap      = DB::table('knowledge')->pluck('max_status_points', 'id');
         $levelled      = 0;
 
         // Build the over-cap set once before iterating — O(colonies), not O(researches).
@@ -508,7 +508,7 @@ class GameTick extends Command
                 $maxSP    = (int) ($maxSPMap[$cr->research_id] ?? 20);
                 $newLevel = max(0, $cr->level - 1);
 
-                DB::table('colony_researches')->where($where)->update([
+                DB::table('colony_knowledge')->where($where)->update([
                     'level'         => $newLevel,
                     'status_points' => $maxSP,
                 ]);
@@ -526,7 +526,7 @@ class GameTick extends Command
                 ]);
                 $levelled++;
             } else {
-                DB::table('colony_researches')->where($where)
+                DB::table('colony_knowledge')->where($where)
                     ->update(['status_points' => $newStatus]);
             }
         }
@@ -574,7 +574,7 @@ class GameTick extends Command
                 ->where('building_id', 28)
                 ->value('level');
 
-            $cap = min($capCC + ($housingLevel * $capHousing), $capMax);
+            $cap = min(($capCC * $ccLevel) + ($housingLevel * $capHousing), $capMax);
 
             UserResource::where('user_id', $userId)->update(['supply' => $cap]);
         }

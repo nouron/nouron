@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\DB;
  *   Junior (1) = 4 AP, Senior (2) = 7 AP, Experte (3) = 12 AP
  *
  * AP types and their scopes:
- *   construction  — Ingenieur (35),       colony-scoped
- *   research      — Wissenschaftler (36), colony-scoped
- *   navigation    — Kommandant (89),      fleet-scoped (is_commander=true)
- *   economy       — Händler (92),         colony-scoped
- *   strategy      — Stratege (93),        colony-scoped
+ *   construction — Baumeister (35),  colony-scoped
+ *   knowledge    — Analytiker (36),  colony-scoped
+ *   navigation   — Raumfahrer (89),  fleet-scoped (is_commander=true)
+ *   economy      — Konsul (92),      colony-scoped
+ *   strategy     — Stratege (93),    colony-scoped
  */
 class PersonellService
 {
@@ -30,7 +30,7 @@ class PersonellService
 
     const PERSONELL_ID_ENGINEER  = 35;
     const PERSONELL_ID_SCIENTIST = 36;
-    const PERSONELL_ID_PILOT     = 89;  // Kommandant
+    const PERSONELL_ID_PILOT     = 89;
     const PERSONELL_ID_TRADER    = 92;
     const PERSONELL_ID_STRATEGE  = 93;
 
@@ -119,9 +119,9 @@ class PersonellService
         return $this->getAvailableActionPoints('construction', $colonyId);
     }
 
-    public function getResearchPoints(int $colonyId): int
+    public function getKnowledgePoints(int $colonyId): int
     {
-        return $this->getAvailableActionPoints('research', $colonyId);
+        return $this->getAvailableActionPoints('knowledge', $colonyId);
     }
 
     public function getFleetNavigationPoints(int $fleetId): int
@@ -299,11 +299,11 @@ class PersonellService
     {
         return match (strtolower($type)) {
             'construction' => [self::PERSONELL_ID_ENGINEER,  'colony'],
-            'research'     => [self::PERSONELL_ID_SCIENTIST, 'colony'],
+            'knowledge'    => [self::PERSONELL_ID_SCIENTIST, 'colony'],
             'navigation'   => [self::PERSONELL_ID_PILOT,     'fleet'],
             'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
-            'strategy'     => [self::PERSONELL_ID_STRATEGE,  'colony'],
-            default        => [null, null],
+            'strategy'   => [self::PERSONELL_ID_STRATEGE,   'colony'],
+            default      => [null, null],
         };
     }
 }

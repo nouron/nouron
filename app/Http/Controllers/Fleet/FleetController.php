@@ -75,7 +75,7 @@ class FleetController extends BaseController
         $resources  = $this->resourcesService->getResources()->keyBy('id');
         $ships      = \Illuminate\Support\Facades\DB::table('ships')->get()->keyBy('id');
         $personells = \Illuminate\Support\Facades\DB::table('personell')->get()->keyBy('id');
-        $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
+        $researches = \Illuminate\Support\Facades\DB::table('knowledge')->get()->keyBy('id');
 
         return view('fleet.config', compact('fleet', 'colony', 'fleetIsInColonyOrbit', 'resources', 'ships', 'personells', 'researches'));
     }
@@ -160,7 +160,7 @@ class FleetController extends BaseController
             DB::table('fleet_ships')->where('fleet_id', $fleet->id)->delete();
             DB::table('fleet_resources')->where('fleet_id', $fleet->id)->delete();
             DB::table('fleet_personell')->where('fleet_id', $fleet->id)->delete();
-            DB::table('fleet_researches')->where('fleet_id', $fleet->id)->delete();
+            DB::table('fleet_knowledge')->where('fleet_id', $fleet->id)->delete();
             $fleet->delete();
         });
 

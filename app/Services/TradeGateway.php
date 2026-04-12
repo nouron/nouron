@@ -177,7 +177,7 @@ class TradeGateway
             }
         }
 
-        DB::table('trade_researches')->updateOrInsert(
+        DB::table('trade_knowledge')->updateOrInsert(
             [
                 'colony_id'   => $data['colony_id'],
                 'direction'   => $data['direction'],
@@ -209,7 +209,7 @@ class TradeGateway
             return false;
         }
 
-        $affected = DB::table('trade_researches')
+        $affected = DB::table('trade_knowledge')
             ->where('colony_id', $data['colony_id'])
             ->where('direction', $data['direction'])
             ->where('research_id', $data['research_id'])

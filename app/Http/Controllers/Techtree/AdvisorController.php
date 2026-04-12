@@ -77,10 +77,10 @@ class AdvisorController extends BaseController
 
         $apInfo = [
             'construction' => $this->personellService->getTotalActionPoints('construction', $colonyId),
-            'research'     => $this->personellService->getTotalActionPoints('research', $colonyId),
-            'economy'      => $this->personellService->getTotalActionPoints('economy', $colonyId),
-            'strategy'     => $this->personellService->getTotalActionPoints('strategy', $colonyId),
-            'navigation'   => $fleetCommanders->sum(fn(Advisor $a) => $a->getApPerTick()),
+            'knowledge'    => $this->personellService->getTotalActionPoints('knowledge', $colonyId),
+            'economy'    => $this->personellService->getTotalActionPoints('economy', $colonyId),
+            'strategy'   => $this->personellService->getTotalActionPoints('strategy', $colonyId),
+            'navigation' => $fleetCommanders->sum(fn(Advisor $a) => $a->getApPerTick()),
         ];
 
         return view('advisors.index', compact(

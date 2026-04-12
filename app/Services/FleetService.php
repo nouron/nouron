@@ -193,8 +193,8 @@ class FleetService
                 $typeKey     = 'ship_id';
                 break;
             case 'research':
-                $colonyTable = 'colony_researches';
-                $fleetTable  = 'fleet_researches';
+                $colonyTable = 'colony_knowledge';
+                $fleetTable  = 'fleet_knowledge';
                 $typeKey     = 'research_id';
                 break;
             case 'personell':
@@ -487,8 +487,8 @@ class FleetService
     {
         switch (strtolower($type)) {
             case 'research':
-                $masterTable = 'researches';
-                $fleetTable  = 'fleet_researches';
+                $masterTable = 'knowledge';
+                $fleetTable  = 'fleet_knowledge';
                 $typeKey     = 'research_id';
                 break;
             case 'ship':

@@ -36,15 +36,15 @@ class GameTickTest extends TestCase
     // ── Supply cap ───────────────────────────────────────────────────────────
 
     /**
-     * Supply cap = CC_flat (15) + housing_level * 8.
-     * Colony 1: CC level=10 (>0 → flat 15), housing level=2 → cap = 15 + 16 = 31.
+     * Supply cap = CC_level × 10 + housing_units × 8.
+     * Colony 1: CC level=5 (max), housing level=2 → cap = 50 + 16 = 66.
      */
     public function test_supply_cap_is_set_from_cc_and_housing(): void
     {
         Artisan::call('game:tick', ['--tick' => 9001]);
 
         $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
-        $this->assertEquals(31, $supply);
+        $this->assertEquals(66, $supply);
     }
 
     /**
@@ -90,7 +90,7 @@ class GameTickTest extends TestCase
     {
         // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
         DB::table('buildings')->update(['supply_cost' => 0]);
-        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('knowledge')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
 
         DB::table('colony_buildings')
@@ -187,7 +187,7 @@ class GameTickTest extends TestCase
 
     /**
      * Research status_points decreases by decay_rate each tick.
-     * biology (id 33): decay_rate=0.13; level=2, SP=20 → 19.87
+     * construction (id 90): decay_rate=0.13; level=2, SP=20 → 19.87
      *
      * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
      */
@@ -195,17 +195,17 @@ class GameTickTest extends TestCase
     {
         // Zero all supply costs so free-supply is always >= 0 and no overcap multiplier fires.
         DB::table('buildings')->update(['supply_cost' => 0]);
-        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('knowledge')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
 
-        DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->update(['status_points' => 20.0, 'level' => 2]);
 
         Artisan::call('game:tick', ['--tick' => 9030]);
 
-        $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        $sp = (float) DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(20.0 - 0.13, $sp, 0.001);
@@ -216,14 +216,14 @@ class GameTickTest extends TestCase
      */
     public function test_research_levels_down_when_status_points_depleted(): void
     {
-        DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->update(['status_points' => 0.1, 'level' => 2]);
 
         Artisan::call('game:tick', ['--tick' => 9031]);
 
-        $row = DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        $row = DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->first();
 
         $this->assertEquals(1, $row->level);

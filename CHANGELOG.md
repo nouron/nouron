@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-04-12 (Berater-Umbenennung: Design-Sprint-Namen wiederhergestellt)
+
+- **Berater-Namen** auf Design-Sprint-Beschlüsse zurückgesetzt: Ingenieur → **Baumeister**, Wissenschaftler → **Analytiker**, Pilot/Kommandant → **Raumfahrer**, Händler → **Konsul** (Stratege unverändert).
+- **AP-Typ `research` → `knowledge`** in allen Codestellen (PersonellService, AbstractTechnologyService, AdvisorController, TechtreeController, Tests). `construction` bleibt unverändert.
+- **`config/advisors.php`** und **`lang/de/advisors.php`** auf neue Bezeichnungen aktualisiert.
+- **`testdata.sqlite.sql`** personell-Einträge angepasst (type-Spalte `civil` → `knowledge`, Namen `techs_*` → neue Schlüssel).
+- **GDD §12** vollständig aktualisiert: alle Tabellen, Slot-System, Datenmodell und Beschreibungen.
+
+## 2026-04-12 (Testfixes: Berater-UNIQUE, CC-Level, AP-Erwartungswerte)
+
+- **PersonellServiceTest** vollständig repariert (53 Fehler): setUp() auf 1 Ingenieur (Rang 2 = 7 AP) reduziert; doppelter Eintrag verletzte UNIQUE-Constraint `(colony_id, personell_id)`; AP-Erwartungswerte 11 → 7 aktualisiert; `delete()`-Guard in allen Tests ergänzt, die Berater neu anlegen.
+- **testTotalActionPointsExcludesUnavailableAdvisors** neu gestaltet: statt zweitem Ingenieur (UNIQUE-Konflikt) wird der vorhandene Wissenschaftler auf unavailable gesetzt und dessen Ausschluss geprüft.
+- **FleetCreationTest** korrigiert: Kommandanten-ID 67 → 7 (TestSeeder hat jetzt nur noch 1 Pilot pro Kolonie statt 19).
+- **TradeApTest** korrigiert: 2× Händler Rang 1 → 1× Händler Rang 2 (7 AP), da UNIQUE zwei Händler derselben Kolonie verbietet.
+- **Gesamtergebnis**: 412 Tests bestanden, 2 übersprungen, 0 Fehler.
+
+## 2026-04-12 (researches-Tabellen → knowledge umbenannt; DB-Migration; Tests aktualisiert)
+
+- **DB-Tabellen umbenannt** (Trennung Gebäude/Forschungen/Schiffe aufgehoben): `researches` → `knowledge`, `research_costs` → `knowledge_costs`, `colony_researches` → `colony_knowledge`, `fleet_researches` → `fleet_knowledge`, `trade_researches` → `trade_knowledge` (Migration `2026_04_12_000002`).
+- **7 neue Kenntnisse** in DB eingeführt (Migration `2026_04_12_000001`): IDs 90–96 (construction, cartography, geology, agronomy, health, trade, defense), alte Forschungen (IDs 33–81) entfernt. `game:sync-knowledge` um `syncKnowledge()`-Methode ergänzt.
+- **`GameTick` Supply-Formel korrigiert**: CC-Beitrag jetzt `CC_level × cap_commandcenter` (statt flat), entspricht GDD §6.
+- **`testdata.sqlite.sql` bereinigt**: Alte knowledge-IDs (33–81) durch neue (90–96) ersetzt; doppelter personell-93-Eintrag entfernt (Migration ist source of truth); `trade_knowledge`-Einträge auf gültige Knowledge-IDs aktualisiert.
+- **Tests aktualisiert**: FleetServiceTest, GameTickTest, OverCapDecayTest, MoralServiceTest, TradeGatewayTest auf neue Knowledge-IDs umgestellt.
+- **Alle Models** (`Research`, `ResearchCost`, `ColonyResearch`, `FleetResearch`, `TradeResearch`) und alle Service-/Controller-Dateien auf neue Tabellennamen aktualisiert.
+
 ## 2026-04-12 (GDD-Review: Inkonsistenzen behoben, techs → knowledge umbenannt)
 
 - **CC max_level 10 → 5** in GDD §4 korrigiert (war nur noch dort veraltet).

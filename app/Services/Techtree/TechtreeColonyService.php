@@ -23,11 +23,11 @@ class TechtreeColonyService
     }
 
     /**
-     * Return all colony_researches rows for the given colony.
+     * Return all colony_knowledge rows for the given colony.
      */
     public function getResearches(int $colonyId): Collection
     {
-        return DB::table('colony_researches')->where('colony_id', $colonyId)->get();
+        return DB::table('colony_knowledge')->where('colony_id', $colonyId)->get();
     }
 
     /**
@@ -70,7 +70,7 @@ class TechtreeColonyService
     {
         [$masterTable, $colonyTable, $idKey] = match ($type) {
             'building'  => ['buildings',  'colony_buildings',  'building_id'],
-            'research'  => ['researches', 'colony_researches', 'research_id'],
+            'research'  => ['knowledge',  'colony_knowledge',  'research_id'],
             'ship'      => ['ships',      'colony_ships',      'ship_id'],
             'personell' => ['personell',  'colony_personell',  'personell_id'],
             default     => throw new \InvalidArgumentException("Unknown type: $type"),

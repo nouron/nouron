@@ -188,12 +188,11 @@ class TradeApTest extends TestCase
      */
     public function test_ap_cost_scales_with_offer_value(): void
     {
-        // We need at least 5 AP — hire two rank-1 traders (4+4=8 AP total).
-        $this->hireTrader(1, rank: 1);
-        $this->hireTrader(1, rank: 1);
+        // We need at least 5 AP — hire one rank-2 trader (7 AP total).
+        $this->hireTrader(1, rank: 2);
 
         $apBefore = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(8, $apBefore);
+        $this->assertSame(7, $apBefore);
 
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
@@ -207,7 +206,7 @@ class TradeApTest extends TestCase
         $this->assertTrue($result);
 
         $apAfter = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(3, $apAfter); // 8 - 5 = 3
+        $this->assertSame(2, $apAfter); // 7 - 5 = 2
     }
 
     // ── dev_mode bypasses AP checks ───────────────────────────────────────────

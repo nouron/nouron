@@ -88,21 +88,7 @@ class MasterDataSeeder extends Seeder
 
     private function seedResearches(): void
     {
-        // All researches: max_status_points = 20, ticks_until_lost = 160 → decay_rate = 0.13
-        // Military: higher supply cost (8 vs 5)
-        $standard = [33, 34, 39, 72, 73, 74, 76, 79, 80];
-        foreach ($standard as $id) {
-            DB::table('researches')->where('id', $id)->update([
-                'max_status_points' => 20,
-                'decay_rate'        => 0.13,
-                'supply_cost'       => 5,
-            ]);
-        }
-
-        DB::table('researches')->where('id', 81)->update([
-            'max_status_points' => 20,
-            'decay_rate'        => 0.13,
-            'supply_cost'       => 8,
-        ]);
+        // Kenntnisse values are set by migration 2026_04_12_000001_replace_researches_with_kenntnisse.
+        // Nothing to do here — game:sync-knowledge keeps them in sync with config/knowledge.php.
     }
 }

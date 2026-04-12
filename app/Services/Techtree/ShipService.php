@@ -37,7 +37,7 @@ class ShipService extends AbstractTechnologyService
             return true;
         }
 
-        $colonyResearch = DB::table('colony_researches')
+        $colonyResearch = DB::table('colony_knowledge')
             ->where('colony_id', $colonyId)
             ->where('research_id', $ship->required_research_id)
             ->first();

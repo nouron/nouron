@@ -6,7 +6,7 @@
  * Fields:
  *   id           — DB primary key in `personell` table
  *   ap_type      — which action-point pool this advisor fills
- *                  'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
+ *                  'industry' | 'science' | 'navigation' | 'economy' | 'strategy'
  *   moral_per_unit — moral change per active advisor (minor effects)
  *   credits      — hire cost in credits
  *
@@ -21,28 +21,28 @@ return [
     // Rang 2 (Senior) and Rang 3 (Experte) hire costs: see GDD §12 (~150 / ~400 Cr).
     // Exact values to be calibrated after first playtest.
 
-    'engineer' => [
+    'baumeister' => [
         'id'             => 35,
-        'ap_type'        => 'construction',
+        'ap_type'        => 'industry',
         'moral_per_unit' => 0,
         'credits'        => 50,
     ],
 
-    'scientist' => [
+    'analytiker' => [
         'id'             => 36,
-        'ap_type'        => 'research',
+        'ap_type'        => 'knowledge',
         'moral_per_unit' => 0,
         'credits'        => 50,
     ],
 
-    'pilot' => [
+    'raumfahrer' => [
         'id'             => 89,
         'ap_type'        => 'navigation',
         'moral_per_unit' => 0,
         'credits'        => 50,
     ],
 
-    'trader' => [
+    'konsul' => [
         'id'             => 92,
         'ap_type'        => 'economy',
         'moral_per_unit' => 0,

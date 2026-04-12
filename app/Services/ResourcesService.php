@@ -223,8 +223,8 @@ class ResourcesService
             ->where('cs.level', '>', 0)
             ->sum(DB::raw('cs.level * COALESCE(s.supply_cost, 0)'));
 
-        $usedResearches = (int) DB::table('colony_researches as cr')
-            ->join('researches as r', 'r.id', '=', 'cr.research_id')
+        $usedResearches = (int) DB::table('colony_knowledge as cr')
+            ->join('knowledge as r', 'r.id', '=', 'cr.research_id')
             ->where('cr.colony_id', $colonyId)
             ->where('cr.level', '>', 0)
             ->sum(DB::raw('cr.level * COALESCE(r.supply_cost, 0)'));

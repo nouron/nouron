@@ -22,7 +22,7 @@ class FleetServiceTest extends TestCase
     // Test constants matching the Simpsons fixture in TestSeeder
     protected int $fleetId    = 10;
     protected int $shipId     = 29;
-    protected int $researchId = 33;
+    protected int $researchId = 90;
     protected int $resourceId = 3;
     protected int $objectId   = 1;
     protected int $systemId   = 1;
@@ -122,15 +122,15 @@ class FleetServiceTest extends TestCase
 
     public function testTransferResearch(): void
     {
-        // initial level for research_id=81 on colony_id=1 is 16 (from test data)
-        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 81, 5);
+        // initial level for research_id=90 (construction) on colony_id=1 is 16 (from test data)
+        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 90, 5);
         $this->assertEquals(5, $transferred);
 
-        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 81, 15);
+        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 90, 15);
         $this->assertEquals(11, $transferred); // only 11 remain (16-5)
 
         // transfer back all 16
-        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 81, -16);
+        $transferred = $this->service->transferResearch($this->colonyId, $this->fleetId, 90, -16);
         $this->assertEquals(16, $transferred);
     }
 
@@ -149,15 +149,15 @@ class FleetServiceTest extends TestCase
 
     public function testTransferTechnology(): void
     {
-        // research type, colony 1, fleet 10, research_id 81
-        $result = $this->service->transferTechnology('research', $this->colonyId, $this->fleetId, 81, 5);
+        // research type, colony 1, fleet 10, research_id 90 (construction)
+        $result = $this->service->transferTechnology('research', $this->colonyId, $this->fleetId, 90, 5);
         $this->assertEquals(5, $result);
 
-        $result = $this->service->transferTechnology('research', $this->colonyId, $this->fleetId, 81, -5);
+        $result = $this->service->transferTechnology('research', $this->colonyId, $this->fleetId, 90, -5);
         $this->assertEquals(5, $result);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->transferTechnology('invalid', $this->colonyId, $this->fleetId, 81, 1);
+        $this->service->transferTechnology('invalid', $this->colonyId, $this->fleetId, 90, 1);
     }
 
     public function testTransferResource(): void
@@ -206,13 +206,13 @@ class FleetServiceTest extends TestCase
     public function testGetFleetResearches(): void
     {
         $result = $this->service->getFleetResearches(['fleet_id' => $this->fleetId]);
-        $this->assertEquals(8, $result->count());
+        $this->assertEquals(2, $result->count());
     }
 
     public function testGetFleetResearchesByFleetId(): void
     {
         $result = $this->service->getFleetResearchesByFleetId($this->fleetId);
-        $this->assertEquals(8, $result->count());
+        $this->assertEquals(2, $result->count());
     }
 
     public function testGetFleetPersonell(): void

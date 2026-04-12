@@ -12,7 +12,7 @@ use Tests\TestCase;
  * Tests for fleet creation, deletion, and the commander requirement.
  *
  * Fixture summary (from TestSeeder / testdata.sqlite.sql):
- *   User 0 (Homer)  → colony 2, pilot advisors (personell_id=89, ids 67-85) available at colony
+ *   User 0 (Homer)  → colony 2, pilot advisor (personell_id=89, id=7) available at colony
  *   User 3 (Bart)   → colony 1, ALL pilot advisors are assigned to fleets (no pilots at colony)
  */
 class FleetCreationTest extends TestCase
@@ -66,8 +66,8 @@ class FleetCreationTest extends TestCase
 
     public function test_create_fleet_assigns_commander(): void
     {
-        // Before: pilot advisor 67 is at colony 2 (fleet_id=NULL)
-        $this->assertDatabaseHas('advisors', ['id' => 67, 'colony_id' => $this->homerColonyId, 'fleet_id' => null]);
+        // Before: pilot advisor 7 is at colony 2 (fleet_id=NULL)
+        $this->assertDatabaseHas('advisors', ['id' => 7, 'colony_id' => $this->homerColonyId, 'fleet_id' => null]);
 
         $this->actingAs($this->makeUser($this->homerUserId))
             ->post(route('fleet.store'), ['fleet' => 'Homer-Beta']);
