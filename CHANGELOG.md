@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-13 (Berater-Keys advisor_*, Navigation colony-scoped, kein Fleet-Kommandant)
+
+- **Interne DB/Config-Keys** auf `advisor_*`-Präfix umgestellt: `advisor_engineer`, `advisor_scientist`, `advisor_pilot`, `advisor_consul`, `advisor_strategist`. `techs_*`-Präfix vollständig abgelöst.
+- **Design-Entscheidung Option B:** Berater sind reine colony-scoped AP-Lieferanten. Kein Berater kommandiert eine Flotte. Supply der Flotte wird durch Hangar-Gebäude geregelt.
+- **Navigation-AP** jetzt colony-scoped (wie alle anderen AP-Typen). `PersonellService::resolveType('navigation')` → `'colony'`. `assignToFleet`/`unassignFromFleet` aus Service entfernt.
+- **FleetController:** Commander-Requirement beim Erstellen und Löschen von Flotten entfernt — jeder Spieler kann direkt Flotten erstellen.
+- `FleetService`: Navigation-AP-Check über Colony statt Fleet.
+- `FleetCreationTest` neu geschrieben, `PersonellServiceTest` auf neue Semantik angepasst. 399 Tests grün.
+
 ## 2026-04-13 (Ressourcen-Bereinigung Phase 3a)
 
 - **Ferum → Compounds** (ID 4, Kürzel `Co`) und **Silicates → Organics** (ID 5, Kürzel `Or`) umbenannt — interne DB-Namen englisch, Anzeigename "Werkstoffe"/"Organika" via Lokalisierung.
