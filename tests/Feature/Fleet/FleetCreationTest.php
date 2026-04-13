@@ -5,25 +5,19 @@ namespace Tests\Feature\Fleet;
 use App\Models\Fleet;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Tests for fleet creation, deletion, and the commander requirement.
+ * Tests for fleet creation and deletion.
  *
- * Fixture summary (from TestSeeder / testdata.sqlite.sql):
- *   User 0 (Homer)  → colony 2, pilot advisor (personell_id=89, id=7) available at colony
- *   User 3 (Bart)   → colony 1, ALL pilot advisors are assigned to fleets (no pilots at colony)
+ * Advisors are colony-scoped AP providers (Option B) — no commander required
+ * to create a fleet. Any authenticated user with a colony can create fleets.
  */
 class FleetCreationTest extends TestCase
 {
     use RefreshDatabase;
 
-    // Homer (user_id=0) has pilot advisors at colony → can create fleet
     protected int $homerUserId  = 0;
-    protected int $homerColonyId = 2;
-
-    // Bart (user_id=3) has no pilot advisors at colony
     protected int $bartUserId   = 3;
 
     protected function setUp(): void
@@ -41,17 +35,6 @@ class FleetCreationTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_create_fleet_requires_commander(): void
-    {
-        // Bart has no pilot at colony → should fail
-        $this->actingAs($this->makeUser($this->bartUserId))
-            ->post(route('fleet.store'), ['fleet' => 'Bart-Flotte'])
-            ->assertRedirect()
-            ->assertSessionHasErrors('fleet');
-
-        $this->assertDatabaseMissing('fleets', ['fleet' => 'Bart-Flotte']);
-    }
-
     public function test_create_fleet_happy_path(): void
     {
         $countBefore = Fleet::where('user_id', $this->homerUserId)->count();
@@ -64,23 +47,15 @@ class FleetCreationTest extends TestCase
         $this->assertDatabaseHas('fleets', ['fleet' => 'Homer-Alpha', 'user_id' => $this->homerUserId]);
     }
 
-    public function test_create_fleet_assigns_commander(): void
+    public function test_create_fleet_bart_happy_path(): void
     {
-        // Before: pilot advisor 7 is at colony 2 (fleet_id=NULL)
-        $this->assertDatabaseHas('advisors', ['id' => 7, 'colony_id' => $this->homerColonyId, 'fleet_id' => null]);
+        $countBefore = Fleet::where('user_id', $this->bartUserId)->count();
 
-        $this->actingAs($this->makeUser($this->homerUserId))
-            ->post(route('fleet.store'), ['fleet' => 'Homer-Beta']);
+        $this->actingAs($this->makeUser($this->bartUserId))
+            ->post(route('fleet.store'), ['fleet' => 'Bart-Flotte'])
+            ->assertRedirect(route('fleet.index'));
 
-        $fleet = Fleet::where('fleet', 'Homer-Beta')->first();
-        $this->assertNotNull($fleet);
-
-        // One pilot advisor should now be assigned to the new fleet
-        $assigned = DB::table('advisors')
-            ->where('fleet_id', $fleet->id)
-            ->where('is_commander', 1)
-            ->count();
-        $this->assertEquals(1, $assigned);
+        $this->assertEquals($countBefore + 1, Fleet::where('user_id', $this->bartUserId)->count());
     }
 
     public function test_create_fleet_validates_name_required(): void
@@ -110,7 +85,6 @@ class FleetCreationTest extends TestCase
 
     public function test_destroy_happy_path(): void
     {
-        // Create a fleet first so we can delete it cleanly
         $this->actingAs($this->makeUser($this->homerUserId))
             ->post(route('fleet.store'), ['fleet' => 'ToDelete']);
 
@@ -122,27 +96,6 @@ class FleetCreationTest extends TestCase
             ->assertRedirect(route('fleet.index'));
 
         $this->assertDatabaseMissing('fleets', ['id' => $fleet->id]);
-    }
-
-    public function test_destroy_returns_commander_to_colony(): void
-    {
-        $this->actingAs($this->makeUser($this->homerUserId))
-            ->post(route('fleet.store'), ['fleet' => 'ReturnFleet']);
-
-        $fleet = Fleet::where('fleet', 'ReturnFleet')->first();
-        $advisor = DB::table('advisors')->where('fleet_id', $fleet->id)->where('is_commander', 1)->first();
-        $this->assertNotNull($advisor);
-
-        $this->actingAs($this->makeUser($this->homerUserId))
-            ->delete(route('fleet.destroy', $fleet->id));
-
-        // Commander should be back at colony
-        $this->assertDatabaseHas('advisors', [
-            'id'           => $advisor->id,
-            'fleet_id'     => null,
-            'colony_id'    => $this->homerColonyId,
-            'is_commander' => 0,
-        ]);
     }
 
     // ── Helper ───────────────────────────────────────────────────────────────

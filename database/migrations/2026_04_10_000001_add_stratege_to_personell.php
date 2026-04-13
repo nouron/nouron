@@ -10,7 +10,7 @@ return new class extends Migration
         DB::statement("
             INSERT INTO personell (id, purpose, name, required_building_id, required_building_level,
                                    \"row\", \"column\", max_status_points, can_command_fleet)
-            VALUES (93, 'military', 'techs_stratege', 25, 3, 9, 0, 10, 0)
+            VALUES (93, 'strategy', 'advisor_strategist', 25, 3, 9, 0, 10, 0)
         ");
 
         DB::statement("INSERT INTO personell_costs (personell_id, resource_id, amount) VALUES (93, 1, 7500)");

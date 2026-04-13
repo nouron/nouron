@@ -37,10 +37,10 @@ class PersonellServiceTest extends TestCase
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_SCIENTIST,
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
         ]);
-        // 1 Kommandant on fleet: rank 1 = 4 navigation AP
+        // 1 pilot at colony: rank 1 = 4 navigation AP (advisors are colony-scoped, Option B)
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_PILOT,
-            'fleet_id' => $this->fleetId, 'is_commander' => true, 'rank' => 1, 'active_ticks' => 0,
+            'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
         ]);
     }
 
@@ -50,8 +50,8 @@ class PersonellServiceTest extends TestCase
         $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
         // 1 scientist rank1 = 4
         $this->assertEquals(4, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
-        // 1 commander rank1 on fleet = 4
-        $this->assertEquals(4, $this->service->getTotalActionPoints('navigation', $this->fleetId));
+        // 1 pilot rank1 at colony = 4
+        $this->assertEquals(4, $this->service->getTotalActionPoints('navigation', $this->colonyId));
         // unknown = 0
         $this->assertEquals(0, $this->service->getTotalActionPoints('unknown', $this->colonyId));
     }
@@ -59,7 +59,7 @@ class PersonellServiceTest extends TestCase
     public function testGetAvailableActionPoints(): void
     {
         $this->assertEquals(7, $this->service->getAvailableActionPoints('construction', $this->colonyId));
-        $this->assertEquals(4,  $this->service->getAvailableActionPoints('navigation', $this->fleetId));
+        $this->assertEquals(4,  $this->service->getAvailableActionPoints('navigation', $this->colonyId));
         $this->assertEquals(0,  $this->service->getAvailableActionPoints('unknown', $this->colonyId));
     }
 
@@ -73,9 +73,9 @@ class PersonellServiceTest extends TestCase
         $this->assertGreaterThan(0, $this->service->getKnowledgePoints($this->colonyId));
     }
 
-    public function testGetFleetNavigationPoints(): void
+    public function testGetNavigationPoints(): void
     {
-        $this->assertEquals(4, $this->service->getFleetNavigationPoints($this->fleetId));
+        $this->assertEquals(4, $this->service->getNavigationPoints($this->colonyId));
     }
 
     public function testLockActionPoints(): void
@@ -84,9 +84,9 @@ class PersonellServiceTest extends TestCase
         $this->assertTrue($this->service->lockActionPoints('construction', $this->colonyId, 3));
         $this->assertEquals($before - 3, $this->service->getAvailableActionPoints('construction', $this->colonyId));
 
-        $beforeNav = $this->service->getAvailableActionPoints('navigation', $this->fleetId);
-        $this->assertTrue($this->service->lockActionPoints('navigation', $this->fleetId, 2));
-        $this->assertEquals($beforeNav - 2, $this->service->getAvailableActionPoints('navigation', $this->fleetId));
+        $beforeNav = $this->service->getAvailableActionPoints('navigation', $this->colonyId);
+        $this->assertTrue($this->service->lockActionPoints('navigation', $this->colonyId, 2));
+        $this->assertEquals($beforeNav - 2, $this->service->getAvailableActionPoints('navigation', $this->colonyId));
 
         $this->assertFalse($this->service->lockActionPoints('unknown', $this->colonyId, 1));
     }
@@ -112,53 +112,10 @@ class PersonellServiceTest extends TestCase
         $this->assertDatabaseHas('advisors', ['id' => $advisor->id]);  // still exists
     }
 
-    public function testAssignToFleet(): void
-    {
-        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
-        $this->assertTrue($this->service->assignToFleet($commander->id, $this->fleetId));
-        $commander->refresh();
-        $this->assertEquals($this->fleetId, $commander->fleet_id);
-        $this->assertTrue($commander->is_commander);
-        $this->assertNull($commander->colony_id);
-    }
-
-    public function testAssignToFleetFailsForNonCommander(): void
-    {
-        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)->delete();
-        $engineer = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
-        $this->expectException(\RuntimeException::class);
-        $this->service->assignToFleet($engineer->id, $this->fleetId);
-    }
-
-    public function testUnassignFromFleet(): void
-    {
-        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
-        $this->service->assignToFleet($commander->id, $this->fleetId);
-        $this->assertTrue($this->service->unassignFromFleet($commander->id, $this->colonyId));
-        $commander->refresh();
-        $this->assertEquals($this->colonyId, $commander->colony_id);
-        $this->assertNull($commander->fleet_id);
-        $this->assertFalse($commander->is_commander);
-    }
-
     public function testGetColonyAdvisors(): void
     {
         $advisors = $this->service->getColonyAdvisors($this->colonyId);
         $this->assertGreaterThan(0, $advisors->count());
-    }
-
-    public function testGetFleetCommander(): void
-    {
-        $commander = $this->service->getFleetCommander($this->fleetId);
-        $this->assertNotNull($commander);
-        $this->assertTrue($commander->is_commander);
-        $this->assertEquals(PersonellService::PERSONELL_ID_PILOT, $commander->personell_id);
-    }
-
-    public function testGetFleetCommanderReturnsNullWhenNoCommander(): void
-    {
-        $result = $this->service->getFleetCommander(999999);
-        $this->assertNull($result);
     }
 
     // ── Advisor model: getApPerTick ───────────────────────────────────────────
@@ -304,42 +261,6 @@ class PersonellServiceTest extends TestCase
 
         $advisor->refresh();
         $this->assertTrue($advisor->isUnemployed());
-    }
-
-    public function testFireCommanderClearsCommanderFlag(): void
-    {
-        $commander = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
-        $this->service->assignToFleet($commander->id, $this->fleetId);
-        $this->service->fire($commander->id);
-
-        $commander->refresh();
-        $this->assertFalse($commander->is_commander);
-        $this->assertNull($commander->fleet_id);
-    }
-
-    // ── assignToFleet(): edge cases ───────────────────────────────────────────
-
-    public function testAssignToFleetNonExistentAdvisorReturnsFalse(): void
-    {
-        $this->assertFalse($this->service->assignToFleet(999999, $this->fleetId));
-    }
-
-    public function testAssignToFleetThrowsRuntimeExceptionForNonPilot(): void
-    {
-        Advisor::where('colony_id', $this->colonyId)->where('personell_id', PersonellService::PERSONELL_ID_SCIENTIST)->delete();
-        $scientist = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_SCIENTIST, $this->colonyId);
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('Nur Kommandanten können Flotten führen.');
-        $this->service->assignToFleet($scientist->id, $this->fleetId);
-    }
-
-    public function testAssignedCommanderHasNoColonyId(): void
-    {
-        $pilot = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_PILOT, $this->colonyId);
-        $this->service->assignToFleet($pilot->id, $this->fleetId);
-        $pilot->refresh();
-        $this->assertNull($pilot->colony_id);
-        $this->assertNotNull($pilot->fleet_id);
     }
 
     // ── lockActionPoints(): accumulation and negative value sanitisation ──────

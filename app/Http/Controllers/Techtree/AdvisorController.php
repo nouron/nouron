@@ -80,7 +80,7 @@ class AdvisorController extends BaseController
             'knowledge'    => $this->personellService->getTotalActionPoints('knowledge', $colonyId),
             'economy'    => $this->personellService->getTotalActionPoints('economy', $colonyId),
             'strategy'   => $this->personellService->getTotalActionPoints('strategy', $colonyId),
-            'navigation' => $fleetCommanders->sum(fn(Advisor $a) => $a->getApPerTick()),
+            'navigation' => $this->personellService->getTotalActionPoints('navigation', $colonyId),
         ];
 
         return view('advisors.index', compact(

@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\DB;
  * AP types and their scopes:
  *   construction — Baumeister (35),  colony-scoped
  *   knowledge    — Analytiker (36),  colony-scoped
- *   navigation   — Raumfahrer (89),  fleet-scoped (is_commander=true)
+ *   navigation   — Raumfahrer (89),  colony-scoped
  *   economy      — Konsul (92),      colony-scoped
  *   strategy     — Stratege (93),    colony-scoped
  */
@@ -124,9 +124,9 @@ class PersonellService
         return $this->getAvailableActionPoints('knowledge', $colonyId);
     }
 
-    public function getFleetNavigationPoints(int $fleetId): int
+    public function getNavigationPoints(int $colonyId): int
     {
-        return $this->getAvailableActionPoints('navigation', $fleetId);
+        return $this->getAvailableActionPoints('navigation', $colonyId);
     }
 
     public function getEconomyPoints(int $colonyId): int
@@ -234,48 +234,6 @@ class PersonellService
         ]);
     }
 
-    /**
-     * Assign a Kommandant to command a fleet.
-     * Only advisors with personell.can_command_fleet=true may be assigned.
-     *
-     * @throws \RuntimeException if the advisor type cannot command a fleet
-     */
-    public function assignToFleet(int $advisorId, int $fleetId): bool
-    {
-        $advisor = Advisor::find($advisorId);
-        if (!$advisor) {
-            return false;
-        }
-
-        $canCommand = DB::table('personell')
-            ->where('id', $advisor->personell_id)
-            ->value('can_command_fleet');
-
-        if (!$canCommand) {
-            throw new \RuntimeException('Nur Kommandanten können Flotten führen.');
-        }
-
-        $advisor->update([
-            'colony_id'    => null,
-            'fleet_id'     => $fleetId,
-            'is_commander' => true,
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Unassign a Kommandant from a fleet and return them to a colony.
-     */
-    public function unassignFromFleet(int $advisorId, int $colonyId): bool
-    {
-        return (bool) Advisor::where('id', $advisorId)->update([
-            'fleet_id'     => null,
-            'colony_id'    => $colonyId,
-            'is_commander' => false,
-        ]);
-    }
-
     // ── Queries ───────────────────────────────────────────────────────────────
 
     public function getColonyAdvisors(int $colonyId): Collection
@@ -300,7 +258,7 @@ class PersonellService
         return match (strtolower($type)) {
             'construction' => [self::PERSONELL_ID_ENGINEER,  'colony'],
             'knowledge'    => [self::PERSONELL_ID_SCIENTIST, 'colony'],
-            'navigation'   => [self::PERSONELL_ID_PILOT,     'fleet'],
+            'navigation'   => [self::PERSONELL_ID_PILOT,     'colony'],
             'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
             'strategy'   => [self::PERSONELL_ID_STRATEGE,   'colony'],
             default      => [null, null],

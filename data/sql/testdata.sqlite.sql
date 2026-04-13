@@ -340,10 +340,10 @@ INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,35,37);
 INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,36,0);
 INSERT INTO "locked_actionpoints" VALUES(15998,'colony',1,35,1);
 INSERT INTO "locked_actionpoints" VALUES(16005,'colony',1,35,9);
-INSERT INTO "personell" VALUES(35,'industry','baumeister',25,5,1,0,10,0);
-INSERT INTO "personell" VALUES(36,'knowledge','analytiker',31,1,3,1,10,0);
-INSERT INTO "personell" VALUES(89,'navigation','raumfahrer',44,1,7,3,10,1);
-INSERT INTO "personell" VALUES(92,'economy','konsul',43,1,7,2,10,0);
+INSERT INTO "personell" VALUES(35,'construction','advisor_engineer',25,5,1,0,10,0);
+INSERT INTO "personell" VALUES(36,'knowledge','advisor_scientist',31,1,3,1,10,0);
+INSERT INTO "personell" VALUES(89,'navigation','advisor_pilot',44,1,7,3,10,0);
+INSERT INTO "personell" VALUES(92,'economy','advisor_consul',43,1,7,2,10,0);
 -- advisors: colony 1 (user_id=3) — 1 per type (slot system), pilot on fleet 10
 INSERT INTO "advisors" VALUES(1,3,35,1,NULL,0,2,5,NULL);
 INSERT INTO "advisors" VALUES(2,3,36,1,NULL,0,1,0,NULL);
