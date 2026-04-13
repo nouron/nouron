@@ -42,8 +42,8 @@ namespace Tests\Feature;
  *   - A negative-moral research (military, id=81) subtracts level × 2
  *
  * calculateMoral() — ship contribution:
- *   - A positive-moral ship (largeTransporter, id=84) adds level × 2
- *   - A negative-moral ship (battlecruiser1, id=49) subtracts level × 4
+ *   - A positive-moral ship (frachter, id=47, moral_per_unit=+1) adds amount × 1
+ *   - A negative-moral ship (korvette, id=37, moral_per_unit=-1) subtracts amount × 1
  *   - Total ship contribution is capped at ±30 before global clamp
  *
  * calculateMoral() — event contribution:

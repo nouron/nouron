@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-13 (Schiffe + Gebäude Phase 3a — Cleanup)
+
+- **Gebäude 25 → 12**: 13 Gebäude entfernt (stadium, casino, prison, secretOps, militarySpaceyard, bank, university, parc, museum, wastedisposal, recyclingStation, public_security, waterextractor). Migration `2026_04_13_000002`.
+- **Schiffe 6 → 3**: fighter1 → `ship_corvette` (ID 37), smallTransporter → `ship_freighter` (ID 47), neue `ship_sonde` (ID 85, supply=0). frigate1/battlecruiser1/mediumTransporter/largeTransporter entfernt.
+- MasterDataSeeder, testdata.sqlite.sql und betroffene Tests aktualisiert. 399 Tests grün.
+
 ## 2026-04-13 (AP-Grundwert 6, Balancing, Design-Sprint abgeschlossen)
 
 - **AP-Grundwert 6/Tick** implementiert: Jeder AP-Typ ist immer mit 6 AP verfügbar, auch ohne aktiven Berater. Berater liefern Bonus on top: Rang 1 +6 (→12), Rang 2 +14 (→20), Rang 3 +20 (→26). `PersonellService`, `Advisor::getApPerTick()`, `config/game.php` angepasst.

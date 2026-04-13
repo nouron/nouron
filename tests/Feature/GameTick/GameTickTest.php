@@ -20,7 +20,7 @@ use Tests\TestCase;
  *     oremine (building 27): level=5,  status_points=11
  *     housing (building 28): level=2,  status_points=10
  *   Colony 2 (Shelbyville), user_id=0 (no player)
- *   Fleet 8 (user 3): has frigate1 (ship_id=29, count=20)
+ *   Fleet 8 (user 3): has korvette (ship_id=37, count=5)
  *   user_resources: user 3 → supply=1938 (will be overwritten by cap model)
  */
 class GameTickTest extends TestCase
@@ -148,21 +148,21 @@ class GameTickTest extends TestCase
 
     /**
      * Fleet ship status_points decreases by ship decay_rate each tick.
-     * frigate1 (id 29): decay_rate=0.16; starting SP=20 → 19.84
+     * korvette (id 37): decay_rate=0.15; starting SP=20 → 19.85
      */
     public function test_ship_status_points_decrease_by_decay_rate(): void
     {
         DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
+            ->where('fleet_id', 8)->where('ship_id', 37)
             ->update(['status_points' => 20.0]);
 
         Artisan::call('game:tick', ['--tick' => 9020]);
 
         $sp = (float) DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
+            ->where('fleet_id', 8)->where('ship_id', 37)
             ->value('status_points');
 
-        $this->assertEqualsWithDelta(20.0 - 0.16, $sp, 0.001);
+        $this->assertEqualsWithDelta(20.0 - 0.15, $sp, 0.001);
     }
 
     /**
@@ -171,13 +171,13 @@ class GameTickTest extends TestCase
     public function test_ship_destroyed_when_status_points_depleted(): void
     {
         DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
+            ->where('fleet_id', 8)->where('ship_id', 37)
             ->update(['status_points' => 0.1]);
 
         Artisan::call('game:tick', ['--tick' => 9021]);
 
         $exists = DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
+            ->where('fleet_id', 8)->where('ship_id', 37)
             ->exists();
 
         $this->assertFalse($exists);

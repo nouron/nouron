@@ -21,7 +21,7 @@ class FleetServiceTest extends TestCase
 
     // Test constants matching the Simpsons fixture in TestSeeder
     protected int $fleetId    = 10;
-    protected int $shipId     = 29;
+    protected int $shipId     = 37;   // korvette (ex fighter1)
     protected int $researchId = 90;
     protected int $resourceId = 4;
     protected int $objectId   = 1;
@@ -194,13 +194,13 @@ class FleetServiceTest extends TestCase
     public function testGetFleetShips(): void
     {
         $result = $this->service->getFleetShips(['fleet_id' => $this->fleetId]);
-        $this->assertEquals(4, $result->count());
+        $this->assertEquals(1, $result->count()); // fleet 10 has only korvette (37) after Phase 3a cleanup
     }
 
     public function testGetFleetShipsByFleetId(): void
     {
         $result = $this->service->getFleetShipsByFleetId($this->fleetId);
-        $this->assertEquals(4, $result->count());
+        $this->assertEquals(1, $result->count()); // fleet 10 has only korvette (37) after Phase 3a cleanup
     }
 
     public function testGetFleetResearches(): void
