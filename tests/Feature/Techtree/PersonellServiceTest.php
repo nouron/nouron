@@ -27,17 +27,17 @@ class PersonellServiceTest extends TestCase
         Advisor::where('colony_id', $this->colonyId)->delete();
         Advisor::where('fleet_id', $this->fleetId)->delete();
 
-        // 1 engineer: rank 2 = 7 construction AP
+        // 1 engineer: rank 2 → bonus 14 + base 6 = 20 construction AP
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
         ]);
-        // 1 scientist: rank 1 = 4 research AP
+        // 1 scientist: rank 1 → bonus 6 + base 6 = 12 knowledge AP
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_SCIENTIST,
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
         ]);
-        // 1 pilot at colony: rank 1 = 4 navigation AP (advisors are colony-scoped, Option B)
+        // 1 pilot at colony: rank 1 → bonus 6 + base 6 = 12 navigation AP (colony-scoped, Option B)
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_PILOT,
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
@@ -46,20 +46,20 @@ class PersonellServiceTest extends TestCase
 
     public function testGetTotalActionPoints(): void
     {
-        // 1 engineer rank2 = 7
-        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
-        // 1 scientist rank1 = 4
-        $this->assertEquals(4, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
-        // 1 pilot rank1 at colony = 4
-        $this->assertEquals(4, $this->service->getTotalActionPoints('navigation', $this->colonyId));
-        // unknown = 0
+        // 1 engineer rank2 → bonus 14 + base 6 = 20
+        $this->assertEquals(20, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // 1 scientist rank1 → bonus 6 + base 6 = 12
+        $this->assertEquals(12, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
+        // 1 pilot rank1 → bonus 6 + base 6 = 12
+        $this->assertEquals(12, $this->service->getTotalActionPoints('navigation', $this->colonyId));
+        // unknown = 0 (unknown type has no personell_id, returns early)
         $this->assertEquals(0, $this->service->getTotalActionPoints('unknown', $this->colonyId));
     }
 
     public function testGetAvailableActionPoints(): void
     {
-        $this->assertEquals(7, $this->service->getAvailableActionPoints('construction', $this->colonyId));
-        $this->assertEquals(4,  $this->service->getAvailableActionPoints('navigation', $this->colonyId));
+        $this->assertEquals(20, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->assertEquals(12, $this->service->getAvailableActionPoints('navigation', $this->colonyId));
         $this->assertEquals(0,  $this->service->getAvailableActionPoints('unknown', $this->colonyId));
     }
 
@@ -75,7 +75,7 @@ class PersonellServiceTest extends TestCase
 
     public function testGetNavigationPoints(): void
     {
-        $this->assertEquals(4, $this->service->getNavigationPoints($this->colonyId));
+        $this->assertEquals(12, $this->service->getNavigationPoints($this->colonyId));
     }
 
     public function testLockActionPoints(): void
@@ -123,26 +123,26 @@ class PersonellServiceTest extends TestCase
     public function testGetApPerTickRankOne(): void
     {
         $advisor = new Advisor(['rank' => 1]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(6, $advisor->getApPerTick());
     }
 
     public function testGetApPerTickRankTwo(): void
     {
         $advisor = new Advisor(['rank' => 2]);
-        $this->assertEquals(7, $advisor->getApPerTick());
+        $this->assertEquals(14, $advisor->getApPerTick());
     }
 
     public function testGetApPerTickRankThree(): void
     {
         $advisor = new Advisor(['rank' => 3]);
-        $this->assertEquals(12, $advisor->getApPerTick());
+        $this->assertEquals(20, $advisor->getApPerTick());
     }
 
     public function testGetApPerTickUnknownRankFallsBackToDefault(): void
     {
-        // rank 99 is not in AP_BY_RANK — should fall back to 4
+        // rank 99 is not in ap_per_rank — should fall back to rank-1 bonus (6)
         $advisor = new Advisor(['rank' => 99]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(6, $advisor->getApPerTick());
     }
 
     // ── Advisor model: isUnemployed ───────────────────────────────────────────
@@ -203,10 +203,10 @@ class PersonellServiceTest extends TestCase
                ->where('personell_id', PersonellService::PERSONELL_ID_SCIENTIST)
                ->update(['unavailable_until_tick' => 99999]);
 
-        // The unavailable scientist must not count: research AP = 0
-        $this->assertEquals(0, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
-        // The available engineer must still count: construction AP = 7 (rank 2)
-        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // The unavailable scientist must not count — base 6 AP still flows, no advisor bonus
+        $this->assertEquals(6, $this->service->getTotalActionPoints('knowledge', $this->colonyId));
+        // The available engineer must still count: base 6 + rank-2 bonus 14 = 20
+        $this->assertEquals(20, $this->service->getTotalActionPoints('construction', $this->colonyId));
     }
 
     // ── hire(): rank clamping and validation ──────────────────────────────────
@@ -269,8 +269,8 @@ class PersonellServiceTest extends TestCase
     {
         $this->service->lockActionPoints('construction', $this->colonyId, 3);
         $this->service->lockActionPoints('construction', $this->colonyId, 2);
-        // 7 total − 5 locked = 2
-        $this->assertEquals(2, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        // 20 total − 5 locked = 15
+        $this->assertEquals(15, $this->service->getAvailableActionPoints('construction', $this->colonyId));
     }
 
     public function testLockActionPointsWithNegativeAmountIsSanitised(): void
@@ -341,9 +341,10 @@ class PersonellServiceTest extends TestCase
 
     // ── getEconomyPoints() convenience wrapper ────────────────────────────────
 
-    public function testGetEconomyPointsReturnsZeroWithNoTraders(): void
+    public function testGetEconomyPointsBaseApWithNoTraders(): void
     {
-        $this->assertEquals(0, $this->service->getEconomyPoints($this->colonyId));
+        // Base 6 AP always flows — even without a Konsul advisor
+        $this->assertEquals(6, $this->service->getEconomyPoints($this->colonyId));
     }
 
     public function testGetEconomyPointsWithTrader(): void
@@ -355,7 +356,8 @@ class PersonellServiceTest extends TestCase
             'rank'         => 2,
             'active_ticks' => 0,
         ]);
-        $this->assertEquals(7, $this->service->getEconomyPoints($this->colonyId));
+        // rank 2 bonus 14 + base 6 = 20
+        $this->assertEquals(20, $this->service->getEconomyPoints($this->colonyId));
     }
 
     // ── incrementAdvisorTicks() via GameTick command ──────────────────────────
@@ -510,9 +512,9 @@ class PersonellServiceTest extends TestCase
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
 
-        // After promotion to rank 2, AP must exceed rank-1 value (4).
+        // After promotion to rank 2, AP must exceed rank-1 value (base 6 + bonus 6 = 12).
         // The exact value depends on the moral multiplier, so we just assert the promotion raised AP.
         $this->assertEquals(2, $advisor->rank);
-        $this->assertGreaterThan(4, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        $this->assertGreaterThan(12, $this->service->getTotalActionPoints('construction', $this->colonyId));
     }
 }

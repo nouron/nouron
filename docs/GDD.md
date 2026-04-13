@@ -815,11 +815,14 @@ Der Typ "Raumfahrer" ist eine Doppelrolle: Auf der Kolonie generiert er Navigati
 
 Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tick und den laufenden Upkeep in Credits.
 
-| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
-|------|-------------|---------------|---------------|------------------------|-------------------|
-| 1 | Junior | +6 | 12 | 50 | 10 |
-| 2 | Senior | +14 | 20 | 150 | 50 |
-| 3 | Experte | +20 | 26 | 400 | 160 |
+Grundwert pro AP-Typ: **6 AP/Tick** (immer verfügbar, auch ohne Berater).
+
+| Rang | Bezeichnung | Berater-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
+|------|-------------|-------------------|----------------|------------------------|-------------------|
+| — | (kein Berater) | +0 | **6** | — | — |
+| 1 | Junior | +6 | **12** | 50 | 10 |
+| 2 | Senior | +14 | **20** | 150 | 50 |
+| 3 | Experte | +20 | **26** | 400 | 160 |
 
 - **Einstellungskosten** sind einmalig beim Rekrutieren fällig (Credits).
 - **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater colony_id oder fleet_id hat (also nicht arbeitslos ist).

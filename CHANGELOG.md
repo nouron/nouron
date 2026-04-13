@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-13 (AP-Grundwert 6, Balancing, Design-Sprint abgeschlossen)
+
+- **AP-Grundwert 6/Tick** implementiert: Jeder AP-Typ ist immer mit 6 AP verfügbar, auch ohne aktiven Berater. Berater liefern Bonus on top: Rang 1 +6 (→12), Rang 2 +14 (→20), Rang 3 +20 (→26). `PersonellService`, `Advisor::getApPerTick()`, `config/game.php` angepasst.
+- **Design-Sprint Phase 3a abgeschlossen:** Alle ausstehenden Designfragen entschieden und dokumentiert — Schiffstypen (3: Sonde/Korvette/Frachter), Gebäude (12), Rassen zurückgestellt auf Phase 4, Roguelike-Struktur in GDD §14. ROADMAP und Plan bereinigt.
+- GDD §12 Rang-Tabelle korrigiert (Werte stimmten nicht mit Code überein). 399 Tests grün.
+
 ## 2026-04-13 (Berater-Keys advisor_*, Navigation colony-scoped, kein Fleet-Kommandant)
 
 - **Interne DB/Config-Keys** auf `advisor_*`-Präfix umgestellt: `advisor_engineer`, `advisor_scientist`, `advisor_pilot`, `advisor_consul`, `advisor_strategist`. `techs_*`-Präfix vollständig abgelöst.

@@ -60,7 +60,8 @@ class PersonellService
             $query->where('colony_id', $scopeId);
         }
 
-        $baseAp = $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
+        $baseAp = config('game.advisor.base_ap', 6)
+                + $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
 
         // Apply moral AP multiplier for colony-scoped types.
         if ($scope === 'colony') {
