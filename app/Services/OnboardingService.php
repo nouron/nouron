@@ -56,12 +56,8 @@ class OnboardingService
 
         // Colony-level resources
         $colonyResources = [
-            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 500],  // water
-            ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 500],  // ferum
-            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 500],  // silicates
-            ['resource_id' => 6,  'colony_id' => $colonyId, 'amount' => 100],  // ena
-            ['resource_id' => 8,  'colony_id' => $colonyId, 'amount' => 100],  // lho
-            ['resource_id' => 10, 'colony_id' => $colonyId, 'amount' => 100],  // aku
+            ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 500],  // res_compounds (Werkstoffe)
+            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 500],  // res_organics (Organika)
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // moral
         ];
 

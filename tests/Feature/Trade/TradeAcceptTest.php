@@ -16,20 +16,18 @@ use Tests\TestCase;
  *   Colony 2 (Shelbyville) → user_id=0 (Homer),  race_id=1, faction_id=7
  *
  *   user_resources: user_id=3 → credits=49615
- *   colony_resources (colony 1): res3=4115, res4=18598, res5=6335, res6=9400, res8=9400, res10=9400
+ *   colony_resources (colony 1): res4=18598, res5=6335
  *
  *   trade_resources:
- *     (colony_id=2, dir=0, res_id=3,  amount=11,  price=11)  ← Homer's buy offer
- *     (colony_id=2, dir=1, res_id=5,  amount=123, price=32)  ← Homer's sell offer
- *     (colony_id=2, dir=0, res_id=6,  amount=45,  price=45)  ← Homer's buy offer
- *     (colony_id=1, dir=0, res_id=10, amount=4,   price=3)   ← Bart's buy offer
- *     (colony_id=1, dir=0, res_id=8,  amount=100, price=50)  ← Bart's buy offer
+ *     (colony_id=2, dir=0, res_id=4,  amount=11,  price=11)  ← Homer's buy offer (Werkstoffe)
+ *     (colony_id=2, dir=1, res_id=5,  amount=123, price=32)  ← Homer's sell offer (Organika)
+ *     (colony_id=1, dir=0, res_id=4,  amount=100, price=50)  ← Bart's buy offer  (Werkstoffe)
  *
  * Test scenarios use:
  *   - Sell offer: Bart (buyer, col 1, user 3) buys Homer's sell offer (col 2, dir=1, res=5)
  *     cost = 123 × 32 = 3936 credits. Homer needs res5=123 on col 2 (seeded manually per test).
- *   - Buy offer: Bart accepts Homer's buy offer (col 2, dir=0, res=3, amount=11, price=11)
- *     Bart delivers 11 of res3 from col 1, Homer pays 11×11=121 credits.
+ *   - Buy offer: Bart accepts Homer's buy offer (col 2, dir=0, res=4, amount=11, price=11)
+ *     Bart delivers 11 of res4 from col 1, Homer pays 11×11=121 credits.
  *     Homer's user_resources row is seeded manually per test.
  */
 class TradeAcceptTest extends TestCase
@@ -121,7 +119,7 @@ class TradeAcceptTest extends TestCase
     // ── Buy offer (direction=0) ────────────────────────────────────────────────
 
     /**
-     * Bart accepts Homer's buy offer for resource 3.
+     * Bart accepts Homer's buy offer for resource 4 (Werkstoffe).
      * Bart delivers resource; Homer pays credits.
      */
     public function test_accept_buy_offer_transfers_resources_and_credits(): void
@@ -130,16 +128,16 @@ class TradeAcceptTest extends TestCase
         $this->setHomerCredits(500);
 
         $bartCreditsBefore = DB::table('user_resources')->where('user_id', 3)->value('credits');
-        $col1Res3Before    = DB::table('colony_resources')
-            ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
+        $col1Res4Before    = DB::table('colony_resources')
+            ->where('colony_id', 1)->where('resource_id', 4)->value('amount');
 
-        // Offer: col 2, dir=0, res=3, amount=11, price=11 → total = 121
+        // Offer: col 2, dir=0, res=4, amount=11, price=11 → total = 121
         $result = $this->gateway->acceptResourceOffer(
             buyerUserId:    3,
             buyerColonyId:  1,
             sellerColonyId: 2,
             direction:      0,
-            resourceId:     3,
+            resourceId:     4,
         );
 
         $this->assertTrue($result);
@@ -152,15 +150,15 @@ class TradeAcceptTest extends TestCase
         $homerCreditsAfter = DB::table('user_resources')->where('user_id', 0)->value('credits');
         $this->assertSame(500 - 121, (int) $homerCreditsAfter);
 
-        // Colony 1 lost resource 3
-        $col1Res3After = DB::table('colony_resources')
-            ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
-        $this->assertSame((int) $col1Res3Before - 11, (int) $col1Res3After);
+        // Colony 1 lost resource 4
+        $col1Res4After = DB::table('colony_resources')
+            ->where('colony_id', 1)->where('resource_id', 4)->value('amount');
+        $this->assertSame((int) $col1Res4Before - 11, (int) $col1Res4After);
 
-        // Colony 2 gained resource 3
-        $col2Res3After = DB::table('colony_resources')
-            ->where('colony_id', 2)->where('resource_id', 3)->value('amount');
-        $this->assertSame(11, (int) $col2Res3After);
+        // Colony 2 gained resource 4
+        $col2Res4After = DB::table('colony_resources')
+            ->where('colony_id', 2)->where('resource_id', 4)->value('amount');
+        $this->assertSame(11, (int) $col2Res4After);
     }
 
     // ── Offer deleted after acceptance ────────────────────────────────────────
@@ -193,13 +191,13 @@ class TradeAcceptTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('eigenes Angebot');
 
-        // Bart tries to accept his own buy offer (col 1, dir=0, res=10)
+        // Bart tries to accept his own buy offer (col 1, dir=0, res=4)
         $this->gateway->acceptResourceOffer(
             buyerUserId:    3,
             buyerColonyId:  1,
             sellerColonyId: 1,
             direction:      0,
-            resourceId:     10,
+            resourceId:     4,
         );
     }
 

@@ -14,7 +14,7 @@ use Tests\TestCase;
  * Testdaten (Simpsons-Fixture via TestSeeder):
  *   - User 3 (Bart)  — Kolonie 1 "Springfield"
  *   - User 0 (Homer) — Kolonie 2 "Shelbyville"
- *   - 5 Rohstoff-Angebote (2× Kolonie 1, 3× Kolonie 2)
+ *   - 3 Rohstoff-Angebote (1× Kolonie 1, 2× Kolonie 2)
  *   - 10 Forschungs-Angebote (2× Kolonie 1, 8× Kolonie 2)
  */
 class TradeControllerTest extends TestCase
@@ -57,7 +57,7 @@ class TradeControllerTest extends TestCase
             ->get(route('trade.resources'));
 
         $offers = $response->viewData('offers');
-        $this->assertCount(5, $offers);
+        $this->assertCount(3, $offers);
     }
 
     public function test_resources_filters_by_colony_id(): void
@@ -66,7 +66,7 @@ class TradeControllerTest extends TestCase
             ->get(route('trade.resources', ['colony_id' => 1]));
 
         $offers = $response->viewData('offers');
-        $this->assertCount(2, $offers);
+        $this->assertCount(1, $offers);
         $this->assertTrue($offers->every(fn($o) => $o->colony_id === 1));
     }
 
@@ -107,7 +107,7 @@ class TradeControllerTest extends TestCase
     public function test_add_resource_offer_succeeds_for_owner(): void
     {
         $countBefore = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->count();
         $this->assertSame(0, $countBefore);
 
@@ -115,7 +115,7 @@ class TradeControllerTest extends TestCase
             ->post(route('trade.offer.resource'), [
                 'colony_id'   => 1,
                 'direction'   => 1,
-                'resource_id' => 3,
+                'resource_id' => 5,
                 'amount'      => 50,
                 'price'       => 5,
             ])
@@ -123,18 +123,18 @@ class TradeControllerTest extends TestCase
             ->assertSessionHas('success');
 
         $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->count());
     }
 
     public function test_add_resource_offer_updates_existing(): void
     {
-        // Seed data: colony 1, direction=0, resource_id=10 already exists (amount=4)
+        // Seed data: colony 1, direction=0, resource_id=4 (Werkstoffe) already exists (amount=100)
         $this->actingAs($this->bart)
             ->post(route('trade.offer.resource'), [
                 'colony_id'   => 1,
                 'direction'   => 0,
-                'resource_id' => 10,
+                'resource_id' => 4,
                 'amount'      => 999,
                 'price'       => 7,
             ])
@@ -143,10 +143,10 @@ class TradeControllerTest extends TestCase
 
         // Still exactly one row, but with the updated amount
         $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 10)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count());
         $this->assertSame(999, (int) DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 10)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->value('amount'));
     }
 
@@ -157,7 +157,7 @@ class TradeControllerTest extends TestCase
             ->post(route('trade.offer.resource'), [
                 'colony_id'   => 2,
                 'direction'   => 1,
-                'resource_id' => 3,
+                'resource_id' => 5,
                 'amount'      => 50,
                 'price'       => 5,
             ])
@@ -174,22 +174,22 @@ class TradeControllerTest extends TestCase
 
     public function test_remove_resource_offer_succeeds(): void
     {
-        // Seed data: colony 1, direction=0, resource_id=8 (lho) belongs to Bart
+        // Seed data: colony 1, direction=0, resource_id=4 (werkstoffe) belongs to Bart
         $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count());
 
         $response = $this->actingAs($this->bart)
             ->postJson(route('trade.offer.remove'), [
                 'colony_id'   => 1,
                 'direction'   => 0,
-                'resource_id' => 8,
+                'resource_id' => 4,
             ]);
 
         $response->assertOk()->assertJson(['result' => true]);
 
         $this->assertSame(0, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count());
     }
 
@@ -200,13 +200,13 @@ class TradeControllerTest extends TestCase
             ->postJson(route('trade.offer.remove'), [
                 'colony_id'   => 1,
                 'direction'   => 0,
-                'resource_id' => 8,
+                'resource_id' => 4,
             ]);
 
         $response->assertOk()->assertJson(['result' => false]);
 
         $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count());
     }
 

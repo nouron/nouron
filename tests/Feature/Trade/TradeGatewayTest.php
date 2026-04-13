@@ -12,12 +12,10 @@ use Tests\TestCase;
 /**
  * Test data (Simpsons fixture via TestSeeder):
  *
- * trade_resources (5 rows):
- *   (colony_id=2, direction=0, resource_id=3,  amount=11,  price=11)
- *   (colony_id=2, direction=1, resource_id=5,  amount=123, price=32)
- *   (colony_id=2, direction=0, resource_id=6,  amount=45,  price=45)
- *   (colony_id=1, direction=0, resource_id=10, amount=4,   price=3)
- *   (colony_id=1, direction=0, resource_id=8,  amount=100, price=50)
+ * trade_resources (3 rows):
+ *   (colony_id=2, direction=0, resource_id=4,  amount=11,  price=11)  ← Homer buys Werkstoffe
+ *   (colony_id=2, direction=1, resource_id=5,  amount=123, price=32)  ← Homer sells Organika
+ *   (colony_id=1, direction=0, resource_id=4,  amount=100, price=50)  ← Bart buys Werkstoffe
  *
  * trade_knowledge (2 rows):
  *   (colony_id=1, direction=1, research_id=90, amount=5,   price=200)
@@ -47,7 +45,7 @@ class TradeGatewayTest extends TestCase
         $offers = $this->gateway->getResources();
 
         $this->assertInstanceOf(Collection::class, $offers);
-        $this->assertCount(5, $offers);
+        $this->assertCount(3, $offers);
         $this->assertNotNull($offers->first()->resource_id);
         $this->assertNotNull($offers->first()->amount);
     }
@@ -57,7 +55,7 @@ class TradeGatewayTest extends TestCase
         $offers = $this->gateway->getResources(['colony_id' => 1]);
 
         $this->assertInstanceOf(Collection::class, $offers);
-        $this->assertCount(2, $offers);
+        $this->assertCount(1, $offers);
         $this->assertTrue($offers->every(fn($o) => $o->colony_id === 1));
     }
 
@@ -87,7 +85,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 5,
             'amount'      => 100,
             'price'       => 10,
         ]);
@@ -100,7 +98,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 5,
             'amount'      => 100,
             'price'       => 10,
             'user_id'     => 99,  // does not own colony 1
@@ -113,16 +111,16 @@ class TradeGatewayTest extends TestCase
 
     public function test_add_resource_offer_creates_new(): void
     {
-        // colony 1 + direction 1 + resource 3 does not exist in seed data
+        // colony 1 + direction 1 + resource 5 (Organika sell) does not exist in seed data
         $countBefore = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->count();
         $this->assertSame(0, $countBefore);
 
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 5,
             'amount'      => 100,
             'price'       => 10,
             'user_id'     => 3,  // Bart owns colony 1
@@ -131,12 +129,12 @@ class TradeGatewayTest extends TestCase
         $this->assertTrue($result);
 
         $countAfter = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->count();
         $this->assertSame(1, $countAfter);
 
         $row = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->first();
         $this->assertSame(100, (int) $row->amount);
     }
@@ -147,7 +145,7 @@ class TradeGatewayTest extends TestCase
         $this->gateway->addResourceOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 5,
             'amount'      => 100,
             'price'       => 10,
             'user_id'     => 3,
@@ -157,7 +155,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 5,
             'amount'      => 500,
             'price'       => 10,
             'user_id'     => 3,
@@ -166,12 +164,12 @@ class TradeGatewayTest extends TestCase
         $this->assertTrue($result);
 
         $count = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->count();
         $this->assertSame(1, $count);
 
         $row = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 3)
+            ->where('colony_id', 1)->where('direction', 1)->where('resource_id', 5)
             ->first();
         $this->assertSame(500, (int) $row->amount);
     }
@@ -280,7 +278,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 4,
         ]);
 
         $this->assertFalse($result);
@@ -291,7 +289,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 4,
             'user_id'     => 99,
         ]);
 
@@ -302,23 +300,23 @@ class TradeGatewayTest extends TestCase
 
     public function test_remove_resource_offer_succeeds(): void
     {
-        // Verify seed data is present: colony 1, buy (direction=0), lho (resource_id=8)
+        // Verify seed data is present: colony 1, buy (direction=0), werkstoffe (resource_id=4)
         $countBefore = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count();
         $this->assertSame(1, $countBefore);
 
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 4,
             'user_id'     => 3,
         ]);
 
         $this->assertTrue($result);
 
         $countAfter = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 4)
             ->count();
         $this->assertSame(0, $countAfter);
     }

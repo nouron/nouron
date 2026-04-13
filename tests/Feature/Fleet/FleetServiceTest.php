@@ -23,7 +23,7 @@ class FleetServiceTest extends TestCase
     protected int $fleetId    = 10;
     protected int $shipId     = 29;
     protected int $researchId = 90;
-    protected int $resourceId = 3;
+    protected int $resourceId = 4;
     protected int $objectId   = 1;
     protected int $systemId   = 1;
     protected int $colonyId   = 1;
@@ -230,13 +230,13 @@ class FleetServiceTest extends TestCase
     public function testGetFleetResources(): void
     {
         $result = $this->service->getFleetResources(['fleet_id' => $this->fleetId]);
-        $this->assertEquals(6, $result->count());
+        $this->assertEquals(2, $result->count());
     }
 
     public function testGetFleetResourcesByFleetId(): void
     {
         $result = $this->service->getFleetResourcesByFleetId($this->fleetId);
-        $this->assertEquals(6, $result->count());
+        $this->assertEquals(2, $result->count());
     }
 
     public function testGetFleetResource(): void

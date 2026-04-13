@@ -118,7 +118,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
         DB::table('trade_resources')->insert([
             'colony_id'   => 999,
             'direction'   => 1,
-            'resource_id' => 3,
+            'resource_id' => 4,
             'amount'      => 10,
             'price'       => 5,
             'restriction' => 0,
@@ -132,7 +132,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
             buyerColonyId:  1,
             sellerColonyId: 999,
             direction:      1,
-            resourceId:     3,
+            resourceId:     4,
         );
     }
 
@@ -148,7 +148,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
      */
     public function test_accept_own_offer_via_same_colony_id_throws(): void
     {
-        // Bart's buy offer on colony 1 (dir=0, res=10)
+        // Bart's buy offer on colony 1 (dir=0, res=4 — Werkstoffe)
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('eigenes Angebot');
 
@@ -157,7 +157,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
             buyerColonyId:  1,
             sellerColonyId: 1, // same colony
             direction:      0,
-            resourceId:     10,
+            resourceId:     4,
         );
     }
 
@@ -375,17 +375,17 @@ class TradeAcceptEdgeCaseTest extends TestCase
     // ── E12: Acceptor has exactly the required resource amount (buy offer) ─────
 
     /**
-     * Boundary: colony 1 has exactly 11 of resource 3 — just enough to satisfy
-     * Homer's buy offer (amount=11). The transfer must succeed and leave colony 1
-     * with 0 of resource 3.
+     * Boundary: colony 1 has exactly 11 of resource 4 (Werkstoffe) — just enough
+     * to satisfy Homer's buy offer (amount=11). The transfer must succeed and
+     * leave colony 1 with 0 of resource 4.
      */
     public function test_accept_buy_offer_when_acceptor_has_exact_amount(): void
     {
         $this->setHomerCredits(500);
 
-        // Set colony 1 resource 3 to exactly the required amount
+        // Set colony 1 resource 4 to exactly the required amount
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => 1, 'resource_id' => 3],
+            ['colony_id' => 1, 'resource_id' => 4],
             ['amount' => 11]
         );
 
@@ -394,14 +394,14 @@ class TradeAcceptEdgeCaseTest extends TestCase
             buyerColonyId:  1,
             sellerColonyId: 2,
             direction:      0,
-            resourceId:     3,
+            resourceId:     4,
         );
 
         $this->assertTrue($result);
 
-        $col1Res3After = (int) DB::table('colony_resources')
-            ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
-        $this->assertSame(0, $col1Res3After);
+        $col1Res4After = (int) DB::table('colony_resources')
+            ->where('colony_id', 1)->where('resource_id', 4)->value('amount');
+        $this->assertSame(0, $col1Res4After);
     }
 
     // ── E13: Seller has no user_resources row yet (sell offer) ───────────────
@@ -502,7 +502,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
             ->post(route('trade.offer.accept'), [
                 'seller_colony_id' => 1, // Bart's own colony = self-trade
                 'direction'        => 0,
-                'resource_id'      => 10,
+                'resource_id'      => 4,  // Bart's buy offer for Werkstoffe
             ]);
 
         $response->assertRedirect();

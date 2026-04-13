@@ -15,9 +15,9 @@ use RuntimeException;
 /**
  * ResourcesService — Laravel port of Resources\Service\ResourcesService.
  *
- * Manages the 9 resource types (credits, supply, water, ferum, silicates,
- * ena, lho, aku, moral). Credits and supply are stored in user_resources
- * (user-level); the remaining 7 are stored in colony_resources.
+ * Manages the 5 resource types (Credits, Supply, Compounds, Organics, Moral).
+ * Credits and Versorgung are stored in user_resources (user-level);
+ * the remaining 3 (Compounds (ID 4), Organics (ID 5), Moral ID 12) are stored in colony_resources.
  */
 class ResourcesService
 {

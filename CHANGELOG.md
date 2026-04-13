@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-13 (Ressourcen-Bereinigung Phase 3a)
+
+- **Ferum → Compounds** (ID 4, Kürzel `Co`) und **Silicates → Organics** (ID 5, Kürzel `Or`) umbenannt — interne DB-Namen englisch, Anzeigename "Werkstoffe"/"Organika" via Lokalisierung.
+- **Wasser (ID 3)** entfernt — logisch in Versorgung (Supply) enthalten.
+- **ENrg (ID 6), LNrg (ID 8), ANrg (ID 10)** aus DB entfernt — Energietypen im neuen Konzept abgeschafft.
+- Verbleibende Ressourcen: Credits (1), Supply (2), Compounds (4), Organics (5), Moral (12).
+- Migration `2026_04_13_000001_rename_resources_and_remove_energy_types.php` erstellt.
+- `OnboardingService`, `testdata.sqlite.sql` und alle betroffenen Tests angepasst (410 Tests grün).
+
 ## 2026-04-12 (Berater-Umbenennung: Design-Sprint-Namen wiederhergestellt)
 
 - **Berater-Namen** auf Design-Sprint-Beschlüsse zurückgesetzt: Ingenieur → **Baumeister**, Wissenschaftler → **Analytiker**, Pilot/Kommandant → **Raumfahrer**, Händler → **Konsul** (Stratege unverändert).
