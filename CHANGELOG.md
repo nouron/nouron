@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-04-14 (Design: Kenntnisse-Redesign — Freischalt-Techtree + Berater-Zuweisung)
+
+- **Kenntnisse-System grundlegend neu designt** (GDD §10): Level+Decay-Modell wird durch Freischalt-Techtree ersetzt — Kenntnisse werden einmalig erarbeitet und bleiben permanent. Kein Decay auf Wissen.
+- **Zwei Effekt-Ebenen** definiert: Primäreffekt (immer aktiv nach Freischaltung), Sekundäreffekt (aktiv wenn Kenntnis einem Berater zugewiesen).
+- **Berater-Zuweisung** als neue Mechanik: jeder Berater ab Rang 2 hat 1 Kenntnis-Slot. Max. 5 aktive Sekundäreffekte gleichzeitig (einer pro Berater). Erzeugt echte Spezialisierungsentscheidungen.
+- **Roguelike-Variabilität**: pro Run nur zufällige Teilmenge der Kenntnisse verfügbar (z.B. 5 von 7).
+- **Roadmap Phase 3a** um drei Design-Punkte erweitert: Kenntnisse-Redesign, Handel-Redesign, Flottenbewegung-Redesign — je mit eigenem Branch.
+- Vollständige Berater×Kenntnisse-Matrix (35 Kombinationen) und konkrete Sekundäreffekt-Werte sind TODOs nach erstem Playtest.
+
 ## 2026-04-12 (GDD-Review: Inkonsistenzen behoben, techs → knowledge umbenannt)
 
 - **CC max_level 10 → 5** in GDD §4 korrigiert (war nur noch dort veraltet).
