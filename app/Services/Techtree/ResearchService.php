@@ -11,9 +11,9 @@ namespace App\Services\Techtree;
  */
 class ResearchService extends AbstractTechnologyService
 {
-    protected function masterTable(): string  { return 'researches'; }
-    protected function colonyTable(): string  { return 'colony_researches'; }
-    protected function costsTable(): string   { return 'research_costs'; }
+    protected function masterTable(): string  { return 'knowledge'; }
+    protected function colonyTable(): string  { return 'colony_knowledge'; }
+    protected function costsTable(): string   { return 'knowledge_costs'; }
     protected function entityIdKey(): string  { return 'research_id'; }
 
     /**

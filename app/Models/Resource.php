@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Eloquent model for the `resources` table — resource type definitions.
- * (9 types: credits, supply, water, ferum, silicates, ena, lho, aku, moral)
+ * (5 types: Credits, Supply, Compounds, Organics, Moral)
  */
 class Resource extends Model
 {

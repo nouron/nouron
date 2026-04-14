@@ -364,8 +364,8 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 
 ### Phase 3a: Content & Balancing + Kernmechaniken
 
-- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 25 Gebäude und 10 Forschungen auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
-- [ ] **Supply-Kosten auf Plausibilität testen** — offene Frage: kann ein Anfänger einen Battlecruiser unterhalten? Supply-Cap-Modell (CC_flat 15 + HousingLevel × 8, max 200) gegen Schiffskosten abgleichen
+- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 12 Gebäude und 10 Kenntnisse auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
+- [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_flat 10×Level + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
 - [ ] **Forschungshandel-Mechanik definieren und umsetzen** — Designfrage: Level-Transfer, Wissenstransfer oder Lizenz-Modell; ADR erforderlich vor Implementierung (`docs/adr/`)
 - [ ] **Interstellare Flottenbewegung freischalten** — aktuell in `FleetController::storeOrder` explizit gesperrt; Wurmloch/Sternentor-Mechanik designen (ADR erforderlich vor Implementierung); `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits
 
@@ -385,7 +385,7 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 ### Phase 3c: Onboarding & Tutorial
 
 - [ ] **Geführte Einführung für neue Spieler** — Form noch offen: interaktive Tour oder Tooltip-gestützte Einführung
-- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht 25 leere Techtree-Kacheln ohne Orientierung; erster Schritt muss klar sein
+- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht 12 leere Kacheln ohne Orientierung; erster Schritt muss klar sein
 - [ ] **Visuelle Hervorhebung des "nächsten sinnvollen Schritts"** — für Anfänger ohne Spielerfahrung; kein Bevormunden für erfahrene Spieler
 
 ---
@@ -394,7 +394,7 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 
 | Thema | Entscheidung | Begründung |
 |---|---|---|
-| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 6 Schiffstypen + 4 Attribute erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
+| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 3 Schiffstypen (Sonde, Korvette, Frachter) erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
 | **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
 | **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
 | **Rassen-System** | Zurückstellen auf Phase 4 | `race_id` ist im Schema, wird nicht ausgewertet. Rassenspezifische Effekte zu definieren setzt Playtest-Daten voraus — sonst blind balancen. |

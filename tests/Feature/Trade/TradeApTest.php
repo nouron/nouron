@@ -53,7 +53,7 @@ class TradeApTest extends TestCase
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     /**
-     * Insert a Händler (trader) advisor for the given colony at rank 1 (4 AP/tick).
+     * Insert a Händler (trader) advisor for the given colony at rank 1 (bonus 6 + base 6 = 12 AP/tick).
      */
     private function hireTrader(int $colonyId, int $rank = 1): Advisor
     {
@@ -92,10 +92,10 @@ class TradeApTest extends TestCase
      */
     public function test_add_offer_locks_economy_ap(): void
     {
-        $this->hireTrader(1); // 4 AP available on colony 1
+        $this->hireTrader(1); // rank 1: bonus 6 + base 6 = 12 AP on colony 1
 
         $apBefore = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(4, $apBefore);
+        $this->assertSame(12, $apBefore);
 
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
@@ -110,15 +110,18 @@ class TradeApTest extends TestCase
 
         $apAfter = $this->personellService->getEconomyPoints(1);
         // min cost is 1 AP: max(1, floor(100×5/1000)) = max(1, 0) = 1
-        $this->assertSame(3, $apAfter);
+        $this->assertSame(11, $apAfter);
     }
 
     /**
-     * addResourceOffer() throws when the colony has no economy AP.
+     * addResourceOffer() throws when the colony has insufficient economy AP.
+     *
+     * Base AP is 6. A large trade (amount=700, price=10) costs 7 AP
+     * (max(1, floor(700×10/1000)) = 7), which exceeds the base of 6 → fails.
      */
     public function test_add_offer_fails_when_insufficient_economy_ap(): void
     {
-        // No trader hired → 0 economy AP
+        // No trader hired → only base 6 economy AP; offer costs 7 AP → insufficient
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('Wirtschafts-AP');
 
@@ -126,7 +129,7 @@ class TradeApTest extends TestCase
             'colony_id'   => 1,
             'direction'   => 1,
             'resource_id' => 3,
-            'amount'      => 10,
+            'amount'      => 700,
             'price'       => 10,
             'user_id'     => 3,
         ]);
@@ -140,11 +143,11 @@ class TradeApTest extends TestCase
      */
     public function test_accept_offer_locks_economy_ap_on_buyer(): void
     {
-        $this->hireTrader(1); // Bart's colony gets 4 economy AP
+        $this->hireTrader(1); // Bart's colony: rank 1 bonus 6 + base 6 = 12 economy AP
         $this->setColony2Resource(5, 200); // Homer stocks resource 5
 
         $apBefore = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(4, $apBefore);
+        $this->assertSame(12, $apBefore);
 
         // Offer: col 2, dir=1, res=5, amount=123, price=32 → total = 3936 credits
         $result = $this->gateway->acceptResourceOffer(
@@ -158,15 +161,16 @@ class TradeApTest extends TestCase
         $this->assertTrue($result);
 
         $apAfter = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(3, $apAfter); // 1 AP locked
+        $this->assertSame(11, $apAfter); // 1 AP locked
     }
 
     /**
-     * acceptResourceOffer() throws when the buyer's colony has no economy AP.
+     * acceptResourceOffer() throws when the buyer's colony has insufficient economy AP.
      */
     public function test_accept_offer_fails_when_buyer_has_insufficient_economy_ap(): void
     {
-        // No trader on colony 1 → 0 economy AP
+        // No trader on colony 1 → base 6 AP. Lock all 6 first so none remain.
+        $this->personellService->lockActionPoints('economy', 1, 6);
         $this->setColony2Resource(5, 200);
 
         $this->expectException(\InvalidArgumentException::class);
@@ -188,12 +192,11 @@ class TradeApTest extends TestCase
      */
     public function test_ap_cost_scales_with_offer_value(): void
     {
-        // We need at least 5 AP — hire two rank-1 traders (4+4=8 AP total).
-        $this->hireTrader(1, rank: 1);
-        $this->hireTrader(1, rank: 1);
+        // Hire rank-2 trader: bonus 14 + base 6 = 20 AP total.
+        $this->hireTrader(1, rank: 2);
 
         $apBefore = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(8, $apBefore);
+        $this->assertSame(20, $apBefore);
 
         $result = $this->gateway->addResourceOffer([
             'colony_id'   => 1,
@@ -207,7 +210,7 @@ class TradeApTest extends TestCase
         $this->assertTrue($result);
 
         $apAfter = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(3, $apAfter); // 8 - 5 = 3
+        $this->assertSame(15, $apAfter); // 20 - 5 = 15
     }
 
     // ── dev_mode bypasses AP checks ───────────────────────────────────────────
@@ -231,8 +234,8 @@ class TradeApTest extends TestCase
 
         $this->assertTrue($result);
 
-        // Also verify no AP were locked (bypass = no side effects)
+        // Also verify no AP were locked (bypass = no side effects) — base 6 still available
         $apAfter = $this->personellService->getEconomyPoints(1);
-        $this->assertSame(0, $apAfter);
+        $this->assertSame(6, $apAfter);
     }
 }

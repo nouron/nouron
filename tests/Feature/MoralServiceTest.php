@@ -42,8 +42,8 @@ namespace Tests\Feature;
  *   - A negative-moral research (military, id=81) subtracts level × 2
  *
  * calculateMoral() — ship contribution:
- *   - A positive-moral ship (largeTransporter, id=84) adds level × 2
- *   - A negative-moral ship (battlecruiser1, id=49) subtracts level × 4
+ *   - A positive-moral ship (frachter, id=47, moral_per_unit=+1) adds amount × 1
+ *   - A negative-moral ship (korvette, id=37, moral_per_unit=-1) subtracts amount × 1
  *   - Total ship contribution is capped at ±30 before global clamp
  *
  * calculateMoral() — event contribution:
@@ -101,7 +101,7 @@ class MoralServiceTest extends TestCase
         // Remove seeded colony_buildings / colony_researches / colony_ships for
         // colony 1 so building/research/ship tests can insert exactly what they need.
         DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
-        DB::table('colony_researches')->where('colony_id', $this->colonyId)->delete();
+        DB::table('colony_knowledge')->where('colony_id', $this->colonyId)->delete();
         DB::table('colony_ships')->where('colony_id', $this->colonyId)->delete();
     }
 
@@ -351,6 +351,9 @@ class MoralServiceTest extends TestCase
     public function testCalculateMoral_negativeBuildingContribution(): void
     {
         // prison (id=55): -3 per level; level=2 → -6
+        // Prison is not in config/buildings.php yet — inject it inline for this test.
+        config(['buildings.prison' => ['id' => 55, 'moral_per_lv' => -3]]);
+
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
             'building_id'  => 55,
@@ -400,10 +403,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_positiveResearchContribution(): void
     {
-        // medicalScience (id=72): +2 per level; level=3 → +6
-        DB::table('colony_researches')->insert([
+        // health (id=94): +2 per level; level=3 → +6
+        DB::table('colony_knowledge')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 72,
+            'research_id'  => 94,
             'level'        => 3,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -416,10 +419,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_negativeResearchContribution(): void
     {
-        // military (id=81): -2 per level; level=5 → -10
-        DB::table('colony_researches')->insert([
+        // defense (id=96): -1 per level; level=5 → -5
+        DB::table('colony_knowledge')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 81,
+            'research_id'  => 96,
             'level'        => 5,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -427,15 +430,15 @@ class MoralServiceTest extends TestCase
 
         $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
 
-        $this->assertSame(-10, $moral);
+        $this->assertSame(-5, $moral);
     }
 
     public function testCalculateMoral_researchNotInConfig_isIgnored(): void
     {
-        // mathematics (research_id=73 in testdata, not in moral.researches config)
-        DB::table('colony_researches')->insert([
+        // construction (research_id=90): moral_per_lv=0, contributes nothing
+        DB::table('colony_knowledge')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 73,
+            'research_id'  => 90,
             'level'        => 10,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -450,11 +453,11 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_positiveShipContribution(): void
     {
-        // largeTransporter (id=84): +2 per level; level=3 → +6
+        // frachter (id=47): +1 per unit; level=6 → +6
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 84,
-            'level'        => 3,
+            'ship_id'      => 47,
+            'level'        => 6,
             'status_points'=> 10,
             'ap_spend'     => 0,
         ]);
@@ -466,10 +469,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_negativeShipContribution(): void
     {
-        // battlecruiser1 (id=49): -4 per level; level=5 → -20
+        // korvette (id=37): -1 per unit; level=5 → -5
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 49,
+            'ship_id'      => 37,
             'level'        => 5,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -477,15 +480,15 @@ class MoralServiceTest extends TestCase
 
         $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
 
-        $this->assertSame(-20, $moral);
+        $this->assertSame(-5, $moral);
     }
 
     public function testCalculateMoral_shipContribution_isCapppedAtPositive30(): void
     {
-        // largeTransporter (id=84): +2 per level; level=100 → raw +200, capped to +30
+        // frachter (id=47): +1 per unit; level=100 → raw +100, capped to +30
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 84,
+            'ship_id'      => 47,
             'level'        => 100,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -498,10 +501,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_shipContribution_isCappedAtNegative30(): void
     {
-        // battlecruiser1 (id=49): -4 per level; level=100 → raw -400, capped to -30
+        // korvette (id=37): -1 per unit; level=100 → raw -100, capped to -30
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 49,
+            'ship_id'      => 37,
             'level'        => 100,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -604,6 +607,9 @@ class MoralServiceTest extends TestCase
     public function testCalculateMoral_isClampedToNegative100(): void
     {
         // prison (id=55): -3/level; level=50 → raw building contribution = -150
+        // Prison is not in config/buildings.php yet — inject it inline for this test.
+        config(['buildings.prison' => ['id' => 55, 'moral_per_lv' => -3]]);
+
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
             'building_id'  => 55,
@@ -675,6 +681,9 @@ class MoralServiceTest extends TestCase
     public function testCalculateAndStore_returnsClampedValue(): void
     {
         // prison (id=55): -3/level; level=50 → raw -150, clamped to -100
+        // Prison is not in config/buildings.php yet — inject it inline for this test.
+        config(['buildings.prison' => ['id' => 55, 'moral_per_lv' => -3]]);
+
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
             'building_id'  => 55,
@@ -691,10 +700,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateAndStore_returnValueMatchesStoredValue(): void
     {
-        // medicalScience (id=72): +2/level; level=7 → +14
-        DB::table('colony_researches')->insert([
+        // health (id=94): +2/level; level=7 → +14
+        DB::table('colony_knowledge')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 72,
+            'research_id'  => 94,
             'level'        => 7,
             'status_points'=> 10,
             'ap_spend'     => 0,
@@ -721,20 +730,20 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        // medicalScience (id=72): +2/level; level=3 → +6
-        DB::table('colony_researches')->insert([
+        // health (id=94): +2/level; level=3 → +6
+        DB::table('colony_knowledge')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 72,
+            'research_id'  => 94,
             'level'        => 3,
             'status_points'=> 10,
             'ap_spend'     => 0,
         ]);
 
-        // largeTransporter (id=84): +2/level; level=1 → +2
+        // frachter (id=47): +1/unit; level=2 → +2
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 84,
-            'level'        => 1,
+            'ship_id'      => 47,
+            'level'        => 2,
             'status_points'=> 10,
             'ap_spend'     => 0,
         ]);

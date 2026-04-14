@@ -68,7 +68,7 @@ class TradeController extends BaseController
     {
         $where       = $this->buildFilter($request);
         $offers      = $this->tradeGateway->getResearches($where ?: null);
-        $researches  = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
+        $researches  = \Illuminate\Support\Facades\DB::table('knowledge')->get()->keyBy('id');
         $user_id     = $this->getCurrentUserId();
         $currentUser = Auth::user();
         $myColonies  = $user_id ? $this->colonyService->getColoniesByUserId($user_id) : collect();

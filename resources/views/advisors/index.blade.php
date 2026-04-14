@@ -395,14 +395,7 @@
                         <select name="personell_id" id="personell_id" class="form-select" required>
                             @foreach($personellTypes as $pId => $pType)
                             @php
-                                $label = match($pType->name) {
-                                    'techs_engineer'  => 'Ingenieur (Bau-AP)',
-                                    'techs_scientist' => 'Wissenschaftler (Forschungs-AP)',
-                                    'techs_trader'    => 'Händler (Wirtschafts-AP)',
-                                    'techs_stratege'  => 'Stratege (Strategie-AP)',
-                                    'techs_pilot'     => 'Pilot / Kommandant (Navigations-AP)',
-                                    default           => $pType->name,
-                                };
+                                $label = __('advisors.' . $pType->name, [], 'de') ?: $pType->name;
                                 $cost = $creditsByPersonellId->get($pId, 0);
                                 $alreadyHired = $advisors->contains('personell_id', $pId);
                             @endphp

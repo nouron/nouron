@@ -172,7 +172,7 @@ class MoralService
             return 0;
         }
 
-        $researches = DB::table('colony_researches')
+        $researches = DB::table('colony_knowledge')
             ->where('colony_id', $colonyId)
             ->whereIn('research_id', array_keys($cfg))
             ->get();

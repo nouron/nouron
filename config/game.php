@@ -73,7 +73,11 @@ return [
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
         'rank_thresholds' => [1 => 10, 2 => 20],
-        'ap_per_rank'     => [1 => 4, 2 => 7, 3 => 12],
+        // base_ap: always available per AP type, regardless of whether an advisor is active (GDD §12).
+        // ap_per_rank: bonus AP the advisor adds on top of base_ap.
+        // Total AP = base_ap + ap_per_rank[rank].  Values: Junior=12, Senior=20, Experte=26.
+        'base_ap'         => 6,
+        'ap_per_rank'     => [1 => 6, 2 => 14, 3 => 20],
         // Slot system: CC level = number of advisor slots (max 5).
         // Formula: min(cc_level, max_slots)
         'max_slots'       => 5,

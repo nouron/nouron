@@ -31,16 +31,17 @@ class SyncKnowledge extends Command
             $this->warn('DRY RUN — no changes will be written.');
         }
 
-        $shipChanges     = $this->syncShips($dry);
-        $buildingChanges = $this->syncBuildings($dry);
+        $shipChanges      = $this->syncShips($dry);
+        $buildingChanges  = $this->syncBuildings($dry);
+        $knowledgeChanges = $this->syncKnowledge($dry);
 
-        $total = $shipChanges + $buildingChanges;
+        $total = $shipChanges + $buildingChanges + $knowledgeChanges;
 
         if ($total === 0) {
             $this->info('Everything is already in sync — no changes needed.');
         } else {
             $verb = $dry ? 'would update' : 'updated';
-            $this->info("Done — {$verb} {$total} row(s) ({$shipChanges} ships, {$buildingChanges} buildings).");
+            $this->info("Done — {$verb} {$total} row(s) ({$shipChanges} ships, {$buildingChanges} buildings, {$knowledgeChanges} knowledge).");
         }
 
         return self::SUCCESS;
@@ -139,6 +140,53 @@ class SyncKnowledge extends Command
 
             if (!$dry) {
                 DB::table('buildings')->where('id', $id)->update($updates);
+            }
+
+            $changed++;
+        }
+
+        return $changed;
+    }
+
+    // ── Knowledge ─────────────────────────────────────────────────────────────
+
+    private function syncKnowledge(bool $dry): int
+    {
+        $configs = config('knowledge', []);
+        $changed = 0;
+
+        foreach ($configs as $key => $cfg) {
+            $id = (int) ($cfg['id'] ?? 0);
+            if (!$id) {
+                $this->warn("  knowledge/{$key}: missing 'id' — skipped.");
+                continue;
+            }
+
+            $row = DB::table('knowledge')->where('id', $id)->first();
+            if (!$row) {
+                $this->warn("  knowledge/{$key}: id={$id} not found in DB — skipped.");
+                continue;
+            }
+
+            $updates = [];
+
+            foreach ([
+                'decay_rate'        => (float) ($cfg['decay_rate']        ?? $row->decay_rate),
+                'max_status_points' => (int)   ($cfg['max_status_points'] ?? $row->max_status_points),
+            ] as $col => $newVal) {
+                if ((string) $row->$col !== (string) $newVal) {
+                    $updates[$col] = $newVal;
+                }
+            }
+
+            if (empty($updates)) {
+                continue;
+            }
+
+            $this->line("  [knowledge] {$key} (id={$id}): " . $this->formatUpdates($row, $updates));
+
+            if (!$dry) {
+                DB::table('knowledge')->where('id', $id)->update($updates);
             }
 
             $changed++;

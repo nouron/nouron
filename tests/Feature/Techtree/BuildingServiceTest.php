@@ -113,7 +113,7 @@ class BuildingServiceTest extends TestCase
         // Clear all supply costs, then set oremine=2
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
-        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('knowledge')->update(['supply_cost' => 0]);
         DB::table('buildings')->where('id', $this->entityId)->update(['supply_cost' => 2]);
 
         // Level=5 × 2 = 10 supply used; cap=100 → free=90 ≥ 2 → should pass

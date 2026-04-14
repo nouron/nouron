@@ -735,10 +735,10 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 
 | AP-Typ (intern) | Beraterbezeichnung | Verwendung |
 |-----------------|-------------------|-----------|
-| `industry` | Ingenieur | Gebäude ausbauen, reparieren, Schiffsbau |
-| `science` | Wissenschaftler | Forschungen vorantreiben, Wissenstransfer |
-| `navigation` | Pilot / Kommandant | Flottenbewegung, Fleet-Trade-Orders |
-| `economy` | Händler | Handelsangebote, Fraktionskontakte, Handelsabkommen |
+| `construction` | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
+| `knowledge` | Analytiker | Forschungen vorantreiben, Wissenstransfer |
+| `navigation` | Raumfahrer | Flottenbewegung, Fleet-Trade-Orders |
+| `economy` | Konsul | Handelsangebote, Fraktionskontakte, Handelsabkommen |
 | `strategy` | Stratege | Kampforders, Verteidigung, taktische Planung |
 
 **Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
@@ -753,13 +753,13 @@ Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren 
 
 | CC-Level | Freigeschalteter Slot | Beratertyp |
 |----------|-----------------------|-----------|
-| 1 | Slot 1 | Ingenieur |
-| 2 | Slot 2 | Wissenschaftler |
-| 3 | Slot 3 | Pilot / Kommandant |
-| 4 | Slot 4 | Händler |
+| 1 | Slot 1 | Baumeister |
+| 2 | Slot 2 | Analytiker |
+| 3 | Slot 3 | Raumfahrer |
+| 4 | Slot 4 | Konsul |
 | 5+ | Slot 5 | Stratege |
 
-Wer alle 5 Berater will, braucht mindestens CC Lv5. Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt. Pro Typ und pro Kolonie kann immer nur genau **ein** Berater den Slot belegen — ein zweiter Ingenieur auf derselben Kolonie ist nicht möglich.
+Wer alle 5 Berater will, braucht mindestens CC Lv5. Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt. Pro Typ und pro Kolonie kann immer nur genau **ein** Berater den Slot belegen — ein zweiter Baumeister auf derselben Kolonie ist nicht möglich.
 
 ---
 
@@ -771,7 +771,7 @@ Jeder Berater ist ein eigener Datensatz. Die Tabelle hat folgendes Schema:
 advisors
 ├── id                      ← eindeutige ID des Beraters
 ├── user_id                 ← Eigentümer (immer gesetzt)
-├── personell_type          ← 'industry' | 'science' | 'navigation' | 'economy' | 'strategy'
+├── personell_type          ← 'construction' | 'knowledge' | 'navigation' | 'economy' | 'strategy'
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
 ├── fleet_id                ← nullable: auf dieser Flotte
 ├── is_commander            ← boolean: führt die Flotte als Kommandant (nur navigation-Typ)
@@ -801,13 +801,13 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 
 | Beratertyp | AP-Pool (intern) | Thematische Rolle |
 |------------|-----------------|------------------|
-| Ingenieur | `industry` | Infrastruktur, Gebäude, Schiffsbau |
-| Wissenschaftler | `science` | Forschung, Technologie, Wissenstransfer |
-| Pilot / Kommandant | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
-| Händler | `economy` | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
+| Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
+| Analytiker | `knowledge` | Forschung, Technologie, Wissenstransfer |
+| Raumfahrer | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
+| Konsul | `economy` | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
 | Stratege | `strategy` | Kampf, Verteidigung, taktische Befehle |
 
-Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
+Der Typ "Raumfahrer" ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
 
 ---
 
@@ -815,11 +815,14 @@ Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er 
 
 Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tick und den laufenden Upkeep in Credits.
 
-| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
-|------|-------------|---------------|---------------|------------------------|-------------------|
-| 1 | Junior | +6 | 12 | 50 | 10 |
-| 2 | Senior | +14 | 20 | 150 | 50 |
-| 3 | Experte | +20 | 26 | 400 | 160 |
+Grundwert pro AP-Typ: **6 AP/Tick** (immer verfügbar, auch ohne Berater).
+
+| Rang | Bezeichnung | Berater-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
+|------|-------------|-------------------|----------------|------------------------|-------------------|
+| — | (kein Berater) | +0 | **6** | — | — |
+| 1 | Junior | +6 | **12** | 50 | 10 |
+| 2 | Senior | +14 | **20** | 150 | 50 |
+| 3 | Experte | +20 | **26** | 400 | 160 |
 
 - **Einstellungskosten** sind einmalig beim Rekrutieren fällig (Credits).
 - **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater colony_id oder fleet_id hat (also nicht arbeitslos ist).

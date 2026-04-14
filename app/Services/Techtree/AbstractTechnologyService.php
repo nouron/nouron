@@ -262,7 +262,7 @@ abstract class AbstractTechnologyService
         // Verify available AP
         $availableAP = match ($pointsType) {
             'construction_points' => $this->personellService?->getConstructionPoints($colonyId) ?? 0,
-            'research_points'     => $this->personellService?->getResearchPoints($colonyId) ?? 0,
+            'research_points'     => $this->personellService?->getKnowledgePoints($colonyId) ?? 0,
             default               => 0,
         };
 
@@ -320,7 +320,7 @@ abstract class AbstractTechnologyService
                 $updateData
             );
 
-            $apType = ($pointsType === 'research_points') ? 'research' : 'construction';
+            $apType = ($pointsType === 'research_points') ? 'knowledge' : 'construction';
 
             if ($changeMode === 'add') {
                 // Lock the AP actually spent toward levelup so they cannot be reused in the same tick

@@ -2,16 +2,19 @@
 
 return [
 
-    'engineer'      => 'Ingenieur',
-    'engineer_desc' => 'Stellt Bau-AP (construction) bereit. Ermöglicht den Ausbau und die Instandhaltung von Gebäuden.',
+    'advisor_engineer'      => 'Baumeister',
+    'advisor_engineer_desc' => 'Stellt Bau-AP (construction) bereit. Ermöglicht den Ausbau und die Instandhaltung von Gebäuden.',
 
-    'scientist'      => 'Wissenschaftler',
-    'scientist_desc' => 'Stellt Forschungs-AP (research) bereit. Treibt den Fortschritt in Wissenschaft und Technologie voran.',
+    'advisor_scientist'      => 'Analytiker',
+    'advisor_scientist_desc' => 'Stellt Wissens-AP (knowledge) bereit. Treibt den Fortschritt in Forschung und Technologie voran.',
 
-    'pilot'      => 'Kommandant',
-    'pilot_desc' => 'Übernimmt das Kommando über eine Flotte. Stellt Navigations-AP (navigation) bereit.',
+    'advisor_pilot'      => 'Raumfahrer',
+    'advisor_pilot_desc' => 'Stellt Navigations-AP (navigation) bereit. Plant Sprünge und koordiniert Flottenoperationen.',
 
-    'trader'      => 'Händler',
-    'trader_desc' => 'Stellt Wirtschafts-AP (economy) bereit. Verwaltet Handelsrouten und Marktoperationen.',
+    'advisor_consul'      => 'Konsul',
+    'advisor_consul_desc' => 'Stellt Wirtschafts-AP (economy) bereit. Verwaltet Handelsrouten und Fraktionskontakte.',
+
+    'advisor_strategist'      => 'Stratege',
+    'advisor_strategist_desc' => 'Stellt Strategie-AP (strategy) bereit. Koordiniert Kampforders und taktische Planung.',
 
 ];

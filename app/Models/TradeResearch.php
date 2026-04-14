@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class TradeResearch extends Model
 {
-    protected $table = 'trade_researches';
+    protected $table = 'trade_knowledge';
     public $incrementing = false;
     public $timestamps = false;
 

@@ -113,17 +113,24 @@ class FleetService
         $finalOrderCost = (int) config('game.fleet.order_costs.' . $order, $moveCost);
         $apCost         = $moveCost * max(0, $pathLength - 1) + $finalOrderCost;
 
+        // Navigation AP is colony-scoped: resolve the fleet owner's colony.
+        $colonyId = $this->colonyService->getPrimeColony($fleet->user_id)?->id;
+
         // AP check and lock must be atomic to prevent TOCTOU race conditions.
-        DB::transaction(function () use ($fleetId, $path, $order, $additionalData, $apCost) {
+        DB::transaction(function () use ($fleetId, $colonyId, $path, $order, $additionalData, $apCost) {
             if (config('game.bypass.ap_checks')) {
                 Log::debug("FleetService::addOrder() AP check bypassed. "
                     . "fleet={$fleetId} order={$order} apCost={$apCost}");
             } else {
-                $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;
+                $availableAP = ($colonyId && $this->personellService)
+                    ? $this->personellService->getAvailableActionPoints('navigation', $colonyId)
+                    : PHP_INT_MAX;
                 if ($availableAP < $apCost) {
                     throw new \RuntimeException("Nicht genug Navigations-AP für diesen Befehl.");
                 }
-                $this->personellService?->lockActionPoints('navigation', $fleetId, $apCost);
+                if ($colonyId) {
+                    $this->personellService?->lockActionPoints('navigation', $colonyId, $apCost);
+                }
             }
 
             $this->_storePathInDb($fleetId, $path, $order, $additionalData);
@@ -193,8 +200,8 @@ class FleetService
                 $typeKey     = 'ship_id';
                 break;
             case 'research':
-                $colonyTable = 'colony_researches';
-                $fleetTable  = 'fleet_researches';
+                $colonyTable = 'colony_knowledge';
+                $fleetTable  = 'fleet_knowledge';
                 $typeKey     = 'research_id';
                 break;
             case 'personell':
@@ -487,8 +494,8 @@ class FleetService
     {
         switch (strtolower($type)) {
             case 'research':
-                $masterTable = 'researches';
-                $fleetTable  = 'fleet_researches';
+                $masterTable = 'knowledge';
+                $fleetTable  = 'fleet_knowledge';
                 $typeKey     = 'research_id';
                 break;
             case 'ship':

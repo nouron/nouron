@@ -47,7 +47,7 @@ class OverCapDecayTest extends TestCase
     private function zeroAllSupplyCosts(): void
     {
         DB::table('buildings')->update(['supply_cost' => 0]);
-        DB::table('researches')->update(['supply_cost' => 0]);
+        DB::table('knowledge')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
     }
 
@@ -116,7 +116,7 @@ class OverCapDecayTest extends TestCase
         // Colony 2 — within cap: zero all entity levels and remove its advisors
         // so that used=0, cap=0 → free=0 (not over-cap).
         DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
-        DB::table('colony_researches')->where('colony_id', 2)->update(['level' => 0]);
+        DB::table('colony_knowledge')->where('colony_id', 2)->update(['level' => 0]);
         DB::table('colony_ships')->where('colony_id', 2)->update(['level' => 0]);
         DB::table('advisors')->where('colony_id', 2)->delete();
 
@@ -187,7 +187,7 @@ class OverCapDecayTest extends TestCase
     /**
      * Research status_points must decrease at 2× decay_rate when colony is over cap.
      *
-     * biology (id 33): decay_rate=0.13, overcap_factor=2.0
+     * construction (id 90): decay_rate=0.13, overcap_factor=2.0
      * Expected: SP = 15.0 - (0.13 × 2.0) = 14.74
      */
     public function test_research_decays_faster_when_colony_is_over_cap(): void
@@ -200,14 +200,14 @@ class OverCapDecayTest extends TestCase
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
         DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
 
-        DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->update(['level' => 2, 'status_points' => 15.0]);
 
         Artisan::call('game:tick', ['--tick' => 9110]);
 
-        $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        $sp = (float) DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(15.0 - (0.13 * 2.0), $sp, 0.001,
@@ -218,20 +218,20 @@ class OverCapDecayTest extends TestCase
      * Research status_points must decrease at normal rate when colony is within cap.
      *
      * All supply costs zeroed → used=0, not over-cap.
-     * biology (id 33): decay_rate=0.13
+     * construction (id 90): decay_rate=0.13
      * Expected: SP = 15.0 - 0.13 = 14.87
      */
     public function test_research_decays_normally_when_colony_is_within_cap(): void
     {
         $this->zeroAllSupplyCosts();
-        DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->update(['level' => 2, 'status_points' => 15.0]);
 
         Artisan::call('game:tick', ['--tick' => 9111]);
 
-        $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+        $sp = (float) DB::table('colony_knowledge')
+            ->where('colony_id', 1)->where('research_id', 90)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(15.0 - 0.13, $sp, 0.001,

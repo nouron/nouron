@@ -18,11 +18,11 @@ use Illuminate\Support\Facades\DB;
  *   Junior (1) = 4 AP, Senior (2) = 7 AP, Experte (3) = 12 AP
  *
  * AP types and their scopes:
- *   construction  — Ingenieur (35),       colony-scoped
- *   research      — Wissenschaftler (36), colony-scoped
- *   navigation    — Kommandant (89),      fleet-scoped (is_commander=true)
- *   economy       — Händler (92),         colony-scoped
- *   strategy      — Stratege (93),        colony-scoped
+ *   construction — Baumeister (35),  colony-scoped
+ *   knowledge    — Analytiker (36),  colony-scoped
+ *   navigation   — Raumfahrer (89),  colony-scoped
+ *   economy      — Konsul (92),      colony-scoped
+ *   strategy     — Stratege (93),    colony-scoped
  */
 class PersonellService
 {
@@ -30,7 +30,7 @@ class PersonellService
 
     const PERSONELL_ID_ENGINEER  = 35;
     const PERSONELL_ID_SCIENTIST = 36;
-    const PERSONELL_ID_PILOT     = 89;  // Kommandant
+    const PERSONELL_ID_PILOT     = 89;
     const PERSONELL_ID_TRADER    = 92;
     const PERSONELL_ID_STRATEGE  = 93;
 
@@ -60,7 +60,8 @@ class PersonellService
             $query->where('colony_id', $scopeId);
         }
 
-        $baseAp = $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
+        $baseAp = config('game.advisor.base_ap', 6)
+                + $query->get()->sum(fn(Advisor $a) => $a->getApPerTick());
 
         // Apply moral AP multiplier for colony-scoped types.
         if ($scope === 'colony') {
@@ -119,14 +120,14 @@ class PersonellService
         return $this->getAvailableActionPoints('construction', $colonyId);
     }
 
-    public function getResearchPoints(int $colonyId): int
+    public function getKnowledgePoints(int $colonyId): int
     {
-        return $this->getAvailableActionPoints('research', $colonyId);
+        return $this->getAvailableActionPoints('knowledge', $colonyId);
     }
 
-    public function getFleetNavigationPoints(int $fleetId): int
+    public function getNavigationPoints(int $colonyId): int
     {
-        return $this->getAvailableActionPoints('navigation', $fleetId);
+        return $this->getAvailableActionPoints('navigation', $colonyId);
     }
 
     public function getEconomyPoints(int $colonyId): int
@@ -234,48 +235,6 @@ class PersonellService
         ]);
     }
 
-    /**
-     * Assign a Kommandant to command a fleet.
-     * Only advisors with personell.can_command_fleet=true may be assigned.
-     *
-     * @throws \RuntimeException if the advisor type cannot command a fleet
-     */
-    public function assignToFleet(int $advisorId, int $fleetId): bool
-    {
-        $advisor = Advisor::find($advisorId);
-        if (!$advisor) {
-            return false;
-        }
-
-        $canCommand = DB::table('personell')
-            ->where('id', $advisor->personell_id)
-            ->value('can_command_fleet');
-
-        if (!$canCommand) {
-            throw new \RuntimeException('Nur Kommandanten können Flotten führen.');
-        }
-
-        $advisor->update([
-            'colony_id'    => null,
-            'fleet_id'     => $fleetId,
-            'is_commander' => true,
-        ]);
-
-        return true;
-    }
-
-    /**
-     * Unassign a Kommandant from a fleet and return them to a colony.
-     */
-    public function unassignFromFleet(int $advisorId, int $colonyId): bool
-    {
-        return (bool) Advisor::where('id', $advisorId)->update([
-            'fleet_id'     => null,
-            'colony_id'    => $colonyId,
-            'is_commander' => false,
-        ]);
-    }
-
     // ── Queries ───────────────────────────────────────────────────────────────
 
     public function getColonyAdvisors(int $colonyId): Collection
@@ -299,11 +258,11 @@ class PersonellService
     {
         return match (strtolower($type)) {
             'construction' => [self::PERSONELL_ID_ENGINEER,  'colony'],
-            'research'     => [self::PERSONELL_ID_SCIENTIST, 'colony'],
-            'navigation'   => [self::PERSONELL_ID_PILOT,     'fleet'],
+            'knowledge'    => [self::PERSONELL_ID_SCIENTIST, 'colony'],
+            'navigation'   => [self::PERSONELL_ID_PILOT,     'colony'],
             'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
-            'strategy'     => [self::PERSONELL_ID_STRATEGE,  'colony'],
-            default        => [null, null],
+            'strategy'   => [self::PERSONELL_ID_STRATEGE,   'colony'],
+            default      => [null, null],
         };
     }
 }

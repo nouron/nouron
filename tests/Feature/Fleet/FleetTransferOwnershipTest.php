@@ -60,7 +60,7 @@ class FleetTransferOwnershipTest extends TestCase
         $response = $this->actingAs($this->makeUser($this->bartUserId))
             ->postJson(route('fleet.json.addtofleet', $this->lennyFleetId), [
                 'itemType' => 'resource',
-                'itemId'   => 3,   // res_water
+                'itemId'   => 4,   // res_compounds (Werkstoffe)
                 'amount'   => 50,
             ]);
 
@@ -93,11 +93,11 @@ class FleetTransferOwnershipTest extends TestCase
         // Align fleet spot with colony 1's spot (spot=1) so getColonyByCoords matches
         DB::table('fleets')->where('id', $this->bartFleetId)->update(['spot' => 1]);
 
-        // Colony 1 has res_water (resource_id=3) with amount=4115 in seed
+        // Colony 1 has res_compounds / Werkstoffe (resource_id=4) with amount=18598 in seed
         $response = $this->actingAs($this->makeUser($this->bartUserId))
             ->postJson(route('fleet.json.addtofleet', $this->bartFleetId), [
                 'itemType' => 'resource',
-                'itemId'   => 3,   // res_water
+                'itemId'   => 4,   // res_compounds (Werkstoffe)
                 'amount'   => 10,
             ]);
 

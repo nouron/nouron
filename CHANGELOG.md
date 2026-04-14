@@ -1,5 +1,60 @@
 # Changelog
 
+## 2026-04-13 (Schiffe + Gebäude Phase 3a — Cleanup)
+
+- **Gebäude 25 → 12**: 13 Gebäude entfernt (stadium, casino, prison, secretOps, militarySpaceyard, bank, university, parc, museum, wastedisposal, recyclingStation, public_security, waterextractor). Migration `2026_04_13_000002`.
+- **Schiffe 6 → 3**: fighter1 → `ship_corvette` (ID 37), smallTransporter → `ship_freighter` (ID 47), neue `ship_sonde` (ID 85, supply=0). frigate1/battlecruiser1/mediumTransporter/largeTransporter entfernt.
+- MasterDataSeeder, testdata.sqlite.sql und betroffene Tests aktualisiert. 399 Tests grün.
+
+## 2026-04-13 (AP-Grundwert 6, Balancing, Design-Sprint abgeschlossen)
+
+- **AP-Grundwert 6/Tick** implementiert: Jeder AP-Typ ist immer mit 6 AP verfügbar, auch ohne aktiven Berater. Berater liefern Bonus on top: Rang 1 +6 (→12), Rang 2 +14 (→20), Rang 3 +20 (→26). `PersonellService`, `Advisor::getApPerTick()`, `config/game.php` angepasst.
+- **Design-Sprint Phase 3a abgeschlossen:** Alle ausstehenden Designfragen entschieden und dokumentiert — Schiffstypen (3: Sonde/Korvette/Frachter), Gebäude (12), Rassen zurückgestellt auf Phase 4, Roguelike-Struktur in GDD §14. ROADMAP und Plan bereinigt.
+- GDD §12 Rang-Tabelle korrigiert (Werte stimmten nicht mit Code überein). 399 Tests grün.
+
+## 2026-04-13 (Berater-Keys advisor_*, Navigation colony-scoped, kein Fleet-Kommandant)
+
+- **Interne DB/Config-Keys** auf `advisor_*`-Präfix umgestellt: `advisor_engineer`, `advisor_scientist`, `advisor_pilot`, `advisor_consul`, `advisor_strategist`. `techs_*`-Präfix vollständig abgelöst.
+- **Design-Entscheidung Option B:** Berater sind reine colony-scoped AP-Lieferanten. Kein Berater kommandiert eine Flotte. Supply der Flotte wird durch Hangar-Gebäude geregelt.
+- **Navigation-AP** jetzt colony-scoped (wie alle anderen AP-Typen). `PersonellService::resolveType('navigation')` → `'colony'`. `assignToFleet`/`unassignFromFleet` aus Service entfernt.
+- **FleetController:** Commander-Requirement beim Erstellen und Löschen von Flotten entfernt — jeder Spieler kann direkt Flotten erstellen.
+- `FleetService`: Navigation-AP-Check über Colony statt Fleet.
+- `FleetCreationTest` neu geschrieben, `PersonellServiceTest` auf neue Semantik angepasst. 399 Tests grün.
+
+## 2026-04-13 (Ressourcen-Bereinigung Phase 3a)
+
+- **Ferum → Compounds** (ID 4, Kürzel `Co`) und **Silicates → Organics** (ID 5, Kürzel `Or`) umbenannt — interne DB-Namen englisch, Anzeigename "Werkstoffe"/"Organika" via Lokalisierung.
+- **Wasser (ID 3)** entfernt — logisch in Versorgung (Supply) enthalten.
+- **ENrg (ID 6), LNrg (ID 8), ANrg (ID 10)** aus DB entfernt — Energietypen im neuen Konzept abgeschafft.
+- Verbleibende Ressourcen: Credits (1), Supply (2), Compounds (4), Organics (5), Moral (12).
+- Migration `2026_04_13_000001_rename_resources_and_remove_energy_types.php` erstellt.
+- `OnboardingService`, `testdata.sqlite.sql` und alle betroffenen Tests angepasst (410 Tests grün).
+
+## 2026-04-12 (Berater-Umbenennung: Design-Sprint-Namen wiederhergestellt)
+
+- **Berater-Namen** auf Design-Sprint-Beschlüsse zurückgesetzt: Ingenieur → **Baumeister**, Wissenschaftler → **Analytiker**, Pilot/Kommandant → **Raumfahrer**, Händler → **Konsul** (Stratege unverändert).
+- **AP-Typ `research` → `knowledge`** in allen Codestellen (PersonellService, AbstractTechnologyService, AdvisorController, TechtreeController, Tests). `construction` bleibt unverändert.
+- **`config/advisors.php`** und **`lang/de/advisors.php`** auf neue Bezeichnungen aktualisiert.
+- **`testdata.sqlite.sql`** personell-Einträge angepasst (type-Spalte `civil` → `knowledge`, Namen `techs_*` → neue Schlüssel).
+- **GDD §12** vollständig aktualisiert: alle Tabellen, Slot-System, Datenmodell und Beschreibungen.
+
+## 2026-04-12 (Testfixes: Berater-UNIQUE, CC-Level, AP-Erwartungswerte)
+
+- **PersonellServiceTest** vollständig repariert (53 Fehler): setUp() auf 1 Ingenieur (Rang 2 = 7 AP) reduziert; doppelter Eintrag verletzte UNIQUE-Constraint `(colony_id, personell_id)`; AP-Erwartungswerte 11 → 7 aktualisiert; `delete()`-Guard in allen Tests ergänzt, die Berater neu anlegen.
+- **testTotalActionPointsExcludesUnavailableAdvisors** neu gestaltet: statt zweitem Ingenieur (UNIQUE-Konflikt) wird der vorhandene Wissenschaftler auf unavailable gesetzt und dessen Ausschluss geprüft.
+- **FleetCreationTest** korrigiert: Kommandanten-ID 67 → 7 (TestSeeder hat jetzt nur noch 1 Pilot pro Kolonie statt 19).
+- **TradeApTest** korrigiert: 2× Händler Rang 1 → 1× Händler Rang 2 (7 AP), da UNIQUE zwei Händler derselben Kolonie verbietet.
+- **Gesamtergebnis**: 412 Tests bestanden, 2 übersprungen, 0 Fehler.
+
+## 2026-04-12 (researches-Tabellen → knowledge umbenannt; DB-Migration; Tests aktualisiert)
+
+- **DB-Tabellen umbenannt** (Trennung Gebäude/Forschungen/Schiffe aufgehoben): `researches` → `knowledge`, `research_costs` → `knowledge_costs`, `colony_researches` → `colony_knowledge`, `fleet_researches` → `fleet_knowledge`, `trade_researches` → `trade_knowledge` (Migration `2026_04_12_000002`).
+- **7 neue Kenntnisse** in DB eingeführt (Migration `2026_04_12_000001`): IDs 90–96 (construction, cartography, geology, agronomy, health, trade, defense), alte Forschungen (IDs 33–81) entfernt. `game:sync-knowledge` um `syncKnowledge()`-Methode ergänzt.
+- **`GameTick` Supply-Formel korrigiert**: CC-Beitrag jetzt `CC_level × cap_commandcenter` (statt flat), entspricht GDD §6.
+- **`testdata.sqlite.sql` bereinigt**: Alte knowledge-IDs (33–81) durch neue (90–96) ersetzt; doppelter personell-93-Eintrag entfernt (Migration ist source of truth); `trade_knowledge`-Einträge auf gültige Knowledge-IDs aktualisiert.
+- **Tests aktualisiert**: FleetServiceTest, GameTickTest, OverCapDecayTest, MoralServiceTest, TradeGatewayTest auf neue Knowledge-IDs umgestellt.
+- **Alle Models** (`Research`, `ResearchCost`, `ColonyResearch`, `FleetResearch`, `TradeResearch`) und alle Service-/Controller-Dateien auf neue Tabellennamen aktualisiert.
+
 ## 2026-04-12 (GDD-Review: Inkonsistenzen behoben, techs → knowledge umbenannt)
 
 - **CC max_level 10 → 5** in GDD §4 korrigiert (war nur noch dort veraltet).
