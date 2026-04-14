@@ -368,7 +368,7 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 - [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_level×10 + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
 - [ ] **Kenntnisse-System redesignen** — aktuell Level+Decay wie Gebäude; Designfrage: Freischalt-Techtree (einmalig erforscht, bleibt) vs. beibehaltenes Decay-Modell; ADR erforderlich vor Implementierung (`docs/adr/`) → Branch: `claude/design-forschung-redesign`
 - [ ] **Handel redesignen** — aktuelles Marktplatz-Modell (Angebotspreise, AP-Kosten, Richtung 0/1) ist für großen 4X-Scope ausgelegt; für 2-4 Spieler/Singleplayer einen einfacheren, brettspielnahen Mechanismus definieren; ADR erforderlich → Branch: `claude/design-handel-redesign`
-- [ ] **Interstellare Flottenbewegung freischalten** — aktuell in `FleetController::storeOrder` explizit gesperrt; Wurmloch/Sternentor-Mechanik designen (ADR erforderlich vor Implementierung); `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits
+- [ ] **Flottenbewegung redesignen** — nicht nur freischalten; Kernfrage: wie sieht Bewegung im neuen kleinen Scope aus (Wurmloch? Direktflug? Sektorkarte?)? ADR erforderlich → Branch: `claude/design-flotte-bewegung`
 
 ---
 
