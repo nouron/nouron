@@ -364,9 +364,10 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 
 ### Phase 3a: Content & Balancing + Kernmechaniken
 
-- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 25 Gebäude und 10 Forschungen auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
-- [ ] **Supply-Kosten auf Plausibilität testen** — offene Frage: kann ein Anfänger einen Battlecruiser unterhalten? Supply-Cap-Modell (CC_flat 15 + HousingLevel × 8, max 200) gegen Schiffskosten abgleichen
-- [ ] **Forschungshandel-Mechanik definieren und umsetzen** — Designfrage: Level-Transfer, Wissenstransfer oder Lizenz-Modell; ADR erforderlich vor Implementierung (`docs/adr/`)
+- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 12 Gebäude und 10 Kenntnisse auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
+- [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_level×10 + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
+- [ ] **Kenntnisse-System redesignen** — aktuell Level+Decay wie Gebäude; Designfrage: Freischalt-Techtree (einmalig erforscht, bleibt) vs. beibehaltenes Decay-Modell; ADR erforderlich vor Implementierung (`docs/adr/`) → Branch: `claude/design-forschung-redesign`
+- [ ] **Handel redesignen** — aktuelles Marktplatz-Modell (Angebotspreise, AP-Kosten, Richtung 0/1) ist für großen 4X-Scope ausgelegt; für 2-4 Spieler/Singleplayer einen einfacheren, brettspielnahen Mechanismus definieren; ADR erforderlich → Branch: `claude/design-handel-redesign`
 - [ ] **Interstellare Flottenbewegung freischalten** — aktuell in `FleetController::storeOrder` explizit gesperrt; Wurmloch/Sternentor-Mechanik designen (ADR erforderlich vor Implementierung); `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits
 
 ---
