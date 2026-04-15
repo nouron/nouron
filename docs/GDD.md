@@ -589,9 +589,9 @@ Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensyst
 - `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Tick auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
 - Pro Tick des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
 
-**Einschränkungen Phase 2:**
+**Einschränkungen (bewusste Designentscheidung):**
 - Ausschließlich innerhalb eines Sternensystems (gleiche `system_id`)
-- Interstellare Bewegung (zwischen Systemen) erfordert eine noch zu definierende Wurmloch-/Sternentor-Mechanik und ist für Phase 3 vorgesehen
+- Interstellare Bewegung wird **nicht implementiert** — siehe unten
 
 **Datenspeicherung:**
 - Koordinaten in `fleet_orders.coordinates` werden als JSON gespeichert (`json_encode`)
@@ -599,6 +599,18 @@ Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensyst
 
 Nach Ausführung wird die Position der Flotte (`fleets.x`, `fleets.y`, `fleets.spot`) aktualisiert.
 INNN-Ereignis `galaxy.fleet_arrived` wird für den Flottenbesitzer erzeugt.
+
+### Interstellare Bewegung — bewusst nicht implementiert
+
+Flotten operieren ausschließlich im eigenen Sternensystem. Interstellare Bewegung zwischen Systemen wird nicht implementiert.
+
+**Begründung:** Bei einem Scope von einer Kolonie pro Spieler und wenigen Schiffen findet fast alles im eigenen System statt — Erkundung, Ressourcenbergung, Bewachung, PvP. Eine interstellare Bewegungsmechanik würde Komplexität hinzufügen ohne spielerischen Mehrwert für Phase 3.
+
+**Das Sprungtor als narratives Element:** Im System ist ein Sprungtor sichtbar (Galaxiekarte), das theoretisch den Weg zu anderen Systemen öffnen könnte. Es wird nicht benutzt — aber es kann bewacht werden (`defend`-Order). Narrativ: Warum siedelt Nexus ausgerechnet in diesem System? Das Sprungtor deutet eine Antwort an ohne sie zu geben.
+
+**"Gäste von außerhalb"** kommen via Events und Bar — Händler, Schmuggler, Boten aus anderen Systemen erscheinen ohne dass eine Bewegungsmechanik implementiert sein muss.
+
+> **Phase 4+:** Wenn Multiplayer-PvP zwischen Systemen gewünscht wird, kann interstellare Bewegung dann als eigene Mechanik nachgerüstet werden. `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits technisch.
 
 ### Trade-Order
 
