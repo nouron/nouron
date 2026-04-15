@@ -653,7 +653,7 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 
 ## 10. Kenntnisse (ehem. Forschung)
 
-7 Wissensgebiete — kein akademisches Studium, sondern praktisches Kolonialwissen, das durch Analyse-AP vorangetrieben wird:
+7 Wissensgebiete — kein akademisches Studium, sondern praktisches Kolonialwissen, das durch Analyse-AP (Analytiker-Berater) erarbeitet wird:
 
 | Key | Name (DE) | Name (EN) |
 |-----|-----------|-----------|
@@ -665,25 +665,63 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 | trade | Handel & Logistik | Trade & Logistics |
 | defense | Verteidigung & Überlebenstaktik | Defence & Survival Tactics |
 
-Kenntnisse werden über Aktionspunkte (AP) vorangetrieben. Details zum AP-System: §12.
+### Freischalt-Modell (Phase 3 Redesign)
 
-### Supply-Cap-Bonus
+Kenntnisse werden **einmalig erarbeitet** (Analytiker-AP) und bleiben **permanent freigeschaltet**. Es gibt kein Decay auf Kenntnissen — Wissen geht nicht verloren. Die natürliche Begrenzung erfolgt über AP-Knappheit und Rundenstruktur.
 
-Jede Kenntnis erhöht den Supply-Cap nicht-linear pro Level (Glockenform):
+> **TODO Implementierung:** Das bestehende Level+Decay-Modell (wie Gebäude) wird durch dieses Freischalt-Modell ersetzt. Migration und Code-Anpassung ausstehend.
 
-| Level | Cap-Bonus (dieses Level) | Kumuliert |
-|-------|--------------------------|-----------|
-| 1 | +3 | 3 |
-| 2 | +5 | 8 |
-| 3 | +5 | 13 |
-| 4 | +4 | 17 |
-| 5 | +3 | **20** |
+### Zwei Effekt-Ebenen
 
-Konfiguration: `config/game.php → supply.knowledge_cap_per_level`. Details zur Supply-Formel: §6.
+Jede Kenntnis hat:
 
-Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy +1/Level, health +2/Level, defense -1/Level) — Details siehe §13.
+- **Primäreffekt** — aktiv sobald freigeschaltet, unabhängig von Beratern (z.B. Supply-Cap-Bonus, Moraleffekt)
+- **Sekundäreffekt** — nur aktiv wenn die Kenntnis einem Berater zugewiesen ist; variiert je nach Berater-Typ
 
-*Weitere Spielmechanik (AP-Kosten, Voraussetzungen) — wird in Phase 3 ergänzt.*
+Beispiele für Sekundäreffekte (konkrete Werte folgen nach erstem Playtest):
+
+| Kenntnis | Berater | Sekundäreffekt |
+|----------|---------|----------------|
+| geology | advisor_engineer | −10% Gebäudekosten |
+| geology | advisor_trader | +10% Rohstoff-Verkaufspreis |
+| health | advisor_scientist | +1 Analyse-AP/Tick |
+| defense | advisor_pilot | −1 AP-Kosten für Angriff |
+| trade | advisor_trader | +15% Handelsgewinn |
+| cartography | advisor_pilot | +1 Bewegungsreichweite |
+
+> **TODO Design:** Vollständige 7×5-Matrix (alle Kenntnisse × alle Berater) ausarbeiten — nach erstem Playtest, wenn klar ist welche Kombinationen strategisch interessant sind.
+
+### Berater-Zuweisung
+
+Freigeschaltete Kenntnisse können einem Berater zugewiesen werden (UI: Drag & Drop). Der Sekundäreffekt der Kenntnis wird durch den zugewiesenen Berater bestimmt.
+
+**Slots je Berater nach Rang:**
+
+| Rang | Kenntnis-Slots |
+|------|----------------|
+| 1 | 0 |
+| 2 | 1 |
+| 3 | 1 |
+
+Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht weiter (dafür steigt der AP-Bonus — §12).
+
+**Max. aktive Sekundäreffekte:** 5 (je ein Slot pro Berater, wenn alle auf Rang 2+). Bei 7 Kenntnissen und 5 Slots muss der Spieler 2 Kenntnisse ohne Sekundäreffekt lassen — das erzeugt echte Spezialisierungsentscheidungen.
+
+> **Balancing-Notiz:** Slot-Anzahl und Kenntnisanzahl sind Ausgangswerte für den ersten Playtest. Nach Erfahrungen aus dem Betrieb können zusätzliche Kenntnisse und/oder ein zweiter Slot bei Rang 3 eingeführt werden.
+
+### Roguelike-Variabilität
+
+Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
+
+> **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§14).
+
+### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
+
+Jede freigeschaltete Kenntnis erhöht den Supply-Cap. Da es kein Levelsystem mehr gibt, wird der Bonus als Pauschalwert beim Freischalten gewährt:
+
+> **TODO Design:** Pauschalen Supply-Cap-Bonus pro Kenntnis definieren (ersetzt die bisherige Level-Glockenformel). Richtwert: +8–12 pro Kenntnis, sodass alle 7 Kenntnisse zusammen ~60–80 Cap-Bonus ergeben.
+
+Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy, health, defense) — Details siehe §13.
 
 ---
 
