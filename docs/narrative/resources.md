@@ -50,3 +50,14 @@ Nahrung, Medizin, Biodunger, organische Verbindungen — alles Lebende, was die 
 - Scope: personlich und uberschaubar — kein galaktisches Imperium, keine Massenproduktion.
 - Referenzatmosphare: Reunion (Amiga/DOS), Imperium Galactica 2, Master of Orion.
 - Spielgrosse: Singleplayer Roguelike oder 2-4 Spieler, Brettspiel-Nahe (Catan/MoO-Stil).
+
+---
+
+## Händler-Berater (advisor_trader)
+
+Beeinflusst beide Handelskanäle der Kolonie.
+
+- **Bar/Cantina:** Ein erfahrener Händler kennt die richtigen Gäste. Höherer Rang bedeutet bessere Einkaufspreise, häufigere Angebote und gelegentlich seltene Waren, die Fremden gar nicht erst angeboten werden.
+- **Nexus-Handelsschiffe:** Gute Kontakte zu den Nexus-Koordinatoren verkürzen Lieferzeiten und verbessern Konditionen. Ab Rang 3 sinkt die Lieferzeit auf 1 Tick (statt 3).
+
+**Narrative Logik:** Handel ist kein Marktplatz-Algorithmus, sondern ein Netz aus persönlichen Beziehungen. Wer die richtigen Leute kennt — in der Cantina und bei Nexus — kommt schneller ans Ziel und zahlt weniger.
