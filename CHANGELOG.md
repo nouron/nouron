@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-04-15 (Design: Handelsmechanik — Bar als einziger Handelsort, Nexus-Fallback, Lore)
+
+- **Handelssystem komplett redesignt** (GDD §11): Bar/Cantina ist der einzige Handelsort — NPC-Gäste, Spieler-zu-Spieler, Kauf und Verkauf alles über dieselbe Mechanik.
+- **Bar-Mechanik:** 0–2 Gäste pro Tick (RNG), Angebote 1–2 Ticks gültig, Credits-gegen-Ressource und Ressource-gegen-Ressource möglich. Spieler-Angebote erscheinen anonym als Gäste.
+- **Nexus-Handelsschiffe** als garantierter Fallback (immer verfügbar, teuer, 3 Ticks Lieferzeit). Händler-Berater verbessert Preis und Lieferzeit auf beiden Kanälen.
+- **Tradecenter gestrichen** (war CC Lv5, zu spät, ohne eigenständige Rolle).
+- **Kenntnishandel entfällt** mit Freischalt-Modell; AP-Delegation als Phase-4-Idee dokumentiert.
+- **Lore-Fundament** erstellt: Nouron = untergegangenes System, Nouronen = Hochkultur, Nexus = menschliche Expansionsinstanz. Narrativ-Referenz unter `docs/narrative/`.
+- **Mission-Einleitungstext** (DE+EN) mit Nexus als Instanz ausgearbeitet.
+
 ## 2026-04-15 (Design: Ressourcen-Redesign — Regolith eingeführt, Werkstoffe nur Handel/Events)
 
 - **Regolith (Rg)** als dritte handelbare Ressource eingeführt (GDD §3): lokal abbaubar durch Industriemine, primäres Baumaterial für Gebäude. Spieler startet mit 200 Rg (Frontier-Depot-Narrativ).

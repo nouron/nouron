@@ -755,37 +755,68 @@ Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy, health, 
 
 ## 11. Handel (Trade)
 
-Ressourcen und Forschungen können über Handelsrouten zwischen Spielern transferiert werden. Angebote werden in `trade_resources` / `trade_researches` gespeichert.
+### Designprinzip (Phase 3 Redesign)
 
-| direction | Bedeutung |
-|-----------|-----------|
-| 0 | Kaufangebot (Spieler will kaufen) |
-| 1 | Verkaufsangebot (Spieler will verkaufen) |
+Handel ist **optional aber lohnend** — der Spieler kann alles auch ohne Handel aufbauen, aber Handel beschleunigt und verbilligt. Kein Zwang, kein Progression-Lock.
 
-Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
+Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kauf, Verkauf, NPC-Angebote, Spieler-zu-Spieler — laufen über denselbe Mechanik. Es gibt keinen separaten Marktplatz und kein Tradecenter.
 
-### Restriktion (`restriction`)
-
-Handel ist in Phase 3 **immer öffentlich** — alle Angebote sind für alle Spieler sichtbar und annehmbar. Das `restriction`-Feld bleibt im Datenmodell erhalten (immer `0`), wird aber nicht ausgewertet.
-
-Fraktionszugehörigkeit beeinflusst den Handel nicht über Restriktionen, sondern ggf. als Preis-Modifikator in späteren Phasen — offen für Phase 4+.
-
-### Forschungshandel
-
-Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle und Gateway-Methoden sind vorhanden), die genaue Mechanik wird in **Phase 3a** definiert und implementiert. Im aktuellen Acceptance-Flow wird Forschungshandel nicht unterstützt.
-
-**Offene Designoptionen (vor Phase 3a zu entscheiden — ADR erforderlich):**
-
-| Option | Beschreibung |
-|--------|-------------|
-| Level-Transfer | Käufer erhält +1 Level in der Forschung, Verkäufer verliert -1 Level |
-| Wissenstransfer | Käufer erhält +1 Level, Verkäufer behält seinen Stand |
-| Lizenz-Modell | Käufer erhält befristeten Bonus-Effekt, kein permanenter Level-Gewinn |
-| AP-Delegation | Wissenschaftler-AP werden an fremde Kolonie "verliehen" — Forscher arbeitet dort für X Ticks |
-
-> **Designidee (2026-04-06):** Statt Forschungen direkt zu handeln, könnten Spieler die AP ihrer Wissenschaftler an andere Kolonien "verleihen" — der Forscher arbeitet dann für eine bestimmte Anzahl Ticks auf der Fremdkolonie. Dieser Ansatz ist thematisch stimmiger (Wissen ist personengebunden) und passt gut zum AP-System. Würde das Berater-System und den Forschungshandel elegant verbinden. Zu evaluieren bei der Phase-3a-Konzeption.
+> **Designentscheidung:** Das Tradecenter (building_id 43, CC Lv5) wird gestrichen. Die Bar übernimmt alle Handelsfunktionen.
 
 ---
+
+### Kanal 1: Bar/Cantina (primär, früh, informell)
+
+Die Bar ist ab CC Lv1 verfügbar. Pro Tick erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Ticks gültig** ist. Danach ist der Gast weg.
+
+**Angebotstypen:**
+- Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
+- Ressource gegen Ressource (z.B. 30 Organika gegen 20 Regolith)
+
+Der Spieler sieht 0–2 Angebote und entscheidet: annehmen oder ablehnen. Keine unbegrenzte Auswahl — echte Entscheidung unter Zeitdruck.
+
+**Spieler-zu-Spieler-Handel:** Wenn ein Spieler ein Angebot in der Bar einstellt, erscheint es für andere Spieler ebenfalls als "Gast". Ob ein Gast ein NPC oder ein echter Spieler ist, bleibt unsichtbar — atmosphärisch stimmig, technisch einfach.
+
+**Händler-Berater (advisor_trader):**
+- Rang 1: Basis-Angebote (0–1 Gäste/Tick, Marktpreise)
+- Rang 2: mehr Angebote (0–2 Gäste/Tick), leicht bessere Preise
+- Rang 3: regelmäßige Angebote (1–2 Gäste/Tick), deutlich bessere Preise
+
+---
+
+### Kanal 2: Nexus-Handelsschiffe (Fallback, teuer, garantiert)
+
+Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch ohne Händler-Berater, auch ohne Bar. Das Sicherheitsnetz gegen Progression-Locks.
+
+| | Ohne Berater | Rang 1 | Rang 2 | Rang 3 |
+|---|---|---|---|---|
+| Lieferzeit | 3 Ticks | 3 Ticks | 2 Ticks | 1 Tick |
+| Preis | +50% Aufschlag | +40% | +25% | +10% |
+
+Anfrage läuft über das INNN-System (Nachricht an Nexus) oder eine eigene Anfrage-UI.
+
+> **TODO Implementierung:** Nexus-Handelsschiff-Anfrage als Fleet-Order oder INNN-Mechanik definieren.
+
+---
+
+### Handelbare Ressourcen
+
+| Ressource | Handelbar | Typische Richtung |
+|-----------|-----------|-------------------|
+| Regolith (Rg) | Ja | Verkauf (Überschuss) |
+| Organika (Or) | Ja | Kauf/Verkauf je nach Spezialisierung |
+| Werkstoffe (Co) | Ja | Kauf (nicht produzierbar) |
+| Credits (Cr) | Nein | Zahlungsmittel |
+| Supply (Sup) | Nein | Systemwert |
+| Moral (M) | Nein | Systemwert |
+
+---
+
+### Kenntnisse-Handel
+
+Mit dem Freischalt-Modell (§10) entfällt der direkte Kenntnishandel. Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
+
+> **Offen (Phase 4+):** AP-Delegation — ein Spieler "verleiht" Analytiker-AP an eine andere Kolonie für X Ticks. Thematisch stimmiger als direkter Wissenstransfer. Für spätere Phase zurückgestellt.
 
 ---
 
