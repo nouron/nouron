@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-04-15 (Design: Handelsmechanik — Bar als einziger Handelsort, Nexus-Fallback, Lore)
+
+- **Handelssystem komplett redesignt** (GDD §11): Bar/Cantina ist der einzige Handelsort — NPC-Gäste, Spieler-zu-Spieler, Kauf und Verkauf alles über dieselbe Mechanik.
+- **Bar-Mechanik:** 0–2 Gäste pro Tick (RNG), Angebote 1–2 Ticks gültig, Credits-gegen-Ressource und Ressource-gegen-Ressource möglich. Spieler-Angebote erscheinen anonym als Gäste.
+- **Nexus-Handelsschiffe** als garantierter Fallback (immer verfügbar, teuer, 3 Ticks Lieferzeit). Händler-Berater verbessert Preis und Lieferzeit auf beiden Kanälen.
+- **Tradecenter gestrichen** (war CC Lv5, zu spät, ohne eigenständige Rolle).
+- **Kenntnishandel entfällt** mit Freischalt-Modell; AP-Delegation als Phase-4-Idee dokumentiert.
+- **Lore-Fundament** erstellt: Nouron = untergegangenes System, Nouronen = Hochkultur, Nexus = menschliche Expansionsinstanz. Narrativ-Referenz unter `docs/narrative/`.
+- **Mission-Einleitungstext** (DE+EN) mit Nexus als Instanz ausgearbeitet.
+
+## 2026-04-15 (Design: Ressourcen-Redesign — Regolith eingeführt, Werkstoffe nur Handel/Events)
+
+- **Regolith (Rg)** als dritte handelbare Ressource eingeführt (GDD §3): lokal abbaubar durch Industriemine, primäres Baumaterial für Gebäude. Spieler startet mit 200 Rg (Frontier-Depot-Narrativ).
+- **Werkstoffe (Co)** neu positioniert: nicht mehr lokal produzierbar, nur via KI-Händler, Spielerhandel und Events. Verwendungsdomäne: Schiffbau, High-Tech, Reparatur.
+- **Industriemine** produziert jetzt Regolith statt Werkstoffe (GDD §5, config/game.php TODO).
+- **Klare Ressourcen-Domänen** definiert: Regolith = Rohbau, Werkstoffe = High-Tech/Schiffe, Credits = Grundkosten überall.
+- **Singleplayer-Sicherheitsnetz** dokumentiert: KI-Händler garantieren Werkstoffe-Verfügbarkeit; Events sind Bonus, kein Progression-Lock.
+
 ## 2026-04-14 (Design: Kenntnisse-Redesign — Freischalt-Techtree + Berater-Zuweisung)
 
 - **Kenntnisse-System grundlegend neu designt** (GDD §10): Level+Decay-Modell wird durch Freischalt-Techtree ersetzt — Kenntnisse werden einmalig erarbeitet und bleiben permanent. Kein Decay auf Wissen.

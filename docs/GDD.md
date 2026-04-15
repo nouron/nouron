@@ -191,13 +191,14 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 ## 3. Ressourcen
 
-5 Ressourcentypen (Stand Phase 3):
+6 Ressourcentypen (Stand Phase 3):
 
 | ID | Name (DE) | Name (EN) | Kürzel | Ebene | Handelbar | Startwert |
 |----|-----------|-----------|--------|-------|-----------|-----------|
 | 1  | Credits | Credits | Cr | User | Nein | 3000 |
 | 2  | Versorgung | Supply | Sup | User | Nein | 10 (CC Lv1, kein Wohnhabitat) |
-| 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 500 |
+| 3  | Regolith | Regolith | Rg | Kolonie | Ja | 200 |
+| 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 0 |
 | 5  | Organika | Organics | Or | Kolonie | Ja | 500 |
 | 12 | Moral | Moral | M | Kolonie | Nein | 0 |
 
@@ -205,10 +206,31 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 ### Ressourcen-Semantik
 
-- **Werkstoffe** — Industrielle Sammelressource: Metalle, Legierungen, Keramik, Polymere. Alles was gebaut, geschmiedet und verarbeitet wird. Produktionsgebäude: Industriemine.
-- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerungswachstum und Moral. Produktionsgebäude: Agrardom.
+- **Regolith** — Lokaler Rohstoff: Mondgestein, Silikate, Mineralstaub. Wird vor Ort von der Industriemine abgebaut. Primäre Verwendung: Rohbaukosten für Gebäude. Der Spieler startet mit einem Grundstock (200 Rg) — narrative Begründung: vor Ankunft des Spielers wurden durch automatisierte Maschinen bereits Ressourcen bereitgestellt (Frontier-Depot).
+- **Werkstoffe** — Veredelte Industriegüter: raffinierte Metalle, Legierungen, technische Komponenten. Nicht lokal produzierbar (keine Raffinerie auf Kolonieniveau). Quellen: KI-Händler (immer verfügbar, Preis in Credits), Spieler-zu-Spieler-Handel, Events. Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen.
+- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Moral. Produktionsgebäude: Agrardom.
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
 - **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
+
+### Ressourcen-Verwendungsdomänen
+
+| Ressource | Gebäude (Rohbau) | Schiffe | High-Tech | Reparatur |
+|-----------|-----------------|---------|-----------|-----------|
+| Regolith | Ja (alle) | Nein | Nein | Nein |
+| Werkstoffe | Nein | Ja | Ja | Ja |
+| Organika | Nein | Nein | Nein | Nein |
+| Credits | Ja (Grundkosten) | Ja | Ja | Ja |
+
+> **Designprinzip:** Jede Ressource hat eine klar getrennte Nische. Regolith und Werkstoffe konkurrieren nicht um denselben Verwendungs-Slot — das verhindert parallele Bottlenecks.
+
+### Werkstoffe: Singleplayer-Sicherheitsnetz
+
+Im Singleplayer gibt es keinen Spieler-zu-Spieler-Handel. Werkstoffe sind daher über **KI-Händler** (stationäre NPC-Fraktionen) immer kaufbar — teurer als Spielerhandel, aber garantiert verfügbar. Events liefern Werkstoffe als Bonus, nie als einzige Quelle.
+
+Typische Werkstoffe-Events (immer mit Wahlmöglichkeit, nie kostenlos):
+- **Strandetes Frachtschiff** — Bergung kostet Navigation-AP, gibt Werkstoffe
+- **Händlerkonvoi in der Nähe** — befristetes Kaufangebot (2 Ticks), günstiger als KI-Marktpreis
+- **Trümmerfeld im System** — Flotte entsenden, Werkstoffe heimholen
 
 ### Credits-Einnahmen
 
@@ -216,16 +238,18 @@ Credits werden durch vier Quellen erworben:
 
 | Quelle | Beschreibung |
 |--------|-------------|
-| Kolonistensteuern | Automatische Abgaben pro Tick — abhängig von der Koloniegröße (Wohnhabitat-Level) |
+| Kolonistensteuern | Automatische Abgaben pro Tick — abhängig von der Koloniegröße (Wohnhabitat-Anzahl) |
 | Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Tick (Arbeitstitel: Name noch offen) |
-| Handel | Einnahmen aus Handelsrouten beim Verkauf von Werkstoffen / Organika |
+| Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
 
-Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten.
+Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe-Import (KI-Händler).
+
+> **TODO Implementierung:** Regolith als neue Ressource (ID 3) in DB-Schema, colony_resources, MasterDataSeeder und config/game.php ergänzen. Startwert 200 in TestSeeder und DevSeeder setzen.
 
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
-Ein dritter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
+Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
 
 ### Abgekündigte Ressourcen (werden in Phase 3 entfernt)
 
@@ -280,8 +304,10 @@ produzierte Menge = Gebäude-Level × Rate
 
 | Gebäude | building_id | Ressource | resource_id | Rate pro Level |
 |---------|-------------|-----------|-------------|----------------|
-| Industriemine | 27 | Werkstoffe | 4 | 10 |
+| Industriemine | 27 | Regolith | 3 | 10 |
 | Agrardom | 41 | Organika | 5 | 10 |
+
+> **Designentscheidung:** Die Industriemine produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
 
 ### Konfiguration
 
@@ -289,10 +315,12 @@ produzierte Menge = Gebäude-Level × Rate
 
 ```php
 'production' => [
-    27 => [4 => 10],   // industrieMine  → Werkstoffe × 10/level
-    41 => [5 => 10],   // bioFacility    → Organika   × 10/level
+    27 => [3 => 10],   // industrieMine  → Regolith  × 10/level
+    41 => [5 => 10],   // bioFacility    → Organika  × 10/level
 ],
 ```
+
+> **TODO Implementierung:** resource_id 4 (Werkstoffe) in Produktions-Config auf 3 (Regolith) umstellen. MasterDataSeeder und config/game.php anpassen.
 
 Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erweiterung dieser Config hinzugefügt werden.
 
@@ -727,37 +755,68 @@ Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy, health, 
 
 ## 11. Handel (Trade)
 
-Ressourcen und Forschungen können über Handelsrouten zwischen Spielern transferiert werden. Angebote werden in `trade_resources` / `trade_researches` gespeichert.
+### Designprinzip (Phase 3 Redesign)
 
-| direction | Bedeutung |
-|-----------|-----------|
-| 0 | Kaufangebot (Spieler will kaufen) |
-| 1 | Verkaufsangebot (Spieler will verkaufen) |
+Handel ist **optional aber lohnend** — der Spieler kann alles auch ohne Handel aufbauen, aber Handel beschleunigt und verbilligt. Kein Zwang, kein Progression-Lock.
 
-Handelsrouten werden über Flottenorders (`order = 'trade'`) abgewickelt.
+Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kauf, Verkauf, NPC-Angebote, Spieler-zu-Spieler — laufen über denselbe Mechanik. Es gibt keinen separaten Marktplatz und kein Tradecenter.
 
-### Restriktion (`restriction`)
-
-Handel ist in Phase 3 **immer öffentlich** — alle Angebote sind für alle Spieler sichtbar und annehmbar. Das `restriction`-Feld bleibt im Datenmodell erhalten (immer `0`), wird aber nicht ausgewertet.
-
-Fraktionszugehörigkeit beeinflusst den Handel nicht über Restriktionen, sondern ggf. als Preis-Modifikator in späteren Phasen — offen für Phase 4+.
-
-### Forschungshandel
-
-Forschungen können grundsätzlich gehandelt werden (`trade_researches`-Tabelle und Gateway-Methoden sind vorhanden), die genaue Mechanik wird in **Phase 3a** definiert und implementiert. Im aktuellen Acceptance-Flow wird Forschungshandel nicht unterstützt.
-
-**Offene Designoptionen (vor Phase 3a zu entscheiden — ADR erforderlich):**
-
-| Option | Beschreibung |
-|--------|-------------|
-| Level-Transfer | Käufer erhält +1 Level in der Forschung, Verkäufer verliert -1 Level |
-| Wissenstransfer | Käufer erhält +1 Level, Verkäufer behält seinen Stand |
-| Lizenz-Modell | Käufer erhält befristeten Bonus-Effekt, kein permanenter Level-Gewinn |
-| AP-Delegation | Wissenschaftler-AP werden an fremde Kolonie "verliehen" — Forscher arbeitet dort für X Ticks |
-
-> **Designidee (2026-04-06):** Statt Forschungen direkt zu handeln, könnten Spieler die AP ihrer Wissenschaftler an andere Kolonien "verleihen" — der Forscher arbeitet dann für eine bestimmte Anzahl Ticks auf der Fremdkolonie. Dieser Ansatz ist thematisch stimmiger (Wissen ist personengebunden) und passt gut zum AP-System. Würde das Berater-System und den Forschungshandel elegant verbinden. Zu evaluieren bei der Phase-3a-Konzeption.
+> **Designentscheidung:** Das Tradecenter (building_id 43, CC Lv5) wird gestrichen. Die Bar übernimmt alle Handelsfunktionen.
 
 ---
+
+### Kanal 1: Bar/Cantina (primär, früh, informell)
+
+Die Bar ist ab CC Lv1 verfügbar. Pro Tick erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Ticks gültig** ist. Danach ist der Gast weg.
+
+**Angebotstypen:**
+- Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
+- Ressource gegen Ressource (z.B. 30 Organika gegen 20 Regolith)
+
+Der Spieler sieht 0–2 Angebote und entscheidet: annehmen oder ablehnen. Keine unbegrenzte Auswahl — echte Entscheidung unter Zeitdruck.
+
+**Spieler-zu-Spieler-Handel:** Wenn ein Spieler ein Angebot in der Bar einstellt, erscheint es für andere Spieler ebenfalls als "Gast". Ob ein Gast ein NPC oder ein echter Spieler ist, bleibt unsichtbar — atmosphärisch stimmig, technisch einfach.
+
+**Händler-Berater (advisor_trader):**
+- Rang 1: Basis-Angebote (0–1 Gäste/Tick, Marktpreise)
+- Rang 2: mehr Angebote (0–2 Gäste/Tick), leicht bessere Preise
+- Rang 3: regelmäßige Angebote (1–2 Gäste/Tick), deutlich bessere Preise
+
+---
+
+### Kanal 2: Nexus-Handelsschiffe (Fallback, teuer, garantiert)
+
+Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch ohne Händler-Berater, auch ohne Bar. Das Sicherheitsnetz gegen Progression-Locks.
+
+| | Ohne Berater | Rang 1 | Rang 2 | Rang 3 |
+|---|---|---|---|---|
+| Lieferzeit | 3 Ticks | 3 Ticks | 2 Ticks | 1 Tick |
+| Preis | +50% Aufschlag | +40% | +25% | +10% |
+
+Anfrage läuft über das INNN-System (Nachricht an Nexus) oder eine eigene Anfrage-UI.
+
+> **TODO Implementierung:** Nexus-Handelsschiff-Anfrage als Fleet-Order oder INNN-Mechanik definieren.
+
+---
+
+### Handelbare Ressourcen
+
+| Ressource | Handelbar | Typische Richtung |
+|-----------|-----------|-------------------|
+| Regolith (Rg) | Ja | Verkauf (Überschuss) |
+| Organika (Or) | Ja | Kauf/Verkauf je nach Spezialisierung |
+| Werkstoffe (Co) | Ja | Kauf (nicht produzierbar) |
+| Credits (Cr) | Nein | Zahlungsmittel |
+| Supply (Sup) | Nein | Systemwert |
+| Moral (M) | Nein | Systemwert |
+
+---
+
+### Kenntnisse-Handel
+
+Mit dem Freischalt-Modell (§10) entfällt der direkte Kenntnishandel. Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
+
+> **Offen (Phase 4+):** AP-Delegation — ein Spieler "verleiht" Analytiker-AP an eine andere Kolonie für X Ticks. Thematisch stimmiger als direkter Wissenstransfer. Für spätere Phase zurückgestellt.
 
 ---
 
