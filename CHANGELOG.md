@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-15 (Design: Ressourcen-Redesign — Regolith eingeführt, Werkstoffe nur Handel/Events)
+
+- **Regolith (Rg)** als dritte handelbare Ressource eingeführt (GDD §3): lokal abbaubar durch Industriemine, primäres Baumaterial für Gebäude. Spieler startet mit 200 Rg (Frontier-Depot-Narrativ).
+- **Werkstoffe (Co)** neu positioniert: nicht mehr lokal produzierbar, nur via KI-Händler, Spielerhandel und Events. Verwendungsdomäne: Schiffbau, High-Tech, Reparatur.
+- **Industriemine** produziert jetzt Regolith statt Werkstoffe (GDD §5, config/game.php TODO).
+- **Klare Ressourcen-Domänen** definiert: Regolith = Rohbau, Werkstoffe = High-Tech/Schiffe, Credits = Grundkosten überall.
+- **Singleplayer-Sicherheitsnetz** dokumentiert: KI-Händler garantieren Werkstoffe-Verfügbarkeit; Events sind Bonus, kein Progression-Lock.
+
 ## 2026-04-14 (Design: Kenntnisse-Redesign — Freischalt-Techtree + Berater-Zuweisung)
 
 - **Kenntnisse-System grundlegend neu designt** (GDD §10): Level+Decay-Modell wird durch Freischalt-Techtree ersetzt — Kenntnisse werden einmalig erarbeitet und bleiben permanent. Kein Decay auf Wissen.
