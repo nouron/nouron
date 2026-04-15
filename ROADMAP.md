@@ -368,7 +368,7 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 - [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_level×10 + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
 - [ ] **Kenntnisse-System redesignen** — aktuell Level+Decay wie Gebäude; Designfrage: Freischalt-Techtree (einmalig erforscht, bleibt) vs. beibehaltenes Decay-Modell; ADR erforderlich vor Implementierung (`docs/adr/`) → Branch: `claude/design-forschung-redesign`
 - [ ] **Handel redesignen** — aktuelles Marktplatz-Modell (Angebotspreise, AP-Kosten, Richtung 0/1) ist für großen 4X-Scope ausgelegt; für 2-4 Spieler/Singleplayer einen einfacheren, brettspielnahen Mechanismus definieren; ADR erforderlich → Branch: `claude/design-handel-redesign`
-- [ ] **Interstellare Flottenbewegung freischalten** — aktuell in `FleetController::storeOrder` explizit gesperrt; Wurmloch/Sternentor-Mechanik designen (ADR erforderlich vor Implementierung); `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits
+- [x] **Flottenbewegung redesignt** — Entscheidung: interstellare Bewegung wird nicht implementiert; Flotten operieren ausschließlich im eigenen System; Sprungtor als narratives Element → Branch: `claude/design-flotte-bewegung`
 
 ---
 
@@ -395,7 +395,8 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 
 | Thema | Entscheidung | Begründung |
 |---|---|---|
-| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 6 Schiffstypen + 4 Attribute erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
+| **Interstellare Bewegung** | Nicht implementieren | Bei einer Kolonie im Fokus findet alles im eigenen System statt. Sprungtor existiert als narratives Element. Gäste von außerhalb kommen via Events/Bar. Phase 4+ nachrüstbar. |
+| **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 3 Schiffstypen erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
 | **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
 | **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
 | **Rassen-System** | Zurückstellen auf Phase 4 | `race_id` ist im Schema, wird nicht ausgewertet. Rassenspezifische Effekte zu definieren setzt Playtest-Daten voraus — sonst blind balancen. |

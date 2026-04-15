@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-15 (Design: Flottenbewegung — interstellare Bewegung bewusst nicht implementiert)
+
+- **Interstellare Bewegung gestrichen** (GDD §8, ROADMAP): Flotten operieren ausschließlich im eigenen System — bewusste Designentscheidung, kein vergessenes Feature.
+- **Sprungtor als narratives Element** definiert: im System sichtbar, nicht nutzbar, bewachbar (`defend`-Order). Verbindung zur Nexus-Lore (warum siedelt Nexus hier?).
+- **"Gäste von außerhalb"** kommen via Events und Bar — keine Bewegungsmechanik nötig.
+- ROADMAP: Flottenbewegung als erledigt markiert, interstellare Bewegung in "Bewusste Designentscheidungen"-Tabelle aufgenommen.
+
 ## 2026-04-15 (Design: Handelsmechanik — Bar als einziger Handelsort, Nexus-Fallback, Lore)
 
 - **Handelssystem komplett redesignt** (GDD §11): Bar/Cantina ist der einzige Handelsort — NPC-Gäste, Spieler-zu-Spieler, Kauf und Verkauf alles über dieselbe Mechanik.
