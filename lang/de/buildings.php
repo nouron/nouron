@@ -26,11 +26,6 @@ return [
     'sciencelab'      => 'Analytik-Labor',
     'sciencelab_desc' => 'Forschungs- und Analysezentrum der Kolonie. Voraussetzung für alle Forschungsaktivitäten.',
 
-    // ── Economy ───────────────────────────────────────────────────────────────
-
-    'tradecenter'      => 'Handelsposten',
-    'tradecenter_desc' => 'Knotenpunkt für interkolonialen Handel. Voraussetzung für aktive Handelsrouten.',
-
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar'      => 'Hangar',

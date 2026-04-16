@@ -26,11 +26,6 @@ return [
     'sciencelab'      => 'Analytics Lab',
     'sciencelab_desc' => 'Research and analysis center of the colony. Required for all research activities.',
 
-    // ── Economy ───────────────────────────────────────────────────────────────
-
-    'tradecenter'      => 'Trading Post',
-    'tradecenter_desc' => 'Hub for inter-colony trade. Required for active trade routes.',
-
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar'      => 'Hangar',

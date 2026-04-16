@@ -362,13 +362,24 @@ Dieser Schnitt macht Sinn, weil Phase 2 die Mechaniken implementiert und stabili
 
 ---
 
-### Phase 3a: Content & Balancing + Kernmechaniken
+### Phase 3a: Design-Sprint — Abgeschlossen (April 2026)
+
+Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79, #80 gemergt).
+
+- [x] **Kenntnisse-System redesignt** — Freischalt-Techtree (permanent, kein Decay); Dual-Effekt-Modell (Primär/Sekundär); Berater-Zuweisung mit Slots nach Rang; 7 Kenntnisse, Roguelike-Variabilität → PR #78
+- [x] **Handel redesignt** — Bar als einziger Handelsort (0–2 Gäste/Tick); Nexus-Handelsschiffe als Fallback; Regolith als neue Ressource (lokal abbaubar); Werkstoffe nur via Handel/Events → PR #79
+- [x] **Flottenbewegung redesignt** — interstellare Bewegung nicht implementiert; Flotten im eigenen System; Sprungtor als narratives Element → PR #80
+
+---
+
+### Phase 3a: Implementierung (Design-Sprint-Ergebnisse)
 
 - [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 12 Gebäude und 10 Kenntnisse auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
 - [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_level×10 + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
-- [ ] **Kenntnisse-System redesignen** — aktuell Level+Decay wie Gebäude; Designfrage: Freischalt-Techtree (einmalig erforscht, bleibt) vs. beibehaltenes Decay-Modell; ADR erforderlich vor Implementierung (`docs/adr/`) → Branch: `claude/design-forschung-redesign`
-- [ ] **Handel redesignen** — aktuelles Marktplatz-Modell (Angebotspreise, AP-Kosten, Richtung 0/1) ist für großen 4X-Scope ausgelegt; für 2-4 Spieler/Singleplayer einen einfacheren, brettspielnahen Mechanismus definieren; ADR erforderlich → Branch: `claude/design-handel-redesign`
-- [x] **Flottenbewegung redesignt** — Entscheidung: interstellare Bewegung wird nicht implementiert; Flotten operieren ausschließlich im eigenen System; Sprungtor als narratives Element → Branch: `claude/design-flotte-bewegung`
+- [x] **Regolith als neue Ressource eingeführt** — resource_id 3 umbenannt, Startwert 200, Industriemine produziert Regolith, OnboardingService angepasst
+- [x] **Tradecenter entfernt** — config, MasterDataSeeder, Migration, Lang-Dateien, testdata; Trader + Wirtschafts-Forschung erfordern jetzt Bar
+- [ ] **Kenntnisse Freischalt-Modell implementieren** — `colony_researches`-Tabelle, `PersonellService`, Decay-Logik für Kenntnisse entfernen; Berater-Slot-System
+- [ ] **Bar-Event-System** — 0–2 NPC-/Spieler-Gäste pro Tick, befristete Angebote (1–2 Ticks), Credits + Tausch
 
 ---
 

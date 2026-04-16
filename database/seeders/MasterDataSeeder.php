@@ -37,7 +37,7 @@ class MasterDataSeeder extends Seeder
             32 => [20, 0.13, 5],   // temple            — ticks_until_lost 150
             41 => [20, 0.17, 2],   // silicatemine      — ticks_until_lost 120
             42 => [20, 0.17, 2],   // waterextractor    — ticks_until_lost 120
-            43 => [20, 0.13, 7],   // tradecenter       — ticks_until_lost 150
+
             44 => [20, 0.12, 20],  // civilianSpaceyard — ticks_until_lost 166
             45 => [20, 0.13, 4],   // parc              — ticks_until_lost 150
             46 => [20, 0.20, 10],  // hospital          — ticks_until_lost 100

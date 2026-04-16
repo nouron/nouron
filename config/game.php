@@ -40,7 +40,7 @@ return [
     // Resource production per tick: building_id => [resource_id => amount_per_level]
     // Each colony building produces (level × rate) units of the given resource per tick.
     'production' => [
-        27 => [4 => 10],   // industrieMine  → Werkstoffe (Compounds)  × 10/level
+        27 => [3 => 10],   // industrieMine  → Regolith                × 10/level
         41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
     ],
 

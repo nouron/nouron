@@ -50,7 +50,7 @@ return [
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'industrieMine' => [                // ex oremine (ID 27) — now produces Werkstoffe
+    'industrieMine' => [                // ex oremine (ID 27) — produces Regolith (resource 3)
         'id'                => 27,
         'supply_cost'       => 2,
         'moral_per_lv'      => 0,
@@ -90,18 +90,6 @@ return [
         'max_status_points' => 20,
         'max_level'         => null,
         'credits'           => 8_000,
-    ],
-
-    // ── Economy ───────────────────────────────────────────────────────────────
-
-    'tradecenter' => [
-        'id'                => 43,
-        'supply_cost'       => 7,
-        'moral_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days
-        'max_status_points' => 20,
-        'max_level'         => null,
-        'credits'           => 20_000,
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
