@@ -40,7 +40,7 @@ return [
     // Resource production per tick: building_id => [resource_id => amount_per_level]
     // Each colony building produces (level × rate) units of the given resource per tick.
     'production' => [
-        27 => [3 => 10],   // industrieMine  → Regolith                × 10/level
+        27 => [3 => 10],   // harvester      → Regolith                × 10/level
         41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
     ],
 
@@ -77,6 +77,19 @@ return [
         // Slot system: CC level = number of advisor slots (max 5).
         // Formula: min(cc_level, max_slots)
         'max_slots'       => 5,
+        // Credits deducted from the owning user each tick per active advisor (GDD §12).
+        // Processed in GameTick after passive Credits income to prevent false-negative
+        // deficits when income and upkeep fire in the same tick.
+        'upkeep'          => [1 => 10, 2 => 50, 3 => 160],
+    ],
+
+    // Passive Credits income per tick (GDD §3).
+    // Applied in GameTick step 8b (generatePassiveCredits), after resource generation.
+    'credits' => [
+        // Flat Cr/Tick subsidy from the Nexus for every colony that has CC > 0.
+        'nexus_subsidy'   => 30,
+        // Cr/Tick per housing level (sum of all housingComplex instances in the colony).
+        'tax_per_housing' => 20,
     ],
 
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).

@@ -11,7 +11,6 @@
  *   decay_rate       — status_points lost per tick (also stored in DB, used by GameTick decay)
  *   max_status_points — status_points reset value after level-down (also stored in DB)
  *   max_level        — hard level cap (null = uncapped, practically limited by supply)
- *   credits          — base build cost in credits
  *
  * Decay reference: decay_rate = max_status_points / target_days
  *   7 d → 2.86 | 10 d → 2.0 | 14 d → 1.43 | 21 d → 0.95
@@ -34,7 +33,6 @@ return [
         'decay_rate'        => 0.33,    // 60 days
         'max_status_points' => 20,
         'max_level'         => 5,
-        'credits'           => 100_000,
     ],
 
     'housingComplex' => [
@@ -45,19 +43,17 @@ return [
         'decay_rate'        => 0.44,    // 45 days
         'max_status_points' => 20,
         'max_level'         => 6,       // max 6 instances (instanced building)
-        'credits'           => 5_000,
     ],
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'industrieMine' => [                // ex oremine (ID 27) — produces Regolith (resource 3)
+    'harvester' => [                    // ex industrieMine/oremine (ID 27) — produces Regolith (resource 3)
         'id'                => 27,
         'supply_cost'       => 2,
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.95,    // 21 days
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 150,
     ],
 
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
@@ -67,7 +63,6 @@ return [
         'decay_rate'        => 0.95,
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 300,
     ],
 
     'depot' => [
@@ -77,7 +72,6 @@ return [
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 20_000,
     ],
 
     // ── Science ───────────────────────────────────────────────────────────────
@@ -89,7 +83,6 @@ return [
         'decay_rate'        => 0.95,    // 21 days
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 8_000,
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
@@ -101,7 +94,6 @@ return [
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
         'max_level'         => null,    // repeatable, supply-limited
-        'credits'           => 40_000,
     ],
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
@@ -113,17 +105,15 @@ return [
         'decay_rate'        => 2.0,     // 10 days
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 12_000,
     ],
 
     'bar' => [
         'id'                => 52,
         'supply_cost'       => 4,
         'moral_per_lv'      => 2,       // social hub — leisure in an otherwise bleak colony life
-        'decay_rate'        => 2.86,    // 7 days — needs regular supplies
+        'decay_rate'        => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 500,
     ],
 
     'denkmal' => [
@@ -133,7 +123,6 @@ return [
         'decay_rate'        => 0.33,    // 60 days — monuments are built to last
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 1_500,
     ],
 
     'temple' => [
@@ -143,7 +132,6 @@ return [
         'decay_rate'        => 2.0,     // 10 days — needs regular upkeep
         'max_status_points' => 20,
         'max_level'         => null,
-        'credits'           => 5_000,
     ],
 
 ];

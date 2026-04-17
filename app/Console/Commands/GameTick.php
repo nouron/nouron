@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Advisor;
 use App\Models\Colony;
 use App\Models\ColonyBuilding;
 use App\Models\ColonyResearch;
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\DB;
  *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
  *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
  *  8b. Moral calculation  — recalculate colony moral and store in colony_resources (resource_id=12)
+ *  8c. Passive Credits    — Nexus subsidy (30 Cr) + colony tax per housing level (20 Cr/level) added to user Credits
+ *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
  */
 class GameTick extends Command
@@ -89,6 +92,12 @@ class GameTick extends Command
 
             $n = $this->calculateMoral($tick);
             $this->line("  Colonies moral updated:   {$n}");
+
+            $n = $this->generatePassiveCredits($tick);
+            $this->line("  Users passive credits:    {$n}");
+
+            $n = $this->deductAdvisorUpkeep($tick);
+            $this->line("  Advisor upkeep deducted:  {$n}");
 
             $n = $this->incrementAdvisorTicks();
             $this->line("  Advisors ticked:          {$n}");
@@ -496,7 +505,12 @@ class GameTick extends Command
         // Build the over-cap set once before iterating — O(colonies), not O(researches).
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
-        $researches = ColonyResearch::where('level', '>', 0)->get();
+        $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
+
+        // Kenntnisse (purpose='knowledge') never decay — GDD §10.
+        $researches = ColonyResearch::where('level', '>', 0)
+            ->whereNotIn('research_id', $knowledgeIds)
+            ->get();
 
         foreach ($researches as $cr) {
             $rate        = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
@@ -540,16 +554,18 @@ class GameTick extends Command
      * Recalculates and sets the supply cap for each user.
      *
      * Cap model (GDD §6):
-     *   cap = CC_flat (15) + housing_level × 8,  max 200
+     *   cap = CC_flat (10) + housing_level × 8 + Σ(knowledge_cap_per_level),  max 200
      *
      * CommandCenter must be level > 0. Without CC → cap = 0.
      * The result is SET (not incremented) in user_resources.supply.
      */
     private function calculateSupply(): int
     {
-        $capCC      = (int) config('buildings.commandCenter.supply_cap', 15);
-        $capHousing = (int) config('buildings.housingComplex.supply_cap', 8);
-        $capMax     = (int) config('game.supply.cap_max', 200);
+        $capCC         = (int) config('buildings.commandCenter.supply_cap', 10);
+        $capHousing    = (int) config('buildings.housingComplex.supply_cap', 8);
+        $capMax        = (int) config('game.supply.cap_max', 200);
+        $capPerLevel   = config('game.supply.knowledge_cap_per_level', []);
+        $knowledgeIds  = collect(config('knowledge'))->pluck('id')->toArray();
 
         $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
 
@@ -574,7 +590,21 @@ class GameTick extends Command
                 ->where('building_id', 28)
                 ->value('level');
 
-            $cap = min($capCC + ($housingLevel * $capHousing), $capMax);
+            $knowledgeCap = 0;
+            if (!empty($knowledgeIds)) {
+                $levels = DB::table('colony_researches')
+                    ->where('colony_id', $colony->id)
+                    ->whereIn('research_id', $knowledgeIds)
+                    ->pluck('level', 'research_id');
+
+                foreach ($levels as $level) {
+                    for ($i = 1; $i <= min((int) $level, 5); $i++) {
+                        $knowledgeCap += $capPerLevel[$i] ?? 0;
+                    }
+                }
+            }
+
+            $cap = min($capCC + ($housingLevel * $capHousing) + $knowledgeCap, $capMax);
 
             UserResource::where('user_id', $userId)->update(['supply' => $cap]);
         }
@@ -633,6 +663,95 @@ class GameTick extends Command
         }
 
         return $colonies->count();
+    }
+
+    // ── 8c. Passive Credits ───────────────────────────────────────────────────
+
+    /**
+     * Awards passive Credits income to every player colony per tick.
+     *
+     * Formula (GDD §3):
+     *   nexus    = game.credits.nexus_subsidy        (flat, if CC level > 0)
+     *   housing  = housingComplex.level × game.credits.tax_per_housing
+     *   total    = nexus + housing
+     *
+     * Colonies without a CC (level = 0) are skipped — the Nexus subsidy only flows
+     * once the colony is operational.  NPC colonies (user_id = null) are skipped.
+     *
+     * @return int Number of users credited this tick.
+     */
+    private function generatePassiveCredits(int $tick): int
+    {
+        $nexusSubsidy  = (int) config('game.credits.nexus_subsidy', 30);
+        $taxPerHousing = (int) config('game.credits.tax_per_housing', 20);
+
+        $colonies = Colony::whereNotNull('user_id')->get();
+        $processed = 0;
+
+        foreach ($colonies as $colony) {
+            $ccLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', 25)
+                ->value('level');
+
+            if ($ccLevel <= 0) {
+                continue; // no CC → colony not operational → no subsidy
+            }
+
+            $housingLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', 28)
+                ->value('level');
+
+            $total = $nexusSubsidy + ($housingLevel * $taxPerHousing);
+
+            DB::table('user_resources')
+                ->where('user_id', $colony->user_id)
+                ->increment('credits', $total);
+
+            $processed++;
+        }
+
+        return $processed;
+    }
+
+    // ── 8d. Advisor upkeep ────────────────────────────────────────────────────
+
+    /**
+     * Deducts Credits upkeep for every active (assigned) advisor each tick.
+     *
+     * Upkeep schedule by rank (GDD §12):
+     *   rank 1 → 10 Cr/Tick
+     *   rank 2 → 50 Cr/Tick
+     *   rank 3 → 160 Cr/Tick
+     *
+     * Credits are clamped to ≥ 0 (the player cannot go into debt from advisor upkeep).
+     * Called AFTER generatePassiveCredits() so income is applied before costs.
+     * Advisors without a colony assignment (unemployed) incur no upkeep.
+     *
+     * @return int Number of advisors processed this tick.
+     */
+    private function deductAdvisorUpkeep(int $tick): int
+    {
+        $upkeepByRank = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+
+        $advisors = Advisor::whereNotNull('colony_id')->with('colony')->get();
+
+        foreach ($advisors as $advisor) {
+            if (!$advisor->colony || $advisor->colony->user_id === null) {
+                continue; // NPC colony or orphaned advisor — skip
+            }
+
+            $upkeep = (int) ($upkeepByRank[$advisor->rank] ?? 10);
+
+            DB::table('user_resources')
+                ->where('user_id', $advisor->colony->user_id)
+                ->update([
+                    'credits' => DB::raw("MAX(0, credits - {$upkeep})"),
+                ]);
+        }
+
+        return $advisors->count();
     }
 
     // ── 9. Advisor ticks ─────────────────────────────────────────────────────

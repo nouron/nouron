@@ -199,29 +199,31 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 2  | Versorgung | Supply | Sup | User | Nein | 10 (CC Lv1, kein Wohnhabitat) |
 | 3  | Regolith | Regolith | Rg | Kolonie | Ja | 200 |
 | 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 0 |
-| 5  | Organika | Organics | Or | Kolonie | Ja | 500 |
+| 5  | Organika | Organics | Or | Kolonie | Ja | 0 |
 | 12 | Moral | Moral | M | Kolonie | Nein | 0 |
 
 **Credits** und **Supply** werden auf User-Ebene (`user_resources`) geführt, alle anderen auf Kolonieebene (`colony_resources`).
 
 ### Ressourcen-Semantik
 
-- **Regolith** — Lokaler Rohstoff: Mondgestein, Silikate, Mineralstaub. Wird vor Ort von der Industriemine abgebaut. Primäre Verwendung: Rohbaukosten für Gebäude. Der Spieler startet mit einem Grundstock (200 Rg) — narrative Begründung: vor Ankunft des Spielers wurden durch automatisierte Maschinen bereits Ressourcen bereitgestellt (Frontier-Depot).
-- **Werkstoffe** — Veredelte Industriegüter: raffinierte Metalle, Legierungen, technische Komponenten. Nicht lokal produzierbar (keine Raffinerie auf Kolonieniveau). Quellen: KI-Händler (immer verfügbar, Preis in Credits), Spieler-zu-Spieler-Handel, Events. Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen.
-- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Moral. Produktionsgebäude: Agrardom.
+- **Regolith** — Lokaler Rohstoff: Mondgestein, Silikate, Mineralstaub. Wird vor Ort vom Harvester abgebaut. Primäre Verwendung: Rohbaukosten für Gebäude (außer CC und Harvester). Startwert 200 Rg — narrative Begründung: vor Ankunft des Spielers wurden durch automatisierte Maschinen bereits Ressourcen bereitgestellt (Frontier-Depot).
+- **Werkstoffe** — Veredelte Industriegüter: raffinierte Metalle, Legierungen, technische Komponenten. Nicht lokal produzierbar. Quellen: KI-Händler (immer verfügbar, Preis in Credits), Spieler-zu-Spieler-Handel, Events. Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen.
+- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Moral. Produktionsgebäude: Agrardom (bioFacility). Startwert 0 — wird durch eigene Produktion oder Handel beschafft.
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
 - **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
 
 ### Ressourcen-Verwendungsdomänen
 
-| Ressource | Gebäude (Rohbau) | Schiffe | High-Tech | Reparatur |
-|-----------|-----------------|---------|-----------|-----------|
-| Regolith | Ja (alle) | Nein | Nein | Nein |
+| Ressource | Gebäude (Rohbau) | Schiffe | High-Tech-Gebäude | Reparatur |
+|-----------|-----------------|---------|-------------------|-----------|
+| Regolith | Ja (außer CC + Harvester) | Nein | Nein | Nein |
 | Werkstoffe | Nein | Ja | Ja | Ja |
-| Organika | Nein | Nein | Nein | Nein |
-| Credits | Ja (Grundkosten) | Ja | Ja | Ja |
+| Organika | Nein | Ja | Ja | Nein |
+| Credits | Ja (immer — Grundkosten) | Ja | Ja | Ja |
 
-> **Designprinzip:** Jede Ressource hat eine klar getrennte Nische. Regolith und Werkstoffe konkurrieren nicht um denselben Verwendungs-Slot — das verhindert parallele Bottlenecks.
+**Ausnahme CC + Harvester:** CommandCenter und Harvester kosten beim Bau nur Credits — sie sind der Einstiegspunkt der Kolonie und dürfen keinen Ressourcen-Catch-22 erzeugen (Regolith braucht Harvester, Harvester braucht Regolith).
+
+> **Designprinzip:** Regolith = Rohbau, Werkstoffe = High-Tech/Schiffe, Organika = biologische Schicht (Schiffe + High-Tech). Credits sind immer beteiligt — als Grundkosten und einziger universeller Tauschstoff.
 
 ### Werkstoffe: Singleplayer-Sicherheitsnetz
 
@@ -1253,6 +1255,12 @@ Jede Partie von Nouron ist eine abgeschlossene **Expeditionsmission**. Es gibt k
 
 Dauer: ~10–20 Ticks. Kann nicht ubersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
 
+**Startzustand (jeder Run):**
+- CommandCenter Level 1 — bereits gebaut, betriebsbereit
+- Harvester Level 1 — bereits gebaut, produziert sofort Regolith
+- Startressourcen: 3.000 Credits, 200 Regolith. Werkstoffe und Organika starten bei 0.
+- Der Spieler kann direkt mit dem Bau von Wohnhabitaten beginnen.
+
 **Abschlussbedingungen (BEIDE mussen erfullt sein):**
 
 | Bedingung | Konkret |
@@ -1270,7 +1278,15 @@ Phase 1 endet automatisch, sobald beide Bedingungen gleichzeitig erfüllt sind. 
 
 Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 mussen bis Tick X erfullt werden.**
 
-**Runlänge gesamt:** 60–100 Ticks (konfigurierbar). Bei 1 Tag/Tick entspricht das 2–3 Monaten.
+**Runlänge gesamt:** 60–100 Ticks (konfigurierbar, Standard 100). Bei 1 Tag/Tick entspricht das 2–3 Monaten — das ist die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
+
+**Tick-Konfiguration:** Jeder Run ist über `config/game.php → run` konfigurierbar:
+- `tick_limit` — Gesamtticks des Runs (Standard 100)
+- `tick_duration_hours` — Maximale Echtzeit pro Tick in Stunden (Standard 24 = 1 Tag)
+- `max_players` — 1 (Singleplayer) oder 2–4 (Multiplayer)
+- `playbymailmode` — bei `true`: Tick endet sobald alle Spieler ihre Aktionen eingereicht haben, spätestens nach `tick_duration_hours`
+
+> **Designprinzip:** Die Max-Wartezeit (`tick_duration_hours`) ist Pflicht auch im Play-by-Mail-Modus — ohne sie blockiert ein inaktiver Spieler alle anderen. Singleplayer nutzt immer das Zeitmodell.
 
 ---
 
@@ -1302,10 +1318,50 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 **Bewertung: gut.** Die Mechanik gibt dem Spieler echte Wahlfreiheit, ohne den Run zu trivial zu machen. Eine verfehlte Aufgabe beendet den Run nicht — das reduziert Frustration und fuhrt zu mehr strategischen Entscheidungen ("Welche zwei lohnen sich fur meine aktuelle Ausgangslage?").
 
 **Milestones gegen zu fruhen Fokus-Verlust:**
-- Tick 30: Mindestens 1 Aufgabe muss zu > 50% erfullt sein. Sonst: Ereignis-Warnung im INNN-Feed ("Die Expedition gerät ins Stocken").
-- Tick 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Warnung mit Tick-Countdown.
+- Tick 30: Mindestens 1 Aufgabe muss zu > 50% erfullt sein. Sonst: Nexus-Warnung im INNN-Feed ("Die Expedition gerät ins Stocken — Nexus Command erwartet Fortschritt").
+- Tick 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Nexus-Warnung mit Tick-Countdown.
 
-Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration.
+Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration. **Nexus ist der Absender** — die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
+
+---
+
+### Nexus als Hintergrund-Akteur
+
+Nexus ist nicht nur der narrative Rahmen des Runs — es ist ein aktiver, aber stiller Spielakteur. Es überwacht die Kolonie und interveniert an definierten Schwellwerten. **Alle Nexus-Interventionen sind einmalige Effekte — kein permanenter State-Flip.**
+
+Kommunikationskanal: ausschließlich der INNN-Feed. Nexus sendet keine Dialogfenster, keine Popups — nur INNN-Ereignisse mit Absender "Nexus Command".
+
+#### Boni (wenn der Spieler ahead-of-curve liegt)
+
+Nexus belohnt Kolonien, die ihre Milestone-Ziele übertreffen:
+- Credits-Transfer ("Nexus genehmigt Betriebsmittelzulage")
+- Temporärer AP-Boost eines Berater-Typs für 3 Ticks
+- Aufgaben-Variante wird leicht entspannt (z.B. Zielwert um 10% gesenkt)
+
+#### Sanktionen (wenn der Spieler hinter Plan liegt)
+
+Nexus erhöht den Druck auf Kolonien, die Milestones verfehlen:
+- Berater kurz abgezogen ("vorübergehend für administrative Zwecke einberufen") — 1 Tick AP-Drop
+- Kleine Credits-Gebühr ("Overhead für Missionsaufsicht")
+- Gnadenfrist-Verkürzung (siehe unten)
+
+Sanktionen erscheinen nie ohne vorherige INNN-Warnung.
+
+#### Gnadenfrist
+
+Ab Tick 80 zeigt das UI den Countdown sichtbar ("Noch 20 Ticks bis Missionsende"). Nexus tritt jetzt aktiver in Erscheinung:
+
+- **Tick 85:** Wenn noch keine Aufgabe vollständig erfüllt ist → Nexus verhängt eine Sanktion (1 Berater 1 Tick abgezogen) **und** verkürzt das effektive Ende auf Tick 95. Der Spieler sieht im INNN-Feed: "Nexus Command hat die Frist auf Tick 95 vorgezogen."
+- **Tick 90:** Letzte Warnung falls immer noch 0 Aufgaben erfüllt.
+- **Tick 95/100:** Run endet — Fail State 2.
+
+Wer hingegen bei Tick 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale Statusmeldung ("Nexus registriert Fortschritt — Mission läuft.") ohne Sanktion.
+
+> **TODO (Implementierung):** Nexus-Trigger-Tabelle definieren — welche Metrik, welcher Schwellwert, welche Reaktion, welche Phase. Muss vor der Implementierung als Config-Tabelle in `config/game.php → run.nexus_triggers` abgelegt werden.
+
+> **TODO (Design):** Nexus-Boni in Phase 1 oder erst ab Phase 2? Phase-2-only wäre einfacher und vermeidet, neue Spieler zu bevormunden.
+
+> **TODO (UI):** Nexus-Absender-Icon im INNN-Feed (niedrige Priorität, vor Frontend-Phase klären).
 
 ---
 
@@ -1345,10 +1401,11 @@ Komponenten:
 
 ### Implementierungshinweise
 
-- Neue Tabellen benotigt: `run_objectives` (aktive Aufgaben des aktuellen Runs), `run_state` (Phase, Tick-Start, Tick-Limit, Fail-State-Tracking)
-- `config/game.php → run` — Tick-Limit, Aufgaben-Pool-Konfiguration, Score-Formel-Gewichte
-- Aufgaben-Fortschritt wird bei jedem Tick-Schritt gepruft (nach Schritt 9 "Advisor Ticks")
+- Neue Tabellen: `run_objectives` (aktive Aufgaben des aktuellen Runs), `run_state` (Phase, Tick-Start, Tick-Limit, Fail-State-Tracking)
+- `config/game.php → run` — Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Nexus-Trigger-Tabelle, Score-Formel-Gewichte
+- Aufgaben-Fortschritt wird bei jedem Tick-Schritt geprüft (nach Schritt 9 "Advisor Ticks")
 - Phase-1-Check nach Tick-Schritt 4 (Gebäude-Decay) sinnvoll, da Gebäude-Level dann aktuell ist
+- Nexus-Interventionen: GameTick prüft nach Aufgaben-Fortschritt die Nexus-Trigger-Tabelle und erzeugt ggf. INNN-Events mit `sender = 'nexus'`
 
 ---
 

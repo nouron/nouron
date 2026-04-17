@@ -12,8 +12,8 @@ return [
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'industrieMine'      => 'Industrial Mine',
-    'industrieMine_desc' => 'Extracts and processes raw materials of all kinds — metals, alloys, ceramics, polymers. The backbone of heavy industry.',
+    'harvester'      => 'Harvester',
+    'harvester_desc' => 'Extracts and processes raw materials of all kinds — metals, alloys, ceramics, polymers. The backbone of heavy industry.',
 
     'bioFacility'      => 'Agrarian Dome',
     'bioFacility_desc' => 'Controlled biosphere for food production, medicine, and organic compounds. Supplies the colony with Organics.',

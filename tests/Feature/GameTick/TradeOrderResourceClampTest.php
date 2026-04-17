@@ -33,10 +33,10 @@ use Tests\TestCase;
  *
  * Fixture summary (TestSeeder):
  *   Fleet 10 (Bart, user_id=3) at (6828, 3016):
- *     fleet_resources: res_water(3)=100, res_ferum(4)=420, res_silicates(5)=10,
+ *     fleet_resources: res_regolith(3)=100, res_werkstoffe(4)=420, res_organika(5)=10,
  *                      res_ena(6)=100, res_lho(8)=100, res_aku(10)=100
  *   Colony 1 (Springfield, user_id=3) at (6828, 3016):
- *     colony_resources: res_water(3)=4115, res_ferum(4)=18598, res_silicates(5)=6335
+ *     colony_resources: res_regolith(3)=200, res_werkstoffe(4)=0, res_organika(5)=0
  *
  * Note: each test uses a unique tick number to avoid primary-key conflicts with
  * seed data (seed orders are at tick ≈14988–15225). Colony resources also
@@ -51,9 +51,9 @@ class TradeOrderResourceClampTest extends TestCase
     private int $colonyId = 1;    // Springfield
 
     // Resource IDs
-    private int $resWater     = 3;
-    private int $resFerum     = 4;
-    private int $resSilicates = 5;
+    private int $resRegolith    = 3;
+    private int $resWerkstoffe  = 4;
+    private int $resOrganika    = 5;
 
     protected function setUp(): void
     {
@@ -70,21 +70,21 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_sell_order_clamps_to_fleet_stock(): void
     {
-        $this->setFleetResource($this->fleetId, $this->resWater, 100);
-        $colonyBefore = $this->getColonyResource($this->colonyId, $this->resWater);
+        $this->setFleetResource($this->fleetId, $this->resRegolith, 100);
+        $colonyBefore = $this->getColonyResource($this->colonyId, $this->resRegolith);
 
-        $this->insertTradeOrder(7001, $this->fleetId, $this->colonyId, $this->resWater, 500, 1);
+        $this->insertTradeOrder(7001, $this->fleetId, $this->colonyId, $this->resRegolith, 500, 1);
 
         Artisan::call('game:tick', ['--tick' => 7001]);
 
         // Fleet gave everything it had — must be exactly 0
-        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resWater),
+        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resRegolith),
             'Fleet stock must be 0 after selling more than it held (clamped to 100).');
 
         // Colony must have received at least 100 (building production may add more)
         $this->assertGreaterThanOrEqual(
             $colonyBefore + 100,
-            $this->getColonyResource($this->colonyId, $this->resWater),
+            $this->getColonyResource($this->colonyId, $this->resRegolith),
             'Colony must receive the full fleet stock (100), not the over-stated 500.'
         );
     }
@@ -95,13 +95,13 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_sell_order_exact_amount_transferred(): void
     {
-        $this->setFleetResource($this->fleetId, $this->resFerum, 420);
+        $this->setFleetResource($this->fleetId, $this->resWerkstoffe, 420);
 
-        $this->insertTradeOrder(7002, $this->fleetId, $this->colonyId, $this->resFerum, 420, 1);
+        $this->insertTradeOrder(7002, $this->fleetId, $this->colonyId, $this->resWerkstoffe, 420, 1);
 
         Artisan::call('game:tick', ['--tick' => 7002]);
 
-        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resFerum),
+        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resWerkstoffe),
             'Fleet must be empty after selling exactly its stock.');
     }
 
@@ -111,13 +111,13 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_sell_order_skipped_when_fleet_has_zero_stock(): void
     {
-        $this->setFleetResource($this->fleetId, $this->resSilicates, 0);
+        $this->setFleetResource($this->fleetId, $this->resOrganika, 0);
 
-        $this->insertTradeOrder(7003, $this->fleetId, $this->colonyId, $this->resSilicates, 200, 1);
+        $this->insertTradeOrder(7003, $this->fleetId, $this->colonyId, $this->resOrganika, 200, 1);
 
         Artisan::call('game:tick', ['--tick' => 7003]);
 
-        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resSilicates),
+        $this->assertEquals(0, $this->getFleetResource($this->fleetId, $this->resOrganika),
             'Fleet with zero stock must still be at 0 after a sell order.');
     }
 
@@ -133,14 +133,14 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_buy_order_clamps_to_colony_stock(): void
     {
-        $this->setColonyResource($this->colonyId, $this->resWater, 50);
-        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resWater);
+        $this->setColonyResource($this->colonyId, $this->resRegolith, 50);
+        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resRegolith);
 
-        $this->insertTradeOrder(7004, $this->fleetId, $this->colonyId, $this->resWater, 300, 0);
+        $this->insertTradeOrder(7004, $this->fleetId, $this->colonyId, $this->resRegolith, 300, 0);
 
         Artisan::call('game:tick', ['--tick' => 7004]);
 
-        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resWater);
+        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resRegolith);
         $transferred = $fleetAfter - $fleetBefore;
 
         // Fleet must have received at most 50 (the colony stock when order was placed)
@@ -156,14 +156,14 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_buy_order_skipped_when_colony_has_zero_stock(): void
     {
-        $this->setColonyResource($this->colonyId, $this->resSilicates, 0);
-        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resSilicates);
+        $this->setColonyResource($this->colonyId, $this->resOrganika, 0);
+        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resOrganika);
 
-        $this->insertTradeOrder(7005, $this->fleetId, $this->colonyId, $this->resSilicates, 500, 0);
+        $this->insertTradeOrder(7005, $this->fleetId, $this->colonyId, $this->resOrganika, 500, 0);
 
         Artisan::call('game:tick', ['--tick' => 7005]);
 
-        $this->assertEquals($fleetBefore, $this->getFleetResource($this->fleetId, $this->resSilicates),
+        $this->assertEquals($fleetBefore, $this->getFleetResource($this->fleetId, $this->resOrganika),
             'Fleet must not gain resources when colony has none.');
     }
 
@@ -172,14 +172,14 @@ class TradeOrderResourceClampTest extends TestCase
      */
     public function test_buy_order_exact_amount_transferred(): void
     {
-        $this->setColonyResource($this->colonyId, $this->resWater, 75);
-        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resWater);
+        $this->setColonyResource($this->colonyId, $this->resRegolith, 75);
+        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resRegolith);
 
-        $this->insertTradeOrder(7006, $this->fleetId, $this->colonyId, $this->resWater, 75, 0);
+        $this->insertTradeOrder(7006, $this->fleetId, $this->colonyId, $this->resRegolith, 75, 0);
 
         Artisan::call('game:tick', ['--tick' => 7006]);
 
-        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resWater);
+        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resRegolith);
         $this->assertEquals($fleetBefore + 75, $fleetAfter,
             'Fleet must receive exactly the requested 75 units.');
     }
@@ -193,15 +193,15 @@ class TradeOrderResourceClampTest extends TestCase
     public function test_sell_does_not_create_fleet_resources(): void
     {
         $fleetStock = 100;
-        $this->setFleetResource($this->fleetId, $this->resWater, $fleetStock);
+        $this->setFleetResource($this->fleetId, $this->resRegolith, $fleetStock);
 
-        $this->insertTradeOrder(7007, $this->fleetId, $this->colonyId, $this->resWater, 9999, 1);
+        $this->insertTradeOrder(7007, $this->fleetId, $this->colonyId, $this->resRegolith, 9999, 1);
 
         Artisan::call('game:tick', ['--tick' => 7007]);
 
         // Fleet can only lose resources on a sell; it must not end up with MORE than it started
         $this->assertLessThanOrEqual($fleetStock,
-            $this->getFleetResource($this->fleetId, $this->resWater),
+            $this->getFleetResource($this->fleetId, $this->resRegolith),
             'Fleet resource amount must not increase on a sell order.');
     }
 
@@ -212,14 +212,14 @@ class TradeOrderResourceClampTest extends TestCase
     public function test_buy_does_not_create_resources_from_nothing(): void
     {
         $colonyStock = 50;
-        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resWater);
-        $this->setColonyResource($this->colonyId, $this->resWater, $colonyStock);
+        $fleetBefore = $this->getFleetResource($this->fleetId, $this->resRegolith);
+        $this->setColonyResource($this->colonyId, $this->resRegolith, $colonyStock);
 
-        $this->insertTradeOrder(7008, $this->fleetId, $this->colonyId, $this->resWater, 9999, 0);
+        $this->insertTradeOrder(7008, $this->fleetId, $this->colonyId, $this->resRegolith, 9999, 0);
 
         Artisan::call('game:tick', ['--tick' => 7008]);
 
-        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resWater);
+        $fleetAfter = $this->getFleetResource($this->fleetId, $this->resRegolith);
         $gained = $fleetAfter - $fleetBefore;
 
         $this->assertLessThanOrEqual($colonyStock, $gained,

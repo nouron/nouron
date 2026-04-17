@@ -12,8 +12,8 @@ return [
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
-    'industrieMine'      => 'Industriemine',
-    'industrieMine_desc' => 'Fördert und verarbeitet Rohstoffe aller Art — Metalle, Legierungen, Keramik, Polymere. Grundlage jeder Schwerindustrie.',
+    'harvester'      => 'Harvester',
+    'harvester_desc' => 'Fördert und verarbeitet Rohstoffe aller Art — Metalle, Legierungen, Keramik, Polymere. Grundlage jeder Schwerindustrie.',
 
     'bioFacility'      => 'Agrardom',
     'bioFacility_desc' => 'Kontrollierte Biosphäre für Nahrungsproduktion, Medizin und organische Verbindungen. Versorgt die Kolonie mit Organika.',

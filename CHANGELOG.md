@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-04-17 (Balancing: Schiffssystem + Berater-Einstellungskosten)
+
+- Migration 000005: Sonde (ID 85) in `ships` eingeführt; Korvette (37) + Frachter (47) umbenannt (`ship_*`-Präfix); Schiffskosten auf 3 Ressourcen umgestellt (Credits + Werkstoffe + Organika); alte Ship-Kosten für deprecated Schiffe entfernt
+- Berater-Einstellungskosten: 50 Cr → differenziert (300/400/500/350/600 Cr je Typ), alle 5 gleichzeitig kostet 2.150 Cr — echter Day-1-Tradeoff
+- `config/buildings.php` + `config/ships.php`: ungenutztes `credits`-Feld entfernt (Build-Kosten kommen ausschließlich aus `building_costs`/`ship_costs` DB-Tabellen)
+
+## 2026-04-17 (Balancing: AP-Kosten, Regolith-Baukosten, passive Credits, Berater-Upkeep)
+
+- Migration 000003: ap_for_levelup für alle Gebäude kalibriert (CC=10, Standard=20, High-Tech=30)
+- Migration 000004: Regolith als Baukosten für alle Gebäude außer CC+Harvester (40–300 Rg je Gebäude)
+- GameTick: passive Credits-Einnahmen (Nexus-Subvention 30 Cr/Tick + Kolonistensteuern 20 Cr/Tick pro Housing-Level)
+- GameTick: Berater-Upkeep-Abzug pro Tick (10/50/160 Cr je Rang)
+- config/game.php: `credits`-Block + `advisor.upkeep` ergänzt
+
+## 2026-04-17 (Balancing: Ressourcen, Harvester, Startzustand)
+
+- Ferum (ID 4) → Werkstoffe (Co), Silikate (ID 5) → Organika (Or): Migration + Lang + Testdata
+- industrieMine → Harvester umbenannt (config, lang)
+- Bar decay_rate: 2.86 → 1.0 (von 7 auf ~20 Ticks bis Verfall)
+- Startzustand: Spieler beginnt mit CC Lv1 + Harvester Lv1 vorgebaut; Startressourcen: Credits + Regolith (Werkstoffe/Organika Startwert 0)
+
+## 2026-04-17 (Implementierung: Kenntnisse-System + GDD §14 Nexus-Mechanik)
+
+- **7 Kenntnisse in DB eingeführt** (IDs 90–96, GDD §10): construction, cartography, geology, agronomy, health, trade, defense. Migration `2026_04_17_000001` fügt die Rows in `researches` ein. Kein Decay (decay_rate=0) — Wissen ist dauerhaft.
+- **Decay-Loop überspringt Kenntnisse aktiv** (`whereNotIn` auf `knowledge`-IDs) statt still durch Rate=0 zu laufen.
+- **Steigende AP-Kosten**: `levelup_costs` in `config/knowledge.php` (5/10/18/28/40 pro Level). `ResearchService` überschreibt `resolveApForLevelup()` aus `AbstractTechnologyService`; `checkRequiredActionPoints` nutzt jetzt ebenfalls diesen Hook.
+- **Supply-Cap-Formel erweitert** (GDD §6): `calculateSupply()` in `GameTick` berücksichtigt `knowledge_cap_per_level`-Bonus (+3/+5/+5/+4/+3 je Level). Formel: `CC_flat(10) + housing × 8 + Σ(knowledge_bonus)`.
+- **GDD §14 erweitert**: Nexus als aktiver Hintergrund-Akteur (Boni/Sanktionen an Schwellwerten, Gnadenfrist-Mechanik Tick 85→95), Tick-Konfiguration (PbM-Modus, tick_duration_hours), Milestone-Warnungen Nexus-gebranded.
+- **Tests**: 8 neue Tests in `KnowledgeServiceTest`. 401 Tests grün.
+
 ## 2026-04-17 (Refactoring: Fleet-Commander-Mechanik entfernt, Test-Suite grüngestellt)
 
 - **Fleet-scoped Berater entfernt**: `assignToFleet`/`unassignFromFleet`/`getFleetCommander` aus `PersonellService` gelöscht. Alle Berater sind jetzt colony-scoped. Flottenerstellung benötigt keinen Kommandant mehr. Migration `2026_04_16_000002` entfernt `fleet_id`/`is_commander` aus `advisors` und `can_command_fleet` aus `personell`.

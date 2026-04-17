@@ -44,11 +44,8 @@ class OnboardingTest extends TestCase
             ->where('colony_id', $colony->id)
             ->pluck('amount', 'resource_id');
         $this->assertEquals(200, $res[3]);   // regolith
-        $this->assertEquals(500, $res[4]);   // ferum
-        $this->assertEquals(500, $res[5]);   // silicates
-        $this->assertEquals(100, $res[6]);   // ena
-        $this->assertEquals(100, $res[8]);   // lho
-        $this->assertEquals(100, $res[10]);  // aku
+        $this->assertEquals(0,   $res[4]);   // werkstoffe — produced by harvester, no starting stock
+        $this->assertEquals(0,   $res[5]);   // organika   — produced by bioFacility, no starting stock
 
         // CommandCenter at level 1
         $cc = DB::table('colony_buildings')
@@ -57,6 +54,15 @@ class OnboardingTest extends TestCase
             ->first();
         $this->assertNotNull($cc, 'CommandCenter must be placed');
         $this->assertEquals(1, $cc->level);
+
+        // Harvester at level 1 — immediately operational from day one
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', 27)
+            ->first();
+        $this->assertNotNull($harvester, 'Harvester must be placed at game start');
+        $this->assertEquals(1, $harvester->level);
+        $this->assertEquals(20, $harvester->status_points, 'Harvester must start fully intact');
     }
 
     public function test_setup_new_player_uses_free_planet(): void
