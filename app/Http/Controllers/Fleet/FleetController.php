@@ -95,25 +95,6 @@ class FleetController extends BaseController
             return back()->withErrors(['fleet' => 'Keine Kolonie gefunden.']);
         }
 
-        // Check that an available pilot advisor exists at this colony
-        $availableCommander = DB::table('advisors')
-            ->join('personell', 'personell.id', '=', 'advisors.personell_id')
-            ->where('advisors.user_id', $userId)
-            ->where('advisors.colony_id', $colony->id)
-            ->whereNull('advisors.fleet_id')
-            ->where('personell.can_command_fleet', 1)
-            ->where(function ($q) {
-                $tick = $this->tickService->getTickCount();
-                $q->whereNull('advisors.unavailable_until_tick')
-                  ->orWhere('advisors.unavailable_until_tick', '<=', $tick);
-            })
-            ->select('advisors.id')
-            ->first();
-
-        if (!$availableCommander) {
-            return back()->withErrors(['fleet' => 'Kein verfügbarer Kommandant. Stelle zuerst einen Piloten ein.']);
-        }
-
         [$cx, $cy, $cs] = $colony->getCoords();
         $fleet = Fleet::create([
             'fleet'   => $request->input('fleet'),
@@ -122,8 +103,6 @@ class FleetController extends BaseController
             'y'       => $cy,
             'spot'    => $cs,
         ]);
-
-        $this->personellService->assignToFleet($availableCommander->id, $fleet->id);
 
         return redirect()->route('fleet.index');
     }
@@ -138,23 +117,6 @@ class FleetController extends BaseController
         }
 
         DB::transaction(function () use ($fleet, $userId) {
-            // Return commander to colony
-            $commander = DB::table('advisors')
-                ->where('fleet_id', $fleet->id)
-                ->where('is_commander', 1)
-                ->first();
-
-            if ($commander) {
-                $colony = $this->colonyService->getPrimeColony($userId);
-                if ($colony) {
-                    DB::table('advisors')->where('id', $commander->id)->update([
-                        'fleet_id'  => null,
-                        'colony_id' => $colony->id,
-                        'is_commander' => 0,
-                    ]);
-                }
-            }
-
             // Cascade delete fleet data
             DB::table('fleet_orders')->where('fleet_id', $fleet->id)->delete();
             DB::table('fleet_ships')->where('fleet_id', $fleet->id)->delete();

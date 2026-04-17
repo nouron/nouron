@@ -36,15 +36,15 @@ class GameTickTest extends TestCase
     // ── Supply cap ───────────────────────────────────────────────────────────
 
     /**
-     * Supply cap = CC_flat (15) + housing_level * 8.
-     * Colony 1: CC level=10 (>0 → flat 15), housing level=2 → cap = 15 + 16 = 31.
+     * Supply cap = CC_flat (10) + housing_level * 8.
+     * Colony 1: CC level=10 (>0 → flat 10), housing level=2 → cap = 10 + 16 = 26.
      */
     public function test_supply_cap_is_set_from_cc_and_housing(): void
     {
         Artisan::call('game:tick', ['--tick' => 9001]);
 
         $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
-        $this->assertEquals(31, $supply);
+        $this->assertEquals(26, $supply);
     }
 
     /**
@@ -67,7 +67,7 @@ class GameTickTest extends TestCase
      */
     public function test_supply_cap_respects_maximum(): void
     {
-        // housing level 30: 15 + 30*8 = 255 → capped at 200
+        // housing level 30: 10 + 30*8 = 250 → capped at 200
         DB::table('colony_buildings')
             ->where('colony_id', 1)->where('building_id', 28)
             ->update(['level' => 30]);

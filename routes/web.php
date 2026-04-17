@@ -111,11 +111,9 @@ Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
 // ── Advisors ──────────────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function () {
-    Route::get('/',                              [AdvisorController::class, 'index'])->name('index');
-    Route::post('/hire',                         [AdvisorController::class, 'hire'])->name('hire');
-    Route::delete('/{id}',                       [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
-    Route::post('/{id}/assign-fleet',            [AdvisorController::class, 'assignCommander'])->name('assign-fleet')->where('id', '[0-9]+');
-    Route::post('/{id}/unassign-fleet',          [AdvisorController::class, 'unassignCommander'])->name('unassign-fleet')->where('id', '[0-9]+');
+    Route::get('/',      [AdvisorController::class, 'index'])->name('index');
+    Route::post('/hire', [AdvisorController::class, 'hire'])->name('hire');
+    Route::delete('/{id}', [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
 });
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────

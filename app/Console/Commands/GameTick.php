@@ -641,12 +641,7 @@ class GameTick extends Command
     {
         $updated = DB::table('advisors')
             ->whereNull('unavailable_until_tick')
-            ->where(function ($q) {
-                $q->whereNotNull('colony_id')
-                  ->orWhere(function ($q2) {
-                      $q2->whereNotNull('fleet_id')->where('is_commander', 1);
-                  });
-            })
+            ->whereNotNull('colony_id')
             ->increment('active_ticks');
 
         $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);

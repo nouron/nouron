@@ -366,26 +366,21 @@ INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,35,37);
 INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,36,0);
 INSERT INTO "locked_actionpoints" VALUES(15998,'colony',1,35,1);
 INSERT INTO "locked_actionpoints" VALUES(16005,'colony',1,35,9);
-INSERT INTO "personell" VALUES(35,'industry','techs_engineer',25,5,1,0,10,0);
-INSERT INTO "personell" VALUES(36,'civil','techs_scientist',31,1,3,1,10,0);
-INSERT INTO "personell" VALUES(89,'military','techs_pilot',44,1,7,3,10,1);
-INSERT INTO "personell" VALUES(92,'economy','techs_trader',52,1,7,2,10,0);
-INSERT INTO "personell" VALUES(93,'military','techs_stratege',25,3,9,0,10,0);
--- advisors: colony 1 (user_id=3) — 1 per type (slot system), pilot on fleet 10
-INSERT INTO "advisors" VALUES(1,3,35,1,NULL,0,2,5,NULL);
-INSERT INTO "advisors" VALUES(2,3,36,1,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(3,3,92,1,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(4,3,93,1,NULL,0,1,0,NULL);
--- advisors: colony 2 (user_id=0) — 1 per type (slot system), pilot on colony (unassigned)
-INSERT INTO "advisors" VALUES(5,0,35,2,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(6,0,36,2,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(7,0,89,2,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(8,0,92,2,NULL,0,1,0,NULL);
-INSERT INTO "advisors" VALUES(9,0,93,2,NULL,0,1,0,NULL);
--- advisors: fleet 10 (user_id=3) — 1 Kommandant (Senior)
-INSERT INTO "advisors" VALUES(10,3,89,NULL,10,1,2,8,NULL);
--- advisors: fleet 17 (user_id=3) — 1 Kommandant
-INSERT INTO "advisors" VALUES(11,3,89,NULL,17,1,1,0,NULL);
+INSERT INTO "personell" VALUES(35,'industry','techs_engineer',25,5,1,0,10);
+INSERT INTO "personell" VALUES(36,'civil','techs_scientist',31,1,3,1,10);
+INSERT INTO "personell" VALUES(89,'military','techs_pilot',44,1,7,3,10);
+INSERT INTO "personell" VALUES(92,'economy','techs_trader',52,1,7,2,10);
+INSERT INTO "personell" VALUES(93,'military','techs_stratege',25,3,9,0,10);
+-- advisors: colony 1 (user_id=3) — 1 per type (slot system)
+INSERT INTO "advisors" VALUES(1,3,35,1,2,5,NULL);
+INSERT INTO "advisors" VALUES(2,3,36,1,1,0,NULL);
+INSERT INTO "advisors" VALUES(3,3,92,1,1,0,NULL);
+INSERT INTO "advisors" VALUES(4,3,93,1,1,0,NULL);
+-- advisors: colony 2 (user_id=0) — 1 per type (slot system)
+INSERT INTO "advisors" VALUES(5,0,35,2,1,0,NULL);
+INSERT INTO "advisors" VALUES(6,0,36,2,1,0,NULL);
+INSERT INTO "advisors" VALUES(8,0,92,2,1,0,NULL);
+INSERT INTO "advisors" VALUES(9,0,93,2,1,0,NULL);
 INSERT INTO "personell_costs" VALUES(35,1,2500);
 INSERT INTO "personell_costs" VALUES(36,1,5000);
 INSERT INTO "personell_costs" VALUES(89,1,5000);

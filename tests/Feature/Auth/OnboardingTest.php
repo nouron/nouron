@@ -43,7 +43,7 @@ class OnboardingTest extends TestCase
         $res = DB::table('colony_resources')
             ->where('colony_id', $colony->id)
             ->pluck('amount', 'resource_id');
-        $this->assertEquals(500, $res[3]);   // water
+        $this->assertEquals(200, $res[3]);   // regolith
         $this->assertEquals(500, $res[4]);   // ferum
         $this->assertEquals(500, $res[5]);   // silicates
         $this->assertEquals(100, $res[6]);   // ena
