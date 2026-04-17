@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-17 (Refactoring: Fleet-Commander-Mechanik entfernt, Test-Suite grüngestellt)
+
+- **Fleet-scoped Berater entfernt**: `assignToFleet`/`unassignFromFleet`/`getFleetCommander` aus `PersonellService` gelöscht. Alle Berater sind jetzt colony-scoped. Flottenerstellung benötigt keinen Kommandant mehr. Migration `2026_04_16_000002` entfernt `fleet_id`/`is_commander` aus `advisors` und `can_command_fleet` aus `personell`.
+- **TestSeeder**: `INSERT OR REPLACE INTO`-Fix verhindert UNIQUE-Constraint-Fehler bei Migrations-Seedern.
+- **Test-Suite**: 395 Tests grün. Alle Testfälle auf neue Konfiguration (Regolith, neue Knowledge-/Ship-IDs, CC-Supply-Cap=10, unique Berater-Constraint) aktualisiert.
+
+## 2026-04-16 (Implementierung: Regolith eingeführt, Tradecenter entfernt)
+
+- **Regolith (Rg)** als primäre lokale Bergbau-Ressource eingeführt: Ressource ID 3 von `res_water` auf `res_regolith` umbenannt, Startwert 200, handelbar. DB-Migration + OnboardingService angepasst.
+- **Industriemine** produziert jetzt Regolith (resource_id 3) statt Ferum/Werkstoffe — Config, Seeder und Testdata angepasst.
+- **Tradecenter (building ID 43) entfernt**: aus config/buildings.php, MasterDataSeeder, Migration, Lang-Dateien und testdata.sqlite.sql gelöscht. Trader-Berater und Wirtschafts-Forschung erfordern jetzt Bar (ID 52) als Voraussetzung.
+
 ## 2026-04-15 (Design: Flottenbewegung — interstellare Bewegung bewusst nicht implementiert)
 
 - **Interstellare Bewegung gestrichen** (GDD §8, ROADMAP): Flotten operieren ausschließlich im eigenen System — bewusste Designentscheidung, kein vergessenes Feature.

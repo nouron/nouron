@@ -9,7 +9,6 @@ return [
     'techs_waterextractor'    => 'Wasserextraktor',
     'techs_sciencelab'        => 'Forschungslabor',
     'techs_depot'             => 'Depot',
-    'techs_tradecenter'       => 'Handelszentrum',
     'techs_civilianSpaceyard' => 'Ziviler Raumhafen',
     'techs_militarySpaceyard' => 'Militärischer Raumhafen',
     'techs_hospital'          => 'Krankenhaus',
@@ -110,7 +109,7 @@ return [
     'desc_techs_waterextractor'    => 'Der Wasserextraktor fördert den Rohstoff Wasser und bereitet ihn auf. Durch den Ausbau wird die Förderrate erhöht.',
     'desc_techs_sciencelab'        => 'Das Forschungslabor ermöglicht die unabhängige Forschung.',
     'desc_techs_depot'             => 'Das Depot lagert die Bestände von Ressourcen und Waren. Durch Ausbau können mehr Ressourcen gelagert werden.',
-    'desc_techs_tradecenter'       => 'Das Handelszentrum erlaubt den Einstieg in den intergalaktischen Handel von Ressourcen, Technologien und mehr.',
+
     'desc_techs_civilianSpaceyard' => 'Der Raumhafen ermöglicht es zivile Raumschiffe zu bauen.',
     'desc_techs_militarySpaceyard' => 'Dieser Raumhafen ermöglicht dir den Bau militärischer Raumschiffe.',
     'desc_techs_hospital'          => 'Um die medizinische Versorgung zu gewährleisten benötigst du ein Krankenhaus.',

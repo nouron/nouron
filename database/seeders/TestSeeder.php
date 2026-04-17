@@ -35,7 +35,11 @@ class TestSeeder extends Seeder
                 continue;
             }
             // Strip trailing semicolon-and-quote artifacts from sqlite3 dumps
-            DB::statement(rtrim($statement, ';') . ';');
+            $statement = rtrim($statement, ';') . ';';
+            // Use OR REPLACE so migrations that pre-inserted master data rows (e.g. add_stratege)
+            // don't cause UNIQUE constraint violations when the seeder runs after migrations.
+            $statement = preg_replace('/^INSERT INTO\b/i', 'INSERT OR REPLACE INTO', $statement);
+            DB::statement($statement);
         }
 
         DB::statement('PRAGMA foreign_keys = ON');

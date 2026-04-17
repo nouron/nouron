@@ -245,8 +245,6 @@ Credits werden durch vier Quellen erworben:
 
 Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe-Import (KI-Händler).
 
-> **TODO Implementierung:** Regolith als neue Ressource (ID 3) in DB-Schema, colony_resources, MasterDataSeeder und config/game.php ergänzen. Startwert 200 in TestSeeder und DevSeeder setzen.
-
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
 Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
@@ -319,8 +317,6 @@ produzierte Menge = Gebäude-Level × Rate
     41 => [5 => 10],   // bioFacility    → Organika  × 10/level
 ],
 ```
-
-> **TODO Implementierung:** resource_id 4 (Werkstoffe) in Produktions-Config auf 3 (Regolith) umstellen. MasterDataSeeder und config/game.php anpassen.
 
 Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erweiterung dieser Config hinzugefügt werden.
 

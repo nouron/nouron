@@ -56,7 +56,7 @@ class OnboardingService
 
         // Colony-level resources
         $colonyResources = [
-            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 500],  // water
+            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 200],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 500],  // ferum
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 500],  // silicates
             ['resource_id' => 6,  'colony_id' => $colonyId, 'amount' => 100],  // ena

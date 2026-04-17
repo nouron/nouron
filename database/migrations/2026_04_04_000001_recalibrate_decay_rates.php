@@ -26,7 +26,7 @@ return new class extends Migration
             32 => 2.00,   // temple            — 10 days
             41 => 0.95,   // silicatemine      — 21 days
             42 => 0.95,   // waterextractor    — 21 days
-            43 => 0.67,   // tradecenter       — 30 days
+
             44 => 0.67,   // civilianSpaceyard — 30 days
             45 => 2.00,   // parc              — 10 days
             46 => 2.00,   // hospital          — 10 days
