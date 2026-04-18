@@ -54,14 +54,12 @@ class OnboardingService
             ['credits' => 3000, 'supply' => 15]  // supply = CC level 1 flat cap
         );
 
-        // Colony-level resources
+        // Colony-level resources.
+        // Werkstoffe (4) and Organika (5) start at 0 — produced by Harvester/bioFacility.
         $colonyResources = [
             ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 200],  // regolith
-            ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 500],  // ferum
-            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 500],  // silicates
-            ['resource_id' => 6,  'colony_id' => $colonyId, 'amount' => 100],  // ena
-            ['resource_id' => 8,  'colony_id' => $colonyId, 'amount' => 100],  // lho
-            ['resource_id' => 10, 'colony_id' => $colonyId, 'amount' => 100],  // aku
+            ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
+            ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // moral
         ];
 
@@ -70,13 +68,24 @@ class OnboardingService
 
     private function seedStartingBuilding(int $colonyId): void
     {
-        // CommandCenter (building_id=25) at level 1 — the only starting building
+        // CommandCenter (building_id=25) at level 1 — operational base from day one.
+        // Harvester (building_id=27) at level 1 — immediately starts producing Regolith.
+        // status_points = max_status_points (20) so both are fully intact at start.
         DB::table('colony_buildings')->insert([
-            'colony_id'     => $colonyId,
-            'building_id'   => 25,
-            'level'         => 1,
-            'status_points' => 20,
-            'ap_spend'      => 0,
+            [
+                'colony_id'     => $colonyId,
+                'building_id'   => 25,
+                'level'         => 1,
+                'status_points' => 20,
+                'ap_spend'      => 0,
+            ],
+            [
+                'colony_id'     => $colonyId,
+                'building_id'   => 27,
+                'level'         => 1,
+                'status_points' => 20,
+                'ap_spend'      => 0,
+            ],
         ]);
     }
 }

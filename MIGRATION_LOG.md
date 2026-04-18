@@ -4,6 +4,19 @@ Schema changes are recorded here in reverse-chronological order.
 
 ---
 
+## 2026-04-17 — Update ship costs and add Sonde (ID 85)
+
+- What changed:
+  - Renamed `ships.name` for ID 37 (`techs_fighter1` → `ship_korvette`) and ID 47 (`techs_smallTransporter` → `ship_frachter`) to the current internal naming convention.
+  - Inserted new ship Sonde (ID 85, military, requires hangar level 1, row 6/col 6, speed 5).
+  - Deleted `ship_costs` rows for deprecated ships (IDs 29, 49, 83, 84, 88).
+  - Replaced `ship_costs` for active ships (37, 47, 85) with multi-resource costs covering Credits (1), Werkstoffe (4), Organika (5).
+- Why: Aligns ship catalogue with GDD §5/§11 (ship redesign, Regolith era). Old techs_* keys were inconsistent with the established ship_* naming convention.
+- Breaking: No — existing colony_ships / fleet_ships rows reference IDs only, not names.
+- Rollback: `php artisan migrate:rollback --step=1` — reverts name renames, removes Sonde, restores Credits-only costs for active and deprecated ships.
+
+---
+
 ## 2026-03-22 — Initial Laravel migration files for all Nouron tables and views
 
 - What changed: Created 35 Laravel migration files covering all 34 tables and 6 views

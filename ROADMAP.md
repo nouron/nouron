@@ -374,12 +374,20 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ### Phase 3a: Implementierung (Design-Sprint-Ergebnisse)
 
-- [ ] **Gebäude- und Forschungskosten kalibrieren** — Kosten, Produktionswerte und Voraussetzungsketten aller 12 Gebäude und 10 Kenntnisse auf Basis des Decay- und AP-Systems aus Phase 2 überprüfen und anpassen
-- [ ] **Supply-Kosten auf Plausibilität testen** — Supply-Cap-Modell (CC_level×10 + HousingComplex×8, max 200) gegen Schiffskosten (Korvette 14, Frachter 6, Sonde 0) abgleichen
-- [x] **Regolith als neue Ressource eingeführt** — resource_id 3 umbenannt, Startwert 200, Industriemine produziert Regolith, OnboardingService angepasst
-- [x] **Tradecenter entfernt** — config, MasterDataSeeder, Migration, Lang-Dateien, testdata; Trader + Wirtschafts-Forschung erfordern jetzt Bar
-- [ ] **Kenntnisse Freischalt-Modell implementieren** — `colony_researches`-Tabelle, `PersonellService`, Decay-Logik für Kenntnisse entfernen; Berater-Slot-System
-- [ ] **Bar-Event-System** — 0–2 NPC-/Spieler-Gäste pro Tick, befristete Angebote (1–2 Ticks), Credits + Tausch
+> **Stand PR #82 (April 2026):** Kern-Balancing und Ressourcensystem vollständig implementiert.
+
+- [x] **Regolith als neue Ressource eingeführt** — resource_id 3, Startwert 200, Harvester produziert Regolith, OnboardingService angepasst (PR #81)
+- [x] **Tradecenter entfernt** — config, MasterDataSeeder, Migration, Lang-Dateien, testdata; Trader + Wirtschafts-Forschung erfordern jetzt Bar (PR #81)
+- [x] **Ressourcen umbenannt** — Ferum → Werkstoffe (Co), Silikate → Organika (Or); beide starten bei 0 (PR #82)
+- [x] **Kenntnisse-System implementiert** — 7 Typen (IDs 90–96), kein Decay, steigende AP-Kosten per Level (5/10/18/28/40), Supply-Cap-Bonus; `ResearchService.resolveApForLevelup()` Hook (PR #82)
+- [x] **Gebäude-Balancing kalibriert** — ap_for_levelup (CC=10, Standard=20, High-Tech=30), Regolith als Baukosten für alle Gebäude außer CC+Harvester (PR #82)
+- [x] **Schiffssystem redesignt** — Sonde (85) in DB eingeführt; Korvette (37) + Frachter (47) umbenannt; Schiffskosten: Credits + Werkstoffe + Organika; deprecated ships costs entfernt (PR #82)
+- [x] **Passive Credits + Berater-Upkeep** — GameTick: Nexus-Subvention 30 Cr/Tick + Kolonistensteuern 20 Cr/Tick pro Housing-Level; Upkeep 10/50/160 Cr je Rang (PR #82)
+- [x] **Startzustand** — CC Lv1 + Harvester Lv1 vorgebaut; 3.000 Credits, 200 Regolith, 0 Werkstoffe/Organika (PR #82)
+- [x] **Berater-Einstellungskosten kalibriert** — 50 Cr → 300–600 Cr je Typ; echter Day-1-Tradeoff (PR #82)
+- [ ] **Bar-Event-System** — 0–2 NPC-Gäste pro Tick, befristete Angebote (1–2 Ticks), Credits + Tausch
+- [ ] **DB-Cleanup: überzählige Gebäude entfernen** — 25 → 12 aktive Gebäude in DB (13 deprecated rows löschen)
+- [ ] **Berater Rang 2/3 Beförderungskosten** — ~150/~400 Cr je Rang; noch nicht implementiert
 
 ---
 

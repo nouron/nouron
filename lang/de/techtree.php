@@ -46,6 +46,10 @@ return [
     'techs_economicScience'   => 'Wirtschaft',
 
     // ── Schiffe ──────────────────────────────────────────────────────────
+    'ship_sonde'              => 'Sonde',
+    'ship_korvette'           => 'Korvette',
+    'ship_frachter'           => 'Frachter',
+    // legacy keys (deprecated ships still in DB)
     'techs_fighter1'          => 'Jäger I',
     'techs_fighter2'          => 'Jäger II',
     'techs_frigate1'          => 'Fregatte I',

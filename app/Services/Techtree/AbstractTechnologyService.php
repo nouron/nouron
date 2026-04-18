@@ -169,7 +169,8 @@ abstract class AbstractTechnologyService
             return false;
         }
 
-        return $colonyEntity->ap_spend >= $entity->ap_for_levelup;
+        $required = $this->resolveApForLevelup($colonyId, $entityId, $entity);
+        return (int) $colonyEntity->ap_spend >= $required;
     }
 
     /**
@@ -281,7 +282,7 @@ abstract class AbstractTechnologyService
         $currentStatus      = $colonyEntity ? (int) $colonyEntity->status_points : 0;
         $currentLevel       = $colonyEntity ? (int) $colonyEntity->level         : 0;
 
-        $apForLevelup    = isset($entity->ap_for_levelup)    ? (int) $entity->ap_for_levelup    : 0;
+        $apForLevelup    = $this->resolveApForLevelup($colonyId, $entityId, $entity);
         $maxStatusPoints = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
         $statusBefore = $currentStatus;
@@ -414,6 +415,15 @@ abstract class AbstractTechnologyService
         });
 
         return true;
+    }
+
+    /**
+     * Returns the AP threshold required for the next levelup.
+     * Subclasses can override to implement level-dependent costs.
+     */
+    protected function resolveApForLevelup(int $colonyId, int $entityId, object $entity): int
+    {
+        return isset($entity->ap_for_levelup) ? (int) $entity->ap_for_levelup : 0;
     }
 
     /**
