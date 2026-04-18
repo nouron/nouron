@@ -4,8 +4,6 @@ Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite a
 
 ## Quickstart
 
-Nouron uses an SQLite database delivered with the project (`data/db/nouron.db`), so no database setup is required for local testing.
-
 **Requirements:** PHP 8.2+, Composer
 
 > **Windows users:** The project runs under WSL2. Run all commands inside your WSL2 terminal.
@@ -18,16 +16,19 @@ composer install
 cp .env.example .env
 php artisan key:generate
 
+# Create the database and seed test data
+php artisan migrate:fresh --seed
+
 # Start local dev server
 php artisan serve
 
-# Run tests (Feature suite)
+# Run tests (Feature suite — uses in-memory SQLite, no setup needed)
 php artisan test --testsuite=Feature
 ```
 
 ### Test accounts
 
-The development database (`data/db/nouron.db`) contains Simpsons test characters. All accounts share the same password:
+After seeding, the database contains Simpsons test characters. All accounts share the same password:
 
 | Username | Email | Password | Role |
 |----------|-------|----------|------|
@@ -38,20 +39,13 @@ The development database (`data/db/nouron.db`) contains Simpsons test characters
 
 ### Resetting game state
 
-To reset the development database to its original state:
-
 ```bash
-cp data/db/nouron.db.bak data/db/nouron.db   # if a backup exists
-# or re-run the seed:
-php artisan db:seed --class=DevSeeder
+php artisan migrate:fresh --seed
 ```
 
-### Database files
+### Database
 
-| File | Purpose |
-|------|---------|
-| `data/db/nouron.db` | Development database (used by `php artisan serve`) |
-| `data/db/test.db` | Test database (used by the test suite, seeded automatically) |
+The database file (`data/db/nouron.db`) is not committed to the repository. The schema is managed entirely via Laravel migrations and the initial data via seeders. The test suite uses an in-memory SQLite database and requires no separate setup.
 
 ### Useful Artisan commands
 
