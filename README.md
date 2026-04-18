@@ -27,13 +27,14 @@ php artisan test --testsuite=Feature
 
 ### Test accounts
 
-The development database (`data/db/nouron.db`) contains Simpsons test characters:
+The development database (`data/db/nouron.db`) contains Simpsons test characters. All accounts share the same password:
 
-| Username | Password | Notes |
-|----------|----------|-------|
-| `Bart` | `test` | Colony "Springfield" |
-| `Homer` | `test` | |
-| `Marge` | `test` | |
+| Username | Email | Password | Role |
+|----------|-------|----------|------|
+| `Bart` | `bart@nouron.de` | `test123` | admin — Colony "Springfield" |
+| `Homer` | `homer@nouron.de` | `test123` | player |
+| `Marge` | `marge@nouron.de` | `test123` | player |
+| `Lisa` | `lisa@nouron.de` | `test123` | player |
 
 ### Resetting game state
 
