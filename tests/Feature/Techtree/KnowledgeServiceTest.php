@@ -41,7 +41,7 @@ class KnowledgeServiceTest extends TestCase
         Advisor::where('colony_id', $this->colonyId)->delete();
         Advisor::create([
             'user_id'     => $this->userId,
-            'personell_id'=> PersonellService::PERSONELL_ID_SCIENTIST,
+            'personell_id'=> PersonellService::idFor('scientist'),
             'colony_id'   => $this->colonyId,
             'rank'        => 2,
             'active_ticks'=> 0,

@@ -48,12 +48,8 @@ class AdvisorController extends BaseController
             ->mapWithKeys(fn($cfg) => [$cfg['id'] => $cfg['credits']]);
 
         // Hireable types (all colony-scoped)
-        $personellTypes = Personell::whereIn('id', [
-            PersonellService::PERSONELL_ID_ENGINEER,
-            PersonellService::PERSONELL_ID_SCIENTIST,
-            PersonellService::PERSONELL_ID_TRADER,
-            PersonellService::PERSONELL_ID_STRATEGE,
-        ])->get()->keyBy('id');
+        $personellTypes = Personell::whereIn('id', PersonellService::allIds())
+            ->get()->keyBy('id');
 
         $apInfo = [
             'construction' => $this->personellService->getTotalActionPoints('construction', $colonyId),
@@ -70,15 +66,8 @@ class AdvisorController extends BaseController
 
     public function hire(Request $request)
     {
-        $hireable = implode(',', [
-            PersonellService::PERSONELL_ID_ENGINEER,
-            PersonellService::PERSONELL_ID_SCIENTIST,
-            PersonellService::PERSONELL_ID_TRADER,
-            PersonellService::PERSONELL_ID_STRATEGE,
-        ]);
-
         $request->validate([
-            'personell_id' => "required|integer|in:{$hireable}",
+            'personell_id' => ['required', 'integer', \Illuminate\Validation\Rule::in(PersonellService::allIds())],
         ]);
 
         $colonyId    = $this->resolveColonyId();

@@ -27,12 +27,12 @@ class PersonellServiceTest extends TestCase
 
         // 1 engineer: rank 2 (7 AP) = 7 construction AP
         Advisor::create([
-            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'user_id' => $this->userId, 'personell_id' => PersonellService::idFor('engineer'),
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
         ]);
         // 1 scientist: rank 1 = 4 research AP
         Advisor::create([
-            'user_id' => $this->userId, 'personell_id' => PersonellService::PERSONELL_ID_SCIENTIST,
+            'user_id' => $this->userId, 'personell_id' => PersonellService::idFor('scientist'),
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
         ]);
     }
@@ -74,7 +74,7 @@ class PersonellServiceTest extends TestCase
 
     public function testHire(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
         $this->assertInstanceOf(Advisor::class, $advisor);
         $this->assertEquals($this->colonyId, $advisor->colony_id);
         $this->assertEquals(1, $advisor->rank);
@@ -82,7 +82,7 @@ class PersonellServiceTest extends TestCase
 
     public function testFire(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
         $this->assertTrue($this->service->fire($advisor->id));
         $advisor->refresh();
         $this->assertNull($advisor->colony_id);
@@ -172,7 +172,7 @@ class PersonellServiceTest extends TestCase
         // Add a trader that is temporarily unavailable — economy AP should be 0
         Advisor::create([
             'user_id'                => $this->userId,
-            'personell_id'           => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id'           => PersonellService::idFor('trader'),
             'colony_id'              => $this->colonyId,
             'rank'                   => 3,
             'active_ticks'           => 10,
@@ -187,31 +187,31 @@ class PersonellServiceTest extends TestCase
 
     public function testHireWithRankBelowOneIsClampedToOne(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId, 0);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId, 0);
         $this->assertEquals(1, $advisor->rank);
     }
 
     public function testHireWithRankAboveThreeIsClampedToThree(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId, 99);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId, 99);
         $this->assertEquals(3, $advisor->rank);
     }
 
     public function testHireWithNegativeUserIdThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->hire(-1, PersonellService::PERSONELL_ID_ENGINEER, $this->colonyId);
+        $this->service->hire(-1, PersonellService::idFor('engineer'), $this->colonyId);
     }
 
     public function testHireWithNegativeColonyIdThrows(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->hire($this->userId, PersonellService::PERSONELL_ID_ENGINEER, -5);
+        $this->service->hire($this->userId, PersonellService::idFor('engineer'), -5);
     }
 
     public function testHiredAdvisorStartsWithZeroActiveTicks(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
         $this->assertEquals(0, $advisor->active_ticks);
         $this->assertNull($advisor->unavailable_until_tick);
     }
@@ -225,7 +225,7 @@ class PersonellServiceTest extends TestCase
 
     public function testFireedAdvisorBecomesUnemployed(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::PERSONELL_ID_TRADER, $this->colonyId);
+        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
         $this->service->fire($advisor->id);
 
         $advisor->refresh();
@@ -319,7 +319,7 @@ class PersonellServiceTest extends TestCase
     {
         Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $this->colonyId,
             'rank'         => 2,
             'active_ticks' => 0,
@@ -333,7 +333,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $this->colonyId,
             'rank'         => 1,
             'active_ticks' => 5,
@@ -348,7 +348,7 @@ class PersonellServiceTest extends TestCase
     {
         $unemployed = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => null,
             'rank'         => 1,
             'active_ticks' => 3,
@@ -363,7 +363,7 @@ class PersonellServiceTest extends TestCase
     {
         $unavailable = Advisor::create([
             'user_id'                => $this->userId,
-            'personell_id'           => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id'           => PersonellService::idFor('trader'),
             'colony_id'              => $this->colonyId,
             'rank'                   => 1,
             'active_ticks'           => 7,
@@ -379,7 +379,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $this->colonyId,
             'rank'         => 1,
             'active_ticks' => 9,
@@ -395,7 +395,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $this->colonyId,
             'rank'         => 2,
             'active_ticks' => 19,
@@ -411,7 +411,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $this->colonyId,
             'rank'         => 3,
             'active_ticks' => 99,
@@ -426,12 +426,12 @@ class PersonellServiceTest extends TestCase
     {
         // Start with 1 engineer at rank 1, 9 ticks — after one tick it hits 10 and promotes
         Advisor::where('colony_id', $this->colonyId)
-               ->where('personell_id', PersonellService::PERSONELL_ID_ENGINEER)
+               ->where('personell_id', PersonellService::idFor('engineer'))
                ->delete();
 
         $advisor = Advisor::create([
             'user_id'      => $this->userId,
-            'personell_id' => PersonellService::PERSONELL_ID_ENGINEER,
+            'personell_id' => PersonellService::idFor('engineer'),
             'colony_id'    => $this->colonyId,
             'rank'         => 1,
             'active_ticks' => 9,

@@ -18,21 +18,30 @@ use Illuminate\Support\Facades\DB;
  *   Junior (1) = 4 AP, Senior (2) = 7 AP, Experte (3) = 12 AP
  *
  * AP types and their scopes (all colony-scoped):
- *   construction  — Ingenieur (35),       colony-scoped
- *   research      — Wissenschaftler (36), colony-scoped
- *   economy       — Händler (92),         colony-scoped
- *   strategy      — Stratege (93),        colony-scoped
+ *   construction  — advisors.engineer   colony-scoped
+ *   research      — advisors.scientist  colony-scoped
+ *   economy       — advisors.trader     colony-scoped
+ *   strategy      — advisors.stratege   colony-scoped
+ *   navigation    — advisors.pilot      colony-scoped
+ *
+ * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
+ * Use PersonellService::idFor('engineer') etc. for all lookups.
  */
 class PersonellService
 {
     use ValidatesId;
 
-    const PERSONELL_ID_ENGINEER  = 35;
-    const PERSONELL_ID_SCIENTIST = 36;
-    const PERSONELL_ID_TRADER    = 92;
-    const PERSONELL_ID_STRATEGE  = 93;
-
     const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
+
+    public static function idFor(string $key): int
+    {
+        return (int) config("advisors.{$key}.id");
+    }
+
+    public static function allIds(): array
+    {
+        return collect(config('advisors'))->pluck('id')->all();
+    }
 
     public function __construct(
         private readonly TickService      $tickService,
@@ -230,10 +239,11 @@ class PersonellService
     private function resolveType(string $type): array
     {
         return match (strtolower($type)) {
-            'construction' => [self::PERSONELL_ID_ENGINEER,  'colony'],
-            'research'     => [self::PERSONELL_ID_SCIENTIST, 'colony'],
-            'economy'      => [self::PERSONELL_ID_TRADER,    'colony'],
-            'strategy'     => [self::PERSONELL_ID_STRATEGE,  'colony'],
+            'construction' => [self::idFor('engineer'),  'colony'],
+            'research'     => [self::idFor('scientist'), 'colony'],
+            'economy'      => [self::idFor('trader'),    'colony'],
+            'strategy'     => [self::idFor('stratege'),  'colony'],
+            'navigation'   => [self::idFor('pilot'),     'colony'],
             default        => [null, null],
         };
     }

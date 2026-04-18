@@ -59,7 +59,7 @@ class TradeApTest extends TestCase
     {
         return Advisor::create([
             'user_id'      => 3,   // Bart owns both test colonies for seeding purposes
-            'personell_id' => PersonellService::PERSONELL_ID_TRADER,
+            'personell_id' => PersonellService::idFor('trader'),
             'colony_id'    => $colonyId,
             'rank'         => $rank,
             'active_ticks' => 0,

@@ -43,40 +43,44 @@
 
     $colonySections = [
         [
-            'personell_id' => 35,
-            'label'        => 'Ingenieure',
-            'sublabel'     => 'Bau-AP',
+            'personell_id' => config('advisors.engineer.id'),
+            'key'          => 'engineer',
             'icon'         => 'bi-hammer',
             'border'       => 'border-primary',
             'bg'           => 'bg-primary bg-opacity-10',
-            'ap_type'      => 'construction',
+            'ap_type'      => config('advisors.engineer.ap_type'),
         ],
         [
-            'personell_id' => 36,
-            'label'        => 'Wissenschaftler',
-            'sublabel'     => 'Forschungs-AP',
+            'personell_id' => config('advisors.scientist.id'),
+            'key'          => 'scientist',
             'icon'         => 'bi-microscope',
             'border'       => 'border-success',
             'bg'           => 'bg-success bg-opacity-10',
-            'ap_type'      => 'research',
+            'ap_type'      => config('advisors.scientist.ap_type'),
         ],
         [
-            'personell_id' => 92,
-            'label'        => 'Händler',
-            'sublabel'     => 'Wirtschafts-AP',
+            'personell_id' => config('advisors.trader.id'),
+            'key'          => 'trader',
             'icon'         => 'bi-cart3',
             'border'       => 'border-warning',
             'bg'           => 'bg-warning bg-opacity-10',
-            'ap_type'      => 'economy',
+            'ap_type'      => config('advisors.trader.ap_type'),
         ],
         [
-            'personell_id' => 93,
-            'label'        => 'Strategen',
-            'sublabel'     => 'Strategie-AP',
+            'personell_id' => config('advisors.stratege.id'),
+            'key'          => 'stratege',
             'icon'         => 'bi-diagram-3',
             'border'       => 'border-danger',
             'bg'           => 'bg-danger bg-opacity-10',
-            'ap_type'      => 'strategy',
+            'ap_type'      => config('advisors.stratege.ap_type'),
+        ],
+        [
+            'personell_id' => config('advisors.pilot.id'),
+            'key'          => 'pilot',
+            'icon'         => 'bi-rocket',
+            'border'       => 'border-info',
+            'bg'           => 'bg-info bg-opacity-10',
+            'ap_type'      => config('advisors.pilot.ap_type'),
         ],
     ];
 
@@ -113,17 +117,17 @@
     <div class="card h-100">
         <div class="card-header d-flex justify-content-between align-items-center py-2">
             <span class="fw-semibold">
-                <i class="bi {{ $section['icon'] }}"></i> {{ $section['label'] }}
+                <i class="bi {{ $section['icon'] }}"></i> {{ __('advisors.' . $section['key'] . '_plural') }}
             </span>
             <span class="d-flex align-items-center gap-2">
-                <small class="text-muted">{{ $section['sublabel'] }}:</small>
+                <small class="text-muted">{{ __('advisors.ap_' . $section['ap_type']) }}:</small>
                 <span class="fw-bold">{{ $totalAp }} AP/Tick</span>
             </span>
         </div>
         <div class="card-body p-0">
             @if(!$hasAdvisor)
             <p class="text-muted small p-3 mb-0">
-                Kein{{ $section['personell_id'] == 36 ? 'e' : '' }} {{ $section['label'] }} aktiv.
+                Keine {{ __('advisors.' . $section['key'] . '_plural') }} aktiv.
                 @if($slotInfo['free'] > 0)
                 <a href="#" data-bs-toggle="modal" data-bs-target="#modal-hire-advisor"
                    data-personell-id="{{ $section['personell_id'] }}">Jetzt einstellen</a>
@@ -209,167 +213,6 @@
 </div>
 @endforeach
 
-{{-- Pilots card (colony + fleet) --}}
-@php
-    $navTotalAp = $fleetCommanders->sum(fn($a) => $a->getApPerTick());
-@endphp
-<div class="col">
-    <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center py-2">
-            <span class="fw-semibold">
-                <i class="bi bi-rocket"></i> Kommandanten
-            </span>
-            <span class="d-flex align-items-center gap-2">
-                <small class="text-muted">Navigations-AP:</small>
-                <span class="fw-bold">{{ $navTotalAp }} AP/Tick</span>
-            </span>
-        </div>
-        <div class="card-body p-0">
-
-            {{-- Available pilots on colony --}}
-            @if($availablePilots->isNotEmpty())
-            <div class="p-2 border-bottom">
-                <p class="text-muted small mb-2">
-                    <i class="bi bi-person-check"></i> Auf Kolonie verfügbar:
-                </p>
-                @foreach($availablePilots as $pilot)
-                @php
-                    $rankBadge = match($pilot->rank) {
-                        1 => ['Junior', 'bg-secondary'],
-                        2 => ['Senior', 'bg-info text-dark'],
-                        3 => ['Experte', 'bg-warning text-dark'],
-                        default => ['?', 'bg-secondary'],
-                    };
-                @endphp
-                <div class="d-flex align-items-center gap-2 mb-1">
-                    <span class="badge {{ $rankBadge[1] }} flex-shrink-0">{{ $rankBadge[0] }}</span>
-                    <span class="text-muted small flex-shrink-0">{{ $pilot->getApPerTick() }} AP/Tick</span>
-                    @if($userFleets->isNotEmpty())
-                    <form method="POST" action="{{ route('advisors.assign-fleet', $pilot->id) }}"
-                          class="d-flex align-items-center gap-1 ms-auto">
-                        @csrf
-                        <select name="fleet_id" class="form-select form-select-sm py-0" style="font-size:0.8rem;min-width:120px" required>
-                            @foreach($userFleets as $fleet)
-                            <option value="{{ $fleet->id }}">{{ $fleet->fleet ?? 'Flotte #' . $fleet->id }}</option>
-                            @endforeach
-                        </select>
-                        <button type="submit" class="btn btn-sm btn-outline-primary py-0 px-1" title="Flotte zuweisen">
-                            <i class="bi bi-send"></i>
-                        </button>
-                    </form>
-                    @else
-                    <span class="text-muted small ms-auto">Keine Flotten vorhanden</span>
-                    @endif
-                    <form method="POST" action="{{ route('advisors.fire', $pilot->id) }}"
-                          onsubmit="return confirm('Kommandant wirklich entlassen?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1" title="Entlassen">
-                            <i class="bi bi-person-dash"></i>
-                        </button>
-                    </form>
-                </div>
-                @endforeach
-            </div>
-            @endif
-
-            {{-- Fleet commanders --}}
-            @if($fleetCommanders->isEmpty() && $availablePilots->isEmpty())
-            <p class="text-muted small p-3 mb-0">
-                Kein Kommandant aktiv.
-                @if($slotInfo['free'] > 0)
-                Stelle einen Piloten über
-                <a href="#" data-bs-toggle="modal" data-bs-target="#modal-hire-advisor"
-                   data-personell-id="89">Berater einstellen</a> ein.
-                @endif
-            </p>
-            @elseif($fleetCommanders->isEmpty())
-            <p class="text-muted small p-3 mb-0">
-                Kein Kommandant auf Flotte aktiv. Weise einen verfügbaren Piloten zu.
-            </p>
-            @else
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Flotte</th>
-                        <th>Rang</th>
-                        <th class="text-center">AP/Tick</th>
-                        <th class="text-center">Ticks</th>
-                        <th class="text-center">Aufstieg</th>
-                        <th class="text-center">Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($fleetCommanders as $advisor)
-                @php
-                    $nextRankTicks = $rankThresh[$advisor->rank] ?? null;
-                    $progress      = $nextRankTicks
-                        ? min(100, (int) round($advisor->active_ticks / $nextRankTicks * 100))
-                        : 100;
-                    $rankBadge = match($advisor->rank) {
-                        1       => ['Junior',  'bg-secondary'],
-                        2       => ['Senior',  'bg-info text-dark'],
-                        3       => ['Experte', 'bg-warning text-dark'],
-                        default => [$rankNames[$advisor->rank] ?? '?', 'bg-secondary'],
-                    };
-                @endphp
-                <tr>
-                    <td>
-                        <i class="bi bi-send text-muted small"></i>
-                        {{ $advisor->fleet->fleet ?? 'Flotte #' . $advisor->fleet_id }}
-                    </td>
-                    <td><span class="badge {{ $rankBadge[1] }}">{{ $rankBadge[0] }}</span></td>
-                    <td class="text-center fw-semibold">{{ $advisor->getApPerTick() }}</td>
-                    <td class="text-center text-muted small">{{ $advisor->active_ticks }}</td>
-                    <td class="text-center" style="min-width:100px">
-                        @if($advisor->rank < 3 && $nextRankTicks)
-                        <div class="progress" style="height:6px"
-                             title="{{ $advisor->active_ticks }}/{{ $nextRankTicks }} Ticks">
-                            <div class="progress-bar bg-dark" style="width:{{ $progress }}%"></div>
-                        </div>
-                        <span class="text-muted" style="font-size:0.7rem">
-                            {{ $advisor->active_ticks }}/{{ $nextRankTicks }}
-                        </span>
-                        @else
-                        <span class="badge bg-warning text-dark" style="font-size:0.65rem">Max</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @if($advisor->unavailable_until_tick)
-                            <span class="badge bg-warning text-dark" style="font-size:0.65rem">
-                                Inaktiv bis T{{ $advisor->unavailable_until_tick }}
-                            </span>
-                        @else
-                            <span class="badge bg-success" style="font-size:0.65rem">Aktiv</span>
-                        @endif
-                    </td>
-                    <td class="text-end">
-                        <form method="POST" action="{{ route('advisors.unassign-fleet', $advisor->id) }}"
-                              onsubmit="return confirm('Kommandant von der Flotte abberufen?')">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-1"
-                                    title="Von Flotte abberufen">
-                                <i class="bi bi-arrow-return-left"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-                </tbody>
-            </table>
-            @endif
-        </div>
-        @if($fleetCommanders->isNotEmpty())
-        <div class="card-footer py-1 d-flex justify-content-end align-items-center">
-            <small class="text-muted">
-                {{ $fleetCommanders->count() }} Kommandanten · <strong>{{ $navTotalAp }} AP/Tick</strong>
-            </small>
-        </div>
-        @endif
-    </div>
-</div>
-
 </div>{{-- /.row --}}
 
 </div>{{-- #advisors --}}
@@ -395,14 +238,15 @@
                         <select name="personell_id" id="personell_id" class="form-select" required>
                             @foreach($personellTypes as $pId => $pType)
                             @php
-                                $label = match($pType->name) {
-                                    'techs_engineer'  => 'Ingenieur (Bau-AP)',
-                                    'techs_scientist' => 'Wissenschaftler (Forschungs-AP)',
-                                    'techs_trader'    => 'Händler (Wirtschafts-AP)',
-                                    'techs_stratege'  => 'Stratege (Strategie-AP)',
-                                    'techs_pilot'     => 'Pilot / Kommandant (Navigations-AP)',
-                                    default           => $pType->name,
+                                $apLabel = match($pType->name) {
+                                    'techs_engineer'  => 'Bau-AP',
+                                    'techs_scientist' => 'Forschungs-AP',
+                                    'techs_trader'    => 'Wirtschafts-AP',
+                                    'techs_stratege'  => 'Strategie-AP',
+                                    'techs_pilot'     => 'Navigations-AP',
+                                    default           => '',
                                 };
+                                $label = __('techtree.' . $pType->name) . ($apLabel ? ' (' . $apLabel . ')' : '');
                                 $cost = $creditsByPersonellId->get($pId, 0);
                                 $alreadyHired = $advisors->contains('personell_id', $pId);
                             @endphp
