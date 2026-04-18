@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-18
+
+- Forschungshandel (`trade_researches`) vollständig entfernt — im neuen Singleplayer-Roguelike-Design nicht mehr vorgesehen; Migration `2026_04_18_000001` droppt die Tabelle, zugehörige Models/Views/Routen/Tests bereinigt
+- `config/researches.php` + `ResearchService::idFor()` eingeführt (analog zu `config/advisors.php` + `PersonellService::idFor()`) — config-driven IDs statt Magic Numbers
+- Test-Suite-Infrastruktur repariert: `testdata.sqlite.sql` in korrekter FK-Dependency-Reihenfolge neu sortiert (Seeder lief bisher mit `PRAGMA foreign_keys = OFF` als Workaround); SQLite-Migrationsbug gefixt (`PRAGMA legacy_alter_table = ON` vor `personell` RENAME verhindert dangling FKs in `personell_costs`)
+- 393 Tests grün (vorher: 403 Errors, 0 Assertions)
+
 ## 2026-04-17 (Balancing: Schiffssystem + Berater-Einstellungskosten)
 
 - Migration 000005: Sonde (ID 85) in `ships` eingeführt; Korvette (37) + Frachter (47) umbenannt (`ship_*`-Präfix); Schiffskosten auf 3 Ressourcen umgestellt (Credits + Werkstoffe + Organika); alte Ship-Kosten für deprecated Schiffe entfernt

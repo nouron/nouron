@@ -15,6 +15,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         DB::table('researches')->insert([
             ['id' => 90, 'purpose' => 'knowledge', 'name' => 'knowledge_construction', 'required_building_id' => null, 'required_building_level' => null, 'row' => 1, 'column' => 6, 'ap_for_levelup' => 3, 'max_status_points' => 20, 'decay_rate' => 0, 'supply_cost' => 0],
             ['id' => 91, 'purpose' => 'knowledge', 'name' => 'knowledge_cartography',  'required_building_id' => null, 'required_building_level' => null, 'row' => 2, 'column' => 6, 'ap_for_levelup' => 3, 'max_status_points' => 20, 'decay_rate' => 0, 'supply_cost' => 0],
@@ -24,6 +26,8 @@ return new class extends Migration
             ['id' => 95, 'purpose' => 'knowledge', 'name' => 'knowledge_trade',        'required_building_id' => null, 'required_building_level' => null, 'row' => 6, 'column' => 6, 'ap_for_levelup' => 3, 'max_status_points' => 20, 'decay_rate' => 0, 'supply_cost' => 0],
             ['id' => 96, 'purpose' => 'knowledge', 'name' => 'knowledge_defense',      'required_building_id' => null, 'required_building_level' => null, 'row' => 7, 'column' => 6, 'ap_for_levelup' => 3, 'max_status_points' => 20, 'decay_rate' => 0, 'supply_cost' => 0],
         ]);
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

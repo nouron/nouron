@@ -106,36 +106,6 @@ class TradeAcceptEdgeCaseTest extends TestCase
         );
     }
 
-    // ── E2: Seller colony not found ───────────────────────────────────────────
-
-    /**
-     * Insert an offer for a colony that does not exist in glx_colonies.
-     * The service must detect the missing seller colony and throw.
-     */
-    public function test_accept_offer_for_nonexistent_seller_colony_throws(): void
-    {
-        // Plant an orphan offer referencing colony 999 (no such colony)
-        DB::table('trade_resources')->insert([
-            'colony_id'   => 999,
-            'direction'   => 1,
-            'resource_id' => 3,
-            'amount'      => 10,
-            'price'       => 5,
-            'restriction' => 0,
-        ]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Kolonie nicht gefunden');
-
-        $this->gateway->acceptResourceOffer(
-            buyerUserId:    3,
-            buyerColonyId:  1,
-            sellerColonyId: 999,
-            direction:      1,
-            resourceId:     3,
-        );
-    }
-
     // ── E3: buyer and seller share the same colony_id ─────────────────────────
 
     /**

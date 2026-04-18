@@ -18,6 +18,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         DB::table('resources')->where('id', 4)->update([
             'name'         => 'res_werkstoffe',
             'abbreviation' => 'Co',
@@ -29,6 +31,8 @@ return new class extends Migration
             'abbreviation' => 'Or',
             'start_amount' => 0,
         ]);
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

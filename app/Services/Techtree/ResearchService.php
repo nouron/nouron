@@ -17,6 +17,11 @@ class ResearchService extends AbstractTechnologyService
     protected function costsTable(): string   { return 'research_costs'; }
     protected function entityIdKey(): string  { return 'research_id'; }
 
+    public static function idFor(string $key): int
+    {
+        return (int) config("researches.{$key}.id");
+    }
+
     /**
      * Invest research points into a research (add AP, repair, or remove damage).
      */

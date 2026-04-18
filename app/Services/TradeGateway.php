@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\TradeResearchView;
 use App\Models\TradeResourceView;
 use App\Services\MoralService;
 use App\Services\Techtree\PersonellService;
@@ -10,7 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * TradeGateway — manages trade offers for resources and researches.
+ * TradeGateway — manages resource trade offers.
  *
  * All mutating operations
  * (add/remove) require a valid user_id and colony ownership check to prevent
@@ -18,11 +17,11 @@ use Illuminate\Support\Facades\DB;
  *
  * Direction convention: 0 = buy offer, 1 = sell offer.
  *
- * Read operations query the enriched views (v_trade_resources, v_trade_researches)
- * so callers receive colony name + username alongside the offer data.
+ * Read operations query the enriched view (v_trade_resources) so callers
+ * receive colony name + username alongside the offer data.
  *
- * Write operations target the base tables (trade_resources, trade_researches)
- * using updateOrInsert for upsert semantics.
+ * Write operations target the base table (trade_resources) using
+ * updateOrInsert for upsert semantics.
  *
  * Economy AP costs (Händler):
  *   - Creating an offer: max(1, floor(amount × price / threshold)) AP, where
@@ -50,21 +49,6 @@ class TradeGateway
     public function getResources(?array $where = null): Collection
     {
         $query = TradeResourceView::query();
-        if ($where) {
-            $query->where($where);
-        }
-        return $query->get();
-    }
-
-    /**
-     * Return all research trade offers, optionally filtered by $where conditions.
-     *
-     * @param  array|null $where  Associative array of column => value conditions.
-     * @return Collection<int, TradeResearchView>
-     */
-    public function getResearches(?array $where = null): Collection
-    {
-        $query = TradeResearchView::query();
         if ($where) {
             $query->where($where);
         }
@@ -143,76 +127,6 @@ class TradeGateway
             ->where('colony_id', $data['colony_id'])
             ->where('direction', $data['direction'])
             ->where('resource_id', $data['resource_id'])
-            ->delete();
-
-        return (bool) $affected;
-    }
-
-    // ── Write — Research Offers ───────────────────────────────────────────────
-
-    /**
-     * Create or update a research trade offer.
-     *
-     * The PK is (colony_id, direction, research_id). Upsert semantics identical
-     * to addResourceOffer.
-     *
-     * Required keys in $data: colony_id, direction, research_id, amount, price, user_id.
-     * Optional key: restriction (defaults to 0).
-     */
-    public function addResearchOffer(array $data): bool
-    {
-        if (!$this->ownershipCheck($data)) {
-            return false;
-        }
-
-        $colonyId = (int) $data['colony_id'];
-        $apCost   = $this->calcOfferApCost((int) $data['amount'], (int) $data['price']);
-
-        if (!config('game.bypass.ap_checks')) {
-            $available = $this->personellService->getEconomyPoints($colonyId);
-            if ($available < $apCost) {
-                throw new \InvalidArgumentException(
-                    'Nicht genug Wirtschafts-AP, um dieses Angebot einzustellen.'
-                );
-            }
-        }
-
-        DB::table('trade_researches')->updateOrInsert(
-            [
-                'colony_id'   => $data['colony_id'],
-                'direction'   => $data['direction'],
-                'research_id' => $data['research_id'],
-            ],
-            [
-                'amount'      => $data['amount'],
-                'price'       => $data['price'],
-                'restriction' => $data['restriction'] ?? 0,
-            ]
-        );
-
-        if (!config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
-        }
-
-        return true;
-    }
-
-    /**
-     * Remove a research trade offer matching (colony_id, direction, research_id).
-     *
-     * Required keys in $data: colony_id, direction, research_id, user_id.
-     * Returns false when ownership check fails, user_id is missing, or no row matched.
-     */
-    public function removeResearchOffer(array $data): bool
-    {
-        if (!$this->ownershipCheck($data)) {
-            return false;
-        }
-
-        $affected = DB::table('trade_researches')
-            ->where('colony_id', $data['colony_id'])
-            ->where('direction', $data['direction'])
-            ->where('research_id', $data['research_id'])
             ->delete();
 
         return (bool) $affected;

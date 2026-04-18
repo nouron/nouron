@@ -5,10 +5,4 @@
             <i class="bi bi-boxes"></i> Rohstoffe
         </a>
     </li>
-    <li class="nav-item">
-        <a class="nav-link @if(request()->routeIs('trade.researches')) active @endif"
-           href="{{ route('trade.researches') }}">
-            <i class="bi bi-lightbulb"></i> Forschungen
-        </a>
-    </li>
 </ul>

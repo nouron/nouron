@@ -7,6 +7,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         DB::statement("
             INSERT INTO personell (id, purpose, name, required_building_id, required_building_level,
                                    \"row\", \"column\", max_status_points, can_command_fleet)
@@ -15,6 +17,8 @@ return new class extends Migration
 
         DB::statement("INSERT INTO personell_costs (personell_id, resource_id, amount) VALUES (93, 1, 7500)");
         DB::statement("INSERT INTO personell_costs (personell_id, resource_id, amount) VALUES (93, 2, 2)");
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

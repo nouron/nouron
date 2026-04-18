@@ -44,6 +44,8 @@ return new class extends Migration
 
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         // 1. Rename active ship keys to the new naming convention.
         DB::table('ships')->where('id', 37)->update(['name' => 'ship_korvette']);
         DB::table('ships')->where('id', 47)->update(['name' => 'ship_frachter']);
@@ -82,6 +84,8 @@ return new class extends Migration
             }
         }
         DB::table('ship_costs')->insert($rows);
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

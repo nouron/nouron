@@ -47,6 +47,8 @@ return new class extends Migration
 
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         $rows = [];
         foreach ($this->regolithCosts as $buildingId => $amount) {
             $rows[] = [
@@ -56,6 +58,8 @@ return new class extends Migration
             ];
         }
         DB::table('building_costs')->insert($rows);
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

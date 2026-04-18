@@ -86,10 +86,8 @@ Route::middleware('auth')->prefix('messages')->name('messages.')->group(function
 // ── Trade (Schritt 8) ─────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
-    Route::match(['get', 'post'], '/resources',  [TradeController::class, 'resources'])->name('resources');
-    Route::match(['get', 'post'], '/researches', [TradeController::class, 'researches'])->name('researches');
+    Route::match(['get', 'post'], '/resources', [TradeController::class, 'resources'])->name('resources');
     Route::post('/offer/resource', [TradeController::class, 'addResourceOffer'])->name('offer.resource');
-    Route::post('/offer/research', [TradeController::class, 'addResearchOffer'])->name('offer.research');
     Route::post('/offer/remove',   [TradeController::class, 'removeOffer'])->name('offer.remove');
     Route::post('/offer/accept',   [TradeController::class, 'acceptResourceOffer'])->name('offer.accept');
 });

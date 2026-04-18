@@ -49,11 +49,15 @@ return new class extends Migration
 
     public function up(): void
     {
+        DB::statement('PRAGMA foreign_keys = OFF');
+
         foreach ($this->costs as $buildingId => $apCost) {
             DB::table('buildings')
                 ->where('id', $buildingId)
                 ->update(['ap_for_levelup' => $apCost]);
         }
+
+        DB::statement('PRAGMA foreign_keys = ON');
     }
 
     public function down(): void

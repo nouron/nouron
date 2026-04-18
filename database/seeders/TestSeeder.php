@@ -27,22 +27,16 @@ class TestSeeder extends Seeder
             fn(string $line) => str_starts_with(ltrim($line), 'INSERT')
         );
 
-        DB::statement('PRAGMA foreign_keys = OFF');
-
         foreach ($statements as $statement) {
             $statement = trim($statement);
             if ($statement === '') {
                 continue;
             }
-            // Strip trailing semicolon-and-quote artifacts from sqlite3 dumps
             $statement = rtrim($statement, ';') . ';';
-            // Use OR REPLACE so migrations that pre-inserted master data rows (e.g. add_stratege)
-            // don't cause UNIQUE constraint violations when the seeder runs after migrations.
+            // OR REPLACE: avoids UNIQUE violations when migrations pre-insert master rows (e.g. add_stratege)
             $statement = preg_replace('/^INSERT INTO\b/i', 'INSERT OR REPLACE INTO', $statement);
             DB::statement($statement);
         }
-
-        DB::statement('PRAGMA foreign_keys = ON');
 
         $this->call(MasterDataSeeder::class);
     }

@@ -210,14 +210,15 @@ class TradeControllerTest extends TestCase
             ->count());
     }
 
-    public function test_remove_offer_returns_false_without_resource_or_research_id(): void
+    public function test_remove_offer_returns_validation_error_without_resource_id(): void
     {
+        // resource_id is now required; omitting it must return 422
         $response = $this->actingAs($this->bart)
             ->postJson(route('trade.offer.remove'), [
                 'colony_id' => 1,
                 'direction' => 0,
             ]);
 
-        $response->assertOk()->assertJson(['result' => false]);
+        $response->assertUnprocessable()->assertJsonValidationErrors(['resource_id']);
     }
 }
