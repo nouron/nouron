@@ -60,6 +60,7 @@ class AdvisorController extends BaseController
             'research'     => $this->personellService->getTotalActionPoints('research', $colonyId),
             'economy'      => $this->personellService->getTotalActionPoints('economy', $colonyId),
             'strategy'     => $this->personellService->getTotalActionPoints('strategy', $colonyId),
+            'navigation'   => $this->personellService->getTotalActionPoints('navigation', $colonyId),
         ];
 
         return view('advisors.index', compact(
