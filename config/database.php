@@ -44,15 +44,6 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
-        // Temporary test connection for validating migrations against a clean DB.
-        // Uses a throwaway file that can be deleted after verification.
-        'sqlite_test' => [
-            'driver' => 'sqlite',
-            'database' => env('DB_TEST_DATABASE', '/home/mg/workspace/nouron/data/db/laravel_migrate_test.db'),
-            'prefix' => '',
-            'foreign_key_constraints' => true,
-        ],
-
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),

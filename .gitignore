@@ -31,3 +31,6 @@ local.properties
 # PDT-specific
 .buildpath
 .env
+
+# SQLite databases — schema managed via migrations, data via seeders
+data/db/*.db
