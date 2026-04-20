@@ -14,10 +14,12 @@
 2. [Tick-System](#2-tick-system)
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
+   - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
 6. [Supply-Generierung](#6-supply-generierung)
 7. [Gebäude-Verfall (Decay)](#7-gebäude-verfall-decay)
 8. [Flotten & Flottenorders](#8-flotten--flottenorders)
+   - 8a. [Systemansicht](#8a-systemansicht)
 9. [Kampfsystem (Combat)](#9-kampfsystem-combat)
 10. [Forschung](#10-forschung)
 11. [Handel (Trade)](#11-handel-trade)
@@ -184,7 +186,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
 | 7 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
 | 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
-| 8b | Moral Calculation — Moral neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §13) |
+| 8b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §13) |
 | 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
 
 ---
@@ -200,7 +202,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 3  | Regolith | Regolith | Rg | Kolonie | Ja | 200 |
 | 4  | Werkstoffe | Compounds | Co | Kolonie | Ja | 0 |
 | 5  | Organika | Organics | Or | Kolonie | Ja | 0 |
-| 12 | Moral | Moral | M | Kolonie | Nein | 0 |
+| 12 | Vertrauen | Trust | V | Kolonie | Nein | 0 |
 
 **Credits** und **Supply** werden auf User-Ebene (`user_resources`) geführt, alle anderen auf Kolonieebene (`colony_resources`).
 
@@ -208,9 +210,9 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 
 - **Regolith** — Lokaler Rohstoff: Mondgestein, Silikate, Mineralstaub. Wird vor Ort vom Harvester abgebaut. Primäre Verwendung: Rohbaukosten für Gebäude (außer CC und Harvester). Startwert 200 Rg — narrative Begründung: vor Ankunft des Spielers wurden durch automatisierte Maschinen bereits Ressourcen bereitgestellt (Frontier-Depot).
 - **Werkstoffe** — Veredelte Industriegüter: raffinierte Metalle, Legierungen, technische Komponenten. Nicht lokal produzierbar. Quellen: KI-Händler (immer verfügbar, Preis in Credits), Spieler-zu-Spieler-Handel, Events. Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen.
-- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Moral. Produktionsgebäude: Agrardom (bioFacility). Startwert 0 — wird durch eigene Produktion oder Handel beschafft.
+- **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Vertrauen. Produktionsgebäude: Agrardom (bioFacility). Startwert 0 — wird durch eigene Produktion oder Handel beschafft.
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
-- **Moral** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
+- **Vertrauen** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
 
 ### Ressourcen-Verwendungsdomänen
 
@@ -268,7 +270,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 |----|------------|-----------|-----------|-----------|---------------|
 | 25 | commandCenter | Kommandozentrale | Command Center | 5 | — |
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
-| 27 | industrieMine | Industriemine | Industrial Mine | — | CC Lv1 |
+| 27 | harvester | Harvester | Harvester | 1 | CC Lv1 |
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv1 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv4 |
@@ -279,14 +281,63 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 50 | denkmal | Kolonialdenkmal | Colonial Monument | — | — |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | — |
 
+> **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
+
 ### Status-Punkte
 
 Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Tick durch Verfall (siehe Abschnitt 7).
 
 > **TODO (Design):** Gebäude haben aktuell zwei konzeptionell unterschiedliche Betriebsmodi, die noch nicht formal unterschieden werden:
-> - **Leveled Buildings** — ein Gebäude, das stufenweise ausgebaut wird (z.B. Kommandozentrale Lv1→5, Industriemine).
+> - **Leveled Buildings** — ein Gebäude, das stufenweise ausgebaut wird (z.B. Kommandozentrale Lv1→5).
 > - **Instanced Buildings** — mehrere Exemplare desselben Gebäudetyps werden unabhängig voneinander gebaut (z.B. Wohnhabitat: bis zu 6 Einheiten, Hangar: je 1 Schiffsslot).
 > In `config/buildings.php` und der DB wird beides über `max_level` abgebildet — semantisch aber verschieden. Für Phase 3b/3c: `building_type: leveled | instanced` einführen und UI/Logik entsprechend anpassen.
+
+---
+
+## 4a. Kolonieoberfläche
+
+### Darstellung: Hex-Grid
+
+Die Kolonieoberfläche wird als 2D top-down Hex-Grid dargestellt. Die Planetengröße bestimmt die Anzahl verfügbarer Ringe und skaliert mit dem Schwierigkeitsgrad des Runs.
+
+### Zwei Zonen
+
+**Kolonie-Zone** — die inneren Ringe um das CC. Hier werden Gebäude gebaut. Neue Ringe werden durch CC-Level freigeschaltet.
+
+**Exploration Zone** — die äußeren Tiles jenseits der Kolonie-Zone. Hier liegen Ressourcenquellen, Gefahren und Event-Spots. Jedes Tile muss einzeln per Navigation-AP erkundet werden (Korvette oder Sonde).
+
+### CC-Level und Koloniewachstum
+
+Die Kommandozentrale schaltet durch Level-Upgrades neue Hex-Ringe in der Kolonie-Zone frei. Tiles innerhalb eines freigeschalteten Rings werden einzeln durch Erkundungs-AP enthüllt — nicht alle auf einmal.
+
+| Planetengröße | Kolonie-Ringe gesamt | Neuer Ring bei CC-Level |
+|---|---|---|
+| Klein | 2 | 1 / 3 |
+| Mittel | 3 | 1 / 2 / 4 |
+| Groß | 4 | 1 / 2 / 3 / 5 |
+
+Ring 1 (6 Tiles direkt um das CC) ist immer sofort verfügbar. Der erste Ressourcen-Tile ist garantiert in Ring 1 (fixes Starttemplate, Typ variiert pro Run).
+
+### Startposition
+
+Die CC-Startposition ist pro Run zufällig. Das erzeugt unterschiedliche Ausgangssituationen und trägt zum Roguelike-Charakter bei.
+
+### Sichtbarkeit
+
+- **Kolonie-Zone:** alle Tiles sofort sichtbar
+- **Exploration Zone:** Fog of War — Tiles werden einzeln per Navigation-AP aufgedeckt
+
+### Tile-Typen und Schwierigkeit
+
+Tile-Typen (z.B. "Reicher Erzknoten", "Armes Vorkommen", "Organik-freies Terrain") beeinflussen die Ressourcenproduktion. Die Schwierigkeit eines Runs steuert die Tile-Qualität: schwieriger Run = schlechtere Vorkommen, keine reichen Erznodes in Ring 1.
+
+### Organika
+
+Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten nicht natürlich vor). Stattdessen produziert der **Agrardom** (Gebäude innerhalb der Kolonie-Zone) Organika passiv pro Tick.
+
+### Gefahren und Ereignisse
+
+Events können sich auf der Kolonieoberfläche abspielen (z.B. Meteoriteneinschlag auf Tile X, Statusverschlechterung durch Sturm). Gebäude werden nicht zerstört — ihr Status-Punkte-Wert sinkt, Reparatur wird nötig. Die Korvette kann Umgebungsgefahren in der Exploration Zone neutralisieren (kostet Navigation-AP).
 
 ---
 
@@ -302,12 +353,14 @@ produzierte Menge = Gebäude-Level × Rate
 
 ### Produktionsgebäude (Phase 3)
 
-| Gebäude | building_id | Ressource | resource_id | Rate pro Level |
-|---------|-------------|-----------|-------------|----------------|
-| Industriemine | 27 | Regolith | 3 | 10 |
-| Agrardom | 41 | Organika | 5 | 10 |
+| Gebäude | building_id | Ressource | resource_id | Rate |
+|---------|-------------|-----------|-------------|------|
+| Harvester | 27 | Regolith | 3 | tile-abhängig |
+| Agrardom | 41 | Organika | 5 | 10 pro Level |
 
-> **Designentscheidung:** Die Industriemine produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
+> **Designentscheidung:** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
+
+> **Harvester-Produktion:** Die produzierte Menge hängt vom Tile-Typ ab (z.B. "Reicher Erzknoten" = +50% Bonus). Quellen versiegen graduell — ein sichtbarer Erschöpfungs-Counter auf dem Tile zeigt den verbleibenden Vorrat.
 
 ### Konfiguration
 
@@ -315,8 +368,8 @@ produzierte Menge = Gebäude-Level × Rate
 
 ```php
 'production' => [
-    27 => [3 => 10],   // industrieMine  → Regolith  × 10/level
-    41 => [5 => 10],   // bioFacility    → Organika  × 10/level
+    27 => [3 => 'tile'],   // harvester      → Regolith  tile-abhängig
+    41 => [5 => 10],       // bioFacility    → Organika  × 10/level
 ],
 ```
 
@@ -377,7 +430,7 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 | Gebäude | Supply |
 |---------|--------|
-| Industriemine, Agrardom | 2 |
+| Harvester, Agrardom | 2 |
 | Kolonialdenkmal | 2 |
 | Lagerhalle | 3 |
 | Cantina, Religiöse Stätte | 4 (je) |
@@ -512,7 +565,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 | Cantina (bar) | 7 | 2.86 |
 | Religiöse Stätte (temple) | 10 | 2.0 |
 | Krankenstation (hospital) | 10 | 2.0 |
-| Industriemine, Agrardom | 21 | 0.95 |
+| Harvester, Agrardom | 21 | 0.95 |
 | Analytik-Labor (sciencelab) | 21 | 0.95 |
 | Lagerhalle (depot) | 30 | 0.67 |
 | Handelsposten (tradecenter) | 30 | 0.67 |
@@ -625,6 +678,48 @@ Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
 
 ---
 
+## 8a. Systemansicht
+
+### Darstellung: 2D Top-Down Grid
+
+Die Systemansicht zeigt das gesamte Sternensystem als 2D top-down Darstellung. Das zugrundeliegende Grid (12×12) ist im Normalmodus unsichtbar — es erscheint nur wenn ein Flottenbefehl erteilt wird (Zielauswahl). Planeten, Flotten und Objekte sind Icons im freien Raum.
+
+### Sichtbarkeit
+
+Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der Expedition vorab erkundet. Einige Tiles erfordern Detailerkundung.
+
+### Erkundungsstufen
+
+| Stufe | Kosten | Ergebnis |
+|-------|--------|---------|
+| Scan | 1 Navigation-AP, sofort | Tile aufgedeckt (leer / Ressource / normales Event) |
+| Tiefenscan | Mehrere Navigation-AP über mehrere Ticks | Verborgener Event-Spot enthüllt (Schiffswrack, Ruine, Versteck) |
+
+### Fixe Objekte (immer vorhanden)
+
+- Stern (1)
+- Heimatplanet + Monde (je Spieler)
+- Sprungtor (1, narratives Element — nicht nutzbar, kann bewacht werden)
+- Nexus-Außenposten (1): Basishandel + Verwaltung der Nexus-Schulden
+
+### Prozedurale Objekte (variabel pro Run)
+
+Asteroiden, Schiffsfriedhöfe, Event-Tiles — zufällig generiert, tragen zum Roguelike-Charakter bei.
+
+### NPC-Fraktionen
+
+Vereinzelte NPC-Fraktionen sind im System präsent. Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber bedeutsam.
+
+### Reisender Händler
+
+Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Ticks. Er bietet seltene Waren an (keine Standardressourcen — Shortcuts, Blaupausen, temporäre Söldner, Informationen). Sein Inventar wird in DS-3 definiert.
+
+### Multiplayer
+
+Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. Interaktion findet über Flottenbewegung auf der Systemkarte statt (Handel, Diplomatie). Die Systemkarte ist der gemeinsame Interaktionsraum.
+
+---
+
 ## 9. Kampfsystem (Combat)
 
 ### Ablauf
@@ -713,7 +808,7 @@ Kenntnisse werden **einmalig erarbeitet** (Analytiker-AP) und bleiben **permanen
 
 Jede Kenntnis hat:
 
-- **Primäreffekt** — aktiv sobald freigeschaltet, unabhängig von Beratern (z.B. Supply-Cap-Bonus, Moraleffekt)
+- **Primäreffekt** — aktiv sobald freigeschaltet, unabhängig von Beratern (z.B. Supply-Cap-Bonus, Vertrauenseffekt)
 - **Sekundäreffekt** — nur aktiv wenn die Kenntnis einem Berater zugewiesen ist; variiert je nach Berater-Typ
 
 Beispiele für Sekundäreffekte (konkrete Werte folgen nach erstem Playtest):
@@ -759,7 +854,7 @@ Jede freigeschaltete Kenntnis erhöht den Supply-Cap. Da es kein Levelsystem meh
 
 > **TODO Design:** Pauschalen Supply-Cap-Bonus pro Kenntnis definieren (ersetzt die bisherige Level-Glockenformel). Richtwert: +8–12 pro Kenntnis, sodass alle 7 Kenntnisse zusammen ~60–80 Cap-Bonus ergeben.
 
-Bestimmte Kenntnisse beeinflussen auch die Moral der Kolonie (agronomy, health, defense) — Details siehe §13.
+Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, health, defense) — Details siehe §13.
 
 ---
 
@@ -818,7 +913,7 @@ Anfrage läuft über das INNN-System (Nachricht an Nexus) oder eine eigene Anfra
 | Werkstoffe (Co) | Ja | Kauf (nicht produzierbar) |
 | Credits (Cr) | Nein | Zahlungsmittel |
 | Supply (Sup) | Nein | Systemwert |
-| Moral (M) | Nein | Systemwert |
+| Vertrauen (V) | Nein | Systemwert |
 
 ---
 
@@ -1001,14 +1096,14 @@ Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP
 
 ### Design-Absicht
 
-Moral ist das "weiche" Feedback-System der Kolonie. Sie reagiert auf die Entscheidungen des Spielers — welche Gebäude gebaut werden, wie militaristisch die Spielweise ist, welche Forschungen betrieben werden — und verstärkt oder schwächt die Kolonieleistung mit spürbaren, aber nicht spielentscheidenden Effekten.
+Vertrauen ist das "weiche" Feedback-System der Kolonie. Es reagiert auf die Entscheidungen des Spielers — welche Gebäude gebaut werden, wie militaristisch die Spielweise ist, welche Forschungen betrieben werden — und verstärkt oder schwächt die Kolonieleistung mit spürbaren, aber nicht spielentscheidenden Effekten.
 
-Moral ist kein zweites Ressourcenproblem, das der Spieler managen muss. Sie ist ein stiller Bewertungsparameter: Wer eine ausgewogene, zivil-orientierte Kolonie aufbaut, wird belohnt. Wer ausschließlich auf Militär setzt und Zivilinfrastruktur vernachlässigt, spürt das in einer moderaten Malus-Spirale.
+Vertrauen ist kein zweites Ressourcenproblem, das der Spieler managen muss. Es ist ein stiller Bewertungsparameter: Wer eine ausgewogene, zivil-orientierte Kolonie aufbaut, wird belohnt. Wer ausschließlich auf Militär setzt und Zivilinfrastruktur vernachlässigt, spürt das in einer moderaten Malus-Spirale.
 
 ### Wertebereich
 
 ```
-Moral: -100 bis +100
+Vertrauen: -100 bis +100
 Neutralwert: 0
 Startwert: 0
 ```
@@ -1017,7 +1112,7 @@ Startwert: 0
 
 | Bereich | Bezeichnung | Anzeige (UI-Hinweis) |
 |---------|-------------|----------------------|
-| +61 bis +100 | Hochmoral | "Euphorisch" |
+| +61 bis +100 | Hohes Vertrauen | "Euphorisch" |
 | +21 bis +60 | Positive Stimmung | "Zufrieden" |
 | -20 bis +20 | Neutral | "Stabil" |
 | -21 bis -60 | Unzufriedenheit | "Unruhig" |
@@ -1027,55 +1122,55 @@ Der Wert -100 ist ein harter Boden (keine weitere Verschlechterung). Ebenso +100
 
 ### Berechnung (Tick-basiert)
 
-Moral wird einmal pro Tick **neu berechnet** — nicht akkumuliert. Die Moral eines Ticks ergibt sich aus der Summe aller aktiven Faktoren:
+Vertrauen wird einmal pro Tick **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Ticks ergibt sich aus der Summe aller aktiven Faktoren:
 
 ```
-moral = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + steuerfaktor + ereigniseffekte, -100, +100)
+vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + steuerfaktor + ereigniseffekte, -100, +100)
 ```
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
 
-Der Wert wird in **Tick-Schritt 8b** (nach Ressourcenproduktion) berechnet, da Moral die Produktionswerte desselben Ticks noch nicht beeinflusst — sie wirkt ab dem Folgetick.
+Der Wert wird in **Tick-Schritt 8b** (nach Ressourcenproduktion) berechnet, da Vertrauen die Produktionswerte desselben Ticks noch nicht beeinflusst — es wirkt ab dem Folgetick.
 
-> **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer moralverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
+> **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer vertrauensverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
 
 ### Einflussfaktoren: Gebäude
 
-Jedes gebaute Exemplar eines Moralgebäudes trägt mit einem fixen Wert pro Level bei. Nur Gebäude mit `status_points > 0` zählen (verfallene Gebäude tragen nicht bei).
+Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro Level bei. Nur Gebäude mit `status_points > 0` zählen (verfallene Gebäude tragen nicht bei).
 
-**Positive Moralgebäude:**
+**Positive Vertrauensgebäude:**
 
-| Gebäude-ID | Bezeichner | Moral/Level |
-|------------|------------|-------------|
+| Gebäude-ID | Bezeichner | Vertrauen/Level |
+|------------|------------|-----------------|
 | 32 | temple (Religiöse Stätte) | +2 |
 | 46 | hospital (Krankenstation) | +3 |
 | 50 | denkmal (Kolonialdenkmal) | +2 |
 | 52 | bar (Cantina) | +2 |
 
-**Negative Moralgebäude:**
+**Negative Vertrauensgebäude:**
 
 *(keine in Phase 3 — alle verbleibenden Gebäude sind neutral oder positiv)*
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + denkmal + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Moral-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + denkmal + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 
-Schiffe tragen zur Moral bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Militärschiffe signalisieren der Bevölkerung Kriegsbereitschaft und erzeugen Unruhe; Transporter stehen für Handel und Wohlstand.
+Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Militärschiffe signalisieren der Bevölkerung Kriegsbereitschaft und erzeugen Unruhe; Transporter stehen für Handel und Wohlstand.
 
-| Schiff-ID | Bezeichner | Moral/Schiff |
-|-----------|------------|--------------|
+| Schiff-ID | Bezeichner | Vertrauen/Schiff |
+|-----------|------------|------------------|
 | 85 | sonde | 0 |
 | 37 | korvette | -1 |
 | 47 | frachter | +1 |
 
 **Rationale:** Die Korvette signalisiert Militärbereitschaft (-1/Schiff). Der Frachter steht für Handel und Wohlstand (+1/Schiff). Sonden sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion.
 
-**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Moral-Summe eingeht:
+**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Vertrauen-Summe eingeht:
 
 ```
-ship_moral = clamp(Σ(ship_amount × moral_per_ship), -30, +30)
+ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), -30, +30)
 ```
 
 > ⚠️ BALANCE CONCERN: Der Cap von ±30 für Schiffe muss nach dem ersten Playtest evaluiert werden. Eine Kolonie mit 30 Fightern wäre bei -30 bereits am Cap — das könnte für frühe militärische Spieler zu früh einsetzen. Alternativ: Cap auf -20 für eine moderatere Wirkung.
@@ -1084,13 +1179,13 @@ ship_moral = clamp(Σ(ship_amount × moral_per_ship), -30, +30)
 
 Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_points, da Forschungslevel persistenter sind).
 
-| Kenntnis-Key | Bezeichner | Moral/Level |
-|--------------|------------|-------------|
+| Kenntnis-Key | Bezeichner | Vertrauen/Level |
+|--------------|------------|-----------------|
 | agronomy | Agronomie & Kultivierung | +1 |
 | health | Gesundheit & Wohlbefinden | +2 |
 | defense | Verteidigung & Überlebenstaktik | -1 |
 
-Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Moraleffekt — sie sind neutrale Werkzeuge.
+Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Vertrauenseffekt — sie sind neutrale Werkzeuge.
 
 **Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis verbreitet ein Klima der Wachsamkeit, das die Stimmung leicht dämpft — analoges Signal zu den Korvetten.
 
@@ -1109,37 +1204,37 @@ Steuersatz 30%: Faktor -3
 Steuersatz 50%: Faktor -5
 Steuersatz 100%: Faktor -10
 
-> ⚠️ BALANCE CONCERN: Steuern als Moralsenke bedeuten, dass hohe Einnahmen immer mit Moralverlust erkauft werden. Das ist gewollt, aber der konkrete Faktor muss mit dem Produktionssystem zusammen kalibriert werden.
+> ⚠️ BALANCE CONCERN: Steuern als Vertrauenssenke bedeuten, dass hohe Einnahmen immer mit Vertrauensverlust erkauft werden. Das ist gewollt, aber der konkrete Faktor muss mit dem Produktionssystem zusammen kalibriert werden.
 
 ### Einflussfaktoren: Ereignisse (Events)
 
-Events können Moral temporär verändern. Die Wirkung hält genau **1 Tick** an (danach wirken nur noch Dauereffekte). Event-Moralwerte werden nicht in `colony_resources` gespeichert, sondern bei der Tick-Berechnung addiert und am Ende des Ticks verworfen.
+Events können Vertrauen temporär verändern. Die Wirkung hält genau **1 Tick** an (danach wirken nur noch Dauereffekte). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Tick-Berechnung addiert und am Ende des Ticks verworfen.
 
-Datenmodell: `innn_events` kann über das `data`-Feld bereits Moral-Deltas tragen. Kein Schemabedarf.
+Datenmodell: `innn_events` kann über das `data`-Feld bereits Vertrauen-Deltas tragen. Kein Schemabedarf.
 
-**Geplante Event-Trigger und Moraleffekte:**
+**Geplante Event-Trigger und Vertrauenseffekte:**
 
-Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden nach der Moral-Berechnung verworfen). Mehrere Events desselben Typs im selben Tick summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
+Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden nach der Vertrauen-Berechnung verworfen). Mehrere Events desselben Typs im selben Tick summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
 
 **Bauwesen / Forschung:**
 
-| Event-Key | Beschreibung | Moraleffekt |
-|-----------|-------------|-------------|
+| Event-Key | Beschreibung | Vertrauenseffekt |
+|-----------|-------------|------------------|
 | `building_level_up` | Gebäude fertiggestellt (Level-Up) | +1 |
 | `building_level_down` | Gebäude verfallen (Level-Down durch Decay) | -3 |
 | `research_level_up` | Forschung abgeschlossen (Level-Up) | +2 |
 
 **Handel:**
 
-| Event-Key | Beschreibung | Moraleffekt |
-|-----------|-------------|-------------|
+| Event-Key | Beschreibung | Vertrauenseffekt |
+|-----------|-------------|------------------|
 | `trade_success` | Handelsmission erfolgreich abgeschlossen | +2 |
 | `trade_blocked` | Handelsmission durch feindliche Flotte blockiert | -3 |
 
 **Kampf / Militär:**
 
-| Event-Key | Beschreibung | Moraleffekt |
-|-----------|-------------|-------------|
+| Event-Key | Beschreibung | Vertrauenseffekt |
+|-----------|-------------|------------------|
 | `combat_won` | Kampf gewonnen (feindliche Flotte vernichtet) | +2 |
 | `combat_lost` | Kampf verloren (eigene Einheiten zerstört) | -5 |
 | `colony_attacked` | Eigene Kolonie wurde angegriffen (unabhängig vom Ausgang) | -4 |
@@ -1147,8 +1242,8 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden n
 
 **Diplomatie:**
 
-| Event-Key | Beschreibung | Moraleffekt |
-|-----------|-------------|-------------|
+| Event-Key | Beschreibung | Vertrauenseffekt |
+|-----------|-------------|------------------|
 | `treaty_signed` | Diplomatischer Vertrag abgeschlossen | +3 |
 
 **Rationale für neue Events:**
@@ -1157,83 +1252,83 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden n
 
 > ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_attacked` + `combat_lost` + `war_declared` in einem Tick summiert sich zu -17. Das kann eine neutrale Kolonie (0) direkt in den "Unruhig"-Bereich (-21) kippen. Das ist designtechnisch akzeptabel (Kriege sind moralische Katastrophen), aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
 
-> ⚠️ BALANCE CONCERN: Event-Moraleffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
+> ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 
-### Effekte der Moral auf die Kolonie
+### Effekte des Vertrauens auf die Kolonie
 
-Moral beeinflusst drei Spielparameter. Alle Effekte werden als **Multiplikatoren** auf die Basiswerte angewendet, nicht als additive Boni. Das verhindert, dass Moral zu einer dominanten Wachstumsstrategie wird.
+Vertrauen beeinflusst drei Spielparameter. Alle Effekte werden als **Multiplikatoren** auf die Basiswerte angewendet, nicht als additive Boni. Das verhindert, dass Vertrauen zu einer dominanten Wachstumsstrategie wird.
 
 #### Ressourcenproduktion
 
 ```
-produzierte_menge_effektiv = produzierte_menge × production_multiplier(moral)
+produzierte_menge_effektiv = produzierte_menge × production_multiplier(vertrauen)
 ```
 
-| Moralbereich | Multiplikator |
-|--------------|---------------|
+| Vertrauensbereich | Multiplikator |
+|-------------------|---------------|
 | +61 bis +100 | 1.20 (+20%) |
 | +21 bis +60 | 1.10 (+10%) |
 | -20 bis +20 | 1.00 (neutral) |
 | -21 bis -60 | 0.85 (-15%) |
 | -61 bis -100 | 0.70 (-30%) |
 
-Angewendet auf alle Produktionsgebäude (Industriemine, Agrardom und zukünftige).
+Angewendet auf alle Produktionsgebäude (Harvester, Agrardom und zukünftige).
 
 #### AP-Multiplikator
 
 ```
-AP_effektiv = AP_basis × ap_multiplier(moral)
+AP_effektiv = AP_basis × ap_multiplier(vertrauen)
 ```
 
-| Moralbereich | Multiplikator |
-|--------------|---------------|
+| Vertrauensbereich | Multiplikator |
+|-------------------|---------------|
 | +61 bis +100 | 1.10 (+10%) |
 | +21 bis +60 | 1.05 (+5%) |
 | -20 bis +20 | 1.00 (neutral) |
 | -21 bis -60 | 0.90 (-10%) |
 | -61 bis -100 | 0.80 (-20%) |
 
-Der AP-Bonus bei hoher Moral ist bewusst kleiner als der Produktionsbonus — AP ist die knappste Ressource und soll nicht durch Moral-Stacking zu stark erhöht werden.
+Der AP-Bonus bei hohem Vertrauen ist bewusst kleiner als der Produktionsbonus — AP ist die knappste Ressource und soll nicht durch Vertrauen-Stacking zu stark erhöht werden.
 
-> ⚠️ BALANCE CONCERN: Ein AP-Malus von -20% bei Aufruhr macht Krisensituationen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay → mehr Moral-Malus). Diese Spirale ist designtechnisch vertretbar (Entropie als Spielprinzip), aber es muss einen Ausweg geben. Der Ausweg ist der Bau von Moralgebäuden, der trotz AP-Malus möglich bleibt (die Malus-Grenze liegt bei 0.80, nicht bei 0).
+> ⚠️ BALANCE CONCERN: Ein AP-Malus von -20% bei Aufruhr macht Krisensituationen selbstverstärkend (weniger AP → weniger Reparaturen → mehr Decay → mehr Vertrauen-Malus). Diese Spirale ist designtechnisch vertretbar (Entropie als Spielprinzip), aber es muss einen Ausweg geben. Der Ausweg ist der Bau von Vertrauensgebäuden, der trotz AP-Malus möglich bleibt (die Malus-Grenze liegt bei 0.80, nicht bei 0).
 
 #### Supply-Cap
 
-Moral beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separater Constraint (Wohnkomplexe, CC) und soll nicht durch ein weiteres System kompliziert werden. Beide Systeme bleiben orthogonal.
+Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separater Constraint (Wohnkomplexe, CC) und soll nicht durch ein weiteres System kompliziert werden. Beide Systeme bleiben orthogonal.
 
 ### Schema-Bedarf
 
-**Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Moralwert als Integer im Bereich -100 bis +100. Das ist ausreichend — Moral ist ein Zustand, keine akkumulierte Menge.
+**Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer im Bereich -100 bis +100. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
-**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `moral`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `vertrauen`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
 ### Tick-Integration
 
-Moral wird als neuer **Tick-Schritt 8b** nach der Ressourcenproduktion berechnet:
+Vertrauen wird als neuer **Tick-Schritt 8b** nach der Ressourcenproduktion berechnet:
 
 | Schritt | Beschreibung |
 |---------|-------------|
-| 8 | Resource Generation — Rohstoffproduktion (mit altem Moral-Multiplikator) |
-| **8b** | **Moral Calculation** — Moral neu berechnen, `colony_resources` (res_id=12) aktualisieren |
+| 8 | Resource Generation — Rohstoffproduktion (mit altem Vertrauen-Multiplikator) |
+| **8b** | **Vertrauen Calculation** — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren |
 | 9 | Advisor Ticks |
 
-Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Moral-Wert von Tick N-1. Der neue Moralwert gilt erst ab Tick N+1. Das verhindert zirkuläre Abhängigkeiten.
+Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Vertrauenswert von Tick N-1. Der neue Vertrauenswert gilt erst ab Tick N+1. Das verhindert zirkuläre Abhängigkeiten.
 
 ### Implementierungsschritte
 
-1. `config/game.php` — `moral`-Block hinzufügen (alle Werte aus obiger Tabelle)
-2. `app/Services/MoralService.php` — Service mit Methode `calculate(int $colonyId): int`
-3. `app/Services/ResourceService.php` (oder TickService) — `MoralService::calculate()` in Schritt 8b aufrufen und `colony_resources` (res_id=12) schreiben
-4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `moral_multiplier` erweitern
-5. Produktionslogik (`config/game.php → production`) — Moral-Multiplikator anwenden
-6. UI: Moral-Anzeige in der Ressourcenleiste (existiert als resource_id=12 bereits)
+1. `config/game.php` — `vertrauen`-Block hinzufügen (alle Werte aus obiger Tabelle)
+2. `app/Services/VertrauenService.php` — Service mit Methode `calculate(int $colonyId): int`
+3. `app/Services/ResourceService.php` (oder TickService) — `VertrauenService::calculate()` in Schritt 8b aufrufen und `colony_resources` (res_id=12) schreiben
+4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `vertrauen_multiplier` erweitern
+5. Produktionslogik (`config/game.php → production`) — Vertrauen-Multiplikator anwenden
+6. UI: Vertrauen-Anzeige in der Ressourcenleiste (existiert als resource_id=12 bereits)
 
 ### Abgrenzung zu Phase 3
 
-Das beschriebene System ist eine bewusst einfache Phase-2-Mechanik. In Phase 3 (Neukonzeption / Solo-Highscore) kann Moral weiterentwickelt werden zu:
+Das beschriebene System ist eine bewusst einfache Phase-2-Mechanik. In Phase 3 (Neukonzeption / Solo-Highscore) kann Vertrauen weiterentwickelt werden zu:
 - Bevölkerungszufriedenheit mit eigenem Bevölkerungswert
 - Revolutionsrisiko bei anhaltender Krise
-- Fraktions-spezifische Moralmodifikatoren
+- Fraktions-spezifische Vertrauensmodifikatoren
 
 Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bis +100) in `colony_resources` stabil bleibt.
 
@@ -1298,7 +1393,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 |---|---------|-------------|-----------|
 | 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Tick uber Z Ticks aufrecht halten | Wirtschaft |
 | 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
-| 3 | **Kolonieblute** | Moral > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
+| 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
 | 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
 | 5 | **Aufklärer** | 3 verschiedene, bisher unbekannte Systeme mit einer Flotte angesteuert | Exploration |
 | 6 | **Kontaktnetz** | Gleichzeitig aktive Handelsrouten mit 3 verschiedenen KI-Fraktionen | Diplomatie |
@@ -1322,6 +1417,18 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 - Tick 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Nexus-Warnung mit Tick-Countdown.
 
 Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration. **Nexus ist der Absender** — die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
+
+---
+
+### Spieler-Rolle: Der Direktor
+
+Der Spieler trägt den Titel **Direktor** (oder Direktorin). So nennen ihn die Kolonisten — es ist die informelle, täglich gebrauchte Anrede.
+
+Nexus-intern heißt die Position **Konzessionär**: jemand der eine Betriebslizenz von einer übergeordneten Instanz auf Zeit erhalten hat, vertraglich gebunden ist und selbst das Risiko trägt — weder einfacher Angestellter noch unabhängiger Eigentümer.
+
+**Nexus** ist kein Staat und keine Armee — es ist ein interstellares Entwicklungskonsortium, das Kolonisierungsrechte vergibt, Startkapital vorschießt und am Ende Rechenschaft erwartet. Der Spieler hat eine Konzession unterzeichnet: Aufbau und Betrieb einer Siedlung auf einem zugewiesenen Planeten, für eine definierte Laufzeit, gegen Vorauszahlung in Credits. Was in der Konzession nicht steht: wie rau die Bedingungen vor Ort sind, was die Kolonisten wirklich brauchen, und wie wenig Nexus bereit ist zu helfen wenn es brennt.
+
+Der Direktor steht zwischen zwei Loyalitäten: den Kolonisten (Vertrauen) und Nexus (Schulden). Wer zu sehr für Nexus optimiert, verliert das Vertrauen der Siedler. Wer Nexus ignoriert, wird zurückgerufen. Das ist kein Widerspruch — das ist der Job.
 
 ---
 
@@ -1367,16 +1474,22 @@ Wer hingegen bei Tick 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale S
 
 ### Fail States
 
-Genau 2 Fail States. Kein Fail durch Militarverlust (passt zur Designphilosophie §1.1).
+Genau 3 Fail States.
 
-**Fail State 1 — Kolonie unbewohnbar:**
-CC wird zerstört (Lv0) ODER alle Wohnhabitat-Instanzen verfallen auf 0.
-- Begründung: Ohne Kommandozentrale oder Unterkunft ist die Kolonie nicht überlebensfähig. Der Spieler hat das Scheitern kommen sehen (Gebäudestatus ist sichtbar) — es ist die Konsequenz kumulierter Vernachlässigung, nicht ein Zufallsereignis.
-- Valide Strategie: Repair-AP bewusst zu sparen ist erlaubt und riskant — genau das macht Roguelikes interessant. Die Notreparatur (Credits statt AP) gibt einen letzten Ausweg, aber nur wenn Credits vorhanden sind.
-- Vorwarnung: INNN-Ereignis wenn SP einer kritischen Struktur unter 30% fällt. Roter UI-Indikator bei SP < 15%. Notreparatur löst automatisch bei SP < 10% aus (kostet Credits). Run-Ende mit Meldung "Kolonie aufgegeben" wenn Struktur zerstört wird.
+**Fail State 1 — Vertrauen kollabiert:**
+Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende Ticks unter einem kritischen Schwellenwert (z.B. < 10).
+- Begründung: Die Kolonisten verlieren den Glauben an ihre Führung. Der Direktor wird abgesetzt und muss die Kolonie verlassen.
+- Vorwarnung: INNN-Ereignis wenn Vertrauen unter 20 fällt. Roter UI-Indikator bei Vertrauen < 10. Countdown-Anzeige "Noch N Ticks bis Abberufung" wenn Zustand anhält.
+- Run-Ende mit Meldung: "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
 
-**Fail State 2 — Zeitablauf:**
-Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfullt wurden.
+**Fail State 2 — Nexus-Schulden zu hoch:**
+Die Schulden beim Nexus-Konsortium überschreiten ein definiertes Maximum (konfigurierbar).
+- Begründung: Nexus hat dem Direktor eine Konzession erteilt und Startkapital vorgeschossen. Unkontrollierte Schulden führen zur Rückberufung — der Direktor wird "gefeuert".
+- Vorwarnung: INNN-Nachricht von Nexus bei 75% des Schuldenlimits. Kritische Warnung bei 90%.
+- Run-Ende mit Meldung: "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
+
+**Fail State 3 — Zeitablauf:**
+Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfüllt wurden.
 - Begründung: Sauberes, vorhersehbares Ende. Verhindert Endlos-Sessions ohne Ziel.
 - Tick-Limit: 100 Ticks (konfigurierbar in `config/game.php → run.tick_limit`).
 - Countdown im UI sichtbar ab Tick 80 ("Noch 20 Ticks bis Missionsende").
@@ -1386,14 +1499,14 @@ Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfullt wurden.
 ### Highscore-Berechnung (Entwurf)
 
 ```
-score = (aufgaben_erfullt × 1000) + (tick_limit - erfullt_in_tick) × 10 + (credits_rest / 10) + (moral_at_end × 5)
+score = (aufgaben_erfullt × 1000) + (tick_limit - erfullt_in_tick) × 10 + (credits_rest / 10) + (vertrauen_at_end × 5)
 ```
 
 Komponenten:
 - Aufgabenanzahl (2 oder 3) als Hauptfaktor
 - Geschwindigkeit (fruheres Erfullen = mehr Punkte)
 - Wohlstand (verbleibende Credits)
-- Koloniequalität (Moral am Ende)
+- Koloniequalität (Vertrauen am Ende)
 
 > ⚠️ BALANCE CONCERN: Highscore-Formel ist ein erster Entwurf. Gewichtung muss nach ersten Playtests kalibriert werden. Ziel: 3-von-3-Sieg sollte deutlich mehr Punkte ergeben als 2-von-3, aber ein schneller 2-von-3-Sieg kann einen langsamen 3-von-3-Sieg ubertrumpfen.
 
