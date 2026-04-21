@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-21 (Design-Sprint: DS-1, DS-2, DS-3 abgeschlossen)
+
+- **DS-1 Kolonieansicht:** Hex-Grid, zwei Zonen (Kolonie + Exploration), CC-Level schaltet Ringe frei (max Lv5, Klein/Mittel/Groß = 2/3/4 Ringe), Harvester als Sondergebäude mit Tile-Position, Organika aus Agrardom, Quellen versiegen graduell. Run-Ende: Vertrauen kritisch → abgesetzt, Nexus-Schulden zu hoch → zurückgerufen.
+- **DS-2 Systemansicht:** 2D top-down Grid 12×12 (unsichtbar, erscheint nur im Flottenbefehlsmodus), Scan/Tiefenscan-Erkundung, fixe Objekte (Stern, Heimatplanet, Sprungtor, Nexus-Außenposten), prozedurale Objekte pro Run.
+- **DS-3 Reisender Händler:** Erscheint ab Tick 15–20, dann alle 10–15 Ticks (~6–7 Besuche/Run), 3–4 Items/Besuch, Credits-Preise, höhere Preise auf schwierigeren Runs. Item-Kategorien: AP-Paket, Schiff (mit Eigenname), Information, Einmal-Item, Exotics (Phase 4+).
+- GDD §4a, §8a und §13/§14 entsprechend aktualisiert (Vertrauen statt Moral, Direktor/Direktorin als Spieler-Titel, Nexus-Narrativ).
+
 ## 2026-04-18
 
 - Forschungshandel (`trade_researches`) vollständig entfernt — im neuen Singleplayer-Roguelike-Design nicht mehr vorgesehen; Migration `2026_04_18_000001` droppt die Tabelle, zugehörige Models/Views/Routen/Tests bereinigt
