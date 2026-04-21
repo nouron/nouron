@@ -712,7 +712,25 @@ Vereinzelte NPC-Fraktionen sind im System präsent. Das System wirkt unbesiedelt
 
 ### Reisender Händler
 
-Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Ticks. Er bietet seltene Waren an (keine Standardressourcen — Shortcuts, Blaupausen, temporäre Söldner, Informationen). Sein Inventar wird in DS-3 definiert.
+Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Ticks. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
+
+**Erscheinungsfrequenz:** Erstmals ab Tick 15–20 (Kolonie soll sich erst etablieren). Danach alle 10–15 Ticks zufällig. Ergibt ~6–7 Besuche pro 100-Tick-Run. Ist der Händler weg, ist er weg — Roguelike-Druck.
+
+**Inventar:** 3–4 Items pro Besuch (Mobile-optimiert, kein Scrollen nötig).
+
+**Preisstruktur:** Alles in Credits. Kein Tauschhandel in Phase 3. Exotics/Tausch für Phase 4+ denkbar.
+
+**Schwierigkeitsskalierung:** Höhere Preise auf schwierigeren Runs — nicht schlechteres Sortiment (das wäre frustrierend).
+
+**Item-Kategorien:**
+
+| Kategorie | Beschreibung | Seltenheit |
+|-----------|-------------|-----------|
+| **AP-Paket** | Sofortiger AP-Schub für ein bestimmtes Gebäude oder eine Kenntnis — beschleunigt, bypassed aber keine Voraussetzungen | gelegentlich |
+| **Schiff** | Gebrauchtes Schiff mit Eigenname — ersetzt ein bestehendes Schiff (Hangar bleibt konstant). Phase 4+: besondere Eigenschaften denkbar | selten |
+| **Information** | Alle versteckten Event-Spots im System sofort enthüllt | selten |
+| **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
+| **Exotics** | Platzhalter Phase 4+ | sehr selten |
 
 ### Multiplayer
 
