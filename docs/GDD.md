@@ -39,6 +39,8 @@ Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen 
 
 Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tag global berechnet.
 
+**Technischer Stack (Stand April 2026):** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS (neue Screens ab Phase 3b), SVG für Spielfelder (Hex-Grid, Systemkarte), Vanilla fetch() für Server-Calls. Bestehende Screens werden schrittweise von jQuery/Bootstrap migriert.
+
 ---
 
 ## 1.1 Designprinzipien
@@ -287,10 +289,14 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Tick durch Verfall (siehe Abschnitt 7).
 
-> **TODO (Design):** Gebäude haben aktuell zwei konzeptionell unterschiedliche Betriebsmodi, die noch nicht formal unterschieden werden:
-> - **Leveled Buildings** — ein Gebäude, das stufenweise ausgebaut wird (z.B. Kommandozentrale Lv1→5).
-> - **Instanced Buildings** — mehrere Exemplare desselben Gebäudetyps werden unabhängig voneinander gebaut (z.B. Wohnhabitat: bis zu 6 Einheiten, Hangar: je 1 Schiffsslot).
-> In `config/buildings.php` und der DB wird beides über `max_level` abgebildet — semantisch aber verschieden. Für Phase 3b/3c: `building_type: leveled | instanced` einführen und UI/Logik entsprechend anpassen.
+**Leveled vs. Instanced Buildings:**
+
+- **Leveled** — ein Objekt auf einem Tile, wird stufenweise ausgebaut (z.B. CC Lv1→5, Harvester, Agrardom). Ein Klick auf das Tile → "Ausbauen".
+- **Instanced** — jede Einheit ist ein eigenes Objekt auf einem eigenen Tile (z.B. Wohnhabitat max. 6 Einheiten, Hangar). Jede Instanz kann separat auf Lv1–3 ausgebaut werden und hat eigene Status-Points.
+
+Das Config-Flag `is_instanced` in `config/buildings.php` steuert das Verhalten. In der DB haben Instanced Buildings eine `instance_id` als Teil des zusammengesetzten PK (`colony_id + building_id + instance_id`).
+
+Das UI-Verb ist immer identisch: **"Tile ausbauen"** — ob Leveled oder Instanced darunterliegt, ist ein Implementierungsdetail das der Spieler nicht sieht. "Neues Wohnhabitat bauen" bedeutet: neues Tile mit Instanz Lv1 belegen. "Wohnhabitat ausbauen" bedeutet: bestehende Instanz von Lv1 auf Lv2 heben.
 
 ---
 
@@ -338,6 +344,100 @@ Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten n
 ### Gefahren und Ereignisse
 
 Events können sich auf der Kolonieoberfläche abspielen (z.B. Meteoriteneinschlag auf Tile X, Statusverschlechterung durch Sturm). Gebäude werden nicht zerstört — ihr Status-Punkte-Wert sinkt, Reparatur wird nötig. Die Korvette kann Umgebungsgefahren in der Exploration Zone neutralisieren (kostet Navigation-AP).
+
+### Hex-Grid Koordinatensystem
+
+**Koordinatenmodell:** Axial-Koordinaten (q, r). Jedes Tile wird durch ein Zahlenpaar (q, r) eindeutig identifiziert. Das CC-Tile steht bei (0, 0). Ringzugehörigkeit: `ring = max(|q|, |r|, |q+r|)`.
+
+**Orientierung:** Pointy-top (Spitze zeigt nach oben).
+
+### Tile-Typ-Katalog
+
+Tile-Typen definieren die **Mechanik** eines Tiles — nicht sein Aussehen. Die visuelle Darstellung hängt vom Planetentyp ab (Theme-Schicht, unabhängig vom Tile-Typ). Definitionen in `config/tile_types.php`.
+
+**Terrain-Tiles:**
+
+| Typ-Key | Beschreibung |
+|---------|-------------|
+| `terrain_empty` | Begehbar, leer, bebaubar |
+| `terrain_hazard` | Gefahr — Korvette/Sonde nötig zur Neutralisierung. Wird danach zu `terrain_empty` |
+| `terrain_impassable` | Nicht begehbar, nicht bebaubar (Klippen, Abgründe, Lavaströme — je nach Planetentyp) |
+
+**Ressource-Tiles (für Harvester):**
+
+| Typ-Key | Ressource | Qualität |
+|---------|-----------|----------|
+| `regolith_rich` | Regolith | Reich |
+| `regolith_normal` | Regolith | Normal |
+| `regolith_poor` | Regolith | Arm |
+
+**Event-Tiles** (werden durch Tiefenscan enthüllt — vorher nur als generisches Signal sichtbar):
+
+| Typ-Key | Beschreibung |
+|---------|-------------|
+| `event_wreck` | Schiffswrack — Bergung möglich |
+| `event_ruin` | Ruine (alien/alt) — Kenntnis/Loot |
+| `event_bunker` | Vergrabener Bunker — Shelter/Ressourcen |
+| `event_probe` | Alte Sonde / Forschungsstation — Tech-Fund |
+| `event_crystal` | Kristallformation — seltene Materialien |
+| `event_vent` | Thermaler Auslass / Geysir |
+| `event_cave` | Höhleneingang — unbekannter Inhalt |
+| `event_cache` | Verstecktes Depot — Ressourcen |
+| `event_signal` | Schwaches Signal — Unklar/Mysterium |
+| `event_anomaly` | Unerklärliche Anomalie — Risiko/Chance |
+
+Ein Tile kann gleichzeitig einen Ressource-Typ und ein Event-Overlay haben (`event_type` nullable). Das Event bleibt bis zum Tiefenscan verborgen — der Ressourcentyp ist nach normalem Scan sichtbar.
+
+### Planetentypen
+
+Fünf Planetentypen, alle im ersten Release (stärkt den Roguelike-Charakter — jeder Run fühlt sich durch den Planetentyp anders an):
+
+| Typ-Key | Name | Schwierigkeit | Charakter |
+|---------|------|--------------|-----------|
+| `rocky` | Gestein | Mittel | Felsiger Standardplanet, Regolith-reich |
+| `desert` | Wüste | Mittel-Schwer | Heiß, staubig, ressourcenarm |
+| `ice` | Eis | Mittel | Gefroren, konservierte Strukturen |
+| `ocean` | Ozean | Mittel | Inseln/Küsten, hohes Hazard-Potential |
+| `volcanic` | Vulkan | Schwer | Aktive Geologie, viele impassable Tiles |
+
+**Event-Pools je Planetentyp:**
+
+| Event | Gestein | Wüste | Eis | Ozean | Vulkan |
+|-------|---------|-------|-----|-------|--------|
+| `event_wreck` | ✓ | ✓ | ✓ | ✓ | |
+| `event_ruin` | ✓ | ✓ | ✓ | ✓ | |
+| `event_bunker` | ✓ | ✓ | ✓ | | |
+| `event_probe` | ✓ | | ✓ | ✓ | ✓ |
+| `event_crystal` | ✓ | | ✓ | | ✓ |
+| `event_vent` | | | | | ✓ |
+| `event_cave` | ✓ | ✓ | ✓ | | ✓ |
+| `event_cache` | ✓ | ✓ | ✓ | ✓ | |
+| `event_signal` | ✓ | ✓ | ✓ | ✓ | ✓ |
+| `event_anomaly` | ✓ | ✓ | | | ✓ |
+
+`terrain_hazard`-Dichte: gering (rocky/desert) → mittel (ice/ocean) → sehr hoch (volcanic).
+`terrain_impassable`-Dichte: gering (rocky/desert) → mittel (ice/ocean) → hoch (volcanic).
+
+Planetentyp und -größe werden in `glx_system_objects.planet_type` und `glx_system_objects.planet_size` gespeichert.
+
+### colony_tiles — Datenbankschema
+
+Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
+
+| Spalte | Typ | Beschreibung |
+|--------|-----|-------------|
+| `id` | PK | |
+| `colony_id` | FK → glx_colonies | |
+| `q` | integer | Axial-Koordinate |
+| `r` | integer | Axial-Koordinate |
+| `ring` | integer | 0 = CC-Tile, 1–4 = Ring-Nummer |
+| `tile_type` | string | Primärer Typ, z.B. `regolith_rich` — sichtbar nach normalem Scan |
+| `event_type` | string nullable | Event-Overlay, NULL = kein Event — sichtbar erst nach Tiefenscan |
+| `is_ring_unlocked` | boolean | CC-Level hat diesen Ring freigeschaltet |
+| `is_explored` | boolean | Normaler Scan (Nav-AP) abgeschlossen |
+| `is_deep_scanned` | boolean | Tiefenscan abgeschlossen — enthüllt `event_type` |
+| `resource_amount` | integer nullable | Verbleibende Ressourcenmenge |
+| `resource_max` | integer nullable | Startwert (Basis für Erschöpfungs-Counter im UI) |
 
 ---
 
@@ -443,7 +543,7 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 ### Kenntnisse als Supply-Cap-Quelle
 
-Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte).
+Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte). Kenntnisse haben **keinen Decay** — einmal erforschtes Wissen bleibt permanent.
 
 | Level | Cap-Bonus (dieses Level) | Kumuliert |
 |-------|--------------------------|-----------|
@@ -684,6 +784,10 @@ Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
 
 Die Systemansicht zeigt das gesamte Sternensystem als 2D top-down Darstellung. Das zugrundeliegende Grid (12×12) ist im Normalmodus unsichtbar — es erscheint nur wenn ein Flottenbefehl erteilt wird (Zielauswahl). Planeten, Flotten und Objekte sind Icons im freien Raum.
 
+### Koordinatensystem
+
+Einheitliches **12×12-Grid** (grid_x: 0–11, grid_y: 0–11) für alle Objekte und Flotten auf der Systemkarte. Der Stern steht immer bei **(6,6)** — Mittelpunkt. Alle anderen Objekte werden beim Run-Start prozedural platziert und in `glx_system_objects.grid_x/grid_y` gespeichert. Flotten nutzen dasselbe Koordinatensystem (`fleets.grid_x`, `fleets.grid_y`). Das veraltete `spot`-Feld entfällt.
+
 ### Sichtbarkeit
 
 Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der Expedition vorab erkundet. Einige Tiles erfordern Detailerkundung.
@@ -697,10 +801,10 @@ Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der E
 
 ### Fixe Objekte (immer vorhanden)
 
-- Stern (1)
-- Heimatplanet + Monde (je Spieler)
-- Sprungtor (1, narratives Element — nicht nutzbar, kann bewacht werden)
-- Nexus-Außenposten (1): Basishandel + Verwaltung der Nexus-Schulden
+- Stern (1) — immer bei (6,6)
+- Heimatplanet + Monde (je Spieler) — prozedural platziert
+- Sprungtor (1, narratives Element — nicht nutzbar, kann bewacht werden) — prozedural platziert
+- Nexus-Außenposten (1): Basishandel + Verwaltung der Nexus-Schulden — prozedural platziert
 
 ### Prozedurale Objekte (variabel pro Run)
 
@@ -726,7 +830,8 @@ Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anza
 
 | Kategorie | Beschreibung | Seltenheit |
 |-----------|-------------|-----------|
-| **AP-Paket** | Sofortiger AP-Schub für ein bestimmtes Gebäude oder eine Kenntnis — beschleunigt, bypassed aber keine Voraussetzungen | gelegentlich |
+| **AP-Paket (flexibel)** | Sofortiger AP-Schub eines Typs (z.B. +20 Construction-AP) — Spieler wählt beim Kauf wofür er sie ausgibt. Teurer als gezieltes Paket | gelegentlich |
+| **AP-Paket (gezielt)** | AP-Schub für ein konkretes Gebäude oder eine Kenntnis — günstiger, aber Ziel ist fixiert | gelegentlich |
 | **Schiff** | Gebrauchtes Schiff mit Eigenname — ersetzt ein bestehendes Schiff (Hangar bleibt konstant). Phase 4+: besondere Eigenschaften denkbar | selten |
 | **Information** | Alle versteckten Event-Spots im System sofort enthüllt | selten |
 | **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
@@ -816,11 +921,11 @@ Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config k
 | trade | Handel & Logistik | Trade & Logistics |
 | defense | Verteidigung & Überlebenstaktik | Defence & Survival Tactics |
 
-### Freischalt-Modell (Phase 3 Redesign)
+### Level-Modell ohne Decay
 
-Kenntnisse werden **einmalig erarbeitet** (Analytiker-AP) und bleiben **permanent freigeschaltet**. Es gibt kein Decay auf Kenntnissen — Wissen geht nicht verloren. Die natürliche Begrenzung erfolgt über AP-Knappheit und Rundenstruktur.
+Kenntnisse verwenden das **Level-Modell (Lv1–5)** — identisch zu Gebäuden, aber **ohne Decay**. Einmal erforschtes Wissen bleibt permanent. Es gibt keinen SP-Verfall auf Kenntnissen — das wäre thematisch unlogisch (Wissen verfällt nicht). Die natürliche Begrenzung erfolgt über AP-Knappheit und Rundenstruktur.
 
-> **TODO Implementierung:** Das bestehende Level+Decay-Modell (wie Gebäude) wird durch dieses Freischalt-Modell ersetzt. Migration und Code-Anpassung ausstehend.
+Jedes Level wird durch Investition von Analytiker-AP erarbeitet. AP-Kosten steigen mit dem Level (steigende Glockenform). Die strategische Entscheidung: Breite (viele Kenntnisse auf Lv2–3) vs. Tiefe (wenige Kenntnisse auf Lv4–5).
 
 ### Zwei Effekt-Ebenen
 
@@ -937,7 +1042,7 @@ Anfrage läuft über das INNN-System (Nachricht an Nexus) oder eine eigene Anfra
 
 ### Kenntnisse-Handel
 
-Mit dem Freischalt-Modell (§10) entfällt der direkte Kenntnishandel. Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
+Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
 > **Offen (Phase 4+):** AP-Delegation — ein Spieler "verleiht" Analytiker-AP an eine andere Kolonie für X Ticks. Thematisch stimmiger als direkter Wissenstransfer. Für spätere Phase zurückgestellt.
 
@@ -1501,10 +1606,18 @@ Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende T
 - Run-Ende mit Meldung: "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
 
 **Fail State 2 — Nexus-Schulden zu hoch:**
-Die Schulden beim Nexus-Konsortium überschreiten ein definiertes Maximum (konfigurierbar).
+Die Schulden beim Nexus-Konsortium überschreiten das Schuldenlimit.
 - Begründung: Nexus hat dem Direktor eine Konzession erteilt und Startkapital vorgeschossen. Unkontrollierte Schulden führen zur Rückberufung — der Direktor wird "gefeuert".
-- Vorwarnung: INNN-Nachricht von Nexus bei 75% des Schuldenlimits. Kritische Warnung bei 90%.
 - Run-Ende mit Meldung: "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
+
+**Nexus-Schulden-Mechanik:**
+- Schulden akkumulieren durch: Startkapital (3.000 Cr Vorschuss) + weitere Nexus-Deals (zusätzliche Credits leihen gegen mehr Schulden)
+- Keine Zinsen
+- Rückzahlung: nur manuell (Spieler überweist aktiv über den Nexus-Außenposten)
+- **Schuldenlimit: 12.000 Cr** (fester Wert, klar kommuniziert als Balken im UI)
+- UI-Label: "Nexus-Kredit: X / 12.000 Cr" — Farbwechsel gelb bei 80%, rot bei 95%
+- Bei >95%: einmalige INNN-Meldung von Nexus, die Vertrauen leicht senkt ("Die Kolonisten merken, dass etwas nicht stimmt")
+- Lose Kopplung mit Vertrauen: kein automatischer Zusammenhang. Der Spieler managt beide Achsen aktiv.
 
 **Fail State 3 — Zeitablauf:**
 Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfüllt wurden.
