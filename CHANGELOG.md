@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-04-23 (Design-Sprint: DS-4 Pre-Phase-3b abgeschlossen)
+
+- **Tech-Stack entschieden:** SVG + plain JS für Spielfelder (Hex-Grid, System-Grid), Alpine.js via CDN für UI-Shell, jQuery AJAX für Server-Calls, Blade+AJAX Hybrid Backend mit 8 neuen JSON-Endpunkten.
+- **Hex-Grid:** Axial-Koordinaten (q,r) + Pointy-top. Tile-Typ-Katalog (15 Typen: terrain, regolith, 10 event_*). 5 Planetentypen (rocky, desert, ice, ocean, volcanic) mit unterschiedlichen Event-Pools — alle im ersten Release.
+- **colony_tiles Schema:** Neue Tabelle mit q/r/ring, tile_type, event_type (nullable), is_explored, is_deep_scanned, resource_amount. Event-Overlay nur nach Tiefenscan sichtbar.
+- **Buildings:** leveled vs. instanced formal entschieden — Instanced mit instance_id als PK-Teil, Level Lv1–3 je Instanz, Config-Flag is_instanced.
+- **Händler AP-Paket:** Zwei Varianten — flexibel (Spieler wählt Ziel, teurer) + gezielt (Ziel fixiert, günstiger).
+- **Systemansicht:** Einheitliches 12×12-Grid (grid_x/grid_y) für Objekte und Flotten. Stern bei (6,6). spot-Feld entfällt.
+- **Nexus-Schulden:** Limit 12.000 Cr, keine Zinsen, manuelle Rückzahlung, INNN-Warn bei >95%.
+- **Kenntnisse:** Level-Modell (Lv1–5) beibehalten, Decay abgeschafft — GDD-Widersprüche §6/§10/§13 damit aufgelöst. Supply-Cap 200 mit CC(50)+Wohnhabitat(48)+Kenntnisse(140) erreichbar.
+- GDD §4a, §4, §6, §8a, §10, §14 entsprechend aktualisiert.
+
 ## 2026-04-21 (Design-Sprint: DS-1, DS-2, DS-3 abgeschlossen)
 
 - **DS-1 Kolonieansicht:** Hex-Grid, zwei Zonen (Kolonie + Exploration), CC-Level schaltet Ringe frei (max Lv5, Klein/Mittel/Groß = 2/3/4 Ringe), Harvester als Sondergebäude mit Tile-Position, Organika aus Agrardom, Quellen versiegen graduell. Run-Ende: Vertrauen kritisch → abgesetzt, Nexus-Schulden zu hoch → zurückgerufen.
