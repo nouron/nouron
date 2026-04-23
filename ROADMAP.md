@@ -393,12 +393,16 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ### Phase 3b: UI-Überarbeitung + Almanach
 
-- [ ] **Frontend-Überarbeitung** — Navigation, Hauptscreens, Ressourcenleiste; Klarheit vor Artwork
-- [ ] **Techtree visuell überarbeiten** — SVG-Baum ist schwer lesbar und nicht mobiloptimiert; Ziel: max. 3 Spalten, horizontales Scrollen, lesbarer auf kleinen Bildschirmen
-- [ ] **Nav-Label "Techtree" → "Kolonie"** + Status-Panel neben Grid (laufende Bauten, AP-Budget, Top-3-Produktion) — falls in Phase 2 noch nicht umgesetzt
-- [ ] **`/colony`-Screen als separater Bildschirm** — Aggregat-Übersicht (aktive Vorgänge, Planetenkontext), losgelöst vom Techtree-Grid
-- [ ] **Moralanzeige im UI** — Mechanik ist in Phase 2 vorhanden, UI fehlt noch
-- [ ] **Ingame-Almanach** — Nachschlagewerk für Gebäude, Forschungen, Schiffstypen und Spielregeln; initial einfache Blade-Seite mit Daten aus den Config-Dateien
+**Frontend-Stack (entschieden April 2026):** Alpine.js + PicoCSS + SVG für neue Screens. Kein jQuery, kein Bootstrap in neuen Screens. Bestehende Screens (fleets, techtree, trade, innn) schrittweise migrieren — galaxy.js + nouron.js zuerst (trivial), dann rest. Ziel: jQuery-CDN + Bootstrap-CDN komplett entfernen.
+
+- [ ] **Alpine.js + PicoCSS einbinden** — CDN-Links in neuem Colony-Layout, bestehende `app.blade.php` vorerst unangetastet
+- [ ] **DB-Migrationen** — `colony_tiles`, `planet_size/type` auf `glx_system_objects`, `instance_id` auf `colony_buildings`, `grid_x/grid_y` auf `fleets` + `glx_system_objects`, `spot`-Feld entfernen
+- [ ] **Colony-View (Hex-Grid)** — SVG + plain JS, Axial-Koordinaten, Fog-of-War, Tile-Interaktion
+- [ ] **System-View (12×12-Grid)** — SVG + plain JS, Objekte und Flotten, Flottenbefehl-Overlay
+- [ ] **Vertrauensanzeige im UI** — Mechanik vorhanden, UI fehlt noch
+- [ ] **Händler-Modal** — Alpine-gesteuert, nativer `<dialog>`, 3–4 Items, Credits-Kauf
+- [ ] **Ingame-Almanach** — Nachschlagewerk für Gebäude, Forschungen, Schiffstypen; Blade-Seite mit Config-Daten
+- [ ] **jQuery-Migration** — galaxy.js + nouron.js (sofort), innn.js, fleets.js, techtree.js, trade.js (schrittweise)
 
 ---
 

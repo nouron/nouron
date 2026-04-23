@@ -4,8 +4,9 @@
 
 **Nouron** ist ein Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv aufgenommen.
 - GitHub: https://github.com/nouron/nouron
-- Techstack: PHP, Laminas (migriert von ZF2), SQLite, REST-API, jQuery/JS-Frontend, Bootstrap 5
-- Status: Migration auf Laminas + Bootstrap 5 abgeschlossen (branch `laminas-migration`), App ist grundsätzlich lauffähig
+- Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS (neu, Phase 3b+), SVG für Spielfelder
+- Frontend-Migration: bestehende Screens nutzen noch jQuery + Bootstrap 5 (werden schrittweise auf Alpine.js + PicoCSS migriert — kein Mix in neuen Screens)
+- Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3b (UI) als nächstes
 
 ## Aktueller Stand (Stand: März 2026)
 
