@@ -4,6 +4,24 @@ Schema changes are recorded here in reverse-chronological order.
 
 ---
 
+## 2026-04-23 — DS-4 schema: colony_tiles, planet/grid fields, instanced buildings
+
+- What changed:
+  - New table `colony_tiles` — hex-grid surface map per colony (axial q/r, ring, tile_type, event_type, resource counters, exploration flags). FK to `glx_colonies` with CASCADE DELETE.
+  - `glx_system_objects`: added `planet_size` VARCHAR NULL, `planet_type` VARCHAR NULL, `grid_x` INTEGER NULL, `grid_y` INTEGER NULL. All nullable for backward compat.
+  - `fleets`: removed `spot` column (legacy dock-slot integer), added `grid_x` / `grid_y` INTEGER NULL for system-grid placement. Table rebuilt via rename→create→copy.
+  - `colony_buildings`: added `instance_id` INTEGER NOT NULL DEFAULT 1, `tile_x` / `tile_y` INTEGER NULL. UNIQUE constraint widened from (colony_id, building_id) to (colony_id, building_id, instance_id). Table rebuilt.
+  - `buildings`: added `is_instanced` BOOLEAN NOT NULL DEFAULT 0. Set to 1 for housingComplex (ID 28) and hangar (ID 44).
+  - New config file `config/tile_types.php` — canonical tile/event type catalogue.
+  - Updated `data/sql/schema.sqlite.sql` — canonical schema brought fully in sync.
+  - Updated `data/sql/testdata.sqlite.sql` — INSERT statements for `glx_system_objects`, `buildings`, `colony_buildings`, `fleets` converted to explicit column lists (future-proofing).
+  - Application fixes: `Fleet::$fillable` and `Fleet::getCoords()` updated (removed spot), `FleetController::store()` and `hold` order updated, `FleetService::transferResource()` coordinate comparison fixed.
+- Why: DS-4 (Tile Catalogue, Planet Types) and DS-2 (System Grid) design decisions. Instanced buildings required by housingComplex/hangar multi-instance model (GDD §4).
+- Breaking: Yes — `fleets.spot` column removed. Any code still writing `fleets.spot` will fail. `Fleet::getCoords()` now returns `[x, y]` instead of `[x, y, spot]`.
+- Rollback: `php artisan migrate:rollback --step=5` — reverts all 5 migrations in reverse order. `colony_tiles` is dropped; `fleets` restores `spot = 0` for all rows (grid_x/grid_y values are lost).
+
+---
+
 ## 2026-04-17 — Update ship costs and add Sonde (ID 85)
 
 - What changed:

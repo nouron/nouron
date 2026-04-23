@@ -268,7 +268,9 @@ class FleetService
             $fleet = $this->getFleet((int) $fleet);
         }
 
-        if (serialize($colony->getCoords()) !== serialize($fleet->getCoords())) {
+        $colonyCoords = $colony->getCoords();
+        $fleetCoords  = $fleet->getCoords();
+        if ($colonyCoords[0] !== $fleetCoords[0] || $colonyCoords[1] !== $fleetCoords[1]) {
             return 0;
         }
 
