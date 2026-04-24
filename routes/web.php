@@ -47,6 +47,7 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
 
 Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () {
     Route::get('/',       [ColonyController::class, 'index'])->name('index');
+    Route::get('/view',   [ColonyController::class, 'hexview'])->name('view');
     Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
 });
 

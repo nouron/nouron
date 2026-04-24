@@ -79,8 +79,8 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->bootBypassFlags();
 
-        // Inject resource bar data into the main layout for authenticated users
-        View::composer('layouts.app', function ($view) {
+        // Inject resource bar data into game layouts for authenticated users
+        View::composer(['layouts.app', 'layouts.colony'], function ($view) {
             if (Auth::check()) {
                 $colonyId = session('activeIds.colonyId', 1);
                 $resourcesService = app(ResourcesService::class);

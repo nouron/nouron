@@ -1,0 +1,227 @@
+/* Colony view — helles UI: Weiß 60%, Anthrazit 30%, Rot 10% */
+:root {
+    --color-anthracite: #333;
+    --color-accent:     #c0392b;
+    --color-bg:         #fff;
+    --color-surface:    #f5f5f5;
+    --color-border:     #ddd;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--color-bg);
+    color: var(--color-anthracite);
+    font-family: system-ui, sans-serif;
+}
+
+.colony-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--color-anthracite);
+    color: #fff;
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.colony-header nav {
+    padding: 0 1rem;
+    margin: 0;
+    background: transparent;
+}
+
+.colony-header nav a,
+.colony-header nav strong a {
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+}
+
+.colony-header nav a:hover,
+.colony-header nav a.active {
+    color: #fff;
+}
+
+.colony-header nav a.active {
+    font-weight: 600;
+    border-bottom: 2px solid var(--color-accent);
+}
+
+.colony-header details.dropdown > summary {
+    color: rgba(255,255,255,0.85);
+}
+
+/* Resource bar */
+.colony-resbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.35rem 1rem 0.4rem;
+    background: #f8f8f8;
+    border-top: 1px solid var(--color-border);
+}
+
+.res-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px 2px 6px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid var(--color-border);
+    background: #fff;
+    color: var(--color-anthracite);
+    white-space: nowrap;
+}
+
+.res-chip--primary {
+    font-size: 0.85rem;
+    padding: 3px 10px 3px 8px;
+    border-width: 2px;
+    border-color: #aaa;
+}
+
+.res-abbr {
+    font-size: 0.65rem;
+    font-weight: 700;
+    opacity: 0.55;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.colony-main {
+    padding: 0;
+    max-width: none;
+}
+
+/* ── Hex page layout ─────────────────────────────────────────────────────── */
+
+.hex-page {
+    height: calc(100vh - 96px); /* subtract header height */
+    display: flex;
+    flex-direction: column;
+}
+
+.hex-layout {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.hex-canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fafafa;
+}
+
+.hex-canvas-header {
+    padding: 0.6rem 1rem 0.4rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.hex-canvas-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--color-anthracite);
+}
+
+.hex-canvas-header small {
+    font-size: 0.75rem;
+    color: #777;
+}
+
+.hex-canvas {
+    flex: 1;
+    overflow: auto;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Tile sidebar ─────────────────────────────────────────────────────────── */
+
+.tile-panel {
+    border-left: 1px solid var(--color-border);
+    background: #fff;
+    padding: 1.25rem;
+    overflow-y: auto;
+}
+
+.tile-panel h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    color: var(--color-anthracite);
+    border-bottom: 2px solid var(--color-accent);
+    padding-bottom: 0.4rem;
+}
+
+.tile-panel dl {
+    margin: 0;
+}
+
+.tile-panel dt {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #888;
+    margin-top: 0.75rem;
+}
+
+.tile-panel dd {
+    margin: 0.15rem 0 0;
+    font-size: 0.9rem;
+}
+
+.tile-panel-empty {
+    color: #aaa;
+    font-size: 0.85rem;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Status chips */
+.tile-status-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.chip--locked   { background: #eee;    color: #999; }
+.chip--fog      { background: #f0f0f0; color: #888; }
+.chip--explored { background: #e8f4e8; color: #2e7d32; border: 1px solid #a5d6a7; }
+.chip--scanned  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .hex-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .tile-panel {
+        border-left: none;
+        border-top: 1px solid var(--color-border);
+        max-height: 200px;
+    }
+}
