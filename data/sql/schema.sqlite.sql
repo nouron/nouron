@@ -10,6 +10,9 @@ CREATE TABLE buildings (
   max_level INTEGER  DEFAULT NULL,
   ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
   max_status_points INTEGER  DEFAULT NULL,
+  decay_rate REAL DEFAULT NULL,
+  supply_cost INTEGER DEFAULT NULL,
+  is_instanced INTEGER NOT NULL DEFAULT '0',
   PRIMARY KEY (id),
   CONSTRAINT row_column UNIQUE (row,column)
 );
@@ -20,12 +23,15 @@ CREATE TABLE building_costs (
   CONSTRAINT building_resource UNIQUE (building_id,resource_id)
 );
 CREATE TABLE colony_buildings (
-  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  building_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  level INTEGER  NOT NULL DEFAULT '0',
-  status_points INTEGER  NOT NULL DEFAULT '10',
-  ap_spend INTEGER  NOT NULL DEFAULT '0',
-  CONSTRAINT colony_building UNIQUE (colony_id,building_id)
+  colony_id    INTEGER NOT NULL REFERENCES glx_colonies(id),
+  building_id  INTEGER NOT NULL REFERENCES buildings(id),
+  instance_id  INTEGER NOT NULL DEFAULT 1,
+  level        INTEGER NOT NULL DEFAULT 0,
+  status_points REAL   NOT NULL DEFAULT 20,
+  ap_spend     INTEGER NOT NULL DEFAULT 0,
+  tile_x       INTEGER DEFAULT NULL,
+  tile_y       INTEGER DEFAULT NULL,
+  CONSTRAINT colony_building UNIQUE (colony_id, building_id, instance_id)
 );
 CREATE TABLE colony_personell (
   colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
@@ -56,14 +62,32 @@ CREATE TABLE colony_ships (
   ap_spend INTEGER  NOT NULL DEFAULT '0',
   PRIMARY KEY (colony_id,ship_id)
 );
+CREATE TABLE colony_tiles (
+  id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  colony_id     INTEGER NOT NULL REFERENCES glx_colonies(id) ON DELETE CASCADE,
+  q             INTEGER NOT NULL,
+  r             INTEGER NOT NULL,
+  ring          INTEGER NOT NULL,
+  tile_type     VARCHAR NOT NULL,
+  event_type    VARCHAR DEFAULT NULL,
+  is_ring_unlocked INTEGER NOT NULL DEFAULT 0,
+  is_explored   INTEGER NOT NULL DEFAULT 0,
+  is_deep_scanned INTEGER NOT NULL DEFAULT 0,
+  resource_amount INTEGER DEFAULT NULL,
+  resource_max  INTEGER DEFAULT NULL,
+  created_at    DATETIME DEFAULT NULL,
+  updated_at    DATETIME DEFAULT NULL,
+  CONSTRAINT colony_tiles_colony_q_r_unique UNIQUE (colony_id, q, r)
+);
 CREATE TABLE fleets (
-  id INTEGER  NOT NULL,
-  fleet TEXT NOT NULL,
-  user_id INTEGER  NOT NULL REFERENCES user(user_id),
-  artefact INTEGER  DEFAULT NULL,
-  x INTEGER  NOT NULL,
-  y INTEGER  NOT NULL,
-  spot INTEGER  NOT NULL DEFAULT '0',
+  id       INTEGER NOT NULL,
+  fleet    TEXT    NOT NULL,
+  user_id  INTEGER NOT NULL REFERENCES user(user_id),
+  artefact INTEGER DEFAULT NULL,
+  x        INTEGER NOT NULL,
+  y        INTEGER NOT NULL,
+  grid_x   INTEGER DEFAULT NULL,
+  grid_y   INTEGER DEFAULT NULL,
   PRIMARY KEY (id)
 );
 CREATE TABLE fleet_orders (
@@ -126,14 +150,18 @@ CREATE TABLE glx_systems (
   PRIMARY KEY (id)
 );
 CREATE TABLE glx_system_objects (
-  id INTEGER  NOT NULL,
-  x INTEGER  NOT NULL,
-  y INTEGER  NOT NULL,
-  name TEXT NOT NULL,
-  type_id INTEGER  NOT NULL REFERENCES glx_system_object_types(id),
-  sight INTEGER  NOT NULL DEFAULT '9',
-  density INTEGER  NOT NULL DEFAULT '0',
-  radiation INTEGER  NOT NULL DEFAULT '0',
+  id          INTEGER NOT NULL,
+  x           INTEGER NOT NULL,
+  y           INTEGER NOT NULL,
+  name        TEXT    NOT NULL,
+  type_id     INTEGER NOT NULL REFERENCES glx_system_object_types(id),
+  sight       INTEGER NOT NULL DEFAULT 9,
+  density     INTEGER NOT NULL DEFAULT 0,
+  radiation   INTEGER NOT NULL DEFAULT 0,
+  planet_size VARCHAR DEFAULT NULL,
+  planet_type VARCHAR DEFAULT NULL,
+  grid_x      INTEGER DEFAULT NULL,
+  grid_y      INTEGER DEFAULT NULL,
   PRIMARY KEY (id)
 );
 CREATE TABLE glx_system_object_types (
@@ -190,11 +218,12 @@ CREATE TABLE innn_news (
   PRIMARY KEY (id)
 );
 CREATE TABLE locked_actionpoints (
-  tick INTEGER  NOT NULL,
-  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  personell_id INTEGER  NOT NULL REFERENCES personell(id),
-  spend_ap INTEGER  NOT NULL DEFAULT '0',
-  PRIMARY KEY (tick,colony_id,personell_id)
+  tick         INTEGER NOT NULL,
+  scope_type   TEXT    NOT NULL,
+  scope_id     INTEGER NOT NULL,
+  personell_id INTEGER NOT NULL,
+  spend_ap     INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (tick, scope_type, scope_id, personell_id)
 );
 CREATE TABLE personell (
   id INTEGER  NOT NULL,
@@ -206,7 +235,7 @@ CREATE TABLE personell (
   column INTEGER  NOT NULL,
   max_status_points INTEGER  DEFAULT NULL,
   PRIMARY KEY (id),
-  CONSTRAINT row UNIQUE (row,column)
+  CONSTRAINT personell_row_column UNIQUE (row,column)
 );
 CREATE TABLE personell_costs (
   personell_id INTEGER  NOT NULL REFERENCES personell(id),
@@ -223,6 +252,8 @@ CREATE TABLE researches (
   column INTEGER  NOT NULL,
   ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
   max_status_points INTEGER  DEFAULT NULL,
+  decay_rate REAL DEFAULT NULL,
+  supply_cost INTEGER DEFAULT NULL,
   PRIMARY KEY (id),
   CONSTRAINT row UNIQUE (row,column)
 );
@@ -256,6 +287,8 @@ CREATE TABLE ships (
   ap_for_levelup INTEGER  NOT NULL DEFAULT '1',
   max_status_points INTEGER  DEFAULT NULL,
   moving_speed INTEGER  DEFAULT NULL,
+  decay_rate REAL DEFAULT NULL,
+  supply_cost INTEGER DEFAULT NULL,
   PRIMARY KEY (id),
   CONSTRAINT row UNIQUE(row,column)
 );
@@ -264,15 +297,6 @@ CREATE TABLE ship_costs (
   resource_id INTEGER  NOT NULL REFERENCES resources(id),
   amount INTEGER  NOT NULL,
   PRIMARY KEY (ship_id,resource_id)
-);
-CREATE TABLE trade_researches (
-  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  direction INTEGER  NOT NULL DEFAULT '0',
-  research_id INTEGER  NOT NULL REFERENCES researches(id),
-  amount bigINTEGER  NOT NULL DEFAULT '0',
-  price INTEGER  NOT NULL DEFAULT '0',
-  restriction INTEGER  DEFAULT NULL,
-  PRIMARY KEY (colony_id,research_id)
 );
 CREATE TABLE trade_resources (
   colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
@@ -309,9 +333,26 @@ CREATE TABLE user_resources (
   credits INTEGER NOT NULL,
   supply INTEGER  NOT NULL
 );
+CREATE TABLE advisors (
+  id                      INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  user_id                 INTEGER NOT NULL REFERENCES "user"(user_id),
+  personell_id            INTEGER NOT NULL REFERENCES personell(id),
+  colony_id               INTEGER DEFAULT NULL REFERENCES glx_colonies(id),
+  rank                    INTEGER NOT NULL DEFAULT 1,
+  active_ticks            INTEGER NOT NULL DEFAULT 0,
+  unavailable_until_tick  INTEGER DEFAULT NULL
+);
+CREATE UNIQUE INDEX advisors_colony_personell_unique ON advisors (colony_id, personell_id) WHERE colony_id IS NOT NULL;
+CREATE TABLE moral_events (
+  id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  colony_id   INTEGER NOT NULL REFERENCES glx_colonies(id),
+  tick        INTEGER NOT NULL,
+  source      TEXT    NOT NULL,
+  delta       INTEGER NOT NULL,
+  description TEXT    DEFAULT NULL
+);
 CREATE VIEW v_glx_colonies AS select c.id AS id,c.name AS name,c.system_object_id AS system_object_id,c.spot AS spot,c.user_id AS user_id,c.since_tick AS since_tick,c.is_primary AS is_primary,o.name AS system_object_name,o.x AS x,o.y AS y,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation from (glx_colonies c join glx_system_objects o) where (c.system_object_id = o.id);
 CREATE VIEW v_glx_systems AS select s.id AS id,s.x AS x,s.y AS y,s.name AS name,s.type_id AS type_id,s.background_image_url AS background_image_url,s.sight AS sight,s.density AS density,s.radiation AS radiation,t.class AS class,t.size AS size,t.icon_url AS icon_url,t.image_url AS image_url from (glx_systems s join glx_system_types t) where (s.type_id = t.id);
 CREATE VIEW v_glx_system_objects AS select o.id AS id,o.x AS x,o.y AS y,o.name AS name,o.type_id AS type_id,o.sight AS sight,o.density AS density,o.radiation AS radiation,t.type AS type,t.image_url AS image_url from (glx_system_objects o join glx_system_object_types t) where (o.type_id = t.id);
 CREATE VIEW v_innn_messages AS select m.id AS id,m.sender_id AS sender_id,m.attitude AS attitude,m.recipient_id AS recipient_id,m.tick AS tick,m.type AS type,m.subject AS subject,m.text AS text,m.is_read AS is_read,m.is_archived AS is_archived,m.is_deleted AS is_deleted,sender.username AS sender,recipient.username AS recipient from ((innn_messages m join user sender) join user recipient) where ((sender.user_id = m.sender_id) and (recipient.user_id = m.recipient_id));
-CREATE VIEW v_trade_researches AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.research_id AS research_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_researches tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));
 CREATE VIEW v_trade_resources AS select tr.colony_id AS colony_id,tr.direction AS direction,tr.resource_id AS resource_id,tr.amount AS amount,tr.price AS price,tr.restriction AS restriction,col.name AS colony,u.username AS username,u.user_id AS user_id,u.race_id AS race_id,u.faction_id AS faction_id from ((trade_resources tr join glx_colonies col) join user u) where ((tr.colony_id = col.id) and (col.user_id = u.user_id));

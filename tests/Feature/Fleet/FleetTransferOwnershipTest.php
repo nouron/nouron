@@ -85,14 +85,10 @@ class FleetTransferOwnershipTest extends TestCase
 
     /**
      * Transferring to own fleet must succeed and return 200 with a JSON body.
-     * Fleet 10 (Bart) is at (6828,3016,spot=0) but colony 1 has spot=1.
-     * We move fleet 10 to spot=1 so the coords match and the transfer is valid.
+     * Fleet 10 (Bart) and colony 1 (Springfield) are both at (6828,3016).
      */
     public function test_add_to_fleet_own_fleet_returns_200(): void
     {
-        // Align fleet spot with colony 1's spot (spot=1) so getColonyByCoords matches
-        DB::table('fleets')->where('id', $this->bartFleetId)->update(['spot' => 1]);
-
         // Colony 1 has res_water (resource_id=3) with amount=4115 in seed
         $response = $this->actingAs($this->makeUser($this->bartUserId))
             ->postJson(route('fleet.json.addtofleet', $this->bartFleetId), [

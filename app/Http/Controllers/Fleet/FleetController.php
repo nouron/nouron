@@ -95,13 +95,12 @@ class FleetController extends BaseController
             return back()->withErrors(['fleet' => 'Keine Kolonie gefunden.']);
         }
 
-        [$cx, $cy, $cs] = $colony->getCoords();
+        [$cx, $cy] = $colony->getCoords();
         $fleet = Fleet::create([
             'fleet'   => $request->input('fleet'),
             'user_id' => $userId,
             'x'       => $cx,
             'y'       => $cy,
-            'spot'    => $cs,
         ]);
 
         return redirect()->route('fleet.index');
@@ -184,7 +183,7 @@ class FleetController extends BaseController
 
             } elseif ($order === 'hold') {
                 // Fleet holds its current position for one tick — no movement.
-                $this->fleetService->addOrder($fleet, 'hold', [$fleet->x, $fleet->y, $fleet->spot]);
+                $this->fleetService->addOrder($fleet, 'hold', [$fleet->x, $fleet->y]);
 
             } elseif ($order === 'convoy') {
                 // Fleet escorts/follows own target fleet to its destination.
