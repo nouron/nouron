@@ -326,6 +326,7 @@ CREATE TABLE user (
   registration timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
   theme TEXT NOT NULL DEFAULT 'darkred',
   tooltips_enabled INTEGER  NOT NULL DEFAULT '1',
+  remember_token TEXT DEFAULT NULL,
   PRIMARY KEY (user_id)
 );
 CREATE TABLE user_resources (
