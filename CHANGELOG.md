@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-04-25 (Phase 3b: Colony Tile Detail Modal)
+
+- **Tile Detail Modal** (`<dialog>` + Alpine.js, kein Bootstrap): Klick auf "Details & Aktionen" in der Tile-Sidebar öffnet ein modales Overlay mit Tile-Typ, Status-Chips, Regolith-Leiste sowie — für Tiles mit Gebäude — Name, Level-Badge, Zustandsbalken (rot) und AP-Fortschrittsbalken (grün). Gebäudenamen werden serverseitig via `lang/de/techtree.php` übersetzt.
+- **Controller erweitert**: `ColonyController::hexview()` lädt jetzt `colony_buildings` gejoint mit `buildings`-Stammdaten und übergibt `$buildings` an die View. Zuweisung Gebäude→Tile: CC (building_id=25) immer bei q=0/r=0; weitere Gebäude via `tile_x`/`tile_y` (Phase 3c).
+- Aktionsbuttons (Ausbauen, Erkunden) als Platzhalter vorhanden, deaktiviert bis Phase 3c.
+
 ## 2026-04-25 (Phase 3b: Colony Hex-Grid View + UI-Polish)
 
 - **Colony Hex-Grid View** (`GET /colony/view`): neuer Game-Screen mit interaktivem SVG-Hex-Grid (Axial-Koordinaten, Pointy-top), Alpine.js State-Management, Tile-Sidebar mit Koordinaten/Typ/Ressourcen-Info. Auto-Generierung von Demo-Tiles (Ring 0–3) beim ersten Aufruf. `ColonyTile`-Model + `ColonyTileService` eingeführt.
