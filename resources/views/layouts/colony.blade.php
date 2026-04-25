@@ -47,8 +47,14 @@
     @if(!empty($resourceBarPossessions))
     <div class="colony-resbar">
         @foreach($resourceBarPossessions as $resId => $res)
-            @if(in_array((int)$resId, [1, 2]) || ($res['amount'] ?? 0) > 0)
-            <span class="res-chip {{ in_array((int)$resId, [1,2]) ? 'res-chip--primary' : '' }}">
+            @php $rid = (int)$resId; $empty = ($res['amount'] ?? 0) == 0; @endphp
+            @if(in_array($rid, [1, 2]))
+            <span class="res-chip res-chip--primary {{ $empty ? 'res-chip--empty' : '' }}">
+                <span class="res-abbr">{{ $res['abbreviation'] ?? '' }}</span>
+                <span class="res-amount">{{ number_format($res['amount'] ?? 0, 0, ',', '.') }}</span>
+            </span>
+            @elseif(in_array($rid, [3, 4, 5, 12]))
+            <span class="res-chip {{ $empty ? 'res-chip--empty' : '' }}">
                 <span class="res-abbr">{{ $res['abbreviation'] ?? '' }}</span>
                 <span class="res-amount">{{ number_format($res['amount'] ?? 0, 0, ',', '.') }}</span>
             </span>

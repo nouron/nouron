@@ -133,8 +133,8 @@ function initHexGrid(container, tiles, opts = {}) {
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
-    svg.setAttribute('height', '100%');
     svg.style.display = 'block';
+    svg.style.maxWidth = `${svgW}px`;
 
     for (const { tile, px, py } of positions) {
         const cx = px + offX;

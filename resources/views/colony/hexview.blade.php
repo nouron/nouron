@@ -2,15 +2,14 @@
 @section('title', $colony->name . ' — Kolonie')
 
 @section('content')
-<div
-    class="hex-page"
-    x-data="colonyHexView({
-        tiles: @json($tiles),
-        colony: @json(['id' => $colony->id, 'name' => $colony->name]),
-        ccLevel: {{ (int)$ccLevel }}
-    })"
-    x-init="init()"
->
+<script>
+window.__colonyViewData = {
+    tiles:   @json($tiles),
+    colony:  @json(['id' => $colony->id, 'name' => $colony->name]),
+    ccLevel: {{ (int)$ccLevel }}
+};
+</script>
+<div class="hex-page" x-data="colonyHexView(window.__colonyViewData)">
     <div class="hex-layout">
 
         {{-- Hex grid canvas --}}
@@ -24,49 +23,55 @@
 
         {{-- Tile info sidebar --}}
         <aside class="tile-panel">
-            <template x-if="selectedTile">
-                <div>
-                    <h3 x-text="tileHeading(selectedTile)"></h3>
-                    <dl>
-                        <dt>Koordinaten</dt>
-                        <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
+            <div class="tile-panel-header">
+                <h3>Tile-Info</h3>
+            </div>
 
-                        <template x-if="selectedTile.is_explored">
-                            <div>
-                                <dt>Typ</dt>
-                                <dd x-text="tileTypeName(selectedTile.tile_type)"></dd>
-                            </div>
-                        </template>
+            <div class="tile-panel-body">
+                <template x-if="selectedTile">
+                    <div>
+                        <h3 x-text="tileHeading(selectedTile)"></h3>
+                        <dl>
+                            <dt>Koordinaten</dt>
+                            <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
 
-                        <template x-if="selectedTile.is_deep_scanned && selectedTile.event_type">
-                            <div>
-                                <dt>Event</dt>
-                                <dd x-text="eventTypeName(selectedTile.event_type)"></dd>
-                            </div>
-                        </template>
+                            <template x-if="selectedTile.is_explored">
+                                <div>
+                                    <dt>Typ</dt>
+                                    <dd x-text="tileTypeName(selectedTile.tile_type)"></dd>
+                                </div>
+                            </template>
 
-                        <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
-                            <div>
-                                <dt>Regolith</dt>
-                                <dd x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></dd>
-                            </div>
-                        </template>
-                    </dl>
+                            <template x-if="selectedTile.is_deep_scanned && selectedTile.event_type">
+                                <div>
+                                    <dt>Event</dt>
+                                    <dd x-text="eventTypeName(selectedTile.event_type)"></dd>
+                                </div>
+                            </template>
 
-                    <div class="tile-status-chips">
-                        <span x-show="!selectedTile.is_ring_unlocked" class="chip chip--locked">Gesperrt</span>
-                        <span x-show="selectedTile.is_ring_unlocked && !selectedTile.is_explored" class="chip chip--fog">Unerforscht</span>
-                        <span x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned" class="chip chip--explored">Erkundet</span>
-                        <span x-show="selectedTile.is_deep_scanned" class="chip chip--scanned">Tiefgescannt</span>
+                            <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
+                                <div>
+                                    <dt>Regolith</dt>
+                                    <dd x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></dd>
+                                </div>
+                            </template>
+                        </dl>
+
+                        <div class="tile-status-chips">
+                            <span x-show="!selectedTile.is_ring_unlocked" class="chip chip--locked">Gesperrt</span>
+                            <span x-show="selectedTile.is_ring_unlocked && !selectedTile.is_explored" class="chip chip--fog">Unerforscht</span>
+                            <span x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned" class="chip chip--explored">Erkundet</span>
+                            <span x-show="selectedTile.is_deep_scanned" class="chip chip--scanned">Tiefgescannt</span>
+                        </div>
                     </div>
-                </div>
-            </template>
+                </template>
 
-            <template x-if="!selectedTile">
-                <div class="tile-panel-empty">
-                    <p>Tile auswählen für Details.</p>
-                </div>
-            </template>
+                <template x-if="!selectedTile">
+                    <div class="tile-panel-empty">
+                        <p>Hex-Tile anklicken<br>um Details anzuzeigen.</p>
+                    </div>
+                </template>
+            </div>
         </aside>
 
     </div>

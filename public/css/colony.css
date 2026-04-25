@@ -7,7 +7,19 @@
     --color-border:     #ddd;
 }
 
-/* ── Layout ──────────────────────────────────────────────────────────────── */
+/* ── PicoCSS resets ───────────────────────────────────────────────────────── */
+
+/* PicoCSS adds max-width, padding, and margin to <main> — remove all of it
+   for the colony view so our layout grid can fill the full viewport width. */
+main.colony-main,
+.colony-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100%;
+}
+
+/* ── Base ────────────────────────────────────────────────────────────────── */
 
 body {
     margin: 0;
@@ -16,6 +28,8 @@ body {
     color: var(--color-anthracite);
     font-family: system-ui, sans-serif;
 }
+
+/* ── Header & nav ────────────────────────────────────────────────────────── */
 
 .colony-header {
     position: sticky;
@@ -26,16 +40,51 @@ body {
     border-bottom: 2px solid var(--color-accent);
 }
 
+/* Compact nav: override PicoCSS default padding/min-height on the <nav> element */
 .colony-header nav {
     padding: 0 1rem;
     margin: 0;
     background: transparent;
+    min-height: unset;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.colony-header nav a,
-.colony-header nav strong a {
+/* PicoCSS puts vertical padding on nav > ul — strip it, keep flex row */
+.colony-header nav > ul {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    gap: 0.25rem;
+    list-style: none;
+}
+
+.colony-header nav > ul > li {
+    padding: 0;
+    margin: 0;
+}
+
+/* Nav links: slightly smaller text, no PicoCSS vertical padding */
+.colony-header nav a {
+    font-size: 0.85rem;
     color: rgba(255,255,255,0.85);
     text-decoration: none;
+    padding: 0 0.5rem;
+    line-height: 44px;    /* vertically centred within the nav bar */
+    display: inline-block;
+}
+
+/* Brand link: slightly larger + bold so it stands out from regular nav items */
+.colony-header nav strong a {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.02em;
+    padding: 0 0.75rem 0 0;
 }
 
 .colony-header nav a:hover,
@@ -48,14 +97,42 @@ body {
     border-bottom: 2px solid var(--color-accent);
 }
 
+/* Dropdown summary: match the compact link style, suppress PicoCSS button-like defaults */
 .colony-header details.dropdown > summary {
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.85);
+    padding: 0 0.5rem;
+    line-height: 44px;
+    margin: 0;
+    /* PicoCSS styles summary as a button variant — undo that */
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+.colony-header details.dropdown > summary:hover {
+    color: #fff;
+}
+
+/* Dropdown menu that opens below the summary */
+.colony-header details.dropdown > ul {
+    background: var(--color-anthracite);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 4px;
+}
+
+.colony-header details.dropdown > ul a,
+.colony-header details.dropdown > ul button {
+    font-size: 0.85rem;
     color: rgba(255,255,255,0.85);
 }
 
-/* Resource bar */
+/* ── Resource bar ────────────────────────────────────────────────────────── */
+
 .colony-resbar {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.4rem;
     padding: 0.35rem 1rem 0.4rem;
     background: #f8f8f8;
@@ -91,77 +168,119 @@ body {
     letter-spacing: 0.05em;
 }
 
-.colony-main {
-    padding: 0;
-    max-width: none;
+.res-chip--empty {
+    opacity: 0.45;
+    border-style: dashed;
 }
 
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
 
-.hex-page {
-    height: calc(100vh - 96px); /* subtract header height */
-    display: flex;
-    flex-direction: column;
-}
-
+/*
+ * Two-column grid: canvas area fills remaining space, sidebar is fixed-width.
+ * min-height accounts for header (~44px) + resource bar (~38px) + 2px border = ~84px.
+ */
 .hex-layout {
     display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 0;
-    flex: 1;
-    overflow: hidden;
+    grid-template-columns: 1fr 320px;
+    align-items: start;
+    min-height: calc(100vh - 84px);
 }
+
+/* ── Canvas wrap (left column) ───────────────────────────────────────────── */
 
 .hex-canvas-wrap {
+    background: #fafafa;
+    border-right: 1px solid var(--color-border);
+    /* Fill the full height of the layout row so the border extends all the way down */
+    align-self: stretch;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    background: #fafafa;
 }
 
+/* Colony name + status line above the grid */
 .hex-canvas-header {
-    padding: 0.6rem 1rem 0.4rem;
+    padding: 0.65rem 1.25rem 0.55rem;
     border-bottom: 1px solid var(--color-border);
+    background: #fff;
     display: flex;
     align-items: baseline;
     gap: 1rem;
+    flex-shrink: 0;
 }
 
 .hex-canvas-header h2 {
     margin: 0;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
+    font-weight: 700;
     color: var(--color-anthracite);
 }
 
 .hex-canvas-header small {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: #777;
 }
 
+/*
+ * The SVG canvas container.
+ * flex: 1 makes it grow to fill remaining vertical space in .hex-canvas-wrap.
+ * Flex centering ensures the SVG sits in the middle of the available area
+ * rather than sticking to the top-left corner.
+ */
 .hex-canvas {
     flex: 1;
-    overflow: auto;
-    padding: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 1.5rem;
+    /* Ensure the SVG never becomes tiny on very wide screens */
+    min-height: 400px;
 }
 
-/* ── Tile sidebar ─────────────────────────────────────────────────────────── */
+/* The JS sets width="100%" and maxWidth on the SVG element directly,
+   so we only need to make sure the flex child doesn't collapse. */
+.hex-canvas svg {
+    width: 100%;
+    height: auto;
+}
+
+/* ── Tile info sidebar (right column) ───────────────────────────────────── */
 
 .tile-panel {
-    border-left: 1px solid var(--color-border);
     background: #fff;
-    padding: 1.25rem;
     overflow-y: auto;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
 }
 
-.tile-panel h3 {
-    margin: 0 0 1rem;
+/* Sticky section header inside the sidebar */
+.tile-panel-header {
+    padding: 0.65rem 1.25rem 0.55rem;
+    border-bottom: 2px solid var(--color-accent);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.tile-panel-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Scrollable content area inside the sidebar */
+.tile-panel-body {
+    padding: 1rem 1.25rem 1.5rem;
+    flex: 1;
+}
+
+/* Selected-tile heading (the tile type name) */
+.tile-panel-body h3 {
+    margin: 0 0 0.75rem;
     font-size: 1rem;
     color: var(--color-anthracite);
-    border-bottom: 2px solid var(--color-accent);
-    padding-bottom: 0.4rem;
 }
 
 .tile-panel dl {
@@ -182,14 +301,33 @@ body {
     font-size: 0.9rem;
 }
 
+/* Empty-state: centred hint with a pseudo-icon */
 .tile-panel-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    gap: 0.5rem;
+    padding: 2rem 1rem;
     color: #aaa;
-    font-size: 0.85rem;
     text-align: center;
-    margin-top: 2rem;
 }
 
-/* Status chips */
+.tile-panel-empty::before {
+    content: "⬡";          /* hollow hex character as a lightweight icon */
+    font-size: 2.5rem;
+    line-height: 1;
+    color: #d0d4db;
+}
+
+.tile-panel-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+/* ── Status chips ────────────────────────────────────────────────────────── */
+
 .tile-status-chips {
     display: flex;
     flex-wrap: wrap;
@@ -213,15 +351,31 @@ body {
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
-@media (max-width: 768px) {
+/* Stack grid + sidebar at 900px and below */
+@media (max-width: 900px) {
     .hex-layout {
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr auto;
+        min-height: unset;
+    }
+
+    .hex-canvas-wrap {
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .hex-canvas {
+        min-height: 320px;
     }
 
     .tile-panel {
         border-left: none;
         border-top: 1px solid var(--color-border);
-        max-height: 200px;
+        /* Limit sidebar height on mobile so it doesn't push the grid far up */
+        max-height: 260px;
+    }
+
+    .tile-panel-empty {
+        justify-content: flex-start;
+        padding: 1rem;
     }
 }
