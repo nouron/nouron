@@ -31,16 +31,29 @@ const TILE_LABELS = {
 const TILE_COLORS = {
     terrain_empty:      '#c8cdd6',
     terrain_hazard:     '#e8b87a',
-    terrain_impassable: '#8a8f9a',
-    regolith_rich:      '#6fa3d4',
-    regolith_normal:    '#90b8dc',
-    regolith_poor:      '#b5cfe6',
+    terrain_impassable: '#7a7f8a',
+    regolith_rich:      '#5a9fd4',
+    regolith_normal:    '#7fb5dc',
+    regolith_poor:      '#a8cfe6',
 };
 
-const CC_COLOR      = '#a8d5a8';
-const FOG_COLOR     = '#e8eaed';
-const LOCKED_COLOR  = '#d0d4db';
+const TILE_STROKES = {
+    terrain_empty:      '#a0a8b4',
+    terrain_hazard:     '#c08040',
+    terrain_impassable: '#555',
+    regolith_rich:      '#3a7ab0',
+    regolith_normal:    '#5090c0',
+    regolith_poor:      '#7aaace',
+};
+
+const CC_COLOR      = '#7ec87e';
+const CC_STROKE     = '#2e7d32';
+const FOG_COLOR     = '#dde0e5';
+const FOG_STROKE    = '#b8bec6';
+const LOCKED_COLOR  = '#c8ccd4';
+const LOCKED_STROKE = '#a8adb8';
 const EVENT_COLOR   = '#e8d89a';
+const EVENT_STROKE  = '#b09a40';
 
 // ── Alpine component ──────────────────────────────────────────────────────────
 
@@ -106,8 +119,8 @@ function colonyHexView(config) {
 function initHexGrid(container, tiles, opts = {}) {
     if (!container || tiles.length === 0) return;
 
-    const SIZE    = 36;
-    const PADDING = SIZE * 2;
+    const SIZE    = 40;
+    const PADDING = SIZE * 1.5;
 
     const maxRing = Math.max(...tiles.map(t => t.ring));
 
@@ -134,7 +147,6 @@ function initHexGrid(container, tiles, opts = {}) {
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
     svg.style.display = 'block';
-    svg.style.maxWidth = `${svgW}px`;
 
     for (const { tile, px, py } of positions) {
         const cx = px + offX;
@@ -158,13 +170,12 @@ function createHexTile(cx, cy, size, tile, opts) {
     polygon.setAttribute('stroke-width', '1.5');
 
     const isCC = tile.q === 0 && tile.r === 0;
-    if (isCC) {
-        polygon.setAttribute('stroke', '#2e7d32');
-        polygon.setAttribute('stroke-width', '2.5');
-    }
+    const [stroke, strokeW] = getTileStroke(tile, isCC);
+    polygon.setAttribute('stroke',       stroke);
+    polygon.setAttribute('stroke-width', strokeW);
 
     if (tile.is_ring_unlocked) {
-        g.style.cursor = 'pointer';
+        g.classList.add('tile--unlocked');
         g.addEventListener('click', () => opts.onSelect && opts.onSelect(tile));
     }
 
@@ -209,11 +220,19 @@ function hexCorners(cx, cy, size) {
 }
 
 function getTileColor(tile) {
-    if (!tile.is_ring_unlocked) return LOCKED_COLOR;
-    if (!tile.is_explored)      return FOG_COLOR;
-    if (tile.q === 0 && tile.r === 0) return CC_COLOR;
+    if (!tile.is_ring_unlocked)               return LOCKED_COLOR;
+    if (!tile.is_explored)                    return FOG_COLOR;
+    if (tile.q === 0 && tile.r === 0)         return CC_COLOR;
     if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
+}
+
+function getTileStroke(tile, isCC) {
+    if (isCC)                    return [CC_STROKE,     '2.5'];
+    if (!tile.is_ring_unlocked)  return [LOCKED_STROKE, '1'];
+    if (!tile.is_explored)       return [FOG_STROKE,    '1'];
+    if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
+    return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];
 }
 
 function svgText(x, y, text, size, fill, weight) {

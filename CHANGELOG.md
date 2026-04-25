@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-25 (Phase 3b: Colony Hex-Grid View + UI-Polish)
+
+- **Colony Hex-Grid View** (`GET /colony/view`): neuer Game-Screen mit interaktivem SVG-Hex-Grid (Axial-Koordinaten, Pointy-top), Alpine.js State-Management, Tile-Sidebar mit Koordinaten/Typ/Ressourcen-Info. Auto-Generierung von Demo-Tiles (Ring 0–3) beim ersten Aufruf. `ColonyTile`-Model + `ColonyTileService` eingeführt.
+- **Neues Layout `layouts/colony.blade.php`**: Alpine.js 3 + PicoCSS 2 via CDN, kein Bootstrap/jQuery. Helles UI (Weiß/Anthrazit/Rot), kompakte Navbar (44px), zentrierte Ressourcenleiste. Veraltete Ressourcentypen (ENRG/LNRG/ANRG) aus der Anzeige gefiltert; alle 6 neuen Ressourcen immer sichtbar, ausgegraut wenn Menge = 0.
+- **Navigation** (`app.blade.php`): "Kolonie"-Link zeigt jetzt auf `colony.view`, "Techtree" als eigenständiger Nav-Eintrag ergänzt.
+- **Frontend-Stack final**: Alpine.js + PicoCSS + SVG. Kein Mix mit jQuery/Bootstrap in neuen Screens. Bekanntes Problem beim Einbetten von `@json()` in HTML-Attributen gelöst (via `<script>`-Tag).
+- **Fix**: `remember_token`-Spalte zur `user`-Tabelle hinzugefügt (Laravel Auth-Anforderung, fehlte nach Schema-Import). Migration + schema.sqlite.sql + testdata.sqlite.sql angepasst.
+
 ## 2026-04-23 (Design-Sprint: DS-4 Pre-Phase-3b abgeschlossen)
 
 - **Tech-Stack entschieden:** SVG + plain JS für Spielfelder (Hex-Grid, System-Grid), Alpine.js via CDN für UI-Shell, jQuery AJAX für Server-Calls, Blade+AJAX Hybrid Backend mit 8 neuen JSON-Endpunkten.
