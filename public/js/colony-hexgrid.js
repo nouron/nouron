@@ -62,6 +62,7 @@ function colonyHexView(config) {
         tiles:        config.tiles,
         colony:       config.colony,
         ccLevel:      config.ccLevel,
+        buildings:    config.buildings ?? [],
         selectedTile: null,
         _svgPolygons: new Map(),
 
@@ -104,6 +105,16 @@ function colonyHexView(config) {
 
         eventTypeName(type) {
             return TILE_LABELS[type] ?? type;
+        },
+
+        buildingForTile(tile) {
+            if (!tile) return null;
+            // CC is always at (0,0), building_id 25
+            if (tile.q === 0 && tile.r === 0) {
+                return this.buildings.find(b => b.building_id === 25) ?? null;
+            }
+            // Other buildings matched by tile_x/tile_y (currently all NULL in DB)
+            return this.buildings.find(b => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },
 
         statusLine() {

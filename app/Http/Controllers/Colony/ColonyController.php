@@ -44,7 +44,29 @@ class ColonyController extends BaseController
             ->where('building_id', 25)
             ->value('level') ?? 0;
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel'));
+        $buildings = DB::table('colony_buildings')
+            ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
+            ->where('colony_buildings.colony_id', $colony->id)
+            ->select(
+                'colony_buildings.building_id',
+                'colony_buildings.instance_id',
+                'colony_buildings.level',
+                'colony_buildings.status_points',
+                'colony_buildings.ap_spend',
+                'colony_buildings.tile_x',
+                'colony_buildings.tile_y',
+                'buildings.name as building_key',
+                'buildings.max_level',
+                'buildings.ap_for_levelup',
+                'buildings.max_status_points',
+            )
+            ->get()
+            ->map(function ($b) {
+                $b->label = __('techtree.' . $b->building_key);
+                return $b;
+            });
+
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings'));
     }
 
     public function rename(Request $request): RedirectResponse
