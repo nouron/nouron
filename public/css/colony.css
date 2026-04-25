@@ -236,11 +236,22 @@ body {
     min-height: 400px;
 }
 
-/* The JS sets width="100%" and maxWidth on the SVG element directly,
-   so we only need to make sure the flex child doesn't collapse. */
 .hex-canvas svg {
     width: 100%;
     height: auto;
+    max-width: 580px;
+}
+
+.hex-canvas svg polygon {
+    transition: filter 0.1s ease;
+}
+
+.hex-canvas svg g.tile--unlocked {
+    cursor: pointer;
+}
+
+.hex-canvas svg g.tile--unlocked:hover polygon {
+    filter: brightness(1.14);
 }
 
 /* ── Tile info sidebar (right column) ───────────────────────────────────── */
