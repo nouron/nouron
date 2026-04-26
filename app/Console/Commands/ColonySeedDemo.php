@@ -10,30 +10,35 @@ use Illuminate\Support\Facades\DB;
  *
  * Run: php artisan colony:seed-demo [colony_id=1]
  *
- * - Deletes and regenerates all colony_tiles (rings 0–3, 37 tiles)
- * - Ring 0+1: fully unlocked, explored, deep-scanned
- * - Ring 2: fully unlocked, explored, 4 events, regolith partially depleted
- * - Ring 3: 10/18 unlocked, 6 explored (frontier)
- * - Assigns tile positions (tile_x/tile_y) to all 11 canonical buildings
- * - Resets building levels to sane values (CC at level 3)
+ * Layout:
+ *   Ring 0:   Kommandozentrale (terrain_empty)
+ *   Ring 1-2: Kolonie-Zone — terrain tiles only (terrain_empty / hazard), buildings placed
+ *   Ring 3:   Exploration-Zone — regolith + events, mostly scouted; Harvester placed here
+ *   Ring 4:   Exploration-Zone (frontier) — regolith + impassable, partially unlocked
+ *
+ * Game-Design rule: Regolith-Tiles are NOT buildable except for the Harvester.
+ *                   Regular buildings stand only on terrain tiles.
  */
 class ColonySeedDemo extends Command
 {
     protected $signature   = 'colony:seed-demo {colony_id=1 : Colony ID to seed}';
     protected $description = 'Seed a colony with a rich ~80% built-out demo state for testing';
 
+    // Harvester placed on a regolith tile in ring 3
+    private const HARVESTER_TILE = [3, 0];
+
     private const BUILDING_PLACEMENTS = [
-        25 => [0,  0],  // CC at origin
-        27 => [1,  0],  // harvester
-        28 => [0,  1],  // housingComplex
-        30 => [-1, 1],  // depot
-        31 => [-1, 0],  // sciencelab
-        41 => [0, -1],  // bioFacility
-        44 => [2,  0],  // hangar (ring 2, needs CC lv2)
-        46 => [1,  1],  // hospital (ring 2)
-        32 => [2, -1],  // temple (ring 2)
-        52 => [-2, 0],  // bar (ring 2)
-        50 => [-1,-1],  // denkmal (ring 2)
+        25 => [0,   0],  // CC (ring 0, terrain)
+        28 => [0,   1],  // housingComplex (ring 1, terrain)
+        30 => [-1,  1],  // depot          (ring 1, terrain)
+        31 => [-1,  0],  // sciencelab     (ring 1, terrain)
+        41 => [0,  -1],  // bioFacility    (ring 1, terrain)
+        44 => [2,   0],  // hangar         (ring 2, terrain)
+        46 => [1,   1],  // hospital       (ring 2, terrain)
+        32 => [2,  -1],  // temple         (ring 2, terrain)
+        52 => [-2,  0],  // bar            (ring 2, terrain)
+        50 => [-1, -1],  // denkmal        (ring 2, terrain)
+        27 => [3,   0],  // harvester      (ring 3, regolith — exploration zone)
     ];
 
     private const BUILDING_LEVELS = [
@@ -64,7 +69,7 @@ class ColonySeedDemo extends Command
         DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
 
         $this->generateTiles($colonyId);
-        $this->info('  ✓ Tiles generated (rings 0–3, 37 tiles)');
+        $this->info('  ✓ Tiles generated (rings 0–4, 61 tiles)');
 
         $this->assignBuildingTiles($colonyId);
         $this->info('  ✓ Building positions assigned');
@@ -78,48 +83,63 @@ class ColonySeedDemo extends Command
         $tiles = [];
         $now   = now();
 
-        $ring2Events = [
-            '0,2'   => 'event_ruin',
-            '-2,1'  => 'event_crystal',
-            '0,-2'  => 'event_cache',
-            '2,-2'  => 'event_wreck',
+        // Forced events at specific ring-3 tiles (identified by q,r key)
+        $ring3Events = [
+            '0,3'   => 'event_ruin',
+            '-3,2'  => 'event_crystal',
+            '0,-3'  => 'event_cache',
+            '2,-3'  => 'event_wreck',
         ];
 
-        for ($ring = 0; $ring <= 3; $ring++) {
+        for ($ring = 0; $ring <= 4; $ring++) {
             foreach ($this->ringCoords($ring) as [$q, $r]) {
                 $seed = abs($q * 7 + $r * 13 + $colonyId * 3);
+                $key  = "{$q},{$r}";
 
-                $isRingUnlocked  = $ring <= 2 || ($seed % 18) < 10;
-                $isExplored      = $ring <= 2 || ($ring === 3 && $isRingUnlocked && ($seed % 6) < 2);
-                $isDeepScanned   = $ring <= 1 || ($ring === 2);
+                // Unlock/explore/scan state per ring
+                $isRingUnlocked = match (true) {
+                    $ring <= 2  => true,
+                    $ring === 3 => true,                   // all ring-3 unlocked (active scouting)
+                    default     => ($seed % 24) < 10,      // ring 4: ~42% unlocked
+                };
+                $isExplored = match (true) {
+                    $ring <= 2  => true,
+                    $ring === 3 => $isRingUnlocked,        // all unlocked ring-3 explored
+                    default     => $isRingUnlocked && ($seed % 6) < 3,
+                };
+                $isDeepScanned = match (true) {
+                    $ring <= 2  => true,
+                    $ring === 3 => $isExplored && ($seed % 3) < 2,  // ~67% deep-scanned
+                    default     => false,
+                };
 
                 $eventType = null;
-                if ($ring === 2 && isset($ring2Events["{$q},{$r}"])) {
-                    $eventType = $ring2Events["{$q},{$r}"];
+                if ($ring === 3 && isset($ring3Events[$key])) {
+                    $eventType = $ring3Events[$key];
                 }
 
-                [$tileType, $resourceMax] = $this->tileTypeFor($q, $r, $ring, $seed, $colonyId);
+                [$tileType, $resourceMax] = $this->tileTypeFor($q, $r, $ring, $seed);
 
                 $resourceAmount = 0;
                 if ($resourceMax > 0) {
-                    $depleted = 0.15 + ($seed % 46) / 100.0;
+                    $depleted       = 0.15 + ($seed % 46) / 100.0;
                     $resourceAmount = (int) round($resourceMax * (1 - $depleted));
                 }
 
                 $tiles[] = [
-                    'colony_id'       => $colonyId,
-                    'q'               => $q,
-                    'r'               => $r,
-                    'ring'            => $ring,
-                    'tile_type'       => $tileType,
-                    'event_type'      => $eventType,
-                    'is_ring_unlocked'=> $isRingUnlocked,
-                    'is_explored'     => $isExplored,
-                    'is_deep_scanned' => $isDeepScanned,
-                    'resource_amount' => $resourceAmount,
-                    'resource_max'    => $resourceMax,
-                    'created_at'      => $now,
-                    'updated_at'      => $now,
+                    'colony_id'        => $colonyId,
+                    'q'                => $q,
+                    'r'                => $r,
+                    'ring'             => $ring,
+                    'tile_type'        => $tileType,
+                    'event_type'       => $eventType,
+                    'is_ring_unlocked' => $isRingUnlocked,
+                    'is_explored'      => $isExplored,
+                    'is_deep_scanned'  => $isDeepScanned,
+                    'resource_amount'  => $resourceAmount,
+                    'resource_max'     => $resourceMax,
+                    'created_at'       => $now,
+                    'updated_at'       => $now,
                 ];
             }
         }
@@ -129,17 +149,34 @@ class ColonySeedDemo extends Command
         }
     }
 
-    private function tileTypeFor(int $q, int $r, int $ring, int $seed, int $colonyId): array
+    /**
+     * Rings 0–2 are the colony zone: terrain tiles only (no regolith).
+     * Rings 3–4 are the exploration zone: regolith + hazards + impassable.
+     * The harvester tile at (3,0) is always regolith_rich.
+     */
+    private function tileTypeFor(int $q, int $r, int $ring, int $seed): array
     {
         if ($q === 0 && $r === 0) {
             return ['terrain_empty', 0];
         }
 
+        // Force harvester tile to regolith_rich
+        if ($q === self::HARVESTER_TILE[0] && $r === self::HARVESTER_TILE[1]) {
+            return ['regolith_rich', 80 + ($seed % 41)];
+        }
+
+        // Colony zone (rings 1–2): terrain only, no resources
+        if ($ring <= 2) {
+            $types = ['terrain_empty', 'terrain_empty', 'terrain_empty', 'terrain_hazard', 'terrain_empty', 'terrain_empty'];
+            return [$types[$seed % count($types)], 0];
+        }
+
+        // Exploration zone (rings 3–4)
         $types = match ($ring) {
-            1 => ['terrain_empty', 'regolith_normal', 'regolith_rich', 'terrain_empty', 'regolith_poor', 'terrain_hazard'],
-            2 => ['regolith_normal', 'terrain_empty', 'regolith_poor', 'regolith_rich', 'terrain_hazard', 'terrain_impassable'],
-            3 => ['terrain_empty', 'regolith_poor', 'terrain_hazard', 'terrain_impassable', 'regolith_normal', 'terrain_empty'],
-            default => ['terrain_empty'],
+            3 => ['regolith_normal', 'regolith_rich', 'regolith_poor', 'terrain_empty',
+                  'terrain_hazard', 'regolith_normal', 'terrain_impassable', 'regolith_poor'],
+            default => ['terrain_empty', 'regolith_poor', 'terrain_hazard', 'terrain_impassable',
+                        'regolith_normal', 'terrain_empty', 'terrain_impassable', 'regolith_poor'],
         };
 
         $type = $types[$seed % count($types)];
