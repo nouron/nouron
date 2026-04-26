@@ -13,7 +13,7 @@ class BuildingServiceTest extends TestCase
     use RefreshDatabase;
 
     protected BuildingService $service;
-    protected int $entityId  = 27; // oremine
+    protected int $entityId  = 30; // depot (no max_level, upgradable)
     protected int $colonyId  = 1;
     protected int $colonyId2 = 2;
 
@@ -34,7 +34,7 @@ class BuildingServiceTest extends TestCase
     {
         $result = $this->service->getEntity($this->entityId);
         $this->assertNotNull($result);
-        $this->assertEquals(27, $result->id);
+        $this->assertEquals(30, $result->id);
         $this->assertFalse($this->service->getEntity(99999));
 
         $this->expectException(\InvalidArgumentException::class);
@@ -51,7 +51,7 @@ class BuildingServiceTest extends TestCase
     {
         $result = $this->service->getColonyEntity($this->colonyId, $this->entityId);
         $this->assertNotNull($result);
-        $this->assertEquals(5, $result->level);  // oremine level=5 on colony 1 per test data
+        $this->assertEquals(3, $result->level);  // depot level=3 on colony 1 per test data
     }
 
     public function testGetColonyEntities(): void
@@ -62,12 +62,12 @@ class BuildingServiceTest extends TestCase
 
     public function testCheckRequiredActionPoints(): void
     {
-        // oremine (27): ap_spend=10, ap_for_levelup=10 -> passes
-        $this->assertTrue($this->service->checkRequiredActionPoints($this->colonyId, 27));
+        // depot (30): ap_spend=10, ap_for_levelup=10 -> passes
+        $this->assertTrue($this->service->checkRequiredActionPoints($this->colonyId, 30));
         // housingComplex (28): ap_spend=0, ap_for_levelup=10 -> fails
         $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId, 28));
-        // colony 2, oremine: ap_spend=1, ap_for_levelup=10 -> fails
-        $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId2, 27));
+        // colony 2, depot: ap_spend=1, ap_for_levelup=10 -> fails
+        $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId2, 30));
     }
 
     public function testLevelup(): void
@@ -101,31 +101,31 @@ class BuildingServiceTest extends TestCase
     /**
      * Supply enforcement: levelup is blocked when free supply < supply_cost.
      *
-     * Setup: zero all building supply_costs, set oremine supply_cost=2.
-     * Colony 1 oremine is level=5 → uses 10 supply.
-     * cap=100 → free=90 → levelup passes.
-     * cap=11  → free=1  → levelup blocked.
+     * Setup: zero all supply_costs, set depot supply_cost=3.
+     * Colony 1 depot is level=3 → uses 9 supply.
+     * cap=100 → free=91 → levelup passes.
+     * After levelup (level=4): uses 12; cap=11 → free=0 < 3 → blocked.
      */
     public function testLevelupBlockedWhenInsufficientSupply(): void
     {
         config(['game.bypass.supply_checks' => false]);
 
-        // Clear all supply costs, then set oremine=2
+        // Clear all supply costs, then set depot=3
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
         DB::table('researches')->update(['supply_cost' => 0]);
-        DB::table('buildings')->where('id', $this->entityId)->update(['supply_cost' => 2]);
+        DB::table('buildings')->where('id', $this->entityId)->update(['supply_cost' => 3]);
 
-        // Level=5 × 2 = 10 supply used; cap=100 → free=90 ≥ 2 → should pass
+        // Level=3 × 3 = 9 supply used; cap=100 → free=91 ≥ 3 → should pass
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 100]);
         $this->assertTrue($this->service->levelup($this->colonyId, $this->entityId));
 
-        // Reset ap_spend after levelup (now level=6); re-prep AP for next levelup
+        // Reset ap_spend after levelup (now level=4); re-prep AP for next levelup
         DB::table('colony_buildings')
             ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
             ->update(['ap_spend' => 10]);
 
-        // Now oremine is level=6 → uses 12 supply; cap=11 → free=max(0,11-12)=0 < 2 → blocked
+        // Now depot is level=4 → uses 12 supply; cap=11 → free=max(0,11-12)=0 < 3 → blocked
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 11]);
         $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
     }

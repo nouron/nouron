@@ -1,39 +1,20 @@
 <?php
 
 return [
-    // ── Gebäude ─────────────────────────────────────────────────────────
-    'techs_commandCenter'     => 'Kommandozentrale',
-    'techs_housingComplex'    => 'Gebäudekomplex',
-    'techs_oremine'           => 'Erzmine',
-    'techs_silicatemine'      => 'Silikatmine',
-    'techs_waterextractor'    => 'Wasserextraktor',
-    'techs_sciencelab'        => 'Forschungslabor',
-    'techs_depot'             => 'Depot',
-    'techs_civilianSpaceyard' => 'Ziviler Raumhafen',
-    'techs_militarySpaceyard' => 'Militärischer Raumhafen',
-    'techs_hospital'          => 'Krankenhaus',
-    'techs_university'        => 'Universität',
-    'techs_temple'            => 'Tempel',
-    'techs_parc'              => 'Park',
-    'techs_bar'               => 'Bar',
-    'techs_museum'            => 'Museum',
-    'techs_stadium'           => 'Stadion',
-    'techs_casino'            => 'Casino',
-    'techs_prison'            => 'Gefängnis',
-    'techs_denkmal'           => 'Denkmal',
-    'techs_bank'              => 'Bank',
-    'techs_recyclingStation'  => 'Recyclingstation',
-    'techs_wastedisposal'     => 'Mülldeponie',
-    'techs_secretOps'         => 'Geheimdienst',
-    'techs_public_security'   => 'Sicherheitszentrale',
-    'techs_powerstation'      => 'Kraftwerk',
-    'techs_factory'           => 'Fabrik',
-    'techs_foodFactory'       => 'Nahrungsmittelfabrik',
-    'techs_weatherstation'    => 'Wetterstation',
-    'techs_firestation'       => 'Feuerwehr',
-    'techs_policestation'     => 'Polizeistation',
+    // ── Gebäude (building_* Keys, GDD §4) ────────────────────────────────────
+    'building_commandCenter'  => 'Kommandozentrale',
+    'building_housingComplex' => 'Wohnhabitat',
+    'building_harvester'      => 'Harvester',
+    'building_bioFacility'    => 'Agrardom',
+    'building_depot'          => 'Lagerhalle',
+    'building_sciencelab'     => 'Analytik-Labor',
+    'building_temple'         => 'Religiöse Stätte',
+    'building_hangar'         => 'Hangar',
+    'building_hospital'       => 'Krankenstation',
+    'building_denkmal'        => 'Kolonialdenkmal',
+    'building_bar'            => 'Cantina',
 
-    // ── Forschungen ──────────────────────────────────────────────────────
+    // ── Forschungen ──────────────────────────────────────────────────────────
     'techs_chemistry'         => 'Chemie',
     'techs_biology'           => 'Biologie',
     'techs_mathematics'       => 'Mathematik',
@@ -45,7 +26,7 @@ return [
     'techs_politicalScience'  => 'Politik',
     'techs_economicScience'   => 'Wirtschaft',
 
-    // ── Schiffe ──────────────────────────────────────────────────────────
+    // ── Schiffe ──────────────────────────────────────────────────────────────
     'ship_sonde'              => 'Sonde',
     'ship_korvette'           => 'Korvette',
     'ship_frachter'           => 'Frachter',
@@ -63,7 +44,7 @@ return [
     'techs_constructionShip'  => 'Konstruktionsschiff',
     'techs_civilianTransporter' => 'Personentransporter',
 
-    // ── Personal ─────────────────────────────────────────────────────────
+    // ── Personal ─────────────────────────────────────────────────────────────
     'techs_engineer'          => 'Ingenieur',
     'techs_scientist'         => 'Wissenschaftler',
     'techs_pilot'             => 'Raumfahrer',
@@ -74,7 +55,7 @@ return [
     'techs_fleetCommander'    => 'Flottenkommandeur',
     'techs_chiefOfIntelligence' => 'Geheimdienstchef',
 
-    // ── Typen ────────────────────────────────────────────────────────────
+    // ── Typen ────────────────────────────────────────────────────────────────
     'types_building'    => 'Gebäude',
     'types_buildings'   => 'Gebäude',
     'types_building_up' => 'bauen',
@@ -92,58 +73,17 @@ return [
     'types_personell_up'   => 'Berater anheuern',
     'types_personell_down' => 'Berater feuern',
 
-    // ── Zwecke ───────────────────────────────────────────────────────────
+    // ── Zwecke ───────────────────────────────────────────────────────────────
     'purposes_civil'     => 'Zivil',
     'purposes_industry'  => 'Industrie',
     'purposes_economy'   => 'Wirtschaft',
     'purposes_politics'  => 'Politik',
     'purposes_military'  => 'Militär',
 
-    // ── UI ───────────────────────────────────────────────────────────────
+    // ── UI ───────────────────────────────────────────────────────────────────
     'tradeable'               => 'handelbar',
     'decay'                   => 'Verfallszeit',
     'max_level'               => 'Maximalstufe',
     'moving_speed'            => 'Geschwindigkeit',
     'costs and requirements'  => 'Kosten und Voraussetzungen',
-
-    // ── Beschreibungen ───────────────────────────────────────────────────
-    'desc_techs_commandCenter'     => 'Das Kommandozentrum ist die Zentrale der Kolonie. Es bietet den ersten Siedlern Schutz und Nahrung bis die Kolonie weiter ausgebaut ist.',
-    'desc_techs_housingComplex'    => 'Der Wohnkomplex bietet den Siedlern privaten Wohnraum. Durch den Ausbau erhöht sich die Anzahl verfügbarer Wohnungen.',
-    'desc_techs_oremine'           => 'Die Erzmine fördert den Rohstoff Eisen. Durch Ausbau der Mine wird die Förderrate erhöht.',
-    'desc_techs_silicatemine'      => 'Die Silikatmine fördert den Rohstoff Silikate. Durch Ausbau der Mine wird die Förderrate erhöht.',
-    'desc_techs_waterextractor'    => 'Der Wasserextraktor fördert den Rohstoff Wasser und bereitet ihn auf. Durch den Ausbau wird die Förderrate erhöht.',
-    'desc_techs_sciencelab'        => 'Das Forschungslabor ermöglicht die unabhängige Forschung.',
-    'desc_techs_depot'             => 'Das Depot lagert die Bestände von Ressourcen und Waren. Durch Ausbau können mehr Ressourcen gelagert werden.',
-
-    'desc_techs_civilianSpaceyard' => 'Der Raumhafen ermöglicht es zivile Raumschiffe zu bauen.',
-    'desc_techs_militarySpaceyard' => 'Dieser Raumhafen ermöglicht dir den Bau militärischer Raumschiffe.',
-    'desc_techs_hospital'          => 'Um die medizinische Versorgung zu gewährleisten benötigst du ein Krankenhaus.',
-    'desc_techs_bank'              => 'Die Bank ist das Zentrum aller finanziellen Transaktionen.',
-    'desc_techs_bar'               => 'Die Bar sorgt für Entspannung von der harten Arbeit der Koloniebewohner.',
-    'desc_techs_casino'            => 'Das Casino ist eine Freizeiteinrichtung der Kolonie, die die Moral der Bürger hebt – aber auch die Kriminalität.',
-    'desc_techs_stadium'           => 'Ein Stadion ist das Highlight einer ausgebauten Kolonie und dient für verschiedenste Freizeitangebote.',
-    'desc_techs_museum'            => 'Kultur ist ein wichtiger Bestandteil einer jeden Gesellschaft.',
-    'desc_techs_temple'            => 'Eine religiöse Stätte befriedigt das Volksbegehren nach Religion.',
-    'desc_techs_prison'            => 'Mit zunehmender Einwohnerzahl steigt auch die Kriminalitätsrate. Um dieser Herr zu werden, werden Gefängnisse benötigt.',
-    'desc_techs_parc'              => 'Ab einer gewissen Bevölkerungsdichte werden Grünanlagen von der Bevölkerung gewünscht.',
-    'desc_techs_denkmal'           => 'Ein großes Denkmal zu Ehren der ersten Kolonisten. Zierobjekte heben die Moral.',
-    'desc_techs_recyclingStation'  => 'Die Recyclinganlage dient der Beseitigung von Müll und erhöht die Bürgermoral.',
-    'desc_techs_wastedisposal'     => 'Die Müllhalde entsorgt den anfallenden Müll. Je weniger Müll, desto höher die Moral.',
-    'desc_techs_secretOps'         => 'Das Geheimdienstzentrum ist die Grundlage aller Geheimdienstoperationen.',
-    'desc_techs_engineer'          => 'Kümmert sich um den Ausbau der Kolonie. Stellt Bau-AP bereit.',
-    'desc_techs_scientist'         => 'Treibt Forschung und Kenntnisse voran. Stellt Forschungs-AP bereit.',
-    'desc_techs_pilot'             => 'Erfahrener Raumfahrer. Stellt Navigations-AP für Flottenoperationen bereit.',
-    'desc_techs_trader'            => 'Verwaltet Handelsrouten und Marktoperationen. Stellt Wirtschafts-AP bereit.',
-    'desc_techs_stratege'          => 'Militärstratege. Stellt Strategie-AP für Verteidigung und Kampfoperationen bereit.',
-    'desc_techs_fighter1'          => 'Ein kleines Kampfschiff. Schwache Bewaffnung, aber schnell und wendig.',
-    'desc_techs_frigate1'          => 'Ein mittleres Kampfschiff. Durchschnittliche Bewaffnung und solide im Flugverhalten.',
-    'desc_techs_battlecruiser1'    => 'Ein großes Kampfschiff. Schwere Bewaffnung und träge im Flugverhalten.',
-    'desc_techs_smallTransporter'  => 'Kleiner Transporter.',
-    'desc_techs_mediumTransporter' => 'Mittlerer Transporter.',
-    'desc_techs_largeTransporter'  => 'Großer Transporter.',
-    'desc_techs_mathematics'       => 'Die Grundlage aller technischen Errungenschaften. Je größer das Wissen, desto mehr Gebäude stehen zur Verfügung.',
-    'desc_techs_languages'         => 'Die Sprachforschung ist wichtig um mit fremden Völkern in Kontakt treten zu können.',
-    'desc_techs_military'          => 'Die militärische Forschung eröffnet neue Möglichkeiten beim Bau von Kampfschiffen.',
-    'desc_techs_diplomacy'         => 'Diplomatie ist die Grundlage jeder Koexistenz verschiedener Völker.',
-    'desc_techs_medicalScience'    => 'Je höher die medizinische Forschung, desto besser die Versorgung deiner Einwohner.',
 ];
