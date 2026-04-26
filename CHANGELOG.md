@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-04-26 (Phase 3b: Buildings-Cleanup + Colony-Sidebar Redesign)
+
+- **Buildings-Cleanup-Migration**: 13 veraltete Gebäude (IDs 42, 45, 48, 51, 53, 54, 55, 56, 64, 65, 66, 68, 70) aus der DB entfernt. Verbleibende 11 Gebäude von `techs_*`-Keys auf `building_*`-Keys umbenannt (GDD §4). CC max_level 10→5 korrigiert. FK-Referenzen in `researches`, `ships`, `personell` bereinigt.
+- **Neue deutsche Namen** (`lang/de/techtree.php`): Alle `building_*`-Keys mit GDD-konformen Bezeichnungen: Kommandozentrale, Harvester, Wohnhabitat, Lagerhalle, Analytik-Labor, Religiöse Stätte, Agrardom, Hangar, Krankenstation, Kolonialdenkmal, Cantina.
+- **Demo-Command** `php artisan colony:seed-demo [colony_id]`: Generiert 37 Tiles (Ringe 0–3) mit reicher Demo-Belegung (~80% ausgebaut), platziert alle 11 Gebäude via `tile_x`/`tile_y`, setzt Levels und Zustandswerte.
+- **Colony-Sidebar Redesign**: Tile-Detail-Modal (`<dialog>`) entfernt. Alle Tile- und Gebäude-Informationen werden direkt inline in der 320px-Sidebar angezeigt — kein extra Klick mehr nötig. Neue CSS-Klassen `sidebar-*` und `tile-dl` statt `modal-*`.
+
 ## 2026-04-25 (Phase 3b: Colony Tile Detail Modal)
 
 - **Tile Detail Modal** (`<dialog>` + Alpine.js, kein Bootstrap): Klick auf "Details & Aktionen" in der Tile-Sidebar öffnet ein modales Overlay mit Tile-Typ, Status-Chips, Regolith-Leiste sowie — für Tiles mit Gebäude — Name, Level-Badge, Zustandsbalken (rot) und AP-Fortschrittsbalken (grün). Gebäudenamen werden serverseitig via `lang/de/techtree.php` übersetzt.
