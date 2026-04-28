@@ -285,6 +285,22 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
+### Bauregeln: Zone-Trennung
+
+**Kernregel:** Ressource-Tiles und Terrain-Tiles sind strikt getrennt — kein Gebäude darf auf einem falschen Tile-Typ platziert werden.
+
+| Tile-Typ | Harvester | Andere Gebäude |
+|----------|-----------|----------------|
+| `terrain_empty`, `terrain_hazard` | ✗ nicht erlaubt | ✓ erlaubt |
+| `regolith_*` (rich / normal / poor) | ✓ erlaubt | ✗ nicht erlaubt |
+| `terrain_impassable` | ✗ | ✗ |
+
+- Der Harvester darf **ausschließlich** auf Ressource-Tiles (`regolith_*`) platziert werden. Terrain-Tiles sind für ihn keine gültige Platzierung.
+- Alle anderen Koloniegebäude dürfen **nicht** auf Ressource-Tiles gebaut werden. Nur Terrain-Tiles sind für reguläre Gebäude gültig.
+- Diese Regel gilt auch beim Verlegung des Harvesters (neues Ziel muss ein `regolith_*`-Tile sein).
+
+**Begründung:** Regolith-Tiles sind Abbaugebiete — ihre Fläche ist durch den Harvester belegt oder für zukünftigen Abbau reserviert. Würde man dort reguläre Gebäude bauen, würde das Vorkommen dauerhaft verschlossen. Umgekehrt wäre ein Harvester auf Terrain-Tiles sinnlos (keine Rohstoffe).
+
 ### Status-Punkte
 
 Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Tick durch Verfall (siehe Abschnitt 7).
@@ -308,9 +324,11 @@ Die Kolonieoberfläche wird als 2D top-down Hex-Grid dargestellt. Die Planetengr
 
 ### Zwei Zonen
 
-**Kolonie-Zone** — die inneren Ringe um das CC. Hier werden Gebäude gebaut. Neue Ringe werden durch CC-Level freigeschaltet.
+**Kolonie-Zone** — die inneren Ringe um das CC. Hier werden Gebäude gebaut (ausschließlich auf Terrain-Tiles). Neue Ringe werden durch CC-Level freigeschaltet.
 
-**Exploration Zone** — die äußeren Tiles jenseits der Kolonie-Zone. Hier liegen Ressourcenquellen, Gefahren und Event-Spots. Jedes Tile muss einzeln per Navigation-AP erkundet werden (Korvette oder Sonde).
+**Exploration Zone** — die äußeren Tiles jenseits der Kolonie-Zone. Hier liegen Ressourcenquellen (Regolith-Tiles), Gefahren und Event-Spots. Der Harvester steht hier auf einem Regolith-Tile. Jedes Tile muss einzeln per Navigation-AP erkundet werden (Korvette oder Sonde).
+
+> Zone-Trennung: Reguläre Gebäude nur auf Terrain-Tiles, Harvester nur auf Regolith-Tiles. Siehe §4 "Bauregeln: Zone-Trennung".
 
 ### CC-Level und Koloniewachstum
 
