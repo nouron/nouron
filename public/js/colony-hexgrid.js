@@ -55,6 +55,21 @@ const LOCKED_STROKE = '#a8adb8';
 const EVENT_COLOR   = '#e8d89a';
 const EVENT_STROKE  = '#b09a40';
 
+// Abbreviations shown on tiles with buildings
+const BUILDING_ABBR = {
+    building_commandCenter:  'CC',
+    building_harvester:      'HV',
+    building_housingComplex: 'WH',
+    building_depot:          'LH',
+    building_sciencelab:     'AL',
+    building_temple:         'RS',
+    building_bioFacility:    'AD',
+    building_hangar:         'HG',
+    building_hospital:       'KS',
+    building_denkmal:        'KD',
+    building_bar:            'CA',
+};
+
 // ── Alpine component ──────────────────────────────────────────────────────────
 
 function colonyHexView(config) {
@@ -69,23 +84,22 @@ function colonyHexView(config) {
         init() {
             this.$nextTick(() => {
                 initHexGrid(this.$refs.hexgrid, this.tiles, {
-                    onSelect:    (tile) => this.selectTile(tile),
-                    polygonMap:  this._svgPolygons,
+                    onSelect:   (tile) => this.selectTile(tile),
+                    polygonMap: this._svgPolygons,
+                    buildings:  this.buildings,
                 });
             });
         },
 
         selectTile(tile) {
-            // Remove highlight from previously selected tile
             if (this.selectedTile) {
                 const prev = this._svgPolygons.get(`${this.selectedTile.q},${this.selectedTile.r}`);
                 if (prev) {
-                    prev.setAttribute('stroke', '#555');
-                    prev.setAttribute('stroke-width', '1.5');
+                    prev.setAttribute('stroke', prev._defaultStroke ?? '#555');
+                    prev.setAttribute('stroke-width', prev._defaultStrokeW ?? '1.5');
                 }
             }
             this.selectedTile = tile;
-            // Highlight newly selected tile
             const cur = this._svgPolygons.get(`${tile.q},${tile.r}`);
             if (cur) {
                 cur.setAttribute('stroke', '#c0392b');
@@ -109,11 +123,9 @@ function colonyHexView(config) {
 
         buildingForTile(tile) {
             if (!tile) return null;
-            // CC is always at (0,0), building_id 25
             if (tile.q === 0 && tile.r === 0) {
                 return this.buildings.find(b => b.building_id === 25) ?? null;
             }
-            // Other buildings matched by tile_x/tile_y (currently all NULL in DB)
             return this.buildings.find(b => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },
 
@@ -133,7 +145,17 @@ function initHexGrid(container, tiles, opts = {}) {
     const SIZE    = 40;
     const PADDING = SIZE * 1.5;
 
-    const maxRing = Math.max(...tiles.map(t => t.ring));
+    // Build tile-coordinate → building lookup
+    const buildingsByTile = new Map();
+    if (opts.buildings) {
+        for (const b of opts.buildings) {
+            if (b.building_id === 25) {
+                buildingsByTile.set('0,0', b);
+            } else if (b.tile_x !== null && b.tile_y !== null) {
+                buildingsByTile.set(`${b.tile_x},${b.tile_y}`, b);
+            }
+        }
+    }
 
     // Compute bounding box from actual tile positions
     let minPx = Infinity, maxPx = -Infinity;
@@ -160,9 +182,10 @@ function initHexGrid(container, tiles, opts = {}) {
     svg.style.display = 'block';
 
     for (const { tile, px, py } of positions) {
-        const cx = px + offX;
-        const cy = py + offY;
-        const g = createHexTile(cx, cy, SIZE - 2, tile, opts);
+        const cx       = px + offX;
+        const cy       = py + offY;
+        const building = buildingsByTile.get(`${tile.q},${tile.r}`) ?? null;
+        const g        = createHexTile(cx, cy, SIZE - 2, tile, building, opts);
         svg.appendChild(g);
     }
 
@@ -170,22 +193,25 @@ function initHexGrid(container, tiles, opts = {}) {
     container.appendChild(svg);
 }
 
-function createHexTile(cx, cy, size, tile, opts) {
+function createHexTile(cx, cy, size, tile, building, opts) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
 
-    const points = hexCorners(cx, cy, size);
+    const isCC          = tile.q === 0 && tile.r === 0;
+    const isImpassable  = tile.tile_type === 'terrain_impassable' && tile.is_explored;
+
+    const points  = hexCorners(cx, cy, size);
     const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     polygon.setAttribute('points', points.join(' '));
-    polygon.setAttribute('fill',         getTileColor(tile));
-    polygon.setAttribute('stroke',       '#555');
-    polygon.setAttribute('stroke-width', '1.5');
+    polygon.setAttribute('fill', getTileColor(tile));
 
-    const isCC = tile.q === 0 && tile.r === 0;
     const [stroke, strokeW] = getTileStroke(tile, isCC);
     polygon.setAttribute('stroke',       stroke);
-    polygon.setAttribute('stroke-width', strokeW);
+    polygon.setAttribute('stroke-width', isImpassable ? '0' : strokeW);
+    // Store defaults for deselect restore
+    polygon._defaultStroke  = stroke;
+    polygon._defaultStrokeW = isImpassable ? '0' : strokeW;
 
-    if (tile.is_ring_unlocked) {
+    if (tile.is_ring_unlocked && !isImpassable) {
         g.classList.add('tile--unlocked');
         g.addEventListener('click', () => opts.onSelect && opts.onSelect(tile));
     }
@@ -196,25 +222,60 @@ function createHexTile(cx, cy, size, tile, opts) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
     }
 
-    // Label for CC tile
+    if (isImpassable) {
+        // Render as a smaller, borderless shape — communicates "obstacle, not a placeable tile"
+        return g;
+    }
+
+    // CC label
     if (isCC) {
         g.appendChild(svgText(cx, cy, 'CC', 10, '#2e7d32', 700));
     }
 
-    // Ring indicator for locked outer tiles
-    if (!tile.is_ring_unlocked && tile.ring === Math.max(...(opts._maxRing ?? [tile.ring]))) {
-        // outer boundary — no extra label needed
-    }
-
-    // Small resource indicator dot
+    // Small resource indicator dot (top-right)
     if (tile.is_explored && tile.resource_max > 0) {
         const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        dot.setAttribute('cx', cx + size * 0.35);
-        dot.setAttribute('cy', cy - size * 0.35);
-        dot.setAttribute('r', '4');
+        dot.setAttribute('cx', cx + size * 0.38);
+        dot.setAttribute('cy', cy - size * 0.38);
+        dot.setAttribute('r',  '4');
         dot.setAttribute('fill', '#2196f3');
         dot.setAttribute('stroke', '#fff');
         dot.setAttribute('stroke-width', '1');
+        dot.setAttribute('pointer-events', 'none');
+        g.appendChild(dot);
+    }
+
+    // Building indicator badge (center-bottom, skip CC — already labeled)
+    if (building && !isCC && tile.is_explored) {
+        const abbr  = BUILDING_ABBR[building.building_key] ?? '?';
+        const badgeW = 22;
+        const badgeH = 12;
+        const bx = cx - badgeW / 2;
+        const by = cy + size * 0.28;
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x',      bx);
+        rect.setAttribute('y',      by);
+        rect.setAttribute('width',  badgeW);
+        rect.setAttribute('height', badgeH);
+        rect.setAttribute('rx',     '3');
+        rect.setAttribute('fill',   'rgba(30,30,30,0.72)');
+        rect.setAttribute('pointer-events', 'none');
+        g.appendChild(rect);
+
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, abbr, 8, '#fff', 700));
+    }
+
+    // Event indicator dot (top-left, only when deep-scanned)
+    if (tile.is_deep_scanned && tile.event_type) {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', cx - size * 0.38);
+        dot.setAttribute('cy', cy - size * 0.38);
+        dot.setAttribute('r',  '4');
+        dot.setAttribute('fill', '#e67e22');
+        dot.setAttribute('stroke', '#fff');
+        dot.setAttribute('stroke-width', '1');
+        dot.setAttribute('pointer-events', 'none');
         g.appendChild(dot);
     }
 
@@ -231,18 +292,19 @@ function hexCorners(cx, cy, size) {
 }
 
 function getTileColor(tile) {
-    if (!tile.is_ring_unlocked)               return LOCKED_COLOR;
-    if (!tile.is_explored)                    return FOG_COLOR;
-    if (tile.q === 0 && tile.r === 0)         return CC_COLOR;
-    if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
+    if (!tile.is_ring_unlocked)                   return LOCKED_COLOR;
+    if (!tile.is_explored)                        return FOG_COLOR;
+    if (tile.q === 0 && tile.r === 0)             return CC_COLOR;
+    if (tile.is_deep_scanned && tile.event_type)  return EVENT_COLOR;
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
 }
 
 function getTileStroke(tile, isCC) {
-    if (isCC)                    return [CC_STROKE,     '2.5'];
-    if (!tile.is_ring_unlocked)  return [LOCKED_STROKE, '1'];
-    if (!tile.is_explored)       return [FOG_STROKE,    '1'];
-    if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
+    if (isCC)                                         return [CC_STROKE,     '2.5'];
+    if (!tile.is_ring_unlocked)                       return [LOCKED_STROKE, '1'];
+    if (!tile.is_explored)                            return [FOG_STROKE,    '1'];
+    if (tile.is_deep_scanned && tile.event_type)      return [EVENT_STROKE,  '1.5'];
+    if (tile.tile_type === 'terrain_impassable')      return ['#555',        '0'];
     return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];
 }
 
@@ -251,9 +313,9 @@ function svgText(x, y, text, size, fill, weight) {
     el.setAttribute('x', x);
     el.setAttribute('y', y + size / 3);
     el.setAttribute('text-anchor', 'middle');
-    el.setAttribute('font-size', size);
+    el.setAttribute('font-size',   size);
     el.setAttribute('font-weight', weight ?? 'normal');
-    el.setAttribute('fill', fill ?? '#333');
+    el.setAttribute('fill',        fill ?? '#333');
     el.setAttribute('pointer-events', 'none');
     el.textContent = text;
     return el;

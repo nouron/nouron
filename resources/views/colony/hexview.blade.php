@@ -29,22 +29,10 @@ window.__colonyViewData = {
             </div>
 
             <div class="tile-panel-body">
-
-                {{-- Empty state --}}
-                <template x-if="!selectedTile">
-                    <div class="tile-panel-empty">
-                        <p>Hex-Tile anklicken<br>um Details anzuzeigen.</p>
-                    </div>
-                </template>
-
-                {{-- Selected tile details --}}
                 <template x-if="selectedTile">
                     <div>
-
-                        {{-- Tile heading --}}
                         <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
 
-                        {{-- Status chips --}}
                         <div class="tile-status-chips">
                             <span x-show="!selectedTile.is_ring_unlocked" class="chip chip--locked">Gesperrt</span>
                             <span x-show="selectedTile.is_ring_unlocked && !selectedTile.is_explored" class="chip chip--fog">Unerforscht</span>
@@ -52,10 +40,9 @@ window.__colonyViewData = {
                             <span x-show="selectedTile.is_deep_scanned" class="chip chip--scanned">Tiefgescannt</span>
                         </div>
 
-                        {{-- Tile properties --}}
                         <dl class="tile-dl">
                             <dt>Koordinaten</dt>
-                            <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} · Ring ${selectedTile.ring}`"></dd>
+                            <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
 
                             <template x-if="selectedTile.is_explored">
                                 <div>
@@ -72,29 +59,33 @@ window.__colonyViewData = {
                             </template>
                         </dl>
 
-                        {{-- Resource deposit --}}
                         <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
                             <div class="sidebar-resource">
-                                <div class="sidebar-bar-label">
-                                    <span>Regolith</span>
-                                    <span x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></span>
-                                </div>
-                                <div class="sidebar-bar-wrap">
-                                    <div class="sidebar-bar sidebar-bar--resource"
-                                         :style="`width:${Math.round(selectedTile.resource_amount / selectedTile.resource_max * 100)}%`"></div>
+                                <div class="sidebar-bar-group">
+                                    <div class="sidebar-bar-label">
+                                        <span>Regolith</span>
+                                        <span x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></span>
+                                    </div>
+                                    <div class="sidebar-bar-wrap">
+                                        <div class="sidebar-bar sidebar-bar--resource"
+                                             :style="`width:${Math.round(selectedTile.resource_amount / selectedTile.resource_max * 100)}%`"></div>
+                                    </div>
                                 </div>
                             </div>
                         </template>
 
-                        {{-- Building on tile --}}
                         <template x-if="buildingForTile(selectedTile)">
                             <div class="sidebar-building">
                                 <div class="sidebar-section-title">Gebäude</div>
-
                                 <div class="sidebar-building-name">
                                     <strong x-text="buildingForTile(selectedTile).label"></strong>
                                     <span class="sidebar-level-badge" x-text="`Lv. ${buildingForTile(selectedTile).level}`"></span>
                                 </div>
+
+                                <dl class="tile-dl" style="margin-top:.5rem">
+                                    <dt>Max. Stufe</dt>
+                                    <dd x-text="buildingForTile(selectedTile).max_level ?? '∞'"></dd>
+                                </dl>
 
                                 <div class="sidebar-bar-group">
                                     <div class="sidebar-bar-label">
@@ -120,17 +111,20 @@ window.__colonyViewData = {
                             </div>
                         </template>
 
-                        {{-- Action buttons --}}
                         <template x-if="selectedTile.is_ring_unlocked">
                             <div class="sidebar-actions">
-                                <button class="sidebar-action-btn" disabled title="Noch nicht implementiert">Ausbauen</button>
-                                <button class="sidebar-action-btn" disabled title="Noch nicht implementiert">Erkunden</button>
+                                <button class="sidebar-action-btn" disabled>Ausbauen</button>
+                                <button class="sidebar-action-btn" disabled>Erkunden</button>
                             </div>
                         </template>
-
                     </div>
                 </template>
 
+                <template x-if="!selectedTile">
+                    <div class="tile-panel-empty">
+                        <p>Hex-Tile anklicken<br>um Details anzuzeigen.</p>
+                    </div>
+                </template>
             </div>
         </aside>
 

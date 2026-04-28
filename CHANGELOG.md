@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-04-26 (Phase 3b: Buildings-Cleanup + Colony-Sidebar Redesign + Hex-Grid Visuals)
+
+- **Buildings-Cleanup-Migration**: 13 veraltete Gebäude (IDs 42, 45, 48, 51, 53, 54, 55, 56, 64, 65, 66, 68, 70) aus der DB entfernt. Verbleibende 11 Gebäude von `techs_*`-Keys auf `building_*`-Keys umbenannt (GDD §4). CC max_level 10→5 korrigiert. FK-Referenzen in `researches`, `ships`, `personell` bereinigt.
+- **Neue deutsche Namen** (`lang/de/techtree.php`): Alle `building_*`-Keys mit GDD-konformen Bezeichnungen: Kommandozentrale, Harvester, Wohnhabitat, Lagerhalle, Analytik-Labor, Religiöse Stätte, Agrardom, Hangar, Krankenstation, Kolonialdenkmal, Cantina.
+- **Colony-Sidebar Redesign**: Tile-Detail-Modal (`<dialog>`) entfernt. Alle Tile- und Gebäude-Informationen werden direkt inline in der 320px-Sidebar angezeigt — kein extra Klick mehr nötig. Neue CSS-Klassen `sidebar-*` und `tile-dl` statt `modal-*`.
+- **Gebäude-Badges auf Tiles**: SVG-Renderer zeigt 2-Buchstaben-Kürzel (CC, WH, LH, AL, HG …) als dunkles Badge auf belegten Tiles. Event-Tiles erhalten orangenen Dot (top-left, nur nach Tiefenscan). Impassable Tiles werden ohne Rand gerendert.
+- **Demo-Command** `php artisan colony:seed-demo [colony_id]`: Generiert 61 Tiles (Ringe 0–4); Kolonie-Zone (Ringe 1–2) nur Terrain, Exploration-Zone (Ringe 3–4) mit Regolith + Events. Harvester steht auf Regolith-Tile in Ring 3. Design-Entscheidung (Game Designer): Regolith-Tiles sind nicht bebaubar — ausschließlich für den Harvester reserviert (GDD §4).
+
 ## 2026-04-25 (Phase 3b: Colony Tile Detail Modal)
 
 - **Tile Detail Modal** (`<dialog>` + Alpine.js, kein Bootstrap): Klick auf "Details & Aktionen" in der Tile-Sidebar öffnet ein modales Overlay mit Tile-Typ, Status-Chips, Regolith-Leiste sowie — für Tiles mit Gebäude — Name, Level-Badge, Zustandsbalken (rot) und AP-Fortschrittsbalken (grün). Gebäudenamen werden serverseitig via `lang/de/techtree.php` übersetzt.
