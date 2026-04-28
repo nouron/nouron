@@ -49,6 +49,15 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
     Route::get('/',       [ColonyController::class, 'index'])->name('index');
     Route::get('/view',   [ColonyController::class, 'hexview'])->name('view');
     Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
+
+    // Tile actions (AJAX)
+    Route::post('/tile/explore',    [ColonyController::class, 'exploreTile'])->name('tile.explore');
+    Route::post('/tile/deep-scan',  [ColonyController::class, 'deepScanTile'])->name('tile.deep-scan');
+
+    // Building actions (AJAX)
+    Route::get('/buildings/available', [ColonyController::class, 'availableBuildings'])->name('buildings.available');
+    Route::post('/building/place',     [ColonyController::class, 'placeBuilding'])->name('building.place');
+    Route::post('/building/invest',    [ColonyController::class, 'investBuilding'])->name('building.invest');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────

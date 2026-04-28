@@ -4,18 +4,72 @@ namespace App\Services;
 
 use App\Models\Colony;
 use App\Models\ColonyTile;
+use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ColonyTileService
 {
+    public function __construct(
+        private readonly PersonellService $personellService,
+    ) {}
+
     public function getTilesForColony(int $colonyId): Collection
     {
         return ColonyTile::where('colony_id', $colonyId)
             ->orderBy('ring')
             ->orderBy('q')
             ->orderBy('r')
-            ->get();
+            ->get()
+            ->map(fn($t) => $this->transformTile($t));
+    }
+
+    public function exploreTile(int $colonyId, int $q, int $r): array
+    {
+        $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
+
+        if (!$tile)                   return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+        if (!$tile->is_ring_unlocked) return ['ok' => false, 'error' => __('colony.error_ring_locked')];
+        if ($tile->is_explored)       return ['ok' => false, 'error' => __('colony.error_already_explored')];
+
+        if ($this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
+            return ['ok' => false, 'error' => __('colony.error_no_nav_ap')];
+        }
+
+        $tile->is_explored = true;
+        $tile->save();
+        $this->personellService->lockActionPoints('navigation', $colonyId, 1);
+
+        return ['ok' => true, 'tile' => $this->transformTile($tile)];
+    }
+
+    public function deepScanTile(int $colonyId, int $q, int $r): array
+    {
+        $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
+
+        if (!$tile)                    return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+        if (!$tile->is_explored)       return ['ok' => false, 'error' => __('colony.error_not_explored')];
+        if ($tile->event_type === null) return ['ok' => false, 'error' => __('colony.error_no_signal')];
+        if ($tile->is_deep_scanned)    return ['ok' => false, 'error' => __('colony.error_already_scanned')];
+
+        if ($this->personellService->getAvailableActionPoints('navigation', $colonyId) < 2) {
+            return ['ok' => false, 'error' => __('colony.error_no_nav_ap_2')];
+        }
+
+        $tile->is_deep_scanned = true;
+        $tile->save();
+        $this->personellService->lockActionPoints('navigation', $colonyId, 2);
+
+        return ['ok' => true, 'tile' => $this->transformTile($tile)];
+    }
+
+    private function transformTile(ColonyTile $tile): array
+    {
+        $arr = $tile->toArray();
+        $arr['has_signal'] = $tile->event_type !== null && (bool) $tile->is_explored && !(bool) $tile->is_deep_scanned;
+        // Hide the actual event until the tile is deep-scanned (sondiert)
+        $arr['event_type'] = $tile->is_deep_scanned ? $tile->event_type : null;
+        return $arr;
     }
 
     /**

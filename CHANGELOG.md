@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-04-28
+
+- **GDD §4 Bauregeln** (`docs/GDD.md`): Harvester/Regolith-Trennungsregel formal dokumentiert. Neue Tabelle und Bullet-Regeln: Harvester darf ausschließlich auf `regolith_*`-Tiles stehen, reguläre Gebäude nur auf Terrain-Tiles. Querverweis in §4a (Kolonieoberfläche) ergänzt.
+- **Phase 3c — Kolonieaktionen** (PR #93): Drei Kernaktionen implementiert: (1) **Erkunden** — Tile-Typ aufdecken für 1 Nav-AP, kontextsensitiver Button in Sidebar; (2) **Sondieren (Deep Scan)** — Event auf Signal-Tiles aufdecken für 2 Nav-AP; nur ~15–20 % der Exploration-Zone-Tiles senden ein Signal (pulsierender SVG-Indikator, Chip `chip--signal`); (3) **Bauen** — globaler Button im Canvas-Header, Gebäude-Auswahlliste in Sidebar, Platzierung auf Terrain-Tile kostet 1 Construction-AP, danach AP investieren bis Level-Up. `has_signal`-Feld in Tile-Daten: `event_type` bleibt verborgen bis Sondieren. Lokalisierung: `lang/de/colony.php` + `lang/en/colony.php` für alle UI-Strings und Fehlermeldungen. 391 Tests grün.
+
 ## 2026-04-26 (Phase 3b: Buildings-Cleanup + Colony-Sidebar Redesign + Hex-Grid Visuals)
 
 - **Buildings-Cleanup-Migration**: 13 veraltete Gebäude (IDs 42, 45, 48, 51, 53, 54, 55, 56, 64, 65, 66, 68, 70) aus der DB entfernt. Verbleibende 11 Gebäude von `techs_*`-Keys auf `building_*`-Keys umbenannt (GDD §4). CC max_level 10→5 korrigiert. FK-Referenzen in `researches`, `ships`, `personell` bereinigt.
