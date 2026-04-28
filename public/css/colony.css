@@ -490,6 +490,125 @@ body {
     cursor: not-allowed;
 }
 
+/* ── Canvas-header build button ─────────────────────────────────────────── */
+
+.build-btn {
+    margin-left: auto;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border-radius: 4px;
+    border: 1px solid var(--color-accent);
+    background: transparent;
+    color: var(--color-accent);
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: background 0.15s ease, color 0.15s ease;
+    flex-shrink: 0;
+}
+
+.build-btn:hover {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+.build-btn--active {
+    background: var(--color-accent);
+    color: #fff;
+}
+
+/* ── Build mode sidebar ──────────────────────────────────────────────────── */
+
+.build-mode-hint {
+    font-size: 0.82rem;
+    color: #777;
+    margin: 0 0 0.75rem;
+}
+
+.build-mode-selected {
+    font-size: 0.82rem;
+    color: var(--color-accent);
+    margin: 0 0 0.75rem;
+    padding: 0.35rem 0.6rem;
+    background: #fff0ee;
+    border-left: 3px solid var(--color-accent);
+    border-radius: 2px;
+}
+
+.build-mode-empty {
+    font-size: 0.82rem;
+    color: #aaa;
+    margin: 0;
+}
+
+.building-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.building-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 0.7rem;
+    border-radius: 5px;
+    border: 1px solid var(--color-border);
+    background: #fafafa;
+    cursor: pointer;
+    transition: background 0.1s ease, border-color 0.1s ease;
+}
+
+.building-list-item:hover {
+    background: #f0f4ff;
+    border-color: #b0c0e8;
+}
+
+.building-list-item--selected {
+    background: #fff0ee;
+    border-color: var(--color-accent);
+}
+
+.building-list-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-anthracite);
+}
+
+.building-list-ap {
+    font-size: 0.72rem;
+    color: #888;
+    font-weight: 500;
+}
+
+/* ── Signal chip ─────────────────────────────────────────────────────────── */
+
+.chip--signal {
+    background: #fff8dc;
+    color: #8a6500;
+    border: 1px solid #e0c040;
+    animation: chip-signal-pulse 2s ease-in-out infinite;
+}
+
+@keyframes chip-signal-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+}
+
+/* ── SVG signal pulse (class applied to SVG circle element) ──────────────── */
+
+@keyframes signal-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.25; }
+}
+
+.signal-pulse {
+    animation: signal-pulse 1.8s ease-in-out infinite;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Stack grid + sidebar at 900px and below */
