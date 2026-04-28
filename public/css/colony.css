@@ -360,204 +360,43 @@ body {
 .chip--explored { background: #e8f4e8; color: #2e7d32; border: 1px solid #a5d6a7; }
 .chip--scanned  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 
-/* ── Sidebar action button ───────────────────────────────────────────────── */
+/* ── Sidebar: tile dl ────────────────────────────────────────────────────── */
 
-.tile-panel-actions {
-    margin-top: 1.25rem;
-}
-
-.tile-detail-btn {
-    width: 100%;
-    padding: 0.45rem 1rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: #fff;
-    background: var(--color-accent);
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    letter-spacing: 0.02em;
-    transition: background 0.15s ease;
-}
-
-.tile-detail-btn:hover {
-    background: #a93226;
-}
-
-/* ── Tile detail modal ───────────────────────────────────────────────────── */
-
-/* PicoCSS styles <dialog> — we override to get a clean, sized overlay */
-dialog.tile-modal {
-    padding: 0;
-    border: none;
-    border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-    max-width: 480px;
-    width: calc(100vw - 2rem);
-    background: #fff;
-}
-
-dialog.tile-modal::backdrop {
-    background: rgba(0,0,0,0.35);
-}
-
-dialog.tile-modal > article {
-    margin: 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-}
-
-.tile-modal-header {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    padding: 1rem 1.25rem 0.85rem;
-    border-bottom: 2px solid var(--color-accent);
-    position: relative;
-}
-
-.tile-modal-header h3 {
-    margin: 0;
-    font-size: 1.05rem;
-    font-weight: 700;
-    color: var(--color-anthracite);
-    padding-right: 1.5rem;
-}
-
-.tile-modal-header small {
-    font-size: 0.75rem;
-    color: #888;
-}
-
-.tile-modal-close {
-    position: absolute;
-    top: 0.7rem;
-    right: 0.9rem;
-    background: none;
-    border: none;
-    font-size: 1.1rem;
-    color: #999;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
-    width: auto;
-}
-
-.tile-modal-close:hover {
-    color: var(--color-anthracite);
-}
-
-.tile-modal-body {
-    padding: 1rem 1.25rem 0.5rem;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-.tile-modal-footer {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem 1rem;
-    border-top: 1px solid var(--color-border);
-    justify-content: flex-end;
-}
-
-/* Modal action buttons */
-.tile-modal-action {
-    padding: 0.4rem 1rem;
-    font-size: 0.82rem;
-    font-weight: 600;
-    border-radius: 4px;
-    border: 1px solid var(--color-accent);
-    background: var(--color-accent);
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.15s ease;
-}
-
-.tile-modal-action:hover:not(:disabled) {
-    background: #a93226;
-}
-
-.tile-modal-action:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.tile-modal-action--secondary {
-    background: #fff;
-    color: var(--color-anthracite);
-    border-color: var(--color-border);
-}
-
-.tile-modal-action--secondary:hover {
-    background: #f5f5f5;
-}
-
-/* ── Modal building section ──────────────────────────────────────────────── */
-
-.modal-building-section {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-border);
-}
-
-.modal-section-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
+.tile-heading {
     margin: 0 0 0.5rem;
-}
-
-.modal-building-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-.modal-building-header strong {
-    font-size: 0.95rem;
+    font-size: 1rem;
     color: var(--color-anthracite);
 }
 
-.modal-level-badge {
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 10px;
-    background: #e8f4e8;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
+.tile-dl {
+    margin: 0.75rem 0 0;
 }
 
-/* ── Modal dl + bars ─────────────────────────────────────────────────────── */
-
-.modal-dl {
-    margin: 0 0 0.5rem;
-}
-
-.modal-dl dt {
+.tile-dl dt {
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: #888;
-    margin-top: 0.6rem;
+    margin-top: 0.65rem;
 }
 
-.modal-dl dd {
+.tile-dl dd {
     margin: 0.1rem 0 0;
     font-size: 0.88rem;
 }
 
-.modal-bar-group {
-    margin-top: 0.75rem;
+/* ── Sidebar: bars (resource deposit, building status/AP) ────────────────── */
+
+.sidebar-resource {
+    margin-top: 0.9rem;
 }
 
-.modal-bar-label {
+.sidebar-bar-group {
+    margin-top: 0.65rem;
+}
+
+.sidebar-bar-label {
     display: flex;
     justify-content: space-between;
     font-size: 0.72rem;
@@ -565,22 +404,96 @@ dialog.tile-modal > article {
     margin-bottom: 0.25rem;
 }
 
-.modal-bar-wrap {
-    height: 8px;
-    background: #eee;
+.sidebar-bar-wrap {
+    height: 7px;
+    background: #e8e8e8;
     border-radius: 4px;
     overflow: hidden;
 }
 
-.modal-bar {
+.sidebar-bar {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
+    min-width: 2px;
 }
 
-.modal-bar--status   { background: #e74c3c; }
-.modal-bar--ap       { background: #27ae60; }
-.modal-bar--resource { background: #2196f3; }
+.sidebar-bar--status   { background: #e74c3c; }
+.sidebar-bar--ap       { background: #27ae60; }
+.sidebar-bar--resource { background: #2196f3; }
+
+/* ── Sidebar: building section ───────────────────────────────────────────── */
+
+.sidebar-building {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.sidebar-section-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #999;
+    margin-bottom: 0.45rem;
+}
+
+.sidebar-building-name {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.3rem;
+}
+
+.sidebar-building-name strong {
+    font-size: 0.92rem;
+    color: var(--color-anthracite);
+}
+
+.sidebar-level-badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 10px;
+    background: #e8f4e8;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+    white-space: nowrap;
+}
+
+/* ── Sidebar: action buttons ─────────────────────────────────────────────── */
+
+.sidebar-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.sidebar-action-btn {
+    flex: 1;
+    padding: 0.42rem 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    border-radius: 4px;
+    border: 1px solid var(--color-accent);
+    background: var(--color-accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    white-space: nowrap;
+}
+
+.sidebar-action-btn:hover:not(:disabled) {
+    background: #a93226;
+}
+
+.sidebar-action-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+}
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
@@ -603,8 +516,7 @@ dialog.tile-modal > article {
     .tile-panel {
         border-left: none;
         border-top: 1px solid var(--color-border);
-        /* Limit sidebar height on mobile so it doesn't push the grid far up */
-        max-height: 260px;
+        max-height: 380px;
     }
 
     .tile-panel-empty {
