@@ -386,18 +386,19 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 - [x] **Startzustand** — CC Lv1 + Harvester Lv1 vorgebaut; 3.000 Credits, 200 Regolith, 0 Werkstoffe/Organika (PR #82)
 - [x] **Berater-Einstellungskosten kalibriert** — 50 Cr → 300–600 Cr je Typ; echter Day-1-Tradeoff (PR #82)
 - [ ] **Bar-Event-System** — 0–2 NPC-Gäste pro Tick, befristete Angebote (1–2 Ticks), Credits + Tausch
-- [ ] **DB-Cleanup: überzählige Gebäude entfernen** — 25 → 12 aktive Gebäude in DB (13 deprecated rows löschen)
+- [x] **DB-Cleanup: überzählige Gebäude entfernt** — 25 → 11 aktive Gebäude; `building_*`-Keys eingeführt; Migration + Seed bereinigt (PR #92)
 - [ ] **Berater Rang 2/3 Beförderungskosten** — ~150/~400 Cr je Rang; noch nicht implementiert
 
 ---
 
-### Phase 3b: UI-Überarbeitung + Almanach
+### Phase 3b: Colony-View + Buildings-Cleanup — Abgeschlossen (April 2026, PR #92)
 
-**Frontend-Stack (entschieden April 2026):** Alpine.js + PicoCSS + SVG für neue Screens. Kein jQuery, kein Bootstrap in neuen Screens. Bestehende Screens (fleets, techtree, trade, innn) schrittweise migrieren — galaxy.js + nouron.js zuerst (trivial), dann rest. Ziel: jQuery-CDN + Bootstrap-CDN komplett entfernen.
+**Frontend-Stack:** Alpine.js + PicoCSS + SVG für neue Screens. Bestehende Screens (fleets, techtree, trade, innn) werden schrittweise migriert.
 
-- [ ] **Alpine.js + PicoCSS einbinden** — CDN-Links in neuem Colony-Layout, bestehende `app.blade.php` vorerst unangetastet
-- [ ] **DB-Migrationen** — `colony_tiles`, `planet_size/type` auf `glx_system_objects`, `instance_id` auf `colony_buildings`, `grid_x/grid_y` auf `fleets` + `glx_system_objects`, `spot`-Feld entfernen
-- [ ] **Colony-View (Hex-Grid)** — SVG + plain JS, Axial-Koordinaten, Fog-of-War, Tile-Interaktion
+- [x] **Alpine.js + PicoCSS eingebunden** — Colony-Layout `layouts/colony.blade.php`; bestehende `app.blade.php` vorerst unangetastet
+- [x] **DB-Migrationen** — `colony_tiles` (Hex-Grid, Rings, Fog-of-War), `instance_id` + `tile_x/y` auf `colony_buildings`, `planet_size/type` auf `glx_system_objects`
+- [x] **Colony-View (Hex-Grid)** — SVG + Alpine.js, Axial-Koordinaten, Fog-of-War, Tile-Sidebar, Building-Badges, Signal-Indikator (PR #92)
+- [x] **Demo-Seed** — `php artisan colony:seed-demo` befüllt Kolonie mit ~80%-Demo-State
 - [ ] **System-View (12×12-Grid)** — SVG + plain JS, Objekte und Flotten, Flottenbefehl-Overlay
 - [ ] **Vertrauensanzeige im UI** — Mechanik vorhanden, UI fehlt noch
 - [ ] **Händler-Modal** — Alpine-gesteuert, nativer `<dialog>`, 3–4 Items, Credits-Kauf
@@ -406,10 +407,29 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3c: Onboarding & Tutorial
+### Phase 3c: Kolonieaktionen — Abgeschlossen (April 2026, PR #93)
+
+- [x] **Erkunden** — unbekannte Exploration-Zone-Tiles aufdecken (1 Nav-AP); kontextsensitiver Button in Sidebar
+- [x] **Sondieren (Deep Scan)** — Signal-Tiles mit Event untersuchen (2 Nav-AP); pulsierender SVG-Indikator
+- [x] **Bauen** — globaler Button im Canvas-Header; Gebäude-Auswahlliste; Terrain-Tile wählen (1 Construction-AP); AP investieren bis Level-Up
+- [x] **AP-Chips** — Nav-AP und Bau-AP werden nach jeder Aktion live aktualisiert
+
+---
+
+### Phase 3d: Colony Zone Expansion — Abgeschlossen (April 2026, PR #94)
+
+- [x] **Tile-Count Unlock** — CC Lv1–5 schaltet 4/2/3/3/3 = max. 15 individuelle Terrain-Tiles frei (statt ganzer Ringe); konfigurierbar via `config/game.php → colony_zone_expansion`
+- [x] **`is_ring_unlocked` → `is_colony_zone`** — DB-Umbenennung; Semantik: Terrain-Tile in Koloniezone (bebaubar)
+- [x] **3-Ring-Karte als Default** — 37 Tiles statt 61; Kartengröße run-konfigurierbar (vorbereitet)
+- [x] **CC Level-Up live** — Grid aktualisiert sich sofort wenn CC aufsteigt
+- [x] **Mehrfach-Instanzen** — Wohnhabitat (max 6×) und Hangar mehrfach platzierbar
+
+---
+
+### Phase 3e: Onboarding & Tutorial (ausstehend)
 
 - [ ] **Geführte Einführung für neue Spieler** — Form noch offen: interaktive Tour oder Tooltip-gestützte Einführung
-- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht 25 leere Techtree-Kacheln ohne Orientierung; erster Schritt muss klar sein
+- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht leere Techtree-Kacheln ohne Orientierung; erster Schritt muss klar sein
 - [ ] **Visuelle Hervorhebung des "nächsten sinnvollen Schritts"** — für Anfänger ohne Spielerfahrung; kein Bevormunden für erfahrene Spieler
 
 ---
