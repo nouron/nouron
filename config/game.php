@@ -25,6 +25,11 @@ return [
     // Will be removed in a future release.
     'dev_mode' => (bool) env('GAME_DEV_MODE', false),
 
+    // Tiles unlocked by CC expansion per level (index 0 = CC Lv1, ..., index 4 = CC Lv5).
+    // Walk order: ring 1 → ring 2 → ring 3; skip regolith_* and terrain_impassable.
+    // Max colony zone = sum = 15 terrain tiles (+ CC tile = 16 total).
+    'colony_zone_expansion' => [4, 2, 3, 3, 3],
+
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)
         'length' => 24,

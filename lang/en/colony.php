@@ -50,6 +50,7 @@ return [
     'error_no_nav_ap'           => 'Not enough navigation AP.',
     'error_no_nav_ap_2'         => 'Not enough navigation AP (2 required).',
     'error_tile_not_buildable'  => 'Only buildable terrain tiles allowed.',
+    'error_tile_outside_colony' => 'This tile is outside the colony zone.',
     'error_tile_occupied'       => 'Tile already occupied.',
     'error_no_construction_ap'  => 'Not enough construction AP.',
     'error_building_not_found'  => 'Building not found.',

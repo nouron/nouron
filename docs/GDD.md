@@ -320,27 +320,37 @@ Das UI-Verb ist immer identisch: **"Tile ausbauen"** — ob Leveled oder Instanc
 
 ### Darstellung: Hex-Grid
 
-Die Kolonieoberfläche wird als 2D top-down Hex-Grid dargestellt. Die Planetengröße bestimmt die Anzahl verfügbarer Ringe und skaliert mit dem Schwierigkeitsgrad des Runs.
+Die Kolonieoberfläche wird als 2D top-down Hex-Grid dargestellt. Die Karte hat immer **3 Ringe** (rings 0–3, gesamt 37 Tiles). Planetentyp und Run-Schwierigkeit beeinflussen die Tile-Qualität (Häufigkeit reicher Vorkommen, Hazard-Dichte), nicht die Kartengröße.
 
 ### Zwei Zonen
 
-**Kolonie-Zone** — die inneren Ringe um das CC. Hier werden Gebäude gebaut (ausschließlich auf Terrain-Tiles). Neue Ringe werden durch CC-Level freigeschaltet.
+**Kolonie-Zone** — ein Set von Terrain-Tiles rund um das CC. Hier werden Gebäude gebaut (ausschließlich auf `terrain_empty`/`terrain_hazard`-Tiles). CC-Level-Upgrades fügen der Kolonie-Zone weitere Terrain-Tiles hinzu.
 
-**Exploration Zone** — die äußeren Tiles jenseits der Kolonie-Zone. Hier liegen Ressourcenquellen (Regolith-Tiles), Gefahren und Event-Spots. Der Harvester steht hier auf einem Regolith-Tile. Jedes Tile muss einzeln per Navigation-AP erkundet werden (Korvette oder Sonde).
+**Exploration Zone** — alle Tiles, die nicht zur Kolonie-Zone gehören. Hier liegen Ressourcenquellen (Regolith-Tiles), Gefahren und Event-Spots. Der Harvester steht hier auf einem Regolith-Tile. Jedes Tile muss einzeln per Navigation-AP erkundet werden (Korvette oder Sonde).
 
 > Zone-Trennung: Reguläre Gebäude nur auf Terrain-Tiles, Harvester nur auf Regolith-Tiles. Siehe §4 "Bauregeln: Zone-Trennung".
 
 ### CC-Level und Koloniewachstum
 
-Die Kommandozentrale schaltet durch Level-Upgrades neue Hex-Ringe in der Kolonie-Zone frei. Tiles innerhalb eines freigeschalteten Rings werden einzeln durch Erkundungs-AP enthüllt — nicht alle auf einmal.
+Die Kommandozentrale schaltet durch Level-Upgrades zusätzliche **Terrain-Tiles** in der Kolonie-Zone frei — keine ganzen Ringe, sondern eine feste Anzahl individueller Tiles.
 
-| Planetengröße | Kolonie-Ringe gesamt | Neuer Ring bei CC-Level |
+**Freischalt-Logik:** Tiles werden in Ringfolge (Ring 1 zuerst, dann Ring 2, dann Ring 3) und innerhalb eines Rings in fester Reihenfolge (Tile-ID-Reihenfolge) freigeschaltet. Regolith-Tiles (`regolith_*`) und unpassierbare Tiles (`terrain_impassable`) werden dabei übersprungen und zählen nicht — sie bleiben dauerhaft Exploration Zone.
+
+| CC-Level | Neu freigeschaltete Terrain-Tiles | Kolonie-Zone gesamt (kumulativ, ohne CC-Tile) |
 |---|---|---|
-| Klein | 2 | 1 / 3 |
-| Mittel | 3 | 1 / 2 / 4 |
-| Groß | 4 | 1 / 2 / 3 / 5 |
+| 1 | 4 | 4 |
+| 2 | 2 | 6 |
+| 3 | 3 | 9 |
+| 4 | 3 | 12 |
+| 5 | 3 | 15 |
 
-Ring 1 (6 Tiles direkt um das CC) ist immer sofort verfügbar. Der erste Ressourcen-Tile ist garantiert in Ring 1 (fixes Starttemplate, Typ variiert pro Run).
+**Maximum: 15 Terrain-Tiles** in der Kolonie-Zone (+ CC-Tile = 16 belegte Tiles). Bei vollständigem Ausbau (alle 10 anderen Gebäude) bleiben 5 Slots für Wohnhabitat — aber das Maximum liegt bei 6 Instanzen. Um das 6. Wohnhabitat zu bauen, muss ein anderes Gebäude weichen. Das erzeugt eine bewusste Knappheits-Entscheidung.
+
+> Die konkreten Zahlen (4/2/3/3/3) sind ein Startwert und liegen in `config/game.php → colony_zone_expansion`. Balancing-Anpassungen ohne Code-Änderungen möglich.
+
+**Kein Spieler-Wahlrecht bei der Freischaltung.** Die Expansion ist deterministisch. Die Spielerentscheidung liegt darin, *welches Gebäude* auf *welchen* der freigeschalteten Tiles gesetzt wird — nicht welche Tiles freigeschaltet werden. Das hält die Interaktion auf Mobile einfach (kein tile-selection-Popup beim CC-Levelup).
+
+Ring 1 (6 Tiles direkt um das CC) liefert die ersten 4–6 Colony-Zone-Tiles (sofern nicht alle regolith oder impassable). Der erste Ressourcen-Tile ist garantiert in Ring 1 (fixes Starttemplate, Typ variiert pro Run).
 
 ### Startposition
 
@@ -350,6 +360,10 @@ Die CC-Startposition ist pro Run zufällig. Das erzeugt unterschiedliche Ausgang
 
 - **Kolonie-Zone:** alle Tiles sofort sichtbar
 - **Exploration Zone:** Fog of War — Tiles werden einzeln per Navigation-AP aufgedeckt
+
+### Visuelle Zone-Abgrenzung
+
+Die Kolonie-Zone-Grenze ist auf kleinen Karten nicht mehr ein sauberer Ring, sondern ergibt sich aus dem `is_colony_zone`-Flag pro Tile. Das Frontend rendert Colony-Zone-Tiles mit einem warmen Basis-Tint (Farbschema: Weiß/Anthrazit/Rot-Palette), Exploration-Zone-Tiles mit einem kühleren, dunkleren Tint. Der Spieler erkennt die Grenze durch Farbe, nicht durch Position. Regolith-Tiles und impassable Tiles innerhalb der inneren Ringe sind immer Exploration Zone — sie wirken als visuelle "Lücken" in der Colony Zone, was die unterschiedliche Funktion deutlich kommuniziert.
 
 ### Tile-Typen und Schwierigkeit
 
@@ -448,10 +462,10 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 | `colony_id` | FK → glx_colonies | |
 | `q` | integer | Axial-Koordinate |
 | `r` | integer | Axial-Koordinate |
-| `ring` | integer | 0 = CC-Tile, 1–4 = Ring-Nummer |
+| `ring` | integer | 0 = CC-Tile, 1–3 = Ring-Nummer (Karte hat max. 3 Ringe) |
 | `tile_type` | string | Primärer Typ, z.B. `regolith_rich` — sichtbar nach normalem Scan |
 | `event_type` | string nullable | Event-Overlay, NULL = kein Event — sichtbar erst nach Tiefenscan |
-| `is_ring_unlocked` | boolean | CC-Level hat diesen Ring freigeschaltet |
+| `is_colony_zone` | boolean | Tile gehört zur Kolonie-Zone (CC-Level-Expansion hat es freigeschaltet). Regolith- und impassable-Tiles sind immer false. |
 | `is_explored` | boolean | Normaler Scan (Nav-AP) abgeschlossen |
 | `is_deep_scanned` | boolean | Tiefenscan abgeschlossen — enthüllt `event_type` |
 | `resource_amount` | integer nullable | Verbleibende Ressourcenmenge |
@@ -519,6 +533,8 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 **Startsituation:** CC Lv1 = 10, 0 Wohnhabitate → Supply-Cap = **10**. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap springt auf 18.
 **Hard-Cap:** 200 Supply.
+
+> **Tile-Budget:** 10 Nicht-CC-Gebäude + 5 Wohnhabitat = 15 Tiles (voll). Wer das 6. Wohnhabitat will, muss ein anderes Gebäude opfern — bewusste Designentscheidung für Knappheit.
 
 > **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung 200 schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
 

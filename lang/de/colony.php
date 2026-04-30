@@ -50,6 +50,7 @@ return [
     'error_no_nav_ap'           => 'Nicht genug Navigations-AP.',
     'error_no_nav_ap_2'         => 'Nicht genug Navigations-AP (2 benötigt).',
     'error_tile_not_buildable'  => 'Nur bebaubare Terrain-Tiles erlaubt.',
+    'error_tile_outside_colony' => 'Dieses Tile liegt außerhalb der Koloniezone.',
     'error_tile_occupied'       => 'Tile bereits belegt.',
     'error_no_construction_ap'  => 'Nicht genug Bau-AP.',
     'error_building_not_found'  => 'Gebäude nicht gefunden.',
