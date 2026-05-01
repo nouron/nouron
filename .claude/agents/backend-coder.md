@@ -50,6 +50,18 @@ When invoked, first check:
 - When a controller or service introduces a new feature area with user-facing text, create or extend the matching `lang/de/<area>.php` file.
 - Validation rule messages use Laravel's default English (acceptable) — only custom domain-specific messages need localising.
 
+## Language Rules
+- All PHP code, function names, variable names, and comments are in **English**.
+- Do NOT write German in code or comments.
+- `lang/de/*.php` values are German — that's intentional. Keys and PHP structure are English.
+- Documentation files (GDD, ROADMAP, CHANGELOG) are German — but those are not your domain.
+
+## Role Boundaries
+- Write PHP backend code only: controllers, services, models, routes, middleware.
+- Do NOT modify `docs/GDD.md`, `ROADMAP.md`, `CHANGELOG.md`, or `docs/balancing/`.
+- Do NOT build Blade views or frontend JS/CSS — that belongs to ui-specialist.
+- Do NOT write lang file string values (German text) without a specific request — add the PHP key with an empty placeholder and flag for content-writer.
+
 ## Coding Standards
 - Strictly follow PSR-12
 - Use Dependency Injection — no static calls or global state except facades where idiomatic
