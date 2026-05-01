@@ -80,6 +80,8 @@ function colonyHexView(config) {
         buildings:         config.buildings ?? [],
         routes:            config.routes ?? {},
         i18n:              config.i18n ?? {},
+        apNav:             config.apNav ?? 0,
+        apConstruction:    config.apConstruction ?? 0,
         selectedTile:      null,
         buildMode:         false,
         pendingBuilding:   null,
@@ -106,11 +108,8 @@ function colonyHexView(config) {
 
         onTileClick(tile) {
             if (this.buildMode && this.pendingBuilding) {
-                const isValid = tile.is_explored
-                    && tile.tile_type.startsWith('terrain_')
-                    && tile.tile_type !== 'terrain_impassable'
-                    && !this.buildingForTile(tile);
-                if (isValid) this.doPlaceBuilding(tile);
+                if (isBuildableTile(tile) && !this.buildingForTile(tile))
+                    this.doPlaceBuilding(tile);
                 return;
             }
             this.selectTile(tile);
@@ -149,7 +148,9 @@ function colonyHexView(config) {
         },
 
         selectPendingBuilding(building) {
-            this.pendingBuilding = building;
+            this.pendingBuilding = (this.pendingBuilding?.building_id === building.building_id)
+                ? null
+                : building;
             this.$nextTick(() => this.redrawGrid());
         },
 
@@ -160,6 +161,7 @@ function colonyHexView(config) {
             if (res.ok) {
                 this.updateTile(res.tile);
                 this.selectedTile = res.tile;
+                this.updateAp(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -171,6 +173,7 @@ function colonyHexView(config) {
             if (res.ok) {
                 this.updateTile(res.tile);
                 this.selectedTile = res.tile;
+                this.updateAp(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -190,6 +193,7 @@ function colonyHexView(config) {
                 this.buildMode       = false;
                 this.pendingBuilding = null;
                 this.selectedTile    = tile;
+                this.updateAp(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -199,11 +203,19 @@ function colonyHexView(config) {
         async doInvestAp(building) {
             const res = await this.post(this.routes.investBuilding, {
                 building_id: building.building_id,
+                instance_id: building.instance_id ?? 1,
             });
             if (res.ok) {
                 this.updateBuilding(res.building);
-                // Refresh selectedTile reference so bars re-render
-                if (this.selectedTile) {
+                this.updateAp(res);
+                if (res.tiles) {
+                    this.tiles = res.tiles;
+                    if (this.selectedTile) {
+                        const updated = res.tiles.find(t => t.q === this.selectedTile.q && t.r === this.selectedTile.r);
+                        if (updated) this.selectedTile = updated;
+                    }
+                    this.$nextTick(() => this.redrawGrid());
+                } else if (this.selectedTile) {
                     this.selectedTile = { ...this.selectedTile };
                 }
             } else {
@@ -213,13 +225,20 @@ function colonyHexView(config) {
 
         // ── State helpers ─────────────────────────────────────────────────────
 
+        updateAp(res) {
+            if (res.apNav          !== undefined) this.apNav          = res.apNav;
+            if (res.apConstruction !== undefined) this.apConstruction = res.apConstruction;
+        },
+
         updateTile(tile) {
             const idx = this.tiles.findIndex(t => t.q === tile.q && t.r === tile.r);
             if (idx !== -1) this.tiles[idx] = tile;
         },
 
         updateBuilding(building) {
-            const idx = this.buildings.findIndex(b => b.building_id === building.building_id);
+            const idx = this.buildings.findIndex(
+                b => b.building_id === building.building_id && b.instance_id === building.instance_id
+            );
             if (idx !== -1) this.buildings[idx] = building;
             else this.buildings.push(building);
         },
@@ -272,6 +291,15 @@ function colonyHexView(config) {
             }).then(r => r.json());
         },
     };
+}
+
+// ── Tile helpers ──────────────────────────────────────────────────────────────
+
+function isBuildableTile(tile) {
+    return tile.is_colony_zone
+        && tile.is_explored
+        && tile.tile_type.startsWith('terrain_')
+        && tile.tile_type !== 'terrain_impassable';
 }
 
 // ── SVG hex grid renderer ─────────────────────────────────────────────────────
@@ -336,11 +364,9 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     const isCC         = tile.q === 0 && tile.r === 0;
     const isImpassable = tile.tile_type === 'terrain_impassable' && tile.is_explored;
 
-    // Build-mode: valid placement tile (explored terrain, not occupied)
+    // Build-mode: valid placement tile (colony zone, explored terrain, not occupied)
     const isBuildTarget = opts.buildMode && opts.pendingBuilding
-        && tile.is_explored
-        && tile.tile_type.startsWith('terrain_')
-        && tile.tile_type !== 'terrain_impassable'
+        && isBuildableTile(tile)
         && !buildingsByTile?.has(`${tile.q},${tile.r}`);
 
     const points  = hexCorners(cx, cy, size);
@@ -357,7 +383,7 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     polygon._defaultStroke  = stroke;
     polygon._defaultStrokeW = isImpassable ? '0' : strokeW;
 
-    if (tile.is_ring_unlocked && !isImpassable) {
+    if (!isImpassable) {
         g.classList.add('tile--unlocked');
         g.addEventListener('click', () => opts.onSelect && opts.onSelect(tile));
     }
@@ -437,16 +463,16 @@ function hexCorners(cx, cy, size) {
 }
 
 function getTileColor(tile) {
-    if (!tile.is_ring_unlocked)                   return LOCKED_COLOR;
-    if (!tile.is_explored)                        return FOG_COLOR;
-    if (tile.q === 0 && tile.r === 0)             return CC_COLOR;
-    if (tile.is_deep_scanned && tile.event_type)  return EVENT_COLOR;
+    if (!tile.is_explored && !tile.is_colony_zone) return LOCKED_COLOR;   // unexplored exploration zone
+    if (!tile.is_explored)                         return FOG_COLOR;        // unexplored colony zone (shouldn't normally appear)
+    if (tile.q === 0 && tile.r === 0)              return CC_COLOR;
+    if (tile.is_deep_scanned && tile.event_type)   return EVENT_COLOR;
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
 }
 
 function getTileStroke(tile, isCC) {
     if (isCC)                                         return [CC_STROKE,     '2.5'];
-    if (!tile.is_ring_unlocked)                       return [LOCKED_STROKE, '1'];
+    if (!tile.is_explored && !tile.is_colony_zone)    return [LOCKED_STROKE, '1'];
     if (!tile.is_explored)                            return [FOG_STROKE,    '1'];
     if (tile.is_deep_scanned && tile.event_type)      return [EVENT_STROKE,  '1.5'];
     if (tile.tile_type === 'terrain_impassable')      return ['#555',        '0'];

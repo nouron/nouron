@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\ColonyTileService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,6 @@ use Illuminate\Support\Facades\DB;
  *   Ring 0:   Kommandozentrale (terrain_empty)
  *   Ring 1-2: Kolonie-Zone — terrain tiles only (terrain_empty / hazard), buildings placed
  *   Ring 3:   Exploration-Zone — regolith + events, mostly scouted; Harvester placed here
- *   Ring 4:   Exploration-Zone (frontier) — regolith + impassable, partially unlocked
  *
  * Game-Design rule: Regolith-Tiles are NOT buildable except for the Harvester.
  *                   Regular buildings stand only on terrain tiles.
@@ -23,6 +23,12 @@ class ColonySeedDemo extends Command
 {
     protected $signature   = 'colony:seed-demo {colony_id=1 : Colony ID to seed}';
     protected $description = 'Seed a colony with a rich ~80% built-out demo state for testing';
+
+    public function __construct(
+        private readonly ColonyTileService $tileService,
+    ) {
+        parent::__construct();
+    }
 
     // Harvester placed on a regolith tile in ring 3
     private const HARVESTER_TILE = [3, 0];
@@ -34,24 +40,19 @@ class ColonySeedDemo extends Command
         31 => [-1,  0],  // sciencelab     (ring 1, terrain)
         41 => [0,  -1],  // bioFacility    (ring 1, terrain)
         44 => [2,   0],  // hangar         (ring 2, terrain)
-        46 => [1,   1],  // hospital       (ring 2, terrain)
-        32 => [2,  -1],  // temple         (ring 2, terrain)
         52 => [-2,  0],  // bar            (ring 2, terrain)
-        50 => [-1, -1],  // denkmal        (ring 2, terrain)
         27 => [3,   0],  // harvester      (ring 3, regolith — exploration zone)
+        // hospital (46), temple (32), denkmal (50) intentionally unplaced — available in Build Mode
     ];
 
     private const BUILDING_LEVELS = [
-        25 => 3,
+        25 => 5,  // CC level 5 for demo (all 15 colony zone tiles unlocked)
         27 => 1,
         28 => 2,
         30 => 3,
         31 => 2,
-        32 => 1,
         41 => 1,
         44 => 1,
-        46 => 1,
-        50 => 1,
         52 => 1,
     ];
 
@@ -69,10 +70,16 @@ class ColonySeedDemo extends Command
         DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
 
         $this->generateTiles($colonyId);
-        $this->info('  ✓ Tiles generated (rings 0–4, 61 tiles)');
+        $this->info('  ✓ Tiles generated (rings 0–3, 37 tiles)');
+
+        $this->tileService->assignColonyZone($colonyId, 5);  // CC Lv5: all 15 colony zone tiles
+        $this->info('  ✓ Colony zone assigned (CC Lv5, 15 terrain tiles)');
 
         $this->assignBuildingTiles($colonyId);
-        $this->info('  ✓ Building positions assigned');
+        $this->info('  ✓ Building positions assigned (hospital/temple/denkmal left unplaced)');
+
+        $this->ensurePilotAdvisor($colonyId);
+        $this->info('  ✓ Pilot advisor ensured (navigation AP)');
 
         $this->line('Done.');
         return self::SUCCESS;
@@ -91,25 +98,16 @@ class ColonySeedDemo extends Command
             '2,-3'  => 'event_wreck',
         ];
 
-        for ($ring = 0; $ring <= 4; $ring++) {
+        for ($ring = 0; $ring <= 3; $ring++) {
             foreach ($this->ringCoords($ring) as [$q, $r]) {
                 $seed = abs($q * 7 + $r * 13 + $colonyId * 3);
                 $key  = "{$q},{$r}";
 
-                // Unlock/explore/scan state per ring
-                $isRingUnlocked = match (true) {
-                    $ring <= 2  => true,
-                    $ring === 3 => true,                   // all ring-3 unlocked (active scouting)
-                    default     => ($seed % 24) < 10,      // ring 4: ~42% unlocked
-                };
-                $isExplored = match (true) {
-                    $ring <= 2  => true,
-                    $ring === 3 => $isRingUnlocked,        // all unlocked ring-3 explored
-                    default     => $isRingUnlocked && ($seed % 6) < 3,
-                };
+                // Explore/scan state per ring
+                $isExplored = $ring <= 3;  // all rings fully explored in demo
                 $isDeepScanned = match (true) {
                     $ring <= 2  => true,
-                    $ring === 3 => $isExplored && ($seed % 3) < 2,  // ~67% deep-scanned
+                    $ring === 3 => ($seed % 3) < 2,   // ~67% deep-scanned
                     default     => false,
                 };
 
@@ -133,7 +131,7 @@ class ColonySeedDemo extends Command
                     'ring'             => $ring,
                     'tile_type'        => $tileType,
                     'event_type'       => $eventType,
-                    'is_ring_unlocked' => $isRingUnlocked,
+                    'is_colony_zone'   => false,
                     'is_explored'      => $isExplored,
                     'is_deep_scanned'  => $isDeepScanned,
                     'resource_amount'  => $resourceAmount,
@@ -151,7 +149,7 @@ class ColonySeedDemo extends Command
 
     /**
      * Rings 0–2 are the colony zone: terrain tiles only (no regolith).
-     * Rings 3–4 are the exploration zone: regolith + hazards + impassable.
+     * Ring 3 is the exploration zone: regolith + hazards + impassable.
      * The harvester tile at (3,0) is always regolith_rich.
      */
     private function tileTypeFor(int $q, int $r, int $ring, int $seed): array
@@ -171,7 +169,7 @@ class ColonySeedDemo extends Command
             return [$types[$seed % count($types)], 0];
         }
 
-        // Exploration zone (rings 3–4)
+        // Exploration zone (ring 3)
         $types = match ($ring) {
             3 => ['regolith_normal', 'regolith_rich', 'regolith_poor', 'terrain_empty',
                   'terrain_hazard', 'regolith_normal', 'terrain_impassable', 'regolith_poor'],
@@ -216,6 +214,14 @@ class ColonySeedDemo extends Command
 
     private function assignBuildingTiles(int $colonyId): void
     {
+        // Clear tile assignment for buildings NOT in BUILDING_PLACEMENTS
+        // (so they appear as "available to build" in Build Mode)
+        $placedIds = array_keys(self::BUILDING_PLACEMENTS);
+        DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereNotIn('building_id', $placedIds)
+            ->update(['tile_x' => null, 'tile_y' => null, 'level' => 0, 'ap_spend' => 0]);
+
         foreach (self::BUILDING_PLACEMENTS as $buildingId => [$tileX, $tileY]) {
             $level = self::BUILDING_LEVELS[$buildingId] ?? 1;
 
@@ -230,5 +236,20 @@ class ColonySeedDemo extends Command
                     'ap_spend'      => 0,
                 ]);
         }
+    }
+
+    private function ensurePilotAdvisor(int $colonyId): void
+    {
+        $pilotId = (int) config('advisors.pilot.id');
+        $userId  = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
+
+        DB::table('advisors')->insertOrIgnore([
+            'user_id'                => $userId,
+            'personell_id'           => $pilotId,
+            'colony_id'              => $colonyId,
+            'rank'                   => 1,
+            'active_ticks'           => 0,
+            'unavailable_until_tick' => null,
+        ]);
     }
 }

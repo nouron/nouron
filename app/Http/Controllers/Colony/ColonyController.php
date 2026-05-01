@@ -69,7 +69,10 @@ class ColonyController extends BaseController
                 return $b;
             });
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings'));
+        $navAp          = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
+        $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
+
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -78,20 +81,18 @@ class ColonyController extends BaseController
     {
         $data   = $request->validate(['q' => 'required|integer', 'r' => 'required|integer']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $result = $this->tileService->exploreTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json(
-            $this->tileService->exploreTile($colony->id, (int) $data['q'], (int) $data['r'])
-        );
+        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
     }
 
     public function deepScanTile(Request $request): JsonResponse
     {
         $data   = $request->validate(['q' => 'required|integer', 'r' => 'required|integer']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $result = $this->tileService->deepScanTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json(
-            $this->tileService->deepScanTile($colony->id, (int) $data['q'], (int) $data['r'])
-        );
+        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
     }
 
     // ── Building actions ──────────────────────────────────────────────────────
@@ -102,22 +103,27 @@ class ColonyController extends BaseController
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)->where('building_id', 25)->value('level') ?? 0;
 
-        // Building IDs already placed on a tile
-        $placed = DB::table('colony_buildings')
+        $placedCounts = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->whereNotNull('tile_x')
-            ->pluck('building_id')
+            ->selectRaw('building_id, COUNT(*) as cnt')
+            ->groupBy('building_id')
+            ->pluck('cnt', 'building_id')
             ->toArray();
 
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
-                     'required_building_id', 'required_building_level')
+                     'required_building_id', 'required_building_level', 'is_instanced')
             ->get()
-            ->filter(function ($b) use ($ccLevel, $placed) {
+            ->filter(function ($b) use ($ccLevel, $placedCounts) {
                 if ($b->id === 25) return false;  // CC — already exists
-                if ($b->id === 27) return false;  // Harvester — special regolith placement
-                if (in_array($b->id, $placed)) return false;
-                // Prerequisite: if requires CC, check CC level
+                if ($b->id === 27) return false;  // Harvester — regolith placement only
+                $count = $placedCounts[$b->id] ?? 0;
+                if ($b->is_instanced) {
+                    if ($count >= ($b->max_level ?? PHP_INT_MAX)) return false;
+                } else {
+                    if ($count > 0) return false;
+                }
                 if ($b->required_building_id === 25 && $ccLevel < (int) ($b->required_building_level ?? 1)) {
                     return false;
                 }
@@ -130,6 +136,7 @@ class ColonyController extends BaseController
                 'ap_for_levelup'    => $b->ap_for_levelup,
                 'max_level'         => $b->max_level,
                 'max_status_points' => $b->max_status_points,
+                'is_instanced'      => (bool) $b->is_instanced,
             ])
             ->values();
 
@@ -156,6 +163,8 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_found')]);
         if (!$tile->is_explored)
             return response()->json(['ok' => false, 'error' => __('colony.error_not_explored')]);
+        if (!$tile->is_colony_zone)
+            return response()->json(['ok' => false, 'error' => __('colony.error_tile_outside_colony')]);
         if (!str_starts_with($tile->tile_type, 'terrain_') || $tile->tile_type === 'terrain_impassable')
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_buildable')]);
 
@@ -174,58 +183,84 @@ class ColonyController extends BaseController
         if (!$building)
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
-        $existing = DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->where('building_id', $data['building_id'])
-            ->first();
-
-        if ($existing) {
-            DB::table('colony_buildings')
+        if ($building->is_instanced) {
+            $nextInstanceId = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $data['building_id'])
-                ->update(['tile_x' => $data['q'], 'tile_y' => $data['r'], 'ap_spend' => 1]);
-        } else {
+                ->max('instance_id') + 1;
             DB::table('colony_buildings')->insert([
                 'colony_id'     => $colony->id,
                 'building_id'   => $data['building_id'],
-                'instance_id'   => 1,
+                'instance_id'   => $nextInstanceId,
                 'level'         => 0,
                 'status_points' => $building->max_status_points ?? 20,
                 'ap_spend'      => 1,
                 'tile_x'        => $data['q'],
                 'tile_y'        => $data['r'],
             ]);
+        } else {
+            $nextInstanceId = 1;
+            $existing = DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', $data['building_id'])
+                ->first();
+
+            if ($existing) {
+                DB::table('colony_buildings')
+                    ->where('colony_id', $colony->id)
+                    ->where('building_id', $data['building_id'])
+                    ->update(['tile_x' => $data['q'], 'tile_y' => $data['r'], 'ap_spend' => 1]);
+                $nextInstanceId = (int) $existing->instance_id;
+            } else {
+                DB::table('colony_buildings')->insert([
+                    'colony_id'     => $colony->id,
+                    'building_id'   => $data['building_id'],
+                    'instance_id'   => 1,
+                    'level'         => 0,
+                    'status_points' => $building->max_status_points ?? 20,
+                    'ap_spend'      => 1,
+                    'tile_x'        => $data['q'],
+                    'tile_y'        => $data['r'],
+                ]);
+            }
         }
 
         $this->personellService->lockActionPoints('construction', $colony->id, 1);
 
-        $row = $this->fetchBuildingRow($colony->id, $data['building_id']);
+        $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
-        return response()->json(['ok' => true, 'building' => $row]);
+        return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id)]);
     }
 
     public function investBuilding(Request $request): JsonResponse
     {
-        $data   = $request->validate(['building_id' => 'required|integer']);
-        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $data = $request->validate([
+            'building_id' => 'required|integer',
+            'instance_id' => 'sometimes|integer',
+        ]);
+        $colony     = $this->colonyService->getPrimeColony(Auth::id());
+        $buildingId = (int) $data['building_id'];
+        $instanceId = (int) ($data['instance_id'] ?? 1);
 
         if ($this->personellService->getConstructionPoints($colony->id) < 1)
             return response()->json(['ok' => false, 'error' => __('colony.error_no_construction_ap')]);
 
         $row = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', $data['building_id'])
+            ->where('building_id', $buildingId)
+            ->where('instance_id', $instanceId)
             ->first();
 
         if (!$row)
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
-        $building   = DB::table('buildings')->where('id', $data['building_id'])->first();
+        $building   = DB::table('buildings')->where('id', $buildingId)->first();
         $newApSpend = min($row->ap_spend + 1, $building->ap_for_levelup);
 
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', $data['building_id'])
+            ->where('building_id', $buildingId)
+            ->where('instance_id', $instanceId)
             ->update(['ap_spend' => $newApSpend]);
 
         $this->personellService->lockActionPoints('construction', $colony->id, 1);
@@ -234,15 +269,30 @@ class ColonyController extends BaseController
         if ($newApSpend >= $building->ap_for_levelup) {
             DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', $data['building_id'])
+                ->where('building_id', $buildingId)
+                ->where('instance_id', $instanceId)
                 ->update(['level' => $row->level + 1, 'ap_spend' => 0]);
             $leveledUp = true;
         }
 
+        // CC level-up: recalculate colony zone and include updated tiles in response
+        if ($leveledUp && $buildingId === 25) {
+            $this->tileService->assignColonyZone($colony->id, $row->level + 1);
+            $tiles = $this->tileService->getTilesForColony($colony->id)->values()->toArray();
+            return response()->json([
+                'ok'         => true,
+                'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
+                'leveled_up' => true,
+                'tiles'      => $tiles,
+                ...$this->currentAp($colony->id),
+            ]);
+        }
+
         return response()->json([
-            'ok'        => true,
-            'building'  => $this->fetchBuildingRow($colony->id, $data['building_id']),
+            'ok'         => true,
+            'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
+            ...$this->currentAp($colony->id),
         ]);
     }
 
@@ -264,12 +314,21 @@ class ColonyController extends BaseController
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function fetchBuildingRow(int $colonyId, int $buildingId): object
+    private function currentAp(int $colonyId): array
+    {
+        return [
+            'apNav'          => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
+            'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+        ];
+    }
+
+    private function fetchBuildingRow(int $colonyId, int $buildingId, int $instanceId = 1): object
     {
         $row = DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colonyId)
             ->where('colony_buildings.building_id', $buildingId)
+            ->where('colony_buildings.instance_id', $instanceId)
             ->select(
                 'colony_buildings.building_id',
                 'colony_buildings.instance_id',

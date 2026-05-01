@@ -8,6 +8,8 @@ window.__colonyViewData = {
     colony:    @json(['id' => $colony->id, 'name' => $colony->name]),
     ccLevel:   {{ (int)$ccLevel }},
     buildings: @json($buildings),
+    apNav:          {{ (int)$navAp }},
+    apConstruction: {{ (int)$constructionAp }},
     routes: {
         explore:            '{{ route('colony.tile.explore') }}',
         deepScan:           '{{ route('colony.tile.deep-scan') }}',
@@ -38,6 +40,10 @@ window.__colonyViewData = {
             <div class="hex-canvas-header">
                 <h2>{{ $colony->name }}</h2>
                 <small x-text="statusLine()"></small>
+                <div class="ap-chips">
+                    <span class="ap-chip ap-chip--nav" x-text="`Nav ${apNav} AP`"></span>
+                    <span class="ap-chip ap-chip--build" x-text="`Bau ${apConstruction} AP`"></span>
+                </div>
                 <button class="build-btn"
                         :class="{ 'build-btn--active': buildMode }"
                         @click="toggleBuildMode()">
@@ -90,9 +96,9 @@ window.__colonyViewData = {
                         <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
 
                         <div class="tile-status-chips">
-                            <span x-show="!selectedTile.is_ring_unlocked"
+                            <span x-show="!selectedTile.is_explored && !selectedTile.is_colony_zone"
                                   class="chip chip--locked">{{ __('colony.chip_locked') }}</span>
-                            <span x-show="selectedTile.is_ring_unlocked && !selectedTile.is_explored"
+                            <span x-show="!selectedTile.is_explored && selectedTile.is_colony_zone"
                                   class="chip chip--fog">{{ __('colony.chip_unexplored') }}</span>
                             <span x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned && !selectedTile.has_signal"
                                   class="chip chip--explored">{{ __('colony.chip_explored') }}</span>
@@ -179,7 +185,7 @@ window.__colonyViewData = {
 
                         {{-- Context action buttons --}}
                         <div class="sidebar-actions">
-                            <template x-if="selectedTile.is_ring_unlocked && !selectedTile.is_explored">
+                            <template x-if="!selectedTile.is_explored">
                                 <button class="sidebar-action-btn" @click="doExploreTile(selectedTile)">
                                     {{ __('colony.explore') }}
                                 </button>

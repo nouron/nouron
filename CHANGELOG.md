@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-04-30
+
+- **Phase 3d — Colony Zone Expansion**: `is_ring_unlocked` → `is_colony_zone` umbenannt (DB-Migration, PRAGMA-Fix für stale `v_trade_researches`-View). Koloniezone schaltet nun individuelle Terrain-Tiles frei statt ganzer Ringe — CC Lv1–5 entspricht kumulativ 4/2/3/3/3 = max. 15 Tiles (config: `game.colony_zone_expansion`). `assignColonyZone()` in `ColonyTileService` berechnet die Zone deterministisch in Ringfolge, überspringt Regolith/impassable, setzt colony-zone-Tiles automatisch auf explored. Karte auf 3 Ringe (37 Tiles) als Default reduziert. Mehrfach-Instanzen für `is_instanced=true`-Gebäude (Wohnhabitat max 6, Hangar) in `availableBuildings()` und `placeBuilding()` implementiert. CC Level-Up gibt aktualisierte Tile-Liste zurück → Frontend (Alpine) aktualisiert Grid sofort. Demo-Seed auf CC Lv5 + 3 Ringe aktualisiert. 393 Tests grün.
+
 ## 2026-04-28
 
 - **GDD §4 Bauregeln** (`docs/GDD.md`): Harvester/Regolith-Trennungsregel formal dokumentiert. Neue Tabelle und Bullet-Regeln: Harvester darf ausschließlich auf `regolith_*`-Tiles stehen, reguläre Gebäude nur auf Terrain-Tiles. Querverweis in §4a (Kolonieoberfläche) ergänzt.
