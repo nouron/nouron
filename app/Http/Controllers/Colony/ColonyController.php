@@ -176,7 +176,7 @@ class ColonyController extends BaseController
         if ($occupied)
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_occupied')]);
 
-        if ($this->personellService->getConstructionPoints($colony->id) < 1)
+        if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
             return response()->json(['ok' => false, 'error' => __('colony.error_no_construction_ap')]);
 
         $building = DB::table('buildings')->where('id', $data['building_id'])->first();
@@ -225,7 +225,8 @@ class ColonyController extends BaseController
             }
         }
 
-        $this->personellService->lockActionPoints('construction', $colony->id, 1);
+        if (!config('game.bypass.ap_checks'))
+            $this->personellService->lockActionPoints('construction', $colony->id, 1);
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
@@ -242,7 +243,7 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if ($this->personellService->getConstructionPoints($colony->id) < 1)
+        if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
             return response()->json(['ok' => false, 'error' => __('colony.error_no_construction_ap')]);
 
         $row = DB::table('colony_buildings')
@@ -263,7 +264,8 @@ class ColonyController extends BaseController
             ->where('instance_id', $instanceId)
             ->update(['ap_spend' => $newApSpend]);
 
-        $this->personellService->lockActionPoints('construction', $colony->id, 1);
+        if (!config('game.bypass.ap_checks'))
+            $this->personellService->lockActionPoints('construction', $colony->id, 1);
 
         $leveledUp = false;
         if ($newApSpend >= $building->ap_for_levelup) {

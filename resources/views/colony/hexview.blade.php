@@ -28,6 +28,8 @@ window.__colonyViewData = {
         buildModeHint:     '{{ __('colony.build_mode_hint') }}',
         noBuildings:       '{{ __('colony.no_buildings') }}',
         constructionSite:  '{{ __('colony.construction_site') }}',
+        discoveryTitle:    '{{ __('colony.discovery_title') }}',
+        discoveryDismiss:  '{{ __('colony.discovery_dismiss') }}',
     },
 };
 </script>
@@ -217,5 +219,27 @@ window.__colonyViewData = {
         </aside>
 
     </div>
+
+    {{-- Event discovery popup ------------------------------------------------
+         Uses the native <dialog> element (PicoCSS styles it out of the box).
+         x-effect watches eventDiscovery and calls the DOM API to open/close,
+         keeping Alpine state as the single source of truth.
+    --}}
+    <dialog x-ref="discoveryDialog"
+            x-effect="eventDiscovery ? $refs.discoveryDialog.showModal() : $refs.discoveryDialog.close()"
+            @close="eventDiscovery = null">
+        <article>
+            <header>
+                <h3 x-text="i18n.discoveryTitle"></h3>
+            </header>
+            <p class="discovery-event-name"
+               x-text="eventDiscovery ? eventTypeName(eventDiscovery.event_type) : ''"></p>
+            <footer>
+                <button @click="dismissEventDiscovery()"
+                        x-text="i18n.discoveryDismiss"></button>
+            </footer>
+        </article>
+    </dialog>
+
 </div>
 @endsection

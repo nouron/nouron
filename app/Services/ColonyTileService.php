@@ -31,13 +31,14 @@ class ColonyTileService
         if (!$tile)             return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
         if ($tile->is_explored) return ['ok' => false, 'error' => __('colony.error_already_explored')];
 
-        if ($this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
+        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
         $tile->save();
-        $this->personellService->lockActionPoints('navigation', $colonyId, 1);
+        if (!config('game.bypass.ap_checks'))
+            $this->personellService->lockActionPoints('navigation', $colonyId, 1);
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
     }
@@ -51,13 +52,14 @@ class ColonyTileService
         if ($tile->event_type === null) return ['ok' => false, 'error' => __('colony.error_no_signal')];
         if ($tile->is_deep_scanned)    return ['ok' => false, 'error' => __('colony.error_already_scanned')];
 
-        if ($this->personellService->getAvailableActionPoints('navigation', $colonyId) < 2) {
+        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 2) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap_2')];
         }
 
         $tile->is_deep_scanned = true;
         $tile->save();
-        $this->personellService->lockActionPoints('navigation', $colonyId, 2);
+        if (!config('game.bypass.ap_checks'))
+            $this->personellService->lockActionPoints('navigation', $colonyId, 2);
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
     }
