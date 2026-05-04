@@ -17,6 +17,7 @@ window.__colonyViewData = {
         buildingsAvailable: '{{ route('colony.buildings.available') }}',
         placeBuilding:      '{{ route('colony.building.place') }}',
         investBuilding:     '{{ route('colony.building.invest') }}',
+        dismissHint:        '{{ route('colony.hint.dismiss') }}',
     },
     i18n: {
         explore:           '{{ __('colony.explore') }}',
@@ -54,31 +55,18 @@ window.__colonyViewData = {
                 </button>
             </div>
 
-            {{-- Onboarding hint bar — shown below the header, above the SVG grid.
-                 Isolated x-data to avoid coupling with colonyHexView state.
-                 Text is server-rendered; only visibility is toggled client-side. --}}
-            @if($activeHint)
+            {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
+                 Updates automatically after any AJAX action that changes hint state. --}}
             <div class="hint-bar"
-                 x-data="{ hint: @json($activeHint), visible: true }"
-                 x-show="visible"
-                 x-transition>
+                 x-show="activeHint"
+                 x-cloak>
                 <span class="hint-bar__icon" aria-hidden="true">!</span>
-                <span class="hint-bar__text">{{ __($activeHint['text_key']) }}</span>
-                <a class="hint-bar__link" href="{{ $activeHint['target_url'] }}">→</a>
+                <span class="hint-bar__text" x-text="activeHint?.text"></span>
+                <a class="hint-bar__link" :href="activeHint?.target_url">→</a>
                 <button class="hint-bar__dismiss"
                         aria-label="Dismiss hint"
-                        @click="
-                            fetch('{{ route('colony.hint.dismiss') }}', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
-                                },
-                                body: JSON.stringify({ hint_key: hint.key })
-                            }).then(() => { visible = false; })
-                        ">×</button>
+                        @click="dismissHint()">×</button>
             </div>
-            @endif
 
             <div x-ref="hexgrid" class="hex-canvas"></div>
         </div>

@@ -64,11 +64,15 @@ class OnboardingHintServiceTest extends TestCase
 
     // ── Guard: disabled / missing prefs ──────────────────────────────────────
 
-    public function test_returns_null_when_no_prefs_row(): void
+    public function test_returns_hint_when_no_prefs_row(): void
     {
+        // Missing row = hints enabled by default. Hint 1 should still fire.
         DB::table('user_preferences')->where('user_id', $this->userId)->delete();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint, 'Missing prefs row must not suppress hints (default = enabled)');
+        $this->assertEquals(1, $hint['rank']);
     }
 
     public function test_returns_null_when_onboarding_hints_disabled(): void

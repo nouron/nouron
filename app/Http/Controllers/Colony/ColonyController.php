@@ -73,7 +73,7 @@ class ColonyController extends BaseController
 
         $navAp          = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
-        $activeHint     = $this->hintService->getActiveHint($colony->id, Auth::id());
+        $activeHint     = $this->resolveHint($colony->id);
 
         return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint'));
     }
@@ -86,7 +86,8 @@ class ColonyController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->exploreTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+        return response()->json([...$result, ...$extra]);
     }
 
     public function deepScanTile(Request $request): JsonResponse
@@ -95,7 +96,8 @@ class ColonyController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->deepScanTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+        return response()->json([...$result, ...$extra]);
     }
 
     // ── Building actions ──────────────────────────────────────────────────────
@@ -233,7 +235,7 @@ class ColonyController extends BaseController
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
-        return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id)]);
+        return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)]);
     }
 
     public function investBuilding(Request $request): JsonResponse
@@ -289,6 +291,7 @@ class ColonyController extends BaseController
                 'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
                 'leveled_up' => true,
                 'tiles'      => $tiles,
+                'activeHint' => $this->resolveHint($colony->id),
                 ...$this->currentAp($colony->id),
             ]);
         }
@@ -297,6 +300,7 @@ class ColonyController extends BaseController
             'ok'         => true,
             'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
+            'activeHint' => $this->resolveHint($colony->id),
             ...$this->currentAp($colony->id),
         ]);
     }
@@ -328,6 +332,13 @@ class ColonyController extends BaseController
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function resolveHint(int $colonyId): ?array
+    {
+        $hint = $this->hintService->getActiveHint($colonyId, Auth::id());
+        if ($hint) $hint['text'] = __($hint['text_key']);
+        return $hint;
+    }
 
     private function currentAp(int $colonyId): array
     {

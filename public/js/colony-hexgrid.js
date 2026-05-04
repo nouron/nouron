@@ -173,6 +173,7 @@ function colonyHexView(config) {
                 this.updateTile(res.tile);
                 this.selectedTile = res.tile;
                 this.updateAp(res);
+                this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -185,6 +186,7 @@ function colonyHexView(config) {
                 this.updateTile(res.tile);
                 this.selectedTile = res.tile;
                 this.updateAp(res);
+                this.updateHint(res);
                 // Show discovery popup when the scan reveals an event on this tile
                 if (res.tile.event_type) {
                     this.eventDiscovery = res.tile;
@@ -209,6 +211,7 @@ function colonyHexView(config) {
                 this.pendingBuilding = null;
                 this.selectedTile    = tile;
                 this.updateAp(res);
+                this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -223,6 +226,7 @@ function colonyHexView(config) {
             if (res.ok) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
+                this.updateHint(res);
                 if (res.tiles) {
                     this.tiles = res.tiles;
                     if (this.selectedTile) {
@@ -243,6 +247,19 @@ function colonyHexView(config) {
         updateAp(res) {
             if (res.apNav          !== undefined) this.apNav          = res.apNav;
             if (res.apConstruction !== undefined) this.apConstruction = res.apConstruction;
+        },
+
+        updateHint(res) {
+            if ('activeHint' in res) this.activeHint = res.activeHint;
+        },
+
+        async dismissHint() {
+            if (!this.activeHint) return;
+            const res = await this.post(this.routes.dismissHint, { hint_key: this.activeHint.key });
+            if (res.ok) {
+                this.activeHint = res.hint ?? null;
+                this.$nextTick(() => this.redrawGrid());
+            }
         },
 
         updateTile(tile) {

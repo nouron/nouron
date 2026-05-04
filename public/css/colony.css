@@ -736,6 +736,10 @@ dialog[x-ref="discoveryDialog"] {
     color: #78350f;
 }
 
+[x-cloak] {
+    display: none !important;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Stack grid + sidebar at 900px and below */

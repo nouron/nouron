@@ -32,12 +32,12 @@ class OnboardingHintService
             ->where('user_id', $userId)
             ->first();
 
-        // Bail out if prefs row missing or onboarding hints disabled.
-        if (!$prefs || !$prefs->onboarding_hints) {
+        // Missing row = hints enabled (default). Bail only when explicitly disabled.
+        if ($prefs && !$prefs->onboarding_hints) {
             return null;
         }
 
-        $dismissed = $this->parseDismissed($prefs->dismissed_hints ?? null);
+        $dismissed = $this->parseDismissed($prefs?->dismissed_hints ?? null);
 
         $currentTick = $this->tickService->getTickCount();
 

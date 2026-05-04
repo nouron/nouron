@@ -6,6 +6,8 @@
 - **ROADMAP Phase 3e konkretisiert**: Platzhalter durch 7-Schritt-Task-Breakdown ersetzt (Schritt 1: Infrastruktur/Config → Schritt 7: Integration/Settings). Alle Aufgaben mit Agenten-Zuordnungen und Abhängigkeitsreihenfolge versehen.
 - Kein Code implementiert — reine Design- und Planungsarbeit.
 
+- **Hint-Leiste reaktiv gemacht**: Hint-Bar aus isoliertem `@if($activeHint)`/`x-data`-Block in den `colonyHexView`-Alpine-Scope integriert. Controller-Methoden `exploreTile`, `deepScanTile`, `placeBuilding`, `investBuilding` geben jetzt `activeHint` in jeder Erfolgs-Response zurück. Neuer `resolveHint()`-Helper im Controller übersetzt den Text serverseitig (`text`-Feld). JS: `updateHint(res)` + `dismissHint()`-Methode im Component. Blade: `x-show="activeHint"` + `x-cloak` statt bedingtem Rendering. `ui-specialist.md` mit Muster-Dokumentation ergänzt.
+
 **Phase 3e Implementierung (Schritte 1–4):**
 
 - **Schritt 1 — Infrastruktur**: Migration `user_preferences`-Tabelle mit `onboarding_hints BOOLEAN DEFAULT 1` und `dismissed_hints TEXT nullable`. `config/game.php → onboarding`-Block mit 5 Schwellwerten. `UserController::updateOnboardingHints()` + Route `PATCH /user/settings/onboarding` + Toggle in `settings.blade.php`.

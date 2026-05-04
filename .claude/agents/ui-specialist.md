@@ -68,5 +68,25 @@ When invoked, first check:
 - **Hex grid** (pointy-top axial): ring = `max(|q|, |r|, |q+r|)`. SVG tiles are `<polygon>` elements rendered from axial coordinates.
 - **Colony zone tiles** (bebaubar): warm grey (`#c8cdd6`). Exploration zone explored tiles: cooler grey (`#a8aeb8`). Fog: `#d8dce6`. Locked (exploration, unexplored): `#b0b8c8`.
 
+## AJAX-Driven Reactive State Pattern (colony screen)
+
+When a server-side value needs to react to AJAX actions (e.g. an onboarding hint that disappears after the user does something), follow this pattern — NOT server-side Blade `@if`:
+
+**Server (controller):**
+- Add a private `resolveXxx(int $colonyId): ?array` helper that fetches + translates the value (adds a `text` field for pre-translated display strings).
+- Spread `'xxxState' => $this->resolveXxx($colony->id)` into **every AJAX success response** that could change the value. Only on `ok: true` paths.
+
+**Client (Alpine component):**
+- Store the value in Alpine state: `activeHint: config.activeHint ?? null`.
+- Add an `updateXxx(res)` helper that uses `'key' in res` (not `!== undefined`) to also catch `null` updates: `if ('activeHint' in res) this.activeHint = res.activeHint;`
+- Call `this.updateXxx(res)` in every action handler after `if (res.ok)`.
+- For user-triggered dismissals, implement the fetch as an Alpine method (`dismissHint()`) rather than inline `@click` fetch — this keeps the handler in the component and allows `$nextTick(() => this.redrawGrid())` afterward.
+
+**Blade:**
+- Use `x-show="activeHint"` + `x-cloak` instead of `@if($activeHint)`. `x-cloak` requires `[x-cloak] { display: none !important }` in CSS.
+- Dissolved isolated `x-data` wrappers that need to react to parent actions should be removed; wire directly into the parent Alpine scope.
+- Text: `x-text="activeHint?.text"` (uses the pre-translated `text` field).
+- Links: `:href="activeHint?.target_url"`.
+
 ## Output Format
 Deliver complete Blade/JS/CSS snippets. Flag any server-side data dependencies. Note any new `lang/de/` keys added — mark as `TODO` if German value not yet defined.
