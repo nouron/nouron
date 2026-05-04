@@ -184,4 +184,21 @@ return [
             'treaty_signed'         =>  3,
         ],
     ],
+
+    'onboarding' => [
+        // Supply threshold below which Rank-1 hint fires (no housing built yet)
+        'hint_supply_cap_threshold' => 10,
+
+        // Ticks elapsed without any engineer assigned before Rank-2 hint fires
+        'hint_no_engineer_ticks' => 3,
+
+        // Ticks elapsed without any knowledge researched before Rank-4 hint fires
+        'hint_no_knowledge_after_tick' => 10,
+
+        // Trust value below which Rank-5 hint fires
+        'hint_trust_threshold' => -20,
+
+        // Minimum ticks elapsed before trust hint can fire (avoids day-1 trigger)
+        'hint_trust_min_ticks' => 5,
+    ],
 ];

@@ -90,6 +90,7 @@ function colonyHexView(config) {
         i18n:               config.i18n ?? {},
         apNav:              config.apNav ?? 0,
         apConstruction:     config.apConstruction ?? 0,
+        activeHint:         config.activeHint ?? null,
         selectedTile:       null,
         buildMode:          false,
         pendingBuilding:    null,
@@ -110,6 +111,7 @@ function colonyHexView(config) {
                 buildings:       this.buildings,
                 buildMode:       this.buildMode,
                 pendingBuilding: this.pendingBuilding,
+                activeHint:      this.activeHint ?? null,
             });
         },
 
@@ -409,6 +411,34 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     if (opts.polygonMap) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
+    }
+
+    // Onboarding pulse ring — drawn behind the fill polygon
+    const hintRank = opts.activeHint?.rank ?? 0;
+
+    // Rank 1: colony-zone terrain tile, explored, buildable, not occupied by any building
+    const isPulseRank1 = hintRank === 1
+        && tile.is_colony_zone
+        && tile.is_explored
+        && tile.tile_type.startsWith('terrain_')
+        && tile.tile_type !== 'terrain_impassable'
+        && !buildingsByTile?.has(`${tile.q},${tile.r}`);
+
+    // Rank 3: the tile on which any Harvester (building_key='building_harvester') sits
+    const isPulseRank3 = hintRank === 3
+        && building?.building_key === 'building_harvester';
+
+    const shouldPulse = isPulseRank1 || isPulseRank3;
+
+    if (shouldPulse) {
+        const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        pulseHex.setAttribute('points', hexCorners(cx, cy, size + 4).join(' '));
+        pulseHex.setAttribute('fill',           'none');
+        pulseHex.setAttribute('stroke',         '#93c5fd');  // blue-300
+        pulseHex.setAttribute('stroke-width',   '2.5');
+        pulseHex.setAttribute('pointer-events', 'none');
+        pulseHex.setAttribute('class',          'onboarding-pulse');
+        g.insertBefore(pulseHex, polygon);  // behind the fill polygon
     }
 
     if (isImpassable) {

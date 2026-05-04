@@ -10,6 +10,7 @@ window.__colonyViewData = {
     buildings: @json($buildings),
     apNav:          {{ (int)$navAp }},
     apConstruction: {{ (int)$constructionAp }},
+    activeHint: @json($activeHint),
     routes: {
         explore:            '{{ route('colony.tile.explore') }}',
         deepScan:           '{{ route('colony.tile.deep-scan') }}',
@@ -52,6 +53,33 @@ window.__colonyViewData = {
                     <span x-text="buildMode ? '{{ __('colony.cancel') }}' : '{{ __('colony.build') }}'"></span>
                 </button>
             </div>
+
+            {{-- Onboarding hint bar — shown below the header, above the SVG grid.
+                 Isolated x-data to avoid coupling with colonyHexView state.
+                 Text is server-rendered; only visibility is toggled client-side. --}}
+            @if($activeHint)
+            <div class="hint-bar"
+                 x-data="{ hint: @json($activeHint), visible: true }"
+                 x-show="visible"
+                 x-transition>
+                <span class="hint-bar__icon" aria-hidden="true">!</span>
+                <span class="hint-bar__text">{{ __($activeHint['text_key']) }}</span>
+                <a class="hint-bar__link" href="{{ $activeHint['target_url'] }}">→</a>
+                <button class="hint-bar__dismiss"
+                        aria-label="Dismiss hint"
+                        @click="
+                            fetch('{{ route('colony.hint.dismiss') }}', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content
+                                },
+                                body: JSON.stringify({ hint_key: hint.key })
+                            }).then(() => { visible = false; })
+                        ">×</button>
+            </div>
+            @endif
+
             <div x-ref="hexgrid" class="hex-canvas"></div>
         </div>
 

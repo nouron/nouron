@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
+use App\Services\OnboardingHintService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,7 @@ class ColonyController extends BaseController
         private readonly ColonyService $colonyService,
         private readonly ColonyTileService $tileService,
         private readonly PersonellService $personellService,
+        private readonly OnboardingHintService $hintService,
     ) {
         parent::__construct($tick);
     }
@@ -71,8 +73,9 @@ class ColonyController extends BaseController
 
         $navAp          = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
+        $activeHint     = $this->hintService->getActiveHint($colony->id, Auth::id());
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -296,6 +299,16 @@ class ColonyController extends BaseController
             'leveled_up' => $leveledUp,
             ...$this->currentAp($colony->id),
         ]);
+    }
+
+    public function dismissHint(Request $request): JsonResponse
+    {
+        $data   = $request->validate(['hint_key' => 'required|string|max:20']);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $this->hintService->dismissHint(Auth::id(), $data['hint_key']);
+        $activeHint = $this->hintService->getActiveHint($colony->id, Auth::id());
+
+        return response()->json(['ok' => true, 'hint' => $activeHint]);
     }
 
     public function rename(Request $request): RedirectResponse

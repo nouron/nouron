@@ -39,8 +39,9 @@ Route::post('/logout', [LoginController::class, 'logout'])
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::get('/',                    [UserController::class, 'show'])->name('show');
     Route::get('/settings',            [UserController::class, 'settings'])->name('settings');
-    Route::patch('/settings/name',     [UserController::class, 'updateDisplayName'])->name('update.displayname');
-    Route::patch('/settings/password', [UserController::class, 'updatePassword'])->name('update.password');
+    Route::patch('/settings/name',       [UserController::class, 'updateDisplayName'])->name('update.displayname');
+    Route::patch('/settings/password',   [UserController::class, 'updatePassword'])->name('update.password');
+    Route::patch('/settings/onboarding', [UserController::class, 'updateOnboardingHints'])->name('update.onboarding');
 });
 
 // ── Colony ────────────────────────────────────────────────────────────────────
@@ -58,6 +59,9 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
     Route::get('/buildings/available', [ColonyController::class, 'availableBuildings'])->name('buildings.available');
     Route::post('/building/place',     [ColonyController::class, 'placeBuilding'])->name('building.place');
     Route::post('/building/invest',    [ColonyController::class, 'investBuilding'])->name('building.invest');
+
+    // Onboarding hint actions (AJAX)
+    Route::post('/hint/dismiss', [ColonyController::class, 'dismissHint'])->name('hint.dismiss');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────

@@ -1,0 +1,270 @@
+<?php
+
+namespace App\Services;
+
+use App\Services\Techtree\PersonellService;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * OnboardingHintService — determines the highest-priority active onboarding hint
+ * for a given colony/user combination.
+ *
+ * Hints are evaluated in rank order (1 = highest priority). The first active hint
+ * that has not been dismissed is returned. Dismissed hints are skipped so that
+ * lower-priority hints can surface when higher-priority ones have been acknowledged.
+ */
+class OnboardingHintService
+{
+    public function __construct(
+        private readonly TickService $tickService,
+    ) {}
+
+    /**
+     * Returns the highest-priority active and non-dismissed hint for the given
+     * colony/user, or null if onboarding hints are disabled, no hint is active,
+     * or all active hints have been dismissed.
+     *
+     * @return array{rank: int, key: string, text_key: string, target_url: string}|null
+     */
+    public function getActiveHint(int $colonyId, int $userId): ?array
+    {
+        $prefs = DB::table('user_preferences')
+            ->where('user_id', $userId)
+            ->first();
+
+        // Bail out if prefs row missing or onboarding hints disabled.
+        if (!$prefs || !$prefs->onboarding_hints) {
+            return null;
+        }
+
+        $dismissed = $this->parseDismissed($prefs->dismissed_hints ?? null);
+
+        $currentTick = $this->tickService->getTickCount();
+
+        // Build the ordered list of hints to evaluate (rank 1 first).
+        $hints = $this->buildHintList($colonyId, $currentTick);
+
+        foreach ($hints as $hint) {
+            if (!$hint['active']) {
+                continue;
+            }
+
+            if (in_array($hint['key'], $dismissed, true)) {
+                // This hint is active but dismissed — continue to next rank.
+                continue;
+            }
+
+            // Return the first active, non-dismissed hint.
+            return [
+                'rank'       => $hint['rank'],
+                'key'        => $hint['key'],
+                'text_key'   => $hint['text_key'],
+                'target_url' => $hint['target_url'],
+            ];
+        }
+
+        return null;
+    }
+
+    /**
+     * Marks a hint as dismissed for the given user.
+     * Uses updateOrInsert so it works even when no user_preferences row exists yet.
+     */
+    public function dismissHint(int $userId, string $hintKey): void
+    {
+        $prefs = DB::table('user_preferences')
+            ->where('user_id', $userId)
+            ->first();
+
+        $dismissed = $this->parseDismissed($prefs->dismissed_hints ?? null);
+
+        if (!in_array($hintKey, $dismissed, true)) {
+            $dismissed[] = $hintKey;
+        }
+
+        DB::table('user_preferences')->updateOrInsert(
+            ['user_id' => $userId],
+            ['dismissed_hints' => json_encode(array_values($dismissed))]
+        );
+    }
+
+    // ── Internal helpers ──────────────────────────────────────────────────────
+
+    /**
+     * Evaluates all five hint conditions and returns an ordered list with an
+     * 'active' flag for each.
+     *
+     * @return list<array{rank: int, key: string, active: bool, text_key: string, target_url: string}>
+     */
+    private function buildHintList(int $colonyId, int $currentTick): array
+    {
+        return [
+            [
+                'rank'       => 1,
+                'key'        => 'hint_1',
+                'active'     => $this->checkHint1($colonyId),
+                'text_key'   => 'colony.onboarding_hint_1',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank'       => 2,
+                'key'        => 'hint_2',
+                'active'     => $this->checkHint2($colonyId, $currentTick),
+                'text_key'   => 'colony.onboarding_hint_2',
+                'target_url' => '/techtree/personell',
+            ],
+            [
+                'rank'       => 3,
+                'key'        => 'hint_3',
+                'active'     => $this->checkHint3($colonyId),
+                'text_key'   => 'colony.onboarding_hint_3',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank'       => 4,
+                'key'        => 'hint_4',
+                'active'     => $this->checkHint4($colonyId, $currentTick),
+                'text_key'   => 'colony.onboarding_hint_4',
+                'target_url' => '/techtree/research',
+            ],
+            [
+                'rank'       => 5,
+                'key'        => 'hint_5',
+                'active'     => $this->checkHint5($colonyId, $currentTick),
+                'text_key'   => 'colony.onboarding_hint_5',
+                'target_url' => '/techtree/buildings',
+            ],
+        ];
+    }
+
+    /**
+     * Hint 1: No Wohnhabitat (building_id=28) placed on any tile yet.
+     */
+    private function checkHint1(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 28)
+            ->whereNotNull('tile_x')
+            ->count() === 0;
+    }
+
+    /**
+     * Hint 2: No engineer advisor active on this colony AND
+     *         current tick >= hint_no_engineer_ticks threshold.
+     */
+    private function checkHint2(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_engineer_ticks', 3);
+
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $engineerId = PersonellService::idFor('engineer');
+
+        return DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->where('personell_id', $engineerId)
+            ->count() === 0;
+    }
+
+    /**
+     * Hint 3: Harvester (building_id=27) is placed on a tile, but that tile's
+     *         tile_type is NOT a regolith variant.
+     *
+     * Returns true only when a harvester is placed AND its tile is non-regolith.
+     */
+    private function checkHint3(int $colonyId): bool
+    {
+        // Find placed harvesters (tile_x must be set).
+        $harvesters = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 27)
+            ->whereNotNull('tile_x')
+            ->select(['tile_x', 'tile_y'])
+            ->get();
+
+        if ($harvesters->isEmpty()) {
+            return false;
+        }
+
+        // Check whether any harvester sits on a non-regolith tile.
+        foreach ($harvesters as $harvester) {
+            $isRegolith = DB::table('colony_tiles')
+                ->where('colony_id', $colonyId)
+                ->where('q', $harvester->tile_x)
+                ->where('r', $harvester->tile_y)
+                ->where('tile_type', 'LIKE', 'regolith_%')
+                ->exists();
+
+            if (!$isRegolith) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Hint 4: No knowledge researched to level > 0 AND
+     *         current tick >= hint_no_knowledge_after_tick threshold.
+     */
+    private function checkHint4(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_knowledge_after_tick', 10);
+
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $knowledgeIds = [90, 91, 92, 93, 94, 95, 96];
+
+        return DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->whereIn('research_id', $knowledgeIds)
+            ->where('level', '>', 0)
+            ->count() === 0;
+    }
+
+    /**
+     * Hint 5: Colony moral/trust (resource_id=12) is below the trust threshold AND
+     *         current tick >= hint_trust_min_ticks threshold.
+     */
+    private function checkHint5(int $colonyId, int $currentTick): bool
+    {
+        $minTicks  = (int) config('game.onboarding.hint_trust_min_ticks', 5);
+        $threshold = (int) config('game.onboarding.hint_trust_threshold', -20);
+
+        if ($currentTick < $minTicks) {
+            return false;
+        }
+
+        $trust = (int) (DB::table('colony_resources')
+            ->where('colony_id', $colonyId)
+            ->where('resource_id', 12)
+            ->value('amount') ?? 0);
+
+        return $trust < $threshold;
+    }
+
+    /**
+     * Parses the dismissed_hints JSON column value into a plain string array.
+     *
+     * @return list<string>
+     */
+    private function parseDismissed(mixed $raw): array
+    {
+        if (empty($raw)) {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        return array_values(array_filter($decoded, 'is_string'));
+    }
+}

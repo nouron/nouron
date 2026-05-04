@@ -74,6 +74,33 @@
             </div>
         </div>
 
+        {{-- Onboarding hints toggle --}}
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-info-circle"></i> Onboarding-Hinweise</div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('user.update.onboarding') }}">
+                    @csrf
+                    @method('PATCH')
+                    {{-- Hidden field ensures value 0 is sent when checkbox is unchecked --}}
+                    <input type="hidden" name="onboarding_hints" value="0">
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" role="switch"
+                               id="onboarding_hints" name="onboarding_hints" value="1"
+                               {{ $onboarding_hints ? 'checked' : '' }}>
+                        <label class="form-check-label" for="onboarding_hints">
+                            Onboarding-Hinweise anzeigen
+                        </label>
+                    </div>
+                    <p class="text-muted small mb-3">
+                        Wenn aktiviert, werden beim Spielstart hilfreiche Hinweise und Erklärungen eingeblendet.
+                    </p>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-check-lg"></i> Speichern
+                    </button>
+                </form>
+            </div>
+        </div>
+
     </div>
 </div>
 @endsection

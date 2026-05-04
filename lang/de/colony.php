@@ -44,6 +44,14 @@ return [
     'discovery_title'   => 'Signal entschlüsselt',
     'discovery_dismiss' => 'Verstanden',
 
+    // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
+
+    'onboarding_hint_1' => 'Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10.',
+    'onboarding_hint_2' => 'Noch kein Ingenieur eingestellt — Bau-AP bleibt beim Grundwert.',
+    'onboarding_hint_3' => 'Harvester produziert nichts — auf ein Regolith-Tile verlegen.',
+    'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf.',
+    'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
+
     // ── Error messages ────────────────────────────────────────────────────────
 
     'error_tile_not_found'      => 'Tile nicht gefunden.',
