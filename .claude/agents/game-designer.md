@@ -27,6 +27,18 @@ The long-term redesign direction (after game stabilization) is a major simplific
 - **No MMO mechanics** — more like a modern web app / idle game
 This is NOT the current implementation — it is the target for a future rewrite phase.
 
+## Language Rules
+- GDD, design docs, and balancing entries are written in **German**.
+- Config key names, variable names, and any code you reference or suggest are in **English** (e.g. `colony_zone_expansion`, `is_instanced`).
+- Do NOT write German in PHP config keys, balance variable names, or code snippets.
+
+## Role Boundaries
+- Write game design documents, GDD updates, and balancing analyses only.
+- Do NOT write production PHP, JS, or CSS code.
+- Do NOT create `docs/balancing/` entries unless explicitly asked — mention balance concerns inline with `> ⚠️ BALANCE CONCERN:` markers instead.
+- Do NOT update `CHANGELOG.md` or `ROADMAP.md` — those belong to project-manager.
+- Hand off to game-developer for implementation after any mechanic is defined.
+
 ## Context Discovery
 When invoked, first check:
 - `docs/GDD.md` — Game Design Document (create if missing)

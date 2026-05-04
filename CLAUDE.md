@@ -211,6 +211,31 @@ Die DB enthält Simpsons-Testcharaktere: Homer (ID 0), Marge (1), Bart (3), etc.
 2 Kolonien: "Springfield" (User Bart, Planet 1) und "Shelbyville" (kein User, Planet 1)
 10 Flotten, 45 Fleet Orders, bcrypt-gehashte Passwörter.
 
+## Sprachregeln
+
+| Bereich | Sprache |
+|---|---|
+| PHP-Code, JS, CSS, Kommentare im Code | **Englisch** |
+| Konfigurationskeys, DB-Spaltennamen | **Englisch** |
+| `lang/de/*.php` Werte (User-facing Strings) | **Deutsch** |
+| GDD, ROADMAP, CHANGELOG, ADRs | **Deutsch** |
+| Blade-Templates (sichtbare Texte) | immer via `__('key')`, nie hardcoded |
+
+## Subagenten (`.claude/agents/`)
+
+Spezialisten für einzelne Aufgabenbereiche. Werden **proaktiv** eingesetzt — nicht erst auf Nachfrage:
+
+- `game-designer` — Mechanics definieren, GDD aktualisieren (vor jeder neuen Mechanik)
+- `game-developer` — Game Logic, Services, Tick-Verarbeitung
+- `backend-coder` — Controller, Routes, API-Endpoints, Middleware
+- `ui-specialist` — Blade, Alpine.js + PicoCSS (neu), Bootstrap/jQuery (Legacy)
+- `db-migration-agent` — Schema, Migrations, SQLite, testdata.sqlite.sql
+- `qa-tester` — Tests schreiben (nach jeder Implementierung automatisch)
+- `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
+- `project-manager` — ROADMAP, CHANGELOG, ADRs, Feature-Breakdown
+
+Abgrenzung: Jeder Agent schreibt nur in seinem Bereich. Details in `.claude/agents/README.md`.
+
 ## Workflow-Hinweise
 
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)

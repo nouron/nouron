@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-01
+
+- **Phase 3d Browser-Test-Fixes**: Harvester (ID 27) als instanziertes Gebäude eingeführt (`is_instanced=1`, max. 1 Instanz, Relocation via Move-Action statt Demolish). Alle 11 Buildings-INSERTs in `testdata.sqlite.sql` um `is_instanced`-Spalte ergänzt — verhindert dauerhaft, dass der Seeder migrierte Flags überschreibt. Neue Migration `2026_05_01_000001_harvester_mark_as_instanced`.
+- **Bypass-Flags griffen nicht**: `GAME_BYPASS_AP` wurde in `ColonyController` (`placeBuilding`, `investBuilding`) und `ColonyTileService` (`exploreTile`, `deepScanTile`) nicht ausgewertet — AP-Checks und AP-Locks jetzt korrekt hinter `config('game.bypass.ap_checks')` geschützt.
+- **Hex-Grid Farbunterscheidung**: Erkundete Terrain-Tiles außerhalb der Colony Zone (Exploration Zone) werden nun in kühlerem Grau/Braun dargestellt (`#a8aeb8` statt `#c8cdd6`, `#c8956a` statt `#e8b87a`).
+- **Event-Discovery-Popup**: Nach erfolgreichem Sondieren auf einem Tile mit `event_type` erscheint ein nativer `<dialog>` ("Signal entschlüsselt") mit dem Event-Namen. Alpine.js `x-effect` + PicoCSS-Styling. Platzhalter für das spätere Event-System.
+- **Subagenten-Definitionen überarbeitet**: Sprachregeln (Code = Englisch, Docs = Deutsch), Rollenabgrenzungen (`DO NOT`-Regeln), veraltete Laminas-Referenzen entfernt, Alpine.js + PicoCSS als primärer Frontend-Stack dokumentiert, `qa-tester` und `content-writer` auf proaktiven Einsatz umgestellt. `CLAUDE.md` um Sprachregeln- und Agenten-Routing-Abschnitt ergänzt.
+
 ## 2026-04-30
 
 - **Phase 3d — Colony Zone Expansion**: `is_ring_unlocked` → `is_colony_zone` umbenannt (DB-Migration, PRAGMA-Fix für stale `v_trade_researches`-View). Koloniezone schaltet nun individuelle Terrain-Tiles frei statt ganzer Ringe — CC Lv1–5 entspricht kumulativ 4/2/3/3/3 = max. 15 Tiles (config: `game.colony_zone_expansion`). `assignColonyZone()` in `ColonyTileService` berechnet die Zone deterministisch in Ringfolge, überspringt Regolith/impassable, setzt colony-zone-Tiles automatisch auf explored. Karte auf 3 Ringe (37 Tiles) als Default reduziert. Mehrfach-Instanzen für `is_instanced=true`-Gebäude (Wohnhabitat max 6, Hangar) in `availableBuildings()` und `placeBuilding()` implementiert. CC Level-Up gibt aktualisierte Tile-Liste zurück → Frontend (Alpine) aktualisiert Grid sofort. Demo-Seed auf CC Lv5 + 3 Ringe aktualisiert. 393 Tests grün.

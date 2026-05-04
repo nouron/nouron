@@ -70,23 +70,32 @@ const BUILDING_ABBR = {
     building_bar:            'CA',
 };
 
+// ── Event-type display names (discovery popup) ────────────────────────────────
+
+const EVENT_TYPE_NAMES = {
+    event_ruin:    'Alte Ruinen',
+    event_crystal: 'Kristallformation',
+    event_wreck:   'Schiffswrack',
+};
+
 // ── Alpine component ──────────────────────────────────────────────────────────
 
 function colonyHexView(config) {
     return {
-        tiles:             config.tiles,
-        colony:            config.colony,
-        ccLevel:           config.ccLevel,
-        buildings:         config.buildings ?? [],
-        routes:            config.routes ?? {},
-        i18n:              config.i18n ?? {},
-        apNav:             config.apNav ?? 0,
-        apConstruction:    config.apConstruction ?? 0,
-        selectedTile:      null,
-        buildMode:         false,
-        pendingBuilding:   null,
+        tiles:              config.tiles,
+        colony:             config.colony,
+        ccLevel:            config.ccLevel,
+        buildings:          config.buildings ?? [],
+        routes:             config.routes ?? {},
+        i18n:               config.i18n ?? {},
+        apNav:              config.apNav ?? 0,
+        apConstruction:     config.apConstruction ?? 0,
+        selectedTile:       null,
+        buildMode:          false,
+        pendingBuilding:    null,
         availableBuildings: [],
-        _svgPolygons:      new Map(),
+        eventDiscovery:     null,   // set to the tile object when a discovery popup should show
+        _svgPolygons:       new Map(),
 
         init() {
             this.$nextTick(() => this.redrawGrid());
@@ -174,6 +183,10 @@ function colonyHexView(config) {
                 this.updateTile(res.tile);
                 this.selectedTile = res.tile;
                 this.updateAp(res);
+                // Show discovery popup when the scan reveals an event on this tile
+                if (res.tile.event_type) {
+                    this.eventDiscovery = res.tile;
+                }
                 this.$nextTick(() => this.redrawGrid());
             } else {
                 alert(res.error);
@@ -254,7 +267,11 @@ function colonyHexView(config) {
         },
 
         eventTypeName(type) {
-            return TILE_LABELS[type] ?? type;
+            return EVENT_TYPE_NAMES[type] ?? 'Unbekanntes Phänomen';
+        },
+
+        dismissEventDiscovery() {
+            this.eventDiscovery = null;
         },
 
         buildingForTile(tile) {
@@ -467,6 +484,13 @@ function getTileColor(tile) {
     if (!tile.is_explored)                         return FOG_COLOR;        // unexplored colony zone (shouldn't normally appear)
     if (tile.q === 0 && tile.r === 0)              return CC_COLOR;
     if (tile.is_deep_scanned && tile.event_type)   return EVENT_COLOR;
+
+    // Exploration-zone terrain: cooler/darker variant to read as peripheral
+    if (!tile.is_colony_zone) {
+        if (tile.tile_type === 'terrain_empty')  return '#a8aeb8'; // desaturated blue-grey (vs colony #c8cdd6)
+        if (tile.tile_type === 'terrain_hazard') return '#c8956a'; // cooler amber (vs colony #e8b87a)
+    }
+
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
 }
 
@@ -476,6 +500,13 @@ function getTileStroke(tile, isCC) {
     if (!tile.is_explored)                            return [FOG_STROKE,    '1'];
     if (tile.is_deep_scanned && tile.event_type)      return [EVENT_STROKE,  '1.5'];
     if (tile.tile_type === 'terrain_impassable')      return ['#555',        '0'];
+
+    // Exploration-zone terrain: matched darker strokes
+    if (!tile.is_colony_zone) {
+        if (tile.tile_type === 'terrain_empty')  return ['#888fa0', '1.5']; // vs colony #a0a8b4
+        if (tile.tile_type === 'terrain_hazard') return ['#9a6838', '1.5']; // vs colony #c08040
+    }
+
     return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];
 }
 

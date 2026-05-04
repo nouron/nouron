@@ -39,6 +39,11 @@ return [
     'build_mode_hint'   => 'Gebäude wählen, dann Terrain-Tile anklicken.',
     'no_buildings'      => 'Keine Gebäude verfügbar.',
 
+    // ── Event discovery popup ─────────────────────────────────────────────────
+
+    'discovery_title'   => 'Signal entschlüsselt',
+    'discovery_dismiss' => 'Verstanden',
+
     // ── Error messages ────────────────────────────────────────────────────────
 
     'error_tile_not_found'      => 'Tile nicht gefunden.',

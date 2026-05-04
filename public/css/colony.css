@@ -633,6 +633,23 @@ body {
     animation: signal-pulse 1.8s ease-in-out infinite;
 }
 
+/* ── Event discovery dialog ──────────────────────────────────────────────── */
+
+/* PicoCSS already styles <dialog> and <article> inside it.
+   We only need to size the dialog and call out the event name. */
+dialog[x-ref="discoveryDialog"] {
+    max-width: 340px;
+    width: 90%;
+}
+
+.discovery-event-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-align: center;
+    margin: 0.25rem 0 0.75rem;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Stack grid + sidebar at 900px and below */

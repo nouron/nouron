@@ -1,69 +1,58 @@
-# Claude Code Subagents — Browsergame Team
+# Claude Code Subagents — Nouron Browsergame Team
 
-Dieses Verzeichnis enthält die Subagenten-Definitionen für das Browsergame-Projekt.
+Dieses Verzeichnis enthält die Subagenten-Definitionen für das Nouron-Projekt.
 
-## Installation
+## Sprachregeln (gilt für alle Agenten)
 
-Kopiere den Ordner `.claude/agents/` in das **Root-Verzeichnis deines Projekts**:
-
-```
-dein-projekt/
-├── .claude/
-│   └── agents/
-│       ├── game-developer.md
-│       ├── backend-coder.md
-│       ├── ui-specialist.md
-│       ├── db-migration-agent.md
-│       ├── qa-tester.md
-│       ├── project-manager.md
-│       ├── game-designer.md
-│       └── content-writer.md
-├── src/
-├── public/
-└── ...
-```
-
-Alternativ kannst du die Agents **global** installieren (für alle Projekte verfügbar):
-
-```bash
-mkdir -p ~/.claude/agents
-cp .claude/agents/*.md ~/.claude/agents/
-```
+| Bereich | Sprache |
+|---|---|
+| PHP-Code, JS, CSS, Kommentare im Code | **Englisch** |
+| Konfigurationskeys, DB-Spaltennamen | **Englisch** |
+| `lang/de/*.php` Werte (User-facing Strings) | **Deutsch** |
+| GDD, ROADMAP, CHANGELOG, ADRs | **Deutsch** |
+| Blade-Templates (User-facing Text) | immer via `__('key')`, nie hardcoded |
 
 ## Agenten-Übersicht
 
-| Agent | Zuständig für | Invoke mit |
+| Agent | Zuständig für | DARF NICHT |
 |---|---|---|
-| `game-developer` | Game Mechanics, Game Loop, Server-side Logic | `@game-developer` |
-| `backend-coder` | PHP/Laravel, Controller, Services, API-Endpoints | `@backend-coder` |
-| `ui-specialist` | Bootstrap 5, jQuery, Blade-Templates, AJAX | `@ui-specialist` |
-| `db-migration-agent` | Schema, Migrations, SQLite, Seeders | `@db-migration-agent` |
-| `qa-tester` | Tests, Security, Regression, Cheat-Detection | `@qa-tester` |
-| `project-manager` | Roadmap, ADRs, Feature-Breakdown, Phase 2/3 | `@project-manager` |
-| `game-designer` | GDD, Balancing, Mechanics Design, Fun Review | `@game-designer` |
-| `content-writer` | Lore, Beschreibungen, Tooltips, INNN-Events | `@content-writer` |
+| `game-designer` | GDD, Mechanics Design, Balancing | Produktionscode schreiben |
+| `game-developer` | Game Logic, Services, Tick-System | GDD schreiben, Frontend bauen |
+| `backend-coder` | PHP/Laravel, Controller, API-Endpoints | GDD/ROADMAP bearbeiten, Frontend bauen |
+| `ui-specialist` | Alpine.js/PicoCSS (neu), Bootstrap/jQuery (Legacy), Blade | PHP-Logik schreiben, lang-Werte setzen |
+| `db-migration-agent` | Schema, Migrations, SQLite, Seeders | Game Logic, lang-Dateien ändern |
+| `qa-tester` | Tests, Security, Regression, Cheat-Detection | Produktionscode ändern |
+| `project-manager` | Roadmap, ADRs, Feature-Breakdown, CHANGELOG | Code schreiben, lang-Dateien ändern |
+| `content-writer` | lang/de/*.php Texte, Lore, Tooltips, INNN | Code schreiben, Blade/JS ändern |
 
 ## Typischer Feature-Workflow
 
 ```
-1. @project-manager    → Feature in Tasks aufteilen, ADR falls nötig
-2. @game-designer      → GDD aktualisieren, Mechanic definieren, Balance-Werte
-3. @db-migration-agent → Schema-Änderungen + Migration schreiben
-4. @game-developer     → Game Logic / Service implementieren
-5. @backend-coder      → Controller + API Endpoint
-6. @ui-specialist      → Frontend View + AJAX
-7. @qa-tester          → Unit + Integration Tests schreiben
-8. @content-writer     → UI-Texte, Tooltips, Lore (falls neue Entitäten)
+1. game-designer      → Mechanic definieren, GDD aktualisieren
+2. db-migration-agent → Schema-Änderungen + Migration
+3. game-developer     → Game Logic / Service implementieren
+4. backend-coder      → Controller + API Endpoint
+5. ui-specialist      → Frontend View + AJAX (Alpine.js + PicoCSS für neue Screens)
+6. qa-tester          → Unit + Integration Tests (proaktiv nach jedem Schritt)
+7. content-writer     → lang/de/*.php Texte, Tooltips, Lore (proaktiv bei neuen Entitäten)
+8. project-manager    → CHANGELOG-Eintrag, ROADMAP aktualisieren (auf Anfrage)
 ```
 
-## Docs-Struktur (wird von Agenten erstellt)
+## Frontend-Stack
+
+| Screen-Typ | Stack |
+|---|---|
+| Neue Screens (Phase 3b+) | Alpine.js 3 + PicoCSS 2 + SVG |
+| Legacy-Screens (pre-3b) | jQuery 3 + Bootstrap 5 (wird schrittweise migriert) |
+
+**Nie mischen**: Kein jQuery auf neuen Screens, kein Alpine auf Legacy-Screens.
+
+## Docs-Struktur
 
 ```
 docs/
-├── GDD.md              ← Game Design Document (@game-designer)
-├── adr/                ← Architecture Decision Records (@project-manager)
-├── balancing/          ← Balance-Changelogs (@game-designer)
-ROADMAP.md              ← Projekt-Roadmap (@project-manager)
-CHANGELOG.md            ← Release-Log (@project-manager)
-MIGRATION_LOG.md        ← DB-Migration-Log (@db-migration-agent)
+├── GDD.md              ← Game Design Document (game-designer)
+├── adr/                ← Architecture Decision Records (project-manager)
+ROADMAP.md              ← Projekt-Roadmap (project-manager)
+CHANGELOG.md            ← Release-Log pro Session (project-manager)
 ```
