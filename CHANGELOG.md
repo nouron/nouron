@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-05
+
+- **Koloniekarte UX-Überarbeitung (Browser-Test-Fixes)**: Ring 1 generiert jetzt ausschließlich `terrain_empty`-Tiles (kein Regolith, keine Blocker), Ring 2 hat nur seltene Hazards/Blocker. Colony-Zone-Expansion auf `[6,3,3,2,1]` geändert — Ring 1 komplett ab CC Lv1 freigeschaltet, logische Progression ohne Teilringe. CC hard cap bei Lv5: `investBuilding()` prüft `max_level`, "AP investieren"-Button wird bei Max-Level ausgeblendet.
+- **Sidebar-Verbesserungen**: Level-0-Gebäude zeigen "Im Bau"-Badge statt Zustandsbalken; fertige Gebäude zeigen Zustand als Prozent. Tile-Bezeichnung "Leeres Terrain" → "Freies Feld".
+- **On-Tile-Info**: Gebäude-Badge zeigt jetzt Level (z.B. "WH 1"); roter Warn-Dot bei Zustand < 10%.
+- **Visuelle Hierarchie**: Unerkundete Tiles hell/ausgewaschen (fast weiß), erkundete Tiles farbiger — klares "erkundet vs. unbekannt". Erkundete Tiles außerhalb Colony Zone: gestrichelter Outline + `CC ↑`-Badge.
+- **Berater-Namen korrigiert**: Ingenieur → Baumeister, Wissenschaftler → Analytiker, Händler → Konsul (lang/de/advisors.php war veraltet). Onboarding-Hint 2 entsprechend aktualisiert.
+
 ## 2026-05-04
 
 - **GDD § 15 Onboarding ausgearbeitet**: Fünf konkrete Maßnahmen definiert — Nexus-Briefing (INNN-Event beim Run-Start, Absender "Nexus Command"), Hint-System (zustandsbasierte Hinweis-Leiste, 5 Prioritätsregeln, deaktivierbar), Pulse-Indikator (CSS-Animation `ring-pulse`, bläulich-weiß, an Hint-System gekoppelt), Techtree-Kaltstart (Kacheln nach "verfügbar / gesperrt / vorhanden" gruppiert), Inline-Erklärungen (5 einmalige INNN-Trigger pro Run: Decay, Supply-Cap, Vertrauen, AP-Limit, Harvester-Verlagerung). Technische Anforderungen, Konfigurationsblock (`config/game.php → onboarding`) und offene Design-TODOs ebenfalls dokumentiert.
