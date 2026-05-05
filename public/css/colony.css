@@ -484,6 +484,18 @@ body {
     border: 1px solid #a5d6a7;
 }
 
+.sidebar-under-construction {
+    margin: 0.5rem 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #78350f;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 4px;
+    display: inline-block;
+}
+
 /* ── Sidebar action buttons ──────────────────────────────────────────────── */
 
 .sidebar-actions {

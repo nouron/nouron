@@ -260,7 +260,11 @@ class ColonyController extends BaseController
         if (!$row)
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
-        $building   = DB::table('buildings')->where('id', $buildingId)->first();
+        $building = DB::table('buildings')->where('id', $buildingId)->first();
+
+        if ($building->max_level !== null && $row->level >= (int) $building->max_level)
+            return response()->json(['ok' => false, 'error' => __('colony.error_max_level_reached')]);
+
         $newApSpend = min($row->ap_spend + 1, $building->ap_for_levelup);
 
         DB::table('colony_buildings')

@@ -1,6 +1,6 @@
 ---
 name: ui-specialist
-description: Use for all frontend and UI/UX tasks — Alpine.js components, PicoCSS layouts, SVG hex grids, AJAX calls, game-specific UI components (resource bars, timers, maps, modals), responsive design, and Blade template work. Invoke when building or modifying any view, component, or client-side interaction.
+description: Use proactively for all frontend and UI/UX tasks — Alpine.js components, PicoCSS layouts, SVG hex grids, AJAX calls, game-specific UI components (resource bars, timers, maps, modals), responsive design, and Blade template work. Invoke when building or modifying any view, component, or client-side interaction.
 tools: Read, Write, Edit, Grep, Glob
 ---
 

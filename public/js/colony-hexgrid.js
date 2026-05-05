@@ -10,7 +10,7 @@
 // ── Tile metadata ─────────────────────────────────────────────────────────────
 
 const TILE_LABELS = {
-    terrain_empty:      'Leeres Terrain',
+    terrain_empty:      'Freies Feld',
     terrain_hazard:     'Gefahrenzone',
     terrain_impassable: 'Unpassierbar',
     regolith_rich:      'Regolith (reich)',
@@ -48,10 +48,10 @@ const TILE_STROKES = {
 
 const CC_COLOR      = '#7ec87e';
 const CC_STROKE     = '#2e7d32';
-const FOG_COLOR     = '#dde0e5';
-const FOG_STROKE    = '#b8bec6';
-const LOCKED_COLOR  = '#c8ccd4';
-const LOCKED_STROKE = '#a8adb8';
+const FOG_COLOR     = '#eceef1';   // unexplored colony zone — very light
+const FOG_STROKE    = '#d4d8de';
+const LOCKED_COLOR  = '#f2f3f5';   // unexplored exploration zone — almost white
+const LOCKED_STROKE = '#dddfe3';
 const EVENT_COLOR   = '#e8d89a';
 const EVENT_STROKE  = '#b09a40';
 
@@ -416,6 +416,10 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     const [stroke, strokeW] = getTileStroke(tile, isCC);
     polygon.setAttribute('stroke',       stroke);
     polygon.setAttribute('stroke-width', isImpassable ? '0' : strokeW);
+    // Dashed stroke signals "explored but not yet colony zone"
+    if (tile.is_explored && !tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) {
+        polygon.setAttribute('stroke-dasharray', '4 3');
+    }
     polygon._defaultStroke  = stroke;
     polygon._defaultStrokeW = isImpassable ? '0' : strokeW;
 
@@ -467,6 +471,21 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         g.appendChild(svgText(cx, cy, 'CC', 10, '#2e7d32', 700));
     }
 
+    // "Not yet claimed" badge on explored terrain outside colony zone
+    if (tile.is_explored && !tile.is_colony_zone && tile.tile_type.startsWith('terrain_')
+            && tile.tile_type !== 'terrain_impassable') {
+        const badgeW = 26, badgeH = 11;
+        const bx = cx - badgeW / 2, by = cy - badgeH / 2;
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', bx); rect.setAttribute('y', by);
+        rect.setAttribute('width', badgeW); rect.setAttribute('height', badgeH);
+        rect.setAttribute('rx', '3');
+        rect.setAttribute('fill', 'rgba(100,100,120,0.45)');
+        rect.setAttribute('pointer-events', 'none');
+        g.appendChild(rect);
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, 'CC ↑', 7, '#eee', 600));
+    }
+
     // Resource indicator dot (top-right, blue)
     if (tile.is_explored && tile.resource_max > 0) {
         const dot = svgCircle(cx + size * 0.38, cy - size * 0.38, 4, '#2196f3', '#fff');
@@ -475,11 +494,13 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     // Building badge (center-bottom, skip CC — already labeled)
     if (building && !isCC && tile.is_explored) {
-        const abbr   = BUILDING_ABBR[building.building_key] ?? '?';
-        const badgeW = 22;
-        const badgeH = 12;
-        const bx     = cx - badgeW / 2;
-        const by     = cy + size * 0.28;
+        const abbr        = BUILDING_ABBR[building.building_key] ?? '?';
+        const isBuilt     = building.level > 0;
+        const levelSuffix = isBuilt ? ` ${building.level}` : '';
+        const badgeW      = isBuilt ? 28 : 22;
+        const badgeH      = 12;
+        const bx          = cx - badgeW / 2;
+        const by          = cy + size * 0.28;
 
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('x',      bx);
@@ -487,12 +508,20 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         rect.setAttribute('width',  badgeW);
         rect.setAttribute('height', badgeH);
         rect.setAttribute('rx',     '3');
-        // Under-construction (level 0) gets a lighter badge
-        rect.setAttribute('fill', building.level === 0 ? 'rgba(80,80,80,0.55)' : 'rgba(30,30,30,0.72)');
+        rect.setAttribute('fill', isBuilt ? 'rgba(30,30,30,0.72)' : 'rgba(80,80,80,0.55)');
         rect.setAttribute('pointer-events', 'none');
         g.appendChild(rect);
 
-        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, abbr, 8, '#fff', 700));
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, abbr + levelSuffix, 8, '#fff', 700));
+
+        // Red warning dot (top-right of badge) when condition < 10%
+        if (isBuilt) {
+            const maxSp   = building.max_status_points ?? 20;
+            const condPct = building.status_points / maxSp;
+            if (condPct < 0.10) {
+                g.appendChild(svgCircle(bx + badgeW - 2, by + 2, 3, '#ef4444', '#fff'));
+            }
+        }
     }
 
     // Event indicator dot (top-left, orange — only when deep-scanned)
@@ -532,11 +561,7 @@ function getTileColor(tile) {
     if (tile.q === 0 && tile.r === 0)              return CC_COLOR;
     if (tile.is_deep_scanned && tile.event_type)   return EVENT_COLOR;
 
-    // Exploration-zone terrain: cooler/darker variant to read as peripheral
-    if (!tile.is_colony_zone) {
-        if (tile.tile_type === 'terrain_empty')  return '#a8aeb8'; // desaturated blue-grey (vs colony #c8cdd6)
-        if (tile.tile_type === 'terrain_hazard') return '#c8956a'; // cooler amber (vs colony #e8b87a)
-    }
+    // Exploration-zone terrain shows same fill as colony zone — distinction is dashed stroke + level badge
 
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
 }
@@ -548,10 +573,9 @@ function getTileStroke(tile, isCC) {
     if (tile.is_deep_scanned && tile.event_type)      return [EVENT_STROKE,  '1.5'];
     if (tile.tile_type === 'terrain_impassable')      return ['#555',        '0'];
 
-    // Exploration-zone terrain: matched darker strokes
-    if (!tile.is_colony_zone) {
-        if (tile.tile_type === 'terrain_empty')  return ['#888fa0', '1.5']; // vs colony #a0a8b4
-        if (tile.tile_type === 'terrain_hazard') return ['#9a6838', '1.5']; // vs colony #c08040
+    // Exploration-zone terrain: dashed stroke signals "not yet claimed"
+    if (!tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) {
+        return [TILE_STROKES[tile.tile_type] ?? '#a0a8b4', '1.5'];
     }
 
     return [TILE_STROKES[tile.tile_type] ?? '#8a9aaa', '1.5'];

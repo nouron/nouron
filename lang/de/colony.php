@@ -19,7 +19,8 @@ return [
     'tile_info'         => 'Tile-Info',
     'click_tile_hint'   => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section'  => 'Gebäude',
-    'construction_site' => 'Baustelle',
+    'construction_site'    => 'Baustelle',
+    'under_construction'   => 'Im Bau',
     'max_level'         => 'Max. Stufe',
     'condition'         => 'Zustand',
     'ap_invested'       => 'AP investiert',
@@ -47,7 +48,7 @@ return [
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
     'onboarding_hint_1' => 'Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10.',
-    'onboarding_hint_2' => 'Noch kein Ingenieur eingestellt — Bau-AP bleibt beim Grundwert.',
+    'onboarding_hint_2' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
     'onboarding_hint_3' => 'Harvester produziert nichts — auf ein Regolith-Tile verlegen.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
@@ -67,5 +68,6 @@ return [
     'error_tile_occupied'       => 'Tile bereits belegt.',
     'error_no_construction_ap'  => 'Nicht genug Bau-AP.',
     'error_building_not_found'  => 'Gebäude nicht gefunden.',
+    'error_max_level_reached'   => 'Maximales Level bereits erreicht.',
 
 ];

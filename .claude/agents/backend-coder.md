@@ -1,6 +1,6 @@
 ---
 name: backend-coder
-description: Use for PHP backend tasks — controllers, services, repositories, REST API endpoints, middleware, dependency injection, Composer, PSR standards, and Laravel framework code. Invoke when building or modifying controllers, services, route handlers, form validation, or any server-side logic.
+description: Use proactively for PHP backend tasks — controllers, services, repositories, REST API endpoints, middleware, dependency injection, Composer, PSR standards, and Laravel framework code. Invoke when building or modifying controllers, services, route handlers, form validation, or any server-side logic.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 

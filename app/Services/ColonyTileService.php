@@ -136,7 +136,7 @@ class ColonyTileService
 
                 $isCC       = ($q === 0 && $r === 0);
                 $isExplored = $isCC || $ring <= 1;
-                $tileType   = $isCC ? 'terrain_empty' : $this->pickTileType($q, $r, $colonyId);
+                $tileType   = $isCC ? 'terrain_empty' : $this->pickTileType($q, $r, $colonyId, $ring);
 
                 $resourceAmount = null;
                 $resourceMax    = null;
@@ -180,10 +180,23 @@ class ColonyTileService
         return $arr;
     }
 
-    private function pickTileType(int $q, int $r, int $colonyId): string
+    private function pickTileType(int $q, int $r, int $colonyId, int $ring = 3): string
     {
         $hash = abs($q * 7 + $r * 13 + $colonyId * 3) % 100;
 
+        // Ring 1: settled core — all buildable, no hazards (hazard mechanic not yet implemented)
+        if ($ring <= 1) {
+            return 'terrain_empty';
+        }
+
+        // Ring 2: colony expansion zone — no regolith, rare hazards and blockers
+        if ($ring === 2) {
+            if ($hash < 3)  return 'terrain_impassable';
+            if ($hash < 10) return 'terrain_hazard';
+            return 'terrain_empty';
+        }
+
+        // Ring 3+: full mix including resource tiles
         if ($hash < 5)  return 'terrain_impassable';
         if ($hash < 15) return 'terrain_hazard';
         if ($hash < 35) return 'regolith_poor';

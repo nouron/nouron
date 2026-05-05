@@ -27,8 +27,9 @@ return [
 
     // Tiles unlocked by CC expansion per level (index 0 = CC Lv1, ..., index 4 = CC Lv5).
     // Walk order: ring 1 → ring 2 → ring 3; skip regolith_* and terrain_impassable.
-    // Max colony zone = sum = 15 terrain tiles (+ CC tile = 16 total).
-    'colony_zone_expansion' => [4, 2, 3, 3, 3],
+    // Ring 1 (6 tiles) fully unlocked at Lv1 = your immediate base area.
+    // Ring 2 expands step by step at Lv2–Lv5. Max = 15 terrain tiles + CC = 16 total.
+    'colony_zone_expansion' => [6, 3, 3, 2, 1],
 
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)

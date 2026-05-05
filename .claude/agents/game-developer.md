@@ -1,6 +1,6 @@
 ---
 name: game-developer
-description: Use for implementing game mechanics, game loops, server-side game logic, combat systems, resource management, timers, and tick-based or real-time game events. Invoke when building or changing core gameplay systems.
+description: Use proactively for implementing game mechanics, game loops, server-side game logic, combat systems, resource management, timers, and tick-based or real-time game events. Invoke when building or changing core gameplay systems.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 

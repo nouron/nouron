@@ -1,6 +1,6 @@
 ---
 name: db-migration-agent
-description: Use for all database tasks — schema design, writing migrations, query optimization, index design, and managing the SQLite database. The current and only database is SQLite. Do NOT introduce any production DB migration concerns yet.
+description: Use proactively for all database tasks — schema design, writing migrations, query optimization, index design, and managing the SQLite database. The current and only database is SQLite. Do NOT introduce any production DB migration concerns yet.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
