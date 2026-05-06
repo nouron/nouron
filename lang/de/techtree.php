@@ -80,6 +80,18 @@ return [
     'purposes_politics'  => 'Politik',
     'purposes_military'  => 'Militär',
 
+    // ── Status chips (techtree overview) ─────────────────────────────────────
+    'status_built'            => 'Gebaut',
+    'status_available'        => 'Verfügbar',
+    'status_locked'           => 'Gesperrt',
+
+    // ── Detail dialog ─────────────────────────────────────────────────────────
+    'detail_type'             => 'Typ',
+    'detail_status'           => 'Status',
+    'detail_level'            => 'Level',
+    'detail_required'         => 'Voraussetzung',
+    'detail_close'            => 'Schließen',
+
     // ── UI ───────────────────────────────────────────────────────────────────
     'tradeable'               => 'handelbar',
     'decay'                   => 'Verfallszeit',
