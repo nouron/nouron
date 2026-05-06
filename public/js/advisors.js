@@ -8,9 +8,10 @@
  */
 function advisorCarousel(config) {
     return {
-        slots:       config.slots,
-        slotInfo:    config.slotInfo,
-        routes:      config.routes,
+        slots:        config.slots,
+        slotInfo:     config.slotInfo,
+        routes:       config.routes,
+        juniorUpkeep: config.junior_upkeep ?? 10,
         activeIndex: 0,
         isMobile:    false,
         touchStartX: 0,

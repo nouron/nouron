@@ -87,6 +87,11 @@
                                         <span class="stat-value" x-text="slot.advisor.active_ticks"></span>
                                     </div>
 
+                                    <div class="stat-row">
+                                        <span class="stat-label">Unterhalt</span>
+                                        <span class="stat-value" x-text="slot.advisor.upkeep + ' Cr/Tick'"></span>
+                                    </div>
+
                                     {{-- Rank advancement progress --}}
                                     <div>
                                         <div class="stat-row" style="margin-bottom:2px">
@@ -130,8 +135,14 @@
                                         <span class="stat-value" x-text="slot.hire_cost + ' Cr'"></span>
                                     </div>
 
-                                    <div class="stat-label" style="font-size:0.7rem;color:#aaa">
-                                        Junior &middot; 4 AP/Tick
+                                    <div class="stat-row">
+                                        <span class="stat-label">AP/Tick (Junior)</span>
+                                        <span class="stat-value">4</span>
+                                    </div>
+
+                                    <div class="stat-row">
+                                        <span class="stat-label">Unterhalt</span>
+                                        <span class="stat-value" x-text="juniorUpkeep + ' Cr/Tick'"></span>
                                     </div>
 
                                     <button class="btn-hire"

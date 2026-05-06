@@ -3,9 +3,8 @@
 /* ── Page wrapper ─────────────────────────────────────────────────────────── */
 
 .advisors-page {
-    padding: 1.5rem 1rem 2rem;
-    max-width: 1100px;
-    margin: 0 auto;
+    padding: 1.5rem 2rem 2rem;
+    max-width: none;
 }
 
 /* ── Header bar ───────────────────────────────────────────────────────────── */
@@ -72,11 +71,17 @@
     transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
-/* Desktop: wrap cards into a centred row instead of sliding */
+/* Desktop: all 5 cards in a single row, no wrapping */
 @media (min-width: 900px) {
     .carousel-track {
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         justify-content: center;
+    }
+    .advisor-card {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        max-width: 380px;
     }
 }
 
@@ -150,7 +155,7 @@
 
 .advisor-card {
     width: 200px;
-    aspect-ratio: 2 / 3;
+    min-height: 440px;
     border-radius: 10px;
     border: 1px solid var(--color-border);
     background: #fff;
@@ -164,7 +169,8 @@
 @media (max-width: 900px) {
     .advisor-card {
         width: calc(100vw - 3rem);
-        max-width: 320px;
+        max-width: 340px;
+        min-height: 420px;
     }
 }
 
@@ -184,7 +190,7 @@
 /* ── Portrait section (top 60%) ───────────────────────────────────────────── */
 
 .advisor-portrait {
-    flex: 0 0 60%;
+    flex: 0 0 220px;
     background: linear-gradient(160deg, #e8eaf0 0%, #d0d4de 100%);
     display: flex;
     flex-direction: column;

@@ -100,6 +100,7 @@ class AdvisorController extends BaseController
                     $progressPct = min(100, (int) round($advisor->active_ticks / $nextThreshold * 100));
                 }
 
+                $upkeepMap   = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
                 $advisorData = [
                     'id'                     => $advisor->id,
                     'rank'                   => $advisor->rank,
@@ -116,6 +117,7 @@ class AdvisorController extends BaseController
                     'is_max_rank'            => $isMaxRank,
                     'is_unavailable'         => $isUnavailable,
                     'unavailable_until_tick' => $advisor->unavailable_until_tick,
+                    'upkeep'                 => $upkeepMap[$advisor->rank] ?? 10,
                 ];
             }
 
@@ -144,14 +146,16 @@ class AdvisorController extends BaseController
         $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
         $slots    = $this->buildSlots($advisors, $slotInfo, $currentTick);
 
-        $pageData = [
-            'slots'    => $slots,
-            'slotInfo' => $slotInfo,
-            'routes'   => [
+        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $pageData  = [
+            'slots'         => $slots,
+            'slotInfo'      => $slotInfo,
+            'routes'        => [
                 'hire' => route('advisors.hire'),
                 'fire' => route('advisors.fire', ['id' => '__ID__']),
             ],
-            'colonyId' => $colonyId,
+            'colonyId'      => $colonyId,
+            'junior_upkeep' => $upkeepMap[1] ?? 10,
         ];
 
         return view('advisors.index', compact('pageData'));
