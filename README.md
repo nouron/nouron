@@ -1,6 +1,6 @@
 # Nouron — A Free Space Opera Browsergame
 
-Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite and Bootstrap 5.
+Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite, Alpine.js + PicoCSS (new screens) and Bootstrap 5 + jQuery (legacy screens).
 
 ## Quickstart
 
@@ -58,6 +58,9 @@ php artisan game:sync-techs --dry-run
 
 # Manually trigger a game tick (normally runs via scheduler)
 php artisan game:tick
+
+# Seed a demo colony state for the logged-in user's colony (useful for UI testing)
+php artisan colony:seed-demo
 ```
 
 ### Scheduler setup

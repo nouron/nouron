@@ -4,6 +4,51 @@ Schema changes are recorded here in reverse-chronological order.
 
 ---
 
+## 2026-05-04 — Phase 3e: user_preferences table (onboarding)
+
+- What changed:
+  - New table `user_preferences` — per-user settings; columns: `user_id` (FK → `user.user_id`), `onboarding_hints` BOOLEAN DEFAULT 1.
+  - Added column `dismissed_hints` TEXT NULL to `user_preferences` — JSON array of hint keys the user has dismissed (e.g. `["hint_1","hint_3"]`).
+- Why: Phase 3e Onboarding — persistent storage for hint visibility preference and per-hint dismiss state.
+- Breaking: No — table is new; no existing data affected.
+- Rollback: `php artisan migrate:rollback --step=2` drops `dismissed_hints` column, then drops `user_preferences` table.
+
+---
+
+## 2026-05-01 — Harvester marked as instanced building
+
+- What changed:
+  - `buildings`: set `is_instanced = 1` for Harvester (ID 27). Max instances = 1 (enforced via `max_level`).
+  - `testdata.sqlite.sql`: all `buildings` INSERT statements updated with explicit `is_instanced` column.
+- Why: Harvester uses the same instanced-building infrastructure as housingComplex/hangar; the existing relocation (Move-Action) workflow required it.
+- Breaking: No — data model unchanged; `is_instanced` was already present.
+- Rollback: `php artisan migrate:rollback --step=1` — resets `is_instanced = 0` for Harvester.
+
+---
+
+## 2026-04-30 — Phase 3d: rename colony_tiles.is_ring_unlocked → is_colony_zone
+
+- What changed:
+  - `colony_tiles`: column `is_ring_unlocked` renamed to `is_colony_zone`.
+  - Semantic change: `is_colony_zone` means "this terrain tile is inside the colony zone and buildable", not just "its ring is unlocked for navigation". Exploration-zone tiles (regolith, impassable) remain `is_colony_zone = false`.
+- Why: Phase 3d Colony Zone Expansion — tile-count-based unlock (not ring-based), making the old name misleading.
+- Breaking: Yes — any raw SQL or code that referenced `is_ring_unlocked` must use `is_colony_zone` instead.
+- Rollback: `php artisan migrate:rollback --step=1` — renames column back to `is_ring_unlocked`.
+
+---
+
+## 2026-04-25 — Buildings cleanup: 25 → 11 active buildings
+
+- What changed:
+  - `buildings`: removed 14 unused building rows (deprecated civilian buildings — temple, stadium, casino, etc.); normalized `name` keys to `building_*` convention; adjusted `required_building_level` values to match new AP costs.
+  - `building_costs`: removed cost rows for deleted buildings.
+  - `testdata.sqlite.sql`: updated to match reduced building catalogue.
+- Why: Phase 3b buildings redesign — smaller, focused building catalogue aligned with GDD §4. Old `techs_*` keys retired.
+- Breaking: Yes — hard-coded building IDs or names for removed buildings will fail.
+- Rollback: `php artisan migrate:rollback --step=1` — re-inserts deleted rows and restores old names.
+
+---
+
 ## 2026-04-23 — DS-4 schema: colony_tiles, planet/grid fields, instanced buildings
 
 - What changed:

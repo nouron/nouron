@@ -416,7 +416,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3d: Colony Zone Expansion — Abgeschlossen (April 2026, PR #94)
+### Phase 3d: Colony Zone Expansion — Abgeschlossen (April 2026, PR #94 + PR #95)
 
 - [x] **Tile-Count Unlock** — CC Lv1–5 schaltet 4/2/3/3/3 = max. 15 individuelle Terrain-Tiles frei (statt ganzer Ringe); konfigurierbar via `config/game.php → colony_zone_expansion`
 - [x] **`is_ring_unlocked` → `is_colony_zone`** — DB-Umbenennung; Semantik: Terrain-Tile in Koloniezone (bebaubar)
@@ -426,7 +426,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3e: Onboarding & New-Player Experience (ausstehend)
+### Phase 3e: Onboarding & New-Player Experience — in Arbeit (Branch feat/phase3e-onboarding, PR #96 offen)
 
 GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
@@ -434,47 +434,48 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 #### Schritt 1 — Infrastruktur & Konfiguration
 
-- [ ] [db-migration-agent] `user_preferences`-Tabelle: Spalte `onboarding_hints BOOLEAN DEFAULT 1` ergänzen (Alternative: Cookie für ersten Run, persistente DB ab zweitem — TODOs im GDD §15 technische Anforderungen)
-- [ ] [game-developer] `config/game.php → onboarding`-Block anlegen: `hint_supply_cap_threshold`, `hint_no_engineer_ticks`, `hint_no_knowledge_after_tick`, `hint_trust_threshold`, `hint_trust_min_ticks`
-- [ ] [backend-coder] User-Settings-Route + Controller-Methode: `onboarding_hints`-Toggle speichern/lesen
+- [x] [db-migration-agent] `user_preferences`-Tabelle + `onboarding_hints`-Spalte (2 Migrationen)
+- [x] [game-developer] `config/game.php → onboarding`-Block: 5 Schwellwerte (`hint_supply_cap_threshold`, `hint_no_engineer_ticks`, `hint_no_knowledge_after_tick`, `hint_trust_threshold`, `hint_trust_min_ticks`)
+- [x] [backend-coder] `UserController::updateOnboardingHints()` + Route `PATCH /user/settings/onboarding` + Toggle in `settings.blade.php`
 
 #### Schritt 2 — Nexus-Briefing (§ 15.1)
 
 - [ ] [content-writer] Finalen Nachrichtentext für das Nexus-Briefing formulieren (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton; GDD §15 TODO)
-- [ ] [game-developer] `InnnService::createEvent()` um `sender = 'nexus'`, Priorität "dringend" erweitern; Nexus-Briefing-Event beim Erzeugen eines neuen Runs automatisch anlegen (Hook in Run-Erzeugung)
-- [ ] [qa-tester] Test: Beim ersten Login eines neuen Runs ist genau ein Nexus-Briefing-Event mit korrektem Absender und Priorität im INNN-Feed vorhanden; kein zweites bei erneutem Login
+- [x] [game-developer] `EventService::createNexusBriefing()` mit idempotent guard; `OnboardingService::setupNewPlayer()` ruft `createNexusBriefing()` — Event beim Erzeugen eines neuen Runs automatisch angelegt
+- [x] [qa-tester] 6 Tests in `NexusBriefingTest.php` grün
 
 #### Schritt 3 — Hint-System (§ 15.2)
 
-- [ ] [game-developer] `OnboardingHintService` (oder Methode in bestehendem Service): wertet 5 Zustandsregeln (Rang 1–5) aus und gibt den höchstrangigen aktiven Hinweis zurück; Konfigurationswerte aus `config/game.php → onboarding`; gibt `null` zurück wenn `onboarding_hints = false`
-- [ ] [backend-coder] API-Endpunkt `GET /colony/hint` — liefert aktiven Hinweis als JSON (Text, Ziel-URL, Rang); wird vom Alpine.js-Frontend gepolt oder einmalig beim Laden übergeben
-- [ ] [ui-specialist] Schmale, schließbare Hinweis-Leiste (Alpine.js-Komponente) direkt unterhalb der Ressourcenleiste im Colony-Layout: gedämpftes Gelb, einzeiliger Text + Aktions-Link + [×]-Schaltfläche. Schließen deaktiviert den spezifischen Hinweistyp für den aktuellen Run. Leiste erscheint nicht wenn `onboarding_hints = false`
-- [ ] [qa-tester] Tests: Rang-1-Bedingung (Supply-Cap ≤ 10, kein Wohnhabitat) gibt Rang-1-Hinweis; Rang-2 überschreibt nicht Rang-1 wenn beide aktiv; Rang-1 verschwindet nach Wohnhabitat-Bau
+- [x] [game-developer] `OnboardingHintService`: 5 Rang-Regeln (Rang 1: kein Wohnhabitat; Rang 2: kein Ingenieur; Rang 3: Harvester auf falschem Tile; Rang 4: keine Kenntnis; Rang 5: Vertrauen < -20); gibt `null` zurück wenn `onboarding_hints = false`
+- [x] [backend-coder] Dismiss-Endpunkt `POST /colony/hint/dismiss`; AJAX-Aktionen liefern `activeHint` in Response; kein separater Poll-Endpunkt nötig
+- [x] [ui-specialist] Reaktive Hint-Bar in `hexview.blade.php` — Alpine `x-show`, kein Page-Reload; AJAX-Aktionen aktualisieren Hinweis live
+- [x] [qa-tester] 17 Tests in `OnboardingHintServiceTest.php` grün
 
 #### Schritt 4 — Pulse-Indikator (§ 15.3)
 
-- [ ] [ui-specialist] CSS-Animation `ring-pulse` (2-Sekunden-Periode, bläulich-weiß, dezent — visuell klar unterscheidbar vom bestehenden orangefarbenen Tiefenscan-Pulse §4a): auf Techtree-Kacheln und Colony-Tiles anwendbar
-- [ ] [ui-specialist] Blade-/Alpine-Logik: Kachel oder Tile erhält CSS-Klasse `ring-pulse` genau dann, wenn der aktive Hint-Rang auf dieses Element zeigt (Tabelle GDD §15.3); Pulse verschwindet wenn Hinweis nicht mehr aktiv; nie mehr als ein Onboarding-Pulse gleichzeitig
+- [x] [ui-specialist] CSS-Animation `onboarding-ring-pulse` (blau-weiß, 2s) in `colony.css`
+- [x] [ui-specialist] Pulse auf Rang-1-Tiles (bebaubare Colony-Zone) und Rang-3-Tiles (Harvester-Tile) im SVG-Grid implementiert
+- [ ] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — zurückgestellt: Techtree-Migration auf Alpine.js zuerst nötig
 
 #### Schritt 5 — Techtree-Kaltstart: Kachel-Sortierung (§ 15.4)
 
-- [ ] [backend-coder] `TechtreeController` / Techtree-API: jeder Kachel ein Gruppierungsflag mitgeben (`available` / `locked` / `built`); Logik: Voraussetzungen erfüllt → available; Voraussetzungen fehlen → locked + Tooltip-Text "Benötigt: X"; bereits vorhanden → built
-- [ ] [ui-specialist] Techtree-View: Kacheln in drei visuelle Gruppen aufteilen (Zwischenstrich + Gruppenbezeichnung "Jetzt verfügbar / Voraussetzung fehlt / Bereits vorhanden"); gesperrte Kacheln gedimmt (Opacity 0.6) mit on-hover-Tooltip; kein separater Anfänger-Modus — Standarddarstellung für alle Spieler
+- [ ] [backend-coder] `TechtreeController` / Techtree-API: Gruppierungsflag je Kachel (`available` / `locked` / `built`) — zurückgestellt: Techtree-Screen muss zuerst auf Alpine.js migriert werden
+- [ ] [ui-specialist] Techtree-View: drei visuelle Gruppen, gesperrte Kacheln gedimmt (Opacity 0.6) mit on-hover-Tooltip — zurückgestellt: Techtree-Migration zuerst
 
 #### Schritt 6 — Inline-Erklärungen: 5 INNN-Trigger (§ 15.6)
 
 - [ ] [game-developer] Trigger 1 (Decay): Erstes Gebäude unter 80% Status-Points → einmaliges `innn_event` mit `event_type = 'onboarding_decay'`, Absender System, erklärt Reparatur-AP (einmalig pro Run)
-- [ ] [game-developer] Trigger 2 (Supply-Cap voll): `freies_supply = 0` → einmaliger Inline-Banner-Flag im Session/Preference-State; UI zeigt gelbes Banner im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar."
+- [ ] [game-developer] Trigger 2 (Supply-Cap voll): `freies_supply = 0` → einmaliger Inline-Banner-Flag im Session/Preference-State; UI zeigt gelbes Banner im Ressourcen-Header
 - [ ] [game-developer] Trigger 3 (Vertrauen erstmals negativ): `vertrauen` wird negativ → einmaliges `innn_event` mit `event_type = 'onboarding_trust'`, Absender Kolonist
-- [ ] [backend-coder] Trigger 4 (AP-Limit): Button-Handler gibt strukturierten Fehlercode zurück wenn AP = 0; Frontend zeigt Tooltip "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." (kein Modal)
-- [ ] [ui-specialist] Trigger 5 (Harvester-Verlagerung): Beim ersten Klick auf "Verlegen"-Aktion erscheint Tooltip "Harvester verlegen kostet 1 Construction-AP und ist sofort wirksam — ohne Downtime." (einmalig pro Run, dann kein Tooltip mehr)
-- [ ] [db-migration-agent] `innn_events` (oder `user_preferences`): Flag-Mechanismus für "bereits gefeuert"-Status der 5 Onboarding-Trigger (z.B. `event_type`-Präfix `onboarding_*` + Unique-Constraint pro User+Typ, oder Spalten-Flags in `user_preferences`)
-- [ ] [content-writer] Finale Texte für alle 5 Inline-Erklärungen (Ton konsistent mit Nexus-Briefing; karg, sachlich, keine Überheblichkeit)
-- [ ] [qa-tester] Tests: Jeder Trigger feuert genau einmal pro Run; kein zweites Event bei erneutem Auslösen der Bedingung; Trigger 4 + 5 erzeugen keine INNN-Events sondern nur UI-Feedback
+- [ ] [backend-coder] Trigger 4 (AP-Limit): Button-Handler gibt strukturierten Fehlercode zurück wenn AP = 0; Frontend zeigt Tooltip (kein Modal)
+- [ ] [ui-specialist] Trigger 5 (Harvester-Verlagerung): Beim ersten Klick auf "Verlegen" erscheint einmaliger Tooltip (einmalig pro Run)
+- [ ] [db-migration-agent] Flag-Mechanismus für "bereits gefeuert"-Status der 5 Onboarding-Trigger in `user_preferences`
+- [ ] [content-writer] Finale Texte für alle 5 Inline-Erklärungen (Ton konsistent mit Nexus-Briefing)
+- [ ] [qa-tester] Tests: Jeder Trigger feuert genau einmal pro Run; Trigger 4 + 5 erzeugen keine INNN-Events sondern nur UI-Feedback
 
 #### Schritt 7 — Integration & Einstellungen
 
-- [ ] [ui-specialist] Einstellungs-Toggle in User-Settings-Screen: "Onboarding-Hinweise anzeigen" (An/Aus); betrifft Hint-Leiste + Pulse + Inline-Banner (INNN-Events bleiben erhalten da persistenter Kanal)
+- [x] [ui-specialist] Einstellungs-Toggle in User-Settings-Screen: "Onboarding-Hinweise anzeigen" (An/Aus) — implementiert (Schritt 1)
 - [ ] [qa-tester] End-to-End: Neuer Run → Nexus-Briefing im INNN → Hint-Leiste zeigt Rang-1-Hinweis → Wohnhabitat bauen → Hint-Rang wechselt auf Rang 2 → Pulse auf Ingenieur-Slot → Onboarding-Hints deaktivieren → alle Elemente verschwinden
 
 ---
