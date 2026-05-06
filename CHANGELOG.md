@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-06
+
+- **Berater-Screen Redesign (Phase 3f)**: Berater-Screen komplett auf Alpine.js + PicoCSS migriert (war Bootstrap/jQuery). Neue Karussell-Ansicht mit 5 Portrait-Karten: Mobile zeigt eine Karte mit Swipe-Navigation, Desktop zeigt alle fünf nebeneinander. Jede Karte zeigt Rang, AP/Tick, Ticks, Aufstieg-Fortschrittsbalken und Status-Chip. Leere Slots haben Hire-Knopf, gesperrte Slots (CC-Level zu niedrig) sind ausgegraut. Hire/Fire laufen jetzt per AJAX ohne Seitenreload, mit nativen `<dialog>`-Bestätigungen. `AdvisorController` um `buildSlots()` und JSON-Branching erweitert (22 neue Feature-Tests).
+
 ## 2026-05-05
 
 - **Koloniekarte UX-Überarbeitung (Browser-Test-Fixes)**: Ring 1 generiert jetzt ausschließlich `terrain_empty`-Tiles (kein Regolith, keine Blocker), Ring 2 hat nur seltene Hazards/Blocker. Colony-Zone-Expansion auf `[6,3,3,2,1]` geändert — Ring 1 komplett ab CC Lv1 freigeschaltet, logische Progression ohne Teilringe. CC hard cap bei Lv5: `investBuilding()` prüft `max_level`, "AP investieren"-Button wird bei Max-Level ausgeblendet.

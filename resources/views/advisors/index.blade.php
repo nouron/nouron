@@ -1,288 +1,215 @@
-@extends('layouts.app')
+@extends('layouts.colony')
 @section('title', 'Berater — Nouron')
 
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/advisors.css') }}">
+@endpush
+
+@push('scripts')
+    <script src="{{ asset('js/advisors.js') }}"></script>
+@endpush
+
 @section('content')
-<div id="advisors">
+<script>window.__advisorData = @json($pageData)</script>
 
-{{-- Flash messages --}}
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    {{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-</div>
-@endif
+<div class="advisors-page" x-data="advisorCarousel(window.__advisorData)" x-cloak>
 
-{{-- Compact status line --}}
-<div class="d-flex flex-wrap gap-3 align-items-center text-muted small mb-4">
-    <span><i class="bi bi-hammer"></i> <strong>{{ $apInfo['construction'] }}</strong> Bau-AP</span>
-    <span class="text-muted opacity-50">·</span>
-    <span><i class="bi bi-microscope"></i> <strong>{{ $apInfo['research'] }}</strong> Forschungs-AP</span>
-    <span class="text-muted opacity-50">·</span>
-    <span><i class="bi bi-cart3"></i> <strong>{{ $apInfo['economy'] }}</strong> Wirtschafts-AP</span>
-    <span class="text-muted opacity-50">·</span>
-    <span><i class="bi bi-diagram-3"></i> <strong>{{ $apInfo['strategy'] }}</strong> Strategie-AP</span>
-    <span class="text-muted opacity-50">·</span>
-    <span><i class="bi bi-rocket"></i> <strong>{{ $apInfo['navigation'] }}</strong> Navigations-AP</span>
-    <span class="ms-auto">
-        <i class="bi bi-person-badge"></i>
-        Slots: <strong>{{ $slotInfo['used'] }}/{{ $slotInfo['max'] }}</strong>
-        <span class="text-muted">(CC Lv{{ $slotInfo['cc_level'] }})</span>
-    </span>
-</div>
+    {{-- ── Header bar ──────────────────────────────────────────────────────── --}}
+    <div class="advisors-header">
+        <h2>Berater</h2>
 
-{{-- Group definitions --}}
-@php
-    $rankNames  = [1 => 'Junior', 2 => 'Senior', 3 => 'Experte'];
-    $rankThresh = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
-
-    $colonySections = [
-        [
-            'personell_id' => config('advisors.engineer.id'),
-            'key'          => 'engineer',
-            'icon'         => 'bi-hammer',
-            'border'       => 'border-primary',
-            'bg'           => 'bg-primary bg-opacity-10',
-            'ap_type'      => config('advisors.engineer.ap_type'),
-        ],
-        [
-            'personell_id' => config('advisors.scientist.id'),
-            'key'          => 'scientist',
-            'icon'         => 'bi-microscope',
-            'border'       => 'border-success',
-            'bg'           => 'bg-success bg-opacity-10',
-            'ap_type'      => config('advisors.scientist.ap_type'),
-        ],
-        [
-            'personell_id' => config('advisors.trader.id'),
-            'key'          => 'trader',
-            'icon'         => 'bi-cart3',
-            'border'       => 'border-warning',
-            'bg'           => 'bg-warning bg-opacity-10',
-            'ap_type'      => config('advisors.trader.ap_type'),
-        ],
-        [
-            'personell_id' => config('advisors.stratege.id'),
-            'key'          => 'stratege',
-            'icon'         => 'bi-diagram-3',
-            'border'       => 'border-danger',
-            'bg'           => 'bg-danger bg-opacity-10',
-            'ap_type'      => config('advisors.stratege.ap_type'),
-        ],
-        [
-            'personell_id' => config('advisors.pilot.id'),
-            'key'          => 'pilot',
-            'icon'         => 'bi-rocket',
-            'border'       => 'border-info',
-            'bg'           => 'bg-info bg-opacity-10',
-            'ap_type'      => config('advisors.pilot.ap_type'),
-        ],
-    ];
-
-    $grouped = $advisors->groupBy('personell_id');
-@endphp
-
-{{-- Section header with hire button --}}
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Aktive Berater</h4>
-    @if($slotInfo['free'] > 0)
-    <button type="button" class="btn btn-sm btn-success"
-            data-bs-toggle="modal" data-bs-target="#modal-hire-advisor">
-        <i class="bi bi-person-plus"></i> Berater einstellen
-    </button>
-    @else
-    <span class="text-muted small">
-        <i class="bi bi-exclamation-triangle"></i>
-        Keine freien Slots — CC Level {{ $slotInfo['cc_level'] }} erlaubt max. {{ $slotInfo['max'] }} Berater
-    </span>
-    @endif
-</div>
-
-{{-- Colony advisor cards (2-per-row on desktop) --}}
-<div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-
-@foreach($colonySections as $section)
-@php
-    $sectionAdvisors = $grouped->get($section['personell_id'], collect());
-    $totalAp         = $sectionAdvisors->sum(fn($a) => $a->getApPerTick());
-    $creditsCost     = $creditsByPersonellId->get($section['personell_id'], 0);
-    $hasAdvisor      = $sectionAdvisors->isNotEmpty();
-@endphp
-<div class="col">
-    <div class="card h-100">
-        <div class="card-header d-flex justify-content-between align-items-center py-2">
-            <span class="fw-semibold">
-                <i class="bi {{ $section['icon'] }}"></i> {{ __('advisors.' . $section['key'] . '_plural') }}
-            </span>
-            <span class="d-flex align-items-center gap-2">
-                <small class="text-muted">{{ __('advisors.ap_' . $section['ap_type']) }}:</small>
-                <span class="fw-bold">{{ $totalAp }} AP/Tick</span>
-            </span>
+        {{-- AP type chips — one per slot showing ap_type label --}}
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+            <template x-for="slot in slots" :key="'chip-' + slot.key">
+                <span class="ap-chip" x-show="slot.state === 'active'">
+                    <strong x-text="apTypeLabel(slot.ap_type)"></strong>
+                    <span x-text="slot.advisor ? slot.advisor.ap_per_tick + ' AP' : ''"></span>
+                </span>
+            </template>
         </div>
-        <div class="card-body p-0">
-            @if(!$hasAdvisor)
-            <p class="text-muted small p-3 mb-0">
-                Keine {{ __('advisors.' . $section['key'] . '_plural') }} aktiv.
-                @if($slotInfo['free'] > 0)
-                <a href="#" data-bs-toggle="modal" data-bs-target="#modal-hire-advisor"
-                   data-personell-id="{{ $section['personell_id'] }}">Jetzt einstellen</a>
-                @endif
-            </p>
-            @else
-            <table class="table table-sm table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Rang</th>
-                        <th class="text-center">AP/Tick</th>
-                        <th class="text-center">Ticks</th>
-                        <th class="text-center">Aufstieg</th>
-                        <th class="text-center">Status</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                @foreach($sectionAdvisors as $advisor)
-                @php
-                    $nextRankTicks = $rankThresh[$advisor->rank] ?? null;
-                    $progress      = $nextRankTicks
-                        ? min(100, (int) round($advisor->active_ticks / $nextRankTicks * 100))
-                        : 100;
-                    $rankBadge = match($advisor->rank) {
-                        1       => ['Junior',  'bg-secondary'],
-                        2       => ['Senior',  'bg-info text-dark'],
-                        3       => ['Experte', 'bg-warning text-dark'],
-                        default => [$rankNames[$advisor->rank] ?? '?', 'bg-secondary'],
-                    };
-                @endphp
-                <tr>
-                    <td><span class="badge {{ $rankBadge[1] }}">{{ $rankBadge[0] }}</span></td>
-                    <td class="text-center fw-semibold">{{ $advisor->getApPerTick() }}</td>
-                    <td class="text-center text-muted small">{{ $advisor->active_ticks }}</td>
-                    <td class="text-center" style="min-width:100px">
-                        @if($advisor->rank < 3 && $nextRankTicks)
-                        <div class="progress" style="height:6px"
-                             title="{{ $advisor->active_ticks }}/{{ $nextRankTicks }} Ticks">
-                            <div class="progress-bar" style="width:{{ $progress }}%"></div>
+
+        <span class="slot-badge">
+            Slots: <strong x-text="slotInfo.used + '/' + slotInfo.max"></strong>
+            <span x-text="'(CC Lv' + slotInfo.cc_level + ')'"></span>
+        </span>
+    </div>
+
+    {{-- ── Carousel ─────────────────────────────────────────────────────────── --}}
+    <div class="carousel-wrapper">
+
+        <button class="carousel-arrow"
+                @click="prev()"
+                :disabled="activeIndex === 0"
+                aria-label="Vorheriger Berater">&#8249;</button>
+
+        <div class="carousel-viewport"
+             @touchstart.passive="onTouchStart($event)"
+             @touchend.passive="onTouchEnd($event)">
+
+            <div class="carousel-track" :style="trackStyle()">
+
+                <template x-for="(slot, i) in slots" :key="slot.key">
+                    <div class="advisor-card"
+                         :class="{
+                             'advisor-card--locked':  slot.state === 'locked',
+                             'advisor-card--current': i === activeIndex
+                         }">
+
+                        {{-- Portrait area --}}
+                        <div class="advisor-portrait" :data-initials="portraitInitials(slot.key)">
+                            <div class="advisor-type-label" x-text="slot.name"></div>
+                            <div class="advisor-ap-chip">
+                                <strong x-text="apTypeLabel(slot.ap_type)"></strong>
+                            </div>
                         </div>
-                        <span class="text-muted" style="font-size:0.7rem">
-                            {{ $advisor->active_ticks }}/{{ $nextRankTicks }}
-                        </span>
-                        @else
-                        <span class="badge bg-warning text-dark" style="font-size:0.65rem">Max</span>
-                        @endif
-                    </td>
-                    <td class="text-center">
-                        @if($advisor->unavailable_until_tick)
-                            <span class="badge bg-warning text-dark" style="font-size:0.65rem">
-                                Inaktiv bis T{{ $advisor->unavailable_until_tick }}
-                            </span>
-                        @else
-                            <span class="badge bg-success" style="font-size:0.65rem">Aktiv</span>
-                        @endif
-                    </td>
-                    <td class="text-end">
-                        <form method="POST" action="{{ route('advisors.fire', $advisor->id) }}"
-                              onsubmit="return confirm('Berater wirklich entlassen?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-1"
-                                    title="Entlassen">
-                                <i class="bi bi-person-dash"></i>
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-                @endforeach
-                </tbody>
-            </table>
-            @endif
-        </div>
-        @if($hasAdvisor)
-        <div class="card-footer py-1 d-flex justify-content-end align-items-center">
-            <small class="text-muted">
-                <strong>{{ $totalAp }} AP/Tick</strong>
-            </small>
-        </div>
-        @endif
+
+                        {{-- Stats / state section --}}
+                        <div class="advisor-stats">
+
+                            {{-- ACTIVE or UNAVAILABLE: advisor object is present --}}
+                            <template x-if="slot.advisor !== null">
+                                <div style="display:flex;flex-direction:column;gap:0.4rem;height:100%">
+
+                                    <div class="stat-row">
+                                        <span class="stat-label">Rang</span>
+                                        <span class="rank-badge"
+                                              :class="'rank-badge--' + slot.advisor.rank"
+                                              x-text="slot.advisor.rank_name"></span>
+                                    </div>
+
+                                    <div class="stat-row">
+                                        <span class="stat-label">AP/Tick</span>
+                                        <span class="stat-value" x-text="slot.advisor.ap_per_tick"></span>
+                                    </div>
+
+                                    <div class="stat-row">
+                                        <span class="stat-label">Ticks</span>
+                                        <span class="stat-value" x-text="slot.advisor.active_ticks"></span>
+                                    </div>
+
+                                    {{-- Rank advancement progress --}}
+                                    <div>
+                                        <div class="stat-row" style="margin-bottom:2px">
+                                            <span class="stat-label">Aufstieg</span>
+                                            <span class="stat-label"
+                                                  x-text="slot.advisor.is_max_rank
+                                                      ? 'Max'
+                                                      : (slot.advisor.active_ticks + '/' + slot.advisor.next_rank_ticks)">
+                                            </span>
+                                        </div>
+                                        <div class="advisor-progress">
+                                            <div class="advisor-progress-fill"
+                                                 :style="{ width: slot.advisor.progress_pct + '%' }"></div>
+                                        </div>
+                                    </div>
+
+                                    {{-- Status chip + fire button --}}
+                                    <div class="stat-row" style="margin-top:auto">
+                                        <span class="advisor-status"
+                                              :class="slot.advisor.is_unavailable
+                                                  ? 'advisor-status--unavailable'
+                                                  : 'advisor-status--active'"
+                                              x-text="slot.advisor.is_unavailable
+                                                  ? ('Inaktiv bis T' + slot.advisor.unavailable_until_tick)
+                                                  : 'Aktiv'">
+                                        </span>
+                                        <button class="btn-fire" @click="openFireDialog(slot)">Entlassen</button>
+                                    </div>
+
+                                </div>
+                            </template>
+
+                            {{-- EMPTY: slot is available, no advisor hired yet --}}
+                            <template x-if="slot.advisor === null && slot.state === 'empty'">
+                                <div style="display:flex;flex-direction:column;gap:0.5rem;height:100%">
+
+                                    <span class="advisor-status advisor-status--empty">Vakant</span>
+
+                                    <div class="stat-row">
+                                        <span class="stat-label">Einstellungskosten</span>
+                                        <span class="stat-value" x-text="slot.hire_cost + ' Cr'"></span>
+                                    </div>
+
+                                    <div class="stat-label" style="font-size:0.7rem;color:#aaa">
+                                        Junior &middot; 4 AP/Tick
+                                    </div>
+
+                                    <button class="btn-hire"
+                                            style="margin-top:auto"
+                                            @click="openHireDialog(slot)">Einstellen</button>
+
+                                </div>
+                            </template>
+
+                            {{-- LOCKED: CC level too low to unlock this slot --}}
+                            <template x-if="slot.state === 'locked'">
+                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:0.4rem;color:#aaa;text-align:center">
+                                    <span style="font-size:1.5rem">&#128274;</span>
+                                    <span class="advisor-status advisor-status--locked">Gesperrt</span>
+                                    <span style="font-size:0.72rem">
+                                        CC Level <strong x-text="slot.cc_required"></strong> erforderlich
+                                    </span>
+                                </div>
+                            </template>
+
+                        </div>{{-- /.advisor-stats --}}
+                    </div>{{-- /.advisor-card --}}
+                </template>
+
+            </div>{{-- /.carousel-track --}}
+        </div>{{-- /.carousel-viewport --}}
+
+        <button class="carousel-arrow"
+                @click="next()"
+                :disabled="activeIndex >= slots.length - 1"
+                aria-label="Nächster Berater">&#8250;</button>
+
+    </div>{{-- /.carousel-wrapper --}}
+
+    {{-- Pagination dots (mobile only, hidden on desktop via CSS) --}}
+    <div class="carousel-dots">
+        <template x-for="(slot, i) in slots" :key="'dot-' + i">
+            <button class="carousel-dot"
+                    :class="{ 'carousel-dot--active': i === activeIndex }"
+                    @click="goTo(i)"
+                    :aria-label="slot.name"></button>
+        </template>
     </div>
-</div>
-@endforeach
 
-</div>{{-- /.row --}}
-
-</div>{{-- #advisors --}}
-
-{{-- Hire modal --}}
-<div class="modal fade" id="modal-hire-advisor" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Berater einstellen</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    {{-- ── Hire confirmation dialog ─────────────────────────────────────────── --}}
+    <dialog class="advisor-dialog" x-ref="hireDialog" @close="closeDialogs()">
+        <h3>Berater einstellen</h3>
+        <template x-if="dialogSlot">
+            <div>
+                <p class="dialog-cost">
+                    <strong x-text="dialogSlot.name"></strong> &middot; Junior &middot; 4 AP/Tick<br>
+                    Kosten: <strong x-text="dialogSlot.hire_cost + ' Cr'"></strong>
+                </p>
+                <div class="dialog-error" x-text="errorMsg"></div>
+                <div class="dialog-actions">
+                    <button class="btn-cancel" @click="closeDialogs()">Abbrechen</button>
+                    <button class="btn-confirm-hire" @click="doHire()">Einstellen</button>
+                </div>
             </div>
-            <form method="POST" action="{{ route('advisors.hire') }}">
-                @csrf
-                <div class="modal-body">
-                    <p class="text-muted small">
-                        Neue Berater starten als Junior ({{ config('game.advisor.ap_per_rank.1', 4) }} AP/Tick).
-                        Slots belegt: <strong>{{ $slotInfo['used'] }}/{{ $slotInfo['max'] }}</strong>
-                        (CC Lv{{ $slotInfo['cc_level'] }}).
-                    </p>
-                    <div class="mb-3">
-                        <label for="personell_id" class="form-label">Typ</label>
-                        <select name="personell_id" id="personell_id" class="form-select" required>
-                            @foreach($personellTypes as $pId => $pType)
-                            @php
-                                $apLabel = match($pType->name) {
-                                    'techs_engineer'  => 'Bau-AP',
-                                    'techs_scientist' => 'Forschungs-AP',
-                                    'techs_trader'    => 'Wirtschafts-AP',
-                                    'techs_stratege'  => 'Strategie-AP',
-                                    'techs_pilot'     => 'Navigations-AP',
-                                    default           => '',
-                                };
-                                $label = __('techtree.' . $pType->name) . ($apLabel ? ' (' . $apLabel . ')' : '');
-                                $cost = $creditsByPersonellId->get($pId, 0);
-                                $alreadyHired = $advisors->contains('personell_id', $pId);
-                            @endphp
-                            <option value="{{ $pId }}" @if($alreadyHired) disabled @endif>
-                                {{ $label }}
-                                — @include('partials.res_chip', ['abbreviation' => 'Cr', 'amount' => number_format($cost, 0, ',', '.')])
-                                @if($alreadyHired) (bereits eingestellt) @endif
-                            </option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-person-plus"></i> Einstellen
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+        </template>
+    </dialog>
 
-<script>
-// Pre-select the type in the hire modal when clicking "Jetzt einstellen" links
-document.addEventListener('DOMContentLoaded', function () {
-    document.querySelectorAll('[data-personell-id]').forEach(function (el) {
-        el.addEventListener('click', function () {
-            var pId = this.getAttribute('data-personell-id');
-            var sel = document.getElementById('personell_id');
-            if (sel && pId) {
-                sel.value = pId;
-            }
-        });
-    });
-});
-</script>
+    {{-- ── Fire confirmation dialog ─────────────────────────────────────────── --}}
+    <dialog class="advisor-dialog" x-ref="fireDialog" @close="closeDialogs()">
+        <h3>Berater entlassen</h3>
+        <template x-if="dialogSlot">
+            <div>
+                <p class="dialog-cost">
+                    <strong x-text="dialogSlot.name"></strong> wirklich entlassen?
+                </p>
+                <div class="dialog-error" x-text="errorMsg"></div>
+                <div class="dialog-actions">
+                    <button class="btn-cancel" @click="closeDialogs()">Abbrechen</button>
+                    <button class="btn-confirm-fire" @click="doFire()">Entlassen</button>
+                </div>
+            </div>
+        </template>
+    </dialog>
 
+</div>{{-- /.advisors-page --}}
 @endsection
