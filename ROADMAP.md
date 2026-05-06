@@ -480,6 +480,19 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 ---
 
+### Phase 3f: Berater-Screen Redesign — Abgeschlossen (Mai 2026, Branch feat/phase3f-advisor-carousel)
+
+Der Berater-Screen war der logische nächste Schritt nach dem Onboarding (Phase 3e), da der Onboarding-Hinweis Rang 2 direkt auf das Einstellen eines Beraters verweist. Der Screen wurde von Bootstrap/jQuery auf Alpine.js + PicoCSS migriert und als Karussell neugestaltet.
+
+- [x] [backend-coder] `AdvisorController::buildSlots()` — 5-Slot-Array mit Zustands-Logik (active/unavailable/empty/locked), CC-Level-Gating, Rang-Fortschritt in Prozent
+- [x] [backend-coder] JSON-Branching in `hire()` und `fire()` — AJAX-Clients erhalten strukturiertes JSON (`{ok, slots, slotInfo}`), HTML-Clients erhalten weiterhin Redirect
+- [x] [ui-specialist] `public/css/advisors.css` — Portrait-Karten (2:3-Verhältnis), Rang-Badges, Fortschrittsbalken, Status-Chips, Karussell-Track mit CSS-Transition, Arrows + Dots (Mobile only)
+- [x] [ui-specialist] `public/js/advisors.js` — Alpine-Komponente: Swipe-Gesten (Touch-Events), Karussell-Navigation, AJAX hire/fire, native `<dialog>`-Steuerung
+- [x] [ui-specialist] `resources/views/advisors/index.blade.php` — Komplett auf `layouts.colony` (PicoCSS + Alpine) umgestellt; `x-for` für Karten, `x-if` für Zustände, `@push`-Stacks für CSS/JS
+- [x] [qa-tester] 22 Feature-Tests in `AdvisorControllerTest.php` — Index, Hire/Fire (Redirect + JSON), 404-Sicherheit, Auth-Guard; alle grün
+
+---
+
 ### Bewusste Designentscheidungen (nicht umsetzen in Phase 3)
 
 | Thema | Entscheidung | Begründung |
@@ -508,7 +521,7 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
 - [ ] **Rassen-System überarbeiten** — `race_id` ist im Schema, wird nicht ausgewertet; rassenspezifische Effekte definieren; Designfrage erst nach Phase-3-Playtest beantwortbar
 - [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Phase 3 voraus
-- [ ] **Benannte Chef-Berater** — individuelle Charaktere mit Fähigkeiten und Namen; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12)
+- [ ] **Berater-Vertiefung (Design-Sprint nötig)** — Beim Einstellen eine Auswahl aus mehreren Kandidaten (zufällig generiert pro Run); Berater haben positive und negative Traits (z.B. "Pragmatiker: +1 Bau-AP / −5% Moral", "Intrigant: +2 Strategie-AP / Vertrauensmalus"); individuelle Namen und Portrait-Grafiken; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12)
 - [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13)
 - [ ] **Handelsbeschränkungen vollständig durchsetzen** — `restriction`-Feld Werte 1/2/3 korrekt auswerten (aktuell ignoriert)
 

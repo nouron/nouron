@@ -29,4 +29,12 @@ return [
     'ap_strategy'     => 'Strategie-AP',
     'ap_navigation'   => 'Navigations-AP',
 
+    // Flash / JSON response messages
+    'hired'                       => 'Berater eingestellt.',
+    'fired'                       => 'Berater entlassen.',
+    'error_duplicate'             => 'Für diesen Beratertyp ist bereits ein Berater auf dieser Kolonie aktiv.',
+    'error_slot_full'             => 'Kein freier Berater-Slot. Erhöhe das CommandCenter-Level.',
+    'error_insufficient_credits'  => 'Nicht genug Credits, um diesen Berater einzustellen.',
+    'error_generic'               => 'Berater konnte nicht eingestellt werden.',
+
 ];
