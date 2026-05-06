@@ -67,6 +67,52 @@ class TechtreeControllerTest extends TestCase
         $this->assertEquals(1, $afterOwn, 'Colony 1 (Bart\'s) must be updated');
     }
 
+    public function testIndexReturns200WithPageData(): void
+    {
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)->get(route('techtree.index'));
+        $response->assertOk();
+        $response->assertViewHas('pageData');
+
+        $pageData = $response->viewData('pageData');
+        $this->assertArrayHasKey('categories', $pageData);
+        $this->assertArrayHasKey('lines', $pageData);
+
+        foreach (['building', 'research', 'ship', 'personell'] as $type) {
+            $this->assertArrayHasKey($type, $pageData['categories'], "Category '$type' missing");
+        }
+    }
+
+    public function testIndexCategoryTechsHaveRequiredFields(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        foreach (['building', 'research', 'ship', 'personell'] as $type) {
+            foreach ($pageData['categories'][$type] as $tech) {
+                $this->assertArrayHasKey('id', $tech);
+                $this->assertArrayHasKey('row', $tech);
+                $this->assertArrayHasKey('col', $tech);
+                $this->assertArrayHasKey('status', $tech);
+                $this->assertContains($tech['status'], ['built', 'available', 'locked'],
+                    "Invalid status '{$tech['status']}' for {$type}/{$tech['id']}");
+            }
+        }
+    }
+
+    public function testIndexLinesHaveRequiredFields(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        foreach ($pageData['lines'] as $line) {
+            $this->assertArrayHasKey('from', $line);
+            $this->assertArrayHasKey('to', $line);
+            $this->assertArrayHasKey('met', $line);
+        }
+    }
+
     /**
      * There is no colony_id parameter in the URL — the route signature
      * is /techtree/{type}/{id}/{order}. This confirms by design that
