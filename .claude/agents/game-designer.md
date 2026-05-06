@@ -1,6 +1,6 @@
 ---
 name: game-designer
-description: Use for game design tasks — defining mechanics, writing or updating the Game Design Document (GDD), balancing resources/units/combat formulas, designing progression systems, player onboarding, and reviewing implemented features for fun factor. Invoke before implementing any new game mechanic.
+description: Use proactively for game design tasks — defining mechanics, writing or updating the Game Design Document (GDD), balancing resources/units/combat formulas, designing progression systems, player onboarding, and reviewing implemented features for fun factor. Invoke before implementing any new game mechanic.
 tools: Read, Write, Edit, Grep, Glob
 ---
 

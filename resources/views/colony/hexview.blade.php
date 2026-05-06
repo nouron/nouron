@@ -10,12 +10,14 @@ window.__colonyViewData = {
     buildings: @json($buildings),
     apNav:          {{ (int)$navAp }},
     apConstruction: {{ (int)$constructionAp }},
+    activeHint: @json($activeHint),
     routes: {
         explore:            '{{ route('colony.tile.explore') }}',
         deepScan:           '{{ route('colony.tile.deep-scan') }}',
         buildingsAvailable: '{{ route('colony.buildings.available') }}',
         placeBuilding:      '{{ route('colony.building.place') }}',
         investBuilding:     '{{ route('colony.building.invest') }}',
+        dismissHint:        '{{ route('colony.hint.dismiss') }}',
     },
     i18n: {
         explore:           '{{ __('colony.explore') }}',
@@ -52,6 +54,20 @@ window.__colonyViewData = {
                     <span x-text="buildMode ? '{{ __('colony.cancel') }}' : '{{ __('colony.build') }}'"></span>
                 </button>
             </div>
+
+            {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
+                 Updates automatically after any AJAX action that changes hint state. --}}
+            <div class="hint-bar"
+                 x-show="activeHint"
+                 x-cloak>
+                <span class="hint-bar__icon" aria-hidden="true">!</span>
+                <span class="hint-bar__text" x-text="activeHint?.text"></span>
+                <a class="hint-bar__link" :href="activeHint?.target_url">→</a>
+                <button class="hint-bar__dismiss"
+                        aria-label="Dismiss hint"
+                        @click="dismissHint()">×</button>
+            </div>
+
             <div x-ref="hexgrid" class="hex-canvas"></div>
         </div>
 
@@ -161,16 +177,24 @@ window.__colonyViewData = {
                                     <dd x-text="buildingForTile(selectedTile).max_level ?? '∞'"></dd>
                                 </dl>
 
-                                <div class="sidebar-bar-group">
-                                    <div class="sidebar-bar-label">
-                                        <span>{{ __('colony.condition') }}</span>
-                                        <span x-text="`${buildingForTile(selectedTile).status_points} / ${buildingForTile(selectedTile).max_status_points ?? 20}`"></span>
+                                <template x-if="buildingForTile(selectedTile).level === 0">
+                                    <div class="sidebar-under-construction">
+                                        {{ __('colony.under_construction') }}
                                     </div>
-                                    <div class="sidebar-bar-wrap">
-                                        <div class="sidebar-bar sidebar-bar--status"
-                                             :style="`width:${Math.round(buildingForTile(selectedTile).status_points / (buildingForTile(selectedTile).max_status_points ?? 20) * 100)}%`"></div>
+                                </template>
+
+                                <template x-if="buildingForTile(selectedTile).level > 0">
+                                    <div class="sidebar-bar-group">
+                                        <div class="sidebar-bar-label">
+                                            <span>{{ __('colony.condition') }}</span>
+                                            <span x-text="`${Math.round(buildingForTile(selectedTile).status_points / (buildingForTile(selectedTile).max_status_points ?? 20) * 100)} %`"></span>
+                                        </div>
+                                        <div class="sidebar-bar-wrap">
+                                            <div class="sidebar-bar sidebar-bar--status"
+                                                 :style="`width:${Math.round(buildingForTile(selectedTile).status_points / (buildingForTile(selectedTile).max_status_points ?? 20) * 100)}%`"></div>
+                                        </div>
                                     </div>
-                                </div>
+                                </template>
 
                                 <div class="sidebar-bar-group">
                                     <div class="sidebar-bar-label">
@@ -199,7 +223,7 @@ window.__colonyViewData = {
                                 </button>
                             </template>
 
-                            <template x-if="buildingForTile(selectedTile)">
+                            <template x-if="buildingForTile(selectedTile) && (buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level)">
                                 <button class="sidebar-action-btn" @click="doInvestAp(buildingForTile(selectedTile))">
                                     {{ __('colony.invest_ap') }}
                                 </button>

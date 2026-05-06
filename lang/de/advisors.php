@@ -2,20 +2,20 @@
 
 return [
 
-    'engineer'        => 'Ingenieur',
-    'engineer_plural' => 'Ingenieure',
+    'engineer'        => 'Baumeister',
+    'engineer_plural' => 'Baumeister',
     'engineer_desc'   => 'Stellt Bau-AP bereit. Ermöglicht den Ausbau und die Instandhaltung von Gebäuden.',
 
-    'scientist'        => 'Wissenschaftler',
-    'scientist_plural' => 'Wissenschaftler',
+    'scientist'        => 'Analytiker',
+    'scientist_plural' => 'Analytiker',
     'scientist_desc'   => 'Stellt Forschungs-AP bereit. Treibt den Fortschritt in Wissenschaft und Technologie voran.',
 
     'pilot'        => 'Raumfahrer',
     'pilot_plural' => 'Raumfahrer',
     'pilot_desc'   => 'Stellt Navigations-AP bereit. Ermöglicht Flottenbewegungen und Erkundungsmissionen.',
 
-    'trader'        => 'Händler',
-    'trader_plural' => 'Händler',
+    'trader'        => 'Konsul',
+    'trader_plural' => 'Konsuln',
     'trader_desc'   => 'Stellt Wirtschafts-AP bereit. Verwaltet Handelsrouten und Marktoperationen.',
 
     'stratege'        => 'Stratege',

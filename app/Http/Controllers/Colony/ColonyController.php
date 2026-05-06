@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
+use App\Services\OnboardingHintService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,7 @@ class ColonyController extends BaseController
         private readonly ColonyService $colonyService,
         private readonly ColonyTileService $tileService,
         private readonly PersonellService $personellService,
+        private readonly OnboardingHintService $hintService,
     ) {
         parent::__construct($tick);
     }
@@ -71,8 +73,9 @@ class ColonyController extends BaseController
 
         $navAp          = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
+        $activeHint     = $this->resolveHint($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -83,7 +86,8 @@ class ColonyController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->exploreTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+        return response()->json([...$result, ...$extra]);
     }
 
     public function deepScanTile(Request $request): JsonResponse
@@ -92,7 +96,8 @@ class ColonyController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->deepScanTile($colony->id, (int) $data['q'], (int) $data['r']);
 
-        return response()->json([...$result, ...($result['ok'] ? $this->currentAp($colony->id) : [])]);
+        $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
+        return response()->json([...$result, ...$extra]);
     }
 
     // ── Building actions ──────────────────────────────────────────────────────
@@ -230,7 +235,7 @@ class ColonyController extends BaseController
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
-        return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id)]);
+        return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)]);
     }
 
     public function investBuilding(Request $request): JsonResponse
@@ -255,7 +260,11 @@ class ColonyController extends BaseController
         if (!$row)
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
-        $building   = DB::table('buildings')->where('id', $buildingId)->first();
+        $building = DB::table('buildings')->where('id', $buildingId)->first();
+
+        if ($building->max_level !== null && $row->level >= (int) $building->max_level)
+            return response()->json(['ok' => false, 'error' => __('colony.error_max_level_reached')]);
+
         $newApSpend = min($row->ap_spend + 1, $building->ap_for_levelup);
 
         DB::table('colony_buildings')
@@ -286,6 +295,7 @@ class ColonyController extends BaseController
                 'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
                 'leveled_up' => true,
                 'tiles'      => $tiles,
+                'activeHint' => $this->resolveHint($colony->id),
                 ...$this->currentAp($colony->id),
             ]);
         }
@@ -294,8 +304,19 @@ class ColonyController extends BaseController
             'ok'         => true,
             'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
+            'activeHint' => $this->resolveHint($colony->id),
             ...$this->currentAp($colony->id),
         ]);
+    }
+
+    public function dismissHint(Request $request): JsonResponse
+    {
+        $data   = $request->validate(['hint_key' => 'required|string|max:20']);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $this->hintService->dismissHint(Auth::id(), $data['hint_key']);
+        $activeHint = $this->hintService->getActiveHint($colony->id, Auth::id());
+
+        return response()->json(['ok' => true, 'hint' => $activeHint]);
     }
 
     public function rename(Request $request): RedirectResponse
@@ -315,6 +336,13 @@ class ColonyController extends BaseController
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private function resolveHint(int $colonyId): ?array
+    {
+        $hint = $this->hintService->getActiveHint($colonyId, Auth::id());
+        if ($hint) $hint['text'] = __($hint['text_key']);
+        return $hint;
+    }
 
     private function currentAp(int $colonyId): array
     {

@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-05-05
+
+- **Koloniekarte UX-Überarbeitung (Browser-Test-Fixes)**: Ring 1 generiert jetzt ausschließlich `terrain_empty`-Tiles (kein Regolith, keine Blocker), Ring 2 hat nur seltene Hazards/Blocker. Colony-Zone-Expansion auf `[6,3,3,2,1]` geändert — Ring 1 komplett ab CC Lv1 freigeschaltet, logische Progression ohne Teilringe. CC hard cap bei Lv5: `investBuilding()` prüft `max_level`, "AP investieren"-Button wird bei Max-Level ausgeblendet.
+- **Sidebar-Verbesserungen**: Level-0-Gebäude zeigen "Im Bau"-Badge statt Zustandsbalken; fertige Gebäude zeigen Zustand als Prozent. Tile-Bezeichnung "Leeres Terrain" → "Freies Feld".
+- **On-Tile-Info**: Gebäude-Badge zeigt jetzt Level (z.B. "WH 1"); roter Warn-Dot bei Zustand < 10%.
+- **Visuelle Hierarchie**: Unerkundete Tiles hell/ausgewaschen (fast weiß), erkundete Tiles farbiger — klares "erkundet vs. unbekannt". Erkundete Tiles außerhalb Colony Zone: gestrichelter Outline + `CC ↑`-Badge.
+- **Berater-Namen korrigiert**: Ingenieur → Baumeister, Wissenschaftler → Analytiker, Händler → Konsul (lang/de/advisors.php war veraltet). Onboarding-Hint 2 entsprechend aktualisiert.
+
+## 2026-05-04
+
+- **GDD § 15 Onboarding ausgearbeitet**: Fünf konkrete Maßnahmen definiert — Nexus-Briefing (INNN-Event beim Run-Start, Absender "Nexus Command"), Hint-System (zustandsbasierte Hinweis-Leiste, 5 Prioritätsregeln, deaktivierbar), Pulse-Indikator (CSS-Animation `ring-pulse`, bläulich-weiß, an Hint-System gekoppelt), Techtree-Kaltstart (Kacheln nach "verfügbar / gesperrt / vorhanden" gruppiert), Inline-Erklärungen (5 einmalige INNN-Trigger pro Run: Decay, Supply-Cap, Vertrauen, AP-Limit, Harvester-Verlagerung). Technische Anforderungen, Konfigurationsblock (`config/game.php → onboarding`) und offene Design-TODOs ebenfalls dokumentiert.
+- **ROADMAP Phase 3e konkretisiert**: Platzhalter durch 7-Schritt-Task-Breakdown ersetzt (Schritt 1: Infrastruktur/Config → Schritt 7: Integration/Settings). Alle Aufgaben mit Agenten-Zuordnungen und Abhängigkeitsreihenfolge versehen.
+- Kein Code implementiert — reine Design- und Planungsarbeit.
+
+- **Hint-Leiste reaktiv gemacht**: Hint-Bar aus isoliertem `@if($activeHint)`/`x-data`-Block in den `colonyHexView`-Alpine-Scope integriert. Controller-Methoden `exploreTile`, `deepScanTile`, `placeBuilding`, `investBuilding` geben jetzt `activeHint` in jeder Erfolgs-Response zurück. Neuer `resolveHint()`-Helper im Controller übersetzt den Text serverseitig (`text`-Feld). JS: `updateHint(res)` + `dismissHint()`-Methode im Component. Blade: `x-show="activeHint"` + `x-cloak` statt bedingtem Rendering. `ui-specialist.md` mit Muster-Dokumentation ergänzt.
+
+**Phase 3e Implementierung (Schritte 1–4):**
+
+- **Schritt 1 — Infrastruktur**: Migration `user_preferences`-Tabelle mit `onboarding_hints BOOLEAN DEFAULT 1` und `dismissed_hints TEXT nullable`. `config/game.php → onboarding`-Block mit 5 Schwellwerten. `UserController::updateOnboardingHints()` + Route `PATCH /user/settings/onboarding` + Toggle in `settings.blade.php`.
+- **Schritt 2 — Nexus-Briefing**: `EventService::createNexusBriefing()` erzeugt einmalig beim ersten Login ein INNN-Event (Absender "Nexus Command"); idempotent via Guard auf `event = 'onboarding.nexus_briefing'`; serialisiert `colony_id` in `parameters`. `OnboardingService::setupNewPlayer()` ruft Nexus-Briefing am Ende der Transaktion auf. Neues Icon `bi-broadcast-pin` für `area = 'nexus'` in `events.blade.php`. Lang-Keys `onboarding_nexus_briefing`, `onboarding_decay`, `onboarding_trust` in `lang/de/events.php`. 6 neue Tests in `NexusBriefingTest.php`, alle grün.
+- **Schritt 3 — Hint-System**: `OnboardingHintService` mit 5 Prioritätsregeln (kein Wohnhabitat, kein Ingenieur, Harvester auf falschem Tile, kein Wissen, Vertrauen < −20); Dismiss-Logik via JSON in `dismissed_hints`; Schwellwerte aus `config/game.php → onboarding`. API-Endpunkt `POST /colony/hint/dismiss` in `ColonyController`. Hint-Leiste in `hexview.blade.php` — gedämpft-gelb, Alpine.js, AJAX-Dismiss, `x-transition`. Lang-Keys `onboarding_hint_1`–`_5` in `lang/de/colony.php`. 17 neue Tests in `OnboardingHintServiceTest.php`, alle grün.
+- **Schritt 4 — Pulse-Indikator**: CSS-Animation `onboarding-ring-pulse` in `colony.css` — bläulich-weiß, 2 s, visuell abgegrenzt vom orangen Signal-Pulse. Pulse-Hexagon-Ring in `colony-hexgrid.js` für Rang 1 (freie Terrain-Tiles) und Rang 3 (Harvester-Tile). `activeHint` wird via `window.__colonyViewData` an das Frontend übergeben.
+- **Bewusst zurückgestellt**: Schritt 5 (Techtree-Kaltstart) und Pulse für Rang 2/4/5 — erst nach Migration des Techtree-Screens auf Alpine.js sinnvoll.
+
 ## 2026-05-01
 
 - **Phase 3d Browser-Test-Fixes**: Harvester (ID 27) als instanziertes Gebäude eingeführt (`is_instanced=1`, max. 1 Instanz, Relocation via Move-Action statt Demolish). Alle 11 Buildings-INSERTs in `testdata.sqlite.sql` um `is_instanced`-Spalte ergänzt — verhindert dauerhaft, dass der Seeder migrierte Flags überschreibt. Neue Migration `2026_05_01_000001_harvester_mark_as_instanced`.

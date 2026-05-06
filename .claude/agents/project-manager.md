@@ -1,6 +1,6 @@
 ---
 name: project-manager
-description: Use for project planning, roadmap updates, architecture decisions, breaking down feature requests into tasks, managing the Phase 2/3 roadmap, writing ADRs, and resolving cross-agent conflicts. Invoke at the start of larger features or when architectural direction is unclear.
+description: Use proactively for project planning, roadmap updates, architecture decisions, breaking down feature requests into tasks, managing the Phase 2/3 roadmap, writing ADRs, and resolving cross-agent conflicts. Invoke at the start of larger features or when architectural direction is unclear.
 tools: Read, Write, Edit, Grep, Glob
 ---
 

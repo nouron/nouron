@@ -40,6 +40,30 @@ class EventService
     }
 
     /**
+     * Fire the one-time Nexus Briefing event for a newly registered player.
+     *
+     * Guard ensures the event is never duplicated — safe to call multiple times.
+     */
+    public function createNexusBriefing(int $userId, int $tick, int $colonyId): void
+    {
+        $alreadyFired = InnnEvent::where('user', $userId)
+            ->where('event', 'onboarding.nexus_briefing')
+            ->exists();
+
+        if ($alreadyFired) {
+            return;
+        }
+
+        $this->createEvent([
+            'user'       => $userId,
+            'tick'       => $tick,
+            'event'      => 'onboarding.nexus_briefing',
+            'area'       => 'nexus',
+            'parameters' => serialize(['colony_id' => $colonyId]),
+        ]);
+    }
+
+    /**
      * Insert a new event and return its new ID.
      *
      * Expected keys in $data: user, tick, event, area, parameters.

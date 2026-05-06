@@ -416,7 +416,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3d: Colony Zone Expansion — Abgeschlossen (April 2026, PR #94)
+### Phase 3d: Colony Zone Expansion — Abgeschlossen (April 2026, PR #94 + PR #95)
 
 - [x] **Tile-Count Unlock** — CC Lv1–5 schaltet 4/2/3/3/3 = max. 15 individuelle Terrain-Tiles frei (statt ganzer Ringe); konfigurierbar via `config/game.php → colony_zone_expansion`
 - [x] **`is_ring_unlocked` → `is_colony_zone`** — DB-Umbenennung; Semantik: Terrain-Tile in Koloniezone (bebaubar)
@@ -426,11 +426,57 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3e: Onboarding & Tutorial (ausstehend)
+### Phase 3e: Onboarding & New-Player Experience — in Arbeit (Branch feat/phase3e-onboarding, PR #96 offen)
 
-- [ ] **Geführte Einführung für neue Spieler** — Form noch offen: interaktive Tour oder Tooltip-gestützte Einführung
-- [ ] **Cold-Start-Problem lösen** — neuer Spieler sieht leere Techtree-Kacheln ohne Orientierung; erster Schritt muss klar sein
-- [ ] **Visuelle Hervorhebung des "nächsten sinnvollen Schritts"** — für Anfänger ohne Spielerfahrung; kein Bevormunden für erfahrene Spieler
+GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
+
+**Kernprinzipien (GDD § 15):** Lernen durch Tun — kein Pflicht-Tutorial — erfahrene Spieler nicht bevormunden — minimaler Implementierungsaufwand.
+
+#### Schritt 1 — Infrastruktur & Konfiguration
+
+- [x] [db-migration-agent] `user_preferences`-Tabelle + `onboarding_hints`-Spalte (2 Migrationen)
+- [x] [game-developer] `config/game.php → onboarding`-Block: 5 Schwellwerte (`hint_supply_cap_threshold`, `hint_no_engineer_ticks`, `hint_no_knowledge_after_tick`, `hint_trust_threshold`, `hint_trust_min_ticks`)
+- [x] [backend-coder] `UserController::updateOnboardingHints()` + Route `PATCH /user/settings/onboarding` + Toggle in `settings.blade.php`
+
+#### Schritt 2 — Nexus-Briefing (§ 15.1)
+
+- [ ] [content-writer] Finalen Nachrichtentext für das Nexus-Briefing formulieren (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton; GDD §15 TODO)
+- [x] [game-developer] `EventService::createNexusBriefing()` mit idempotent guard; `OnboardingService::setupNewPlayer()` ruft `createNexusBriefing()` — Event beim Erzeugen eines neuen Runs automatisch angelegt
+- [x] [qa-tester] 6 Tests in `NexusBriefingTest.php` grün
+
+#### Schritt 3 — Hint-System (§ 15.2)
+
+- [x] [game-developer] `OnboardingHintService`: 5 Rang-Regeln (Rang 1: kein Wohnhabitat; Rang 2: kein Ingenieur; Rang 3: Harvester auf falschem Tile; Rang 4: keine Kenntnis; Rang 5: Vertrauen < -20); gibt `null` zurück wenn `onboarding_hints = false`
+- [x] [backend-coder] Dismiss-Endpunkt `POST /colony/hint/dismiss`; AJAX-Aktionen liefern `activeHint` in Response; kein separater Poll-Endpunkt nötig
+- [x] [ui-specialist] Reaktive Hint-Bar in `hexview.blade.php` — Alpine `x-show`, kein Page-Reload; AJAX-Aktionen aktualisieren Hinweis live
+- [x] [qa-tester] 17 Tests in `OnboardingHintServiceTest.php` grün
+
+#### Schritt 4 — Pulse-Indikator (§ 15.3)
+
+- [x] [ui-specialist] CSS-Animation `onboarding-ring-pulse` (blau-weiß, 2s) in `colony.css`
+- [x] [ui-specialist] Pulse auf Rang-1-Tiles (bebaubare Colony-Zone) und Rang-3-Tiles (Harvester-Tile) im SVG-Grid implementiert
+- [ ] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — zurückgestellt: Techtree-Migration auf Alpine.js zuerst nötig
+
+#### Schritt 5 — Techtree-Kaltstart: Kachel-Sortierung (§ 15.4)
+
+- [ ] [backend-coder] `TechtreeController` / Techtree-API: Gruppierungsflag je Kachel (`available` / `locked` / `built`) — zurückgestellt: Techtree-Screen muss zuerst auf Alpine.js migriert werden
+- [ ] [ui-specialist] Techtree-View: drei visuelle Gruppen, gesperrte Kacheln gedimmt (Opacity 0.6) mit on-hover-Tooltip — zurückgestellt: Techtree-Migration zuerst
+
+#### Schritt 6 — Inline-Erklärungen: 5 INNN-Trigger (§ 15.6)
+
+- [ ] [game-developer] Trigger 1 (Decay): Erstes Gebäude unter 80% Status-Points → einmaliges `innn_event` mit `event_type = 'onboarding_decay'`, Absender System, erklärt Reparatur-AP (einmalig pro Run)
+- [ ] [game-developer] Trigger 2 (Supply-Cap voll): `freies_supply = 0` → einmaliger Inline-Banner-Flag im Session/Preference-State; UI zeigt gelbes Banner im Ressourcen-Header
+- [ ] [game-developer] Trigger 3 (Vertrauen erstmals negativ): `vertrauen` wird negativ → einmaliges `innn_event` mit `event_type = 'onboarding_trust'`, Absender Kolonist
+- [ ] [backend-coder] Trigger 4 (AP-Limit): Button-Handler gibt strukturierten Fehlercode zurück wenn AP = 0; Frontend zeigt Tooltip (kein Modal)
+- [ ] [ui-specialist] Trigger 5 (Harvester-Verlagerung): Beim ersten Klick auf "Verlegen" erscheint einmaliger Tooltip (einmalig pro Run)
+- [ ] [db-migration-agent] Flag-Mechanismus für "bereits gefeuert"-Status der 5 Onboarding-Trigger in `user_preferences`
+- [ ] [content-writer] Finale Texte für alle 5 Inline-Erklärungen (Ton konsistent mit Nexus-Briefing)
+- [ ] [qa-tester] Tests: Jeder Trigger feuert genau einmal pro Run; Trigger 4 + 5 erzeugen keine INNN-Events sondern nur UI-Feedback
+
+#### Schritt 7 — Integration & Einstellungen
+
+- [x] [ui-specialist] Einstellungs-Toggle in User-Settings-Screen: "Onboarding-Hinweise anzeigen" (An/Aus) — implementiert (Schritt 1)
+- [ ] [qa-tester] End-to-End: Neuer Run → Nexus-Briefing im INNN → Hint-Leiste zeigt Rang-1-Hinweis → Wohnhabitat bauen → Hint-Rang wechselt auf Rang 2 → Pulse auf Ingenieur-Slot → Onboarding-Hints deaktivieren → alle Elemente verschwinden
 
 ---
 

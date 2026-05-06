@@ -27,8 +27,9 @@ return [
 
     // Tiles unlocked by CC expansion per level (index 0 = CC Lv1, ..., index 4 = CC Lv5).
     // Walk order: ring 1 → ring 2 → ring 3; skip regolith_* and terrain_impassable.
-    // Max colony zone = sum = 15 terrain tiles (+ CC tile = 16 total).
-    'colony_zone_expansion' => [4, 2, 3, 3, 3],
+    // Ring 1 (6 tiles) fully unlocked at Lv1 = your immediate base area.
+    // Ring 2 expands step by step at Lv2–Lv5. Max = 15 terrain tiles + CC = 16 total.
+    'colony_zone_expansion' => [6, 3, 3, 2, 1],
 
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)
@@ -183,5 +184,22 @@ return [
             'war_declared'          => -8,
             'treaty_signed'         =>  3,
         ],
+    ],
+
+    'onboarding' => [
+        // Supply threshold below which Rank-1 hint fires (no housing built yet)
+        'hint_supply_cap_threshold' => 10,
+
+        // Ticks elapsed without any engineer assigned before Rank-2 hint fires
+        'hint_no_engineer_ticks' => 3,
+
+        // Ticks elapsed without any knowledge researched before Rank-4 hint fires
+        'hint_no_knowledge_after_tick' => 10,
+
+        // Trust value below which Rank-5 hint fires
+        'hint_trust_threshold' => -20,
+
+        // Minimum ticks elapsed before trust hint can fire (avoids day-1 trigger)
+        'hint_trust_min_ticks' => 5,
     ],
 ];

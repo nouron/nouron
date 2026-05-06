@@ -484,6 +484,18 @@ body {
     border: 1px solid #a5d6a7;
 }
 
+.sidebar-under-construction {
+    margin: 0.5rem 0;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #78350f;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 4px;
+    display: inline-block;
+}
+
 /* ── Sidebar action buttons ──────────────────────────────────────────────── */
 
 .sidebar-actions {
@@ -633,6 +645,22 @@ body {
     animation: signal-pulse 1.8s ease-in-out infinite;
 }
 
+/* ── Onboarding pulse ring (SVG polygon, blue-300) ───────────────────────── */
+
+/*
+ * Distinct from .signal-pulse (orange/yellow circle for hidden events).
+ * This ring is blue-white and targets buildable tiles (rank 1)
+ * or the misplaced Harvester tile (rank 3).
+ */
+@keyframes onboarding-ring-pulse {
+    0%, 100% { opacity: 0.9; stroke-width: 2.5px; }
+    50%       { opacity: 0.35; stroke-width: 1.5px; }
+}
+
+.onboarding-pulse {
+    animation: onboarding-ring-pulse 2s ease-in-out infinite;
+}
+
 /* ── Event discovery dialog ──────────────────────────────────────────────── */
 
 /* PicoCSS already styles <dialog> and <article> inside it.
@@ -648,6 +676,80 @@ dialog[x-ref="discoveryDialog"] {
     color: var(--color-anthracite);
     text-align: center;
     margin: 0.25rem 0 0.75rem;
+}
+
+/* ── Onboarding hint bar ─────────────────────────────────────────────────── */
+
+/*
+ * Narrow amber banner rendered between the canvas header and the SVG grid.
+ * Flex row: icon | text (grows) | action link | dismiss button.
+ * Uses Alpine x-transition for a smooth fade-in/out on dismiss.
+ */
+.hint-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 1rem;
+    background: #fef3c7;
+    border-bottom: 1px solid #fde68a;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.hint-bar__icon {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    background: #d97706;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.hint-bar__text {
+    flex: 1;
+    color: #78350f;
+    line-height: 1.3;
+}
+
+.hint-bar__link {
+    flex-shrink: 0;
+    color: #92400e;
+    font-weight: 700;
+    text-decoration: underline;
+    white-space: nowrap;
+}
+
+.hint-bar__link:hover {
+    color: #78350f;
+}
+
+.hint-bar__dismiss {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    padding: 0 0.2rem;
+    font-size: 1rem;
+    line-height: 1;
+    color: #92400e;
+    cursor: pointer;
+    /* Override PicoCSS button margin/padding */
+    margin: 0;
+    box-shadow: none;
+    min-width: unset;
+}
+
+.hint-bar__dismiss:hover {
+    color: #78350f;
+}
+
+[x-cloak] {
+    display: none !important;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */

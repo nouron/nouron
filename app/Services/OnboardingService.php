@@ -16,6 +16,7 @@ class OnboardingService
     public function __construct(
         private readonly ColonyService $colonyService,
         private readonly TickService   $tickService,
+        private readonly EventService  $eventService,
     ) {}
 
     /**
@@ -41,6 +42,7 @@ class OnboardingService
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
+            $this->eventService->createNexusBriefing($userId, $tick, $colony->id);
 
             return $colony;
         });

@@ -98,6 +98,7 @@
                         'techtree' => 'bi-tools',
                         'galaxy'   => 'bi-rocket-takeoff',
                         'trade'    => 'bi-bag',
+                        'nexus'    => 'bi-broadcast-pin',
                         default    => 'bi-info-circle',
                     };
                 @endphp

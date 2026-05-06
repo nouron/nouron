@@ -26,6 +26,7 @@
 12. [Berater & Aktionspunkte (AP-System)](#12-berater--aktionspunkte-ap-system)
 13. [Moralsystem](#13-moralsystem)
 14. [Run-Struktur (Roguelike-Modus)](#14-run-struktur-roguelike-modus)
+15. [Onboarding](#15-onboarding)
 
 ---
 
@@ -1688,3 +1689,250 @@ Komponenten:
 ---
 
 *Dokument erstellt: 2026-03-26. Weitere Abschnitte werden im Verlauf von Phase 2 ergänzt.*
+
+---
+
+## 15. Onboarding
+
+### Designprinzipien für Onboarding
+
+Vier Prinzipien leiten das gesamte Onboarding-Design und haben Vorrang vor allen konkreten Maßnahmen:
+
+1. **Lernen durch Tun, nicht durch Lesen.** Erklärungen erscheinen genau dann, wenn sie relevant sind — nicht vorab und nicht als Pflichtlektüre.
+2. **Kein separater Tutorial-Modus.** Onboarding passiert im echten Spielzustand. Tag 1 ist der echte Spielstart. Was im Onboarding gebaut wird, bleibt erhalten.
+3. **Erfahrene Spieler werden nicht bevormundet.** Alle Hinweise sind schließbar, überspringbar oder deaktivierbar. Wer weiß was er tut, soll das sofort tun können.
+4. **Minimaler Implementierungsaufwand.** Das System darf keine komplexe State-Maschine erfordern. Jede Maßnahme muss einzeln implementierbar und wartbar sein.
+
+---
+
+### Das Cold-Start-Problem
+
+Ein neuer Spieler sieht nach dem ersten Login:
+
+- Die **Koloniekarte** (Hex-Grid): CC Lv1 und Harvester sind gesetzt, der Rest der Kolonie-Zone ist leer.
+- Den **Techtree-Screen**: 12 Gebäude-Kacheln, 7 Kenntnis-Kacheln, 3 Schiffstypen, 5 Berater-Typen — alle ohne Erklärung der Zusammenhänge.
+- Die **Ressourcenleiste**: 3.000 Credits, 200 Regolith, 0 Werkstoffe, 0 Organika.
+
+Das Problem: Der Spieler sieht viele Optionen, hat aber keinen Hinweis, welche davon den größten Effekt hat. Jede Option sieht gleichwertig aus. Das erzeugt Paralyse.
+
+**Die Lösung ist nicht mehr Information — sie ist Fokussteuerung.** Eine einzige klar hervorgehobene "erste Aktion" beseitigt die Paralyse ohne den Spieler in eine Reihenfolge zu zwingen.
+
+---
+
+### § 15.1 — Der erste Bildschirm: Nexus-Briefing
+
+**Mechanik:** Beim allerersten Login eines Runs erscheint eine **Nexus-Nachricht im INNN-Feed** (kein Popup, kein Modal). Die Nachricht ist bereits sichtbar ohne dass der Spieler aktiv etwas öffnen muss — sie ist der erste Eintrag im INNN-Feed, Absender "Nexus Command", Priorität "dringend".
+
+**Inhalt der Nachricht (Ton: karg, professionell, Roguelike-Atmosphäre):**
+
+> **Nexus Command — Einsatzüberblick**
+>
+> Direktor, Ihre Konzession ist aktiv. Folgendes liegt vor:
+>
+> — Kommandozentrale (Lv1): betriebsbereit
+> — Harvester (Lv1): Regolith-Produktion läuft
+> — Startkapital: 3.000 Cr. Regolith-Reserve: 200 Rg
+>
+> Erste Priorität: Kolonie lebensfähig machen. Dafür brauchen Sie Wohnraum.
+> Zweite Priorität: Personal einstellen — Kolonien ohne Berater handeln langsam.
+>
+> Der Rest liegt bei Ihnen.
+
+Diese Nachricht erfüllt vier Funktionen gleichzeitig:
+- Erklärt den Startzustand narrativ (Frontier-Atmosphäre bleibt erhalten)
+- Benennt die erste sinnvolle Aktion ("Wohnraum")
+- Verankert den Berater-Mechanic als frühe Priorität
+- Ist kein Popup — erfahrene Spieler überlesen sie ohne Unterbrechung
+
+**Technisch:** Die Nachricht wird beim Erzeugen eines neuen Runs über `InnnService::createEvent()` mit `sender = 'nexus'` erzeugt. Kein neues Schema erforderlich.
+
+---
+
+### § 15.2 — "Nächste sinnvolle Aktion": das Hint-System
+
+Das **Hint-System** zeigt zu jedem Zeitpunkt genau **einen** hervorgehobenen Hinweis an. Nie mehr als einen gleichzeitig. Der Hinweis verschwindet sobald die Aktion ausgeführt wurde.
+
+**Darstellung:** Eine schmale, schließbare Hinweis-Leiste direkt unterhalb der Ressourcenleiste. Hintergrundfarbe: gedämpftes Gelb (Warnton, kein Alarm). Maximale Länge: eine Zeile Text + ein Aktions-Link.
+
+Beispiel-Darstellung:
+```
+[!] Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10. → Jetzt bauen
+                                                                          [×]
+```
+
+Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kachel — kein Suchen nötig.
+
+**Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
+
+| Rang | Bedingung | Hinweistext | Ziel-Link |
+|------|-----------|-------------|-----------|
+| 1 | Kein Wohnhabitat vorhanden (Supply-Cap = 10) | "Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10." | Colony-Screen, Bauen-Aktion |
+| 2 | Kein Ingenieur-Berater aktiv (0 Construction-AP-Bonus) | "Noch kein Ingenieur eingestellt — Construction-AP bleibt bei Grundwert." | Berater-Screen |
+| 3 | Harvester steht auf keinem Regolith-Tile | "Harvester produziert nichts — auf Regolith-Tile verlegen." | Colony-Screen, Harvester-Tile |
+| 4 | Kein Wissen freigeschaltet nach Tick 10 | "Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf." | Techtree-Screen, Kenntnisse |
+| 5 | Vertrauen unter -20 für >= 3 Ticks | "Vertrauen sinkt — Zivilgebäude bauen oder reparieren." | Techtree-Screen, Gebäude |
+
+**Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
+
+> **Designentscheidung:** Das System prüft Zustände, keine Sequenzen. Es gibt keine "abgehakten Tutorial-Schritte" — nur eine kontinuierliche Zustandsauswertung. Das ist wartungsarm und funktioniert ohne State-Maschine.
+
+> **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
+
+> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Tick 10) setzt voraus, dass das Analytik-Labor (CC Lv4) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Tick 10 realistisch ist oder ob der Schwellwert auf Tick 15–20 angepasst werden muss.
+
+---
+
+### § 15.3 — Visuelles Hervorheben: "Pulse"-Indikator
+
+**Mechanik:** Wenn eine Techtree-Kachel oder ein Tile auf der Koloniekarte den ersten empfohlenen nächsten Schritt darstellt, erhält sie einen **Pulse-Indikator** — eine dezente, langsam pulsierende SVG-Umrandung (CSS animation `ring-pulse`, 2s Periode, ein Atemzug-Rhythmus, nicht aufdringlich).
+
+**Trigger:** Der Pulse-Indikator wird ausschließlich durch denselben Zustandscheck wie das Hint-System gesteuert. Er zeigt auf genau die Kachel oder den Tile, auf den der aktive Hinweis verweist. Kein Pulse ohne zugehörigen Hint.
+
+**Konkrete Darstellung (Phase 3e):**
+
+| Hint-Rang | Pulsierendes Element |
+|-----------|----------------------|
+| 1 (kein Wohnhabitat) | Wohnhabitat-Kachel im Techtree, und freie Terrain-Tiles auf der Koloniekarte |
+| 2 (kein Ingenieur) | Ingenieur-Slot im Berater-Screen |
+| 3 (Harvester falsch) | Harvester-Tile auf der Koloniekarte |
+| 4 (kein Wissen) | Analytik-Labor-Kachel im Techtree |
+| 5 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
+
+**Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
+
+**Abgrenzung zu bestehenden Indikatoren:** Der Tiefenscan-Pulse auf der Koloniekarte (bestehend, § 4a) ist ein anderer Indikator-Typ (orangefarbene Blitz-Animation). Onboarding-Pulse ist blau-weißlich — visuell eindeutig unterscheidbar.
+
+> ⚠️ BALANCE CONCERN: Wenn zu viele Elemente gleichzeitig pulsierten (eigener Scan-Indicator, Onboarding-Pulse, zukünftige Event-Marker), wird die Karte visuell unruhig. Die Regel "nie mehr als ein Onboarding-Pulse gleichzeitig" muss auch auf UI-Ebene durchgesetzt werden.
+
+---
+
+### § 15.4 — Techtree-Kaltstart: Zugangshürde reduzieren
+
+Der Techtree-Screen hat 12 Gebäude-Kacheln, 7 Kenntnisse, 3 Schiffe, 5 Berater — alle auf einmal sichtbar. Das ist für neue Spieler ein Orientierungsproblem.
+
+**Maßnahme: Zustandsbasierte Kachel-Sortierung.**
+
+Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwischenstrich und eine kleine Gruppenbezeichnung:
+
+| Gruppe | Inhalt | Darstellung |
+|--------|--------|-------------|
+| **Jetzt verfügbar** | Gebäude, die Voraussetzungen erfüllt haben und sofort gebaut werden können | Normal hell, oben |
+| **Voraussetzung fehlt** | Gebäude, die noch gesperrt sind | Gedimmt (Opacity 0.6), Tooltip zeigt was fehlt |
+| **Bereits vorhanden** | Gebaute Gebäude | Grüner Statusring, unten oder ausgeblendet |
+
+**Kein separater "Anfänger-Modus"** — das ist die Standarddarstellung für alle Spieler. Erfahrene Spieler profitieren ebenfalls von einer schnellen "Was ist gerade baubar?"-Übersicht.
+
+**Tooltip bei gesperrten Kacheln:** Ein einzeiliger Hinweis direkt auf der Kachel (kein separates Modal): z.B. "Benötigt: CC Lv4" oder "Benötigt: Hangar". Der Tooltip erscheint nur on-hover — nicht dauerhaft als Text auf der Kachel.
+
+> **Designentscheidung:** Die Kacheln werden nicht dauerhaft verborgen oder ausgeblendet — der Spieler sieht immer den gesamten Techtree. "Jetzt verfügbar" herauszuheben ist weniger invasiv als Inhalte zu verstecken. Transparenz über das gesamte System ist ein Nouron-Merkmal.
+
+---
+
+### § 15.5 — Die ersten 3–5 Aktionen: natürlicher Pfad
+
+Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natürlichen Pfad, wenn der Spieler dem Hint-System folgt. Der Pfad ist nicht zwingend — aber er ist der offensichtlich sinnvolle:
+
+**Aktion 1 — Wohnhabitat bauen (Colony-Screen)**
+
+- Warum: Supply-Cap von 10 ist ohne Wohnhabitat zu niedrig für Berater + Schiffe
+- Kosten: Credits + Regolith (CC Lv1 verfügbar, kein Construction-AP nötig wenn Dev-Mode off)
+- Ergebnis: Supply-Cap springt auf 18. Visuell: Kolonie-Zone-Tile ist jetzt bebaut.
+- Feedback-Loop klar: Ressourcenleiste aktualisiert sich sofort (Alpine.js live-update)
+
+**Aktion 2 — Ingenieur-Berater einstellen (Berater-Screen)**
+
+- Warum: +6 Construction-AP/Tick durch Junior-Ingenieur verdoppelt den Grundwert
+- Kosten: 50 Cr (Junior — erster Berater ist bewusst günstig)
+- Ergebnis: Construction-AP-Anzeige springt von 6 auf 12. Berater-Card zeigt "Junior Ingenieur — aktiv"
+- Feedback-Loop klar: AP-Chips auf allen Screens aktualisieren sich sofort
+
+**Aktion 3 — CC ausbauen (Techtree-Screen → CC-Kachel)**
+
+- Warum: CC Lv2 schaltet Wissenschaftler-Slot frei; 2 weitere Kolonie-Zone-Tiles
+- Kosten: Construction-AP (erster Tick mit Ingenieur macht das spürbar) + Credits
+- Ergebnis: Neue Tiles leuchten auf der Karte auf. Wissenschaftler-Slot in Berater-UI erscheint.
+- Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion § 4a)
+
+**Aktion 4 — Exploration: erstes Tile erkunden (Colony-Screen)**
+
+- Warum: Regolith-Vorräte sind sichtbar nach Exploration; Event-Tiles können etwas enthalten
+- Kosten: 1 Navigation-AP (Grundwert von 6 — kein Pilot-Berater nötig)
+- Ergebnis: Ein Exploration-Zone-Tile wird aufgedeckt. Typ sichtbar (Regolith/Terrain/Event).
+- Feedback-Loop klar: Tile-Animation beim Aufdecken (Fog of War lüftet)
+
+**Aktion 5 — Zweiten Berater einstellen oder erste Kenntnis erforschen**
+
+- Warum: Ab hier verzweigen sich sinnvolle Strategien — Aufbau, Exploration, Handel
+- An diesem Punkt ist das Onboarding erledigt: Der Spieler hat die Kernsysteme berührt
+
+**Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
+
+> ⚠️ BALANCE CONCERN: Aktion 2 (Ingenieur-Berater, 50 Cr) muss nach dem ersten Playtest daraufhin geprüft werden, ob 50 Cr nach dem Wohnhabitat-Bau noch sicher verfügbar sind. Wenn der Wohnhabitat-Bau mehr als ~2.800 Cr kostet, ist der Junior-Ingenieur knapp. Einstellungskosten sind in `config/game.php → advisors` konfigurierbar.
+
+---
+
+### § 15.6 — Inline-Erklärungen statt Handbuch
+
+Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anzubieten, gibt es **kontextsensitive Inline-Erklärungen** — kurze Einzeiler die genau dann erscheinen, wenn das Konzept zum ersten Mal relevant wird.
+
+**Trigger-Punkte (einmalig pro Run, nicht wiederholend):**
+
+| Konzept | Trigger | Anzeigeform |
+|---------|---------|-------------|
+| Decay (Verfall) | Erstes Gebäude fällt auf < 80% Status-Points | INNN-Ereignis: "Ihre [Gebäudename] zeigt erste Verfallserscheinungen. Reparatur-AP verlangsamen den Prozess." |
+| Supply-Cap erreicht | `freies_supply` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar." |
+| Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | INNN-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
+| Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
+| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet 1 Construction-AP und ist sofort wirksam — ohne Downtime." |
+
+**Format:** INNN-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Supply-Cap), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
+
+**Technisch:** Alle fünf Trigger sind einmalige `innn_events`-Einträge mit einem Flag `is_onboarding_hint = true` (oder einem separaten `event_type`-Präfix `onboarding_*`). Sie werden beim Erzeugen markiert und nach dem Lesen nicht mehr wiederholt.
+
+> **Designentscheidung:** INNN ist der natürliche Kanal für alle narrativen Erklärungen — der Spieler lernt früh, dass INNN wichtige Informationen liefert. Onboarding-Hinweise über denselben Kanal zu liefern stärkt diese Gewohnheit statt eine neue UI-Schicht einzuführen.
+
+---
+
+### § 15.7 — Was Onboarding bewusst nicht leistet
+
+Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und werden nicht implementiert:
+
+| Ausgeschlossen | Begründung |
+|----------------|-----------|
+| Pflicht-Reihenfolge (Story-Modus, "Schritt 1 von 5") | Macht den Roguelike-Start zur Lehrveranstaltung; verhindert eigene Erkundung |
+| Gesperrte Screens bis Tutorial fertig | Bevormundet erfahrene Spieler; zerstört die "echter Spielstart von Tag 1"-Eigenschaft |
+| Erklärungsmodal beim Laden des Spiels | Pop-up-Spam; wird weggeklickt; Informationen zu früh, nicht kontextsensitiv |
+| Animierter Cursor-Zeiger ("Klick hier!") | Infantilisiert; passt nicht zum Direktor-Ton von Nouron |
+| Permanente Sidebar-Erklärung aller Konzepte | Platzverschwendung; nach dem ersten Tag nicht mehr sinnvoll |
+| Separater Sandbox-/Tutorial-Run | Hoher Implementierungsaufwand; Spieler wollen spielen, nicht üben |
+
+---
+
+### Technische Anforderungen (Zusammenfassung)
+
+| Maßnahme | Implementierungsaufwand | Abhängigkeiten |
+|----------|------------------------|----------------|
+| Nexus-Briefing (INNN-Nachricht beim Run-Start) | Klein — `InnnService::createEvent()` erweitern | Run-Erzeugung muss Hook haben |
+| Hint-System (Zustandscheck + Leiste unter Ressourcen) | Mittel — Alpine.js Komponente, 5 Bedingungsregeln | Ressourcenleiste-Layout, User-Preferences |
+| Pulse-Indikator (CSS-Animation auf Kacheln/Tiles) | Klein — CSS-Klasse `ring-pulse` + Condition-Flag im Blade | Hint-System (welches Element pulsiert) |
+| Kachel-Sortierung im Techtree | Mittel — Techtree-Controller liefert Gruppierungsflag | Techtree-Screen-Refactoring |
+| Inline-Erklärungen (5 Trigger-Punkte) | Klein pro Trigger — INNN-Event + Flag | Run-State (Trigger darf nur einmal feuern) |
+| User-Preference `onboarding_hints` | Klein — User-Settings-Tabelle oder Cookie | User-Settings-Screen |
+
+**Konfiguration:** `config/game.php → onboarding`:
+
+```php
+'onboarding' => [
+    'hint_supply_cap_threshold'    => 10,   // Hint Rang 1: Supply-Cap <= dieser Wert
+    'hint_no_engineer_ticks'       => 0,    // Hint Rang 2: Ticks ohne Ingenieur (0 = sofort)
+    'hint_no_knowledge_after_tick' => 10,   // Hint Rang 4: Warnung nach diesem Tick
+    'hint_trust_threshold'         => -20,  // Hint Rang 5: Vertrauen unter diesem Wert
+    'hint_trust_min_ticks'         => 3,    // Hint Rang 5: mindestens N Ticks ununterbrochen
+],
+```
+
+> **TODO (Implementierung):** User-Preferences-Tabelle benötigt Spalte `onboarding_hints BOOLEAN DEFAULT 1`. Alternativ: Session-Storage für den ersten Run, persistente DB-Einstellung ab zweitem Run.
+
+> **TODO (Design):** Nexus-Briefing-Text ist bisher nur als Entwurf definiert. Finale Formulierung mit dem content-writer abstimmen (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton).
+
+> **TODO (Design):** Reihenfolge der ersten freigeschalteten Kenntnis-Slots im Roguelike-Zufallssystem (§ 10) beeinflusst Onboarding — Hint Rang 4 muss prüfen ob das Analytik-Labor überhaupt Teil des laufenden Runs ist. Falls nicht: Hint anpassen auf "erste verfügbare Kenntnis".
