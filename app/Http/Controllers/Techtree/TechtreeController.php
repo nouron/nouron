@@ -45,12 +45,92 @@ class TechtreeController extends BaseController
 
     /**
      * Display the full techtree overview for the active colony.
+     *
+     * Builds $pageData with 'categories' (grouped tech objects) and 'lines'
+     * (SVG dependency connections) consumed by the Alpine.js techtree view.
      */
-    public function index()
+    public function index(): \Illuminate\View\View
     {
         $colonyId = $this->resolveColonyId();
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
-        return view('techtree.index', compact('techtree', 'colonyId'));
+
+        $categories = [];
+        $lines      = [];
+
+        foreach (['building', 'research', 'ship', 'personell'] as $type) {
+            $categories[$type] = [];
+            foreach ($techtree[$type] as $id => $tech) {
+                $categories[$type][] = [
+                    'id'            => $id,
+                    'type'          => $type,
+                    'name'          => __('techtree.' . $tech['name']),
+                    'level'         => (int) ($tech['level'] ?? 0),
+                    'row'           => (int) ($tech['row'] ?? 0),
+                    'col'           => (int) ($tech['column'] ?? 0),
+                    'status'        => $this->computeStatus($tech, $techtree),
+                    'required_desc' => $this->computeRequiredDesc($tech, $techtree),
+                    'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
+                ];
+
+                if (!empty($tech['required_building_id'])) {
+                    $reqId       = (int) $tech['required_building_id'];
+                    $reqBuilding = $techtree['building'][$reqId] ?? null;
+                    $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+                    $met         = $reqBuilding && (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
+                    $lines[]     = [
+                        'from' => "tech-building-{$reqId}",
+                        'to'   => "tech-{$type}-{$id}",
+                        'met'  => $met,
+                    ];
+                }
+            }
+        }
+
+        $pageData = [
+            'categories' => $categories,
+            'lines'      => $lines,
+        ];
+
+        return view('techtree.index', compact('pageData', 'colonyId'));
+    }
+
+    /**
+     * Determine whether a tech is built, available, or locked based on its
+     * required building dependency being satisfied.
+     */
+    private function computeStatus(array $tech, array $techtree): string
+    {
+        if (($tech['level'] ?? 0) > 0) {
+            return 'built';
+        }
+        if (!empty($tech['required_building_id'])) {
+            $reqId       = (int) $tech['required_building_id'];
+            $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+            $reqBuilding = $techtree['building'][$reqId] ?? null;
+            if (!$reqBuilding || (int) ($reqBuilding['level'] ?? 0) < $reqLevel) {
+                return 'locked';
+            }
+        }
+        return 'available';
+    }
+
+    /**
+     * Build a human-readable prerequisite description for a tech node, or null
+     * when the tech has no building dependency.
+     */
+    private function computeRequiredDesc(array $tech, array $techtree): ?string
+    {
+        if (empty($tech['required_building_id'])) {
+            return null;
+        }
+        $reqId       = (int) $tech['required_building_id'];
+        $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+        $reqBuilding = $techtree['building'][$reqId] ?? null;
+        if (!$reqBuilding) {
+            return null;
+        }
+        $name = __('techtree.' . $reqBuilding['name']);
+        return "Benötigt {$name} Lv{$reqLevel}";
     }
 
     /**

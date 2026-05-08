@@ -1,96 +1,82 @@
-@extends('layouts.app')
+@extends('layouts.colony')
 @section('title', 'Techtree — Nouron')
 
-@section('content')
-<div class="row mb-2">
-    <div class="col-md-6 offset-md-3 d-flex gap-2 flex-wrap">
-        <a href="#" id="toggleBuildings"  class="btn btn-secondary btn-sm">Gebäude an/aus</a>
-        <a href="#" id="toggleResearches" class="btn btn-secondary btn-sm">Forschungen an/aus</a>
-        <a href="#" id="toggleShips"      class="btn btn-secondary btn-sm">Schiffe an/aus</a>
-        <a href="#" id="toggleAdvisors"   class="btn btn-secondary btn-sm">Berater an/aus</a>
-    </div>
-</div>
-<div id="colony">
-    <div id="visualTechtree">
-        {{-- Hidden storage used by techtree.js --}}
-        <div id="storage-tech-id" class="d-none"></div>
-        <div id="storage" class="d-none"></div>
-
-{{-- 16 rows × 6 cols grid; IDs match tech row/column from DB (0-based) --}}
-        <div class="grid">
-            @for($row = 0; $row <= 15; $row++)
-            <div class="row">
-                @for($col = 0; $col <= 5; $col++)
-                <span class="col-2 grid-cell" id="grid-{{ $row }}-{{ $col }}"></span>
-                @endfor
-            </div>
-            @endfor
-        </div>
-
-        {{-- Hidden techdata source elements; JS reads these and copies them into the grid --}}
-        <div class="d-none">
-
-            @foreach(['building', 'research', 'ship', 'personell'] as $type)
-            @foreach($techtree[$type] as $id => $tech)
-            <span class="techdata" id="techsource-{{ $tech['row'] }}-{{ $tech['column'] }}">
-                <a id="{{ $type }}-{{ $id }}"
-                   class="btn btn-block technology {{ $type }}{{ ($tech['level'] ?? 0) == 0 ? ' notexists' : '' }}"
-                   href="{{ route('techtree.technology', [$type, $id]) }}"
-                   data-bs-toggle="modal"
-                   data-bs-target="#{{ $type }}Modal-{{ $id }}">
-                    {{ __('techtree.' . $tech['name']) }}{{ ($tech['level'] ?? 0) > 0 ? ' ' . $tech['level'] : '' }}
-                </a>
-                <span class="d-none data">{{ json_encode($tech) }}</span>
-            </span>
-            @endforeach
-            @endforeach
-
-            {{-- Requirements data for SVG dependency lines --}}
-            {{-- Buildings requiring other buildings --}}
-            @foreach($techtree['building'] as $id => $tech)
-            @if(!empty($tech['required_building_id']))
-            <div class="requirementsdata building">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
-            @endif
-            @endforeach
-
-            {{-- Researches requiring buildings --}}
-            @foreach($techtree['research'] as $id => $tech)
-            @if(!empty($tech['required_building_id']))
-            <div class="requirementsdata research">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
-            @endif
-            @endforeach
-
-            {{-- Ships requiring researches --}}
-            @foreach($techtree['ship'] as $id => $tech)
-            @if(!empty($tech['required_research_id']))
-            <div class="requirementsdata ship">{{ $id }}-{{ $tech['required_research_id'] }}-{{ $tech['required_research_level'] ?? 1 }}-{{ $techtree['research'][$tech['required_research_id']]['level'] ?? 0 }}</div>
-            @endif
-            @endforeach
-
-            {{-- Personell requiring buildings --}}
-            @foreach($techtree['personell'] as $id => $tech)
-            @if(!empty($tech['required_building_id']))
-            <div class="requirementsdata personell">{{ $id }}-{{ $tech['required_building_id'] }}-{{ $tech['required_building_level'] ?? 1 }}-{{ $techtree['building'][$tech['required_building_id']]['level'] ?? 0 }}</div>
-            @endif
-            @endforeach
-
-        </div>
-
-        {{-- One modal shell per tech; content loaded via AJAX on open --}}
-        @foreach(['building', 'research', 'ship', 'personell'] as $type)
-        @foreach($techtree[$type] as $id => $tech)
-        <div id="{{ $type }}Modal-{{ $id }}" class="techModal modal fade" tabindex="-1" role="dialog" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content"></div>
-            </div>
-        </div>
-        @endforeach
-        @endforeach
-
-    </div>{{-- #visualTechtree --}}
-</div>{{-- #colony --}}
-@endsection
+@push('styles')
+    <link rel="stylesheet" href="{{ asset('css/techtree-view.css') }}">
+@endpush
 
 @push('scripts')
-<script>$(document).ready(function(){ if ($('#colony').length > 0) { techtree.init(); } });</script>
+    <script src="{{ asset('js/techtree-view.js') }}"></script>
 @endpush
+
+@section('content')
+<script>window.__techtreeData = @json($pageData)</script>
+
+<div class="techtree-page" x-data="techtreeView(window.__techtreeData)" x-cloak>
+
+    {{-- Category toggles --}}
+    <div class="techtree-toolbar">
+        <button :class="{ active: visible.building }"  @click="toggle('building')">{{ __('techtree.types_buildings') }}</button>
+        <button :class="{ active: visible.research }"  @click="toggle('research')">{{ __('techtree.types_researchs') }}</button>
+        <button :class="{ active: visible.ship }"      @click="toggle('ship')">{{ __('techtree.types_ships') }}</button>
+        <button :class="{ active: visible.personell }" @click="toggle('personell')">{{ __('techtree.types_personells') }}</button>
+    </div>
+
+    {{-- Scrollable grid + SVG overlay --}}
+    <div class="techtree-grid-wrapper" x-ref="wrapper">
+        <svg class="techtree-svg" x-ref="svg" aria-hidden="true"></svg>
+
+        <div class="techtree-grid">
+            @foreach(['building', 'research', 'ship', 'personell'] as $type)
+                @foreach($pageData['categories'][$type] as $tech)
+                <div class="tech-card tech-{{ $type }} status-{{ $tech['status'] }}"
+                     id="tech-{{ $type }}-{{ $tech['id'] }}"
+                     style="grid-row: {{ $tech['row'] + 1 }}; grid-column: {{ $tech['col'] + 1 }}"
+                     @click="openDetail({{ json_encode($tech) }})">
+
+                    <div class="tech-name">{{ $tech['name'] }}</div>
+
+                    @if($tech['level'] > 0)
+                    <div class="tech-level-badge">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</div>
+                    @endif
+
+                    @if($tech['required_desc'] && $tech['status'] === 'locked')
+                    <div class="tech-required">{{ $tech['required_desc'] }}</div>
+                    @endif
+
+                    <div class="tech-status-chip chip-{{ $tech['status'] }}">
+                        @if($tech['status'] === 'built') Lv {{ $tech['level'] }}
+                        @elseif($tech['status'] === 'available') {{ __('techtree.status_available') }}
+                        @else {{ __('techtree.status_locked') }}
+                        @endif
+                    </div>
+                </div>
+                @endforeach
+            @endforeach
+        </div>
+    </div>
+
+    {{-- Tech detail dialog --}}
+    <dialog class="tech-detail" x-ref="detailDialog" @close="closeDetail()">
+        <template x-if="selectedTech">
+            <div>
+                <h3 x-text="selectedTech.name"></h3>
+                <div class="detail-meta">
+                    <span><strong>{{ __('techtree.detail_type') }}:</strong> <span x-text="typeLabel(selectedTech.type)"></span></span>
+                    <span><strong>{{ __('techtree.detail_status') }}:</strong> <span x-text="statusLabel(selectedTech)"></span></span>
+                    <template x-if="selectedTech.level > 0">
+                        <span><strong>{{ __('techtree.detail_level') }}:</strong>
+                            <span x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
+                        </span>
+                    </template>
+                    <template x-if="selectedTech.required_desc">
+                        <span><strong>{{ __('techtree.detail_required') }}:</strong> <span x-text="selectedTech.required_desc"></span></span>
+                    </template>
+                </div>
+                <button class="detail-close" @click="closeDetail()">{{ __('techtree.detail_close') }}</button>
+            </div>
+        </template>
+    </dialog>
+
+</div>
+@endsection
