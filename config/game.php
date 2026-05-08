@@ -186,6 +186,19 @@ return [
         ],
     ],
 
+    // CC-Level gate for knowledge research levels 4 and 5.
+    // A colony must have CommandCenter (ID 25) at this level before a Kenntnis
+    // can be levelled to the corresponding level.
+    // Enforcement logic (invest/levelup guard) is not yet implemented — this
+    // entry documents the design rule and will be read by the service in a
+    // future sprint.
+    //
+    // Format: knowledge_level => required_cc_level
+    'knowledge_cc_level_cap' => [
+        4 => 4,  // CC Lv4 required to reach knowledge Lv4
+        5 => 5,  // CC Lv5 required to reach knowledge Lv5
+    ],
+
     'onboarding' => [
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,

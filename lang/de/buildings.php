@@ -33,8 +33,8 @@ return [
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'hospital'      => 'Krankenstation',
-    'hospital_desc' => 'Medizinische Grundversorgung für die Kolonisten. Benötigt regelmäßige Wartung und Nachschub.',
+    'infirmary'      => 'Krankenstation',
+    'infirmary_desc' => 'Medizinische Grundversorgung für die Kolonisten. Benötigt regelmäßige Wartung und Nachschub.',
 
     'bar'      => 'Cantina',
     'bar_desc' => 'Der zentrale Treffpunkt der Kolonie. Hier entspannen die Kolonisten nach der Schicht, tauschen Klatsch aus und treffen Fremde. Wer hier zuhört, erfährt mehr als in jedem offiziellen Bericht.',

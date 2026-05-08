@@ -704,7 +704,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 |---------|-----------------|------------------------|
 | Cantina (bar) | 7 | 2.86 |
 | Religiöse Stätte (temple) | 10 | 2.0 |
-| Krankenstation (hospital) | 10 | 2.0 |
+| Krankenstation (infirmary) | 10 | 2.0 |
 | Harvester, Agrardom | 21 | 0.95 |
 | Analytik-Labor (sciencelab) | 21 | 0.95 |
 | Lagerhalle (depot) | 30 | 0.67 |
@@ -1040,88 +1040,105 @@ Die folgende Tabelle listet alle Entitäten im Techtree.
 | `commandCenter` | Kommandozentrale | — | 5 | 0 | 2 |
 | `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen | 1 | 1 |
 | `harvester` | Harvester | CC Lv 1 | supply-limitiert | 2 | 1 |
-| `bioFacility` | Bio-Anlage | CC Lv 1 | supply-limitiert | 3 | 1 |
+| `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert | 3 | 1 |
 | `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert | 4 | 2 |
 | `depot` | Depot | CC Lv 2 | supply-limitiert | 5 | 2 |
-| `bar` | Bar / Cantina | CC Lv 1 | supply-limitiert | 4 | 3 |
+| `bar` | Bar / Cantina | Wohnhabitat Lv 1 | supply-limitiert | 4 | 3 |
+| `infirmary` | Krankenstation | CC Lv 3 | supply-limitiert | 5 | 3 |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert | 6 | 3 |
-| `hospital` | Hospital | CC Lv 3 | supply-limitiert | 5 | 3 |
 | `temple` | Tempel | CC Lv 4 | supply-limitiert | 7 | 3 |
 | `monument` | Denkmal | CC Lv 5 | supply-limitiert | 8 | 3 |
 
-Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Wohlfahrt (Bar, Hospital, Tempel, Denkmal).
+Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Wohlfahrt (Bar, Krankenstation, Tempel, Denkmal).
 
 #### Kenntnisse
 
-Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus.
+Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
 
 | Key (intern) | Name (DE) | Voraussetzung | Max-Level | Grid row | Grid col |
 |---|---|---|---|---|---|
 | `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 | 1 | 4 |
-| `cartography` | Kartografie | Analytik-Labor Lv 1 | 5 | 2 | 4 |
-| `geology` | Geologie | Analytik-Labor Lv 1 | 5 | 3 | 4 |
-| `agronomy` | Agronomie | Analytik-Labor Lv 1 | 5 | 4 | 4 |
-| `health` | Gesundheit | Analytik-Labor Lv 1 | 5 | 5 | 4 |
-| `trade` | Handel & Logistik | Analytik-Labor Lv 1 | 5 | 6 | 4 |
-| `defense` | Verteidigung | Analytik-Labor Lv 2 | 5 | 7 | 4 |
+| `agronomy` | Agronomie | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 | 5 | 2 | 4 |
+| `health` | Gesundheit | Analytik-Labor Lv 1 + Krankenstation Lv 1 | 5 | 3 | 4 |
+| `cartography` | Kartografie | Analytik-Labor Lv 1 + Hangar Lv 1 | 5 | 4 | 4 |
+| `geology` | Geologie | Analytik-Labor Lv 2 + Harvester Lv 1 | 5 | 5 | 4 |
+| `trade` | Handel & Logistik | Analytik-Labor Lv 2 + Bar Lv 1 | 5 | 6 | 4 |
+| `defense` | Verteidigung | Analytik-Labor Lv 3 + Hangar Lv 2 | 5 | 7 | 4 |
 
-**Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. `defense` ist eine Stufe teurer (Lv 2 statt Lv 1), weil Verteidigungswissen im Roguelike-Kontext erst ab einem gewissen Kolonie-Reifegrad sinnvoll ist.
+**Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. Die zusätzlichen Gebäude-Voraussetzungen verknüpfen jede Kenntnis mit dem passenden Kolonieteil — Agronomie braucht eine Bio-Anlage, Kartografie einen Hangar, Verteidigung ein höheres Analytik-Labor und einen ausgebauten Hangar. Die Kenntnisse Lv4 und Lv5 sind zusätzlich durch das CC-Level gegattet (siehe §11.2 Regel 3).
 
 > **Roguelike-Variabilität:** Pro Run steht nicht der vollständige Kenntnisbaum zur Verfügung — nur eine zufällig gezogene Teilmenge (z.B. 5 von 7). Details in §15 (Run-Struktur).
 
 #### Schiffe
 
-Drei semantisch klare Typen: Sonde erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
+Drei semantisch klare Typen: Drohne erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
 
 | Key (intern) | Name (DE) | Voraussetzung | Grid row | Grid col |
 |---|---|---|---|---|
 | `drone` | Drohne | Hangar Lv 1 | 1 | 5 |
-| `freighter` | Frachter | Hangar Lv 1 | 2 | 5 |
-| `corvette` | Korvette | Hangar Lv 2 | 3 | 5 |
+| `freighter` | Frachter | Hangar Lv 2 | 2 | 5 |
+| `corvette` | Korvette | Hangar Lv 3 | 3 | 5 |
 
 #### Berater (Personal)
 
-Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungsreihenfolge im Run wider.
+Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungsreihenfolge im Run wider. CC-Level öffnet Berater-Slots (CC Lv1 = 1 Slot, ..., CC Lv5 = 5 Slots).
 
-| Key (intern) | Name (DE) | AP-Typ | Voraussetzung | Grid row | Grid col |
+| Key (intern) | Name (DE) | AP-Typ | Hire-Voraussetzung | Grid row | Grid col |
 |---|---|---|---|---|---|
 | `engineer` | Baumeister | construction | CC Lv 1 | 1 | 0 |
 | `scientist` | Analytiker | research | CC Lv 2 | 3 | 0 |
-| `pilot` | Pilot | navigation | Hangar Lv 1 | 7 | 0 |
-| `trader` | Konsul | economy | Bar Lv 1 | 9 | 0 |
-| `strategist` | Stratege | strategy | Korvette (mind. 1 Einheit) | 11 | 0 |
+| `pilot` | Pilot | navigation | Hangar Lv 1 | 5 | 0 |
+| `trader` | Konsul | economy | Bar Lv 1 | 7 | 0 |
+| `strategist` | Stratege | strategy | Hangar Lv 2 | 9 | 0 |
 
 ---
 
 ### 11.2 Abhängigkeitsregeln
 
-Das Abhängigkeitssystem folgt drei einfachen Regeln:
+Das Abhängigkeitssystem folgt vier Regeln:
 
 **Regel 1 — CC als Tier-Gate**
 Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. Kein Gebäude höherer Tier ist baubar, solange das CC-Level nicht erreicht ist. Die Tiers:
 
 | CC-Level | Freischaltet |
 |---|---|
-| 1 | Wohnhabitat, Harvester, Bio-Anlage, Bar |
+| 1 | Wohnhabitat, Harvester |
 | 2 | Analytik-Labor, Depot |
-| 3 | Hangar, Hospital |
-| 4 | Tempel |
-| 5 | Denkmal |
+| 3 | Krankenstation, Hangar |
+| 4 | Tempel, Berater-Spezialfähigkeit |
+| 5 | Denkmal, zweiter Nexus-Außenposten-Slot |
 
 **Regel 2 — Funktionale Abhängigkeiten**
 Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude voraus:
 
 | Entität | Voraussetzung |
 |---|---|
-| Kenntnisse (alle) | Analytik-Labor Lv 1 |
-| `defense` (Kenntnis) | Analytik-Labor Lv 2 |
-| Sonde, Frachter | Hangar Lv 1 |
-| Korvette | Hangar Lv 2 |
-| Pilot | Hangar Lv 1 |
-| Konsul | Bar Lv 1 |
-| Stratege | Korvette (mind. 1 Einheit gebaut) |
+| `bioFacility` | Harvester Lv 1 |
+| `bar` | Wohnhabitat Lv 1 |
+| `construction` (Kenntnis) | Analytik-Labor Lv 1 |
+| `agronomy` (Kenntnis) | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 |
+| `health` (Kenntnis) | Analytik-Labor Lv 1 + Krankenstation Lv 1 |
+| `cartography` (Kenntnis) | Analytik-Labor Lv 1 + Hangar Lv 1 |
+| `geology` (Kenntnis) | Analytik-Labor Lv 2 + Harvester Lv 1 |
+| `trade` (Kenntnis) | Analytik-Labor Lv 2 + Bar Lv 1 |
+| `defense` (Kenntnis) | Analytik-Labor Lv 3 + Hangar Lv 2 |
+| Drohne | Hangar Lv 1 |
+| Frachter | Hangar Lv 2 |
+| Korvette | Hangar Lv 3 |
+| Pilot (Berater) | Hangar Lv 1 |
+| Konsul (Berater) | Bar Lv 1 |
+| Stratege (Berater) | Hangar Lv 2 |
 
-**Regel 3 — Supply als weicher Gate**
+**Regel 3 — CC-Level-Cap für Kenntnisse Lv4/5**
+Kenntnisse können maximal auf das aktuelle CC-Level ausgebaut werden, sobald sie Lv4 oder Lv5 erreichen sollen. Lv1–3 sind immer erreichbar wenn die Gebäude-Voraussetzungen erfüllt sind. Lv4 erfordert zusätzlich CC Lv4, Lv5 erfordert CC Lv5.
+
+| Kenntnis-Level | Zusätzliche Voraussetzung |
+|---|---|
+| 1–3 | Nur Gebäude-Voraussetzungen (Regel 2) |
+| 4 | Gebäude-Voraussetzungen + CC Lv 4 |
+| 5 | Gebäude-Voraussetzungen + CC Lv 5 |
+
+**Regel 4 — Supply als weicher Gate**
 Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level und Wohnhabitate begrenzt. Der Spieler kann theoretisch alles bauen wollen, ist aber durch Supply gezwungen, Prioritäten zu setzen. Das ist kein harter Abhängigkeitsbaum, sondern Ressourcendruck. Details in §6 (Supply-Generierung).
 
 > **Keine zyklischen Abhängigkeiten.** Jede Abhängigkeitskette endet beim CC. Ein Deadlock durch wechselseitige Abhängigkeiten ist konstruktiv ausgeschlossen.
@@ -1130,7 +1147,7 @@ Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level
 
 ### 11.3 Grid-Layout (Techtree-Ansicht)
 
-Das Techtree-Grid ist 12 Zeilen × 6 Spalten (row 0–11, col 0–5). Spalten-Semantik:
+Das Techtree-Grid ist 10 Zeilen × 6 Spalten (row 0–9, col 0–5). Spalten-Semantik:
 
 | Spalten | Kategorie |
 |---|---|
@@ -1151,26 +1168,26 @@ Die Zeilen-Semantik folgt dem CC-Level-Fortschritt von oben nach unten: CC oben 
 | bioFacility | building | 3 | 1 |
 | sciencelab | building | 4 | 2 |
 | depot | building | 5 | 2 |
-| hangar | building | 6 | 3 |
 | bar | building | 4 | 3 |
-| hospital | building | 5 | 3 |
+| infirmary | building | 5 | 3 |
+| hangar | building | 6 | 3 |
 | temple | building | 7 | 3 |
 | monument | building | 8 | 3 |
 | construction | research | 1 | 4 |
-| cartography | research | 2 | 4 |
-| geology | research | 3 | 4 |
-| agronomy | research | 4 | 4 |
-| health | research | 5 | 4 |
+| agronomy | research | 2 | 4 |
+| health | research | 3 | 4 |
+| cartography | research | 4 | 4 |
+| geology | research | 5 | 4 |
 | trade | research | 6 | 4 |
 | defense | research | 7 | 4 |
-| sonde | ship | 1 | 5 |
-| frachter | ship | 2 | 5 |
-| korvette | ship | 3 | 5 |
+| drone | ship | 1 | 5 |
+| freighter | ship | 2 | 5 |
+| corvette | ship | 3 | 5 |
 | engineer | personell | 1 | 0 |
 | scientist | personell | 3 | 0 |
-| pilot | personell | 7 | 0 |
-| trader | personell | 9 | 0 |
-| stratege | personell | 11 | 0 |
+| pilot | personell | 5 | 0 |
+| trader | personell | 7 | 0 |
+| strategist | personell | 9 | 0 |
 
 > Die `row`/`col`-Werte sind kanonisch — sie werden 1:1 in die DB-Tabellen geschrieben. Das Grid-CSS liest sie als `grid-row: row + 1; grid-column: col + 1`.
 
@@ -1461,7 +1478,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 | Gebäude-ID | Bezeichner | Vertrauen/Level |
 |------------|------------|-----------------|
 | 32 | temple (Religiöse Stätte) | +2 |
-| 46 | hospital (Krankenstation) | +3 |
+| 46 | infirmary (Krankenstation) | +3 |
 | 50 | monument (Kolonialdenkmal) | +2 |
 | 52 | bar (Cantina) | +2 |
 
@@ -1471,7 +1488,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + monument + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + infirmary + monument + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 

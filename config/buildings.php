@@ -98,7 +98,7 @@ return [
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'hospital' => [
+    'infirmary' => [
         'id'                => 46,
         'supply_cost'       => 10,
         'moral_per_lv'      => 3,

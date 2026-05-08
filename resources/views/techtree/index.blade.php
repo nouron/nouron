@@ -14,7 +14,7 @@
 
 <div class="techtree-page" x-data="techtreeView(window.__techtreeData)" x-cloak>
 
-    {{-- Category toggles --}}
+    {{-- Category toggle toolbar --}}
     <div class="techtree-toolbar">
         <button :class="{ active: visible.building }"  @click="toggle('building')">{{ __('techtree.types_buildings') }}</button>
         <button :class="{ active: visible.research }"  @click="toggle('research')">{{ __('techtree.types_researchs') }}</button>
@@ -22,39 +22,127 @@
         <button :class="{ active: visible.personell }" @click="toggle('personell')">{{ __('techtree.types_personells') }}</button>
     </div>
 
-    {{-- Scrollable grid + SVG overlay --}}
-    <div class="techtree-grid-wrapper" x-ref="wrapper">
-        <svg class="techtree-svg" x-ref="svg" aria-hidden="true"></svg>
+    <div class="techtree-sections" x-ref="sectionsWrapper">
+        <svg class="techtree-global-svg" x-ref="globalSvg" aria-hidden="true"></svg>
 
-        <div class="techtree-grid">
-            @foreach(['building', 'research', 'ship', 'personell'] as $type)
-                @foreach($pageData['categories'][$type] as $tech)
-                <div class="tech-card tech-{{ $type }} status-{{ $tech['status'] }}"
-                     id="tech-{{ $type }}-{{ $tech['id'] }}"
-                     style="grid-row: {{ $tech['row'] + 1 }}; grid-column: {{ $tech['col'] + 1 }}"
-                     @click="openDetail({{ json_encode($tech) }})">
-
-                    <div class="tech-name">{{ $tech['name'] }}</div>
-
-                    @if($tech['level'] > 0)
-                    <div class="tech-level-badge">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</div>
-                    @endif
-
-                    @if($tech['required_desc'] && $tech['status'] === 'locked')
-                    <div class="tech-required">{{ $tech['required_desc'] }}</div>
-                    @endif
-
-                    <div class="tech-status-chip chip-{{ $tech['status'] }}">
-                        @if($tech['status'] === 'built') Lv {{ $tech['level'] }}
-                        @elseif($tech['status'] === 'available') {{ __('techtree.status_available') }}
-                        @else {{ __('techtree.status_locked') }}
+        {{-- Buildings section --}}
+        <section class="techtree-section section-building" x-show="visible.building">
+            <h3 class="techtree-section-title">{{ __('techtree.types_buildings') }}</h3>
+            <div class="tech-grid">
+                    @foreach($pageData['categories']['building'] as $tech)
+                    <div class="tech-card tech-building status-{{ $tech['status'] }}"
+                         id="tech-building-{{ $tech['id'] }}"
+                         @click="openDetail({{ json_encode($tech) }})">
+                        <span class="tech-name">{{ $tech['name'] }}</span>
+                        <span class="tech-status-chip chip-{{ $tech['status'] }}">
+                            @if($tech['status'] === 'built')Lv {{ $tech['level'] }}
+                            @elseif($tech['status'] === 'available'){{ __('techtree.status_available') }}
+                            @else{{ __('techtree.status_locked') }}
+                            @endif
+                        </span>
+                        @if($tech['status'] === 'built' && $tech['level'] > 0)
+                        <span class="tech-sub">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</span>
+                        @elseif($tech['required_desc'])
+                        <span class="tech-sub">
+                            @if($tech['status'] === 'locked')<span class="tech-sub-lock">&#128274;</span> @endif{{ $tech['required_desc'] }}
+                        </span>
                         @endif
                     </div>
+                    @endforeach
+            </div>
+        </section>
+
+        {{-- Research / Kenntnisse section --}}
+        <section class="techtree-section section-research" x-show="visible.research">
+            <h3 class="techtree-section-title">{{ __('techtree.types_researchs') }}</h3>
+            <div class="techtree-prereq-chip">
+                &#8627; {{ __('techtree.building_sciencelab') }}
+            </div>
+            <div class="tech-grid">
+                @foreach($pageData['categories']['research'] as $tech)
+                <div class="tech-card tech-research status-{{ $tech['status'] }}"
+                     id="tech-research-{{ $tech['id'] }}"
+                     @click="openDetail({{ json_encode($tech) }})">
+                    <span class="tech-name">{{ $tech['name'] }}</span>
+                    <span class="tech-status-chip chip-{{ $tech['status'] }}">
+                        @if($tech['status'] === 'built')Lv {{ $tech['level'] }}
+                        @elseif($tech['status'] === 'available'){{ __('techtree.status_available') }}
+                        @else{{ __('techtree.status_locked') }}
+                        @endif
+                    </span>
+                    @if($tech['status'] === 'built' && $tech['level'] > 0)
+                    <span class="tech-sub">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</span>
+                    @elseif($tech['required_desc'])
+                    <span class="tech-sub">
+                        @if($tech['status'] === 'locked')<span class="tech-sub-lock">&#128274;</span> @endif{{ $tech['required_desc'] }}
+                    </span>
+                    @endif
                 </div>
                 @endforeach
-            @endforeach
-        </div>
-    </div>
+            </div>
+        </section>
+
+        {{-- Ships section --}}
+        <section class="techtree-section section-ship" x-show="visible.ship">
+            <h3 class="techtree-section-title">{{ __('techtree.types_ships') }}</h3>
+            <div class="techtree-prereq-chip">
+                &#8627; {{ __('techtree.building_hangar') }}
+            </div>
+            <div class="tech-grid">
+                @foreach($pageData['categories']['ship'] as $tech)
+                <div class="tech-card tech-ship status-{{ $tech['status'] }}"
+                     id="tech-ship-{{ $tech['id'] }}"
+                     @click="openDetail({{ json_encode($tech) }})">
+                    <span class="tech-name">{{ $tech['name'] }}</span>
+                    <span class="tech-status-chip chip-{{ $tech['status'] }}">
+                        @if($tech['status'] === 'built')Lv {{ $tech['level'] }}
+                        @elseif($tech['status'] === 'available'){{ __('techtree.status_available') }}
+                        @else{{ __('techtree.status_locked') }}
+                        @endif
+                    </span>
+                    @if($tech['status'] === 'built' && $tech['level'] > 0)
+                    <span class="tech-sub">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</span>
+                    @elseif($tech['required_desc'])
+                    <span class="tech-sub">
+                        @if($tech['status'] === 'locked')<span class="tech-sub-lock">&#128274;</span> @endif{{ $tech['required_desc'] }}
+                    </span>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </section>
+
+        {{-- Advisors / Personell section --}}
+        <section class="techtree-section section-personell" x-show="visible.personell">
+            <h3 class="techtree-section-title">{{ __('techtree.types_personells') }}</h3>
+            <div class="techtree-prereq-chip">
+                &#8627; {{ __('techtree.building_commandCenter') }}
+            </div>
+            <div class="tech-grid">
+                @foreach($pageData['categories']['personell'] as $tech)
+                <div class="tech-card tech-personell status-{{ $tech['status'] }}"
+                     id="tech-personell-{{ $tech['id'] }}"
+                     @click="openDetail({{ json_encode($tech) }})">
+                    <span class="tech-name">{{ $tech['name'] }}</span>
+                    <span class="tech-status-chip chip-{{ $tech['status'] }}">
+                        @if($tech['status'] === 'built')Lv {{ $tech['level'] }}
+                        @elseif($tech['status'] === 'available'){{ __('techtree.status_available') }}
+                        @else{{ __('techtree.status_locked') }}
+                        @endif
+                    </span>
+                    @if($tech['status'] === 'built' && $tech['level'] > 0)
+                    <span class="tech-sub">Lv {{ $tech['level'] }}{{ $tech['max_level'] ? ' / ' . $tech['max_level'] : '' }}</span>
+                    @elseif($tech['required_desc'])
+                    <span class="tech-sub">
+                        @if($tech['status'] === 'locked')<span class="tech-sub-lock">&#128274;</span> @endif{{ $tech['required_desc'] }}
+                    </span>
+                    @endif
+                </div>
+                @endforeach
+            </div>
+        </section>
+
+    </div>{{-- .techtree-sections --}}
 
     {{-- Tech detail dialog --}}
     <dialog class="tech-detail" x-ref="detailDialog" @close="closeDetail()">
@@ -78,5 +166,5 @@
         </template>
     </dialog>
 
-</div>
+</div>{{-- .techtree-page --}}
 @endsection

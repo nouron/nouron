@@ -33,8 +33,8 @@ return [
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'hospital'      => 'Medical Station',
-    'hospital_desc' => 'Basic medical care for colonists. Requires regular maintenance and supplies.',
+    'infirmary'      => 'Medical Station',
+    'infirmary_desc' => 'Basic medical care for colonists. Requires regular maintenance and supplies.',
 
     'bar'      => 'Cantina',
     'bar_desc' => 'The social heart of the colony. Colonists unwind here after their shift, swap gossip, and meet strangers passing through. Those who listen carefully learn more than any official report will tell them.',

@@ -10,21 +10,18 @@ return [
     'building_sciencelab'     => 'Analytik-Labor',
     'building_temple'         => 'Religiöse Stätte',
     'building_hangar'         => 'Hangar',
-    'building_hospital'       => 'Krankenstation',
+    'building_infirmary'      => 'Krankenstation',
     'building_monument'       => 'Kolonialdenkmal',
     'building_bar'            => 'Cantina',
 
-    // ── Forschungen ──────────────────────────────────────────────────────────
-    'techs_chemistry'         => 'Chemie',
-    'techs_biology'           => 'Biologie',
-    'techs_mathematics'       => 'Mathematik',
-    'techs_medicalScience'    => 'Medizin',
-    'techs_physics'           => 'Physik',
-    'techs_languages'         => 'Sprachen',
-    'techs_military'          => 'Militär',
-    'techs_diplomacy'         => 'Diplomatie',
-    'techs_politicalScience'  => 'Politik',
-    'techs_economicScience'   => 'Wirtschaft',
+    // ── Kenntnisse ───────────────────────────────────────────────────────────
+    'knowledge_construction'  => 'Baukunde',
+    'knowledge_cartography'   => 'Kartographie',
+    'knowledge_geology'       => 'Geologie',
+    'knowledge_agronomy'      => 'Agronomie',
+    'knowledge_health'        => 'Medizin & Wohlbefinden',
+    'knowledge_trade'         => 'Handel & Logistik',
+    'knowledge_defense'       => 'Verteidigung',
 
     // ── Schiffe ──────────────────────────────────────────────────────────────
     'ship_drone'              => 'Drohne',

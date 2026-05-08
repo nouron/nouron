@@ -1,91 +1,91 @@
 function techtreeView(config) {
     return {
         categories:   config.categories,
-        lines:        config.lines,
+        lines:        config.lines ?? [],
         visible:      { building: true, research: true, ship: true, personell: true },
         selectedTech: null,
 
         init() {
-            this.$nextTick(() => this.drawLines());
-            window.addEventListener('resize', () => this.drawLines());
+            this.$nextTick(() => this.drawAllLines());
+            window.addEventListener('resize', () => this.drawAllLines());
         },
 
         toggle(type) {
             this.visible[type] = !this.visible[type];
-            // Update card visibility in the DOM then redraw
-            this.$nextTick(() => {
-                this.applyVisibility();
-                this.drawLines();
-            });
+            this.$nextTick(() => this.drawAllLines());
         },
 
-        applyVisibility() {
-            for (const type of ['building', 'research', 'ship', 'personell']) {
-                const cards = document.querySelectorAll(`.tech-${type}`);
-                cards.forEach(c => {
-                    if (this.visible[type]) c.classList.remove('type-hidden');
-                    else c.classList.add('type-hidden');
-                });
-            }
-        },
+        /**
+         * Draw orthogonal L-shaped dependency arrows across the full sections wrapper.
+         * Arrows connect any tech card to its required building, across section boundaries.
+         * Coordinates are relative to the sectionsWrapper container.
+         */
+        drawAllLines() {
+            const svgEl     = this.$refs.globalSvg;
+            const wrapperEl = this.$refs.sectionsWrapper;
+            if (!svgEl || !wrapperEl) return;
 
-        drawLines() {
-            const svg     = this.$refs.svg;
-            const wrapper = this.$refs.wrapper;
-            if (!svg || !wrapper) return;
+            while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
 
-            const wRect = wrapper.getBoundingClientRect();
+            const wRect = wrapperEl.getBoundingClientRect();
 
-            // Set SVG to cover full scrollable content area
-            const grid = wrapper.querySelector('.techtree-grid');
-            const gRect = grid ? grid.getBoundingClientRect() : wRect;
-            const svgW = Math.max(wRect.width,  gRect.right  - wRect.left + wrapper.scrollLeft);
-            const svgH = Math.max(wRect.height, gRect.bottom - wRect.top  + wrapper.scrollTop);
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            const makeMarker = (id, color) => {
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', id);
+                marker.setAttribute('markerWidth', '8');
+                marker.setAttribute('markerHeight', '8');
+                marker.setAttribute('refX', '7');
+                marker.setAttribute('refY', '3');
+                marker.setAttribute('orient', 'auto');
+                const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                poly.setAttribute('points', '0 0, 8 3, 0 6');
+                poly.setAttribute('fill', color);
+                marker.appendChild(poly);
+                return marker;
+            };
+            defs.appendChild(makeMarker('arr-met',   '#27ae60'));
+            defs.appendChild(makeMarker('arr-unmet', '#ccc'));
+            svgEl.appendChild(defs);
 
-            svg.setAttribute('width',  svgW);
-            svg.setAttribute('height', svgH);
-            svg.innerHTML = `
-                <defs>
-                    <marker id="arrow-met"   markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <path d="M0,0 L0,6 L6,3 z" fill="#27ae60"/>
-                    </marker>
-                    <marker id="arrow-unmet" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                        <path d="M0,0 L0,6 L6,3 z" fill="#bbb"/>
-                    </marker>
-                </defs>`;
-
-            const scrollLeft = wrapper.scrollLeft;
-            const scrollTop  = wrapper.scrollTop;
+            let drew = false;
 
             for (const line of this.lines) {
                 const fromEl = document.getElementById(line.from);
                 const toEl   = document.getElementById(line.to);
                 if (!fromEl || !toEl) continue;
-                if (fromEl.classList.contains('type-hidden') || toEl.classList.contains('type-hidden')) continue;
+                // Skip if either card is inside a hidden section (display:none)
+                if (!fromEl.offsetParent || !toEl.offsetParent) continue;
 
-                const fRect = fromEl.getBoundingClientRect();
-                const tRect = toEl.getBoundingClientRect();
+                const fR = fromEl.getBoundingClientRect();
+                const tR = toEl.getBoundingClientRect();
 
-                // Coordinates relative to wrapper, accounting for scroll
-                const x1 = fRect.left + fRect.width  / 2 - wRect.left + scrollLeft;
-                const y1 = fRect.bottom - wRect.top + scrollTop;
-                const x2 = tRect.left + tRect.width  / 2 - wRect.left + scrollLeft;
-                const y2 = tRect.top  - wRect.top  + scrollTop;
+                const x1 = fR.left + fR.width  / 2 - wRect.left;
+                const y1 = fR.bottom               - wRect.top;
+                const x2 = tR.left + tR.width  / 2 - wRect.left;
+                const y2 = tR.top                  - wRect.top;
+                const midY = (y1 + y2) / 2;
 
-                // Cubic bezier: control points halfway between y1 and y2
-                const cy = (y1 + y2) / 2;
-                const color  = line.met ? '#27ae60' : '#bbb';
-                const marker = line.met ? 'url(#arrow-met)' : 'url(#arrow-unmet)';
+                const color = line.met ? '#27ae60' : '#ccc';
+                const mid   = line.met ? 'url(#arr-met)' : 'url(#arr-unmet)';
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${cy} ${x2} ${cy} ${x2} ${y2}`);
-                path.setAttribute('stroke', color);
-                path.setAttribute('stroke-width', '1.5');
+                path.setAttribute('d', `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`);
                 path.setAttribute('fill', 'none');
-                path.setAttribute('marker-end', marker);
+                path.setAttribute('stroke', color);
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('marker-end', mid);
                 if (!line.met) path.setAttribute('stroke-dasharray', '5 3');
+                svgEl.appendChild(path);
+                drew = true;
+            }
 
-                svg.appendChild(path);
+            if (drew) {
+                const h = wrapperEl.scrollHeight;
+                const w = wrapperEl.scrollWidth;
+                svgEl.setAttribute('width',   String(w));
+                svgEl.setAttribute('height',  String(h));
+                svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
             }
         },
 
@@ -100,15 +100,22 @@ function techtreeView(config) {
         },
 
         statusLabel(tech) {
-            if (tech.status === 'built') {
-                return tech.level > 0 ? `Lv ${tech.level}` : 'Gebaut';
-            }
-            if (tech.status === 'available') return 'Verfügbar';
-            return 'Gesperrt';
+            const labels = {
+                built:     tech.level > 0 ? `Lv ${tech.level}` : 'Gebaut',
+                available: 'Verfügbar',
+                locked:    'Gesperrt',
+            };
+            return labels[tech.status] ?? tech.status;
         },
 
         typeLabel(type) {
-            return { building: 'Gebäude', research: 'Forschung', ship: 'Schiff', personell: 'Personal' }[type] ?? type;
+            const labels = {
+                building:  'Gebäude',
+                research:  'Forschung',
+                ship:      'Schiff',
+                personell: 'Personal',
+            };
+            return labels[type] ?? type;
         },
     };
 }

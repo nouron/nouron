@@ -78,6 +78,7 @@ class TechtreeControllerTest extends TestCase
         $pageData = $response->viewData('pageData');
         $this->assertArrayHasKey('categories', $pageData);
         $this->assertArrayHasKey('lines', $pageData);
+        $this->assertIsArray($pageData['lines']);
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             $this->assertArrayHasKey($type, $pageData['categories'], "Category '$type' missing");
@@ -101,16 +102,19 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
-    public function testIndexLinesHaveRequiredFields(): void
+    public function testRequiredDescShowsDualPrerequisites(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        foreach ($pageData['lines'] as $line) {
-            $this->assertArrayHasKey('from', $line);
-            $this->assertArrayHasKey('to', $line);
-            $this->assertArrayHasKey('met', $line);
-        }
+        // knowledge_cartography (ID 91) requires Analytik-Labor Lv1 + Hangar Lv1 — dual prereq
+        $cartography = collect($pageData['categories']['research'])
+            ->first(fn($t) => $t['id'] === 91);
+
+        $this->assertNotNull($cartography, 'knowledge_cartography (ID 91) must be present');
+        $this->assertNotNull($cartography['required_desc'], 'knowledge_cartography must have a required_desc');
+        $this->assertStringContainsString('+', $cartography['required_desc'],
+            'Dual prerequisites must be joined by "+"');
     }
 
     /**
