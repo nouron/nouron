@@ -20,7 +20,7 @@ return [
 
     // ── Unmanned ──────────────────────────────────────────────────────────────
 
-    'sonde' => [
+    'drone' => [
         'id'             => 85,
         'moving_speed'   => 5,          // fastest unit in the game
         'supply_cost'    => 0,          // unmanned — no crew, no supply upkeep
@@ -29,7 +29,7 @@ return [
 
     // ── Military ──────────────────────────────────────────────────────────────
 
-    'korvette' => [
+    'corvette' => [
         'id'             => 37,         // ex fighter1
         'moving_speed'   => 4,
         'supply_cost'    => 14,         // high — limits fleet size organically
@@ -38,7 +38,7 @@ return [
 
     // ── Transport ─────────────────────────────────────────────────────────────
 
-    'frachter' => [
+    'freighter' => [
         'id'             => 47,         // ex smallTransporter
         'moving_speed'   => 3,
         'supply_cost'    => 6,

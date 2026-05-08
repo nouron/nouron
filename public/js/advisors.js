@@ -128,16 +128,16 @@ function advisorCarousel(config) {
 
         /**
          * Returns the two-letter initials displayed as a watermark in the portrait area.
-         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader, stratege)
+         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader, strategist)
          * @returns {string}
          */
         portraitInitials(key) {
             const map = {
-                engineer:  'Ba',
-                scientist: 'An',
-                pilot:     'Rf',
-                trader:    'Ko',
-                stratege:  'St',
+                engineer:   'Ba',
+                scientist:  'An',
+                pilot:      'Rf',
+                trader:     'Ko',
+                strategist: 'St',
             };
             return map[key] ?? key.substring(0, 2).toUpperCase();
         },

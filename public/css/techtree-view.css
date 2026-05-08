@@ -53,7 +53,7 @@
 .techtree-grid {
     display: grid;
     grid-template-columns: repeat(6, 160px);
-    grid-template-rows: repeat(16, minmax(64px, auto));
+    grid-template-rows: repeat(12, minmax(64px, auto));
     gap: 0.5rem;
     padding: 1rem;
     min-width: max-content;

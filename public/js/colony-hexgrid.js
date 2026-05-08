@@ -66,7 +66,7 @@ const BUILDING_ABBR = {
     building_bioFacility:    'AD',
     building_hangar:         'HG',
     building_hospital:       'KS',
-    building_denkmal:        'KD',
+    building_monument:       'KD',
     building_bar:            'CA',
 };
 

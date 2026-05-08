@@ -11,7 +11,7 @@ return [
     'building_temple'         => 'Religiöse Stätte',
     'building_hangar'         => 'Hangar',
     'building_hospital'       => 'Krankenstation',
-    'building_denkmal'        => 'Kolonialdenkmal',
+    'building_monument'       => 'Kolonialdenkmal',
     'building_bar'            => 'Cantina',
 
     // ── Forschungen ──────────────────────────────────────────────────────────
@@ -27,33 +27,16 @@ return [
     'techs_economicScience'   => 'Wirtschaft',
 
     // ── Schiffe ──────────────────────────────────────────────────────────────
-    'ship_sonde'              => 'Sonde',
-    'ship_korvette'           => 'Korvette',
-    'ship_frachter'           => 'Frachter',
-    // legacy keys (deprecated ships still in DB)
-    'techs_fighter1'          => 'Jäger I',
-    'techs_fighter2'          => 'Jäger II',
-    'techs_frigate1'          => 'Fregatte I',
-    'techs_frigate2'          => 'Fregatte II',
-    'techs_battlecruiser1'    => 'Kampfkreuzer I',
-    'techs_battlecruiser2'    => 'Kampfkreuzer II',
-    'techs_smallTransporter'  => 'Kleiner Transporter',
-    'techs_mediumTransporter' => 'Mittlerer Transporter',
-    'techs_largeTransporter'  => 'Großer Transporter',
-    'techs_scienceVessel'     => 'Forschungsschiff',
-    'techs_constructionShip'  => 'Konstruktionsschiff',
-    'techs_civilianTransporter' => 'Personentransporter',
+    'ship_drone'              => 'Drohne',
+    'ship_corvette'           => 'Korvette',
+    'ship_freighter'          => 'Frachter',
 
     // ── Personal ─────────────────────────────────────────────────────────────
-    'techs_engineer'          => 'Ingenieur',
-    'techs_scientist'         => 'Wissenschaftler',
+    'techs_engineer'          => 'Baumeister',
+    'techs_scientist'         => 'Analytiker',
     'techs_pilot'             => 'Raumfahrer',
-    'techs_trader'            => 'Händler',
-    'techs_stratege'          => 'Stratege',
-    'techs_diplomat'          => 'Diplomat',
-    'techs_representative'    => 'Abgeordneter',
-    'techs_fleetCommander'    => 'Flottenkommandeur',
-    'techs_chiefOfIntelligence' => 'Geheimdienstchef',
+    'techs_trader'            => 'Konsul',
+    'techs_strategist'        => 'Stratege',
 
     // ── Typen ────────────────────────────────────────────────────────────────
     'types_building'    => 'Gebäude',

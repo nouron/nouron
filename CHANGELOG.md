@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-08
+
+- **Techtree-Screen Migration (Phase 3g)**: Techtree komplett auf Alpine.js + PicoCSS migriert. Neue 16×6-CSS-Grid-Ansicht mit Karten je Tech, farblichen Kategorie-Akzenten (Gebäude/Forschung/Schiff/Personal) und Status-Chips (gebaut/verfügbar/gesperrt). SVG-Bézier-Linien mit Pfeilköpfen zeigen Abhängigkeiten — grün bei erfüllter, gestrichelt-grau bei unerfüllter Voraussetzung; Scroll-Offset-Kompensation damit Linien beim Scrollen korrekt bleiben. Kategorie-Toggles blenden Karten aus (visibility:hidden, kein Grid-Reflow). Klick öffnet nativen Detail-Dialog. Aktionsbuttons entfernt (bauen/reparieren jetzt in Colony-View). 3 neue Controller-Tests (index-Route, pageData-Struktur, lines-Felder).
+
 ## 2026-05-06
 
 - **Berater-Screen Redesign (Phase 3f)**: Berater-Screen komplett auf Alpine.js + PicoCSS migriert (war Bootstrap/jQuery). Neue Karussell-Ansicht mit 5 Portrait-Karten: Mobile zeigt eine Karte mit Swipe-Navigation, Desktop zeigt alle fünf nebeneinander. Jede Karte zeigt Rang, AP/Tick, Ticks, Aufstieg-Fortschrittsbalken und Status-Chip. Leere Slots haben Hire-Knopf, gesperrte Slots (CC-Level zu niedrig) sind ausgegraut. Hire/Fire laufen jetzt per AJAX ohne Seitenreload, mit nativen `<dialog>`-Bestätigungen. `AdvisorController` um `buildSlots()` und JSON-Branching erweitert (22 neue Feature-Tests).

@@ -22,11 +22,16 @@
    - 8a. [Systemansicht](#8a-systemansicht)
 9. [Kampfsystem (Combat)](#9-kampfsystem-combat)
 10. [Forschung](#10-forschung)
-11. [Handel (Trade)](#11-handel-trade)
-12. [Berater & Aktionspunkte (AP-System)](#12-berater--aktionspunkte-ap-system)
-13. [Moralsystem](#13-moralsystem)
-14. [Run-Struktur (Roguelike-Modus)](#14-run-struktur-roguelike-modus)
-15. [Onboarding](#15-onboarding)
+11. [Techtree](#11-techtree)
+    - 11.1 [Entitäten-Übersicht](#111-entitäten-übersicht)
+    - 11.2 [Abhängigkeitsregeln](#112-abhängigkeitsregeln)
+    - 11.3 [Grid-Layout (Techtree-Ansicht)](#113-grid-layout-techtree-ansicht)
+    - 11.4 [Legacy-Entitäten (entfernt)](#114-legacy-entitäten-entfernt)
+12. [Handel (Trade)](#12-handel-trade)
+13. [Berater & Aktionspunkte (AP-System)](#13-berater--aktionspunkte-ap-system)
+14. [Moralsystem](#14-moralsystem)
+15. [Run-Struktur (Roguelike-Modus)](#15-run-struktur-roguelike-modus)
+16. [Onboarding](#16-onboarding)
 
 ---
 
@@ -189,7 +194,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 | 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
 | 7 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
 | 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
-| 8b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §13) |
+| 8b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §14) |
 | 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
 
 ---
@@ -215,7 +220,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 - **Werkstoffe** — Veredelte Industriegüter: raffinierte Metalle, Legierungen, technische Komponenten. Nicht lokal produzierbar. Quellen: KI-Händler (immer verfügbar, Preis in Credits), Spieler-zu-Spieler-Handel, Events. Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen.
 - **Organika** — Biologische Ressource: Nahrung, Medizin, Biodünger, organische Verbindungen. Entscheidend für Bevölkerung und Vertrauen. Produktionsgebäude: Agrardom (bioFacility). Startwert 0 — wird durch eigene Produktion oder Handel beschafft.
 - **Versorgung** — Versorgungskapazität (Nahrung + Energie + Wasser, kombiniert abstrahiert). Kein Rohstoff im klassischen Sinne — definiert die maximale Größe der Kolonie (Cap-Modell, siehe §6).
-- **Vertrauen** — Systemmechanik, kein handelbarer Rohstoff (siehe §13).
+- **Vertrauen** — Systemmechanik, kein handelbarer Rohstoff (siehe §14).
 
 ### Ressourcen-Verwendungsdomänen
 
@@ -250,7 +255,7 @@ Credits werden durch vier Quellen erworben:
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
 
-Ausgaben: Berater-Upkeep (§12), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe-Import (KI-Händler).
+Ausgaben: Berater-Upkeep (§13), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe-Import (KI-Händler).
 
 ### Zukünftiger Rohstoff (Phase 4+): Exotics
 
@@ -281,7 +286,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 44 | hangar | Hangar | Hangar | — | CC Lv2 |
 | 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
 | 52 | bar | Cantina | Cantina | — | CC Lv1 |
-| 50 | denkmal | Kolonialdenkmal | Colonial Monument | — | — |
+| 50 | monument | Kolonialdenkmal | Colonial Monument | — | — |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | — |
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
@@ -545,9 +550,9 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 | Schiff | ship_id | Supply (Unterhalt) | Bemerkung |
 |--------|---------|-------------------|-----------|
-| sonde | 85 | **0** | unbemannt, kein Hangar nötig |
-| korvette | 37 | **14** | benötigt Hangar |
-| frachter | 47 | **6** | benötigt Hangar |
+| drone | 85 | **0** | unbemannt, kein Hangar nötig |
+| corvette | 37 | **14** | benötigt Hangar |
+| freighter | 47 | **6** | benötigt Hangar |
 
 **Beispielrechnung:** 2 Korvetten + 2 Frachter = 28 + 12 = 40 Supply — bereits mehr als die Hälfte eines typischen Mid-Game-Caps.
 
@@ -557,7 +562,7 @@ Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, s
 
 ### Supply-Kosten Gebäude
 
-**Berater:** kein Supply-Verbrauch — Kosten laufen über Credits (siehe §12).
+**Berater:** kein Supply-Verbrauch — Kosten laufen über Credits (siehe §13).
 
 **CommandCenter und Wohnhabitat:** kein Supply-Verbrauch (sie definieren den Cap).
 
@@ -617,9 +622,9 @@ Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die ü
     'knowledge_cap_per_level' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
     // Berater kosten kein Supply — Upkeep läuft über Credits (config/game.php → advisors)
     'ship_cost' => [
-        85 => 0,   // sonde    — unbemannt
-        37 => 14,  // korvette
-        47 => 6,   // frachter
+        85 => 0,   // drone     — unbemannt
+        37 => 14,  // corvette
+        47 => 6,   // freighter
     ],
 ],
 ```
@@ -931,9 +936,9 @@ Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein 
 ```php
 'combat' => [
     'ship_power' => [
-        85 => 0,   // sonde
-        37 => 1,   // korvette
-        47 => 0,   // frachter
+        85 => 0,   // drone
+        37 => 1,   // corvette
+        47 => 0,   // freighter
     ],
 ],
 ```
@@ -994,7 +999,7 @@ Freigeschaltete Kenntnisse können einem Berater zugewiesen werden (UI: Drag & D
 | 2 | 1 |
 | 3 | 1 |
 
-Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht weiter (dafür steigt der AP-Bonus — §12).
+Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht weiter (dafür steigt der AP-Bonus — §13).
 
 **Max. aktive Sekundäreffekte:** 5 (je ein Slot pro Berater, wenn alle auf Rang 2+). Bei 7 Kenntnissen und 5 Slots muss der Spieler 2 Kenntnisse ohne Sekundäreffekt lassen — das erzeugt echte Spezialisierungsentscheidungen.
 
@@ -1004,7 +1009,7 @@ Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht w
 
 Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
 
-> **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§14).
+> **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§15).
 
 ### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
 
@@ -1012,11 +1017,166 @@ Jede freigeschaltete Kenntnis erhöht den Supply-Cap. Da es kein Levelsystem meh
 
 > **TODO Design:** Pauschalen Supply-Cap-Bonus pro Kenntnis definieren (ersetzt die bisherige Level-Glockenformel). Richtwert: +8–12 pro Kenntnis, sodass alle 7 Kenntnisse zusammen ~60–80 Cap-Bonus ergeben.
 
-Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, health, defense) — Details siehe §13.
+Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, health, defense) — Details siehe §14.
 
 ---
 
-## 11. Handel (Trade)
+## 11. Techtree
+
+Der Techtree ist die Verwaltungsansicht aller ausbaubaren Entitäten einer Kolonie: Gebäude, Kenntnisse, Schiffe und Berater. Er ist kein linearer Forschungsbaum, sondern ein **überschaubares Abhängigkeitsgitter** — die Kommandozentrale (CC) ist das einzige globale Gate, das den Fortschritt reguliert.
+
+Das Designziel: Ein Spieler soll in 30 Sekunden verstehen, was er bauen kann und warum etwas noch gesperrt ist. Kein Micromanagement, keine Forschungsketten die Monate dauern.
+
+---
+
+### 11.1 Entitäten-Übersicht
+
+Die folgende Tabelle listet alle Entitäten im Techtree.
+
+#### Gebäude
+
+| Key (intern) | Name (DE) | Voraussetzung | Max-Level | Grid row | Grid col |
+|---|---|---|---|---|---|
+| `commandCenter` | Kommandozentrale | — | 5 | 0 | 2 |
+| `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen | 1 | 1 |
+| `harvester` | Harvester | CC Lv 1 | supply-limitiert | 2 | 1 |
+| `bioFacility` | Bio-Anlage | CC Lv 1 | supply-limitiert | 3 | 1 |
+| `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert | 4 | 2 |
+| `depot` | Depot | CC Lv 2 | supply-limitiert | 5 | 2 |
+| `bar` | Bar / Cantina | CC Lv 1 | supply-limitiert | 4 | 3 |
+| `hangar` | Hangar | CC Lv 3 | supply-limitiert | 6 | 3 |
+| `hospital` | Hospital | CC Lv 3 | supply-limitiert | 5 | 3 |
+| `temple` | Tempel | CC Lv 4 | supply-limitiert | 7 | 3 |
+| `monument` | Denkmal | CC Lv 5 | supply-limitiert | 8 | 3 |
+
+Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Wohlfahrt (Bar, Hospital, Tempel, Denkmal).
+
+#### Kenntnisse
+
+Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus.
+
+| Key (intern) | Name (DE) | Voraussetzung | Max-Level | Grid row | Grid col |
+|---|---|---|---|---|---|
+| `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 | 1 | 4 |
+| `cartography` | Kartografie | Analytik-Labor Lv 1 | 5 | 2 | 4 |
+| `geology` | Geologie | Analytik-Labor Lv 1 | 5 | 3 | 4 |
+| `agronomy` | Agronomie | Analytik-Labor Lv 1 | 5 | 4 | 4 |
+| `health` | Gesundheit | Analytik-Labor Lv 1 | 5 | 5 | 4 |
+| `trade` | Handel & Logistik | Analytik-Labor Lv 1 | 5 | 6 | 4 |
+| `defense` | Verteidigung | Analytik-Labor Lv 2 | 5 | 7 | 4 |
+
+**Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. `defense` ist eine Stufe teurer (Lv 2 statt Lv 1), weil Verteidigungswissen im Roguelike-Kontext erst ab einem gewissen Kolonie-Reifegrad sinnvoll ist.
+
+> **Roguelike-Variabilität:** Pro Run steht nicht der vollständige Kenntnisbaum zur Verfügung — nur eine zufällig gezogene Teilmenge (z.B. 5 von 7). Details in §15 (Run-Struktur).
+
+#### Schiffe
+
+Drei semantisch klare Typen: Sonde erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
+
+| Key (intern) | Name (DE) | Voraussetzung | Grid row | Grid col |
+|---|---|---|---|---|
+| `drone` | Drohne | Hangar Lv 1 | 1 | 5 |
+| `freighter` | Frachter | Hangar Lv 1 | 2 | 5 |
+| `corvette` | Korvette | Hangar Lv 2 | 3 | 5 |
+
+#### Berater (Personal)
+
+Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungsreihenfolge im Run wider.
+
+| Key (intern) | Name (DE) | AP-Typ | Voraussetzung | Grid row | Grid col |
+|---|---|---|---|---|---|
+| `engineer` | Baumeister | construction | CC Lv 1 | 1 | 0 |
+| `scientist` | Analytiker | research | CC Lv 2 | 3 | 0 |
+| `pilot` | Pilot | navigation | Hangar Lv 1 | 7 | 0 |
+| `trader` | Konsul | economy | Bar Lv 1 | 9 | 0 |
+| `strategist` | Stratege | strategy | Korvette (mind. 1 Einheit) | 11 | 0 |
+
+---
+
+### 11.2 Abhängigkeitsregeln
+
+Das Abhängigkeitssystem folgt drei einfachen Regeln:
+
+**Regel 1 — CC als Tier-Gate**
+Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. Kein Gebäude höherer Tier ist baubar, solange das CC-Level nicht erreicht ist. Die Tiers:
+
+| CC-Level | Freischaltet |
+|---|---|
+| 1 | Wohnhabitat, Harvester, Bio-Anlage, Bar |
+| 2 | Analytik-Labor, Depot |
+| 3 | Hangar, Hospital |
+| 4 | Tempel |
+| 5 | Denkmal |
+
+**Regel 2 — Funktionale Abhängigkeiten**
+Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude voraus:
+
+| Entität | Voraussetzung |
+|---|---|
+| Kenntnisse (alle) | Analytik-Labor Lv 1 |
+| `defense` (Kenntnis) | Analytik-Labor Lv 2 |
+| Sonde, Frachter | Hangar Lv 1 |
+| Korvette | Hangar Lv 2 |
+| Pilot | Hangar Lv 1 |
+| Konsul | Bar Lv 1 |
+| Stratege | Korvette (mind. 1 Einheit gebaut) |
+
+**Regel 3 — Supply als weicher Gate**
+Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level und Wohnhabitate begrenzt. Der Spieler kann theoretisch alles bauen wollen, ist aber durch Supply gezwungen, Prioritäten zu setzen. Das ist kein harter Abhängigkeitsbaum, sondern Ressourcendruck. Details in §6 (Supply-Generierung).
+
+> **Keine zyklischen Abhängigkeiten.** Jede Abhängigkeitskette endet beim CC. Ein Deadlock durch wechselseitige Abhängigkeiten ist konstruktiv ausgeschlossen.
+
+---
+
+### 11.3 Grid-Layout (Techtree-Ansicht)
+
+Das Techtree-Grid ist 12 Zeilen × 6 Spalten (row 0–11, col 0–5). Spalten-Semantik:
+
+| Spalten | Kategorie |
+|---|---|
+| 0 | Berater |
+| 1–3 | Gebäude (Infra links → Wohlfahrt rechts) |
+| 4 | Kenntnisse |
+| 5 | Schiffe |
+
+Die Zeilen-Semantik folgt dem CC-Level-Fortschritt von oben nach unten: CC oben (row 0), Endgame-Gebäude unten (row 8+). Berater-Positionen spiegeln ihre thematische Einführungsreihenfolge wider.
+
+**Vollständige Grid-Koordinatentabelle:**
+
+| Entität | Typ | row | col |
+|---|---|---|---|
+| commandCenter | building | 0 | 2 |
+| housingComplex | building | 1 | 1 |
+| harvester | building | 2 | 1 |
+| bioFacility | building | 3 | 1 |
+| sciencelab | building | 4 | 2 |
+| depot | building | 5 | 2 |
+| hangar | building | 6 | 3 |
+| bar | building | 4 | 3 |
+| hospital | building | 5 | 3 |
+| temple | building | 7 | 3 |
+| monument | building | 8 | 3 |
+| construction | research | 1 | 4 |
+| cartography | research | 2 | 4 |
+| geology | research | 3 | 4 |
+| agronomy | research | 4 | 4 |
+| health | research | 5 | 4 |
+| trade | research | 6 | 4 |
+| defense | research | 7 | 4 |
+| sonde | ship | 1 | 5 |
+| frachter | ship | 2 | 5 |
+| korvette | ship | 3 | 5 |
+| engineer | personell | 1 | 0 |
+| scientist | personell | 3 | 0 |
+| pilot | personell | 7 | 0 |
+| trader | personell | 9 | 0 |
+| stratege | personell | 11 | 0 |
+
+> Die `row`/`col`-Werte sind kanonisch — sie werden 1:1 in die DB-Tabellen geschrieben. Das Grid-CSS liest sie als `grid-row: row + 1; grid-column: col + 1`.
+
+---
+
+## 12. Handel (Trade)
 
 ### Designprinzip (Phase 3 Redesign)
 
@@ -1083,7 +1243,7 @@ Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
 ---
 
-## 12. Berater & Aktionspunkte (AP-System)
+## 13. Berater & Aktionspunkte (AP-System)
 
 ### Grundkonzept
 
@@ -1250,7 +1410,7 @@ Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP
 
 ---
 
-## 13. Moralsystem
+## 14. Moralsystem
 
 ### Design-Absicht
 
@@ -1302,7 +1462,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 |------------|------------|-----------------|
 | 32 | temple (Religiöse Stätte) | +2 |
 | 46 | hospital (Krankenstation) | +3 |
-| 50 | denkmal (Kolonialdenkmal) | +2 |
+| 50 | monument (Kolonialdenkmal) | +2 |
 | 52 | bar (Cantina) | +2 |
 
 **Negative Vertrauensgebäude:**
@@ -1311,7 +1471,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 
 **Rationale:** Die Cantina wurde als sozialer Treffpunkt konzipiert (+2) — ein wichtiger Ort für das Gemeinschaftsgefühl einer kleinen Kolonie. Militärischer Druck wirkt über Schiffe und Kenntnisse, nicht über Gebäude.
 
-> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + denkmal + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
+> ⚠️ BALANCE CONCERN: Wenn ein Spieler alle positiven Gebäude maximal ausbaut (temple + hospital + monument + bar je Lv10+), ist das theoretische Maximum allein durch Gebäude sehr hoch. Der clamp bei +100 verhindert Überlauf, aber der Vertrauen-Cap sollte beim ersten Playtest evaluiert werden ob er zu schnell erreichbar ist.
 
 ### Einflussfaktoren: Schiffe
 
@@ -1492,7 +1652,7 @@ Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bi
 
 ---
 
-## 14. Run-Struktur (Roguelike-Modus)
+## 15. Run-Struktur (Roguelike-Modus)
 
 ### Konzept
 
@@ -1692,7 +1852,7 @@ Komponenten:
 
 ---
 
-## 15. Onboarding
+## 16. Onboarding
 
 ### Designprinzipien für Onboarding
 
@@ -1710,7 +1870,7 @@ Vier Prinzipien leiten das gesamte Onboarding-Design und haben Vorrang vor allen
 Ein neuer Spieler sieht nach dem ersten Login:
 
 - Die **Koloniekarte** (Hex-Grid): CC Lv1 und Harvester sind gesetzt, der Rest der Kolonie-Zone ist leer.
-- Den **Techtree-Screen**: 12 Gebäude-Kacheln, 7 Kenntnis-Kacheln, 3 Schiffstypen, 5 Berater-Typen — alle ohne Erklärung der Zusammenhänge.
+- Den **Techtree-Screen**: 11 Gebäude-Kacheln, 7 Kenntnis-Kacheln, 3 Schiffstypen, 5 Berater-Typen — alle ohne Erklärung der Zusammenhänge.
 - Die **Ressourcenleiste**: 3.000 Credits, 200 Regolith, 0 Werkstoffe, 0 Organika.
 
 Das Problem: Der Spieler sieht viele Optionen, hat aber keinen Hinweis, welche davon den größten Effekt hat. Jede Option sieht gleichwertig aus. Das erzeugt Paralyse.
@@ -1719,7 +1879,7 @@ Das Problem: Der Spieler sieht viele Optionen, hat aber keinen Hinweis, welche d
 
 ---
 
-### § 15.1 — Der erste Bildschirm: Nexus-Briefing
+### § 16.1 — Der erste Bildschirm: Nexus-Briefing
 
 **Mechanik:** Beim allerersten Login eines Runs erscheint eine **Nexus-Nachricht im INNN-Feed** (kein Popup, kein Modal). Die Nachricht ist bereits sichtbar ohne dass der Spieler aktiv etwas öffnen muss — sie ist der erste Eintrag im INNN-Feed, Absender "Nexus Command", Priorität "dringend".
 
@@ -1748,7 +1908,7 @@ Diese Nachricht erfüllt vier Funktionen gleichzeitig:
 
 ---
 
-### § 15.2 — "Nächste sinnvolle Aktion": das Hint-System
+### § 16.2 — "Nächste sinnvolle Aktion": das Hint-System
 
 Das **Hint-System** zeigt zu jedem Zeitpunkt genau **einen** hervorgehobenen Hinweis an. Nie mehr als einen gleichzeitig. Der Hinweis verschwindet sobald die Aktion ausgeführt wurde.
 
@@ -1782,7 +1942,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 ---
 
-### § 15.3 — Visuelles Hervorheben: "Pulse"-Indikator
+### § 16.3 — Visuelles Hervorheben: "Pulse"-Indikator
 
 **Mechanik:** Wenn eine Techtree-Kachel oder ein Tile auf der Koloniekarte den ersten empfohlenen nächsten Schritt darstellt, erhält sie einen **Pulse-Indikator** — eine dezente, langsam pulsierende SVG-Umrandung (CSS animation `ring-pulse`, 2s Periode, ein Atemzug-Rhythmus, nicht aufdringlich).
 
@@ -1806,9 +1966,9 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 ---
 
-### § 15.4 — Techtree-Kaltstart: Zugangshürde reduzieren
+### § 16.4 — Techtree-Kaltstart: Zugangshürde reduzieren
 
-Der Techtree-Screen hat 12 Gebäude-Kacheln, 7 Kenntnisse, 3 Schiffe, 5 Berater — alle auf einmal sichtbar. Das ist für neue Spieler ein Orientierungsproblem.
+Der Techtree-Screen hat 11 Gebäude-Kacheln, 7 Kenntnisse, 3 Schiffe, 5 Berater — alle auf einmal sichtbar. Das ist für neue Spieler ein Orientierungsproblem.
 
 **Maßnahme: Zustandsbasierte Kachel-Sortierung.**
 
@@ -1828,7 +1988,7 @@ Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwische
 
 ---
 
-### § 15.5 — Die ersten 3–5 Aktionen: natürlicher Pfad
+### § 16.5 — Die ersten 3–5 Aktionen: natürlicher Pfad
 
 Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natürlichen Pfad, wenn der Spieler dem Hint-System folgt. Der Pfad ist nicht zwingend — aber er ist der offensichtlich sinnvolle:
 
@@ -1871,7 +2031,7 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 
 ---
 
-### § 15.6 — Inline-Erklärungen statt Handbuch
+### § 16.6 — Inline-Erklärungen statt Handbuch
 
 Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anzubieten, gibt es **kontextsensitive Inline-Erklärungen** — kurze Einzeiler die genau dann erscheinen, wenn das Konzept zum ersten Mal relevant wird.
 
@@ -1893,7 +2053,7 @@ Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anz
 
 ---
 
-### § 15.7 — Was Onboarding bewusst nicht leistet
+### § 16.7 — Was Onboarding bewusst nicht leistet
 
 Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und werden nicht implementiert:
 

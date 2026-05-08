@@ -242,7 +242,7 @@ class PersonellService
             'construction' => [self::idFor('engineer'),  'colony'],
             'research'     => [self::idFor('scientist'), 'colony'],
             'economy'      => [self::idFor('trader'),    'colony'],
-            'strategy'     => [self::idFor('stratege'),  'colony'],
+            'strategy'     => [self::idFor('strategist'), 'colony'],
             'navigation'   => [self::idFor('pilot'),     'colony'],
             default        => [null, null],
         };

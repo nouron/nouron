@@ -116,9 +116,9 @@ return [
     // Transports have 0 combat power (non-combat).
     'combat' => [
         'ship_power' => [
-            85 => 0,   // sonde     — unmanned probe, no weapons
-            37 => 3,   // korvette  — combat ship
-            47 => 0,   // frachter  — transport, no weapons
+            85 => 0,   // probe     — unmanned, no weapons
+            37 => 3,   // corvette  — combat ship
+            47 => 0,   // freighter — transport, no weapons
         ],
     ],
 
