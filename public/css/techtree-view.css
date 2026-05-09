@@ -39,7 +39,7 @@
 .techtree-sections {
     position: relative;
     padding: 1.25rem 1rem;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
 }
 
@@ -55,60 +55,21 @@
     z-index: 1;
 }
 
-/* ── Single section ──────────────────────────────────────── */
-.techtree-section {
-    margin-bottom: 2rem;
-}
 
-/* ── Cross-section prerequisite chip ─────────────────────── */
-.techtree-prereq-chip {
-    font-size: 0.75rem;
-    color: #888;
-    font-style: italic;
-    margin-bottom: 0.6rem;
-    padding-left: 0.25rem;
-}
-
-/* ── Section header ──────────────────────────────────────── */
-.techtree-section-title {
-    display: flex;
-    align-items: center;
-    gap: 0.65rem;
-    font-size: 0.85rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--color-anthracite, #2c2c2c);
-    margin: 0 0 0.75rem;
-}
-
-.techtree-section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--color-border, #e0e0e0);
-}
-
-/* Category accent on section title */
-.section-building .techtree-section-title { color: #3b82f6; }
-.section-research  .techtree-section-title { color: #10b981; }
-.section-ship      .techtree-section-title { color: #f59e0b; }
-.section-personell .techtree-section-title { color: #8b5cf6; }
-
-/* ── Tech grid — explicit 3-column placement (desktop) ──────── */
+/* ── Unified tech grid — 6 columns, all categories share one coordinate space ── */
 .tech-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    column-gap: 0.75rem;
+    grid-template-columns: repeat(6, 1fr);
+    column-gap: 0.5rem;
     row-gap: 3rem;   /* generous vertical space for dependency arrows */
     position: relative;
     z-index: 2;
 }
 
-/* Tablet: 2 columns, auto-flow (ignore explicit grid-column/row) */
+/* Tablet: 3 columns, auto-flow */
 @media (max-width: 1023px) and (min-width: 640px) {
     .tech-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
     .tech-card {
         grid-column: auto !important;

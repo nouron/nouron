@@ -73,23 +73,41 @@ class TechtreeController extends BaseController
                     'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                 ];
 
-                // Dependency arrows: all types → their required building
-                if (!empty($tech['required_building_id'])) {
-                    $reqId = (int) $tech['required_building_id'];
-                    if (isset($techtree['building'][$reqId])) {
-                        $reqBuilding = $techtree['building'][$reqId];
-                        $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
-                        $met         = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
-                        $lines[]     = ['from' => "tech-building-{$reqId}", 'to' => "tech-{$type}-{$id}", 'met' => $met, 'label' => "Lv{$reqLevel}"];
+                // Dependency arrows:
+                // For research: draw from the specific secondary prereq only
+                //   (the sciencelab "global unlock" is shown as a section label, not per-arrow).
+                //   Exception: knowledge_construction has no secondary prereq → draw from sciencelab.
+                // For all other types: draw from both primary and secondary prereqs.
+                if ($type === 'research') {
+                    $arrowBuildingId    = !empty($tech['required_building2_id'])
+                        ? (int) $tech['required_building2_id']
+                        : (int) ($tech['required_building_id'] ?? 0);
+                    $arrowBuildingLevel = !empty($tech['required_building2_id'])
+                        ? (int) ($tech['required_building2_level'] ?? 1)
+                        : (int) ($tech['required_building_level'] ?? 1);
+                    if ($arrowBuildingId && isset($techtree['building'][$arrowBuildingId])) {
+                        $arrowBuilding = $techtree['building'][$arrowBuildingId];
+                        $arrowMet      = (int) ($arrowBuilding['level'] ?? 0) >= $arrowBuildingLevel;
+                        $lines[]       = ['from' => "tech-building-{$arrowBuildingId}", 'to' => "tech-research-{$id}", 'met' => $arrowMet, 'label' => "Lv{$arrowBuildingLevel}"];
                     }
-                }
-                if (!empty($tech['required_building2_id'])) {
-                    $req2Id = (int) $tech['required_building2_id'];
-                    if (isset($techtree['building'][$req2Id])) {
-                        $req2Building = $techtree['building'][$req2Id];
-                        $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
-                        $met2         = (int) ($req2Building['level'] ?? 0) >= $req2Level;
-                        $lines[]      = ['from' => "tech-building-{$req2Id}", 'to' => "tech-{$type}-{$id}", 'met' => $met2, 'label' => "Lv{$req2Level}"];
+                } else {
+                    if (!empty($tech['required_building_id'])) {
+                        $reqId = (int) $tech['required_building_id'];
+                        if (isset($techtree['building'][$reqId])) {
+                            $reqBuilding = $techtree['building'][$reqId];
+                            $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+                            $met         = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
+                            $lines[]     = ['from' => "tech-building-{$reqId}", 'to' => "tech-{$type}-{$id}", 'met' => $met, 'label' => "Lv{$reqLevel}"];
+                        }
+                    }
+                    if (!empty($tech['required_building2_id'])) {
+                        $req2Id = (int) $tech['required_building2_id'];
+                        if (isset($techtree['building'][$req2Id])) {
+                            $req2Building = $techtree['building'][$req2Id];
+                            $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
+                            $met2         = (int) ($req2Building['level'] ?? 0) >= $req2Level;
+                            $lines[]      = ['from' => "tech-building-{$req2Id}", 'to' => "tech-{$type}-{$id}", 'met' => $met2, 'label' => "Lv{$req2Level}"];
+                        }
                     }
                 }
             }
