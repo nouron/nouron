@@ -80,7 +80,7 @@ class TechtreeController extends BaseController
                         $reqBuilding = $techtree['building'][$reqId];
                         $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
                         $met         = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
-                        $lines[]     = ['from' => "tech-building-{$reqId}", 'to' => "tech-{$type}-{$id}", 'met' => $met];
+                        $lines[]     = ['from' => "tech-building-{$reqId}", 'to' => "tech-{$type}-{$id}", 'met' => $met, 'label' => "Lv{$reqLevel}"];
                     }
                 }
                 if (!empty($tech['required_building2_id'])) {
@@ -89,7 +89,7 @@ class TechtreeController extends BaseController
                         $req2Building = $techtree['building'][$req2Id];
                         $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
                         $met2         = (int) ($req2Building['level'] ?? 0) >= $req2Level;
-                        $lines[]      = ['from' => "tech-building-{$req2Id}", 'to' => "tech-{$type}-{$id}", 'met' => $met2];
+                        $lines[]      = ['from' => "tech-building-{$req2Id}", 'to' => "tech-{$type}-{$id}", 'met' => $met2, 'label' => "Lv{$req2Level}"];
                     }
                 }
             }

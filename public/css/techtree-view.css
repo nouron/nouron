@@ -95,34 +95,35 @@
 .section-ship      .techtree-section-title { color: #f59e0b; }
 .section-personell .techtree-section-title { color: #8b5cf6; }
 
-/* ── Tech grid (responsive, max 3 columns) ───────────────── */
+/* ── Tech grid — explicit 3-column placement (desktop) ──────── */
 .tech-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     column-gap: 0.75rem;
-    row-gap: 2.5rem;   /* generous vertical space so arrows are readable between rows */
+    row-gap: 3rem;   /* generous vertical space for dependency arrows */
     position: relative;
     z-index: 2;
 }
 
-/* Cap at 3 columns on wide viewports */
-@media (min-width: 1024px) {
-    .tech-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* 2 columns on tablet */
+/* Tablet: 2 columns, auto-flow (ignore explicit grid-column/row) */
 @media (max-width: 1023px) and (min-width: 640px) {
     .tech-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    .tech-card {
+        grid-column: auto !important;
+        grid-row: auto !important;
+    }
 }
 
-/* 1 column on mobile */
+/* Mobile: single column, auto-flow */
 @media (max-width: 639px) {
     .tech-grid {
         grid-template-columns: 1fr;
+    }
+    .tech-card {
+        grid-column: auto !important;
+        grid-row: auto !important;
     }
 }
 
