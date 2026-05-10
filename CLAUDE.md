@@ -242,6 +242,18 @@ Abgrenzung: Jeder Agent schreibt nur in seinem Bereich. Details in `.claude/agen
 - Claude Code wird für die Weiterentwicklung verwendet
 - Der Owner heißt Mario (tech.mario@outlook.de)
 
+### Git-Workflow (verbindlich)
+
+**Nie direkt auf `master` committen oder pushen** — auch nicht nach einem Merge wenn man bereits auf `master` ist.
+
+Ablauf für jede Änderung:
+1. `git checkout -b feat/<name>` — neuen Branch anlegen
+2. Commits auf dem Branch
+3. `git push origin feat/<name>`
+4. PR auf GitHub erstellen
+
+Wenn GitHub beim Push warnt *"Changes must be made through a pull request"*: Push sofort abbrechen, Branch anlegen, PR erstellen. Branch-Protection-Regeln niemals bypassen.
+
 ## Changelog-Pflege
 
 Am Ende jeder Session, in der Code-Arbeit stattgefunden hat, wird ein Eintrag in `CHANGELOG.md` im Projekt-Root ergänzt. Format:
