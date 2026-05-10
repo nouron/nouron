@@ -517,6 +517,8 @@ Der Berater-Screen war der logische nächste Schritt nach dem Onboarding (Phase 
 
 **Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Rassen-Effekte, Steuersystem und Diplomatie-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
 
+- [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
+- [ ] **Nexus-Außenposten-Slot (CC Lv5-Gate)** — CC Lv5 schaltet einen zweiten Außenposten-Slot frei — direkter Meilenstein in der Expansionsmechanik; Datenmodell noch nicht vorhanden (siehe Phase 5 Außenposten); hier konkret: CC Lv5 gibt die Möglichkeit einen zweiten Nexus-Kontakt-Knoten zu errichten, der eigene Handels- und Missionsoptionen bietet
 - [ ] **Diplomatie-System** — `innn_message_types.relationship_effect` auswerten; diplomatische Zustände (Krieg, Frieden, Allianz, Neutralität); Moral-Events `war_declared`/`treaty_signed` aktivieren; AP-Kosten gemäß Designprinzip (Kriegserklärung teurer als Handelsvertrag)
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
 - [ ] **Rassen-System überarbeiten** — `race_id` ist im Schema, wird nicht ausgewertet; rassenspezifische Effekte definieren; Designfrage erst nach Phase-3-Playtest beantwortbar

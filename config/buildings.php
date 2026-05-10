@@ -98,7 +98,7 @@ return [
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'hospital' => [
+    'infirmary' => [
         'id'                => 46,
         'supply_cost'       => 10,
         'moral_per_lv'      => 3,
@@ -116,7 +116,7 @@ return [
         'max_level'         => null,
     ],
 
-    'denkmal' => [
+    'monument' => [
         'id'                => 50,
         'supply_cost'       => 2,
         'moral_per_lv'      => 2,

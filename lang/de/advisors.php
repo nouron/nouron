@@ -18,9 +18,9 @@ return [
     'trader_plural' => 'Konsuln',
     'trader_desc'   => 'Stellt Wirtschafts-AP bereit. Verwaltet Handelsrouten und Marktoperationen.',
 
-    'stratege'        => 'Stratege',
-    'stratege_plural' => 'Strategen',
-    'stratege_desc'   => 'Stellt Strategie-AP bereit. Zuständig für Verteidigung und Kampfoperationen.',
+    'strategist'        => 'Stratege',
+    'strategist_plural' => 'Strategen',
+    'strategist_desc'   => 'Stellt Strategie-AP bereit. Zuständig für Verteidigung und Kampfoperationen.',
 
     // AP-Typ-Labels
     'ap_construction' => 'Bau-AP',

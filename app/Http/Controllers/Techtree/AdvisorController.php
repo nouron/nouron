@@ -22,7 +22,7 @@ class AdvisorController extends BaseController
      * Canonical advisor slot order. Position index (0-based) + 1 = position number (1–5)
      * and equals the CC level required to unlock that slot.
      */
-    private const SLOT_ORDER = ['engineer', 'scientist', 'pilot', 'trader', 'stratege'];
+    private const SLOT_ORDER = ['engineer', 'scientist', 'pilot', 'trader', 'strategist'];
 
     public function __construct(
         TickService                       $tick,

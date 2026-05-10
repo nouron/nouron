@@ -49,7 +49,7 @@ return [
         'credits'        => 350,
     ],
 
-    'stratege' => [
+    'strategist' => [
         'id'             => 93,
         'ap_type'        => 'strategy',
         'moral_per_unit' => 0,

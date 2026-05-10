@@ -76,41 +76,86 @@ class TechtreeControllerTest extends TestCase
         $response->assertViewHas('pageData');
 
         $pageData = $response->viewData('pageData');
-        $this->assertArrayHasKey('categories', $pageData);
-        $this->assertArrayHasKey('lines', $pageData);
+        $this->assertArrayHasKey('phases', $pageData);
+        $this->assertCount(5, $pageData['phases']);
 
-        foreach (['building', 'research', 'ship', 'personell'] as $type) {
-            $this->assertArrayHasKey($type, $pageData['categories'], "Category '$type' missing");
+        foreach (range(1, 5) as $n) {
+            $this->assertArrayHasKey($n, $pageData['phases'], "Phase $n missing");
+            $this->assertArrayHasKey('cc_level', $pageData['phases'][$n]);
+            $this->assertArrayHasKey('items', $pageData['phases'][$n]);
+            $this->assertArrayHasKey('lines', $pageData['phases'][$n]);
         }
     }
 
-    public function testIndexCategoryTechsHaveRequiredFields(): void
+    public function testIndexPhaseItemsHaveRequiredFields(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        foreach (['building', 'research', 'ship', 'personell'] as $type) {
-            foreach ($pageData['categories'][$type] as $tech) {
-                $this->assertArrayHasKey('id', $tech);
-                $this->assertArrayHasKey('row', $tech);
-                $this->assertArrayHasKey('col', $tech);
+        foreach ($pageData['phases'] as $phaseNum => $phase) {
+            foreach ($phase['items'] as $tech) {
+                $this->assertArrayHasKey('id',     $tech);
+                $this->assertArrayHasKey('type',   $tech);
+                $this->assertArrayHasKey('row',    $tech);
+                $this->assertArrayHasKey('col',    $tech);
                 $this->assertArrayHasKey('status', $tech);
                 $this->assertContains($tech['status'], ['built', 'available', 'locked'],
-                    "Invalid status '{$tech['status']}' for {$type}/{$tech['id']}");
+                    "Invalid status '{$tech['status']}' for {$tech['type']}/{$tech['id']} in phase {$phaseNum}");
             }
         }
     }
 
-    public function testIndexLinesHaveRequiredFields(): void
+    public function testAllPhasesContainItems(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
-        foreach ($pageData['lines'] as $line) {
-            $this->assertArrayHasKey('from', $line);
-            $this->assertArrayHasKey('to', $line);
-            $this->assertArrayHasKey('met', $line);
+        foreach (range(1, 3) as $n) {
+            $this->assertNotEmpty($pageData['phases'][$n]['items'], "Phase $n must have items");
         }
+    }
+
+    public function testRequiredDescShowsDualPrerequisites(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
+        $cartography = null;
+        foreach ($pageData['phases'] as $phase) {
+            $found = collect($phase['items'])->first(fn($t) => $t['id'] === 91 && $t['type'] === 'research');
+            if ($found) {
+                $cartography = $found;
+                break;
+            }
+        }
+
+        $this->assertNotNull($cartography, 'knowledge_cartography (ID 91) must be in a phase');
+        $this->assertNotNull($cartography['required_desc'], 'knowledge_cartography must have a required_desc');
+        $this->assertStringContainsString('+', $cartography['required_desc'],
+            'Dual prerequisites must be joined by "+"');
+    }
+
+    public function testKnowledgeCartographyIsInPhase3(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $found = collect($pageData['phases'][3]['items'])
+            ->first(fn($t) => $t['id'] === 91 && $t['type'] === 'research');
+
+        $this->assertNotNull($found, 'knowledge_cartography (ID 91) must be in phase 3');
+    }
+
+    public function testPhase3LinesIncludeHangarArrow(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $lines = $pageData['phases'][3]['lines'];
+        $hangarLines = array_filter($lines, fn($l) => $l['from'] === 'tech-building-44');
+
+        $this->assertNotEmpty($hangarLines, 'Phase 3 must have arrows originating from hangar (ID 44)');
     }
 
     /**
@@ -122,5 +167,38 @@ class TechtreeControllerTest extends TestCase
     {
         $route = route('techtree.action', ['type' => 'building', 'id' => 27, 'order' => 'add']);
         $this->assertStringNotContainsString('colony', $route);
+    }
+
+    public function testInfirmaryIsInPhase2(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $found = collect($pageData['phases'][2]['items'])
+            ->first(fn($t) => $t['id'] === 46 && $t['type'] === 'building');
+
+        $this->assertNotNull($found, 'infirmary (building ID 46) must be in phase 2');
+    }
+
+    public function testBarIsInPhase2(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $found = collect($pageData['phases'][2]['items'])
+            ->first(fn($t) => $t['id'] === 52 && $t['type'] === 'building');
+
+        $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
+    }
+
+    public function testKnowledgeGeologyIsInPhase3(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $found = collect($pageData['phases'][3]['items'])
+            ->first(fn($t) => $t['id'] === 92 && $t['type'] === 'research');
+
+        $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3');
     }
 }

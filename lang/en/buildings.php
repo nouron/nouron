@@ -33,14 +33,14 @@ return [
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
-    'hospital'      => 'Medical Station',
-    'hospital_desc' => 'Basic medical care for colonists. Requires regular maintenance and supplies.',
+    'infirmary'      => 'Medical Station',
+    'infirmary_desc' => 'Basic medical care for colonists. Requires regular maintenance and supplies.',
 
     'bar'      => 'Cantina',
     'bar_desc' => 'The social heart of the colony. Colonists unwind here after their shift, swap gossip, and meet strangers passing through. Those who listen carefully learn more than any official report will tell them.',
 
-    'denkmal'      => 'Colonial Monument',
-    'denkmal_desc' => 'A memorial to the colony\'s founding history. An enduring symbol of the shared journey.',
+    'monument'      => 'Colonial Monument',
+    'monument_desc' => 'A memorial to the colony\'s founding history. An enduring symbol of the shared journey.',
 
     'temple'      => 'Sacred Site',
     'temple_desc' => 'A spiritual anchor for the population. Provides comfort in an unforgiving world far from home.',

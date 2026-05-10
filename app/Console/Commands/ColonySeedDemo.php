@@ -42,7 +42,7 @@ class ColonySeedDemo extends Command
         44 => [2,   0],  // hangar         (ring 2, terrain)
         52 => [-2,  0],  // bar            (ring 2, terrain)
         27 => [3,   0],  // harvester      (ring 3, regolith — exploration zone)
-        // hospital (46), temple (32), denkmal (50) intentionally unplaced — available in Build Mode
+        // infirmary (46), temple (32), denkmal (50) intentionally unplaced — available in Build Mode
     ];
 
     private const BUILDING_LEVELS = [
@@ -76,7 +76,7 @@ class ColonySeedDemo extends Command
         $this->info('  ✓ Colony zone assigned (CC Lv5, 15 terrain tiles)');
 
         $this->assignBuildingTiles($colonyId);
-        $this->info('  ✓ Building positions assigned (hospital/temple/denkmal left unplaced)');
+        $this->info('  ✓ Building positions assigned (infirmary/temple/monument left unplaced)');
 
         $this->ensurePilotAdvisor($colonyId);
         $this->info('  ✓ Pilot advisor ensured (navigation AP)');

@@ -77,6 +77,7 @@ class TechtreeColonyService
         };
 
         $entities = DB::table($masterTable)
+            ->where('is_active', 1)
             ->get()
             ->keyBy('id')
             ->map(fn($e) => (array) $e)

@@ -116,9 +116,9 @@ return [
     // Transports have 0 combat power (non-combat).
     'combat' => [
         'ship_power' => [
-            85 => 0,   // sonde     — unmanned probe, no weapons
-            37 => 3,   // korvette  — combat ship
-            47 => 0,   // frachter  — transport, no weapons
+            85 => 0,   // probe     — unmanned, no weapons
+            37 => 3,   // corvette  — combat ship
+            47 => 0,   // freighter — transport, no weapons
         ],
     ],
 
@@ -184,6 +184,19 @@ return [
             'war_declared'          => -8,
             'treaty_signed'         =>  3,
         ],
+    ],
+
+    // CC-Level gate for knowledge research levels 4 and 5.
+    // A colony must have CommandCenter (ID 25) at this level before a Kenntnis
+    // can be levelled to the corresponding level.
+    // Enforcement logic (invest/levelup guard) is not yet implemented — this
+    // entry documents the design rule and will be read by the service in a
+    // future sprint.
+    //
+    // Format: knowledge_level => required_cc_level
+    'knowledge_cc_level_cap' => [
+        4 => 4,  // CC Lv4 required to reach knowledge Lv4
+        5 => 5,  // CC Lv5 required to reach knowledge Lv5
     ],
 
     'onboarding' => [

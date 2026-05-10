@@ -1,182 +1,359 @@
-/* Techtree overview — Alpine.js + PicoCSS (Phase 3g) */
+/* Techtree overview — Alpine.js + PicoCSS (Phase-based sections, Phase 3h) */
 
+[x-cloak] { display: none !important; }
+
+/* ── Page wrapper ─────────────────────────────────────────── */
 .techtree-page {
     padding: 0;
-    overflow: hidden;
 }
 
-/* ── Toolbar ─────────────────────────────────────────────── */
-.techtree-toolbar {
-    display: flex;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border);
-    background: #fff;
-    flex-wrap: wrap;
-}
-
-.techtree-toolbar button {
-    padding: 0.3rem 0.9rem;
-    border-radius: 20px;
-    border: 1px solid var(--color-border);
-    background: #f5f5f5;
-    color: #666;
-    font-size: 0.8rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-}
-
-.techtree-toolbar button.active {
-    background: var(--color-anthracite);
-    color: #fff;
-    border-color: var(--color-anthracite);
-}
-
-/* ── Grid wrapper + SVG overlay ──────────────────────────── */
-.techtree-grid-wrapper {
+/* ── Sections wrapper — positioning context for global SVG ── */
+.techtree-sections {
     position: relative;
-    overflow: auto;
-    height: calc(100vh - 110px); /* full remaining viewport height */
-    background: #fafafa;
+    padding: 1rem;
+    max-width: 760px;
+    margin: 0 auto;
 }
 
-.techtree-svg {
+/* ── Global SVG arrow overlay (spans all sections) ─────────── */
+.techtree-global-svg {
     position: absolute;
     top: 0;
     left: 0;
+    width: 100%;
+    height: 100%;
     pointer-events: none;
     overflow: visible;
+    z-index: 1;
 }
 
-/* ── CSS Grid ─────────────────────────────────────────────── */
-.techtree-grid {
+/* ── Phase section ────────────────────────────────────────── */
+.techtree-phase {
+    margin-bottom: 1.75rem;
+}
+
+/* ── Phase header ─────────────────────────────────────────── */
+.phase-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 0.75rem;
+    padding: 0.4rem 0.75rem;
+    background: #f4f4f4;
+    border-radius: 6px;
+    border-left: 3px solid var(--color-anthracite, #2c2c2c);
+    font-size: 1rem;
+    font-weight: 400;
+}
+
+.phase-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--color-anthracite, #2c2c2c);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.phase-cc {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+/* ── Tech grid — 3 columns per phase ─────────────────────── */
+.tech-grid {
     display: grid;
-    grid-template-columns: repeat(6, 160px);
-    grid-template-rows: repeat(16, minmax(64px, auto));
-    gap: 0.5rem;
-    padding: 1rem;
-    min-width: max-content;
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 0.5rem;
+    row-gap: 2.5rem;
+    position: relative;
+    z-index: 2;
 }
 
 /* ── Tech card ────────────────────────────────────────────── */
 .tech-card {
-    border: 1px solid var(--color-border);
+    border: 1px solid var(--color-border, #e0e0e0);
+    border-left: 3px solid transparent;
     border-radius: 6px;
     background: #fff;
-    padding: 0.4rem 0.5rem 0.35rem;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
+    padding: 0.55rem 0.65rem 0.5rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    row-gap: 0.25rem;
     cursor: pointer;
     transition: box-shadow 0.15s, transform 0.15s;
-    border-left: 3px solid transparent;
-    min-height: 56px;
-    font-size: 0.78rem;
-    position: relative;
+    min-width: 0; /* prevent grid blowout */
 }
 
 .tech-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transform: translateY(-1px);
 }
 
-/* Category accent colors (left border) */
+/* Category accent colors */
 .tech-card.tech-building  { border-left-color: #3b82f6; }
 .tech-card.tech-research  { border-left-color: #10b981; }
 .tech-card.tech-ship      { border-left-color: #f59e0b; }
 .tech-card.tech-personell { border-left-color: #8b5cf6; }
 
-/* Status-based card styles */
+/* Locked: dimmed */
 .tech-card.status-locked {
     opacity: 0.55;
     background: #f8f8f8;
 }
 
+/* Available: dashed border (accent left stays solid) */
 .tech-card.status-available {
-    border-style: dashed;
-    border-left-style: solid;
+    border-top-style: dashed;
+    border-right-style: dashed;
+    border-bottom-style: dashed;
 }
 
-/* Hidden (type toggled off) */
-.tech-card.type-hidden {
-    visibility: hidden;  /* keep grid space, hide visually */
-}
-
-/* ── Card content ─────────────────────────────────────────── */
+/* ── Card: name ──────────────────────────────────────────── */
 .tech-name {
+    grid-column: 1;
+    grid-row: 1;
     font-weight: 600;
-    color: var(--color-anthracite);
-    line-height: 1.2;
-    font-size: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--color-anthracite, #2c2c2c);
+    line-height: 1.25;
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
-.tech-level-badge {
-    font-size: 0.62rem;
-    font-weight: 700;
-    color: #888;
-    letter-spacing: 0.03em;
-}
-
+/* ── Card: status chip ───────────────────────────────────── */
 .tech-status-chip {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: start;
     display: inline-flex;
     align-items: center;
-    padding: 1px 6px;
+    padding: 2px 6px;
     border-radius: 20px;
     font-size: 0.6rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    align-self: flex-start;
-    margin-top: auto;
+    white-space: nowrap;
+    margin-left: 0.4rem;
+    flex-shrink: 0;
 }
 
 .chip-built     { background: #e8f4e8; color: #2e7d32; }
 .chip-available { background: #e8f0fe; color: #1a56db; }
 .chip-locked    { background: #f0f0f0; color: #999; }
 
-/* ── Required desc tooltip ─────────────────────────────────── */
-.tech-required {
-    font-size: 0.6rem;
-    color: #aaa;
-    font-style: italic;
+/* ── Card: sub-line (locked reason) ─────────────────────── */
+.tech-sub {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 0.68rem;
+    color: #888;
     line-height: 1.2;
+    overflow-wrap: break-word;
+}
+
+/* ── Mobile phase navigation (sticky bottom) ─────────────── */
+.phase-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.6rem 1rem;
+    border-top: 1px solid var(--color-border, #e0e0e0);
+    background: #fff;
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
+}
+
+.phase-nav-arrow {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: 1px solid var(--color-border, #e0e0e0);
+    background: #f5f5f5;
+    color: var(--color-anthracite, #2c2c2c);
+    font-size: 1.3rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background 0.12s;
+}
+
+.phase-nav-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.phase-dots {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.phase-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    border: 1.5px solid var(--color-anthracite, #2c2c2c);
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.12s;
+}
+
+.phase-dot.active {
+    background: var(--color-anthracite, #2c2c2c);
 }
 
 /* ── Detail dialog ────────────────────────────────────────── */
 dialog.tech-detail {
-    max-width: 380px;
+    max-width: 360px;
     width: 90%;
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
-    padding: 1.5rem;
+    border-radius: 12px;
+    border: none;
+    padding: 0;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
 }
 
-dialog.tech-detail h3 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
+dialog.tech-detail::backdrop {
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
 }
 
-.detail-meta {
-    font-size: 0.82rem;
-    color: #666;
+.detail-inner {
+    border-top: 4px solid #3b82f6;
+    padding: 1.1rem 1.25rem 1.1rem;
+}
+
+.detail-cat-building  { border-top-color: #3b82f6; }
+.detail-cat-research  { border-top-color: #10b981; }
+.detail-cat-ship      { border-top-color: #f59e0b; }
+.detail-cat-personell { border-top-color: #8b5cf6; }
+
+.detail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 0.55rem;
+}
+
+.detail-badges {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.detail-type-badge {
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    background: #f0f0f0;
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+
+.detail-x {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #bbb;
+    cursor: pointer;
+    padding: 0 0 0 0.5rem;
+    flex-shrink: 0;
+    margin: -4px -4px 0 0;
+    transition: color 0.1s;
+}
+
+.detail-x:hover { color: #555; }
+
+.detail-title {
+    margin: 0 0 0.85rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--color-anthracite, #2c2c2c);
+    line-height: 1.3;
+}
+
+.detail-body {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
     margin-bottom: 1rem;
+    font-size: 0.83rem;
 }
 
-.detail-meta span strong {
-    color: var(--color-anthracite);
+.detail-row {
+    display: flex;
+    gap: 0.5rem;
+    color: #555;
+}
+
+.detail-row-label {
+    font-weight: 600;
+    color: var(--color-anthracite, #2c2c2c);
+    min-width: 72px;
+    flex-shrink: 0;
 }
 
 .detail-close {
     width: 100%;
-    padding: 0.4rem;
-    border-radius: 6px;
-    border: 1px solid var(--color-border);
+    padding: 0.45rem;
+    border-radius: 8px;
+    border: 1px solid var(--color-border, #e0e0e0);
     background: #f5f5f5;
     cursor: pointer;
     font-size: 0.85rem;
-    margin-top: 0.5rem;
+    font-weight: 500;
+    transition: background 0.12s;
+}
+
+.detail-close:hover { background: #eee; }
+
+/* Mobile: bottom sheet */
+@media (max-width: 600px) {
+    dialog.tech-detail {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 16px 16px 0 0;
+        margin: 0;
+    }
+
+    .detail-inner {
+        padding: 1.25rem 1.25rem 1.5rem;
+    }
+}
+
+/* ── Mobile tweaks ───────────────────────────────────────── */
+@media (max-width: 480px) {
+    .techtree-sections {
+        padding: 0.6rem 0.5rem;
+    }
+
+    .tech-card {
+        padding: 0.4rem 0.45rem 0.35rem;
+    }
+
+    .tech-name {
+        font-size: 0.72rem;
+    }
+
+    .tech-status-chip {
+        font-size: 0.55rem;
+        padding: 1px 4px;
+        margin-left: 0.25rem;
+    }
 }
