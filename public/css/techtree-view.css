@@ -337,6 +337,21 @@ dialog.tech-detail::backdrop {
     }
 }
 
+/* ── Hover focus — dim/highlight cards and SVG paths ─────── */
+.tech-card.hover-dim      { opacity: 0.25; transition: opacity 0.15s; }
+.tech-card.hover-highlight { opacity: 1;   transition: opacity 0.15s; }
+
+.techtree-global-svg path.hover-dim {
+    opacity: 0.15;
+    transition: opacity 0.15s;
+}
+
+.techtree-global-svg path.hover-highlight {
+    opacity: 1;
+    stroke-width: 2 !important;
+    transition: opacity 0.15s;
+}
+
 /* ── Mobile tweaks ───────────────────────────────────────── */
 @media (max-width: 480px) {
     .techtree-sections {

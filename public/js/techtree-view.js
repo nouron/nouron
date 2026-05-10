@@ -1,10 +1,11 @@
 function techtreeView(config) {
     return {
-        phases:       config.phases,
-        selectedTech: null,
-        activePhase:  1,
-        isMobile:     false,
-        touchStartX:  0,
+        phases:        config.phases,
+        selectedTech:  null,
+        activePhase:   1,
+        isMobile:      false,
+        touchStartX:   0,
+        hoveredTechId: null,
 
         init() {
             this.checkBreakpoint();
@@ -50,6 +51,68 @@ function techtreeView(config) {
             }
         },
 
+        // ── Hover focus ────────────────────────────────────────────
+
+        onCardEnter(tech) {
+            this.hoveredTechId = 'tech-' + tech.type + '-' + tech.id;
+            this.applyHoverFocus();
+        },
+
+        onCardLeave() {
+            this.hoveredTechId = null;
+            this.clearHoverFocus();
+        },
+
+        applyHoverFocus() {
+            const focusedId = this.hoveredTechId;
+            if (!focusedId) return;
+
+            // Collect all lines from all phases
+            const allLines = [];
+            for (const phaseNum of Object.keys(this.phases)) {
+                const phase = this.phases[phaseNum];
+                if (phase.lines) allLines.push(...phase.lines);
+            }
+
+            // Find prerequisite source ids for the hovered card
+            const prereqFromIds = new Set(
+                allLines
+                    .filter(l => l.to === focusedId)
+                    .map(l => l.from)
+            );
+
+            // Dim / highlight cards (el.id matches full element id, e.g. "tech-building-25")
+            document.querySelectorAll('.tech-card').forEach(el => {
+                const isRelevant = el.id === focusedId || prereqFromIds.has(el.id);
+                el.classList.remove('hover-dim', 'hover-highlight');
+                el.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
+            });
+
+            // Dim / highlight SVG paths
+            const svgEl = this.$refs.globalSvg;
+            if (svgEl) {
+                svgEl.querySelectorAll('path[data-to]').forEach(path => {
+                    const isRelevant = path.dataset.to === focusedId;
+                    path.classList.remove('hover-dim', 'hover-highlight');
+                    path.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
+                });
+            }
+        },
+
+        clearHoverFocus() {
+            document.querySelectorAll('.tech-card').forEach(el => {
+                el.classList.remove('hover-dim', 'hover-highlight');
+            });
+            const svgEl = this.$refs.globalSvg;
+            if (svgEl) {
+                svgEl.querySelectorAll('path[data-to]').forEach(path => {
+                    path.classList.remove('hover-dim', 'hover-highlight');
+                });
+            }
+        },
+
+        // ── Arrow drawing ──────────────────────────────────────────
+
         drawAllLines() {
             const svgEl     = this.$refs.globalSvg;
             const wrapperEl = this.$refs.sectionsWrapper;
@@ -66,23 +129,23 @@ function techtreeView(config) {
 
             const wRect = wrapperEl.getBoundingClientRect();
 
-            // Arrow markers
+            // Arrow markers — smaller, compact arrowheads
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             const makeMarker = (id, color) => {
                 const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
                 marker.setAttribute('id', id);
-                marker.setAttribute('markerWidth', '10');
-                marker.setAttribute('markerHeight', '10');
-                marker.setAttribute('refX', '9');
-                marker.setAttribute('refY', '4');
+                marker.setAttribute('markerWidth',  '6');
+                marker.setAttribute('markerHeight', '6');
+                marker.setAttribute('refX', '5');
+                marker.setAttribute('refY', '3');
                 marker.setAttribute('orient', 'auto');
                 const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-                poly.setAttribute('points', '0 0, 10 4, 0 8');
+                poly.setAttribute('points', '0 0, 6 3, 0 6');
                 poly.setAttribute('fill', color);
                 marker.appendChild(poly);
                 return marker;
             };
-            defs.appendChild(makeMarker('arr-met',   '#27ae60'));
+            defs.appendChild(makeMarker('arr-met',   '#555'));
             defs.appendChild(makeMarker('arr-unmet', '#bbb'));
             svgEl.appendChild(defs);
 
@@ -106,7 +169,7 @@ function techtreeView(config) {
                 (toGroups[line.to]     ??= []).push(line);
             }
 
-            const SPREAD = 16; // px between parallel lines at same node
+            const SPREAD = 10; // px between parallel lines at same node
 
             for (const line of visibleLines) {
                 const fR = line.fromEl.getBoundingClientRect();
@@ -120,24 +183,40 @@ function techtreeView(config) {
                 const toIdx  = toList.indexOf(line);
                 const toN    = toList.length;
 
-                const cxFrom = fR.left + fR.width / 2 - wRect.left;
-                const cxTo   = tR.left + tR.width / 2 - wRect.left;
+                // Use edge anchors: right edge when target is to the right, left edge otherwise
+                const goingRight = (tR.left + tR.width / 2) > (fR.left + fR.width / 2);
+                const fromEdgeX  = goingRight ? fR.right  - wRect.left : fR.left - wRect.left;
+                const toEdgeX    = goingRight ? tR.left   - wRect.left : tR.right - wRect.left;
 
-                const x1   = cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD;
-                const y1   = fR.bottom - wRect.top;
-                const x2   = cxTo   + (toIdx   - (toN   - 1) / 2) * SPREAD;
-                const y2   = tR.top  - wRect.top;
+                // Vertical spread still fan across card center
+                const cxFrom = fR.left + fR.width  / 2 - wRect.left;
+                const cxTo   = tR.left + tR.width  / 2 - wRect.left;
+
+                // When source and target are in the same column (vertical line), use center
+                const sameColumn = Math.abs(cxFrom - cxTo) < 10;
+
+                const x1 = sameColumn
+                    ? cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD
+                    : fromEdgeX + (fromIdx - (fromN - 1) / 2) * SPREAD;
+                const y1 = fR.bottom - wRect.top;
+
+                const x2 = sameColumn
+                    ? cxTo + (toIdx - (toN - 1) / 2) * SPREAD
+                    : toEdgeX + (toIdx - (toN - 1) / 2) * SPREAD;
+                const y2  = tR.top - wRect.top;
                 const midY = (y1 + y2) / 2;
 
-                const color    = line.met ? '#27ae60' : '#bbb';
+                const color    = line.met ? '#555' : '#bbb';
                 const markerId = line.met ? 'url(#arr-met)' : 'url(#arr-unmet)';
 
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', `M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`);
                 path.setAttribute('fill', 'none');
                 path.setAttribute('stroke', color);
-                path.setAttribute('stroke-width', '2.5');
+                path.setAttribute('stroke-width', '1.5');
                 path.setAttribute('marker-end', markerId);
+                path.setAttribute('data-from', line.from);
+                path.setAttribute('data-to',   line.to);
                 if (!line.met) path.setAttribute('stroke-dasharray', '5 3');
                 svgEl.appendChild(path);
 

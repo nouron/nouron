@@ -35,7 +35,9 @@
                 <div class="tech-card tech-{{ $tech['type'] }} status-{{ $tech['status'] }}"
                      id="tech-{{ $tech['type'] }}-{{ $tech['id'] }}"
                      style="grid-column:{{ $tech['col'] }};grid-row:{{ $tech['row'] }}"
-                     @click="openDetail({{ json_encode($tech) }})">
+                     @click="openDetail({{ json_encode($tech) }})"
+                     @mouseenter="onCardEnter({{ json_encode($tech) }})"
+                     @mouseleave="onCardLeave()">
                     <span class="tech-name">{{ $tech['name'] }}</span>
                     <span class="tech-status-chip chip-{{ $tech['status'] }}">
                         @if($tech['status'] === 'built')Lv {{ $tech['level'] }}{{ $tech['max_level'] ? '/' . $tech['max_level'] : '' }}
