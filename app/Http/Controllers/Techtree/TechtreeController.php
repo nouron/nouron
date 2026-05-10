@@ -46,22 +46,40 @@ class TechtreeController extends BaseController
     /**
      * Display the full techtree overview for the active colony.
      *
-     * Builds $pageData with 'categories' (grouped tech objects) consumed by
-     * the Alpine.js techtree view. Dependencies are rendered as text inside
-     * cards; no SVG lines are drawn.
+     * Builds $pageData with 'phases' (1-5, keyed by CC level) consumed by
+     * the Alpine.js techtree view. Each phase has a 3-column grid of tech cards
+     * and within-phase dependency arrows. CC arrows are omitted — the phase
+     * header communicates the CC requirement.
      */
     public function index(): \Illuminate\View\View
     {
         $colonyId = $this->resolveColonyId();
-        $techtree = $this->techtreeColonyService->getTechtree($colonyId);
+        $techtree  = $this->techtreeColonyService->getTechtree($colonyId);
 
-        $categories = [];
-        $lines      = [];
+        // Map element DOM id → phase number for same-phase arrow filtering
+        $elementPhase = [];
+        foreach (['building', 'research', 'ship', 'personell'] as $type) {
+            foreach ($techtree[$type] as $id => $tech) {
+                $phase = (int) ($tech['phase'] ?? 0);
+                if ($phase > 0) {
+                    $elementPhase["tech-{$type}-{$id}"] = $phase;
+                }
+            }
+        }
+
+        $phases = [];
+        for ($n = 1; $n <= 5; $n++) {
+            $phases[$n] = ['cc_level' => $n, 'items' => [], 'lines' => []];
+        }
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
-            $categories[$type] = [];
             foreach ($techtree[$type] as $id => $tech) {
-                $categories[$type][] = [
+                $phaseNum = (int) ($tech['phase'] ?? 0);
+                if ($phaseNum < 1 || $phaseNum > 5) {
+                    continue;
+                }
+
+                $phases[$phaseNum]['items'][] = [
                     'id'            => $id,
                     'type'          => $type,
                     'name'          => __('techtree.' . $tech['name']),
@@ -73,53 +91,69 @@ class TechtreeController extends BaseController
                     'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                 ];
 
-                // Dependency arrows:
-                // For research: draw from the specific secondary prereq only
-                //   (the sciencelab "global unlock" is shown as a section label, not per-arrow).
-                //   Exception: knowledge_construction has no secondary prereq → draw from sciencelab.
-                // For all other types: draw from both primary and secondary prereqs.
+                // Generate within-phase arrow for this item.
+                // Research: prefer secondary prereq building if it's in the same phase,
+                //           else fall back to primary (sciencelab acts as phase-2 gatekeeper).
+                // Other:    use primary prereq if it's in the same phase.
                 if ($type === 'research') {
-                    $arrowBuildingId    = !empty($tech['required_building2_id'])
-                        ? (int) $tech['required_building2_id']
-                        : (int) ($tech['required_building_id'] ?? 0);
-                    $arrowBuildingLevel = !empty($tech['required_building2_id'])
-                        ? (int) ($tech['required_building2_level'] ?? 1)
-                        : (int) ($tech['required_building_level'] ?? 1);
-                    if ($arrowBuildingId && isset($techtree['building'][$arrowBuildingId])) {
-                        $arrowBuilding = $techtree['building'][$arrowBuildingId];
-                        $arrowMet      = (int) ($arrowBuilding['level'] ?? 0) >= $arrowBuildingLevel;
-                        $lines[]       = ['from' => "tech-building-{$arrowBuildingId}", 'to' => "tech-research-{$id}", 'met' => $arrowMet, 'label' => "Lv{$arrowBuildingLevel}"];
+                    $fromId    = null;
+                    $fromLevel = 1;
+
+                    if (!empty($tech['required_building2_id'])) {
+                        $secId    = (int) $tech['required_building2_id'];
+                        $secPhase = (int) ($techtree['building'][$secId]['phase'] ?? 0);
+                        if ($secPhase === $phaseNum && isset($techtree['building'][$secId])) {
+                            $fromId    = $secId;
+                            $fromLevel = (int) ($tech['required_building2_level'] ?? 1);
+                        }
+                    }
+
+                    if ($fromId === null && !empty($tech['required_building_id'])) {
+                        $priId    = (int) $tech['required_building_id'];
+                        $priPhase = (int) ($techtree['building'][$priId]['phase'] ?? 0);
+                        if ($priPhase === $phaseNum && isset($techtree['building'][$priId])) {
+                            $fromId    = $priId;
+                            $fromLevel = (int) ($tech['required_building_level'] ?? 1);
+                        }
+                    }
+
+                    if ($fromId !== null) {
+                        $fromBuilding                  = $techtree['building'][$fromId];
+                        $met                           = (int) ($fromBuilding['level'] ?? 0) >= $fromLevel;
+                        $phases[$phaseNum]['lines'][] = [
+                            'from'  => "tech-building-{$fromId}",
+                            'to'    => "tech-research-{$id}",
+                            'met'   => $met,
+                            'label' => "Lv{$fromLevel}",
+                        ];
                     }
                 } else {
                     if (!empty($tech['required_building_id'])) {
-                        $reqId = (int) $tech['required_building_id'];
-                        if (isset($techtree['building'][$reqId])) {
-                            $reqBuilding = $techtree['building'][$reqId];
-                            $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
-                            $met         = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
-                            $lines[]     = ['from' => "tech-building-{$reqId}", 'to' => "tech-{$type}-{$id}", 'met' => $met, 'label' => "Lv{$reqLevel}"];
-                        }
-                    }
-                    if (!empty($tech['required_building2_id'])) {
-                        $req2Id = (int) $tech['required_building2_id'];
-                        if (isset($techtree['building'][$req2Id])) {
-                            $req2Building = $techtree['building'][$req2Id];
-                            $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
-                            $met2         = (int) ($req2Building['level'] ?? 0) >= $req2Level;
-                            $lines[]      = ['from' => "tech-building-{$req2Id}", 'to' => "tech-{$type}-{$id}", 'met' => $met2, 'label' => "Lv{$req2Level}"];
+                        $reqId    = (int) $tech['required_building_id'];
+                        $reqPhase = (int) ($techtree['building'][$reqId]['phase'] ?? 0);
+                        if ($reqPhase === $phaseNum && isset($techtree['building'][$reqId])) {
+                            $reqBuilding                   = $techtree['building'][$reqId];
+                            $reqLevel                      = (int) ($tech['required_building_level'] ?? 1);
+                            $met                           = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
+                            $phases[$phaseNum]['lines'][] = [
+                                'from'  => "tech-building-{$reqId}",
+                                'to'    => "tech-{$type}-{$id}",
+                                'met'   => $met,
+                                'label' => "Lv{$reqLevel}",
+                            ];
                         }
                     }
                 }
             }
-
-            // Sort by tier (row, then col) so parents appear before children in the grid
-            usort($categories[$type], fn($a, $b) => [$a['row'], $a['col']] <=> [$b['row'], $b['col']]);
         }
 
-        $pageData = [
-            'categories' => $categories,
-            'lines'      => $lines,
-        ];
+        // Sort items within each phase by (row, col)
+        foreach ($phases as &$phase) {
+            usort($phase['items'], fn($a, $b) => [$a['row'], $a['col']] <=> [$b['row'], $b['col']]);
+        }
+        unset($phase);
+
+        $pageData = ['phases' => $phases];
 
         return view('techtree.index', compact('pageData', 'colonyId'));
     }

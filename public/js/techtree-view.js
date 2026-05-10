@@ -1,33 +1,68 @@
 function techtreeView(config) {
     return {
-        categories:   config.categories,
-        lines:        config.lines ?? [],
-        visible:      { building: true, research: true, ship: true, personell: true },
+        phases:       config.phases,
         selectedTech: null,
+        activePhase:  1,
+        isMobile:     false,
+        touchStartX:  0,
 
         init() {
+            this.checkBreakpoint();
+            window.addEventListener('resize', () => {
+                this.checkBreakpoint();
+                this.$nextTick(() => this.drawAllLines());
+            });
             this.$nextTick(() => this.drawAllLines());
-            window.addEventListener('resize', () => this.drawAllLines());
         },
 
-        toggle(type) {
-            this.visible[type] = !this.visible[type];
+        checkBreakpoint() {
+            this.isMobile = window.innerWidth < 640;
+        },
+
+        prevPhase() {
+            if (this.activePhase > 1) {
+                this.activePhase--;
+                this.$nextTick(() => this.drawAllLines());
+            }
+        },
+
+        nextPhase() {
+            if (this.activePhase < 5) {
+                this.activePhase++;
+                this.$nextTick(() => this.drawAllLines());
+            }
+        },
+
+        goToPhase(n) {
+            this.activePhase = n;
             this.$nextTick(() => this.drawAllLines());
         },
 
-        /**
-         * Draw orthogonal L-shaped dependency arrows across the full sections wrapper.
-         * Features:
-         * - Parallel offset: multiple lines from/to the same card are spread horizontally
-         * - Level label: each arrow shows the required building level at the elbow midpoint
-         * - Thicker strokes and larger arrowheads for visual clarity
-         */
+        onTouchStart(e) {
+            this.touchStartX = e.touches[0].clientX;
+        },
+
+        onTouchEnd(e) {
+            if (!this.isMobile) return;
+            const dx = e.changedTouches[0].clientX - this.touchStartX;
+            if (Math.abs(dx) > 40) {
+                dx < 0 ? this.nextPhase() : this.prevPhase();
+            }
+        },
+
         drawAllLines() {
             const svgEl     = this.$refs.globalSvg;
             const wrapperEl = this.$refs.sectionsWrapper;
             if (!svgEl || !wrapperEl) return;
 
             while (svgEl.firstChild) svgEl.removeChild(svgEl.firstChild);
+
+            // Collect all lines from all phases
+            const allLines = [];
+            for (const phaseNum of Object.keys(this.phases)) {
+                const phase = this.phases[phaseNum];
+                if (phase.lines) allLines.push(...phase.lines);
+            }
 
             const wRect = wrapperEl.getBoundingClientRect();
 
@@ -51,9 +86,9 @@ function techtreeView(config) {
             defs.appendChild(makeMarker('arr-unmet', '#bbb'));
             svgEl.appendChild(defs);
 
-            // Gather only visible lines (skip hidden x-show sections)
+            // Gather only visible lines (skip hidden x-show elements)
             const visibleLines = [];
-            for (const line of this.lines) {
+            for (const line of allLines) {
                 const fromEl = document.getElementById(line.from);
                 const toEl   = document.getElementById(line.to);
                 if (!fromEl || !toEl) continue;
@@ -63,7 +98,7 @@ function techtreeView(config) {
 
             if (visibleLines.length === 0) return;
 
-            // Group lines by source/target for parallel offset calculation
+            // Group by source/target for parallel offset
             const fromGroups = {};
             const toGroups   = {};
             for (const line of visibleLines) {
@@ -71,7 +106,7 @@ function techtreeView(config) {
                 (toGroups[line.to]     ??= []).push(line);
             }
 
-            const SPREAD = 18; // px between parallel lines at same source or target
+            const SPREAD = 16; // px between parallel lines at same node
 
             for (const line of visibleLines) {
                 const fR = line.fromEl.getBoundingClientRect();
@@ -88,10 +123,10 @@ function techtreeView(config) {
                 const cxFrom = fR.left + fR.width / 2 - wRect.left;
                 const cxTo   = tR.left + tR.width / 2 - wRect.left;
 
-                const x1 = cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD;
-                const y1 = fR.bottom - wRect.top;
-                const x2 = cxTo   + (toIdx   - (toN   - 1) / 2) * SPREAD;
-                const y2 = tR.top  - wRect.top;
+                const x1   = cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD;
+                const y1   = fR.bottom - wRect.top;
+                const x2   = cxTo   + (toIdx   - (toN   - 1) / 2) * SPREAD;
+                const y2   = tR.top  - wRect.top;
                 const midY = (y1 + y2) / 2;
 
                 const color    = line.met ? '#27ae60' : '#bbb';
@@ -106,30 +141,29 @@ function techtreeView(config) {
                 if (!line.met) path.setAttribute('stroke-dasharray', '5 3');
                 svgEl.appendChild(path);
 
-                // Level label at midpoint of horizontal segment
                 if (line.label) {
-                    const midX  = (x1 + x2) / 2;
+                    const midX   = (x1 + x2) / 2;
                     const labelW = line.label.length * 6 + 10;
                     const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    bgRect.setAttribute('x',      String(midX - labelW / 2));
-                    bgRect.setAttribute('y',      String(midY - 8));
-                    bgRect.setAttribute('width',  String(labelW));
-                    bgRect.setAttribute('height', '13');
-                    bgRect.setAttribute('rx',     '3');
-                    bgRect.setAttribute('fill',   '#fff');
-                    bgRect.setAttribute('stroke', color);
+                    bgRect.setAttribute('x',            String(midX - labelW / 2));
+                    bgRect.setAttribute('y',            String(midY - 8));
+                    bgRect.setAttribute('width',        String(labelW));
+                    bgRect.setAttribute('height',       '13');
+                    bgRect.setAttribute('rx',           '3');
+                    bgRect.setAttribute('fill',         '#fff');
+                    bgRect.setAttribute('stroke',       color);
                     bgRect.setAttribute('stroke-width', '1');
                     svgEl.appendChild(bgRect);
 
                     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    text.setAttribute('x',                  String(midX));
-                    text.setAttribute('y',                  String(midY + 1));
-                    text.setAttribute('text-anchor',        'middle');
-                    text.setAttribute('dominant-baseline',  'middle');
-                    text.setAttribute('font-size',          '9');
-                    text.setAttribute('font-weight',        '700');
-                    text.setAttribute('font-family',        'sans-serif');
-                    text.setAttribute('fill',               color);
+                    text.setAttribute('x',                 String(midX));
+                    text.setAttribute('y',                 String(midY + 1));
+                    text.setAttribute('text-anchor',       'middle');
+                    text.setAttribute('dominant-baseline', 'middle');
+                    text.setAttribute('font-size',         '9');
+                    text.setAttribute('font-weight',       '700');
+                    text.setAttribute('font-family',       'sans-serif');
+                    text.setAttribute('fill',              color);
                     text.textContent = line.label;
                     svgEl.appendChild(text);
                 }

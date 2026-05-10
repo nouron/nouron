@@ -150,13 +150,13 @@ INSERT INTO "research_costs" VALUES(72,1,5000);
 INSERT INTO "research_costs" VALUES(81,1,5000);
 INSERT INTO "research_costs" VALUES(73,1,5000);
 INSERT INTO "research_costs" VALUES(80,1,5000);
-INSERT INTO "ships" VALUES(29,'military','techs_frigate1',NULL,NULL,NULL,NULL,0,10,5,15,10,500,NULL,NULL,0);
-INSERT INTO "ships" VALUES(37,'military','ship_corvette',44,3,NULL,NULL,0,6,5,15,10,500,NULL,NULL,1);
-INSERT INTO "ships" VALUES(47,'economy','ship_freighter',44,2,NULL,NULL,0,5,5,15,10,500,NULL,NULL,1);
-INSERT INTO "ships" VALUES(49,'military','techs_battlecruiser1',NULL,NULL,NULL,NULL,0,12,5,15,10,500,NULL,NULL,0);
-INSERT INTO "ships" VALUES(83,'economy','techs_mediumTransporter',NULL,NULL,NULL,NULL,0,9,4,15,10,500,NULL,NULL,0);
-INSERT INTO "ships" VALUES(84,'economy','techs_largeTransporter',NULL,NULL,NULL,NULL,0,11,4,15,10,500,NULL,NULL,0);
-INSERT INTO "ships" VALUES(85,'military','ship_drone',44,1,NULL,NULL,0,4,5,3,10,5,NULL,NULL,1);
+INSERT INTO "ships" VALUES(29,'military','techs_frigate1',NULL,NULL,NULL,NULL,0,10,5,15,10,500,NULL,NULL,0,0);
+INSERT INTO "ships" VALUES(37,'military','ship_corvette',44,3,NULL,NULL,0,6,5,15,10,500,NULL,NULL,1,0);
+INSERT INTO "ships" VALUES(47,'economy','ship_freighter',44,2,NULL,NULL,0,5,5,15,10,500,NULL,NULL,1,0);
+INSERT INTO "ships" VALUES(49,'military','techs_battlecruiser1',NULL,NULL,NULL,NULL,0,12,5,15,10,500,NULL,NULL,0,0);
+INSERT INTO "ships" VALUES(83,'economy','techs_mediumTransporter',NULL,NULL,NULL,NULL,0,9,4,15,10,500,NULL,NULL,0,0);
+INSERT INTO "ships" VALUES(84,'economy','techs_largeTransporter',NULL,NULL,NULL,NULL,0,11,4,15,10,500,NULL,NULL,0,0);
+INSERT INTO "ships" VALUES(85,'military','ship_drone',44,1,NULL,NULL,0,4,5,3,10,5,NULL,NULL,1,0);
 INSERT INTO "ship_costs" VALUES(85,1,500);
 INSERT INTO "ship_costs" VALUES(85,4,5);
 INSERT INTO "ship_costs" VALUES(85,5,2);
@@ -166,11 +166,11 @@ INSERT INTO "ship_costs" VALUES(37,5,30);
 INSERT INTO "ship_costs" VALUES(47,1,2000);
 INSERT INTO "ship_costs" VALUES(47,4,20);
 INSERT INTO "ship_costs" VALUES(47,5,10);
-INSERT INTO "personell" VALUES(35,'industry','techs_engineer',25,1,2,0,10,1);
-INSERT INTO "personell" VALUES(36,'civil','techs_scientist',31,1,3,0,10,1);
-INSERT INTO "personell" VALUES(89,'military','techs_pilot',44,1,5,0,10,1);
-INSERT INTO "personell" VALUES(92,'economy','techs_trader',52,1,4,0,10,1);
-INSERT INTO "personell" VALUES(93,'military','techs_strategist',25,3,6,0,10,1);
+INSERT INTO "personell" VALUES(35,'industry','techs_engineer',25,1,2,0,10,1,0);
+INSERT INTO "personell" VALUES(36,'civil','techs_scientist',31,1,3,0,10,1,0);
+INSERT INTO "personell" VALUES(89,'military','techs_pilot',44,1,5,0,10,1,0);
+INSERT INTO "personell" VALUES(92,'economy','techs_trader',52,1,4,0,10,1,0);
+INSERT INTO "personell" VALUES(93,'military','techs_strategist',25,3,6,0,10,1,0);
 INSERT INTO "personell_costs" VALUES(35,1,2500);
 INSERT INTO "personell_costs" VALUES(36,1,5000);
 INSERT INTO "personell_costs" VALUES(89,1,5000);
@@ -410,4 +410,38 @@ INSERT INTO "user_resources" VALUES(3,49615,1938);
 
 INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL);
 INSERT OR REPLACE INTO "user_preferences" VALUES(2,1,1,NULL,NULL,NULL);
+
+-- Phase-based techtree grid positions (migration 2026_05_10_000001 — layout v2)
+-- Phase 1 (CC Lv1): housingComplex, harvester, bioFacility, engineer
+UPDATE "buildings"  SET phase=1, "row"=1, "column"=1 WHERE id=28; -- housingComplex
+UPDATE "buildings"  SET phase=1, "row"=1, "column"=2 WHERE id=27; -- harvester
+UPDATE "buildings"  SET phase=1, "row"=2, "column"=2 WHERE id=41; -- bioFacility
+UPDATE "personell"  SET phase=1, "row"=2, "column"=3 WHERE id=35; -- engineer
+-- Phase 2 (CC Lv2): depot, sciencelab, infirmary, bar, scientist, trader,
+--                   knowledge_construction, knowledge_agronomy, knowledge_health, knowledge_trade
+UPDATE "buildings"  SET phase=2, "row"=1, "column"=1 WHERE id=30; -- depot
+UPDATE "buildings"  SET phase=2, "row"=1, "column"=2 WHERE id=31; -- sciencelab
+UPDATE "buildings"  SET phase=2, "row"=1, "column"=3 WHERE id=46; -- infirmary
+UPDATE "buildings"  SET phase=2, "row"=2, "column"=1 WHERE id=52; -- bar
+UPDATE "personell"  SET phase=2, "row"=2, "column"=3 WHERE id=36; -- scientist
+UPDATE "personell"  SET phase=2, "row"=3, "column"=3 WHERE id=92; -- trader
+UPDATE "researches" SET phase=2, "row"=4, "column"=3 WHERE id=90; -- knowledge_construction
+UPDATE "researches" SET phase=2, "row"=5, "column"=3 WHERE id=93; -- knowledge_agronomy
+UPDATE "researches" SET phase=2, "row"=6, "column"=1 WHERE id=94; -- knowledge_health
+UPDATE "researches" SET phase=2, "row"=6, "column"=3 WHERE id=95; -- knowledge_trade
+-- Phase 3 (CC Lv3): hangar, strategist, drone, pilot, knowledge_geology,
+--                   freighter, knowledge_cartography, corvette, knowledge_defense
+UPDATE "buildings"  SET phase=3, "row"=1, "column"=2 WHERE id=44; -- hangar
+UPDATE "personell"  SET phase=3, "row"=1, "column"=3 WHERE id=93; -- strategist
+UPDATE "ships"      SET phase=3, "row"=2, "column"=2 WHERE id=85; -- drone
+UPDATE "personell"  SET phase=3, "row"=2, "column"=3 WHERE id=89; -- pilot
+UPDATE "researches" SET phase=3, "row"=3, "column"=1 WHERE id=92; -- knowledge_geology
+UPDATE "ships"      SET phase=3, "row"=3, "column"=2 WHERE id=47; -- freighter
+UPDATE "researches" SET phase=3, "row"=3, "column"=3 WHERE id=91; -- knowledge_cartography
+UPDATE "ships"      SET phase=3, "row"=4, "column"=2 WHERE id=37; -- corvette
+UPDATE "researches" SET phase=3, "row"=4, "column"=3 WHERE id=96; -- knowledge_defense
+-- Phase 4 (CC Lv4)
+UPDATE "buildings"  SET phase=4, "row"=1, "column"=2 WHERE id=32; -- temple
+-- Phase 5 (CC Lv5)
+UPDATE "buildings"  SET phase=5, "row"=1, "column"=2 WHERE id=50; -- monument
 INSERT OR REPLACE INTO "user_preferences" VALUES(3,3,1,NULL,NULL,NULL);

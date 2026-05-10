@@ -21,10 +21,10 @@ class TestSeeder extends Seeder
     {
         $sql = file_get_contents(base_path('data/sql/testdata.sqlite.sql'));
 
-        // Execute only INSERT statements (schema is handled by migrations)
+        // Execute INSERT and UPDATE statements (schema is handled by migrations)
         $statements = array_filter(
             explode("\n", $sql),
-            fn(string $line) => str_starts_with(ltrim($line), 'INSERT')
+            fn(string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
         );
 
         foreach ($statements as $statement) {

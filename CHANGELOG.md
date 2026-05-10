@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-05-10
+
+- **Techtree Phase-Layout v2 (Game-Design-Review)**: Nach Game-Designer-Analyse wurden 5 Elemente zwischen Phasen verschoben. Cantina und Händler-Berater wandern von Phase 1 → Phase 2 (Cantina als Gate für den Händler ergibt nur in Phase 2 einen geschlossenen Feedback-Loop). Krankenstation und knowledge_health wandern von Phase 3 → Phase 2 (Wohlfahrt gehört zur Stabilisierungsphase, nicht zur Militärphase; GDD §4 sagt CC Lv2 als Gate). knowledge_geology wandert von Phase 2 → Phase 3 (tiefes Abbau-Wissen passt zur Exploration-Phase). Phase 1 bleibt damit schlanker und deterministischer: housingComplex, Harvester, Bio-Anlage, Baumeister. Phase 2 wird zur vollständigen Aufbau- und Wohlfahrtsphase. Hangar + Drohne bleiben in Phase 3 (CC Lv3 als Gate ist richtig — Exploration muss erarbeitet werden). Migration 000001 v2 mit korrekter Update-Reihenfolge zur Vermeidung von Unique-Constraint-Verletzungen. 3 neue Feature-Tests für infirmary/bar Phase 2 und geology Phase 3.
+
+## 2026-05-09
+
+- **Techtree Phase-basiertes Layout (Phase 3h)**: Techtree-Ansicht komplett überarbeitet. Statt einer einheitlichen 6-Spalten-Karte gibt es jetzt fünf Sektionen (Phase 1–5), eine pro Kommandozentrale-Level. Jede Sektion hat ein 3-Spalten-Grid (max. 3 Spalten, alle Kategorien gemischt). Desktop: Sektionen vertikal gestapelt. Mobile: horizontales Karussell mit Wisch-Geste und Dot-Navigation. Pfeile verbinden Abhängigkeiten ausschließlich innerhalb einer Phase (keine CC-Pfeile, da der Phasen-Header das CC-Requirement kommuniziert). Bei Forschungen mit sektorübergreifender Sekundärbedingung wird automatisch auf das Phasen-interne Primärgebäude (Analytik-Labor) zurückgegriffen. DB-Migration 000003 fügt `phase`-Spalte zu allen vier Master-Tabellen hinzu und ersetzt die alten `(row, column)` Unique-Indizes durch partielle `(phase, row, column)` Indizes. TestSeeder erweitert um UPDATE-Support.
+
 ## 2026-05-08
 
 - **Techtree-Screen Migration (Phase 3g)**: Techtree komplett auf Alpine.js + PicoCSS migriert. Neue 16×6-CSS-Grid-Ansicht mit Karten je Tech, farblichen Kategorie-Akzenten (Gebäude/Forschung/Schiff/Personal) und Status-Chips (gebaut/verfügbar/gesperrt). SVG-Bézier-Linien mit Pfeilköpfen zeigen Abhängigkeiten — grün bei erfüllter, gestrichelt-grau bei unerfüllter Voraussetzung; Scroll-Offset-Kompensation damit Linien beim Scrollen korrekt bleiben. Kategorie-Toggles blenden Karten aus (visibility:hidden, kein Grid-Reflow). Klick öffnet nativen Detail-Dialog. Aktionsbuttons entfernt (bauen/reparieren jetzt in Colony-View). 3 neue Controller-Tests (index-Route, pageData-Struktur, lines-Felder).

@@ -280,12 +280,12 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
 | 27 | harvester | Harvester | Harvester | 1 | CC Lv1 |
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
-| 30 | depot | Lagerhalle | Warehouse | — | CC Lv1 |
-| 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv4 |
+| 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
+| 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
 | 43 | tradecenter | Handelsposten | Trading Post | — | CC Lv5 |
-| 44 | hangar | Hangar | Hangar | — | CC Lv2 |
+| 44 | hangar | Hangar | Hangar | — | CC Lv3 |
 | 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
-| 52 | bar | Cantina | Cantina | — | CC Lv1 |
+| 52 | bar | Cantina | Cantina | — | CC Lv2 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | — | — |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | — |
 
@@ -1043,8 +1043,8 @@ Die folgende Tabelle listet alle Entitäten im Techtree.
 | `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert | 3 | 1 |
 | `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert | 4 | 2 |
 | `depot` | Depot | CC Lv 2 | supply-limitiert | 5 | 2 |
-| `bar` | Bar / Cantina | Wohnhabitat Lv 1 | supply-limitiert | 4 | 3 |
-| `infirmary` | Krankenstation | CC Lv 3 | supply-limitiert | 5 | 3 |
+| `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert | 4 | 2 |
+| `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert | 5 | 2 |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert | 6 | 3 |
 | `temple` | Tempel | CC Lv 4 | supply-limitiert | 7 | 3 |
 | `monument` | Denkmal | CC Lv 5 | supply-limitiert | 8 | 3 |
@@ -1103,8 +1103,8 @@ Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. 
 | CC-Level | Freischaltet |
 |---|---|
 | 1 | Wohnhabitat, Harvester |
-| 2 | Analytik-Labor, Depot |
-| 3 | Krankenstation, Hangar |
+| 2 | Analytik-Labor, Depot, Krankenstation, Cantina |
+| 3 | Hangar |
 | 4 | Tempel, Berater-Spezialfähigkeit |
 | 5 | Denkmal, zweiter Nexus-Außenposten-Slot |
 
@@ -1147,49 +1147,50 @@ Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level
 
 ### 11.3 Grid-Layout (Techtree-Ansicht)
 
-Das Techtree-Grid ist 10 Zeilen × 6 Spalten (row 0–9, col 0–5). Spalten-Semantik:
+Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meilenstein. Jede Phase ist ein **3-Spalten-Grid** (Koordinaten phasen-lokal, 1-indexiert). Pfeile verbinden Abhängigkeiten ausschließlich innerhalb einer Phase — das CC-Level-Gate kommuniziert der Phasen-Header.
 
-| Spalten | Kategorie |
-|---|---|
-| 0 | Berater |
-| 1–3 | Gebäude (Infra links → Wohlfahrt rechts) |
-| 4 | Kenntnisse |
-| 5 | Schiffe |
+**Pfeil-Quellen:**
 
-Die Zeilen-Semantik folgt dem CC-Level-Fortschritt von oben nach unten: CC oben (row 0), Endgame-Gebäude unten (row 8+). Berater-Positionen spiegeln ihre thematische Einführungsreihenfolge wider.
+- Gebäude, Schiffe, Berater: Pfeil von `required_building_id`
+- Kenntnisse: Pfeil vom **sekundären Gebäude** (nicht vom Analytik-Labor). Ausnahme: `construction` hat kein sekundäres Gebäude — Pfeil vom Analytik-Labor. Bei phasen-übergreifenden Sekundär-Voraussetzungen wird auf das Analytik-Labor als Phasen-internen Anker zurückgegriffen.
 
-**Vollständige Grid-Koordinatentabelle:**
+**Vollständige Phasen-Grid-Koordinatentabelle** (row/col phasen-lokal, 1-indexiert):
 
-| Entität | Typ | row | col |
-|---|---|---|---|
-| commandCenter | building | 0 | 2 |
-| housingComplex | building | 1 | 1 |
-| harvester | building | 2 | 1 |
-| bioFacility | building | 3 | 1 |
-| sciencelab | building | 4 | 2 |
-| depot | building | 5 | 2 |
-| bar | building | 4 | 3 |
-| infirmary | building | 5 | 3 |
-| hangar | building | 6 | 3 |
-| temple | building | 7 | 3 |
-| monument | building | 8 | 3 |
-| construction | research | 1 | 4 |
-| agronomy | research | 2 | 4 |
-| health | research | 3 | 4 |
-| cartography | research | 4 | 4 |
-| geology | research | 5 | 4 |
-| trade | research | 6 | 4 |
-| defense | research | 7 | 4 |
-| drone | ship | 1 | 5 |
-| freighter | ship | 2 | 5 |
-| corvette | ship | 3 | 5 |
-| engineer | personell | 1 | 0 |
-| scientist | personell | 3 | 0 |
-| pilot | personell | 5 | 0 |
-| trader | personell | 7 | 0 |
-| strategist | personell | 9 | 0 |
+| Phase | CC-Lv | Entität | Typ | Row | Col |
+|-------|--------|---------|-----|-----|-----|
+| 1 | 1 | housingComplex | building | 1 | 1 |
+| 1 | 1 | harvester | building | 1 | 2 |
+| 1 | 1 | bioFacility | building | 2 | 2 |
+| 1 | 1 | engineer | personell | 2 | 3 |
+| 2 | 2 | depot | building | 1 | 1 |
+| 2 | 2 | sciencelab | building | 1 | 2 |
+| 2 | 2 | infirmary | building | 1 | 3 |
+| 2 | 2 | bar | building | 2 | 1 |
+| 2 | 2 | scientist | personell | 2 | 3 |
+| 2 | 2 | trader | personell | 3 | 3 |
+| 2 | 2 | knowledge_construction | research | 4 | 3 |
+| 2 | 2 | knowledge_agronomy | research | 5 | 3 |
+| 2 | 2 | knowledge_health | research | 6 | 1 |
+| 2 | 2 | knowledge_trade | research | 6 | 3 |
+| 3 | 3 | hangar | building | 1 | 2 |
+| 3 | 3 | strategist | personell | 1 | 3 |
+| 3 | 3 | drone | ship | 2 | 2 |
+| 3 | 3 | pilot | personell | 2 | 3 |
+| 3 | 3 | knowledge_geology | research | 3 | 1 |
+| 3 | 3 | freighter | ship | 3 | 2 |
+| 3 | 3 | knowledge_cartography | research | 3 | 3 |
+| 3 | 3 | corvette | ship | 4 | 2 |
+| 3 | 3 | knowledge_defense | research | 4 | 3 |
+| 4 | 4 | temple | building | 1 | 2 |
+| 5 | 5 | monument | building | 1 | 2 |
 
 > Die `row`/`col`-Werte sind kanonisch — sie werden 1:1 in die DB-Tabellen geschrieben. Das Grid-CSS liest sie als `grid-row: row + 1; grid-column: col + 1`.
+
+**Implementierungshinweise (Blade/JS):**
+
+Die bisherigen 4 getrennten `<section>`-Blöcke mit je eigenem `<div class="tech-grid">` werden zu einem einzigen gemeinsamen `<div class="tech-grid">` zusammengeführt. Kategorie-Toggle-Buttons steuern `display: none` auf den einzelnen Tech-Cards (per CSS-Klasse oder `x-show` auf Card-Ebene), nicht auf Grid-Container-Ebene. Section-Titel (Gebäude / Kenntnisse / Schiffe / Berater) bleiben als positionierte Label-Elemente im Grid erhalten.
+
+> ⚠️ BALANCE CONCERN: Die Kenntnisse `cartography` (row 7) und `defense` (row 8) liegen visuell weit unter ihrem sekundären Prereq Hangar (row 3). Das ist unvermeidbar bei 7 Kenntnissen in einer Spalte ohne Kollisionen. Falls die Pfeil-Länge als störend empfunden wird, kann `cartography` auf col 5 row 4 verschoben werden (neben drone, dem anderen Hangar-Lv1-Kind) — das würde die Kenntnisse-Spalte jedoch aufreißen und die visuelle Gruppierung schwächen.
 
 ---
 
