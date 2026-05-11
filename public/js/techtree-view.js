@@ -251,11 +251,9 @@ function techtreeView(config) {
 
         openDetail(tech) {
             this.selectedTech = tech;
-            this.$nextTick(() => this.$refs.detailDialog.showModal());
         },
 
         closeDetail() {
-            this.$refs.detailDialog.close();
             this.selectedTech = null;
         },
 
