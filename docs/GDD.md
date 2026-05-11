@@ -43,7 +43,7 @@ Die Kolonie bleibt im gesamten Spielverlauf überschaubar. Es geht nicht darum, 
 
 Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen variablen Verlauf und ein klares Ende — Erfolg oder Scheitern. Nouron enthält **Roguelike-Elemente**: variable Aufgaben je Run, zufällige Ereignisse und echte Konsequenzen für Fehlentscheidungen. Runs können wiederholt werden; jeder Run fühlt sich anders an.
 
-Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tag global berechnet.
+Das Spiel läuft auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tick berechnet. Im Solo-Modus löst der Spieler Ticks manuell aus; im Multiplayer-Modus feuert der Tick wenn alle Spieler bereit sind — oder nach Ablauf des Timeouts.
 
 **Technischer Stack (Stand April 2026):** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS (neue Screens ab Phase 3b), SVG für Spielfelder (Hex-Grid, Systemkarte), Vanilla fetch() für Server-Calls. Bestehende Screens werden schrittweise von jQuery/Bootstrap migriert.
 
@@ -128,28 +128,35 @@ Diese Merkmale folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren
 
 Ein **Tick** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Flottenorders) werden einmal pro Tick ausgeführt.
 
-**Alle Spielwerte sind in Ticks ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Die Echtzeit-Dauer eines Ticks ist konfigurierbar (`config/game.php → tick.length`, aktuell 24 Stunden). Damit skalieren alle Spielmechaniken automatisch:
+**Alle Spielwerte sind in Ticks ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Damit skalieren alle Spielmechaniken automatisch, unabhängig davon wie lang ein Tick in Echtzeit dauert.
 
-| tick.length | 1 Tick entspricht | 100 Ticks ≈ |
-|-------------|------------------|-------------|
-| 24 h (Standard) | 1 Tag | 3,3 Monate |
-| 1 h | 1 Stunde | 4 Tage |
+### Solo vs. Multiplayer
 
-> **Designentscheidung offen:** 1 Tick/Tag (aktuell) oder 24 Ticks/Tag werden evaluiert. Die Wahl ändert nur `tick.length` — alle Balancing-Werte bleiben in Ticks und skalieren automatisch.
+Das Tick-System funktioniert in beiden Modi identisch — was sich unterscheidet, ist wer den Tick auslöst:
+
+**Solo-Modus:** Der Spieler steuert den Tick selbst. Nach dem Setzen aller Befehle löst er den nächsten Tick manuell aus — der Tick feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. „1 Tick" entspricht einem Spielzug, nicht einer Kalenderdauer.
+
+**Multiplayer-Modus:** Alle Spieler einer Instanz teilen denselben Tick-Rhythmus. Der Tick feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
+
+| Timeout-Konfiguration | Einsatz |
+|-----------------------|---------|
+| 12 h | Schnell-Runden |
+| 24 h (Standard) | Normales Multiplayer |
+| 48 h | Casual / Play-by-Mail |
 
 ### Zeitberechnung
 
 Die Tick-Nummer ergibt sich aus:
 
 ```
-tick = floor((unix_timestamp - 4h) / 86400)
+tick = floor((unix_timestamp - offset) / tick_duration_seconds)
 ```
 
-Dies entspricht der Anzahl vergangener Tage seit der Unix-Epoch, verschoben um 4 Stunden (damit der Tagesübergang um Mitternacht nicht mit dem Berechnungsfenster kollidiert).
+`tick_duration_seconds` entspricht `config/game.php → tick.length` in Sekunden. Der Offset (Standard: 4 Stunden) verhindert, dass der Tagesübergang um Mitternacht mit dem Berechnungsfenster kollidiert.
 
-### Berechnungsfenster
+### Berechnungsfenster (Multiplayer / Server-gesteuert)
 
-Der Tick wird täglich automatisch zwischen **03:00 und 04:00 Uhr Serverzeit** berechnet (konfigurierbar in `config/game.php → tick.calculation`).
+Im Multiplayer-Modus wird der Tick serverseitig automatisch ausgelöst — entweder wenn alle Spieler bestätigt haben oder nach Ablauf des Timeouts. Das Berechnungsfenster ist in `config/game.php → tick.calculation` konfiguriert.
 
 ### Manueller Aufruf
 
@@ -171,9 +178,9 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 |---------|-------------|
 | 1 | Fleet Move Orders — Flotten bewegen sich zu Zielkoordinaten |
 | 2 | Fleet Trade Orders — Ressourcentransfer Flotte ↔ Kolonie |
-| 3 | Fleet Combat Orders — Kampfauflösung, Verluste werden berechnet |
+| 3 | Fleet Encounter Orders — Zwischenfälle werden aufgelöst |
 | 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 |
-| 5 | Ship Decay — Schiffe verlieren SP (×2 im Kampftick); Eintrag gelöscht bei SP ≤ 0 |
+| 5 | Ship Decay — Schiffe verlieren SP (×2 bei Begegnung); Eintrag gelöscht bei SP ≤ 0 |
 | 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
 | 7 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
 | 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
