@@ -261,10 +261,12 @@ Ausgaben: Berater-Upkeep (§13), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe
 
 Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
 
-### Abgekündigte Ressourcen (werden in Phase 3 entfernt)
+### Abgekündigte Ressourcen (konzeptionell entfernt, DB-Cleanup ausstehend)
 
 - Wasser (ID 3) — wird durch Versorgung (Supply) abstrahiert; kein eigenständiges Rohstoff-Modell nötig.
 - ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
+
+> Die IDs 3, 6, 8, 10 existieren noch im DB-Schema (historisch), werden aber vom Spiel nicht mehr genutzt. Ein dedizierter DB-Cleanup-Migration-Task steht noch aus.
 
 ---
 
@@ -1035,19 +1037,21 @@ Die folgende Tabelle listet alle Entitäten im Techtree.
 
 #### Gebäude
 
-| Key (intern) | Name (DE) | Voraussetzung | Max-Level | Grid row | Grid col |
-|---|---|---|---|---|---|
-| `commandCenter` | Kommandozentrale | — | 5 | 0 | 2 |
-| `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen | 1 | 1 |
-| `harvester` | Harvester | CC Lv 1 | supply-limitiert | 2 | 1 |
-| `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert | 3 | 1 |
-| `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert | 4 | 2 |
-| `depot` | Depot | CC Lv 2 | supply-limitiert | 5 | 2 |
-| `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert | 4 | 2 |
-| `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert | 5 | 2 |
-| `hangar` | Hangar | CC Lv 3 | supply-limitiert | 6 | 3 |
-| `temple` | Tempel | CC Lv 4 | supply-limitiert | 7 | 3 |
-| `monument` | Denkmal | CC Lv 5 | supply-limitiert | 8 | 3 |
+Grid-Koordinaten (phasen-lokal) siehe §11.3.
+
+| Key (intern) | Name (DE) | Voraussetzung | Max-Level |
+|---|---|---|---|
+| `commandCenter` | Kommandozentrale | — | 5 |
+| `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen |
+| `harvester` | Harvester | CC Lv 1 | supply-limitiert |
+| `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert |
+| `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert |
+| `depot` | Depot | CC Lv 2 | supply-limitiert |
+| `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
+| `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
+| `hangar` | Hangar | CC Lv 3 | supply-limitiert |
+| `temple` | Tempel | CC Lv 4 | supply-limitiert |
+| `monument` | Denkmal | CC Lv 5 | supply-limitiert |
 
 Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Wohlfahrt (Bar, Krankenstation, Tempel, Denkmal).
 
@@ -1055,15 +1059,15 @@ Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabit
 
 Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
 
-| Key (intern) | Name (DE) | Voraussetzung | Max-Level | Grid row | Grid col |
-|---|---|---|---|---|---|
-| `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 | 1 | 4 |
-| `agronomy` | Agronomie | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 | 5 | 2 | 4 |
-| `health` | Gesundheit | Analytik-Labor Lv 1 + Krankenstation Lv 1 | 5 | 3 | 4 |
-| `cartography` | Kartografie | Analytik-Labor Lv 1 + Hangar Lv 1 | 5 | 4 | 4 |
-| `geology` | Geologie | Analytik-Labor Lv 2 + Harvester Lv 1 | 5 | 5 | 4 |
-| `trade` | Handel & Logistik | Analytik-Labor Lv 2 + Bar Lv 1 | 5 | 6 | 4 |
-| `defense` | Verteidigung | Analytik-Labor Lv 3 + Hangar Lv 2 | 5 | 7 | 4 |
+| Key (intern) | Name (DE) | Voraussetzung | Max-Level |
+|---|---|---|---|
+| `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 |
+| `agronomy` | Agronomie | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 | 5 |
+| `health` | Gesundheit | Analytik-Labor Lv 1 + Krankenstation Lv 1 | 5 |
+| `cartography` | Kartografie | Analytik-Labor Lv 1 + Hangar Lv 1 | 5 |
+| `geology` | Geologie | Analytik-Labor Lv 2 + Harvester Lv 1 | 5 |
+| `trade` | Handel & Logistik | Analytik-Labor Lv 2 + Bar Lv 1 | 5 |
+| `defense` | Verteidigung | Analytik-Labor Lv 3 + Hangar Lv 2 | 5 |
 
 **Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. Die zusätzlichen Gebäude-Voraussetzungen verknüpfen jede Kenntnis mit dem passenden Kolonieteil — Agronomie braucht eine Bio-Anlage, Kartografie einen Hangar, Verteidigung ein höheres Analytik-Labor und einen ausgebauten Hangar. Die Kenntnisse Lv4 und Lv5 sind zusätzlich durch das CC-Level gegattet (siehe §11.2 Regel 3).
 
@@ -1073,23 +1077,23 @@ Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Lab
 
 Drei semantisch klare Typen: Drohne erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
 
-| Key (intern) | Name (DE) | Voraussetzung | Grid row | Grid col |
-|---|---|---|---|---|
-| `drone` | Drohne | Hangar Lv 1 | 1 | 5 |
-| `freighter` | Frachter | Hangar Lv 2 | 2 | 5 |
-| `corvette` | Korvette | Hangar Lv 3 | 3 | 5 |
+| Key (intern) | Name (DE) | Voraussetzung |
+|---|---|---|
+| `drone` | Drohne | Hangar Lv 1 |
+| `freighter` | Frachter | Hangar Lv 2 |
+| `corvette` | Korvette | Hangar Lv 3 |
 
 #### Berater (Personal)
 
 Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungsreihenfolge im Run wider. CC-Level öffnet Berater-Slots (CC Lv1 = 1 Slot, ..., CC Lv5 = 5 Slots).
 
-| Key (intern) | Name (DE) | AP-Typ | Hire-Voraussetzung | Grid row | Grid col |
-|---|---|---|---|---|---|
-| `engineer` | Baumeister | construction | CC Lv 1 | 1 | 0 |
-| `scientist` | Analytiker | research | CC Lv 2 | 3 | 0 |
-| `pilot` | Pilot | navigation | Hangar Lv 1 | 5 | 0 |
-| `trader` | Konsul | economy | Bar Lv 1 | 7 | 0 |
-| `strategist` | Stratege | strategy | Hangar Lv 2 | 9 | 0 |
+| Key (intern) | Name (DE) | AP-Typ | Hire-Voraussetzung |
+|---|---|---|---|
+| `engineer` | Baumeister | construction | CC Lv 1 |
+| `scientist` | Analytiker | research | CC Lv 2 |
+| `pilot` | Raumfahrer | navigation | Hangar Lv 1 |
+| `trader` | Konsul | economy | Bar Lv 1 |
+| `strategist` | Stratege | strategy | Hangar Lv 2 |
 
 ---
 
@@ -1956,7 +1960,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
 
-> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Tick 10) setzt voraus, dass das Analytik-Labor (CC Lv4) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Tick 10 realistisch ist oder ob der Schwellwert auf Tick 15–20 angepasst werden muss.
+> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Tick 10) setzt voraus, dass das Analytik-Labor (CC Lv2) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Tick 10 realistisch ist oder ob der Schwellwert auf Tick 15–20 angepasst werden muss.
 
 ---
 
