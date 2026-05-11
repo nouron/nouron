@@ -20,7 +20,7 @@
 7. [Gebäude-Verfall (Decay)](#7-gebäude-verfall-decay)
 8. [Flotten & Flottenorders](#8-flotten--flottenorders)
    - 8a. [Systemansicht](#8a-systemansicht)
-9. [Kampfsystem (Combat)](#9-kampfsystem-combat)
+9. [Begegnungen & Gefahren](#9-begegnungen--gefahren)
 10. [Forschung](#10-forschung)
 11. [Techtree](#11-techtree)
     - 11.1 [Entitäten-Übersicht](#111-entitäten-übersicht)
@@ -37,7 +37,7 @@
 
 ## 1. Spielkonzept
 
-Nouron ist ein rundenbasiertes Weltraum-Strategiespiel für Einzelspieler im Browser. Der Spieler übernimmt die Rolle eines Koloniekommandanten mit einem klaren Auftrag: eine kleine, ressourcenarme Kolonie auf Vordermann zu bringen — entweder eine frisch gestartete Siedlung oder eine heruntergekommene Anlage, die sich selbst überlassen wurde.
+Nouron ist ein rundenbasiertes Weltraum-Strategiespiel für Einzelspieler im Browser. Der Spieler übernimmt die Rolle eines Kolonie-Direktors mit einem klaren Auftrag: eine kleine, ressourcenarme Kolonie auf Vordermann zu bringen — entweder eine frisch gestartete Siedlung oder eine heruntergekommene Anlage, die sich selbst überlassen wurde.
 
 Die Kolonie bleibt im gesamten Spielverlauf überschaubar. Es geht nicht darum, ein galaktisches Imperium aufzubauen, sondern darum, eine kleine Gemeinschaft unter schwierigen Bedingungen am Leben zu erhalten und gedeihen zu lassen.
 
@@ -51,21 +51,17 @@ Das Spiel läuft servergesteuert auf Basis eines Tick-Systems: alle Spielzustand
 
 ## 1.1 Designprinzipien
 
-### Militarismus ist teuer — bewusst
+### Aufbau vor Konflikt
 
-**Kernprinzip: Militarische Aktionen kosten immer mehr AP als nicht-militarische.**
+Nouron erzählt die Geschichte einer kleinen Kolonie, die ums Überleben kämpft — nicht die Geschichte eines aufstrebenden Militärstaats. Die Kolonie hat keine Armee, keine Flottenstützpunkte, keine Kriegsziele. Sie hat eine Korvette, die ab und zu auf etwas Unbekanntes trifft, und einen Trupp Kolonisten, der manchmal in gefährliches Terrain gerät.
 
-Dies ist kein technisches Detail, sondern eine fundamentale Designentscheidung. Nouron ist kein Kriegsspiel. Die Kernphantasie ist der Aufbau eines florierenden Imperiums durch Handel, Infrastruktur und Forschung. Militarische Macht ist ein Mittel zur Absicherung, nicht das Ziel.
+Gefahren sind klein und lokal: ein verwaistes Schiffswrack, das gelegentlich Piraten anzieht; eine Minenstation, in der etwas schief gelaufen ist; ein fremdes Schiff, das im System auftaucht und Signale sendet. Diese Begegnungen sind Ereignisse — keine Schlachten.
 
-### Warum dieses Prinzip
+### Opportunitätskosten statt Verbot
 
-Ohne Kostenasymmetrie dominiert in Strategie-Browserspielen erfahrungsgemass eine einzelne optimale Strategie: maximale Militarisierung, da Angriff die billigste Form der Ressourcengewinnung ist. Das zerstoert den Spielspass fur alle, die eine andere Spielweise bevorzugen.
+Verteidigung und Schutz sind sinnvolle Optionen im Spiel. Sie kosten jedoch strukturell mehr AP als zivile Aktionen — nicht als Strafe, sondern als Konsequenz: eine Korvette, die patrouilliert, schleppt keine Güter. Ein Pilot, der auf Bewachungsmission ist, erkundet kein neues Terrain.
 
-Indem militarische Aktionen strukturell teurer sind, wird Militarismus nicht verboten, aber er hat einen realen Opportunitatskostenfaktor. Ein Spieler, der standig angreift, hat weniger AP fur Aufbau, Forschung und Handel — und wachst dadurch langsamer als ein Spieler, der sich auf friedliche Entwicklung konzentriert.
-
-### Umsetzung im AP-System
-
-Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders ab — zivile wie militarische. Die Differenzierung erfolgt ausschliesslich uber die AP-Kosten je Order-Typ:
+Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders ab. Die Differenzierung erfolgt über die AP-Kosten je Order-Typ:
 
 | Order-Typ | Navigation-AP-Kosten |
 |-----------|----------------------|
@@ -77,26 +73,13 @@ Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders a
 | defend (Verteidigen) | 2 |
 | attack (Angriff) | 3 |
 
-Ein Pilot, der 15 AP pro Tick generiert, kann also entweder:
-- 15 Bewegungs- oder Handels-Orders erteilen, oder
-- 5 Angriffs-Orders
-
-Die zivile Variante erzeugt dreimal so viele Aktionen wie die militarische bei gleicher AP-Basis.
+Ein Pilot, der 15 AP pro Tick generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
 
 ### Geltungsbereich: spielweites Prinzip
 
-Diese Asymmetrie gilt nicht nur fur Flottenorders. Sie muss in allen zukunftigen Mechaniken, die AP-Kosten oder andere Kosten haben, konsequent angewendet werden:
+Diese Kostenstruktur gilt für alle Mechaniken mit AP-Kosten. Jede neue Mechanik muss beim Design geprüft werden: Ist die konfrontative Variante teurer als die zivile? Wenn nicht, ist sie nicht balanciert im Sinne der Nouron-Vision.
 
-- **Diplomatie / Vertrage**: Angriffs- oder Sanktionsvertrage kosten mehr als Handels- oder Beistandsvertrage.
-- **Politiksystem**: Kriegserklarungen und Embargos verbrauchen mehr politische AP als Allianzen oder Handelsabkommen.
-- **Spionage / Geheimdienstoperationen**: Sabotageaktionen kosten mehr als Informationssammlung.
-- **Neue Schiffstypen**: Kampfschiffe sind teurer in Bau-AP als zivile Schiffe vergleichbarer Grosse.
-
-> Jede neue Spielmechanik muss beim Design gepruft werden: Ist die militarische Variante teurer als die zivile? Wenn nicht, ist die Mechanik nicht balanciert im Sinne der Nouron-Vision.
-
-### Abgrenzung
-
-Das Prinzip bedeutet nicht, dass Militarismus unmoglich oder unrentabel ist. Ein hochspezialisierter Militarspieler, der alle Piloten auf maximales Level bringt, kann trotzdem erhebliche Kampfkapazitat aufbauen. Die Kostenadditionalitat stellt sicher, dass diese Spezialisierung eine echte Wahl ist — mit echten Opportunitatskosten — und nicht die einzig sinnvolle Strategie.
+> Konkret: Neue Schiffstypen mit Kampfwert > 0 sind teurer in Bau-AP als zivile Schiffe vergleichbarer Größe. Defensiv-orientierte Orders kosten mehr als reine Bewegungs-Orders.
 
 ---
 
@@ -121,8 +104,8 @@ Jeder Run hat variable Aufgaben, zufällige Ereignisse und echte Konsequenzen. D
 **5. Kleine, handverlesene Galaxie**
 Wenige Systeme, wenige Objekte. Jede Begegnung mit einer anderen Fraktion oder einem Ereignis hat Gewicht. Die Knappheit des Raums ist Teil des Designs.
 
-**6. Militär als Opportunitätskosten-Entscheidung**
-Verteidigung ist möglich und sinnvoll — aber Angriff kostet strukturell mehr AP als zivile Aktionen. Wer ständig kämpft, baut und wächst langsamer. (Ausführlich in §1.1.)
+**6. Schutz als Opportunitätskosten-Entscheidung**
+Eine Korvette kann die Kolonie bewachen — aber eine Korvette, die patrouilliert, handelt nicht. Konfrontative Aktionen kosten strukturell mehr AP als zivile. Wer alle Schiffe auf Schutzpatrouille schickt, baut und forscht langsamer. (Ausführlich in §1.1.)
 
 ### Der Zusammenhang
 
@@ -548,7 +531,7 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 ### Supply-Kosten der Schiffstypen
 
-Korvetten sind bewusst teurer als Frachter (Kernprinzip: Militär kostet mehr, siehe §1.1). Sonden kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
+Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport (siehe §1.1). Sonden kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
 
 | Schiff | ship_id | Supply (Unterhalt) | Bemerkung |
 |--------|---------|-------------------|-----------|
@@ -690,7 +673,7 @@ In einem Tick, in dem eine Flotte an Kampfhandlungen beteiligt war, verfällt de
 hangar_decay_in_kampftick = decay_rate × 2
 ```
 
-**Designabsicht:** "Krieg verschleißt die Infrastruktur." Kampf erzeugt direkten Reparaturdruck auf den Hangar — wer offensiv agiert, muss anschließend AP in Wartung investieren. Die Regel ist bewusst einfach gehalten: ein Faktor, ein Gebäudetyp.
+**Designabsicht:** Begegnungen erzeugen direkten Reparaturdruck auf den Hangar — wer seine Korvette auf Konfrontationskurs schickt, muss anschließend AP in Wartung investieren. Die Regel ist bewusst einfach gehalten: ein Faktor, ein Gebäudetyp.
 
 ### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
@@ -758,7 +741,7 @@ Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle 
 
 ### Navigation-AP-Kosten je Order-Typ
 
-Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (siehe Abschnitt 12). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — militarische Orders sind teurer (siehe Abschnitt 1.1, Designprinzip "Militarismus ist teuer").
+Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (siehe Abschnitt 13). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — konfrontative Orders sind teurer als zivile (siehe Abschnitt 1.1, Designprinzip "Aufbau vor Konflikt").
 
 | Order-Typ | Navigation-AP-Kosten | Kategorie |
 |-----------|----------------------|-----------|
@@ -885,51 +868,55 @@ Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. I
 
 ---
 
-## 9. Kampfsystem (Combat)
+## 9. Begegnungen & Gefahren
 
-### Ablauf
+Die Kolonie existiert nicht im Vakuum. Im System gibt es vereinzelte Präsenzen — Piraten, fremde Sonden, verlassene Stationen — die gelegentlich zu Zwischenfällen führen. Diese Begegnungen sind keine Schlachten; sie sind Ereignisse mit Konsequenzen.
 
-Eine Attack-Order löst folgende Schritte aus:
+### Arten von Begegnungen
 
-1. Der Angreifer bewegt sich zu den Zielkoordinaten
-2. Alle fremden Flotten an diesen Koordinaten werden als Verteidiger identifiziert
-3. Kampfstärken werden berechnet
+**Erkundungsbegegnungen (Drone/Korvette):** Eine Sonde stößt auf etwas Unbekanntes — ein Schiffswrack, ein Signal, eine verlassene Station. Ergebnis: INNN-Ereignis, mögliche Ressource oder Gefahr.
+
+**Zwischenfälle im System:** Ein fremdes Schiff kreuzt den Orbit. Eine Korvette kann es mit einer `defend`- oder `attack`-Order konfrontieren — oder ignorieren. Die Entscheidung hat Konsequenzen für Vertrauen und Supply.
+
+**Kolonistengefahren:** Lokale Gefahren auf der Kolonieoberfläche (Sturm, Einsturz, Seuchenausbruch) — keine Schiffe beteiligt, kein AP-Verbrauch, sondern Event-getrieben.
+
+### Konfrontations-Ablauf
+
+Wenn eine `attack`-Order ausgelöst wird (z.B. gegen eine Piratensonde):
+
+1. Die Korvette bewegt sich zu den Zielkoordinaten
+2. Alle fremden Schiffe an diesen Koordinaten werden als Gegner identifiziert
+3. Stärken werden verglichen
 4. Verluste werden anteilig verteilt
-5. INNN-Ereignis `galaxy.combat` wird für beide Seiten erzeugt
+5. INNN-Ereignis `galaxy.combat` wird erzeugt
 
-### Kampfstärke
+### Stärkewerte der Schiffstypen
 
 ```
-Kampfstärke einer Flotte = Σ(Schiffanzahl × Kampfwert des Schiffstyps)
+Stärke einer Flotte = Σ(Schiffanzahl × Stärkewert des Typs)
 ```
 
-### Kampfwerte der Schiffstypen
-
-| Schiff | ship_id | Kampfwert |
-|--------|---------|-----------|
+| Schiff | ship_id | Stärkewert |
+|--------|---------|------------|
 | Sonde | 85 | 0 |
 | Korvette | 37 | 1 |
 | Frachter | 47 | 0 |
 
-Schiffe mit Kampfwert 0 sind **nicht-kampffähig** und werden im Gefecht nicht zerstört. Sonden können jedoch durch Kampfhandlungen in ihrer Nähe verloren gehen.
+Schiffe mit Stärkewert 0 sind **nicht-kampffähig** und werden im Zwischenfall nicht zerstört. Sonden können jedoch durch nahe Konfrontationen verloren gehen.
 
 ### Verlustberechnung
 
 ```
-Verlustquote Angreifer = Verteidiger-Stärke / Gesamtstärke
-Verlustquote Verteidiger = Angreifer-Stärke / Gesamtstärke
-Gesamtstärke = Angreifer-Stärke + Verteidiger-Stärke
+Verlustquote A = Stärke B / Gesamtstärke
+Verlustquote B = Stärke A / Gesamtstärke
+Gesamtstärke   = Stärke A + Stärke B
 ```
-
-Verluste je Schiffstyp:
 
 ```
 Verluste = ceil(Anzahl × Verlustquote)
 ```
 
-Sinkt eine Schiffsklasse auf 0 oder darunter, wird der Eintrag aus `fleet_ships` gelöscht.
-
-Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein Kampf statt.
+Sinkt eine Schiffsklasse auf 0 oder darunter, wird der Eintrag aus `fleet_ships` gelöscht. Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet keine Konfrontation statt.
 
 ### Konfiguration
 
@@ -945,7 +932,7 @@ Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet kein 
 ],
 ```
 
-Neue Schiffstypen und deren Kampfwerte werden ausschließlich in dieser Config konfiguriert.
+Neue Schiffstypen und deren Stärkewerte werden ausschließlich in dieser Config konfiguriert.
 
 ---
 
@@ -1497,7 +1484,7 @@ Jedes gebaute Exemplar eines Vertrauensgebäudes trägt mit einem fixen Wert pro
 
 ### Einflussfaktoren: Schiffe
 
-Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Militärschiffe signalisieren der Bevölkerung Kriegsbereitschaft und erzeugen Unruhe; Transporter stehen für Handel und Wohlstand.
+Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h. `colony_ships.amount > 0`). Der Effekt gilt **pro Schiff**, nicht pro Level. Eine Korvette signalisiert den Kolonisten Wachsamkeit und Anspannung; ein Frachter steht für Handel und Versorgung.
 
 | Schiff-ID | Bezeichner | Vertrauen/Schiff |
 |-----------|------------|------------------|
@@ -1505,7 +1492,7 @@ Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h
 | 37 | korvette | -1 |
 | 47 | frachter | +1 |
 
-**Rationale:** Die Korvette signalisiert Militärbereitschaft (-1/Schiff). Der Frachter steht für Handel und Wohlstand (+1/Schiff). Sonden sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion.
+**Rationale:** Die Korvette signalisiert Wachsamkeit und Anspannung (-1/Schiff). Der Frachter steht für Versorgung und Normalität (+1/Schiff). Sonden sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion bei den Bewohnern.
 
 **Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Vertrauen-Summe eingeht:
 
@@ -1513,7 +1500,7 @@ Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h
 ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), -30, +30)
 ```
 
-> ⚠️ BALANCE CONCERN: Der Cap von ±30 für Schiffe muss nach dem ersten Playtest evaluiert werden. Eine Kolonie mit 30 Fightern wäre bei -30 bereits am Cap — das könnte für frühe militärische Spieler zu früh einsetzen. Alternativ: Cap auf -20 für eine moderatere Wirkung.
+> ⚠️ BALANCE CONCERN: Der Cap von ±30 für Schiffe muss nach dem ersten Playtest evaluiert werden. Eine Kolonie mit 30 Korvetten wäre bei -30 bereits am Cap — das könnte für defensiv-orientierte Spieler zu früh einsetzen. Alternativ: Cap auf -20 für eine moderatere Wirkung.
 
 ### Einflussfaktoren: Forschungen
 
@@ -1571,14 +1558,13 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden n
 | `trade_success` | Handelsmission erfolgreich abgeschlossen | +2 |
 | `trade_blocked` | Handelsmission durch feindliche Flotte blockiert | -3 |
 
-**Kampf / Militär:**
+**Begegnungen / Zwischenfälle:**
 
 | Event-Key | Beschreibung | Vertrauenseffekt |
 |-----------|-------------|------------------|
-| `combat_won` | Kampf gewonnen (feindliche Flotte vernichtet) | +2 |
-| `combat_lost` | Kampf verloren (eigene Einheiten zerstört) | -5 |
-| `colony_attacked` | Eigene Kolonie wurde angegriffen (unabhängig vom Ausgang) | -4 |
-| `war_declared` | Kriegserklärung empfangen | -8 |
+| `encounter_won` | Zwischenfall erfolgreich abgewehrt | +2 |
+| `encounter_lost` | Eigene Schiffe bei Zwischenfall beschädigt | -5 |
+| `colony_threatened` | Kolonie direkt bedroht (unabhängig vom Ausgang) | -4 |
 
 **Diplomatie:**
 
@@ -1587,10 +1573,10 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden n
 | `treaty_signed` | Diplomatischer Vertrag abgeschlossen | +3 |
 
 **Rationale für neue Events:**
-- `colony_attacked` (-4) ist von `combat_lost` (-5) getrennt, weil ein Angriff die Bevölkerung auch dann verunsichert, wenn die Verteidigung erfolgreich war. Beide Effekte können in einem Tick summieren (Angriff + Verlust = -9).
-- `trade_blocked` (-3) macht Handelsblockaden als Kriegsstrategie spürbar — nicht nur wirtschaftlich, sondern auch moralisch.
+- `colony_threatened` (-4) ist von `encounter_lost` (-5) getrennt, weil eine Bedrohung die Kolonisten auch dann verunsichert, wenn sie abgewehrt wurde. Beide Effekte können in einem Tick summieren (Bedrohung + Verlust = -9).
+- `trade_blocked` (-3) macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
 
-> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_attacked` + `combat_lost` + `war_declared` in einem Tick summiert sich zu -17. Das kann eine neutrale Kolonie (0) direkt in den "Unruhig"-Bereich (-21) kippen. Das ist designtechnisch akzeptabel (Kriege sind moralische Katastrophen), aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
+> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_threatened` + `encounter_lost` in einem Tick summiert sich zu -9. Das kann eine neutrale Kolonie (0) spürbar in Richtung "Unruhig" (-21) drücken. Das ist designtechnisch akzeptabel — Bedrohungen hinterlassen Spuren — aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
 
 > ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 

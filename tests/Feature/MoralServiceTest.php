@@ -306,14 +306,14 @@ class MoralServiceTest extends TestCase
     public function testFireEvent_defaultTick_isCurrentTickPlusOne(): void
     {
         // No tick argument — should default to tickService->getTickCount() + 1
-        $this->service->fireEvent($this->colonyId, 'combat_won');
+        $this->service->fireEvent($this->colonyId, 'encounter_won');
 
         $expectedTick = $this->tickService->getTickCount() + 1;
 
         $this->assertDatabaseHas('moral_events', [
             'colony_id'  => $this->colonyId,
             'tick'       => $expectedTick,
-            'event_type' => 'combat_won',
+            'event_type' => 'encounter_won',
         ]);
     }
 
@@ -543,10 +543,10 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_multipleDistinctEvents_areSummed(): void
     {
-        // trade_success (+2) + combat_won (+2) + treaty_signed (+3) = +7
+        // trade_success (+2) + encounter_won (+2) + treaty_signed (+3) = +7
         DB::table('moral_events')->insert([
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'trade_success'],
-            ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'combat_won'],
+            ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'encounter_won'],
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'treaty_signed'],
         ]);
 
@@ -557,8 +557,8 @@ class MoralServiceTest extends TestCase
 
     public function testCalculateMoral_negativeEventContribution(): void
     {
-        // combat_lost: -5
-        $this->service->fireEvent($this->colonyId, 'combat_lost', $this->tick);
+        // encounter_lost: -5
+        $this->service->fireEvent($this->colonyId, 'encounter_lost', $this->tick);
 
         $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
 
