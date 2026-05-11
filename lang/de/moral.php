@@ -14,9 +14,8 @@ return [
     'event_research_level_up'   => 'Ein Forschungsdurchbruch hebt die Stimmung.',
     'event_trade_success'       => 'Ein Handelsgeschäft wurde erfolgreich abgeschlossen.',
     'event_trade_blocked'       => 'Eine Handelsroute wurde blockiert.',
-    'event_combat_won'          => 'Ein Kampf wurde gewonnen – die Moral steigt.',
-    'event_combat_lost'         => 'Ein Kampf wurde verloren – die Moral sinkt.',
-    'event_colony_attacked'     => 'Die Kolonie wurde angegriffen.',
-    'event_war_declared'        => 'Krieg wurde erklärt – Panik unter der Bevölkerung.',
+    'event_encounter_won'       => 'Ein Zwischenfall wurde erfolgreich abgewehrt – die Stimmung steigt.',
+    'event_encounter_lost'      => 'Eigene Schiffe wurden bei einem Zwischenfall beschädigt – die Kolonisten sind besorgt.',
+    'event_colony_threatened'   => 'Die Kolonie wurde direkt bedroht – die Bewohner sind verunsichert.',
     'event_treaty_signed'       => 'Ein Friedensvertrag wurde unterzeichnet.',
 ];

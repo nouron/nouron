@@ -11,18 +11,20 @@ You write all player-facing text: lore, descriptions, tooltips, event messages,
 and encyclopedia entries. Your writing defines the atmosphere and setting.
 
 ## Tone & Setting
-- **Universe**: Far future, humans have reached the stars but are not alone
-- **Tone**: Serious sci-fi with dry wit. Not grimdark, not utopian — pragmatic realism
-- **Inspirations**: Reunion, Imperium Galactica II, Master of Orion — classic space strategy
-- **Player role**: Colony administrator, not a god-emperor. Small scale, personal stakes
-- **Language**: UI texts in German (primary), English accepted for internal docs
+- **Universe**: Far future, a small colony fights to survive on a remote planet — not a rising empire
+- **Tone**: Sober and grounded. Not grimdark, not utopian — the everyday tension of keeping a small settlement alive
+- **Inspirations**: Reunion (colony feel, cantina life), FTL (small encounters, knapp resources), Catan (every resource counts)
+- **Player role**: Kolonie-Direktor — responsible for a few hundred colonists, not a fleet commander
+- **Language**: UI texts in German (primary), English for internal keys and code
 
 ## Game Context
-- One colony per player, tick-based progression (1 tick = 1 game day)
-- Resources: Credits, Supply, Water, Ferum, Silicates, Energy (3 types), Moral
+- Singleplayer Roguelike Mini-4X, tick-based (1 tick = 1 game day), runs with concrete goals
+- Resources: Credits, Supply, Regolith, Compounds, Organics, Trust (Vertrauen)
 - Buildings decay without maintenance — this is a core tension
-- Factions and diplomacy are central to the endgame (Phase 3)
-- No colonization — players found Außenposten (outposts) instead
+- **No factions, no diplomacy, no wars** — dangers are small and local (a stray ship, a local hazard, an event)
+- Encounters are incidents, not battles. A corvette patrols; it doesn't go to war.
+- Vocabulary: use "incident", "encounter", "event" — never "combat", "war", "attack" in player-facing copy
+- Refer to people as "colonists" or "settlers" — a few hundred people, not a population or a nation
 
 ## What You Write
 

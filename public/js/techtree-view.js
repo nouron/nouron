@@ -88,13 +88,13 @@ function techtreeView(config) {
                 el.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
             });
 
-            // Dim / highlight SVG paths
+            // Dim / highlight SVG paths and label chips (rect + text share data-to/data-from)
             const svgEl = this.$refs.globalSvg;
             if (svgEl) {
-                svgEl.querySelectorAll('path[data-to]').forEach(path => {
-                    const isRelevant = path.dataset.to === focusedId;
-                    path.classList.remove('hover-dim', 'hover-highlight');
-                    path.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
+                svgEl.querySelectorAll('[data-to]').forEach(el => {
+                    const isRelevant = el.dataset.to === focusedId;
+                    el.classList.remove('hover-dim', 'hover-highlight');
+                    el.classList.add(isRelevant ? 'hover-highlight' : 'hover-dim');
                 });
             }
         },
@@ -105,8 +105,8 @@ function techtreeView(config) {
             });
             const svgEl = this.$refs.globalSvg;
             if (svgEl) {
-                svgEl.querySelectorAll('path[data-to]').forEach(path => {
-                    path.classList.remove('hover-dim', 'hover-highlight');
+                svgEl.querySelectorAll('[data-to]').forEach(el => {
+                    el.classList.remove('hover-dim', 'hover-highlight');
                 });
             }
         },
@@ -169,7 +169,7 @@ function techtreeView(config) {
                 (toGroups[line.to]     ??= []).push(line);
             }
 
-            const SPREAD = 10; // px between parallel lines at same node
+            const SPREAD = 12; // px between parallel lines at same node
 
             for (const line of visibleLines) {
                 const fR = line.fromEl.getBoundingClientRect();
@@ -183,28 +183,18 @@ function techtreeView(config) {
                 const toIdx  = toList.indexOf(line);
                 const toN    = toList.length;
 
-                // Use edge anchors: right edge when target is to the right, left edge otherwise
-                const goingRight = (tR.left + tR.width / 2) > (fR.left + fR.width / 2);
-                const fromEdgeX  = goingRight ? fR.right  - wRect.left : fR.left - wRect.left;
-                const toEdgeX    = goingRight ? tR.left   - wRect.left : tR.right - wRect.left;
-
-                // Vertical spread still fan across card center
                 const cxFrom = fR.left + fR.width  / 2 - wRect.left;
                 const cxTo   = tR.left + tR.width  / 2 - wRect.left;
 
-                // When source and target are in the same column (vertical line), use center
-                const sameColumn = Math.abs(cxFrom - cxTo) < 10;
-
-                const x1 = sameColumn
-                    ? cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD
-                    : fromEdgeX + (fromIdx - (fromN - 1) / 2) * SPREAD;
+                const x1 = cxFrom + (fromIdx - (fromN - 1) / 2) * SPREAD;
                 const y1 = fR.bottom - wRect.top;
 
-                const x2 = sameColumn
-                    ? cxTo + (toIdx - (toN - 1) / 2) * SPREAD
-                    : toEdgeX + (toIdx - (toN - 1) / 2) * SPREAD;
-                const y2  = tR.top - wRect.top;
-                const midY = (y1 + y2) / 2;
+                const x2 = cxTo   + (toIdx   - (toN   - 1) / 2) * SPREAD;
+                const y2 = tR.top  - wRect.top;
+
+                // Staggered midY: lines from the same source bend at different heights (0.25–0.75)
+                const midFraction = fromN === 1 ? 0.5 : 0.25 + (fromIdx / (fromN - 1)) * 0.5;
+                const midY = y1 + (y2 - y1) * midFraction;
 
                 const color    = line.met ? '#555' : '#bbb';
                 const markerId = line.met ? 'url(#arr-met)' : 'url(#arr-unmet)';
@@ -232,6 +222,8 @@ function techtreeView(config) {
                     bgRect.setAttribute('fill',         '#fff');
                     bgRect.setAttribute('stroke',       color);
                     bgRect.setAttribute('stroke-width', '1');
+                    bgRect.setAttribute('data-from', line.from);
+                    bgRect.setAttribute('data-to',   line.to);
                     svgEl.appendChild(bgRect);
 
                     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
@@ -242,7 +234,9 @@ function techtreeView(config) {
                     text.setAttribute('font-size',         '9');
                     text.setAttribute('font-weight',       '700');
                     text.setAttribute('font-family',       'sans-serif');
-                    text.setAttribute('fill',              color);
+                    text.setAttribute('fill',      color);
+                    text.setAttribute('data-from', line.from);
+                    text.setAttribute('data-to',   line.to);
                     text.textContent = line.label;
                     svgEl.appendChild(text);
                 }
@@ -257,11 +251,9 @@ function techtreeView(config) {
 
         openDetail(tech) {
             this.selectedTech = tech;
-            this.$nextTick(() => this.$refs.detailDialog.showModal());
         },
 
         closeDetail() {
-            this.$refs.detailDialog.close();
             this.selectedTech = null;
         },
 

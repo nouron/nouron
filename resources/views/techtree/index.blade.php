@@ -70,8 +70,13 @@
         <button class="phase-nav-arrow" @click="nextPhase()" :disabled="activePhase >= 5">&#8250;</button>
     </div>
 
-    {{-- Tech detail dialog --}}
-    <dialog class="tech-detail" x-ref="detailDialog" @close="closeDetail()" @click.self="closeDetail()">
+    {{-- Tech detail panel (sidebar on desktop, bottom sheet on mobile) --}}
+    <div class="tech-panel-backdrop" x-show="selectedTech" @click="closeDetail()" x-cloak></div>
+    <aside class="tech-panel" x-show="selectedTech" x-cloak
+           x-transition:enter-start="tech-panel-hidden"
+           x-transition:enter-end="tech-panel-visible"
+           x-transition:leave-start="tech-panel-visible"
+           x-transition:leave-end="tech-panel-hidden">
         <template x-if="selectedTech">
             <div class="detail-inner" :class="'detail-cat-' + selectedTech.type">
 
@@ -106,7 +111,7 @@
                 <button class="detail-close" @click="closeDetail()">{{ __('techtree.detail_close') }}</button>
             </div>
         </template>
-    </dialog>
+    </aside>
 
 </div>{{-- .techtree-page --}}
 @endsection

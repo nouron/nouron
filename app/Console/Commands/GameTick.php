@@ -44,8 +44,8 @@ class GameTick extends Command
     protected $signature   = 'game:tick {--tick= : Override the tick number (default: current tick)}';
     protected $description = 'Process one game tick (fleet orders, decay, supply, resources)';
 
-    /** Fleet IDs that were involved in combat this tick — used for 2× ship decay. */
-    private array $combatFleetIds = [];
+    /** Fleet IDs that were involved in an encounter this tick — used for 2× ship decay. */
+    private array $encounterFleetIds = [];
 
     public function __construct(
         private readonly TickService      $tickService,
@@ -72,8 +72,8 @@ class GameTick extends Command
             $n = $this->processTradeOrders($tick);
             $this->line("  Fleet trade orders:       {$n}");
 
-            $n = $this->processCombatOrders($tick);
-            $this->line("  Fleet combat orders:      {$n}");
+            $n = $this->processEncounterOrders($tick);
+            $this->line("  Fleet encounter orders:   {$n}");
 
             $n = $this->processBuildingDecay($tick);
             $this->line("  Buildings levelled down:  {$n}");
@@ -242,9 +242,9 @@ class GameTick extends Command
         }
     }
 
-    // ── 3. Fleet: combat orders ──────────────────────────────────────────────
+    // ── 3. Fleet: encounter orders ───────────────────────────────────────────
 
-    private function processCombatOrders(int $tick): int
+    private function processEncounterOrders(int $tick): int
     {
         $orders = FleetOrder::where('tick', $tick)
             ->where('order', 'attack')
@@ -257,104 +257,104 @@ class GameTick extends Command
         foreach ($orders as $order) {
             $coords = json_decode($order->coordinates, true);
             if (!is_array($coords) || count($coords) < 3) {
-                $this->warn("  Fleet {$order->fleet_id}: invalid attack coordinates, skipping.");
+                $this->warn("  Fleet {$order->fleet_id}: invalid encounter coordinates, skipping.");
                 continue;
             }
 
-            $attacker = Fleet::find($order->fleet_id);
-            if (!$attacker) {
+            $initiator = Fleet::find($order->fleet_id);
+            if (!$initiator) {
                 continue;
             }
 
-            Fleet::where('id', $attacker->id)->update([
+            Fleet::where('id', $initiator->id)->update([
                 'x' => $coords[0], 'y' => $coords[1], 'spot' => $coords[2],
             ]);
 
-            $defenders = Fleet::where('x', $coords[0])
+            $encountered = Fleet::where('x', $coords[0])
                 ->where('y', $coords[1])
                 ->where('spot', $coords[2])
-                ->where('user_id', '!=', $attacker->user_id)
-                ->where('id', '!=', $attacker->id)
+                ->where('user_id', '!=', $initiator->user_id)
+                ->where('id', '!=', $initiator->id)
                 ->get();
 
-            if ($defenders->isEmpty()) {
+            if ($encountered->isEmpty()) {
                 $order->update(['was_processed' => 1]);
                 $this->eventService->createEvent([
-                    'user'       => $attacker->user_id,
+                    'user'       => $initiator->user_id,
                     'tick'       => $tick,
                     'event'      => 'galaxy.fleet_arrived',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['fleet_id' => $attacker->id, 'coords' => $coords]),
+                    'parameters' => serialize(['fleet_id' => $initiator->id, 'coords' => $coords]),
                 ]);
                 $processed++;
                 continue;
             }
 
-            $attackerPower    = $this->calcFleetPower($attacker->id, $shipPower);
-            $defenderFleetIds = $defenders->pluck('id')->all();
-            $defenderPower    = array_sum(array_map(
+            $initiatorPower    = $this->calcFleetPower($initiator->id, $shipPower);
+            $encounteredFleetIds = $encountered->pluck('id')->all();
+            $encounteredPower  = array_sum(array_map(
                 fn($id) => $this->calcFleetPower($id, $shipPower),
-                $defenderFleetIds
+                $encounteredFleetIds
             ));
 
-            $totalPower = $attackerPower + $defenderPower;
+            $totalPower = $initiatorPower + $encounteredPower;
             if ($totalPower > 0) {
-                $this->applyShipLosses($attacker->id, $defenderPower / $totalPower, $shipPower);
-                foreach ($defenderFleetIds as $defId) {
-                    $this->applyShipLosses($defId, $attackerPower / $totalPower, $shipPower);
+                $this->applyShipLosses($initiator->id, $encounteredPower / $totalPower, $shipPower);
+                foreach ($encounteredFleetIds as $encId) {
+                    $this->applyShipLosses($encId, $initiatorPower / $totalPower, $shipPower);
                 }
 
-                // Record all combat participants for the ship decay step
-                $this->combatFleetIds[] = $attacker->id;
-                foreach ($defenderFleetIds as $defId) {
-                    $this->combatFleetIds[] = $defId;
+                // Record all encounter participants for the 2× ship decay step
+                $this->encounterFleetIds[] = $initiator->id;
+                foreach ($encounteredFleetIds as $encId) {
+                    $this->encounterFleetIds[] = $encId;
                 }
             }
 
             $order->update(['was_processed' => 1]);
 
-            // Notify attacker
+            // Notify initiating fleet
             $this->eventService->createEvent([
-                'user'       => $attacker->user_id,
+                'user'       => $initiator->user_id,
                 'tick'       => $tick,
-                'event'      => 'galaxy.combat',
+                'event'      => 'galaxy.encounter',
                 'area'       => 'galaxy',
                 'parameters' => serialize([
-                    'attacker_id' => $attacker->user_id,
-                    'defender_id' => $defenders->first()->user_id,
-                    'colony_id'   => 0,
+                    'initiator_id'   => $initiator->user_id,
+                    'encountered_id' => $encountered->first()->user_id,
+                    'colony_id'      => 0,
                 ]),
             ]);
 
-            $attackerColonyId = $this->getColonyIdByUserId($attacker->user_id);
-            if ($attackerColonyId) {
+            $initiatorColonyId = $this->getColonyIdByUserId($initiator->user_id);
+            if ($initiatorColonyId) {
                 $this->moralService->fireEvent(
-                    $attackerColonyId,
-                    $attackerPower >= $defenderPower ? 'combat_won' : 'combat_lost',
+                    $initiatorColonyId,
+                    $initiatorPower >= $encounteredPower ? 'encounter_won' : 'encounter_lost',
                     $tick
                 );
             }
 
-            // Notify each unique defender user
-            foreach ($defenders->unique('user_id') as $defFleet) {
+            // Notify each unique encountered fleet
+            foreach ($encountered->unique('user_id') as $encFleet) {
                 $this->eventService->createEvent([
-                    'user'       => $defFleet->user_id,
+                    'user'       => $encFleet->user_id,
                     'tick'       => $tick,
-                    'event'      => 'galaxy.combat',
+                    'event'      => 'galaxy.encounter',
                     'area'       => 'galaxy',
                     'parameters' => serialize([
-                        'attacker_id' => $attacker->user_id,
-                        'defender_id' => $defFleet->user_id,
-                        'colony_id'   => 0,
+                        'initiator_id'   => $initiator->user_id,
+                        'encountered_id' => $encFleet->user_id,
+                        'colony_id'      => 0,
                     ]),
                 ]);
 
-                $defenderColonyId = $this->getColonyIdByUserId($defFleet->user_id);
-                if ($defenderColonyId) {
-                    $this->moralService->fireEvent($defenderColonyId, 'colony_attacked', $tick);
+                $encounteredColonyId = $this->getColonyIdByUserId($encFleet->user_id);
+                if ($encounteredColonyId) {
+                    $this->moralService->fireEvent($encounteredColonyId, 'colony_threatened', $tick);
                     $this->moralService->fireEvent(
-                        $defenderColonyId,
-                        $defenderPower >= $attackerPower ? 'combat_won' : 'combat_lost',
+                        $encounteredColonyId,
+                        $encounteredPower >= $initiatorPower ? 'encounter_won' : 'encounter_lost',
                         $tick
                     );
                 }
@@ -461,7 +461,7 @@ class GameTick extends Command
         foreach ($fleetShips as $fs) {
             $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
 
-            if (in_array($fs->fleet_id, $this->combatFleetIds)) {
+            if (in_array($fs->fleet_id, $this->encounterFleetIds)) {
                 $rate *= $combatFactor;
             }
 
