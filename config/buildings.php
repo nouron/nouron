@@ -102,7 +102,7 @@ return [
         'id'                => 46,
         'supply_cost'       => 10,
         'moral_per_lv'      => 3,
-        'decay_rate'        => 2.0,     // 10 days
+        'decay_rate'        => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
         'max_status_points' => 20,
         'max_level'         => null,
     ],

@@ -17,7 +17,7 @@
    - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
 6. [Supply-Generierung](#6-supply-generierung)
-7. [Gebäude-Verfall (Decay)](#7-gebäude-verfall-decay)
+7. [Verfall & Entropie](#7-verfall--entropie)
 8. [Flotten & Flottenorders](#8-flotten--flottenorders)
    - 8a. [Systemansicht](#8a-systemansicht)
 9. [Begegnungen & Gefahren](#9-begegnungen--gefahren)
@@ -59,9 +59,9 @@ Gefahren sind klein und lokal: ein verwaistes Schiffswrack, das gelegentlich Pir
 
 ### Opportunitätskosten statt Verbot
 
-Verteidigung und Schutz sind sinnvolle Optionen im Spiel. Sie kosten jedoch strukturell mehr AP als zivile Aktionen — nicht als Strafe, sondern als Konsequenz: eine Korvette, die patrouilliert, schleppt keine Güter. Ein Pilot, der auf Bewachungsmission ist, erkundet kein neues Terrain.
+Verteidigung und Schutz sind sinnvolle Optionen im Spiel. Sie kosten jedoch strukturell mehr AP als zivile Aktionen — nicht als Strafe, sondern als Konsequenz: eine Korvette, die patrouilliert, schleppt keine Güter. Ein Raumfahrer, der auf Bewachungsmission ist, erkundet kein neues Terrain.
 
-Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders ab. Die Differenzierung erfolgt über die AP-Kosten je Order-Typ:
+Navigation-AP werden durch **Raumfahrer** generiert und decken alle Flottenorders ab. Die Differenzierung erfolgt über die AP-Kosten je Order-Typ:
 
 | Order-Typ | Navigation-AP-Kosten |
 |-----------|----------------------|
@@ -73,7 +73,7 @@ Navigation-AP werden durch **Piloten** generiert und decken alle Flottenorders a
 | defend (Verteidigen) | 2 |
 | attack (Angriff) | 3 |
 
-Ein Pilot, der 15 AP pro Tick generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
+Ein Raumfahrer, der 15 AP pro Tick generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
 
 ### Geltungsbereich: spielweites Prinzip
 
@@ -96,7 +96,7 @@ Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer seine Kolonie vernachl
 Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich ausgeführt. Das Spiel passt sich dem Spieler an, nicht umgekehrt.
 
 **3. Nur eine Kolonie — Tiefe statt Breite**
-Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Kommandant — alle Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
+Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
 
 **4. Roguelike-Elemente im Strategieformat**
 Jeder Run hat variable Aufgaben, zufällige Ereignisse und echte Konsequenzen. Das Scheitern ist möglich und lehrreich. Kein Run ist identisch — aber die Kolonie bleibt immer dieselbe Art von Ort.
@@ -178,14 +178,12 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
 |---------|-------------|
 | 1 | Fleet Move Orders — Flotten bewegen sich zu Zielkoordinaten |
 | 2 | Fleet Trade Orders — Ressourcentransfer Flotte ↔ Kolonie |
-| 3 | Fleet Encounter Orders — Zwischenfälle werden aufgelöst |
-| 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 |
-| 5 | Ship Decay — Schiffe verlieren SP (×2 bei Begegnung); Eintrag gelöscht bei SP ≤ 0 |
-| 6 | Research Decay — Forschungen verlieren SP; Level-Down bei SP ≤ 0 |
-| 7 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
-| 8 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
-| 8b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (siehe §14) |
-| 9 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen |
+| 3 | Fleet Encounter Orders — Zwischenfälle aufgelöst; Schiffs-Verschleiß (`wear_per_order`) abgezogen |
+| 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 (§7) |
+| 5 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
+| 6 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
+| 6b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (§14) |
+| 7 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen, Burnout-Wahrscheinlichkeit würfeln (§7, §13) |
 
 ---
 
@@ -264,7 +262,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 ### Gebäude (Phase 3 — vollständige Liste)
 
-12 Gebäude, reduziert auf das Mini-4X-Kernsortiment:
+11 aktive Gebäude (Stand Phase 3), weitere in Planung:
 
 | ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
 |----|------------|-----------|-----------|-----------|---------------|
@@ -274,7 +272,6 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
-| 43 | tradecenter | Handelsposten | Trading Post | — | CC Lv5 |
 | 44 | hangar | Hangar | Hangar | — | CC Lv3 |
 | 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
 | 52 | bar | Cantina | Cantina | — | CC Lv2 |
@@ -298,6 +295,25 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 - Diese Regel gilt auch beim Verlegung des Harvesters (neues Ziel muss ein `regolith_*`-Tile sein).
 
 **Begründung:** Regolith-Tiles sind Abbaugebiete — ihre Fläche ist durch den Harvester belegt oder für zukünftigen Abbau reserviert. Würde man dort reguläre Gebäude bauen, würde das Vorkommen dauerhaft verschlossen. Umgekehrt wäre ein Harvester auf Terrain-Tiles sinnlos (keine Rohstoffe).
+
+### Lagerhalle (depot) — Mechanik
+
+Die Lagerhalle erhöht die maximale Lagerkapazität aller drei Kolonieressourcen (Regolith, Werkstoffe, Organika). Ohne Lagerhalle gilt ein Basis-Cap; jedes Level der Lagerhalle erhöht diesen Cap.
+
+```
+resource_cap = base_cap + (depot_level × cap_per_level)
+```
+
+Überschreitet die Produktion den Cap in einem Tick, gehen die überschüssigen Einheiten verloren. Das erzeugt eine echte Entscheidung: Wer stark produziert (Harvester + Agrardom auf hohem Level) muss früher in Lagerkapazität investieren, sonst verpufft die Produktion.
+
+| Parameter | Richtwert | Quelle |
+|-----------|-----------|--------|
+| `base_cap` | 500 je Ressource | nach Playtest kalibrieren |
+| `cap_per_level` | +200 je Depot-Level | nach Playtest kalibrieren |
+
+> **TODO Balance:** Konkrete Zahlen (`base_cap`, `cap_per_level`) nach erstem Playtest festlegen und in `config/buildings.php → depot` ergänzen. Das Ressourcen-Cap-System muss bei Implementierung im ProductionService berücksichtigt werden.
+
+---
 
 ### Status-Punkte
 
@@ -336,15 +352,15 @@ Die Kommandozentrale schaltet durch Level-Upgrades zusätzliche **Terrain-Tiles*
 
 | CC-Level | Neu freigeschaltete Terrain-Tiles | Kolonie-Zone gesamt (kumulativ, ohne CC-Tile) |
 |---|---|---|
-| 1 | 4 | 4 |
-| 2 | 2 | 6 |
-| 3 | 3 | 9 |
-| 4 | 3 | 12 |
-| 5 | 3 | 15 |
+| 1 | 6 | 6 |
+| 2 | 3 | 9 |
+| 3 | 3 | 12 |
+| 4 | 2 | 14 |
+| 5 | 1 | 15 |
 
-**Maximum: 15 Terrain-Tiles** in der Kolonie-Zone (+ CC-Tile = 16 belegte Tiles). Bei vollständigem Ausbau (alle 10 anderen Gebäude) bleiben 5 Slots für Wohnhabitat — aber das Maximum liegt bei 6 Instanzen. Um das 6. Wohnhabitat zu bauen, muss ein anderes Gebäude weichen. Das erzeugt eine bewusste Knappheits-Entscheidung.
+**Maximum: 15 Terrain-Tiles** in der Kolonie-Zone (+ CC-Tile = 16 belegte Tiles). Bei vollständigem Ausbau aller anderen Gebäude bleiben je nach Konstellation noch Slots für Wohnhabitate — die Knappheit ist bewusst: Wohnhabitate konkurrieren mit Produktionsgebäuden um denselben Tile-Pool.
 
-> Die konkreten Zahlen (4/2/3/3/3) sind ein Startwert und liegen in `config/game.php → colony_zone_expansion`. Balancing-Anpassungen ohne Code-Änderungen möglich.
+> Die konkreten Zahlen (6/3/3/2/1) liegen in `config/game.php → colony_zone_expansion`. Balancing-Anpassungen ohne Code-Änderungen möglich.
 
 **Kein Spieler-Wahlrecht bei der Freischaltung.** Die Expansion ist deterministisch. Die Spielerentscheidung liegt darin, *welches Gebäude* auf *welchen* der freigeschalteten Tiles gesetzt wird — nicht welche Tiles freigeschaltet werden. Das hält die Interaktion auf Mobile einfach (kein tile-selection-Popup beim CC-Levelup).
 
@@ -548,7 +564,7 @@ Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport 
 
 **Beispielrechnung:** 2 Korvetten + 2 Frachter = 28 + 12 = 40 Supply — bereits mehr als die Hälfte eines typischen Mid-Game-Caps.
 
-**Schiffe verfallen nicht.** Sie sind entweder intakt oder zerstört (Kampf, Umgebungsgefahren). Wartungsdruck entsteht durch den Hangar-Decay, nicht durch Ship-Status-Points.
+**Schiffe haben keinen passiven Decay.** Wartungsdruck entsteht durch aktiven Einsatz (Schiffs-Verschleiß — siehe §7) und durch Hangar-Decay. `fleet_ships.status_points` sinkt durch Flottenorders, nicht durch Zeitablauf.
 
 > **TODO (Design, Phase 4+):** Sonderfall "Schiffe ohne Hangar" — durch Events, Handelsdeals oder andere Mechaniken könnte der Spieler Schiffe erwerben, die normalerweise nicht im Hangar baubar sind (z.B. erbeutete Fraktionsschiffe, Belohnungsschiffe aus Events). Diese wären per Run einzigartig und ein Roguelike-Element das jeden Durchlauf anders macht. Mechanik (Hangar-Pflicht? Supply-Kosten?) und Balance noch offen — für spätere Phase detailliert ausarbeiten.
 
@@ -566,7 +582,6 @@ Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport 
 | Kolonialdenkmal | 2 |
 | Lagerhalle | 3 |
 | Cantina, Religiöse Stätte | 4 (je) |
-| Handelsposten | 7 |
 | Analytik-Labor | 8 |
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
@@ -589,17 +604,16 @@ Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kennt
 
 **Strategische Implikation:** Level 2–3 liefern den besten Cap-pro-AP-Wert. Alle 7 Kenntnisse auf Lv3 (7 × 13 = 91 Bonus) schlägt 3 Kenntnisse auf Lv5 (3 × 20 = 60 Bonus) — Breite lohnt sich mehr als Tiefe.
 
-### Decay für Schiffe und Forschungen
+### Entropie-Übersicht
 
-Schiffe und Forschungen haben — analog zu Gebäuden — `status_points` die über Zeit abnehmen.
+Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 
-| Entität | Decay-Rate | Besonderheit |
-|---------|-----------|--------------|
-| Gebäude | 1 SP/Tick | bereits implementiert; inkl. Hangar |
-| Schiffe | — | kein Decay; Verlust nur durch Kampf oder Umgebungsgefahren |
-| Forschungen | sehr langsam (TBD) | kein Verlust durch Inaktivität, nur Verfall |
-
-> Konkrete Werte (SP/Tick, Gnadenfrist) werden bei Implementierung in `config/game.php → decay` festgelegt.
+| Entität | Mechanismus | Auslöser | Gegenmaßnahme |
+|---------|-------------|----------|---------------|
+| Gebäude | Passiver Decay (`decay_rate` SP/Tick) | Zeitablauf | Repair-AP investieren |
+| Schiffe | Verschleiß (`wear_per_order` aus config/ships.php) | Aktiver Einsatz (Orders) | Repair-Order (Construction-AP + Credits) |
+| Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
+| Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
 
 ### Konfiguration
 
@@ -633,17 +647,23 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 |-------------|----------------|--------------|---------------|
 | Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
-| Decay | Stand von Gebäuden und Forschungen | täglich | Reparatur-AP investieren |
+| Gebäude-Decay | Stand von Gebäuden | täglich | Reparatur-AP investieren |
+| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Order | Repair-Order (Construction-AP + Credits) |
+| Berater-Burnout | AP-Kapazität bei Überbelastung | probabilistisch | Erholungsphase abwarten |
 
 Diese drei Mechanismen sind bewusst unabhängig voneinander.
 
 ---
 
-## 7. Verfall (Decay) — Gebäude und Forschungen
+## 7. Verfall & Entropie
+
+Entropie ist ein übergreifendes Designprinzip: Ohne aktive Pflege degradiert die Kolonie schrittweise. Die drei Entropie-Vektoren sind **Gebäude-Decay**, **Schiffs-Verschleiß** und **Berater-Burnout**. Kenntnisse verfallen nicht — einmal erarbeitetes Wissen bleibt permanent (kein SP-System auf Kenntnissen).
+
+### Gebäude-Decay
 
 ### Mechanik
 
-Gebäude und Forschungen verfallen ohne aktive Pflege. Schiffe verfallen nicht — sie gehen nur durch Kampf oder Umgebungsgefahren verloren (siehe §6). Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`, `researches`) gespeichert sind.
+Gebäude verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`) gespeichert sind.
 
 **Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Tick). Pro Tick wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
 
@@ -662,7 +682,7 @@ Beispiel: max_status_points=5, decay_rate=0.3
 | Leveled Building (allgemein) | Leveled | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
 | Wohnhabitat | Instanced | **Instanz zerstört** (kein Level zum Abziehen); Supply-Cap sinkt um 8; INNN-Ereignis |
 | Hangar | Instanced | **Instanz zerstört**; zugewiesenes Schiff wird **unbrauchbar** (nicht zerstört); INNN-Ereignis |
-| Kenntnis | Leveled | Level − 1; INNN-Ereignis |
+*(Kenntnis — kein Decay; Kenntnisse haben kein SP-System, siehe §10)*
 
 > **Instanced vs. Leveled:** Leveled Buildings verlieren ein Level und regenerieren SP — sie geben mehrere Chancen. Instanced Buildings (Wohnhabitat, Hangar) haben kein Level: Decay auf 0 zerstört die Instanz sofort. Das macht sie gefährlicher zu vernachlässigen, erlaubt aber bewusst riskantes Spiel (Repair-AP sparen auf eigene Gefahr).
 
@@ -670,17 +690,7 @@ Beispiel: max_status_points=5, decay_rate=0.3
 
 > **Hangar-Decay-Detail:** Ein Schiff im zerstörten Hangar bleibt in der Datenbank erhalten — es ist nur deaktiviert. Sobald ein neuer Hangar gebaut oder der alte repariert wird, ist das Schiff wieder einsatzbereit.
 
-> **Schiffe verfallen nicht.** Schiffe werden durch Kampf oder Umgebungsgefahren zerstört, nicht durch Decay. Wartungsdruck entsteht indirekt durch den Hangar-Decay.
-
-### Kampf-Beschleunigung (Hangar)
-
-In einem Tick, in dem eine Flotte an Kampfhandlungen beteiligt war, verfällt der zugeordnete **Hangar** mit **Faktor 2** auf die decay_rate:
-
-```
-hangar_decay_in_kampftick = decay_rate × 2
-```
-
-**Designabsicht:** Begegnungen erzeugen direkten Reparaturdruck auf den Hangar — wer seine Korvette auf Konfrontationskurs schickt, muss anschließend AP in Wartung investieren. Die Regel ist bewusst einfach gehalten: ein Faktor, ein Gebäudetyp.
+> **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Flottenorders), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
 
 ### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
@@ -694,22 +704,18 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
 | Entität | Ticks until lost | decay_rate (bei SP=20) |
 |---------|-----------------|------------------------|
-| Cantina (bar) | 7 | 2.86 |
 | Religiöse Stätte (temple) | 10 | 2.0 |
-| Krankenstation (infirmary) | 10 | 2.0 |
+| Cantina (bar) | 20 | 1.0 |
 | Harvester, Agrardom | 21 | 0.95 |
 | Analytik-Labor (sciencelab) | 21 | 0.95 |
-| Lagerhalle (depot) | 30 | 0.67 |
-| Handelsposten (tradecenter) | 30 | 0.67 |
-| Hangar | 30 | 0.67 |
+| Lagerhalle (depot), Krankenstation (infirmary), Hangar | 30 | 0.67 |
 | Wohnhabitat (housingComplex) | 45 | 0.44 |
-| Kommandozentrale (max Lv5), Kolonialdenkmal | 61 | 0.33 |
-| Kenntnisse (most) | ~150 | ~0.13 |
+| Kommandozentrale (max Lv5), Kolonialdenkmal | 60 | 0.33 |
 
 
 > **Tick-Skalierung:** Bei 24 Ticks/Tag entspricht "133 Ticks" ~5,5 Echtzeit-Tagen. Bei 1 Tick/Tag sind es 133 Tage. Die Tick-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des tick-basierten Systems.
 
-> Konkrete Werte pro Typ per Migration in die Stammdaten-Tabellen (`buildings.decay_rate`, `ships.decay_rate`, `researches.decay_rate`).
+> Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). Kenntnisse und Schiffe haben kein Decay-System; `researches.decay_rate` und `ships.decay_rate` entfallen.
 
 **Minimum:** Jede Entität hat mindestens **5 max_status_points**.
 
@@ -719,10 +725,9 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
 Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genutzt:
 
-- `buildings`, `ships`, `researches`: Spalten `max_status_points INTEGER` und `decay_rate REAL` — Werte aus `config/buildings.php`, `config/ships.php`, `config/techs.php`; Sync via `php artisan game:sync-techs`
+- `buildings`: Spalten `max_status_points INTEGER` und `decay_rate REAL` — Werte aus `config/buildings.php`; Sync via `php artisan game:sync-techs`
 - `colony_buildings.status_points REAL` — aktueller Zustandswert des Gebäudes
-- `fleet_ships.status_points REAL` — aktueller Zustandswert des Schiffes
-- `colony_researches.status_points REAL` — aktueller Zustandswert der Forschung
+- `fleet_ships.status_points REAL` — Verschleißzustand des Schiffes (wird durch Orders verbraucht, nicht durch Zeit)
 
 ### Konfiguration
 
@@ -730,13 +735,86 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 
 ```php
 'decay' => [
-    'combat_factor' => 2,    // Hangar-Decay im Kampftick × 2 (Schiffe verfallen nicht)
+    // Schiffs-Verschleiß: wear_per_order steht in config/ships.php je Schiffstyp
 ],
 ```
 
 ### Designabsicht
 
 Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verlieren schrittweise Infrastruktur und Flotte. Die Kombination aus kleiner decay_rate und fraktionaler Akkumulation bedeutet: nichts bricht sofort — aber vernachlässigte Entitäten degradieren stetig.
+
+---
+
+### Schiffs-Verschleiß
+
+Schiffe verfallen **nicht durch Zeitablauf**, sondern durch aktiven Einsatz. Jede ausgeführte Flottenorder verbraucht Verschleißpunkte des beteiligten Schiffes.
+
+**Mechanik:**
+
+```
+fleet_ships.status_points -= wear_per_order (je Schiffstyp aus config/ships.php)
+```
+
+Wenn `status_points ≤ 0`, wird das Schiff **deaktiviert** (nicht zerstört). Es bleibt in der Datenbank, ist aber nicht einsatzbereit. Reaktivierung erfordert eine Reparatur-Order (verbraucht Construction-AP, kostet Credits).
+
+| Schiffstyp | wear_per_order (Richtwert) | Begründung |
+|------------|---------------------------|------------|
+| sonde | 0.05 | Unbemannte Sonde — minimalster Verschleiß |
+| korvette | 0.20 | Militärisches Manövrieren — höherer Verschleiß |
+| frachter | 0.10 | Routinebetrieb — moderater Verschleiß |
+
+Konkrete Werte stehen in `config/ships.php` je Schiffstyp. Nach erstem Playtest kalibrierbar.
+
+**Kein passiver Decay:** Ein Schiff, das im Hangar liegt und keine Orders erhält, verliert keine `status_points`. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
+
+**Reparatur:** Repair-Order auf die Flotte. Kosten: Construction-AP + Credits (aus `config/ships.php → repair_cost_per_point`). Reparatur gibt `status_points` zurück bis auf `max_status_points`.
+
+> **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Aggressive Flottennutzung ist teuer in Construction-AP, die sonst in Gebäude fließen könnten.
+
+---
+
+### Berater-Burnout
+
+Berater können nicht dauerhaft auf Hochtouren laufen. Nach langer Aktivität steigt die Wahrscheinlichkeit, dass ein Berater für eine begrenzte Zeit ausfällt — **Burnout**. Der Ausfall ist nicht garantiert, aber wahrscheinlicher, je länger der Berater ununterbrochen aktiv ist.
+
+**Mechanik (probabilistisch):**
+
+```
+burnout_chance(tick) = base_chance × growth_factor^(active_ticks / threshold) × rank_dampener(rank)
+```
+
+| Parameter | Wert (Richtwert) | Beschreibung |
+|-----------|-----------------|--------------|
+| `base_chance` | 0.01 (1%) | Grundwahrscheinlichkeit pro Tick bei Neubeginn |
+| `growth_factor` | 1.5 | Multiplikator-Steigerung mit `active_ticks` |
+| `threshold` | 50 Ticks | Ticks bis zur signifikanten Chancensteigerung |
+| `rank_dampener(1)` | 1.00 | Junior — keine Dämpfung |
+| `rank_dampener(2)` | 0.70 | Senior — 30% weniger Burnout-Anfälligkeit |
+| `rank_dampener(3)` | 0.40 | Experte — robuster gegen Burnout |
+
+**Beispiel:** Ein Junior-Berater (rank=1) mit 100 aktiven Ticks hat ~`0.01 × 1.5^2 × 1.0 = 2.25%` Chance pro Tick auf Burnout. Ein Experte (rank=3) mit denselben 100 Ticks kommt auf ~`0.9%`.
+
+**Was passiert bei Burnout:**
+- `unavailable_until_tick = current_tick + recovery_ticks` (Richtwert: 5–15 Ticks, abhängig von Rang)
+- `active_ticks` wird **zurückgesetzt** (der Berater startet frisch nach der Erholung)
+- Der AP-Pool dieses Typs fällt für die Dauer auf den Grundwert (6 AP/Tick)
+- INNN-Ereignis: „[Name] benötigt eine Auszeit — [AP-Typ]-Kapazität vorübergehend reduziert."
+
+**Rang-Erholungszeiten:**
+
+| Rang | recovery_ticks (Richtwert) |
+|------|---------------------------|
+| Junior | 15 |
+| Senior | 10 |
+| Experte | 5 |
+
+Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_dampener` eine geringere Burnout-Chance.
+
+**`active_ticks`-Reset:** Nach dem Burnout startet der Zähler bei 0. Das bedeutet: Ein Berater der gerade erholt hat, ist für eine Weile sicher. Burnout-Risiko baut sich langsam wieder auf. Kein "ständiger Burnout" ist möglich.
+
+> **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Tick".
+
+> **Implementierungshinweis:** Die Burnout-Prüfung erfolgt in Tick-Schritt 7 (Advisor Ticks), nach dem AP-Bonus-Update. Die Zufallsziehung passiert einmal pro Berater pro Tick. Alle Konfigurations-Parameter stehen in `config/game.php → advisors.burnout`.
 
 ---
 
@@ -748,7 +826,7 @@ Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle 
 
 ### Navigation-AP-Kosten je Order-Typ
 
-Jede Flottenorder verbraucht Navigation-AP, die durch Piloten generiert werden (siehe Abschnitt 13). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — konfrontative Orders sind teurer als zivile (siehe Abschnitt 1.1, Designprinzip "Aufbau vor Konflikt").
+Jede Flottenorder verbraucht Navigation-AP, die durch Raumfahrer generiert werden (siehe Abschnitt 13). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — konfrontative Orders sind teurer als zivile (siehe Abschnitt 1.1, Designprinzip "Aufbau vor Konflikt").
 
 | Order-Typ | Navigation-AP-Kosten | Kategorie |
 |-----------|----------------------|-----------|
@@ -842,9 +920,19 @@ Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der E
 
 Asteroiden, Schiffsfriedhöfe, Event-Tiles — zufällig generiert, tragen zum Roguelike-Charakter bei.
 
-### NPC-Fraktionen
+### NPC-Präsenzen
 
-Vereinzelte NPC-Fraktionen sind im System präsent. Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber bedeutsam.
+Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber bedeutsam. Drei Klassen von NPC-Präsenzen:
+
+| Klasse | Stärkewert | Auftreten | Auslöser |
+|--------|-----------|-----------|---------|
+| **Piratensonde** | 1 | häufig | Zufälliges Event-Tile in der Exploration Zone; erscheint wenn eine Flotte das Tile betritt |
+| **Schmugglerfrachter** | 0 | gelegentlich | Bewegt sich durch das System; auslösbar mit `attack`-Order; flieht bei Konfrontation (kein Kampf, aber +Vertrauen für Abwehr) |
+| **Schwerer Wächter** | 5 | selten | Bewacht ein hochwertiges Event-Tile (z.B. verlassenes Lager); erscheint nur bei Tiefenscan-Ergebnis mit `danger_high` |
+
+**Encounter-Auslöser:** NPC-Begegnungen entstehen ausschließlich durch Flottenorders — passiv trifft keine Flotte auf NPCs. Ein NPC-Event-Tile wird bei Erkundung (Sonde/Korvette) aufgedeckt; der Spieler entscheidet dann bewusst ob er `attack` oder `defend` ordert oder das Tile ignoriert.
+
+**Erscheinungsfrequenz pro Run:** 3–5 Piratensonden-Events, 1–3 Schmuggler, 0–1 schwere Wächter (prozedurale Verteilung bei Run-Generierung).
 
 ### Reisender Händler
 
@@ -1011,9 +1099,17 @@ Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufäll
 
 ### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
 
-Jede freigeschaltete Kenntnis erhöht den Supply-Cap. Da es kein Levelsystem mehr gibt, wird der Bonus als Pauschalwert beim Freischalten gewährt:
+Jede Kenntnis erhöht den Supply-Cap stufenweise mit jedem Level. Der Bonus ist nicht-linear — mittlere Level sind effizienter als Extremwerte (Glockenform). Details und Zahlenwerte in §6 und `config/game.php → supply.knowledge_cap_per_level`.
 
-> **TODO Design:** Pauschalen Supply-Cap-Bonus pro Kenntnis definieren (ersetzt die bisherige Level-Glockenformel). Richtwert: +8–12 pro Kenntnis, sodass alle 7 Kenntnisse zusammen ~60–80 Cap-Bonus ergeben.
+| Level | Cap-Bonus (dieses Level) | Kumuliert |
+|-------|--------------------------|-----------|
+| 1 | +3 | 3 |
+| 2 | +5 | 8 |
+| 3 | +5 | 13 |
+| 4 | +4 | 17 |
+| 5 | +3 | **20** |
+
+Maximum aller 7 Kenntnisse auf Lv5: 7 × 20 = **140 Cap-Bonus**. In der Praxis lohnt sich Breite (viele Kenntnisse auf Lv2–3) mehr als Tiefe (wenige auf Lv5).
 
 Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, health, defense) — Details siehe §14.
 
@@ -1125,7 +1221,7 @@ Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude vora
 | Drohne | Hangar Lv 1 |
 | Frachter | Hangar Lv 2 |
 | Korvette | Hangar Lv 3 |
-| Pilot (Berater) | Hangar Lv 1 |
+| Raumfahrer (Berater) | Hangar Lv 1 |
 | Konsul (Berater) | Bar Lv 1 |
 | Stratege (Berater) | Hangar Lv 2 |
 
@@ -1200,9 +1296,7 @@ Die bisherigen 4 getrennten `<section>`-Blöcke mit je eigenem `<div class="tech
 
 Handel ist **optional aber lohnend** — der Spieler kann alles auch ohne Handel aufbauen, aber Handel beschleunigt und verbilligt. Kein Zwang, kein Progression-Lock.
 
-Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kauf, Verkauf, NPC-Angebote, Spieler-zu-Spieler — laufen über denselbe Mechanik. Es gibt keinen separaten Marktplatz und kein Tradecenter.
-
-> **Designentscheidung:** Das Tradecenter (building_id 43, CC Lv5) wird gestrichen. Die Bar übernimmt alle Handelsfunktionen.
+Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kauf, Verkauf, NPC-Angebote, Spieler-zu-Spieler — laufen über dieselbe Mechanik. Es gibt keinen separaten Marktplatz.
 
 ---
 
@@ -1234,9 +1328,13 @@ Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch o
 | Lieferzeit | 3 Ticks | 3 Ticks | 2 Ticks | 1 Tick |
 | Preis | +50% Aufschlag | +40% | +25% | +10% |
 
-Anfrage läuft über das INNN-System (Nachricht an Nexus) oder eine eigene Anfrage-UI.
+**Anfrage-Mechanik:** Der Spieler sendet eine Anfrage über das INNN-System (Nachricht an "Nexus Command"). Nexus antwortet nach 1–3 Ticks (abhängig vom Konsul-Rang) mit einem INNN-Ereignis, das die Lieferung bestätigt und die Ressourcen direkt zur Kolonie transferiert. Kein eigenes Fleet-Objekt — das Nexus-Schiff erscheint nicht auf der Karte.
 
-> **TODO Implementierung:** Nexus-Handelsschiff-Anfrage als Fleet-Order oder INNN-Mechanik definieren.
+**Ablauf:**
+1. Spieler öffnet INNN → "Nexus-Handelsschiff anfordern" → wählt Ressource + Menge
+2. Credits-Betrag wird sofort eingefroren (reserviert)
+3. Nach Lieferzeit: INNN-Ereignis "Nexus-Lieferung eingetroffen", Ressourcen gutgeschrieben, Credits abgebucht
+4. Kann nur 1 offene Anfrage gleichzeitig haben
 
 ---
 
@@ -1275,7 +1373,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 |-----------------|-------------------|-----------|
 | `construction` | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
 | `research` | Analytiker | Kenntnisse vorantreiben, Wissensarbeit |
-| `navigation` | Raumfahrer / Kommandant | Flottenbewegung, Fleet-Trade-Orders |
+| `navigation` | Raumfahrer | Flottenbewegung, Fleet-Trade-Orders |
 | `economy` | Konsul | Handelsangebote, Marktgeschäfte |
 | `strategy` | Stratege | Schutzorders, Verteidigung, taktische Planung |
 
@@ -1293,7 +1391,7 @@ Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren 
 |----------|-----------------------|-----------|
 | 1 | Slot 1 | Baumeister |
 | 2 | Slot 2 | Analytiker |
-| 3 | Slot 3 | Raumfahrer / Kommandant |
+| 3 | Slot 3 | Raumfahrer |
 | 4 | Slot 4 | Konsul |
 | 5+ | Slot 5 | Stratege |
 
@@ -1341,11 +1439,13 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 |------------|-----------------|------------------|
 | Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
 | Analytiker | `research` | Kenntnisse, Wissensarbeit |
-| Raumfahrer / Kommandant | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
+| Raumfahrer | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
 | Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
 | Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
-Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
+Der Raumfahrer ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
+
+> **TODO Design (Evaluation):** Der Raumfahrer ist der einzige Beratertyp mit einer "Außendienst"-Mechanik (kann die Kolonie verlassen und eine Flotte führen). Ob andere Beratertypen analoge Mechaniken bekommen sollen — z.B. der Konsul begleitet einen Handelstrip, der Analytiker leitet eine Erkundungssonde — ist offen und soll nach erstem Playtest evaluiert werden.
 
 ---
 
@@ -1353,18 +1453,27 @@ Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er 
 
 Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tick und den laufenden Upkeep in Credits.
 
-| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Einstellungskosten (Cr) | Upkeep (Cr/Tick) |
-|------|-------------|---------------|---------------|------------------------|-------------------|
-| 1 | Junior | +6 | 12 | 50 | 10 |
-| 2 | Senior | +14 | 20 | 150 | 50 |
-| 3 | Experte | +20 | 26 | 400 | 160 |
+| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Upkeep (Cr/Tick) |
+|------|-------------|---------------|---------------|-------------------|
+| 1 | Junior | +4 | 10 | 10 |
+| 2 | Senior | +7 | 13 | 50 |
+| 3 | Experte | +12 | 18 | 160 |
 
-- **Einstellungskosten** sind einmalig beim Rekrutieren fällig (Credits).
-- **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater colony_id oder fleet_id hat (also nicht arbeitslos ist).
-- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (Schwellwerte konfigurierbar). Optional per Credits beschleunigbar.
-- Alle Werte stehen in `config/game.php → advisors` und werden nach erstem Playtest kalibriert.
+*(Gesamt-AP = 6 Grundwert + AP-Bonus)*
 
-> ⚠️ BALANCE CONCERN: Die Einstellungskosten sind noch nicht gegen die Credits-Startmenge (3000 Cr) kalibriert. Testspiele nötig, um zu prüfen ob ein Junior-Ingenieur am Tag 1 erschwinglich ist, ohne das frühe Spiel auszuhöhlen.
+**Einstellungskosten (Rang 1) — typ-spezifisch:**
+
+| Beratertyp | Kosten (Cr) | Begründung |
+|------------|-------------|-----------|
+| Baumeister | 300 | Kernanforderung Tag 1 — günstigster Einstieg |
+| Analytiker | 400 | Mittlere Priorität — erst bei CC Lv2 verfügbar |
+| Raumfahrer | 500 | Flotten-fokussiert — erst relevant wenn Hangar gebaut |
+| Konsul | 350 | Handelssupport — mittlere Priorität |
+| Stratege | 600 | Teuerster — typischerweise Late-Game |
+
+- **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater `colony_id` oder `fleet_id` hat.
+- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
+- Alle Werte stehen in `config/advisors.php` (Einstellungskosten) und `config/game.php → advisors` (AP, Upkeep, Rang-Thresholds).
 
 > **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Tick, laufender Upkeep (Cr/Tick) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
 
@@ -1381,21 +1490,21 @@ Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Persona
 
 Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berater verbrauchen kein Supply.
 
-**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt (Designentscheidung Phase 3, noch offen). Aktuell: kein Piloten-pro-Flotte-Pflichtmodell.
+**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt (Designentscheidung Phase 3, noch offen). Aktuell: kein Raumfahrer-pro-Flotte-Pflichtmodell.
 
 ---
 
-### Kommandant: Kolonie vs. Flotte
+### Raumfahrer: Kolonie vs. Flotte
 
-Der Pilot / Kommandant ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann, um eine Flotte zu führen.
+Der Raumfahrer ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann, um eine Flotte zu führen.
 
 - **Kolonie-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
 - **Flotte-zugewiesen (Kommandant):** Generiert Navigation-AP direkt auf der Flotte; Kolonie-Slot ist leer bis zur Rückkehr.
-- **Rückkehr:** Beim Auflösen einer Flotte wird der Kommandant automatisch wieder der Kolonie zugewiesen (`colony_id` gesetzt, `fleet_id` = NULL, `is_commander` = false).
-- **Flottenverlust im Kampf:** Der Kommandant ist für 2–3 Ticks nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
-- **Einzelne Schiffe** brauchen keine eigenen Piloten. Nur die Flotte als Ganzes braucht einen Kommandanten.
+- **Rückkehr:** Beim Auflösen einer Flotte wird der Raumfahrer automatisch wieder der Kolonie zugewiesen (`colony_id` gesetzt, `fleet_id` = NULL, `is_commander` = false).
+- **Flottenverlust im Kampf:** Der Raumfahrer ist für 2–3 Ticks nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
+- **Einzelne Schiffe** brauchen keine eigenen Raumfahrer. Nur die Flotte als Ganzes braucht einen Kommandanten.
 
-> **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Pilot-Berater nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert. Dieser Flow ist für Phase 2 vorgesehen und blockiert die Vollständigkeit des Flottenkommando-Systems.
+> **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Raumfahrer nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert.
 
 ---
 
@@ -1419,6 +1528,20 @@ Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses T
 - `app/Services/Techtree/AbstractTechnologyService.php` — AP-Verbrauch beim Investieren
 - `app/Services/FleetService.php` — Navigation-AP-Check bei Order-Erstellung
 - Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_type, spend_ap)`
+
+### Berater-Burnout (Auswirkung auf AP)
+
+Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der AP-Pool des betroffenen Typs sinkt auf den **Grundwert (6 AP/Tick)**.
+
+**Beispiel:** Ein Senior-Analytiker (rank=2) liefert normalerweise 20 AP/Tick für `research`. Bei Burnout: nur noch 6 AP/Tick für `research`.
+
+**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Ticks — Richtwerte aus `config/game.php → advisors.burnout`).
+
+**Sichtbarkeit:** Die Berater-Übersicht zeigt einen "Pause"-Zustand mit Countdown bis zur Rückkehr. INNN-Ereignis informiert beim Einsetzen.
+
+**`active_ticks`-Reset:** Der Berater beginnt nach dem Burnout bei 0 aktiven Ticks — Burnout "entlastet" also auch zukünftig, weil die Wahrscheinlichkeit eines weiteren Burnouts wieder sinkt.
+
+**Kein manueller Eingriff nötig:** Der Berater kehrt automatisch auf den Slot zurück wenn `current_tick > unavailable_until_tick`. Der Slot bleibt "reserviert" — ein anderer Berater kann nicht eingestellt werden während der Slot im Erholungs-Zustand ist.
 
 ### Dev-Mode
 
@@ -1466,7 +1589,7 @@ vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffs
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
 
-Der Wert wird in **Tick-Schritt 8b** (nach Ressourcenproduktion) berechnet, da Vertrauen die Produktionswerte desselben Ticks noch nicht beeinflusst — es wirkt ab dem Folgetick.
+Der Wert wird in **Tick-Schritt 6b** (nach Ressourcenproduktion) berechnet, da Vertrauen die Produktionswerte desselben Ticks noch nicht beeinflusst — es wirkt ab dem Folgetick.
 
 > **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer vertrauensverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
 
@@ -1525,22 +1648,11 @@ Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen
 
 **Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis verbreitet ein Klima der Wachsamkeit, das die Stimmung leicht dämpft — analoges Signal zu den Korvetten.
 
-### Einflussfaktoren: Steuern
+### Einflussfaktoren: Koloniebeiträge (Platzhalter)
 
-Das Steuersystem ist in Phase 2 noch nicht implementiert. Der Platzhalter in der Formel ist `steuerfaktor = 0`.
+> **TODO Design (Evaluation):** Der Begriff "Steuern" passt nicht zur kleinen, persönlichen Kolonie — kein Imperium, kein Gouverneur. Treffendere Begriffe wären z.B. "Koloniebeiträge", "Abgaben" oder "Nexus-Quote". Das zugrundeliegende System (prozentualer Abzug → Vertrauensmalus) muss ebenfalls neu durchdacht werden, bevor es implementiert wird.
 
-Vorgesehene Mechanik (Phase 3):
-
-```
-steuerfaktor = -floor(steuersatz / 10)
-```
-
-Steuersatz 0–20%: Faktor 0 (kein Malus)
-Steuersatz 30%: Faktor -3
-Steuersatz 50%: Faktor -5
-Steuersatz 100%: Faktor -10
-
-> ⚠️ BALANCE CONCERN: Steuern als Vertrauenssenke bedeuten, dass hohe Einnahmen immer mit Vertrauensverlust erkauft werden. Das ist gewollt, aber der konkrete Faktor muss mit dem Produktionssystem zusammen kalibriert werden.
+Das System ist noch nicht implementiert. Der Platzhalter in der Formel ist `steuerfaktor = 0`.
 
 ### Einflussfaktoren: Ereignisse (Events)
 
@@ -1639,13 +1751,13 @@ Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separa
 
 ### Tick-Integration
 
-Vertrauen wird als neuer **Tick-Schritt 8b** nach der Ressourcenproduktion berechnet:
+Vertrauen wird als neuer **Tick-Schritt 6b** nach der Ressourcenproduktion berechnet:
 
 | Schritt | Beschreibung |
 |---------|-------------|
-| 8 | Resource Generation — Rohstoffproduktion (mit altem Vertrauen-Multiplikator) |
-| **8b** | **Vertrauen Calculation** — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren |
-| 9 | Advisor Ticks |
+| 6 | Resource Generation — Rohstoffproduktion (mit altem Vertrauen-Multiplikator) |
+| **6b** | **Vertrauen Calculation** — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren |
+| 7 | Advisor Ticks |
 
 Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Vertrauenswert von Tick N-1. Der neue Vertrauenswert gilt erst ab Tick N+1. Das verhindert zirkuläre Abhängigkeiten.
 
@@ -1653,17 +1765,16 @@ Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Vertrauensw
 
 1. `config/game.php` — `vertrauen`-Block hinzufügen (alle Werte aus obiger Tabelle)
 2. `app/Services/VertrauenService.php` — Service mit Methode `calculate(int $colonyId): int`
-3. `app/Services/ResourceService.php` (oder TickService) — `VertrauenService::calculate()` in Schritt 8b aufrufen und `colony_resources` (res_id=12) schreiben
+3. `app/Services/ResourceService.php` (oder TickService) — `VertrauenService::calculate()` in Schritt 6b aufrufen und `colony_resources` (res_id=12) schreiben
 4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `vertrauen_multiplier` erweitern
 5. Produktionslogik (`config/game.php → production`) — Vertrauen-Multiplikator anwenden
 6. UI: Vertrauen-Anzeige in der Ressourcenleiste (existiert als resource_id=12 bereits)
 
-### Abgrenzung zu Phase 3
+### Mögliche Erweiterungen (nach Playtest)
 
-Das beschriebene System ist eine bewusst einfache Phase-2-Mechanik. In Phase 3 (Neukonzeption / Solo-Highscore) kann Vertrauen weiterentwickelt werden zu:
-- Bevölkerungszufriedenheit mit eigenem Bevölkerungswert
-- Revolutionsrisiko bei anhaltender Krise
-- Fraktions-spezifische Vertrauensmodifikatoren
+Das beschriebene System ist bewusst einfach gehalten. Nach einem ersten Playtest kann Vertrauen weiterentwickelt werden zu:
+- Revolutionsrisiko bei anhaltender Krise (harter Fail-State-Auslöser)
+- Ereignis-Kaskaden bei extremen Vertrauenswerten (z.B. Desertion, Sabotage)
 
 Diese Erweiterungen erfordern kein Schema-Refactoring, da der Grundwert (-100 bis +100) in `colony_resources` stabil bleibt.
 
@@ -1722,7 +1833,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 
 ### Aufgabenpool
 
-10 Aufgabentypen. Alle Aufgaben sind ohne Militär erfullt werden (Kampf bleibt optional oder einer von mehreren Wegen). Jede Aufgabe passt zu einer der vorhandenen Spielmechaniken.
+11 Aufgabentypen (Pool). Pro Run werden 3 gezogen — mehr Varianz reduziert Wiederholungsgefühl. Alle Aufgaben können ohne Militär erfüllt werden (Kampf bleibt optional). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
 
 | # | Aufgabe | Kernmechanik | Spielstil |
 |---|---------|-------------|-----------|
@@ -1730,16 +1841,19 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
 | 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
 | 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
-| 5 | **Aufklärer** | 3 verschiedene, bisher unbekannte Systeme mit einer Flotte angesteuert | Exploration |
-| 6 | **Kontaktnetz** | Gleichzeitig aktive Handelsrouten mit 3 verschiedenen KI-Fraktionen | Diplomatie |
-| 7 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
-| 8 | **Kreditimperium** | Credits-Bestand X Ticks uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
-| 9 | **Wissenschaftsnetzwerk** | Wissenschaftler-AP an mindestens 2 verschiedene KI-Kolonien ausgeliehen (je >= 10 Ticks) | Diplomatie |
-| 10 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Ticks (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
+| 5 | **Expeditionsstatus** | Alle Tiles der Exploration Zone vollständig aufgedeckt (gesamter äußerer Bereich, nicht nur Ring 1–2) | Exploration/Navigation |
+| 6 | **Bewährungsprobe** | Mindestens 3 Encounters erfolgreich abgewehrt (`encounter_won`) mit eigener Flotte | Navigation/Konflikt |
+| 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |
+| 8 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
+| 9 | **Kreditimperium** | Credits-Bestand X Ticks uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
+| 10 | **Expertenstab** | Alle 5 Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher | Aufbau/Personal |
+| 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Ticks (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
 
-> ⚠️ BALANCE CONCERN: Aufgaben 1 + 8 (beides Wirtschaft) sind strukturell leicht zusammen losbar. Aufgaben-Sets mussen so gezogen werden, dass sie mindestens 2 verschiedene Spielstilkategorien abdecken. Eine Kombo-Blacklist ist vor der Implementierung zu definieren.
+> ⚠️ BALANCE CONCERN: Aufgaben 1, 7, 9 (alle Wirtschaft) dürfen nicht alle drei gleichzeitig gezogen werden. Aufgaben-Sets müssen mindestens 2 verschiedene Spielstilkategorien abdecken — eine Kombo-Blacklist ist vor der Implementierung zu definieren.
 
-> ⚠️ BALANCE CONCERN: Aufgabe 10 (Effizienz) kollidiert strukturell mit gleichzeitigem massivem Bauen (Aufgaben 2, 7) — "AP-effizient" und "viel bauen" sind Gegensätze. Aufgabe 10 sollte nie zusammen mit Aufgabe 2 oder 7 gezogen werden.
+> ⚠️ BALANCE CONCERN: Aufgabe 6 (Bewährungsprobe) ist teilweise RNG-abhängig — Encounters müssen auftreten. Sicherstellen dass Encounter-Frequenz im Solo-Run hoch genug ist, oder einen alternativen Erfüllungsweg (aktiv `attack`-Order) ermöglichen.
+
+> ⚠️ BALANCE CONCERN: Aufgabe 11 (Effizienz) kollidiert strukturell mit massivem Bauen (Aufgaben 2, 8) — "AP-effizient" und "viel bauen" sind Gegensätze. Aufgabe 11 sollte nie zusammen mit Aufgabe 2 oder 8 gezogen werden.
 
 ---
 
@@ -1859,8 +1973,8 @@ Komponenten:
 
 - Neue Tabellen: `run_objectives` (aktive Aufgaben des aktuellen Runs), `run_state` (Phase, Tick-Start, Tick-Limit, Fail-State-Tracking)
 - `config/game.php → run` — Tick-Limit, Tick-Dauer, Spieleranzahl, PbM-Modus, Nexus-Trigger-Tabelle, Score-Formel-Gewichte
-- Aufgaben-Fortschritt wird bei jedem Tick-Schritt geprüft (nach Schritt 9 "Advisor Ticks")
-- Phase-1-Check nach Tick-Schritt 4 (Gebäude-Decay) sinnvoll, da Gebäude-Level dann aktuell ist
+- Aufgaben-Fortschritt wird bei jedem Tick-Schritt geprüft (nach Schritt 7 "Advisor Ticks")
+- Phase-1-Check nach Tick-Schritt 4 (Building Decay) sinnvoll, da Gebäude-Level dann aktuell ist
 - Nexus-Interventionen: GameTick prüft nach Aufgaben-Fortschritt die Nexus-Trigger-Tabelle und erzeugt ggf. INNN-Events mit `sender = 'nexus'`
 
 ---
@@ -2033,7 +2147,7 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 **Aktion 4 — Exploration: erstes Tile erkunden (Colony-Screen)**
 
 - Warum: Regolith-Vorräte sind sichtbar nach Exploration; Event-Tiles können etwas enthalten
-- Kosten: 1 Navigation-AP (Grundwert von 6 — kein Pilot-Berater nötig)
+- Kosten: 1 Navigation-AP (Grundwert von 6 — kein Raumfahrer nötig)
 - Ergebnis: Ein Exploration-Zone-Tile wird aufgedeckt. Typ sichtbar (Regolith/Terrain/Event).
 - Feedback-Loop klar: Tile-Animation beim Aufdecken (Fog of War lüftet)
 

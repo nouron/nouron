@@ -17,9 +17,7 @@
  */
 return [
 
-    // credits = one-time hire cost (Rang 1 = Junior).
-    // All 5 at once costs 2150 Cr — forces real day-1 decisions with 3000 Cr start.
-    // Rang 2 (Senior) and Rang 3 (Experte) hire costs: see GDD §12 (~150 / ~400 Cr).
+    // credits = one-time hire cost (Rang 1 = Junior). Type-specific — see GDD §13.
 
     'engineer' => [
         'id'             => 35,
