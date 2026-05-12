@@ -198,6 +198,32 @@ return [
         5 => 5,  // CC Lv5 required to reach knowledge Lv5
     ],
 
+    // Run structure — one run = one expedition with a defined start, goal and end (GDD §15).
+    // These values are not yet read by any service (run system not yet implemented).
+    'run' => [
+        'tick_limit'           => 100,    // total ticks per run (60–100, default 100)
+        'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
+        'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer
+        'playbymailmode'       => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
+
+        // Nexus intervention milestones (tick numbers, GDD §15 "Nexus-Eingriffe").
+        'nexus_milestones' => [
+            30  => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
+            50  => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning
+            85  => 'sanction',        // at tick 85: if 0 tasks done → advisor penalty + deadline shortened to 95
+            90  => 'final_warning',   // at tick 90: last warning if still 0 tasks done
+        ],
+
+        // Score formula weights (GDD §15 "Highscore").
+        // score = (tasks_done × w_task) + (tick_limit - done_at_tick) × w_tick + (credits_remaining / w_credits) + (trust_at_end × w_trust)
+        'score_weights' => [
+            'task_completed'    => 1000,  // per completed objective
+            'ticks_saved'       =>   10,  // per tick below tick_limit when last objective was met
+            'credits_divisor'   =>   10,  // remaining credits divided by this value
+            'trust_multiplier'  =>    5,  // trust value at run end × this value
+        ],
+    ],
+
     'onboarding' => [
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,
