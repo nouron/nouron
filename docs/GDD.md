@@ -906,10 +906,12 @@ Stärke einer Flotte = Σ(Schiffanzahl × Stärkewert des Typs)
 | Schiff | ship_id | Stärkewert |
 |--------|---------|------------|
 | Sonde | 85 | 0 |
-| Korvette | 37 | 1 |
+| Korvette | 37 | 3 |
 | Frachter | 47 | 0 |
 
 Schiffe mit Stärkewert 0 sind **nicht-kampffähig** und werden im Zwischenfall nicht zerstört. Sonden können jedoch durch nahe Konfrontationen verloren gehen.
+
+> Der absolute Stärkewert der Korvette ist erst relevant wenn NPC-Schiffe eigene Stärkewerte erhalten (z.B. Piraten-Sonde = 1, schwerer Wächter = 5). Bis dahin bestimmt der Wert nur die Verlustquote gegen NPC-Begegnungen.
 
 ### Verlustberechnung
 
@@ -1271,11 +1273,11 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 
 | AP-Typ (intern) | Beraterbezeichnung | Verwendung |
 |-----------------|-------------------|-----------|
-| `industry` | Ingenieur | Gebäude ausbauen, reparieren, Schiffsbau |
-| `science` | Wissenschaftler | Forschungen vorantreiben, Wissenstransfer |
-| `navigation` | Pilot / Kommandant | Flottenbewegung, Fleet-Trade-Orders |
-| `economy` | Händler | Handelsangebote, Fraktionskontakte, Handelsabkommen |
-| `strategy` | Stratege | Kampforders, Verteidigung, taktische Planung |
+| `construction` | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
+| `research` | Analytiker | Kenntnisse vorantreiben, Wissensarbeit |
+| `navigation` | Raumfahrer / Kommandant | Flottenbewegung, Fleet-Trade-Orders |
+| `economy` | Konsul | Handelsangebote, Marktgeschäfte |
+| `strategy` | Stratege | Schutzorders, Verteidigung, taktische Planung |
 
 **Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
 
@@ -1289,10 +1291,10 @@ Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren 
 
 | CC-Level | Freigeschalteter Slot | Beratertyp |
 |----------|-----------------------|-----------|
-| 1 | Slot 1 | Ingenieur |
-| 2 | Slot 2 | Wissenschaftler |
-| 3 | Slot 3 | Pilot / Kommandant |
-| 4 | Slot 4 | Händler |
+| 1 | Slot 1 | Baumeister |
+| 2 | Slot 2 | Analytiker |
+| 3 | Slot 3 | Raumfahrer / Kommandant |
+| 4 | Slot 4 | Konsul |
 | 5+ | Slot 5 | Stratege |
 
 Wer alle 5 Berater will, braucht mindestens CC Lv5. Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt. Pro Typ und pro Kolonie kann immer nur genau **ein** Berater den Slot belegen — ein zweiter Ingenieur auf derselben Kolonie ist nicht möglich.
@@ -1307,7 +1309,7 @@ Jeder Berater ist ein eigener Datensatz. Die Tabelle hat folgendes Schema:
 advisors
 ├── id                      ← eindeutige ID des Beraters
 ├── user_id                 ← Eigentümer (immer gesetzt)
-├── personell_type          ← 'industry' | 'science' | 'navigation' | 'economy' | 'strategy'
+├── personell_type          ← 'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
 ├── fleet_id                ← nullable: auf dieser Flotte
 ├── is_commander            ← boolean: führt die Flotte als Kommandant (nur navigation-Typ)
@@ -1337,11 +1339,11 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 
 | Beratertyp | AP-Pool (intern) | Thematische Rolle |
 |------------|-----------------|------------------|
-| Ingenieur | `industry` | Infrastruktur, Gebäude, Schiffsbau |
-| Wissenschaftler | `science` | Forschung, Technologie, Wissenstransfer |
-| Pilot / Kommandant | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
-| Händler | `economy` | Wirtschaftsbeziehungen, Fraktionskontakte, Markt |
-| Stratege | `strategy` | Kampf, Verteidigung, taktische Befehle |
+| Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
+| Analytiker | `research` | Kenntnisse, Wissensarbeit |
+| Raumfahrer / Kommandant | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
+| Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
+| Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
 Der Typ "Pilot / Kommandant" ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
 

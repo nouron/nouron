@@ -8,60 +8,15 @@
 - Frontend-Migration: bestehende Screens nutzen noch jQuery + Bootstrap 5 (werden schrittweise auf Alpine.js + PicoCSS migriert — kein Mix in neuen Screens)
 - Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3b (UI) als nächstes
 
-## Aktueller Stand (Stand: März 2026)
+## Aktueller Stand (Stand: Mai 2026)
 
-**Phase 1: ZF2 → Laminas Migration — abgeschlossen**
+Laravel-Migration abgeschlossen. Spielkonzept auf **Singleplayer Roguelike Mini-4X** umgestellt (FTL/Catan-Stil). Design-Sprints DS-1–DS-4 abgeschlossen. Phase 3 (UI-Redesign + neue Screens) aktiv.
 
-Folgende Arbeiten wurden bereits erledigt:
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign (Phasen-Layout), Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler.
 
-### ZF2 → Laminas Migration
-- Alle Namespaces von `Zend\*` auf `Laminas\*` migriert
-- `composer.json` auf Laminas-Pakete umgestellt
-- PHP-8-Kompatibilität hergestellt (veraltete Konstrukte bereinigt)
-- Service-Locator-Shim in `IngameController` ergänzt (Laminas hat `getServiceLocator()` aus Controllern entfernt)
-- `Core\Model\ResultSet::current()` für Laminas-Kompatibilität angepasst
-- `AbstractTable::save()` überarbeitet (Hydrator-Extraktion, skalare Filterung)
-- Routing, Autoloading und Modul-Konfiguration auf Laminas-Standard gebracht
+**Laufend (Phase 3):** UI-Migration von jQuery/Bootstrap auf Alpine.js + PicoCSS. Berater-Screen (Karussell), GDD-Cleanup, Onboarding.
 
-### Bootstrap 3 → Bootstrap 5 Migration
-- Umstieg auf Bootstrap 5 per CDN (inkl. Bootstrap Icons, jQuery 3)
-- Alle Glyphicons durch Bootstrap Icons (`bi bi-*`) ersetzt (~50 Stellen)
-- Alle `data-toggle/data-dismiss/data-target` → `data-bs-*` Attribute aktualisiert
-- Accordion, Modal, Pagination, Navbar auf BS5-Struktur umgebaut
-- jQuery-Post-Processing im Layout für Laminas Navigation-Helper (fügt `nav-link`-Klassen hinzu)
-- Ressourcenleiste von `row`-Layout auf `d-flex` umgestellt
-- `form-group` per CSS wiederhergestellt (in BS5 entfernt), Inputs per jQuery mit `form-control` versehen
-
-### INNN (Nachrichten & Ereignisse)
-- `MessageViewFactory` korrigiert (falsche Entity-Klasse wurde eingebunden)
-- `MessageService` WHERE-Klauseln auf korrekte camelCase-Spaltennamen korrigiert
-- Tippfehler in Controller-Methoden behoben
-- Alle Nachrichtenaktionen gegen null-userId aus Session abgesichert
-- Ereignisse-View implementiert (war leeres Template)
-- Leere-Liste-Hinweise in allen INNN-Tabs ergänzt
-
-### Techtree
-- SVG-Overlay blockierte alle Klicks auf Tech-Buttons → `pointer-events: none` ergänzt
-- AJAX-Modal-Loading implementiert: Klick auf Tech öffnet Popup mit Serverinhalt
-- Klick-Handler für Aktions-Buttons (ausbauen, reparieren, abreißen, AP investieren)
-- Hover-Effekte für AP- und Status-Bars auf BS5-Klassennamen aktualisiert
-
-### Fleet
-- `fleets.js` für neue Config-UI neu geschrieben (click-to-select, Mengenbuttons)
-- 500-Fehler in `getFleetTechnologies` behoben (toter ZF2-Code entfernt)
-
-**Phase 1b (nächster Schritt): Laminas → Laravel Migration**
-Laravel ist deutlich populärer als Laminas, hat eine größere Community und senkt die Einstiegshürde für potenzielle Mitwirkende. Ziel ist eine saubere, schrittweise Migration (kein Big Bang):
-- Modul für Modul migrieren, Test-Suite muss vor und nach jedem Schritt grün sein
-- Eloquent als ORM-Ersatz für TableGateway/Hydrator-Pattern
-- Laravel Routing, Controller und Service Provider statt Laminas-Äquivalente
-- Blade-Templates statt `.phtml`-Dateien
-
-**Phase 2 (nach Laravel-Migration): Spielablauf stabilisieren**
-- Tick-System, Aktionspunkte, Handelsrouten, Flottenoperationen testen und ggf. reparieren
-
-**Phase 3 (später): Neukonzeption — noch zu definieren**
-Wird nach Abschluss von Phase 2 neu definiert.
+**Spielkonzept:** Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Gefahren sind klein und lokal (ein Schiff begegnet dem Unbekannten, ein Ereignis trifft die Siedlung). Runs haben ein konkretes Ziel und ein klares Ende.
 
 ## Wichtige Korrekturen / Klarstellungen
 
@@ -89,112 +44,97 @@ Nachrichten: innn_messages, innn_events, innn_news, innn_message_types
 Stammdaten: buildings, researches, ships, personell, resources + jeweilige _costs-Tabellen
 ```
 
-### Ressourcen (9 Stück)
+### Ressourcen (6 aktiv)
 
-| ID | Name | Kürzel | Handelbar | Startmenge |
-|----|------|--------|-----------|------------|
-| 1 | res_credits | Cr | Nein | 3000 |
-| 2 | res_supply | Sup | Nein | 200 |
-| 3 | res_water | W | Ja | 500 |
-| 4 | res_ferum | E | Ja | 500 |
-| 5 | res_silicates | S | Ja | 500 |
-| 6 | res_ena | ENrg | Ja | 100 |
-| 8 | res_lho | LNrg | Ja | 100 |
-| 10 | res_aku | ANrg | Ja | 100 |
-| 12 | res_moral | M | Nein | 0 |
+| ID | Key | Name (DE) | Ebene | Handelbar | Startwert |
+|----|-----|-----------|-------|-----------|-----------|
+| 1 | credits | Credits | User | Nein | 3000 |
+| 2 | supply | Versorgung | User | Nein | 10 (CC Lv1) |
+| 3 | regolith | Regolith | Kolonie | Ja | 200 |
+| 4 | compounds | Werkstoffe | Kolonie | Ja | 0 |
+| 5 | organics | Organika | Kolonie | Ja | 0 |
+| 12 | trust | Vertrauen | Kolonie | Nein | 0 |
 
-### Gebäude (25 Stück)
+### Gebäude (11 aktiv, CC-Level als Gate)
 
-Wichtige Gebäude mit Abhängigkeitskette:
-- `techs_commandCenter` (ID 25) — Basisgebäude, keine Voraussetzung, max Level 10
-- `techs_oremine` (27), `techs_silicatemine` (41), `techs_waterextractor` (42) — Rohstoffgebäude, brauchen CommandCenter Lv1
-- `techs_housingComplex` (28) — Wohnkomplex, braucht CC Lv3, max Level 200
-- `techs_sciencelab` (31) — Forschungslabor, braucht CC Lv4
-- `techs_tradecenter` (43) — Handelszentrum, braucht CC Lv5
-- `techs_civilianSpaceyard` (44) — Zivile Werft
-- `techs_militarySpaceyard` (68) — Militärwerft, braucht Zivile Werft Lv5
-- Diverse Zivilgebäude: temple, parc, hospital, stadium, casino, prison, museum, bar, etc.
-- `techs_bank` (70) — Bank
-- `techs_secretOps` (66) — Geheimdienst
+| Key | Name (DE) | CC-Lv | Phase |
+|-----|-----------|-------|-------|
+| `commandCenter` | Kommandozentrale | — | — |
+| `housingComplex` | Wohnhabitat | 1 | 1 |
+| `harvester` | Harvester | 1 | 1 |
+| `bioFacility` | Agrardom | 1 + Harvester | 1 |
+| `sciencelab` | Analytik-Labor | 2 | 2 |
+| `depot` | Lagerhalle | 2 | 2 |
+| `infirmary` | Krankenstation | 2 | 2 |
+| `bar` | Cantina | 2 | 2 |
+| `hangar` | Hangar | 3 | 3 |
+| `temple` | Religiöse Stätte | 4 | 4 |
+| `monument` | Kolonialdenkmal | 5 | 5 |
 
-### Forschungen (10 Stück)
+### Kenntnisse (7, alle via Analytik-Labor)
 
-biology, languages, mathematics, medicalScience, physics, chemistry, economicScience, diplomacy, politicalScience, military
+`construction`, `agronomy`, `health`, `cartography`, `geology`, `trade`, `defense`
 
-### Schiffe (6 Typen)
+### Schiffe (3 Typen)
 
-fighter1, frigate1, battlecruiser1, smallTransporter, mediumTransporter, largeTransporter
+| Key | Name | Supply | Stärkewert | Hangar nötig |
+|-----|------|--------|-----------|--------------|
+| `drone` | Sonde | 0 | 0 | Nein |
+| `corvette` | Korvette | 14 | 3 | Ja |
+| `freighter` | Frachter | 6 | 0 | Ja |
 
-### Personal (4 Typen)
+### Personal / Berater (5 Typen)
 
-engineer (industry), scientist (civil), pilot (military), trader (economy)
+| Key | Name (DE) | AP-Typ |
+|-----|-----------|--------|
+| `engineer` | Baumeister | `construction` |
+| `scientist` | Analytiker | `research` |
+| `pilot` | Raumfahrer | `navigation` |
+| `trader` | Konsul | `economy` |
+| `strategist` | Stratege | `strategy` |
 
-### Spielmechaniken (aus DB-Analyse)
+### Spielmechaniken
 
-- **Tick-basiert**: fleet_orders haben ein `tick`-Feld, Events referenzieren Ticks
-- **AP-System**: `locked_actionpoints` trackt AP-Verbrauch pro Tick/Kolonie/Personal
-- **Gebäude-Verfall**: `status_points` in colony_buildings (max_status_points definiert Obergrenze)
-- **Handelsrouten**: trade_resources/trade_researches mit Richtung (0=Kauf, 1=Verkauf), Preis, Menge, Restriktion
-- **Flottenbefehle**: Serialisierte PHP-Arrays in fleet_orders.data (z.B. Trade-Parameter)
-- **Beziehungssystem**: innn_message_types haben relationship_effect
-- **Fraktionen**: user.faction_id (Werte 6, 7 in Testdaten)
-- **Rassen**: user.race_id (Werte 1, 3 in Testdaten)
-- **Koordinatensystem**: x, y für Systeme und Systemobjekte (z.B. 6800,3000)
+- **Tick-basiert**: Solo = manuell ausgelöst; Multiplayer = alle bestätigen oder Timeout (24–48h)
+- **AP-System**: 5 unabhängige Pools (construction/research/navigation/economy/strategy), je 6 AP/Tick Grundwert
+- **Gebäude-Verfall**: `status_points` in `colony_buildings`; Level-Down bei SP ≤ 0
+- **Supply-Cap**: CC-Level + Wohnhabitate + Kenntnisse bestimmen max. Supply; Schiffe/Gebäude verbrauchen Supply
+- **Encounters**: `attack`-Orders lösen Zwischenfälle aus; Korvette (Stärke 3) vs. NPC-Schiffe
+- **Koordinatensystem**: 12×12-Grid pro System; Stern bei (6,6)
 
-## Architektur (Laminas MVC)
+## Architektur (Laravel)
 
-Tatsächliche Modulstruktur (11 Module):
 ```
-module/
-  Application/        -- Layout, Navigation, Basis-Routing
-  Core/               -- Abstrakte Basisklassen (AbstractTable, AbstractService, IngameController)
-  Colony/             -- Kolonie-Verwaltung
-  Fleet/              -- Flottenoperationen und -konfiguration
-  Galaxy/             -- Sternensysteme, Karte
-  INNN/               -- Nachrichten, Ereignisse, News
-  Map/                -- Karten-Hilfsfunktionen
-  Resources/          -- Ressourcen-Tracking und -Anzeige
-  Techtree/           -- Gebäude, Forschung, Schiffe, Personal
-  Trade/              -- Handelsrouten
-  User/               -- Benutzerprofil, Einstellungen
+app/
+  Http/Controllers/   -- Route Handler (Techtree, Colony, Fleet, INNN, ...)
+  Services/           -- Game Logic (TickService, MoralService, AdvisorService, ...)
+  Models/             -- Eloquent Models
+  Console/Commands/   -- game:tick, game:sync-techs
 config/
-  application.config.php   -- Modulliste und Ladereihenfolge
-  autoload/
-    global.php             -- DB-Adapter, Service-Factories, Tick-Config
-    lmcuser.global.php     -- Auth-Konfiguration
+  game.php            -- Spielparameter (tick, supply, combat, advisors, onboarding, ...)
+  buildings.php       -- Gebäude-Stammdaten (decay_rate, max_level, supply_cost, ...)
+  advisors.php        -- Berater-Stammdaten (ap_type, credits, rank_thresholds, ...)
+database/
+  migrations/         -- Schema-Migrationen
+  seeders/            -- TestSeeder (befüllt test.db aus testdata.sqlite.sql)
+data/sql/
+  testdata.sqlite.sql -- Testdaten (INSERT + UPDATE, wird von TestSeeder ausgeführt)
+resources/views/      -- Blade-Templates
 public/
-  index.php           -- Entry Point
-  js/                 -- techtree.js, fleets.js, galaxy.js, trade.js, ...
-data/
-  db/nouron.db        -- SQLite-Spieldatenbank
-vendor/               -- Composer Dependencies
-composer.json
-composer.lock
+  js/                 -- techtree-view.js, advisors.js, ...
+  css/                -- techtree-view.css, advisors.css, ...
 ```
 
-Schichtung pro Modul:
-```
-Controller → Service → Table (TableGateway) → Entity
-```
-Jede Klasse hat eine eigene Factory für Dependency Injection über den Laminas ServiceManager.
+Schichtung: `Controller → Service → Eloquent Model → SQLite`
 
-## Bekannte offene Punkte / noch nicht getestet
+## Technische Hinweise
 
-- Tick-System und Spielfortschritt (fleet_orders Verarbeitung)
-- Aktionspunkte-Vergabe und -Verbrauch im Techtree vollständig
-- Handelsrouten (Trade-Modul)
-- Flottenoperationen (Bewegung, Kampf)
-- Login/Registrierung (Auth-System)
-- Flash-Messenger in Formularen
-
-## Technische Hinweise (gesammelt aus Migration)
-
-- `getServiceLocator()` in Controllern: via Shim in `Core\Controller\IngameController` verfügbar
-- `getActive('user')` liefert userId aus Laminas Session-Container `activeIds`
-- DB-Spaltennamen im `v_innn_messages`-View sind camelCase (`isRead`, `isDeleted`, etc.)
-- `AbstractTable::fetchAll()` akzeptiert String- oder Array-WHERE-Klauseln
-- `setTerminal(true)` in TechnologyController rendert ohne Layout (für AJAX-Calls)
-- Bootstrap 5: Navigation-Helper braucht jQuery-Post-Processing für `nav-link`-Klassen
+- `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt der Config, nicht umgekehrt
+- Neue Screens: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap
+- Legacy-Screens: noch jQuery + Bootstrap 5 — werden schrittweise migriert, kein Mix in neuen Screens
+- `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
+- Techtree-Koordinaten sind phase-lokal (Zeile/Spalte innerhalb einer Phase), nicht global
+- Moral-Events: Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
 
 ## Vorhandene Dokumentation (im NOURON-Ordner)
 
