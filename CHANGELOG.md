@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-12
+
+- **GDD-Review vollständig abgearbeitet (chore/gdd-update-2)**: Alle 7 kritischen und 8 mittleren Punkte aus dem GDD-Review-Paket behoben. Korrekturen: CC-Expansion-Tabelle (6/3/3/2/1), Berater-AP-Werte (+4/+7/+12), typ-spezifische Einstellungskosten (300–600 Cr), Bar- und Infirmary-Decay-Rates. Neue Designdokumentation: Schiffs-Verschleiß- und Berater-Burnout-System (§7), Lagerhalle-Mechanik (Ressourcen-Cap), NPC-Encounter-Typen (§9), Nexus-Handelsschiff als INNN-Mechanik (§12), erweiterter Aufgabenpool §15 (11 Typen), run-Block in config/game.php. Begriffliche Bereinigung: "Pilot/Kommandant" → "Raumfahrer", veraltete Phase-Referenzen entfernt, Tick-Schritte neu nummeriert. Infirmary-Decay-Rate von 2.0 auf 0.67 korrigiert (Designentscheidung: Basisinfrastruktur, nicht Luxus).
+
 ## 2026-05-10
 
 - **Techtree Phase-Layout v2 (Game-Design-Review)**: Nach Game-Designer-Analyse wurden 5 Elemente zwischen Phasen verschoben. Cantina und Händler-Berater wandern von Phase 1 → Phase 2 (Cantina als Gate für den Händler ergibt nur in Phase 2 einen geschlossenen Feedback-Loop). Krankenstation und knowledge_health wandern von Phase 3 → Phase 2 (Wohlfahrt gehört zur Stabilisierungsphase, nicht zur Militärphase; GDD §4 sagt CC Lv2 als Gate). knowledge_geology wandert von Phase 2 → Phase 3 (tiefes Abbau-Wissen passt zur Exploration-Phase). Phase 1 bleibt damit schlanker und deterministischer: housingComplex, Harvester, Bio-Anlage, Baumeister. Phase 2 wird zur vollständigen Aufbau- und Wohlfahrtsphase. Hangar + Drohne bleiben in Phase 3 (CC Lv3 als Gate ist richtig — Exploration muss erarbeitet werden). Migration 000001 v2 mit korrekter Update-Reihenfolge zur Vermeidung von Unique-Constraint-Verletzungen. 3 neue Feature-Tests für infirmary/bar Phase 2 und geology Phase 3.
