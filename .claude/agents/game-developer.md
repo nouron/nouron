@@ -1,6 +1,6 @@
 ---
 name: game-developer
-description: Use proactively for implementing game mechanics, game loops, server-side game logic, combat systems, resource management, timers, and tick-based or real-time game events. Invoke when building or changing core gameplay systems.
+description: Use proactively for implementing game mechanics, game loops, server-side game logic, encounter systems, resource management, timers, and tick-based or real-time game events. Invoke when building or changing core gameplay systems.
 tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
@@ -36,7 +36,7 @@ You implement server-side game mechanics for Nouron: a tick-based, single-player
 - **Moral system**: `app/Services/MoralService` — formula + multiplier bands from `config/game.php → moral`.
 - **Supply cap**: `config/game.php → supply.*`. Formula: CC level × cap_commandcenter + housing × cap_housingcomplex + knowledge cap.
 - **Decay**: fractional `status_points`, per-entity `decay_rate` in `buildings` / `ships` master tables.
-- **Resources**: 9 types (IDs 1–12, non-consecutive). Credits (1) + Supply (2) are user-level; others colony-level.
+- **Resources**: 6 active types (IDs 1–5 + 12, non-consecutive). Credits (1) + Supply (2) are user-level; Regolith (3), Compounds (4), Organics (5), Trust (12) are colony-level.
 
 ## Localization
 - All player-visible text (event messages, game notifications, status labels) belongs in `lang/de/<area>.php` — never hardcoded in PHP logic.
@@ -57,6 +57,15 @@ When invoked, first check:
 - All game state changes must be atomic (DB transactions)
 - All balance values in `config/game.php` — never hardcode numbers in logic
 - Full PHP 8.2 type signatures on every public method
+
+### DB Transaction Pattern
+```php
+DB::transaction(function () use ($colony, $amount): void {
+    $colony->decrement('resource_regolith', $amount);
+    ColonyBuilding::where('colony_id', $colony->id)->update(['status_points' => ...]);
+});
+```
+Throw domain exceptions inside the closure — `DB::transaction()` auto-rolls back on any exception.
 
 ## Output Format
 When implementing a mechanic, deliver:

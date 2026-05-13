@@ -13,7 +13,7 @@ and encyclopedia entries. Your writing defines the atmosphere and setting.
 ## Tone & Setting
 - **Universe**: Far future, a small colony fights to survive on a remote planet — not a rising empire
 - **Tone**: Sober and grounded. Not grimdark, not utopian — the everyday tension of keeping a small settlement alive
-- **Inspirations**: Reunion (colony feel, cantina life), FTL (small encounters, knapp resources), Catan (every resource counts)
+- **Inspirations**: Reunion (colony feel, cantina life), FTL (small encounters, scarce resources), Catan (every resource counts)
 - **Player role**: Kolonie-Direktor — responsible for a few hundred colonists, not a fleet commander
 - **Language**: UI texts in German (primary), English for internal keys and code
 
@@ -59,6 +59,7 @@ All player-facing text lives in `lang/de/<area>.php`. Complete list:
 | `advisors.php` | Advisor type names and descriptions |
 | `moral.php` | Moral event labels |
 | `techs.php` | Generic tech labels |
+| `colony.php` | Colony screen labels, tile actions, zone status |
 
 New game entities always get entries in the matching file. New feature areas get a new file.
 

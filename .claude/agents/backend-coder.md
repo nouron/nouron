@@ -40,9 +40,10 @@ When invoked, first check:
 ## Responsibilities
 - Implement controllers, services, and middleware
 - Build routes and request validation
-- Write and maintain database migrations and seeders
 - Build endpoints consumed by the frontend (redirect+flash for forms, JSON for AJAX)
 - Manage dependency injection and config handling
+
+Schema changes and migrations belong to **db-migration-agent** — if a controller or service needs a new column, flag it and hand off.
 
 ## Localization
 - All user-facing strings (flash messages, validation error messages, UI labels returned in JSON) must use `__('file.key')` — never hardcoded German prose in controller or service code.
@@ -71,5 +72,4 @@ When invoked, first check:
 - CSRF protection on every state-changing endpoint (Laravel handles via `web` middleware)
 
 ## Output Format
-Deliver complete, runnable code files. Include a brief comment at the top of
-each new file explaining its purpose and how it fits into the architecture.
+Deliver complete, runnable code files. Only add a comment when the WHY is non-obvious (a hidden constraint, a workaround, a subtle invariant) — never to explain what the code does.

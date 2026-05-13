@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-13
+
+- **Neue Gebäude im Design (feat/new-buildings-design, PR #104)**: Drei neue Gebäude als Design-Entscheidungen ins GDD aufgenommen. Sicherheits-Hub (CC Lv2, 1 Instanz): `defend`-Order günstiger (1 statt 2 Nav-AP) + Level-Down-Recycling. Uplink-Station (CC Lv2–5, Lv1–3, ersetzt frühere Relais-Station- und Sendezentrum-Idee): einheitliches Kommunikationsgebäude, das aktive Nexus-Anfragen gateted (Lv1), Exploration-Bonus und Händler-Frequenz verbessert (Lv2) und eine Run-Abschluss-Aktion ermöglicht (Lv3). Handelsposten (CC Lv4, 1 Instanz): Konsul-AP-Effizienz + bessere Händler-Konditionen. Wartungs-Depot verworfen (globale Decay-Aura bricht Entropie als USP). Config-Stubs (provisional) in `config/buildings.php` ergänzt. Tier-Gate-Tabelle §11.2 aktualisiert.
+- **Agent-Definitionen überarbeitet**: backend-coder (Migration-Scope an db-migration-agent abgegrenzt, Kommentar-Policy angepasst), content-writer (`colony.php` als neues Lang-File ergänzt), game-designer (ADR-Scope geklärt), game-developer (Ressourcen-Anzahl korrekt auf 6, DB-Transaction-Pattern ergänzt). Neuer Agent: git-expert.
+
 ## 2026-05-12
 
 - **GDD-Review vollständig abgearbeitet (chore/gdd-update-2)**: Alle 7 kritischen und 8 mittleren Punkte aus dem GDD-Review-Paket behoben. Korrekturen: CC-Expansion-Tabelle (6/3/3/2/1), Berater-AP-Werte (+4/+7/+12), typ-spezifische Einstellungskosten (300–600 Cr), Bar- und Infirmary-Decay-Rates. Neue Designdokumentation: Schiffs-Verschleiß- und Berater-Burnout-System (§7), Lagerhalle-Mechanik (Ressourcen-Cap), NPC-Encounter-Typen (§9), Nexus-Handelsschiff als INNN-Mechanik (§12), erweiterter Aufgabenpool §15 (11 Typen), run-Block in config/game.php. Begriffliche Bereinigung: "Pilot/Kommandant" → "Raumfahrer", veraltete Phase-Referenzen entfernt, Tick-Schritte neu nummeriert. Infirmary-Decay-Rate von 2.0 auf 0.67 korrigiert (Designentscheidung: Basisinfrastruktur, nicht Luxus).
