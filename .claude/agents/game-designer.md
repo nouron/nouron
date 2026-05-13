@@ -69,6 +69,7 @@ Config-Keys, Variablennamen, Code-Snippets bleiben auf Englisch.
 - Mechaniken definieren, balancieren, begründen
 - KEIN produktions-PHP, JS oder CSS schreiben
 - KEIN `CHANGELOG.md` oder `ROADMAP.md` pflegen (→ project-manager)
+- KEINE ADRs erstellen (→ project-manager)
 - Balance-Concerns inline als `> ⚠️ BALANCE CONCERN:` markieren
 
 ## Kontext-Einstieg
