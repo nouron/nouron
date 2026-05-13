@@ -262,7 +262,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 ### Gebäude (Phase 3 — vollständige Liste)
 
-11 aktive Gebäude (Stand Phase 3), weitere in Planung:
+11 aktive Gebäude + 3 im Design (Stand Phase 3b):
 
 | ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
 |----|------------|-----------|-----------|-----------|---------------|
@@ -272,11 +272,16 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
-| 44 | hangar | Hangar | Hangar | — | CC Lv3 |
-| 46 | hospital | Krankenstation | Medical Station | — | CC Lv2 |
+| 46 | infirmary | Krankenstation | Medical Station | — | CC Lv2 |
 | 52 | bar | Cantina | Cantina | — | CC Lv2 |
-| 50 | monument | Kolonialdenkmal | Colonial Monument | — | — |
-| 32 | temple | Religiöse Stätte | Sacred Site | — | — |
+| 44 | hangar | Hangar | Hangar | — | CC Lv3 |
+| 32 | temple | Religiöse Stätte | Sacred Site | — | CC Lv4 |
+| 50 | monument | Kolonialdenkmal | Colonial Monument | — | CC Lv5 |
+| — | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv2 ¹ |
+| — | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 ¹ |
+| — | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 ¹ |
+
+¹ Geplant — noch nicht implementiert; DB-ID noch nicht vergeben.
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
@@ -312,6 +317,50 @@ resource_cap = base_cap + (depot_level × cap_per_level)
 | `cap_per_level` | +200 je Depot-Level | nach Playtest kalibrieren |
 
 > **TODO Balance:** Konkrete Zahlen (`base_cap`, `cap_per_level`) nach erstem Playtest festlegen und in `config/buildings.php → depot` ergänzen. Das Ressourcen-Cap-System muss bei Implementierung im ProductionService berücksichtigt werden.
+
+---
+
+### Sicherheits-Hub (securityHub) — Mechanik ¹
+
+Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv2). Er bietet zwei unabhängige Effekte:
+
+**Passiv — günstigere Verteidigung:**
+Die `defend`-Order kostet 1 Nav-AP statt 2. Verteidigung wird attraktiver ohne den Angriff zu verbilligen (GDD §1.1 Prinzip: Militär kostet mehr als zivil bleibt gewahrt — Angriff kostet weiterhin 3).
+
+**Passiv — Level-Down-Recycling:**
+Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch einen kleinen Ressourcenanteil zurück (handelbare Ressourcen: Regolith, Werkstoffe, Organika). Konkrete Prozentzahl nach Playtest festlegen; die Rückgabe muss deutlich unter dem Reparaturwert liegen damit kein Anreiz entsteht, Verfall absichtlich zu provozieren.
+
+> **TODO Balance:** Recycling-Prozentsatz und genaue Baukosten nach erstem Playtest kalibrieren. Vorläufig: 200 Rg + 200 Co, Supply 8, Decay 0.67.
+
+---
+
+### Uplink-Station (uplinkStation) — Mechanik ¹
+
+Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Handelsschiff anfordern, Verwaltungsanfragen). Eingehende INNN-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
+
+| Level | CC-Voraussetzung | Freischaltet / Effekt |
+|-------|-----------------|----------------------|
+| 1 | CC Lv2 | Aktive Nexus-Anfragen (Handelsschiff, Verwaltung) |
+| 2 | CC Lv3 | Tiefenscan dauert 1 Tick weniger; Reisender Händler erscheint häufiger |
+| 3 | CC Lv5 | Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
+
+**Baukosten Lv1:** Ausschließlich Regolith + Credits — keine Werkstoffe, um einen Zirkelschluss zu vermeiden (Werkstoffe über Nexus anfordern setzt das Gebäude voraus).
+
+> **TODO Balance:** Genaue Tiefenscan-Basiskosten und Händler-Erscheinungsrate müssen vor Finalisierung der Lv2-Effekte festgelegt werden. Meta-Bonus für nächsten Run (Lv3) erst konkretisieren wenn Run-Abschluss-Mechanik vollständig ausgearbeitet ist (§15 N4). Vorläufig: 300 Rg + Credits für Lv1, Lv2+ auch Werkstoffe; Supply 6, Decay 0.67.
+
+---
+
+### Handelsposten (tradingPost) — Mechanik ¹
+
+Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
+
+**Passiv — Konsul-Effizienz:**
+Trade-Orders des Konsuls kosten 1 Economy-AP weniger (Minimum 0). Nur relevant wenn ein Konsul aktiv ist.
+
+**Passiv — Händlerkonditionen:**
+Der Reisende Händler bietet bei Anwesenheit eines Handelspostens bessere Preiskonditionen (+10–15 % Handelswert). Konkreter Wert nach Playtest kalibrieren.
+
+> **TODO Balance:** Genaue Baukosten, Decay und Supply nach erstem Playtest festlegen. Vorläufig: 400 Cr + 200 Rg, Supply 6, Decay 0.67. Handelswert-Bonus muss mit dem Konsul-Rang-System abgestimmt werden (kein Stack-Effekt wenn Konsul Experte + Handelsposten).
 
 ---
 
@@ -1142,10 +1191,15 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
 | `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert |
-| `temple` | Tempel | CC Lv 4 | supply-limitiert |
-| `monument` | Denkmal | CC Lv 5 | supply-limitiert |
+| `securityHub` | Sicherheits-Hub | CC Lv 2 | max. 1 Instanz ¹ |
+| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 ¹ |
+| `temple` | Religiöse Stätte | CC Lv 4 | supply-limitiert |
+| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz ¹ |
+| `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
 
-Die 11 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Wohlfahrt (Bar, Krankenstation, Tempel, Denkmal).
+¹ Geplant — noch nicht implementiert.
+
+Die 14 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
 #### Kenntnisse
 
@@ -1199,10 +1253,10 @@ Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. 
 | CC-Level | Freischaltet |
 |---|---|
 | 1 | Wohnhabitat, Harvester |
-| 2 | Analytik-Labor, Depot, Krankenstation, Cantina |
-| 3 | Hangar |
-| 4 | Tempel, Berater-Spezialfähigkeit |
-| 5 | Denkmal, zweiter Nexus-Außenposten-Slot |
+| 2 | Analytik-Labor, Depot, Krankenstation, Cantina, Sicherheits-Hub, Uplink-Station (Lv1) |
+| 3 | Hangar; Uplink-Station Lv2 freischaltbar |
+| 4 | Religiöse Stätte, Handelsposten |
+| 5 | Denkmal; Uplink-Station Lv3 freischaltbar |
 
 **Regel 2 — Funktionale Abhängigkeiten**
 Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude voraus:
