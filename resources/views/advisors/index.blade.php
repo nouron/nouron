@@ -73,18 +73,18 @@
                             </template>
                         </div>
 
-                        {{-- Name header --}}
-                        <div class="advisor-name-header">
+                        {{-- Info panel: name + stats in bottom section --}}
+                        <div class="advisor-info">
+
                             <div class="advisor-name-row">
                                 <span class="advisor-name" x-text="slot.name"></span>
-                                {{-- Rank badge only when an advisor is present --}}
                                 <template x-if="slot.advisor !== null">
                                     <span class="rank-badge"
                                           :class="'rank-badge--' + slot.advisor.rank"
                                           x-text="slot.advisor.rank_name"></span>
                                 </template>
                             </div>
-                            {{-- AP type + rate subtitle --}}
+
                             <template x-if="slot.advisor !== null">
                                 <span class="advisor-subtitle"
                                       x-text="apTypeLabel(slot.ap_type) + ' · ' + slot.advisor.ap_per_tick + ' AP/Tick'">
@@ -96,104 +96,100 @@
                             <template x-if="slot.state === 'locked'">
                                 <span class="advisor-subtitle">Gesperrt</span>
                             </template>
-                        </div>
 
-                        <hr class="advisor-divider">
+                            <div class="advisor-stats">
 
-                        {{-- Stats section --}}
-                        <div class="advisor-stats">
+                                {{-- ACTIVE or UNAVAILABLE --}}
+                                <template x-if="slot.advisor !== null">
+                                    <div style="display:contents">
 
-                            {{-- ACTIVE or UNAVAILABLE: advisor is present --}}
-                            <template x-if="slot.advisor !== null">
-                                <div style="display:contents">
-
-                                    <div class="stat-row">
-                                        <span class="stat-label">Ticks</span>
-                                        <span class="stat-value" x-text="slot.advisor.active_ticks"></span>
-                                    </div>
-
-                                    <div class="stat-row">
-                                        <span class="stat-label">Unterhalt</span>
-                                        <span class="stat-value" x-text="slot.advisor.upkeep + ' Cr/Tick'"></span>
-                                    </div>
-
-                                    {{-- Rank advancement progress bar --}}
-                                    <div class="advisor-progress-wrap">
                                         <div class="stat-row">
-                                            <span class="stat-label">Aufstieg</span>
-                                            <span class="stat-label"
-                                                  x-text="slot.advisor.is_max_rank
-                                                      ? 'Max'
-                                                      : (slot.advisor.active_ticks + '/' + slot.advisor.next_rank_ticks)">
+                                            <span class="stat-label">Ticks</span>
+                                            <span class="stat-value" x-text="slot.advisor.active_ticks"></span>
+                                        </div>
+
+                                        <div class="stat-row">
+                                            <span class="stat-label">Unterhalt</span>
+                                            <span class="stat-value" x-text="slot.advisor.upkeep + ' Cr/Tick'"></span>
+                                        </div>
+
+                                        <div class="advisor-progress-wrap">
+                                            <div class="stat-row">
+                                                <span class="stat-label">Aufstieg</span>
+                                                <span class="stat-label"
+                                                      x-text="slot.advisor.is_max_rank
+                                                          ? 'Max'
+                                                          : (slot.advisor.active_ticks + '/' + slot.advisor.next_rank_ticks)">
+                                                </span>
+                                            </div>
+                                            <div class="advisor-progress">
+                                                <div class="advisor-progress-fill"
+                                                     :style="{ width: slot.advisor.progress_pct + '%' }"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="advisor-card-footer">
+                                            <span class="advisor-status"
+                                                  :class="slot.advisor.is_unavailable
+                                                      ? 'advisor-status--unavailable'
+                                                      : 'advisor-status--active'"
+                                                  x-text="slot.advisor.is_unavailable
+                                                      ? ('Inaktiv bis T' + slot.advisor.unavailable_until_tick)
+                                                      : 'Aktiv'">
                                             </span>
+                                            <button class="btn-fire" @click="openFireDialog(slot)">Entlassen</button>
                                         </div>
-                                        <div class="advisor-progress">
-                                            <div class="advisor-progress-fill"
-                                                 :style="{ width: slot.advisor.progress_pct + '%' }"></div>
-                                        </div>
-                                    </div>
 
-                                    {{-- Footer: status chip + dismiss button --}}
-                                    <div class="advisor-card-footer">
-                                        <span class="advisor-status"
-                                              :class="slot.advisor.is_unavailable
-                                                  ? 'advisor-status--unavailable'
-                                                  : 'advisor-status--active'"
-                                              x-text="slot.advisor.is_unavailable
-                                                  ? ('Inaktiv bis T' + slot.advisor.unavailable_until_tick)
-                                                  : 'Aktiv'">
+                                    </div>
+                                </template>
+
+                                {{-- EMPTY --}}
+                                <template x-if="slot.advisor === null && slot.state === 'empty'">
+                                    <div style="display:contents">
+
+                                        <div class="stat-row">
+                                            <span class="stat-label">Einstellungskosten</span>
+                                            <span class="stat-value" x-text="slot.hire_cost + ' Cr'"></span>
+                                        </div>
+
+                                        <div class="stat-row">
+                                            <span class="stat-label">AP/Tick (Junior)</span>
+                                            <span class="stat-value">4</span>
+                                        </div>
+
+                                        <div class="stat-row">
+                                            <span class="stat-label">Unterhalt</span>
+                                            <span class="stat-value" x-text="juniorUpkeep + ' Cr/Tick'"></span>
+                                        </div>
+
+                                        <div class="advisor-card-footer">
+                                            <span class="advisor-status advisor-status--empty">Vakant</span>
+                                            <button class="btn-hire" @click="openHireDialog(slot)">Einstellen</button>
+                                        </div>
+
+                                    </div>
+                                </template>
+
+                                {{-- LOCKED --}}
+                                <template x-if="slot.state === 'locked'">
+                                    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:0.5rem;color:#bbb;text-align:center;padding:0.5rem 0">
+                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                                             stroke="currentColor" stroke-width="1.5"
+                                             stroke-linecap="round" stroke-linejoin="round"
+                                             aria-hidden="true">
+                                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                        </svg>
+                                        <span class="advisor-status advisor-status--locked">Gesperrt</span>
+                                        <span style="font-size:0.7rem;color:#bbb">
+                                            CC Level <strong x-text="slot.cc_required"></strong> erforderlich
                                         </span>
-                                        <button class="btn-fire" @click="openFireDialog(slot)">Entlassen</button>
                                     </div>
+                                </template>
 
-                                </div>
-                            </template>
+                            </div>{{-- /.advisor-stats --}}
 
-                            {{-- EMPTY: slot available, no advisor hired --}}
-                            <template x-if="slot.advisor === null && slot.state === 'empty'">
-                                <div style="display:contents">
-
-                                    <div class="stat-row">
-                                        <span class="stat-label">Einstellungskosten</span>
-                                        <span class="stat-value" x-text="slot.hire_cost + ' Cr'"></span>
-                                    </div>
-
-                                    <div class="stat-row">
-                                        <span class="stat-label">AP/Tick (Junior)</span>
-                                        <span class="stat-value">4</span>
-                                    </div>
-
-                                    <div class="stat-row">
-                                        <span class="stat-label">Unterhalt</span>
-                                        <span class="stat-value" x-text="juniorUpkeep + ' Cr/Tick'"></span>
-                                    </div>
-
-                                    <div class="advisor-card-footer">
-                                        <span class="advisor-status advisor-status--empty">Vakant</span>
-                                        <button class="btn-hire" @click="openHireDialog(slot)">Einstellen</button>
-                                    </div>
-
-                                </div>
-                            </template>
-
-                            {{-- LOCKED: CC level requirement not met --}}
-                            <template x-if="slot.state === 'locked'">
-                                <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:0.5rem;color:#bbb;text-align:center;padding:0.5rem 0">
-                                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-                                         stroke="currentColor" stroke-width="1.5"
-                                         stroke-linecap="round" stroke-linejoin="round"
-                                         aria-hidden="true">
-                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                    </svg>
-                                    <span class="advisor-status advisor-status--locked">Gesperrt</span>
-                                    <span style="font-size:0.7rem;color:#bbb">
-                                        CC Level <strong x-text="slot.cc_required"></strong> erforderlich
-                                    </span>
-                                </div>
-                            </template>
-
-                        </div>{{-- /.advisor-stats --}}
+                        </div>{{-- /.advisor-info --}}
                     </div>{{-- /.advisor-card --}}
                 </template>
 
