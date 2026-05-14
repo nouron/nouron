@@ -22,6 +22,7 @@
             <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*')])>Kolonie</a></li>
             <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])>Techtree</a></li>
             <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])>Berater</a></li>
+            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])>Cantina</a></li>
             <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])>Nachrichten</a></li>
         </ul>
         <ul>

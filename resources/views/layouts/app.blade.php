@@ -43,6 +43,10 @@
                        href="{{ route('advisors.index') }}"><i class="bi bi-people"></i> Berater</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('colony.bar*')) active @endif"
+                       href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i> Cantina</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"
                        href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i> Handel</a>
                 </li>
