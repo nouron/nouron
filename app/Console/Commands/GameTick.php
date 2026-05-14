@@ -411,6 +411,27 @@ class GameTick extends Command
         // Build the over-cap set once before iterating — O(colonies), not O(buildings).
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
+        // Sicherheits-Hub recycling: colonies that have securityHub built get a
+        // fraction of build costs back on any building level-down.
+        $secHubId         = (int) config('buildings.securityHub.id', 53);
+        $recyclePct       = (float) config('buildings.securityHub.recycle_pct', 0.10);
+        $secHubColonies   = DB::table('colony_buildings')
+            ->where('building_id', $secHubId)
+            ->where('level', '>', 0)
+            ->pluck('colony_id')
+            ->flip()
+            ->all();
+
+        // Build cost map for recycling: building_id → [resource_id => amount]
+        // Only tradeable colony resources (3=regolith, 4=compounds, 5=organics).
+        $tradeableIds     = [3, 4, 5];
+        $buildCostMap     = DB::table('building_costs')
+            ->whereIn('resource_id', $tradeableIds)
+            ->get()
+            ->groupBy('building_id')
+            ->map(fn($rows) => $rows->pluck('amount', 'resource_id')->all())
+            ->all();
+
         $buildings = ColonyBuilding::where('level', '>', 0)->get();
 
         foreach ($buildings as $cb) {
@@ -439,6 +460,18 @@ class GameTick extends Command
                         'tech_id'   => $cb->building_id,
                     ]),
                 ]);
+
+                // Sicherheits-Hub: return recycle_pct of tradeable build costs on level-down.
+                if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
+                    foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
+                        $returned = (int) max(1, floor($baseAmount * $recyclePct));
+                        DB::table('colony_resources')->updateOrInsert(
+                            ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
+                            ['amount'    => DB::raw("amount + {$returned}")]
+                        );
+                    }
+                }
+
                 $levelled++;
             } else {
                 DB::table('colony_buildings')->where($where)

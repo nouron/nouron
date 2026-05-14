@@ -52,14 +52,21 @@ class ColonyTileService
         if ($tile->event_type === null) return ['ok' => false, 'error' => __('colony.error_no_signal')];
         if ($tile->is_deep_scanned)    return ['ok' => false, 'error' => __('colony.error_already_scanned')];
 
-        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 2) {
+        // Uplink-Station Lv2+ (building_id=54): deep-scan costs 1 Nav-AP instead of 2.
+        $uplinkLv = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', (int) config('buildings.uplinkStation.id', 54))
+            ->value('level') ?? 0;
+        $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
+
+        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap_2')];
         }
 
         $tile->is_deep_scanned = true;
         $tile->save();
         if (!config('game.bypass.ap_checks'))
-            $this->personellService->lockActionPoints('navigation', $colonyId, 2);
+            $this->personellService->lockActionPoints('navigation', $colonyId, $scanApCost);
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
     }
