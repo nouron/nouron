@@ -192,8 +192,8 @@
 .advisor-portrait {
     flex: 0 0 220px;
     background-color: #c0c3ce;          /* fallback when no image is available */
-    background-size: cover;
-    background-position: center top;
+    background-size: 85%;
+    background-position: center center;
     background-repeat: no-repeat;
     display: flex;
     flex-direction: column;
