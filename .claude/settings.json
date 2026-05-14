@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(git *)",
-      "Bash(gh *)"
+      "Bash(gh *)",
+      "Write",
+      "Edit"
     ]
   }
 }

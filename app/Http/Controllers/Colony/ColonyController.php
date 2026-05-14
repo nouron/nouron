@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\OnboardingHintService;
+use App\Services\OnboardingTriggerService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -23,6 +24,7 @@ class ColonyController extends BaseController
         private readonly ColonyTileService $tileService,
         private readonly PersonellService $personellService,
         private readonly OnboardingHintService $hintService,
+        private readonly OnboardingTriggerService $onboardingTriggerService,
     ) {
         parent::__construct($tick);
     }
@@ -75,7 +77,10 @@ class ColonyController extends BaseController
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
         $activeHint     = $this->resolveHint($colony->id);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint'));
+        $fireds        = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
+        $supplyCapFull = in_array('supply_cap_full', $fireds);
+
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -182,7 +187,13 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_occupied')]);
 
         if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
-            return response()->json(['ok' => false, 'error' => __('colony.error_no_construction_ap')]);
+            return response()->json([
+                'ok'      => false,
+                'error'   => 'ap_limit',
+                'ap_type' => 'construction',
+                'current' => 0,
+                'message' => __('colony.onboarding_trigger_ap_limit'),
+            ]);
 
         $building = DB::table('buildings')->where('id', $data['building_id'])->first();
         if (!$building)
@@ -235,6 +246,20 @@ class ColonyController extends BaseController
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
+        // Harvester relocation (building_id 27): append onboarding tip flag once per user.
+        if ((int) $data['building_id'] === 27) {
+            $showTip = !$this->onboardingTriggerService->hasFired(Auth::id(), 'harvester_move_shown');
+            $this->onboardingTriggerService->markFired(Auth::id(), 'harvester_move_shown');
+
+            return response()->json([
+                'ok'                  => true,
+                'building'            => $row,
+                'showHarvesterMoveTip' => $showTip,
+                ...$this->currentAp($colony->id),
+                'activeHint'          => $this->resolveHint($colony->id),
+            ]);
+        }
+
         return response()->json(['ok' => true, 'building' => $row, ...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)]);
     }
 
@@ -249,7 +274,13 @@ class ColonyController extends BaseController
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
         if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
-            return response()->json(['ok' => false, 'error' => __('colony.error_no_construction_ap')]);
+            return response()->json([
+                'ok'      => false,
+                'error'   => 'ap_limit',
+                'ap_type' => 'construction',
+                'current' => 0,
+                'message' => __('colony.onboarding_trigger_ap_limit'),
+            ]);
 
         $row = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
