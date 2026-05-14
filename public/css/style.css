@@ -218,3 +218,12 @@ a.technology.building.notexists  { border-left-color: #bbbbed; }
 a.technology.research.notexists  { border-left-color: #88cc99; }
 a.technology.ship.notexists      { border-left-color: #ddcc77; }
 a.technology.personell.notexists { border-left-color: #cccccc; }
+
+/* INNN: unread message fade pulse (replaces jQuery fade-cycle) */
+@keyframes inbox-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+}
+.fade-cycling {
+    animation: inbox-pulse 2s ease-in-out var(--fade-delay, 0s) infinite;
+}

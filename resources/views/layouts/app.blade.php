@@ -108,29 +108,23 @@
     @yield('content')
 </div>
 
+{{-- jQuery still required by fleets.js and trade.js (pending migration) --}}
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+{{-- bootbox + growl: still required by trade.js (pending migration) --}}
 <script src="https://cdn.jsdelivr.net/npm/bootbox@6.0.0/bootbox.min.js"></script>
 <script src="{{ asset('js/jquery.bootstrap-growl.min.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/leader-line/leader-line.min.js"></script>
 <script src="{{ asset('js/nouron.js') }}"></script>
-<script src="{{ asset('js/techtree.js') }}"></script>
 <script src="{{ asset('js/fleets.js') }}"></script>
 <script src="{{ asset('js/trade.js') }}"></script>
 <script src="{{ asset('js/innn.js') }}"></script>
 @stack('scripts')
 <script>
-$(document).ready(function () {
-    // Bootstrap 5: init tooltips
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
-        new bootstrap.Tooltip(el);
-    });
-
+document.addEventListener('DOMContentLoaded', function () {
     // Module JS init (guarded by element presence)
-    if ($('#colony').length > 0)     { techtree.init(); }
-    if ($('#fleetlist').length > 0)  { fleetlist.init(); }
-    if ($('#fleetconfig').length > 0){ fleetconfig.init(); }
-    if ($('#trade').length > 0)      { trade.init(); }
+    if (document.getElementById('fleetlist'))  { fleetlist.init(); }
+    if (document.getElementById('fleetconfig')){ fleetconfig.init(); }
+    if (document.getElementById('trade'))      { trade.init(); }
 });
 </script>
 </body>
