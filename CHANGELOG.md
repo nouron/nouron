@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-14
+
+- **Phase 3e Schritt 6: Onboarding-Trigger-System (PR #108)**: Fünf One-shot-Trigger implementiert, die dem Spieler beim ersten Auftreten bestimmter Spielereignisse kontextbezogene Hinweise geben. Trigger werden als JSON-Array in `user_preferences.fired_triggers` gespeichert und sind idempotent — jeder Key feuert maximal einmal pro User. Drei Trigger im GameTick: `onboarding_decay` (Gebäude fällt unter 80 % SP → INNN-Event), `supply_cap_full` (Supply erschöpft → UI-Banner), `onboarding_trust` (Trust erstmals negativ → INNN-Event). Zwei Trigger im Frontend: `ap_limit_shown` (AP leer → Toast) und `harvester_move_shown` (erster Harvester-Move → Info-Toast). Neuer `OnboardingTriggerService` mit Unit-Tests (9 Tests), 11 Feature-Integration-Tests gegen echten GameTick. `.claude/settings.json` mit Subagent-Permissions für autonomes Write/Edit.
+
 ## 2026-05-13
 
 - **Neue Gebäude im Design (feat/new-buildings-design, PR #104)**: Drei neue Gebäude als Design-Entscheidungen ins GDD aufgenommen. Sicherheits-Hub (CC Lv2, 1 Instanz): `defend`-Order günstiger (1 statt 2 Nav-AP) + Level-Down-Recycling. Uplink-Station (CC Lv2–5, Lv1–3, ersetzt frühere Relais-Station- und Sendezentrum-Idee): einheitliches Kommunikationsgebäude, das aktive Nexus-Anfragen gateted (Lv1), Exploration-Bonus und Händler-Frequenz verbessert (Lv2) und eine Run-Abschluss-Aktion ermöglicht (Lv3). Handelsposten (CC Lv4, 1 Instanz): Konsul-AP-Effizienz + bessere Händler-Konditionen. Wartungs-Depot verworfen (globale Decay-Aura bricht Entropie als USP). Config-Stubs (provisional) in `config/buildings.php` ergänzt. Tier-Gate-Tabelle §11.2 aktualisiert.
