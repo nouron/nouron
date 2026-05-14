@@ -480,6 +480,16 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 ---
 
+### Phase 3g: Neue Gebäude (Design) — Abgeschlossen (Mai 2026, PRs #104 + #105)
+
+Drei neue Gebäude entworfen und im GDD (§4 + §11) sowie in `config/buildings.php` dokumentiert. Implementierung (DB-Migration, Services, UI) folgt nach erstem Playtest.
+
+- [x] **Sicherheits-Hub** (`securityHub`, CC Lv2, max 1 Instanz) — Verteidigung-Order kostet nur 1 Nav-AP; gibt ~10% der Stufenkosten als Ressourcen zurück beim Decay-Level-Down. Provisorisch: supply_cost 8, decay 30d.
+- [x] **Uplink-Station** (`uplinkStation`, CC Lv2/3/5, max 1 Instanz, 3 Level) — Lv1: Aktive Nexus-Anfragen freischalten; Lv2: Tiefenscan −1 Tick + Händler häufiger; Lv3: Run-Abschluss-Aktion. Lv1-Baukosten ohne Werkstoffe (kein Zirkelrisiko). Provisorisch: supply_cost 6, decay 30d.
+- [x] **Handelsposten** (`tradingPost`, CC Lv4, max 1 Instanz) — Händler-Economy-AP −1; Händlerpreise +10–15%. Provisorisch: supply_cost 6, decay 30d.
+
+---
+
 ### Phase 3f: Berater-Screen Redesign — Abgeschlossen (Mai 2026, Branch feat/phase3f-advisor-carousel)
 
 Der Berater-Screen war der logische nächste Schritt nach dem Onboarding (Phase 3e), da der Onboarding-Hinweis Rang 2 direkt auf das Einstellen eines Beraters verweist. Der Screen wurde von Bootstrap/jQuery auf Alpine.js + PicoCSS migriert und als Karussell neugestaltet.
@@ -490,6 +500,18 @@ Der Berater-Screen war der logische nächste Schritt nach dem Onboarding (Phase 
 - [x] [ui-specialist] `public/js/advisors.js` — Alpine-Komponente: Swipe-Gesten (Touch-Events), Karussell-Navigation, AJAX hire/fire, native `<dialog>`-Steuerung
 - [x] [ui-specialist] `resources/views/advisors/index.blade.php` — Komplett auf `layouts.colony` (PicoCSS + Alpine) umgestellt; `x-for` für Karten, `x-if` für Zustände, `@push`-Stacks für CSS/JS
 - [x] [qa-tester] 22 Feature-Tests in `AdvisorControllerTest.php` — Index, Hire/Fire (Redirect + JSON), 404-Sicherheit, Auth-Guard; alle grün
+
+---
+
+### Entwicklungswerkzeuge (Dev Tools)
+
+Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-Stack nötig. Alle Tools liegen im `tools/`-Verzeichnis und starten per `php -S localhost:808x tools/<name>.php`.
+
+- [x] **Techtree-Editor** (`tools/techtree-editor.php`, PR #106) — Visueller Drag-and-Drop-Editor für Techtree-Positionen (phase/row/column). Zeigt alle 4 Entitätstypen in einem 5-Tab-Grid; Swaps werden als DB-Transaktion in der SQLite-DB persistiert. Start: `php -S localhost:8081 tools/techtree-editor.php`
+- [ ] **Debug-Statusleiste** — Overlay im Spielbrowser (z.B. als Bookmarklet oder separates Tool): zeigt aktuelle Spielparameter auf einen Blick — Supply-Verbrauch/-Cap, AP-Pools, Moral-Wert, Tick-Nummer, aktive Flags.
+- [ ] **Berechnungs-Toggle** — Artisan-Kommando oder .env-Flag zum An-/Abschalten einzelner Berechnungen für Testzwecke: Ressourcenberechnung, AP-Berechnung, Decay, Moral-Multiplikator. Erlaubt isoliertes Testen einzelner Systeme ohne Interferenz.
+- [ ] **Ressourcen-Editor** (`tools/resource-editor.php`) — Schnelles Setzen von Ressourcenwerten (Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen) für beliebige User/Kolonie direkt in der DB. Für Balancing-Tests ohne manuelles SQL.
+- [ ] **Tick-Simulator** — Artisan-Kommando `game:tick-dry-run` das einen Tick simuliert und alle Änderungen als Diff ausgibt (Ressourcen, Decay, AP-Regeneration), ohne die DB zu schreiben. Ideal für Balancing-Checks.
 
 ---
 
