@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
+use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
@@ -13,6 +14,7 @@ use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 
 class TechtreeController extends BaseController
@@ -26,6 +28,7 @@ class TechtreeController extends BaseController
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly ResourcesService $resourcesService,
         private readonly ColonyService $colonyService,
+        private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
     }
@@ -153,9 +156,14 @@ class TechtreeController extends BaseController
         }
         unset($phase);
 
+        // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
+        $userId        = Auth::id();
+        $hint          = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
+        $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
+
         $pageData = ['phases' => $phases];
 
-        return view('techtree.index', compact('pageData', 'colonyId'));
+        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank'));
     }
 
     /**

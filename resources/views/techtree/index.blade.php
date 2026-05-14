@@ -15,6 +15,7 @@
 <div class="techtree-page"
      x-data="techtreeView(window.__techtreeData)"
      x-cloak
+     data-hint-rank="{{ $activeHintRank }}"
      @touchstart.passive="onTouchStart($event)"
      @touchend.passive="onTouchEnd($event)">
 

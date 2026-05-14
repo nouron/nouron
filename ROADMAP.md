@@ -426,7 +426,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3e: Onboarding & New-Player Experience — fast abgeschlossen (Mai 2026)
+### Phase 3e: Onboarding & New-Player Experience — Abgeschlossen (Mai 2026)
 
 GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
@@ -455,7 +455,7 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 - [x] [ui-specialist] CSS-Animation `onboarding-ring-pulse` (blau-weiß, 2s) in `colony.css`
 - [x] [ui-specialist] Pulse auf Rang-1-Tiles (bebaubare Colony-Zone) und Rang-3-Tiles (Harvester-Tile) im SVG-Grid implementiert
-- [ ] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — Techtree-Migration abgeschlossen, Implementierung ausstehend
+- [x] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — `data-hint-rank` auf Container, CSS `@keyframes techtree-card-pulse` auf `.tech-personell/.tech-research/.tech-building.status-available`
 
 #### Schritt 5 — Techtree-Kaltstart: Kachel-Sortierung (§ 15.4)
 
@@ -476,7 +476,7 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 #### Schritt 7 — Integration & Einstellungen
 
 - [x] [ui-specialist] Einstellungs-Toggle in User-Settings-Screen: "Onboarding-Hinweise anzeigen" (An/Aus) — implementiert (Schritt 1)
-- [ ] [qa-tester] End-to-End: Neuer Run → Nexus-Briefing im INNN → Hint-Leiste zeigt Rang-1-Hinweis → Wohnhabitat bauen → Hint-Rang wechselt auf Rang 2 → Pulse auf Ingenieur-Slot → Onboarding-Hints deaktivieren → alle Elemente verschwinden
+- [x] [qa-tester] End-to-End: Neuer Run → Nexus-Briefing im INNN → Hint-Leiste zeigt Rang-1-Hinweis → Wohnhabitat bauen → Hint-Rang wechselt auf Rang 2 → Onboarding-Hints deaktivieren → null — `OnboardingE2ETest.php` (4 Tests, 15 Assertions)
 
 ---
 
