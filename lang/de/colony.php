@@ -94,4 +94,19 @@ return [
     'error_building_not_found'  => 'Gebäude nicht gefunden.',
     'error_max_level_reached'   => 'Maximales Level bereits erreicht.',
 
+    // ── Bar/Cantina ───────────────────────────────────────────────────────────
+
+    'bar_title'                        => 'Cantina',
+    'bar_no_building'                  => 'Die Cantina ist noch nicht gebaut.',
+    'bar_no_offers'                    => 'Keine Gäste im Moment. Komm nächsten Tick wieder.',
+    'bar_offer_heading'                => 'Angebote',
+    'bar_offer_accept'                 => 'Annehmen',
+    'bar_offer_give'                   => 'Du gibst',
+    'bar_offer_get'                    => 'Du bekommst',
+    'bar_offer_expires'                => 'Läuft ab nach Tick',
+    'bar_offer_not_found'              => 'Angebot nicht gefunden.',
+    'bar_offer_already_accepted'       => 'Angebot bereits angenommen.',
+    'bar_offer_expired'                => 'Angebot ist abgelaufen.',
+    'bar_offer_insufficient_resources' => 'Nicht genügend Ressourcen.',
+
 ];

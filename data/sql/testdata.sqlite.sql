@@ -455,3 +455,10 @@ UPDATE "buildings"  SET phase=4, "row"=1, "column"=2 WHERE id=32; -- temple
 -- Phase 5 (CC Lv5)
 UPDATE "buildings"  SET phase=5, "row"=1, "column"=2 WHERE id=50; -- monument
 INSERT OR REPLACE INTO "user_preferences" VALUES(3,3,1,NULL,NULL,NULL,NULL);
+
+-- Bar offers (migration 2026_05_14_000003)
+-- colony_id=1 (Springfield), expires_tick=9999999 (far future, always valid in tests)
+-- Offer 1: pay 800 Credits, receive 50 Compounds (Werkstoffe)
+INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,1,800,4,50,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
+-- Offer 2: pay 20 Regolith, receive 30 Organics (Organika)
+INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,3,20,5,30,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
