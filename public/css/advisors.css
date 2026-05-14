@@ -155,106 +155,132 @@
 
 .advisor-card {
     width: 200px;
-    min-height: 440px;
-    border-radius: 10px;
-    border: 1px solid var(--color-border);
+    /* Fill as much of the viewport as possible; 230px = nav(84) + page-padding(56) + header(58) + dots(32) */
+    height: calc(100vh - 230px);
+    min-height: 340px;
+    max-height: 680px;
+    border-radius: 12px;
+    border: 1px solid #e4e4ef;
     background: #fff;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(26, 26, 46, 0.06);
 }
 
 @media (max-width: 900px) {
     .advisor-card {
         width: calc(100vw - 3rem);
-        max-width: 340px;
-        min-height: 420px;
+        max-width: 320px;
+        height: calc(100vh - 200px);
+        min-height: 340px;
     }
 }
 
 /* Highlighted card in the carousel (active index) */
 .advisor-card--current {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(26, 26, 46, 0.14);
+    transform: translateY(-4px);
+    border-color: #c0c0d8;
 }
 
 /* Locked card: greyed out, non-interactive */
 .advisor-card--locked {
-    opacity: 0.45;
+    opacity: 0.38;
     filter: grayscale(1);
     pointer-events: none;
 }
 
-/* ── Portrait section (top 60%) ───────────────────────────────────────────── */
+/* ── Portrait — full bleed, top 2/3 of card ───────────────────────────────── */
 
 .advisor-portrait {
-    flex: 0 0 220px;
-    background: linear-gradient(160deg, #e8eaf0 0%, #d0d4de 100%);
+    flex: 0 0 65%;
+    background-color: #f5f5f8;
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    position: relative;
     display: flex;
-    flex-direction: column;
     align-items: center;
     justify-content: center;
-    position: relative;
+    overflow: hidden;
 }
 
-/* Large watermark initials rendered via CSS attr() */
-.advisor-portrait::before {
-    content: attr(data-initials);
-    font-size: 3.5rem;
-    font-weight: 900;
-    color: rgba(80, 80, 100, 0.2);
-    letter-spacing: -0.05em;
-    position: absolute;
+/* Placeholder person icon for vacant/locked slots */
+.advisor-portrait-placeholder {
+    width: 64px;
+    height: 64px;
+    color: #d0d0dc;
 }
 
-/* Advisor type name centred on portrait, above the watermark */
-.advisor-type-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    color: var(--color-anthracite);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    text-align: center;
-    padding: 0 0.5rem;
-    position: relative;
-    z-index: 1;
-}
+/* ── Info panel — bottom 1/3 of card ─────────────────────────────────────── */
 
-/* AP type chip anchored to the bottom of the portrait */
-.advisor-ap-chip {
-    position: absolute;
-    bottom: 0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.72rem;
-    padding: 2px 8px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.75);
-    color: #555;
-    z-index: 1;
-}
-
-.advisor-ap-chip strong {
-    color: var(--color-anthracite);
-    font-weight: 700;
-}
-
-/* ── Stats section (bottom 40%) ───────────────────────────────────────────── */
-
-.advisor-stats {
+.advisor-info {
     flex: 1;
-    padding: 0.75rem;
     display: flex;
     flex-direction: column;
+    padding: 0.65rem 0.85rem 0.75rem;
+    border-top: 1px solid #eeeeF4;
+    overflow: hidden;
+}
+
+/* Name row: bold name left, rank badge right */
+.advisor-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 0.4rem;
-    font-size: 0.8rem;
-    border-top: 1px solid var(--color-border);
+    margin-bottom: 0.1rem;
+}
+
+.advisor-name {
+    font-size: 0.73rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a1a2e;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.advisor-subtitle {
+    font-size: 0.68rem;
+    color: #bbb;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Rank badge ───────────────────────────────────────────────────────────── */
+
+.rank-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.rank-badge--1 { background: #f0f0f4; color: #888; border: 1px solid #ddd; }
+.rank-badge--2 { background: #dbeafe; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.rank-badge--3 { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+/* ── Stats section (within info panel) ────────────────────────────────────── */
+
+.advisor-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.22rem;
+    flex: 1;
 }
 
 /* ── Stat rows ────────────────────────────────────────────────────────────── */
@@ -266,44 +292,37 @@
 }
 
 .stat-label {
-    color: #888;
-    font-size: 0.72rem;
+    color: #aaa;
+    font-size: 0.71rem;
+    font-weight: 400;
 }
 
 .stat-value {
+    font-size: 0.75rem;
     font-weight: 600;
+    color: #1a1a2e;
 }
-
-/* ── Rank badge ───────────────────────────────────────────────────────────── */
-
-.rank-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 0.68rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
-.rank-badge--1 { background: #f0f0f0; color: #666; }
-.rank-badge--2 { background: #dbeafe; color: #1d4ed8; }
-.rank-badge--3 { background: #fef3c7; color: #92400e; }
 
 /* ── Progress bar (rank advancement) ─────────────────────────────────────── */
 
-.advisor-progress {
-    height: 5px;
-    background: #eee;
-    border-radius: 3px;
-    overflow: hidden;
+.advisor-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     margin-top: 2px;
+}
+
+.advisor-progress {
+    height: 4px;
+    background: #e8e8f0;
+    border-radius: 2px;
+    overflow: hidden;
 }
 
 .advisor-progress-fill {
     height: 100%;
-    background: var(--color-accent);
-    border-radius: 3px;
+    background: #1a1a2e;
+    border-radius: 2px;
     transition: width 0.4s ease;
 }
 
@@ -312,37 +331,70 @@
 .advisor-status {
     display: inline-flex;
     align-items: center;
-    padding: 2px 7px;
+    gap: 4px;
+    padding: 2px 8px;
     border-radius: 20px;
     font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.04em;
+    white-space: nowrap;
 }
 
-.advisor-status--active      { background: #e8f4e8; color: #2e7d32; border: 1px solid #a5d6a7; }
-.advisor-status--unavailable { background: #fef3c7; color: #78350f; border: 1px solid #fcd34d; }
-.advisor-status--empty       { background: #f0f4ff; color: #3b5ac6; border: 1px solid #b0c0e8; }
-.advisor-status--locked      { background: #f0f0f0; color: #999;    border: 1px solid #ddd; }
+.advisor-status--active      { background: #f2faf2; color: #2e7d32; border: 1px solid #c8e6c9; }
+.advisor-status--unavailable { background: #fef9ec; color: #78350f; border: 1px solid #fde68a; }
+.advisor-status--empty       { background: #f4f6ff; color: #3b5ac6; border: 1px solid #c5cff0; }
+.advisor-status--locked      { background: #f4f4f4; color: #999;    border: 1px solid #ddd; }
+
+/* ── Card footer: status chip + action button ────────────────────────────── */
+
+.advisor-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
 
 /* ── Hire / fire action buttons inside cards ──────────────────────────────── */
 
-.advisor-card .btn-hire,
-.advisor-card .btn-fire {
-    width: 100%;
-    padding: 0.4rem;
-    font-size: 0.78rem;
+.btn-hire {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
     border-radius: 6px;
-    border: none;
+    border: 1px solid #c8e6c9;
+    background: transparent;
+    color: #2e7d32;
     cursor: pointer;
     font-weight: 600;
-    margin-top: auto;
+    transition: background 0.15s;
+    white-space: nowrap;
 }
 
-.btn-hire             { background: #e8f4e8; color: #2e7d32; }
-.btn-hire:hover       { background: #c8e6c9; }
-.btn-fire             { background: #fdecea; color: #c0392b; }
-.btn-fire:hover       { background: #f8d7da; }
+.btn-hire:hover { background: #f2faf2; }
+
+.btn-fire {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    background: transparent;
+    color: #c0392b;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.btn-fire:hover { background: #fff5f5; }
+
+/* Full-width hire button used in vacant slot when there is no status chip companion */
+.btn-hire--full {
+    width: 100%;
+    padding: 0.4rem;
+    text-align: center;
+}
 
 /* ── Hire / fire confirmation dialogs ─────────────────────────────────────── */
 
