@@ -480,9 +480,9 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 ---
 
-### Phase 3g: Neue Gebäude (Design) — Abgeschlossen (Mai 2026, PRs #104 + #105)
+### Phase 3g: Neue Gebäude — Abgeschlossen (Mai 2026, PRs #104 + #105 + #112)
 
-Drei neue Gebäude entworfen und im GDD (§4 + §11) sowie in `config/buildings.php` dokumentiert. Implementierung (DB-Migration, Services, UI) folgt nach erstem Playtest.
+Drei neue Gebäude entworfen (GDD §4 + §11) und vollständig implementiert (DB-Migration, Service-Effekte, Sprachschlüssel).
 
 - [x] **Sicherheits-Hub** (`securityHub`, CC Lv2, max 1 Instanz) — Verteidigung-Order kostet nur 1 Nav-AP; gibt ~10% der Stufenkosten als Ressourcen zurück beim Decay-Level-Down. Provisorisch: supply_cost 8, decay 30d.
 - [x] **Uplink-Station** (`uplinkStation`, CC Lv2/3/5, max 1 Instanz, 3 Level) — Lv1: Aktive Nexus-Anfragen freischalten; Lv2: Tiefenscan −1 Tick + Händler häufiger; Lv3: Run-Abschluss-Aktion. Lv1-Baukosten ohne Werkstoffe (kein Zirkelrisiko). Provisorisch: supply_cost 6, decay 30d.
