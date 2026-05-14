@@ -14,6 +14,7 @@ use App\Models\FleetShip;
 use App\Models\UserResource;
 use App\Services\EventService;
 use App\Services\MoralService;
+use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Console\Command;
@@ -48,10 +49,11 @@ class GameTick extends Command
     private array $encounterFleetIds = [];
 
     public function __construct(
-        private readonly TickService      $tickService,
-        private readonly EventService     $eventService,
-        private readonly MoralService     $moralService,
-        private readonly ResourcesService $resourcesService,
+        private readonly TickService               $tickService,
+        private readonly EventService              $eventService,
+        private readonly MoralService              $moralService,
+        private readonly ResourcesService          $resourcesService,
+        private readonly OnboardingTriggerService  $onboardingTriggerService,
     ) {
         parent::__construct();
     }
@@ -441,6 +443,24 @@ class GameTick extends Command
             } else {
                 DB::table('colony_buildings')->where($where)
                     ->update(['status_points' => $newStatus]);
+
+                // Trigger 1 — onboarding_decay: fires once when a building first
+                // drops below 80 % of its max_status_points.
+                $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
+                if ($newStatus < ($maxSP * 0.8)) {
+                    $colony = Colony::find($cb->colony_id);
+                    $userId = $colony?->user_id ?? null;
+                    if ($userId !== null && !$this->onboardingTriggerService->hasFired($userId, 'onboarding_decay')) {
+                        $this->eventService->createEvent([
+                            'user'       => $userId,
+                            'tick'       => $tick,
+                            'event'      => 'onboarding_decay',
+                            'area'       => 'techtree',
+                            'parameters' => serialize(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
+                        ]);
+                        $this->onboardingTriggerService->markFired($userId, 'onboarding_decay');
+                    }
+                }
             }
         }
 
@@ -607,6 +627,19 @@ class GameTick extends Command
             $cap = min($capCC + ($housingLevel * $capHousing) + $knowledgeCap, $capMax);
 
             UserResource::where('user_id', $userId)->update(['supply' => $cap]);
+
+            // Trigger 2 — supply_cap_full: fires once when used supply >= cap.
+            if (!$this->onboardingTriggerService->hasFired($userId, 'supply_cap_full')) {
+                $usedSupply = (int) DB::table('colony_buildings as cb')
+                    ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+                    ->where('cb.colony_id', $colony->id)
+                    ->where('cb.level', '>', 0)
+                    ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+
+                if ($usedSupply >= $cap) {
+                    $this->onboardingTriggerService->markFired($userId, 'supply_cap_full');
+                }
+            }
         }
 
         return $userIds->count();
@@ -659,7 +692,36 @@ class GameTick extends Command
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
+            // Trigger 3 — onboarding_trust: fires once when trust crosses from
+            // non-negative to negative for a real (non-NPC) colony.
+            $userId = $colony->user_id ?? null;
+            $trustBefore = null;
+            if ($userId !== null && !$this->onboardingTriggerService->hasFired($userId, 'onboarding_trust')) {
+                $trustBefore = (int) (DB::table('colony_resources')
+                    ->where('colony_id', $colony->id)
+                    ->where('resource_id', 12)
+                    ->value('amount') ?? 0);
+            }
+
             $this->moralService->calculateAndStore($colony, $tick);
+
+            if ($userId !== null && $trustBefore !== null && $trustBefore >= 0) {
+                $trustAfter = (int) (DB::table('colony_resources')
+                    ->where('colony_id', $colony->id)
+                    ->where('resource_id', 12)
+                    ->value('amount') ?? 0);
+
+                if ($trustAfter < 0) {
+                    $this->eventService->createEvent([
+                        'user'       => $userId,
+                        'tick'       => $tick,
+                        'event'      => 'onboarding_trust',
+                        'area'       => 'colony',
+                        'parameters' => serialize(['colony_id' => $colony->id]),
+                    ]);
+                    $this->onboardingTriggerService->markFired($userId, 'onboarding_trust');
+                }
+            }
         }
 
         return $colonies->count();

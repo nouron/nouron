@@ -752,6 +752,58 @@ dialog[x-ref="discoveryDialog"] {
     display: none !important;
 }
 
+/* ── Supply-cap warning banner (Trigger 2) ───────────────────────────────── */
+
+/*
+ * Amber-on-dark strip rendered directly below the onboarding hint bar when
+ * the supply cap was hit during the last game tick.
+ * Static server-rendered (@if), so no Alpine transition needed.
+ */
+.supply-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.35rem 1rem;
+    background: #92400e;
+    color: #fef3c7;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* ── Action toast (Triggers 4 + 5) ──────────────────────────────────────── */
+
+/*
+ * Fixed-position non-interactive notification that fades out after 3.5 s.
+ * Type variants: --error (dark red) and --info (dark green).
+ * pointer-events: none prevents the toast from blocking clicks on the grid.
+ */
+.colony-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    max-width: 320px;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    z-index: 500;
+    pointer-events: none;
+    color: #fff;
+    /* Default (error) colour — overridden by modifier below */
+    background: #7f1d1d;
+}
+
+.colony-toast--error {
+    background: #7f1d1d;
+}
+
+.colony-toast--info {
+    background: #14532d;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Stack grid + sidebar at 900px and below */

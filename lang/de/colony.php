@@ -53,6 +53,30 @@ return [
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
 
+    // ── Onboarding — Nexus-Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
+
+    'onboarding_nexus_briefing_title' => 'Konzession aktiviert — Kolonie :colony',
+    'onboarding_nexus_briefing_body'  => 'Kommandozentrale und Harvester sind operationsbereit. Startkapital: 3.000 Cr — Nexus-Vorschuss, kein Geschenk. Regolith-Vorrat: 200 Rg. Die Kolonie gilt als lebensfähig, wenn Wohnraum und Personal vorhanden sind. Subventionen laufen vorerst weiter.',
+
+    // ── Onboarding — Inline-Trigger-Erklärungen ───────────────────────────────
+
+    // Trigger 1 — Decay (INNN-Event, event_type = 'onboarding_decay')
+    'onboarding_trigger_decay_title'    => 'Strukturverfall gemeldet',
+    'onboarding_trigger_decay_body'     => 'Gebäude verlieren ohne Wartung schrittweise Stabilität. Sinken die Statuswerte auf null, fällt das Gebäude eine Stufe zurück. Bau-AP in den Erhalt investieren.',
+
+    // Trigger 2 — Supply-Cap voll (UI-Banner, 1 Satz)
+    'onboarding_trigger_supply_full'    => 'Versorgungskapazität erschöpft — weitere Gebäude oder Schiffe können nicht zugewiesen werden. Wohnhabitat ausbauen oder Verbraucher abbauen.',
+
+    // Trigger 3 — Vertrauen negativ (INNN-Event, event_type = 'onboarding_trust')
+    'onboarding_trigger_trust_title'    => 'Vertrauen im negativen Bereich',
+    'onboarding_trigger_trust_body'     => 'Sinkendes Vertrauen drückt die Produktion der Kolonie. Ursache ist meist schlechte Moral — Zivilgebäude stabilisieren den Wert.',
+
+    // Trigger 4 — AP-Limit (Tooltip)
+    'onboarding_trigger_ap_limit'       => 'Keine Bau-AP mehr in diesem Tick verfügbar.',
+
+    // Trigger 5 — Harvester-Verlagerung (Tooltip)
+    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP — der Harvester produziert danach auf dem neuen Tile.',
+
     // ── Error messages ────────────────────────────────────────────────────────
 
     'error_tile_not_found'      => 'Tile nicht gefunden.',

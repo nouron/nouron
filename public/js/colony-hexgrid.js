@@ -96,6 +96,10 @@ function colonyHexView(config) {
         pendingBuilding:    null,
         availableBuildings: [],
         eventDiscovery:     null,   // set to the tile object when a discovery popup should show
+        toastMessage:       '',
+        toastVisible:       false,
+        toastType:          'error',  // 'error' | 'info'
+        _toastTimer:        null,
         _svgPolygons:       new Map(),
 
         init() {
@@ -176,7 +180,8 @@ function colonyHexView(config) {
                 this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                alert(res.error);
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
             }
         },
 
@@ -193,7 +198,8 @@ function colonyHexView(config) {
                 }
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                alert(res.error);
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
             }
         },
 
@@ -214,7 +220,8 @@ function colonyHexView(config) {
                 this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                alert(res.error);
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
             }
         },
 
@@ -227,6 +234,9 @@ function colonyHexView(config) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
+                if (res.showHarvesterMoveTip) {
+                    this.showToast(this.i18n.harvesterMoveTip, 'info');
+                }
                 if (res.tiles) {
                     this.tiles = res.tiles;
                     if (this.selectedTile) {
@@ -238,7 +248,8 @@ function colonyHexView(config) {
                     this.selectedTile = { ...this.selectedTile };
                 }
             } else {
-                alert(res.error);
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
             }
         },
 
@@ -291,6 +302,16 @@ function colonyHexView(config) {
 
         dismissEventDiscovery() {
             this.eventDiscovery = null;
+        },
+
+        // ── Toast notifications ───────────────────────────────────────────────
+
+        showToast(message, type = 'error') {
+            if (this._toastTimer) clearTimeout(this._toastTimer);
+            this.toastMessage = message;
+            this.toastType    = type;
+            this.toastVisible = true;
+            this._toastTimer  = setTimeout(() => { this.toastVisible = false; }, 3500);
         },
 
         buildingForTile(tile) {

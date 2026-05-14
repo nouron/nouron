@@ -20,18 +20,19 @@ window.__colonyViewData = {
         dismissHint:        '{{ route('colony.hint.dismiss') }}',
     },
     i18n: {
-        explore:           '{{ __('colony.explore') }}',
-        deepScan:          '{{ __('colony.deep_scan') }}',
-        investAp:          '{{ __('colony.invest_ap') }}',
-        build:             '{{ __('colony.build') }}',
-        cancel:            '{{ __('colony.cancel') }}',
-        selectTileHint:    '{{ __('colony.select_tile_hint') }}',
-        buildModeTitle:    '{{ __('colony.build_mode_title') }}',
-        buildModeHint:     '{{ __('colony.build_mode_hint') }}',
-        noBuildings:       '{{ __('colony.no_buildings') }}',
-        constructionSite:  '{{ __('colony.construction_site') }}',
-        discoveryTitle:    '{{ __('colony.discovery_title') }}',
-        discoveryDismiss:  '{{ __('colony.discovery_dismiss') }}',
+        explore:            '{{ __('colony.explore') }}',
+        deepScan:           '{{ __('colony.deep_scan') }}',
+        investAp:           '{{ __('colony.invest_ap') }}',
+        build:              '{{ __('colony.build') }}',
+        cancel:             '{{ __('colony.cancel') }}',
+        selectTileHint:     '{{ __('colony.select_tile_hint') }}',
+        buildModeTitle:     '{{ __('colony.build_mode_title') }}',
+        buildModeHint:      '{{ __('colony.build_mode_hint') }}',
+        noBuildings:        '{{ __('colony.no_buildings') }}',
+        constructionSite:   '{{ __('colony.construction_site') }}',
+        discoveryTitle:     '{{ __('colony.discovery_title') }}',
+        discoveryDismiss:   '{{ __('colony.discovery_dismiss') }}',
+        harvesterMoveTip:   @json(__('colony.onboarding_trigger_harvester_move')),
     },
 };
 </script>
@@ -67,6 +68,13 @@ window.__colonyViewData = {
                         aria-label="Dismiss hint"
                         @click="dismissHint()">×</button>
             </div>
+
+            {{-- Supply-cap warning banner (Trigger 2) — server-side flag set by game tick --}}
+            @if($supplyCapFull)
+            <div class="supply-banner" role="alert">
+                {{ __('colony.onboarding_trigger_supply_full') }}
+            </div>
+            @endif
 
             <div x-ref="hexgrid" class="hex-canvas"></div>
         </div>
@@ -264,6 +272,15 @@ window.__colonyViewData = {
             </footer>
         </article>
     </dialog>
+
+    {{-- Action / AP-limit toast (Triggers 4 + 5) --}}
+    <div class="colony-toast"
+         :class="`colony-toast--${toastType}`"
+         x-show="toastVisible"
+         x-transition
+         x-text="toastMessage"
+         aria-live="polite"
+         role="status"></div>
 
 </div>
 @endsection
