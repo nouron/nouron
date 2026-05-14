@@ -12,6 +12,7 @@ use App\Models\FleetOrder;
 use App\Models\FleetResource;
 use App\Models\FleetShip;
 use App\Models\UserResource;
+use App\Services\BarService;
 use App\Services\EventService;
 use App\Services\MoralService;
 use App\Services\OnboardingTriggerService;
@@ -39,6 +40,7 @@ use Illuminate\Support\Facades\DB;
  *  8c. Passive Credits    — Nexus subsidy (30 Cr) + colony tax per housing level (20 Cr/level) added to user Credits
  *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
+ * 10. Bar offers          — expire stale offers, generate new NPC offers per colony with Bar
  */
 class GameTick extends Command
 {
@@ -54,6 +56,7 @@ class GameTick extends Command
         private readonly MoralService              $moralService,
         private readonly ResourcesService          $resourcesService,
         private readonly OnboardingTriggerService  $onboardingTriggerService,
+        private readonly BarService               $barService,
     ) {
         parent::__construct();
     }
@@ -103,6 +106,9 @@ class GameTick extends Command
 
             $n = $this->incrementAdvisorTicks();
             $this->line("  Advisors ticked:          {$n}");
+
+            $n = $this->processBarOffers($tick);
+            $this->line("  Bar offers generated:     {$n}");
         });
 
         $this->info("Tick {$tick} done.");
@@ -851,6 +857,24 @@ class GameTick extends Command
 
     // ── 9. Advisor ticks ─────────────────────────────────────────────────────
 
+    // ── 10. Bar offers ───────────────────────────────────────────────────────
+
+    private function processBarOffers(int $tick): int
+    {
+        $colonyIds = DB::table('colony_buildings')
+            ->where('building_id', (int) config('buildings.bar.id', 52))
+            ->where('level', '>', 0)
+            ->pluck('colony_id');
+
+        foreach ($colonyIds as $colonyId) {
+            $this->barService->generateOffersForColony((int) $colonyId, $tick);
+        }
+
+        return $colonyIds->count();
+    }
+
+    // ── 9. Advisor ticks ─────────────────────────────────────────────────────
+
     private function incrementAdvisorTicks(): int
     {
         $updated = DB::table('advisors')
@@ -858,12 +882,35 @@ class GameTick extends Command
             ->whereNotNull('colony_id')
             ->increment('active_ticks');
 
-        $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        $thresholds    = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        $promotionCosts = config('game.advisor.promotion_costs', [2 => 150, 3 => 400]);
+
         foreach ($thresholds as $fromRank => $ticks) {
-            DB::table('advisors')
-                ->where('rank', $fromRank)
-                ->where('active_ticks', '>=', $ticks)
-                ->update(['rank' => $fromRank + 1]);
+            $toRank = $fromRank + 1;
+            $cost   = (int) ($promotionCosts[$toRank] ?? 0);
+
+            $eligible = DB::table('advisors as a')
+                ->join('glx_colonies as c', 'c.id', '=', 'a.colony_id')
+                ->where('a.rank', $fromRank)
+                ->where('a.active_ticks', '>=', $ticks)
+                ->whereNotNull('a.colony_id')
+                ->select('a.id', 'c.user_id')
+                ->get();
+
+            foreach ($eligible as $advisor) {
+                if ($cost > 0) {
+                    $credits = (int) (DB::table('user_resources')
+                        ->where('user_id', $advisor->user_id)
+                        ->value('credits') ?? 0);
+                    if ($credits < $cost) {
+                        continue; // Deferred — try again next tick
+                    }
+                    DB::table('user_resources')
+                        ->where('user_id', $advisor->user_id)
+                        ->decrement('credits', $cost);
+                }
+                DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
+            }
         }
 
         return $updated;

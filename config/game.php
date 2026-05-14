@@ -78,15 +78,18 @@ return [
     // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
-        'rank_thresholds' => [1 => 10, 2 => 20],
-        'ap_per_rank'     => [1 => 4, 2 => 7, 3 => 12],
+        'rank_thresholds'  => [1 => 10, 2 => 20],
+        'ap_per_rank'      => [1 => 4, 2 => 7, 3 => 12],
+        // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
+        // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
+        'promotion_costs'  => [2 => 150, 3 => 400],
         // Slot system: CC level = number of advisor slots (max 5).
         // Formula: min(cc_level, max_slots)
-        'max_slots'       => 5,
+        'max_slots'        => 5,
         // Credits deducted from the owning user each tick per active advisor (GDD §12).
         // Processed in GameTick after passive Credits income to prevent false-negative
         // deficits when income and upkeep fire in the same tick.
-        'upkeep'          => [1 => 10, 2 => 50, 3 => 160],
+        'upkeep'           => [1 => 10, 2 => 50, 3 => 160],
     ],
 
     // Passive Credits income per tick (GDD §3).
@@ -96,6 +99,20 @@ return [
         'nexus_subsidy'   => 30,
         // Cr/Tick per housing level (sum of all housingComplex instances in the colony).
         'tax_per_housing' => 20,
+    ],
+
+    // Bar/Cantina NPC offer generation (GDD §14 Kanal 1).
+    // base_prices: Cr per 1 unit of tradeable resource (before variance/discount).
+    // price_variance: ±fraction applied to base price (pseudo-random per offer).
+    // trader_discount: fraction by which prices drop for the player (keyed by trader rank, 0 = no trader).
+    // guest_count: [min, max] guests per tick keyed by trader rank.
+    // offer_duration: ticks an offer stays valid (expires_tick = current_tick + offer_duration).
+    'bar' => [
+        'base_prices'     => [3 => 30, 4 => 60, 5 => 50], // regolith, compounds, organics
+        'price_variance'  => 0.20,
+        'trader_discount' => [0 => 0.00, 1 => 0.00, 2 => 0.10, 3 => 0.25],
+        'guest_count'     => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
+        'offer_duration'  => 2,
     ],
 
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).

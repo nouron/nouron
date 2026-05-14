@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Colony\BarController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Galaxy\GalaxyController;
@@ -62,6 +63,10 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
 
     // Onboarding hint actions (AJAX)
     Route::post('/hint/dismiss', [ColonyController::class, 'dismissHint'])->name('hint.dismiss');
+
+    // Bar/Cantina
+    Route::get('/bar',               [BarController::class, 'index'])->name('bar');
+    Route::post('/bar/accept/{offer}', [BarController::class, 'accept'])->name('bar.accept');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────
