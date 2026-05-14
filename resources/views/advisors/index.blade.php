@@ -56,7 +56,9 @@
                          }">
 
                         {{-- Portrait area --}}
-                        <div class="advisor-portrait" :data-initials="portraitInitials(slot.key)">
+                        <div class="advisor-portrait"
+                             :style="portraitImageUrl(slot.key) ? 'background-image: url(' + portraitImageUrl(slot.key) + ')' : ''"
+                             :data-initials="portraitInitials(slot.key)">
                             <div class="advisor-type-label" x-text="slot.name"></div>
                             <div class="advisor-ap-chip">
                                 <strong x-text="apTypeLabel(slot.ap_type)"></strong>

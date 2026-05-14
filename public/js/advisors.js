@@ -142,6 +142,23 @@ function advisorCarousel(config) {
             return map[key] ?? key.substring(0, 2).toUpperCase();
         },
 
+        /**
+         * Returns the portrait image URL for a given advisor slot key.
+         * Gender is fixed per slot (index-based alternation, no gender attribute on model).
+         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader, strategist)
+         * @returns {string}
+         */
+        portraitImageUrl(key) {
+            const map = {
+                engineer:   '/img/advisors/construction_master_male.png',
+                scientist:  '/img/advisors/analyst_female.png',
+                pilot:      '/img/advisors/pilot_male.png',
+                trader:     '/img/advisors/trader_female.png',
+                strategist: '/img/advisors/strategist_male.png',
+            };
+            return map[key] ?? '';
+        },
+
         _csrf() {
             return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
         },
