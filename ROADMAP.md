@@ -426,7 +426,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 
 ---
 
-### Phase 3e: Onboarding & New-Player Experience — in Arbeit (Branch feat/phase3e-onboarding, PR #96 offen)
+### Phase 3e: Onboarding & New-Player Experience — fast abgeschlossen (Mai 2026)
 
 GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
@@ -440,7 +440,7 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 #### Schritt 2 — Nexus-Briefing (§ 15.1)
 
-- [ ] [content-writer] Finalen Nachrichtentext für das Nexus-Briefing formulieren (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton; GDD §15 TODO)
+- [x] [content-writer] Finalen Nachrichtentext für das Nexus-Briefing formulieren — `lang/de/colony.php → onboarding_nexus_briefing_title/body` (karg, lakonisch, Frontier-Ton)
 - [x] [game-developer] `EventService::createNexusBriefing()` mit idempotent guard; `OnboardingService::setupNewPlayer()` ruft `createNexusBriefing()` — Event beim Erzeugen eines neuen Runs automatisch angelegt
 - [x] [qa-tester] 6 Tests in `NexusBriefingTest.php` grün
 
@@ -455,23 +455,23 @@ GDD-Referenz: § 15 (Designprinzipien, §15.1–§15.7)
 
 - [x] [ui-specialist] CSS-Animation `onboarding-ring-pulse` (blau-weiß, 2s) in `colony.css`
 - [x] [ui-specialist] Pulse auf Rang-1-Tiles (bebaubare Colony-Zone) und Rang-3-Tiles (Harvester-Tile) im SVG-Grid implementiert
-- [ ] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — zurückgestellt: Techtree-Migration auf Alpine.js zuerst nötig
+- [ ] [ui-specialist] Pulse für Rang 2/4/5 (Techtree-Kacheln) — Techtree-Migration abgeschlossen, Implementierung ausstehend
 
 #### Schritt 5 — Techtree-Kaltstart: Kachel-Sortierung (§ 15.4)
 
-- [ ] [backend-coder] `TechtreeController` / Techtree-API: Gruppierungsflag je Kachel (`available` / `locked` / `built`) — zurückgestellt: Techtree-Screen muss zuerst auf Alpine.js migriert werden
-- [ ] [ui-specialist] Techtree-View: drei visuelle Gruppen, gesperrte Kacheln gedimmt (Opacity 0.6) mit on-hover-Tooltip — zurückgestellt: Techtree-Migration zuerst
+- [x] [backend-coder] `TechtreeController` / Techtree-API: Gruppierungsflag je Kachel (`available` / `locked` / `built`) — implementiert
+- [x] [ui-specialist] Techtree-View: drei visuelle Gruppen, gesperrte Kacheln gedimmt (Opacity 0.55) mit Lock-Icon + Voraussetzungs-Hinweis
 
 #### Schritt 6 — Inline-Erklärungen: 5 INNN-Trigger (§ 15.6)
 
-- [ ] [game-developer] Trigger 1 (Decay): Erstes Gebäude unter 80% Status-Points → einmaliges `innn_event` mit `event_type = 'onboarding_decay'`, Absender System, erklärt Reparatur-AP (einmalig pro Run)
-- [ ] [game-developer] Trigger 2 (Supply-Cap voll): `freies_supply = 0` → einmaliger Inline-Banner-Flag im Session/Preference-State; UI zeigt gelbes Banner im Ressourcen-Header
-- [ ] [game-developer] Trigger 3 (Vertrauen erstmals negativ): `vertrauen` wird negativ → einmaliges `innn_event` mit `event_type = 'onboarding_trust'`, Absender Kolonist
-- [ ] [backend-coder] Trigger 4 (AP-Limit): Button-Handler gibt strukturierten Fehlercode zurück wenn AP = 0; Frontend zeigt Tooltip (kein Modal)
-- [ ] [ui-specialist] Trigger 5 (Harvester-Verlagerung): Beim ersten Klick auf "Verlegen" erscheint einmaliger Tooltip (einmalig pro Run)
-- [ ] [db-migration-agent] Flag-Mechanismus für "bereits gefeuert"-Status der 5 Onboarding-Trigger in `user_preferences`
-- [ ] [content-writer] Finale Texte für alle 5 Inline-Erklärungen (Ton konsistent mit Nexus-Briefing)
-- [ ] [qa-tester] Tests: Jeder Trigger feuert genau einmal pro Run; Trigger 4 + 5 erzeugen keine INNN-Events sondern nur UI-Feedback
+- [x] [game-developer] Trigger 1 (Decay): Erstes Gebäude unter 80% Status-Points → einmaliges `innn_event` mit `event_type = 'onboarding_decay'`, Absender System, erklärt Reparatur-AP (einmalig pro Run)
+- [x] [game-developer] Trigger 2 (Supply-Cap voll): `freies_supply = 0` → `fired_triggers → supply_cap_full` in `user_preferences`
+- [x] [game-developer] Trigger 3 (Vertrauen erstmals negativ): `vertrauen` wird negativ → einmaliges `innn_event` mit `event_type = 'onboarding_trust'`, Absender Kolonist
+- [x] [backend-coder] Trigger 4 (AP-Limit): Button-Handler gibt `error: 'ap_limit'` zurück; Frontend zeigt Inline-Meldung (kein Modal)
+- [x] [ui-specialist] Trigger 5 (Harvester-Verlagerung): Beim ersten Klick auf "Verlegen" erscheint einmaliger Tooltip via `harvester_move_shown`-Flag
+- [x] [db-migration-agent] Flag-Mechanismus: `fired_triggers` JSON-Spalte in `user_preferences`; `OnboardingTriggerService` mit idempotenten `hasFired`/`markFired`
+- [x] [content-writer] Finale Texte für alle 5 Inline-Erklärungen in `lang/de/colony.php`
+- [x] [qa-tester] 43 Tests in `OnboardingTriggersTest.php` + `OnboardingTriggerServiceTest.php` — alle grün
 
 #### Schritt 7 — Integration & Einstellungen
 
