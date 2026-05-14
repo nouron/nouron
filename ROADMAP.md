@@ -403,7 +403,8 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 - [ ] **Vertrauensanzeige im UI** — Mechanik vorhanden, UI fehlt noch
 - [ ] **Händler-Modal** — Alpine-gesteuert, nativer `<dialog>`, 3–4 Items, Credits-Kauf
 - [ ] **Ingame-Almanach** — Nachschlagewerk für Gebäude, Forschungen, Schiffstypen; Blade-Seite mit Config-Daten
-- [ ] **jQuery-Migration** — galaxy.js + nouron.js (sofort), innn.js, fleets.js, techtree.js, trade.js (schrittweise)
+- [x] **jQuery-Migration (Schritt 1)** — galaxy.js, nouron.js, innn.js auf Vanilla JS migriert; techtree.js + leader-line.min.js aus layouts.app entfernt (dead code); Inline-$(document).ready → DOMContentLoaded
+- [ ] **jQuery-Migration (Schritt 2)** — fleets.js, trade.js (noch jQuery-abhängig); jQuery + bootbox + growl können erst danach entfernt werden
 
 ---
 

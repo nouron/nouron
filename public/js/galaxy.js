@@ -1,7 +1,7 @@
-$(document).ready(function () {
+document.addEventListener('DOMContentLoaded', function () {
 
     // ── Galaxy Overview (/galaxy) ─────────────────────────────────────────
-    if ($('#galaxy-overview').length > 0) {
+    if (document.getElementById('galaxy-overview')) {
         var el = document.getElementById('galaxy-overview');
         var allSystems = JSON.parse(el.dataset.systems || '[]');
 
@@ -166,7 +166,7 @@ $(document).ready(function () {
     }
 
     // ── System Detail (/galaxy/:id) ───────────────────────────────────────
-    if ($('#galaxy-map').length > 0) {
+    if (document.getElementById('galaxy-map')) {
         var mapEl      = document.getElementById('galaxy-map');
         var cx         = parseInt(mapEl.dataset.x || '0');
         var cy         = parseInt(mapEl.dataset.y || '0');
@@ -382,12 +382,9 @@ $(document).ready(function () {
         });
 
         // Toggle buttons
-        $('#toggleGridLayer').on('click', function(e) {
-            e.preventDefault();
-            // grid is drawn directly on map; re-toggle via layerMisc visibility not applicable
-            // just reload map data as a refresh
-        });
-        $('#toggleSystemLayer').on('click', function(e) {
+        var toggleSystem = document.getElementById('toggleSystemLayer');
+        var toggleFleets = document.getElementById('toggleFleetsLayer');
+        if (toggleSystem) toggleSystem.addEventListener('click', function(e) {
             e.preventDefault();
             if (galaxyMap.hasLayer(layerPlanets)) {
                 galaxyMap.removeLayer(layerPlanets);
@@ -395,7 +392,7 @@ $(document).ready(function () {
                 galaxyMap.addLayer(layerPlanets);
             }
         });
-        $('#toggleFleetsLayer').on('click', function(e) {
+        if (toggleFleets) toggleFleets.addEventListener('click', function(e) {
             e.preventDefault();
             if (galaxyMap.hasLayer(layerFleets)) {
                 galaxyMap.removeLayer(layerFleets);

@@ -1,49 +1,55 @@
-// Run once the DOM is ready
-$(document).ready(function () {
-    
-    $('.new-inbox-message').bind('fade-cycle', function() {
-        $(this).fadeOut('slow', function() {
-            $(this).fadeIn('slow', function() {
-                $(this).trigger('fade-cycle');
-            });
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Fade-cycle animation for unread inbox messages
+    document.querySelectorAll('.new-inbox-message').forEach(function (el, index) {
+        el.style.setProperty('--fade-delay', (index * 0.25) + 's');
+        el.classList.add('fade-cycling');
+    });
+
+    // Message archive/delete buttons
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.message-options a.btn');
+        if (!btn) return;
+        e.preventDefault();
+
+        var siblings = btn.closest('.message-options').querySelectorAll('a.btn');
+        siblings.forEach(function (s) { s.classList.add('disabled'); });
+
+        fetch(btn.getAttribute('href'), {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            var optionsId   = btn.closest('.message-options').getAttribute('id');
+            var messageDomId = optionsId ? optionsId.replace('-options', '') : null;
+            if (data.result && (data.status === 'archived' || data.status === 'deleted')) {
+                var row = messageDomId ? document.getElementById(messageDomId) : null;
+                if (row) row.style.display = 'none';
+            } else if (data.result) {
+                siblings.forEach(function (s) { s.classList.add('disabled'); });
+                var span = document.createElement('span');
+                span.className = 'btn';
+                span.innerHTML = btn.innerHTML;
+                btn.replaceWith(span);
+                var opts = document.getElementById(messageDomId + ' .message-options a.btn:last-child');
+                if (opts) opts.classList.remove('hidden', 'disabled');
+            }
+            var flash = document.getElementById('flashMessages');
+            if (flash) {
+                var alert = document.createElement('div');
+                alert.className = 'alert alert-success';
+                alert.textContent = 'ok';
+                flash.appendChild(alert);
+            }
+        })
+        .catch(function () {
+            var flash = document.getElementById('flashMessages');
+            if (flash) {
+                var alert = document.createElement('div');
+                alert.className = 'alert alert-danger';
+                alert.textContent = 'Ein Fehler ist aufgetreten';
+                flash.appendChild(alert);
+            }
         });
     });
-    $('.new-inbox-message').each(function(index, elem) {
-        setTimeout(function() {
-            $(elem).trigger('fade-cycle');
-        }, index * 250);
-    });    
-    
-    $(".message-options a.btn").click(function(e){
-        e.preventDefault();
-        button = $(this);
-        button.siblings().addClass('disabled');
-        var target = $(this).attr('href');
-        var message_id_options = $(this).parent().attr('id');
-        $.getJSON(
-            target,
-            function(data) {
-                message_dom_id = message_id_options.replace('-options', '');
-                if (data.result && (data.status == 'archived' || data.status == 'deleted')) {
-                    $("#"+message_dom_id).fadeOut('fast');
-                } else if (data.result) {
-                    button.siblings().addClass('disabled');
-                    span = '<span class="btn">'+button.html()+'</span>';
-                    button.replaceWith( span );
-                    $("#"+message_dom_id+" .message-options a.btn").last().removeClass('hidden disabled');
-                    $("#"+message_dom_id+" .message-options a.btn").last().prev().removeClass('hidden disabled');
-                }
-
-                $("#flashMessages").append('<div class="alert alert-success">ok</div>');
-            },
-            function(data) {
-                $("#flashMessages").append('<div class="alert alert-error">Ein Fehler ist aufgetreten</div>');
-            }
-        );
-        return false;
-    });
-    
-    
-    
-    
 });
