@@ -13,6 +13,9 @@ return [
     'building_infirmary'      => 'Krankenstation',
     'building_monument'       => 'Kolonialdenkmal',
     'building_bar'            => 'Cantina',
+    'building_securityHub'    => 'Sicherheits-Hub',
+    'building_uplinkStation'  => 'Uplink-Station',
+    'building_tradingPost'    => 'Handelsposten',
 
     // ── Kenntnisse ───────────────────────────────────────────────────────────
     'knowledge_construction'  => 'Baukunde',

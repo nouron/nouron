@@ -111,7 +111,21 @@ class FleetService
         $pathLength     = count($path);
         $moveCost       = (int) config('game.fleet.order_costs.move', 1);
         $finalOrderCost = (int) config('game.fleet.order_costs.' . $order, $moveCost);
-        $apCost         = $moveCost * max(0, $pathLength - 1) + $finalOrderCost;
+
+        // Sicherheits-Hub (building_id=53): defend costs 1 Nav-AP instead of 2.
+        if ($order === 'defend' && $finalOrderCost > 1) {
+            $fleetUserId = DB::table('fleets')->where('id', $fleetId)->value('user_id');
+            $primeColony = $fleetUserId ? $this->colonyService->getPrimeColony($fleetUserId) : null;
+            if ($primeColony && DB::table('colony_buildings')
+                    ->where('colony_id', $primeColony->id)
+                    ->where('building_id', (int) config('buildings.securityHub.id', 53))
+                    ->where('level', '>', 0)
+                    ->exists()) {
+                $finalOrderCost = max(1, $finalOrderCost - 1);
+            }
+        }
+
+        $apCost = $moveCost * max(0, $pathLength - 1) + $finalOrderCost;
 
         // AP check and lock must be atomic to prevent TOCTOU race conditions.
         DB::transaction(function () use ($fleetId, $path, $order, $additionalData, $apCost) {

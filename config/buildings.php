@@ -134,44 +134,50 @@ return [
         'max_level'         => null,
     ],
 
-    // ── Planned (design complete, not yet implemented) ────────────────────────
+    // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
-    // Security Hub — CC Lv2, max 1 instance. Reduces defend-order to 1 Nav-AP;
-    // returns ~10% of step costs in resources on level-down decay (see GDD §4).
-    // TODO: assign DB id, calibrate supply_cost/decay_rate/baukosten after playtest.
+    // Security Hub — CC Lv2, max 1 instance (is_instanced=0).
+    // Effect 1: defend-order costs 1 Nav-AP instead of 2 (FleetService).
+    // Effect 2: on building level-down by decay, return 10% of step costs in
+    //           tradeable resources (GameTick, config key: securityHub_recycle_pct).
+    // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
     'securityHub' => [
-        'id'                => null,    // TBD — not yet in DB
-        'supply_cost'       => 8,       // provisional
-        'moral_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days — provisional
-        'max_status_points' => 20,
-        'max_level'         => 3,
+        'id'                  => 53,
+        'supply_cost'         => 8,
+        'moral_per_lv'        => 0,
+        'decay_rate'          => 0.67,    // 30 days — provisional
+        'max_status_points'   => 20,
+        'max_level'           => 3,
+        'recycle_pct'         => 0.10,    // fraction of build cost returned on level-down
     ],
 
-    // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance.
-    // Lv1: unlocks active Nexus requests. Lv2: deep-scan bonus + merchant frequency.
-    // Lv3: run-completion report action (see GDD §4 + §15).
-    // Lv1 build cost must not require Compounds — circular dependency risk.
-    // TODO: assign DB id, finalise per-level costs + effects after playtest.
+    // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).
+    // Effect Lv2+: deep-scan costs 1 Nav-AP instead of 2 (ColonyTileService).
+    // Effect Lv2+: merchant appears more frequently (TODO: implement with merchant system).
+    // Effect Lv3: run-completion action — TODO: implement when run-end mechanic is built.
+    // Lv1 build cost: Regolith + Credits only — no Compounds (circular dep risk).
+    // TODO Balance: per-level CC gates (Lv2→CC3, Lv3→CC5) not yet enforced — post-playtest.
     'uplinkStation' => [
-        'id'                => null,    // TBD — not yet in DB
-        'supply_cost'       => 6,       // provisional
+        'id'                => 54,
+        'supply_cost'       => 6,
         'moral_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days — provisional
         'max_status_points' => 20,
         'max_level'         => 3,
     ],
 
-    // Trading Post — CC Lv4, max 1 instance. Reduces trader Economy-AP cost by 1;
-    // improves Merchant prices +10–15% (see GDD §4).
-    // TODO: assign DB id, calibrate price bonus vs. trader rank after playtest.
+    // Trading Post — CC Lv4, max 1 instance (is_instanced=0).
+    // Effect: Merchant (+Reisender Händler) gives +12% better trade value when present.
+    //         Konsul Economy-AP reduction: TODO implement when merchant system is built.
+    // TODO Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
     'tradingPost' => [
-        'id'                => null,    // TBD — not yet in DB
-        'supply_cost'       => 6,       // provisional
-        'moral_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days — provisional
-        'max_status_points' => 20,
-        'max_level'         => 3,
+        'id'                   => 55,
+        'supply_cost'          => 6,
+        'moral_per_lv'         => 0,
+        'decay_rate'           => 0.67,    // 30 days — provisional
+        'max_status_points'    => 20,
+        'max_level'            => 3,
+        'merchant_price_bonus' => 0.12,    // +12% trade value when Reisender Händler present
     ],
 
 ];
