@@ -382,6 +382,20 @@
 
 .detail-x:hover { color: #333; }
 
+/* Full-bleed building image in techtree detail-inner (padding: 1.1rem) */
+.detail-inner .building-detail-img-wrap {
+    width: calc(100% + 2.2rem);
+    margin: 0 -1.1rem 0.75rem;
+    overflow: hidden;
+}
+
+.detail-inner .building-detail-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
 .detail-title {
     margin: 0.1rem 0 1rem;
     font-size: 1.05rem;

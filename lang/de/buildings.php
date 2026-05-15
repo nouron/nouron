@@ -5,26 +5,26 @@ return [
     // ── Supply-Cap providers ──────────────────────────────────────────────────
 
     'commandCenter'      => 'Kommandozentrale',
-    'commandCenter_desc' => 'Schaltzentrale der Kolonie. Ohne aktive Kommandozentrale ist kein Ausbau möglich.',
+    'commandCenter_desc' => 'Kommunikationsknoten und Verwaltungskern der Kolonie. Jedes Ausbaustufe erschließt weitere Baufläche und erhöht die Versorgungskapazität — ohne funktionsfähige Kommandozentrale steht der Aufbau still.',
 
     'housingComplex'      => 'Wohnhabitat',
-    'housingComplex_desc' => 'Wohnmodule für die Kolonisten. Jede Einheit erhöht die Versorgungskapazität der Kolonie.',
+    'housingComplex_desc' => 'Standardmodule für Unterkunft, Lebenserhaltung und minimale Privatsphäre. Eng, aber ausreichend. Jede Einheit erhöht die Versorgungskapazität und macht Platz für mehr Kolonisten.',
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
     'harvester'      => 'Harvester',
-    'harvester_desc' => 'Fördert und verarbeitet Rohstoffe aller Art — Metalle, Legierungen, Keramik, Polymere. Grundlage jeder Schwerindustrie.',
+    'harvester_desc' => 'Automatisierte Abbauplattform, die auf einem Regolith-Vorkommen in der Explorationszone stationiert wird. Fördert Regolith pro Tick — Menge abhängig von der Qualität des Vorkommens. Der einzige Weg, lokal Rohbaumaterial zu gewinnen.',
 
     'bioFacility'      => 'Agrardom',
-    'bioFacility_desc' => 'Kontrollierte Biosphäre für Nahrungsproduktion, Medizin und organische Verbindungen. Versorgt die Kolonie mit Organika.',
+    'bioFacility_desc' => 'Geschlossene Biosphäre unter Druckhülle: Aquaponik, Pilzkulturen, medizinische Anzuchten. Auf einem Planeten ohne natürliche Biologie ist der Agrardom kein Komfort — er ist Lebenserhaltung.',
 
     'depot'      => 'Lagerhalle',
-    'depot_desc' => 'Robuste Lagerinfrastruktur für Werkstoffe und Organika. Erhöht die maximale Lagerkapazität der Kolonie.',
+    'depot_desc' => 'Druckdichte Lagerstätten für Regolith, Werkstoffe und Organika. Ohne ausreichende Lagerkapazität geht Produktion verloren — was die Anlage über Nacht fördert, landet am nächsten Morgen auf dem Boden.',
 
     // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab'      => 'Analytik-Labor',
-    'sciencelab_desc' => 'Forschungs- und Analysezentrum der Kolonie. Voraussetzung für alle Forschungsaktivitäten.',
+    'sciencelab_desc' => 'Ausrüstung für Materialanalyse, Tiefenscans und angewandte Forschung. Wer hier arbeitet, tut es unter beengten Bedingungen — aber ohne dieses Labor bleibt die Kolonie blind für das, was im Boden und im Umfeld steckt.',
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
@@ -34,15 +34,15 @@ return [
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
     'infirmary'      => 'Krankenstation',
-    'infirmary_desc' => 'Medizinische Grundversorgung für die Kolonisten. Benötigt regelmäßige Wartung und Nachschub.',
+    'infirmary_desc' => 'Behandlungsräume, Notfallausrüstung, ein Bett das nie kalt wird. Auf einem fremden Planeten ist Krankheit kein Pech — sie ist ein Versorgungsproblem. Die Krankenstation braucht Organika und regelmäßige Wartung, um zu funktionieren.',
 
     'bar'      => 'Cantina',
     'bar_desc' => 'Der zentrale Treffpunkt der Kolonie. Hier entspannen die Kolonisten nach der Schicht, tauschen Klatsch aus und treffen Fremde. Wer hier zuhört, erfährt mehr als in jedem offiziellen Bericht.',
 
     'monument'      => 'Kolonialdenkmal',
-    'monument_desc' => 'Erinnerung an die Gründungsgeschichte der Kolonie. Ein dauerhaftes Symbol des gemeinsamen Weges.',
+    'monument_desc' => 'Ein materieller Verweis auf das, was bisher erreicht wurde — und auf die Namen derer, die es nicht bis hierhin geschafft haben. Wer es errichtet, schreibt Geschichte. Kolonisten, die ein Denkmal sehen, denken seltener an Abreise.',
 
     'temple'      => 'Religiöse Stätte',
-    'temple_desc' => 'Spiritueller Anker für die Bevölkerung. Gibt Halt in einer unwirtlichen Welt fernab der Heimat.',
+    'temple_desc' => 'Kein prunkvoller Bau — ein abgetrennter Raum, ein Symbol, ein stiller Ort. Auf einem Planeten fernab der Heimat brauchen Menschen irgendwo einen Anker. Welche Überzeugung dahintersteht, ist Sache der Kolonisten.',
 
 ];

@@ -69,7 +69,8 @@ class ColonyController extends BaseController
             )
             ->get()
             ->map(function ($b) {
-                $b->label = __('techtree.' . $b->building_key);
+                $b->label      = __('techtree.' . $b->building_key);
+                $b->image_slug = self::buildingImageSlug($b->building_key);
                 return $b;
             });
 
@@ -405,8 +406,16 @@ class ColonyController extends BaseController
             )
             ->first();
 
-        $row->label = __('techtree.' . $row->building_key);
+        $row->label      = __('techtree.' . $row->building_key);
+        $row->image_slug = self::buildingImageSlug($row->building_key);
 
         return $row;
+    }
+
+    private static function buildingImageSlug(string $key): string
+    {
+        $key = preg_replace('/^building_/', '', $key);
+        $overrides = ['bar' => 'cantina'];
+        return $overrides[$key] ?? strtolower(preg_replace('/([A-Z])/', '-$1', $key));
     }
 }

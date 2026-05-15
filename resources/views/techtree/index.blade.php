@@ -93,6 +93,14 @@
                 {{-- Title --}}
                 <h3 class="detail-title" x-text="selectedTech.name"></h3>
 
+                {{-- Building image (only for building-type items with a resolved image_slug).
+                     show_header:false because the <h3 detail-title> above already renders the name. --}}
+                @include('partials.building-detail', [
+                    'expr'        => 'selectedTech',
+                    'name_field'  => 'name',
+                    'show_header' => false,
+                ])
+
                 {{-- Meta rows --}}
                 <div class="detail-body">
                     <template x-if="selectedTech.level > 0">

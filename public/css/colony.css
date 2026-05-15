@@ -446,6 +446,43 @@ body {
 .sidebar-bar--ap       { background: #27ae60; }
 .sidebar-bar--resource { background: #2196f3; }
 
+/* ── Shared building detail partial (.building-detail-*) ─────────────────── */
+
+/*
+ * Used in both the colony hex-view sidebar and the techtree detail panel.
+ * Image container has a fixed height so varying image dimensions stay consistent.
+ * CLAUDE.md: container in em/rem; images width/height 100% + object-fit: contain.
+ */
+.building-detail-wrap {
+    margin-bottom: 0.75rem;
+}
+
+/* Full-bleed in colony tile-panel-body (padding: 1rem 1.25rem) */
+.tile-panel-body .building-detail-img-wrap {
+    width: calc(100% + 2.5rem);
+    margin: 0 -1.25rem 0.75rem;
+    overflow: hidden;
+}
+
+.building-detail-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+.building-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.building-detail-name {
+    font-size: 0.95rem;
+    color: var(--color-anthracite, #333);
+}
+
 /* ── Sidebar building section ────────────────────────────────────────────── */
 
 .sidebar-building {
