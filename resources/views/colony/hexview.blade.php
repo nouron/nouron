@@ -171,14 +171,11 @@ window.__colonyViewData = {
                         <template x-if="buildingForTile(selectedTile)">
                             <div class="sidebar-building">
                                 <div class="sidebar-section-title">{{ __('colony.building_section') }}</div>
-                                <div class="sidebar-building-name">
-                                    <strong x-text="buildingForTile(selectedTile).level === 0
-                                        ? '{{ __('colony.construction_site') }}: ' + buildingForTile(selectedTile).label
-                                        : buildingForTile(selectedTile).label"></strong>
-                                    <span class="sidebar-level-badge"
-                                          x-show="buildingForTile(selectedTile).level > 0"
-                                          x-text="`Lv. ${buildingForTile(selectedTile).level}`"></span>
-                                </div>
+
+                                @include('partials.building-detail', [
+                                    'expr'       => 'buildingForTile(selectedTile)',
+                                    'name_field' => 'label',
+                                ])
 
                                 <dl class="tile-dl" style="margin-top:.5rem">
                                     <dt>{{ __('colony.max_level') }}</dt>

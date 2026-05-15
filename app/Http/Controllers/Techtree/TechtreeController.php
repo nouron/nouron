@@ -92,6 +92,8 @@ class TechtreeController extends BaseController
                     'status'        => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
                     'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
+                    'key'           => $type === 'building' ? $tech['name'] : null,
+                    'image_slug'    => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
                 ];
 
                 // Generate within-phase arrow for this item.
@@ -164,6 +166,13 @@ class TechtreeController extends BaseController
         $pageData = ['phases' => $phases];
 
         return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank'));
+    }
+
+    private static function buildingImageSlug(string $key): string
+    {
+        $key = preg_replace('/^building_/', '', $key);
+        $overrides = ['bar' => 'cantina'];
+        return $overrides[$key] ?? strtolower(preg_replace('/([A-Z])/', '-$1', $key));
     }
 
     /**
