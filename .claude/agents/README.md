@@ -1,6 +1,6 @@
 # Claude Code Subagents — Nouron Browsergame Team
 
-Dieses Verzeichnis enthält die Subagenten-Definitionen für das Nouron-Projekt.
+Subagenten-Definitionen für Nouron-Projekt.
 
 ## Sprachregeln (gilt für alle Agenten)
 
