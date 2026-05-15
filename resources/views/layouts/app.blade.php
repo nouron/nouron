@@ -43,6 +43,10 @@
                        href="{{ route('advisors.index') }}"><i class="bi bi-people"></i> Berater</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('colony.bar*')) active @endif"
+                       href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i> Cantina</a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"
                        href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i> Handel</a>
                 </li>
@@ -108,23 +112,14 @@
     @yield('content')
 </div>
 
-{{-- jQuery still required by fleets.js and trade.js (pending migration) --}}
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-{{-- bootbox + growl: still required by trade.js (pending migration) --}}
-<script src="https://cdn.jsdelivr.net/npm/bootbox@6.0.0/bootbox.min.js"></script>
-<script src="{{ asset('js/jquery.bootstrap-growl.min.js') }}"></script>
 <script src="{{ asset('js/nouron.js') }}"></script>
 <script src="{{ asset('js/fleets.js') }}"></script>
-<script src="{{ asset('js/trade.js') }}"></script>
 <script src="{{ asset('js/innn.js') }}"></script>
 @stack('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Module JS init (guarded by element presence)
-    if (document.getElementById('fleetlist'))  { fleetlist.init(); }
-    if (document.getElementById('fleetconfig')){ fleetconfig.init(); }
-    if (document.getElementById('trade'))      { trade.init(); }
+    if (document.getElementById('fleetconfig')) { fleetconfig.init(); }
 });
 </script>
 </body>
