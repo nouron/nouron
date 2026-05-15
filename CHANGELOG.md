@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-05-15
+
+- **Gebäude-Bildintegration (PR #118)**: Shared Blade Partial `partials/building-detail.blade.php` zeigt Gebäudebilder in Colony-Sidebar und Techtree-Panel ohne Code-Duplikat. `ColonyController` + `TechtreeController` berechnen `image_slug` serverseitig (camelCase→kebab, `bar`→`cantina` Override, `building_`-Prefix wird gestrippt). Bild läuft randlos über volle Sidebar-Breite (full-bleed via negative Margins). 11 Gebäudebilder initial in `public/img/buildings/`.
+- **Image-Gen-Tool (`tools/image-gen/generate.py`)**: Per-Kategorie `_config.json` steuert `api_size`, `quality` und `resize`. `_base.prompt.md` mit Inhalt `none` deaktiviert den globalen Style-Prompt für Kategorien wie Tile-Piktogramme. `--no-base-prompt` Flag für einmaligen Override. Pillow-Resize-Support für kleine Ausgabegrößen. `.gitignore`: `public/img/_*/` und `.prompts/` ausgeschlossen — Image-Gen-Staging bleibt lokal, manuell nach `public/img/<type>/` kuratiert.
+- **Bild-Prompts überarbeitet**: Gebäude-Prompts korrigiert (keine Personen außen ohne Schutzanzug; einheitlich runde Bullaugen als Fenster). Kommandozentrale erhält runden Grundriss als zentrales Kolonie-Gebäude.
+- **Claude Code Skills committet**: Caveman-Plugin-Skills + `skills-lock.json` ins Repo aufgenommen.
+
 ## 2026-05-14
 
 - **jQuery-Migration Schritt 1 (feat/jquery-migration)**: `galaxy.js`, `nouron.js`, `innn.js` auf Vanilla JS / `DOMContentLoaded` migriert; `fetch()` statt `$.getJSON` in `innn.js`; CSS-Animation `inbox-pulse` ersetzt jQuery fade-cycle; `techtree.js` und `leader-line.min.js` aus `layouts/app.blade.php` entfernt (dead code seit neuem Techtree-Screen); Inline `$(document).ready` in `layouts.app` auf `DOMContentLoaded` umgestellt. jQuery bleibt bis `fleets.js` + `trade.js` migriert sind.
