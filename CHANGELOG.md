@@ -2,7 +2,8 @@
 
 ## 2026-05-17
 
-- **Dev Tools: Ressourcen-Editor + Tick-Dry-Run**: `tools/resource-editor.php` (Start: `php -S localhost:8082`) — Browser-UI zum Setzen von Credits, Supply, Regolith, Werkstoffe, Organika und Vertrauen für beliebige Kolonien ohne manuelles SQL. `php artisan game:tick-dry-run [--colony=ID]` — simuliert einen Tick und gibt Credits-/Ressourcen-/Decay-Diff aus, ohne die DB zu schreiben; Building-Decay-Status mit farbigen Warnungen (gelb < 40%, rot < 20% oder Level-Down).
+- **Dev Panel (`tools/dev-panel.php`)**: Kombiniertes Browser-Tool, löst `techtree-editor.php` und `resource-editor.php` ab. Tab-Navigation: **Resources** — Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen für beliebige User/Kolonie setzen ohne SQL. **Techtree** — Drag-and-Drop-Editor für Techtree-Positionen (phase/row/column). Ein Port statt zwei: `php -S localhost:8081 tools/dev-panel.php`.
+- **Tick-Dry-Run (`game:tick-dry-run`)**: Artisan-Command simuliert einen Tick ohne DB-Schreibzugriff. Zeigt Credits-Delta (Nexus/Housing/Berater-Upkeep), Ressourcen-Produktion mit Moral-Multiplikator, Building-Decay-Status mit farbigen Warnungen (gelb < 40% SP, rot < 20% SP / Level-Down). `--colony=ID` filtert auf eine Kolonie.
 - **CHANGELOG + ROADMAP aktualisiert**: Phase 3 als abgeschlossen markiert; Phase 3h (Techtree Phase-Layout) in ROADMAP ergänzt.
 
 ## 2026-05-15
