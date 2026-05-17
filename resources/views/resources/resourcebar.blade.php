@@ -1,23 +1,37 @@
 {{-- Resource bar partial (no layout) — replaces resources/json/reloadresourcebar.phtml --}}
 {{-- Server-side data dependency: $possessions — keyed by resource_id, each entry has: amount, abbreviation, name --}}
+{{-- Optional: $currentSol (int), $solLimit (int) — inject Sol chip before primary resources --}}
 @auth
 @php
-    $primaryIds  = [1, 2];   // Credits (Cr) and Supply (Sup) — always shown, always first
-    $primary     = [];
-    $secondary   = [];
+    $primaryIds   = [1, 2, 12]; // Credits (Cr), Supply (Sup), Trust (M) — always shown
+    $activeResIds = [1, 2, 3, 4, 5, 12]; // whitelist — ENrg/LNrg/ANrg (6/8/10) excluded
+    $primary      = [];
+    $secondary    = [];
 
     foreach ($possessions as $resId => $resource) {
-        if (in_array((int)$resId, $primaryIds)) {
-            $primary[(int)$resId] = $resource;
+        $rid = (int) $resId;
+        if (!in_array($rid, $activeResIds)) continue;
+        if (in_array($rid, $primaryIds)) {
+            $primary[$rid] = $resource;
         } else {
-            $secondary[$resId] = $resource;
+            $secondary[$rid] = $resource;
         }
     }
 
-    // Guarantee order: Credits first, then Supply
     ksort($primary);
+
+    $solDisplay = $currentSol ?? null; // composer already caps at solLimit
 @endphp
-<div class="d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
+<div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
+
+    {{-- Sol chip: only shown when run-local Sol is meaningful (≤ solLimit) --}}
+    @if($solDisplay !== null)
+        <span class="res-chip res-chip--primary res-chip--sol res-Sol">
+            <span class="res-abbr">Sol</span>
+            <span class="res-amount">{{ $solDisplay }} / {{ $solLimit ?? 100 }}</span>
+        </span>
+        <span class="res-divider" aria-hidden="true"></span>
+    @endif
 
     {{-- Primary resources: always visible, regardless of amount --}}
     @foreach($primary as $resId => $resource)

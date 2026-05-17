@@ -80,7 +80,11 @@
 {{-- Resource bar --}}
 @if(!empty($resourceBarPossessions))
 <div id="resourcebar-container">
-    @include('resources.resourcebar', ['possessions' => $resourceBarPossessions])
+    @include('resources.resourcebar', [
+        'possessions' => $resourceBarPossessions,
+        'currentSol'  => $currentSol ?? null,
+        'solLimit'    => $solLimit ?? 100,
+    ])
 </div>
 @endif
 

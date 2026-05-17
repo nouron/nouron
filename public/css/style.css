@@ -40,7 +40,7 @@ a:hover {color: #000; text-decoration: underline;}
 /* ── Resource bar ──────────────────────────────────────────────────────── */
 #resourcebar-container {
     position: fixed;
-    top: 56px;
+    top: 64px;
     left: 0; right: 0;
     z-index: 1029;
     background: #f8f9fa;
@@ -108,6 +108,20 @@ a:hover {color: #000; text-decoration: underline;}
 .res-LNrg { background: #ede9fe; border-color: #7c65cc; }
 .res-ANrg { background: #fefce8; border-color: #ca9b11; }
 .res-M    { background: #fce7f3; border-color: #d166a0; }
+.res-Rg   { background: #fdf0e0; border-color: #d4924a; }
+.res-Co   { background: #dceeff; border-color: #5599dd; }
+.res-Or   { background: #e8f5e0; border-color: #5a9a3a; }
+.res-Sol  { background: #ede9fe; border-color: #7c65cc; }
+
+/* Flexbox wrapper used by the shared resourcebar partial — works without Bootstrap utilities as fallback */
+.res-bar-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
 
 .sidebar-nav {padding: 9px 0;}

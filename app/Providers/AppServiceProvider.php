@@ -17,6 +17,7 @@ use App\Services\TickService;
 use App\Services\FleetService;
 use App\Services\TradeGateway;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -92,6 +93,17 @@ class AppServiceProvider extends ServiceProvider
                     }
                 }
                 $view->with('resourceBarPossessions', $possessions ?? []);
+
+                // Inject Sol run-progress for the resource bar Sol chip
+                $colony    = DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->first();
+                $sinceTick = $colony ? (int) $colony->since_tick : null;
+                $tickService = app(TickService::class);
+                $globalTick  = $tickService->getTickCount();
+                $solLimit    = (int) config('game.run.tick_limit', 100);
+                $currentSol  = $sinceTick !== null ? min($solLimit, max(1, $globalTick - $sinceTick + 1)) : null;
+
+                $view->with('currentSol', $currentSol);
+                $view->with('solLimit', $solLimit);
             }
         });
     }
