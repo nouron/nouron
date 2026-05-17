@@ -1,7 +1,12 @@
 # Changelog
 
+## 2026-05-17
+
+- **CHANGELOG + ROADMAP aktualisiert**: Phase 3 als abgeschlossen markiert; Phase 3h (Techtree Phase-Layout) in ROADMAP ergänzt.
+
 ## 2026-05-15
 
+- **Lore-Dokumente erstellt (PR #119)**: `docs/lore/planet.md` (5 Planetentypen mit Ressourcenprofil + Lore), `docs/lore/tiles.md` (vollständiger Tile-Katalog mit SVG-Piktogramm-Spezifikationen), `docs/lore/ships.md` (Visual-Direction für alle 3 Schiffstypen). ADR 0001 (`docs/adr/0001-graphics-asset-format.md`): verbindliches Grafik-Asset-Format (WebP 2×, em/rem CSS, SVG-clipPath für Hex-Tiles). `lang/de/buildings.php`: Beschreibungstexte für alle 11 Gebäude ergänzt. CLAUDE.md: Grafik-Asset-Abschnitt hinzugefügt, caveman-komprimiert. Agent-Definitionen (`.claude/agents/`) auf Deutsch übersetzt.
 - **Gebäude-Bildintegration (PR #118)**: Shared Blade Partial `partials/building-detail.blade.php` zeigt Gebäudebilder in Colony-Sidebar und Techtree-Panel ohne Code-Duplikat. `ColonyController` + `TechtreeController` berechnen `image_slug` serverseitig (camelCase→kebab, `bar`→`cantina` Override, `building_`-Prefix wird gestrippt). Bild läuft randlos über volle Sidebar-Breite (full-bleed via negative Margins). 11 Gebäudebilder initial in `public/img/buildings/`.
 - **Image-Gen-Tool (`tools/image-gen/generate.py`)**: Per-Kategorie `_config.json` steuert `api_size`, `quality` und `resize`. `_base.prompt.md` mit Inhalt `none` deaktiviert den globalen Style-Prompt für Kategorien wie Tile-Piktogramme. `--no-base-prompt` Flag für einmaligen Override. Pillow-Resize-Support für kleine Ausgabegrößen. `.gitignore`: `public/img/_*/` und `.prompts/` ausgeschlossen — Image-Gen-Staging bleibt lokal, manuell nach `public/img/<type>/` kuratiert.
 - **Bild-Prompts überarbeitet**: Gebäude-Prompts korrigiert (keine Personen außen ohne Schutzanzug; einheitlich runde Bullaugen als Fenster). Kommandozentrale erhält runden Grundriss als zentrales Kolonie-Gebäude.
@@ -9,6 +14,7 @@
 
 ## 2026-05-14
 
+- **Fix: Cantina-Link in Navigationen ergänzt**: Cantina-Link fehlte in beiden Navigationsleisten (`app.blade.php` + `colony.blade.php`).
 - **jQuery-Migration Schritt 2 (feat/jquery-migration-step2)**: `fleets.js` und `trade.js` auf Vanilla JS migriert. `fleets.js`: alle `$.getJSON`/`$.post`/`$(...)` durch `fetch()`, `querySelectorAll`, `addEventListener` ersetzt; CSRF-Token via `<meta name="csrf-token">` in POST-Requests eingebunden (war vorher komplett fehlend → Transfer-Funktion war kaputt); URL-Bug behoben (`/resources/json/getColonyResources/` → `/resources/colony/`). `trade.js`: gesamte jQuery/Bootbox/Bootstrap-3-Logik entfernt (war teils broken mit BS5); Stub `{ init: function () {} }` behalten. `layouts/app.blade.php`: jQuery CDN, Bootbox, `jquery.bootstrap-growl.min.js` entfernt — jQuery vollständig aus dem Projekt entfernt.
 - **jQuery-Migration Schritt 1 (feat/jquery-migration)**: `galaxy.js`, `nouron.js`, `innn.js` auf Vanilla JS / `DOMContentLoaded` migriert; `fetch()` statt `$.getJSON` in `innn.js`; CSS-Animation `inbox-pulse` ersetzt jQuery fade-cycle; `techtree.js` und `leader-line.min.js` aus `layouts/app.blade.php` entfernt (dead code seit neuem Techtree-Screen); Inline `$(document).ready` in `layouts.app` auf `DOMContentLoaded` umgestellt. jQuery bleibt bis `fleets.js` + `trade.js` migriert sind.
 - **Phase 3a Reste abgeschlossen (PR #114)**: Bar-Event-System implementiert — `BarService` generiert pro Tick 0–2 NPC-Angebote für Kolonien mit Cantina, Konsul-Rang steuert Angebotsanzahl und Preisrabatt, Angebote laufen nach 2 Ticks ab. Zwei Angebotstypen: Ressource gegen Credits (60 %) und Tausch Ressource↔Ressource (40 %). `BarController` + Route `/colony/bar` + Blade-View (PicoCSS + Alpine.js). Berater-Beförderungskosten: Rang 1→2 kostet 150 Cr, 2→3 kostet 400 Cr; bei fehlenden Credits wird Beförderung auf nächsten Tick verschoben. 32 neue Tests (BarServiceTest, BarControllerTest, AdvisorPromotionCostTest).

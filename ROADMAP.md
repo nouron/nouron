@@ -353,7 +353,7 @@ Die folgenden Services sind implementiert, aber ohne UI — Spieler können dies
 
 ---
 
-## Phase 3: "Das Spiel zeigen"
+## Phase 3: "Das Spiel zeigen" — Abgeschlossen (Mai 2026)
 *(nach Phase 2)*
 
 **Ziel:** Das Spiel ist für externe Spieler zugänglich, verständlich und rund.
@@ -501,6 +501,18 @@ Der Berater-Screen war der logische nächste Schritt nach dem Onboarding (Phase 
 - [x] [ui-specialist] `public/js/advisors.js` — Alpine-Komponente: Swipe-Gesten (Touch-Events), Karussell-Navigation, AJAX hire/fire, native `<dialog>`-Steuerung
 - [x] [ui-specialist] `resources/views/advisors/index.blade.php` — Komplett auf `layouts.colony` (PicoCSS + Alpine) umgestellt; `x-for` für Karten, `x-if` für Zustände, `@push`-Stacks für CSS/JS
 - [x] [qa-tester] 22 Feature-Tests in `AdvisorControllerTest.php` — Index, Hire/Fire (Redirect + JSON), 404-Sicherheit, Auth-Guard; alle grün
+
+---
+
+### Phase 3h: Techtree Phase-Layout — Abgeschlossen (Mai 2026)
+
+Techtree-Ansicht komplett überarbeitet. Fünf Sektionen (Phase 1–5), eine pro CC-Level. 3-Spalten-Grid je Sektion; SVG-Bézier-Pfeile für Abhängigkeiten innerhalb einer Phase. Mobile: horizontales Karussell mit Wisch-Geste und Dot-Navigation.
+
+- [x] DB-Migration 000003 — `phase`-Spalte auf allen 4 Master-Tabellen; partielle `(phase, row, column)` Unique-Indizes ersetzen alte `(row, column)` Indizes
+- [x] `TechtreeController` — pageData-Struktur mit Phase-Gruppen; Liniengenerierung phase-lokal
+- [x] `resources/views/techtree/index.blade.php` — Alpine.js + PicoCSS, Phasen-Sektionen, Karussell (Mobile)
+- [x] `public/js/techtree-view.js` — Bézier-SVG-Linien mit Scroll-Offset-Kompensation; Kategorie-Toggles (visibility:hidden, kein Grid-Reflow)
+- [x] TestSeeder erweitert um UPDATE-Support; 3 neue Controller-Tests
 
 ---
 
