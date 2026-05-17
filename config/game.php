@@ -241,6 +241,25 @@ return [
         ],
     ],
 
+    // Traveling Merchant (Reisender Händler) — random system event, separate from Bar/Cantina.
+    // The merchant appears once from Sol first_appearance_min–max, then every interval_min–max Sols.
+    // Each visit lasts duration_ticks Sols and offers items_count items for Credits.
+    'merchant' => [
+        'first_appearance_min' => 15,   // earliest Sol the merchant can first appear
+        'first_appearance_max' => 20,   // latest Sol for the first appearance
+        'interval_min'         => 10,   // minimum Sols between visits
+        'interval_max'         => 15,   // maximum Sols between visits
+        'duration_ticks'       => 2,    // how many Sols the merchant stays (inclusive)
+        'items_count'          => 3,    // items offered per visit (3 default, up to 4)
+        'items' => [
+            'ap_flex'     => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
+            'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],
+            'information' => ['label' => 'Systemkarte vollständig',   'cost' => 1200],
+            'repair_kit'  => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
+            'trust_boost' => ['label' => 'Vertrauensschub (+15)',     'cost' => 600,  'trust_amount' => 15],
+        ],
+    ],
+
     'onboarding' => [
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,

@@ -232,6 +232,21 @@ body {
     color: #166534;
 }
 
+.ap-chip--trust-pos {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ap-chip--trust-neu {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.ap-chip--trust-neg {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
 .hex-canvas-header h2 {
     margin: 0;
     font-size: 1.15rem;
@@ -839,6 +854,122 @@ dialog[x-ref="discoveryDialog"] {
 
 .colony-toast--info {
     background: #14532d;
+}
+
+/* ── Merchant button (canvas header) ────────────────────────────────────── */
+
+.merchant-btn {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.8rem;
+    background: #fef9c3;
+    color: #713f12;
+    border: 1px solid #fde047;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    white-space: nowrap;
+    /* PicoCSS button resets */
+    margin: 0;
+    box-shadow: none;
+    flex-shrink: 0;
+}
+
+.merchant-btn:hover {
+    background: #fef08a;
+}
+
+/* ── Merchant dialog ─────────────────────────────────────────────────────── */
+
+.merchant-dialog {
+    max-width: 480px;
+    width: 90vw;
+    border-radius: var(--pico-border-radius);
+    padding: 0;
+}
+
+.merchant-dialog article {
+    margin: 0;
+}
+
+.merchant-dialog > article > header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--pico-muted-border-color);
+}
+
+/* PicoCSS puts the close button (rel="prev") at the end — override to keep
+   it at the start and reserve the middle for the title. */
+.merchant-dialog > article > header > button[rel="prev"] {
+    order: -1;
+    margin: 0;
+}
+
+.merchant-dialog > article > header h3 {
+    margin: 0;
+    flex: 1;
+    font-size: 1rem;
+}
+
+.merchant-dialog > article > header small {
+    color: var(--pico-muted-color);
+    font-size: 0.78rem;
+}
+
+.merchant-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+}
+
+/* Each item row: label | cost | buy-button */
+.merchant-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    margin: 0;
+    border: 1px solid var(--pico-muted-border-color);
+    border-radius: var(--pico-border-radius);
+    transition: opacity 0.2s ease;
+}
+
+.merchant-item--sold {
+    opacity: 0.5;
+}
+
+.merchant-item__label {
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.merchant-item__cost {
+    font-weight: 600;
+    color: var(--pico-muted-color);
+    white-space: nowrap;
+    font-size: 0.85rem;
+}
+
+.merchant-item__buy {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.merchant-dialog > article > footer {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid var(--pico-muted-border-color);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.merchant-dialog > article > footer button {
+    margin: 0;
+    width: auto;
 }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */

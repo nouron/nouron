@@ -90,7 +90,13 @@ function colonyHexView(config) {
         i18n:               config.i18n ?? {},
         apNav:              config.apNav ?? 0,
         apConstruction:     config.apConstruction ?? 0,
+        trust:              config.trust ?? 0,
+        currentSol:         config.currentSol ?? 0,
+        solLimit:           config.solLimit ?? 100,
         activeHint:         config.activeHint ?? null,
+        merchantVisit:      config.merchantVisit ?? null,
+        merchantItems:      config.merchantItems ?? [],
+        merchantOpen:       false,
         selectedTile:       null,
         buildMode:          false,
         pendingBuilding:    null,
@@ -264,6 +270,39 @@ function colonyHexView(config) {
             if ('activeHint' in res) this.activeHint = res.activeHint;
         },
 
+        // ── Merchant ──────────────────────────────────────────────────────────
+
+        hasMerchant() {
+            return this.merchantVisit !== null;
+        },
+
+        openMerchant() {
+            this.merchantOpen = true;
+            // mark visit as seen (fire-and-forget)
+            if (this.merchantVisit && !this.merchantVisit.was_visited) {
+                this.post(this.routes.merchantOpen.replace('__VISIT__', this.merchantVisit.id), {});
+                this.merchantVisit.was_visited = true;
+            }
+            this.$nextTick(() => this.$refs.merchantDialog.showModal());
+        },
+
+        closeMerchant() {
+            this.merchantOpen = false;
+            this.$refs.merchantDialog.close();
+        },
+
+        async buyMerchantItem(itemId) {
+            const url = this.routes.merchantBuy.replace('__ID__', itemId);
+            const res = await this.post(url, {});
+            if (res.ok) {
+                const item = this.merchantItems.find(i => i.id === itemId);
+                if (item) item.sold = true;
+                this.showToast(res.message ?? 'Kauf erfolgreich.', 'info');
+            } else {
+                this.showToast(res.error ?? 'Kauf fehlgeschlagen.', 'error');
+            }
+        },
+
         async dismissHint() {
             if (!this.activeHint) return;
             const res = await this.post(this.routes.dismissHint, { hint_key: this.activeHint.key });
@@ -325,7 +364,7 @@ function colonyHexView(config) {
         statusLine() {
             const total    = this.tiles.length;
             const explored = this.tiles.filter(t => t.is_explored).length;
-            return `${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
+            return `Sol ${this.currentSol} / ${this.solLimit} · ${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
         },
 
         // ── HTTP helpers ──────────────────────────────────────────────────────

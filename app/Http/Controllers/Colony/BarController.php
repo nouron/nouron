@@ -26,8 +26,9 @@ class BarController extends BaseController
 
     public function index(): View
     {
-        $colony = $this->colonyService->getPrimeColony(Auth::id());
-        $tick   = $this->tick->getTickCount();
+        $colony     = $this->colonyService->getPrimeColony(Auth::id());
+        $tick       = $this->tick->getTickCount();
+        $currentSol = max(1, $tick - (int) $colony->since_tick + 1);
 
         $barLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -38,7 +39,7 @@ class BarController extends BaseController
             ? $this->barService->getActiveOffers($colony->id, $tick)
             : collect();
 
-        return view('colony.bar', compact('colony', 'offers', 'barLevel', 'tick'));
+        return view('colony.bar', compact('colony', 'offers', 'barLevel', 'currentSol'));
     }
 
     public function accept(Request $request, int $offerId): JsonResponse

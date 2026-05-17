@@ -14,6 +14,7 @@ use App\Models\FleetShip;
 use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EventService;
+use App\Services\MerchantService;
 use App\Services\MoralService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
@@ -41,6 +42,7 @@ use Illuminate\Support\Facades\DB;
  *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
  * 10. Bar offers          — expire stale offers, generate new NPC offers per colony with Bar
+ * 11. Merchant spawn      — check each colony for a new Traveling Merchant visit
  */
 class GameTick extends Command
 {
@@ -56,7 +58,8 @@ class GameTick extends Command
         private readonly MoralService              $moralService,
         private readonly ResourcesService          $resourcesService,
         private readonly OnboardingTriggerService  $onboardingTriggerService,
-        private readonly BarService               $barService,
+        private readonly BarService                $barService,
+        private readonly MerchantService           $merchantService,
     ) {
         parent::__construct();
     }
@@ -109,6 +112,9 @@ class GameTick extends Command
 
             $n = $this->processBarOffers($tick);
             $this->line("  Bar offers generated:     {$n}");
+
+            $n = $this->processMerchantSpawn($tick);
+            $this->line("  Merchant visits spawned:  {$n}");
         });
 
         $this->info("Tick {$tick} done.");
@@ -874,6 +880,29 @@ class GameTick extends Command
     }
 
     // ── 9. Advisor ticks ─────────────────────────────────────────────────────
+
+    // ── 11. Merchant spawn ────────────────────────────────────────────────────
+
+    /**
+     * For every player colony, check if a new Traveling Merchant visit should
+     * be spawned this tick. NPC colonies (user_id = null) are skipped.
+     *
+     * @return int Number of new visits spawned.
+     */
+    private function processMerchantSpawn(int $tick): int
+    {
+        $colonies = Colony::whereNotNull('user_id')->get();
+        $spawned  = 0;
+
+        foreach ($colonies as $colony) {
+            if ($this->merchantService->shouldSpawn($colony->id, $tick)) {
+                $this->merchantService->spawnVisit($colony->id, $tick);
+                $spawned++;
+            }
+        }
+
+        return $spawned;
+    }
 
     private function incrementAdvisorTicks(): int
     {
