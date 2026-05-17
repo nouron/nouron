@@ -8,6 +8,8 @@
 - **Dev Panel (`tools/dev-panel.php`)**: Kombiniertes Browser-Tool, löst `techtree-editor.php` und `resource-editor.php` ab. Tab-Navigation: **Resources** — Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen für beliebige User/Kolonie setzen ohne SQL. **Techtree** — Drag-and-Drop-Editor für Techtree-Positionen (phase/row/column). Ein Port statt zwei: `php -S localhost:8081 tools/dev-panel.php`.
 - **Tick-Dry-Run (`game:tick-dry-run`)**: Artisan-Command simuliert einen Tick ohne DB-Schreibzugriff. Zeigt Credits-Delta (Nexus/Housing/Berater-Upkeep), Ressourcen-Produktion mit Moral-Multiplikator, Building-Decay-Status mit farbigen Warnungen (gelb < 40% SP, rot < 20% SP / Level-Down). `--colony=ID` filtert auf eine Kolonie.
 - **CHANGELOG + ROADMAP aktualisiert**: Phase 3 als abgeschlossen markiert; Phase 3h (Techtree Phase-Layout) in ROADMAP ergänzt.
+- **Globale Ressourcenleiste (PR #125)**: Sol-Chip + Credits + Supply + Trust auf allen Gameplay-Seiten (`layouts/app` + `layouts/colony`). Sol run-lokal berechnet (`since_tick`-Proxy, gecappt auf `solLimit`). Deprecated Ressourcen (ENrg/LNrg/ANrg) per Whitelist gefiltert. Per-Ressource Farbchips, Bootstrap Icons in Colony-Nav. `since_tick` in Testdaten auf 20585 gesetzt (Sol zeigt ~6/100).
+- **Nav-Active-Bug behoben**: `colony.*` matchte `colony.bar*` → Cantina und Kolonie gleichzeitig aktiv. Fix: Kolonie-Link schließt `colony.bar*` + `colony.merchant*` explizit aus. Aktiver Tab jetzt Hintergrund-Highlight statt Unterstrich.
 
 ## 2026-05-15
 
