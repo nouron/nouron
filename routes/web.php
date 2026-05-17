@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colony\BarController;
 use App\Http\Controllers\Colony\ColonyController;
+use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Galaxy\GalaxyController;
 use App\Http\Controllers\INNN\MessageController;
@@ -67,6 +68,10 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
     // Bar/Cantina
     Route::get('/bar',               [BarController::class, 'index'])->name('bar');
     Route::post('/bar/accept/{offer}', [BarController::class, 'accept'])->name('bar.accept');
+
+    // Traveling Merchant
+    Route::post('/merchant/buy/{itemId}',         [MerchantController::class, 'buy'])->name('merchant.buy')->where('itemId', '[0-9]+');
+    Route::post('/merchant/visit/{visitId}/open', [MerchantController::class, 'markVisited'])->name('merchant.open')->where('visitId', '[0-9]+');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────

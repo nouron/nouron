@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
+use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
 use App\Services\Techtree\PersonellService;
@@ -25,6 +26,7 @@ class ColonyController extends BaseController
         private readonly PersonellService $personellService,
         private readonly OnboardingHintService $hintService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
+        private readonly MerchantService $merchantService,
     ) {
         parent::__construct($tick);
     }
@@ -81,7 +83,15 @@ class ColonyController extends BaseController
         $fireds        = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull'));
+        $trust      = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
+        $currentSol = $this->getTick();
+
+        $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $currentSol);
+        $merchantItems = $merchantVisit
+            ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
+            : [];
+
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'merchantVisit', 'merchantItems'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

@@ -15,7 +15,7 @@
 
     <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
         <h2 style="margin:0">{{ __('colony.bar_title') }}</h2>
-        <small style="color:var(--pico-muted-color)">Tick {{ $tick }}</small>
+        <small style="color:var(--pico-muted-color)">Sol {{ $tick }}</small>
     </div>
 
     @if ($barLevel < 1)

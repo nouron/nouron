@@ -94,6 +94,18 @@ return [
     'error_building_not_found'  => 'Gebäude nicht gefunden.',
     'error_max_level_reached'   => 'Maximales Level bereits erreicht.',
 
+    // ── Generic UI actions ───────────────────────────────────────────────────
+
+    'close'             => 'Schließen',
+
+    // ── Traveling Merchant (Reisender Händler) ────────────────────────────────
+
+    'merchant_in_system'  => 'Händler im System',
+    'merchant_title'      => 'Reisender Händler',
+    'merchant_until_sol'  => 'Bleibt bis Sol',
+    'merchant_buy'        => 'Kaufen',
+    'merchant_sold'       => 'Verkauft',
+
     // ── Bar/Cantina ───────────────────────────────────────────────────────────
 
     'bar_title'                        => 'Cantina',
