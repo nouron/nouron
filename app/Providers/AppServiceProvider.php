@@ -99,8 +99,8 @@ class AppServiceProvider extends ServiceProvider
                 $sinceTick = $colony ? (int) $colony->since_tick : null;
                 $tickService = app(TickService::class);
                 $globalTick  = $tickService->getTickCount();
-                $currentSol  = $sinceTick !== null ? max(1, $globalTick - $sinceTick + 1) : null;
                 $solLimit    = (int) config('game.run.tick_limit', 100);
+                $currentSol  = $sinceTick !== null ? min($solLimit, max(1, $globalTick - $sinceTick + 1)) : null;
 
                 $view->with('currentSol', $currentSol);
                 $view->with('solLimit', $solLimit);

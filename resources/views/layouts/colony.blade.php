@@ -20,7 +20,7 @@
         <ul>
             <li><a href="{{ route('galaxy.index') }}" @class(['active' => request()->routeIs('galaxy.*')])><i class="bi bi-globe2"></i> Galaxis</a></li>
             <li><a href="{{ route('fleet.index') }}" @class(['active' => request()->routeIs('fleet.*')])><i class="bi bi-send"></i> Flotte</a></li>
-            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*')])><i class="bi bi-hexagon"></i> Kolonie</a></li>
+            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])><i class="bi bi-hexagon"></i> Kolonie</a></li>
             <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-building"></i> Techtree</a></li>
             <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i> Berater</a></li>
             <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i> Cantina</a></li>

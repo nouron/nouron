@@ -20,10 +20,7 @@
 
     ksort($primary);
 
-    // Cap Sol display: if runs don't exist yet, since_tick may be very old
-    $solDisplay = (isset($currentSol) && $currentSol !== null && $currentSol <= ($solLimit ?? 100))
-        ? $currentSol
-        : null;
+    $solDisplay = $currentSol ?? null; // composer already caps at solLimit
 @endphp
 <div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
 

@@ -87,14 +87,18 @@ body {
     padding: 0 0.75rem 0 0;
 }
 
-.colony-header nav a:hover,
-.colony-header nav a.active {
+.colony-header nav a:hover {
     color: #fff;
+    background: rgba(255,255,255,0.10);
+    border-radius: 6px;
 }
 
 .colony-header nav a.active {
+    color: #fff;
     font-weight: 600;
-    border-bottom: 2px solid var(--color-accent);
+    background: rgba(255,255,255,0.18);
+    border-radius: 6px;
+    border-bottom: none;
 }
 
 /* Dropdown summary: match the compact link style, suppress PicoCSS button-like defaults */
