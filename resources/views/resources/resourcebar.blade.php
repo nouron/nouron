@@ -1,8 +1,9 @@
 {{-- Resource bar partial (no layout) — replaces resources/json/reloadresourcebar.phtml --}}
 {{-- Server-side data dependency: $possessions — keyed by resource_id, each entry has: amount, abbreviation, name --}}
+{{-- Optional: $currentSol (int), $solLimit (int) — inject Sol chip before primary resources --}}
 @auth
 @php
-    $primaryIds  = [1, 2];   // Credits (Cr) and Supply (Sup) — always shown, always first
+    $primaryIds  = [1, 2, 12]; // Credits (Cr), Supply (Sup), Trust (M) — always shown, always first
     $primary     = [];
     $secondary   = [];
 
@@ -14,10 +15,19 @@
         }
     }
 
-    // Guarantee order: Credits first, then Supply
+    // Guarantee order: Credits first, then Supply, then Trust
     ksort($primary);
 @endphp
-<div class="d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
+<div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
+
+    {{-- Sol chip: computed run progress, shown before primary resources when available --}}
+    @if(isset($currentSol) && $currentSol !== null)
+        <span class="res-chip res-chip--primary res-chip--sol res-Sol">
+            <span class="res-abbr">Sol</span>
+            <span class="res-amount">{{ $currentSol }} / {{ $solLimit ?? 100 }}</span>
+        </span>
+        <span class="res-divider" aria-hidden="true"></span>
+    @endif
 
     {{-- Primary resources: always visible, regardless of amount --}}
     @foreach($primary as $resId => $resource)

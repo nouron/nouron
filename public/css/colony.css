@@ -130,13 +130,19 @@ body {
 /* ── Resource bar ────────────────────────────────────────────────────────── */
 
 .colony-resbar {
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 5px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+/* Flexbox wrapper used by the shared resourcebar partial — works without Bootstrap utilities */
+.res-bar-wrap {
     display: flex;
     flex-wrap: wrap;
+    gap: 0.5rem;
     justify-content: center;
-    gap: 0.4rem;
-    padding: 0.35rem 1rem 0.4rem;
-    background: #f8f8f8;
-    border-top: 1px solid var(--color-border);
+    align-items: center;
 }
 
 .res-chip {
@@ -151,13 +157,17 @@ body {
     background: #fff;
     color: var(--color-anthracite);
     white-space: nowrap;
+    cursor: default;
+    transition: filter 0.15s;
 }
+.res-chip:hover { filter: brightness(0.94); }
 
 .res-chip--primary {
     font-size: 0.85rem;
     padding: 3px 10px 3px 8px;
     border-width: 2px;
     border-color: #aaa;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
 }
 
 .res-abbr {
@@ -168,10 +178,32 @@ body {
     letter-spacing: 0.05em;
 }
 
+.res-amount { font-variant-numeric: tabular-nums; }
+
+/* Vertical rule separating primary from secondary resources */
+.res-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 1px;
+    margin: 0 2px;
+    align-self: center;
+}
+
 .res-chip--empty {
     opacity: 0.45;
     border-style: dashed;
 }
+
+/* Per-resource accent colours */
+.res-Cr  { background: #fff8dc; border-color: #e6c84a; }
+.res-Sup { background: #f0f0f0; border-color: #aaa; }
+.res-Rg  { background: #fdf0e0; border-color: #d4924a; }
+.res-Co  { background: #dceeff; border-color: #5599dd; }
+.res-Or  { background: #e8f5e0; border-color: #5a9a3a; }
+.res-M   { background: #fce7f3; border-color: #d166a0; }
+.res-Sol { background: #ede9fe; border-color: #7c65cc; }
 
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
 
