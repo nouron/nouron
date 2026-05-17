@@ -92,6 +92,7 @@ function colonyHexView(config) {
         apConstruction:     config.apConstruction ?? 0,
         trust:              config.trust ?? 0,
         currentSol:         config.currentSol ?? 0,
+        solLimit:           config.solLimit ?? 100,
         activeHint:         config.activeHint ?? null,
         merchantVisit:      config.merchantVisit ?? null,
         merchantItems:      config.merchantItems ?? [],
@@ -363,7 +364,7 @@ function colonyHexView(config) {
         statusLine() {
             const total    = this.tiles.length;
             const explored = this.tiles.filter(t => t.is_explored).length;
-            return `Sol ${this.currentSol} · ${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
+            return `Sol ${this.currentSol} / ${this.solLimit} · ${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
         },
 
         // ── HTTP helpers ──────────────────────────────────────────────────────

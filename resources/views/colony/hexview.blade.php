@@ -12,6 +12,7 @@ window.__colonyViewData = {
     apConstruction: {{ (int)$constructionAp }},
     trust:          {{ $trust }},
     currentSol:     {{ $currentSol }},
+    solLimit:       {{ $solLimit }},
     activeHint: @json($activeHint),
     merchantVisit:  @json($merchantVisit ?? null),
     merchantItems:  @json($merchantItems ?? []),

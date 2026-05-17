@@ -84,14 +84,16 @@ class ColonyController extends BaseController
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
         $trust      = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
-        $currentSol = $this->getTick();
+        $globalTick = $this->getTick();
+        $currentSol = max(1, $globalTick - (int) $colony->since_tick + 1);
+        $solLimit   = (int) config('game.run.tick_limit', 100);
 
-        $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $currentSol);
+        $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $globalTick);
         $merchantItems = $merchantVisit
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'merchantVisit', 'merchantItems'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
