@@ -524,7 +524,6 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 - [ ] **Debug-Statusleiste** — Overlay im Spielbrowser (z.B. als Bookmarklet oder separates Tool): zeigt aktuelle Spielparameter auf einen Blick — Supply-Verbrauch/-Cap, AP-Pools, Moral-Wert, Tick-Nummer, aktive Flags.
 - [ ] **Berechnungs-Toggle** — Artisan-Kommando oder .env-Flag zum An-/Abschalten einzelner Berechnungen für Testzwecke: Ressourcenberechnung, AP-Berechnung, Decay, Moral-Multiplikator. Erlaubt isoliertes Testen einzelner Systeme ohne Interferenz.
 - [x] **Tick-Simulator** (`game:tick-dry-run`) — Simuliert einen Tick und zeigt Credits-, Ressourcen- und Decay-Diff ohne DB-Schreibzugriff. `--colony=ID` filtert auf eine Kolonie. Ideal für Balancing-Checks.
-- [x] **Tick-Simulator** (`game:tick-dry-run`) — Simuliert einen Tick und zeigt Credits-, Ressourcen- und Decay-Diff ohne DB-Schreibzugriff. `--colony=ID` filtert auf eine Kolonie. Ideal für Balancing-Checks.
 
 ---
 
