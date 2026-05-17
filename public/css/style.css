@@ -40,7 +40,7 @@ a:hover {color: #000; text-decoration: underline;}
 /* ── Resource bar ──────────────────────────────────────────────────────── */
 #resourcebar-container {
     position: fixed;
-    top: 56px;
+    top: 58px;
     left: 0; right: 0;
     z-index: 1029;
     background: #f8f9fa;

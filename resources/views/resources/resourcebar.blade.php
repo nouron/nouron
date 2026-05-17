@@ -3,28 +3,35 @@
 {{-- Optional: $currentSol (int), $solLimit (int) — inject Sol chip before primary resources --}}
 @auth
 @php
-    $primaryIds  = [1, 2, 12]; // Credits (Cr), Supply (Sup), Trust (M) — always shown, always first
-    $primary     = [];
-    $secondary   = [];
+    $primaryIds   = [1, 2, 12]; // Credits (Cr), Supply (Sup), Trust (M) — always shown
+    $activeResIds = [1, 2, 3, 4, 5, 12]; // whitelist — ENrg/LNrg/ANrg (6/8/10) excluded
+    $primary      = [];
+    $secondary    = [];
 
     foreach ($possessions as $resId => $resource) {
-        if (in_array((int)$resId, $primaryIds)) {
-            $primary[(int)$resId] = $resource;
+        $rid = (int) $resId;
+        if (!in_array($rid, $activeResIds)) continue;
+        if (in_array($rid, $primaryIds)) {
+            $primary[$rid] = $resource;
         } else {
-            $secondary[$resId] = $resource;
+            $secondary[$rid] = $resource;
         }
     }
 
-    // Guarantee order: Credits first, then Supply, then Trust
     ksort($primary);
+
+    // Cap Sol display: if runs don't exist yet, since_tick may be very old
+    $solDisplay = (isset($currentSol) && $currentSol !== null && $currentSol <= ($solLimit ?? 100))
+        ? $currentSol
+        : null;
 @endphp
 <div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
 
-    {{-- Sol chip: computed run progress, shown before primary resources when available --}}
-    @if(isset($currentSol) && $currentSol !== null)
+    {{-- Sol chip: only shown when run-local Sol is meaningful (≤ solLimit) --}}
+    @if($solDisplay !== null)
         <span class="res-chip res-chip--primary res-chip--sol res-Sol">
             <span class="res-abbr">Sol</span>
-            <span class="res-amount">{{ $currentSol }} / {{ $solLimit ?? 100 }}</span>
+            <span class="res-amount">{{ $solDisplay }} / {{ $solLimit ?? 100 }}</span>
         </span>
         <span class="res-divider" aria-hidden="true"></span>
     @endif
