@@ -523,8 +523,8 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 - [x] **Techtree-Editor** (`tools/techtree-editor.php`, PR #106) — Visueller Drag-and-Drop-Editor für Techtree-Positionen (phase/row/column). Zeigt alle 4 Entitätstypen in einem 5-Tab-Grid; Swaps werden als DB-Transaktion in der SQLite-DB persistiert. Start: `php -S localhost:8081 tools/techtree-editor.php`
 - [ ] **Debug-Statusleiste** — Overlay im Spielbrowser (z.B. als Bookmarklet oder separates Tool): zeigt aktuelle Spielparameter auf einen Blick — Supply-Verbrauch/-Cap, AP-Pools, Moral-Wert, Tick-Nummer, aktive Flags.
 - [ ] **Berechnungs-Toggle** — Artisan-Kommando oder .env-Flag zum An-/Abschalten einzelner Berechnungen für Testzwecke: Ressourcenberechnung, AP-Berechnung, Decay, Moral-Multiplikator. Erlaubt isoliertes Testen einzelner Systeme ohne Interferenz.
-- [ ] **Ressourcen-Editor** (`tools/resource-editor.php`) — Schnelles Setzen von Ressourcenwerten (Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen) für beliebige User/Kolonie direkt in der DB. Für Balancing-Tests ohne manuelles SQL.
-- [ ] **Tick-Simulator** — Artisan-Kommando `game:tick-dry-run` das einen Tick simuliert und alle Änderungen als Diff ausgibt (Ressourcen, Decay, AP-Regeneration), ohne die DB zu schreiben. Ideal für Balancing-Checks.
+- [x] **Ressourcen-Editor** (`tools/resource-editor.php`) — Schnelles Setzen von Ressourcenwerten (Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen) für beliebige User/Kolonie direkt in der DB. Start: `php -S localhost:8082 tools/resource-editor.php`
+- [x] **Tick-Simulator** (`game:tick-dry-run`) — Simuliert einen Tick und zeigt Credits-, Ressourcen- und Decay-Diff ohne DB-Schreibzugriff. `--colony=ID` filtert auf eine Kolonie. Ideal für Balancing-Checks.
 
 ---
 
