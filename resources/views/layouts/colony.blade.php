@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Nouron')</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/colony.css') }}">
     @stack('styles')
 </head>
@@ -17,13 +18,13 @@
             <li><strong><a href="{{ route('galaxy.index') }}">Nouron</a></strong></li>
         </ul>
         <ul>
-            <li><a href="{{ route('galaxy.index') }}" @class(['active' => request()->routeIs('galaxy.*')])>Galaxis</a></li>
-            <li><a href="{{ route('fleet.index') }}" @class(['active' => request()->routeIs('fleet.*')])>Flotte</a></li>
-            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*')])>Kolonie</a></li>
-            <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])>Techtree</a></li>
-            <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])>Berater</a></li>
-            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])>Cantina</a></li>
-            <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])>Nachrichten</a></li>
+            <li><a href="{{ route('galaxy.index') }}" @class(['active' => request()->routeIs('galaxy.*')])><i class="bi bi-globe2"></i> Galaxis</a></li>
+            <li><a href="{{ route('fleet.index') }}" @class(['active' => request()->routeIs('fleet.*')])><i class="bi bi-send"></i> Flotte</a></li>
+            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*')])><i class="bi bi-hexagon"></i> Kolonie</a></li>
+            <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-building"></i> Techtree</a></li>
+            <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i> Berater</a></li>
+            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i> Cantina</a></li>
+            <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i> Nachrichten</a></li>
         </ul>
         <ul>
             <li>
