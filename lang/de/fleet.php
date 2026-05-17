@@ -35,7 +35,7 @@ return [
     // ── Order descriptions (shown below form) ─────────────────────────────────
 
     'desc_move'    => 'Flotte bewegt sich zu den angegebenen Koordinaten.',
-    'desc_hold'    => 'Flotte hält ihre aktuelle Position für einen Tick.',
+    'desc_hold'    => 'Flotte hält ihre aktuelle Position für einen Sol.',
     'desc_trade'   => 'Flotte lädt Ressourcen bei einer Kolonie auf oder ab.',
     'desc_convoy'  => 'Flotte eskortiert die Ziel-Flotte zu deren Zielposition.',
     'desc_defend'  => 'Flotte bewegt sich zur Position der Ziel-Flotte, um diese zu verteidigen.',

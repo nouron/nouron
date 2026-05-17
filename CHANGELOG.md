@@ -2,6 +2,7 @@
 
 ## 2026-05-17
 
+- **Sol-Terminologie**: Player-facing "Tick" → "Sol" in `lang/de/` (buildings, colony, fleet — 5 Strings) und `docs/GDD.md`. Intern bleiben `TickService`, `game:tick`, DB-Spalten und Config-Keys unverändert. Spielzeit heißt jetzt offiziell **Sol** (angelehnt an NASA-Terminologie für Marssonnentag).
 - **Dev Panel (`tools/dev-panel.php`)**: Kombiniertes Browser-Tool, löst `techtree-editor.php` und `resource-editor.php` ab. Tab-Navigation: **Resources** — Credits, Supply, Regolith, Werkstoffe, Organika, Vertrauen für beliebige User/Kolonie setzen ohne SQL. **Techtree** — Drag-and-Drop-Editor für Techtree-Positionen (phase/row/column). Ein Port statt zwei: `php -S localhost:8081 tools/dev-panel.php`.
 - **Tick-Dry-Run (`game:tick-dry-run`)**: Artisan-Command simuliert einen Tick ohne DB-Schreibzugriff. Zeigt Credits-Delta (Nexus/Housing/Berater-Upkeep), Ressourcen-Produktion mit Moral-Multiplikator, Building-Decay-Status mit farbigen Warnungen (gelb < 40% SP, rot < 20% SP / Level-Down). `--colony=ID` filtert auf eine Kolonie.
 - **CHANGELOG + ROADMAP aktualisiert**: Phase 3 als abgeschlossen markiert; Phase 3h (Techtree Phase-Layout) in ROADMAP ergänzt.

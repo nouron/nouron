@@ -72,7 +72,7 @@ return [
     'onboarding_trigger_trust_body'     => 'Sinkendes Vertrauen drückt die Produktion der Kolonie. Ursache ist meist schlechte Moral — Zivilgebäude stabilisieren den Wert.',
 
     // Trigger 4 — AP-Limit (Tooltip)
-    'onboarding_trigger_ap_limit'       => 'Keine Bau-AP mehr in diesem Tick verfügbar.',
+    'onboarding_trigger_ap_limit'       => 'Keine Bau-AP mehr in diesem Sol verfügbar.',
 
     // Trigger 5 — Harvester-Verlagerung (Tooltip)
     'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP — der Harvester produziert danach auf dem neuen Tile.',
@@ -98,12 +98,12 @@ return [
 
     'bar_title'                        => 'Cantina',
     'bar_no_building'                  => 'Die Cantina ist noch nicht gebaut.',
-    'bar_no_offers'                    => 'Keine Gäste im Moment. Komm nächsten Tick wieder.',
+    'bar_no_offers'                    => 'Keine Gäste im Moment. Komm nächsten Sol wieder.',
     'bar_offer_heading'                => 'Angebote',
     'bar_offer_accept'                 => 'Annehmen',
     'bar_offer_give'                   => 'Du gibst',
     'bar_offer_get'                    => 'Du bekommst',
-    'bar_offer_expires'                => 'Läuft ab nach Tick',
+    'bar_offer_expires'                => 'Läuft ab in Sol',
     'bar_offer_not_found'              => 'Angebot nicht gefunden.',
     'bar_offer_already_accepted'       => 'Angebot bereits angenommen.',
     'bar_offer_expired'                => 'Angebot ist abgelaufen.',

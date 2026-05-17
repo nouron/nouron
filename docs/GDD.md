@@ -11,7 +11,7 @@
 1. [Spielkonzept](#1-spielkonzept)
    - 1.1 [Designprinzipien](#11-designprinzipien)
    - 1.2 [Alleinstellungsmerkmale (USPs)](#12-alleinstellungsmerkmale-usps)
-2. [Tick-System](#2-tick-system)
+2. [Sol-Zyklus (Tick-System)](#2-sol-zyklus-tick-system)
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
    - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
@@ -43,7 +43,7 @@ Die Kolonie bleibt im gesamten Spielverlauf überschaubar. Es geht nicht darum, 
 
 Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen variablen Verlauf und ein klares Ende — Erfolg oder Scheitern. Nouron enthält **Roguelike-Elemente**: variable Aufgaben je Run, zufällige Ereignisse und echte Konsequenzen für Fehlentscheidungen. Runs können wiederholt werden; jeder Run fühlt sich anders an.
 
-Das Spiel läuft auf Basis eines Tick-Systems: alle Spielzustandsänderungen werden einmal pro Tick berechnet. Im Solo-Modus löst der Spieler Ticks manuell aus; im Multiplayer-Modus feuert der Tick wenn alle Spieler bereit sind — oder nach Ablauf des Timeouts.
+Das Spiel läuft auf Basis eines Sol-Zyklus: alle Spielzustandsänderungen werden einmal pro Sol berechnet. Im Solo-Modus löst der Spieler Sole manuell aus; im Multiplayer-Modus feuert der Sol wenn alle Spieler bereit sind — oder nach Ablauf des Timeouts. (Intern: "Tick" — die technische Bezeichnung für den Berechnungszyklus.)
 
 **Technischer Stack (Stand April 2026):** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS (neue Screens ab Phase 3b), SVG für Spielfelder (Hex-Grid, Systemkarte), Vanilla fetch() für Server-Calls. Bestehende Screens werden schrittweise von jQuery/Bootstrap migriert.
 
@@ -73,7 +73,7 @@ Navigation-AP werden durch **Raumfahrer** generiert und decken alle Flottenorder
 | defend (Verteidigen) | 2 |
 | attack (Angriff) | 3 |
 
-Ein Raumfahrer, der 15 AP pro Tick generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
+Ein Raumfahrer, der 15 AP pro Sol generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
 
 ### Geltungsbereich: spielweites Prinzip
 
@@ -90,9 +90,9 @@ Nouron teilt sich das Genre "Browser-Strategiespiel" mit Dutzenden von Titeln. W
 ### Die sechs Merkmale
 
 **1. Verfall als durchgängiges Systemprinzip**
-Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer seine Kolonie vernachlässigt, verliert sie langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Tick zu einer echten Ressourcenentscheidung.
+Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer seine Kolonie vernachlässigt, verliert sie langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Sol zu einer echten Ressourcenentscheidung.
 
-**2. Tick-basiertes Spieltempo (1 Tick = 1 Tag)**
+**2. Sol-basiertes Spieltempo (1 Sol = 1 Tag)**
 Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich ausgeführt. Das Spiel passt sich dem Spieler an, nicht umgekehrt.
 
 **3. Nur eine Kolonie — Tiefe statt Breite**
@@ -122,21 +122,25 @@ Diese Merkmale folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren
 
 ---
 
-## 2. Tick-System
+## 2. Sol-Zyklus (Tick-System)
 
 ### Grundprinzip
 
-Ein **Tick** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Flottenorders) werden einmal pro Tick ausgeführt.
+**Aus Spielerperspektive:** Die Zeiteinheit in Nouron heißt **Sol** — ein Sonnentag auf dem kolonisierten Planeten (NASA-Terminologie, analog zu "The Martian"). Jeder Run zählt ab Sol 1. Entscheidungen werden pro Sol getroffen und ausgeführt. Ein Spieler hat "ab Sol 34" eine Kenntnis erforscht.
 
-**Alle Spielwerte sind in Ticks ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Damit skalieren alle Spielmechaniken automatisch, unabhängig davon wie lang ein Tick in Echtzeit dauert.
+**Technisch:** Intern heißt diese Einheit **Tick**. `TickService`, `game:tick`, DB-Spalten und Config-Keys verwenden durchgehend den Begriff "tick". Sol = Tick — dieselbe Einheit, zwei Perspektiven.
+
+Ein **Sol** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Flottenorders) werden einmal pro Sol ausgeführt.
+
+**Alle Spielwerte sind in Solen ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Damit skalieren alle Spielmechaniken automatisch, unabhängig davon wie lang ein Sol in Echtzeit dauert.
 
 ### Solo vs. Multiplayer
 
-Das Tick-System funktioniert in beiden Modi identisch — was sich unterscheidet, ist wer den Tick auslöst:
+Das Sol-System funktioniert in beiden Modi identisch — was sich unterscheidet, ist wer den Sol auslöst:
 
-**Solo-Modus:** Der Spieler steuert den Tick selbst. Nach dem Setzen aller Befehle löst er den nächsten Tick manuell aus — der Tick feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. „1 Tick" entspricht einem Spielzug, nicht einer Kalenderdauer.
+**Solo-Modus:** Der Spieler steuert den Sol selbst. Nach dem Setzen aller Befehle löst er den nächsten Sol manuell aus — der Sol feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. „1 Sol" entspricht einem Spielzug, nicht einer Kalenderdauer.
 
-**Multiplayer-Modus:** Alle Spieler einer Instanz teilen denselben Tick-Rhythmus. Der Tick feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
+**Multiplayer-Modus:** Alle Spieler einer Instanz teilen denselben Sol-Rhythmus. Der Sol feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
 
 | Timeout-Konfiguration | Einsatz |
 |-----------------------|---------|
@@ -144,9 +148,9 @@ Das Tick-System funktioniert in beiden Modi identisch — was sich unterscheidet
 | 24 h (Standard) | Normales Multiplayer |
 | 48 h | Casual / Play-by-Mail |
 
-### Zeitberechnung
+### Zeitberechnung (Sol-Nummer)
 
-Die Tick-Nummer ergibt sich aus:
+Die Sol-Nummer (intern: Tick-Nummer) ergibt sich aus:
 
 ```
 tick = floor((unix_timestamp - offset) / tick_duration_seconds)
@@ -156,7 +160,7 @@ tick = floor((unix_timestamp - offset) / tick_duration_seconds)
 
 ### Berechnungsfenster (Multiplayer / Server-gesteuert)
 
-Im Multiplayer-Modus wird der Tick serverseitig automatisch ausgelöst — entweder wenn alle Spieler bestätigt haben oder nach Ablauf des Timeouts. Das Berechnungsfenster ist in `config/game.php → tick.calculation` konfiguriert.
+Im Multiplayer-Modus wird der Sol (intern: Tick) serverseitig automatisch ausgelöst — entweder wenn alle Spieler bestätigt haben oder nach Ablauf des Timeouts. Das Berechnungsfenster ist in `config/game.php → tick.calculation` konfiguriert.
 
 ### Manueller Aufruf
 
@@ -229,7 +233,7 @@ Im Singleplayer gibt es keinen Spieler-zu-Spieler-Handel. Werkstoffe sind daher 
 
 Typische Werkstoffe-Events (immer mit Wahlmöglichkeit, nie kostenlos):
 - **Strandetes Frachtschiff** — Bergung kostet Navigation-AP, gibt Werkstoffe
-- **Händlerkonvoi in der Nähe** — befristetes Kaufangebot (2 Ticks), günstiger als KI-Marktpreis
+- **Händlerkonvoi in der Nähe** — befristetes Kaufangebot (2 Sole), günstiger als KI-Marktpreis
 - **Trümmerfeld im System** — Flotte entsenden, Werkstoffe heimholen
 
 ### Credits-Einnahmen
@@ -238,8 +242,8 @@ Credits werden durch vier Quellen erworben:
 
 | Quelle | Beschreibung |
 |--------|-------------|
-| Kolonistensteuern | Automatische Abgaben pro Tick — abhängig von der Koloniegröße (Wohnhabitat-Anzahl) |
-| Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Tick (Arbeitstitel: Name noch offen) |
+| Kolonistensteuern | Automatische Abgaben pro Sol — abhängig von der Koloniegröße (Wohnhabitat-Anzahl) |
+| Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Sol (Arbeitstitel: Name noch offen) |
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
 
@@ -309,7 +313,7 @@ Die Lagerhalle erhöht die maximale Lagerkapazität aller drei Kolonieressourcen
 resource_cap = base_cap + (depot_level × cap_per_level)
 ```
 
-Überschreitet die Produktion den Cap in einem Tick, gehen die überschüssigen Einheiten verloren. Das erzeugt eine echte Entscheidung: Wer stark produziert (Harvester + Agrardom auf hohem Level) muss früher in Lagerkapazität investieren, sonst verpufft die Produktion.
+Überschreitet die Produktion den Cap in einem Sol, gehen die überschüssigen Einheiten verloren. Das erzeugt eine echte Entscheidung: Wer stark produziert (Harvester + Agrardom auf hohem Level) muss früher in Lagerkapazität investieren, sonst verpufft die Produktion.
 
 | Parameter | Richtwert | Quelle |
 |-----------|-----------|--------|
@@ -341,7 +345,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 | Level | CC-Voraussetzung | Freischaltet / Effekt |
 |-------|-----------------|----------------------|
 | 1 | CC Lv2 | Aktive Nexus-Anfragen (Handelsschiff, Verwaltung) |
-| 2 | CC Lv3 | Tiefenscan dauert 1 Tick weniger; Reisender Händler erscheint häufiger |
+| 2 | CC Lv3 | Tiefenscan dauert 1 Sol weniger; Reisender Händler erscheint häufiger |
 | 3 | CC Lv5 | Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
 
 **Baukosten Lv1:** Ausschließlich Regolith + Credits — keine Werkstoffe, um einen Zirkelschluss zu vermeiden (Werkstoffe über Nexus anfordern setzt das Gebäude voraus).
@@ -366,7 +370,7 @@ Der Reisende Händler bietet bei Anwesenheit eines Handelspostens bessere Preisk
 
 ### Status-Punkte
 
-Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Tick durch Verfall (siehe Abschnitt 7).
+Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_points`) ist in der `buildings`-Tabelle hinterlegt. Status-Punkte sinken pro Sol durch Verfall (siehe Abschnitt 7).
 
 **Leveled vs. Instanced Buildings:**
 
@@ -434,7 +438,7 @@ Tile-Typen (z.B. "Reicher Erzknoten", "Armes Vorkommen", "Organik-freies Terrain
 
 ### Organika
 
-Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten nicht natürlich vor). Stattdessen produziert der **Agrardom** (Gebäude innerhalb der Kolonie-Zone) Organika passiv pro Tick.
+Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten nicht natürlich vor). Stattdessen produziert der **Agrardom** (Gebäude innerhalb der Kolonie-Zone) Organika passiv pro Sol.
 
 ### Gefahren und Ereignisse
 
@@ -540,7 +544,7 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 
 ### Mechanik
 
-Einmal pro Tick produziert jedes aktive Produktionsgebäude in jeder Kolonie Rohstoffe. Die produzierte Menge ergibt sich aus:
+Einmal pro Sol produziert jedes aktive Produktionsgebäude in jeder Kolonie Rohstoffe. Die produzierte Menge ergibt sich aus:
 
 ```
 produzierte Menge = Gebäude-Level × Rate
@@ -576,7 +580,7 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude und Kenntnisse erhöhen den Cap. Schiffe und Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Tick-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude und Kenntnisse erhöhen den Cap. Schiffe und Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
 supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
@@ -635,7 +639,7 @@ Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport 
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
 
-> Supply-Kosten sind **tick-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
+> Supply-Kosten sind **sol-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
 ### Kenntnisse als Supply-Cap-Quelle
 
@@ -659,7 +663,7 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 
 | Entität | Mechanismus | Auslöser | Gegenmaßnahme |
 |---------|-------------|----------|---------------|
-| Gebäude | Passiver Decay (`decay_rate` SP/Tick) | Zeitablauf | Repair-AP investieren |
+| Gebäude | Passiver Decay (`decay_rate` SP/Sol) | Zeitablauf | Repair-AP investieren |
 | Schiffe | Verschleiß (`wear_per_order` aus config/ships.php) | Aktiver Einsatz (Orders) | Repair-Order (Construction-AP + Credits) |
 | Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
 | Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
@@ -684,9 +688,9 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 ],
 ```
 
-### Supply im Tick (Schritt 7)
+### Supply im Sol (Schritt 7)
 
-`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 7 jedes Ticks neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
+`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 7 jedes Sols neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
 
 Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_level × supply_cost)`.
 
@@ -712,16 +716,16 @@ Entropie ist ein übergreifendes Designprinzip: Ohne aktive Pflege degradiert di
 
 ### Mechanik
 
-Gebäude verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Tick), die in den Stammdaten-Tabellen (`buildings`) gespeichert sind.
+Gebäude verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Sol, intern SP/Tick), die in den Stammdaten-Tabellen (`buildings`) gespeichert sind.
 
-**Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Tick). Pro Tick wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
+**Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Sol). Pro Sol wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
 
 ```
 Beispiel: max_status_points=5, decay_rate=0.3
-  Nach Tick 1: status_points = 4.70
-  Nach Tick 2: status_points = 4.40
-  Nach Tick 3: status_points = 4.10
-  Nach Tick 4: status_points = 3.80  ← erster ganzer SP verloren
+  Nach Sol 1: status_points = 4.70
+  Nach Sol 2: status_points = 4.40
+  Nach Sol 3: status_points = 4.10
+  Nach Sol 4: status_points = 3.80  ← erster ganzer SP verloren
 ```
 
 **Konsequenzen nach Building-Typ:**
@@ -743,7 +747,7 @@ Beispiel: max_status_points=5, decay_rate=0.3
 
 ### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
-Die Technologie-Tabelle enthält für jede Entität einen "Ticks until lost"-Wert (ohne Wartung). Daraus leitet sich die `decay_rate` ab, wenn `max_status_points` standardisiert wird:
+Die Technologie-Tabelle enthält für jede Entität einen "Sole bis Verlust"-Wert (ohne Wartung; intern: "ticks_until_lost"). Daraus leitet sich die `decay_rate` ab, wenn `max_status_points` standardisiert wird:
 
 ```
 decay_rate = max_status_points / ticks_until_lost
@@ -751,7 +755,7 @@ decay_rate = max_status_points / ticks_until_lost
 
 Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
-| Entität | Ticks until lost | decay_rate (bei SP=20) |
+| Entität | Sole bis Verlust (ticks_until_lost) | decay_rate (bei SP=20) |
 |---------|-----------------|------------------------|
 | Religiöse Stätte (temple) | 10 | 2.0 |
 | Cantina (bar) | 20 | 1.0 |
@@ -762,13 +766,13 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 | Kommandozentrale (max Lv5), Kolonialdenkmal | 60 | 0.33 |
 
 
-> **Tick-Skalierung:** Bei 24 Ticks/Tag entspricht "133 Ticks" ~5,5 Echtzeit-Tagen. Bei 1 Tick/Tag sind es 133 Tage. Die Tick-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des tick-basierten Systems.
+> **Sol-Skalierung:** Bei 24 Solen/Tag entspricht "133 Sole" ~5,5 Echtzeit-Tagen. Bei 1 Sol/Tag sind es 133 Tage. Die Sol-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des Sol-basierten Systems (intern: tick-basiert).
 
 > Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). Kenntnisse und Schiffe haben kein Decay-System; `researches.decay_rate` und `ships.decay_rate` entfallen.
 
 **Minimum:** Jede Entität hat mindestens **5 max_status_points**.
 
-> ⚠️ **Gnadenfrist** (kein Decay für neue Schiffe/Gebäude für X Ticks): vorerst nicht implementiert. Kann in einer späteren Phase evaluiert werden.
+> ⚠️ **Gnadenfrist** (kein Decay für neue Schiffe/Gebäude für X Sole): vorerst nicht implementiert. Kann in einer späteren Phase evaluiert werden.
 
 ### Schema (implementiert)
 
@@ -834,19 +838,19 @@ burnout_chance(tick) = base_chance × growth_factor^(active_ticks / threshold) �
 
 | Parameter | Wert (Richtwert) | Beschreibung |
 |-----------|-----------------|--------------|
-| `base_chance` | 0.01 (1%) | Grundwahrscheinlichkeit pro Tick bei Neubeginn |
+| `base_chance` | 0.01 (1%) | Grundwahrscheinlichkeit pro Sol bei Neubeginn |
 | `growth_factor` | 1.5 | Multiplikator-Steigerung mit `active_ticks` |
-| `threshold` | 50 Ticks | Ticks bis zur signifikanten Chancensteigerung |
+| `threshold` | 50 Sole | Sole bis zur signifikanten Chancensteigerung |
 | `rank_dampener(1)` | 1.00 | Junior — keine Dämpfung |
 | `rank_dampener(2)` | 0.70 | Senior — 30% weniger Burnout-Anfälligkeit |
 | `rank_dampener(3)` | 0.40 | Experte — robuster gegen Burnout |
 
-**Beispiel:** Ein Junior-Berater (rank=1) mit 100 aktiven Ticks hat ~`0.01 × 1.5^2 × 1.0 = 2.25%` Chance pro Tick auf Burnout. Ein Experte (rank=3) mit denselben 100 Ticks kommt auf ~`0.9%`.
+**Beispiel:** Ein Junior-Berater (rank=1) mit 100 aktiven Solen hat ~`0.01 × 1.5^2 × 1.0 = 2.25%` Chance pro Sol auf Burnout. Ein Experte (rank=3) mit denselben 100 Solen kommt auf ~`0.9%`.
 
 **Was passiert bei Burnout:**
-- `unavailable_until_tick = current_tick + recovery_ticks` (Richtwert: 5–15 Ticks, abhängig von Rang)
+- `unavailable_until_tick = current_tick + recovery_ticks` (Richtwert: 5–15 Sole, abhängig von Rang)
 - `active_ticks` wird **zurückgesetzt** (der Berater startet frisch nach der Erholung)
-- Der AP-Pool dieses Typs fällt für die Dauer auf den Grundwert (6 AP/Tick)
+- Der AP-Pool dieses Typs fällt für die Dauer auf den Grundwert (6 AP/Sol)
 - INNN-Ereignis: „[Name] benötigt eine Auszeit — [AP-Typ]-Kapazität vorübergehend reduziert."
 
 **Rang-Erholungszeiten:**
@@ -861,7 +865,7 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 **`active_ticks`-Reset:** Nach dem Burnout startet der Zähler bei 0. Das bedeutet: Ein Berater der gerade erholt hat, ist für eine Weile sicher. Burnout-Risiko baut sich langsam wieder auf. Kein "ständiger Burnout" ist möglich.
 
-> **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Tick".
+> **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Sol".
 
 > **Implementierungshinweis:** Die Burnout-Prüfung erfolgt in Tick-Schritt 7 (Advisor Ticks), nach dem AP-Bonus-Update. Die Zufallsziehung passiert einmal pro Berater pro Tick. Alle Konfigurations-Parameter stehen in `config/game.php → advisors.burnout`.
 
@@ -894,10 +898,10 @@ Jede Flottenorder verbraucht Navigation-AP, die durch Raumfahrer generiert werde
 Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensystems.
 
 **Bewegungs-Mechanik (Phase 2):**
-- Bewegung geschieht über mehrere Ticks — die Flotte teleportiert sich nicht sofort
-- Geschwindigkeit = `moving_speed` des langsamsten Schiffs in der Flotte (Fallback: 1 Einheit/Tick)
-- `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Tick auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
-- Pro Tick des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
+- Bewegung geschieht über mehrere Sole — die Flotte teleportiert sich nicht sofort
+- Geschwindigkeit = `moving_speed` des langsamsten Schiffs in der Flotte (Fallback: 1 Einheit/Sol)
+- `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Sol auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
+- Pro Sol des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
 
 **Einschränkungen (bewusste Designentscheidung):**
 - Ausschließlich innerhalb eines Sternensystems (gleiche `system_id`)
@@ -956,7 +960,7 @@ Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der E
 | Stufe | Kosten | Ergebnis |
 |-------|--------|---------|
 | Scan | 1 Navigation-AP, sofort | Tile aufgedeckt (leer / Ressource / normales Event) |
-| Tiefenscan | Mehrere Navigation-AP über mehrere Ticks | Verborgener Event-Spot enthüllt (Schiffswrack, Ruine, Versteck) |
+| Tiefenscan | Mehrere Navigation-AP über mehrere Sole | Verborgener Event-Spot enthüllt (Schiffswrack, Ruine, Versteck) |
 
 ### Fixe Objekte (immer vorhanden)
 
@@ -985,9 +989,9 @@ Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber 
 
 ### Reisender Händler
 
-Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Ticks. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
+Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Sole. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
 
-**Erscheinungsfrequenz:** Erstmals ab Tick 15–20 (Kolonie soll sich erst etablieren). Danach alle 10–15 Ticks zufällig. Ergibt ~6–7 Besuche pro 100-Tick-Run. Ist der Händler weg, ist er weg — Roguelike-Druck.
+**Erscheinungsfrequenz:** Erstmals ab Sol 15–20 (Kolonie soll sich erst etablieren). Danach alle 10–15 Sole zufällig. Ergibt ~6–7 Besuche pro 100-Sol-Run. Ist der Händler weg, ist er weg — Roguelike-Druck.
 
 **Inventar:** 3–4 Items pro Besuch (Mobile-optimiert, kein Scrollen nötig).
 
@@ -1115,7 +1119,7 @@ Beispiele für Sekundäreffekte (konkrete Werte folgen nach erstem Playtest):
 |----------|---------|----------------|
 | geology | advisor_engineer | −10% Gebäudekosten |
 | geology | advisor_trader | +10% Rohstoff-Verkaufspreis |
-| health | advisor_scientist | +1 Analyse-AP/Tick |
+| health | advisor_scientist | +1 Analyse-AP/Sol |
 | defense | advisor_pilot | −1 AP-Kosten für Angriff |
 | trade | advisor_trader | +15% Handelsgewinn |
 | cartography | advisor_pilot | +1 Bewegungsreichweite |
@@ -1356,7 +1360,7 @@ Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kau
 
 ### Kanal 1: Bar/Cantina (primär, früh, informell)
 
-Die Bar ist ab CC Lv1 verfügbar. Pro Tick erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Ticks gültig** ist. Danach ist der Gast weg.
+Die Bar ist ab CC Lv1 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
 
 **Angebotstypen:**
 - Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
@@ -1367,9 +1371,9 @@ Der Spieler sieht 0–2 Angebote und entscheidet: annehmen oder ablehnen. Keine 
 **Spieler-zu-Spieler-Handel:** Wenn ein Spieler ein Angebot in der Bar einstellt, erscheint es für andere Spieler ebenfalls als "Gast". Ob ein Gast ein NPC oder ein echter Spieler ist, bleibt unsichtbar — atmosphärisch stimmig, technisch einfach.
 
 **Händler-Berater (advisor_trader):**
-- Rang 1: Basis-Angebote (0–1 Gäste/Tick, Marktpreise)
-- Rang 2: mehr Angebote (0–2 Gäste/Tick), leicht bessere Preise
-- Rang 3: regelmäßige Angebote (1–2 Gäste/Tick), deutlich bessere Preise
+- Rang 1: Basis-Angebote (0–1 Gäste/Sol, Marktpreise)
+- Rang 2: mehr Angebote (0–2 Gäste/Sol), leicht bessere Preise
+- Rang 3: regelmäßige Angebote (1–2 Gäste/Sol), deutlich bessere Preise
 
 ---
 
@@ -1379,10 +1383,10 @@ Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch o
 
 | | Ohne Berater | Rang 1 | Rang 2 | Rang 3 |
 |---|---|---|---|---|
-| Lieferzeit | 3 Ticks | 3 Ticks | 2 Ticks | 1 Tick |
+| Lieferzeit | 3 Sole | 3 Sole | 2 Sole | 1 Sol |
 | Preis | +50% Aufschlag | +40% | +25% | +10% |
 
-**Anfrage-Mechanik:** Der Spieler sendet eine Anfrage über das INNN-System (Nachricht an "Nexus Command"). Nexus antwortet nach 1–3 Ticks (abhängig vom Konsul-Rang) mit einem INNN-Ereignis, das die Lieferung bestätigt und die Ressourcen direkt zur Kolonie transferiert. Kein eigenes Fleet-Objekt — das Nexus-Schiff erscheint nicht auf der Karte.
+**Anfrage-Mechanik:** Der Spieler sendet eine Anfrage über das INNN-System (Nachricht an "Nexus Command"). Nexus antwortet nach 1–3 Solen (abhängig vom Konsul-Rang) mit einem INNN-Ereignis, das die Lieferung bestätigt und die Ressourcen direkt zur Kolonie transferiert. Kein eigenes Fleet-Objekt — das Nexus-Schiff erscheint nicht auf der Karte.
 
 **Ablauf:**
 1. Spieler öffnet INNN → "Nexus-Handelsschiff anfordern" → wählt Ressource + Menge
@@ -1409,7 +1413,7 @@ Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch o
 
 Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
-> **Offen (Phase 4+):** AP-Delegation — ein Spieler "verleiht" Analytiker-AP an eine andere Kolonie für X Ticks. Thematisch stimmiger als direkter Wissenstransfer. Für spätere Phase zurückgestellt.
+> **Offen (Phase 4+):** AP-Delegation — ein Spieler "verleiht" Analytiker-AP an eine andere Kolonie für X Sole. Thematisch stimmiger als direkter Wissenstransfer. Für spätere Phase zurückgestellt.
 
 ---
 
@@ -1417,7 +1421,7 @@ Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
 ### Grundkonzept
 
-Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Tick in Gebäude, Forschung, Flotten und Handel investieren kann.
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Sol in Gebäude, Forschung, Flotten und Handel investieren kann.
 
 Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater hat einen eigenen Datensatz mit Rang, Aktivitätszähler und Verfügbarkeitsstatus. Der Spieler rekrutiert, benennt und entwickelt konkrete Individuen, keine abstrakten "Personal"-Stapel.
 
@@ -1431,7 +1435,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 | `economy` | Konsul | Handelsangebote, Marktgeschäfte |
 | `strategy` | Stratege | Schutzorders, Verteidigung, taktische Planung |
 
-**Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Tick** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
+**Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Sol** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
 
 **Berater** erhöhen den Grundwert ihres AP-Typs. Max. **1 Berater pro Typ pro Kolonie** (Slot-System) — also maximal 5 gleichzeitig.
 
@@ -1505,10 +1509,10 @@ Der Raumfahrer ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP 
 
 ### Rang-System
 
-Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tick und den laufenden Upkeep in Credits.
+Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol und den laufenden Upkeep in Credits.
 
-| Rang | Bezeichnung | AP-Bonus/Tick | Gesamt-AP/Tick | Upkeep (Cr/Tick) |
-|------|-------------|---------------|---------------|-------------------|
+| Rang | Bezeichnung | AP-Bonus/Sol | Gesamt-AP/Sol | Upkeep (Cr/Sol) |
+|------|-------------|--------------|---------------|-----------------|
 | 1 | Junior | +4 | 10 | 10 |
 | 2 | Senior | +7 | 13 | 50 |
 | 3 | Experte | +12 | 18 | 160 |
@@ -1525,17 +1529,17 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Tic
 | Konsul | 350 | Handelssupport — mittlere Priorität |
 | Stratege | 600 | Teuerster — typischerweise Late-Game |
 
-- **Upkeep** wird jeden Tick von den Colony-Credits abgezogen, solange der Berater `colony_id` oder `fleet_id` hat.
+- **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` oder `fleet_id` hat.
 - **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
 - Alle Werte stehen in `config/advisors.php` (Einstellungskosten) und `config/game.php → advisors` (AP, Upkeep, Rang-Thresholds).
 
-> **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Tick, laufender Upkeep (Cr/Tick) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
+> **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
 
 ---
 
 ### Kosten: Credits — kein Supply
 
-Berater kosten ausschliesslich **Credits** — sowohl bei der Einstellung (einmalig) als auch im laufenden Upkeep (pro Tick). Supply ist nicht betroffen.
+Berater kosten ausschliesslich **Credits** — sowohl bei der Einstellung (einmalig) als auch im laufenden Upkeep (pro Sol). Supply ist nicht betroffen.
 
 Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Personalkosten laufen über Credits. Das trennt zwei konzeptuell verschiedene Ressourcen sauber:
 
@@ -1555,7 +1559,7 @@ Der Raumfahrer ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann
 - **Kolonie-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
 - **Flotte-zugewiesen (Kommandant):** Generiert Navigation-AP direkt auf der Flotte; Kolonie-Slot ist leer bis zur Rückkehr.
 - **Rückkehr:** Beim Auflösen einer Flotte wird der Raumfahrer automatisch wieder der Kolonie zugewiesen (`colony_id` gesetzt, `fleet_id` = NULL, `is_commander` = false).
-- **Flottenverlust im Kampf:** Der Raumfahrer ist für 2–3 Ticks nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
+- **Flottenverlust im Kampf:** Der Raumfahrer ist für 2–3 Sole nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
 - **Einzelne Schiffe** brauchen keine eigenen Raumfahrer. Nur die Flotte als Ganzes braucht einen Kommandanten.
 
 > **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Raumfahrer nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert.
@@ -1568,7 +1572,7 @@ Der Raumfahrer ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann
 availableAP(type) = 6 (Grundwert) + AP_bonus(rank) − lockedAP(tick, type)
 ```
 
-Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses Typs ist (0 wenn kein Berater im Slot). AP-Locks verfallen automatisch zum nächsten Tick — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
+Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses Typs ist (0 wenn kein Berater im Slot). AP-Locks verfallen automatisch zum nächsten Sol — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
 
 ### AP-Verbrauch
 
@@ -1585,11 +1589,11 @@ Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses T
 
 ### Berater-Burnout (Auswirkung auf AP)
 
-Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der AP-Pool des betroffenen Typs sinkt auf den **Grundwert (6 AP/Tick)**.
+Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der AP-Pool des betroffenen Typs sinkt auf den **Grundwert (6 AP/Sol)**.
 
-**Beispiel:** Ein Senior-Analytiker (rank=2) liefert normalerweise 20 AP/Tick für `research`. Bei Burnout: nur noch 6 AP/Tick für `research`.
+**Beispiel:** Ein Senior-Analytiker (rank=2) liefert normalerweise 20 AP/Sol für `research`. Bei Burnout: nur noch 6 AP/Sol für `research`.
 
-**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Ticks — Richtwerte aus `config/game.php → advisors.burnout`).
+**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Sole — Richtwerte aus `config/game.php → advisors.burnout`).
 
 **Sichtbarkeit:** Die Berater-Übersicht zeigt einen "Pause"-Zustand mit Countdown bis zur Rückkehr. INNN-Ereignis informiert beim Einsetzen.
 
@@ -1633,9 +1637,9 @@ Startwert: 0
 
 Der Wert -100 ist ein harter Boden (keine weitere Verschlechterung). Ebenso +100 als Deckel.
 
-### Berechnung (Tick-basiert)
+### Berechnung (Sol-basiert)
 
-Vertrauen wird einmal pro Tick **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Ticks ergibt sich aus der Summe aller aktiven Faktoren:
+Vertrauen wird einmal pro Sol **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Sols ergibt sich aus der Summe aller aktiven Faktoren:
 
 ```
 vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + steuerfaktor + ereigniseffekte, -100, +100)
@@ -1643,9 +1647,9 @@ vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffs
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
 
-Der Wert wird in **Tick-Schritt 6b** (nach Ressourcenproduktion) berechnet, da Vertrauen die Produktionswerte desselben Ticks noch nicht beeinflusst — es wirkt ab dem Folgetick.
+Der Wert wird in **Tick-Schritt 6b** (nach Ressourcenproduktion) berechnet, da Vertrauen die Produktionswerte desselben Sols noch nicht beeinflusst — es wirkt ab dem nächsten Sol.
 
-> **Implementierungsnotiz:** Die Tick-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Ticks die volle Wirkung einer vertrauensverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
+> **Implementierungsnotiz:** Die Sol-Reihenfolge bedeutet, dass ein Spieler erst nach 2 Solen die volle Wirkung einer vertrauensverändernden Aktion sieht. Das ist akzeptables Design (kein Exploit durch Last-Minute-Bauweise).
 
 ### Einflussfaktoren: Gebäude
 
@@ -1710,13 +1714,13 @@ Das System ist noch nicht implementiert. Der Platzhalter in der Formel ist `steu
 
 ### Einflussfaktoren: Ereignisse (Events)
 
-Events können Vertrauen temporär verändern. Die Wirkung hält genau **1 Tick** an (danach wirken nur noch Dauereffekte). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Tick-Berechnung addiert und am Ende des Ticks verworfen.
+Events können Vertrauen temporär verändern. Die Wirkung hält genau **1 Sol** an (danach wirken nur noch Dauereffekte). Event-Vertrauenswerte werden nicht in `colony_resources` gespeichert, sondern bei der Sol-Berechnung addiert und am Ende des Sols verworfen.
 
 Datenmodell: `innn_events` kann über das `data`-Feld bereits Vertrauen-Deltas tragen. Kein Schemabedarf.
 
 **Geplante Event-Trigger und Vertrauenseffekte:**
 
-Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden nach der Vertrauen-Berechnung verworfen). Mehrere Events desselben Typs im selben Tick summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
+Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Sol (werden nach der Vertrauen-Berechnung verworfen). Mehrere Events desselben Typs im selben Sol summieren sich **nicht** — es gilt der stärkste Wert der Kategorie.
 
 **Bauwesen / Forschung:**
 
@@ -1748,10 +1752,10 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Tick (werden n
 | `treaty_signed` | Diplomatischer Vertrag abgeschlossen | +3 |
 
 **Rationale für neue Events:**
-- `colony_threatened` (-4) ist von `encounter_lost` (-5) getrennt, weil eine Bedrohung die Kolonisten auch dann verunsichert, wenn sie abgewehrt wurde. Beide Effekte können in einem Tick summieren (Bedrohung + Verlust = -9).
+- `colony_threatened` (-4) ist von `encounter_lost` (-5) getrennt, weil eine Bedrohung die Kolonisten auch dann verunsichert, wenn sie abgewehrt wurde. Beide Effekte können in einem Sol summieren (Bedrohung + Verlust = -9).
 - `trade_blocked` (-3) macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
 
-> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_threatened` + `encounter_lost` in einem Tick summiert sich zu -9. Das kann eine neutrale Kolonie (0) spürbar in Richtung "Unruhig" (-21) drücken. Das ist designtechnisch akzeptabel — Bedrohungen hinterlassen Spuren — aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
+> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_threatened` + `encounter_lost` in einem Sol summiert sich zu -9. Das kann eine neutrale Kolonie (0) spürbar in Richtung "Unruhig" (-21) drücken. Das ist designtechnisch akzeptabel — Bedrohungen hinterlassen Spuren — aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
 
 > ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 
@@ -1803,7 +1807,7 @@ Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separa
 
 **Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `vertrauen`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
-### Tick-Integration
+### Sol-Integration
 
 Vertrauen wird als neuer **Tick-Schritt 6b** nach der Ressourcenproduktion berechnet:
 
@@ -1813,7 +1817,7 @@ Vertrauen wird als neuer **Tick-Schritt 6b** nach der Ressourcenproduktion berec
 | **6b** | **Vertrauen Calculation** — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren |
 | 7 | Advisor Ticks |
 
-Die Reihenfolge ist bewusst: Die Produktion von Tick N verwendet den Vertrauenswert von Tick N-1. Der neue Vertrauenswert gilt erst ab Tick N+1. Das verhindert zirkuläre Abhängigkeiten.
+Die Reihenfolge ist bewusst: Die Produktion von Sol N verwendet den Vertrauenswert von Sol N-1. Der neue Vertrauenswert gilt erst ab Sol N+1. Das verhindert zirkuläre Abhängigkeiten.
 
 ### Implementierungsschritte
 
@@ -1848,7 +1852,7 @@ Jede Partie von Nouron ist eine abgeschlossene **Expeditionsmission**. Es gibt k
 
 #### Phase 1 — "Kolonie stabilisieren" (Pflicht)
 
-Dauer: ~10–20 Ticks. Kann nicht ubersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
+Dauer: ~10–20 Sole. Kann nicht ubersprungen werden. Ziel ist eine lebensfähige, selbsttragende Kolonie.
 
 **Startzustand (jeder Run):**
 - CommandCenter Level 1 — bereits gebaut, betriebsbereit
@@ -1871,15 +1875,15 @@ Phase 1 endet automatisch, sobald beide Bedingungen gleichzeitig erfüllt sind. 
 
 #### Phase 2 — "Expeditionsmission"
 
-Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 mussen bis Tick X erfullt werden.**
+Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool zugewiesen (zufällig oder aus vordefinierten Sets). **2 von 3 mussen bis Sol X erfullt werden.**
 
-**Runlänge gesamt:** 60–100 Ticks (konfigurierbar, Standard 100). Bei 1 Tag/Tick entspricht das 2–3 Monaten — das ist die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
+**Runlänge gesamt:** 60–100 Sole (konfigurierbar, Standard 100). Bei 1 Tag/Sol entspricht das 2–3 Monaten — das ist die Referenzgröße für alle AP- und Ressourcen-Balancingwerte.
 
-**Tick-Konfiguration:** Jeder Run ist über `config/game.php → run` konfigurierbar:
-- `tick_limit` — Gesamtticks des Runs (Standard 100)
-- `tick_duration_hours` — Maximale Echtzeit pro Tick in Stunden (Standard 24 = 1 Tag)
+**Sol-Konfiguration:** Jeder Run ist über `config/game.php → run` konfigurierbar:
+- `tick_limit` — Gesamtsole des Runs (Standard 100)
+- `tick_duration_hours` — Maximale Echtzeit pro Sol in Stunden (Standard 24 = 1 Tag)
 - `max_players` — 1 (Singleplayer) oder 2–4 (Multiplayer)
-- `playbymailmode` — bei `true`: Tick endet sobald alle Spieler ihre Aktionen eingereicht haben, spätestens nach `tick_duration_hours`
+- `playbymailmode` — bei `true`: Sol endet sobald alle Spieler ihre Aktionen eingereicht haben, spätestens nach `tick_duration_hours`
 
 > **Designprinzip:** Die Max-Wartezeit (`tick_duration_hours`) ist Pflicht auch im Play-by-Mail-Modus — ohne sie blockiert ein inaktiver Spieler alle anderen. Singleplayer nutzt immer das Zeitmodell.
 
@@ -1891,17 +1895,17 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 
 | # | Aufgabe | Kernmechanik | Spielstil |
 |---|---------|-------------|-----------|
-| 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Tick uber Z Ticks aufrecht halten | Wirtschaft |
+| 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Sol uber Z Sole aufrecht halten | Wirtschaft |
 | 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
-| 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Ticks | Diplomatie/Zivilaufbau |
-| 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Ticks | Wirtschaft/Aufbau |
+| 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Sole | Diplomatie/Zivilaufbau |
+| 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Sole | Wirtschaft/Aufbau |
 | 5 | **Expeditionsstatus** | Alle Tiles der Exploration Zone vollständig aufgedeckt (gesamter äußerer Bereich, nicht nur Ring 1–2) | Exploration/Navigation |
 | 6 | **Bewährungsprobe** | Mindestens 3 Encounters erfolgreich abgewehrt (`encounter_won`) mit eigener Flotte | Navigation/Konflikt |
 | 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |
 | 8 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
-| 9 | **Kreditimperium** | Credits-Bestand X Ticks uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
+| 9 | **Kreditimperium** | Credits-Bestand X Sole uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
 | 10 | **Expertenstab** | Alle 5 Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher | Aufbau/Personal |
-| 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Ticks (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
+| 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Sole (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
 
 > ⚠️ BALANCE CONCERN: Aufgaben 1, 7, 9 (alle Wirtschaft) dürfen nicht alle drei gleichzeitig gezogen werden. Aufgaben-Sets müssen mindestens 2 verschiedene Spielstilkategorien abdecken — eine Kombo-Blacklist ist vor der Implementierung zu definieren.
 
@@ -1916,8 +1920,8 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 **Bewertung: gut.** Die Mechanik gibt dem Spieler echte Wahlfreiheit, ohne den Run zu trivial zu machen. Eine verfehlte Aufgabe beendet den Run nicht — das reduziert Frustration und fuhrt zu mehr strategischen Entscheidungen ("Welche zwei lohnen sich fur meine aktuelle Ausgangslage?").
 
 **Milestones gegen zu fruhen Fokus-Verlust:**
-- Tick 30: Mindestens 1 Aufgabe muss zu > 50% erfullt sein. Sonst: Nexus-Warnung im INNN-Feed ("Die Expedition gerät ins Stocken — Nexus Command erwartet Fortschritt").
-- Tick 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Nexus-Warnung mit Tick-Countdown.
+- Sol 30: Mindestens 1 Aufgabe muss zu > 50% erfullt sein. Sonst: Nexus-Warnung im INNN-Feed ("Die Expedition gerät ins Stocken — Nexus Command erwartet Fortschritt").
+- Sol 50: Wenn noch keine Aufgabe vollständig erfullt, zweite Nexus-Warnung mit Sol-Countdown.
 
 Diese Milestones sind weich (kein Fail, nur Feedback) und erzeugen Dringlichkeitsgefuhl ohne Frustration. **Nexus ist der Absender** — die Nachrichten kommen nicht anonym vom System, sondern von der übergeordneten Instanz, die den Spieler ausgesandt hat.
 
@@ -1945,13 +1949,13 @@ Kommunikationskanal: ausschließlich der INNN-Feed. Nexus sendet keine Dialogfen
 
 Nexus belohnt Kolonien, die ihre Milestone-Ziele übertreffen:
 - Credits-Transfer ("Nexus genehmigt Betriebsmittelzulage")
-- Temporärer AP-Boost eines Berater-Typs für 3 Ticks
+- Temporärer AP-Boost eines Berater-Typs für 3 Sole
 - Aufgaben-Variante wird leicht entspannt (z.B. Zielwert um 10% gesenkt)
 
 #### Sanktionen (wenn der Spieler hinter Plan liegt)
 
 Nexus erhöht den Druck auf Kolonien, die Milestones verfehlen:
-- Berater kurz abgezogen ("vorübergehend für administrative Zwecke einberufen") — 1 Tick AP-Drop
+- Berater kurz abgezogen ("vorübergehend für administrative Zwecke einberufen") — 1 Sol AP-Drop
 - Kleine Credits-Gebühr ("Overhead für Missionsaufsicht")
 - Gnadenfrist-Verkürzung (siehe unten)
 
@@ -1959,13 +1963,13 @@ Sanktionen erscheinen nie ohne vorherige INNN-Warnung.
 
 #### Gnadenfrist
 
-Ab Tick 80 zeigt das UI den Countdown sichtbar ("Noch 20 Ticks bis Missionsende"). Nexus tritt jetzt aktiver in Erscheinung:
+Ab Sol 80 zeigt das UI den Countdown sichtbar ("Noch 20 Sole bis Missionsende"). Nexus tritt jetzt aktiver in Erscheinung:
 
-- **Tick 85:** Wenn noch keine Aufgabe vollständig erfüllt ist → Nexus verhängt eine Sanktion (1 Berater 1 Tick abgezogen) **und** verkürzt das effektive Ende auf Tick 95. Der Spieler sieht im INNN-Feed: "Nexus Command hat die Frist auf Tick 95 vorgezogen."
-- **Tick 90:** Letzte Warnung falls immer noch 0 Aufgaben erfüllt.
-- **Tick 95/100:** Run endet — Fail State 2.
+- **Sol 85:** Wenn noch keine Aufgabe vollständig erfüllt ist → Nexus verhängt eine Sanktion (1 Berater 1 Sol abgezogen) **und** verkürzt das effektive Ende auf Sol 95. Der Spieler sieht im INNN-Feed: "Nexus Command hat die Frist auf Sol 95 vorgezogen."
+- **Sol 90:** Letzte Warnung falls immer noch 0 Aufgaben erfüllt.
+- **Sol 95/100:** Run endet — Fail State 2.
 
-Wer hingegen bei Tick 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale Statusmeldung ("Nexus registriert Fortschritt — Mission läuft.") ohne Sanktion.
+Wer hingegen bei Sol 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale Statusmeldung ("Nexus registriert Fortschritt — Mission läuft.") ohne Sanktion.
 
 > **TODO (Implementierung):** Nexus-Trigger-Tabelle definieren — welche Metrik, welcher Schwellwert, welche Reaktion, welche Phase. Muss vor der Implementierung als Config-Tabelle in `config/game.php → run.nexus_triggers` abgelegt werden.
 
@@ -1980,9 +1984,9 @@ Wer hingegen bei Tick 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale S
 Genau 3 Fail States.
 
 **Fail State 1 — Vertrauen kollabiert:**
-Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende Ticks unter einem kritischen Schwellenwert (z.B. < 10).
+Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende Sole unter einem kritischen Schwellenwert (z.B. < 10).
 - Begründung: Die Kolonisten verlieren den Glauben an ihre Führung. Der Direktor wird abgesetzt und muss die Kolonie verlassen.
-- Vorwarnung: INNN-Ereignis wenn Vertrauen unter 20 fällt. Roter UI-Indikator bei Vertrauen < 10. Countdown-Anzeige "Noch N Ticks bis Abberufung" wenn Zustand anhält.
+- Vorwarnung: INNN-Ereignis wenn Vertrauen unter 20 fällt. Roter UI-Indikator bei Vertrauen < 10. Countdown-Anzeige "Noch N Sole bis Abberufung" wenn Zustand anhält.
 - Run-Ende mit Meldung: "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
 
 **Fail State 2 — Nexus-Schulden zu hoch:**
@@ -2000,10 +2004,10 @@ Die Schulden beim Nexus-Konsortium überschreiten das Schuldenlimit.
 - Lose Kopplung mit Vertrauen: kein automatischer Zusammenhang. Der Spieler managt beide Achsen aktiv.
 
 **Fail State 3 — Zeitablauf:**
-Das Tick-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfüllt wurden.
+Das Sol-Limit des Runs wird erreicht ohne dass 2 von 3 Aufgaben erfüllt wurden.
 - Begründung: Sauberes, vorhersehbares Ende. Verhindert Endlos-Sessions ohne Ziel.
-- Tick-Limit: 100 Ticks (konfigurierbar in `config/game.php → run.tick_limit`).
-- Countdown im UI sichtbar ab Tick 80 ("Noch 20 Ticks bis Missionsende").
+- Sol-Limit: 100 Sole (konfigurierbar in `config/game.php → run.tick_limit`).
+- Countdown im UI sichtbar ab Sol 80 ("Noch 20 Sole bis Missionsende").
 
 ---
 
@@ -2114,8 +2118,8 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 1 | Kein Wohnhabitat vorhanden (Supply-Cap = 10) | "Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10." | Colony-Screen, Bauen-Aktion |
 | 2 | Kein Ingenieur-Berater aktiv (0 Construction-AP-Bonus) | "Noch kein Ingenieur eingestellt — Construction-AP bleibt bei Grundwert." | Berater-Screen |
 | 3 | Harvester steht auf keinem Regolith-Tile | "Harvester produziert nichts — auf Regolith-Tile verlegen." | Colony-Screen, Harvester-Tile |
-| 4 | Kein Wissen freigeschaltet nach Tick 10 | "Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf." | Techtree-Screen, Kenntnisse |
-| 5 | Vertrauen unter -20 für >= 3 Ticks | "Vertrauen sinkt — Zivilgebäude bauen oder reparieren." | Techtree-Screen, Gebäude |
+| 4 | Kein Wissen freigeschaltet nach Sol 10 | "Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf." | Techtree-Screen, Kenntnisse |
+| 5 | Vertrauen unter -20 für >= 3 Sole | "Vertrauen sinkt — Zivilgebäude bauen oder reparieren." | Techtree-Screen, Gebäude |
 
 **Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
 
@@ -2123,7 +2127,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
 
-> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Tick 10) setzt voraus, dass das Analytik-Labor (CC Lv2) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Tick 10 realistisch ist oder ob der Schwellwert auf Tick 15–20 angepasst werden muss.
+> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Sol 10) setzt voraus, dass das Analytik-Labor (CC Lv2) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Sol 10 realistisch ist oder ob der Schwellwert auf Sol 15–20 angepasst werden muss.
 
 ---
 
@@ -2186,7 +2190,7 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 
 **Aktion 2 — Ingenieur-Berater einstellen (Berater-Screen)**
 
-- Warum: +6 Construction-AP/Tick durch Junior-Ingenieur verdoppelt den Grundwert
+- Warum: +6 Construction-AP/Sol durch Junior-Ingenieur verdoppelt den Grundwert
 - Kosten: 50 Cr (Junior — erster Berater ist bewusst günstig)
 - Ergebnis: Construction-AP-Anzeige springt von 6 auf 12. Berater-Card zeigt "Junior Ingenieur — aktiv"
 - Feedback-Loop klar: AP-Chips auf allen Screens aktualisieren sich sofort
@@ -2194,7 +2198,7 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 **Aktion 3 — CC ausbauen (Techtree-Screen → CC-Kachel)**
 
 - Warum: CC Lv2 schaltet Wissenschaftler-Slot frei; 2 weitere Kolonie-Zone-Tiles
-- Kosten: Construction-AP (erster Tick mit Ingenieur macht das spürbar) + Credits
+- Kosten: Construction-AP (erster Sol mit Ingenieur macht das spürbar) + Credits
 - Ergebnis: Neue Tiles leuchten auf der Karte auf. Wissenschaftler-Slot in Berater-UI erscheint.
 - Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion § 4a)
 
@@ -2269,10 +2273,10 @@ Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und 
 ```php
 'onboarding' => [
     'hint_supply_cap_threshold'    => 10,   // Hint Rang 1: Supply-Cap <= dieser Wert
-    'hint_no_engineer_ticks'       => 0,    // Hint Rang 2: Ticks ohne Ingenieur (0 = sofort)
-    'hint_no_knowledge_after_tick' => 10,   // Hint Rang 4: Warnung nach diesem Tick
+    'hint_no_engineer_ticks'       => 0,    // Hint Rang 2: Sole ohne Ingenieur (0 = sofort)
+    'hint_no_knowledge_after_tick' => 10,   // Hint Rang 4: Warnung nach diesem Sol
     'hint_trust_threshold'         => -20,  // Hint Rang 5: Vertrauen unter diesem Wert
-    'hint_trust_min_ticks'         => 3,    // Hint Rang 5: mindestens N Ticks ununterbrochen
+    'hint_trust_min_ticks'         => 3,    // Hint Rang 5: mindestens N Sole ununterbrochen
 ],
 ```
 
