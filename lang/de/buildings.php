@@ -13,7 +13,7 @@ return [
     // ── Industry ──────────────────────────────────────────────────────────────
 
     'harvester'      => 'Harvester',
-    'harvester_desc' => 'Automatisierte Abbauplattform, die auf einem Regolith-Vorkommen in der Explorationszone stationiert wird. Fördert Regolith pro Tick — Menge abhängig von der Qualität des Vorkommens. Der einzige Weg, lokal Rohbaumaterial zu gewinnen.',
+    'harvester_desc' => 'Automatisierte Abbauplattform, die auf einem Regolith-Vorkommen in der Explorationszone stationiert wird. Fördert Regolith pro Sol — Menge abhängig von der Qualität des Vorkommens. Der einzige Weg, lokal Rohbaumaterial zu gewinnen.',
 
     'bioFacility'      => 'Agrardom',
     'bioFacility_desc' => 'Geschlossene Biosphäre unter Druckhülle: Aquaponik, Pilzkulturen, medizinische Anzuchten. Auf einem Planeten ohne natürliche Biologie ist der Agrardom kein Komfort — er ist Lebenserhaltung.',
