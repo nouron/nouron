@@ -153,6 +153,16 @@ class PersonellService
                 return 'duplicate';
             }
 
+            // Same-tick re-hire guard — prevent fire→hire→fire exploit within one tick.
+            $currentTick = $this->tickService->getTickCount();
+            if (Advisor::where('user_id', $userId)
+                ->where('personell_id', $personellId)
+                ->whereNull('colony_id')
+                ->where('unavailable_until_tick', $currentTick)
+                ->exists()) {
+                return 'dismissed_this_tick';
+            }
+
             // CC-Level gate — slots available = min(cc_level, max_slots).
             $ccLevel  = (int) (DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)
@@ -219,7 +229,8 @@ class PersonellService
     public function fire(int $advisorId): bool
     {
         return (bool) Advisor::where('id', $advisorId)->update([
-            'colony_id' => null,
+            'colony_id'              => null,
+            'unavailable_until_tick' => $this->tickService->getTickCount(),
         ]);
     }
 

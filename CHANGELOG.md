@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-05-18
+
+- **Reisender Händler in Cantina**: Händler-Dialog aus Hexview entfernt und vollständig in Cantina-Screen (`colony.bar`) integriert. `BarController` lädt `merchantVisit` + `merchantItems`, Alpine-Komponente mit Item-Loop, Kauf-Button, Toast-Feedback. Bug-Fix: `x-data`-Attribut verwendete doppelte Anführungszeichen — JSON-Strukturzeichen terminierten Attribut frühzeitig (SyntaxError). Fix: einfache Anführungszeichen für HTML-Attribut, `@json()`-Routen als Parameter übergeben.
+- **Advisor-Exploit behoben**: Berater konnte im selben Sol eingestellt, gefeuert und sofort wieder eingestellt werden — Credits wurden mehrfach abgezogen. Fix: `PersonellService::fire()` setzt `unavailable_until_tick = currentTick`, `hire()` lehnt Wiedereinstellung im gleichen Tick ab (`dismissed_this_tick`). Fehlermeldung in `lang/de/advisors.php` ergänzt.
+- **Vertrauens-Abkürzung korrigiert**: Ressource 12 (Vertrauen) hatte Abkürzung `M` (veraltet) → `Tr` (englisch, konsistent mit anderen Bezeichnern). CSS-Klasse `.res-M` → `.res-Tr` in `style.css` und `colony.css`. Testdaten aktualisiert.
+- **Navigation vereinfacht**: Galaxis, Flotte und Techtree aus Colony-Nav entfernt. Neue schlanke Nav: Kolonie · Berater · Cantina · Nachrichten. Logo-Link → `colony.view`. Techtree später über Kolonie-Tiles erreichbar.
+- **Händler-Benachrichtigung in Nav**: Hexview-Händler-Dialog entfernt, stattdessen `🛸 Händler im System`-Link in Nav-Leiste (Alpine `x-show="hasMerchant()"`, nur sichtbar bei aktivem Besuch).
+- **Sol-Anzeige behoben**: `currentSol` zeigte globalen Tick (~20591) statt run-lokalen Sol. Fix: `min($solLimit, max(1, $globalTick - $sinceTick + 1))` in `AppServiceProvider`. Testdaten: `since_tick = 20585` → Sol zeigt korrekt ~6/100.
+- **Tests**: `MerchantServiceTest` (22 Tests), `MerchantControllerTest` (8 Tests) neu. `BarControllerTest`, `AdvisorPromotionCostTest`, `BuildingServiceTest`, `TechtreeControllerTest` angepasst (self-contained setUp ohne Testdaten-Abhängigkeit für Berater).
+
 ## 2026-05-17
 
 - **Vertrauensanzeige + Sol-Nummer**: Colony Hexview zeigt jetzt aktuelle Sol-Nummer in der Statuszeile (`Sol 42 · X/Y Tiles erkundet · CC Level N`) sowie Vertrauens-Chip mit Farbindikator (grün ≥ 20, grau 0–19, rot < 0). Bar-Screen: "Tick" → "Sol" korrigiert.

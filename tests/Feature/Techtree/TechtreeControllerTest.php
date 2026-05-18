@@ -27,6 +27,17 @@ class TechtreeControllerTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+
+        // Provide a construction advisor for colony 1 so techtree invest actions have AP.
+        DB::table('advisors')->where('colony_id', $this->colonyIdBart)->delete();
+        DB::table('advisors')->insert([
+            'user_id'               => $this->userIdBart,
+            'personell_id'          => 35, // engineer (construction AP)
+            'colony_id'             => $this->colonyIdBart,
+            'rank'                  => 3,
+            'active_ticks'          => 0,
+            'unavailable_until_tick' => null,
+        ]);
     }
 
     /**

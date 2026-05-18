@@ -57,21 +57,19 @@ class AdvisorPromotionCostTest extends TestCase
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
 
-        // Remove all advisors for Bart except the trader (id=3) so upkeep costs
-        // from other advisors don't contaminate the credits balance under test.
-        DB::table('advisors')
-            ->where('colony_id', self::COLONY_ID)
-            ->where('id', '!=', self::ADVISOR_ID)
-            ->delete();
+        // Clear all advisors for this colony, then insert exactly the one advisor
+        // this test needs so upkeep from others can't contaminate the credits balance.
+        DB::table('advisors')->where('colony_id', self::COLONY_ID)->delete();
 
-        // Reset the trader advisor to rank 1 and place it one tick below the threshold.
-        // After one tick increment it will reach active_ticks = threshold and be eligible.
-        DB::table('advisors')
-            ->where('id', self::ADVISOR_ID)
-            ->update([
-                'rank'        => 1,
-                'active_ticks' => self::RANK1_THRESHOLD - 1,
-            ]);
+        DB::table('advisors')->insert([
+            'id'                    => self::ADVISOR_ID,
+            'user_id'               => self::USER_ID,
+            'personell_id'          => self::ADVISOR_PERSONELL_ID,
+            'colony_id'             => self::COLONY_ID,
+            'rank'                  => 1,
+            'active_ticks'          => self::RANK1_THRESHOLD - 1,
+            'unavailable_until_tick' => null,
+        ]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

@@ -6,7 +6,7 @@ INSERT INTO "resources" VALUES(5,'res_organika','Or','Level',1,0,'resicon-silica
 INSERT INTO "resources" VALUES(6,'res_ena','ENrg','Constant',1,100,'resicon-ena');
 INSERT INTO "resources" VALUES(8,'res_lho','LNrg','Constant',1,100,'resicon-lho');
 INSERT INTO "resources" VALUES(10,'res_aku','ANrg','Constant',1,100,'resicon-aku');
-INSERT INTO "resources" VALUES(12,'res_moral','M','Event',0,0,'resicon-moral');
+INSERT INTO "resources" VALUES(12,'res_moral','Tr','Event',0,0,'resicon-moral');
 INSERT INTO "glx_system_types" VALUES(1,'stellar_class_A',8,'stellars/s_white.png','stellars/s_white_quarter.png');
 INSERT INTO "glx_system_types" VALUES(2,'stellar_class_O',12,'stellars/s_blue.png','stellars/s_blue_quarter.png');
 INSERT INTO "glx_system_types" VALUES(3,'stellar_class_B',11,'stellars/s_cyan.png','stellars/s_cyan_quarter.png');
@@ -271,14 +271,7 @@ INSERT INTO "colony_personell" VALUES(2,35,19,10);
 INSERT INTO "colony_personell" VALUES(2,36,19,10);
 INSERT INTO "colony_personell" VALUES(2,89,19,10);
 INSERT INTO "colony_personell" VALUES(2,92,19,10);
-INSERT INTO "advisors" VALUES(1,3,35,1,2,5,NULL);
-INSERT INTO "advisors" VALUES(2,3,36,1,1,0,NULL);
-INSERT INTO "advisors" VALUES(3,3,92,1,1,0,NULL);
-INSERT INTO "advisors" VALUES(4,3,93,1,1,0,NULL);
-INSERT INTO "advisors" VALUES(5,0,35,2,1,0,NULL);
-INSERT INTO "advisors" VALUES(6,0,36,2,1,0,NULL);
-INSERT INTO "advisors" VALUES(8,0,92,2,1,0,NULL);
-INSERT INTO "advisors" VALUES(9,0,93,2,1,0,NULL);
+-- advisors intentionally empty: CC level 1 = 1 slot, start clean for onboarding flow
 INSERT INTO "locked_actionpoints" VALUES(15930,'colony',1,35,22);
 INSERT INTO "locked_actionpoints" VALUES(15930,'colony',1,36,3);
 INSERT INTO "locked_actionpoints" VALUES(15934,'colony',1,35,20);

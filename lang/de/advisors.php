@@ -35,6 +35,7 @@ return [
     'error_duplicate'             => 'Für diesen Beratertyp ist bereits ein Berater auf dieser Kolonie aktiv.',
     'error_slot_full'             => 'Kein freier Berater-Slot. Erhöhe das CommandCenter-Level.',
     'error_insufficient_credits'  => 'Nicht genug Credits, um diesen Berater einzustellen.',
+    'error_dismissed_this_tick'   => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic'               => 'Berater konnte nicht eingestellt werden.',
 
 ];
