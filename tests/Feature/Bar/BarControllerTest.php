@@ -124,7 +124,7 @@ class BarControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('colony.bar');
-        $response->assertViewHasAll(['colony', 'offers', 'barLevel', 'tick']);
+        $response->assertViewHasAll(['colony', 'offers', 'barLevel', 'currentSol']);
     }
 
     public function test_index_shows_bar_page_when_bar_not_built(): void

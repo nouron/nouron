@@ -23,8 +23,6 @@ window.__colonyViewData = {
         placeBuilding:      '{{ route('colony.building.place') }}',
         investBuilding:     '{{ route('colony.building.invest') }}',
         dismissHint:        '{{ route('colony.hint.dismiss') }}',
-        merchantBuy:        '{{ route('colony.merchant.buy', ['itemId' => '__ID__']) }}',
-        merchantOpen:       '{{ route('colony.merchant.open', ['visitId' => '__VISIT__']) }}',
     },
     i18n: {
         explore:            '{{ __('colony.explore') }}',
@@ -59,13 +57,13 @@ window.__colonyViewData = {
                           :class="trust >= 20 ? 'ap-chip--trust-pos' : trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'"
                           x-text="`Vertrauen ${trust}`"></span>
                 </div>
-                {{-- Merchant button — only shown when merchant is in system --}}
-                <button class="merchant-btn"
-                        x-show="hasMerchant()"
-                        @click="openMerchant()"
-                        x-cloak>
+                {{-- Merchant notification — links to Bar when merchant is present --}}
+                <a href="{{ route('colony.bar') }}"
+                   class="merchant-notify"
+                   x-show="hasMerchant()"
+                   x-cloak>
                     🛸 {{ __('colony.merchant_in_system') }}
-                </button>
+                </a>
 
                 <button class="build-btn"
                         :class="{ 'build-btn--active': buildMode }"
@@ -266,43 +264,6 @@ window.__colonyViewData = {
         </aside>
 
     </div>
-
-    {{-- Merchant modal -------------------------------------------------------
-         Native <dialog> element; opened via openMerchant() which calls
-         $refs.merchantDialog.showModal() — browser handles backdrop + focus-trap
-         + Escape key. merchantOpen tracks state on Alpine side so x-for re-renders
-         correctly when the dialog is reopened.
-    --}}
-    <dialog x-ref="merchantDialog" class="merchant-dialog" @close="merchantOpen = false">
-        <article>
-            <header>
-                <button aria-label="{{ __('colony.close') }}" rel="prev" @click="closeMerchant()"></button>
-                <h3>{{ __('colony.merchant_title') }}</h3>
-                <small x-show="merchantVisit">
-                    {{ __('colony.merchant_until_sol') }} <span x-text="merchantVisit?.tick_end"></span>
-                </small>
-            </header>
-
-            <div class="merchant-items">
-                <template x-for="item in merchantItems" :key="item.id">
-                    <article class="merchant-item" :class="{ 'merchant-item--sold': item.sold }">
-                        <div class="merchant-item__label" x-text="item.label"></div>
-                        <div class="merchant-item__cost" x-text="`${item.cost_credits} Cr`"></div>
-                        <button class="merchant-item__buy"
-                                :disabled="item.sold"
-                                @click="buyMerchantItem(item.id)">
-                            <span x-show="!item.sold">{{ __('colony.merchant_buy') }}</span>
-                            <span x-show="item.sold">{{ __('colony.merchant_sold') }}</span>
-                        </button>
-                    </article>
-                </template>
-            </div>
-
-            <footer>
-                <button @click="closeMerchant()">{{ __('colony.close') }}</button>
-            </footer>
-        </article>
-    </dialog>
 
     {{-- Event discovery popup ------------------------------------------------
          Uses the native <dialog> element (PicoCSS styles it out of the box).

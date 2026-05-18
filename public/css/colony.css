@@ -206,7 +206,7 @@ body {
 .res-Rg  { background: #fdf0e0; border-color: #d4924a; }
 .res-Co  { background: #dceeff; border-color: #5599dd; }
 .res-Or  { background: #e8f5e0; border-color: #5a9a3a; }
-.res-M   { background: #fce7f3; border-color: #d166a0; }
+.res-Tr  { background: #fce7f3; border-color: #d166a0; }
 .res-Sol { background: #ede9fe; border-color: #7c65cc; }
 
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
@@ -892,121 +892,109 @@ dialog[x-ref="discoveryDialog"] {
     background: #14532d;
 }
 
-/* ── Merchant button (canvas header) ────────────────────────────────────── */
+/* ── Merchant notification chip (hexview canvas header) ─────────────────── */
 
-.merchant-btn {
-    font-size: 0.8rem;
-    padding: 0.3rem 0.8rem;
-    background: #fef9c3;
-    color: #713f12;
-    border: 1px solid #fde047;
-    border-radius: 999px;
-    cursor: pointer;
+/*
+ * Amber/gold chip — visible but not dominant.
+ * Replaces the old .merchant-btn trigger now that the modal lives in the bar.
+ */
+.merchant-notify {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.82rem;
     font-weight: 600;
+    background: #fffbea;
+    border: 1px solid #e6c84a;
+    color: #7a5c00;
+    text-decoration: none;
     white-space: nowrap;
-    /* PicoCSS button resets */
-    margin: 0;
-    box-shadow: none;
     flex-shrink: 0;
 }
 
-.merchant-btn:hover {
-    background: #fef08a;
+.merchant-notify:hover {
+    background: #fff3c4;
+    text-decoration: none;
+    color: #5a4000;
 }
 
-/* ── Merchant dialog ─────────────────────────────────────────────────────── */
+/* ── Merchant section (bar/cantina page) ─────────────────────────────────── */
 
-.merchant-dialog {
-    max-width: 480px;
-    width: 90vw;
-    border-radius: var(--pico-border-radius);
-    padding: 0;
+.merchant-section {
+    margin-bottom: 2rem;
+    padding: 1.25rem;
+    border: 1px solid #e6c84a;
+    border-radius: var(--pico-border-radius, 6px);
+    background: #fffdf0;
+    max-width: 560px;
 }
 
-.merchant-dialog article {
-    margin: 0;
-}
-
-.merchant-dialog > article > header {
+.merchant-section__header {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     gap: 0.75rem;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--pico-muted-border-color);
+    margin-bottom: 1rem;
 }
 
-/* PicoCSS puts the close button (rel="prev") at the end — override to keep
-   it at the start and reserve the middle for the title. */
-.merchant-dialog > article > header > button[rel="prev"] {
-    order: -1;
-    margin: 0;
-}
-
-.merchant-dialog > article > header h3 {
-    margin: 0;
-    flex: 1;
-    font-size: 1rem;
-}
-
-.merchant-dialog > article > header small {
-    color: var(--pico-muted-color);
-    font-size: 0.78rem;
-}
-
-.merchant-items {
+.merchant-items-bar {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
-    padding: 1rem 1.25rem;
+    gap: 0.6rem;
 }
 
 /* Each item row: label | cost | buy-button */
-.merchant-item {
+.merchant-item-bar {
     display: grid;
     grid-template-columns: 1fr auto auto;
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     margin: 0;
-    border: 1px solid var(--pico-muted-border-color);
-    border-radius: var(--pico-border-radius);
+    border: 1px solid var(--pico-muted-border-color, #ddd);
+    border-radius: var(--pico-border-radius, 6px);
+    background: #fff;
     transition: opacity 0.2s ease;
 }
 
-.merchant-item--sold {
+.merchant-item-bar--sold {
     opacity: 0.5;
 }
 
-.merchant-item__label {
+.merchant-item-bar__label {
     font-weight: 500;
     font-size: 0.9rem;
 }
 
-.merchant-item__cost {
+.merchant-item-bar__cost {
     font-weight: 600;
-    color: var(--pico-muted-color);
+    color: var(--pico-muted-color, #666);
     white-space: nowrap;
     font-size: 0.85rem;
 }
 
-.merchant-item__buy {
+.merchant-item-bar__buy {
     padding: 0.25rem 0.75rem;
     font-size: 0.8rem;
     margin: 0;
     white-space: nowrap;
+    cursor: pointer;
 }
 
-.merchant-dialog > article > footer {
-    padding: 0.75rem 1.25rem;
-    border-top: 1px solid var(--pico-muted-border-color);
-    display: flex;
-    justify-content: flex-end;
+/* ── Merchant buy feedback toast (bar page) ──────────────────────────────── */
+
+.merchant-toast {
+    padding: 0.45rem 0.9rem;
+    border-radius: 4px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    color: #fff;
 }
 
-.merchant-dialog > article > footer button {
-    margin: 0;
-    width: auto;
-}
+.merchant-toast--info  { background: #14532d; }
+.merchant-toast--error { background: #7f1d1d; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 

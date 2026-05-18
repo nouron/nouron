@@ -178,6 +178,7 @@ class AdvisorController extends BaseController
                 'duplicate'            => __('advisors.error_duplicate'),
                 'slot_full'            => __('advisors.error_slot_full'),
                 'insufficient_credits' => __('advisors.error_insufficient_credits'),
+                'dismissed_this_tick'  => __('advisors.error_dismissed_this_tick'),
             ];
             $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
 

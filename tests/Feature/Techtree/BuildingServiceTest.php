@@ -22,6 +22,17 @@ class BuildingServiceTest extends TestCase
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
         $this->service = $this->app->make(BuildingService::class);
+
+        // Provide a construction advisor for colony 1 so invest() has AP available.
+        DB::table('advisors')->where('colony_id', $this->colonyId)->delete();
+        DB::table('advisors')->insert([
+            'user_id'               => 3,
+            'personell_id'          => 35, // engineer (construction AP)
+            'colony_id'             => $this->colonyId,
+            'rank'                  => 3,  // 12 AP — enough for any invest test
+            'active_ticks'          => 0,
+            'unavailable_until_tick' => null,
+        ]);
     }
 
     public function testGetEntities(): void

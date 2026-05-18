@@ -103,8 +103,10 @@ return [
     'merchant_in_system'  => 'Händler im System',
     'merchant_title'      => 'Reisender Händler',
     'merchant_until_sol'  => 'Bleibt bis Sol',
-    'merchant_buy'        => 'Kaufen',
-    'merchant_sold'       => 'Verkauft',
+    'merchant_buy'         => 'Kaufen',
+    'merchant_sold'        => 'Verkauft',
+    'merchant_buy_success' => 'Kauf erfolgreich.',
+    'merchant_buy_error'   => 'Kauf fehlgeschlagen.',
 
     // ── Bar/Cantina ───────────────────────────────────────────────────────────
 

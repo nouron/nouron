@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\BarService;
 use App\Services\ColonyService;
+use App\Services\MerchantService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,8 +19,9 @@ class BarController extends BaseController
 
     public function __construct(
         TickService $tick,
-        private readonly ColonyService $colonyService,
-        private readonly BarService    $barService,
+        private readonly ColonyService  $colonyService,
+        private readonly BarService     $barService,
+        private readonly MerchantService $merchantService,
     ) {
         parent::__construct($tick);
     }
@@ -39,7 +41,15 @@ class BarController extends BaseController
             ? $this->barService->getActiveOffers($colony->id, $tick)
             : collect();
 
-        return view('colony.bar', compact('colony', 'offers', 'barLevel', 'currentSol'));
+        $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $tick);
+        $merchantItems = $merchantVisit
+            ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
+            : [];
+
+        return view('colony.bar', compact(
+            'colony', 'offers', 'barLevel', 'currentSol',
+            'merchantVisit', 'merchantItems',
+        ));
     }
 
     public function accept(Request $request, int $offerId): JsonResponse
