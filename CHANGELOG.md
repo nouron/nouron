@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-23
+
+- **Run-System + manueller Sol-Trigger**: `runs`-Tabelle eingeführt (`current_tick`, `status`, FK auf User + Colony). `Run`-Model mit `scopeActive()`. `TickService`-Singleton verwendet bei Web-Requests `runs.current_tick` statt timestamp-basierter Berechnung. `GameTick`-Command nimmt `--run=N` entgegen. `SolController` (`POST /sol/next`): inkrementiert `current_tick` atomar, feuert sofort `game:tick`. "Nächsten Sol starten"-Button in Bootstrap-Navbar. Fixer `dailyAt('03:00')`-Scheduler entfernt (als Kommentar erhalten als Multiplayer-Referenz).
+
 ## 2026-05-18
 
 - **Reisender Händler in Cantina**: Händler-Dialog aus Hexview entfernt und vollständig in Cantina-Screen (`colony.bar`) integriert. `BarController` lädt `merchantVisit` + `merchantItems`, Alpine-Komponente mit Item-Loop, Kauf-Button, Toast-Feedback. Bug-Fix: `x-data`-Attribut verwendete doppelte Anführungszeichen — JSON-Strukturzeichen terminierten Attribut frühzeitig (SyntaxError). Fix: einfache Anführungszeichen für HTML-Attribut, `@json()`-Routen als Parameter übergeben.
