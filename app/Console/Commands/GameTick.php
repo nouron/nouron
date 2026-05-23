@@ -11,6 +11,7 @@ use App\Models\Fleet;
 use App\Models\FleetOrder;
 use App\Models\FleetResource;
 use App\Models\FleetShip;
+use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EventService;
@@ -25,8 +26,9 @@ use Illuminate\Support\Facades\DB;
 /**
  * GameTick — processes one game tick.
  *
- * Run manually:   php artisan game:tick
- * Run for tick N: php artisan game:tick --tick=16300
+ * Run manually:         php artisan game:tick
+ * Run for a given run:  php artisan game:tick --run=1
+ * Override tick number: php artisan game:tick --tick=16300
  *
  * Steps per tick:
  *  1. Fleet move orders   — update fleet position to ordered coordinates
@@ -46,7 +48,9 @@ use Illuminate\Support\Facades\DB;
  */
 class GameTick extends Command
 {
-    protected $signature   = 'game:tick {--tick= : Override the tick number (default: current tick)}';
+    protected $signature   = 'game:tick
+                                {--run=  : Run ID to process (omit to use the first active run)}
+                                {--tick= : Override the tick number (default: from run or time-based)}';
     protected $description = 'Process one game tick (fleet orders, decay, supply, resources)';
 
     /** Fleet IDs that were involved in an encounter this tick — used for 2× ship decay. */
@@ -66,12 +70,35 @@ class GameTick extends Command
 
     public function handle(): int
     {
+        // Resolve the Run record: explicit --run= ID, or first active run as fallback.
+        $runId = $this->option('run');
+        $run   = $runId
+            ? Run::find((int) $runId)
+            : Run::where('status', 'active')->first();
+
+        if (!$run) {
+            $this->error($runId
+                ? "Run #{$runId} not found."
+                : 'No active run found. Start a run before processing a tick.'
+            );
+            return self::FAILURE;
+        }
+
+        // Ensure started_at is set on the very first tick of a run.
+        if ($run->started_at === null) {
+            $run->started_at = now();
+            $run->save();
+        }
+
+        // Tick number: explicit --tick override wins; otherwise use the run's current_tick.
         if ($override = $this->option('tick')) {
             $this->tickService->setTickCount((int) $override);
+        } else {
+            $this->tickService->setTickCount($run->current_tick);
         }
 
         $tick = $this->tickService->getTickCount();
-        $this->info("Processing tick {$tick}…");
+        $this->info("Processing tick {$tick} (Run #{$run->id})…");
 
         DB::transaction(function () use ($tick) {
             $n = $this->processMoveOrders($tick);

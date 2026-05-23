@@ -56,6 +56,17 @@
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto">
+                @auth
+                <li class="nav-item">
+                    <form method="POST" action="{{ route('sol.next') }}">
+                        @csrf
+                        <button type="submit" class="btn btn-sm btn-outline-light"
+                                onclick="this.disabled=true; this.form.submit();">
+                            <i class="bi bi-skip-forward-fill"></i> {{ __('colony.next_sol_button') }}
+                        </button>
+                    </form>
+                </li>
+                @endauth
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle"></i> {{ Auth::user()->username }}
@@ -109,6 +120,12 @@
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible">
             {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if(session('sol_advanced'))
+        <div class="alert alert-success alert-dismissible">
+            Sol {{ session('sol_advanced') }} berechnet.
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif

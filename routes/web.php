@@ -12,6 +12,7 @@ use App\Http\Controllers\Fleet\FleetController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
+use App\Http\Controllers\SolController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -137,6 +138,10 @@ Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function
     Route::post('/hire', [AdvisorController::class, 'hire'])->name('hire');
     Route::delete('/{id}', [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
 });
+
+// ── Sol (player-triggered tick advancement) ───────────────────────────────────
+
+Route::middleware('auth')->post('/sol/next', [SolController::class, 'next'])->name('sol.next');
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 

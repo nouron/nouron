@@ -8,5 +8,6 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Run one game tick per day at 03:00 (calculation window defined in config/game.php).
-Schedule::command('game:tick')->dailyAt('03:00');
+// Legacy: fixed daily tick — replaced by player-triggered Sol (see SolController).
+// Kept as fallback reference; will be activated for multiplayer timeout handling.
+// Schedule::command('game:tick')->dailyAt('03:00');

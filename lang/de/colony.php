@@ -123,4 +123,8 @@ return [
     'bar_offer_expired'                => 'Angebot ist abgelaufen.',
     'bar_offer_insufficient_resources' => 'Nicht genügend Ressourcen.',
 
+    // ── Sol trigger (navbar button) ───────────────────────────────────────────
+
+    'next_sol_button' => 'Nächsten Sol starten',
+
 ];
