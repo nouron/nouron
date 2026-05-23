@@ -43,6 +43,7 @@ class OnboardingTriggersTest extends TestCase
     /** Isolated user / colony IDs that don't collide with testdata fixtures. */
     private int $userId   = 8001;
     private int $colonyId = 8001;
+    private int $runId;
 
     /** system_object_id 3 is free in testdata (not used by colonies 1 or 2). */
     private int $systemObjectId = 3;
@@ -104,6 +105,17 @@ class OnboardingTriggersTest extends TestCase
             'status_points'=> 18, // 90 % — well above 80 %, will not trigger onboarding_decay
             'ap_spend'     => 0,
         ]);
+
+        // Run for the test colony — current_tick=500 matches the pinned TickService value.
+        // game:tick resolves runs by ID to avoid picking up Bart's seeded run.
+        $this->runId = DB::table('runs')->insertGetId([
+            'user_id'      => $this->userId,
+            'colony_id'    => $this->colonyId,
+            'current_tick' => 500,
+            'status'       => 'active',
+            'created_at'   => now(),
+            'updated_at'   => now(),
+        ]);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
@@ -132,7 +144,7 @@ class OnboardingTriggersTest extends TestCase
 
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_decay'));
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $event = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
@@ -170,7 +182,7 @@ class OnboardingTriggersTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $count = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
@@ -200,7 +212,7 @@ class OnboardingTriggersTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $count = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
@@ -228,7 +240,7 @@ class OnboardingTriggersTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $count = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
@@ -268,7 +280,7 @@ class OnboardingTriggersTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $this->assertTrue(
             $this->triggerService->hasFired($this->userId, 'supply_cap_full'),
@@ -300,7 +312,7 @@ class OnboardingTriggersTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         // Verify the fired_triggers JSON contains supply_cap_full exactly once.
         $raw     = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
@@ -318,7 +330,7 @@ class OnboardingTriggersTest extends TestCase
     public function test_supply_trigger_silent_when_below_cap(): void
     {
         // No additional buildings — only CC (supply_cost=0). Used supply = 0, cap = 10.
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $this->assertFalse(
             $this->triggerService->hasFired($this->userId, 'supply_cap_full'),
@@ -351,7 +363,7 @@ class OnboardingTriggersTest extends TestCase
             'event_type' => 'encounter_lost',
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $moralAfter = (int) DB::table('colony_resources')
             ->where('colony_id', $this->colonyId)
@@ -393,7 +405,7 @@ class OnboardingTriggersTest extends TestCase
             'event_type' => 'encounter_lost',
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $count = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
@@ -425,7 +437,7 @@ class OnboardingTriggersTest extends TestCase
             'event_type' => 'encounter_lost',
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         $count = InnnEvent::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
@@ -471,7 +483,7 @@ class OnboardingTriggersTest extends TestCase
             'event_type' => 'encounter_lost',
         ]);
 
-        Artisan::call('game:tick');
+        Artisan::call('game:tick', ['--run' => $this->runId]);
 
         // No onboarding_trust event must exist for any user because user_id is null.
         $count = InnnEvent::where('event', 'onboarding_trust')->count();
