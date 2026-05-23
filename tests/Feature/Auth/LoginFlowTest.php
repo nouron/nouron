@@ -92,7 +92,7 @@ class LoginFlowTest extends TestCase
         $this->post(route('login'), [
             'username' => 'validplayer',
             'password' => 'mypassword',
-        ])->assertRedirect(route('galaxy.index'));
+        ])->assertRedirect(route('lobby'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -110,7 +110,7 @@ class LoginFlowTest extends TestCase
         $this->post(route('login'), [
             'username' => 'valid@example.com',
             'password' => 'mypassword',
-        ])->assertRedirect(route('galaxy.index'));
+        ])->assertRedirect(route('lobby'));
 
         $this->assertAuthenticatedAs($user);
     }
@@ -218,7 +218,7 @@ class LoginFlowTest extends TestCase
         $this->post(route('login'), [
             'username' => 'sessiontest',
             'password' => 'password',
-        ])->assertRedirect(route('galaxy.index'));
+        ])->assertRedirect(route('lobby'));
 
         $this->assertAuthenticated();
     }

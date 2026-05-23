@@ -66,6 +66,6 @@ class RegisterController extends Controller
         Auth::login($user);
         $request->session()->put('activeIds.colonyId', $colony->id);
 
-        return redirect()->route('galaxy.index');
+        return redirect()->route('lobby');
     }
 }
