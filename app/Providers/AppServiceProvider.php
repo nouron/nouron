@@ -29,9 +29,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // TickService as a singleton — tick count must stay consistent per request
+        // TickService as a singleton — tick count must stay consistent per request.
+        // For web requests the tick is sourced from the authenticated user's active Run
+        // so that the Sol number shown in-game matches the run's current_tick.
+        // Console commands (Artisan / scheduler) fall back to the time-based calculation.
         $this->app->singleton(TickService::class, function () {
-            return new TickService();
+            if (app()->runningInConsole()) {
+                return new TickService(); // time-based fallback for Artisan / tests
+            }
+
+            $userId = auth()->id();
+            $run    = $userId
+                ? \App\Models\Run::where('user_id', $userId)->where('status', 'active')->first()
+                : null;
+
+            return new TickService($run?->current_tick);
         });
 
         $this->app->bind(ColonyService::class, ColonyService::class);
