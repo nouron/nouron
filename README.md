@@ -51,10 +51,10 @@ The database file (`data/db/nouron.db`) is not committed to the repository. The 
 
 ```bash
 # Sync ship/building/knowledge values from config files to the database
-php artisan game:sync-knowledge
+php artisan game:sync-config
 
 # Preview sync changes without writing
-php artisan game:sync-knowledge --dry-run
+php artisan game:sync-config --dry-run
 
 # Manually trigger a game tick (normally runs via scheduler)
 php artisan game:tick
