@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Colony;
+use App\Models\Run;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -43,6 +44,14 @@ class OnboardingService
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
             $this->eventService->createNexusBriefing($userId, $tick, $colony->id);
+
+            Run::create([
+                'user_id'      => $userId,
+                'colony_id'    => $colony->id,
+                'current_tick' => $tick,
+                'status'       => 'active',
+                'started_at'   => now(),
+            ]);
 
             return $colony;
         });

@@ -457,5 +457,6 @@ INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id
 INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,3,20,5,30,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
 
 -- Active run for Bart (user_id=3) on Springfield (colony_id=1).
--- current_tick matches user_resources.since_tick for user_id=3 (migration 2026_05_23_000001).
 INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,created_at,updated_at) VALUES(1,3,1,1938,'active','2026-05-23 00:00:00',NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
+-- Active run for Homer (user_id=0) on Shelbyville (colony_id=2).
+INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,created_at,updated_at) VALUES(2,0,2,1938,'active','2026-05-23 00:00:00',NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
