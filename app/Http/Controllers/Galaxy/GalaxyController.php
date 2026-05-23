@@ -139,6 +139,8 @@ class GalaxyController extends BaseController
                 'x'     => $fleet->x,
                 'y'     => $fleet->y,
                 'attribs' => [
+                    'id'        => $fleet->id,
+                    'name'      => $fleet->fleet,
                     'title'     => $fleet->fleet . ' (' . $owner . ')',
                     'class'     => $ownFleet ? 'fleet-own' : 'fleet-foreign',
                     'image_url' => '',
