@@ -218,6 +218,7 @@ return [
     // Run structure — one run = one expedition with a defined start, goal and end (GDD §15).
     // These values are not yet read by any service (run system not yet implemented).
     'run' => [
+        'allow_multiple'       => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
         'tick_limit'           => 100,    // total ticks per run (60–100, default 100)
         'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer

@@ -51,6 +51,12 @@ class OnboardingService
                 'current_tick' => $tick,
                 'status'       => 'active',
                 'started_at'   => null, // set when player clicks "Mission starten" in lobby
+                'settings'     => [
+                    'tick_limit'     => config('game.run.tick_limit'),
+                    'bypass'         => config('game.bypass'),
+                    'supply_cap_max' => config('game.supply.cap_max'),
+                    'max_players'    => config('game.run.max_players'),
+                ],
             ]);
 
             return $colony;
