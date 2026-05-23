@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     @stack('styles')
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
 <body>
 
@@ -133,6 +134,11 @@
     @yield('content')
 </div>
 
+@auth
+    @if(Auth::user()->role === 'admin')
+        @include('partials.debug-bar')
+    @endif
+@endauth
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/nouron.js') }}"></script>
 <script src="{{ asset('js/fleets.js') }}"></script>
