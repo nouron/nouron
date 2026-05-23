@@ -138,9 +138,9 @@ Ein **Sol** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmecha
 
 Das Sol-System funktioniert in beiden Modi identisch — was sich unterscheidet, ist wer den Sol auslöst:
 
-**Solo-Modus:** Der Spieler steuert den Sol selbst. Nach dem Setzen aller Befehle löst er den nächsten Sol manuell aus — der Sol feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. „1 Sol" entspricht einem Spielzug, nicht einer Kalenderdauer.
+**Solo-Modus (primär):** Der Spieler steuert den Sol selbst. Nach dem Setzen aller Befehle löst er den nächsten Sol manuell aus ("Nächsten Sol starten"-Button) — der Sol feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. "1 Sol" entspricht einem Spielzug, nicht einer Kalenderdauer.
 
-**Multiplayer-Modus:** Alle Spieler einer Instanz teilen denselben Sol-Rhythmus. Der Sol feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
+**Multiplayer-Modus (spätere Phase):** Alle Spieler einer Instanz teilen denselben Sol-Rhythmus. Der Sol feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
 
 | Timeout-Konfiguration | Einsatz |
 |-----------------------|---------|
@@ -148,31 +148,38 @@ Das Sol-System funktioniert in beiden Modi identisch — was sich unterscheidet,
 | 24 h (Standard) | Normales Multiplayer |
 | 48 h | Casual / Play-by-Mail |
 
-### Zeitberechnung (Sol-Nummer)
+### Sol-Nummer (Sequenz-Counter)
 
-Die Sol-Nummer (intern: Tick-Nummer) ergibt sich aus:
+Die Sol-Nummer ist ein einfacher **Integer-Counter pro Run**, gespeichert in `runs.current_tick`. Sie beginnt bei 0 und wird bei jedem Sol-Trigger atomar um 1 erhöht. Es gibt keinen Bezug zum Unix-Timestamp.
 
 ```
-tick = floor((unix_timestamp - offset) / tick_duration_seconds)
+runs.current_tick += 1   -- atomar in DB-Transaktion
 ```
 
-`tick_duration_seconds` entspricht `config/game.php → tick.length` in Sekunden. Der Offset (Standard: 4 Stunden) verhindert, dass der Tagesübergang um Mitternacht mit dem Berechnungsfenster kollidiert.
+Dies hat drei Konsequenzen:
+
+- **Kein Doppellauf möglich:** Der Increment ist der Guard. Ein zweiter Player-Trigger erhöht `current_tick` auf den nächsten Wert und würde eine neue Berechnung auslösen — CSRF-Schutz und UI-Deaktivierung des Buttons nach Auslösung verhindern das auf Anwendungsebene.
+- **fleet_orders-Kompatibilität:** `fleet_orders.tick` bleibt eine einfache Integer-Referenz. Der Filter wechselt von `where('tick', $tickService->getTickCount())` auf `where('tick', $run->current_tick)`.
+- **Multiplayer-Erweiterung:** Im Multiplayer löst der Server den Increment aus (alle bestätigt oder Timeout), nicht der Spieler. Keine Architektur-Änderung nötig.
+
+Die bisherige Timestamp-Formel (`floor((timestamp - offset) / 86400)`) und `TickService::calculateTickFromTimestamp()` bleiben im Code, werden im Solo-Modus aber nicht verwendet. Sie dienen als Basis für spätere Multiplayer-Timeout-Berechnung.
 
 ### Berechnungsfenster (Multiplayer / Server-gesteuert)
 
-Im Multiplayer-Modus wird der Sol (intern: Tick) serverseitig automatisch ausgelöst — entweder wenn alle Spieler bestätigt haben oder nach Ablauf des Timeouts. Das Berechnungsfenster ist in `config/game.php → tick.calculation` konfiguriert.
+Im Multiplayer-Modus wird der Sol serverseitig automatisch ausgelöst — entweder wenn alle Spieler bestätigt haben oder nach Ablauf des Timeouts. Das Berechnungsfenster ist in `config/game.php → tick.calculation` konfiguriert. Im Solo-Modus ist dieses Fenster ohne Bedeutung.
 
-### Manueller Aufruf
+### Manueller Aufruf (Entwicklung/Tests)
 
 ```bash
-php artisan game:tick           # berechnet den aktuellen Tick
-php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (z. B. für Tests)
+php artisan game:tick           # berechnet den nächsten Tick für den aktiven Run
+php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 ```
 
 ### Implementierung
 
 - Artisan-Command: `app/Console/Commands/GameTick.php`
 - Tick-Berechnung: `app/Services/TickService.php`
+- Tick-Counter: `runs.current_tick` (DB-Spalte, Integer, pro Run)
 - Konfiguration: `config/game.php → tick`
 - Alle Schritte eines Ticks laufen in einer einzigen DB-Transaktion (atomar)
 
