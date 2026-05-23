@@ -1,28 +1,29 @@
 @extends('layouts.app')
-@section('title', 'Mission Control — Nouron')
+@section('title', __('lobby.page_title') . ' — Nouron')
 
 @push('styles')
-{{-- PicoCSS scoped to .lobby-scope — prevents bleed into Bootstrap navbar/layout --}}
+{{--
+    PicoCSS is loaded AFTER Bootstrap in <head> (via @stack('styles')).
+    Risk: PicoCSS element selectors reset body, a, button globally.
+    Mitigation: Bootstrap's class-based selectors (.btn, .navbar, .nav-link …)
+    have higher specificity than PicoCSS bare element rules, so the Bootstrap
+    navbar survives. All lobby-specific PicoCSS components live inside
+    .lobby-scope to keep any remaining conflicts contained.
+--}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
 <style>
-    /* ── Scope PicoCSS resets away from Bootstrap nav/container ──────────────
-       PicoCSS and Bootstrap conflict on box-model, form resets, button styles.
-       We contain PicoCSS influence to .lobby-scope only.                     */
+    /* ── Scope: contain PicoCSS custom-property cascade to .lobby-scope ──────
+       PicoCSS and Bootstrap share element selectors (body, a, button, input).
+       We cannot fully isolate CDN-loaded CSS, but class-scoped overrides and
+       Bootstrap's higher-specificity class selectors keep the nav unharmed.  */
     .lobby-scope {
-        /* Re-apply PicoCSS custom properties locally */
         --pico-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         --pico-font-size: 1rem;
         --pico-line-height: 1.5;
         font-family: var(--pico-font-family);
     }
 
-    /* PicoCSS sets margin/padding on <main> — we're not using <main> here
-       so no conflict, but ensure our wrapper behaves cleanly */
-    .lobby-scope article {
-        margin-bottom: 1rem;
-    }
-
-    /* Card grid for runs */
+    /* Card grid — responsive columns */
     .lobby-run-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
@@ -30,7 +31,7 @@
         margin-top: 0.75rem;
     }
 
-    /* Run card — PicoCSS <article> base with additional tweaks */
+    /* PicoCSS <article> cards */
     .lobby-run-card {
         margin: 0;
         padding: 1.25rem;
@@ -63,14 +64,14 @@
         align-items: center;
     }
 
-    /* Sol progress text */
+    /* Sol progress label */
     .lobby-sol-progress {
         font-size: 0.85rem;
         color: var(--pico-muted-color, #6c757d);
         margin-bottom: 0.25rem;
     }
 
-    /* Progress bar wrapper — PicoCSS <progress> is block-level */
+    /* PicoCSS <progress> */
     .lobby-run-card progress {
         margin-bottom: 0.5rem;
         height: 0.5rem;
@@ -90,7 +91,7 @@
         white-space: nowrap;
     }
 
-    /* Settings meta list inside cards */
+    /* Settings meta list */
     .lobby-meta {
         font-size: 0.85rem;
         color: var(--pico-muted-color, #6c757d);
@@ -106,7 +107,7 @@
         content: none;
     }
 
-    /* Status pill for finished runs */
+    /* Status pills for finished runs */
     .lobby-status-pill {
         display: inline-block;
         padding: 0.15em 0.6em;
@@ -115,6 +116,7 @@
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.03em;
+        white-space: nowrap;
     }
 
     .lobby-status-pill--completed {
@@ -127,7 +129,7 @@
         color: #fff;
     }
 
-    /* Expandable details toggle — uses PicoCSS <details>/<summary> */
+    /* PicoCSS native <details>/<summary> for expandable settings */
     .lobby-run-card details {
         margin-top: 0.75rem;
         font-size: 0.85rem;
@@ -138,6 +140,21 @@
         color: var(--pico-primary, #1095c1);
         font-size: 0.85rem;
         padding: 0.25rem 0;
+    }
+
+    /* Details meta list: block layout (not flex) to stack items vertically */
+    .lobby-details-meta {
+        list-style: none;
+        padding: 0.5rem 0 0;
+        margin: 0;
+    }
+
+    .lobby-details-meta li {
+        padding: 0.15rem 0;
+    }
+
+    .lobby-details-meta li::before {
+        content: none;
     }
 
     /* Empty state */
@@ -151,8 +168,8 @@
     .lobby-section-heading {
         font-size: 1.1rem;
         font-weight: 600;
-        margin: 1.5rem 0 0.25rem;
-        padding-bottom: 0.25rem;
+        margin: 1.75rem 0 0.25rem;
+        padding-bottom: 0.35rem;
         border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
     }
 
@@ -161,23 +178,34 @@
     }
 
     /* Disabled "coming soon" button */
-    .lobby-btn-disabled {
-        opacity: 0.55;
+    button[disabled].lobby-btn-disabled {
+        opacity: 0.5;
         cursor: not-allowed;
+        pointer-events: none;
     }
 
-    /* [x-cloak] support */
+    .lobby-coming-soon-note {
+        font-size: 0.8rem;
+        color: var(--pico-muted-color, #6c757d);
+        margin-top: 0.35rem;
+    }
+
+    /* Alpine x-cloak support */
     [x-cloak] { display: none !important; }
 </style>
 @endpush
 
 @section('content')
-{{-- Scoping wrapper: PicoCSS influence is contained inside .lobby-scope.
-     Bootstrap navbar/layout outside this div is unaffected.               --}}
+{{--
+    .lobby-scope wrapper:
+    - Contains PicoCSS custom-property influence.
+    - No Bootstrap grid classes used inside — PicoCSS article/grid only.
+    - Alpine.js is already loaded globally by layouts/app.blade.php.
+--}}
 <div class="lobby-scope" style="max-width: 56rem; margin: 0 auto; padding: 1rem 0 3rem;">
 
     {{-- ── Page header ──────────────────────────────────────────────────────── --}}
-    <hgroup style="margin-bottom: 1.5rem;">
+    <hgroup style="margin-bottom: 1.75rem;">
         <h1 style="margin-bottom: 0.25rem;">{{ __('lobby.page_title') }}</h1>
         <p style="color: var(--pico-muted-color, #6c757d); margin: 0;">
             {{ __('lobby.page_subtitle') }}
@@ -190,8 +218,10 @@
         <div class="lobby-run-grid">
             @foreach($active as $run)
                 @php
-                    $tickLimit = $run->settings['tick_limit'] ?? 100;
-                    $solPct    = $tickLimit > 0 ? min(100, round(($run->current_tick / $tickLimit) * 100)) : 0;
+                    $tickLimit  = $run->settings['tick_limit'] ?? 100;
+                    $solPct     = $tickLimit > 0
+                        ? min(100, round(($run->current_tick / $tickLimit) * 100))
+                        : 0;
                     $colonyName = $run->colony->name ?? __('lobby.colony_unnamed');
                 @endphp
                 <article class="lobby-run-card">
@@ -200,12 +230,19 @@
                     </header>
 
                     <p class="lobby-sol-progress">
-                        {{ __('lobby.sol_progress', ['current' => $run->current_tick, 'limit' => $tickLimit]) }}
+                        {{ __('lobby.sol_progress', [
+                            'current' => $run->current_tick,
+                            'limit'   => $tickLimit,
+                        ]) }}
                     </p>
-                    <progress value="{{ $run->current_tick }}" max="{{ $tickLimit }}" title="{{ $solPct }}%"></progress>
+                    <progress
+                        value="{{ $run->current_tick }}"
+                        max="{{ $tickLimit }}"
+                        title="{{ $solPct }}%"
+                    ></progress>
 
                     @if($run->started_at)
-                        <p class="lobby-sol-progress" style="margin-top: 0.25rem;">
+                        <p class="lobby-sol-progress">
                             {{ __('lobby.started_at') }}: {{ $run->started_at->format('d.m.Y') }}
                         </p>
                     @endif
@@ -228,7 +265,10 @@
                 @php
                     $tickLimit  = $run->settings['tick_limit'] ?? 100;
                     $supplyCap  = $run->settings['supply_cap_max'] ?? null;
-                    $bypass     = $run->settings['bypass'] ?? [];
+                    $maxPlayers = $run->settings['max_players'] ?? null;
+                    $bypass     = is_array($run->settings['bypass'] ?? null)
+                        ? $run->settings['bypass']
+                        : [];
                     $anyBypass  = collect($bypass)->contains(true);
                     $colonyName = $run->colony->name ?? __('lobby.colony_unnamed');
                 @endphp
@@ -249,16 +289,23 @@
                         @if($supplyCap !== null)
                             <li>{{ __('lobby.supply_cap') }}: <strong>{{ $supplyCap }}</strong></li>
                         @endif
+                        @if($maxPlayers !== null)
+                            <li>{{ __('lobby.max_players') }}: <strong>{{ $maxPlayers }}</strong></li>
+                        @endif
                         @foreach($bypass as $checkKey => $isActive)
                             @if($isActive)
                                 <li>
-                                    <span class="lobby-bypass-badge">{{ __('lobby.bypass_active') }}: {{ $checkKey }}</span>
+                                    <span class="lobby-bypass-badge">
+                                        {{ __('lobby.bypass_active') }}: {{ $checkKey }}
+                                    </span>
                                 </li>
                             @endif
                         @endforeach
                     </ul>
 
                     <footer>
+                        {{-- POST to lobby.start — controller finds the pending run by user_id,
+                             run_id is passed as a hint but the controller currently ignores it. --}}
                         <form method="POST" action="{{ route('lobby.start') }}" style="margin: 0;">
                             @csrf
                             <input type="hidden" name="run_id" value="{{ $run->id }}">
@@ -270,7 +317,9 @@
         </div>
     @endif
 
-    {{-- ── New Run button (when $allowMultiple and no pending run) ─────────── --}}
+    {{-- ── New Run button ───────────────────────────────────────────────────── --}}
+    {{-- Shown when the game allows multiple runs AND no pending run exists yet. --}}
+    {{-- Disabled until the run-creation flow is implemented.                   --}}
     @if($allowMultiple && $pending->isEmpty())
         <div style="margin-top: 1.5rem;">
             <button
@@ -281,9 +330,7 @@
             >
                 {{ __('lobby.new_run_button') }}
             </button>
-            <p style="font-size: 0.8rem; color: var(--pico-muted-color, #6c757d); margin-top: 0.35rem;">
-                {{ __('lobby.coming_soon') }}
-            </p>
+            <p class="lobby-coming-soon-note">{{ __('lobby.coming_soon') }}</p>
         </div>
     @endif
 
@@ -295,17 +342,22 @@
                 @php
                     $tickLimit  = $run->settings['tick_limit'] ?? 100;
                     $supplyCap  = $run->settings['supply_cap_max'] ?? null;
-                    $bypass     = $run->settings['bypass'] ?? [];
+                    $maxPlayers = $run->settings['max_players'] ?? null;
+                    $bypass     = is_array($run->settings['bypass'] ?? null)
+                        ? $run->settings['bypass']
+                        : [];
                     $anyBypass  = collect($bypass)->contains(true);
                     $colonyName = $run->colony->name ?? __('lobby.colony_unnamed');
                     $statusKey  = $run->status === 'completed' ? 'status_completed' : 'status_failed';
-                    $statusClass= $run->status === 'completed' ? 'completed' : 'failed';
+                    $statusCls  = $run->status === 'completed' ? 'completed' : 'failed';
                     $fromDate   = $run->started_at ? $run->started_at->format('d.m.Y') : '—';
                     $toDate     = $run->ended_at   ? $run->ended_at->format('d.m.Y')   : '—';
                 @endphp
 
-                {{-- Alpine x-data for expandable details --}}
-                <article class="lobby-run-card" x-data="{ open: false }">
+                {{-- PicoCSS native <details> handles expand/collapse without Alpine.
+                     Alpine x-data is not needed here — <details>/<summary> provide
+                     built-in toggle, focus management, and keyboard (Enter/Space).  --}}
+                <article class="lobby-run-card">
                     <header>
                         <h3>
                             {{ __('lobby.run_number', ['id' => $run->id]) }}
@@ -313,26 +365,32 @@
                                 &mdash; {{ $colonyName }}
                             @endif
                         </h3>
-                        <span class="lobby-status-pill lobby-status-pill--{{ $statusClass }}">
+                        <span class="lobby-status-pill lobby-status-pill--{{ $statusCls }}">
                             {{ __('lobby.' . $statusKey) }}
                         </span>
                     </header>
 
                     <p class="lobby-sol-progress">
-                        {{ __('lobby.sol_progress', ['current' => $run->current_tick, 'limit' => $tickLimit]) }}
+                        {{ __('lobby.sol_progress', [
+                            'current' => $run->current_tick,
+                            'limit'   => $tickLimit,
+                        ]) }}
                     </p>
 
                     <p class="lobby-sol-progress">
                         {{ __('lobby.played_from_to', ['from' => $fromDate, 'to' => $toDate]) }}
                     </p>
 
-                    {{-- Expandable details via Alpine + PicoCSS <details> fallback --}}
+                    {{-- Expandable settings snapshot — PicoCSS <details>/<summary> --}}
                     <details>
                         <summary>{{ __('lobby.settings_detail') }}</summary>
-                        <ul class="lobby-meta" style="margin-top: 0.5rem; display: block; padding-left: 0;">
+                        <ul class="lobby-details-meta">
                             <li>{{ __('lobby.tick_limit') }}: <strong>{{ $tickLimit }}</strong></li>
                             @if($supplyCap !== null)
                                 <li>{{ __('lobby.supply_cap') }}: <strong>{{ $supplyCap }}</strong></li>
+                            @endif
+                            @if($maxPlayers !== null)
+                                <li>{{ __('lobby.max_players') }}: <strong>{{ $maxPlayers }}</strong></li>
                             @endif
                             @if($anyBypass)
                                 @foreach($bypass as $checkKey => $isActive)
