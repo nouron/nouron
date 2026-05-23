@@ -50,14 +50,23 @@ The database file (`data/db/nouron.db`) is not committed to the repository. The 
 ### Useful Artisan commands
 
 ```bash
-# Sync ship/building values from config files to the database
-php artisan game:sync-techs
+# Sync ship/building/knowledge values from config files to the database
+php artisan game:sync-knowledge
 
-# Preview changes without writing
-php artisan game:sync-techs --dry-run
+# Preview sync changes without writing
+php artisan game:sync-knowledge --dry-run
 
 # Manually trigger a game tick (normally runs via scheduler)
 php artisan game:tick
+
+# Simulate a game tick and show a before/after diff — no DB writes
+php artisan game:tick-dry-run
+
+# Simulate for a single colony only
+php artisan game:tick-dry-run --colony=1
+
+# Drop all tables, run migrations, and seed (dev only — asks for confirmation)
+php artisan db:reset
 
 # Seed a demo colony state for the logged-in user's colony (useful for UI testing)
 php artisan colony:seed-demo
@@ -65,7 +74,7 @@ php artisan colony:seed-demo
 
 ### Scheduler setup
 
-The game tick runs once per day at 03:00. To activate the Laravel scheduler on your server, add one cron entry:
+The Laravel scheduler runs `game:tick` once per day at 03:00 server time (configurable via `config/game.php → tick.calculation`). To activate the scheduler, add a single cron entry that fires every minute — Laravel handles the rest:
 
 ```
 * * * * * cd /path/to/nouron && php artisan schedule:run >> /dev/null 2>&1
@@ -136,5 +145,7 @@ All graphics and texts are licensed (unless otherwise noted) under Creative Comm
 
 This project uses third-party frameworks and libraries with their own licenses:
 * [Laravel](https://laravel.com/)
+* [Alpine.js](https://alpinejs.dev/)
+* [PicoCSS](https://picocss.com/)
 * [Bootstrap 5](https://getbootstrap.com/)
 * [jQuery](https://jquery.com/)
