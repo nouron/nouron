@@ -56,7 +56,7 @@ php artisan game:sync-config
 # Preview sync changes without writing
 php artisan game:sync-config --dry-run
 
-# Manually trigger a game tick (normally runs via scheduler)
+# Manually trigger a game tick (dev/testing — in-game this is triggered by the player)
 php artisan game:tick
 
 # Simulate a game tick and show a before/after diff — no DB writes
@@ -72,13 +72,11 @@ php artisan db:reset
 php artisan colony:seed-demo
 ```
 
-### Scheduler setup
+### Sol trigger
 
-The Laravel scheduler runs `game:tick` once per day at 03:00 server time (configurable via `config/game.php → tick.calculation`). To activate the scheduler, add a single cron entry that fires every minute — Laravel handles the rest:
+In solo mode the player manually advances the game by clicking "Nächsten Sol starten" in the UI — there is no fixed scheduler. The `game:tick` command can be used from the terminal for dev/testing purposes.
 
-```
-* * * * * cd /path/to/nouron && php artisan schedule:run >> /dev/null 2>&1
-```
+> **Note:** The Laravel scheduler (`routes/console.php`) still contains a legacy `dailyAt('03:00')` entry. This will be replaced once the Run system and the in-game trigger are implemented (see GDD §2).
 
 ## Environment & Dev Settings
 
