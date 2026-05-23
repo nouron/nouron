@@ -6,10 +6,10 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * SyncKnowledge — synchronises config/ships.php, config/buildings.php and config/knowledge.php to the DB.
+ * SyncConfig — synchronises config/ships.php, config/buildings.php and config/knowledge.php to the DB.
  *
- * Run:            php artisan game:sync-knowledge
- * Preview only:   php artisan game:sync-knowledge --dry-run
+ * Run:            php artisan game:sync-config
+ * Preview only:   php artisan game:sync-config --dry-run
  *
  * Synced fields:
  *   ships     → moving_speed, decay_rate, supply_cost, max_status_points
@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\DB;
  *
  * Only rows that actually differ are updated (safe to run repeatedly).
  */
-class SyncKnowledge extends Command
+class SyncConfig extends Command
 {
-    protected $signature   = 'game:sync-knowledge {--dry-run : Preview changes without writing to DB}';
+    protected $signature   = 'game:sync-config {--dry-run : Preview changes without writing to DB}';
     protected $description = 'Sync config/ships.php, config/buildings.php and config/knowledge.php values to the database';
 
     public function handle(): int

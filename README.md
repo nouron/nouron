@@ -50,26 +50,33 @@ The database file (`data/db/nouron.db`) is not committed to the repository. The 
 ### Useful Artisan commands
 
 ```bash
-# Sync ship/building values from config files to the database
-php artisan game:sync-techs
+# Sync ship/building/knowledge values from config files to the database
+php artisan game:sync-config
 
-# Preview changes without writing
-php artisan game:sync-techs --dry-run
+# Preview sync changes without writing
+php artisan game:sync-config --dry-run
 
-# Manually trigger a game tick (normally runs via scheduler)
+# Manually trigger a game tick (dev/testing — in-game this is triggered by the player)
 php artisan game:tick
+
+# Simulate a game tick and show a before/after diff — no DB writes
+php artisan game:tick-dry-run
+
+# Simulate for a single colony only
+php artisan game:tick-dry-run --colony=1
+
+# Drop all tables, run migrations, and seed (dev only — asks for confirmation)
+php artisan db:reset
 
 # Seed a demo colony state for the logged-in user's colony (useful for UI testing)
 php artisan colony:seed-demo
 ```
 
-### Scheduler setup
+### Sol trigger
 
-The game tick runs once per day at 03:00. To activate the Laravel scheduler on your server, add one cron entry:
+In solo mode the player manually advances the game by clicking "Nächsten Sol starten" in the UI — there is no fixed scheduler. The `game:tick` command can be used from the terminal for dev/testing purposes.
 
-```
-* * * * * cd /path/to/nouron && php artisan schedule:run >> /dev/null 2>&1
-```
+> **Note:** The Laravel scheduler (`routes/console.php`) still contains a legacy `dailyAt('03:00')` entry. This will be replaced once the Run system and the in-game trigger are implemented (see GDD §2).
 
 ## Environment & Dev Settings
 
@@ -136,5 +143,7 @@ All graphics and texts are licensed (unless otherwise noted) under Creative Comm
 
 This project uses third-party frameworks and libraries with their own licenses:
 * [Laravel](https://laravel.com/)
+* [Alpine.js](https://alpinejs.dev/)
+* [PicoCSS](https://picocss.com/)
 * [Bootstrap 5](https://getbootstrap.com/)
 * [jQuery](https://jquery.com/)
