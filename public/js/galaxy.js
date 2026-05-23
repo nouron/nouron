@@ -332,6 +332,140 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         }
 
+        // ── Fleet command state ───────────────────────────────────────────────
+        var selectedFleetId = null;
+        var commandMode     = null; // 'move' | null
+        var gridOverlay     = null;
+
+        /**
+         * Show the fleet command panel for the given own fleet.
+         * @param {number} id   - Fleet ID
+         * @param {string} name - Fleet display name
+         */
+        function activateFleet(id, name) {
+            selectedFleetId = id;
+            var nameEl = document.getElementById('cmd-fleet-name');
+            if (nameEl) nameEl.textContent = name;
+            var panel = document.getElementById('fleet-command-panel');
+            if (panel) panel.style.display = 'block';
+        }
+
+        /**
+         * Hide the fleet command panel and clear any active command mode / grid.
+         */
+        function deactivateFleet() {
+            selectedFleetId = null;
+            commandMode     = null;
+            var panel = document.getElementById('fleet-command-panel');
+            if (panel) panel.style.display = 'none';
+            if (gridOverlay) {
+                galaxyMap.removeLayer(gridOverlay);
+                gridOverlay = null;
+            }
+            galaxyMap.getContainer().style.cursor = '';
+        }
+
+        /**
+         * Enter move-target-selection mode: renders a 12×12 clickable rectangle
+         * grid centred on the system origin (cx, cy) with cellSize=8 coordinate units.
+         */
+        function activateMoveMode() {
+            commandMode = 'move';
+
+            // Remove existing grid overlay if present
+            if (gridOverlay) {
+                galaxyMap.removeLayer(gridOverlay);
+                gridOverlay = null;
+            }
+
+            var cellSize  = 8;
+            var cols      = 12;
+            var rows      = 12;
+            var startX    = cx - (cols / 2) * cellSize; // top-left corner X
+            var startY    = cy - (rows / 2) * cellSize; // top-left corner Y
+
+            gridOverlay = L.layerGroup();
+
+            for (var row = 0; row < rows; row++) {
+                for (var col = 0; col < cols; col++) {
+                    var cellX  = startX + col * cellSize;
+                    var cellY  = startY + row * cellSize;
+                    var cellCX = cellX + cellSize / 2; // cell center X (longitude)
+                    var cellCY = cellY + cellSize / 2; // cell center Y (latitude)
+
+                    // Leaflet rectangle: [[minLat, minLng], [maxLat, maxLng]]
+                    var rect = L.rectangle(
+                        [[cellY, cellX], [cellY + cellSize, cellX + cellSize]],
+                        {
+                            color:       '#50a0dc',
+                            weight:      0.5,
+                            fillColor:   'rgba(50,120,200,0.08)',
+                            fillOpacity: 1,
+                            interactive: true,
+                            className:   'grid-cell',
+                        }
+                    );
+
+                    // Capture cell centre coordinates in closure
+                    (function(destX, destY, r) {
+                        r.on('mouseover', function() {
+                            r.setStyle({ fillColor: 'rgba(80,160,220,0.20)', fillOpacity: 1 });
+                        });
+                        r.on('mouseout', function() {
+                            r.setStyle({ fillColor: 'rgba(50,120,200,0.08)', fillOpacity: 1 });
+                        });
+                        r.on('click', function(e) {
+                            L.DomEvent.stopPropagation(e);
+                            submitMove(destX, destY);
+                        });
+                    }(cellCX, cellCY, rect));
+
+                    gridOverlay.addLayer(rect);
+                }
+            }
+
+            gridOverlay.addTo(galaxyMap);
+            galaxyMap.getContainer().style.cursor = 'crosshair';
+        }
+
+        /**
+         * Build and submit the move order form for the currently selected fleet.
+         * @param {number} destX - Destination X coordinate
+         * @param {number} destY - Destination Y coordinate
+         */
+        function submitMove(destX, destY) {
+            var form    = document.getElementById('fleet-order-form');
+            var typeEl  = document.getElementById('order-type');
+            var destXEl = document.getElementById('order-dest-x');
+            var destYEl = document.getElementById('order-dest-y');
+            if (!form || !typeEl || !destXEl || !destYEl) return;
+
+            form.action = '/fleet/' + selectedFleetId + '/orders';
+            typeEl.value  = 'move';
+            destXEl.value = Math.round(destX);
+            destYEl.value = Math.round(destY);
+            form.submit();
+        }
+
+        /**
+         * Submit a hold order for the currently selected fleet.
+         */
+        function submitHold() {
+            var form   = document.getElementById('fleet-order-form');
+            var typeEl = document.getElementById('order-type');
+            if (!form || !typeEl) return;
+
+            form.action = '/fleet/' + selectedFleetId + '/orders';
+            typeEl.value = 'hold';
+            form.submit();
+        }
+
+        // Expose command functions so inline onclick attributes in the Blade template
+        // can reach them (they are declared inside the DOMContentLoaded closure).
+        window.deactivateFleet  = deactivateFleet;
+        window.activateMoveMode = activateMoveMode;
+        window.submitHold       = submitHold;
+
         function renderObject(obj, showLabel) {
             var latlng = [obj.y, obj.x];
             var title  = obj.attribs.title || obj.attribs['class'] || '?';
@@ -353,11 +487,23 @@ document.addEventListener('DOMContentLoaded', function () {
                 var isOwn   = obj.attribs.class === 'fleet-own';
                 var fColor  = isOwn ? '#44cc88' : '#ffaa22';
                 var fBorder = isOwn ? '#22aa66' : '#ffcc44';
-                return L.circleMarker(latlng, {
+                var marker  = L.circleMarker(latlng, {
                     radius: 7, color: fBorder, weight: 2,
                     fillColor: fColor, fillOpacity: 0.85,
                     className: 'fleet-marker ' + (obj.attribs.class || ''),
                 }).bindTooltip(title);
+
+                // Own fleets open the command panel on click
+                if (isOwn) {
+                    (function(fleetId, fleetName, m) {
+                        m.on('click', function(e) {
+                            L.DomEvent.stopPropagation(e);
+                            activateFleet(fleetId, fleetName);
+                        });
+                    }(obj.attribs.id, obj.attribs.name, marker));
+                }
+
+                return marker;
             }
             var cm = L.circleMarker(latlng, {
                 radius: 7, color: '#4488cc', weight: 1.5,
