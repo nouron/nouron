@@ -2034,6 +2034,41 @@ Komponenten:
 
 ---
 
+### Lobby-Screen (Run-Einstieg)
+
+Jeder Run beginnt mit einem **Lobby-Screen**, der nach Login erscheint wenn kein laufender Run existiert oder ein neuer Run vorbereitet wurde.
+
+#### Ablauf
+
+1. **Nach Registrierung:** `OnboardingService::setupNewPlayer()` erstellt Colony, Startressourcen und Gebäude wie bisher — setzt aber `started_at = null`. Der Run hat `status = 'active'`, ist aber noch nicht gestartet.
+2. **Nach Login:** Route `/lobby` ist der feste Einstieg. Controller-Logik:
+   - Run `status = 'active'` UND `started_at != null` → direkter Redirect zur Colony-Ansicht.
+   - Run `status = 'active'` UND `started_at = null` → Lobby-Screen anzeigen.
+   - Kein aktiver Run (Run beendet, oder noch kein Run) → Lobby-Screen mit "Neuen Run starten"-Option.
+3. **"Mission starten"-Button:** POST-Request setzt `started_at = now()`, Redirect zur Colony-Ansicht. Das ist der einzige Ort wo `started_at` geschrieben wird.
+
+#### Was der Screen zeigt (Minimal-Version)
+
+- Koloniename — editierbar vor dem ersten Klick auf "Mission starten", danach fix
+- Nexus-Briefing — statischer Lore-Text als narrativer Einstieg: "Direktor, Ihre Konzession wurde aktiviert. Die Kolonie wartet auf Ihre Ankunft."
+- "Mission starten"-Button
+
+#### Erweiterung Phase 4+
+
+- Liste vergangener Runs: Sol-Anzahl, erzielte Aufgaben, Highscore
+- "Neuen Run starten"-Button wenn aktiver Run beendet ist (status = 'completed' oder 'failed')
+- Zukünftig: Schwierigkeitsauswahl oder Run-Optionen (z.B. Kenntnisauswahl, Startbedingungen)
+
+#### Designentscheid: Warum Option B (eigene Route), nicht Modal
+
+Ein Modal bietet keinen Platz für die spätere Erweiterung (Highscores, Run-Liste). Die feste Route `/lobby` ist der kanonische Einstiegspunkt — sie bleibt auch nach Phase 3 stabil. Ein Modal wäre Sackgasse.
+
+#### Technische Anmerkung zu `started_at = null`
+
+`started_at = null` bei `status = 'active'` ist kein neuer Run-Status, sondern ein Zustand "vorbereitet, nicht gestartet". `scopeActive()` filtert nur auf `status`, nicht auf `started_at` — das ist korrekt, weil Colony und Ressourcen bereits existieren und z.B. für den Onboarding-Screen gebraucht werden. Kein anderer Game-Loop-Code (TickService, GameTick) verarbeitet einen Run ohne `started_at`.
+
+---
+
 ### Implementierungshinweise
 
 - Neue Tabellen: `run_objectives` (aktive Aufgaben des aktuellen Runs), `run_state` (Phase, Tick-Start, Tick-Limit, Fail-State-Tracking)
@@ -2041,6 +2076,7 @@ Komponenten:
 - Aufgaben-Fortschritt wird bei jedem Tick-Schritt geprüft (nach Schritt 7 "Advisor Ticks")
 - Phase-1-Check nach Tick-Schritt 4 (Building Decay) sinnvoll, da Gebäude-Level dann aktuell ist
 - Nexus-Interventionen: GameTick prüft nach Aufgaben-Fortschritt die Nexus-Trigger-Tabelle und erzeugt ggf. INNN-Events mit `sender = 'nexus'`
+- Lobby-Route: `GET /lobby` (LobbyController@show) + `POST /lobby/start` (LobbyController@start). Auth-Middleware, kein Game-Loop-Zugriff vor `started_at != null`.
 
 ---
 
