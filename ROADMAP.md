@@ -522,7 +522,7 @@ Techtree-Ansicht komplett überarbeitet. Fünf Sektionen (Phase 1–5), eine pro
 Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-Stack nötig. Alle Tools liegen im `tools/`-Verzeichnis und starten per `php -S localhost:808x tools/<name>.php`.
 
 - [x] **Dev Panel** (`tools/dev-panel.php`) — Kombiniertes Browser-Tool mit Tab-Navigation: **Resources** (Credits/Supply/Regolith/Werkstoffe/Organika/Vertrauen setzen) + **Techtree** (Drag-and-Drop-Editor für Techtree-Positionen). Löst `tools/techtree-editor.php` und `tools/resource-editor.php` ab. Start: `php -S localhost:8081 tools/dev-panel.php`
-- [ ] **Debug-Statusleiste** — Overlay im Spielbrowser (z.B. als Bookmarklet oder separates Tool): zeigt aktuelle Spielparameter auf einen Blick — Supply-Verbrauch/-Cap, AP-Pools, Moral-Wert, Tick-Nummer, aktive Flags.
+- [x] **Debug-Statusleiste** — Fixed Bottom-Bar, nur für `role=admin` sichtbar. Kompakte Zeile: Run-ID, Sol/Tick-Limit, Bypass-Flags (farbkodiert), App-Env. „Config ▾"-Toggle öffnet Detailpanel mit Run-, Tick-, Supply-, Credits-, Fleet-AP- und Moral-Event-Werten aus `config/game.php`. Alpine.js x-show, kein Bootstrap.
 - [ ] **Berechnungs-Toggle** — Artisan-Kommando oder .env-Flag zum An-/Abschalten einzelner Berechnungen für Testzwecke: Ressourcenberechnung, AP-Berechnung, Decay, Moral-Multiplikator. Erlaubt isoliertes Testen einzelner Systeme ohne Interferenz.
 - [x] **Tick-Simulator** (`game:tick-dry-run`) — Simuliert einen Tick und zeigt Credits-, Ressourcen- und Decay-Diff ohne DB-Schreibzugriff. `--colony=ID` filtert auf eine Kolonie. Ideal für Balancing-Checks.
 
@@ -552,6 +552,11 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 **Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Rassen-Effekte, Steuersystem und Diplomatie-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
 
+- [ ] **Multiplayer-Lobby & Multi-Run-Support** — `game.run.allow_multiple` Config-Flag ist vorbereitet, der „Neuen Run starten"-Button im Lobby-Screen existiert (disabled). Für echtes Multi-Run-Support fehlt:
+  - Run-Erstellungsflow: `OnboardingService::setupNewPlayer()` alloziert immer einen neuen Planeten + neue Kolonie; für einen zweiten Run muss das isoliert aufrufbar sein ohne Neu-Registrierung
+  - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
+  - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
+  - Für echtes Multiplayer (mehrere User pro Run): `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`)
 - [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
 - [ ] **Nexus-Außenposten-Slot (CC Lv5-Gate)** — CC Lv5 schaltet einen zweiten Außenposten-Slot frei — direkter Meilenstein in der Expansionsmechanik; Datenmodell noch nicht vorhanden (siehe Phase 5 Außenposten); hier konkret: CC Lv5 gibt die Möglichkeit einen zweiten Nexus-Kontakt-Knoten zu errichten, der eigene Handels- und Missionsoptionen bietet
 - [ ] **Diplomatie-System** — `innn_message_types.relationship_effect` auswerten; diplomatische Zustände (Krieg, Frieden, Allianz, Neutralität); Moral-Events `war_declared`/`treaty_signed` aktivieren; AP-Kosten gemäß Designprinzip (Kriegserklärung teurer als Handelsvertrag)
