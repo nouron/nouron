@@ -5,22 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Run;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class LobbyController extends Controller
 {
-    public function index(): mixed
+    public function index(): View
     {
-        $run = Run::where('user_id', auth()->id())
-            ->where('status', 'active')
+        $runs = Run::where('user_id', auth()->id())
             ->with('colony')
-            ->first();
+            ->orderByDesc('created_at')
+            ->get();
 
-        // Already started — send straight to the game.
-        if ($run && $run->started_at !== null) {
-            return redirect()->route('colony.view');
-        }
+        $pending  = $runs->filter(fn(Run $r) => $r->status === 'active' && $r->started_at === null);
+        $active   = $runs->filter(fn(Run $r) => $r->status === 'active' && $r->started_at !== null);
+        $finished = $runs->filter(fn(Run $r) => in_array($r->status, ['completed', 'failed'], true));
 
-        return view('lobby.index', compact('run'));
+        $allowMultiple = config('game.run.allow_multiple', false);
+
+        return view('lobby.index', compact('runs', 'pending', 'active', 'finished', 'allowMultiple'));
     }
 
     public function start(Request $request): RedirectResponse

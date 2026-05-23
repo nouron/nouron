@@ -24,6 +24,7 @@ class Run extends Model
         'status',
         'started_at',
         'ended_at',
+        'settings',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class Run extends Model
             'current_tick' => 'integer',
             'started_at'   => 'datetime',
             'ended_at'     => 'datetime',
+            'settings'     => 'array',
         ];
     }
 
