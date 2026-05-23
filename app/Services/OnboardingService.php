@@ -50,7 +50,7 @@ class OnboardingService
                 'colony_id'    => $colony->id,
                 'current_tick' => $tick,
                 'status'       => 'active',
-                'started_at'   => now(),
+                'started_at'   => null, // set when player clicks "Mission starten" in lobby
             ]);
 
             return $colony;

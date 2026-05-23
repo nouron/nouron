@@ -26,7 +26,7 @@ class OnboardingTest extends TestCase
             'email'                 => 'new@example.com',
             'password'              => 'secret1234',
             'password_confirmation' => 'secret1234',
-        ])->assertRedirect(route('galaxy.index'));
+        ])->assertRedirect(route('lobby'));
 
         $user = User::where('username', 'newplayer')->firstOrFail();
 
@@ -134,7 +134,7 @@ class OnboardingTest extends TestCase
         $this->post(route('login'), [
             'username' => 'nocolony',
             'password' => 'secret123',
-        ])->assertRedirect(route('galaxy.index'));
+        ])->assertRedirect(route('lobby'));
 
         $this->assertDatabaseHas('glx_colonies', ['user_id' => $user->user_id]);
     }

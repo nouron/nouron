@@ -55,7 +55,7 @@ class LoginController extends Controller
                 }
             }
 
-            return redirect()->intended(route('galaxy.index'));
+            return redirect()->intended(route('lobby'));
         }
 
         return back()->withErrors([

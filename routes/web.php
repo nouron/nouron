@@ -12,9 +12,17 @@ use App\Http\Controllers\Fleet\FleetController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
+use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
+
+// ── Lobby ─────────────────────────────────────────────────────────────────────
+
+Route::middleware('auth')->group(function () {
+    Route::get('/lobby',       [LobbyController::class, 'index'])->name('lobby');
+    Route::post('/lobby/start', [LobbyController::class, 'start'])->name('lobby.start');
+});
 
 // ── Public ───────────────────────────────────────────────────────────────────
 
