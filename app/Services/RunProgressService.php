@@ -23,25 +23,25 @@ class RunProgressService
     // ── Task metadata ────────────────────────────────────────────────────────
 
     private const TASK_CATEGORIES = [
-        'economy'     => ['task_kreditimperium', 'task_handelspartner'],
-        'research'    => ['task_forschungsvorsprung', 'task_ingenieursleistung'],
-        'exploration' => ['task_expeditionsstatus'],
-        'diplomacy'   => ['task_koloniebluete'],
-        'survival'    => ['task_selbstversorgung'],
-        'combat'      => ['task_bewaehrungsprobe'],
-        'personal'    => ['task_expertenstab'],
+        'economy'     => ['task_credit_reserve', 'task_trade_volume'],
+        'research'    => ['task_research_lead', 'task_engineering_output'],
+        'exploration' => ['task_expedition_coverage'],
+        'diplomacy'   => ['task_colony_prosperity'],
+        'survival'    => ['task_self_sufficiency'],
+        'combat'      => ['task_combat_record'],
+        'personal'    => ['task_senior_advisors'],
     ];
 
     private const TASK_TARGETS = [
-        'task_expertenstab'        => 1,
-        'task_kreditimperium'      => 10,
-        'task_koloniebluete'       => 10,
-        'task_forschungsvorsprung' => 3,
-        'task_selbstversorgung'    => 15,
-        'task_expeditionsstatus'   => 19,
-        'task_ingenieursleistung'  => 200,
-        'task_handelspartner'      => 5,
-        'task_bewaehrungsprobe'    => 3,
+        'task_senior_advisors'        => 1,
+        'task_credit_reserve'      => 10,
+        'task_colony_prosperity'       => 10,
+        'task_research_lead' => 3,
+        'task_self_sufficiency'    => 15,
+        'task_expedition_coverage'   => 19,
+        'task_engineering_output'  => 200,
+        'task_trade_volume'      => 5,
+        'task_combat_record'    => 3,
     ];
 
     // ── Phase-1 completion check ─────────────────────────────────────────────
@@ -124,7 +124,7 @@ class RunProgressService
      * Draw 3 tasks from the configured task pool and insert RunObjective records.
      *
      * Combo-blacklist: no more than 1 economy task in a single draw set.
-     * Economy tasks: task_kreditimperium, task_handelspartner.
+     * Economy tasks: task_credit_reserve, task_trade_volume.
      * If the full shuffled pool yields < 3 valid tasks, fill up with non-economy tasks.
      */
     public function drawObjectives(Run $run): void
@@ -196,21 +196,21 @@ class RunProgressService
 
         foreach ($objectives as $objective) {
             match ($objective->task_key) {
-                'task_expertenstab'        => $this->updateExpertenstab($objective, $run),
-                'task_kreditimperium'      => $this->updateKreditimperium($objective, $run),
-                'task_koloniebluete'       => $this->updateKoloniebluete($objective, $run),
-                'task_forschungsvorsprung' => $this->updateForschungsvorsprung($objective, $run),
-                'task_selbstversorgung'    => $this->updateSelbstversorgung($objective, $run),
-                'task_expeditionsstatus'   => $this->updateExpeditionsstatus($objective, $run),
-                'task_ingenieursleistung'  => $this->updateIngenieursleistung($objective, $run),
-                'task_handelspartner'      => $this->updateHandelspartner($objective, $run),
-                'task_bewaehrungsprobe'    => $this->updateBewaehrungsprobe($objective, $run),
+                'task_senior_advisors'        => $this->updateSeniorAdvisors($objective, $run),
+                'task_credit_reserve'      => $this->updateCreditReserve($objective, $run),
+                'task_colony_prosperity'       => $this->updateColonyProsperity($objective, $run),
+                'task_research_lead' => $this->updateResearchLead($objective, $run),
+                'task_self_sufficiency'    => $this->updateSelfSufficiency($objective, $run),
+                'task_expedition_coverage'   => $this->updateExpeditionCoverage($objective, $run),
+                'task_engineering_output'  => $this->updateEngineeringOutput($objective, $run),
+                'task_trade_volume'      => $this->updateTradeVolume($objective, $run),
+                'task_combat_record'    => $this->updateCombatRecord($objective, $run),
                 default                    => null,
             };
         }
     }
 
-    private function updateExpertenstab(RunObjective $objective, Run $run): void
+    private function updateSeniorAdvisors(RunObjective $objective, Run $run): void
     {
         $totalAdvisors = Advisor::where('colony_id', $run->colony_id)->count();
         $seniorAdvisors = Advisor::where('colony_id', $run->colony_id)
@@ -228,7 +228,7 @@ class RunProgressService
         $objective->save();
     }
 
-    private function updateKreditimperium(RunObjective $objective, Run $run): void
+    private function updateCreditReserve(RunObjective $objective, Run $run): void
     {
         $credits = (int) (DB::table('user_resources')
             ->where('user_id', $run->user_id)
@@ -249,7 +249,7 @@ class RunProgressService
         $objective->save();
     }
 
-    private function updateKoloniebluete(RunObjective $objective, Run $run): void
+    private function updateColonyProsperity(RunObjective $objective, Run $run): void
     {
         $trust = (int) (DB::table('colony_resources')
             ->where('colony_id', $run->colony_id)
@@ -271,7 +271,7 @@ class RunProgressService
         $objective->save();
     }
 
-    private function updateForschungsvorsprung(RunObjective $objective, Run $run): void
+    private function updateResearchLead(RunObjective $objective, Run $run): void
     {
         $count = (int) DB::table('colony_researches')
             ->where('colony_id', $run->colony_id)
@@ -292,7 +292,7 @@ class RunProgressService
      * Regolith (colony_resources, resource_id=3) > 50, Organika (resource_id=5) > 50,
      * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
      */
-    private function updateSelbstversorgung(RunObjective $objective, Run $run): void
+    private function updateSelfSufficiency(RunObjective $objective, Run $run): void
     {
         $regolith = (int) (DB::table('colony_resources')
             ->where('colony_id', $run->colony_id)
@@ -328,7 +328,7 @@ class RunProgressService
     /**
      * Counter task: number of explored colony-zone tiles >= target_value (19).
      */
-    private function updateExpeditionsstatus(RunObjective $objective, Run $run): void
+    private function updateExpeditionCoverage(RunObjective $objective, Run $run): void
     {
         $count = (int) DB::table('colony_tiles')
             ->where('colony_id', $run->colony_id)
@@ -348,7 +348,7 @@ class RunProgressService
     /**
      * Counter task: sum of status_points across all colony buildings >= 200.
      */
-    private function updateIngenieursleistung(RunObjective $objective, Run $run): void
+    private function updateEngineeringOutput(RunObjective $objective, Run $run): void
     {
         $total = (int) (DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
@@ -369,7 +369,7 @@ class RunProgressService
      * Join path: merchant_items.visit_id → merchant_visits.id → merchant_visits.colony_id = run.colony_id.
      * Time filter: merchant_visits.created_at >= run.started_at.
      */
-    private function updateHandelspartner(RunObjective $objective, Run $run): void
+    private function updateTradeVolume(RunObjective $objective, Run $run): void
     {
         $count = (int) DB::table('merchant_items')
             ->join('merchant_visits', 'merchant_items.visit_id', '=', 'merchant_visits.id')
@@ -390,7 +390,7 @@ class RunProgressService
     /**
      * Counter task: number of encounter_won INNN events for this user since run start >= 3.
      */
-    private function updateBewaehrungsprobe(RunObjective $objective, Run $run): void
+    private function updateCombatRecord(RunObjective $objective, Run $run): void
     {
         $count = (int) DB::table('innn_events')
             ->where('user', $run->user_id)

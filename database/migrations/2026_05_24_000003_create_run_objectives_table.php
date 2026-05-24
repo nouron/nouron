@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
  * run_objectives:
  *   run_id        — FK → runs(id), CASCADE on delete
  *   task_key      — machine key identifying the objective type, e.g.
- *                   'task_expertenstab', 'task_kreditimperium'
+ *                   'task_senior_advisors', 'task_credit_reserve'
  *   target_value  — the numeric goal that must be reached (e.g. 5 researches at Lv5)
  *   current_value — progress counter, incremented by the tick/game service
  *   streak_value  — consecutive-Sol counter used by streak-type objectives
