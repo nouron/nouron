@@ -682,6 +682,7 @@ class RunProgressService
             'event'      => $event,
             'area'       => $area,
             'parameters' => serialize($parameters),
+            'created_at' => now(),
         ]);
     }
 }

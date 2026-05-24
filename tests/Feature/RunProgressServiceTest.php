@@ -35,6 +35,39 @@ namespace Tests\Feature;
  *   - calculateScore returns 0 for failed run
  *   - calculateScore returns positive score for completed run with objectives
  *
+ * TASK_SELBSTVERSORGUNG (streak)
+ *   - streak increments when regolith>50 AND organics>50 AND supply>0
+ *   - streak resets to 0 when regolith fails (<= 50)
+ *   - completes (completed_at set) when streak reaches target_value (15)
+ *
+ * TASK_EXPEDITIONSSTATUS (counter)
+ *   - completes when 19+ explored colony-zone tiles exist
+ *   - does not complete with only 10 such tiles
+ *
+ * TASK_INGENIEURSLEISTUNG (counter)
+ *   - completes when sum of status_points >= 200
+ *   - does not complete when sum < 200
+ *
+ * TASK_HANDELSPARTNER (counter)
+ *   - completes when 5+ sold items from visits after run.started_at
+ *   - items from visits before run.started_at are not counted
+ *
+ * TASK_BEWAEHRUNGSPROBE (counter)
+ *   - completes when 3+ encounter_won events after run.started_at
+ *   - events from before run.started_at are not counted
+ *
+ * DRAW OBJECTIVES — COMBO BLACKLIST
+ *   - at most 1 economy task in any drawn set of 3
+ *
+ * NEXUS INTERVENTIONS
+ *   - sol 30 warning fires when no task above 50% progress
+ *   - sol 30 warning does NOT fire when a task is above 50%
+ *   - sol 50 warning fires when 0 objectives completed
+ *   - sol 65 sanction fires and locks advisor when 0 objectives completed
+ *   - sol 65 sanction does NOT fire when at least one objective is completed
+ *   - nexus_debt > 12000 triggers failed run status
+ *   - sol 80 countdown fires when current_tick >= tick_limit - 20
+ *
  */
 
 use App\Models\Advisor;
@@ -558,5 +591,506 @@ class RunProgressServiceTest extends TestCase
         //        = 2000 + 500 + 300 + 200 = 3000
         $this->assertGreaterThan(0, $score, 'A completed run with objectives and resources must yield a positive score');
         $this->assertEquals(3000, $score, 'Score formula must compute correctly');
+    }
+
+    // ── Additional helpers ────────────────────────────────────────────────────
+
+    /**
+     * Set a colony resource amount (generic by resource_id).
+     */
+    private function setColonyResource(int $resourceId, int $amount): void
+    {
+        DB::table('colony_resources')->updateOrInsert(
+            ['resource_id' => $resourceId, 'colony_id' => $this->colonyId],
+            ['amount' => $amount]
+        );
+    }
+
+    /**
+     * Insert N explored colony-zone tiles with distinct (q, r) coordinates.
+     * q is set to 100 + index and r to 0 to avoid conflicts with testdata tiles.
+     */
+    private function insertExploredColonyZoneTiles(int $count): void
+    {
+        for ($i = 0; $i < $count; $i++) {
+            DB::table('colony_tiles')->insert([
+                'colony_id'      => $this->colonyId,
+                'q'              => 100 + $i,
+                'r'              => 0,
+                'ring'           => 1,
+                'tile_type'      => 'regolith',
+                'is_explored'    => 1,
+                'is_colony_zone' => 1,
+                'created_at'     => now(),
+                'updated_at'     => now(),
+            ]);
+        }
+    }
+
+    // ── task_selbstversorgung (streak) ────────────────────────────────────────
+
+    public function test_task_selbstversorgung_increments_streak_when_all_conditions_met(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 0);
+
+        // regolith (3) > 50, organics (5) > 50, supply (4) > 0
+        $this->setColonyResource(3, 60);
+        $this->setColonyResource(5, 55);
+        $this->setColonyResource(4, 1);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment to 1 when all 3 conditions are met');
+        $this->assertEquals(1, $objective->current_value);
+        $this->assertNull($objective->completed_at, 'objective must not complete after only 1 streak tick');
+    }
+
+    public function test_task_selbstversorgung_resets_streak_when_regolith_fails(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        // Pre-load a streak of 7
+        $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 7);
+
+        // Regolith at exactly 50 — condition requires > 50, so this fails
+        $this->setColonyResource(3, 50);
+        $this->setColonyResource(5, 55);
+        $this->setColonyResource(4, 1);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= 50');
+        $this->assertEquals(0, $objective->current_value);
+        $this->assertNull($objective->completed_at);
+    }
+
+    public function test_task_selbstversorgung_completes_when_streak_reaches_target(): void
+    {
+        $run = $this->makeRun(['current_tick' => 20, 'phase' => 2]);
+        // Pre-load streak at 14 — one passing tick should complete it (target=15)
+        $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 14);
+
+        $this->setColonyResource(3, 100);
+        $this->setColonyResource(5, 100);
+        $this->setColonyResource(4, 5);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(15, $objective->streak_value, 'streak_value must reach 15');
+        $this->assertNotNull($objective->completed_at, 'task_selbstversorgung must be marked complete when streak reaches target_value');
+    }
+
+    // ── task_expeditionsstatus (counter) ──────────────────────────────────────
+
+    public function test_task_expeditionsstatus_completes_when_19_explored_colony_zone_tiles_exist(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_expeditionsstatus', 19);
+
+        $this->insertExploredColonyZoneTiles(19);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(19, $objective->current_value);
+        $this->assertNotNull($objective->completed_at, 'task_expeditionsstatus must complete when 19 explored colony-zone tiles exist');
+    }
+
+    public function test_task_expeditionsstatus_does_not_complete_with_only_10_tiles(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_expeditionsstatus', 19);
+
+        $this->insertExploredColonyZoneTiles(10);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(10, $objective->current_value);
+        $this->assertNull($objective->completed_at, 'task_expeditionsstatus must not complete with only 10 tiles');
+    }
+
+    // ── task_ingenieursleistung (counter) ─────────────────────────────────────
+
+    public function test_task_ingenieursleistung_completes_when_status_points_sum_reaches_200(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_ingenieursleistung', 200);
+
+        // Remove all existing buildings to have full control over the sum
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
+
+        // Insert buildings whose status_points sum to exactly 200
+        DB::table('colony_buildings')->insert([
+            ['colony_id' => $this->colonyId, 'building_id' => 25, 'level' => 3, 'status_points' => 100],
+            ['colony_id' => $this->colonyId, 'building_id' => 28, 'level' => 2, 'status_points' => 100],
+        ]);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(200, $objective->current_value);
+        $this->assertNotNull($objective->completed_at, 'task_ingenieursleistung must complete when status_points sum >= 200');
+    }
+
+    public function test_task_ingenieursleistung_does_not_complete_when_status_points_below_200(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_ingenieursleistung', 200);
+
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->delete();
+
+        // Sum = 199 — just below target
+        DB::table('colony_buildings')->insert([
+            ['colony_id' => $this->colonyId, 'building_id' => 25, 'level' => 3, 'status_points' => 100],
+            ['colony_id' => $this->colonyId, 'building_id' => 28, 'level' => 2, 'status_points' => 99],
+        ]);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(199, $objective->current_value);
+        $this->assertNull($objective->completed_at, 'task_ingenieursleistung must not complete when status_points sum < 200');
+    }
+
+    // ── task_handelspartner (counter) ─────────────────────────────────────────
+
+    public function test_task_handelspartner_completes_when_5_sold_items_after_run_start(): void
+    {
+        $startedAt = now()->subHour();
+        $run = $this->makeRun([
+            'current_tick' => 10,
+            'phase'        => 2,
+            'started_at'   => $startedAt,
+        ]);
+        $objective = $this->makeObjective($run, 'task_handelspartner', 5);
+
+        // Create a merchant visit AFTER run started_at
+        $visitId = DB::table('merchant_visits')->insertGetId([
+            'colony_id'   => $this->colonyId,
+            'tick_start'  => 5,
+            'tick_end'    => 8,
+            'was_visited' => true,
+            'created_at'  => now(),
+            'updated_at'  => now(),
+        ]);
+
+        // Insert 5 sold items for that visit
+        for ($i = 0; $i < 5; $i++) {
+            DB::table('merchant_items')->insert([
+                'visit_id'      => $visitId,
+                'item_type'     => 'ap_flex',
+                'label'         => 'Test Item ' . $i,
+                'cost_credits'  => 100,
+                'payload'       => null,
+                'sold'          => 1,
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ]);
+        }
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(5, $objective->current_value);
+        $this->assertNotNull($objective->completed_at, 'task_handelspartner must complete when 5+ sold items from visits after run.started_at');
+    }
+
+    public function test_task_handelspartner_does_not_count_items_from_visits_before_run_start(): void
+    {
+        $startedAt = now();
+        $run = $this->makeRun([
+            'current_tick' => 10,
+            'phase'        => 2,
+            'started_at'   => $startedAt,
+        ]);
+        $objective = $this->makeObjective($run, 'task_handelspartner', 5);
+
+        // Create a merchant visit BEFORE run started_at
+        $visitId = DB::table('merchant_visits')->insertGetId([
+            'colony_id'   => $this->colonyId,
+            'tick_start'  => 2,
+            'tick_end'    => 4,
+            'was_visited' => true,
+            'created_at'  => now()->subDay(),
+            'updated_at'  => now()->subDay(),
+        ]);
+
+        // Insert 5 sold items — but the visit predates the run, so they must not count
+        for ($i = 0; $i < 5; $i++) {
+            DB::table('merchant_items')->insert([
+                'visit_id'      => $visitId,
+                'item_type'     => 'ap_flex',
+                'label'         => 'Old Item ' . $i,
+                'cost_credits'  => 100,
+                'payload'       => null,
+                'sold'          => 1,
+                'created_at'    => now()->subDay(),
+                'updated_at'    => now()->subDay(),
+            ]);
+        }
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->current_value, 'Items from visits before run.started_at must not be counted');
+        $this->assertNull($objective->completed_at);
+    }
+
+    // ── task_bewaehrungsprobe (counter) ───────────────────────────────────────
+
+    public function test_task_bewaehrungsprobe_completes_when_3_encounter_won_events_after_run_start(): void
+    {
+        $startedAt = now()->subHour();
+        $run = $this->makeRun([
+            'current_tick' => 10,
+            'phase'        => 2,
+            'started_at'   => $startedAt,
+        ]);
+        $objective = $this->makeObjective($run, 'task_bewaehrungsprobe', 3);
+
+        for ($i = 0; $i < 3; $i++) {
+            DB::table('innn_events')->insert([
+                'user'       => $this->userId,
+                'tick'       => 7 + $i,
+                'event'      => 'encounter_won',
+                'area'       => 'combat',
+                'parameters' => serialize([]),
+                'created_at' => now(),
+            ]);
+        }
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(3, $objective->current_value);
+        $this->assertNotNull($objective->completed_at, 'task_bewaehrungsprobe must complete when 3+ encounter_won events after run.started_at');
+    }
+
+    public function test_task_bewaehrungsprobe_does_not_count_events_before_run_start(): void
+    {
+        $startedAt = now();
+        $run = $this->makeRun([
+            'current_tick' => 10,
+            'phase'        => 2,
+            'started_at'   => $startedAt,
+        ]);
+        $objective = $this->makeObjective($run, 'task_bewaehrungsprobe', 3);
+
+        // Insert 3 encounter_won events with created_at BEFORE started_at
+        for ($i = 0; $i < 3; $i++) {
+            DB::table('innn_events')->insert([
+                'user'       => $this->userId,
+                'tick'       => 2 + $i,
+                'event'      => 'encounter_won',
+                'area'       => 'combat',
+                'parameters' => serialize([]),
+                'created_at' => now()->subDay(),
+            ]);
+        }
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->current_value, 'Events before run.started_at must not be counted');
+        $this->assertNull($objective->completed_at);
+    }
+
+    // ── drawObjectives — combo blacklist ──────────────────────────────────────
+
+    public function test_drawObjectives_never_draws_both_economy_tasks_in_one_set(): void
+    {
+        // Pool: 2 economy tasks + 5 non-economy tasks
+        config(['game.run.task_pool' => [
+            'task_kreditimperium',
+            'task_handelspartner',
+            'task_expertenstab',
+            'task_forschungsvorsprung',
+            'task_selbstversorgung',
+            'task_expeditionsstatus',
+            'task_bewaehrungsprobe',
+        ]]);
+
+        $economyTasks = ['task_kreditimperium', 'task_handelspartner'];
+
+        // Run 20 draws; none should contain both economy tasks simultaneously
+        for ($draw = 0; $draw < 20; $draw++) {
+            $run = $this->makeRun(['phase' => 2]);
+            $this->service->drawObjectives($run);
+
+            $drawnKeys = RunObjective::where('run_id', $run->id)
+                ->pluck('task_key')
+                ->all();
+
+            $economyCount = count(array_intersect($drawnKeys, $economyTasks));
+
+            $this->assertLessThanOrEqual(
+                1,
+                $economyCount,
+                "Draw #{$draw} contained both economy tasks: " . implode(', ', $drawnKeys)
+            );
+        }
+    }
+
+    // ── checkNexusInterventions ───────────────────────────────────────────────
+
+    /**
+     * Build a run at Phase 2, sol X (phase2_start_tick=0, current_tick=sol).
+     * started_at is set 1 hour in the past so newly inserted events (created_at≈now)
+     * pass the eventAlreadyFired check (>= started_at).
+     */
+    private function makePhase2Run(int $sol, array $overrides = []): Run
+    {
+        return $this->makeRun(array_merge([
+            'phase'             => 2,
+            'phase2_start_tick' => 0,
+            'current_tick'      => $sol,
+            'started_at'        => now()->subHour(),
+        ], $overrides));
+    }
+
+    public function test_nexus_sol30_warning_fires_when_no_task_above_50_percent(): void
+    {
+        $run = $this->makePhase2Run(30);
+
+        // One objective with 0% progress (current_value=0, target_value=10)
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_warning_sol30')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_warning_sol30 must fire when no task is above 50% progress at sol 30');
+    }
+
+    public function test_nexus_sol30_warning_does_not_fire_when_task_above_50_percent(): void
+    {
+        $run = $this->makePhase2Run(30);
+
+        // One objective above 50% (current=6 of 10 = 60%)
+        RunObjective::create([
+            'run_id'        => $run->id,
+            'task_key'      => 'task_expertenstab',
+            'target_value'  => 10,
+            'current_value' => 6,
+            'streak_value'  => 0,
+            'completed_at'  => null,
+        ]);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_warning_sol30')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_warning_sol30 must NOT fire when at least one task is above 50% progress');
+    }
+
+    public function test_nexus_sol50_warning_fires_when_0_objectives_completed(): void
+    {
+        $run = $this->makePhase2Run(50);
+
+        // An open objective with no completion
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_warning_sol50')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_warning_sol50 must fire when 0 objectives are completed at sol 50');
+    }
+
+    public function test_nexus_sol65_sanction_fires_and_locks_advisor_when_0_objectives_completed(): void
+    {
+        $run = $this->makePhase2Run(65);
+
+        // No completed objectives
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        // Insert one active advisor to be locked
+        $advisor = $this->insertAdvisor();
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_sanction_sol65')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_sanction_sol65 must fire when 0 objectives are completed at sol 65');
+
+        $advisor->refresh();
+        $this->assertEquals(
+            66,
+            $advisor->unavailable_until_tick,
+            'The advisor must be locked for 1 sol (unavailable_until_tick = current_tick + 1 = 66)'
+        );
+    }
+
+    public function test_nexus_sol65_sanction_does_not_fire_when_objective_is_completed(): void
+    {
+        $run = $this->makePhase2Run(65);
+
+        // One completed objective
+        RunObjective::create([
+            'run_id'        => $run->id,
+            'task_key'      => 'task_expertenstab',
+            'target_value'  => 1,
+            'current_value' => 1,
+            'streak_value'  => 0,
+            'completed_at'  => 40,
+        ]);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_sanction_sol65')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_sanction_sol65 must NOT fire when at least one objective is already completed');
+    }
+
+    public function test_nexus_debt_above_12000_fails_run(): void
+    {
+        $run = $this->makePhase2Run(60, ['nexus_debt' => 13000]);
+
+        // Objective present so the run is in a valid state
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $run->refresh();
+        $this->assertEquals('failed', $run->status, 'Run must be failed when nexus_debt > 12000');
+        $this->assertEquals('nexus_debt', $run->fail_reason);
+    }
+
+    public function test_nexus_sol80_countdown_fires_when_tick_near_limit(): void
+    {
+        // tick_limit = 100, current_tick = 85 → 85 >= 100 - 20 = 80 → fires
+        $run = $this->makePhase2Run(85, [
+            'settings' => ['tick_limit' => 100],
+        ]);
+
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_countdown_sol80')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_countdown_sol80 must fire when current_tick >= tick_limit - 20');
     }
 }
