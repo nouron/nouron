@@ -225,6 +225,11 @@ return [
             'task_kreditimperium',
             'task_koloniebluete',
             'task_forschungsvorsprung',
+            'task_selbstversorgung',
+            'task_expeditionsstatus',
+            'task_ingenieursleistung',
+            'task_handelspartner',
+            'task_bewaehrungsprobe',
         ],
         'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer

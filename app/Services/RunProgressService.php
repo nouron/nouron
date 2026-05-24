@@ -14,11 +14,36 @@ use Illuminate\Support\Facades\DB;
  *  - Detect Phase-1 completion and promote the run to Phase 2.
  *  - Draw 3 random objectives from the task pool at Phase-2 start.
  *  - Update objective progress each tick (streak, counters, completion).
- *  - Detect fail states (trust collapse, time limit).
+ *  - Detect fail states (trust collapse, nexus debt, time limit).
+ *  - Check Nexus intervention checkpoints during Phase 2.
  *  - End a run (win or loss) and calculate the final score.
  */
 class RunProgressService
 {
+    // ── Task metadata ────────────────────────────────────────────────────────
+
+    private const TASK_CATEGORIES = [
+        'economy'     => ['task_kreditimperium', 'task_handelspartner'],
+        'research'    => ['task_forschungsvorsprung', 'task_ingenieursleistung'],
+        'exploration' => ['task_expeditionsstatus'],
+        'diplomacy'   => ['task_koloniebluete'],
+        'survival'    => ['task_selbstversorgung'],
+        'combat'      => ['task_bewaehrungsprobe'],
+        'personal'    => ['task_expertenstab'],
+    ];
+
+    private const TASK_TARGETS = [
+        'task_expertenstab'        => 1,
+        'task_kreditimperium'      => 10,
+        'task_koloniebluete'       => 10,
+        'task_forschungsvorsprung' => 3,
+        'task_selbstversorgung'    => 15,
+        'task_expeditionsstatus'   => 19,
+        'task_ingenieursleistung'  => 200,
+        'task_handelspartner'      => 5,
+        'task_bewaehrungsprobe'    => 3,
+    ];
+
     // ── Phase-1 completion check ─────────────────────────────────────────────
 
     /**
@@ -71,12 +96,14 @@ class RunProgressService
     /**
      * Promote a run from Phase 1 to Phase 2.
      *
-     * Draws 3 objectives, persists the phase change and fires an INNN event.
+     * Draws 3 objectives, persists the phase change, records phase2_start_tick
+     * and fires an INNN event.
      */
     public function transitionToPhase2(Run $run): void
     {
         DB::transaction(function () use ($run): void {
-            $run->phase = 2;
+            $run->phase             = 2;
+            $run->phase2_start_tick = $run->current_tick;
             $run->save();
 
             $this->drawObjectives($run);
@@ -96,30 +123,57 @@ class RunProgressService
     /**
      * Draw 3 tasks from the configured task pool and insert RunObjective records.
      *
-     * Target values per task key:
-     *   task_expertenstab       → 1  (binary: all 5 slots filled + 2 senior)
-     *   task_kreditimperium     → 10 (10 consecutive ticks with credits >= 5000)
-     *   task_koloniebluete      → 10 (10 consecutive ticks with trust > 70)
-     *   task_forschungsvorsprung → 3 (3 researches at level >= 5)
+     * Combo-blacklist: no more than 1 economy task in a single draw set.
+     * Economy tasks: task_kreditimperium, task_handelspartner.
+     * If the full shuffled pool yields < 3 valid tasks, fill up with non-economy tasks.
      */
     public function drawObjectives(Run $run): void
     {
-        $targetValues = [
-            'task_expertenstab'        => 1,
-            'task_kreditimperium'      => 10,
-            'task_koloniebluete'       => 10,
-            'task_forschungsvorsprung' => 3,
-        ];
+        $pool    = config('game.run.task_pool', array_keys(self::TASK_TARGETS));
+        $economy = self::TASK_CATEGORIES['economy'];
 
-        $pool     = config('game.run.task_pool', array_keys($targetValues));
-        $shuffled = collect($pool)->shuffle()->take(3);
+        $shuffled = collect($pool)->shuffle()->values();
+
+        $selected       = [];
+        $economyCount   = 0;
+
+        foreach ($shuffled as $taskKey) {
+            if (count($selected) >= 3) {
+                break;
+            }
+
+            $isEconomy = in_array($taskKey, $economy, true);
+
+            if ($isEconomy && $economyCount >= 1) {
+                // Combo-blacklist: skip second economy task
+                continue;
+            }
+
+            $selected[] = $taskKey;
+
+            if ($isEconomy) {
+                $economyCount++;
+            }
+        }
+
+        // Fallback: if still < 3 tasks, fill with non-economy tasks not yet selected
+        if (count($selected) < 3) {
+            foreach ($shuffled as $taskKey) {
+                if (count($selected) >= 3) {
+                    break;
+                }
+                if (!in_array($taskKey, $selected, true) && !in_array($taskKey, $economy, true)) {
+                    $selected[] = $taskKey;
+                }
+            }
+        }
 
         $rows = [];
-        foreach ($shuffled as $taskKey) {
+        foreach ($selected as $taskKey) {
             $rows[] = [
                 'run_id'        => $run->id,
                 'task_key'      => $taskKey,
-                'target_value'  => $targetValues[$taskKey] ?? 1,
+                'target_value'  => self::TASK_TARGETS[$taskKey] ?? 1,
                 'current_value' => 0,
                 'streak_value'  => 0,
                 'completed_at'  => null,
@@ -146,6 +200,11 @@ class RunProgressService
                 'task_kreditimperium'      => $this->updateKreditimperium($objective, $run),
                 'task_koloniebluete'       => $this->updateKoloniebluete($objective, $run),
                 'task_forschungsvorsprung' => $this->updateForschungsvorsprung($objective, $run),
+                'task_selbstversorgung'    => $this->updateSelbstversorgung($objective, $run),
+                'task_expeditionsstatus'   => $this->updateExpeditionsstatus($objective, $run),
+                'task_ingenieursleistung'  => $this->updateIngenieursleistung($objective, $run),
+                'task_handelspartner'      => $this->updateHandelspartner($objective, $run),
+                'task_bewaehrungsprobe'    => $this->updateBewaehrungsprobe($objective, $run),
                 default                    => null,
             };
         }
@@ -229,6 +288,278 @@ class RunProgressService
         $objective->save();
     }
 
+    /**
+     * Streak task: all three conditions must hold simultaneously each sol.
+     * Regolith (resource_id=3) > 50, Organics (resource_id=5) > 50, Supply (resource_id=4) > 0.
+     * Any single failure resets the streak to 0.
+     */
+    private function updateSelbstversorgung(RunObjective $objective, Run $run): void
+    {
+        $regolith = (int) (DB::table('colony_resources')
+            ->where('colony_id', $run->colony_id)
+            ->where('resource_id', 3)
+            ->value('amount') ?? 0);
+
+        $organics = (int) (DB::table('colony_resources')
+            ->where('colony_id', $run->colony_id)
+            ->where('resource_id', 5)
+            ->value('amount') ?? 0);
+
+        $supply = (int) (DB::table('colony_resources')
+            ->where('colony_id', $run->colony_id)
+            ->where('resource_id', 4)
+            ->value('amount') ?? 0);
+
+        $allMet = $regolith > 50 && $organics > 50 && $supply > 0;
+
+        if ($allMet) {
+            $objective->streak_value++;
+        } else {
+            $objective->streak_value = 0;
+        }
+
+        $objective->current_value = $objective->streak_value;
+
+        if ($objective->current_value >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    /**
+     * Counter task: number of explored colony-zone tiles >= target_value (19).
+     */
+    private function updateExpeditionsstatus(RunObjective $objective, Run $run): void
+    {
+        $count = (int) DB::table('colony_tiles')
+            ->where('colony_id', $run->colony_id)
+            ->where('is_explored', 1)
+            ->where('is_colony_zone', 1)
+            ->count();
+
+        $objective->current_value = $count;
+
+        if ($count >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    /**
+     * Counter task: sum of status_points across all colony buildings >= 200.
+     */
+    private function updateIngenieursleistung(RunObjective $objective, Run $run): void
+    {
+        $total = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $run->colony_id)
+            ->sum('status_points') ?? 0);
+
+        $objective->current_value = $total;
+
+        if ($total >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    /**
+     * Counter task: number of sold merchant items purchased during this run session >= 5.
+     *
+     * Join path: merchant_items.visit_id → merchant_visits.id → merchant_visits.colony_id = run.colony_id.
+     * Time filter: merchant_visits.created_at >= run.started_at.
+     */
+    private function updateHandelspartner(RunObjective $objective, Run $run): void
+    {
+        $count = (int) DB::table('merchant_items')
+            ->join('merchant_visits', 'merchant_items.visit_id', '=', 'merchant_visits.id')
+            ->where('merchant_visits.colony_id', $run->colony_id)
+            ->where('merchant_items.sold', 1)
+            ->where('merchant_visits.created_at', '>=', $run->started_at)
+            ->count();
+
+        $objective->current_value = $count;
+
+        if ($count >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    /**
+     * Counter task: number of encounter_won INNN events for this user since run start >= 3.
+     */
+    private function updateBewaehrungsprobe(RunObjective $objective, Run $run): void
+    {
+        $count = (int) DB::table('innn_events')
+            ->where('user', $run->user_id)
+            ->where('event', 'encounter_won')
+            ->where('created_at', '>=', $run->started_at)
+            ->count();
+
+        $objective->current_value = $count;
+
+        if ($count >= $objective->target_value && $objective->completed_at === null) {
+            $objective->completed_at = $run->current_tick;
+        }
+
+        $objective->save();
+    }
+
+    // ── Nexus interventions ──────────────────────────────────────────────────
+
+    /**
+     * Check Phase-2 Nexus intervention checkpoints and fire INNN events or penalties.
+     *
+     * Called once per tick, only when run is in Phase 2.
+     * Each checkpoint fires at most once per run (guarded by innn_events lookup).
+     *
+     * Checkpoints by Phase-2 sol:
+     *  Sol 30  — < 1 task at > 50% progress → warning event
+     *  Sol 50  — 0 tasks completed           → warning event
+     *  Sol 55  — nexus_debt > 12000          → endRun failed (nexus_debt)
+     *  Sol 65  — 0 tasks completed           → sanction event + 1 random advisor locked 1 sol
+     *  Sol 80  — countdown warning           → event only when tick >= tick_limit - 20
+     */
+    public function checkNexusInterventions(Run $run): void
+    {
+        $sol = $run->getPhase2Sol();
+
+        if ($sol >= 30) {
+            $this->maybeFireSol30Warning($run, $sol);
+        }
+
+        if ($sol >= 50) {
+            $this->maybeFireSol50Warning($run);
+        }
+
+        if ($sol >= 55) {
+            if (($run->nexus_debt ?? 0) > 12000) {
+                $this->endRun($run, 'failed', 'nexus_debt');
+                return;
+            }
+        }
+
+        if ($sol >= 65) {
+            $this->maybeFireSol65Sanction($run);
+        }
+
+        if ($sol >= 80) {
+            $this->maybeFireSol80Countdown($run);
+        }
+    }
+
+    private function maybeFireSol30Warning(Run $run, int $sol): void
+    {
+        $eventKey = 'run.nexus_warning_sol30';
+
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        // Only fire once, at the exact sol-30 boundary
+        if ($sol !== 30) {
+            return;
+        }
+
+        $objectives = $run->objectives()->get();
+        $aboveHalf  = $objectives->filter(fn($o) => $o->progressPct() > 50)->count();
+
+        if ($aboveHalf < 1) {
+            $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+                'run_id'    => $run->id,
+                'colony_id' => $run->colony_id,
+            ]);
+        }
+    }
+
+    private function maybeFireSol50Warning(Run $run): void
+    {
+        $eventKey = 'run.nexus_warning_sol50';
+
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        $completed = $run->objectives()->whereNotNull('completed_at')->count();
+
+        if ($completed === 0) {
+            $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+                'run_id'    => $run->id,
+                'colony_id' => $run->colony_id,
+            ]);
+        }
+    }
+
+    private function maybeFireSol65Sanction(Run $run): void
+    {
+        $eventKey = 'run.nexus_sanction_sol65';
+
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        $completed = $run->objectives()->whereNotNull('completed_at')->count();
+
+        if ($completed > 0) {
+            return;
+        }
+
+        // Fire sanction event
+        $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+            'run_id'    => $run->id,
+            'colony_id' => $run->colony_id,
+        ]);
+
+        // Apply penalty: pick a random active advisor and lock them for 1 sol
+        $advisor = Advisor::where('colony_id', $run->colony_id)
+            ->where(function ($q) use ($run): void {
+                $q->whereNull('unavailable_until_tick')
+                  ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+            })
+            ->inRandomOrder()
+            ->first();
+
+        if ($advisor !== null) {
+            $advisor->unavailable_until_tick = $run->current_tick + 1;
+            $advisor->save();
+        }
+    }
+
+    private function maybeFireSol80Countdown(Run $run): void
+    {
+        $eventKey = 'run.nexus_countdown_sol80';
+
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        if ($run->current_tick < $run->getTickLimit() - 20) {
+            return;
+        }
+
+        $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+            'run_id'    => $run->id,
+            'colony_id' => $run->colony_id,
+        ]);
+    }
+
+    /**
+     * Return true if an innn_events row with this event key already exists
+     * for this user, created at or after the run's start time.
+     */
+    private function eventAlreadyFired(Run $run, string $eventKey): bool
+    {
+        return DB::table('innn_events')
+            ->where('user', $run->user_id)
+            ->where('event', $eventKey)
+            ->where('created_at', '>=', $run->started_at)
+            ->exists();
+    }
+
     // ── Fail state checks ────────────────────────────────────────────────────
 
     /**
@@ -238,6 +569,7 @@ class RunProgressService
      *
      * Fail states checked:
      *  trust_collapse — trust value < trust_fail_threshold (instant fail).
+     *  nexus_debt     — nexus_debt > 12000 (checked here as secondary path).
      *  time_limit     — current_tick >= tick_limit.
      */
     public function checkFailStates(Run $run): ?string
@@ -251,6 +583,10 @@ class RunProgressService
 
         if ($trust < $trustThreshold) {
             return 'trust_collapse';
+        }
+
+        if (($run->nexus_debt ?? 0) > 12000) {
+            return 'nexus_debt';
         }
 
         if ($run->current_tick >= $run->getTickLimit()) {
@@ -268,20 +604,21 @@ class RunProgressService
      * Persists status, fail_reason and ended_at atomically, then fires an INNN event.
      *
      * @param string      $status     'completed' or 'failed'
-     * @param string|null $failReason e.g. 'trust_collapse', 'time_limit'
+     * @param string|null $failReason e.g. 'trust_collapse', 'time_limit', 'nexus_debt'
      */
     public function endRun(Run $run, string $status, ?string $failReason = null): void
     {
         DB::transaction(function () use ($run, $status, $failReason): void {
-            $run->status     = $status;
+            $run->status      = $status;
             $run->fail_reason = $failReason;
-            $run->ended_at   = now();
+            $run->ended_at    = now();
             $run->save();
 
             $eventKey = match (true) {
-                $status === 'completed'               => 'run.run_completed',
-                $failReason === 'trust_collapse'      => 'run.run_failed_trust',
-                default                               => 'run.run_failed_time',
+                $status === 'completed'          => 'run.run_completed',
+                $failReason === 'trust_collapse' => 'run.run_failed_trust',
+                $failReason === 'nexus_debt'     => 'run.run_failed_nexus_debt',
+                default                          => 'run.run_failed_time',
             };
 
             $this->createEvent(
@@ -310,8 +647,8 @@ class RunProgressService
             return 0;
         }
 
-        $completed    = $run->objectives()->whereNotNull('completed_at')->count();
-        $tickLimit    = $run->getTickLimit();
+        $completed     = $run->objectives()->whereNotNull('completed_at')->count();
+        $tickLimit     = $run->getTickLimit();
         $completedTick = $run->current_tick;
 
         $credits = (int) (DB::table('colony_resources')
