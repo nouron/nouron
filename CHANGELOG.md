@@ -2,6 +2,8 @@
 
 ## 2026-05-24
 
+- **Sprint A — Run-Struktur (Playtest-Voraussetzung)**: Phase-1-Erkennung (CC Lv3 + 2 Produktionsgebäude Lv2+ + 3 Berater), Phase-2-Start mit Aufgaben-Zuweisung (4 trackbare Typen: Expertenstab, Kreditimperium, Kolonieblüte, Forschungsvorsprung), Aufgaben-Fortschrittstracking pro Sol im GameTick, Sieg-Bedingung (2/3 Aufgaben), Fail-States (Vertrauen < -20, Zeitablauf). Ergebnis-Screen (`/run/{id}/result`) mit Score, Fortschrittsbalken, Sieg/Niederlage-Feedback. DB: `run_objectives`-Tabelle, `phase`/`fail_reason` auf `runs`. 20 neue Tests, 576 gesamt grün.
+
 - **Kommandanten-Zuweisung (Fleet)**: Raumfahrer-Berater kann einer Flotte als Kommandant zugewiesen und abberufen werden. DB-Migration re-added `fleet_id`/`is_commander` auf `advisors`-Tabelle. `PersonellService::assignCommander/removeCommander`, zwei neue Routes (`fleet.commander.assign/remove`). `fleet/config` zeigt Commander-Sektion (Zuweisung, Abberufung, Verfügbarkeitscheck). Berater-Screen zeigt "Auf Flotte"-Chip wenn Raumfahrer als Kommandant aktiv. GDD-TODO §14 erfüllt. 16 neue Tests.
 
 - **CLAUDE.md bereinigt**: Veraltete Statusangaben korrigiert — Berater-Screen, jQuery-Migration und Onboarding-System als abgeschlossen markiert. Abgeschlossen-Liste um Run-System, Lobby, Debug-Bar, Fleet Command Overlay ergänzt. Ausstehend präzisiert: Onboarding-Wizard (kein dedizierter Flow), Kommandanten-Zuweisung UI, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg).
