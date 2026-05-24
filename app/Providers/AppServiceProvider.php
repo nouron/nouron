@@ -116,6 +116,15 @@ class AppServiceProvider extends ServiceProvider
 
                 $view->with('currentSol', $currentSol);
                 $view->with('solLimit', $solLimit);
+
+                // Feature 3: Nexus debt from the active run — shown in the navbar.
+                // nexus_debt_max = 12000 Cr (Nexus cancels the concession above this cap, GDD §15).
+                $activeRun = \App\Models\Run::where('user_id', Auth::id())
+                    ->where('status', 'active')
+                    ->first(['nexus_debt']);
+
+                $view->with('nexusDebt', $activeRun?->nexus_debt);
+                $view->with('nexusDebtMax', 12000);
             }
         });
     }

@@ -58,6 +58,28 @@
             </ul>
             <ul class="navbar-nav ms-auto">
                 @auth
+                {{-- Feature 3: Nexus debt badge — only shown when an active run exists. --}}
+                @if(isset($nexusDebt) && $nexusDebt !== null)
+                    @php
+                        // Colour thresholds: normal < 80%, warning >= 80%, danger >= 95%.
+                        $nexusDebtPct = $nexusDebtMax > 0 ? ($nexusDebt / $nexusDebtMax) * 100 : 0;
+                        $nexusBadgeClass = match(true) {
+                            $nexusDebtPct >= 95 => 'bg-danger text-white',
+                            $nexusDebtPct >= 80 => 'bg-warning text-dark',
+                            default             => 'bg-secondary text-white',
+                        };
+                    @endphp
+                    <li class="nav-item d-flex align-items-center px-2">
+                        <span
+                            class="badge {{ $nexusBadgeClass }}"
+                            title="{{ __('colony.nexus_debt_label') }}"
+                        >
+                            <i class="bi bi-bank"></i>
+                            {{ __('colony.nexus_debt_label') }}:
+                            {{ number_format($nexusDebt) }} / {{ number_format($nexusDebtMax) }} Cr
+                        </span>
+                    </li>
+                @endif
                 <li class="nav-item">
                     <form method="POST" action="{{ route('sol.next') }}">
                         @csrf

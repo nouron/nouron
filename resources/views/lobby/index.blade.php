@@ -192,6 +192,57 @@
 
     /* Alpine x-cloak support */
     [x-cloak] { display: none !important; }
+
+    /* ── Highscore table ───────────────────────────────────────────────────── */
+    .lobby-highscore-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+    }
+
+    .lobby-highscore-table th,
+    .lobby-highscore-table td {
+        padding: 0.55rem 0.75rem;
+        text-align: left;
+        border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
+        vertical-align: middle;
+    }
+
+    .lobby-highscore-table thead th {
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--pico-muted-color, #6c757d);
+        border-bottom: 2px solid var(--pico-muted-border-color, #ddd);
+    }
+
+    .lobby-highscore-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .lobby-highscore-table tbody tr:hover td {
+        background: var(--pico-card-background-color, #f9f9f9);
+    }
+
+    /* Score column — right-align and slightly bolder */
+    .lobby-highscore-score {
+        text-align: right !important;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* Ended date sub-line */
+    .lobby-hs-meta {
+        font-size: 0.78rem;
+        color: var(--pico-muted-color, #6c757d);
+    }
+
+    /* Empty state for highscore section */
+    .lobby-hs-empty {
+        font-size: 0.9rem;
+        color: var(--pico-muted-color, #6c757d);
+        margin-top: 0.75rem;
+    }
 </style>
 @endpush
 
@@ -319,18 +370,20 @@
 
     {{-- ── New Run button ───────────────────────────────────────────────────── --}}
     {{-- Shown when the game allows multiple runs AND no pending run exists yet. --}}
-    {{-- Disabled until the run-creation flow is implemented.                   --}}
-    @if($allowMultiple && $pending->isEmpty())
+    @if($allowMultiple && $pending->isEmpty() && $active->isEmpty())
         <div style="margin-top: 1.5rem;">
-            <button
-                class="lobby-btn-disabled"
-                disabled
-                aria-disabled="true"
-                title="{{ __('lobby.coming_soon') }}"
+            {{-- POST to run.new — controller resets the colony and creates a fresh Run. --}}
+            <form
+                method="POST"
+                action="{{ route('run.new') }}"
+                style="display: inline;"
+                onsubmit="return confirm(@json(__('lobby.new_run_confirm')))"
             >
-                {{ __('lobby.new_run_button') }}
-            </button>
-            <p class="lobby-coming-soon-note">{{ __('lobby.coming_soon') }}</p>
+                @csrf
+                <button type="submit">
+                    {{ __('lobby.new_run_button') }}
+                </button>
+            </form>
         </div>
     @endif
 
@@ -408,6 +461,63 @@
                 </article>
             @endforeach
         </div>
+    @endif
+
+    {{-- ── Highscore table ─────────────────────────────────────────────────── --}}
+    {{-- Feature 1: Shows the last 10 finished runs with pre-calculated scores. --}}
+    <h2 class="lobby-section-heading" style="margin-top: 2.5rem;">
+        {{ __('lobby.highscore_title') }}
+    </h2>
+
+    @if($finishedRuns->isNotEmpty())
+        <div style="overflow-x: auto; margin-top: 0.75rem;">
+            <table class="lobby-highscore-table">
+                <thead>
+                    <tr>
+                        <th>{{ __('lobby.highscore_col_mission') }}</th>
+                        <th>{{ __('lobby.highscore_col_status') }}</th>
+                        <th>{{ __('lobby.highscore_col_sol') }}</th>
+                        <th>{{ __('lobby.highscore_col_tasks') }}</th>
+                        <th class="lobby-highscore-score">{{ __('lobby.highscore_col_score') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($finishedRuns as $entry)
+                        @php
+                            $statusCls = $entry['status'] === 'completed' ? 'completed' : 'failed';
+                            $statusKey = $entry['status'] === 'completed' ? 'status_completed' : 'status_failed';
+                            $endedDate = $entry['ended_at'] ? $entry['ended_at']->format('d.m.Y') : '—';
+                        @endphp
+                        <tr>
+                            <td>
+                                {{ __('lobby.run_number', ['id' => $entry['id']]) }}
+                                @if($entry['ended_at'])
+                                    <br>
+                                    <small class="lobby-hs-meta">{{ __('lobby.highscore_ended', ['date' => $endedDate]) }}</small>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="lobby-status-pill lobby-status-pill--{{ $statusCls }}">
+                                    {{ __('lobby.' . $statusKey) }}
+                                </span>
+                            </td>
+                            <td>{{ $entry['current_tick'] }} / {{ $entry['tick_limit'] }}</td>
+                            <td>
+                                {{ $entry['completed_objectives'] }}
+                                @if($entry['total_objectives'] > 0)
+                                    / {{ $entry['total_objectives'] }}
+                                @endif
+                            </td>
+                            <td class="lobby-highscore-score">
+                                <strong>{{ number_format($entry['score']) }}</strong>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @else
+        <p class="lobby-hs-empty">{{ __('lobby.highscore_no_runs') }}</p>
     @endif
 
     {{-- ── Empty state ──────────────────────────────────────────────────────── --}}
