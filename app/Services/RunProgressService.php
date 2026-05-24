@@ -25,16 +25,18 @@ class RunProgressService
      * Check whether all Phase-1 completion conditions are met.
      *
      * Conditions (GDD §15):
-     *  1. Command Center (building_id = 1) at level >= 3.
-     *  2. At least 2 production buildings (building_id != 1) at level >= 2.
+     *  1. Command Center (building_id = 25) at level >= 3.
+     *  2. At least 2 production buildings (building_id != 25) at level >= 2.
      *  3. At least 3 active advisors (colony assigned, not on cooldown).
      */
     public function checkPhase1Completion(Run $run): bool
     {
+        $ccId = config('buildings.commandCenter.id', 25);
+
         // Condition 1 — CC level >= 3
         $ccReady = DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
-            ->where('building_id', 1)
+            ->where('building_id', $ccId)
             ->where('level', '>=', 3)
             ->exists();
 
@@ -45,7 +47,7 @@ class RunProgressService
         // Condition 2 — at least 2 non-CC production buildings at level >= 2
         $productionCount = DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
-            ->where('building_id', '!=', 1)
+            ->where('building_id', '!=', $ccId)
             ->where('level', '>=', 2)
             ->count();
 
