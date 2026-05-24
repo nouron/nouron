@@ -230,10 +230,9 @@ class RunProgressService
 
     private function updateKreditimperium(RunObjective $objective, Run $run): void
     {
-        $credits = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 1)
-            ->value('amount') ?? 0);
+        $credits = (int) (DB::table('user_resources')
+            ->where('user_id', $run->user_id)
+            ->value('credits') ?? 0);
 
         if ($credits >= 5000) {
             $objective->streak_value++;
@@ -290,8 +289,8 @@ class RunProgressService
 
     /**
      * Streak task: all three conditions must hold simultaneously each sol.
-     * Regolith (resource_id=3) > 50, Organics (resource_id=5) > 50, Supply (resource_id=4) > 0.
-     * Any single failure resets the streak to 0.
+     * Regolith (colony_resources, resource_id=3) > 50, Organika (resource_id=5) > 50,
+     * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
      */
     private function updateSelbstversorgung(RunObjective $objective, Run $run): void
     {
@@ -305,10 +304,9 @@ class RunProgressService
             ->where('resource_id', 5)
             ->value('amount') ?? 0);
 
-        $supply = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 4)
-            ->value('amount') ?? 0);
+        $supply = (int) (DB::table('user_resources')
+            ->where('user_id', $run->user_id)
+            ->value('supply') ?? 0);
 
         $allMet = $regolith > 50 && $organics > 50 && $supply > 0;
 
@@ -651,20 +649,19 @@ class RunProgressService
         $tickLimit     = $run->getTickLimit();
         $completedTick = $run->current_tick;
 
-        $credits = (int) (DB::table('colony_resources')
-            ->where('colony_id', $run->colony_id)
-            ->where('resource_id', 1)
-            ->value('amount') ?? 0);
+        $credits = (int) (DB::table('user_resources')
+            ->where('user_id', $run->user_id)
+            ->value('credits') ?? 0);
 
         $trust = (int) (DB::table('colony_resources')
             ->where('colony_id', $run->colony_id)
             ->where('resource_id', 12)
             ->value('amount') ?? 0);
 
-        return ($completed * 1000)
+        return max(0, ($completed * 1000)
             + (($tickLimit - $completedTick) * 10)
             + (int) ($credits / 10)
-            + ($trust * 5);
+            + ($trust * 5));
     }
 
     // ── Internal helpers ─────────────────────────────────────────────────────

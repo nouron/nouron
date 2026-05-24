@@ -152,13 +152,24 @@ class RunProgressServiceTest extends TestCase
     }
 
     /**
-     * Set the credits resource (resource_id = 1) for colony 1.
+     * Set credits for user 3 in user_resources (credits are user-level, not colony-level).
      */
     private function setCredits(int $amount): void
     {
-        DB::table('colony_resources')->updateOrInsert(
-            ['resource_id' => 1, 'colony_id' => $this->colonyId],
-            ['amount' => $amount]
+        DB::table('user_resources')->updateOrInsert(
+            ['user_id' => $this->userId],
+            ['credits' => $amount, 'supply' => 15]
+        );
+    }
+
+    /**
+     * Set supply for user 3 in user_resources (supply is user-level, not colony-level).
+     */
+    private function setSupply(int $amount): void
+    {
+        DB::table('user_resources')->updateOrInsert(
+            ['user_id' => $this->userId],
+            ['supply' => $amount]
         );
     }
 
@@ -236,7 +247,7 @@ class RunProgressServiceTest extends TestCase
         // Testdata has buildings 25 (lv3), 28 (lv2), 30 (lv3), 31 (lv2) etc.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
-            ->where('building_id', '!=', 1)
+            ->where('building_id', '!=', 25)
             ->update(['level' => 1]);
 
         // Seed exactly 1 qualifying production building (level >= 2)
@@ -634,10 +645,10 @@ class RunProgressServiceTest extends TestCase
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 0);
 
-        // regolith (3) > 50, organics (5) > 50, supply (4) > 0
+        // regolith (resource_id=3) > 50, organics (resource_id=5) > 50, supply (user_resources) > 0
         $this->setColonyResource(3, 60);
         $this->setColonyResource(5, 55);
-        $this->setColonyResource(4, 1);
+        $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
 
@@ -656,7 +667,7 @@ class RunProgressServiceTest extends TestCase
         // Regolith at exactly 50 — condition requires > 50, so this fails
         $this->setColonyResource(3, 50);
         $this->setColonyResource(5, 55);
-        $this->setColonyResource(4, 1);
+        $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
 
@@ -674,7 +685,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->setColonyResource(3, 100);
         $this->setColonyResource(5, 100);
-        $this->setColonyResource(4, 5);
+        $this->setSupply(5);
 
         $this->service->updateObjectiveProgress($run);
 
@@ -1092,5 +1103,163 @@ class RunProgressServiceTest extends TestCase
             ->exists();
 
         $this->assertTrue($fired, 'nexus_countdown_sol80 must fire when current_tick >= tick_limit - 20');
+    }
+
+    // ── Additional coverage (BUG-fixes & test-gaps) ───────────────────────────
+
+    public function test_task_selbstversorgung_resets_streak_when_supply_is_zero(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 5);
+
+        $this->setColonyResource(3, 60);
+        $this->setColonyResource(5, 55);
+        $this->setSupply(0); // supply = 0 — condition fails
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when supply = 0');
+    }
+
+    public function test_task_selbstversorgung_resets_streak_when_organics_fails(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_selbstversorgung', 15, 5);
+
+        $this->setColonyResource(3, 60);
+        $this->setColonyResource(5, 50); // exactly 50 — requires > 50, so fails
+        $this->setSupply(1);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when organics <= 50');
+    }
+
+    public function test_task_kreditimperium_reads_credits_from_user_resources(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_kreditimperium', 10, 0);
+
+        // Write credits to user_resources (not colony_resources — which would be the wrong table).
+        DB::table('user_resources')->updateOrInsert(
+            ['user_id' => $this->userId],
+            ['credits' => 8000, 'supply' => 10]
+        );
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(1, $objective->streak_value, 'streak must increment when user_resources.credits >= 5000');
+    }
+
+    public function test_calculate_score_reads_credits_from_user_resources(): void
+    {
+        $run = $this->makeRun(['status' => 'completed', 'current_tick' => 50]);
+
+        DB::table('user_resources')->updateOrInsert(
+            ['user_id' => $this->userId],
+            ['credits' => 5000, 'supply' => 10]
+        );
+        $this->setTrust(0);
+
+        $score = $this->service->calculateScore($run);
+
+        // Formula: (0 × 1000) + ((100 - 50) × 10) + (5000 / 10) + (0 × 5) = 0 + 500 + 500 + 0 = 1000
+        $this->assertEquals(1000, $score, 'calculateScore must read credits from user_resources');
+    }
+
+    public function test_calculate_score_clamps_to_zero_when_trust_is_very_negative(): void
+    {
+        $run = $this->makeRun(['status' => 'completed', 'current_tick' => 99]);
+
+        DB::table('user_resources')->updateOrInsert(
+            ['user_id' => $this->userId],
+            ['credits' => 0, 'supply' => 10]
+        );
+        $this->setTrust(-100); // -100 × 5 = -500 offset; tick bonus = (100-99)×10 = 10 → net negative
+
+        $score = $this->service->calculateScore($run);
+
+        $this->assertEquals(0, $score, 'calculateScore must not return a negative score');
+    }
+
+    public function test_nexus_debt_exactly_at_12000_does_not_fail_run(): void
+    {
+        // nexus_debt = 12000 is NOT > 12000, so the run must NOT fail.
+        $run = $this->makePhase2Run(60, ['nexus_debt' => 12000]);
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $run->refresh();
+        $this->assertEquals('active', $run->status, 'Run must stay active when nexus_debt == 12000 (boundary)');
+    }
+
+    public function test_nexus_sol80_countdown_does_not_fire_when_tick_too_early(): void
+    {
+        // tick_limit = 100, current_tick = 79 → 79 < 100 - 20 = 80 → must NOT fire
+        $run = $this->makePhase2Run(79, [
+            'settings' => ['tick_limit' => 100],
+        ]);
+        $this->makeObjective($run, 'task_expertenstab', 10);
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_countdown_sol80')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_countdown_sol80 must not fire when current_tick < tick_limit - 20');
+    }
+
+    public function test_nexus_sol65_sanction_fires_even_without_advisor_in_colony(): void
+    {
+        // Colony 1 has no advisors (cleared in setUp). The sanction event must still fire.
+        $run = $this->makePhase2Run(65);
+        $this->makeObjective($run, 'task_expertenstab', 10); // 0 completed objectives
+
+        $this->service->checkNexusInterventions($run);
+
+        $fired = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_sanction_sol65')
+            ->exists();
+
+        $this->assertTrue($fired, 'Sol-65 sanction event must fire even when no advisor is present');
+    }
+
+    public function test_nexus_interventions_are_idempotent(): void
+    {
+        // Calling checkNexusInterventions twice on the same sol must not insert duplicate events.
+        $run = $this->makePhase2Run(50);
+        $this->makeObjective($run, 'task_expertenstab', 10); // 0 completed
+
+        $this->service->checkNexusInterventions($run);
+        $this->service->checkNexusInterventions($run);
+
+        $count = DB::table('innn_events')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_warning_sol50')
+            ->count();
+
+        $this->assertEquals(1, $count, 'nexus_warning_sol50 must only be inserted once per run');
+    }
+
+    public function test_draw_objectives_fallback_with_pool_of_2_tasks(): void
+    {
+        // Task pool has only 2 tasks — both non-economy.
+        // drawObjectives must not crash and must produce <= 2 objectives.
+        config(['game.run.task_pool' => ['task_expertenstab', 'task_forschungsvorsprung']]);
+
+        $run = $this->makeRun(['phase' => 2]);
+
+        $this->service->drawObjectives($run);
+
+        $count = RunObjective::where('run_id', $run->id)->count();
+        $this->assertLessThanOrEqual(2, $count, 'With a 2-task pool, at most 2 objectives must be drawn');
+        $this->assertGreaterThan(0, $count, 'At least 1 objective must be drawn even with a tiny pool');
     }
 }

@@ -143,6 +143,11 @@ class LobbyController extends Controller
                 ->where('colony_id', $colonyId)
                 ->update(['is_explored' => false]);
 
+            // Reset all research progress so the run starts with a clean slate.
+            DB::table('colony_researches')
+                ->where('colony_id', $colonyId)
+                ->update(['level' => 0]);
+
             // Create the new run record.
             Run::create([
                 'user_id'      => $userId,
