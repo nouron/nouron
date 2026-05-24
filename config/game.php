@@ -216,10 +216,16 @@ return [
     ],
 
     // Run structure — one run = one expedition with a defined start, goal and end (GDD §15).
-    // These values are not yet read by any service (run system not yet implemented).
     'run' => [
         'allow_multiple'       => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
         'tick_limit'           => 100,    // total ticks per run (60–100, default 100)
+        'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
+        'task_pool'            => [       // all available Phase-2 task keys
+            'task_expertenstab',
+            'task_kreditimperium',
+            'task_koloniebluete',
+            'task_forschungsvorsprung',
+        ],
         'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer
         'playbymailmode'       => false,  // true: tick fires when all players confirm, at most after tick_duration_hours

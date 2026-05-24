@@ -13,6 +13,7 @@ use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\LobbyController;
+use App\Http\Controllers\RunResultController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -20,8 +21,10 @@ use Illuminate\Support\Facades\Route;
 // ── Lobby ─────────────────────────────────────────────────────────────────────
 
 Route::middleware('auth')->group(function () {
-    Route::get('/lobby',       [LobbyController::class, 'index'])->name('lobby');
-    Route::post('/lobby/start', [LobbyController::class, 'start'])->name('lobby.start');
+    Route::get('/lobby',          [LobbyController::class, 'index'])->name('lobby');
+    Route::post('/lobby/start',   [LobbyController::class, 'start'])->name('lobby.start');
+    Route::get('/run/{id}/result', [RunResultController::class, 'show'])->name('run.result')->where('id', '[0-9]+');
+    Route::post('/run/new',        [LobbyController::class, 'newRun'])->name('run.new');
 });
 
 // ── Public ───────────────────────────────────────────────────────────────────
