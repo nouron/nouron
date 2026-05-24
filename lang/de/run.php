@@ -9,4 +9,18 @@ return [
     'task_kreditimperium'       => 'Kreditimperium: Credits-Bestand ≥ 5.000 für 10 aufeinanderfolgende Sole',
     'task_koloniebluete'        => 'Kolonieblüte: Vertrauen > 70 für 10 aufeinanderfolgende Sole',
     'task_forschungsvorsprung'  => 'Forschungsvorsprung: Mindestens 3 Forschungen auf Level 5+',
+
+    // Result screen
+    'result_title_completed'    => 'Mission erfüllt',
+    'result_title_failed'       => 'Mission gescheitert',
+    'result_fail_trust'         => 'Die Kolonisten haben das Vertrauen verloren.',
+    'result_fail_time'          => 'Die Konzessionslaufzeit ist abgelaufen.',
+    'result_score_label'        => 'Score',
+    'result_ticks_label'        => 'Erreicht in Sol :current von :limit',
+    'result_objective_fulfilled' => 'Erfüllt',
+    'result_objective_open'     => 'Nicht erfüllt',
+    'result_btn_new_run'        => 'Neue Mission starten',
+    'result_btn_colony'         => 'Kolonie ansehen',
+    'result_btn_colony_disabled' => 'Kolonie ansehen (nur bei Erfolg)',
+    'new_run_preparing'         => 'Neuer Run wird vorbereitet — Feature kommt in Phase 4.',
 ];
