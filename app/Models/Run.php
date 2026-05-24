@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Eloquent model for the runs table.
@@ -25,12 +26,15 @@ class Run extends Model
         'started_at',
         'ended_at',
         'settings',
+        'phase',
+        'fail_reason',
     ];
 
     protected function casts(): array
     {
         return [
             'current_tick' => 'integer',
+            'phase'        => 'integer',
             'started_at'   => 'datetime',
             'ended_at'     => 'datetime',
             'settings'     => 'array',
@@ -54,6 +58,36 @@ class Run extends Model
     public function colony()
     {
         return $this->belongsTo(Colony::class, 'colony_id', 'id');
+    }
+
+    /**
+     * The Phase-2 objectives assigned to this run.
+     */
+    public function objectives(): HasMany
+    {
+        return $this->hasMany(RunObjective::class, 'run_id');
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
+    public function isPhase1(): bool
+    {
+        return $this->phase === 1;
+    }
+
+    public function isPhase2(): bool
+    {
+        return $this->phase === 2;
+    }
+
+    /**
+     * Maximum number of ticks allowed for this run.
+     * Reads from the run's own settings JSON first, falls back to game config.
+     */
+    public function getTickLimit(): int
+    {
+        $settings = $this->settings ?? [];
+        return (int) ($settings['tick_limit'] ?? config('game.run.tick_limit', 100));
     }
 
     // ── Scopes ───────────────────────────────────────────────────────────────

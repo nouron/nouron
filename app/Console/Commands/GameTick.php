@@ -144,6 +144,42 @@ class GameTick extends Command
             $this->line("  Merchant visits spawned:  {$n}");
         });
 
+        // Step 12 — Run structure: phase transitions, objective progress, run-end checks.
+        // Runs outside the main DB::transaction so that endRun() can commit independently
+        // and return early without rolling back the tick's resource/decay work.
+        $run->refresh();
+        $runProgressService = $this->laravel->make(\App\Services\RunProgressService::class);
+
+        if ($run->phase === 1) {
+            if ($runProgressService->checkPhase1Completion($run)) {
+                $runProgressService->transitionToPhase2($run);
+                $run->refresh();
+                $this->line('  Phase 1 completed — transitioning to Phase 2.');
+            }
+        }
+
+        if ($run->phase === 2) {
+            $runProgressService->updateObjectiveProgress($run);
+
+            // Win condition: at least 2 of 3 objectives completed.
+            $completedCount = $run->objectives()->whereNotNull('completed_at')->count();
+            if ($completedCount >= 2) {
+                $score = $runProgressService->calculateScore($run);
+                $runProgressService->endRun($run, 'completed');
+                $this->info("  Run #{$run->id} completed! Score: {$score}");
+                $this->info("Tick {$tick} done.");
+                return self::SUCCESS;
+            }
+        }
+
+        $failReason = $runProgressService->checkFailStates($run);
+        if ($failReason) {
+            $runProgressService->endRun($run, 'failed', $failReason);
+            $this->warn("  Run #{$run->id} failed: {$failReason}");
+            $this->info("Tick {$tick} done.");
+            return self::SUCCESS;
+        }
+
         $this->info("Tick {$tick} done.");
         return self::SUCCESS;
     }
