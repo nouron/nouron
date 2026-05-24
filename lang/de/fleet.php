@@ -42,6 +42,14 @@ return [
     'desc_join'    => 'Flotte schließt sich der Ziel-Flotte an und fusioniert mit ihr.',
     'desc_attack'  => 'Flotte greift die Ziel-Flotte an.',
 
+    // ── Commander assignment ──────────────────────────────────────────────────
+
+    'commander_assigned'             => 'Kommandant der Flotte zugewiesen.',
+    'commander_removed'              => 'Kommandant von der Flotte abberufen.',
+    'commander_no_navigator'         => 'Kein Navigator auf der Kolonie verfügbar.',
+    'commander_navigator_unavailable'=> 'Navigator ist derzeit nicht verfügbar.',
+    'commander_already_assigned'     => 'Diese Flotte hat bereits einen Kommandanten.',
+
     // ── General UI ────────────────────────────────────────────────────────────
 
     'order_form_title'        => 'Befehl erteilen',

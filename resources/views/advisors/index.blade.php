@@ -137,6 +137,15 @@
                                                       ? ('Inaktiv bis T' + slot.advisor.unavailable_until_tick)
                                                       : 'Aktiv'">
                                             </span>
+                                            {{-- Fleet commander chip.
+                                                 Requires buildSlots() in AdvisorController to include
+                                                 fleet_id and is_commander fields on slot.advisor. --}}
+                                            <template x-if="slot.advisor.fleet_id && slot.advisor.is_commander">
+                                                <span class="advisor-status advisor-status--on-fleet"
+                                                      title="Kommandiert eine Flotte">
+                                                    Auf Flotte
+                                                </span>
+                                            </template>
                                             <button class="btn-fire" @click="openFireDialog(slot)">Entlassen</button>
                                         </div>
 

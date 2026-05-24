@@ -113,6 +113,62 @@
         </small>
     </h2>
 
+    {{-- Commander section --}}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title"><i class="bi bi-person-badge"></i> Kommandant</h5>
+
+            {{-- NOTE for backend: use session('commander_success') for assign/remove actions
+                 to avoid collision with the order-form session('success') below. --}}
+            @if(session('commander_success'))
+                <div class="alert alert-success py-2">{{ session('commander_success') }}</div>
+            @endif
+            @if($errors->has('commander'))
+                <div class="alert alert-danger py-2">{{ $errors->first('commander') }}</div>
+            @endif
+
+            @if($commander)
+                {{-- Commander is assigned --}}
+                <div class="d-flex align-items-center gap-3">
+                    <span>
+                        <i class="bi bi-person-fill"></i>
+                        <strong>{{ $commander->personell->name }}</strong>
+                        <span class="badge bg-secondary ms-1">Rang {{ $commander->rank }}</span>
+                    </span>
+                    <form method="POST" action="{{ route('fleet.commander.remove', $fleet->id) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i> Abberufen
+                        </button>
+                    </form>
+                </div>
+            @else
+                {{-- No commander assigned --}}
+                <p class="mb-2 text-muted small">Kein Kommandant zugewiesen.</p>
+
+                @if($availableNavigator)
+                    <form method="POST" action="{{ route('fleet.commander.assign', $fleet->id) }}">
+                        @csrf
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-person-plus-fill"></i> Raumfahrer zuweisen
+                        </button>
+                    </form>
+                    <p class="mt-2 mb-0 text-muted small">
+                        <i class="bi bi-info-circle"></i>
+                        Dein Raumfahrer (<strong>{{ $availableNavigator->personell->name }}</strong>,
+                        Rang {{ $availableNavigator->rank }}) verlässt die Kolonie und führt diese Flotte.
+                    </p>
+                @else
+                    <p class="mb-0 text-muted small">
+                        <i class="bi bi-slash-circle"></i>
+                        Kein verfügbarer Raumfahrer auf der Kolonie.
+                    </p>
+                @endif
+            @endif
+        </div>
+    </div>
+    {{-- End commander section --}}
+
     @if($fleetIsInColonyOrbit && $colony)
 
     <div class="alert alert-info py-2 mb-3">

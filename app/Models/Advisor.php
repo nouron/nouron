@@ -13,11 +13,14 @@ class Advisor extends Model
     protected $fillable = [
         'user_id', 'personell_id', 'colony_id',
         'rank', 'active_ticks', 'unavailable_until_tick',
+        'fleet_id', 'is_commander',
     ];
 
     protected $casts = [
         'rank'         => 'integer',
         'active_ticks' => 'integer',
+        'fleet_id'     => 'integer',
+        'is_commander' => 'boolean',
     ];
 
     public function personell(): BelongsTo
@@ -39,6 +42,16 @@ class Advisor extends Model
     public function isUnemployed(): bool
     {
         return $this->colony_id === null;
+    }
+
+    public function isCommander(): bool
+    {
+        return (bool) $this->is_commander;
+    }
+
+    public function isOnFleet(): bool
+    {
+        return $this->fleet_id !== null;
     }
 
     public function isAvailable(?int $currentTick = null): bool

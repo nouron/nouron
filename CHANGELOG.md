@@ -2,6 +2,8 @@
 
 ## 2026-05-24
 
+- **Kommandanten-Zuweisung (Fleet)**: Raumfahrer-Berater kann einer Flotte als Kommandant zugewiesen und abberufen werden. DB-Migration re-added `fleet_id`/`is_commander` auf `advisors`-Tabelle. `PersonellService::assignCommander/removeCommander`, zwei neue Routes (`fleet.commander.assign/remove`). `fleet/config` zeigt Commander-Sektion (Zuweisung, Abberufung, Verfügbarkeitscheck). Berater-Screen zeigt "Auf Flotte"-Chip wenn Raumfahrer als Kommandant aktiv. GDD-TODO §14 erfüllt. 16 neue Tests.
+
 - **CLAUDE.md bereinigt**: Veraltete Statusangaben korrigiert — Berater-Screen, jQuery-Migration und Onboarding-System als abgeschlossen markiert. Abgeschlossen-Liste um Run-System, Lobby, Debug-Bar, Fleet Command Overlay ergänzt. Ausstehend präzisiert: Onboarding-Wizard (kein dedizierter Flow), Kommandanten-Zuweisung UI, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg).
 
 ## 2026-05-23

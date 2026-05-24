@@ -18,6 +18,7 @@
                             <tr>
                                 <th>Flotte</th>
                                 <th>Position</th>
+                                <th>Kommandant</th>
                                 <th>Aktion</th>
                                 <th></th>
                             </tr>
@@ -38,6 +39,12 @@
                                     @else
                                         {{ $fleet->x }},{{ $fleet->y }}
                                     @endif
+                                </td>
+                                <td>
+                                    {{-- Commander status placeholder. Full detail on fleet config page.
+                                         TODO (backend): pass $commandersByFleet keyed by fleet id
+                                         to render commander name here if needed in the future. --}}
+                                    <span class="text-muted small">—</span>
                                 </td>
                                 <td>
                                     @php $nextOrder = $pendingOrders->get($fleet->id)?->first() @endphp
@@ -76,7 +83,7 @@
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="4">
+                                <td colspan="5">
                                     @if($errors->has('fleet'))
                                         <div class="alert alert-danger py-1 mb-2 small">{{ $errors->first('fleet') }}</div>
                                     @endif
