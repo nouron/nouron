@@ -1510,7 +1510,100 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 
 Der Raumfahrer ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
 
-> **TODO Design (Evaluation):** Der Raumfahrer ist der einzige Beratertyp mit einer "Außendienst"-Mechanik (kann die Kolonie verlassen und eine Flotte führen). Ob andere Beratertypen analoge Mechaniken bekommen sollen — z.B. der Konsul begleitet einen Handelstrip, der Analytiker leitet eine Erkundungssonde — ist offen und soll nach erstem Playtest evaluiert werden.
+### Außenmissionen (Berater-Außendienst)
+
+> **Phase 4** — Vollständig ausgearbeitet, Implementierung ab Phase 4 geplant.
+
+Der Raumfahrer hat den Flottenkommandanten-Pfad als eigene Außendienst-Mechanik (§14). Alle übrigen vier Beratertypen können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr.
+
+---
+
+#### Grundprinzip
+
+- Der Berater verlässt die Kolonie für die Missionsdauer vollständig.
+- Während der Mission generiert er **keine AP** für seinen Pool.
+- Bei Rückkehr erhält die Kolonie einen Bonus — abhängig vom Missionstyp und Rang.
+- Der Spieler initiiert die Mission manuell; sie kann nicht vorzeitig abgebrochen werden.
+- Maximal **2 Berater gleichzeitig auf Außenmission** (kolonieweites Limit).
+
+---
+
+#### Missionen nach Beratertyp
+
+| Beratertyp | Missionsname | Dauer (Sole) | Bonus bei Erfolg |
+|------------|--------------|--------------|-----------------|
+| Baumeister | Nexus-Notfall-Wartung | 3–5 | Ein beliebiges Koloniegebäude erhält sofort volle `status_points` |
+| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne Research-AP-Kosten, CC-Gates bleiben aktiv) |
+| Konsul | Handelsreise | 3–4 | Exklusives Bar-Angebot bei Rückkehr (2 Sole gültig, erscheint als zusätzlicher Slot neben normalen Bar-Angeboten) |
+| Stratege | Sicherheitsanalyse | 3–4 | Nächster zufälliger NPC-Encounter ist vorab bekannt (Stärkewert + Typ sichtbar vor dem Auslösen) |
+| Raumfahrer | — | — | Kein Außenmissions-Pfad — sein Außendienst ist der Flottenkommandanten-Pfad (§14) |
+
+> **⚠️ Balance:** Der Analytiker-Bonus (Kenntnis +1 Level kostenlos) ist der stärkste Effekt. CC-Gates bleiben aktiv — ein Kenntnislevel das CC Lv5 voraussetzt, kann durch eine Außenmission nicht übersprungen werden. Dennoch muss nach Playtest geprüft werden, ob ein Free-Level-Upgrade bei Lv4→Lv5 zu mächtig ist. Ggf. Einschränkung: Bonus gilt nur für Lv1→Lv2 oder Lv2→Lv3.
+
+> **⚠️ Balance:** Der Stratege-Bonus (vorab bekannter Encounter) verändert die Risikostruktur von Begegnungen fundamental. Er sollte nur für den unmittelbar nächsten Encounter gelten, nicht pauschal für mehrere Sole voraus. Verfällt nach dem nächsten Encounter oder nach 5 Solen (je nachdem was früher eintritt).
+
+---
+
+#### Risiko-Mechanik: Drei Ausgänge
+
+Jede Außenmission hat drei mögliche Ausgänge. Der Rang des Beraters bestimmt die Wahrscheinlichkeitsverteilung.
+
+| Ausgang | Beschreibung |
+|---------|-------------|
+| **Erfolg** | Voller Bonus bei Rückkehr |
+| **Teilerfolg** | Halber Bonus (gerundet nach unten) |
+| **Misserfolg** | Kein Bonus — AP haben dennoch für die Missionsdauer gefehlt |
+
+**Wahrscheinlichkeiten nach Rang:**
+
+| Rang | Erfolg | Teilerfolg | Misserfolg |
+|------|--------|------------|------------|
+| 1 — Junior | 60% | 25% | 15% |
+| 2 — Senior | 75% | 20% | 5% |
+| 3 — Experte | 90% | 10% | 0% |
+
+**Kein permanenter Verlust:** Bei Misserfolg kehrt der Berater unbeschadet zurück. Der einzige Schaden ist der Opportunitätsverlust — die AP haben während der Missionsdauer gefehlt. Ein Rang-Abzug oder permanenter Malus findet nicht statt.
+
+> **⚠️ Balance:** Bei Rang 1 besteht eine 15% Misserfolgswahrscheinlichkeit. Das ist der Anreiz, Missionen bevorzugt mit erfahrenen Beratern zu starten — oder das Risiko bewusst einzugehen. Eine Junior-Mission bleibt attraktiv wenn die Opportunitätskosten gering sind (kurze Missionsdauer, AP-Pool ohnehin nicht voll ausgelastet).
+
+---
+
+#### Constraints und Interaktionen
+
+| Regel | Beschreibung |
+|-------|-------------|
+| **Burnout-Sperre** | Ein Berater mit gesetztem `unavailable_until_tick` (Burnout) kann keine Mission starten. |
+| **Missions-Immunität** | Ein Berater auf Außenmission kann während dieser Zeit keinen Burnout erleiden. Der Burnout-Timer pausiert für die Missionsdauer. |
+| **Concurrent-Limit** | Maximal 2 Berater gleichzeitig auf Mission (kolonieweites Limit). Ein dritter kann erst starten, wenn einer zurückgekehrt ist. |
+| **Missionsdauer-Transparenz** | Das Missions-UI zeigt die verbleibenden Sole bis Rückkehr neben der aktuellen Sol-Nummer an. |
+| **AP-Nutzungsrate** | Run-Aufgabe "Effizienzsprung" (AP-Nutzungsrate ≥ 90%, §15) und Außenmissionen schließen sich nicht aus — der Spieler muss aktiv abwägen ob er einen AP-Produzenten für die Missionsdauer opfert. |
+| **Raumfahrer ausgenommen** | Der Raumfahrer erscheint in der Missions-Auswahl nicht — seine Außendienst-Mechanik ist der Flottenkommandanten-Pfad. |
+
+---
+
+#### Technische Implementierungshinweise
+
+**Schema-Erweiterung (`advisors`-Tabelle):**
+
+```
+advisors
+├── on_mission_until_tick  ← nullable int: gesetzt während Außenmission aktiv
+└── mission_type           ← nullable string: z.B. 'nexus_maintenance', 'data_exchange', 'trade_trip', 'security_analysis'
+```
+
+`on_mission_until_tick` und `unavailable_until_tick` sind semantisch getrennt — ersteres ist freiwillige Abwesenheit, letzteres unfreiwillige Erholungsphase. Sie dürfen nicht gleichzeitig gesetzt sein (Constraint auf Service-Ebene).
+
+**AP-Berechnung:**
+
+`getTotalActionPoints()` (bzw. `PersonellService`) muss `on_mission_until_tick` analog zu `unavailable_until_tick` behandeln: Wenn `current_tick <= on_mission_until_tick`, liefert der Berater **0 AP-Bonus** (Grundwert bleibt aktiv).
+
+**Bonus-Dispatch:**
+
+Der Missions-Abschluss wird in `AdvisorMissionService` verarbeitet. Empfehlung: Strategy-Pattern oder typ-spezifische `resolve*Mission()`-Methoden je `mission_type`. Der Zufallsausgang (Erfolg/Teilerfolg/Misserfolg) wird im Tick-Schritt 7 gewürfelt, sobald `current_tick > on_mission_until_tick`.
+
+**Tick-Integration:**
+
+Missions-Auflösung läuft in **Tick-Schritt 7** (Advisor Ticks), nach AP-Berechnung und Burnout-Prüfung. Reihenfolge innerhalb Schritt 7: erst AP-Update, dann Burnout-Check, dann Missions-Auflösung.
 
 ---
 
