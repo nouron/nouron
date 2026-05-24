@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Fleet;
 
 use App\Http\Controllers\BaseController;
+use App\Models\Advisor;
 use App\Models\Fleet;
 use App\Models\FleetOrder;
 use App\Services\ColonyService;
@@ -77,7 +78,33 @@ class FleetController extends BaseController
         $personells = \Illuminate\Support\Facades\DB::table('personell')->get()->keyBy('id');
         $researches = \Illuminate\Support\Facades\DB::table('researches')->get()->keyBy('id');
 
-        return view('fleet.config', compact('fleet', 'colony', 'fleetIsInColonyOrbit', 'resources', 'ships', 'personells', 'researches'));
+        $commander = Advisor::where('fleet_id', $id)
+            ->where('is_commander', 1)
+            ->with('personell')
+            ->first();
+
+        $primeColony = null;
+        try {
+            $primeColony = $this->colonyService->getPrimeColony($userId);
+        } catch (\RuntimeException) {
+            // no prime colony — $availableNavigator will be null
+        }
+
+        $navigationPersonellId = \App\Services\Techtree\PersonellService::idFor('pilot');
+        $availableNavigator = $primeColony
+            ? Advisor::where('colony_id', $primeColony->id)
+                ->where('personell_id', $navigationPersonellId)
+                ->where('is_commander', 0)
+                ->whereNull('unavailable_until_tick')
+                ->with('personell')
+                ->first()
+            : null;
+
+        return view('fleet.config', compact(
+            'fleet', 'colony', 'fleetIsInColonyOrbit',
+            'resources', 'ships', 'personells', 'researches',
+            'commander', 'availableNavigator'
+        ));
     }
 
     // ── CRUD ─────────────────────────────────────────────────────────────────
@@ -272,5 +299,51 @@ class FleetController extends BaseController
         });
 
         return response()->json($result);
+    }
+
+    // ── Commander assignment ──────────────────────────────────────────────────
+
+    public function assignCommander(Request $request, int $id)
+    {
+        $userId = $this->getCurrentUserId();
+        $fleet  = Fleet::where('id', $id)->where('user_id', $userId)->first();
+
+        if (!$fleet) {
+            abort(403);
+        }
+
+        try {
+            $colony = $this->colonyService->getPrimeColony($userId);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['commander' => $e->getMessage()]);
+        }
+
+        try {
+            $this->personellService->assignCommander($colony->id, $id, $userId);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['commander' => $e->getMessage()]);
+        }
+
+        return redirect()->route('fleet.config', $id)->with('commander_success', __('fleet.commander_assigned'));
+    }
+
+    public function removeCommander(Request $request, int $id)
+    {
+        $userId = $this->getCurrentUserId();
+        $fleet  = Fleet::where('id', $id)->where('user_id', $userId)->first();
+
+        if (!$fleet) {
+            abort(403);
+        }
+
+        try {
+            $colony = $this->colonyService->getPrimeColony($userId);
+        } catch (\RuntimeException $e) {
+            return back()->withErrors(['commander' => $e->getMessage()]);
+        }
+
+        $this->personellService->removeCommander($id, $colony->id, $userId);
+
+        return redirect()->route('fleet.config', $id)->with('commander_success', __('fleet.commander_removed'));
     }
 }

@@ -137,6 +137,9 @@ Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
     Route::post('/json/addToFleet/{id}',   [FleetController::class, 'addToFleet'])->name('json.addtofleet')->where('id', '[0-9]+');
     Route::get('/json/getFleetTechnologies/{id}', [FleetController::class, 'getFleetTechnologies'])->name('json.technologies')->where('id', '[0-9]+');
     Route::get('/json/getFleetResources/{id}',    [FleetController::class, 'getFleetResources'])->name('json.resources')->where('id', '[0-9]+');
+    // Commander assignment
+    Route::post('/{id}/commander/assign', [FleetController::class, 'assignCommander'])->name('commander.assign')->where('id', '[0-9]+');
+    Route::post('/{id}/commander/remove', [FleetController::class, 'removeCommander'])->name('commander.remove')->where('id', '[0-9]+');
 });
 
 // ── Advisors ──────────────────────────────────────────────────────────────────
