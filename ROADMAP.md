@@ -517,6 +517,32 @@ Techtree-Ansicht komplett überarbeitet. Fünf Sektionen (Phase 1–5), eine pro
 
 ---
 
+### Phase 3i: Run-System — Abgeschlossen (Mai 2026, PR #141)
+
+Roguelike-Run-Struktur mit zwei Phasen, 9 trackbaren Objectives und Nexus-Interventionssystem. Playtest-Voraussetzung für Phase-4-Entscheidungen.
+
+#### Sprint A — Kern-Infrastruktur
+
+- [x] DB: `runs`-Tabelle (`current_tick`, `status`, `phase`, `fail_reason`, `nexus_debt`, `phase2_start_tick`) + `run_objectives`-Tabelle (`task_key`, `target_value`, `current_value`, `streak_value`, `completed_at`)
+- [x] `Run`- und `RunObjective`-Eloquent-Models
+- [x] `RunProgressService`: Phase-1-Check (CC Lv3 + 2 Produktionsgebäude Lv2+ + 3 Berater), `drawObjectives()` mit Combo-Blacklist (max. 1 Economy-Task), 4 Objective-Typen (Phase 1 Sprint A)
+- [x] GameTick-Integration: `updateObjectiveProgress`, `checkNexusInterventions`, `checkFailStates`, `endRun`, `calculateScore`
+- [x] Fail-States: Vertrauen < −20, Zeitablauf (tick_limit), Nexus-Schulden > 12.000 Cr
+- [x] Sieg-Bedingung: min. 2 von 3 Objectives erfüllt
+- [x] Ergebnis-Screen (`/run/{id}/result`) mit Score, Fortschrittsbalken, Sieg/Niederlage-Feedback
+
+#### Sprint B — Vollständige Objective-Suite + Nexus
+
+- [x] 5 weitere Objective-Typen (9 insgesamt): `task_self_sufficiency`, `task_expedition_coverage`, `task_engineering_output`, `task_trade_volume`, `task_combat_record`
+- [x] Nexus-Interventionen: Sol-30/50-Warnung, Sol-65-Berater-Sperre, Sol-80-Countdown, Schulden-Fail-State
+- [x] UI: Highscore-Tabelle Lobby, Nexus-Kredit-Badge Navbar (grau/gelb/rot)
+- [x] Vollständiger `newRun()`-Reset (Gebäude, Tiles, Forschungen, Advisors, Credits)
+- [x] Score-Formel: `(abgeschlossen × 1000) + ((tick_limit − sol) × 10) + (credits / 10) + (vertrauen × 5)`, min. 0
+- [x] Task-Keys englischsprachig gemäß CLAUDE.md-Konvention
+- [x] 613 Tests grün (57 neue in Sprint B)
+
+---
+
 ### Entwicklungswerkzeuge (Dev Tools)
 
 Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-Stack nötig. Alle Tools liegen im `tools/`-Verzeichnis und starten per `php -S localhost:808x tools/<name>.php`.

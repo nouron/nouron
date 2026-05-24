@@ -127,4 +127,9 @@ return [
 
     'next_sol_button' => 'Nächsten Sol starten',
 
+    // ── Nexus-Schulden-Anzeige (Feature 3) ───────────────────────────────────
+
+    'nexus_debt_label'  => 'Nexus-Kredit',
+    'nexus_debt_format' => ':amount / 12.000 Cr',
+
 ];

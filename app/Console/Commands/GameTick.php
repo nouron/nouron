@@ -161,6 +161,17 @@ class GameTick extends Command
         if ($run->phase === 2) {
             $runProgressService->updateObjectiveProgress($run);
 
+            // Step 12a — Nexus interventions (warnings, sanctions, nexus_debt fail).
+            $runProgressService->checkNexusInterventions($run);
+            $run->refresh();
+
+            // Early-exit if Nexus ended the run (nexus_debt fail path in checkNexusInterventions).
+            if ($run->status !== 'active') {
+                $this->warn("  Run #{$run->id} ended by Nexus intervention: {$run->fail_reason}");
+                $this->info("Tick {$tick} done.");
+                return self::SUCCESS;
+            }
+
             // Win condition: at least 2 of 3 objectives completed.
             $completedCount = $run->objectives()->whereNotNull('completed_at')->count();
             if ($completedCount >= 2) {

@@ -28,16 +28,20 @@ class Run extends Model
         'settings',
         'phase',
         'fail_reason',
+        'nexus_debt',
+        'phase2_start_tick',
     ];
 
     protected function casts(): array
     {
         return [
-            'current_tick' => 'integer',
-            'phase'        => 'integer',
-            'started_at'   => 'datetime',
-            'ended_at'     => 'datetime',
-            'settings'     => 'array',
+            'current_tick'      => 'integer',
+            'phase'             => 'integer',
+            'nexus_debt'        => 'integer',
+            'phase2_start_tick' => 'integer',
+            'started_at'        => 'datetime',
+            'ended_at'          => 'datetime',
+            'settings'          => 'array',
         ];
     }
 
@@ -78,6 +82,16 @@ class Run extends Model
     public function isPhase2(): bool
     {
         return $this->phase === 2;
+    }
+
+    /**
+     * Number of sols elapsed since Phase-2 started.
+     *
+     * Returns 0 when phase2_start_tick is not yet set (i.e. still in Phase 1).
+     */
+    public function getPhase2Sol(): int
+    {
+        return $this->current_tick - ($this->phase2_start_tick ?? $this->current_tick);
     }
 
     /**

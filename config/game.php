@@ -221,10 +221,15 @@ return [
         'tick_limit'           => 100,    // total ticks per run (60–100, default 100)
         'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
         'task_pool'            => [       // all available Phase-2 task keys
-            'task_expertenstab',
-            'task_kreditimperium',
-            'task_koloniebluete',
-            'task_forschungsvorsprung',
+            'task_senior_advisors',
+            'task_credit_reserve',
+            'task_colony_prosperity',
+            'task_research_lead',
+            'task_self_sufficiency',
+            'task_expedition_coverage',
+            'task_engineering_output',
+            'task_trade_volume',
+            'task_combat_record',
         ],
         'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer

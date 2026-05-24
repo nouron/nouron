@@ -33,4 +33,17 @@ return [
     'colony_unnamed' => '(Unbenannt)',
     'ended_at'       => 'Beendet',
     'max_players'    => 'Max. Spieler',
+
+    // Highscore table (Feature 1)
+    'highscore_title'        => 'Vergangene Missionen',
+    'highscore_col_mission'  => 'Mission',
+    'highscore_col_status'   => 'Status',
+    'highscore_col_sol'      => 'Sol erreicht',
+    'highscore_col_tasks'    => 'Aufgaben',
+    'highscore_col_score'    => 'Score',
+    'highscore_no_runs'      => 'Noch keine abgeschlossenen Missionen.',
+    'highscore_ended'        => 'Beendet: :date',
+
+    // New run button (Feature 2)
+    'new_run_confirm'        => 'Neuen Run starten — Kolonie wird zurückgesetzt. Fortfahren?',
 ];
