@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-24
+
+- **CLAUDE.md bereinigt**: Veraltete Statusangaben korrigiert — Berater-Screen, jQuery-Migration und Onboarding-System als abgeschlossen markiert. Abgeschlossen-Liste um Run-System, Lobby, Debug-Bar, Fleet Command Overlay ergänzt. Ausstehend präzisiert: Onboarding-Wizard (kein dedizierter Flow), Kommandanten-Zuweisung UI, Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg).
+
 ## 2026-05-23
 
 - **Run-System + manueller Sol-Trigger**: `runs`-Tabelle eingeführt (`current_tick`, `status`, FK auf User + Colony). `Run`-Model mit `scopeActive()`. `TickService`-Singleton verwendet bei Web-Requests `runs.current_tick` statt timestamp-basierter Berechnung. `GameTick`-Command nimmt `--run=N` entgegen. `SolController` (`POST /sol/next`): inkrementiert `current_tick` atomar, feuert sofort `game:tick`. "Nächsten Sol starten"-Button in Bootstrap-Navbar. Fixer `dailyAt('03:00')`-Scheduler entfernt (als Kommentar erhalten als Multiplayer-Referenz).

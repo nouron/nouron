@@ -5,16 +5,16 @@
 **Nouron** Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv.
 - GitHub: https://github.com/nouron/nouron
 - Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS (neu, Phase 3b+), SVG für Spielfelder
-- Frontend-Migration: bestehende Screens noch jQuery + Bootstrap 5 (schrittweise auf Alpine.js + PicoCSS — kein Mix in neuen Screens)
+- Frontend-Migration: jQuery vollständig entfernt (Mai 2026). Legacy-Screens noch Bootstrap 5 (schrittweise auf Alpine.js + PicoCSS — kein Mix in neuen Screens)
 - Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3 (UI) aktiv
 
 ## Aktueller Stand (Stand: Mai 2026)
 
 **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler.
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte).
 
-**Laufend (Phase 3):** UI-Migration jQuery/Bootstrap → Alpine.js + PicoCSS. jQuery-Migration Schritt 2 abgeschlossen (fleets.js, trade.js). Berater-Screen, GDD-Cleanup, Onboarding ausstehend.
+**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Kommandanten-Zuweisung UI (Fleet), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg noch in DB, per Whitelist gefiltert).
 
 ## Wichtige Korrekturen
 
@@ -49,7 +49,7 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 
 - `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt Config, nicht umgekehrt
 - Neue Screens: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap
-- Legacy-Screens: noch jQuery + Bootstrap 5 — werden schrittweise migriert
+- Legacy-Screens: noch Bootstrap 5 — werden schrittweise auf Alpine.js + PicoCSS migriert (jQuery vollständig entfernt)
 - `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
 - Moral-Events: Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
@@ -88,7 +88,7 @@ Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
 - `game-designer` — Mechanics definieren, GDD aktualisieren (vor jeder neuen Mechanik)
 - `game-developer` — Game Logic, Services, Tick-Verarbeitung
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
-- `ui-specialist` — Blade, Alpine.js + PicoCSS (neu), Bootstrap/jQuery (Legacy)
+- `ui-specialist` — Blade, Alpine.js + PicoCSS (neu), Bootstrap 5 (Legacy, kein jQuery mehr)
 - `db-migration-agent` — Schema, Migrations, SQLite, testdata.sqlite.sql
 - `qa-tester` — Tests schreiben (nach jeder Implementierung automatisch)
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
