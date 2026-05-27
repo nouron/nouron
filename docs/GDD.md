@@ -2462,8 +2462,9 @@ Phase-2-Objectives werden nicht sofort beim Phasenübergang angezeigt. Stattdess
 |------------------------|---------|
 | Sol +0 (Übergang) | INNN-Ereignis von Nexus: "Phase 1 abgeschlossen. Neue Direktive folgt." — keine Objectives sichtbar |
 | Sol +1 | Berater-Dialog (z.B. Baumeister): Objective 1 wird enthüllt. AP-Kosten entstehen, wenn der Spieler den Dialog aktiv annimmt. |
-| Sol +2–3 | Zweiter Berater (z.B. Analytiker) enthüllt Objective 2 |
-| Sol +4–5 | Dritter Berater enthüllt Objective 3 oder Objective 2 wird erst durch ein Run-Ereignis ausgelöst |
+| Sol +4–5 | Zweiter Berater (z.B. Analytiker) enthüllt Objective 2 |
+| Sol +8–12 | Dritter Berater enthüllt Objective 3 oder Objective wird durch ein Run-Ereignis ausgelöst |
+| Sol +15 | Sol-Threshold-Fallback: alle noch nicht enthüllten Objectives erscheinen automatisch |
 
 Der Spieler kann bereits ab Sol +1 mit den Arbeiten beginnen — er muss das vollständige Objective-Set nicht kennen um sinnvoll zu handeln. Das erzeugt echte Spannung: "Was kommt als nächstes?"
 
@@ -2474,7 +2475,7 @@ Objectives können durch drei verschiedene Trigger enthüllt werden:
 | Trigger-Typ | Beschreibung | Beispiel |
 |-------------|-------------|---------|
 | `advisor_dialog` | Ein Berater-Dialog (§17.2) löst die Enthüllung aus | Baumeister berichtet nach erstem Sol von einem Nexus-Auftrag |
-| `sol_threshold` | Fester Sol-Zeitpunkt nach Phase-2-Start | Objective erscheint spätestens ab Sol +5 (Fallback wenn kein Dialog ausgelöst wurde) |
+| `sol_threshold` | Fester Sol-Zeitpunkt nach Phase-2-Start | Objective erscheint spätestens ab Sol +15 (Fallback wenn kein Dialog ausgelöst wurde) |
 | `run_event` | Ein bestimmtes Run-Ereignis löst das Objective aus | Korvette erkundet ein neues Tile → Objective "Expedition abschließen" wird sichtbar |
 
 **Fallback-Regel:** Jedes Objective hat einen `reveal_by_sol`-Wert (Anzahl Sole nach Phase-2-Start). Wurde das Objective bis dahin nicht durch Dialog oder Event enthüllt, erscheint es automatisch — stilles INNN-Ereignis mit Absender "Nexus Command". Kein Objective bleibt für immer versteckt.
@@ -2685,7 +2686,7 @@ Neuer Block in `config/game.php → progressive_discovery`:
 ```php
 'progressive_discovery' => [
     // Objective Discovery
-    'objective_reveal_fallback_ticks' => 5,   // Sole nach Phase-2-Start bis Sol-Threshold-Fallback greift
+    'objective_reveal_fallback_ticks' => 15,  // Sole nach Phase-2-Start bis Sol-Threshold-Fallback greift
     'objective_reveal_min_delay'      => 1,   // Minimale Sole zwischen zwei Objective-Enthüllungen
 
     // Advisor Dialogs
