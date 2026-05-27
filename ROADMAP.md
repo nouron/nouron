@@ -578,6 +578,12 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 **Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Rassen-Effekte, Steuersystem und Diplomatie-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
 
+- [ ] **Progressive Discovery System** (GDD §17) — Drei miteinander verwandte Mechaniken die als roter Faden durch den Run laufen:
+  - **Almanach-Grundstruktur:** Neue Tabellen `almanac_articles` + `run_almanac_unlocks`; Freischalt-Trigger-System; INNN-Benachrichtigung "Neuer Almanach-Artikel freigeschaltet"; Wissensbonus beim ersten Lesen (einmalig pro Run); Config-Block `config/almanac.php`. Erster Implementierungsschritt, keine Abhängigkeiten.
+  - **Objective Discovery via Sol-Threshold:** Neue Spalten `revealed_at_tick` + `reveal_trigger` auf `run_objectives`; "Unbekannt"-Zustand im Objectives-Screen (Fragezeichen-Icon); gestaffelte Enthüllung der Phase-2-Objectives über Sol +0 bis +5 nach Phasenübergang; Sol-Threshold-Fallback als Sicherheitsnetz. Zweiter Implementierungsschritt.
+  - **Advisor Dialogs:** Neue Tabelle `advisor_dialogs`; Dialog-Lifecycle (pending → offered → accepted/declined/expired); AP-Kosten beim Annehmen; Config-Block `config/advisor_dialogs.php`; Tick-Schritt-7-Integration; erster Katalog: 3–5 Dialog-Definitionen je Berater-Typ. Dritter Implementierungsschritt, setzt Almanach + Objective Discovery voraus.
+  - Schema-Erweiterung `runs.almanac_read_bonuses` (JSON) + `config/game.php → progressive_discovery`-Block.
+  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
 - [ ] **Multiplayer-Lobby & Multi-Run-Support** — `game.run.allow_multiple` Config-Flag ist vorbereitet, der „Neuen Run starten"-Button im Lobby-Screen existiert (disabled). Für echtes Multi-Run-Support fehlt:
   - Run-Erstellungsflow: `OnboardingService::setupNewPlayer()` alloziert immer einen neuen Planeten + neue Kolonie; für einen zweiten Run muss das isoliert aufrufbar sein ohne Neu-Registrierung
   - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)

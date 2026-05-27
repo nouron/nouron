@@ -76,6 +76,57 @@ Stammdaten: buildings, researches, ships, personell, resources + jeweilige _cost
 - **Encounters**: `attack`-Orders lösen Zwischenfälle aus; Korvette (Stärke 3) vs. NPC-Schiffe
 - **Koordinatensystem**: 12×12-Grid pro System; Stern bei (6,6)
 
+## Progressive Discovery System (GDD §17)
+
+### Almanach-Artikel-Kategorien
+
+| Kategorie-Key | Beschreibung |
+|---------------|-------------|
+| `mechanics` | Spielmechaniken (AP, Supply, Decay, Sol-Zyklus) |
+| `buildings` | Gebäude-Beschreibungen und Effekte |
+| `knowledge` | Kenntnisse und Forschungseffekte |
+| `lore` | Hintergrundgeschichte, Planet, Nexus |
+| `encounters` | Begegnungen, NPC-Typen, Taktiken |
+
+### Almanach Freischalt-Trigger-Typen
+
+| Trigger-Key | Parameter | Beschreibung |
+|-------------|-----------|-------------|
+| `always` | — | Immer verfügbar |
+| `sol_reached:{n}` | n = Sol-Nummer | Run hat Sol n erreicht |
+| `building_built:{key}` | key = Gebäude-Key | Gebäude erstmals gebaut |
+| `objective_revealed:{key}` | key = Task-Key | Objective wurde enthüllt |
+| `encounter_event:{type}` | type = Event-Typ | Bestimmter Encounter aufgetreten |
+| `advisor_dialog:{key}` | key = Dialog-Key | Berater-Dialog abgeschlossen |
+
+### Advisor Dialog Status-Werte
+
+| Status | Bedeutung |
+|--------|-----------|
+| `pending` | Dialog-Trigger erfüllt, noch nicht im INNN-Feed |
+| `offered` | INNN-Eintrag erzeugt, Spieler hat noch nicht geantwortet |
+| `accepted` | Spieler hat angenommen, AP verbraucht, Bonus gutgeschrieben |
+| `declined` | Spieler hat abgelehnt oder Dialog ist verfallen |
+| `expired` | Maximale Postpone-Anzahl überschritten, Dialog automatisch aufgelöst |
+
+### Neue Tabellen (Phase 4)
+
+| Tabelle | Zweck |
+|---------|-------|
+| `almanac_articles` | Stammdaten aller Almanach-Artikel (key, category, unlock_trigger, bonus_type, bonus_value) |
+| `run_almanac_unlocks` | Welche Artikel sind in diesem Run freigeschaltet (`run_id`, `article_key`, `unlocked_at_tick`) |
+| `advisor_dialogs` | Laufende und abgeschlossene Berater-Dialoge pro Run (`run_id`, `advisor_type`, `dialog_key`, `status`, ...) |
+
+### Neue Felder auf bestehenden Tabellen (Phase 4)
+
+| Tabelle | Spalte | Typ | Zweck |
+|---------|--------|-----|-------|
+| `run_objectives` | `revealed_at_tick` | integer nullable | Sol der Objective-Enthüllung |
+| `run_objectives` | `reveal_trigger` | string nullable | Wie wurde enthüllt (`advisor_dialog`, `sol_threshold`, `run_event`) |
+| `runs` | `almanac_read_bonuses` | JSON | Liste von article_keys mit bereits gutgeschriebenen Boni |
+
+---
+
 ## Testdaten in der DB
 
 Simpsons-Testcharaktere: Homer (ID 0), Marge (1), Bart (3), etc.
