@@ -6,5 +6,19 @@
       "Write",
       "Edit"
     ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "mcp__github__merge_pull_request",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash .claude/hooks/pre-merge-check.sh",
+            "statusMessage": "Merge-Checkliste wird geprüft..."
+          }
+        ]
+      }
+    ]
   }
 }
