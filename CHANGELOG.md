@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-05-24
+## 2026-05-28
+
+- **GDD §17 — Progressive Discovery System**: Drei neue Designmechaniken als roter Faden durch das Spiel festgehalten. §17.1 Objective Discovery: Phase-2-Objectives nicht sofort sichtbar, gestaffelte Enthüllung über Sol +1/+4–5/+8–12, Fallback bei Sol +15 nach Phase-2-Start. §17.2 Advisor Dialogs: Berater als aktive Akteure mit Multi-Sol-Dialogen und AP-Kosten. §17.3 Almanach Unlock: Artikel per Run-Fortschritt freischalten, Lesen gibt einmaligen Wissensbonus (ap_bonus, resource_bonus, knowledge_hint, encounter_prep). §17.4 Implementierungshinweise: 3 neue Tabellen (advisor_dialogs, almanac_articles, run_almanac_unlocks), empfohlene Implementierungsreihenfolge. Phase-4-Eintrag in ROADMAP ergänzt. Nur Dokumentation, kein Code.
+
+- **ROADMAP Phase 4 bereinigt**: Drei veraltete Einträge korrigiert: Rassen-System als abgekündigt markiert (GDD §3, DB-Cleanup-Eintrag ersetzt TODO); klassisches Diplomatie-System (Krieg/Allianz) auf NPC-Vereinbarungen reduziert (inkompatibel mit Singleplayer-Roguelike, GDD §1.1); Nexus-Außenposten-Slot aus Phase 4 entfernt (steht bereits als Phase-5-Hypothese).
+
+
 
 - **Sprint B — Run-System Phase 2 (Playtest-Voraussetzung)**: 5 weitere Aufgaben-Typen: `task_self_sufficiency` (Streak: Regolith + Organika + Supply), `task_expedition_coverage` (Counter: erkannte Colony-Zone-Tiles), `task_engineering_output` (Counter: SP-Summe Gebäude), `task_trade_volume` (Counter: gekaufte Händler-Items im Run), `task_combat_record` (Counter: Kampfsiege im Run). Combo-Blacklist: max. 1 Economy-Aufgabe pro Ziehung. Nexus-Interventionen: Warnungen bei Sol-30/50, Berater-Sperre bei Sol-65 (bei 0 Aufgaben), Countdown bei Sol-80. Nexus-Schulden-Fail-State (> 12.000 Cr). UI: Highscore-Tabelle in Lobby (letzte 10 Runs), vollständiger `newRun()`-Flow (Kolonie-Reset inkl. `colony_researches`), Nexus-Kredit-Badge in Navbar (grau/gelb/rot). DB: `innn_events.created_at` ergänzt. QA-Review: Credits/Supply wurden aus falscher Tabelle gelesen (`colony_resources` statt `user_resources`) — gefixt; Score-Clamp auf 0. Task-Keys von Deutsch auf Englisch umbenannt (CLAUDE.md-Konvention). 57 neue Tests, 613 gesamt grün.
 
