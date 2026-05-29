@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/swipe.css') }}">
     @stack('styles')
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
@@ -26,35 +27,35 @@
                 @if(($inActiveRun ?? false) && !request()->routeIs('lobby*'))
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('galaxy.*')) active @endif"
-                       href="{{ route('galaxy.index') }}"><i class="bi bi-globe2"></i> Galaxis</a>
+                       href="{{ route('galaxy.index') }}"><i class="bi bi-globe2"></i><span class="nav-label"> Galaxis</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('fleet.*')) active @endif"
-                       href="{{ route('fleet.index') }}"><i class="bi bi-send"></i> Flotte</a>
+                       href="{{ route('fleet.index') }}"><i class="bi bi-send"></i><span class="nav-label"> Flotte</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('colony.*')) active @endif"
-                       href="{{ route('colony.view') }}"><i class="bi bi-globe2"></i> Kolonie</a>
+                       href="{{ route('colony.view') }}"><i class="bi bi-globe2"></i><span class="nav-label"> Kolonie</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('techtree.*')) active @endif"
-                       href="{{ route('techtree.index') }}"><i class="bi bi-building"></i> Techtree</a>
+                       href="{{ route('techtree.index') }}"><i class="bi bi-building"></i><span class="nav-label"> Techtree</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('advisors.*')) active @endif"
-                       href="{{ route('advisors.index') }}"><i class="bi bi-people"></i> Berater</a>
+                       href="{{ route('advisors.index') }}"><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('colony.bar*')) active @endif"
-                       href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i> Cantina</a>
+                       href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"
-                       href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i> Handel</a>
+                       href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i><span class="nav-label"> Handel</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('messages.*')) active @endif"
-                       href="{{ route('messages.inbox') }}"><i class="bi bi-envelope"></i> Nachrichten</a>
+                       href="{{ route('messages.inbox') }}"><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a>
                 </li>
                 @endif
             </ul>

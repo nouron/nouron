@@ -26,6 +26,14 @@
 
 - **image-gen crop-Feature**: `tools/image-gen/generate.py` — center-crop nach Resize über `crop`-Key in Kategorie-Config.
 
+- **Messages-Screen auf neues Design migriert**: Von `layouts.app` (Bootstrap) auf `layouts.colony` (PicoCSS/Alpine). Bootstrap-Accordion durch Alpine `x-data`/`x-show` ersetzt. Tabs-Partial mit neuem `msg-tabs`-Stil. `messages.css` als eigene CSS-Datei extrahiert (geladen via `@push('styles')` im Tabs-Partial). `msg-*`-CSS aus `resources.css` entfernt (gehört dort nicht hin).
+
+- **Navbar Icon-only auf Mobile**: Nav-Label-Text in `<span class="nav-label">` gewrappt — auf Mobilgeräten (< 768px) via `swipe.css` ausgeblendet, nur Icons bleiben sichtbar. Gilt für beide Layouts.
+
+- **Swipe-Infrastruktur**: `public/js/swipe.js` — zwei Alpine-Komponenten: `swipeNav({prev, next})` (URL-Navigation via Swipe) + `swipeCarousel(count, initial)` (In-Page-Panels, für Berater/Cantina/Hangar geplant). `public/css/swipe.css` — Container, Track, Panel, Dot-Indikatoren. Geladen in `layouts.colony` + `layouts.app`.
+
+- **Messages Swipe-Navigation**: Alle Messages-Views (`inbox`, `outbox`, `archive`, `events`, `news`) haben `swipeNav`-Wrapper — auf Mobile zwischen Tabs hin- und herwischen (Eingang → Ausgang → Archiv → Ereignisse → INNN).
+
 ## 2026-05-29
 
 - **PR #142 Review-Fixes**: ROADMAP Phase-4-TODO Objective Discovery: Sol +5 auf Sol +15 korrigiert (war nach §17.1-Timing-Korrektur nicht mitgezogen). Hook-Kommentar in `pre-merge-check.sh` präzisiert (kein PR-Description-Check vorhanden). `advisor_dialogs.status`-Semantik geschärft: `declined` = explizite Spieler-Ablehnung, `expired` = automatischer Verfall durch Postpone-Maximum oder Timeout — in GDD §17.2 und `game-reference.md` konsistent dokumentiert. CHANGELOG doppelte Leerzeile entfernt. CLAUDE.md abschließendes Newline ergänzt.

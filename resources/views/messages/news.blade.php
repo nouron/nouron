@@ -1,18 +1,14 @@
-@extends('layouts.app')
+@extends('layouts.colony')
 @section('title', 'INNN — Nouron')
 
 @section('content')
+<div style="padding: 1.5rem 1.5rem 3rem;"
+     x-data="swipeNav({ prev: '{{ route('messages.events') }}' })"
+     @touchstart.passive="touchStart($event)"
+     @touchend.passive="touchEnd($event)">
 @include('messages.partials.tabs')
 
 @php
-$topicBadge = [
-    'economy'   => 'bg-success',
-    'politics'  => 'bg-primary',
-    'diplomacy' => 'bg-info text-dark',
-    'culture'   => 'bg-warning text-dark',
-    'sports'    => 'bg-danger',
-    'misc'      => 'bg-secondary',
-];
 $topicLabel = [
     'economy'   => 'Wirtschaft',
     'politics'  => 'Politik',
@@ -23,28 +19,29 @@ $topicLabel = [
 ];
 @endphp
 
-<div class="row">
-    <div class="col-12">
-        @if($news->isEmpty())
-            <p class="text-muted fst-italic">Keine Nachrichten vorhanden.</p>
-        @else
-            <div class="list-group">
-                @foreach($news as $item)
-                <div class="list-group-item list-group-item-action">
-                    <div class="d-flex w-100 justify-content-between align-items-start mb-1">
-                        <h6 class="mb-0 fw-bold">{{ $item->headline }}</h6>
-                        <div class="d-flex gap-2 align-items-center ms-3 flex-shrink-0">
-                            <span class="badge {{ $topicBadge[$item->topic] ?? 'bg-secondary' }}">
-                                {{ $topicLabel[$item->topic] ?? $item->topic }}
-                            </span>
-                            <span class="text-muted small">Tick {{ $item->tick }}</span>
-                        </div>
-                    </div>
-                    <p class="mb-0 text-muted small">{{ $item->text }}</p>
-                </div>
-                @endforeach
+<div class="msg-list">
+    @if($news->isEmpty())
+        <p class="msg-empty">Keine Nachrichten vorhanden.</p>
+    @else
+        @foreach($news as $item)
+        <div class="msg-item" x-data="{ open: false }">
+            <div class="msg-header"
+                 @click="open = !open"
+                 :aria-expanded="open"
+                 role="button">
+                <span class="msg-meta">Sol {{ $item->tick }}</span>
+                <span class="msg-sender">
+                    <span class="msg-topic-badge">{{ $topicLabel[$item->topic] ?? $item->topic }}</span>
+                </span>
+                <span class="msg-subject">{{ $item->headline }}</span>
+                <i class="bi bi-chevron-down msg-chevron" :class="{ 'msg-chevron--open': open }"></i>
             </div>
-        @endif
-    </div>
+            <div class="msg-body" x-show="open" x-cloak>
+                <p class="msg-text">{{ $item->text }}</p>
+            </div>
+        </div>
+        @endforeach
+    @endif
 </div>
+</div>{{-- swipeNav wrapper --}}
 @endsection

@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
     <link rel="stylesheet" href="{{ asset('css/colony.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/swipe.css') }}">
     @stack('styles')
 </head>
 <body>
@@ -20,11 +21,11 @@
             <li><a href="{{ route('colony.view') }}" class="colony-logo">Nouron</a></li>
         </ul>
         <ul>
-            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])><i class="bi bi-hexagon"></i> Kolonie</a></li>
-            <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i> Berater</a></li>
-            <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-diagram-3"></i> Techtree</a></li>
-            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i> Cantina</a></li>
-            <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i> Nachrichten</a></li>
+            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])><i class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
+            <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
+            <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
+            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
+            <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
         </ul>
         <ul>
             {{-- Sol-Button (only in an active run) --}}
@@ -70,6 +71,7 @@
 </main>
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+<script src="{{ asset('js/swipe.js') }}"></script>
 <script src="{{ asset('js/colony-hexgrid.js') }}"></script>
 @stack('scripts')
 </body>
