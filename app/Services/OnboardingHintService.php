@@ -125,7 +125,7 @@ class OnboardingHintService
                 'key'        => 'hint_4',
                 'active'     => $this->checkHint4($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_4',
-                'target_url' => '/techtree/research',
+                'target_url' => '/techtree',
             ],
             [
                 'rank'       => 5,

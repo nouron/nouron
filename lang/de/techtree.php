@@ -81,4 +81,8 @@ return [
     'max_level'               => 'Maximalstufe',
     'moving_speed'            => 'Geschwindigkeit',
     'costs and requirements'  => 'Kosten und Voraussetzungen',
+
+    // ── AP-Hinweise (wenn keine AP verfügbar) ─────────────────────────────────
+    'hint_no_research_ap'     => 'Kein Forschungs-AP verfügbar — Analytiker-Berater einstellen.',
+    'hint_no_construction_ap' => 'Kein Bau-AP verfügbar — Baumeister-Berater einstellen.',
 ];

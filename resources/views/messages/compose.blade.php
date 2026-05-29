@@ -1,76 +1,68 @@
-@extends('layouts.app')
+@extends('layouts.colony')
 
 @section('title', 'Neue Nachricht — Nouron')
 
 @section('content')
 @include('messages.partials.tabs')
 
-<div class="row">
-    <div class="col-12 col-md-8 col-lg-6">
-        <ul class="nav nav-tabs mb-3" id="compose-tabs">
-            <li class="nav-item">
-                <button class="nav-link active" data-bs-toggle="tab"
-                        data-bs-target="#msg-to-user" type="button">
-                    ... an Spieler
-                </button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link disabled" type="button">... an Fraktion</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link disabled" type="button">... an INNN</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link disabled" type="button">... an Support</button>
-            </li>
-        </ul>
-
-        <div class="tab-content">
-            <div class="tab-pane fade show active" id="msg-to-user">
-                @if($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
-
-                <form method="POST" action="{{ route('messages.send') }}">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="recipient_id" class="form-label">Empfanger-ID</label>
-                        <input type="number" class="form-control" id="recipient_id"
-                               name="recipient_id" value="{{ old('recipient_id') }}"
-                               min="0" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="attitude" class="form-label">Haltung</label>
-                        <select class="form-select" id="attitude" name="attitude">
-                            <option value="mood_factual" @selected(old('attitude', 'mood_factual') === 'mood_factual')>Sachlich</option>
-                            <option value="mood_friendly" @selected(old('attitude') === 'mood_friendly')>Freundlich</option>
-                            <option value="mood_hostile"  @selected(old('attitude') === 'mood_hostile')>Feindlich</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label for="subject" class="form-label">Betreff</label>
-                        <input type="text" class="form-control" id="subject"
-                               name="subject" value="{{ old('subject') }}"
-                               maxlength="255" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="text" class="form-label">Nachricht</label>
-                        <textarea class="form-control" id="text" name="text"
-                                  rows="8" required>{{ old('text') }}</textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-send"></i> Senden
-                    </button>
-                    <a href="{{ route('messages.inbox') }}" class="btn btn-secondary ms-2">Abbrechen</a>
-                </form>
-            </div>
-        </div>
+<div style="padding: 1.5rem 1.5rem 3rem;">
+<div class="msg-compose">
+    <div class="msg-compose-tabs">
+        <button class="msg-tab msg-tab--active" type="button">
+            <i class="bi bi-person"></i> an Spieler
+        </button>
+        <button class="msg-tab" type="button" disabled title="Nicht verfügbar">
+            <i class="bi bi-people"></i> an Fraktion
+        </button>
+        <button class="msg-tab" type="button" disabled title="Nicht verfügbar">
+            <i class="bi bi-newspaper"></i> an INNN
+        </button>
+        <button class="msg-tab" type="button" disabled title="Nicht verfügbar">
+            <i class="bi bi-headset"></i> an Support
+        </button>
     </div>
+
+    @if($errors->any())
+        <div class="msg-error-list">
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form method="POST" action="{{ route('messages.send') }}" class="msg-form">
+        @csrf
+        <div class="msg-form-field">
+            <label for="recipient_id">Empfanger-ID</label>
+            <input type="number" id="recipient_id" name="recipient_id"
+                   value="{{ old('recipient_id') }}" min="0" required>
+        </div>
+        <div class="msg-form-field">
+            <label for="attitude">Haltung</label>
+            <select id="attitude" name="attitude">
+                <option value="mood_factual" @selected(old('attitude', 'mood_factual') === 'mood_factual')>Sachlich</option>
+                <option value="mood_friendly" @selected(old('attitude') === 'mood_friendly')>Freundlich</option>
+                <option value="mood_hostile"  @selected(old('attitude') === 'mood_hostile')>Feindlich</option>
+            </select>
+        </div>
+        <div class="msg-form-field">
+            <label for="subject">Betreff</label>
+            <input type="text" id="subject" name="subject"
+                   value="{{ old('subject') }}" maxlength="255" required>
+        </div>
+        <div class="msg-form-field">
+            <label for="text">Nachricht</label>
+            <textarea id="text" name="text" rows="8" required>{{ old('text') }}</textarea>
+        </div>
+        <div class="msg-form-actions">
+            <button type="submit" class="msg-action-btn msg-action-btn--primary">
+                <i class="bi bi-send"></i> Senden
+            </button>
+            <a href="{{ route('messages.inbox') }}" class="msg-action-btn">Abbrechen</a>
+        </div>
+    </form>
+</div>
 </div>
 @endsection

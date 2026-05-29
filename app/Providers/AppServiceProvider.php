@@ -119,12 +119,15 @@ class AppServiceProvider extends ServiceProvider
 
                 // Feature 3: Nexus debt from the active run — shown in the navbar.
                 // nexus_debt_max = 12000 Cr (Nexus cancels the concession above this cap, GDD §15).
+                // Only runs with started_at set count as "in-run" — pending runs do not show run UI.
                 $activeRun = \App\Models\Run::where('user_id', Auth::id())
                     ->where('status', 'active')
+                    ->whereNotNull('started_at')
                     ->first(['nexus_debt']);
 
                 $view->with('nexusDebt', $activeRun?->nexus_debt);
                 $view->with('nexusDebtMax', 12000);
+                $view->with('inActiveRun', $activeRun !== null);
             }
         });
     }

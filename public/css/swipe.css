@@ -1,0 +1,83 @@
+/* ── Swipe carousel (mobile) ───────────────────────────────────────────── */
+.swipe-container {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+}
+
+.swipe-track {
+    display: flex;
+    width: 100%;
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+}
+
+.swipe-panel {
+    flex: 0 0 100%;
+    min-width: 0;
+}
+
+/* Dot indicators */
+.swipe-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    padding: 0.6rem 0 0.25rem;
+}
+
+.swipe-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-border, #e8e8ec);
+    transition: background 0.2s, transform 0.2s;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.swipe-dot--active {
+    background: var(--color-accent, #8c2030);
+    transform: scale(1.25);
+}
+
+/* ── Mobile nav: icon-only ─────────────────────────────────────────────── */
+@media (max-width: 767px) {
+    /* Colony layout nav */
+    .colony-header nav a .nav-label,
+    /* Bootstrap layout nav */
+    .navbar-nouron .nav-link .nav-label {
+        display: none;
+    }
+
+    /* Tighten colony nav spacing on small screens */
+    .colony-header nav > ul {
+        gap: 0;
+    }
+    .colony-header nav a {
+        padding: 0 0.5rem;
+    }
+    /* Tighten Bootstrap nav */
+    .navbar-nouron .nav-link {
+        padding-left: 0.4rem !important;
+        padding-right: 0.4rem !important;
+    }
+}
+
+/* ── Messages swipe hint (mobile only) ────────────────────────────────── */
+@media (max-width: 767px) {
+    .msg-swipe-hint {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.72rem;
+        color: var(--color-text-secondary, #6b6b7a);
+        padding: 0.25rem 0;
+        opacity: 0.6;
+    }
+}
+@media (min-width: 768px) {
+    .msg-swipe-hint { display: none; }
+}

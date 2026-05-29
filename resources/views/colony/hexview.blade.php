@@ -51,11 +51,34 @@ window.__colonyViewData = {
                 <h2>{{ $colony->name }}</h2>
                 <small x-text="statusLine()"></small>
                 <div class="ap-chips">
-                    <span class="ap-chip ap-chip--nav" x-text="`Nav ${apNav} AP`"></span>
-                    <span class="ap-chip ap-chip--build" x-text="`Bau ${apConstruction} AP`"></span>
-                    <span class="ap-chip"
+                    <span class="ap-chip ap-chip--nav" x-data="{ open: false }"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          style="position:relative;cursor:default">
+                        <span x-text="`Nav ${apNav} AP`"></span>
+                        @include('partials.res-popup', [
+                            'popup_title' => __('resources.popup_nav_ap_title'),
+                            'popup_desc'  => __('resources.popup_nav_ap_desc'),
+                        ])
+                    </span>
+                    <span class="ap-chip ap-chip--build" x-data="{ open: false }"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          style="position:relative;cursor:default">
+                        <span x-text="`Bau ${apConstruction} AP`"></span>
+                        @include('partials.res-popup', [
+                            'popup_title' => __('resources.popup_bau_ap_title'),
+                            'popup_desc'  => __('resources.popup_bau_ap_desc'),
+                        ])
+                    </span>
+                    <span class="ap-chip" x-data="{ open: false }"
                           :class="trust >= 20 ? 'ap-chip--trust-pos' : trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'"
-                          x-text="`Vertrauen ${trust}`"></span>
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          style="position:relative;cursor:default">
+                        <span x-text="`Vertrauen ${trust}`"></span>
+                        @include('partials.res-popup', [
+                            'popup_title' => __('resources.popup_trust_title'),
+                            'popup_desc'  => __('resources.popup_trust_desc'),
+                        ])
+                    </span>
                 </div>
                 {{-- Merchant notification — links to Bar when merchant is present --}}
                 <a href="{{ route('colony.bar') }}"
@@ -125,7 +148,10 @@ window.__colonyViewData = {
                                     :class="{ 'building-list-item--selected': pendingBuilding?.building_id === b.building_id }"
                                     @click="selectPendingBuilding(b)">
                                     <span class="building-list-name" x-text="b.label"></span>
-                                    <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
+                                    <span class="building-list-meta">
+                                        <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
+                                        <span class="building-list-supply" x-show="b.supply_cost > 0" x-text="`${b.supply_cost} SUP`"></span>
+                                    </span>
                                 </li>
                             </template>
                         </ul>

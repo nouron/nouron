@@ -155,7 +155,8 @@ Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function
 
 // ── Sol (player-triggered tick advancement) ───────────────────────────────────
 
-Route::middleware('auth')->post('/sol/next', [SolController::class, 'next'])->name('sol.next');
+Route::middleware('auth')->post('/sol/next',        [SolController::class, 'next'])->name('sol.next');
+Route::middleware('auth')->get('/sol/remaining-ap', [SolController::class, 'remainingAp'])->name('sol.remaining-ap');
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 

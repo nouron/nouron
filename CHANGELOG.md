@@ -1,5 +1,45 @@
 # Changelog
 
+## 2026-05-29 (Session 2)
+
+- **Design Guide**: `docs/design-guide.md` erstellt — verbindliche Referenz für Farben (`#8c2030` Nouron-Rot), Typografie (Libre Baskerville für H1/H2/Logo, system-ui für alles andere), Spacing-System (8px-Basis), Komponenten (Navbar, Cards, Buttons, Chips), Screen-Typen (Lobby, In-Run, Cantina).
+
+- **Navbar-Migration hell**: Bootstrap-Navbar von `navbar-dark bg-dark` auf helle Variante (`navbar-nouron`) umgestellt. Libre-Baskerville-Logo. Beide Layouts (`app.blade.php` + `colony.blade.php`) migriert. Colony-Layout: Techtree-Navlink ergänzt. Navbar kontextbewusst: Run-Navigation (Galaxis, Flotte etc.), Nexus-Kredit, Sol-Button nur sichtbar wenn aktiver Run + nicht auf Lobby-Route.
+
+- **CSS-Refactor**: Alle Ressourcen-Chip-Styles in eigene `public/css/resources.css` ausgelagert (importiert von `style.css` + `colony.css`). Design-Tokens als CSS Custom Properties in `:root` (`--color-accent`, `--color-bg`, etc.). Sol/AP-Overlay-Styles ergänzt.
+
+- **Ressourcenleiste vereinfacht**: Trust (resource_id=12) aus Bar entfernt (Duplikat mit Colony-Header). Nexus-Kredit aus Navbar in CR-Chip-Popup verschoben (hover/tap). Sol-Chip ohne Max-Wert und ohne Border. Alle Chips einheitliche Größe (`0.82rem`, kein `res-chip--primary` size-jump).
+
+- **Chip-Popups (reusable)**: `resources/views/partials/res-popup.blade.php` — Alpine-Hover/Tap-Popup für alle Chips (SOL, CR, SUP, sekundäre, Nav-AP, Bau-AP, Vertrauen). Beschreibungstexte in `lang/de/resources.php`.
+
+- **Sol-Button Flow**: AP-Check vor Sol-Ende via `GET /sol/remaining-ap`. Confirm-Dialog wenn ungenutzte AP vorhanden (zeigt AP-Aufschlüsselung). Ladescree (Blur-Overlay, Spinner, min. 5 Sekunden). `partials/sol-button.blade.php` als wiederverwendbarer Alpine-Komponent für beide Layouts.
+
+- **Lobby-Fixes**: Dunkle PicoCSS-Karte → hell (`data-theme="light"`). Sol 1938/100 → gecappt auf tick_limit. Run-Nav + Ressourcenleiste auf Lobby-Route ausgeblendet.
+
+- **Techtree-Verbesserungen**: Onboarding-Hint 4 Route `/techtree/research` → `/techtree` (404 gefixt). Hint-Text klarer formuliert. AP-Hinweis unter Progress-Bar wenn `apAvailable = 0` ("Analytiker einstellen" bzw. "Baumeister einstellen").
+
+- **Supply-Kosten im Bau-Dialog**: `supply_cost` wird jetzt im Gebäude-Bau-Panel angezeigt (`X SUP` Badge, nur bei supply_cost > 0).
+
+- **Testdata Springfield bereinigt**: Von korruptem Viel-Gebäude-Stand (Usage 70 >> Cap 26) auf validen Sol-5-Startstand zurückgesetzt — CC Lv1, Harvester Lv1, 1× WH Lv1, Baumeister-Berater, Credits 2700, Supply 18.
+
+- **`game:validate-colony` Artisan Command**: Prüft aktiven Run, Supply-Cap vs. Usage, CC-Level, Trust-Ressource, Tick-Sanity. Exit-Code 1 bei Fehlern (CI-fähig). Aufruf: `php artisan game:validate-colony [colony_id]`.
+
+- **image-gen crop-Feature**: `tools/image-gen/generate.py` — center-crop nach Resize über `crop`-Key in Kategorie-Config.
+
+- **Messages-Screen auf neues Design migriert**: Von `layouts.app` (Bootstrap) auf `layouts.colony` (PicoCSS/Alpine). Bootstrap-Accordion durch Alpine `x-data`/`x-show` ersetzt. Tabs-Partial mit neuem `msg-tabs`-Stil. `messages.css` als eigene CSS-Datei extrahiert (geladen via `@push('styles')` im Tabs-Partial). `msg-*`-CSS aus `resources.css` entfernt (gehört dort nicht hin).
+
+- **Navbar Icon-only auf Mobile**: Nav-Label-Text in `<span class="nav-label">` gewrappt — auf Mobilgeräten (< 768px) via `swipe.css` ausgeblendet, nur Icons bleiben sichtbar. Gilt für beide Layouts.
+
+- **Swipe-Infrastruktur**: `public/js/swipe.js` — zwei Alpine-Komponenten: `swipeNav({prev, next})` (URL-Navigation via Swipe) + `swipeCarousel(count, initial)` (In-Page-Panels, für Berater/Cantina/Hangar geplant). `public/css/swipe.css` — Container, Track, Panel, Dot-Indikatoren. Geladen in `layouts.colony` + `layouts.app`.
+
+- **Messages Swipe-Navigation**: Alle Messages-Views (`inbox`, `outbox`, `archive`, `events`, `news`) haben `swipeNav`-Wrapper — auf Mobile zwischen Tabs hin- und herwischen (Eingang → Ausgang → Archiv → Ereignisse → INNN).
+
+- **Hamburger-Menü (Mobile)**: Unter 600px kollabiert die Colony-Navbar zu Logo + Hamburger-Icon. Flyout-Menü mit allen 5 Nav-Links + Profil/Einstellungen/Abmelden. Hamburger via Alpine `@click.outside` schließbar.
+
+- **Sol-Button Mobile**: Auf Mobile nur auf der Kolonie-View sichtbar (`body.page-colony`). Auf Messages, Techtree, Berater, Cantina ausgeblendet — Sol beenden ist die zentrale Hub-Aktion der Kolonie-View.
+
+- **Messages Mobile**: Tabs-Bar unter 600px ausgeblendet. Stattdessen: aktueller Tab-Name + 5 Dot-Indikatoren. Swipe-Logik via window-level vanilla JS (zuverlässiger als Alpine für touch-Events).
+
 ## 2026-05-29
 
 - **PR #142 Review-Fixes**: ROADMAP Phase-4-TODO Objective Discovery: Sol +5 auf Sol +15 korrigiert (war nach §17.1-Timing-Korrektur nicht mitgezogen). Hook-Kommentar in `pre-merge-check.sh` präzisiert (kein PR-Description-Check vorhanden). `advisor_dialogs.status`-Semantik geschärft: `declined` = explizite Spieler-Ablehnung, `expired` = automatischer Verfall durch Postpone-Maximum oder Timeout — in GDD §17.2 und `game-reference.md` konsistent dokumentiert. CHANGELOG doppelte Leerzeile entfernt. CLAUDE.md abschließendes Newline ergänzt.
