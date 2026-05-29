@@ -34,6 +34,12 @@
 
 - **Messages Swipe-Navigation**: Alle Messages-Views (`inbox`, `outbox`, `archive`, `events`, `news`) haben `swipeNav`-Wrapper — auf Mobile zwischen Tabs hin- und herwischen (Eingang → Ausgang → Archiv → Ereignisse → INNN).
 
+- **Hamburger-Menü (Mobile)**: Unter 600px kollabiert die Colony-Navbar zu Logo + Hamburger-Icon. Flyout-Menü mit allen 5 Nav-Links + Profil/Einstellungen/Abmelden. Hamburger via Alpine `@click.outside` schließbar.
+
+- **Sol-Button Mobile**: Auf Mobile nur auf der Kolonie-View sichtbar (`body.page-colony`). Auf Messages, Techtree, Berater, Cantina ausgeblendet — Sol beenden ist die zentrale Hub-Aktion der Kolonie-View.
+
+- **Messages Mobile**: Tabs-Bar unter 600px ausgeblendet. Stattdessen: aktueller Tab-Name + 5 Dot-Indikatoren. Swipe-Logik via window-level vanilla JS (zuverlässiger als Alpine für touch-Events).
+
 ## 2026-05-29
 
 - **PR #142 Review-Fixes**: ROADMAP Phase-4-TODO Objective Discovery: Sol +5 auf Sol +15 korrigiert (war nach §17.1-Timing-Korrektur nicht mitgezogen). Hook-Kommentar in `pre-merge-check.sh` präzisiert (kein PR-Description-Check vorhanden). `advisor_dialogs.status`-Semantik geschärft: `declined` = explizite Spieler-Ablehnung, `expired` = automatischer Verfall durch Postpone-Maximum oder Timeout — in GDD §17.2 und `game-reference.md` konsistent dokumentiert. CHANGELOG doppelte Leerzeile entfernt. CLAUDE.md abschließendes Newline ergänzt.

@@ -2,10 +2,7 @@
 @section('title', 'INNN — Nouron')
 
 @section('content')
-<div style="padding: 1.5rem 1.5rem 3rem;"
-     x-data="swipeNav({ prev: '{{ route('messages.events') }}' })"
-     @touchstart.passive="touchStart($event)"
-     @touchend.passive="touchEnd($event)">
+<div style="padding: 1.5rem 1.5rem 3rem;">
 @include('messages.partials.tabs')
 
 @php
@@ -43,5 +40,5 @@ $topicLabel = [
         @endforeach
     @endif
 </div>
-</div>{{-- swipeNav wrapper --}}
+</div>
 @endsection

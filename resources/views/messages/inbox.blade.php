@@ -3,10 +3,7 @@
 @section('title', 'Posteingang — Nouron')
 
 @section('content')
-<div style="padding: 1.5rem 1.5rem 3rem;"
-     x-data="swipeNav({ next: '{{ route('messages.outbox') }}' })"
-     @touchstart.passive="touchStart($event)"
-     @touchend.passive="touchEnd($event)">
+<div style="padding: 1.5rem 1.5rem 3rem;">
 @include('messages.partials.tabs')
 
 <div class="msg-list">

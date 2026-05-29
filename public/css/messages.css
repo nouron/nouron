@@ -1,4 +1,47 @@
 /* ── Messages ────────────────────────────────────────────────────────── */
+
+/* Mobile tab header: hidden on desktop, shown below 600px */
+.msg-mobile-header {
+    display: none;
+}
+
+@media (max-width: 599px) {
+    .msg-tabs-bar { display: none; }
+    .msg-mobile-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 0 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+    .msg-mobile-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--color-text-primary, #1a1a1e);
+    }
+}
+
+/* Swipe position dots */
+.swipe-dots {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.swipe-dot {
+    display: block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--color-border, #e8e8ec);
+    border: 1px solid var(--color-border, #e8e8ec);
+    transition: background 0.15s;
+}
+.swipe-dot--active {
+    background: var(--color-accent, #8c2030);
+    border-color: var(--color-accent, #8c2030);
+}
+.swipe-dot:hover { background: var(--color-text-secondary, #6b6b7a); }
+
 .msg-tabs-bar {
     margin-bottom: 1.5rem;
     border-bottom: 1px solid var(--color-border, #e8e8ec);

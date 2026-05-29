@@ -2,10 +2,7 @@
 @section('title', 'Ereignisse — Nouron')
 
 @section('content')
-<div style="padding: 1.5rem 1.5rem 3rem;"
-     x-data="swipeNav({ prev: '{{ route('messages.archive') }}', next: '{{ route('messages.news') }}' })"
-     @touchstart.passive="touchStart($event)"
-     @touchend.passive="touchEnd($event)">
+<div style="padding: 1.5rem 1.5rem 3rem;">
 @include('messages.partials.tabs')
 <div class="msg-list">
     @if($events->isEmpty())
