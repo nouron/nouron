@@ -14,15 +14,16 @@
 <body>
 
 @auth
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+<nav class="navbar navbar-expand-lg navbar-nouron fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="{{ route('galaxy.index') }}">Nouron</a>
+        <a class="navbar-brand navbar-brand-nouron" href="{{ route('galaxy.index') }}">Nouron</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
                 aria-controls="navbarMain" aria-expanded="false" aria-label="Navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav me-auto">
+                @if(($inActiveRun ?? false) && !request()->routeIs('lobby*'))
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('galaxy.*')) active @endif"
                        href="{{ route('galaxy.index') }}"><i class="bi bi-globe2"></i> Galaxis</a>
@@ -55,40 +56,15 @@
                     <a class="nav-link @if(request()->routeIs('messages.*')) active @endif"
                        href="{{ route('messages.inbox') }}"><i class="bi bi-envelope"></i> Nachrichten</a>
                 </li>
+                @endif
             </ul>
             <ul class="navbar-nav ms-auto">
                 @auth
-                {{-- Feature 3: Nexus debt badge — only shown when an active run exists. --}}
-                @if(isset($nexusDebt) && $nexusDebt !== null)
-                    @php
-                        // Colour thresholds: normal < 80%, warning >= 80%, danger >= 95%.
-                        $nexusDebtPct = $nexusDebtMax > 0 ? ($nexusDebt / $nexusDebtMax) * 100 : 0;
-                        $nexusBadgeClass = match(true) {
-                            $nexusDebtPct >= 95 => 'bg-danger text-white',
-                            $nexusDebtPct >= 80 => 'bg-warning text-dark',
-                            default             => 'bg-secondary text-white',
-                        };
-                    @endphp
-                    <li class="nav-item d-flex align-items-center px-2">
-                        <span
-                            class="badge {{ $nexusBadgeClass }}"
-                            title="{{ __('colony.nexus_debt_label') }}"
-                        >
-                            <i class="bi bi-bank"></i>
-                            {{ __('colony.nexus_debt_label') }}:
-                            {{ number_format($nexusDebt) }} / {{ number_format($nexusDebtMax) }} Cr
-                        </span>
-                    </li>
-                @endif
-                <li class="nav-item">
-                    <form method="POST" action="{{ route('sol.next') }}">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-light"
-                                onclick="this.disabled=true; this.form.submit();">
-                            <i class="bi bi-skip-forward-fill"></i> {{ __('colony.next_sol_button') }}
-                        </button>
-                    </form>
+                @if(($inActiveRun ?? false) && !request()->routeIs('lobby*'))
+                <li class="nav-item d-flex align-items-center">
+                    @include('partials.sol-button')
                 </li>
+                @endif
                 @endauth
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
@@ -111,13 +87,15 @@
     </div>
 </nav>
 
-{{-- Resource bar --}}
-@if(!empty($resourceBarPossessions))
+{{-- Resource bar — hidden on lobby (no active run context needed there) --}}
+@if(!empty($resourceBarPossessions) && !request()->routeIs('lobby*'))
 <div id="resourcebar-container">
     @include('resources.resourcebar', [
-        'possessions' => $resourceBarPossessions,
-        'currentSol'  => $currentSol ?? null,
-        'solLimit'    => $solLimit ?? 100,
+        'possessions'  => $resourceBarPossessions,
+        'currentSol'   => $currentSol ?? null,
+        'solLimit'     => $solLimit ?? 100,
+        'nexusDebt'    => ($inActiveRun ?? false) ? ($nexusDebt ?? null) : null,
+        'nexusDebtMax' => $nexusDebtMax ?? 12000,
     ])
 </div>
 @endif
@@ -126,7 +104,7 @@
 
 {{-- Sub-navigation tabs (module-specific) --}}
 @hasSection('subnav')
-<div class="bg-dark border-bottom border-secondary">
+<div class="subnav-light">
     <div class="container-fluid">
         @yield('subnav')
     </div>

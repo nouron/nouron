@@ -1,10 +1,11 @@
-{{-- Resource bar partial (no layout) — replaces resources/json/reloadresourcebar.phtml --}}
-{{-- Server-side data dependency: $possessions — keyed by resource_id, each entry has: amount, abbreviation, name --}}
-{{-- Optional: $currentSol (int), $solLimit (int) — inject Sol chip before primary resources --}}
+{{-- Resource bar partial --}}
+{{-- $possessions: keyed by resource_id — amount, abbreviation, name --}}
+{{-- Optional: $currentSol, $solLimit, $nexusDebt, $nexusDebtMax --}}
 @auth
 @php
-    $primaryIds   = [1, 2, 12]; // Credits (Cr), Supply (Sup), Trust (M) — always shown
-    $activeResIds = [1, 2, 3, 4, 5, 12]; // whitelist — ENrg/LNrg/ANrg (6/8/10) excluded
+    // Trust (12) removed — shown in colony header as "Vertrauen", not duplicated here
+    $primaryIds   = [1, 2];           // Credits (Cr), Supply (Sup)
+    $activeResIds = [1, 2, 3, 4, 5]; // whitelist — Trust/ENrg/LNrg/ANrg excluded
     $primary      = [];
     $secondary    = [];
 
@@ -20,45 +21,99 @@
 
     ksort($primary);
 
-    $solDisplay = $currentSol ?? null; // composer already caps at solLimit
+    $solDisplay   = $currentSol ?? null;
+    $crResource   = $primary[1] ?? null;
+    $hasNexus     = isset($nexusDebt) && $nexusDebt !== null;
+    $nexusPct     = $hasNexus && ($nexusDebtMax ?? 12000) > 0
+        ? ($nexusDebt / ($nexusDebtMax ?? 12000)) * 100 : 0;
+    $nexusChipMod = match(true) {
+        $nexusPct >= 95 => 'res-chip--danger',
+        $nexusPct >= 80 => 'res-chip--warning',
+        default         => '',
+    };
+
+    // Popup extra for CR chip (NX info row)
+    $crPopupExtra = $hasNexus
+        ? '<div class="res-popup-nx-row ' . $nexusChipMod . '">'
+            . '<span class="res-popup-label">' . __('resources.popup_nx_title') . '</span>'
+            . '<span>' . number_format($nexusDebt, 0, ',', '.') . ' / ' . number_format($nexusDebtMax ?? 12000, 0, ',', '.') . ' Cr</span>'
+          . '</div>'
+        : null;
 @endphp
 <div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
 
-    {{-- Sol chip: only shown when run-local Sol is meaningful (≤ solLimit) --}}
+    {{-- Sol chip: no border, no max --}}
     @if($solDisplay !== null)
-        <span class="res-chip res-chip--primary res-chip--sol res-Sol">
+        <span class="res-chip res-chip--sol" x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              style="position:relative;cursor:default">
             <span class="res-abbr">Sol</span>
-            <span class="res-amount">{{ $solDisplay }} / {{ $solLimit ?? 100 }}</span>
+            <span class="res-amount">{{ $solDisplay }}</span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_sol_title'),
+                'popup_desc'  => __('resources.popup_sol_desc'),
+            ])
         </span>
         <span class="res-divider" aria-hidden="true"></span>
     @endif
 
-    {{-- Primary resources: always visible, regardless of amount --}}
-    @foreach($primary as $resId => $resource)
-        <span class="res-chip res-chip--primary res-{{ $resource['abbreviation'] ?? 'x' }}"
-              data-bs-toggle="tooltip" data-bs-placement="bottom"
-              title="{{ __('resources.' . ($resource['name'] ?? '')) }}">
-            <span class="res-abbr">{{ $resource['abbreviation'] ?? '' }}</span>
-            <span class="res-amount">{{ number_format($resource['amount'] ?? 0, 0, ',', '.') }}</span>
+    {{-- Credits chip — NX shown in popup --}}
+    @if($crResource !== null)
+        <span class="res-chip res-Cr {{ $nexusChipMod }}" x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              style="position:relative;cursor:default">
+            <span class="res-abbr">CR</span>
+            <span class="res-amount">{{ number_format($crResource['amount'] ?? 0, 0, ',', '.') }}</span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_cr_title'),
+                'popup_desc'  => __('resources.popup_cr_desc'),
+                'popup_extra' => $crPopupExtra,
+            ])
         </span>
-    @endforeach
+    @endif
 
-    {{-- Visual separator between primary and secondary resources --}}
-    @if(count($secondary) > 0)
-        <span class="res-divider" aria-hidden="true"></span>
+    {{-- Supply chip --}}
+    @if(isset($primary[2]))
+        <span class="res-chip res-Sup" x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              style="position:relative;cursor:default">
+            <span class="res-abbr">SUP</span>
+            <span class="res-amount">{{ number_format($primary[2]['amount'] ?? 0, 0, ',', '.') }}</span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_sup_title'),
+                'popup_desc'  => __('resources.popup_sup_desc'),
+            ])
+        </span>
     @endif
 
     {{-- Secondary (tradeable) resources: only shown when amount > 0 --}}
-    @foreach($secondary as $resId => $resource)
-        @if(($resource['amount'] ?? 0) > 0)
-            <span class="res-chip res-{{ $resource['abbreviation'] ?? 'x' }}"
-                  data-bs-toggle="tooltip" data-bs-placement="bottom"
-                  title="{{ __('resources.' . ($resource['name'] ?? '')) }}">
-                <span class="res-abbr">{{ $resource['abbreviation'] ?? '' }}</span>
-                <span class="res-amount">{{ number_format($resource['amount'], 0, ',', '.') }}</span>
-            </span>
+    @if(count($secondary) > 0)
+        @php
+            $anySecondary = collect($secondary)->contains(fn($r) => ($r['amount'] ?? 0) > 0);
+            $popupKeyMap  = ['W' => 'w', 'O' => 'o', 'Rg' => 'rg'];
+        @endphp
+        @if($anySecondary)
+            <span class="res-divider" aria-hidden="true"></span>
+            @foreach($secondary as $resId => $resource)
+                @if(($resource['amount'] ?? 0) > 0)
+                    @php
+                        $abbr    = $resource['abbreviation'] ?? 'x';
+                        $langKey = 'popup_' . strtolower($abbr);
+                    @endphp
+                    <span class="res-chip res-{{ $abbr }}" x-data="{ open: false }"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          style="position:relative;cursor:default">
+                        <span class="res-abbr">{{ $abbr }}</span>
+                        <span class="res-amount">{{ number_format($resource['amount'], 0, ',', '.') }}</span>
+                        @include('partials.res-popup', [
+                            'popup_title' => __('resources.' . $langKey . '_title'),
+                            'popup_desc'  => __('resources.' . $langKey . '_desc'),
+                        ])
+                    </span>
+                @endif
+            @endforeach
         @endif
-    @endforeach
+    @endif
 
 </div>
 @endauth

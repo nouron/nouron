@@ -50,7 +50,7 @@ return [
     'onboarding_hint_1' => 'Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10.',
     'onboarding_hint_2' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
     'onboarding_hint_3' => 'Harvester produziert nichts — auf ein Regolith-Tile verlegen.',
-    'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf.',
+    'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
 
     // ── Onboarding — Nexus-Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
@@ -125,7 +125,7 @@ return [
 
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 
-    'next_sol_button' => 'Nächsten Sol starten',
+    'next_sol_button' => 'Sol beenden',
 
     // ── Nexus-Schulden-Anzeige (Feature 3) ───────────────────────────────────
 

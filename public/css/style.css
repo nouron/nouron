@@ -1,8 +1,22 @@
 @CHARSET "UTF-8";
 
+@import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap");
+@import url("resources.css");
 @import url("techtree.css");
 @import url("galaxy.css");
 @import url("fleets.css");
+
+/* ── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+    --color-bg:              #ffffff;
+    --color-surface:         #f7f7f5;
+    --color-text-primary:    #1a1a1e;
+    --color-text-secondary:  #6b6b7a;
+    --color-accent:          #8c2030;
+    --color-border:          #e8e8ec;
+    --color-navbar-bg:       #ffffff;
+    --color-navbar-border:   #e8e8ec;
+}
 
 body {padding-top: 96px;padding-bottom: 40px;}
 hr {border-color: #ccc}
@@ -12,23 +26,106 @@ hr {border-color: #ccc}
 a {color: #000; white-space: nowrap;}
 a:hover {color: #000; text-decoration: underline;}
 
-/* Navbar-Links vom globalen a-Stil ausnehmen */
-.navbar a,
-.navbar .nav-link,
-.navbar .dropdown-item {
-    color: rgba(255,255,255,0.85);
-    white-space: nowrap;
-}
-.navbar a:hover,
-.navbar .nav-link:hover {
-    color: #fff;
-    text-decoration: none;
-}
-.navbar .dropdown-item:hover {
-    color: #000;
+/* ── Navbar (helle Variante) ───────────────────────────────────────────── */
+.navbar-nouron {
+    background: var(--color-navbar-bg) !important;
+    border-bottom: 1px solid var(--color-navbar-border);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-/* Laminas navigation helper: <li><a> ohne nav-link-Klasse */
+.navbar-brand-nouron {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--color-text-primary) !important;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+.navbar-brand-nouron:hover {
+    color: var(--color-accent) !important;
+    text-decoration: none;
+}
+
+.navbar-nouron .nav-link {
+    color: #4a4a58 !important;
+    font-size: 0.875rem;
+    white-space: nowrap;
+}
+.navbar-nouron .nav-link:hover {
+    color: var(--color-text-primary) !important;
+    text-decoration: none;
+}
+.navbar-nouron .nav-link.active {
+    color: var(--color-accent) !important;
+    font-weight: 600;
+}
+.navbar-nouron .dropdown-toggle {
+    color: #4a4a58 !important;
+}
+.navbar-nouron .dropdown-menu {
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.navbar-nouron .dropdown-item {
+    color: var(--color-text-primary);
+    font-size: 0.875rem;
+}
+.navbar-nouron .dropdown-item:hover {
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+}
+.navbar-nouron .navbar-toggler {
+    border-color: var(--color-border);
+}
+
+/* Sol-Button (accent red, light navbar) */
+.btn-sol {
+    background: var(--color-accent);
+    border: 1px solid var(--color-accent);
+    color: #ffffff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.15s;
+}
+.btn-sol:hover { opacity: 0.88; }
+
+/* Nexus credit badge (for light navbar) */
+.nexus-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    white-space: nowrap;
+}
+.nexus-badge--warning {
+    background: #fef9e7;
+    border-color: #d4a017;
+    color: #7a5500;
+}
+.nexus-badge--danger {
+    background: #fdf0f2;
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+/* Subnav light */
+.subnav-light {
+    background: var(--color-navbar-bg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* Navbar nav list — legacy Laminas helper: <li><a> without nav-link class */
 .navbar-nav li {
     list-style: none;
 }
@@ -43,83 +140,10 @@ a:hover {color: #000; text-decoration: underline;}
     top: 64px;
     left: 0; right: 0;
     z-index: 1029;
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
     padding: 5px 12px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-}
-.resource-bar { text-align: center; }
-
-.res-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 2px 9px 2px 7px;
-    border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: 600;
-    border: 1px solid rgba(0,0,0,0.10);
-    cursor: default;
-    white-space: nowrap;
-    background: #fff;
-    color: #333;
-    transition: filter 0.15s;
-}
-.res-chip:hover { filter: brightness(0.94); }
-.res-abbr {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    opacity: 0.65;
-    text-transform: uppercase;
-}
-.res-amount { font-variant-numeric: tabular-nums; }
-
-/* Primary resource chips — Credits and Supply: larger, bolder, always visible */
-.res-chip--primary {
-    font-size: 0.88rem;
-    padding: 3px 12px 3px 10px;
-    border-width: 2px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-}
-.res-chip--primary .res-abbr {
-    font-size: 0.75rem;
-    opacity: 0.80;
-}
-
-/* Vertical rule separating primary from secondary resources */
-.res-divider {
-    display: inline-block;
-    width: 1px;
-    height: 22px;
-    background: #ccc;
-    border-radius: 1px;
-    margin: 0 2px;
-    align-self: center;
-}
-
-/* Per-resource accent colours */
-.res-Cr   { background: #fff8dc; border-color: #e6c84a; }
-.res-Sup  { background: #f0f0f0; border-color: #aaa; }
-.res-W    { background: #dceeff; border-color: #5599dd; }
-.res-E    { background: #efefef; border-color: #999; }
-.res-S    { background: #f5e8d8; border-color: #c87f3a; }
-.res-ENrg { background: #dcfce7; border-color: #3db86e; }
-.res-LNrg { background: #ede9fe; border-color: #7c65cc; }
-.res-ANrg { background: #fefce8; border-color: #ca9b11; }
-.res-Tr   { background: #fce7f3; border-color: #d166a0; }
-.res-Rg   { background: #fdf0e0; border-color: #d4924a; }
-.res-Co   { background: #dceeff; border-color: #5599dd; }
-.res-Or   { background: #e8f5e0; border-color: #5a9a3a; }
-.res-Sol  { background: #ede9fe; border-color: #7c65cc; }
-
-/* Flexbox wrapper used by the shared resourcebar partial — works without Bootstrap utilities as fallback */
-.res-bar-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
 }
 
 body .nav-list > .active > a, .nav-list > .active > a:hover {background-color: #333;}
@@ -240,4 +264,107 @@ a.technology.personell.notexists { border-left-color: #cccccc; }
 }
 .fade-cycling {
     animation: inbox-pulse 2s ease-in-out var(--fade-delay, 0s) infinite;
+}
+
+/* ── Sol Button Overlay & Dialog ───────────────────────────────────────── */
+.sol-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 30, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sol-overlay--loading {
+    background: rgba(26, 26, 30, 0.75);
+}
+
+/* Confirm dialog */
+.sol-dialog {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 2rem 2.5rem;
+    max-width: 420px;
+    width: 90%;
+}
+.sol-dialog__title {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+    color: var(--color-text-primary, #1a1a1e);
+    margin: 0 0 1rem;
+}
+.sol-dialog__body {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    line-height: 1.5;
+    margin: 0 0 0.5rem;
+}
+.sol-dialog__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+.sol-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.45rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.15s;
+}
+.sol-btn--ghost {
+    background: transparent;
+    border-color: var(--color-border, #e8e8ec);
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.sol-btn--ghost:hover { opacity: 0.75; }
+.sol-btn--primary {
+    background: var(--color-accent, #8c2030);
+    border-color: var(--color-accent, #8c2030);
+    color: #ffffff;
+}
+.sol-btn--primary:hover { opacity: 0.88; }
+
+/* Loading screen */
+.sol-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: #ffffff;
+}
+.sol-loading__text {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0;
+    opacity: 0.95;
+}
+.sol-loading__sub {
+    font-size: 0.8rem;
+    opacity: 0.55;
+    margin: 0;
+    letter-spacing: 0.05em;
+}
+
+/* Spinner */
+.sol-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: sol-spin 0.9s linear infinite;
+}
+@keyframes sol-spin {
+    to { transform: rotate(360deg); }
 }

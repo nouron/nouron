@@ -1,0 +1,222 @@
+/* ── resources.css ─────────────────────────────────────────────────────────
+ * Shared resource chip, resource bar, AP chip, and popup styles.
+ * Imported by style.css (Bootstrap layout) and colony.css (Alpine/Pico layout).
+ * Do NOT add layout-specific rules here (e.g. fixed positioning, grid areas).
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* ── Resource bar wrapper ───────────────────────────────────────────────── */
+
+/* Inline centering helper used by the shared resourcebar partial */
+.resource-bar { text-align: center; }
+
+/* Flexbox wrapper used by the shared resourcebar partial */
+.res-bar-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ── Base chip ──────────────────────────────────────────────────────────── */
+
+.res-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px 3px 8px;
+    border-radius: 20px;
+    font-size: 0.70rem;
+    font-weight: 700;
+    border: 1px solid rgba(0,0,0,0.12);
+    background: #fff;
+    color: #333;
+    white-space: nowrap;
+    cursor: default;
+    transition: filter 0.15s;
+}
+.res-chip:hover { filter: brightness(0.94); }
+
+/* No size difference between primary and secondary chips */
+.res-chip--primary { }
+
+/* ── Chip internals ─────────────────────────────────────────────────────── */
+
+.res-abbr {
+    font-size: 0.70rem;
+    font-weight: 700;
+    opacity: 0.65;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.res-amount { font-variant-numeric: tabular-nums; }
+
+/* Vertical rule separating primary from secondary resources */
+.res-divider {
+    display: inline-block;
+    width: 1px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 1px;
+    margin: 0 2px;
+    align-self: center;
+}
+
+/* Chip internal separator (legacy) */
+.res-chip-sep {
+    opacity: 0.35;
+    font-weight: 400;
+    padding: 0 1px;
+    font-size: 0.75rem;
+}
+
+/* ── Chip state modifiers ───────────────────────────────────────────────── */
+
+/* Empty / zero resource */
+.res-chip--empty {
+    opacity: 0.45;
+    border-style: dashed;
+}
+
+/* Sol chip: borderless, transparent */
+.res-chip--sol {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Warning / danger state */
+.res-chip--warning { background: #fef9e7 !important; border-color: #d4a017 !important; color: #7a5500; }
+.res-chip--danger  { background: #fdf0f2 !important; border-color: var(--color-accent, #8c2030) !important; color: var(--color-accent, #8c2030); }
+
+/* Chip that triggers a hover popup */
+.res-chip--has-popup { position: relative; }
+
+/* ── Per-resource accent colours ────────────────────────────────────────── */
+
+.res-Cr  { background: #fff8dc; border-color: #e6c84a; }
+.res-Sup { background: #f0f0f0; border-color: #aaa; }
+.res-Rg  { background: #fdf0e0; border-color: #d4924a; }
+.res-Co  { background: #dceeff; border-color: #5599dd; }
+.res-Or  { background: #e8f5e0; border-color: #5a9a3a; }
+.res-Tr  { background: #fce7f3; border-color: #d166a0; }
+.res-Sol { background: #ede9fe; border-color: #7c65cc; }
+
+/* Nexus debt chip (standalone fallback) */
+.res-NX  { background: #fdf4f5; border-color: #c9a0a7; }
+
+/* ── Hover popup ────────────────────────────────────────────────────────── */
+
+.res-popup {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffffff;
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10);
+    padding: 0.5rem 0.75rem;
+    min-width: 180px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.res-popup-header {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--color-text-primary, #1a1a1e);
+    letter-spacing: 0.02em;
+    margin-bottom: 0.2rem;
+}
+
+.res-popup-body {
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    line-height: 1.4;
+}
+
+.res-popup-extra {
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--color-border, #e8e8ec);
+}
+
+/* Nexus breakdown row inside popup */
+.res-popup-nx-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.res-popup-nx-row .res-popup-label {
+    font-size: 0.72rem;
+    opacity: 0.7;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.res-popup-nx-row.res-chip--warning { color: #7a5500; }
+.res-popup-nx-row.res-chip--danger  { color: var(--color-accent, #8c2030); }
+
+/* Legacy generic row (kept for fallback) */
+.res-popup-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-text-primary, #1a1a1e);
+}
+
+.res-popup-label {
+    opacity: 0.6;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* ── AP chips (colony canvas header) ────────────────────────────────────── */
+
+.ap-chips {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+
+.ap-chip {
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.ap-chip--nav {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.ap-chip--build {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ap-chip--trust-pos {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.ap-chip--trust-neu {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.ap-chip--trust-neg {
+    background: #fee2e2;
+    color: #991b1b;
+}

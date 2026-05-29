@@ -14,7 +14,7 @@
 
 **Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte).
 
-**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Kommandanten-Zuweisung UI (Fleet), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg noch in DB, per Whitelist gefiltert).
+**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Kommandanten-Zuweisung UI (Fleet), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg noch in DB, per Whitelist gefiltert), Cantina-Redesign (Bar-Hintergrund + NPC-Charaktere geplant).
 
 ## Wichtige Korrekturen
 
@@ -23,6 +23,7 @@
   - `data/db/test.db` — Testdatenbank (befüllt via `data/sql/testdata.sqlite.sql`)
 - `Routen.txt` und `code/nouron_(pre_zend)/` veraltet — nur GitHub-Repo relevant
 - Vollständige Referenztabellen (Ressourcen, Gebäude, Schiffe, DB-Schema) → `docs/game-reference.md`
+- Design Guide (Farben, Typo, Spacing, Komponenten) → `docs/design-guide.md`
 
 ## Architektur (Laravel)
 
@@ -40,7 +41,8 @@ database/migrations/  -- Schema-Migrationen
 data/sql/
   testdata.sqlite.sql -- Testdaten (INSERT + UPDATE, wird von TestSeeder ausgeführt)
 resources/views/      -- Blade-Templates
-public/js|css/        -- techtree-view.js, advisors.js, techtree-view.css, ...
+  partials/           -- sol-button.blade.php, res-popup.blade.php (wiederverwendbar)
+public/js|css/        -- techtree-view.js, advisors.js, techtree-view.css, resources.css, ...
 ```
 
 Schichtung: `Controller → Service → Eloquent Model → SQLite`

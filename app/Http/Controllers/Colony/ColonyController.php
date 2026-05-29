@@ -136,7 +136,7 @@ class ColonyController extends BaseController
 
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
-                     'required_building_id', 'required_building_level', 'is_instanced')
+                     'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
             ->filter(function ($b) use ($ccLevel, $placedCounts) {
                 if ($b->id === 25) return false;  // CC — already exists
@@ -160,6 +160,7 @@ class ColonyController extends BaseController
                 'max_level'         => $b->max_level,
                 'max_status_points' => $b->max_status_points,
                 'is_instanced'      => (bool) $b->is_instanced,
+                'supply_cost'       => (int) $b->supply_cost,
             ])
             ->values();
 

@@ -31,10 +31,12 @@
         margin-top: 0.75rem;
     }
 
-    /* PicoCSS <article> cards */
+    /* PicoCSS <article> cards — force light background regardless of system color scheme */
     .lobby-run-card {
         margin: 0;
         padding: 1.25rem;
+        background: #ffffff;
+        color: #333;
     }
 
     .lobby-run-card header {
@@ -46,11 +48,13 @@
         margin-bottom: 0.5rem;
         background: none;
         border: none;
+        color: inherit;
     }
 
     .lobby-run-card header h3 {
         margin: 0;
         font-size: 1.1rem;
+        color: #1a1a2e;
     }
 
     .lobby-run-card footer {
@@ -253,7 +257,7 @@
     - No Bootstrap grid classes used inside — PicoCSS article/grid only.
     - Alpine.js is already loaded globally by layouts/app.blade.php.
 --}}
-<div class="lobby-scope" style="max-width: 56rem; margin: 0 auto; padding: 1rem 0 3rem;">
+<div class="lobby-scope" data-theme="light" style="max-width: 56rem; margin: 0 auto; padding: 2rem 0 3rem;">
 
     {{-- ── Page header ──────────────────────────────────────────────────────── --}}
     <hgroup style="margin-bottom: 1.75rem;">
@@ -269,11 +273,12 @@
         <div class="lobby-run-grid">
             @foreach($active as $run)
                 @php
-                    $tickLimit  = $run->settings['tick_limit'] ?? 100;
-                    $solPct     = $tickLimit > 0
+                    $tickLimit   = $run->settings['tick_limit'] ?? 100;
+                    $displayTick = min($run->current_tick, $tickLimit);
+                    $solPct      = $tickLimit > 0
                         ? min(100, round(($run->current_tick / $tickLimit) * 100))
                         : 0;
-                    $colonyName = $run->colony->name ?? __('lobby.colony_unnamed');
+                    $colonyName  = $run->colony->name ?? __('lobby.colony_unnamed');
                 @endphp
                 <article class="lobby-run-card">
                     <header>
@@ -282,12 +287,12 @@
 
                     <p class="lobby-sol-progress">
                         {{ __('lobby.sol_progress', [
-                            'current' => $run->current_tick,
+                            'current' => $displayTick,
                             'limit'   => $tickLimit,
                         ]) }}
                     </p>
                     <progress
-                        value="{{ $run->current_tick }}"
+                        value="{{ $displayTick }}"
                         max="{{ $tickLimit }}"
                         title="{{ $solPct }}%"
                     ></progress>

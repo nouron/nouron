@@ -204,17 +204,9 @@ INSERT INTO "innn_message_types" VALUES(10,'subject_pact',39,1);
 INSERT INTO "innn_message_types" VALUES(11,'subject_peace_treaty',25,1);
 INSERT INTO "innn_message_types" VALUES(12,'subject_declaration_of_war',-49,1);
 INSERT INTO "innn_message_types" VALUES(13,'subject_nap',10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,25,3,16,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,27,1,11,10);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,2,10,0);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,30,3,10,10);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,31,2,11,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,32,1,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,41,1,10,4);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,44,1,15,0);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,46,1,9,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,50,1,9,9);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,52,1,10,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,25,1,20,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,27,1,20,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,1,20,2);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,25,5,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,27,1,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,28,4,10,1);
@@ -245,13 +237,10 @@ INSERT INTO "colony_researches" VALUES(2,76,19,10,1);
 INSERT INTO "colony_researches" VALUES(2,79,19,10,1);
 INSERT INTO "colony_researches" VALUES(2,80,19,10,1);
 INSERT INTO "colony_researches" VALUES(2,81,19,10,1);
-INSERT INTO "colony_resources" VALUES(3,1,200);
+INSERT INTO "colony_resources" VALUES(3,1,250);
 INSERT INTO "colony_resources" VALUES(4,1,0);
 INSERT INTO "colony_resources" VALUES(5,1,0);
-INSERT INTO "colony_resources" VALUES(6,1,9400);
-INSERT INTO "colony_resources" VALUES(8,1,9400);
-INSERT INTO "colony_resources" VALUES(10,1,9400);
-INSERT INTO "colony_resources" VALUES(12,1,9500);
+INSERT INTO "colony_resources" VALUES(12,1,0);
 INSERT INTO "colony_ships" VALUES(1,29,0,10,1);
 INSERT INTO "colony_ships" VALUES(1,37,9,10,1);
 INSERT INTO "colony_ships" VALUES(1,49,12,10,1);
@@ -271,22 +260,7 @@ INSERT INTO "colony_personell" VALUES(2,35,19,10);
 INSERT INTO "colony_personell" VALUES(2,36,19,10);
 INSERT INTO "colony_personell" VALUES(2,89,19,10);
 INSERT INTO "colony_personell" VALUES(2,92,19,10);
--- advisors intentionally empty: CC level 1 = 1 slot, start clean for onboarding flow
-INSERT INTO "locked_actionpoints" VALUES(15930,'colony',1,35,22);
-INSERT INTO "locked_actionpoints" VALUES(15930,'colony',1,36,3);
-INSERT INTO "locked_actionpoints" VALUES(15934,'colony',1,35,20);
-INSERT INTO "locked_actionpoints" VALUES(15935,'colony',1,35,1);
-INSERT INTO "locked_actionpoints" VALUES(15942,'colony',1,35,26);
-INSERT INTO "locked_actionpoints" VALUES(15947,'colony',1,35,8);
-INSERT INTO "locked_actionpoints" VALUES(15962,'colony',1,35,3);
-INSERT INTO "locked_actionpoints" VALUES(15983,'colony',1,35,5);
-INSERT INTO "locked_actionpoints" VALUES(15990,'colony',1,35,3);
-INSERT INTO "locked_actionpoints" VALUES(15990,'colony',1,36,5);
-INSERT INTO "locked_actionpoints" VALUES(15991,'colony',1,36,1);
-INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,35,37);
-INSERT INTO "locked_actionpoints" VALUES(15997,'colony',1,36,0);
-INSERT INTO "locked_actionpoints" VALUES(15998,'colony',1,35,1);
-INSERT INTO "locked_actionpoints" VALUES(16005,'colony',1,35,9);
+INSERT INTO "advisors" (user_id,colony_id,personell_id,rank,active_ticks) VALUES(3,1,35,1,0);
 INSERT INTO "fleets" (id,fleet,user_id,artefact,x,y) VALUES(8,'B. Flotte 1',18,NULL,6828,3016);
 INSERT INTO "fleets" (id,fleet,user_id,artefact,x,y) VALUES(9,'B. Flotte 2',18,NULL,6818,3006);
 INSERT INTO "fleets" (id,fleet,user_id,artefact,x,y) VALUES(10,'Test Flotte 1',3,NULL,6828,3016);
@@ -409,7 +383,7 @@ INSERT INTO "trade_resources" VALUES(2,0,6,45,45,0);
 INSERT INTO "trade_resources" VALUES(1,0,10,4,3,0);
 INSERT INTO "trade_resources" VALUES(1,0,8,100,50,0);
 
-INSERT INTO "user_resources" VALUES(3,49615,1938);
+INSERT INTO "user_resources" VALUES(3,2700,18);
 
 INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL,NULL);
 INSERT OR REPLACE INTO "user_preferences" VALUES(2,1,1,NULL,NULL,NULL,NULL);
@@ -457,6 +431,6 @@ INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id
 INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,3,20,5,30,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
 
 -- Active run for Bart (user_id=3) on Springfield (colony_id=1).
-INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,1938,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
+INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
 -- Active run for Homer (user_id=0) on Shelbyville (colony_id=2).
-INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(2,0,2,1938,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
+INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(2,0,2,20,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');

@@ -1,4 +1,7 @@
 /* Colony view — helles UI: Weiß 60%, Anthrazit 30%, Rot 10% */
+
+@import url("resources.css");
+
 :root {
     --color-anthracite: #333;
     --color-accent:     #c0392b;
@@ -35,9 +38,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: var(--color-anthracite);
-    color: #fff;
-    border-bottom: 2px solid var(--color-accent);
+    background: #ffffff;
+    padding: 0;
 }
 
 /* Compact nav: override PicoCSS default padding/min-height on the <nav> element */
@@ -46,7 +48,7 @@ body {
     margin: 0;
     background: transparent;
     min-height: unset;
-    height: 44px;
+    height: 60px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -58,8 +60,8 @@ body {
     flex-direction: row;
     align-items: center;
     margin: 0;
-    padding: 0;
-    gap: 0.25rem;
+    padding: 10px;
+    gap: 1rem;
     list-style: none;
 }
 
@@ -71,143 +73,184 @@ body {
 /* Nav links: slightly smaller text, no PicoCSS vertical padding */
 .colony-header nav a {
     font-size: 0.85rem;
-    color: rgba(255,255,255,0.85);
+    color: #4a4a58;
     text-decoration: none;
-    padding: 0 0.5rem;
-    line-height: 44px;    /* vertically centred within the nav bar */
+    padding: 10px;
+    line-height: 40px;
     display: inline-block;
 }
 
-/* Brand link: slightly larger + bold so it stands out from regular nav items */
-.colony-header nav strong a {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: 0.02em;
-    padding: 0 0.75rem 0 0;
+.colony-header nav a:hover {
+    color: var(--color-text-primary, #1a1a1e);
+    background: rgba(0,0,0,0.04);
+    border-radius: 6px;
+    text-decoration: none;
 }
 
-.colony-header nav a:hover {
-    color: #fff;
-    background: rgba(255,255,255,0.10);
-    border-radius: 6px;
+/* Colony logo — Libre Baskerville wordmark */
+.colony-logo {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    color: var(--color-text-primary, #1a1a1e) !important;
+    font-size: 0.9rem;
+    text-decoration: none;
+    padding: 0 0.75rem 0 0;
+    line-height: 40px;
+    display: inline-block;
+}
+
+.colony-logo:hover {
+    color: var(--color-accent, #8c2030) !important;
+    background: none;
+    text-decoration: none;
+}
+
+/* Active nav link */
+nav a.active,
+nav a[aria-current] {
+    color: var(--color-accent, #8c2030) !important;
+    font-weight: 600;
 }
 
 .colony-header nav a.active {
-    color: #fff;
-    font-weight: 600;
-    background: rgba(255,255,255,0.18);
+    background: rgba(140,32,48,0.06);
     border-radius: 6px;
     border-bottom: none;
 }
 
-/* Dropdown summary: match the compact link style, suppress PicoCSS button-like defaults */
-.colony-header details.dropdown > summary {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.85);
-    padding: 0 0.5rem;
-    line-height: 44px;
-    margin: 0;
-    /* PicoCSS styles summary as a button variant — undo that */
-    background: none;
-    border: none;
-    box-shadow: none;
+/* User dropdown — full PicoCSS override */
+.colony-user-dropdown > summary {
+    --pico-background-color: transparent !important;
+    --pico-border-color: transparent !important;
+    --pico-color: #4a4a58 !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: #4a4a58 !important;
+    font-size: 0.85rem !important;
+    font-weight: 400 !important;
+    padding: 0 0.5rem !important;
+    margin: 0 !important;
+    line-height: 40px !important;
+    cursor: pointer;
+    list-style: none;
 }
-
-.colony-header details.dropdown > summary:hover {
-    color: #fff;
+.colony-user-dropdown > summary:hover {
+    color: var(--color-text-primary, #1a1a1e) !important;
+    background: none !important;
 }
-
-/* Dropdown menu that opens below the summary */
-.colony-header details.dropdown > ul {
-    background: var(--color-anthracite);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 4px;
+/* Remove all arrow indicators from PicoCSS details/summary */
+.colony-user-dropdown > summary::marker,
+.colony-user-dropdown > summary::-webkit-details-marker,
+.colony-user-dropdown > summary::before,
+.colony-user-dropdown > summary::after {
+    display: none !important;
+    content: none !important;
 }
-
-.colony-header details.dropdown > ul a,
-.colony-header details.dropdown > ul button {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.85);
+.colony-user-dropdown > ul {
+    position: absolute !important;
+    right: 0.5rem !important;
+    left: auto !important;
+    top: 44px !important;
+    min-width: 160px !important;
+    background: #ffffff !important;
+    border: 1px solid var(--color-border, #e8e8ec) !important;
+    border-radius: 4px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important;
+    padding: 0.25rem 0 !important;
+    margin: 0 !important;
+    list-style: none !important;
+    z-index: 200 !important;
+}
+.colony-user-dropdown > ul li {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+.colony-user-dropdown > ul a,
+.colony-user-dropdown > ul button {
+    --pico-background-color: transparent !important;
+    --pico-border-color: transparent !important;
+    --pico-color: var(--color-text-primary, #1a1a1e) !important;
+    display: block !important;
+    width: 100% !important;
+    padding: 0.45rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 400 !important;
+    color: var(--color-text-primary, #1a1a1e) !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    text-decoration: none !important;
+    cursor: pointer;
+    margin: 0 !important;
+}
+.colony-user-dropdown > ul a:hover,
+.colony-user-dropdown > ul button:hover {
+    background: var(--color-surface, #f7f7f5) !important;
+    color: var(--color-text-primary, #1a1a1e) !important;
+    text-decoration: none !important;
 }
 
 /* ── Resource bar ────────────────────────────────────────────────────────── */
 
 .colony-resbar {
-    background: #f8f9fa;
-    border-bottom: 1px solid #dee2e6;
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
     padding: 5px 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
-/* Flexbox wrapper used by the shared resourcebar partial — works without Bootstrap utilities */
-.res-bar-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
+/* ── Sol-Button — override PicoCSS primary button defaults ──────────────── */
+button.btn-sol,
+.colony-header button.btn-sol {
+    --pico-background-color: var(--color-accent, #8c2030);
+    --pico-border-color: var(--color-accent, #8c2030);
+    --pico-color: #ffffff;
+    background: var(--color-accent, #8c2030) !important;
+    border: 1px solid var(--color-accent, #8c2030) !important;
+    color: #ffffff !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 0.2rem 0.65rem !important;
+    border-radius: 4px !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.3rem !important;
+    white-space: nowrap !important;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+button.btn-sol:hover,
+.colony-header button.btn-sol:hover {
+    opacity: 0.88;
 }
 
-.res-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 2px 8px 2px 6px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border: 1px solid var(--color-border);
-    background: #fff;
-    color: var(--color-anthracite);
-    white-space: nowrap;
-    cursor: default;
-    transition: filter 0.15s;
+/* Dropdown: plain text items, no PicoCSS button styles */
+.colony-header details.dropdown > ul button,
+.colony-header details.dropdown > ul a {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    color: var(--color-text-primary, #1a1a1e) !important;
+    font-size: 0.875rem !important;
+    padding: 0.4rem 0.75rem !important;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
 }
-.res-chip:hover { filter: brightness(0.94); }
-
-.res-chip--primary {
-    font-size: 0.85rem;
-    padding: 3px 10px 3px 8px;
-    border-width: 2px;
-    border-color: #aaa;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+.colony-header details.dropdown > ul button:hover,
+.colony-header details.dropdown > ul a:hover {
+    background: var(--color-surface, #f7f7f5) !important;
+    color: var(--color-text-primary, #1a1a1e) !important;
 }
 
-.res-abbr {
-    font-size: 0.65rem;
-    font-weight: 700;
-    opacity: 0.55;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.res-amount { font-variant-numeric: tabular-nums; }
-
-/* Vertical rule separating primary from secondary resources */
-.res-divider {
-    display: inline-block;
-    width: 1px;
-    height: 22px;
-    background: #ccc;
-    border-radius: 1px;
-    margin: 0 2px;
-    align-self: center;
-}
-
-.res-chip--empty {
-    opacity: 0.45;
-    border-style: dashed;
-}
-
-/* Per-resource accent colours */
-.res-Cr  { background: #fff8dc; border-color: #e6c84a; }
-.res-Sup { background: #f0f0f0; border-color: #aaa; }
-.res-Rg  { background: #fdf0e0; border-color: #d4924a; }
-.res-Co  { background: #dceeff; border-color: #5599dd; }
-.res-Or  { background: #e8f5e0; border-color: #5a9a3a; }
-.res-Tr  { background: #fce7f3; border-color: #d166a0; }
-.res-Sol { background: #ede9fe; border-color: #7c65cc; }
+/* Resource chip styles live in resources.css (imported at top of file) */
 
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
 
@@ -244,44 +287,7 @@ body {
     flex-shrink: 0;
 }
 
-.ap-chips {
-    display: flex;
-    gap: 0.4rem;
-    margin-left: auto;
-}
-
-.ap-chip {
-    font-size: 0.72rem;
-    font-weight: 600;
-    padding: 0.2rem 0.55rem;
-    border-radius: 999px;
-    white-space: nowrap;
-}
-
-.ap-chip--nav {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.ap-chip--build {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.ap-chip--trust-pos {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.ap-chip--trust-neu {
-    background: #f3f4f6;
-    color: #374151;
-}
-
-.ap-chip--trust-neg {
-    background: #fee2e2;
-    color: #991b1b;
-}
+/* AP chip styles live in resources.css (imported at top of file) */
 
 .hex-canvas-header h2 {
     margin: 0;
@@ -708,6 +714,21 @@ body {
     font-weight: 500;
 }
 
+.building-list-meta {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.building-list-supply {
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: 10px;
+    padding: 0 0.4rem;
+}
+
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
 
 .chip--signal {
@@ -1025,4 +1046,99 @@ dialog[x-ref="discoveryDialog"] {
         justify-content: flex-start;
         padding: 1rem;
     }
+}
+
+/* ── Sol Button Overlay & Dialog (colony layout) ───────────────────────── */
+.sol-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 26, 30, 0.55);
+    backdrop-filter: blur(2px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sol-overlay--loading { background: rgba(26, 26, 30, 0.75); }
+.sol-dialog {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    padding: 2rem 2.5rem;
+    max-width: 420px;
+    width: 90%;
+}
+.sol-dialog__title {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 1.1rem;
+    color: var(--color-text-primary, #1a1a1e);
+    margin: 0 0 1rem;
+}
+.sol-dialog__body {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    line-height: 1.5;
+    margin: 0 0 0.5rem;
+}
+.sol-dialog__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+.sol-btn {
+    font-size: 0.875rem;
+    font-weight: 600;
+    padding: 0.45rem 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: opacity 0.15s;
+}
+.sol-btn--ghost {
+    background: transparent;
+    border-color: var(--color-border, #e8e8ec);
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.sol-btn--ghost:hover { opacity: 0.75; }
+.sol-btn--primary {
+    background: var(--color-accent, #8c2030);
+    border-color: var(--color-accent, #8c2030);
+    color: #ffffff;
+}
+.sol-btn--primary:hover { opacity: 0.88; }
+.sol-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: #ffffff;
+}
+.sol-loading__text {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0;
+    opacity: 0.95;
+}
+.sol-loading__sub {
+    font-size: 0.8rem;
+    opacity: 0.55;
+    margin: 0;
+    letter-spacing: 0.05em;
+}
+.sol-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: sol-spin 0.9s linear infinite;
+}
+@keyframes sol-spin {
+    to { transform: rotate(360deg); }
 }
