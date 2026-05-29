@@ -2546,7 +2546,7 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 
 #### Ablehnung und Verfall
 
-Lehnt der Spieler einen Dialog dauerhaft ab (2x "Morgen" oder direkte Ablehnung bei `is_skippable = true`), verfällt er ohne Konsequenz. Kein Dialog ist existenziell für den Run. Die Enthüllungen die über Dialoge transportiert werden, kommen im Zweifelsfall über den Sol-Threshold-Fallback (§17.1).
+Lehnt der Spieler einen Dialog explizit ab (`is_skippable = true`, Spieler wählt "Ablehnen"), wird er als `declined` abgeschlossen. Schiebt der Spieler ihn 2× auf ("Morgen") oder läuft `dialog_expire_after_ticks` ab, gilt er als `expired`. In beiden Fällen keine Konsequenz. Kein Dialog ist existenziell für den Run. Die Enthüllungen die über Dialoge transportiert werden, kommen im Zweifelsfall über den Sol-Threshold-Fallback (§17.1).
 
 **Nicht verfügbare Berater:** Wenn der Berater-Typ des Dialogs gerade keinen aktiven Berater hat (Slot leer, Burnout, Außenmission), ist der Dialog nicht verfügbar. Er erscheint nicht im INNN-Feed. Der Sol-Threshold-Fallback greift stattdessen.
 

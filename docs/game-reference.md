@@ -106,8 +106,8 @@ Stammdaten: buildings, researches, ships, personell, resources + jeweilige _cost
 | `pending` | Dialog-Trigger erfüllt, noch nicht im INNN-Feed |
 | `offered` | INNN-Eintrag erzeugt, Spieler hat noch nicht geantwortet |
 | `accepted` | Spieler hat angenommen, AP verbraucht, Bonus gutgeschrieben |
-| `declined` | Spieler hat abgelehnt oder Dialog ist verfallen |
-| `expired` | Maximale Postpone-Anzahl überschritten, Dialog automatisch aufgelöst |
+| `declined` | Spieler hat explizit abgelehnt (`is_skippable = true`, Spieler wählt "Ablehnen") |
+| `expired` | Dialog automatisch aufgelöst — Postpone-Maximum (2×) oder `dialog_expire_after_ticks` überschritten |
 
 ### Neue Tabellen (Phase 4)
 

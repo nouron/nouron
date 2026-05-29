@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pre-merge checklist: blocks mcp__github__merge_pull_request unless
-# CHANGELOG.md has an entry for today and the PR description looks non-trivial.
+# CHANGELOG.md has an entry for today.
 
 set -euo pipefail
 
