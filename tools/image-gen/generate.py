@@ -172,6 +172,10 @@ def main():
 
     api_size_override = cat_cfg.get("api_size")
 
+    crop_to = None
+    if cat_cfg.get("crop"):
+        crop_to = parse_resize(cat_cfg["crop"])
+
     # Per-category base override: _base.prompt.md in the category dir takes precedence.
     # If it contains only "none", base prompt is skipped entirely.
     category_base_file = prompt_dir / "_base.prompt.md"
@@ -239,9 +243,16 @@ def main():
                 output_format=args.output_format,
                 output_compression=args.compression,
             )
-            if resize_to:
+            if resize_to or crop_to:
                 img = Image.open(io.BytesIO(image_bytes))
-                img = img.resize(resize_to, Image.LANCZOS)
+                if resize_to:
+                    img = img.resize(resize_to, Image.LANCZOS)
+                if crop_to:
+                    cw, ch = crop_to
+                    iw, ih = img.size
+                    left = (iw - cw) // 2
+                    top = (ih - ch) // 2
+                    img = img.crop((left, top, left + cw, top + ch))
                 buf = io.BytesIO()
                 fmt = args.output_format.upper().replace("JPG", "JPEG")
                 save_kwargs = {}
@@ -251,6 +262,8 @@ def main():
                 image_bytes = buf.getvalue()
             output_path.write_bytes(image_bytes)
             suffix = f" (resized to {args.resize})" if resize_to else ""
+            if crop_to:
+                suffix += f" (cropped to {crop_to[0]}x{crop_to[1]})"
             print(f"saved → {output_path.relative_to(PROJECT_ROOT)}{suffix}")
         except Exception as e:
             print(f"FAILED: {e}", file=sys.stderr)
