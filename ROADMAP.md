@@ -562,9 +562,9 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 | **Modulare Schiffe** | Nicht implementieren | Die Kolonie steht im Vordergrund. Die 3 Schiffstypen erzeugen bereits sinnvolle Kompositionsentscheidungen. Bei 1 Tick/Tag wäre der Feedback-Loop für Modul-Fehler zu langsam. |
 | **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
 | **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
-| **Rassen-System** | Zurückstellen auf Phase 4 | `race_id` ist im Schema, wird nicht ausgewertet. Rassenspezifische Effekte zu definieren setzt Playtest-Daten voraus — sonst blind balancen. |
+| **Rassen-System** | Abgekündigt | Konzeptuell aufgegeben (GDD §3) — zusammen mit ENrg/LNrg/ANrg. `race_id` wird per DB-Cleanup entfernt (Phase 4), keine rassenspezifischen Effekte geplant. |
 | **Gruppen/Gilden** | Zurückstellen auf Phase 4 | Kein Datenmodell vorhanden. Soziale Mechaniken entfalten erst Wert wenn eine aktive Spielerbasis existiert. |
-| **Diplomatie** | Zurückstellen auf Phase 4 | `innn_message_types.relationship_effect` ist vorbereitet; vollständige Diplomatie setzt stabile Moral-Balance aus Phase 3 voraus. |
+| **Klassische Diplomatie** | Abgekündigt | Krieg/Allianz/Fraktionszustände inkompatibel mit Singleplayer-Roguelike ohne organisierte Gegner (GDD §1.1). Ersetzt durch NPC-Vereinbarungen (Phase 4) und `treaty_signed`-Events. |
 | **Außenposten** | Zurückstellen auf Phase 5 | Ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird, lässt sich erst nach echtem Betrieb beurteilen. |
 | **Benannte Chef-Berater** | Zurückstellen auf Phase 4 | Aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12); individuelle Charaktere erst nach Phase-3-Playtest sinnvoll. |
 | **Steuersystem** | Zurückstellen auf Phase 4 | `steuerfaktor` in Moral-Formel ist Platzhalter (= 0). Implementierung setzt stabile Moral-Balance aus Phase 3 voraus. |
@@ -576,18 +576,23 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 **Ziel:** Spieler, die das Basisspiel kennen, bekommen neue Strategiepfade und Interaktionsebenen.
 
-**Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Rassen-Effekte, Steuersystem und Diplomatie-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
+**Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Steuersystem und NPC-Vereinbarungs-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
 
+- [ ] **Progressive Discovery System** (GDD §17) — Drei miteinander verwandte Mechaniken die als roter Faden durch den Run laufen:
+  - **Almanach-Grundstruktur:** Neue Tabellen `almanac_articles` + `run_almanac_unlocks`; Freischalt-Trigger-System; INNN-Benachrichtigung "Neuer Almanach-Artikel freigeschaltet"; Wissensbonus beim ersten Lesen (einmalig pro Run); Config-Block `config/almanac.php`. Erster Implementierungsschritt, keine Abhängigkeiten.
+  - **Objective Discovery via Sol-Threshold:** Neue Spalten `revealed_at_tick` + `reveal_trigger` auf `run_objectives`; "Unbekannt"-Zustand im Objectives-Screen (Fragezeichen-Icon); gestaffelte Enthüllung der Phase-2-Objectives bis spätestens Sol +15 nach Phasenübergang (Fallback); Sol-Threshold-Fallback als Sicherheitsnetz. Zweiter Implementierungsschritt.
+  - **Advisor Dialogs:** Neue Tabelle `advisor_dialogs`; Dialog-Lifecycle (pending → offered → accepted/declined/expired); AP-Kosten beim Annehmen; Config-Block `config/advisor_dialogs.php`; Tick-Schritt-7-Integration; erster Katalog: 3–5 Dialog-Definitionen je Berater-Typ. Dritter Implementierungsschritt, setzt Almanach + Objective Discovery voraus.
+  - Schema-Erweiterung `runs.almanac_read_bonuses` (JSON) + `config/game.php → progressive_discovery`-Block.
+  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
 - [ ] **Multiplayer-Lobby & Multi-Run-Support** — `game.run.allow_multiple` Config-Flag ist vorbereitet, der „Neuen Run starten"-Button im Lobby-Screen existiert (disabled). Für echtes Multi-Run-Support fehlt:
   - Run-Erstellungsflow: `OnboardingService::setupNewPlayer()` alloziert immer einen neuen Planeten + neue Kolonie; für einen zweiten Run muss das isoliert aufrufbar sein ohne Neu-Registrierung
   - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
   - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
   - Für echtes Multiplayer (mehrere User pro Run): `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`)
 - [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
-- [ ] **Nexus-Außenposten-Slot (CC Lv5-Gate)** — CC Lv5 schaltet einen zweiten Außenposten-Slot frei — direkter Meilenstein in der Expansionsmechanik; Datenmodell noch nicht vorhanden (siehe Phase 5 Außenposten); hier konkret: CC Lv5 gibt die Möglichkeit einen zweiten Nexus-Kontakt-Knoten zu errichten, der eigene Handels- und Missionsoptionen bietet
-- [ ] **Diplomatie-System** — `innn_message_types.relationship_effect` auswerten; diplomatische Zustände (Krieg, Frieden, Allianz, Neutralität); Moral-Events `war_declared`/`treaty_signed` aktivieren; AP-Kosten gemäß Designprinzip (Kriegserklärung teurer als Handelsvertrag)
+- [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten.
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
-- [ ] **Rassen-System überarbeiten** — `race_id` ist im Schema, wird nicht ausgewertet; rassenspezifische Effekte definieren; Designfrage erst nach Phase-3-Playtest beantwortbar
+- [ ] **DB-Cleanup: `race_id` entfernen** — Rassen wurden konzeptuell abgekündigt (GDD §3, zusammen mit ENrg/LNrg/ANrg). `race_id` auf `users`-Tabelle ist historisches Schema ohne Auswertung → Migration zum Entfernen der Spalte.
 - [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Phase 3 voraus
 - [ ] **Berater-Vertiefung (Design-Sprint nötig)** — Beim Einstellen eine Auswahl aus mehreren Kandidaten (zufällig generiert pro Run); Berater haben positive und negative Traits (z.B. "Pragmatiker: +1 Bau-AP / −5% Moral", "Intrigant: +2 Strategie-AP / Vertrauensmalus"); individuelle Namen und Portrait-Grafiken; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12)
 - [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13)

@@ -119,3 +119,12 @@ Ende jeder Session mit Code-Arbeit: Eintrag in `CHANGELOG.md` ergänzen.
 
 - Kurze Beschreibung (1–3 Sätze pro Thema, auf Deutsch, prägnant)
 ```
+
+### Vor jedem Merge (Pflicht-Checkliste)
+
+Vor `mcp__github__merge_pull_request` immer prüfen:
+
+1. **CHANGELOG** — Eintrag für heute (`## YYYY-MM-DD`) vorhanden?
+2. **PR-Beschreibung** — spiegelt alle Commits seit dem letzten Merge wider?
+
+Der Pre-Merge-Hook (`.claude/hooks/pre-merge-check.sh`) blockiert automatisch wenn CHANGELOG fehlt. PR-Beschreibung muss manuell geprüft/aktualisiert werden.
