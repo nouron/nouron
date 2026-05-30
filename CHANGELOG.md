@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-05-30
+
+- **gh-pages Website**: Komplettes Redesign gemäß `docs/design-guide.md`. `data-theme="light"`, Nouron-Rot `#8c2030` als Akzentfarbe, Libre Baskerville ausschließlich für H1/H2 (uppercase, letter-spacing 0.45em), system-ui für alle funktionalen Texte, 4px Border-Radius, weiße Navigation mit Border-Bottom. Inhalte auf aktuellen GDD-Stand gebracht: keine Rassen, kein Imperium-Aufbau, korrekte Mechanik-Beschreibungen (AP-System, Berater, Decay, Sol-basiert, Run-Struktur).
+
 ## 2026-05-29
 
 - **PR #142 Review-Fixes**: ROADMAP Phase-4-TODO Objective Discovery: Sol +5 auf Sol +15 korrigiert (war nach §17.1-Timing-Korrektur nicht mitgezogen). Hook-Kommentar in `pre-merge-check.sh` präzisiert (kein PR-Description-Check vorhanden). `advisor_dialogs.status`-Semantik geschärft: `declined` = explizite Spieler-Ablehnung, `expired` = automatischer Verfall durch Postpone-Maximum oder Timeout — in GDD §17.2 und `game-reference.md` konsistent dokumentiert. CHANGELOG doppelte Leerzeile entfernt. CLAUDE.md abschließendes Newline ergänzt.
