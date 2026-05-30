@@ -85,6 +85,7 @@ class TechtreeColonyService
 
         $colonyEntities = DB::table($colonyTable)
             ->where('colony_id', $colonyId)
+            ->orderBy('level')  // for instanced buildings: highest-level instance wins keyBy
             ->get()
             ->keyBy($idKey)
             ->map(fn($e) => (array) $e)
