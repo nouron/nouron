@@ -132,14 +132,14 @@ class OnboardingHintService
                 'key'        => 'hint_5',
                 'active'     => $this->checkHint5($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_5',
-                'target_url' => '/techtree/buildings',
+                'target_url' => '/colony/view',
             ],
             [
                 'rank'       => 6,
                 'key'        => 'hint_6',
                 'active'     => $this->checkHint6($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_6',
-                'target_url' => '/techtree/buildings',
+                'target_url' => '/colony/view?build=52',
             ],
         ];
     }

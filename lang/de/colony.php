@@ -36,9 +36,12 @@ return [
 
     // ── Build mode ────────────────────────────────────────────────────────────
 
-    'build_mode_title'  => 'Gebäude bauen',
-    'build_mode_hint'   => 'Gebäude wählen, dann Terrain-Tile anklicken.',
-    'no_buildings'      => 'Keine Gebäude verfügbar.',
+    'build_mode_title'       => 'Gebäude bauen',
+    'build_mode_hint'        => 'Gebäude wählen, dann Terrain-Tile anklicken.',
+    'no_buildings'           => 'Keine Gebäude verfügbar.',
+    'inprogress_label'       => 'Im Bau',
+    'inprogress_hint'        => 'Tile auf der Karte anklicken um AP zu investieren.',
+    'levelup_built'          => 'Bau abgeschlossen:',
 
     // ── Event discovery popup ─────────────────────────────────────────────────
 

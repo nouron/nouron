@@ -105,6 +105,8 @@ function colonyHexView(config) {
         toastVisible:       false,
         toastType:          'error',  // 'error' | 'info'
         _toastTimer:        null,
+        levelupNotice:      null,   // set to label string when a building levels up
+        _lvlTimer:          null,
         _svgPolygons:       new Map(),
 
         init() {
@@ -140,6 +142,13 @@ function colonyHexView(config) {
                 if (isBuildableTile(tile) && !this.buildingForTile(tile))
                     this.doPlaceBuilding(tile);
                 return;
+            }
+            // Tile has a building but build mode is active without selection:
+            // exit build mode so the tile-info panel (with AP invest button) renders.
+            if (this.buildMode && this.buildingForTile(tile)) {
+                this.buildMode       = false;
+                this.pendingBuilding = null;
+                this.$nextTick(() => this.redrawGrid());
             }
             this.selectTile(tile);
         },
@@ -248,6 +257,10 @@ function colonyHexView(config) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
+                if (res.leveled_up) {
+                    this.showLevelupNotice(res.building.label);
+                    if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+                }
                 if (res.showHarvesterMoveTip) {
                     this.showToast(this.i18n.harvesterMoveTip, 'info');
                 }
@@ -332,6 +345,12 @@ function colonyHexView(config) {
             this.toastType    = type;
             this.toastVisible = true;
             this._toastTimer  = setTimeout(() => { this.toastVisible = false; }, 3500);
+        },
+
+        showLevelupNotice(label) {
+            if (this._lvlTimer) clearTimeout(this._lvlTimer);
+            this.levelupNotice = label;
+            this._lvlTimer = setTimeout(() => { this.levelupNotice = null; }, 2200);
         },
 
         buildingForTile(tile) {
