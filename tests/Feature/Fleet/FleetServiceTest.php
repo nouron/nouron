@@ -230,13 +230,13 @@ class FleetServiceTest extends TestCase
     public function testGetFleetResources(): void
     {
         $result = $this->service->getFleetResources(['fleet_id' => $this->fleetId]);
-        $this->assertEquals(6, $result->count());
+        $this->assertEquals(3, $result->count()); // Rg, Co, Or (ENrg/LNrg/ANrg removed)
     }
 
     public function testGetFleetResourcesByFleetId(): void
     {
         $result = $this->service->getFleetResourcesByFleetId($this->fleetId);
-        $this->assertEquals(6, $result->count());
+        $this->assertEquals(3, $result->count()); // Rg, Co, Or
     }
 
     public function testGetFleetResource(): void

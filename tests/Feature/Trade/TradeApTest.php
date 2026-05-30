@@ -48,6 +48,9 @@ class TradeApTest extends TestCase
         // Remove any advisors that may have been seeded so AP counts are predictable.
         Advisor::where('colony_id', 1)->delete();
         Advisor::where('colony_id', 2)->delete();
+
+        // Ensure Bart has enough credits (independent of testdata amount).
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => 50000]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

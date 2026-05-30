@@ -483,6 +483,11 @@ class OnboardingTriggersTest extends TestCase
             'event_type' => 'encounter_lost',
         ]);
 
+        // Pre-fire the trigger for all real players so their trust changes don't pollute the count.
+        foreach (DB::table('user')->whereNotNull('user_id')->pluck('user_id') as $uid) {
+            $this->triggerService->markFired((int) $uid, 'onboarding_trust');
+        }
+
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
         // No onboarding_trust event must exist for any user because user_id is null.

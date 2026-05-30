@@ -45,6 +45,8 @@ class TradeAcceptTest extends TestCase
         // Bypass AP checks — test colonies have no traders (no economy AP).
         config(['game.dev_mode' => true]);
         $this->gateway = $this->app->make(TradeGateway::class);
+        // Ensure Bart has enough credits for trade tests (independent of testdata amount).
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => 50000]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -193,13 +195,13 @@ class TradeAcceptTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('eigenes Angebot');
 
-        // Bart tries to accept his own buy offer (col 1, dir=0, res=10)
+        // Bart tries to accept his own buy offer (col 1, dir=0, res=5)
         $this->gateway->acceptResourceOffer(
             buyerUserId:    3,
             buyerColonyId:  1,
             sellerColonyId: 1,
             direction:      0,
-            resourceId:     10,
+            resourceId:     5,
         );
     }
 

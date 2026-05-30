@@ -5,7 +5,7 @@
 @php
     // Trust (12) removed — shown in colony header as "Vertrauen", not duplicated here
     $primaryIds   = [1, 2];           // Credits (Cr), Supply (Sup)
-    $activeResIds = [1, 2, 3, 4, 5]; // whitelist — Trust/ENrg/LNrg/ANrg excluded
+    $activeResIds = [1, 2, 3, 4, 5]; // whitelist — Trust (12) shown separately; ENrg/LNrg/ANrg removed
     $primary      = [];
     $secondary    = [];
 

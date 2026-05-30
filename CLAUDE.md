@@ -12,9 +12,9 @@
 
 **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte).
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
 
-**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Kommandanten-Zuweisung UI (Fleet), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg noch in DB, per Whitelist gefiltert), Cantina-Redesign (Bar-Hintergrund + NPC-Charaktere geplant).
+**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Cantina-Redesign (Bar-Hintergrund + NPC-Charaktere geplant).
 
 ## Wichtige Korrekturen
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-05-30
+
+- **Ressourcen-DB-Cleanup**: ENrg (6), LNrg (8), ANrg (10) vollständig entfernt — Migration, `data.sqlite.sql`, `testdata.sqlite.sql`, `fleet_resources`, `trade_resources`, `research_costs` bereinigt. Resourcebar-Kommentar aktualisiert. CLAUDE.md auf aktuellen Stand gebracht (Kommandanten-Zuweisung als erledigt markiert).
+- **Testdata-Stabilisierung**: Colony 1 auf realistischen Spielstand aktualisiert (CC lv3, Housing lv2, Depot lv3, ScienceLab lv1, Bar lv0). Werkstoffe/Organika-Startwerte von 0 auf 50 gesetzt. 12 Tests korrigiert die veraltete Ressource-IDs oder Testdata-Annahmen hatten (ResourcesService, FleetService, GameTick, Trade, Lobby, Onboarding, Knowledge).
+
 ## 2026-05-29 (Session 2)
 
 - **Design Guide**: `docs/design-guide.md` erstellt — verbindliche Referenz für Farben (`#8c2030` Nouron-Rot), Typografie (Libre Baskerville für H1/H2/Logo, system-ui für alles andere), Spacing-System (8px-Basis), Komponenten (Navbar, Cards, Buttons, Chips), Screen-Typen (Lobby, In-Run, Cantina).

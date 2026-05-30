@@ -37,7 +37,7 @@ class GameTickTest extends TestCase
 
     /**
      * Supply cap = CC_flat (10) + housing_level * 8.
-     * Colony 1: CC level=10 (>0 → flat 10), housing level=2 → cap = 10 + 16 = 26.
+     * Colony 1: CC level=3 (>0 → flat 10), housing level=2 → cap = 10 + 16 = 26.
      */
     public function test_supply_cap_is_set_from_cc_and_housing(): void
     {

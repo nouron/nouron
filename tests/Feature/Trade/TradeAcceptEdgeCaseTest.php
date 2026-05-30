@@ -59,6 +59,8 @@ class TradeAcceptEdgeCaseTest extends TestCase
         $this->gateway = $this->app->make(TradeGateway::class);
         $this->bart    = User::find(3);
         $this->homer   = User::find(0);
+        // Ensure Bart has enough credits for trade tests (independent of testdata amount).
+        DB::table('user_resources')->where('user_id', 3)->update(['credits' => 50000]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
@@ -118,7 +120,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
      */
     public function test_accept_own_offer_via_same_colony_id_throws(): void
     {
-        // Bart's buy offer on colony 1 (dir=0, res=10)
+        // Bart's buy offer on colony 1 (dir=0, res=5)
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('eigenes Angebot');
 
@@ -127,7 +129,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
             buyerColonyId:  1,
             sellerColonyId: 1, // same colony
             direction:      0,
-            resourceId:     10,
+            resourceId:     5,
         );
     }
 
@@ -472,7 +474,7 @@ class TradeAcceptEdgeCaseTest extends TestCase
             ->post(route('trade.offer.accept'), [
                 'seller_colony_id' => 1, // Bart's own colony = self-trade
                 'direction'        => 0,
-                'resource_id'      => 10,
+                'resource_id'      => 5,
             ]);
 
         $response->assertRedirect();
