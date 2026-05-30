@@ -15,9 +15,9 @@ use Tests\TestCase;
  * trade_resources (5 rows):
  *   (colony_id=2, direction=0, resource_id=3,  amount=11,  price=11)
  *   (colony_id=2, direction=1, resource_id=5,  amount=123, price=32)
- *   (colony_id=2, direction=0, resource_id=6,  amount=45,  price=45)
- *   (colony_id=1, direction=0, resource_id=10, amount=4,   price=3)
- *   (colony_id=1, direction=0, resource_id=8,  amount=100, price=50)
+ *   (colony_id=2, direction=0, resource_id=4,  amount=45,  price=45)
+ *   (colony_id=1, direction=0, resource_id=5,  amount=4,   price=3)
+ *   (colony_id=1, direction=0, resource_id=3,  amount=100, price=50)
  *
  * Colony 1 (Springfield) belongs to user_id=3 (Bart).
  */
@@ -160,7 +160,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 3,
         ]);
 
         $this->assertFalse($result);
@@ -171,7 +171,7 @@ class TradeGatewayTest extends TestCase
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 3,
             'user_id'     => 99,
         ]);
 
@@ -182,23 +182,23 @@ class TradeGatewayTest extends TestCase
 
     public function test_remove_resource_offer_succeeds(): void
     {
-        // Verify seed data is present: colony 1, buy (direction=0), lho (resource_id=8)
+        // Verify seed data is present: colony 1, buy (direction=0), regolith (resource_id=3)
         $countBefore = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
             ->count();
         $this->assertSame(1, $countBefore);
 
         $result = $this->gateway->removeResourceOffer([
             'colony_id'   => 1,
             'direction'   => 0,
-            'resource_id' => 8,
+            'resource_id' => 3,
             'user_id'     => 3,
         ]);
 
         $this->assertTrue($result);
 
         $countAfter = DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 8)
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
             ->count();
         $this->assertSame(0, $countAfter);
     }

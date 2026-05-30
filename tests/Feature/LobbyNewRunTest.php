@@ -128,15 +128,8 @@ class LobbyNewRunTest extends TestCase
 
     public function test_new_run_releases_advisors_from_colony(): void
     {
-        // Bind an advisor to colony 1.
-        DB::table('advisors')->insert([
-            'user_id'                => $this->userId,
-            'personell_id'           => 35,
-            'colony_id'              => $this->colonyId,
-            'rank'                   => 1,
-            'active_ticks'           => 0,
-            'unavailable_until_tick' => null,
-        ]);
+        // Testdata seeds personell_id=35 to colony 1 — no extra insert needed.
+        $this->assertGreaterThan(0, DB::table('advisors')->where('colony_id', $this->colonyId)->count());
 
         $this->actingAs($this->user())->post(route('run.new'));
 
