@@ -82,6 +82,11 @@ class TechtreeController extends BaseController
                     continue;
                 }
 
+                $advisorKey = $type === 'personell'
+                    ? str_replace('techs_', '', $tech['name'])
+                    : null;
+                $advisorCfg = $advisorKey ? config("advisors.{$advisorKey}", []) : [];
+
                 $phases[$phaseNum]['items'][] = [
                     'id'            => $id,
                     'type'          => $type,
@@ -94,6 +99,8 @@ class TechtreeController extends BaseController
                     'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key'           => $type === 'building' ? $tech['name'] : null,
                     'image_slug'    => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
+                    'ap_type'       => $advisorCfg['ap_type'] ?? null,
+                    'hire_cost'     => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
                 ];
 
                 // Generate within-phase arrow for this item.

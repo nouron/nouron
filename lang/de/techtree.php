@@ -85,4 +85,13 @@ return [
     // ── AP-Hinweise (wenn keine AP verfügbar) ─────────────────────────────────
     'hint_no_research_ap'     => 'Kein Forschungs-AP verfügbar — Analytiker-Berater einstellen.',
     'hint_no_construction_ap' => 'Kein Bau-AP verfügbar — Baumeister-Berater einstellen.',
+
+    // ── Berater-Chip im Techtree ──────────────────────────────────────────────
+    'advisor_hired'          => 'Eingestellt',
+    'advisor_available'      => 'Verfügbar',
+    'advisor_locked'         => 'Gesperrt',
+    'detail_advisor_status'  => 'Status',
+    'detail_advisor_ap'      => 'AP-Typ',
+    'detail_advisor_cost'    => 'Einstellungskosten',
+    'detail_advisor_link'    => 'Im Berater-Screen verwalten',
 ];

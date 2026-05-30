@@ -2,9 +2,12 @@
 
 ## 2026-05-30
 
+- **GDD §13 — Berater als Informationsebene**: Neues Designkonzept dokumentiert ("Fog of Information"). Jeder Berater liefert QoL-Infos in seinem zugehörigen Screen (Baumeister → Decay-Prognosen, Analytiker → AP-Fluss, Konsul → Händler-Einschätzung, Raumfahrer → Reisezeitprognose, Stratege → Ziel-Erreichbarkeit). Implementierung Phase 4. ROADMAP entsprechend ergänzt.
+- **Techtree Colony-Link mit Baumodus-Vorauswahl**: "Auf Kolonie bauen →" Link im Techtree übergibt `?build={building_id}`. Colony-View öffnet automatisch Baumodus mit vorausgewähltem Gebäude. AP-Invest-Leiste aus Techtree-Sidebar für Gebäude entfernt. Kenntnisse behalten AP-Leiste im Techtree.
+- **Techtree Overhaul**: Berater zurück als Karten (kein Chip), korrekte Status-Anzeige (Eingestellt/Verfügbar/Gesperrt statt LV X). Instanzierte Gebäude zeigen Anzahl/Max. Schiffe zeigen count/Hangar-Kapazität. Sidebar: Berater mit AP-Typ + Kosten + Link; Gebäude mit Colony-Link; Kenntnisse mit AP-Invest-Leiste.
 - **Cantina Playtest-Readiness**: Händler spawnt jetzt nur wenn Cantina gebaut (bug fix). Onboarding-Hint 6 "Cantina nicht gebaut" feuert ab CC lv2 + Housing lv1. INNN-Event bei jedem Händler-Besuch (`merchant.visit`). Cantina-Nav-Link grau + Tooltip wenn nicht gebaut (beide Layouts).
-- **Ressourcen-DB-Cleanup**: ENrg (6), LNrg (8), ANrg (10) vollständig entfernt — Migration, `data.sqlite.sql`, `testdata.sqlite.sql`, `fleet_resources`, `trade_resources`, `research_costs` bereinigt. Resourcebar-Kommentar aktualisiert. CLAUDE.md auf aktuellen Stand gebracht (Kommandanten-Zuweisung als erledigt markiert).
-- **Testdata-Stabilisierung**: Colony 1 auf realistischen Spielstand aktualisiert (CC lv3, Housing lv2, Depot lv3, ScienceLab lv1, Bar lv0). Werkstoffe/Organika-Startwerte von 0 auf 50 gesetzt. 12 Tests korrigiert die veraltete Ressource-IDs oder Testdata-Annahmen hatten (ResourcesService, FleetService, GameTick, Trade, Lobby, Onboarding, Knowledge).
+- **Ressourcen-DB-Cleanup**: ENrg (6), LNrg (8), ANrg (10) vollständig entfernt — Migration, `data.sqlite.sql`, `testdata.sqlite.sql`, `fleet_resources`, `trade_resources`, `research_costs` bereinigt.
+- **Testdata-Stabilisierung**: Colony 1 auf realistischen Spielstand aktualisiert (CC lv3, Housing lv2, Depot lv3, ScienceLab lv1, Bar lv0). Werkstoffe/Organika-Startwerte von 0 auf 50 gesetzt. 12 Tests korrigiert.
 
 ## 2026-05-29 (Session 2)
 

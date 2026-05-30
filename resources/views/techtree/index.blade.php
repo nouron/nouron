@@ -33,6 +33,19 @@
             <div class="tech-grid">
 
                 @foreach($phase['items'] as $tech)
+                @if($tech['type'] === 'personell')
+                {{-- Advisor chip: compact pill, no level, hired-status dot --}}
+                <div class="tech-chip tech-personell status-{{ $tech['status'] }}"
+                     id="tech-{{ $tech['type'] }}-{{ $tech['id'] }}"
+                     style="grid-column:{{ $tech['col'] }};grid-row:{{ $tech['row'] }}"
+                     @click="openDetail({{ json_encode($tech) }})"
+                     @mouseenter="onCardEnter({{ json_encode($tech) }})"
+                     @mouseleave="onCardLeave()">
+                    <i class="bi bi-person-fill tech-chip-icon"></i>
+                    <span class="tech-chip-name">{{ $tech['name'] }}</span>
+                    <span class="tech-chip-dot dot-{{ $tech['status'] }}" title="@if($tech['status']==='built'){{ __('techtree.advisor_hired') }}@elseif($tech['status']==='available'){{ __('techtree.advisor_available') }}@else{{ __('techtree.advisor_locked') }}@endif"></span>
+                </div>
+                @else
                 <div class="tech-card tech-{{ $tech['type'] }} status-{{ $tech['status'] }}"
                      id="tech-{{ $tech['type'] }}-{{ $tech['id'] }}"
                      style="grid-column:{{ $tech['col'] }};grid-row:{{ $tech['row'] }}"
@@ -50,6 +63,7 @@
                     <span class="tech-sub">&#128274; {{ $tech['required_desc'] }}</span>
                     @endif
                 </div>
+                @endif
                 @endforeach
 
             </div>
@@ -103,18 +117,62 @@
 
                 {{-- Meta rows --}}
                 <div class="detail-body">
-                    <template x-if="selectedTech.level > 0">
-                        <div class="detail-row">
-                            <span class="detail-row-label">{{ __('techtree.detail_level') }}</span>
-                            <span x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
+
+                    {{-- Personell: hired status, AP type, hire cost + link to Berater screen --}}
+                    <template x-if="selectedTech.type === 'personell'">
+                        <div>
+                            <div class="detail-row">
+                                <span class="detail-row-label">{{ __('techtree.detail_advisor_status') }}</span>
+                                <span x-text="selectedTech.status === 'built'
+                                    ? '{{ __('techtree.advisor_hired') }}'
+                                    : (selectedTech.status === 'available'
+                                        ? '{{ __('techtree.advisor_available') }}'
+                                        : '{{ __('techtree.advisor_locked') }}')"
+                                      :class="selectedTech.status === 'built' ? 'detail-advisor-hired' : ''">
+                                </span>
+                            </div>
+                            <template x-if="selectedTech.ap_type">
+                                <div class="detail-row">
+                                    <span class="detail-row-label">{{ __('techtree.detail_advisor_ap') }}</span>
+                                    <span x-text="selectedTech.ap_type"></span>
+                                </div>
+                            </template>
+                            <template x-if="selectedTech.hire_cost">
+                                <div class="detail-row">
+                                    <span class="detail-row-label">{{ __('techtree.detail_advisor_cost') }}</span>
+                                    <span x-text="selectedTech.hire_cost + ' Cr'"></span>
+                                </div>
+                            </template>
+                            <template x-if="selectedTech.required_desc">
+                                <div class="detail-row">
+                                    <span class="detail-row-label">{{ __('techtree.detail_required') }}</span>
+                                    <span x-text="selectedTech.required_desc"></span>
+                                </div>
+                            </template>
+                            <a href="{{ route('advisors.index') }}" class="detail-advisor-link">
+                                {{ __('techtree.detail_advisor_link') }} &rarr;
+                            </a>
                         </div>
                     </template>
-                    <template x-if="selectedTech.required_desc">
-                        <div class="detail-row">
-                            <span class="detail-row-label">{{ __('techtree.detail_required') }}</span>
-                            <span x-text="selectedTech.required_desc"></span>
+
+                    {{-- Non-personell: level + required --}}
+                    <template x-if="selectedTech.type !== 'personell'">
+                        <div>
+                            <template x-if="selectedTech.level > 0">
+                                <div class="detail-row">
+                                    <span class="detail-row-label">{{ __('techtree.detail_level') }}</span>
+                                    <span x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
+                                </div>
+                            </template>
+                            <template x-if="selectedTech.required_desc">
+                                <div class="detail-row">
+                                    <span class="detail-row-label">{{ __('techtree.detail_required') }}</span>
+                                    <span x-text="selectedTech.required_desc"></span>
+                                </div>
+                            </template>
                         </div>
                     </template>
+
                 </div>
 
                 <button class="detail-close" @click="closeDetail()">{{ __('techtree.detail_close') }}</button>

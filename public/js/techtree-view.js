@@ -258,6 +258,9 @@ function techtreeView(config) {
         },
 
         statusLabel(tech) {
+            if (tech.type === 'personell') {
+                return { built: 'Eingestellt', available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+            }
             const labels = {
                 built:     tech.level > 0 ? `Lv ${tech.level}` : 'Gebaut',
                 available: 'Verfügbar',
@@ -271,7 +274,7 @@ function techtreeView(config) {
                 building:  'Gebäude',
                 research:  'Forschung',
                 ship:      'Schiff',
-                personell: 'Personal',
+                personell: 'Berater',
             };
             return labels[type] ?? type;
         },
