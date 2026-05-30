@@ -157,7 +157,7 @@
         linear-gradient(to right, #f4f0fe 0%, #fff 65%);
 }
 
-/* Locked: dimmed */
+/* ── Locked cards ────────────────────────────────────────────────────────── */
 .tech-card.status-locked { opacity: 0.55; }
 .tech-card.status-locked.tech-building  { background: linear-gradient(to right, #f7fafe 0%, #f8f8f8 60%); }
 .tech-card.status-locked.tech-research  { background: linear-gradient(to right, #f6fcf9 0%, #f8f8f8 60%); }
@@ -449,6 +449,89 @@
 }
 
 .detail-close:hover { background: #e0e0e0; }
+
+/* Advisor-specific detail panel */
+.detail-advisor-hired {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+.detail-advisor-link {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 0.45rem 0.85rem;
+    background: #f4f0fe;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
+    color: #7c3aed;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.detail-advisor-link:hover {
+    background: #ede9fe;
+    color: #6d28d9;
+    text-decoration: none;
+}
+
+/* ── Sidebar AP invest bar ──────────────────────────────────────────────── */
+.detail-ap-section {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--pico-muted-border-color, #eee);
+}
+
+.detail-ap-bar {
+    display: flex;
+    gap: 2px;
+    margin: 0.4rem 0;
+    flex-wrap: wrap;
+}
+
+.ap-seg {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    transition: opacity 0.1s;
+}
+
+.ap-seg--done   { background: #16a34a; }
+.ap-seg--todo   { background: #bfdbfe; cursor: pointer; }
+.ap-seg--todo:hover { background: #3b82f6; }
+.ap-seg--locked { background: #e5e7eb; cursor: not-allowed; }
+
+.detail-ap-hint {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin: 0.25rem 0 0;
+}
+
+.detail-colony-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    background: #f0f9ff;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 4px;
+    color: #0369a1;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.detail-colony-link:hover {
+    background: #e0f2fe;
+    color: #075985;
+    text-decoration: none;
+}
+
+.detail-row--ap {
+    margin-bottom: 0.2rem;
+}
 
 @media (max-width: 640px) {
     .detail-inner { padding: 1.25rem 1.25rem 1.5rem; }

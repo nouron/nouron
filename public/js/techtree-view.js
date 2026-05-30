@@ -258,8 +258,20 @@ function techtreeView(config) {
         },
 
         statusLabel(tech) {
+            if (tech.type === 'personell') {
+                return { built: 'Eingestellt', available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+            }
+            if (tech.type === 'ship') {
+                if (tech.status === 'built') return tech.level + (tech.hangar_cap ? ' / ' + tech.hangar_cap : '');
+                return { available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+            }
+            if (tech.is_instanced) {
+                if (tech.status !== 'built') return { available: 'Verfügbar', locked: 'Gesperrt' }[tech.status] ?? tech.status;
+                if (tech.max_level === 1) return tech.instance_count > 0 ? 'Platziert' : 'Nicht gebaut';
+                return tech.instance_count + (tech.max_level ? ' / ' + tech.max_level : '');
+            }
             const labels = {
-                built:     tech.level > 0 ? `Lv ${tech.level}` : 'Gebaut',
+                built:     tech.level > 0 ? `Lv ${tech.level}${tech.max_level ? '/' + tech.max_level : ''}` : 'Gebaut',
                 available: 'Verfügbar',
                 locked:    'Gesperrt',
             };
@@ -271,9 +283,30 @@ function techtreeView(config) {
                 building:  'Gebäude',
                 research:  'Forschung',
                 ship:      'Schiff',
-                personell: 'Personal',
+                personell: 'Berater',
             };
             return labels[type] ?? type;
+        },
+
+        async investAp(tech, type, amount) {
+            const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
+            const res = await fetch(`/techtree/${type}/${tech.id}/order`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrf,
+                },
+                body: JSON.stringify({ order: 'add', ap: amount }),
+            });
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json.success) {
+                tech.ap_spend = Math.min((tech.ap_spend || 0) + amount, tech.ap_for_levelup);
+                tech.ap_available = Math.max(0, (tech.ap_available || 0) - amount);
+                if (tech.ap_spend >= tech.ap_for_levelup) {
+                    window.location.reload();
+                }
+            }
         },
     };
 }
