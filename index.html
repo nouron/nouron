@@ -1,15 +1,17 @@
 <!DOCTYPE html>
-<html lang="de" data-theme="light">
+<html lang="de" data-lang="de" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nouron — A Free Space Opera Browsergame</title>
   <meta name="description" content="Nouron ist ein rundenbasiertes Weltraum-Strategiespiel im Browser. Singleplayer, Roguelike-Elemente, Sol-basierter Rhythmus — für Spieler die lieber nachdenken als klicken." />
-  <meta name="author" content="Mario Gehnke" />
   <meta property="og:title" content="Nouron — A Free Space Opera Browsergame" />
   <meta property="og:description" content="Eine Kolonie. Ein Direktor. Echte Entscheidungen. Rundenbasiertes Weltraum-Strategiespiel im Browser." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#8c2030" />
+
+  <!-- Init language from localStorage before render — prevents flash -->
+  <script>try{var _l=localStorage.getItem('nouron-lang');if(_l){document.documentElement.dataset.lang=_l;document.documentElement.lang=_l;}}catch(e){}</script>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -50,6 +52,10 @@
 
     body { background-color: var(--color-bg); color: var(--color-text); }
 
+    /* ── Language switching ── */
+    [data-lang="en"] .lang-de { display: none; }
+    [data-lang="de"] .lang-en { display: none; }
+
     /* ── Nav ── */
     body > nav {
       background: var(--color-bg);
@@ -79,6 +85,20 @@
       font-weight: 600;
     }
     .nav-cta:hover { background: var(--color-accent); color: #ffffff !important; }
+    .lang-toggle-btn {
+      all: unset;
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      color: var(--color-muted);
+      cursor: pointer;
+      font-size: .8rem;
+      font-family: system-ui, sans-serif;
+      font-weight: 600;
+      padding: .2rem .55rem;
+      line-height: 1.4;
+      display: inline-block;
+    }
+    .lang-toggle-btn:hover { color: var(--color-text); border-color: var(--color-text); }
 
     /* ── Hero ── */
     .hero {
@@ -228,8 +248,10 @@
       padding: 1.5rem;
     }
     .inspo-card h4 { margin: 0 0 .2rem; }
-    .inspo-year    { font-size: .73rem; color: var(--color-accent); display: block; margin-bottom: .5rem; font-family: system-ui, sans-serif; }
-    .inspo-card p  { font-size: .85rem; color: var(--color-muted); margin: 0; line-height: 1.55; }
+    .inspo-card h4 a { color: var(--color-text); text-decoration: underline; text-underline-offset: 3px; }
+    .inspo-card h4 a:hover { color: var(--color-accent); }
+    .inspo-year { font-size: .73rem; color: var(--color-accent); display: block; margin-bottom: .5rem; font-family: system-ui, sans-serif; }
+    .inspo-card p { font-size: .85rem; color: var(--color-muted); margin: 0; line-height: 1.55; }
 
     /* ── Dev items ── */
     .dev-grid {
@@ -242,6 +264,14 @@
     .dev-icon  { font-size: 1.25rem; flex-shrink: 0; margin-top: .05rem; }
     .dev-item h4 { margin: 0 0 .25rem; }
     .dev-item p  { margin: 0; font-size: .85rem; color: var(--color-muted); line-height: 1.55; }
+
+    /* ── History (wider cards) ── */
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
+      gap: 1rem;
+      margin-top: 2.5rem;
+    }
 
     /* ── CTA box ── */
     .cta-box {
@@ -260,6 +290,12 @@
       font-size: .9rem;
       border-radius: 4px;
     }
+
+    /* ── Impressum ── */
+    .impressum-box { max-width: 560px; margin-top: 2rem; }
+    .impressum-box h3 { margin-top: 1.5rem; margin-bottom: .4rem; }
+    .impressum-box p  { font-size: .9rem; color: var(--color-muted); line-height: 1.7; }
+    .impressum-box a  { color: var(--color-muted); }
 
     /* ── Footer ── */
     footer {
@@ -303,26 +339,37 @@
       <li><a href="#features">Features</a></li>
       <li><a href="#gameplay">Gameplay</a></li>
       <li><a href="#status">Status</a></li>
-      <li><a href="#geschichte">Geschichte</a></li>
+      <li><a href="#geschichte"><span class="lang-de">Geschichte</span><span class="lang-en">History</span></a></li>
+      <li><a href="https://x.com/_nouron" target="_blank" rel="noopener" title="X @_nouron">&#120143;</a></li>
       <li><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a></li>
-      <li><a href="#spielen" class="nav-cta">Spielen</a></li>
+      <li><button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button></li>
+      <li><a href="#spielen" class="nav-cta"><span class="lang-de">Spielen</span><span class="lang-en">Play</span></a></li>
     </ul>
   </nav>
 
   <div class="hero">
     <h1>Nouron</h1>
-    <p class="hero-tagline">Eine Kolonie. Ein Direktor. Echte Entscheidungen.</p>
-    <p class="hero-sub">
+    <p class="hero-tagline">
+      <span class="lang-de">Eine Kolonie. Ein Direktor. Echte Entscheidungen.</span>
+      <span class="lang-en">One Colony. One Director. Real Decisions.</span>
+    </p>
+    <p class="hero-sub lang-de">
       Ein rundenbasiertes Weltraum-Strategiespiel im Browser — kostenlos spielbar.
       Aktuell Singleplayer mit Roguelike-Elementen und Sol-basiertem Rhythmus;
       Multiplayer im Brettspiel-Stil (play-by-email) ist in Planung.
       Für Spieler, die lieber nachdenken als klicken.
     </p>
+    <p class="hero-sub lang-en">
+      A turn-based space strategy game in your browser — free to play.
+      Currently singleplayer with roguelike elements and Sol-based rhythm;
+      multiplayer in board-game style (play-by-email) is planned.
+      For players who prefer thinking over clicking.
+    </p>
     <div class="hero-actions">
-      <a href="#spielen" role="button">Jetzt spielen</a>
-      <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub ansehen</a>
+      <a href="#spielen" role="button"><span class="lang-de">Jetzt spielen</span><span class="lang-en">Play now</span></a>
+      <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub</a>
     </div>
-    <div class="hero-chips">
+    <div class="hero-chips lang-de">
       <span class="chip">Singleplayer</span>
       <span class="chip">Multiplayer (geplant)</span>
       <span class="chip">Sol-basiert</span>
@@ -331,221 +378,425 @@
       <span class="chip">Kostenlos</span>
       <span class="chip">Open Source</span>
     </div>
+    <div class="hero-chips lang-en">
+      <span class="chip">Singleplayer</span>
+      <span class="chip">Multiplayer (planned)</span>
+      <span class="chip">Sol-based</span>
+      <span class="chip">Roguelike elements</span>
+      <span class="chip">Browser game</span>
+      <span class="chip">Free to play</span>
+      <span class="chip">Open Source</span>
+    </div>
   </div>
 
   <main class="container">
 
     <section id="features">
-      <p class="section-label">Was ist Nouron?</p>
-      <h2>Sechs Merkmale, ein Grundgedanke</h2>
-      <p class="lead">
-        Nouron belohnt Spieler, die ihren Fokus bewusst setzen und mit begrenzten Mitteln das Beste herausholen —
-        kein Imperium-Aufbau, kein Dauerklicken. Das Frontier-Szenario: eine kleine Kolonie,
-        ein begrenzter Horizont, echte Konsequenzen.
-      </p>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <span class="feature-icon">🏚️</span>
-          <h3>Verfall als Systemprinzip</h3>
-          <p>Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer die Kolonie vernachlässigt,
-          verliert sie langsam — nicht durch Gegner, sondern durch Entropie.
-          Jeder Sol ist eine echte Ressourcenentscheidung.</p>
+      <div class="lang-de">
+        <p class="section-label">Was ist Nouron?</p>
+        <h2>Sechs Merkmale, ein Grundgedanke</h2>
+        <p class="lead">
+          Nouron belohnt Spieler, die ihren Fokus bewusst setzen und mit begrenzten Mitteln das Beste
+          herausholen — kein Imperium-Aufbau, kein Dauerklicken. Das Frontier-Szenario: eine kleine
+          Kolonie, ein begrenzter Horizont, echte Konsequenzen.
+        </p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="feature-icon">🏚️</span>
+            <h3>Verfall als Systemprinzip</h3>
+            <p>Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer die Kolonie vernachlässigt,
+            verliert sie langsam — nicht durch Gegner, sondern durch Entropie.
+            Jeder Sol ist eine echte Ressourcenentscheidung.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🌅</span>
+            <h3>Sol-basiertes Spieltempo</h3>
+            <p>Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich
+            ausgeführt. Das Spiel passt sich dem Spieler an — nicht umgekehrt.
+            Perfekt auch als Zweitspiel.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🏔️</span>
+            <h3>Nur eine Kolonie — Tiefe statt Breite</h3>
+            <p>Kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle
+            Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
+            Größe entsteht durch Bedeutung, nicht durch Anzahl.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🎲</span>
+            <h3>Roguelike-Runs</h3>
+            <p>Jeder Run hat variable Direktiven, zufällige Ereignisse und echte Konsequenzen.
+            Scheitern ist möglich — und lehrreich. Kein Run ist identisch,
+            aber die Kolonie fühlt sich immer nach Heimat an.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🌌</span>
+            <h3>Kleine, handverlesene Galaxie</h3>
+            <p>Wenige Systeme, wenige Objekte. Jede Begegnung mit einem Händler oder Ereignis
+            hat Gewicht. Die Knappheit des Raums ist Teil des Designs — nicht ein technisches Limit.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">⚖️</span>
+            <h3>Schutz als Opportunitätsentscheidung</h3>
+            <p>Eine Korvette kann die Kolonie bewachen — aber eine Korvette, die patrouilliert,
+            handelt nicht. Konfrontative Aktionen kosten strukturell mehr AP als zivile.
+            Wer Schutz will, bezahlt mit Aufbau.</p>
+          </div>
         </div>
-        <div class="feature-card">
-          <span class="feature-icon">🌅</span>
-          <h3>Sol-basiertes Spieltempo</h3>
-          <p>Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich
-          ausgeführt. Das Spiel passt sich dem Spieler an — nicht umgekehrt.
-          Perfekt auch als Zweitspiel.</p>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🏔️</span>
-          <h3>Nur eine Kolonie — Tiefe statt Breite</h3>
-          <p>Kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle
-          Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
-          Größe entsteht durch Bedeutung, nicht durch Anzahl.</p>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🎲</span>
-          <h3>Roguelike-Runs</h3>
-          <p>Jeder Run hat variable Direktiven, zufällige Ereignisse und echte Konsequenzen.
-          Scheitern ist möglich — und lehrreich. Kein Run ist identisch,
-          aber die Kolonie fühlt sich immer nach Heimat an.</p>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">🌌</span>
-          <h3>Kleine, handverlesene Galaxie</h3>
-          <p>Wenige Systeme, wenige Objekte. Jede Begegnung mit einem Händler oder Ereignis
-          hat Gewicht. Die Knappheit des Raums ist Teil des Designs —
-          nicht ein technisches Limit.</p>
-        </div>
-        <div class="feature-card">
-          <span class="feature-icon">⚖️</span>
-          <h3>Schutz als Opportunitätsentscheidung</h3>
-          <p>Eine Korvette kann die Kolonie bewachen — aber eine Korvette, die patrouilliert,
-          handelt nicht. Konfrontative Aktionen kosten strukturell mehr AP als zivile.
-          Wer Schutz will, bezahlt mit Aufbau.</p>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">What is Nouron?</p>
+        <h2>Six traits, one idea</h2>
+        <p class="lead">
+          Nouron rewards players who set their focus deliberately and make the most of limited resources —
+          no empire building, no constant clicking. The frontier scenario: a small colony,
+          a limited horizon, real consequences.
+        </p>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <span class="feature-icon">🏚️</span>
+            <h3>Decay as a System Principle</h3>
+            <p>Buildings and knowledge decay without active maintenance. Neglect the colony and lose
+            it slowly — not to enemies, but to entropy.
+            Every Sol is a real resource decision.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🌅</span>
+            <h3>Sol-Based Pace</h3>
+            <p>No real-time pressure. Decisions are made once a day and executed once a day.
+            The game adapts to the player — not the other way around.
+            Perfect as a second game.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🏔️</span>
+            <h3>One Colony — Depth Over Breadth</h3>
+            <p>No micromanaging ten outposts. One colony, one director — all decisions affect
+            the same place and the same community.
+            Scale comes from meaning, not from quantity.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🎲</span>
+            <h3>Roguelike Runs</h3>
+            <p>Each run has variable directives, random events and real consequences.
+            Failure is possible — and instructive. No run is identical,
+            but the colony always feels like home.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">🌌</span>
+            <h3>A Small, Handpicked Galaxy</h3>
+            <p>Few systems, few objects. Every encounter with a trader or event carries weight.
+            The scarcity of space is part of the design — not a technical limitation.</p>
+          </div>
+          <div class="feature-card">
+            <span class="feature-icon">⚖️</span>
+            <h3>Protection as an Opportunity Cost</h3>
+            <p>A corvette can guard the colony — but a patrolling corvette isn't trading.
+            Confrontational actions structurally cost more AP than civilian ones.
+            Want protection? Pay with development.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="gameplay">
-      <p class="section-label">Spielablauf</p>
-      <h2>Ein Run — von Anfang bis Ende</h2>
-      <p class="lead">
-        Jeder Run beginnt bei Sol 1 und endet mit Erfolg oder Scheitern.
-        Zwei Phasen, konkrete Direktiven von Nexus, unzählige Wege dorthin.
-        Im nächsten Run wartet ein anderes Szenario.
-      </p>
-      <div class="phases">
-        <div class="phase-card">
-          <span class="phase-label">Phase 1</span>
-          <h3>Kolonie aufbauen</h3>
-          <p>Errichte Command Center, Wohnhabitate und erste Produktionsgebäude.
-          Stelle Berater ein, die täglich Aktionspunkte generieren.
-          Erkunde das System mit deiner Korvette — und hüte dich vor Verfall.</p>
+      <div class="lang-de">
+        <p class="section-label">Spielablauf</p>
+        <h2>Ein Run — von Anfang bis Ende</h2>
+        <p class="lead">
+          Jeder Run beginnt bei Sol 1 und endet mit Erfolg oder Scheitern.
+          Zwei Phasen, konkrete Direktiven von Nexus, unzählige Wege dorthin.
+          Im nächsten Run wartet ein anderes Szenario.
+        </p>
+        <div class="phases">
+          <div class="phase-card">
+            <span class="phase-label">Phase 1</span>
+            <h3>Kolonie aufbauen</h3>
+            <p>Errichte Command Center, Wohnhabitate und erste Produktionsgebäude.
+            Stelle Berater ein, die täglich Aktionspunkte generieren.
+            Erkunde das System mit deiner Korvette — und hüte dich vor Verfall.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">Phase 2</span>
+            <h3>Direktiven erfüllen</h3>
+            <p>Nexus gibt drei Direktiven. Du weißt nicht, was dich erwartet —
+            Berater enthüllen die Aufgaben nach und nach. Zwei von drei müssen
+            erfüllt werden. Nexus-Interventionen bei Sol 30, 50, 65 und 80.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">Ende</span>
+            <h3>Sieg oder Scheitern</h3>
+            <p>Der Run endet mit einem Score und einer Bewertung.
+            Jedes Scheitern ist eine Lehre. Jeder neue Run beginnt mit einer
+            anderen Aufgabenstellung — und derselben Kolonie, die wieder von vorn anfängt.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">System</span>
+            <h3>Berater &amp; Aktionspunkte</h3>
+            <p>Berater generieren täglich AP in fünf Typen: Bau, Forschung, Navigation,
+            Wirtschaft, Strategie. Jede Aktion kostet AP. Wer seine Berater klug einsetzt,
+            entscheidet den Run.</p>
+          </div>
         </div>
-        <div class="phase-card">
-          <span class="phase-label">Phase 2</span>
-          <h3>Direktiven erfüllen</h3>
-          <p>Nexus gibt drei Direktiven. Du weißt nicht, was dich erwartet —
-          Berater enthüllen die Aufgaben nach und nach. Zwei von drei müssen
-          erfüllt werden. Nexus-Interventionen bei Sol 30, 50, 65 und 80.</p>
-        </div>
-        <div class="phase-card">
-          <span class="phase-label">Ende</span>
-          <h3>Sieg oder Scheitern</h3>
-          <p>Der Run endet mit einem Score und einer Bewertung.
-          Jedes Scheitern ist eine Lehre. Jeder neue Run beginnt mit einer
-          anderen Aufgabenstellung — und derselben Kolonie, die wieder von vorn anfängt.</p>
-        </div>
-        <div class="phase-card">
-          <span class="phase-label">System</span>
-          <h3>Berater &amp; Aktionspunkte</h3>
-          <p>Berater generieren täglich AP in fünf Typen: Bau, Forschung, Navigation,
-          Wirtschaft, Strategie. Jede Aktion kostet AP. Wer seine Berater klug einsetzt,
-          entscheidet den Run.</p>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">Gameplay</p>
+        <h2>One run — start to finish</h2>
+        <p class="lead">
+          Every run starts at Sol 1 and ends in success or failure.
+          Two phases, concrete directives from Nexus, countless paths to the goal.
+          The next run brings a different scenario.
+        </p>
+        <div class="phases">
+          <div class="phase-card">
+            <span class="phase-label">Phase 1</span>
+            <h3>Build the Colony</h3>
+            <p>Establish the Command Center, housing habitats and first production buildings.
+            Hire advisors that generate action points daily.
+            Explore the system with your corvette — and watch out for decay.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">Phase 2</span>
+            <h3>Fulfill Directives</h3>
+            <p>Nexus assigns three directives. You don't know what to expect —
+            advisors reveal the objectives gradually. Two of three must be completed.
+            Nexus interventions at Sol 30, 50, 65 and 80.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">End</span>
+            <h3>Victory or Failure</h3>
+            <p>The run ends with a score and an evaluation.
+            Every failure is a lesson. Every new run starts with a different task —
+            and the same colony starting from scratch.</p>
+          </div>
+          <div class="phase-card">
+            <span class="phase-label">System</span>
+            <h3>Advisors &amp; Action Points</h3>
+            <p>Advisors generate AP daily in five types: Construction, Research, Navigation,
+            Economy, Strategy. Every action costs AP. Using advisors wisely decides the run.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="status">
-      <p class="section-label">Entwicklungsstand</p>
-      <h2>Phase 3 — Playtest-Vorbereitung</h2>
-      <p class="lead">
-        Nouron ist ein aktives Hobbyprojekt. Stand Mai 2026 befinden wir uns kurz vor dem
-        ersten echten Playtest. Die Kernmechaniken sind implementiert und in über 600
-        automatisierten Tests geprüft.
-      </p>
-      <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
-        <div>
-          <h3 style="color: #2d6a4f; margin-bottom: 1rem;">Implementiert</h3>
-          <ul class="status-list">
-            <li><span class="s-icon s-done">✓</span> Run-System (Phase 1 &amp; 2, Objectives, Score)</li>
-            <li><span class="s-icon s-done">✓</span> Nexus-Interventionen &amp; Fail-States</li>
-            <li><span class="s-icon s-done">✓</span> Berater-System mit AP-Typen &amp; Rang-Progression</li>
-            <li><span class="s-icon s-done">✓</span> Hex-Grid Kolonieansicht (SVG, interaktiv)</li>
-            <li><span class="s-icon s-done">✓</span> Techtree (Gebäude, Forschungen, Schiffe, Berater)</li>
-            <li><span class="s-icon s-done">✓</span> INNN-Nachrichtensystem</li>
-            <li><span class="s-icon s-done">✓</span> Handelssystem (Reisender Händler / Cantina)</li>
-            <li><span class="s-icon s-done">✓</span> Moralsystem &amp; Decay (Verfall)</li>
-            <li><span class="s-icon s-done">✓</span> Supply-System &amp; Flottenorders</li>
-            <li><span class="s-icon s-done">✓</span> Systemkarte &amp; Fleet Command Overlay</li>
-            <li><span class="s-icon s-done">✓</span> Onboarding-System (Triggers &amp; Hints)</li>
-          </ul>
+      <div class="lang-de">
+        <p class="section-label">Entwicklungsstand</p>
+        <h2>Phase 3 — Playtest-Vorbereitung</h2>
+        <p class="lead">
+          Nouron ist ein aktives Hobbyprojekt. Stand Mai 2026 befinden wir uns kurz vor dem
+          ersten echten Playtest. Die Kernmechaniken sind implementiert und in über 600
+          automatisierten Tests geprüft.
+        </p>
+        <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
+          <div>
+            <h3 style="color: #2d6a4f; margin-bottom: 1rem;">Implementiert</h3>
+            <ul class="status-list">
+              <li><span class="s-icon s-done">✓</span> Run-System (Phase 1 &amp; 2, Objectives, Score)</li>
+              <li><span class="s-icon s-done">✓</span> Nexus-Interventionen &amp; Fail-States</li>
+              <li><span class="s-icon s-done">✓</span> Berater-System mit AP-Typen &amp; Rang-Progression</li>
+              <li><span class="s-icon s-done">✓</span> Hex-Grid Kolonieansicht (SVG, interaktiv)</li>
+              <li><span class="s-icon s-done">✓</span> Techtree (Gebäude, Forschungen, Schiffe, Berater)</li>
+              <li><span class="s-icon s-done">✓</span> INNN-Nachrichtensystem</li>
+              <li><span class="s-icon s-done">✓</span> Handelssystem (Reisender Händler / Cantina)</li>
+              <li><span class="s-icon s-done">✓</span> Moralsystem &amp; Decay (Verfall)</li>
+              <li><span class="s-icon s-done">✓</span> Supply-System &amp; Flottenorders</li>
+              <li><span class="s-icon s-done">✓</span> Systemkarte &amp; Fleet Command Overlay</li>
+              <li><span class="s-icon s-done">✓</span> Onboarding-System (Triggers &amp; Hints)</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: #7a5c00; margin-bottom: 1rem;">Geplant (Phase 4)</h3>
+            <ul class="status-list">
+              <li><span class="s-icon s-wip">⏳</span> Playtest mit echten Spielern</li>
+              <li><span class="s-icon s-wip">⏳</span> Progressive Discovery — Berater-Dialoge &amp; Almanach</li>
+              <li><span class="s-icon s-wip">⏳</span> Multiplayer-Lobby &amp; Multi-Run-Support</li>
+              <li><span class="s-icon s-wip">⏳</span> Berater-Spezialfähigkeiten (CC Lv4-Gate)</li>
+              <li><span class="s-icon s-wip">⏳</span> NPC-Vereinbarungen (Händler, Schmuggler)</li>
+              <li><span class="s-icon s-wip">⏳</span> Steuersystem &amp; Moral-Erweiterung</li>
+            </ul>
+          </div>
         </div>
-        <div>
-          <h3 style="color: #7a5c00; margin-bottom: 1rem;">Geplant (Phase 4)</h3>
-          <ul class="status-list">
-            <li><span class="s-icon s-wip">⏳</span> Playtest mit echten Spielern</li>
-            <li><span class="s-icon s-wip">⏳</span> Progressive Discovery — Berater-Dialoge &amp; Almanach</li>
-            <li><span class="s-icon s-wip">⏳</span> Multiplayer-Lobby &amp; Multi-Run-Support</li>
-            <li><span class="s-icon s-wip">⏳</span> Berater-Spezialfähigkeiten (CC Lv4-Gate)</li>
-            <li><span class="s-icon s-wip">⏳</span> NPC-Vereinbarungen (Händler, Schmuggler)</li>
-            <li><span class="s-icon s-wip">⏳</span> Steuersystem &amp; Moral-Erweiterung</li>
-          </ul>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">Development Status</p>
+        <h2>Phase 3 — Playtest Preparation</h2>
+        <p class="lead">
+          Nouron is an active hobby project. As of May 2026 we're just before the first real playtest.
+          Core mechanics are implemented and verified by over 600 automated tests.
+        </p>
+        <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
+          <div>
+            <h3 style="color: #2d6a4f; margin-bottom: 1rem;">Implemented</h3>
+            <ul class="status-list">
+              <li><span class="s-icon s-done">✓</span> Run system (Phase 1 &amp; 2, objectives, score)</li>
+              <li><span class="s-icon s-done">✓</span> Nexus interventions &amp; fail states</li>
+              <li><span class="s-icon s-done">✓</span> Advisor system with AP types &amp; rank progression</li>
+              <li><span class="s-icon s-done">✓</span> Hex-grid colony view (SVG, interactive)</li>
+              <li><span class="s-icon s-done">✓</span> Tech tree (buildings, research, ships, advisors)</li>
+              <li><span class="s-icon s-done">✓</span> INNN news system</li>
+              <li><span class="s-icon s-done">✓</span> Trading system (traveling merchant / cantina)</li>
+              <li><span class="s-icon s-done">✓</span> Morale system &amp; decay</li>
+              <li><span class="s-icon s-done">✓</span> Supply system &amp; fleet orders</li>
+              <li><span class="s-icon s-done">✓</span> System map &amp; fleet command overlay</li>
+              <li><span class="s-icon s-done">✓</span> Onboarding system (triggers &amp; hints)</li>
+            </ul>
+          </div>
+          <div>
+            <h3 style="color: #7a5c00; margin-bottom: 1rem;">Planned (Phase 4)</h3>
+            <ul class="status-list">
+              <li><span class="s-icon s-wip">⏳</span> Playtest with real players</li>
+              <li><span class="s-icon s-wip">⏳</span> Progressive discovery — advisor dialogs &amp; almanac</li>
+              <li><span class="s-icon s-wip">⏳</span> Multiplayer lobby &amp; multi-run support</li>
+              <li><span class="s-icon s-wip">⏳</span> Advisor special abilities (CC Lv4 gate)</li>
+              <li><span class="s-icon s-wip">⏳</span> NPC agreements (traders, smugglers)</li>
+              <li><span class="s-icon s-wip">⏳</span> Tax system &amp; morale expansion</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="spielen">
       <div class="cta-box">
-        <p class="section-label">Mitspielen</p>
-        <h2>Playtest beitreten</h2>
-        <p class="lead">
-          Nouron befindet sich im aktiven Playtest. Das Spiel ist kostenlos — und bleibt es.
-          Interesse? Meld dich direkt oder hinterlasse eine Nachricht auf GitHub.
-        </p>
+        <div class="lang-de">
+          <p class="section-label">Mitspielen</p>
+          <h2>Playtest beitreten</h2>
+          <p class="lead">
+            Nouron befindet sich im aktiven Playtest. Das Spiel ist kostenlos — und bleibt es.
+            Interesse? Öffne ein GitHub Issue oder schreib direkt (Kontakt im Impressum).
+          </p>
+        </div>
+        <div class="lang-en">
+          <p class="section-label">Join</p>
+          <h2>Join the playtest</h2>
+          <p class="lead">
+            Nouron is in active playtest. The game is free — and will stay that way.
+            Interested? Open a GitHub Issue or find contact details in the legal notice.
+          </p>
+        </div>
         <div class="cta-actions">
-          <a href="mailto:tech.mario@outlook.de" role="button">Kontakt aufnehmen</a>
-          <a href="https://github.com/nouron/nouron/issues" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub Issues</a>
+          <a href="https://github.com/nouron/nouron/issues" target="_blank" rel="noopener" role="button">GitHub Issues</a>
+          <a href="#impressum" role="button" class="secondary outline">
+            <span class="lang-de">Impressum / Kontakt</span>
+            <span class="lang-en">Legal Notice / Contact</span>
+          </a>
         </div>
       </div>
     </section>
 
     <section id="vorbilder">
-      <p class="section-label">Einflüsse</p>
-      <h2>Vorbilder</h2>
-      <p class="lead">Nouron ist kein Klon — aber es wäre ohne diese vier Spiele nicht dasselbe.</p>
+      <div class="lang-de">
+        <p class="section-label">Einflüsse</p>
+        <h2>Vorbilder</h2>
+        <p class="lead">Nouron ist kein Klon — aber es wäre ohne diese vier Spiele nicht dasselbe.</p>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">Influences</p>
+        <h2>Inspirations</h2>
+        <p class="lead">Nouron is not a clone — but it wouldn't be the same without these four games.</p>
+      </div>
       <div class="inspo-grid">
         <div class="inspo-card">
           <h4><a href="https://en.wikipedia.org/wiki/Reunion_(video_game)" target="_blank" rel="noopener">Reunion</a></h4>
           <span class="inspo-year">1994 · Starkos</span>
-          <p>Stärkster Einfluss: ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite.
+          <p class="lang-de">Stärkster Einfluss: ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite.
           Die Cantina, der Alltag der Kolonie, das Gefühl von Ort.</p>
+          <p class="lang-en">Strongest influence: one player, one home planet, maximum depth over breadth.
+          The cantina, the everyday life of the colony, the sense of place.</p>
         </div>
         <div class="inspo-card">
           <h4><a href="https://en.wikipedia.org/wiki/FTL:_Faster_Than_Light" target="_blank" rel="noopener">FTL: Faster Than Light</a></h4>
           <span class="inspo-year">2012 · Subset Games</span>
-          <p>Vorbild für die Run-Struktur: variables Ziel, zufällige Ereignisse,
+          <p class="lang-de">Vorbild für die Run-Struktur: variables Ziel, zufällige Ereignisse,
           echtes Scheitern als Teil des Spiels — nicht als Bestrafung.</p>
+          <p class="lang-en">Model for the run structure: variable goal, random events,
+          real failure as part of the game — not as punishment.</p>
         </div>
         <div class="inspo-card">
           <h4><a href="https://en.wikipedia.org/wiki/Catan" target="_blank" rel="noopener">Catan</a></h4>
           <span class="inspo-year">1995 · Klaus Teuber</span>
-          <p>Vorbild für das Ressourcenmanagement mit Knappheit: jede Ressource hat Gewicht,
+          <p class="lang-de">Vorbild für das Ressourcenmanagement mit Knappheit: jede Ressource hat Gewicht,
           Tausch ist eine Kernmechanik, nicht ein Komfort-Feature.</p>
+          <p class="lang-en">Model for resource management with scarcity: every resource has weight,
+          trading is a core mechanic, not a convenience feature.</p>
         </div>
         <div class="inspo-card">
           <h4><a href="https://en.wikipedia.org/wiki/Master_of_Orion" target="_blank" rel="noopener">Master of Orion</a></h4>
           <span class="inspo-year">1993 · Simtex</span>
-          <p>Vorbild für das Mini-4X-Grundgerüst und die Kommandopunkte-Mechanik.
+          <p class="lang-de">Vorbild für das Mini-4X-Grundgerüst und die Kommandopunkte-Mechanik.
           Tiefe durch Systeme, nicht durch Komplexität um ihrer selbst willen.</p>
+          <p class="lang-en">Model for the mini-4X framework and the command-point mechanic.
+          Depth through systems, not complexity for its own sake.</p>
         </div>
       </div>
     </section>
 
     <section id="geschichte">
-      <p class="section-label">Geschichte</p>
-      <h2>Von 2008 bis heute</h2>
-      <p class="lead">
-        Nouron begann als klassisches Multiplayer-Browsergame mit Rassen, Diplomatie und galaktischem
-        Imperium-Aufbau — sieben Jahre Entwicklung, dann Stillstand. 2026 folgte ein radikaler Neustart
-        mit einem komplett neuen Spielkonzept.
-      </p>
-      <div class="feature-grid" style="grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));">
-        <div class="feature-card">
-          <h3>Ursprüngliche Vision (2008–2014)</h3>
-          <p>Klassisches Multiplayer-Space-4X: mehrere Rassen mit eigenen Boni, Diplomatie,
-          Fraktionen, Krieg und Allianz. Viele Kolonien, ein galaktisches Imperium als Ziel.
-          Das Projekt wuchs zu groß — zu viele Systeme, zu wenig spielbarer Kern. 2014 eingestellt.</p>
+      <div class="lang-de">
+        <p class="section-label">Geschichte</p>
+        <h2>Von 2008 bis heute</h2>
+        <p class="lead">
+          Nouron begann als klassisches Multiplayer-Browsergame mit Rassen, Diplomatie und galaktischem
+          Imperium-Aufbau — sieben Jahre Entwicklung, dann Stillstand. 2026 folgte ein radikaler Neustart
+          mit einem komplett neuen Spielkonzept.
+        </p>
+        <div class="history-grid">
+          <div class="feature-card">
+            <h3>Ursprüngliche Vision (2008–2014)</h3>
+            <p>Klassisches Multiplayer-Space-4X: mehrere Rassen mit eigenen Boni, Diplomatie,
+            Fraktionen, Krieg und Allianz. Viele Kolonien, ein galaktisches Imperium als Ziel.
+            Das Projekt wuchs zu groß — zu viele Systeme, zu wenig spielbarer Kern. 2014 eingestellt.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Neustart 2026 — komplett neu gedacht</h3>
+            <p>Keine Rassen, kein Imperium, keine Diplomatie. Stattdessen: ein Roguelike-Mini-4X
+            mit konkretem Ziel, echtem Scheitern und klarem Ende. Singleplayer first —
+            Multiplayer kommt als play-by-email-Variante im Brettspiel-Stil zurück.</p>
+          </div>
         </div>
-        <div class="feature-card">
-          <h3>Neustart 2026 — komplett neu gedacht</h3>
-          <p>Keine Rassen, kein Imperium, keine Diplomatie. Stattdessen: ein Roguelike-Mini-4X
-          mit konkretem Ziel, echtem Scheitern und klarem Ende. Singleplayer first — aber der
-          Brettspiel-Gedanke lebt als play-by-email-Multiplayer wieder auf.</p>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">History</p>
+        <h2>From 2008 to today</h2>
+        <p class="lead">
+          Nouron began as a classic multiplayer browser game with races, diplomacy and galactic
+          empire building — seven years of development, then a standstill. 2026 brought a radical
+          restart with a completely new game concept.
+        </p>
+        <div class="history-grid">
+          <div class="feature-card">
+            <h3>Original Vision (2008–2014)</h3>
+            <p>Classic multiplayer space 4X: multiple races with unique bonuses, diplomacy,
+            factions, war and alliance. Many colonies, a galactic empire as the goal.
+            The project grew too large — too many systems, too little playable core. Discontinued 2014.</p>
+          </div>
+          <div class="feature-card">
+            <h3>Restart 2026 — Completely Rethought</h3>
+            <p>No races, no empire, no diplomacy. Instead: a roguelike mini-4X with a concrete goal,
+            real failure and a clear ending. Singleplayer first —
+            multiplayer returns as a play-by-email board-game variant.</p>
+          </div>
         </div>
       </div>
     </section>
 
     <section id="dev">
-      <p class="section-label">Entwicklung</p>
-      <h2>Open Source &amp; Hobbyprojekt</h2>
-      <p class="lead">
-        Nouron ist ein privates Hobbyprojekt, entwickelt seit 2008, seit 2026 wieder aktiv.
-        Der gesamte Quellcode ist auf GitHub verfügbar und offen für Feedback.
-      </p>
+      <div class="lang-de">
+        <p class="section-label">Entwicklung</p>
+        <h2>Open Source &amp; Hobbyprojekt</h2>
+        <p class="lead">
+          Nouron ist ein privates Hobbyprojekt, entwickelt seit 2008, seit 2026 wieder aktiv.
+          Der gesamte Quellcode ist auf GitHub verfügbar und offen für Feedback.
+        </p>
+      </div>
+      <div class="lang-en">
+        <p class="section-label">Development</p>
+        <h2>Open Source &amp; Hobby Project</h2>
+        <p class="lead">
+          Nouron is a private hobby project, in development since 2008, active again since 2026.
+          The entire source code is available on GitHub and open to feedback.
+        </p>
+      </div>
       <div class="dev-grid">
         <div class="dev-item">
           <span class="dev-icon">💻</span>
@@ -559,25 +810,57 @@
           <div>
             <h4>Open Source</h4>
             <p><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">github.com/nouron/nouron</a><br>
-            Issues, Forks und Pull Requests willkommen.</p>
+            <span class="lang-de">Issues, Forks und Pull Requests willkommen.</span>
+            <span class="lang-en">Issues, forks and pull requests welcome.</span></p>
           </div>
         </div>
         <div class="dev-item">
           <span class="dev-icon">🧑‍💻</span>
           <div>
-            <h4>Wer steckt dahinter?</h4>
-            <p>Mario Gehnke — Entwickler aus Leidenschaft.
-            Kein Team, kein Zeitdruck, keine Finanzierung.</p>
+            <h4><span class="lang-de">Wer steckt dahinter?</span><span class="lang-en">Who's behind it?</span></h4>
+            <p>
+              <span class="lang-de">Ein Solo-Entwickler aus Leidenschaft. Details im <a href="#impressum">Impressum</a>.</span>
+              <span class="lang-en">A solo developer by passion. Details in the <a href="#impressum">legal notice</a>.</span>
+            </p>
           </div>
         </div>
         <div class="dev-item">
           <span class="dev-icon">🚫</span>
           <div>
-            <h4>Kein Pay-to-Win</h4>
-            <p>Keine Premium-Accounts, kein Item-Shop, keine Reflinks.
-            Das Spiel ist kostenlos — jetzt und in Zukunft.</p>
+            <h4><span class="lang-de">Kein Pay-to-Win</span><span class="lang-en">No Pay-to-Win</span></h4>
+            <p>
+              <span class="lang-de">Keine Premium-Accounts, kein Item-Shop, keine Reflinks. Das Spiel ist kostenlos — jetzt und in Zukunft.</span>
+              <span class="lang-en">No premium accounts, no item shop, no referral links. The game is free — now and in the future.</span>
+            </p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="impressum">
+      <p class="section-label lang-de">Rechtliches</p>
+      <p class="section-label lang-en">Legal</p>
+      <h2><span class="lang-de">Impressum</span><span class="lang-en">Legal Notice</span></h2>
+      <div class="impressum-box">
+        <p class="lang-en" style="font-size:.85rem;">
+          This legal notice is required by German law (§ 5 TMG) for websites accessible from Germany.
+        </p>
+        <h3>Angaben gemäß § 5 TMG</h3>
+        <p>
+          Mario Gehnke<br>
+          <span class="email-protect" data-eu="tech.mario" data-ed="outlook.de"></span>
+        </p>
+        <h3><span class="lang-de">Haftungsausschluss</span><span class="lang-en">Disclaimer</span></h3>
+        <p class="lang-de">
+          Dieses Projekt ist ein privates, nicht-kommerzielles Hobbyprojekt ohne Gewinnerzielungsabsicht.
+          Für externe Links wird keine Haftung übernommen.
+        </p>
+        <p class="lang-en">
+          This project is a private, non-commercial hobby project with no profit motive.
+          No liability is accepted for external links.
+        </p>
+        <h3><span class="lang-de">Lizenz</span><span class="lang-en">License</span></h3>
+        <p><a href="https://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank" rel="noopener">CC BY-NC-SA 3.0 DE</a></p>
       </div>
     </section>
 
@@ -588,16 +871,46 @@
       <div class="footer-inner">
         <span>
           <span class="footer-logo">Nouron</span>
-          &nbsp;— Ein Hobbyprojekt von Mario Gehnke
+          &nbsp;—&nbsp;<span class="lang-de">Ein Hobbyprojekt</span><span class="lang-en">A hobby project</span>
         </span>
         <span>
           <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a> ·
-          <a href="mailto:tech.mario@outlook.de">Kontakt</a> ·
+          <a href="https://x.com/_nouron" target="_blank" rel="noopener">&#120143; @_nouron</a> ·
+          <a href="#impressum"><span class="lang-de">Impressum</span><span class="lang-en">Legal Notice</span></a> ·
           <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank" rel="noopener">CC BY-NC-SA</a>
         </span>
       </div>
     </div>
   </footer>
+
+  <script>
+    function toggleLang() {
+      setLang(document.documentElement.dataset.lang === 'de' ? 'en' : 'de');
+    }
+
+    function setLang(lang) {
+      document.documentElement.dataset.lang = lang;
+      document.documentElement.lang = lang;
+      try { localStorage.setItem('nouron-lang', lang); } catch(e) {}
+      var btn = document.getElementById('lang-toggle');
+      if (btn) btn.textContent = lang === 'de' ? 'EN' : 'DE';
+    }
+
+    // Sync toggle button label with current language on load
+    (function() {
+      var lang = document.documentElement.dataset.lang || 'de';
+      var btn = document.getElementById('lang-toggle');
+      if (btn) btn.textContent = lang === 'de' ? 'EN' : 'DE';
+    })();
+
+    // Email obfuscation — assembled from split parts, never as plain text in HTML
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.email-protect').forEach(function(el) {
+        var addr = el.dataset.eu + '@' + el.dataset.ed;
+        el.innerHTML = '<a href="mailto:' + addr + '">' + addr + '</a>';
+      });
+    });
+  </script>
 
 </body>
 </html>
