@@ -1707,6 +1707,37 @@ Im Dev-Mode (`GAME_DEV_MODE=true` in `.env`, Standard) werden Ressourcen- und AP
 
 ---
 
+### Berater als Informationsebene
+
+Jeder Berater erweitert nicht nur den AP-Pool seines Typs — er erweitert auch den **Informationsraum** des Spielers in seinem zugehörigen Screen. Ohne Berater ist der Screen voll funktionstüchtig; mit Berater erscheinen zusätzliche Metriken, Prognosen und Hinweise.
+
+Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exploration, aber auf Spieler-Entscheidungsqualität bezogen. Wer einen Berater verliert (Burnout, Abwesenheit, Außenmission), spielt dasselbe Spiel mit weniger Kontext. Das erzeugt spürbare Konsequenz ohne harten Progress-Block.
+
+**Designprinzipien:**
+
+- Informations-Verlust ≠ Feature-Verlust: alle Screens bleiben vollständig bedienbar
+- Kritische Warnungen (z.B. Gebäude-Decay unter Schwellwert) feuern **immer** via INNN — auch ohne Baumeister. Berater liefern Vorwarnzeit und Kontext, nicht die letzte Warnung selbst.
+- Pro Berater: maximal 2–3 zusätzliche Informationspunkte. Optionale Details auf Tooltip-Ebene, nicht im Hauptscreen.
+- Discovery-Moment beim ersten Einstellen eines Beraters: Onboarding-Hint zeigt was neu sichtbar wird.
+
+**QoL-Infos nach Beratertyp:**
+
+| Berater | Screen | Primär-Information | Sekundär-Information |
+|---------|--------|--------------------|----------------------|
+| Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
+| Analytiker | Techtree | "Sole bis Level X bei aktuellem Forschungs-AP-Fluss" | Priorisierungshinweis für offene Run-Aufgaben |
+| Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt |
+| Raumfahrer | Systemkarte | Aufgebrochene Reisezeit ("X Sole Reise + Y Sole Order + Rückkehr Sol Z") | Verschleiß-Prognose pro geplante Order |
+| Stratege | Run-Ziel-Panel | Ziel-Erreichbarkeits-Prognose ("Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") | Stärkenabschätzung vor `attack`-Order |
+
+> **⚠️ Balance — Konsul:** Händler-Einschätzung darf nicht binär sein ("kaufen / nicht kaufen"), sonst entwertet sie die Handelsentscheidung. Kontextuell: "günstig für Werkstoffe — du hast davon aber bereits 200" ist besser als "guter Deal".
+
+> **⚠️ Balance — Erster Cantina-Besuch:** Konsul ist erst ab CC Lv2 verfügbar, der erste Händler erscheint früher. Der erste Cantina-Besuch muss immer ein objektiv gutes Angebot zeigen — unabhängig vom Konsul-Status. Sonst entsteht Früh-Spiel-Frustration bei Spielern ohne Konsul.
+
+**Implementierung:** Phase 4 — setzt stabiles Berater-System und abgeschlossene Screen-Redesigns voraus. Keine neuen Datenpunkte nötig (alle Quellen in Config und DB bereits vorhanden), reine UI-Logik. Discovery-Moments integrieren sich in bestehenden Onboarding-Hint-Stack (§16).
+
+---
+
 ---
 
 ## 14. Moralsystem

@@ -108,7 +108,16 @@ function colonyHexView(config) {
         _svgPolygons:       new Map(),
 
         init() {
-            this.$nextTick(() => this.redrawGrid());
+            this.$nextTick(async () => {
+                this.redrawGrid();
+                const params  = new URLSearchParams(window.location.search);
+                const buildId = parseInt(params.get('build'), 10);
+                if (buildId) {
+                    await this.toggleBuildMode();
+                    const match = this.availableBuildings.find(b => b.building_id === buildId);
+                    if (match) this.selectPendingBuilding(match);
+                }
+            });
         },
 
         // ── Grid rendering ────────────────────────────────────────────────────

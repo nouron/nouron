@@ -179,27 +179,8 @@
                                     <span x-text="selectedTech.required_desc"></span>
                                 </div>
                             </template>
-                            {{-- AP invest bar: only for non-instanced leveled buildings --}}
-                            <template x-if="!selectedTech.is_instanced && selectedTech.ap_for_levelup > 0 && selectedTech.status !== 'locked'">
-                                <div class="detail-ap-section">
-                                    <div class="detail-row detail-row--ap">
-                                        <span class="detail-row-label">{{ __('techtree.detail_ap_invest') }}</span>
-                                        <span x-text="selectedTech.ap_spend + ' / ' + selectedTech.ap_for_levelup + ' AP'"></span>
-                                    </div>
-                                    <div class="detail-ap-bar">
-                                        <template x-for="n in selectedTech.ap_for_levelup" :key="n">
-                                            <span :class="n <= selectedTech.ap_spend ? 'ap-seg ap-seg--done' : (selectedTech.ap_available > 0 ? 'ap-seg ap-seg--todo' : 'ap-seg ap-seg--locked')"
-                                                  @click="n > selectedTech.ap_spend && selectedTech.ap_available > 0 && investAp(selectedTech, 'building', n - selectedTech.ap_spend)">
-                                            </span>
-                                        </template>
-                                    </div>
-                                    <template x-if="selectedTech.ap_available <= 0 && selectedTech.ap_spend < selectedTech.ap_for_levelup">
-                                        <p class="detail-ap-hint">{{ __('techtree.hint_no_construction_ap') }}</p>
-                                    </template>
-                                </div>
-                            </template>
-                            {{-- Colony link --}}
-                            <a href="{{ route('colony.view') }}" class="detail-colony-link">
+                            {{-- Colony link: opens build mode with this building pre-selected --}}
+                            <a :href="'/colony/view?build=' + selectedTech.id" class="detail-colony-link">
                                 {{ __('techtree.detail_colony_link') }} &rarr;
                             </a>
                         </div>
