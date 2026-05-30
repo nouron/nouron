@@ -138,6 +138,22 @@ window.__colonyViewData = {
                             </p>
                         </template>
 
+                        {{-- In-progress buildings (placed but level=0): guide player to click the tile --}}
+                        <template x-if="buildings.filter(b => b.level === 0 && b.tile_x !== null).length > 0">
+                            <div class="build-mode-inprogress">
+                                <p class="build-mode-inprogress-label">{{ __('colony.inprogress_label') }}</p>
+                                <ul class="building-list">
+                                    <template x-for="b in buildings.filter(b => b.level === 0 && b.tile_x !== null)" :key="b.building_id + '-' + b.instance_id">
+                                        <li class="building-list-item building-list-item--inprogress">
+                                            <span class="building-list-name" x-text="b.label ?? b.building_key"></span>
+                                            <span class="building-list-ap" x-text="`${b.ap_spend} / ${b.ap_for_levelup} AP`"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                                <p class="build-mode-inprogress-hint">{{ __('colony.inprogress_hint') }}</p>
+                            </div>
+                        </template>
+
                         <template x-if="availableBuildings.length === 0">
                             <p class="build-mode-empty">{{ __('colony.no_buildings') }}</p>
                         </template>

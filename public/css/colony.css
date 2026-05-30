@@ -671,6 +671,41 @@ button.btn-sol:hover,
     margin: 0;
 }
 
+.build-mode-inprogress {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem 0.7rem;
+    background: #fffbe6;
+    border: 1px solid #e8d86a;
+    border-radius: 6px;
+}
+
+.build-mode-inprogress-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #8a6a00;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 0.4rem 0;
+}
+
+.build-mode-inprogress-hint {
+    font-size: 0.75rem;
+    color: #8a6a00;
+    margin: 0.4rem 0 0 0;
+}
+
+.building-list-item--inprogress {
+    cursor: default;
+    background: #fffbe6;
+    border-color: #e8d86a;
+    opacity: 0.9;
+}
+
+.building-list-item--inprogress:hover {
+    background: #fffbe6;
+    border-color: #e8d86a;
+}
+
 .building-list {
     list-style: none;
     margin: 0;
@@ -1202,14 +1237,206 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0;
     letter-spacing: 0.05em;
 }
-.sol-spinner {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255,255,255,0.2);
-    border-top-color: #ffffff;
-    border-radius: 50%;
-    animation: sol-spin 0.9s linear infinite;
 }
 @keyframes sol-spin {
     to { transform: rotate(360deg); }
 }
+
+/* ── Cantina Viewport & Panning ────────────────────────────────────────── */
+
+.cantina-viewport {
+    position: relative;
+    width: 100%;
+    height: 480px;
+    overflow: hidden;
+    border-radius: var(--pico-border-radius, 8px);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    background: #f7f7f5;
+    margin-bottom: 2rem;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.cantina-background-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background-image: url('../img/_cantina/cantina-interior.webp');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
+}
+
+/* On mobile, make background wider than screen to allow panning */
+@media (max-width: 767px) {
+    .cantina-viewport {
+        height: 380px;
+    }
+    .cantina-background-wrapper {
+        width: 200%; /* Allows panning */
+    }
+}
+
+/* Force static background on desktop (prevent translation) */
+@media (min-width: 768px) {
+    .cantina-background-wrapper {
+        transform: none !important;
+    }
+}
+
+/* ── Hotspots ──────────────────────────────────────────────────────────── */
+
+.cantina-hotspot {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    margin-left: -35px; /* Center hotspot on coordinate */
+    margin-top: -35px;
+    border-radius: 50%;
+    background: rgba(140, 32, 48, 0.12);
+    border: 2px dashed var(--color-accent, #8c2030);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-accent, #8c2030);
+    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s;
+    box-shadow: 0 0 12px rgba(140, 32, 48, 0.2);
+    z-index: 10;
+}
+
+.cantina-hotspot:hover {
+    transform: scale(1.15);
+    background: rgba(140, 32, 48, 0.22);
+}
+
+.cantina-hotspot i {
+    font-size: 1.5rem;
+    pointer-events: none;
+}
+
+/* Pulsing outer ring */
+.hotspot-pulse {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid var(--color-accent, #8c2030);
+    animation: hotspot-pulse-anim 2.2s infinite;
+    pointer-events: none;
+}
+
+@keyframes hotspot-pulse-anim {
+    0% { transform: scale(1); opacity: 0.95; }
+    100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* Hotspot names / labels */
+.hotspot-label {
+    position: absolute;
+    top: -28px;
+    background: rgba(26, 26, 30, 0.85);
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* ── Modal Drawer (Responsive) ─────────────────────────────────────────── */
+
+.cantina-modal {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--pico-muted-border-color, #e8e8ec);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+/* Mobile drawer (slides up from bottom) */
+@media (max-width: 767px) {
+    .cantina-modal {
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        padding: 1.25rem 1.25rem 1.75rem;
+        transform: translateY(100%);
+    }
+    .cantina-modal.open {
+        transform: translateY(0);
+    }
+}
+
+/* Desktop dialog (centered popup) */
+@media (min-width: 768px) {
+    .cantina-modal {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.92);
+        border-radius: 10px;
+        padding: 1.75rem;
+        width: 460px;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .cantina-modal.open {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+.cantina-modal-close {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--pico-muted-color, #666);
+    cursor: pointer;
+    padding: 0.25rem;
+    margin: 0;
+    width: auto;
+}
+.cantina-modal-close:hover {
+    color: var(--color-text-primary, #1a1a1e);
+}
+
+.cantina-empty-hint {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 1rem 2rem;
+    border-radius: 6px;
+    border: 1px solid var(--pico-muted-border-color);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.guest-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(140, 32, 48, 0.08);
+}
+
