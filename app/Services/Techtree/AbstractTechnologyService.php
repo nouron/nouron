@@ -109,16 +109,16 @@ abstract class AbstractTechnologyService
             return true;
         }
 
-        $colonyBuilding = DB::table('colony_buildings')
+        $maxLevel = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', $entity->required_building_id)
-            ->first();
+            ->max('level');
 
-        if (!$colonyBuilding) {
+        if ($maxLevel === null) {
             return false;
         }
 
-        return $colonyBuilding->level >= $entity->required_building_level;
+        return (int) $maxLevel >= (int) $entity->required_building_level;
     }
 
     /**
