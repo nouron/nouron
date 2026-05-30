@@ -128,6 +128,15 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('nexusDebt', $activeRun?->nexus_debt);
                 $view->with('nexusDebtMax', 12000);
                 $view->with('inActiveRun', $activeRun !== null);
+
+                // Cantina nav-link gating: grey out when bar not yet built
+                $colonyIdForBar = session('activeIds.colonyId', 1);
+                $barBuilt = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyIdForBar)
+                    ->where('building_id', 52)
+                    ->where('level', '>', 0)
+                    ->exists();
+                $view->with('barBuilt', $barBuilt);
             }
         });
     }

@@ -52,6 +52,8 @@ return [
     'onboarding_hint_3' => 'Harvester produziert nichts — auf ein Regolith-Tile verlegen.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
+    'onboarding_hint_6' => 'Cantina noch nicht gebaut — hier erscheinen Händler und NPC-Gäste mit Tauschangeboten und Einmal-Items.',
+    'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 + Kommandozentrale lv2 erforderlich.',
 
     // ── Onboarding — Nexus-Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
 

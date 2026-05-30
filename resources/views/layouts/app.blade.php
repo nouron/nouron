@@ -46,8 +46,13 @@
                        href="{{ route('advisors.index') }}"><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @if(request()->routeIs('colony.bar*')) active @endif"
-                       href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a>
+                    @if($barBuilt ?? false)
+                        <a class="nav-link @if(request()->routeIs('colony.bar*')) active @endif"
+                           href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a>
+                    @else
+                        <span class="nav-link nav-link-locked"
+                              title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span>
+                    @endif
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"

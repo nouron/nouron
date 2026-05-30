@@ -971,6 +971,13 @@ class GameTick extends Command
         foreach ($colonies as $colony) {
             if ($this->merchantService->shouldSpawn($colony->id, $tick)) {
                 $this->merchantService->spawnVisit($colony->id, $tick);
+                $this->eventService->createEvent([
+                    'user'       => $colony->user_id,
+                    'tick'       => $tick,
+                    'event'      => 'merchant.visit',
+                    'area'       => 'colony',
+                    'parameters' => serialize(['colony_id' => $colony->id]),
+                ]);
                 $spawned++;
             }
         }

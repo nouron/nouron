@@ -85,6 +85,17 @@ class MerchantService
         $intervalMax = (int) ($cfg['interval_max'] ?? 15);
         $intervalAvg = ($intervalMin + $intervalMax) / 2.0;
 
+        // No spawn without a built Cantina (bar building_id=52, level > 0)
+        $barBuilt = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 52)
+            ->where('level', '>', 0)
+            ->exists();
+
+        if (!$barBuilt) {
+            return false;
+        }
+
         // Not yet past the earliest possible first appearance
         if ($currentTick < $firstMin) {
             return false;

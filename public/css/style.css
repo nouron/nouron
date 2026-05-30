@@ -23,6 +23,14 @@ hr {border-color: #ccc}
 
 /* .navbar-inner removed (Bootstrap 3 only) */
 
+/* Nav links that are locked (feature not yet available) */
+.nav-link-locked {
+    opacity: 0.45;
+    cursor: default;
+    pointer-events: none;
+    color: rgba(255,255,255,0.45);
+}
+
 a {color: #000; white-space: nowrap;}
 a:hover {color: #000; text-decoration: underline;}
 
