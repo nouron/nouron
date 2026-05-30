@@ -20,6 +20,9 @@ return [
     // TODO: trigger when colony moral first drops below threshold
     'onboarding_trust'            => 'Vertrauen der Kolonisten auf :colony gesunken — Ursache prüfen.',
 
+    // Merchant events
+    'merchant_visit'              => 'Reisender Händler in der Cantina auf Kolonie :colony — Angebot ist zeitlich begrenzt.',
+
     // Fallback (shown when no specific template matches)
     'unknown'                     => 'Ereignis: :event',
 ];

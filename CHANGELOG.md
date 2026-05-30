@@ -2,6 +2,7 @@
 
 ## 2026-05-30
 
+- **Cantina Playtest-Readiness**: Händler spawnt jetzt nur wenn Cantina gebaut (bug fix). Onboarding-Hint 6 "Cantina nicht gebaut" feuert ab CC lv2 + Housing lv1. INNN-Event bei jedem Händler-Besuch (`merchant.visit`). Cantina-Nav-Link grau + Tooltip wenn nicht gebaut (beide Layouts).
 - **Ressourcen-DB-Cleanup**: ENrg (6), LNrg (8), ANrg (10) vollständig entfernt — Migration, `data.sqlite.sql`, `testdata.sqlite.sql`, `fleet_resources`, `trade_resources`, `research_costs` bereinigt. Resourcebar-Kommentar aktualisiert. CLAUDE.md auf aktuellen Stand gebracht (Kommandanten-Zuweisung als erledigt markiert).
 - **Testdata-Stabilisierung**: Colony 1 auf realistischen Spielstand aktualisiert (CC lv3, Housing lv2, Depot lv3, ScienceLab lv1, Bar lv0). Werkstoffe/Organika-Startwerte von 0 auf 50 gesetzt. 12 Tests korrigiert die veraltete Ressource-IDs oder Testdata-Annahmen hatten (ResourcesService, FleetService, GameTick, Trade, Lobby, Onboarding, Knowledge).
 

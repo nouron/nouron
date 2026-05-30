@@ -91,6 +91,12 @@ class MerchantServiceTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
         config(['game.merchant' => self::merchantConfig()]);
         $this->service = $this->app->make(MerchantService::class);
+
+        // Merchant requires bar built (building_id=52, level>0). Testdata seeds it at lv=0.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', 52)
+            ->update(['level' => 1]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

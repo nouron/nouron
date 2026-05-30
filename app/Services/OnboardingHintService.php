@@ -91,7 +91,7 @@ class OnboardingHintService
     // ── Internal helpers ──────────────────────────────────────────────────────
 
     /**
-     * Evaluates all five hint conditions and returns an ordered list with an
+     * Evaluates all hint conditions and returns an ordered list with an
      * 'active' flag for each.
      *
      * @return list<array{rank: int, key: string, active: bool, text_key: string, target_url: string}>
@@ -132,6 +132,13 @@ class OnboardingHintService
                 'key'        => 'hint_5',
                 'active'     => $this->checkHint5($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_5',
+                'target_url' => '/techtree/buildings',
+            ],
+            [
+                'rank'       => 6,
+                'key'        => 'hint_6',
+                'active'     => $this->checkHint6($colonyId, $currentTick),
+                'text_key'   => 'colony.onboarding_hint_6',
                 'target_url' => '/techtree/buildings',
             ],
         ];
@@ -246,6 +253,45 @@ class OnboardingHintService
             ->value('amount') ?? 0);
 
         return $trust < $threshold;
+    }
+
+    /**
+     * Hint 6: Cantina (building_id=52) not yet built, but prerequisites are met:
+     *         CC >= level 2 AND Housing >= level 1.
+     * Fires after Sol threshold to avoid showing it immediately on day 1.
+     */
+    private function checkHint6(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 5);
+
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+
+        if ($ccLevel < 2) {
+            return false;
+        }
+
+        $housingLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 28)
+            ->value('level');
+
+        if ($housingLevel < 1) {
+            return false;
+        }
+
+        $barLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 52)
+            ->value('level');
+
+        return $barLevel === 0;
     }
 
     /**

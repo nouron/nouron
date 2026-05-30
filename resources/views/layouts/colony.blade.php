@@ -26,7 +26,11 @@
             <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])><i class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
             <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
             <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
+            @if($barBuilt ?? false)
             <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
+            @else
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
+            @endif
             <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
         </ul>
 
@@ -70,9 +74,15 @@
                     <a href="{{ route('techtree.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('techtree.*')])>
                         <i class="bi bi-diagram-3"></i> Techtree
                     </a>
+                    @if($barBuilt ?? false)
                     <a href="{{ route('colony.bar') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.bar*')])>
                         <i class="bi bi-cup-hot"></i> Cantina
                     </a>
+                    @else
+                    <span class="nav-flyout-item nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}">
+                        <i class="bi bi-cup-hot"></i> Cantina
+                    </span>
+                    @endif
                     <a href="{{ route('messages.inbox') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('messages.*')])>
                         <i class="bi bi-envelope"></i> Nachrichten
                     </a>

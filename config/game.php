@@ -287,5 +287,8 @@ return [
 
         // Minimum ticks elapsed before trust hint can fire (avoids day-1 trigger)
         'hint_trust_min_ticks' => 5,
+
+        // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing)
+        'hint_no_cantina_after_tick' => 5,
     ],
 ];
