@@ -141,6 +141,13 @@ function colonyHexView(config) {
                     this.doPlaceBuilding(tile);
                 return;
             }
+            // Tile has a building but build mode is active without selection:
+            // exit build mode so the tile-info panel (with AP invest button) renders.
+            if (this.buildMode && this.buildingForTile(tile)) {
+                this.buildMode       = false;
+                this.pendingBuilding = null;
+                this.$nextTick(() => this.redrawGrid());
+            }
             this.selectTile(tile);
         },
 
