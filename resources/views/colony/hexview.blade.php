@@ -337,5 +337,20 @@ window.__colonyViewData = {
          aria-live="polite"
          role="status"></div>
 
+    {{-- Levelup notice: centered slide-up + fade --}}
+    <div class="colony-levelup-notice"
+         x-show="levelupNotice"
+         x-transition:enter="levelup-enter"
+         x-transition:enter-start="levelup-enter-start"
+         x-transition:enter-end="levelup-enter-end"
+         x-transition:leave="levelup-leave"
+         x-transition:leave-start="levelup-leave-start"
+         x-transition:leave-end="levelup-leave-end"
+         aria-live="polite">
+        <span class="levelup-icon">✓</span>
+        <span>{{ __('colony.levelup_built') }}</span>
+        <strong x-text="levelupNotice"></strong>
+    </div>
+
 </div>
 @endsection

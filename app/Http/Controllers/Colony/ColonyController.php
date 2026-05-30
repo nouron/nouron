@@ -327,7 +327,11 @@ class ColonyController extends BaseController
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $buildingId)
                 ->where('instance_id', $instanceId)
-                ->update(['level' => $row->level + 1, 'ap_spend' => 0]);
+                ->update([
+                    'level'         => $row->level + 1,
+                    'ap_spend'      => 0,
+                    'status_points' => $building->max_status_points ?? 20,
+                ]);
             $leveledUp = true;
         }
 

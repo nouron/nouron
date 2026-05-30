@@ -948,6 +948,41 @@ dialog[x-ref="discoveryDialog"] {
     background: #14532d;
 }
 
+/* ── Levelup notice: centered slide-up + fade ───────────────────────────── */
+
+.colony-levelup-notice {
+    position: fixed;
+    bottom: 25vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.4rem;
+    background: #1a3a1a;
+    color: #7ec87e;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 600;
+    white-space: nowrap;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+}
+
+.levelup-icon {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Alpine transition classes */
+.levelup-enter            { transition: opacity 0.35s ease, transform 0.35s ease; }
+.levelup-enter-start      { opacity: 0; transform: translateX(-50%) translateY(30px); }
+.levelup-enter-end        { opacity: 1; transform: translateX(-50%) translateY(0); }
+.levelup-leave            { transition: opacity 0.5s ease, transform 0.5s ease; }
+.levelup-leave-start      { opacity: 1; transform: translateX(-50%) translateY(0); }
+.levelup-leave-end        { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+
 /* ── Merchant notification chip (hexview canvas header) ─────────────────── */
 
 /*
