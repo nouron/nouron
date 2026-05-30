@@ -1,286 +1,547 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>Nouron - a free space opera browsergame</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Nouron is a private browsergame project which offers tick based space strategy gameplay.">
-    <meta name="author" content="Mario Gehnke">
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nouron — A Free Space Opera Browsergame</title>
+  <meta name="description" content="Nouron ist ein rundenbasiertes Weltraum-Strategiespiel im Browser. Singleplayer, Roguelike-Elemente, Sol-basierter Rhythmus — für Spieler die lieber nachdenken als klicken." />
+  <meta name="author" content="Mario Gehnke" />
+  <meta property="og:title" content="Nouron — A Free Space Opera Browsergame" />
+  <meta property="og:description" content="Eine Kolonie. Ein Direktor. Echte Entscheidungen. Rundenbasiertes Weltraum-Strategiespiel im Browser." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#07111a" />
 
-    <!-- Le styles -->
-    <link href="css/bootstrap.css" rel="stylesheet">
-    <link href="css/main.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
-    <link href="css/prettyPhoto.css" rel="stylesheet" type="text/css" media="screen" charset="utf-8" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
 
-    <!-- Le fav and touch icons -->
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="apple-touch-icon-144-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="apple-touch-icon-114-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="apple-touch-icon-72-precomposed.png">
-    <link rel="apple-touch-icon-precomposed" href="apple-touch-icon-57-precomposed.png">
+  <style>
+    /* ── Design Tokens ── */
+    :root {
+      --n-bg:        #07111a;
+      --n-surface:   #0d1e2e;
+      --n-border:    #1c3348;
+      --n-primary:   #4fc3f7;
+      --n-primary-d: #2980b9;
+      --n-text:      #dce8f2;
+      --n-muted:     #7a99b5;
+      --n-success:   #56c27a;
+      --n-gold:      #f0c060;
 
-    <!-- Google Analytics -->
-    <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-    ga('create', 'UA-XXXXXX-XX', 'example.com');
-    ga('require', 'displayfeatures');
-    ga('send', 'pageview');
-    </script>
-    
-  </head>
+      --pico-background-color:         var(--n-bg);
+      --pico-card-background-color:    var(--n-surface);
+      --pico-card-border-color:        var(--n-border);
+      --pico-primary:                  var(--n-primary);
+      --pico-primary-background:       var(--n-primary-d);
+      --pico-primary-hover-background: var(--n-primary);
+      --pico-color:                    var(--n-text);
+      --pico-muted-color:              var(--n-muted);
+      --pico-muted-border-color:       var(--n-border);
+      --pico-font-family:              'Inter', system-ui, sans-serif;
+    }
 
-  <body data-spy="scroll" data-target=".navbar">
+    body { background-color: var(--n-bg); }
 
-    <div class="navbar navbar-inverse navbar-fixed-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li><a href="#description">Beschreibung</a></li>
-              <li><a href="#targets">Ziele</a></li>
-              <li><a href="#gallery">Bilder</a></li>
-              <li><a href="#questions">Fragen</a></li>
-            </ul>
-          </div><!--/.nav-collapse -->
+    /* ── Nav ── */
+    body > nav {
+      background: rgba(7,17,26,.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--n-border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding-block: .75rem;
+    }
+    nav ul { margin: 0; }
+    .nav-logo {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      color: var(--n-primary);
+      text-decoration: none;
+    }
+    nav a { color: var(--n-muted); font-size: .875rem; }
+    nav a:hover { color: var(--n-text); }
+    .nav-cta {
+      color: var(--n-primary) !important;
+      border: 1px solid var(--n-primary);
+      border-radius: 4px;
+      padding: .25rem .75rem;
+    }
+    .nav-cta:hover { background: var(--n-primary); color: var(--n-bg) !important; }
+
+    /* ── Hero ── */
+    .hero {
+      background:
+        radial-gradient(ellipse 80% 40% at 50% 0%, rgba(79,195,247,.07) 0%, transparent 70%),
+        linear-gradient(180deg, #091622 0%, var(--n-bg) 100%);
+      text-align: center;
+      padding: 6rem 1.5rem 5rem;
+      border-bottom: 1px solid var(--n-border);
+    }
+    .hero-logo {
+      font-family: 'Libre Baskerville', serif;
+      font-size: clamp(3.5rem, 10vw, 7rem);
+      font-weight: 700;
+      letter-spacing: .16em;
+      color: var(--n-text);
+      margin: 0;
+      line-height: 1;
+    }
+    .hero-tagline {
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: var(--n-muted);
+      margin: 1rem 0 0;
+      font-style: italic;
+    }
+    .hero-sub {
+      max-width: 560px;
+      margin: 1.5rem auto 2.5rem;
+      color: var(--n-muted);
+      font-size: 1rem;
+      line-height: 1.75;
+    }
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .hero-actions a[role="button"] { padding: .75rem 2rem; font-size: 1rem; }
+    .hero-chips {
+      display: flex;
+      gap: .5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 3rem;
+    }
+    .chip {
+      padding: .3rem .9rem;
+      border: 1px solid var(--n-border);
+      border-radius: 999px;
+      font-size: .78rem;
+      color: var(--n-muted);
+      letter-spacing: .04em;
+    }
+
+    /* ── Sections ── */
+    section { padding: 4rem 0; border-bottom: 1px solid var(--n-border); }
+    section:last-of-type { border-bottom: none; }
+    .section-label {
+      font-size: .72rem;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: var(--n-primary);
+      margin-bottom: .4rem;
+    }
+    h2 { margin-top: 0; }
+    .lead { font-size: 1.05rem; color: var(--n-muted); line-height: 1.75; max-width: 660px; }
+
+    /* ── Feature grid ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2.5rem;
+    }
+    .feature-card {
+      background: var(--n-surface);
+      border: 1px solid var(--n-border);
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color .2s;
+    }
+    .feature-card:hover { border-color: var(--n-primary-d); }
+    .feature-icon { font-size: 1.75rem; margin-bottom: .75rem; display: block; }
+    .feature-card h3 { font-size: 1rem; margin: 0 0 .5rem; color: var(--n-text); }
+    .feature-card p  { font-size: .9rem; color: var(--n-muted); margin: 0; line-height: 1.65; }
+
+    /* ── Phases ── */
+    .phases {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2.5rem;
+    }
+    .phase-card {
+      background: var(--n-surface);
+      border: 1px solid var(--n-border);
+      border-radius: 8px;
+      padding: 1.5rem 1.25rem 1.25rem;
+    }
+    .phase-label {
+      display: inline-block;
+      background: var(--n-primary);
+      color: var(--n-bg);
+      font-size: .72rem;
+      font-weight: 700;
+      padding: .15rem .6rem;
+      border-radius: 999px;
+      letter-spacing: .05em;
+      margin-bottom: .75rem;
+    }
+    .phase-card h3 { font-size: 1rem; margin: 0 0 .5rem; color: var(--n-text); }
+    .phase-card p  { font-size: .875rem; color: var(--n-muted); margin: 0; line-height: 1.65; }
+
+    /* ── Status lists ── */
+    .status-list { list-style: none; padding: 0; margin: 0; }
+    .status-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: .6rem;
+      padding: .5rem 0;
+      font-size: .9rem;
+      border-bottom: 1px solid var(--n-border);
+    }
+    .status-list li:last-child { border-bottom: none; }
+    .s-icon { flex-shrink: 0; }
+    .s-done { color: var(--n-success); }
+    .s-wip  { color: var(--n-gold); }
+
+    /* ── Inspirations ── */
+    .inspo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-top: 2rem;
+    }
+    .inspo-card {
+      background: var(--n-surface);
+      border: 1px solid var(--n-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+    .inspo-card h4 { margin: 0 0 .2rem; font-size: .95rem; color: var(--n-text); }
+    .inspo-year    { font-size: .73rem; color: var(--n-primary); display: block; margin-bottom: .5rem; }
+    .inspo-card p  { font-size: .85rem; color: var(--n-muted); margin: 0; line-height: 1.55; }
+
+    /* ── Dev items ── */
+    .dev-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .dev-item { display: flex; gap: .75rem; align-items: flex-start; }
+    .dev-icon  { font-size: 1.25rem; flex-shrink: 0; margin-top: .05rem; }
+    .dev-item h4 { margin: 0 0 .25rem; font-size: .9rem; color: var(--n-text); }
+    .dev-item p  { margin: 0; font-size: .85rem; color: var(--n-muted); line-height: 1.55; }
+
+    /* ── CTA box ── */
+    .cta-box {
+      background: var(--n-surface);
+      border: 1px solid var(--n-border);
+      border-radius: 10px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+    }
+    .cta-box h2 { margin-bottom: .5rem; }
+    .cta-box .lead { margin: 0 auto 2rem; }
+    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1.75rem 0;
+      border-top: 1px solid var(--n-border);
+      font-size: .875rem;
+      color: var(--n-muted);
+    }
+    footer a { color: var(--n-muted); }
+    footer a:hover { color: var(--n-text); }
+    .footer-inner {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .hero { padding: 4rem 1rem 3.5rem; }
+      section { padding: 2.5rem 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="container-fluid">
+    <ul>
+      <li><a href="#" class="nav-logo">NOURON</a></li>
+    </ul>
+    <ul>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#gameplay">Gameplay</a></li>
+      <li><a href="#status">Status</a></li>
+      <li><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="#spielen" class="nav-cta">Spielen</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <h1 class="hero-logo">Nouron</h1>
+    <p class="hero-tagline">Eine Kolonie. Ein Direktor. Echte Entscheidungen.</p>
+    <p class="hero-sub">
+      Ein rundenbasiertes Weltraum-Strategiespiel im Browser — kostenlos spielbar.
+      Singleplayer mit Roguelike-Elementen und Sol-basiertem Rhythmus.
+      Für Spieler, die lieber nachdenken als klicken.
+    </p>
+    <div class="hero-actions">
+      <a href="#spielen" role="button">Jetzt spielen</a>
+      <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub ansehen</a>
+    </div>
+    <div class="hero-chips">
+      <span class="chip">Singleplayer</span>
+      <span class="chip">Sol-basiert</span>
+      <span class="chip">Roguelike-Elemente</span>
+      <span class="chip">Browsergame</span>
+      <span class="chip">Kostenlos</span>
+      <span class="chip">Open Source</span>
+    </div>
+  </div>
+
+  <main class="container">
+
+    <section id="features">
+      <p class="section-label">Was ist Nouron?</p>
+      <h2>Sechs Merkmale, ein Grundgedanke</h2>
+      <p class="lead">
+        Nouron belohnt Spieler, die ihren Fokus bewusst setzen und mit begrenzten Mitteln das Beste herausholen —
+        kein Imperium-Aufbau, kein Dauerklicken. Das Frontier-Szenario: eine kleine Kolonie,
+        ein begrenzter Horizont, echte Konsequenzen.
+      </p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <span class="feature-icon">🏚️</span>
+          <h3>Verfall als Systemprinzip</h3>
+          <p>Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer die Kolonie vernachlässigt,
+          verliert sie langsam — nicht durch Gegner, sondern durch Entropie.
+          Jeder Sol ist eine echte Ressourcenentscheidung.</p>
         </div>
+        <div class="feature-card">
+          <span class="feature-icon">🌅</span>
+          <h3>Sol-basiertes Spieltempo</h3>
+          <p>Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich
+          ausgeführt. Das Spiel passt sich dem Spieler an — nicht umgekehrt.
+          Perfekt auch als Zweitspiel.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🏔️</span>
+          <h3>Nur eine Kolonie — Tiefe statt Breite</h3>
+          <p>Kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle
+          Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
+          Größe entsteht durch Bedeutung, nicht durch Anzahl.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🎲</span>
+          <h3>Roguelike-Runs</h3>
+          <p>Jeder Run hat variable Direktiven, zufällige Ereignisse und echte Konsequenzen.
+          Scheitern ist möglich — und lehrreich. Kein Run ist identisch,
+          aber die Kolonie fühlt sich immer nach Heimat an.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">🌌</span>
+          <h3>Kleine, handverlesene Galaxie</h3>
+          <p>Wenige Systeme, wenige Objekte. Jede Begegnung mit einer Fraktion oder einem
+          Ereignis hat Gewicht. Die Knappheit des Raums ist Teil des Designs —
+          nicht ein technisches Limit.</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon">⚖️</span>
+          <h3>Schutz als Opportunitätsentscheidung</h3>
+          <p>Eine Korvette kann die Kolonie bewachen — aber eine Korvette, die patrouilliert,
+          handelt nicht. Konfrontative Aktionen kosten strukturell mehr AP als zivile.
+          Wer Schutz will, bezahlt mit Aufbau.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameplay">
+      <p class="section-label">Spielablauf</p>
+      <h2>Ein Run — von Anfang bis Ende</h2>
+      <p class="lead">
+        Jeder Run beginnt bei Sol 1 und endet mit Erfolg oder Scheitern.
+        Zwei Phasen, konkrete Direktiven von Nexus, unzählige Wege dorthin.
+        Im nächsten Run wartet ein anderes Szenario.
+      </p>
+      <div class="phases">
+        <div class="phase-card">
+          <span class="phase-label">Phase 1</span>
+          <h3>Kolonie aufbauen</h3>
+          <p>Errichte Command Center, Wohnhabitate und erste Produktionsgebäude.
+          Stelle Berater ein, die täglich Aktionspunkte generieren.
+          Erkunde das System mit deiner Korvette — und hüte dich vor Verfall.</p>
+        </div>
+        <div class="phase-card">
+          <span class="phase-label">Phase 2</span>
+          <h3>Direktiven erfüllen</h3>
+          <p>Nexus gibt drei Direktiven. Du weißt nicht, was dich erwartet —
+          Berater enthüllen die Aufgaben nach und nach. Zwei von drei müssen
+          erfüllt werden. Nexus-Interventionen bei Sol 30, 50, 65 und 80.</p>
+        </div>
+        <div class="phase-card">
+          <span class="phase-label">Ende</span>
+          <h3>Sieg oder Scheitern</h3>
+          <p>Der Run endet mit einem Score und einer Bewertung.
+          Jedes Scheitern ist eine Lehre. Jeder neue Run beginnt mit einer
+          anderen Aufgabenstellung — und derselben Kolonie, die wieder von vorn anfängt.</p>
+        </div>
+        <div class="phase-card">
+          <span class="phase-label">System</span>
+          <h3>Berater &amp; Aktionspunkte</h3>
+          <p>Berater generieren täglich AP in fünf Typen: Bau, Forschung, Navigation,
+          Wirtschaft, Strategie. Jede Aktion kostet AP. Wer seine Berater klug einsetzt,
+          entscheidet den Run.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="status">
+      <p class="section-label">Entwicklungsstand</p>
+      <h2>Phase 3 — Playtest-Vorbereitung</h2>
+      <p class="lead">
+        Nouron ist ein aktives Hobbyprojekt. Stand Mai 2026 befinden wir uns kurz vor dem
+        ersten echten Playtest. Die Kernmechaniken sind implementiert und in über 600
+        automatisierten Tests geprüft.
+      </p>
+      <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
+        <div>
+          <h3 style="font-size: .95rem; color: var(--n-success); margin-bottom: 1rem;">Implementiert</h3>
+          <ul class="status-list">
+            <li><span class="s-icon s-done">✓</span> Run-System (Phase 1 &amp; 2, Objectives, Score)</li>
+            <li><span class="s-icon s-done">✓</span> Nexus-Interventionen &amp; Fail-States</li>
+            <li><span class="s-icon s-done">✓</span> Berater-System mit AP-Typen &amp; Rang-Progression</li>
+            <li><span class="s-icon s-done">✓</span> Hex-Grid Kolonieansicht (SVG, interaktiv)</li>
+            <li><span class="s-icon s-done">✓</span> Techtree (Gebäude, Forschungen, Schiffe, Berater)</li>
+            <li><span class="s-icon s-done">✓</span> INNN-Nachrichtensystem</li>
+            <li><span class="s-icon s-done">✓</span> Handelssystem (Reisender Händler / Cantina)</li>
+            <li><span class="s-icon s-done">✓</span> Moralsystem &amp; Decay (Verfall)</li>
+            <li><span class="s-icon s-done">✓</span> Supply-System &amp; Flottenorders</li>
+            <li><span class="s-icon s-done">✓</span> Systemkarte &amp; Fleet Command Overlay</li>
+            <li><span class="s-icon s-done">✓</span> Onboarding-System (Triggers &amp; Hints)</li>
+          </ul>
+        </div>
+        <div>
+          <h3 style="font-size: .95rem; color: var(--n-gold); margin-bottom: 1rem;">Geplant (Phase 4)</h3>
+          <ul class="status-list">
+            <li><span class="s-icon s-wip">⏳</span> Playtest mit echten Spielern</li>
+            <li><span class="s-icon s-wip">⏳</span> Progressive Discovery — Berater-Dialoge &amp; Almanach</li>
+            <li><span class="s-icon s-wip">⏳</span> Multiplayer-Lobby &amp; Multi-Run-Support</li>
+            <li><span class="s-icon s-wip">⏳</span> Berater-Spezialfähigkeiten (CC Lv4-Gate)</li>
+            <li><span class="s-icon s-wip">⏳</span> NPC-Vereinbarungen (Händler, Schmuggler)</li>
+            <li><span class="s-icon s-wip">⏳</span> Steuersystem &amp; Moral-Erweiterung</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="spielen">
+      <div class="cta-box">
+        <p class="section-label">Mitspielen</p>
+        <h2>Playtest beitreten</h2>
+        <p class="lead">
+          Nouron befindet sich im aktiven Playtest. Das Spiel ist kostenlos — und bleibt es.
+          Interesse? Meld dich direkt oder hinterlasse eine Nachricht auf GitHub.
+        </p>
+        <div class="cta-actions">
+          <a href="mailto:tech.mario@outlook.de" role="button">Kontakt aufnehmen</a>
+          <a href="https://github.com/nouron/nouron/issues" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub Issues</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="vorbilder">
+      <p class="section-label">Einflüsse</p>
+      <h2>Vorbilder</h2>
+      <p class="lead">Nouron ist kein Klon — aber es wäre ohne diese vier Spiele nicht dasselbe.</p>
+      <div class="inspo-grid">
+        <div class="inspo-card">
+          <h4>Reunion</h4>
+          <span class="inspo-year">1994 · Starkos</span>
+          <p>Stärkster Einfluss: ein Spieler, ein Heimatplanet, maximale Tiefe statt Breite.
+          Die Cantina, der Alltag der Kolonie, das Gefühl von Ort.</p>
+        </div>
+        <div class="inspo-card">
+          <h4>FTL: Faster Than Light</h4>
+          <span class="inspo-year">2012 · Subset Games</span>
+          <p>Vorbild für die Run-Struktur: variables Ziel, zufällige Ereignisse,
+          echtes Scheitern als Teil des Spiels — nicht als Bestrafung.</p>
+        </div>
+        <div class="inspo-card">
+          <h4>Catan</h4>
+          <span class="inspo-year">1995 · Klaus Teuber</span>
+          <p>Vorbild für das Ressourcenmanagement mit Knappheit: jede Ressource hat Gewicht,
+          Tausch ist eine Kernmechanik, nicht ein Komfort-Feature.</p>
+        </div>
+        <div class="inspo-card">
+          <h4>Master of Orion</h4>
+          <span class="inspo-year">1993 · Simtex</span>
+          <p>Vorbild für das Mini-4X-Grundgerüst und die Kommandopunkte-Mechanik.
+          Tiefe durch Systeme, nicht durch Komplexität um ihrer selbst willen.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="dev">
+      <p class="section-label">Entwicklung</p>
+      <h2>Open Source &amp; Hobbyprojekt</h2>
+      <p class="lead">
+        Nouron ist ein privates Hobbyprojekt, entwickelt seit 2008, seit 2026 wieder aktiv.
+        Der gesamte Quellcode ist auf GitHub verfügbar und offen für Feedback.
+      </p>
+      <div class="dev-grid">
+        <div class="dev-item">
+          <span class="dev-icon">💻</span>
+          <div>
+            <h4>Tech Stack</h4>
+            <p>PHP / Laravel · SQLite<br>Alpine.js · PicoCSS · SVG<br>Blade-Templates</p>
+          </div>
+        </div>
+        <div class="dev-item">
+          <span class="dev-icon">📂</span>
+          <div>
+            <h4>Open Source</h4>
+            <p><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">github.com/nouron/nouron</a><br>
+            Issues, Forks und Pull Requests willkommen.</p>
+          </div>
+        </div>
+        <div class="dev-item">
+          <span class="dev-icon">🧑‍💻</span>
+          <div>
+            <h4>Wer steckt dahinter?</h4>
+            <p>Mario Gehnke — Entwickler aus Leidenschaft.
+            Kein Team, kein Zeitdruck, keine Finanzierung.</p>
+          </div>
+        </div>
+        <div class="dev-item">
+          <span class="dev-icon">🚫</span>
+          <div>
+            <h4>Kein Pay-to-Win</h4>
+            <p>Keine Premium-Accounts, kein Item-Shop, keine Reflinks.
+            Das Spiel ist kostenlos — jetzt und in Zukunft.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <span>
+          <strong style="font-family:'Libre Baskerville',serif; letter-spacing:.1em; color:var(--n-primary)">NOURON</strong>
+          &nbsp;— Ein Hobbyprojekt von Mario Gehnke
+        </span>
+        <span>
+          <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a> ·
+          <a href="mailto:tech.mario@outlook.de">Kontakt</a> ·
+          <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank" rel="noopener">CC BY-NC-SA</a>
+        </span>
       </div>
     </div>
+  </footer>
 
-    <div class="container">
-      <div class="row-fluid">
-        <div class="span4" id="logo">
-            <a href="media/nouron_logo.svg" title="Das Nouron-Logo als SVG-Datei herunterladen"><img src="img/logo.png" alt="Nouron" width="250" height="250"/></a>
-            
-        </div>
-        <div class="span8" id="description">
-          <p class="lead">Nouron steht f&#252;r <a href="http://en.wikipedia.org/wiki/Turns,_rounds_and_time-keeping_systems_in_games#Ticks_and_rounds">tickbasierte</a> Weltraum-Strategie im Browser, mit drei unterschiedlichen Rassen und acht spielbaren Fraktionen. Der Schwerpunkt liegt, im Gegensatz zu den meisten anderen Browsergames des Genres, nicht auf Kampfhandlungen. Vielmehr r&#252;ckt die Diplomatie und Politik in den Vordergrund. Das typische Bashen und Farmen wird es in Nouron nicht geben!</p>
-          <p>Ein weiteres Hauptziel ist es, dem Spieler ein wirklich angenehmes Spielerlebnis zu bieten - ohne Stress und ohne den Zwang, zu bestimmten Uhrzeiten online sein zu m&#252;ssen. Es ist vor allem ein Spiel f&#252;r Leute die wenig Zeit haben oder ein Zweitbrowsergame suchen ;)</p>
-
-          <p>Aktuelle Neuigkeiten &#252;ber die Entwicklung des Spiels gibt es im <a href="http://tector.wordpress.com" target="_blank"><i class="icon-rss"></i> Blog</a>, auf <a href="https://x.com/_nouron" target="_blank"><i class="icon-twitter"></i> X</a> und auf <a href="https://www.facebook.com/nouronbg" target="_blank"><i class="icon-facebook"></i> Facebook</a>. Nouron ist ein 1-Mann-Hobbyprojekt: Über jegliches Interesse, Unterstützung und/oder Feedback freue ich mich!</p>
-          <hr />
-        </div>
-      </div>
-
-      <div class="row-fluid">
-        <div class="span12 well well-large" id="targets">
-          <ul class="span4 unstyled">
-            <li>&#10004; <a href="http://en.wikipedia.org/wiki/Turns,_rounds_and_time-keeping_systems_in_games#Ticks_and_rounds" target="_blank">tickbasiert</a> (24h-Ticks)</li>
-            <li>&#10004; geringer Klick- und Zeitaufwand</li>
-            <li>&#10004; konstante Bau- und Forschungszeiten</li>
-            <li>&#10004; kein <a href="http://de.wikipedia.org/wiki/Computerspieler-Jargon#farmen" target="_blank">Farming</a> und kein <a href="http://de.wikipedia.org/wiki/Computerspieler-Jargon#bashen" target="_blank">Bashing</a></li>
-            <li>&#10004; keine  <a href="http://de.wikipedia.org/wiki/Reflink" target="_blank">Reflinks</a> oder &#228;hnliche Werbefeatures</li>
-          </ul>
-          <ul class="span4 unstyled">
-            <li>&#10004; vielf&#228;ltiger Weltraum</li>
-            <li>&#10004; Diplomatie und Politik</li>
-            <li>&#10004; Handel</li>
-            <li>&#10004; Spionage und Sabotage</li>
-            <li>&#10004; primitives Kampfsystem</li>
-          </ul>
-          <ul class="span4 unstyled">
-            <li>&#10004; ... ein paar wirklich neue Ideen :)</li>
-            <li>&#10004; zweckm&#228;&#223;iges, minimales aber sch&#246;nes Design</li>
-            <li>&#10004; f&#252;r mobile Ger&#228;te geeignet</li>
-            <li>&#10004; moderne Technik und Open Source</li>
-            <li>&#10004; kostenlos spielbar</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="row-fluid">
-        <div class="span12">
-          <div class="row-fluid">
-            <div class="span4">
-                <h4><i class="icon-sitemap"></i> Techtree</h4>
-                <p>Die Techtree-Build-Option ist eine vollkommen neue M&#246;g&shy;lichkeit den Aufbau deiner Kolonie zu managen. Zudem sind alle Bau- und Forschungs&shy;zeiten konstant und werden nicht unlogisch pro Level erh&#246;ht.</p>
-            </div>
-            <div class="span4">
-                <h4><i class="icon-user"></i> Rassen und Fraktionen</h4>
-                <p>Es gibt drei Rassen: die altehr&shy;w&#252;rdigen Lhonurier, die auf&shy;strebenden Ena und die k&#252;hnen Akumarer. Innerhalb der Rassen gibt es geteilte Lager - entscheide dich f&#252;r eine Seite!</p>
-            </div>
-            <div class="span4">
-                <h4><i class="icon-star-empty"></i> Vielf&#228;ltiger Weltraum</h4>
-                <p>Stellare Objekte, Planeten, Monde, Raumstationen, Minen&shy;felder, Asteroiden&shy;g&#252;rtel, Raumschiff&shy;friedh&#246;fe und mehr sorgen f&#252;r eine abwechslungs&shy;reiche Umgebung.</p>
-            </div>
-          </div>
-          <div class="row-fluid">
-            <div class="span4">
-                <h4><i class="icon-fighter-jet"></i> Milit&#228;r</h4>
-                <p>Das Kampfsystem ist absichtlich primitiv gehalten um nicht zu Kriegs&shy;handlungen zu verleiten. Es gibt keine Verteidigungs&shy;anlangen, da Kolonien nicht angegriffen werden k&#246;nnen. Somit wird es kein Bashing und kein Farming geben.</p>
-            </div>
-            <div class="span4">
-                <h4><i class="icon-truck"></i> Handel</h4>
-                <p>Handle mit Ressourcen, Geb&#228;uden, Schiffen, Berater, Aktien und sogar Flugrouten. Oder werde Pirat - habe aber stets acht vor der Polizei.</p>
-            </div>
-            <div class="span4">
-                <h4><i class="icon-edit"></i> Diplomatie, Politik und Gesetze</h4>
-                <p>Jegliche Kommunikation hat diplomatische Folgen. Sobald du Senatsmitglied bist, kannst du selbst mit &#252;ber Gesetze bestimmen.</p>
-            </div>
-          </div>
-          <div class="row-fluid">
-            <div class="span4">
-                <h4><i class="icon-bell"></i> INNN</h4>
-                <p>&#220;ber das Nachrichtensystem INNN wird jede Art von Information verarbeitet. Sowohl die Nachrichten deiner Berater, als auch diplomatische Botschaften und der Nouron-Nachrichtensender werden hier bereitgestellt.</p>
-            </div>
-            <div class="span4">
-                <h4><i class="icon-group"></i> Supply</h4>
-                <p>Mit dem Supply-Management kannst du genau deine Spezialisierung bestimmen. Denn man kann nicht alles haben ;)</p>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <div class="row-fluid">
-        <div class="span12 well well-large">
-          <div id="gallery">
-            <a class="span2 offset1" href="img/gallery/200907_galaxy.png" rel="prettyPhoto[pp_gal]">
-                <span class="span12 img-rounded" style="background: #000 url(img/gallery/200907_galaxy_t.gif) center center no-repeat;" title="Die Nouron-Galaxie (P.Wippermann)"></span>
-            </a>
-            <a class="span2"  href="img/gallery/200907_sketch_city.png" rel="prettyPhoto[pp_gal]">
-                <span class="span12 img-rounded" style="background: #eee url(img/gallery/200907_sketch_city_t.gif) center center no-repeat;" title="Eine Stadtkolonie (P.Wippermann)"><!----></span>
-            </a>
-            <a class="span2"  href="img/gallery/200907_sketch_hangar.png" rel="prettyPhoto[pp_gal]">
-                <span class="span12 img-rounded" style="background: #fff url(img/gallery/200907_sketch_hangar_t.gif) center center no-repeat;" title="Hangar f&#252;r die Raumschiffe (P.Wippermann)"><!----></span>
-            </a>
-            <a class="span2"  href="img/gallery/201103_avatars_ena.png" rel="prettyPhoto[pp_gal]">
-                <span class="span12 img-rounded" style="background: #fff url(img/gallery/201103_avatars_ena_t.gif) center center no-repeat;" title="Avatare der Ena-Rasse (J. Wiesenberg)"><!----></span>
-            </a>
-            <a class="span2"  href="img/gallery/200907_planets.png" rel="prettyPhoto[pp_gal]">
-                <span class="span12 img-rounded" style="background: #fff url(img/gallery/200907_planets_t.gif) center center no-repeat;"  title="Planetenarten (M.Gehnke)"><!----></span>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <hr />
-      <div class="row-fluid" id="questions">
-        <div class="span8">
-          <div class="accordion" id="accordion2">
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseOne">
-                Wann wird Nouron fertig sein?
-                </a>
-              </div>
-              <div id="collapseOne" class="accordion-body collapse in">
-                <div class="accordion-inner">
-                Zun&#228;chst einmal ist Nouron ein privates Hobby-Projekt. Es gibt keine Garantie daf&#252;r, dass das Spiel wirklich ver&#246;ffentlicht wird. Es w&#228;re aber wirklich schade wenn nicht ;) Da ich Nouron in meiner Freizeit entwickle dauert es alles etwas l&#228;nger. It's done, when it's done.
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseTwo">
-                Warum 24h-Ticks? Ist das nicht langweilig?
-                </a>
-              </div>
-              <div id="collapseTwo" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Nouron ist kein Spiel f&#252;r die breite Masse. Wer dauerklicken will ist hier definitiv falsch! Nouron soll niemanden dazu zwingen, zu bestimmten Uhrzeiten online zu sein oder gar nachts aufzustehen. So hat jeder die gleichen Chancen und weniger Stress.
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseThree">
-                Wird das Spiel Geld kosten (Premiumaccount, Itemkauf, etc.)?
-                </a>
-              </div>
-              <div id="collapseThree" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Das ist nicht geplant. Das Spiel wird durch Werbung und privat finanziert solange es m&#246;glich ist.
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFour">
-                Kein Krieg? Nur Diplomatie? Ist das nicht langweilig?
-                </a>
-              </div>
-              <div id="collapseFour" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Nat&#252;rlich wird es auch Krieg geben. Der Schwerpunkt des Spiels liegt aber auf Diplomatie und Politik. Nouron wird beweisen, dass das Spa&#223; machen kann!
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseFive">
-                Welche Sprachen wird das Spiel unterst&#252;tzen?
-                </a>
-              </div>
-              <div id="collapseFive" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Prim&#228;r nat&#252;rlich deutsch. Wenn das Spiel fertiggestellt ist wird auch eine englische Version erstellt. Die Grundlagen daf&#252;r werden bereits bei der Entwicklung der deutschen Version geschaffen.
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSix">
-                Wieviele Spielwelten wird es geben?
-                </a>
-              </div>
-              <div id="collapseSix" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Solange die Spieleranzahl nicht explodiert: nur eine.
-                </div>
-              </div>
-            </div>
-            <div class="accordion-group">
-              <div class="accordion-heading">
-                <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion2" href="#collapseSeven">
-                Wieviele Planeten/Monde/Sterne/etc. wird es in etwa geben?
-                </a>
-              </div>
-              <div id="collapseSeven" class="accordion-body collapse">
-                <div class="accordion-inner">
-                Viele Spiele prahlen gerne mit der Anzahl von Spielobjekten. Nouron soll sich eher auf einen Teil der Galaxie mit nicht zu vielen Planeten beschr&#228;nken. Daf&#252;r werden diese aber mit Geschichten ausgestattet und mehrere Spieler k&#246;nnen auf dem gleichen Planeten siedeln. Auch Monde sind kolonisierbar.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="span4 well-large" id="bottom_eyecatcher">
-            <br />
-        </div>
-      </div>
-
-      <hr />
-
-      <footer>
-        <p><a href="http://tector.wordpress.com" target="_blank"><i class="icon-rss"></i> Blog</a> |
-<a href="https://x.com/_nouron" target="_blank"><i class="icon-twitter"></i> X</a> |
-<a href="https://www.facebook.com/nouronbg" target="_blank"><i class="icon-facebook"></i> Facebook</a> |
-            <a href="http://tector.wordpress.com/impressum/" target="_blank">Impressum</a> | Dieser Inhalt ist unter <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank">Creative Commons (BY-NC-SA)</a> lizenziert.</p>
-      </footer>
-
-    </div> <!-- /container -->
-
-    <!-- ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="https://code.jquery.com/jquery-1.8.0.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/jquery.prettyPhoto.js"></script>
-    
-    <script type="text/javascript" charset="utf-8">
-      $(document).ready( function() {
-        $('#navbar').scrollspy()
-        $("a[rel^='prettyPhoto']").prettyPhoto();
-      });
-    </script>
-  </body>
+</body>
 </html>
