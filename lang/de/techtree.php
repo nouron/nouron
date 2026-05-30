@@ -90,8 +90,16 @@ return [
     'advisor_hired'          => 'Eingestellt',
     'advisor_available'      => 'Verfügbar',
     'advisor_locked'         => 'Gesperrt',
+    'advisor_placed'         => 'Platziert',
+    'advisor_not_placed'     => 'Nicht gebaut',
     'detail_advisor_status'  => 'Status',
     'detail_advisor_ap'      => 'AP-Typ',
     'detail_advisor_cost'    => 'Einstellungskosten',
     'detail_advisor_link'    => 'Im Berater-Screen verwalten',
+
+    // ── Instanced buildings + ships ───────────────────────────────────────────
+    'detail_instances'       => 'Instanzen',
+    'detail_count'           => 'Anzahl',
+    'detail_ap_invest'       => 'AP investieren',
+    'detail_colony_link'     => 'Auf Kolonie bauen',
 ];

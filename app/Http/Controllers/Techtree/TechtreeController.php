@@ -15,6 +15,7 @@ use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class TechtreeController extends BaseController
@@ -75,6 +76,20 @@ class TechtreeController extends BaseController
             $phases[$n] = ['cc_level' => $n, 'items' => [], 'lines' => []];
         }
 
+        // Instance counts per building_id for this colony
+        $instanceCounts = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->select('building_id', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('building_id')
+            ->pluck('cnt', 'building_id');
+
+        // Total hangar instances (building_id=44) = ship capacity
+        $hangarCap = (int) ($instanceCounts[44] ?? 0);
+
+        // Available AP for sidebar invest
+        $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colonyId);
+        $researchAp     = $this->personellService->getAvailableActionPoints('research', $colonyId);
+
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             foreach ($techtree[$type] as $id => $tech) {
                 $phaseNum = (int) ($tech['phase'] ?? 0);
@@ -99,8 +114,15 @@ class TechtreeController extends BaseController
                     'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key'           => $type === 'building' ? $tech['name'] : null,
                     'image_slug'    => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
-                    'ap_type'       => $advisorCfg['ap_type'] ?? null,
-                    'hire_cost'     => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
+                    'ap_type'        => $advisorCfg['ap_type'] ?? null,
+                    'hire_cost'      => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
+                    'is_instanced'   => (bool) ($tech['is_instanced'] ?? false),
+                    'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
+                    'hangar_cap'     => $type === 'ship' ? $hangarCap : null,
+                    'ap_spend'       => (int) ($tech['ap_spend'] ?? 0),
+                    'ap_for_levelup' => (int) ($tech['ap_for_levelup'] ?? 0),
+                    'ap_available'   => $type === 'building' ? $constructionAp
+                                        : ($type === 'research' ? $researchAp : 0),
                 ];
 
                 // Generate within-phase arrow for this item.

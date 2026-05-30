@@ -143,64 +143,18 @@
         ) top right / 20px 20px no-repeat,
         linear-gradient(to right, #fef8ec 0%, #fff 65%);
 }
-/* Personell full-card style removed — advisors now render as .tech-chip */
-
-/* ── Advisor Chip ────────────────────────────────────────────────────────── */
-.tech-chip {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.4rem 0.7rem;
-    background: #fff;
-    border: 1.5px solid #8b5cf6;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: box-shadow 0.15s, border-color 0.15s;
-    min-height: 0;
-    align-self: center;
-    justify-self: start;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.tech-chip:hover {
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
-    border-color: #7c3aed;
-}
-
-.tech-chip-icon {
-    color: #8b5cf6;
-    font-size: 0.9rem;
-    flex-shrink: 0;
-}
-
-.tech-chip-name {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #1a1a2e;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* Status dot */
-.tech-chip-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    margin-left: auto;
-}
-
-.tech-chip-dot.dot-built     { background: #16a34a; }
-.tech-chip-dot.dot-available { background: #d1d5db; border: 1.5px solid #9ca3af; }
-.tech-chip-dot.dot-locked    { background: #d1d5db; border: 1.5px solid #9ca3af; }
-
-/* Locked chip: dimmed */
-.tech-chip.status-locked {
-    opacity: 0.55;
-    border-style: dashed;
-    cursor: default;
+.tech-card.tech-personell {
+    border-color: rgba(139, 92, 246, 0.35);
+    border-left-color: #8b5cf6;
+    background:
+        linear-gradient(
+            to bottom left,
+            transparent 10.5px,
+            rgba(139, 92, 246, 0.6) 10.5px,
+            rgba(139, 92, 246, 0.6) 14px,
+            transparent 14px
+        ) top right / 20px 20px no-repeat,
+        linear-gradient(to right, #f4f0fe 0%, #fff 65%);
 }
 
 /* ── Locked cards ────────────────────────────────────────────────────────── */
@@ -208,6 +162,7 @@
 .tech-card.status-locked.tech-building  { background: linear-gradient(to right, #f7fafe 0%, #f8f8f8 60%); }
 .tech-card.status-locked.tech-research  { background: linear-gradient(to right, #f6fcf9 0%, #f8f8f8 60%); }
 .tech-card.status-locked.tech-ship      { background: linear-gradient(to right, #fefbf6 0%, #f8f8f8 60%); }
+.tech-card.status-locked.tech-personell { background: linear-gradient(to right, #f9f8fe 0%, #f8f8f8 60%); }
 
 /* Available: dashed sides */
 .tech-card.status-available {
@@ -519,6 +474,63 @@
     background: #ede9fe;
     color: #6d28d9;
     text-decoration: none;
+}
+
+/* ── Sidebar AP invest bar ──────────────────────────────────────────────── */
+.detail-ap-section {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--pico-muted-border-color, #eee);
+}
+
+.detail-ap-bar {
+    display: flex;
+    gap: 2px;
+    margin: 0.4rem 0;
+    flex-wrap: wrap;
+}
+
+.ap-seg {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    transition: opacity 0.1s;
+}
+
+.ap-seg--done   { background: #16a34a; }
+.ap-seg--todo   { background: #bfdbfe; cursor: pointer; }
+.ap-seg--todo:hover { background: #3b82f6; }
+.ap-seg--locked { background: #e5e7eb; cursor: not-allowed; }
+
+.detail-ap-hint {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin: 0.25rem 0 0;
+}
+
+.detail-colony-link {
+    display: inline-block;
+    margin-top: 0.75rem;
+    padding: 0.4rem 0.75rem;
+    background: #f0f9ff;
+    border: 1px solid rgba(14, 165, 233, 0.3);
+    border-radius: 4px;
+    color: #0369a1;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.12s;
+}
+
+.detail-colony-link:hover {
+    background: #e0f2fe;
+    color: #075985;
+    text-decoration: none;
+}
+
+.detail-row--ap {
+    margin-bottom: 0.2rem;
 }
 
 @media (max-width: 640px) {
