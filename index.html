@@ -4,9 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Nouron — A Free Space Opera Browsergame</title>
-  <meta name="description" content="Nouron ist ein rundenbasiertes Weltraum-Strategiespiel im Browser. Singleplayer, Roguelike-Elemente, Sol-basierter Rhythmus — für Spieler die lieber nachdenken als klicken." />
+  <meta name="description" content="Nouron ist ein rundenbasiertes Weltraum-Strategiespiel mit Roguelike-Elementen für Mobile und Browser — für Spieler die lieber nachdenken als viel klicken." />
   <meta property="og:title" content="Nouron — A Free Space Opera Browsergame" />
-  <meta property="og:description" content="Eine Kolonie. Ein Direktor. Echte Entscheidungen. Rundenbasiertes Weltraum-Strategiespiel im Browser." />
+  <meta property="og:description" content="Eine Kolonie. Ein Direktor. Echte Entscheidungen. Rundenbasiertes Weltraum-Strategiespiel mit Roguelike-Elementen für Mobile und Browser." />
   <meta property="og:type" content="website" />
   <meta name="theme-color" content="#8c2030" />
 
@@ -18,316 +18,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" />
 
-  <style>
-    :root {
-      --color-bg:      #ffffff;
-      --color-surface: #f7f7f5;
-      --color-text:    #1a1a1e;
-      --color-muted:   #6b6b7a;
-      --color-accent:  #8c2030;
-      --color-accent-h:#731a27;
-      --color-border:  #e8e8ec;
-
-      --pico-background-color:         var(--color-bg);
-      --pico-color:                    var(--color-text);
-      --pico-muted-color:              var(--color-muted);
-      --pico-muted-border-color:       var(--color-border);
-      --pico-primary:                  var(--color-accent);
-      --pico-primary-hover-background: var(--color-accent-h);
-      --pico-card-background-color:    var(--color-bg);
-      --pico-card-border-color:        var(--color-border);
-      --pico-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    h1, h2 {
-      font-family: 'Libre Baskerville', Georgia, serif;
-      font-weight: 400;
-      text-transform: uppercase;
-      letter-spacing: 0.45em;
-    }
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.4rem; }
-    h3 { font-size: 1.1rem; font-weight: 600; font-family: system-ui, sans-serif; }
-    h4 { font-size: 1rem;   font-weight: 600; font-family: system-ui, sans-serif; }
-
-    body { background-color: var(--color-bg); color: var(--color-text); }
-
-    /* ── Language switching ── */
-    [data-lang="en"] .lang-de { display: none; }
-    [data-lang="de"] .lang-en { display: none; }
-
-    /* ── Nav ── */
-    body > nav {
-      background: var(--color-bg);
-      border-bottom: 1px solid var(--color-border);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      padding-block: .75rem;
-    }
-    nav ul { margin: 0; }
-    .nav-logo {
-      font-family: 'Libre Baskerville', Georgia, serif;
-      font-size: 1rem;
-      font-weight: 400;
-      letter-spacing: 0.45em;
-      text-transform: uppercase;
-      color: var(--color-text);
-      text-decoration: none;
-    }
-    nav a { color: var(--color-muted); font-size: .875rem; font-family: system-ui, sans-serif; }
-    nav a:hover { color: var(--color-text); }
-    .nav-cta {
-      color: var(--color-accent) !important;
-      border: 1px solid var(--color-accent);
-      border-radius: 4px;
-      padding: .25rem .75rem;
-      font-weight: 600;
-    }
-    .nav-cta:hover { background: var(--color-accent); color: #ffffff !important; }
-    .lang-toggle-btn {
-      all: unset;
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      color: var(--color-muted);
-      cursor: pointer;
-      font-size: .8rem;
-      font-family: system-ui, sans-serif;
-      font-weight: 600;
-      padding: .2rem .55rem;
-      line-height: 1.4;
-      display: inline-block;
-    }
-    .lang-toggle-btn:hover { color: var(--color-text); border-color: var(--color-text); }
-
-    /* ── Hero ── */
-    .hero {
-      background: var(--color-surface);
-      text-align: center;
-      padding: 6rem 1.5rem 5rem;
-      border-bottom: 1px solid var(--color-border);
-    }
-    .hero h1 {
-      font-size: clamp(2rem, 8vw, 4.5rem);
-      letter-spacing: 0.45em;
-      color: var(--color-text);
-      margin: 0;
-      line-height: 1.1;
-    }
-    .hero-tagline {
-      font-family: 'Libre Baskerville', Georgia, serif;
-      font-style: italic;
-      font-size: clamp(.95rem, 2vw, 1.2rem);
-      color: var(--color-muted);
-      margin: 1rem 0 0;
-    }
-    .hero-sub {
-      max-width: 560px;
-      margin: 1.5rem auto 2.5rem;
-      color: var(--color-muted);
-      font-size: 1rem;
-      line-height: 1.75;
-    }
-    .hero-actions {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-    .hero-actions a[role="button"] {
-      padding: .75rem 2rem;
-      font-size: .9rem;
-      font-family: system-ui, sans-serif;
-      font-weight: 600;
-      border-radius: 4px;
-    }
-    .hero-chips {
-      display: flex;
-      gap: .5rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 3rem;
-    }
-    .chip {
-      padding: .3rem .9rem;
-      border: 1px solid var(--color-border);
-      border-radius: 999px;
-      font-size: .78rem;
-      color: var(--color-muted);
-      font-family: system-ui, sans-serif;
-    }
-
-    /* ── Sections ── */
-    section { padding: 4rem 0; border-bottom: 1px solid var(--color-border); }
-    section:last-of-type { border-bottom: none; }
-    .section-label {
-      font-size: .72rem;
-      letter-spacing: .16em;
-      text-transform: uppercase;
-      color: var(--color-accent);
-      margin-bottom: .4rem;
-      font-family: system-ui, sans-serif;
-    }
-    .lead { font-size: 1.05rem; color: var(--color-muted); line-height: 1.75; max-width: 660px; }
-
-    /* ── Feature grid ── */
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-      gap: 1rem;
-      margin-top: 2.5rem;
-    }
-    .feature-card {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      padding: 1.5rem;
-      transition: border-color .2s;
-    }
-    .feature-card:hover { border-color: var(--color-accent); }
-    .feature-icon { font-size: 1.5rem; margin-bottom: .75rem; display: block; }
-    .feature-card h3 { margin: 0 0 .5rem; }
-    .feature-card p  { font-size: .9rem; color: var(--color-muted); margin: 0; line-height: 1.65; }
-
-    /* ── Phases ── */
-    .phases {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
-      gap: 1rem;
-      margin-top: 2.5rem;
-    }
-    .phase-card {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      padding: 1.5rem;
-    }
-    .phase-label {
-      display: inline-block;
-      background: var(--color-accent);
-      color: #ffffff;
-      font-size: .72rem;
-      font-weight: 600;
-      font-family: system-ui, sans-serif;
-      padding: .15rem .6rem;
-      border-radius: 4px;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      margin-bottom: .75rem;
-    }
-    .phase-card h3 { margin: 0 0 .5rem; }
-    .phase-card p  { font-size: .875rem; color: var(--color-muted); margin: 0; line-height: 1.65; }
-
-    /* ── Status lists ── */
-    .status-list { list-style: none; padding: 0; margin: 0; }
-    .status-list li {
-      display: flex;
-      align-items: flex-start;
-      gap: .6rem;
-      padding: .5rem 0;
-      font-size: .9rem;
-      border-bottom: 1px solid var(--color-border);
-      font-family: system-ui, sans-serif;
-    }
-    .status-list li:last-child { border-bottom: none; }
-    .s-icon { flex-shrink: 0; }
-    .s-done { color: #2d6a4f; }
-    .s-wip  { color: #7a5c00; }
-
-    /* ── Inspirations ── */
-    .inspo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-    .inspo-card {
-      background: var(--color-bg);
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      padding: 1.5rem;
-    }
-    .inspo-card h4 { margin: 0 0 .2rem; }
-    .inspo-card h4 a { color: var(--color-text); text-decoration: underline; text-underline-offset: 3px; }
-    .inspo-card h4 a:hover { color: var(--color-accent); }
-    .inspo-year { font-size: .73rem; color: var(--color-accent); display: block; margin-bottom: .5rem; font-family: system-ui, sans-serif; }
-    .inspo-card p { font-size: .85rem; color: var(--color-muted); margin: 0; line-height: 1.55; }
-
-    /* ── Dev items ── */
-    .dev-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-      gap: 1.5rem;
-      margin-top: 2rem;
-    }
-    .dev-item { display: flex; gap: .75rem; align-items: flex-start; }
-    .dev-icon  { font-size: 1.25rem; flex-shrink: 0; margin-top: .05rem; }
-    .dev-item h4 { margin: 0 0 .25rem; }
-    .dev-item p  { margin: 0; font-size: .85rem; color: var(--color-muted); line-height: 1.55; }
-
-    /* ── History (wider cards) ── */
-    .history-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr));
-      gap: 1rem;
-      margin-top: 2.5rem;
-    }
-
-    /* ── CTA box ── */
-    .cta-box {
-      background: var(--color-surface);
-      border: 1px solid var(--color-border);
-      border-radius: 4px;
-      padding: 2.5rem 2rem;
-      text-align: center;
-    }
-    .cta-box h2 { margin-bottom: .5rem; }
-    .cta-box .lead { margin: 0 auto 2rem; }
-    .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .cta-actions a[role="button"] {
-      font-family: system-ui, sans-serif;
-      font-weight: 600;
-      font-size: .9rem;
-      border-radius: 4px;
-    }
-
-    /* ── Impressum ── */
-    .impressum-box { max-width: 560px; margin-top: 2rem; }
-    .impressum-box h3 { margin-top: 1.5rem; margin-bottom: .4rem; }
-    .impressum-box p  { font-size: .9rem; color: var(--color-muted); line-height: 1.7; }
-    .impressum-box a  { color: var(--color-muted); }
-
-    /* ── Footer ── */
-    footer {
-      background: var(--color-surface);
-      border-top: 1px solid var(--color-border);
-      padding: 1.75rem 0;
-      font-size: .875rem;
-      color: var(--color-muted);
-      font-family: system-ui, sans-serif;
-    }
-    footer a { color: var(--color-muted); }
-    footer a:hover { color: var(--color-text); }
-    .footer-inner {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-    }
-    .footer-logo {
-      font-family: 'Libre Baskerville', Georgia, serif;
-      font-weight: 400;
-      letter-spacing: 0.45em;
-      text-transform: uppercase;
-      color: var(--color-text);
-    }
-
-    @media (max-width: 600px) {
-      .hero { padding: 4rem 1rem 3.5rem; }
-      section { padding: 2.5rem 0; }
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
@@ -340,14 +31,15 @@
       <li><a href="#gameplay">Gameplay</a></li>
       <li><a href="#status">Status</a></li>
       <li><a href="#geschichte"><span class="lang-de">Geschichte</span><span class="lang-en">History</span></a></li>
-      <li><a href="https://x.com/_nouron" target="_blank" rel="noopener" title="X @_nouron">&#120143;</a></li>
-      <li><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href="https://x.com/_nouron" target="_blank" rel="noopener" aria-label="X _nouron"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a></li>
+      <li><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a></li>
       <li><button id="lang-toggle" class="lang-toggle-btn" onclick="toggleLang()">EN</button></li>
       <li><a href="#spielen" class="nav-cta"><span class="lang-de">Spielen</span><span class="lang-en">Play</span></a></li>
     </ul>
   </nav>
 
   <div class="hero">
+    <div class="hero-inner">
     <h1>Nouron</h1>
     <p class="hero-tagline">
       <span class="lang-de">Eine Kolonie. Ein Direktor. Echte Entscheidungen.</span>
@@ -367,7 +59,13 @@
     </p>
     <div class="hero-actions">
       <a href="#spielen" role="button"><span class="lang-de">Jetzt spielen</span><span class="lang-en">Play now</span></a>
-      <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" role="button" class="secondary outline">GitHub</a>
+      <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" role="button" class="secondary outline" aria-label="GitHub">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+          <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+        </svg>
+
+        GitHub
+      </a>
     </div>
     <div class="hero-chips lang-de">
       <span class="chip">Singleplayer</span>
@@ -387,7 +85,8 @@
       <span class="chip">Free to play</span>
       <span class="chip">Open Source</span>
     </div>
-  </div>
+    </div><!-- /.hero-inner -->
+  </div><!-- /.hero -->
 
   <main class="container">
 
@@ -402,42 +101,54 @@
         </p>
         <div class="feature-grid">
           <div class="feature-card">
-            <span class="feature-icon">🏚️</span>
-            <h3>Verfall als Systemprinzip</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg>
+              <h3>Verfall als Systemprinzip</h3>
+            </div>
             <p>Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer die Kolonie vernachlässigt,
             verliert sie langsam — nicht durch Gegner, sondern durch Entropie.
             Jeder Sol ist eine echte Ressourcenentscheidung.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🌅</span>
-            <h3>Sol-basiertes Spieltempo</h3>
-            <p>Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+              <h3>Rundenbasiertes Spieltempo</h3>
+            </div>
+            <p>Keine Echtzeit-Hektik. Entscheidungen werden pro Runde (1 Sol = 1 Tag im Spiel) getroffen und pro Runde 
             ausgeführt. Das Spiel passt sich dem Spieler an — nicht umgekehrt.
             Perfekt auch als Zweitspiel.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🏔️</span>
-            <h3>Nur eine Kolonie — Tiefe statt Breite</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              <h3>Nur eine Kolonie — Tiefe statt Breite</h3>
+            </div>
             <p>Kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle
             Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
             Größe entsteht durch Bedeutung, nicht durch Anzahl.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🎲</span>
-            <h3>Roguelike-Runs</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></svg>
+              <h3>Roguelike-Runs</h3>
+            </div>
             <p>Jeder Run hat variable Direktiven, zufällige Ereignisse und echte Konsequenzen.
             Scheitern ist möglich — und lehrreich. Kein Run ist identisch,
             aber die Kolonie fühlt sich immer nach Heimat an.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🌌</span>
-            <h3>Kleine, handverlesene Galaxie</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <h3>Kleine, handverlesene Galaxie</h3>
+            </div>
             <p>Wenige Systeme, wenige Objekte. Jede Begegnung mit einem Händler oder Ereignis
             hat Gewicht. Die Knappheit des Raums ist Teil des Designs — nicht ein technisches Limit.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">⚖️</span>
-            <h3>Schutz als Opportunitätsentscheidung</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+              <h3>Schutz als Opportunitätsentscheidung</h3>
+            </div>
             <p>Eine Korvette kann die Kolonie bewachen — aber eine Korvette, die patrouilliert,
             handelt nicht. Konfrontative Aktionen kosten strukturell mehr AP als zivile.
             Wer Schutz will, bezahlt mit Aufbau.</p>
@@ -454,42 +165,54 @@
         </p>
         <div class="feature-grid">
           <div class="feature-card">
-            <span class="feature-icon">🏚️</span>
-            <h3>Decay as a System Principle</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg>
+              <h3>Decay as a System Principle</h3>
+            </div>
             <p>Buildings and knowledge decay without active maintenance. Neglect the colony and lose
             it slowly — not to enemies, but to entropy.
             Every Sol is a real resource decision.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🌅</span>
-            <h3>Sol-Based Pace</h3>
-            <p>No real-time pressure. Decisions are made once a day and executed once a day.
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+              <h3>Turn-Based Pace</h3>
+            </div>
+            <p>No real-time pressure. Decisions are made per round (1 Sol = 1 day in game) and executed per round.
             The game adapts to the player — not the other way around.
             Perfect as a second game.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🏔️</span>
-            <h3>One Colony — Depth Over Breadth</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              <h3>One Colony — Depth Over Breadth</h3>
+            </div>
             <p>No micromanaging ten outposts. One colony, one director — all decisions affect
             the same place and the same community.
             Scale comes from meaning, not from quantity.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🎲</span>
-            <h3>Roguelike Runs</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="M16 8h.01M8 8h.01M8 16h.01M16 16h.01M12 12h.01"/></svg>
+              <h3>Roguelike Runs</h3>
+            </div>
             <p>Each run has variable directives, random events and real consequences.
             Failure is possible — and instructive. No run is identical,
             but the colony always feels like home.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">🌌</span>
-            <h3>A Small, Handpicked Galaxy</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              <h3>A Small, Handpicked Galaxy</h3>
+            </div>
             <p>Few systems, few objects. Every encounter with a trader or event carries weight.
             The scarcity of space is part of the design — not a technical limitation.</p>
           </div>
           <div class="feature-card">
-            <span class="feature-icon">⚖️</span>
-            <h3>Protection as an Opportunity Cost</h3>
+            <div class="card-header">
+              <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
+              <h3>Protection as an Opportunity Cost</h3>
+            </div>
             <p>A corvette can guard the colony — but a patrolling corvette isn't trading.
             Confrontational actions structurally cost more AP than civilian ones.
             Want protection? Pay with development.</p>
@@ -589,30 +312,30 @@
         </p>
         <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
           <div>
-            <h3 style="color: #2d6a4f; margin-bottom: 1rem;">Implementiert</h3>
+            <h3 style="margin-bottom: 1rem;">Implementiert</h3>
             <ul class="status-list">
-              <li><span class="s-icon s-done">✓</span> Run-System (Phase 1 &amp; 2, Objectives, Score)</li>
-              <li><span class="s-icon s-done">✓</span> Nexus-Interventionen &amp; Fail-States</li>
-              <li><span class="s-icon s-done">✓</span> Berater-System mit AP-Typen &amp; Rang-Progression</li>
-              <li><span class="s-icon s-done">✓</span> Hex-Grid Kolonieansicht (SVG, interaktiv)</li>
-              <li><span class="s-icon s-done">✓</span> Techtree (Gebäude, Forschungen, Schiffe, Berater)</li>
-              <li><span class="s-icon s-done">✓</span> INNN-Nachrichtensystem</li>
-              <li><span class="s-icon s-done">✓</span> Handelssystem (Reisender Händler / Cantina)</li>
-              <li><span class="s-icon s-done">✓</span> Moralsystem &amp; Decay (Verfall)</li>
-              <li><span class="s-icon s-done">✓</span> Supply-System &amp; Flottenorders</li>
-              <li><span class="s-icon s-done">✓</span> Systemkarte &amp; Fleet Command Overlay</li>
-              <li><span class="s-icon s-done">✓</span> Onboarding-System (Triggers &amp; Hints)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Run-System (Phase 1 &amp; 2, Objectives, Score)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Nexus-Interventionen &amp; Fail-States</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Berater-System mit AP-Typen &amp; Rang-Progression</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Hex-Grid Kolonieansicht (SVG, interaktiv)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Techtree (Gebäude, Forschungen, Schiffe, Berater)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> INNN-Nachrichtensystem</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Handelssystem (Reisender Händler / Cantina)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Moralsystem &amp; Decay (Verfall)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Supply-System &amp; Flottenorders</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Systemkarte &amp; Fleet Command Overlay</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Onboarding-System (Triggers &amp; Hints)</li>
             </ul>
           </div>
           <div>
-            <h3 style="color: #7a5c00; margin-bottom: 1rem;">Geplant (Phase 4)</h3>
+            <h3 style="margin-bottom: 1rem;">Geplant (Phase 4)</h3>
             <ul class="status-list">
-              <li><span class="s-icon s-wip">⏳</span> Playtest mit echten Spielern</li>
-              <li><span class="s-icon s-wip">⏳</span> Progressive Discovery — Berater-Dialoge &amp; Almanach</li>
-              <li><span class="s-icon s-wip">⏳</span> Multiplayer-Lobby &amp; Multi-Run-Support</li>
-              <li><span class="s-icon s-wip">⏳</span> Berater-Spezialfähigkeiten (CC Lv4-Gate)</li>
-              <li><span class="s-icon s-wip">⏳</span> NPC-Vereinbarungen (Händler, Schmuggler)</li>
-              <li><span class="s-icon s-wip">⏳</span> Steuersystem &amp; Moral-Erweiterung</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Playtest mit echten Spielern</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Progressive Discovery — Berater-Dialoge &amp; Almanach</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Multiplayer-Lobby &amp; Multi-Run-Support</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Berater-Spezialfähigkeiten (CC Lv4-Gate)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> NPC-Vereinbarungen (Händler, Schmuggler)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Steuersystem &amp; Moral-Erweiterung</li>
             </ul>
           </div>
         </div>
@@ -626,30 +349,30 @@
         </p>
         <div class="grid" style="margin-top: 2rem; gap: 2.5rem; align-items: start;">
           <div>
-            <h3 style="color: #2d6a4f; margin-bottom: 1rem;">Implemented</h3>
+            <h3 style="margin-bottom: 1rem;">Implemented</h3>
             <ul class="status-list">
-              <li><span class="s-icon s-done">✓</span> Run system (Phase 1 &amp; 2, objectives, score)</li>
-              <li><span class="s-icon s-done">✓</span> Nexus interventions &amp; fail states</li>
-              <li><span class="s-icon s-done">✓</span> Advisor system with AP types &amp; rank progression</li>
-              <li><span class="s-icon s-done">✓</span> Hex-grid colony view (SVG, interactive)</li>
-              <li><span class="s-icon s-done">✓</span> Tech tree (buildings, research, ships, advisors)</li>
-              <li><span class="s-icon s-done">✓</span> INNN news system</li>
-              <li><span class="s-icon s-done">✓</span> Trading system (traveling merchant / cantina)</li>
-              <li><span class="s-icon s-done">✓</span> Morale system &amp; decay</li>
-              <li><span class="s-icon s-done">✓</span> Supply system &amp; fleet orders</li>
-              <li><span class="s-icon s-done">✓</span> System map &amp; fleet command overlay</li>
-              <li><span class="s-icon s-done">✓</span> Onboarding system (triggers &amp; hints)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Run system (Phase 1 &amp; 2, objectives, score)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Nexus interventions &amp; fail states</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Advisor system with AP types &amp; rank progression</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Hex-grid colony view (SVG, interactive)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Tech tree (buildings, research, ships, advisors)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> INNN news system</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Trading system (traveling merchant / cantina)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Morale system &amp; decay</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Supply system &amp; fleet orders</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> System map &amp; fleet command overlay</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span> Onboarding system (triggers &amp; hints)</li>
             </ul>
           </div>
           <div>
-            <h3 style="color: #7a5c00; margin-bottom: 1rem;">Planned (Phase 4)</h3>
+            <h3 style="margin-bottom: 1rem;">Planned (Phase 4)</h3>
             <ul class="status-list">
-              <li><span class="s-icon s-wip">⏳</span> Playtest with real players</li>
-              <li><span class="s-icon s-wip">⏳</span> Progressive discovery — advisor dialogs &amp; almanac</li>
-              <li><span class="s-icon s-wip">⏳</span> Multiplayer lobby &amp; multi-run support</li>
-              <li><span class="s-icon s-wip">⏳</span> Advisor special abilities (CC Lv4 gate)</li>
-              <li><span class="s-icon s-wip">⏳</span> NPC agreements (traders, smugglers)</li>
-              <li><span class="s-icon s-wip">⏳</span> Tax system &amp; morale expansion</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Playtest with real players</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Progressive discovery — advisor dialogs &amp; almanac</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Multiplayer lobby &amp; multi-run support</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Advisor special abilities (CC Lv4 gate)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> NPC agreements (traders, smugglers)</li>
+              <li><span class="s-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/></svg></span> Tax system &amp; morale expansion</li>
             </ul>
           </div>
         </div>
@@ -799,69 +522,70 @@
       </div>
       <div class="dev-grid">
         <div class="dev-item">
-          <span class="dev-icon">💻</span>
-          <div>
+          <div class="card-header">
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
             <h4>Tech Stack</h4>
-            <p>PHP / Laravel · SQLite<br>Alpine.js · PicoCSS · SVG<br>Blade-Templates</p>
           </div>
+          <p>PHP / Laravel · SQLite<br>Alpine.js · PicoCSS · SVG<br>Blade-Templates</p>
         </div>
         <div class="dev-item">
-          <span class="dev-icon">📂</span>
-          <div>
+          <div class="card-header">
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
             <h4>Open Source</h4>
-            <p><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">github.com/nouron/nouron</a><br>
-            <span class="lang-de">Issues, Forks und Pull Requests willkommen.</span>
-            <span class="lang-en">Issues, forks and pull requests welcome.</span></p>
           </div>
+          <p><a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">github.com/nouron/nouron</a><br>
+          <span class="lang-de">Issues, Forks und Pull Requests willkommen.</span>
+          <span class="lang-en">Issues, forks and pull requests welcome.</span></p>
         </div>
         <div class="dev-item">
-          <span class="dev-icon">🧑‍💻</span>
-          <div>
+          <div class="card-header">
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             <h4><span class="lang-de">Wer steckt dahinter?</span><span class="lang-en">Who's behind it?</span></h4>
-            <p>
-              <span class="lang-de">Ein Solo-Entwickler aus Leidenschaft. Details im <a href="#impressum">Impressum</a>.</span>
-              <span class="lang-en">A solo developer by passion. Details in the <a href="#impressum">legal notice</a>.</span>
-            </p>
           </div>
+          <p>
+            <span class="lang-de">Ein Solo-Entwickler aus Leidenschaft. Details im <a href="#impressum">Impressum</a>.</span>
+            <span class="lang-en">A solo developer by passion. Details in the <a href="#impressum">legal notice</a>.</span>
+          </p>
         </div>
         <div class="dev-item">
-          <span class="dev-icon">🚫</span>
-          <div>
+          <div class="card-header">
+            <svg class="card-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" x2="19.07" y1="4.93" y2="19.07"/></svg>
             <h4><span class="lang-de">Kein Pay-to-Win</span><span class="lang-en">No Pay-to-Win</span></h4>
-            <p>
-              <span class="lang-de">Keine Premium-Accounts, kein Item-Shop, keine Reflinks. Das Spiel ist kostenlos — jetzt und in Zukunft.</span>
-              <span class="lang-en">No premium accounts, no item shop, no referral links. The game is free — now and in the future.</span>
-            </p>
           </div>
+          <p>
+            <span class="lang-de">Keine Premium-Accounts, kein Item-Shop, keine Reflinks. Das Spiel ist kostenlos — jetzt und in Zukunft.</span>
+            <span class="lang-en">No premium accounts, no item shop, no referral links. The game is free — now and in the future.</span>
+          </p>
         </div>
       </div>
     </section>
 
-    <section id="impressum">
-      <p class="section-label lang-de">Rechtliches</p>
-      <p class="section-label lang-en">Legal</p>
-      <h2><span class="lang-de">Impressum</span><span class="lang-en">Legal Notice</span></h2>
-      <div class="impressum-box">
-        <p class="lang-en" style="font-size:.85rem;">
-          This legal notice is required by German law (§ 5 TMG) for websites accessible from Germany.
-        </p>
-        <h3>Angaben gemäß § 5 TMG</h3>
-        <p>
-          Mario Gehnke<br>
-          <span class="email-protect" data-eu="tech.mario" data-ed="outlook.de"></span>
-        </p>
-        <h3><span class="lang-de">Haftungsausschluss</span><span class="lang-en">Disclaimer</span></h3>
-        <p class="lang-de">
-          Dieses Projekt ist ein privates, nicht-kommerzielles Hobbyprojekt ohne Gewinnerzielungsabsicht.
-          Für externe Links wird keine Haftung übernommen.
-        </p>
-        <p class="lang-en">
-          This project is a private, non-commercial hobby project with no profit motive.
-          No liability is accepted for external links.
-        </p>
-        <h3><span class="lang-de">Lizenz</span><span class="lang-en">License</span></h3>
-        <p><a href="https://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank" rel="noopener">CC BY-NC-SA 3.0 DE</a></p>
-      </div>
+    <section id="impressum" style="padding:0">
+      <details class="impressum-details">
+        <summary>
+          <span class="lang-de">Impressum / Rechtliches</span>
+          <span class="lang-en">Legal Notice</span>
+        </summary>
+        <div class="impressum-box">
+          <p class="lang-en" style="font-size:.85rem;">
+            This legal notice is required by German law (§ 5 TMG) for websites accessible from Germany.
+          </p>
+          <h3>Angaben gemäß § 5 TMG</h3>
+          <p>
+            <span class="name-protect" data-fn="TWFyaW8=" data-ln="R2Vobmtl"></span><br>
+            <span class="email-protect" data-eu="bWFyaW8uZ2Vobmtl" data-ed="b3V0bG9vay5kZQ=="></span>
+          </p>
+          <h3><span class="lang-de">Haftungsausschluss</span><span class="lang-en">Disclaimer</span></h3>
+          <p class="lang-de">
+            Dieses Projekt ist ein privates, nicht-kommerzielles Hobbyprojekt ohne Gewinnerzielungsabsicht.
+            Für externe Links wird keine Haftung übernommen.
+          </p>
+          <p class="lang-en">
+            This project is a private, non-commercial hobby project with no profit motive.
+            No liability is accepted for external links.
+          </p>
+        </div>
+      </details>
     </section>
 
   </main>
@@ -874,10 +598,9 @@
           &nbsp;—&nbsp;<span class="lang-de">Ein Hobbyprojekt</span><span class="lang-en">A hobby project</span>
         </span>
         <span>
-          <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener">GitHub</a> ·
-          <a href="https://x.com/_nouron" target="_blank" rel="noopener">&#120143; @_nouron</a> ·
-          <a href="#impressum"><span class="lang-de">Impressum</span><span class="lang-en">Legal Notice</span></a> ·
-          <a href="https://creativecommons.org/licenses/by-nc-sa/3.0/de/" target="_blank" rel="noopener">CC BY-NC-SA</a>
+          <a href="https://github.com/nouron/nouron" target="_blank" rel="noopener" aria-label="GitHub"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg></a> ·
+          <a href="https://x.com/_nouron" target="_blank" rel="noopener" aria-label="X @_nouron"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a> ·
+          <a href="#impressum"><span class="lang-de">Impressum</span><span class="lang-en">Legal Notice</span></a>
         </span>
       </div>
     </div>
@@ -903,11 +626,15 @@
       if (btn) btn.textContent = lang === 'de' ? 'EN' : 'DE';
     })();
 
-    // Email obfuscation — assembled from split parts, never as plain text in HTML
     document.addEventListener('DOMContentLoaded', function() {
+      // Email + name: base64-encoded in HTML, assembled in JS only — never plain text in source
       document.querySelectorAll('.email-protect').forEach(function(el) {
-        var addr = el.dataset.eu + '@' + el.dataset.ed;
+        var addr = atob(el.dataset.eu) + '@' + atob(el.dataset.ed);
         el.innerHTML = '<a href="mailto:' + addr + '">' + addr + '</a>';
+      });
+      // Name obfuscation — base64 encoded parts
+      document.querySelectorAll('.name-protect').forEach(function(el) {
+        el.textContent = atob(el.dataset.fn) + ' ' + atob(el.dataset.ln);
       });
     });
   </script>
