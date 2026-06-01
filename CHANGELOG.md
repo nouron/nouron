@@ -1,5 +1,41 @@
 # Changelog
 
+## 2026-06-01
+
+Technischer Audit durchgeführt (39 Findings). Alle kritischen und hohen Punkte behoben:
+
+**Sicherheit:**
+- serialize() → json_encode() an allen DB-Schreibstellen (RCE-Vektor geschlossen)
+- user_id aus Fleet::$fillable entfernt (Mass Assignment)
+- Colony-Ownership-Check in TradeController (addResourceOffer, removeOffer)
+- XSS in building-detail.blade.php geschlossen ({!! →  {{ }})
+- JSON in Galaxy-data-Attributen korrekt escaped (@json statt {{ json_encode }})
+
+**Gameplay-Bugs:**
+- Supply-Cap-Bug: Wohnhabitat-Instanzen werden jetzt summiert (value → sum)
+- Knowledge-CC-Level-Gate implementiert (war dokumentiert aber nicht enforced)
+- AP-Items vom Händler funktionieren jetzt (creditAp in PersonellService)
+
+**Stabilität:**
+- DB::transaction() in BarService::acceptOffer() (atomarer Ressourcentransfer)
+- MerchantService::buyItem() atomar
+- Advisor-Promotion: lockForUpdate() gegen Race Condition
+- UTC in AppServiceProvider erzwungen (Tick-System-Stabilität)
+
+**Frontend:**
+- jQuery aus user.js und techtree.js entfernt (native fetch + DOM-API)
+- Tailwind-Import aus app.css entfernt
+- Inline-CSS in fleet-config.css und galaxy.css ausgelagert
+- confirm()-Dialoge lokalisiert
+
+**Architektur/Code-Qualität:**
+- BuildingId-Enum für Magic Numbers eingeführt
+- Run-Model-Scopes ergänzt
+- Colony-Model: ColonyRecord für Writes, Colony für Reads
+- DB-Index auf colony_resources.colony_id
+- Testdata-Inkonsistenz behoben (Springfield since_tick)
+- ROADMAP Phase-3-Items als [x] markiert
+
 ## 2026-05-30
 
 - **Cantina Mobile-Swipe & Hotspots (Phase 3)**: Cantina-Screen komplett überarbeitet. Mobile Ansichten unterstützen jetzt horizontales Parallaxe-Panning des breiten retro DOS-Hintergrundbildes (`cantina-interior.webp`) via Touch-Swipes (`swipeCarousel`). Charaktere/Angebote und der Händler sind als absolute Hotspots direkt im Bild verankert und wandern mit. Klick auf einen Hotspot öffnet ein interaktives, am unteren Rand hochgleitendes Drawer-Overlay (Mobile) bzw. einen zentrierten modalen Dialog (Desktop) für die Handelsaktionen.

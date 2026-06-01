@@ -161,8 +161,7 @@ class TradeControllerTest extends TestCase
                 'amount'      => 50,
                 'price'       => 5,
             ])
-            ->assertRedirect(route('trade.resources'))
-            ->assertSessionHas('error');
+            ->assertForbidden();
     }
 
     // ── POST /trade/offer/remove ──────────────────────────────────────────────
@@ -203,7 +202,7 @@ class TradeControllerTest extends TestCase
                 'resource_id' => 3,
             ]);
 
-        $response->assertOk()->assertJson(['result' => false]);
+        $response->assertForbidden();
 
         $this->assertSame(1, DB::table('trade_resources')
             ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
