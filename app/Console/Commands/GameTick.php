@@ -727,7 +727,7 @@ class GameTick extends Command
             $housingLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', 28)
-                ->value('level');
+                ->sum('level');
 
             $knowledgeCap = 0;
             if (!empty($knowledgeIds)) {
@@ -1008,18 +1008,32 @@ class GameTick extends Command
                 ->get();
 
             foreach ($eligible as $advisor) {
-                if ($cost > 0) {
-                    $credits = (int) (DB::table('user_resources')
-                        ->where('user_id', $advisor->user_id)
-                        ->value('credits') ?? 0);
-                    if ($credits < $cost) {
-                        continue; // Deferred — try again next tick
+                DB::transaction(function () use ($advisor, $fromRank, $toRank, $cost): void {
+                    // Re-read with row lock to prevent race condition on concurrent tick runs.
+                    $current = DB::table('advisors')
+                        ->where('id', $advisor->id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    // Guard: already promoted (or demoted) since the eligible query ran.
+                    if (!$current || (int) $current->rank !== $fromRank) {
+                        return;
                     }
-                    DB::table('user_resources')
-                        ->where('user_id', $advisor->user_id)
-                        ->decrement('credits', $cost);
-                }
-                DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
+
+                    if ($cost > 0) {
+                        $credits = (int) (DB::table('user_resources')
+                            ->where('user_id', $advisor->user_id)
+                            ->value('credits') ?? 0);
+                        if ($credits < $cost) {
+                            return; // Deferred — try again next tick
+                        }
+                        DB::table('user_resources')
+                            ->where('user_id', $advisor->user_id)
+                            ->decrement('credits', $cost);
+                    }
+
+                    DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
+                });
             }
         }
 

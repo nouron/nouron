@@ -56,7 +56,7 @@ class TickService
         $calcBegin  = (int) $this->config['calculation']['start'];
         $calcEnd    = (int) $this->config['calculation']['end'];
 
-        return $time >= mktime($calcBegin) && $time < mktime($calcEnd);
+        return $time >= mktime($calcBegin, 0, 0) && $time < mktime($calcEnd, 0, 0);
     }
 
     /**

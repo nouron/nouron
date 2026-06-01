@@ -105,11 +105,13 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
         }
 
-        // Execute trade
-        $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
-        $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
-        $offer->is_accepted = true;
-        $offer->save();
+        // Execute trade atomically — partial transfer must not persist
+        DB::transaction(function () use ($offer, $colonyId): void {
+            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
+            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
+            $offer->is_accepted = true;
+            $offer->save();
+        });
 
         return ['ok' => true];
     }

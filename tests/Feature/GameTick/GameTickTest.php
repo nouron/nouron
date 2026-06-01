@@ -63,6 +63,29 @@ class GameTickTest extends TestCase
     }
 
     /**
+     * Supply cap sums all housing instance levels (instanced building, multiple rows per colony).
+     *
+     * Colony 1 baseline: CC level=3 → flat 10. One existing housing row at level 2 → 16.
+     * Add two more housing instances at level 2 each → total housing sum = 6 → cap = 10 + (6×8) = 58.
+     */
+    public function test_supply_cap_sums_all_housing_instances(): void
+    {
+        // Insert two additional housing instances for colony 1 (building_id=28 is instanced).
+        DB::table('colony_buildings')->insert([
+            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 2],
+            ['colony_id' => 1, 'building_id' => 28, 'level' => 2, 'status_points' => 20, 'ap_spend' => 0, 'instance_id' => 3],
+        ]);
+
+        Artisan::call('game:tick', ['--tick' => 9004]);
+
+        $supply = DB::table('user_resources')->where('user_id', 3)->value('supply');
+
+        // Total housing level sum = 2 + 2 + 2 = 6; cap_housingcomplex = 8; cap_commandcenter = 10
+        // cap = 10 + (6 × 8) = 58
+        $this->assertEquals(58, $supply);
+    }
+
+    /**
      * Supply is capped at cap_max (200) regardless of housing level.
      */
     public function test_supply_cap_respects_maximum(): void
