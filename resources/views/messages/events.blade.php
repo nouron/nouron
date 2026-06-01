@@ -12,7 +12,7 @@
         @php
             $params = [];
             if ($event->parameters) {
-                $raw = @unserialize($event->parameters);
+                $raw = json_decode($event->parameters, true);
                 if (is_array($raw)) {
                     $params = $raw;
                 }

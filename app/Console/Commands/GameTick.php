@@ -226,7 +226,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.fleet_arrived',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
+                    'parameters' => json_encode(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
                 ]);
             }
         }
@@ -274,7 +274,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.trade',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['colony_id' => $colonyId]),
+                    'parameters' => json_encode(['colony_id' => $colonyId]),
                 ]);
             }
 
@@ -372,7 +372,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.fleet_arrived',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['fleet_id' => $initiator->id, 'coords' => $coords]),
+                    'parameters' => json_encode(['fleet_id' => $initiator->id, 'coords' => $coords]),
                 ]);
                 $processed++;
                 continue;
@@ -407,7 +407,7 @@ class GameTick extends Command
                 'tick'       => $tick,
                 'event'      => 'galaxy.encounter',
                 'area'       => 'galaxy',
-                'parameters' => serialize([
+                'parameters' => json_encode([
                     'initiator_id'   => $initiator->user_id,
                     'encountered_id' => $encountered->first()->user_id,
                     'colony_id'      => 0,
@@ -430,7 +430,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.encounter',
                     'area'       => 'galaxy',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'initiator_id'   => $initiator->user_id,
                         'encountered_id' => $encFleet->user_id,
                         'colony_id'      => 0,
@@ -541,7 +541,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => $cb->colony_id,
                         'tech_id'   => $cb->building_id,
                     ]),
@@ -575,7 +575,7 @@ class GameTick extends Command
                             'tick'       => $tick,
                             'event'      => 'onboarding_decay',
                             'area'       => 'techtree',
-                            'parameters' => serialize(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
+                            'parameters' => json_encode(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
                         ]);
                         $this->onboardingTriggerService->markFired($userId, 'onboarding_decay');
                     }
@@ -615,7 +615,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => 0,
                         'tech_id'   => $fs->ship_id,
                     ]),
@@ -672,7 +672,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => $cr->colony_id,
                         'tech_id'   => $cr->research_id,
                     ]),
@@ -836,7 +836,7 @@ class GameTick extends Command
                         'tick'       => $tick,
                         'event'      => 'onboarding_trust',
                         'area'       => 'colony',
-                        'parameters' => serialize(['colony_id' => $colony->id]),
+                        'parameters' => json_encode(['colony_id' => $colony->id]),
                     ]);
                     $this->onboardingTriggerService->markFired($userId, 'onboarding_trust');
                 }
@@ -976,7 +976,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'merchant.visit',
                     'area'       => 'colony',
-                    'parameters' => serialize(['colony_id' => $colony->id]),
+                    'parameters' => json_encode(['colony_id' => $colony->id]),
                 ]);
                 $spawned++;
             }

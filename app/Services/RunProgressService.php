@@ -678,7 +678,7 @@ class RunProgressService
             'tick'       => $tick,
             'event'      => $event,
             'area'       => $area,
-            'parameters' => serialize($parameters),
+            'parameters' => json_encode($parameters),
             'created_at' => now(),
         ]);
     }

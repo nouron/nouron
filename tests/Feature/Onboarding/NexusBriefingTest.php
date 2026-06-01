@@ -52,8 +52,8 @@ class NexusBriefingTest extends TestCase
         $event = $events->first();
         $this->assertEquals('nexus', $event->area, 'Event area must be "nexus"');
 
-        $params = unserialize($event->parameters);
-        $this->assertIsArray($params, 'Parameters must be a serialized array');
+        $params = json_decode($event->parameters, true);
+        $this->assertIsArray($params, 'Parameters must be a JSON-encoded array');
         $this->assertArrayHasKey('colony_id', $params, 'Parameters must contain colony_id');
         $this->assertEquals($colony->id, $params['colony_id'], 'colony_id must match the created colony');
     }
@@ -137,8 +137,8 @@ class NexusBriefingTest extends TestCase
             ->where('event', 'onboarding.nexus_briefing')
             ->first();
 
-        $alphaParams = unserialize($alphaEvent->parameters);
-        $betaParams  = unserialize($betaEvent->parameters);
+        $alphaParams = json_decode($alphaEvent->parameters, true);
+        $betaParams  = json_decode($betaEvent->parameters, true);
 
         $this->assertEquals($colonyAlpha->id, $alphaParams['colony_id'], 'Alpha event must reference Alpha colony');
         $this->assertEquals($colonyBeta->id,  $betaParams['colony_id'],  'Beta event must reference Beta colony');
@@ -156,7 +156,7 @@ class NexusBriefingTest extends TestCase
             'tick'       => 42,
             'event'      => 'onboarding.nexus_briefing',
             'area'       => 'nexus',
-            'parameters' => serialize(['colony_id' => 1]),
+            'parameters' => json_encode(['colony_id' => 1]),
         ]);
 
         // Now call the service with a different tick — must not insert a new row

@@ -153,7 +153,7 @@ class OnboardingTriggersTest extends TestCase
         $this->assertNotNull($event, 'onboarding_decay INNN event must be created when SP crosses 80 % threshold');
         $this->assertEquals('techtree', $event->area);
 
-        $params = unserialize($event->parameters);
+        $params = json_decode($event->parameters, true);
         $this->assertIsArray($params);
         $this->assertArrayHasKey('colony_id', $params);
         $this->assertEquals($this->colonyId, $params['colony_id']);
@@ -379,7 +379,7 @@ class OnboardingTriggersTest extends TestCase
         $this->assertNotNull($event, 'onboarding_trust INNN event must be created when trust crosses 0→negative');
         $this->assertEquals('colony', $event->area);
 
-        $params = unserialize($event->parameters);
+        $params = json_decode($event->parameters, true);
         $this->assertIsArray($params);
         $this->assertArrayHasKey('colony_id', $params);
         $this->assertEquals($this->colonyId, $params['colony_id']);

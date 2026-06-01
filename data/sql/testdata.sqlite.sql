@@ -366,8 +366,8 @@ INSERT INTO "innn_messages" VALUES(30,0,'mood_friendly',3,16000,0,'test','text t
 INSERT INTO "innn_messages" VALUES(31,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
 INSERT INTO "innn_messages" VALUES(32,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
 INSERT INTO "innn_messages" VALUES(33,0,'mood_friendly',3,16000,0,'test','text text text',1,1,0);
-INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','a:2:{s:7:"colony_id";i:0;s:11:"tech_id";i:27;}',NULL);
-INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','a:1:{s:7:"colony_id";i:1;}',NULL);
+INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','{"colony_id":0,"tech_id":27}',NULL);
+INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','{"colony_id":1}',NULL);
 INSERT INTO "innn_news" VALUES(1,12345,'innn_black','economy','test_headline','test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text ');
 INSERT INTO "trade_resources" VALUES(2,0,3,11,11,0);
 INSERT INTO "trade_resources" VALUES(2,1,5,123,32,0);
