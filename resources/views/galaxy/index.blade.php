@@ -40,8 +40,8 @@
 
 @section('content')
 <div id="galaxy-overview"
-     data-systems="{{ json_encode($systems->values()) }}"
-     data-config="{{ json_encode($config) }}"
+     data-systems='@json($systems->values())'
+     data-config='@json($config)'
      style="width:100%; height:calc(100vh - 130px);"></div>
 @endsection
 

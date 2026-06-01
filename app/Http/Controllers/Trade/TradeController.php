@@ -76,7 +76,13 @@ class TradeController extends BaseController
             'restriction' => ['sometimes', 'nullable', 'integer'],
         ]);
 
-        $data['user_id'] = $this->getCurrentUserId();
+        $userId = $this->getCurrentUserId();
+
+        if (!$this->colonyService->checkColonyOwner((int) $data['colony_id'], (int) $userId)) {
+            abort(403);
+        }
+
+        $data['user_id'] = $userId;
         $result = $this->tradeGateway->addResourceOffer($data);
 
         if ($result) {
@@ -146,6 +152,10 @@ class TradeController extends BaseController
         ]);
 
         $userId = $this->getCurrentUserId();
+
+        if (!$this->colonyService->checkColonyOwner((int) $request->input('colony_id'), (int) $userId)) {
+            abort(403);
+        }
 
         $data = array_merge(
             $request->only(['colony_id', 'direction', 'resource_id']),

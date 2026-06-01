@@ -72,9 +72,9 @@
          data-x="{{ (int)($system->x ?? 0) }}"
          data-y="{{ (int)($system->y ?? 0) }}"
          data-bg="{{ $system->background_image_url ? '/img/' . $system->background_image_url : '' }}"
-         data-objects="{{ json_encode($objects->values()) }}"
-         data-colonies="{{ json_encode($colonies->values()) }}"
-         data-config="{{ json_encode($config) }}"
+         data-objects='@json($objects->values())'
+         data-colonies='@json($colonies->values())'
+         data-config='@json($config)'
          style="width:100%; height:calc(100vh - 130px);"></div>
 
     {{-- Fleet command panel — shown via JS when an own fleet marker is clicked --}}

@@ -23,21 +23,21 @@
 
 {{-- Entire block hidden when image_slug is falsy (non-building types in techtree) --}}
 <div class="building-detail-wrap"
-     x-show="{!! $expr !!}.image_slug">
+     x-show="{{ $expr }}.image_slug">
 
     <div class="building-detail-img-wrap">
         <img class="building-detail-img"
-             :src="'/img/buildings/' + {!! $expr !!}.image_slug + '.webp'"
-             :alt="{!! $expr !!}.{{ $nameField }}">
+             :src="'/img/buildings/' + {{ $expr }}.image_slug + '.webp'"
+             :alt="{{ $expr }}.{{ $nameField }}">
     </div>
 
     @if($showHeader)
     <div class="building-detail-header">
         <strong class="building-detail-name"
-                x-text="{!! $expr !!}.{{ $nameField }}"></strong>
+                x-text="{{ $expr }}.{{ $nameField }}"></strong>
         <span class="sidebar-level-badge"
-              x-show="{!! $expr !!}.level > 0"
-              x-text="`Lv. ${ {!! $expr !!}.level }`"></span>
+              x-show="{{ $expr }}.level > 0"
+              x-text="`Lv. ${ {{ $expr }}.level }`"></span>
     </div>
     @endif
 

@@ -9,7 +9,7 @@ class Fleet extends Model
     protected $table = 'fleets';
     protected $primaryKey = 'id';
     public $timestamps = false;
-    protected $fillable = ['fleet', 'user_id', 'x', 'y', 'grid_x', 'grid_y', 'artefact'];
+    protected $fillable = ['fleet', 'x', 'y', 'grid_x', 'grid_y', 'artefact'];
 
     public function user()
     {
