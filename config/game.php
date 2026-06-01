@@ -172,6 +172,8 @@ return [
     // Per-entity moral_per_lv / moral_per_unit values live in config/buildings.php,
     // config/techs.php and config/ships.php — MoralService reads from those files.
     'moral' => [
+        // resource_id in colony_resources where the moral value is stored (res_moral).
+        'resource_id' => 12,
         // Hard cap for total ship moral contribution (before global clamp).
         'ships_cap' => 30,
         // Production multipliers by moral band (see GDD §13 "Effekte der Moral").

@@ -108,11 +108,33 @@ class Run extends Model
 
     /**
      * Limit query to active runs only.
-     *
-     * Usage: Run::active()->where('user_id', $userId)->first()
      */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Limit query to completed runs only.
+     */
+    public function scopeCompleted(Builder $query): Builder
+    {
+        return $query->where('status', 'completed');
+    }
+
+    /**
+     * Limit query to failed runs only.
+     */
+    public function scopeFailed(Builder $query): Builder
+    {
+        return $query->where('status', 'failed');
+    }
+
+    /**
+     * Limit query to runs belonging to a specific user.
+     */
+    public function scopeByUser(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId);
     }
 }

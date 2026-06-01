@@ -129,7 +129,7 @@
                         @if(isset($user_id) && (int) $offer->user_id === $user_id)
                         {{-- Own offer: show delete button only --}}
                         <form method="POST" action="{{ route('trade.offer.remove') }}" class="d-inline"
-                              onsubmit="return confirm('Angebot wirklich löschen?')">
+                              onsubmit="return confirm(@json(__('trade.confirm_delete_offer')))">
                             @csrf
                             <input type="hidden" name="colony_id"   value="{{ $offer->colony_id }}">
                             <input type="hidden" name="direction"   value="{{ $offer->direction }}">
@@ -159,7 +159,7 @@
                         @endphp
                         @if($canAccept)
                         <form method="POST" action="{{ route('trade.offer.accept') }}" class="d-inline"
-                              onsubmit="return confirm('Angebot wirklich annehmen?')">
+                              onsubmit="return confirm(@json(__('trade.confirm_accept_offer')))">
                             @csrf
                             <input type="hidden" name="seller_colony_id" value="{{ $offer->colony_id }}">
                             <input type="hidden" name="direction"        value="{{ $offer->direction }}">

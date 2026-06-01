@@ -61,6 +61,7 @@ return [
     'fleet_create'            => 'Neue Flotte',
     'fleet_name'              => 'Flottenname',
     'fleet_delete_confirm'    => 'Flotte wirklich auflösen?',
+    'confirm_delete'          => 'Flotte wirklich löschen?',
     'no_fleets'               => 'Keine Flotten vorhanden.',
 
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BuildingId;
 use App\Models\Advisor;
 use App\Models\Colony;
 use App\Models\ColonyBuilding;
@@ -716,7 +717,7 @@ class GameTick extends Command
 
             $ccLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 25)
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level');
 
             if ($ccLevel <= 0) {
@@ -726,7 +727,7 @@ class GameTick extends Command
 
             $housingLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 28)
+                ->where('building_id', BuildingId::Housing->value)
                 ->sum('level');
 
             $knowledgeCap = 0;
@@ -872,7 +873,7 @@ class GameTick extends Command
         foreach ($colonies as $colony) {
             $ccLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 25)
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level');
 
             if ($ccLevel <= 0) {
@@ -881,7 +882,7 @@ class GameTick extends Command
 
             $housingLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 28)
+                ->where('building_id', BuildingId::Housing->value)
                 ->value('level');
 
             $total = $nexusSubsidy + ($housingLevel * $taxPerHousing);

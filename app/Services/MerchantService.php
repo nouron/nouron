@@ -187,6 +187,14 @@ class MerchantService
                 ->update(['sold' => true, 'updated_at' => now()]);
         });
 
+        Log::info('merchant_purchase', [
+            'colony_id'    => $colonyId,
+            'user_id'      => $userId,
+            'item_id'      => $itemId,
+            'item_type'    => $item->item_type,
+            'cost_credits' => $item->cost_credits,
+        ]);
+
         $newCredits = (int) (DB::table('user_resources')
             ->where('user_id', $userId)
             ->value('credits') ?? 0);

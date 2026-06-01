@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\DB;
  */
 class MoralService
 {
+    /** Fallback if config('game.moral.resource_id') is not set. */
     public const RESOURCE_ID = 12;
 
     public function __construct(
@@ -47,7 +48,7 @@ class MoralService
         $moral = $this->calculateMoral($colony->id, $tick);
 
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => $colony->id, 'resource_id' => self::RESOURCE_ID],
+            ['colony_id' => $colony->id, 'resource_id' => $this->resourceId()],
             ['amount' => $moral]
         );
 
@@ -76,10 +77,15 @@ class MoralService
     {
         $row = DB::table('colony_resources')
             ->where('colony_id', $colonyId)
-            ->where('resource_id', self::RESOURCE_ID)
+            ->where('resource_id', $this->resourceId())
             ->first();
 
         return $row ? (int) $row->amount : 0;
+    }
+
+    private function resourceId(): int
+    {
+        return (int) config('game.moral.resource_id', self::RESOURCE_ID);
     }
 
     // ── Multipliers ───────────────────────────────────────────────────────────
