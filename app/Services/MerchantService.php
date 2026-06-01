@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -20,13 +21,20 @@ use Illuminate\Support\Facades\Log;
  *   - trust_boost  → adds trust_amount to colony_resources (resource_id = 12)
  *   - information  → sets colony_tiles.is_explored = 1 for all tiles of the colony
  *
- * Item effects deferred to Phase 4:
- *   - ap_flex / ap_targeted → marked sold, effect logged as TODO
- *   - credit_loan           → not yet offered (config placeholder)
+ * Item effects implemented in Phase 4:
+ *   - ap_flex     → distributes AP across all advisor types with active advisors (PersonellService::creditAp)
+ *   - ap_targeted → credits AP to the specific type stored in the item payload
+ *
+ * Item effects still deferred:
+ *   - credit_loan — not yet offered (config placeholder)
  */
 class MerchantService
 {
     private const TRUST_RESOURCE_ID = 12;
+
+    public function __construct(
+        private readonly PersonellService $personellService,
+    ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
     {
@@ -166,18 +174,18 @@ class MerchantService
             return ['ok' => false, 'error' => 'Nicht genug Credits.'];
         }
 
-        // Deduct credits
-        DB::table('user_resources')
-            ->where('user_id', $userId)
-            ->decrement('credits', $item->cost_credits);
+        // Deduct credits, apply effect and mark sold atomically.
+        DB::transaction(function () use ($item, $itemId, $colonyId, $userId): void {
+            DB::table('user_resources')
+                ->where('user_id', $userId)
+                ->decrement('credits', $item->cost_credits);
 
-        // Apply effect
-        $this->applyItemEffect($item, $colonyId);
+            $this->applyItemEffect($item, $colonyId);
 
-        // Mark sold
-        DB::table('merchant_items')
-            ->where('id', $itemId)
-            ->update(['sold' => true, 'updated_at' => now()]);
+            DB::table('merchant_items')
+                ->where('id', $itemId)
+                ->update(['sold' => true, 'updated_at' => now()]);
+        });
 
         $newCredits = (int) (DB::table('user_resources')
             ->where('user_id', $userId)
@@ -252,7 +260,8 @@ class MerchantService
      * repair_kit   → heal the colony building with the lowest relative SP
      * trust_boost  → add trust to colony_resources (resource_id = 12)
      * information  → reveal all colony_tiles for this colony
-     * ap_flex / ap_targeted → deferred to Phase 4, logged
+     * ap_flex      → distribute AP across advisor types via PersonellService::creditAp
+     * ap_targeted  → credit AP to a specific advisor type via PersonellService::creditAp
      */
     private function applyItemEffect(object $item, int $colonyId): void
     {
@@ -279,9 +288,18 @@ class MerchantService
                 break;
 
             case 'ap_flex':
+                // ap_flex: distribute AP across all advisor types that have active advisors.
+                $apAmount = (int) ($payload['amount'] ?? 20);
+                $this->personellService->creditAp($colonyId, 'any', $apAmount);
+                Log::info("MerchantService: ap_flex applied — {$apAmount} AP distributed across active advisors on colony {$colonyId}.");
+                break;
+
             case 'ap_targeted':
-                // TODO Phase 4: integrate with PersonellService to credit AP directly.
-                Log::info("MerchantService: AP item '{$item->item_type}' purchased for colony {$colonyId} — effect deferred to Phase 4.");
+                // ap_targeted: credit AP to the specific type stored in the payload.
+                $apAmount = (int) ($payload['amount'] ?? 15);
+                $apType   = (string) ($payload['ap_type'] ?? 'construction');
+                $this->personellService->creditAp($colonyId, $apType, $apAmount);
+                Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to '{$apType}' on colony {$colonyId}.");
                 break;
 
             default:

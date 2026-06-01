@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\GalaxyService;
+use App\Services\MerchantService;
 use App\Services\MessageService;
 use App\Services\MoralService;
 use App\Services\ResourcesService;
@@ -48,6 +49,9 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(ColonyService::class, ColonyService::class);
         $this->app->bind(EventService::class, EventService::class);
+        $this->app->bind(MerchantService::class, fn($app) => new MerchantService(
+            $app->make(PersonellService::class),
+        ));
         $this->app->bind(GalaxyService::class, GalaxyService::class);
         $this->app->bind(MessageService::class, MessageService::class);
         $this->app->bind(ResourcesService::class, ResourcesService::class);
@@ -90,6 +94,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force UTC for all PHP date/time operations to guarantee consistent tick
+        // calculations regardless of the server's system timezone setting.
+        // The tick system (config/game.php → tick) assumes UTC — never change this.
+        date_default_timezone_set('UTC');
+
         $this->bootBypassFlags();
 
         // Inject resource bar data into game layouts for authenticated users
