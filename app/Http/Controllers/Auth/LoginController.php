@@ -45,12 +45,12 @@ class LoginController extends Controller
             try {
                 $primeColony = app(ColonyService::class)->getPrimeColony($userId);
                 $request->session()->put('activeIds.colonyId', $primeColony->id);
-            } catch (\Throwable) {
+            } catch (\RuntimeException) {
                 // User has no colony — run onboarding (e.g. legacy account or seeding gap)
                 try {
                     $colony = app(OnboardingService::class)->setupNewPlayer($userId);
                     $request->session()->put('activeIds.colonyId', $colony->id);
-                } catch (\Throwable $e) {
+                } catch (\RuntimeException $e) {
                     Log::error('Onboarding failed on login for user ' . $userId . ': ' . $e->getMessage());
                 }
             }
