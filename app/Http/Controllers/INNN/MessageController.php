@@ -95,6 +95,19 @@ class MessageController extends BaseController
     }
 
     /**
+     * Actions tab: player-initiated action events (colony, trade, advisor, sol).
+     */
+    public function actions(): View
+    {
+        $userId  = $this->getCurrentUserId();
+        $actions = $userId !== null
+            ? $this->eventService->getPlayerActions($userId)
+            : collect();
+
+        return view('messages.actions', compact('actions'));
+    }
+
+    /**
      * INNN News tab: game-generated news visible to all players.
      */
     public function news(): View

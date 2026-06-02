@@ -40,6 +40,30 @@ class EventService
     }
 
     /**
+     * Fetch player-initiated action events for the given user, newest first.
+     * Filters to area 'colony'/'run' plus specific player-action keys in other areas.
+     */
+    public function getPlayerActions(mixed $userId): Collection
+    {
+        $this->validateId($userId);
+
+        $playerEventKeys = [
+            'trade.bar_accepted',
+            'trade.merchant_purchase',
+            'techtree.advisor_hired',
+        ];
+
+        return InnnEvent::where('user', (int) $userId)
+            ->where(function ($q) use ($playerEventKeys) {
+                $q->whereIn('area', ['colony', 'run'])
+                  ->orWhereIn('event', $playerEventKeys);
+            })
+            ->orderByDesc('tick')
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    /**
      * Fire the one-time Nexus Briefing event for a newly registered player.
      *
      * Guard ensures the event is never duplicated — safe to call multiple times.

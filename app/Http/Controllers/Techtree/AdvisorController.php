@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Models\Advisor;
 use App\Models\Personell;
 use App\Services\ColonyService;
+use App\Services\EventService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
@@ -13,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 
@@ -29,6 +31,7 @@ class AdvisorController extends BaseController
         private readonly PersonellService $personellService,
         private readonly ResourcesService $resourcesService,
         private readonly ColonyService    $colonyService,
+        private readonly EventService     $eventService,
     ) {
         parent::__construct($tick);
     }
@@ -189,6 +192,18 @@ class AdvisorController extends BaseController
             }
             return back()->with('error', $errorMessage);
         }
+
+        $advisorType = (string) collect(config('advisors'))
+            ->search(fn(array $cfg) => $cfg['id'] === $personellId)
+            ?: (string) $personellId;
+
+        $this->eventService->createEvent([
+            'user'       => Auth::id(),
+            'tick'       => $this->getTick(),
+            'event'      => 'techtree.advisor_hired',
+            'area'       => 'techtree',
+            'parameters' => json_encode(['colony_id' => $colonyId, 'advisor_type' => $advisorType]),
+        ]);
 
         if ($request->expectsJson()) {
             $currentTick = $this->getTick();

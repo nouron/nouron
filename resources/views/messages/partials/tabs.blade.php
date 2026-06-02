@@ -13,6 +13,8 @@
            href="{{ route('messages.archive') }}"><i class="bi bi-archive"></i><span class="nav-label"> Archiv</span></a>
         <a class="msg-tab @if(request()->routeIs('messages.events')) msg-tab--active @endif"
            href="{{ route('messages.events') }}"><i class="bi bi-lightning-charge"></i><span class="nav-label"> Ereignisse</span></a>
+        <a class="msg-tab @if(request()->routeIs('messages.actions')) msg-tab--active @endif"
+           href="{{ route('messages.actions') }}"><i class="bi bi-cursor"></i><span class="nav-label"> Aktionen</span></a>
         <a class="msg-tab @if(request()->routeIs('messages.news')) msg-tab--active @endif"
            href="{{ route('messages.news') }}"><i class="bi bi-newspaper"></i><span class="nav-label"> INNN</span></a>
         <a class="msg-tab msg-tab--action @if(request()->routeIs('messages.compose')) msg-tab--active @endif"
@@ -22,13 +24,14 @@
 
 {{-- Mobile: current tab name + dot indicators --}}
 @php
-$tabOrder = ['messages.inbox', 'messages.outbox', 'messages.archive', 'messages.events', 'messages.news'];
-$tabNames = ['Eingang', 'Ausgang', 'Archiv', 'Ereignisse', 'INNN'];
+$tabOrder = ['messages.inbox', 'messages.outbox', 'messages.archive', 'messages.events', 'messages.actions', 'messages.news'];
+$tabNames = ['Eingang', 'Ausgang', 'Archiv', 'Ereignisse', 'Aktionen', 'INNN'];
 $tabUrls  = [
     route('messages.inbox'),
     route('messages.outbox'),
     route('messages.archive'),
     route('messages.events'),
+    route('messages.actions'),
     route('messages.news'),
 ];
 $currentIdx = 0;

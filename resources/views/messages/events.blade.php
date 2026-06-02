@@ -97,6 +97,8 @@
                 'galaxy'   => 'bi-rocket-takeoff',
                 'trade'    => 'bi-bag',
                 'nexus'    => 'bi-broadcast-pin',
+                'colony'   => 'bi-globe2',
+                'run'      => 'bi-hourglass-split',
                 default    => 'bi-info-circle',
             };
         @endphp

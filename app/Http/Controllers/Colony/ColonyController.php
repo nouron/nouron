@@ -6,6 +6,7 @@ use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
+use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
@@ -28,6 +29,7 @@ class ColonyController extends BaseController
         private readonly OnboardingHintService $hintService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
         private readonly MerchantService $merchantService,
+        private readonly EventService $eventService,
     ) {
         parent::__construct($tick);
     }
@@ -105,6 +107,16 @@ class ColonyController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->exploreTile($colony->id, (int) $data['q'], (int) $data['r']);
 
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user'       => Auth::id(),
+                'tick'       => $this->getTick(),
+                'event'      => 'colony.tile_explored',
+                'area'       => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
+
         $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
         return response()->json([...$result, ...$extra]);
     }
@@ -114,6 +126,16 @@ class ColonyController extends BaseController
         $data   = $request->validate(['q' => 'required|integer', 'r' => 'required|integer']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $result = $this->tileService->deepScanTile($colony->id, (int) $data['q'], (int) $data['r']);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user'       => Auth::id(),
+                'tick'       => $this->getTick(),
+                'event'      => 'colony.tile_deep_scanned',
+                'area'       => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
 
         $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
         return response()->json([...$result, ...$extra]);
@@ -258,6 +280,14 @@ class ColonyController extends BaseController
 
         if (!config('game.bypass.ap_checks'))
             $this->personellService->lockActionPoints('construction', $colony->id, 1);
+
+        $this->eventService->createEvent([
+            'user'       => Auth::id(),
+            'tick'       => $this->getTick(),
+            'event'      => 'colony.building_placed',
+            'area'       => 'colony',
+            'parameters' => json_encode(['colony_id' => $colony->id, 'building_id' => $data['building_id']]),
+        ]);
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
