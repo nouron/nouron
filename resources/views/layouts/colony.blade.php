@@ -32,6 +32,7 @@
             <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
             @endif
             <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
+            <li><a href="{{ route('nexusdb.index') }}" @class(['active' => request()->routeIs('nexusdb.*')])><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
         </ul>
 
         <ul>
@@ -85,6 +86,9 @@
                     @endif
                     <a href="{{ route('messages.inbox') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('messages.*')])>
                         <i class="bi bi-envelope"></i> Nachrichten
+                    </a>
+                    <a href="{{ route('nexusdb.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('nexusdb.*')])>
+                        <i class="bi bi-database"></i> Nexus-DB
                     </a>
                     <div class="nav-flyout-divider"></div>
                     <a href="{{ route('user.show') }}" class="nav-flyout-item"><i class="bi bi-person"></i> Profil</a>

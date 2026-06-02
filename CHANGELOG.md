@@ -2,6 +2,13 @@
 
 ## 2026-06-02
 
+**Nexus-Datenbank** (Phase 3 — letzter offener Punkt): Statische Referenzseite für Gebäude, Schiffe und Kenntnisse.
+
+- `NexusDbController` liest Daten aus `config/buildings`, `config/ships`, `config/game.knowledge_cc_level_cap`
+- Blade-View mit Alpine.js Tab-Navigation (Gebäude / Schiffe / Kenntnisse), PicoCSS scoped via `.nexusdb-scope`
+- Lang-Datei `lang/de/nexusdb.php` mit allen UI-Labels
+- Nav-Link "Nexus-DB" in beiden Layouts (`app.blade.php` + `colony.blade.php`)
+
 Cantina-Redesign (Bar-Screen): Hotspot-basiertes Viewport-Layout mit NPC-Interaktion.
 
 - Cantina-Viewport mit Hintergrundbild (cantina-interior.webp) ersetzt altes Merchant-Section-Layout
