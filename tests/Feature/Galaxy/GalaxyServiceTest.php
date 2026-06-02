@@ -274,7 +274,7 @@ class GalaxyServiceTest extends TestCase
     {
         $path = $this->service->getPath([0, 0], [3, 0], 1, 0);
         $this->assertArrayHasKey(0, $path);
-        $this->assertEquals([0, 0, 0], $path[0]);
+        $this->assertEquals([0, 0], $path[0]);
     }
 
     public function test_get_path_ends_at_destination(): void
