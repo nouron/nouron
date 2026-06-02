@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Run;
+use App\Services\EventService;
 use App\Services\Techtree\PersonellService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,7 @@ class SolController extends Controller
 {
     public function __construct(
         private readonly PersonellService $personellService,
+        private readonly EventService     $eventService,
     ) {}
 
     public function next(Request $request): RedirectResponse
@@ -30,6 +32,14 @@ class SolController extends Controller
         $run->refresh();
 
         Artisan::call('game:tick', ['--run' => $run->id]);
+
+        $this->eventService->createEvent([
+            'user'       => Auth::id(),
+            'tick'       => $run->current_tick,
+            'event'      => 'run.sol_advanced',
+            'area'       => 'run',
+            'parameters' => json_encode(['colony_id' => $run->colony_id, 'sol' => $run->current_tick]),
+        ]);
 
         return redirect()->back()->with('sol_advanced', $run->current_tick);
     }
