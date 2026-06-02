@@ -2,6 +2,8 @@
 
 ## 2026-06-02
 
+**ROADMAP Phase 4/5/6/7**: Phase 4 in drei eigenständige Phasen aufgeteilt (4a/4b/4c → 4/5/6), alte Phase 5 "Das Spiel erweitern" wird Phase 7. GDD-Audit: 21 Befunde behoben — inhaltliche Widersprüche korrigiert (Bar CC-Level, Berater-Kosten), veraltete TODOs entfernt, zwei neue Abschnitte (§8 Aktionslog, §18 Nexus-Datenbank) ergänzt.
+
 **Aktionslog** (Phase 4 — Infrastruktur): Spieleraktionen werden jetzt in `innn_events` geloggt. Neuer Tab "Aktionen" unter `/messages/actions` zeigt spieler-initiierte Events getrennt von System-Ereignissen.
 
 - 7 neue Event-Keys: `colony.tile_explored`, `colony.tile_deep_scanned`, `colony.building_placed`, `trade.bar_accepted`, `trade.merchant_purchase`, `techtree.advisor_hired`, `run.sol_advanced`
