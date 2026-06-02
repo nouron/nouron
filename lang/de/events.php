@@ -23,6 +23,15 @@ return [
     // Merchant events
     'merchant_visit'              => 'Reisender Händler in der Cantina auf Kolonie :colony — Angebot ist zeitlich begrenzt.',
 
+    // Player action log
+    'colony_tile_explored'        => 'Sektor auf Kolonie :colony aufgedeckt.',
+    'colony_tile_deep_scanned'    => 'Tiefenscan auf Kolonie :colony abgeschlossen — Befund protokolliert.',
+    'colony_building_placed'      => 'Struktur :tech auf Kolonie :colony errichtet.',
+    'trade_bar_accepted'          => 'Bar-Angebot auf Kolonie :colony angenommen.',
+    'trade_merchant_purchase'     => 'Händlerware :item_id auf Kolonie :colony erworben.',
+    'techtree_advisor_hired'      => 'Berater :advisor_type auf Kolonie :colony in Dienst gestellt.',
+    'run_sol_advanced'            => 'Sol :sol auf Kolonie :colony abgeschlossen.',
+
     // Fallback (shown when no specific template matches)
     'unknown'                     => 'Ereignis: :event',
 ];

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\BarService;
 use App\Services\ColonyService;
+use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -22,6 +23,7 @@ class BarController extends BaseController
         private readonly ColonyService  $colonyService,
         private readonly BarService     $barService,
         private readonly MerchantService $merchantService,
+        private readonly EventService   $eventService,
     ) {
         parent::__construct($tick);
     }
@@ -58,6 +60,16 @@ class BarController extends BaseController
         $colony = $this->colonyService->getPrimeColony($userId);
         $tick   = $this->tick->getTickCount();
         $result = $this->barService->acceptOffer($colony->id, $offerId, $userId, $tick);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user'       => $userId,
+                'tick'       => $tick,
+                'event'      => 'trade.bar_accepted',
+                'area'       => 'trade',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
 
         return response()->json($result, $result['ok'] ? 200 : 422);
     }

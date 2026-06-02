@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Colony;
 
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
+use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -16,6 +17,7 @@ class MerchantController extends BaseController
         TickService $tick,
         private readonly ColonyService  $colonyService,
         private readonly MerchantService $merchantService,
+        private readonly EventService   $eventService,
     ) {
         parent::__construct($tick);
     }
@@ -30,6 +32,16 @@ class MerchantController extends BaseController
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
         $result = $this->merchantService->buyItem($itemId, $colony->id, $userId);
+
+        if ($result['ok']) {
+            $this->eventService->createEvent([
+                'user'       => $userId,
+                'tick'       => $this->getTick(),
+                'event'      => 'trade.merchant_purchase',
+                'area'       => 'trade',
+                'parameters' => json_encode(['colony_id' => $colony->id, 'item_id' => $itemId]),
+            ]);
+        }
 
         return response()->json($result, $result['ok'] ? 200 : 422);
     }
