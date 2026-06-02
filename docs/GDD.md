@@ -45,7 +45,7 @@ Das Spiel ist in **Runs** strukturiert: Jeder Run hat ein konkretes Ziel, einen 
 
 Das Spiel läuft auf Basis eines Sol-Zyklus: alle Spielzustandsänderungen werden einmal pro Sol berechnet. Im Solo-Modus löst der Spieler Sole manuell aus; im Multiplayer-Modus feuert der Sol wenn alle Spieler bereit sind — oder nach Ablauf des Timeouts. (Intern: "Tick" — die technische Bezeichnung für den Berechnungszyklus.)
 
-**Technischer Stack (Stand April 2026):** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS (neue Screens ab Phase 3b), SVG für Spielfelder (Hex-Grid, Systemkarte), Vanilla fetch() für Server-Calls. Bestehende Screens werden schrittweise von jQuery/Bootstrap migriert.
+**Technischer Stack (Stand Juni 2026):** PHP/Laravel Backend, SQLite, Blade-Templates. Frontend: Alpine.js + PicoCSS (Standard für alle neuen Screens), SVG für Spielfelder (Hex-Grid, Systemkarte), Vanilla fetch() für Server-Calls. jQuery vollständig entfernt (Mai 2026). Legacy-Screens noch Bootstrap 5, werden schrittweise auf Alpine.js + PicoCSS migriert.
 
 ---
 
@@ -260,27 +260,26 @@ Ausgaben: Berater-Upkeep (§13), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe
 
 Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
 
-### Abgekündigte Ressourcen (konzeptionell entfernt, DB-Cleanup ausstehend)
+### Abgekündigte Ressourcen (entfernt)
 
 - Wasser (ID 3) — wird durch Versorgung (Supply) abstrahiert; kein eigenständiges Rohstoff-Modell nötig.
 - ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
+- `race_id` — Rassen-Referenz ebenfalls entfernt.
 
-> Die IDs 3, 6, 8, 10 existieren noch im DB-Schema (historisch), werden aber vom Spiel nicht mehr genutzt. Ein dedizierter DB-Cleanup-Migration-Task steht noch aus.
+> DB-Cleanup durchgeführt Mai/Juni 2026: Die IDs 3, 6, 8, 10 und `race_id` wurden aus dem aktiven Spielschema entfernt.
 
 ---
 
 ## 4. Kolonien & Gebäude
 
-### Gebäude (Phase 3 — vollständige Liste)
-
-11 aktive Gebäude + 3 im Design (Stand Phase 3b):
+### Gebäude (14 aktive Gebäude, Stand Juni 2026)
 
 | ID | Config-Key | Name (DE) | Name (EN) | Max-Level | Voraussetzung |
 |----|------------|-----------|-----------|-----------|---------------|
 | 25 | commandCenter | Kommandozentrale | Command Center | 5 | — |
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
 | 27 | harvester | Harvester | Harvester | 1 | CC Lv1 |
-| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
+| 41 | bioFacility | Agrardom | Agrarian Dome | — | Harvester Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
 | 46 | infirmary | Krankenstation | Medical Station | — | CC Lv2 |
@@ -292,7 +291,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | — | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 ¹ |
 | — | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 ¹ |
 
-¹ Geplant — noch nicht implementiert; DB-ID noch nicht vergeben.
+¹ Implementiert seit PR #112 (Phase 3g, Mai 2026).
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
@@ -695,9 +694,9 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 ],
 ```
 
-### Supply im Sol (Schritt 7)
+### Supply im Sol (Schritt 5)
 
-`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 7 jedes Sols neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
+`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 5 jedes Sols neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
 
 Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_level × supply_cost)`.
 
@@ -1155,7 +1154,7 @@ Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht w
 
 Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
 
-> **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§15).
+> Zufällige Kenntnisauswahl ist Bestandteil der Run-Struktur (§15). Vollständige Ausarbeitung für Phase 4+.
 
 ### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
 
@@ -1202,13 +1201,11 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
 | `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert |
-| `securityHub` | Sicherheits-Hub | CC Lv 2 | max. 1 Instanz ¹ |
-| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 ¹ |
+| `securityHub` | Sicherheits-Hub | CC Lv 2 | max. 1 Instanz |
+| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 |
 | `temple` | Religiöse Stätte | CC Lv 4 | supply-limitiert |
-| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz ¹ |
+| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz |
 | `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
-
-¹ Geplant — noch nicht implementiert.
 
 Die 14 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
@@ -1512,7 +1509,7 @@ Der Raumfahrer ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP 
 
 ### Außenmissionen (Berater-Außendienst)
 
-> **Phase 4** — Vollständig ausgearbeitet, Implementierung ab Phase 4 geplant.
+> **Phase 5+** — Vollständig ausgearbeitet, Implementierung ab Phase 5 geplant.
 
 Der Raumfahrer hat den Flottenkommandanten-Pfad als eigene Außendienst-Mechanik (§14). Alle übrigen vier Beratertypen können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr.
 
