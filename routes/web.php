@@ -13,6 +13,7 @@ use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
 use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\LobbyController;
+use App\Http\Controllers\NexusDbController;
 use App\Http\Controllers\RunResultController;
 use App\Http\Controllers\SolController;
 use App\Http\Controllers\UserController;
@@ -157,6 +158,10 @@ Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function
 
 Route::middleware('auth')->post('/sol/next',        [SolController::class, 'next'])->name('sol.next');
 Route::middleware('auth')->get('/sol/remaining-ap', [SolController::class, 'remainingAp'])->name('sol.remaining-ap');
+
+// ── Nexus Database (static reference) ────────────────────────────────────────
+
+Route::middleware('auth')->get('/nexus-db', [NexusDbController::class, 'index'])->name('nexusdb.index');
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 
