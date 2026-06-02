@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BarOffer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BarService
 {
@@ -105,11 +106,22 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
         }
 
-        // Execute trade
-        $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
-        $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
-        $offer->is_accepted = true;
-        $offer->save();
+        // Execute trade atomically — partial transfer must not persist
+        DB::transaction(function () use ($offer, $colonyId): void {
+            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
+            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
+            $offer->is_accepted = true;
+            $offer->save();
+        });
+
+        Log::info('bar_trade', [
+            'colony_id'       => $colonyId,
+            'offer_id'        => $offerId,
+            'give_resource_id' => $offer->give_resource_id,
+            'give_amount'      => $offer->give_amount,
+            'get_resource_id'  => $offer->get_resource_id,
+            'get_amount'       => $offer->get_amount,
+        ]);
 
         return ['ok' => true];
     }

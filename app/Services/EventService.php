@@ -59,7 +59,7 @@ class EventService
             'tick'       => $tick,
             'event'      => 'onboarding.nexus_briefing',
             'area'       => 'nexus',
-            'parameters' => serialize(['colony_id' => $colonyId]),
+            'parameters' => json_encode(['colony_id' => $colonyId]),
         ]);
     }
 

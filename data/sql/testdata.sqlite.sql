@@ -65,7 +65,7 @@ INSERT INTO "user" VALUES(4,'Maggy','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.yt
 INSERT INTO "user" VALUES(5,'Moe','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','moe@nouron.de',NULL,3,5,'','',0,1,'abcdefg',0,'2012-12-27 11:46:30','0000-00-00 00:00:00','0',1,NULL);
 INSERT INTO "user" VALUES(18,'Lenny','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','lenny@nouron.de',NULL,0,0,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1,NULL);
 INSERT INTO "user" VALUES(19,'Carl','','player','$2y$10$tqJJsdnuAuhVcqtdqeby3.ytOSc2AupZs6LjST3GjiKytKBsuxp8m','carl@nouron.de',NULL,1,1,'','',0,0,'',1,'2012-12-27 11:46:30','0000-00-00 00:00:00','darkred',1,NULL);
-INSERT INTO "glx_colonies" VALUES(1,'Springfield',1,1,3,20585,1);
+INSERT INTO "glx_colonies" VALUES(1,'Springfield',1,1,3,20582,1);
 INSERT INTO "glx_colonies" VALUES(2,'Shelbyville',1,2,0,20585,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',NULL,NULL,0,0,2,5,10,20,0.33,0,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,0,1,2,1,10,20,0.95,2,1,1);
@@ -366,8 +366,8 @@ INSERT INTO "innn_messages" VALUES(30,0,'mood_friendly',3,16000,0,'test','text t
 INSERT INTO "innn_messages" VALUES(31,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
 INSERT INTO "innn_messages" VALUES(32,0,'mood_friendly',3,16000,0,'test','text text text',0,0,0);
 INSERT INTO "innn_messages" VALUES(33,0,'mood_friendly',3,16000,0,'test','text text text',1,1,0);
-INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','a:2:{s:7:"colony_id";i:0;s:11:"tech_id";i:27;}',NULL);
-INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','a:1:{s:7:"colony_id";i:1;}',NULL);
+INSERT INTO "innn_events" VALUES(16,3,15405,'techtree.level_up_finished','','{"colony_id":0,"tech_id":27}',NULL);
+INSERT INTO "innn_events" VALUES(19,3,15405,'galaxy.trade','','{"colony_id":1}',NULL);
 INSERT INTO "innn_news" VALUES(1,12345,'innn_black','economy','test_headline','test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text test_text ');
 INSERT INTO "trade_resources" VALUES(2,0,3,11,11,0);
 INSERT INTO "trade_resources" VALUES(2,1,5,123,32,0);

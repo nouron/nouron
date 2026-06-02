@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Colony;
 
+use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
@@ -50,7 +51,7 @@ class ColonyController extends BaseController
 
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0;
 
         $buildings = DB::table('colony_buildings')
@@ -124,7 +125,7 @@ class ColonyController extends BaseController
     {
         $colony  = $this->colonyService->getPrimeColony(Auth::id());
         $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)->where('building_id', 25)->value('level') ?? 0;
+            ->where('colony_id', $colony->id)->where('building_id', BuildingId::CommandCenter->value)->value('level') ?? 0;
 
         $placedCounts = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -139,15 +140,15 @@ class ColonyController extends BaseController
                      'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
             ->filter(function ($b) use ($ccLevel, $placedCounts) {
-                if ($b->id === 25) return false;  // CC — already exists
-                if ($b->id === 27) return false;  // Harvester — regolith placement only
+                if ($b->id === BuildingId::CommandCenter->value) return false;  // CC — already exists
+                if ($b->id === BuildingId::Harvester->value) return false;  // Harvester — regolith placement only
                 $count = $placedCounts[$b->id] ?? 0;
                 if ($b->is_instanced) {
                     if ($count >= ($b->max_level ?? PHP_INT_MAX)) return false;
                 } else {
                     if ($count > 0) return false;
                 }
-                if ($b->required_building_id === 25 && $ccLevel < (int) ($b->required_building_level ?? 1)) {
+                if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
                     return false;
                 }
                 return true;
@@ -260,8 +261,8 @@ class ColonyController extends BaseController
 
         $row = $this->fetchBuildingRow($colony->id, $data['building_id'], $nextInstanceId);
 
-        // Harvester relocation (building_id 27): append onboarding tip flag once per user.
-        if ((int) $data['building_id'] === 27) {
+        // Harvester relocation: append onboarding tip flag once per user.
+        if ((int) $data['building_id'] === BuildingId::Harvester->value) {
             $showTip = !$this->onboardingTriggerService->hasFired(Auth::id(), 'harvester_move_shown');
             $this->onboardingTriggerService->markFired(Auth::id(), 'harvester_move_shown');
 
@@ -336,7 +337,7 @@ class ColonyController extends BaseController
         }
 
         // CC level-up: recalculate colony zone and include updated tiles in response
-        if ($leveledUp && $buildingId === 25) {
+        if ($leveledUp && $buildingId === BuildingId::CommandCenter->value) {
             $this->tileService->assignColonyZone($colony->id, $row->level + 1);
             $tiles = $this->tileService->getTilesForColony($colony->id)->values()->toArray();
             return response()->json([

@@ -869,7 +869,7 @@ class RunProgressServiceTest extends TestCase
                 'tick'       => 7 + $i,
                 'event'      => 'encounter_won',
                 'area'       => 'combat',
-                'parameters' => serialize([]),
+                'parameters' => json_encode([]),
                 'created_at' => now(),
             ]);
         }
@@ -898,7 +898,7 @@ class RunProgressServiceTest extends TestCase
                 'tick'       => 2 + $i,
                 'event'      => 'encounter_won',
                 'area'       => 'combat',
-                'parameters' => serialize([]),
+                'parameters' => json_encode([]),
                 'created_at' => now()->subDay(),
             ]);
         }

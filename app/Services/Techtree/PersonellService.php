@@ -303,6 +303,119 @@ class PersonellService
         return true;
     }
 
+    // ── AP credit (merchant / external grants) ───────────────────────────────
+
+    /**
+     * Credit AP directly to a colony, bypassing the normal per-tick earn cycle.
+     *
+     * This is used by the Traveling Merchant when the player buys an AP item.
+     * The grant is recorded as "negative spend" on the current tick so that
+     * getAvailableActionPoints() returns a higher value until the AP is consumed.
+     *
+     * ap_flex   → type is 'any': distribute the amount across all advisor types
+     *             that have at least one active advisor on the colony, spreading
+     *             it as evenly as possible (remainder goes to the first type).
+     *             If no advisors are present, falls back to 'construction'.
+     *
+     * ap_targeted → type is a specific AP type key (e.g. 'research'):
+     *             credit the full amount to that single pool only.
+     *
+     * @param  int    $colonyId
+     * @param  string $apType   'any' for flex, or a specific type key
+     * @param  int    $amount   total AP to grant (must be > 0)
+     */
+    public function creditAp(int $colonyId, string $apType, int $amount): void
+    {
+        if ($amount <= 0) {
+            return;
+        }
+
+        $tick = $this->tickService->getTickCount();
+
+        if ($apType === 'any') {
+            $this->creditApFlex($colonyId, $amount, $tick);
+        } else {
+            $this->creditApToType($colonyId, $apType, $amount, $tick);
+        }
+    }
+
+    /**
+     * Distribute AP evenly across all advisor types with active advisors on the colony.
+     * Falls back to 'construction' when no advisors are present.
+     */
+    private function creditApFlex(int $colonyId, int $amount, int $tick): void
+    {
+        // Collect all AP types that have at least one advisor currently on the colony.
+        $allTypes      = ['construction', 'research', 'economy', 'strategy', 'navigation'];
+        $activeTypes   = [];
+
+        foreach ($allTypes as $type) {
+            [$personellId] = $this->resolveType($type);
+            if (!$personellId) {
+                continue;
+            }
+            $hasAdvisor = Advisor::where('colony_id', $colonyId)
+                ->where('personell_id', $personellId)
+                ->whereNull('unavailable_until_tick')
+                ->exists();
+            if ($hasAdvisor) {
+                $activeTypes[] = $type;
+            }
+        }
+
+        // If no advisors are active, grant to construction as a sensible default.
+        if (empty($activeTypes)) {
+            $activeTypes = ['construction'];
+        }
+
+        $count     = count($activeTypes);
+        $base      = intdiv($amount, $count);
+        $remainder = $amount % $count;
+
+        foreach ($activeTypes as $i => $type) {
+            $grant = $base + ($i === 0 ? $remainder : 0);
+            if ($grant > 0) {
+                $this->creditApToType($colonyId, $type, $grant, $tick);
+            }
+        }
+    }
+
+    /**
+     * Grant AP to a single named type by recording a negative spend_ap entry
+     * for the current tick. This increases the available AP budget by $amount.
+     */
+    private function creditApToType(int $colonyId, string $apType, int $amount, int $tick): void
+    {
+        [$personellId, $scope] = $this->resolveType($apType);
+
+        // Unknown type — silently skip rather than crash so a bad payload can't break a purchase.
+        if (!$personellId) {
+            return;
+        }
+
+        $existing = (int) (DB::table('locked_actionpoints')
+            ->where([
+                'tick'         => $tick,
+                'scope_type'   => $scope,
+                'scope_id'     => $colonyId,
+                'personell_id' => $personellId,
+            ])
+            ->value('spend_ap') ?? 0);
+
+        // A negative spend_ap increases the available AP pool for this tick.
+        $newValue = $existing - $amount;
+
+        DB::table('locked_actionpoints')->updateOrInsert(
+            [
+                'tick'         => $tick,
+                'scope_type'   => $scope,
+                'scope_id'     => $colonyId,
+                'personell_id' => $personellId,
+            ],
+            ['spend_ap' => $newValue]
+        );
+    }
+
     // ── Queries ───────────────────────────────────────────────────────────────
 
     public function getColonyAdvisors(int $colonyId): Collection

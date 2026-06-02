@@ -31,10 +31,13 @@ return [
     // Ring 2 expands step by step at Lv2–Lv5. Max = 15 terrain tiles + CC = 16 total.
     'colony_zone_expansion' => [6, 3, 3, 2, 1],
 
+    // IMPORTANT: The tick system assumes the server (and PHP runtime) runs in UTC.
+    // AppServiceProvider::boot() enforces date_default_timezone_set('UTC') at startup.
+    // Never deploy Nouron with a non-UTC system timezone — tick boundaries will drift.
     'tick' => [
         // How many hours is one tick (currently 1 tick = 1 day)
         'length' => 24,
-        // The daily calculation window (server time, hour of day)
+        // The daily calculation window (server time, hour of day, UTC)
         'calculation' => [
             'start' => 3,
             'end'   => 4,
@@ -169,6 +172,8 @@ return [
     // Per-entity moral_per_lv / moral_per_unit values live in config/buildings.php,
     // config/techs.php and config/ships.php — MoralService reads from those files.
     'moral' => [
+        // resource_id in colony_resources where the moral value is stored (res_moral).
+        'resource_id' => 12,
         // Hard cap for total ship moral contribution (before global clamp).
         'ships_cap' => 30,
         // Production multipliers by moral band (see GDD §13 "Effekte der Moral").

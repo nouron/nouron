@@ -72,7 +72,7 @@
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-outline-danger"
                                                 title="Flotte löschen"
-                                                onclick="return confirm('Flotte \'{{ addslashes($fleet->fleet) }}\' wirklich löschen?')">
+                                                onclick="return confirm(@json(__('fleet.confirm_delete')))">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form>

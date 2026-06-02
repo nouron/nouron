@@ -399,7 +399,7 @@ Alle drei Design-Themen wurden entschieden und im GDD dokumentiert (PRs #78, #79
 - [x] **DB-Migrationen** — `colony_tiles` (Hex-Grid, Rings, Fog-of-War), `instance_id` + `tile_x/y` auf `colony_buildings`, `planet_size/type` auf `glx_system_objects`
 - [x] **Colony-View (Hex-Grid)** — SVG + Alpine.js, Axial-Koordinaten, Fog-of-War, Tile-Sidebar, Building-Badges, Signal-Indikator (PR #92)
 - [x] **Demo-Seed** — `php artisan colony:seed-demo` befüllt Kolonie mit ~80%-Demo-State
-- [ ] **System-View (12×12-Grid)** — SVG + plain JS, Objekte und Flotten, Flottenbefehl-Overlay
+- [x] **System-View (12×12-Grid)** — SVG + plain JS, Objekte und Flotten, Flottenbefehl-Overlay
 - [x] **Vertrauensanzeige im UI** — Vertrauens-Chip in Colony Hexview (grün/grau/rot); Trust in globaler Ressourcenleiste auf allen Seiten
 - [x] **Händler-Modal** — Alpine-gesteuert, nativer `<dialog>`, 3 Items (Reparatur-Kit, Vertrauensschub, Systemkarte); MerchantService + MerchantController + GameTick-Integration; DB: `merchant_visits` + `merchant_items`
 - [x] **Globale Ressourcenleiste** — Sol-Chip + Credits + Supply + Trust persistent auf allen Gameplay-Seiten (`layouts/app` + `layouts/colony`); Sol run-lokal via `since_tick`; deprecated Ressourcen (ENrg/LNrg/ANrg) gefiltert

@@ -14,6 +14,8 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // SQLite-only partial index — WHERE clause is not portable to PostgreSQL/MySQL.
+        // Excludes fleet-assigned advisors (colony_id = NULL) from the uniqueness constraint.
         DB::statement('
             CREATE UNIQUE INDEX advisors_colony_personell_unique
             ON advisors (colony_id, personell_id)

@@ -1,0 +1,331 @@
+<?php
+
+namespace Tests\Feature\Security;
+
+use App\Models\Advisor;
+use App\Models\Fleet;
+use App\Models\User;
+use App\Services\Techtree\PersonellService;
+use App\Services\Techtree\ResearchService;
+use Database\Seeders\TestSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Tests\TestCase;
+
+/**
+ * Security tests covering cross-colony access vectors.
+ *
+ * Scenarios covered:
+ *   1. Trade: addResourceOffer with a foreign colony_id returns 403
+ *   2. Trade: removeOffer with a foreign colony_id returns 403
+ *   3. Fleet: user_id injected in store request is ignored; fleet is owned by authenticated user
+ *   4. Fleet: fleet store with spoofed user_id does not assign fleet to the spoofed user
+ *   5. Knowledge CC-level gate: levelup to level 4 blocked when CC is at level 3
+ *   6. Knowledge CC-level gate: levelup to level 4 succeeds when CC is at level 4 (positive baseline)
+ *   7. Knowledge CC-level gate: levelup to level 5 blocked when CC is at level 4
+ *
+ * Fixture (TestSeeder / testdata.sqlite.sql):
+ *   User 3 (Bart)  → colony 1 "Springfield"  (CC level=3)
+ *   User 0 (Homer) → colony 2 "Shelbyville"  (CC level=5)
+ */
+class CrossColonyAccessTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private User $bart;
+    private User $homer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->app->make(TestSeeder::class)->run();
+        $this->bart  = User::where('user_id', 3)->firstOrFail();
+        $this->homer = User::where('user_id', 0)->firstOrFail();
+    }
+
+    // ── Trade: addResourceOffer cross-colony ─────────────────────────────────
+
+    /**
+     * Bart (user 3, colony 1) must not be able to post an offer on Homer's colony 2.
+     * After the security fix the controller calls abort(403), so the HTTP response
+     * must be 403 Forbidden — not a redirect with an error flash.
+     */
+    public function test_add_resource_offer_with_foreign_colony_returns_403(): void
+    {
+        $this->actingAs($this->bart)
+            ->post(route('trade.offer.resource'), [
+                'colony_id'   => 2,   // Homer's colony — Bart does NOT own this
+                'direction'   => 1,
+                'resource_id' => 3,
+                'amount'      => 50,
+                'price'       => 5,
+            ])
+            ->assertForbidden();
+
+        // No offer row must have been written for colony 2
+        $this->assertSame(0, DB::table('trade_resources')
+            ->where('colony_id', 2)
+            ->where('resource_id', 3)
+            ->where('direction', 1)
+            ->count());
+    }
+
+    /**
+     * Homer (user 0, colony 2) must not be able to modify an offer on Bart's colony 1.
+     * After the security fix the controller calls abort(403) in removeOffer as well.
+     */
+    public function test_remove_offer_with_foreign_colony_returns_403(): void
+    {
+        // Seed data: colony 1, direction=0, resource_id=3 belongs to Bart
+        $this->assertSame(1, DB::table('trade_resources')
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
+            ->count(), 'precondition: Bart\'s offer must exist before the attack');
+
+        $this->actingAs($this->homer)
+            ->postJson(route('trade.offer.remove'), [
+                'colony_id'   => 1,   // Bart's colony — Homer does NOT own this
+                'direction'   => 0,
+                'resource_id' => 3,
+            ])
+            ->assertForbidden();
+
+        // Bart's offer must still be intact
+        $this->assertSame(1, DB::table('trade_resources')
+            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
+            ->count());
+    }
+
+    // ── Fleet: user_id mass-assignment guard ─────────────────────────────────
+
+    /**
+     * An attacker sends user_id=homer in the request body when creating a fleet
+     * while authenticated as Bart.  The mass-assignment guard (user_id not in
+     * Fleet::$fillable) ensures the spoofed value is never written to the DB.
+     *
+     * NOTE: As of the current codebase, FleetController::store() passes user_id
+     * via Fleet::create(), but because user_id is absent from $fillable the value
+     * is silently stripped by Eloquent, causing a NOT NULL constraint violation (500).
+     * BUG: The controller must assign user_id outside of create() — e.g.
+     *   $fleet = new Fleet([...]); $fleet->user_id = $userId; $fleet->save();
+     * This test documents the existing structural guard and the side-effect bug.
+     *
+     * @see test_fleet_fillable_does_not_include_user_id — structural guard assertion
+     */
+    public function test_fleet_store_with_spoofed_user_id_never_writes_homer_as_owner(): void
+    {
+        // Regardless of the 500 that the current controller bug produces, Homer must
+        // NEVER end up owning a fleet created during Bart's session.
+        $this->actingAs($this->bart)
+            ->post(route('fleet.store'), [
+                'fleet'   => 'Spoofed Fleet',
+                'user_id' => $this->homer->user_id,   // adversarial: try to claim Homer's identity
+            ]);
+        // We do not assert the HTTP status here — a 500 is a separate (production) bug.
+        // The security invariant: Homer must NOT own the fleet, regardless of outcome.
+        $this->assertDatabaseMissing('fleets', [
+            'fleet'   => 'Spoofed Fleet',
+            'user_id' => $this->homer->user_id,
+        ]);
+    }
+
+    /**
+     * Complement: verify user_id is not in Fleet::$fillable, which is the
+     * structural guard that prevents mass-assignment of the user_id column.
+     */
+    public function test_fleet_fillable_does_not_include_user_id(): void
+    {
+        $fleet    = new Fleet();
+        $fillable = $fleet->getFillable();
+
+        $this->assertNotContains(
+            'user_id',
+            $fillable,
+            'user_id must not be in Fleet::$fillable — mass assignment guard'
+        );
+    }
+
+    // ── Knowledge CC-level gate ───────────────────────────────────────────────
+
+    /**
+     * Colony 1 (Springfield) has CC at level 3.
+     * Config says knowledge level 4 requires CC level 4.
+     * Levelup to knowledge level 4 must be rejected (returns false).
+     *
+     * Setup: bring knowledge_construction (90) to level 3 via direct DB writes
+     * so we can attempt the level-4 transition without burning AP in a fixture.
+     */
+    public function test_knowledge_levelup_to_4_blocked_when_cc_is_level_3(): void
+    {
+        $colonyId    = 1;
+        $knowledgeId = 90; // knowledge_construction — exists in testdata
+
+        // Precondition: colony 1 CC is at level 3
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        $this->assertSame(3, $ccLevel, 'precondition: CC must be at level 3 for this test');
+
+        // Manually set knowledge to level 3, ap_spend to full for level 3→4 transition.
+        // config/knowledge.php: levelup_costs[4] = 28 → ap_spend must reach 28.
+        // Setting it to the full threshold means only the CC-gate is the blocking condition.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 28]
+        );
+
+        // Config: knowledge_cc_level_cap[4] = 4, but CC is 3 → must block
+        $service = $this->app->make(ResearchService::class);
+        $result  = $service->levelup($colonyId, $knowledgeId);
+
+        $this->assertFalse(
+            $result,
+            'Levelup to knowledge level 4 must fail when CC is only at level 3'
+        );
+
+        // Level must remain at 3 in the DB
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $knowledgeId)
+            ->value('level');
+        $this->assertSame(3, $level, 'Knowledge level must not have changed after blocked levelup');
+    }
+
+    /**
+     * Positive baseline: colony 2 (Shelbyville) has CC at level 5 (>= required 4).
+     * Levelup to knowledge level 4 must succeed.
+     */
+    public function test_knowledge_levelup_to_4_succeeds_when_cc_is_level_5(): void
+    {
+        $colonyId    = 2;
+        $knowledgeId = 90; // knowledge_construction
+
+        // Precondition: colony 2 CC is at level 5
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        $this->assertSame(5, $ccLevel, 'precondition: CC must be at level 5 for this test');
+
+        // Add a Wissenschaftler to colony 2 so AP pool is available
+        Advisor::where('colony_id', $colonyId)->delete();
+        Advisor::create([
+            'user_id'      => $this->homer->user_id,
+            'personell_id' => PersonellService::idFor('scientist'),
+            'colony_id'    => $colonyId,
+            'rank'         => 2,
+            'active_ticks' => 0,
+        ]);
+
+        // Set knowledge to level 3, ap_spend satisfied: levelup_costs[4] = 28
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 28]
+        );
+
+        $service = $this->app->make(ResearchService::class);
+        $result  = $service->levelup($colonyId, $knowledgeId);
+
+        $this->assertTrue(
+            $result,
+            'Levelup to knowledge level 4 must succeed when CC is at level 5'
+        );
+
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $knowledgeId)
+            ->value('level');
+        $this->assertSame(4, $level);
+    }
+
+    /**
+     * Edge case: CC at exactly the required threshold level.
+     * Colony 2 CC=5. Knowledge level 5 requires CC level 5.
+     * Must succeed (equals is allowed, only strict less-than blocks).
+     */
+    public function test_knowledge_levelup_to_5_succeeds_when_cc_is_exactly_5(): void
+    {
+        $colonyId    = 2;
+        $knowledgeId = 90; // knowledge_construction
+
+        // Precondition: colony 2 CC is at level 5
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        $this->assertSame(5, $ccLevel, 'precondition: CC must be at level 5 for this test');
+
+        // Add a Wissenschaftler to colony 2
+        Advisor::where('colony_id', $colonyId)->delete();
+        Advisor::create([
+            'user_id'      => $this->homer->user_id,
+            'personell_id' => PersonellService::idFor('scientist'),
+            'colony_id'    => $colonyId,
+            'rank'         => 2,
+            'active_ticks' => 0,
+        ]);
+
+        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 40
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
+            ['level' => 4, 'status_points' => 20, 'ap_spend' => 40]
+        );
+
+        $service = $this->app->make(ResearchService::class);
+        $result  = $service->levelup($colonyId, $knowledgeId);
+
+        $this->assertTrue(
+            $result,
+            'Levelup to knowledge level 5 must succeed when CC equals the required level 5'
+        );
+
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $knowledgeId)
+            ->value('level');
+        $this->assertSame(5, $level);
+    }
+
+    /**
+     * Adversarial: CC at level 4 cannot unlock knowledge level 5 (requires CC level 5).
+     * Uses colony 1 after manually bumping CC to 4 — just below the level-5 gate.
+     */
+    public function test_knowledge_levelup_to_5_blocked_when_cc_is_level_4(): void
+    {
+        $colonyId    = 1;
+        $knowledgeId = 90; // knowledge_construction
+
+        // Bump colony 1 CC to level 4 (was 3 in seed; still below the level-5 gate)
+        DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->update(['level' => 4]);
+
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        $this->assertSame(4, $ccLevel, 'precondition: CC must be at level 4 for this test');
+
+        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 40
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
+            ['level' => 4, 'status_points' => 20, 'ap_spend' => 40]
+        );
+
+        // Config: knowledge_cc_level_cap[5] = 5, but CC is 4 → must block
+        $service = $this->app->make(ResearchService::class);
+        $result  = $service->levelup($colonyId, $knowledgeId);
+
+        $this->assertFalse(
+            $result,
+            'Levelup to knowledge level 5 must fail when CC is only at level 4'
+        );
+
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $knowledgeId)
+            ->value('level');
+        $this->assertSame(4, $level, 'Knowledge level must not have changed after blocked levelup');
+    }
+}

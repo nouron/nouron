@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BuildingId;
 use App\Models\Advisor;
 use App\Models\Colony;
 use App\Models\ColonyBuilding;
@@ -206,15 +207,14 @@ class GameTick extends Command
 
         foreach ($orders as $order) {
             $coords = json_decode($order->coordinates, true);
-            if (!is_array($coords) || count($coords) < 3) {
+            if (!is_array($coords) || count($coords) < 2) {
                 $this->warn("  Fleet {$order->fleet_id}: invalid move coordinates, skipping.");
                 continue;
             }
 
             Fleet::where('id', $order->fleet_id)->update([
-                'x'    => $coords[0],
-                'y'    => $coords[1],
-                'spot' => $coords[2],
+                'x' => $coords[0],
+                'y' => $coords[1],
             ]);
 
             $order->update(['was_processed' => 1]);
@@ -226,7 +226,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.fleet_arrived',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
+                    'parameters' => json_encode(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
                 ]);
             }
         }
@@ -274,7 +274,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.trade',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['colony_id' => $colonyId]),
+                    'parameters' => json_encode(['colony_id' => $colonyId]),
                 ]);
             }
 
@@ -355,12 +355,11 @@ class GameTick extends Command
             }
 
             Fleet::where('id', $initiator->id)->update([
-                'x' => $coords[0], 'y' => $coords[1], 'spot' => $coords[2],
+                'x' => $coords[0], 'y' => $coords[1],
             ]);
 
             $encountered = Fleet::where('x', $coords[0])
                 ->where('y', $coords[1])
-                ->where('spot', $coords[2])
                 ->where('user_id', '!=', $initiator->user_id)
                 ->where('id', '!=', $initiator->id)
                 ->get();
@@ -372,7 +371,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.fleet_arrived',
                     'area'       => 'galaxy',
-                    'parameters' => serialize(['fleet_id' => $initiator->id, 'coords' => $coords]),
+                    'parameters' => json_encode(['fleet_id' => $initiator->id, 'coords' => $coords]),
                 ]);
                 $processed++;
                 continue;
@@ -407,7 +406,7 @@ class GameTick extends Command
                 'tick'       => $tick,
                 'event'      => 'galaxy.encounter',
                 'area'       => 'galaxy',
-                'parameters' => serialize([
+                'parameters' => json_encode([
                     'initiator_id'   => $initiator->user_id,
                     'encountered_id' => $encountered->first()->user_id,
                     'colony_id'      => 0,
@@ -430,7 +429,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'galaxy.encounter',
                     'area'       => 'galaxy',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'initiator_id'   => $initiator->user_id,
                         'encountered_id' => $encFleet->user_id,
                         'colony_id'      => 0,
@@ -541,7 +540,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => $cb->colony_id,
                         'tech_id'   => $cb->building_id,
                     ]),
@@ -575,7 +574,7 @@ class GameTick extends Command
                             'tick'       => $tick,
                             'event'      => 'onboarding_decay',
                             'area'       => 'techtree',
-                            'parameters' => serialize(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
+                            'parameters' => json_encode(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
                         ]);
                         $this->onboardingTriggerService->markFired($userId, 'onboarding_decay');
                     }
@@ -615,7 +614,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => 0,
                         'tech_id'   => $fs->ship_id,
                     ]),
@@ -672,7 +671,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
-                    'parameters' => serialize([
+                    'parameters' => json_encode([
                         'colony_id' => $cr->colony_id,
                         'tech_id'   => $cr->research_id,
                     ]),
@@ -716,7 +715,7 @@ class GameTick extends Command
 
             $ccLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 25)
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level');
 
             if ($ccLevel <= 0) {
@@ -726,8 +725,8 @@ class GameTick extends Command
 
             $housingLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 28)
-                ->value('level');
+                ->where('building_id', BuildingId::Housing->value)
+                ->sum('level');
 
             $knowledgeCap = 0;
             if (!empty($knowledgeIds)) {
@@ -836,7 +835,7 @@ class GameTick extends Command
                         'tick'       => $tick,
                         'event'      => 'onboarding_trust',
                         'area'       => 'colony',
-                        'parameters' => serialize(['colony_id' => $colony->id]),
+                        'parameters' => json_encode(['colony_id' => $colony->id]),
                     ]);
                     $this->onboardingTriggerService->markFired($userId, 'onboarding_trust');
                 }
@@ -872,7 +871,7 @@ class GameTick extends Command
         foreach ($colonies as $colony) {
             $ccLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 25)
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level');
 
             if ($ccLevel <= 0) {
@@ -881,7 +880,7 @@ class GameTick extends Command
 
             $housingLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', 28)
+                ->where('building_id', BuildingId::Housing->value)
                 ->value('level');
 
             $total = $nexusSubsidy + ($housingLevel * $taxPerHousing);
@@ -976,7 +975,7 @@ class GameTick extends Command
                     'tick'       => $tick,
                     'event'      => 'merchant.visit',
                     'area'       => 'colony',
-                    'parameters' => serialize(['colony_id' => $colony->id]),
+                    'parameters' => json_encode(['colony_id' => $colony->id]),
                 ]);
                 $spawned++;
             }
@@ -1008,18 +1007,32 @@ class GameTick extends Command
                 ->get();
 
             foreach ($eligible as $advisor) {
-                if ($cost > 0) {
-                    $credits = (int) (DB::table('user_resources')
-                        ->where('user_id', $advisor->user_id)
-                        ->value('credits') ?? 0);
-                    if ($credits < $cost) {
-                        continue; // Deferred — try again next tick
+                DB::transaction(function () use ($advisor, $fromRank, $toRank, $cost): void {
+                    // Re-read with row lock to prevent race condition on concurrent tick runs.
+                    $current = DB::table('advisors')
+                        ->where('id', $advisor->id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    // Guard: already promoted (or demoted) since the eligible query ran.
+                    if (!$current || (int) $current->rank !== $fromRank) {
+                        return;
                     }
-                    DB::table('user_resources')
-                        ->where('user_id', $advisor->user_id)
-                        ->decrement('credits', $cost);
-                }
-                DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
+
+                    if ($cost > 0) {
+                        $credits = (int) (DB::table('user_resources')
+                            ->where('user_id', $advisor->user_id)
+                            ->value('credits') ?? 0);
+                        if ($credits < $cost) {
+                            return; // Deferred — try again next tick
+                        }
+                        DB::table('user_resources')
+                            ->where('user_id', $advisor->user_id)
+                            ->decrement('credits', $cost);
+                    }
+
+                    DB::table('advisors')->where('id', $advisor->id)->update(['rank' => $toRank]);
+                });
             }
         }
 

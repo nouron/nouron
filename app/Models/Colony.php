@@ -9,22 +9,17 @@ use Illuminate\Database\Eloquent\Model;
  * and glx_system_objects). Includes coordinates (x, y) and planetary properties
  * (type_id, sight, density, radiation) from the joined system object.
  *
- * Writes go through the underlying glx_colonies table (no write ops yet).
+ * READ-ONLY: v_glx_colonies is a SQLite view. All writes must target the
+ * underlying glx_colonies table via DB::table('glx_colonies') or ColonyRecord.
  */
 class Colony extends Model
 {
     protected $table = 'v_glx_colonies';
+
+    // Prevent accidental writes through this model (v_glx_colonies is a SQLite view).
+    protected $guarded = ['*'];
     protected $primaryKey = 'id';
     public $timestamps = false;
-
-    protected $fillable = [
-        'name',
-        'system_object_id',
-        'spot',
-        'user_id',
-        'since_tick',
-        'is_primary',
-    ];
 
     protected function casts(): array
     {

@@ -26,4 +26,6 @@ return [
     'only my group'     => 'nur für meine Gruppe',
     'only my faction'   => 'nur für meine Fraktion',
     'only my race'      => 'nur für meine Rasse',
+    'confirm_delete_offer'  => 'Angebot wirklich löschen?',
+    'confirm_accept_offer'  => 'Angebot wirklich annehmen?',
 ];

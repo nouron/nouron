@@ -12,7 +12,7 @@
         @php
             $params = [];
             if ($event->parameters) {
-                $raw = @unserialize($event->parameters);
+                $raw = json_decode($event->parameters, true);
                 if (is_array($raw)) {
                     $params = $raw;
                 }
@@ -104,6 +104,8 @@
             <div class="msg-header" style="cursor: default;">
                 <span class="msg-meta">Sol {{ $event->tick }}</span>
                 <i class="bi {{ $icon }}" style="color: var(--color-text-secondary); flex-shrink: 0;"></i>
+                {{-- {!! !!} is intentional: lang strings embed HTML-wrapped entity names.
+                     All user-derived values in $resolved are sanitised with e() above. --}}
                 <span class="msg-subject">{!! $text !!}</span>
             </div>
         </div>

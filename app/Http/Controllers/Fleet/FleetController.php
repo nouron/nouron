@@ -123,12 +123,13 @@ class FleetController extends BaseController
         }
 
         [$cx, $cy] = $colony->getCoords();
-        $fleet = Fleet::create([
-            'fleet'   => $request->input('fleet'),
-            'user_id' => $userId,
-            'x'       => $cx,
-            'y'       => $cy,
+        $fleet = new Fleet([
+            'fleet' => $request->input('fleet'),
+            'x'     => $cx,
+            'y'     => $cy,
         ]);
+        $fleet->user_id = $userId;
+        $fleet->save();
 
         return redirect()->route('fleet.index');
     }
