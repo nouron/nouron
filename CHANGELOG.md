@@ -2,6 +2,12 @@
 
 ## 2026-06-02
 
+**Aktionslog** (Phase 4 — Infrastruktur): Spieleraktionen werden jetzt in `innn_events` geloggt. Neuer Tab "Aktionen" unter `/messages/actions` zeigt spieler-initiierte Events getrennt von System-Ereignissen.
+
+- 7 neue Event-Keys: `colony.tile_explored`, `colony.tile_deep_scanned`, `colony.building_placed`, `trade.bar_accepted`, `trade.merchant_purchase`, `techtree.advisor_hired`, `run.sol_advanced`
+- Logging in ColonyController, BarController, MerchantController, AdvisorController, SolController
+- Aktionen-Tab mit eigenem Parameter-Resolver, Desktop + Mobile Swipe-Nav
+
 **Nexus-Datenbank** (Phase 3 — letzter offener Punkt): Statische Referenzseite für Gebäude, Schiffe und Kenntnisse.
 
 - `NexusDbController` liest Daten aus `config/buildings`, `config/ships`, `config/game.knowledge_cc_level_cap`
