@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-06-02
+
+Cantina-Redesign (Bar-Screen): Hotspot-basiertes Viewport-Layout mit NPC-Interaktion.
+
+- Cantina-Viewport mit Hintergrundbild (cantina-interior.webp) ersetzt altes Merchant-Section-Layout
+- Hotspots (Merchant + Bar-Gäste) mit Pulse-Animation und Name-Label
+- Modal/Drawer: Mobile slide-up, Desktop zentriertes Popup
+- Mobile Fullscreen-View (edge-to-edge, `calc(100vh - 105px)`)
+- Swipe-Panning: 300%-breiter Wrapper, 4 Positionen decken das gesamte Bild ab (Tresen links bis Tür rechts)
+- `data-theme="light"` am HTML-Tag (PicoCSS Dark-Mode-Override verhindert)
+- Page-Hintergrund colony-main explizit weiß
+- Berater-Screen: Fullscreen-Karten auf Mobile (Pfeile versteckt, 100vw)
+- Assets: `public/img/cantina/` + `public/img/characters/` (NPC-Konzepte)
+
 ## 2026-06-01
 
 Technischer Audit durchgeführt (39 Findings). Alle kritischen und hohen Punkte behoben:

@@ -7,6 +7,12 @@
     max-width: none;
 }
 
+@media (max-width: 767px) {
+    .advisors-page {
+        padding: 1rem 0 0;
+    }
+}
+
 /* ── Header bar ───────────────────────────────────────────────────────────── */
 
 .advisors-header {
@@ -114,10 +120,19 @@
     cursor: default;
 }
 
-/* Arrows are only useful on mobile — hide on desktop */
+/* Arrows hidden on desktop (swipe unused) and on small mobile (swipe covers it) */
 @media (min-width: 900px) {
     .carousel-arrow {
         display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .carousel-arrow {
+        display: none;
+    }
+    .carousel-wrapper {
+        gap: 0;
     }
 }
 
@@ -176,6 +191,17 @@
         max-width: 320px;
         height: calc(100vh - 200px);
         min-height: 340px;
+    }
+}
+
+@media (max-width: 767px) {
+    .advisor-card {
+        width: 100vw;
+        max-width: none;
+        height: calc(100vh - 160px);
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
     }
 }
 

@@ -20,6 +20,7 @@ main.colony-main,
     margin: 0 !important;
     max-width: none !important;
     width: 100%;
+    background: #fff !important;
 }
 
 /* ── Base ────────────────────────────────────────────────────────────────── */
@@ -1277,12 +1278,22 @@ dialog[x-ref="discoveryDialog"] {
     to { transform: rotate(360deg); }
 }
 
+.bar-page {
+    padding: 1.5rem 2rem 2rem;
+}
+
+@media (max-width: 767px) {
+    .bar-page {
+        padding: 0;
+    }
+}
+
 /* ── Cantina Viewport & Panning ────────────────────────────────────────── */
 
 .cantina-viewport {
     position: relative;
     width: 100%;
-    height: 480px;
+    height: 720px;
     overflow: hidden;
     border-radius: var(--pico-border-radius, 8px);
     border: 1px solid var(--pico-muted-border-color, #e8e8ec);
@@ -1298,7 +1309,7 @@ dialog[x-ref="discoveryDialog"] {
     left: 0;
     height: 100%;
     width: 100%;
-    background-image: url('../img/_cantina/cantina-interior.webp');
+    background-image: url('../img/cantina/cantina-interior.webp');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -1306,13 +1317,22 @@ dialog[x-ref="discoveryDialog"] {
     will-change: transform;
 }
 
-/* On mobile, make background wider than screen to allow panning */
+/* On mobile, full-bleed viewport — breaks out of any parent padding */
 @media (max-width: 767px) {
     .cantina-viewport {
-        height: 380px;
+        height: calc(100vh - 105px);
+        aspect-ratio: unset;
+        border-radius: 0;
+        border: none;
+        margin-bottom: 0;
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        transform: translateX(-50%);
     }
     .cantina-background-wrapper {
-        width: 200%; /* Allows panning */
+        width: 300%;
+        background-position: left center;
     }
 }
 
