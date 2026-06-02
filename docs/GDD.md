@@ -947,6 +947,21 @@ Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
 
 ---
 
+### Aktionslog
+
+Der Aktionslog protokolliert Spieleraktionen als Ereignisse in `innn_events`. Jedes Event hat ein `area`-Feld das den Kontext der Aktion beschreibt:
+
+| `area`-Wert | Beschreibung |
+|-------------|-------------|
+| `colony` | Bauaktionen, Reparaturen, Gebäude-Upgrade |
+| `run` | Run-Zustandsänderungen, Milestone-Erreichen |
+| `trade` | Handelstransaktionen (Bar, Nexus-Schiff, Reisender Händler) |
+| `techtree` | Forschungsfortschritte, Berater-Einstellungen |
+
+Der Spieler erreicht den Aktionslog unter `/messages/actions` (Aktionen-Tab). Der Log ist vom INNN-Feed getrennt — er zeigt eigene Aktionen, kein Systemfeed. Das ermöglicht schnelles Nachvollziehen was in einem Sol tatsächlich passiert ist.
+
+---
+
 ## 8a. Systemansicht
 
 ### Darstellung: 2D Top-Down Grid
@@ -1154,7 +1169,7 @@ Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht w
 
 Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
 
-> Zufällige Kenntnisauswahl ist Bestandteil der Run-Struktur (§15). Vollständige Ausarbeitung für Phase 4+.
+> Zufällige Kenntnisauswahl ist Bestandteil der Run-Struktur (§15). Vollständige Implementierung für Phase 4+.
 
 ### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
 
@@ -1364,7 +1379,7 @@ Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kau
 
 ### Kanal 1: Bar/Cantina (primär, früh, informell)
 
-Die Bar ist ab CC Lv1 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
+Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
 
 **Angebotstypen:**
 - Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
@@ -1659,7 +1674,7 @@ Der Raumfahrer ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann
 - **Flottenverlust im Kampf:** Der Raumfahrer ist für 2–3 Sole nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
 - **Einzelne Schiffe** brauchen keine eigenen Raumfahrer. Nur die Flotte als Ganzes braucht einen Kommandanten.
 
-> **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Raumfahrer nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert.
+> **Kommandanten-Zuweisung:** UI-Flow implementiert (PR #139). Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert.
 
 ---
 
@@ -1731,7 +1746,7 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 
 > **⚠️ Balance — Erster Cantina-Besuch:** Konsul ist erst ab CC Lv2 verfügbar, der erste Händler erscheint früher. Der erste Cantina-Besuch muss immer ein objektiv gutes Angebot zeigen — unabhängig vom Konsul-Status. Sonst entsteht Früh-Spiel-Frustration bei Spielern ohne Konsul.
 
-**Implementierung:** Phase 4 — setzt stabiles Berater-System und abgeschlossene Screen-Redesigns voraus. Keine neuen Datenpunkte nötig (alle Quellen in Config und DB bereits vorhanden), reine UI-Logik. Discovery-Moments integrieren sich in bestehenden Onboarding-Hint-Stack (§16).
+**Implementierung:** Phase 5 — setzt stabiles Berater-System und abgeschlossene Screen-Redesigns voraus. Keine neuen Datenpunkte nötig (alle Quellen in Config und DB bereits vorhanden), reine UI-Logik. Discovery-Moments integrieren sich in bestehenden Onboarding-Hint-Stack (§16).
 
 ---
 
@@ -2099,7 +2114,7 @@ Ab Sol 80 zeigt das UI den Countdown sichtbar ("Noch 20 Sole bis Missionsende").
 
 Wer hingegen bei Sol 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale Statusmeldung ("Nexus registriert Fortschritt — Mission läuft.") ohne Sanktion.
 
-> **TODO (Implementierung):** Nexus-Trigger-Tabelle definieren — welche Metrik, welcher Schwellwert, welche Reaktion, welche Phase. Muss vor der Implementierung als Config-Tabelle in `config/game.php → run.nexus_triggers` abgelegt werden.
+> Nexus-Trigger-Tabelle implementiert (Sprint B): Metriken, Schwellwerte, Reaktionen und Phasen sind als Config-Tabelle in `config/game.php → run.nexus_triggers` definiert.
 
 > **TODO (Design):** Nexus-Boni in Phase 1 oder erst ab Phase 2? Phase-2-only wäre einfacher und vermeidet, neue Spieler zu bevormunden.
 
@@ -2174,11 +2189,11 @@ Jeder Run beginnt mit einem **Lobby-Screen**, der nach Login erscheint wenn kein
 - Nexus-Briefing — statischer Lore-Text als narrativer Einstieg: "Direktor, Ihre Konzession wurde aktiviert. Die Kolonie wartet auf Ihre Ankunft."
 - "Mission starten"-Button
 
-#### Erweiterung Phase 4+
+#### Erweiterungen (Phase 3i implementiert, weitere Phase 4+)
 
-- Liste vergangener Runs: Sol-Anzahl, erzielte Aufgaben, Highscore
-- "Neuen Run starten"-Button wenn aktiver Run beendet ist (status = 'completed' oder 'failed')
-- Zukünftig: Schwierigkeitsauswahl oder Run-Optionen (z.B. Kenntnisauswahl, Startbedingungen)
+- Liste vergangener Runs: Sol-Anzahl, erzielte Aufgaben, Highscore — **implementiert (Phase 3i)**
+- "Neuen Run starten"-Button wenn aktiver Run beendet ist (status = 'completed' oder 'failed') — **implementiert (Phase 3i)**
+- Zukünftig (Phase 4+): Schwierigkeitsauswahl oder Run-Optionen (z.B. Kenntnisauswahl, Startbedingungen)
 
 #### Designentscheid: Warum Option B (eigene Route), nicht Modal
 
@@ -2355,8 +2370,8 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 **Aktion 2 — Ingenieur-Berater einstellen (Berater-Screen)**
 
 - Warum: +6 Construction-AP/Sol durch Junior-Ingenieur verdoppelt den Grundwert
-- Kosten: 50 Cr (Junior — erster Berater ist bewusst günstig)
-- Ergebnis: Construction-AP-Anzeige springt von 6 auf 12. Berater-Card zeigt "Junior Ingenieur — aktiv"
+- Kosten: 300 Cr (Junior-Baumeister)
+- Ergebnis: Construction-AP-Anzeige springt von 6 auf 10. Berater-Card zeigt "Junior Ingenieur — aktiv"
 - Feedback-Loop klar: AP-Chips auf allen Screens aktualisieren sich sofort
 
 **Aktion 3 — CC ausbauen (Techtree-Screen → CC-Kachel)**
@@ -2380,7 +2395,7 @@ Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natür
 
 **Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
 
-> ⚠️ BALANCE CONCERN: Aktion 2 (Ingenieur-Berater, 50 Cr) muss nach dem ersten Playtest daraufhin geprüft werden, ob 50 Cr nach dem Wohnhabitat-Bau noch sicher verfügbar sind. Wenn der Wohnhabitat-Bau mehr als ~2.800 Cr kostet, ist der Junior-Ingenieur knapp. Einstellungskosten sind in `config/game.php → advisors` konfigurierbar.
+> ⚠️ BALANCE CONCERN: Aktion 2 (Ingenieur-Berater, 300 Cr) muss nach dem ersten Playtest daraufhin geprüft werden, ob 300 Cr nach dem Wohnhabitat-Bau noch sicher verfügbar sind. Wenn der Wohnhabitat-Bau mehr als ~2.500 Cr kostet, ist der Junior-Ingenieur knapp. Einstellungskosten sind in `config/advisors.php` konfigurierbar.
 
 ---
 
@@ -2444,9 +2459,7 @@ Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und 
 ],
 ```
 
-> **TODO (Implementierung):** User-Preferences-Tabelle benötigt Spalte `onboarding_hints BOOLEAN DEFAULT 1`. Alternativ: Session-Storage für den ersten Run, persistente DB-Einstellung ab zweitem Run.
-
-> **TODO (Design):** Nexus-Briefing-Text ist bisher nur als Entwurf definiert. Finale Formulierung mit dem content-writer abstimmen (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton).
+> `onboarding_hints`-Spalte in `user_preferences` implementiert (Phase 3e Schritt 1). Nexus-Briefing-Text finalisiert (Phase 3e Schritt 2) — siehe §16.1 für den kanonischen Wortlaut.
 
 > **TODO (Design):** Reihenfolge der ersten freigeschalteten Kenntnis-Slots im Roguelike-Zufallssystem (§ 10) beeinflusst Onboarding — Hint Rang 4 muss prüfen ob das Analytik-Labor überhaupt Teil des laufenden Runs ist. Falls nicht: Hint anpassen auf "erste verfügbare Kenntnis".
 
@@ -2746,3 +2759,13 @@ Die drei Teilmechaniken können unabhängig voneinander implementiert werden. Em
 3. **Advisor Dialogs** — aufwendiger, aber der narrativ reichhaltigste Teil. Setzt Almanach und Objective Discovery als Empfänger voraus.
 
 Die vollständige Integration aller drei Teilmechaniken ist der Zielzustand. Jede Teilmechanik alleine bringt aber bereits Wert — es gibt keinen "alles oder nichts"-Implementierungspunkt.
+
+---
+
+## 18. Nexus-Datenbank
+
+Die Nexus-Datenbank ist eine statische Referenzseite unter `/nexus-db`. Sie zeigt dem Spieler alle Stammdaten des Spiels — Gebäude, Schiffe, Kenntnisse — direkt aus den Config-Daten (canonical source of truth: `config/buildings.php`, `config/ships.php`, `config/game.php`).
+
+Die Seite ist jederzeit aufrufbar — unabhängig vom Runzustand. Sie enthält keine spielspezifischen Zustände (kein Lagerbestand, kein Forschungsfortschritt), nur generische Referenzwerte: Baukosten, Supply-Kosten, Decay-Rate, Max-Level, Voraussetzungen.
+
+> Zweck: Spieler können Entscheidungen informiert treffen ohne das GDD oder externe Dokumente zu konsultieren. Kein Tutorial, kein Tooltip-Ersatz — eine kompakte Nachschlagetabelle die die Config-Werte direkt widerspiegelt.
