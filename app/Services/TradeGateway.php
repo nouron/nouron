@@ -146,7 +146,6 @@ class TradeGateway
      *   0 = anyone may accept
      *   1 = same group (treated as 0 until group module exists)
      *   2 = same faction (buyer.faction_id == seller.faction_id)
-     *   3 = same race   (buyer.race_id   == seller.race_id)
      * - After a successful transfer the offer row is deleted from trade_resources.
      * - A player may never accept their own offer.
      * - AP cost: 1 economy AP charged to the acceptor (buyer). Bypassed when game.bypass.ap_checks is true.
@@ -211,7 +210,7 @@ class TradeGateway
             // 4. Restriction check
             $restriction = (int) $offer->restriction;
 
-            if ($restriction === 2 || $restriction === 3) {
+            if ($restriction === 2) {
                 $buyerUser  = DB::table('user')->where('user_id', $buyerUserId)->first();
                 $sellerUser = DB::table('user')->where('user_id', $sellerUserId)->first();
 
@@ -219,12 +218,8 @@ class TradeGateway
                     throw new \InvalidArgumentException('Benutzer nicht gefunden.');
                 }
 
-                if ($restriction === 2 && $buyerUser->faction_id !== $sellerUser->faction_id) {
+                if ($buyerUser->faction_id !== $sellerUser->faction_id) {
                     throw new \InvalidArgumentException('Dieses Angebot ist nur für Mitglieder der gleichen Fraktion verfügbar.');
-                }
-
-                if ($restriction === 3 && $buyerUser->race_id !== $sellerUser->race_id) {
-                    throw new \InvalidArgumentException('Dieses Angebot ist nur für Mitglieder der gleichen Rasse verfügbar.');
                 }
             }
 
