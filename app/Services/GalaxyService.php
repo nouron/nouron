@@ -257,7 +257,7 @@ class GalaxyService
         $err = $el / 2;
 
         $path         = [];
-        $path[$tick]  = [$coordsA[0], $coordsA[1], $coordsA[2] ?? 0];
+        $path[$tick]  = [$coordsA[0], $coordsA[1]];
 
         for ($t = 1; $t <= $el; ++$t) {
             $err -= $es;
@@ -271,10 +271,7 @@ class GalaxyService
             }
 
             if (($t % $speed) === 0 || ($x === $xend && $y === $yend)) {
-                $path[++$tick] = [$x, $y, 0];
-                if (isset($coordsB[2]) && $x === $xend && $y === $yend) {
-                    $path[$tick][2] = $coordsB[2];
-                }
+                $path[++$tick] = [$x, $y];
             }
         }
 

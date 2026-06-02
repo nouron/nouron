@@ -207,15 +207,14 @@ class GameTick extends Command
 
         foreach ($orders as $order) {
             $coords = json_decode($order->coordinates, true);
-            if (!is_array($coords) || count($coords) < 3) {
+            if (!is_array($coords) || count($coords) < 2) {
                 $this->warn("  Fleet {$order->fleet_id}: invalid move coordinates, skipping.");
                 continue;
             }
 
             Fleet::where('id', $order->fleet_id)->update([
-                'x'    => $coords[0],
-                'y'    => $coords[1],
-                'spot' => $coords[2],
+                'x' => $coords[0],
+                'y' => $coords[1],
             ]);
 
             $order->update(['was_processed' => 1]);
@@ -356,12 +355,11 @@ class GameTick extends Command
             }
 
             Fleet::where('id', $initiator->id)->update([
-                'x' => $coords[0], 'y' => $coords[1], 'spot' => $coords[2],
+                'x' => $coords[0], 'y' => $coords[1],
             ]);
 
             $encountered = Fleet::where('x', $coords[0])
                 ->where('y', $coords[1])
-                ->where('spot', $coords[2])
                 ->where('user_id', '!=', $initiator->user_id)
                 ->where('id', '!=', $initiator->id)
                 ->get();

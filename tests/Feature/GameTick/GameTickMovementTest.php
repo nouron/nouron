@@ -70,14 +70,13 @@ class GameTickMovementTest extends TestCase
     public function test_move_order_updates_fleet_position(): void
     {
         $tick = 10001;
-        $this->insertMoveOrder($tick, self::FLEET_ID, '[7000, 3200, 0]');
+        $this->insertMoveOrder($tick, self::FLEET_ID, '[7000, 3200]');
 
         Artisan::call('game:tick', ['--tick' => $tick]);
 
         $fleet = $this->getFleetPosition(self::FLEET_ID);
         $this->assertEquals(7000, $fleet->x, 'Fleet x must be updated to ordered coordinate');
         $this->assertEquals(3200, $fleet->y, 'Fleet y must be updated to ordered coordinate');
-        $this->assertEquals(0, (int) $fleet->spot, 'Fleet spot must be updated to ordered coordinate');
     }
 
     /**
@@ -86,7 +85,7 @@ class GameTickMovementTest extends TestCase
     public function test_move_order_is_marked_processed(): void
     {
         $tick = 10002;
-        $this->insertMoveOrder($tick, self::FLEET_ID, '[7100, 3300, 1]');
+        $this->insertMoveOrder($tick, self::FLEET_ID, '[7100, 3300]');
 
         Artisan::call('game:tick', ['--tick' => $tick]);
 
@@ -100,7 +99,7 @@ class GameTickMovementTest extends TestCase
     public function test_move_order_creates_fleet_arrived_event(): void
     {
         $tick = 10003;
-        $this->insertMoveOrder($tick, self::FLEET_ID, '[7200, 3400, 0]');
+        $this->insertMoveOrder($tick, self::FLEET_ID, '[7200, 3400]');
 
         Artisan::call('game:tick', ['--tick' => $tick]);
 
@@ -122,7 +121,7 @@ class GameTickMovementTest extends TestCase
     {
         $orderTick = 10010;
         $runTick   = 10011; // one off
-        $this->insertMoveOrder($orderTick, self::FLEET_ID, '[9000, 9000, 0]');
+        $this->insertMoveOrder($orderTick, self::FLEET_ID, '[9000, 9000]');
 
         $positionBefore = $this->getFleetPosition(self::FLEET_ID);
         Artisan::call('game:tick', ['--tick' => $runTick]);
@@ -145,7 +144,7 @@ class GameTickMovementTest extends TestCase
             'fleet_id'      => self::FLEET_ID,
             'tick'          => $tick,
             'order'         => 'move',
-            'coordinates'   => '[9999, 9999, 0]',
+            'coordinates'   => '[9999, 9999]',
             'data'          => null,
             'was_processed' => 1, // already done
         ]);
@@ -177,19 +176,19 @@ class GameTickMovementTest extends TestCase
     }
 
     /**
-     * An order with too few coordinate values (< 3) must skip the fleet.
+     * An order with too few coordinate values (< 2) must skip the fleet.
      */
     public function test_move_order_with_incomplete_coordinates_is_skipped(): void
     {
         $tick = 10021;
-        $this->insertMoveOrder($tick, self::FLEET_ID, '[7000, 3200]'); // only 2 elements
+        $this->insertMoveOrder($tick, self::FLEET_ID, '[7000]'); // only 1 element
 
         $positionBefore = $this->getFleetPosition(self::FLEET_ID);
         Artisan::call('game:tick', ['--tick' => $tick]);
 
         $positionAfter = $this->getFleetPosition(self::FLEET_ID);
         $this->assertEquals($positionBefore->x, $positionAfter->x,
-            'Fleet must not move when coordinates array has fewer than 3 elements');
+            'Fleet must not move when coordinates array has fewer than 2 elements');
     }
 
     /**
@@ -199,8 +198,8 @@ class GameTickMovementTest extends TestCase
     {
         $tick = 10030;
         // Fleet 11 and Fleet 12 — both belong to user 3
-        $this->insertMoveOrder($tick, 11, '[7100, 3100, 0]');
-        $this->insertMoveOrder($tick, 12, '[7200, 3200, 0]');
+        $this->insertMoveOrder($tick, 11, '[7100, 3100]');
+        $this->insertMoveOrder($tick, 12, '[7200, 3200]');
 
         Artisan::call('game:tick', ['--tick' => $tick]);
 
