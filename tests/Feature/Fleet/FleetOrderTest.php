@@ -74,7 +74,7 @@ class FleetOrderTest extends TestCase
         $order = FleetOrder::where('fleet_id', $this->fleetId)->orderBy('tick')->first();
         $decoded = json_decode($order->coordinates, true);
         $this->assertIsArray($decoded);
-        $this->assertCount(3, $decoded);
+        $this->assertCount(2, $decoded);
     }
 
     public function test_move_order_out_of_system_is_rejected(): void

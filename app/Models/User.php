@@ -29,7 +29,6 @@ class User extends Authenticatable
         'password',
         'role',
         'state',
-        'race_id',
         'faction_id',
         'description',
         'note',

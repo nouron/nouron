@@ -119,7 +119,6 @@
                                 0       => ['Alle',     'bg-success'],
                                 1       => ['Gruppe',   'bg-secondary'],
                                 2       => ['Fraktion', 'bg-warning text-dark'],
-                                3       => ['Rasse',    'bg-info text-dark'],
                                 default => [(string) $offer->restriction, 'bg-secondary'],
                             };
                         @endphp
@@ -152,9 +151,6 @@
                             } elseif ($myColonies->isNotEmpty() && $restriction === 2) {
                                 $canAccept      = isset($currentUser) && $currentUser->faction_id == $offer->faction_id;
                                 $restrictReason = 'Nur für Mitglieder der gleichen Fraktion';
-                            } elseif ($myColonies->isNotEmpty() && $restriction === 3) {
-                                $canAccept      = isset($currentUser) && $currentUser->race_id == $offer->race_id;
-                                $restrictReason = 'Nur für Mitglieder der gleichen Rasse';
                             }
                         @endphp
                         @if($canAccept)

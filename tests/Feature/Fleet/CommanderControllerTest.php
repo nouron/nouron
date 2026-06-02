@@ -60,12 +60,10 @@ class CommanderControllerTest extends TestCase
 
     private function createFleet(int $userId, int $x = 6828, int $y = 3016): Fleet
     {
-        return Fleet::create([
-            'fleet'   => 'Test Fleet',
-            'user_id' => $userId,
-            'x'       => $x,
-            'y'       => $y,
-        ]);
+        $fleet = new Fleet(['fleet' => 'Test Fleet', 'x' => $x, 'y' => $y]);
+        $fleet->user_id = $userId;
+        $fleet->save();
+        return $fleet;
     }
 
     private function insertPilotOnColony(int $colonyId, array $overrides = []): Advisor

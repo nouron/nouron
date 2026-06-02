@@ -62,6 +62,10 @@
                     <a class="nav-link @if(request()->routeIs('messages.*')) active @endif"
                        href="{{ route('messages.inbox') }}"><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link @if(request()->routeIs('nexusdb.*')) active @endif"
+                       href="{{ route('nexusdb.index') }}"><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a>
+                </li>
                 @endif
             </ul>
             <ul class="navbar-nav ms-auto">

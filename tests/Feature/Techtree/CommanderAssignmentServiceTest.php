@@ -68,12 +68,10 @@ class CommanderAssignmentServiceTest extends TestCase
 
     private function createFleet(int $userId = null): Fleet
     {
-        return Fleet::create([
-            'fleet'   => 'Test Fleet',
-            'user_id' => $userId ?? $this->userId,
-            'x'       => 6828,
-            'y'       => 3016,
-        ]);
+        $fleet = new Fleet(['fleet' => 'Test Fleet', 'x' => 6828, 'y' => 3016]);
+        $fleet->user_id = $userId ?? $this->userId;
+        $fleet->save();
+        return $fleet;
     }
 
     // ── assignCommander() ─────────────────────────────────────────────────────
