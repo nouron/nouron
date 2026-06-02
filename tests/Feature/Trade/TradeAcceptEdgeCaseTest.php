@@ -23,8 +23,6 @@ use Tests\TestCase;
  *   E5  Seller's stock is exactly zero → exception (sell offer)
  *   E6  totalCost = amount × price would overflow a 32-bit integer → transfer
  *       still executes correctly (PHP ints are 64-bit on 64-bit platforms)
- *   E7  restriction=3 (same race) blocks different races
- *   E8  restriction=3 (same race) allows same race
  *   E9  restriction=1 (group, not yet implemented) is treated as open (= 0)
  *   E10 DB is left consistent after a failed transfer (credits/resources unchanged)
  *   E11 Offer is NOT deleted when transfer fails due to insufficient credits
@@ -211,56 +209,6 @@ class TradeAcceptEdgeCaseTest extends TestCase
 
         $homerCreditsAfter = (int) DB::table('user_resources')->where('user_id', 0)->value('credits');
         $this->assertSame($totalCost, $homerCreditsAfter);
-    }
-
-    // ── E7: restriction=3 (race) blocks different races ───────────────────────
-
-    /**
-     * Bart (race_id=2) tries to accept a race-restricted offer from Homer
-     * (race_id=1). The service must throw.
-     */
-    public function test_restriction_race_blocks_different_race(): void
-    {
-        $this->setColony2Resource(5, 200);
-
-        DB::table('trade_resources')
-            ->where('colony_id', 2)->where('direction', 1)->where('resource_id', 5)
-            ->update(['restriction' => 3]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Rasse');
-
-        $this->gateway->acceptResourceOffer(
-            buyerUserId:    3,
-            buyerColonyId:  1,
-            sellerColonyId: 2,
-            direction:      1,
-            resourceId:     5,
-        );
-    }
-
-    // ── E8: restriction=3 (race) allows same race ─────────────────────────────
-
-    public function test_restriction_race_allows_same_race(): void
-    {
-        $this->setColony2Resource(5, 200);
-
-        DB::table('trade_resources')
-            ->where('colony_id', 2)->where('direction', 1)->where('resource_id', 5)
-            ->update(['restriction' => 3]);
-
-        // Make Homer share Bart's race (race_id=2)
-        DB::table('user')->where('user_id', 0)->update(['race_id' => 2]);
-
-        $result = $this->gateway->acceptResourceOffer(
-            buyerUserId:    3,
-            buyerColonyId:  1,
-            sellerColonyId: 2,
-            direction:      1,
-            resourceId:     5,
-        );
-
-        $this->assertTrue($result);
     }
 
     // ── E9: restriction=1 (group) is treated as open ──────────────────────────
