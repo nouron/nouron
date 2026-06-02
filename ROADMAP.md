@@ -576,28 +576,52 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 **Ziel:** Spieler, die das Basisspiel kennen, bekommen neue Strategiepfade und Interaktionsebenen.
 
-**Voraussetzung:** Phase-3-Playtest mit echten Spielern abgeschlossen. Ohne Playtest-Feedback sind die Design-Entscheidungen in Phase 4 zu unsicher — insbesondere Steuersystem und NPC-Vereinbarungs-Balance hängen von Beobachtungen aus dem echten Spielbetrieb ab.
+> **Aufteilung in 3 Unterphasen:** Phase 3 hat gezeigt, dass ein einzelner "Vertiefungs-Block" zu groß wird. Phase 4 wird daher in 4a (technische Infrastruktur + Discovery, kein Playtest nötig), 4b (Balance-Mechaniken nach Playtest) und 4c (soziale Schicht, setzt aktive Spielerbasis voraus) aufgeteilt. Jede Phase liefert eigenständigen Spielerwert und kann einzeln abgeschlossen werden.
 
+---
+
+### Phase 4a: Infrastruktur & Discovery
+*(Voraussetzung: Phase 3 abgeschlossen — kein Playtest-Feedback erforderlich)*
+
+**Ziel:** Technische Schulden abbauen und das Progressive-Discovery-System einführen, das als roter Faden durch alle späteren Phasen läuft. Diese Items haben klare Specs, keine Design-Unsicherheit und liefern direkt sichtbaren Spielerwert.
+
+- [x] **DB-Cleanup: `race_id` entfernen** — Rassen wurden konzeptuell abgekündigt (GDD §3, zusammen mit ENrg/LNrg/ANrg). `race_id` auf `users`-Tabelle ist historisches Schema ohne Auswertung → Migration zum Entfernen der Spalte.
+- [x] **Aktionslog-Infrastruktur** — Player-Action-Events + Aktionen-Tab (INNN-Integration); persistentes Log über Spieleraktionen (Gebäude gebaut, Flotte bewegt, Handel abgeschlossen).
+- [ ] **Handelsbeschränkungen vollständig durchsetzen** — `restriction`-Feld Werte 1/2/3 korrekt auswerten (aktuell ignoriert). Keine Abhängigkeiten, klare Spec.
+- [ ] **Multi-Run-Support** — `game.run.allow_multiple` Config-Flag ist vorbereitet, der „Neuen Run starten"-Button im Lobby-Screen existiert (disabled). Für echten Multi-Run-Support fehlt:
+  - Run-Erstellungsflow: `OnboardingService::setupNewPlayer()` alloziert immer einen neuen Planeten + neue Kolonie; für einen zweiten Run muss das isoliert aufrufbar sein ohne Neu-Registrierung
+  - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
+  - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
 - [ ] **Progressive Discovery System** (GDD §17) — Drei miteinander verwandte Mechaniken die als roter Faden durch den Run laufen:
   - **Almanach-Grundstruktur:** Neue Tabellen `almanac_articles` + `run_almanac_unlocks`; Freischalt-Trigger-System; INNN-Benachrichtigung "Neuer Almanach-Artikel freigeschaltet"; Wissensbonus beim ersten Lesen (einmalig pro Run); Config-Block `config/almanac.php`. Erster Implementierungsschritt, keine Abhängigkeiten.
   - **Objective Discovery via Sol-Threshold:** Neue Spalten `revealed_at_tick` + `reveal_trigger` auf `run_objectives`; "Unbekannt"-Zustand im Objectives-Screen (Fragezeichen-Icon); gestaffelte Enthüllung der Phase-2-Objectives bis spätestens Sol +15 nach Phasenübergang (Fallback); Sol-Threshold-Fallback als Sicherheitsnetz. Zweiter Implementierungsschritt.
   - **Advisor Dialogs:** Neue Tabelle `advisor_dialogs`; Dialog-Lifecycle (pending → offered → accepted/declined/expired); AP-Kosten beim Annehmen; Config-Block `config/advisor_dialogs.php`; Tick-Schritt-7-Integration; erster Katalog: 3–5 Dialog-Definitionen je Berater-Typ. Dritter Implementierungsschritt, setzt Almanach + Objective Discovery voraus.
   - Schema-Erweiterung `runs.almanac_read_bonuses` (JSON) + `config/game.php → progressive_discovery`-Block.
-  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
-- [ ] **Multiplayer-Lobby & Multi-Run-Support** — `game.run.allow_multiple` Config-Flag ist vorbereitet, der „Neuen Run starten"-Button im Lobby-Screen existiert (disabled). Für echtes Multi-Run-Support fehlt:
-  - Run-Erstellungsflow: `OnboardingService::setupNewPlayer()` alloziert immer einen neuen Planeten + neue Kolonie; für einen zweiten Run muss das isoliert aufrufbar sein ohne Neu-Registrierung
-  - `LobbyController::start()` muss konkrete `run_id` aus dem Formular auswerten (aktuell nimmt er einfach den ersten ausstehenden Run)
-  - Session-Switching: wenn mehrere aktive Runs existieren, muss `activeIds.colonyId` beim Wechsel angepasst werden
-  - Für echtes Multiplayer (mehrere User pro Run): `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`)
-- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Reisezeitprognose in Systemkarte; Stratege → Ziel-Erreichbarkeits-Prognose im Run-Ziel-Panel. Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt Phase-3-Playtest voraus.
-- [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp
-- [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten.
-- [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen
-- [ ] **DB-Cleanup: `race_id` entfernen** — Rassen wurden konzeptuell abgekündigt (GDD §3, zusammen mit ENrg/LNrg/ANrg). `race_id` auf `users`-Tabelle ist historisches Schema ohne Auswertung → Migration zum Entfernen der Spalte.
-- [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Phase 3 voraus
-- [ ] **Berater-Vertiefung (Design-Sprint nötig)** — Beim Einstellen eine Auswahl aus mehreren Kandidaten (zufällig generiert pro Run); Berater haben positive und negative Traits (z.B. "Pragmatiker: +1 Bau-AP / −5% Moral", "Intrigant: +2 Strategie-AP / Vertrauensmalus"); individuelle Namen und Portrait-Grafiken; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12)
-- [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13)
-- [ ] **Handelsbeschränkungen vollständig durchsetzen** — `restriction`-Feld Werte 1/2/3 korrekt auswerten (aktuell ignoriert)
+  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4a-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
+
+---
+
+### Phase 4b: Vertiefung nach Playtest
+*(Voraussetzung: Phase-4a abgeschlossen + Playtest-Feedback aus echtem Betrieb)*
+
+**Ziel:** Mechaniken einführen, deren Balance direkt von Beobachtungen aus dem echten Spielbetrieb abhängt. Ohne Playtest sind diese Entscheidungen zu riskant. Jede Mechanik hier baut auf Daten auf, die erst nach Phase-3/4a-Betrieb vorliegen.
+
+- [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Reisezeitprognose in Systemkarte; Stratege → Ziel-Erreichbarkeits-Prognose im Run-Ziel-Panel. Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt Playtest voraus (sonst unbekannt welche Screens Spieler tatsächlich nutzen).
+- [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Playtest voraus. Playtest zeigt ob Credits-Einnahmen im echten Spielbetrieb als zu hoch/niedrig wahrgenommen werden.
+- [ ] **NPC-Vereinbarungen** — `innn_message_types.relationship_effect` für Nexus-Beziehungsstufen auswerten; `treaty_signed`-Moral-Event für Handels-/Schutzabkommen mit NPC-Fraktionen (Händler, Schmuggler) aktivieren; kein Krieg/Allianz-System (inkompatibel mit Singleplayer-Roguelike-Konzept, GDD §1.1). `war_declared` als Moral-Event-Key deprecaten. Playtest-Feedback zeigt welche NPC-Fraktionen Spieler als relevant wahrnehmen.
+- [ ] **Moral-Erweiterung** — Bevölkerungszufriedenheit als eigener Wert, Revolutionsrisiko, fraktionsspezifische Moralmodifikatoren (GDD §13). Setzt Playtest voraus: ob das aktuelle Moralsystem als zu flach empfunden wird, ist erst nach echten Runs beurteilbar.
+- [ ] **Berater-Spezialfähigkeit (CC Lv4-Gate)** — Berater können ab CC Lv4 eine einmalige Spezialfähigkeit pro Tag aktivieren — sofort spürbare taktische Option (z.B. Baumeister: Notfall-Reparatur ohne AP-Kosten; Stratege: temporäre Kampfbonus-Runde); Design-Sprint nötig für konkrete Fähigkeiten je Beratertyp. Voraussetzung: Playtest zeigt ob CC Lv4 regelmäßig erreicht wird.
+
+---
+
+### Phase 4c: Soziale Schicht
+*(Voraussetzung: Phase-4b abgeschlossen + aktive Spielerbasis vorhanden)*
+
+**Ziel:** Mechaniken für mehrere Spieler, die nur dann Wert erzeugen wenn eine Gemeinschaft existiert. Kein Schema vorhanden — erst ausarbeiten wenn echte Nutzerzahlen vorliegen. Bewusst als letzter Block, weil soziale Features ohne Spielerbasis wertlos sind.
+
+- [ ] **Berater-Vertiefung (Design-Sprint nötig)** — Beim Einstellen eine Auswahl aus mehreren Kandidaten (zufällig generiert pro Run); Berater haben positive und negative Traits (z.B. "Pragmatiker: +1 Bau-AP / −5% Moral", "Intrigant: +2 Strategie-AP / Vertrauensmalus"); individuelle Namen und Portrait-Grafiken; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12). Design-Sprint vor Implementierung Pflicht.
+- [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen. Setzt aktive Spielerbasis voraus.
+- [ ] **Multiplayer-Lobby (echter Multiplayer)** — Für mehrere User pro Run: `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`). Baut auf Multi-Run-Support aus Phase 4a auf.
 
 ---
 
