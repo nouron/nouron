@@ -9,102 +9,173 @@
         4 => __('resources.res_werkstoffe'),
         5 => __('resources.res_organika'),
     ];
+    $names = ['Sarkis', 'Kael', 'Zara', 'Dax', 'Talon', 'Vesper', 'Lyra', 'Orin'];
+    $roles = ['Schmuggler', 'Reisender', 'Grenzland-Siedler', 'Scrap-Sammler', 'Techniker', 'Informant'];
 @endphp
 
-<div x-data='barPage(
+<div class="bar-page" x-data='barPage(
     @json($merchantVisit),
     @json($merchantItems),
     @json(route("colony.merchant.buy", ["itemId" => "__ID__"])),
     @json(route("colony.merchant.open", ["visitId" => "__VISIT__"])),
-    @json(route("colony.bar.accept", ["offer" => "__OFFER__"]))
+    @json(route("colony.bar.accept", ["offer" => "__OFFER__"])),
+    @json($offers->count())
 )' x-cloak>
 
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem">
-        <h2 style="margin:0">{{ __('colony.bar_title') }}</h2>
-        <small style="color:var(--pico-muted-color)">Sol {{ $currentSol }}</small>
-    </div>
-
-    {{-- Traveling Merchant section — only shown when an active visit exists --}}
-    @if ($merchantVisit !== null)
-    <section class="merchant-section"
-             x-init="markVisitSeen()">
-        <div class="merchant-section__header">
-            <h3 style="margin:0">🛸 {{ __('colony.merchant_title') }}</h3>
-            <small style="color:var(--pico-muted-color)">
-                {{ __('colony.merchant_until_sol') }} {{ $merchantVisit->tick_end }}
-            </small>
-        </div>
-
-        {{-- Toast for buy feedback --}}
-        <div x-show="toast.visible"
-             x-transition
-             :class="'merchant-toast merchant-toast--' + toast.type"
-             x-text="toast.message"
-             aria-live="polite"
-             role="status"></div>
-
-        <div class="merchant-items-bar">
-            <template x-for="item in merchantItems" :key="item.id">
-                <article class="merchant-item-bar"
-                         :class="{ 'merchant-item-bar--sold': item.sold }">
-                    <div class="merchant-item-bar__label" x-text="item.label"></div>
-                    <div class="merchant-item-bar__cost" x-text="`${item.cost_credits} Cr`"></div>
-                    <button class="merchant-item-bar__buy"
-                            :disabled="item.sold || buyLoading"
-                            @click="buyItem(item.id)">
-                        <span x-show="!item.sold">{{ __('colony.merchant_buy') }}</span>
-                        <span x-show="item.sold">{{ __('colony.merchant_sold') }}</span>
-                    </button>
-                </article>
-            </template>
-        </div>
-    </section>
-    @endif
 
     @if ($barLevel < 1)
         <p>{{ __('colony.bar_no_building') }}</p>
-    @elseif ($offers->isEmpty())
-        <p style="color:var(--pico-muted-color)">{{ __('colony.bar_no_offers') }}</p>
     @else
-        <p style="font-weight:600;margin-bottom:1rem">{{ __('colony.bar_offer_heading') }}</p>
-
-        <div style="display:flex;flex-direction:column;gap:1rem;max-width:480px">
-            @foreach ($offers as $offer)
-            <article style="margin:0;padding:1.25rem;border-radius:var(--pico-border-radius);border:1px solid var(--pico-muted-border-color)">
-                <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1rem">
-                    <div>
-                        <div style="font-size:0.8rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                            {{ __('colony.bar_offer_give') }}
-                        </div>
-                        <strong>{{ $offer->give_amount }}×</strong>
-                        {{ $resourceLabels[$offer->give_resource_id] ?? $offer->give_resource_id }}
-                    </div>
-                    <span style="font-size:1.25rem">→</span>
-                    <div>
-                        <div style="font-size:0.8rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                            {{ __('colony.bar_offer_get') }}
-                        </div>
-                        <strong>{{ $offer->get_amount }}×</strong>
-                        {{ $resourceLabels[$offer->get_resource_id] ?? $offer->get_resource_id }}
-                    </div>
-                </div>
-
-                <div style="display:flex;justify-content:space-between;align-items:center">
-                    <small style="color:var(--pico-muted-color)">
-                        {{ __('colony.bar_offer_expires') }} {{ $offer->expires_tick }}
-                    </small>
-                    <button
-                        @click="accept({{ $offer->id }}, $el)"
-                        :disabled="accepted[{{ $offer->id }}] || loading"
-                        style="margin:0"
-                    >
-                        <span x-show="!accepted[{{ $offer->id }}]">{{ __('colony.bar_offer_accept') }}</span>
-                        <span x-show="accepted[{{ $offer->id }}]">✓</span>
+        {{-- Viewport showing background and hotspots --}}
+        <div class="cantina-viewport" @touchstart="touchStart" @touchend="touchEnd">
+            
+            {{-- Background image wrapper (shifts on mobile swipe, static on desktop) --}}
+            <div class="cantina-background-wrapper" :style="{ transform: `translateX(-${current * 22.222}%)` }">
+                
+                {{-- Merchant Hotspot (Jara) — Panel 0 center: 16.7% --}}
+                @if ($merchantVisit !== null)
+                    <button class="cantina-hotspot" style="left: 17%; top: 58%;" @click="openMerchant()">
+                        <span class="hotspot-pulse"></span>
+                        <i class="bi bi-shop"></i>
+                        <span class="hotspot-label">{{ __('colony.merchant_title') }}</span>
                     </button>
+                @endif
+
+                {{-- Offer Hotspots — Panel 1 center: 39%, Panel 2 center: 61% --}}
+                @foreach ($offers as $idx => $offer)
+                    @php
+                        $posLeft = $idx === 0 ? '39%' : '61%';
+                        $posTop = $idx === 0 ? '40%' : '47%';
+                        $offerId = $offer->id;
+                        $name = $names[$offerId % count($names)];
+                    @endphp
+                    <button class="cantina-hotspot" style="left: {{ $posLeft }}; top: {{ $posTop }};" @click="openOffer({{ $offerId }})">
+                        <span class="hotspot-pulse"></span>
+                        <i class="bi bi-chat-right-text"></i>
+                        <span class="hotspot-label">{{ $name }}</span>
+                    </button>
+                @endforeach
+
+            </div>
+
+            {{-- Mobile-only swipe dots indicators --}}
+            <div class="swipe-dots nav-mobile" style="position: absolute; bottom: 0.75rem; left: 0; right: 0; z-index: 20;">
+                <template x-for="i in count" :key="i">
+                    <span class="swipe-dot" :class="{ 'swipe-dot--active': current === (i-1) }" @click="goTo(i-1)"></span>
+                </template>
+            </div>
+
+            {{-- Empty cantina indicator --}}
+            @if ($offers->isEmpty() && $merchantVisit === null)
+                <div class="cantina-empty-hint">
+                    <p style="margin:0; font-size: 0.9rem; font-weight:500;">{{ __('colony.bar_no_offers') }}</p>
                 </div>
-                <div x-show="error[{{ $offer->id }}]" x-text="error[{{ $offer->id }}]"
-                     style="color:var(--pico-del-color);font-size:0.85rem;margin-top:0.5rem"></div>
-            </article>
+            @endif
+
+        </div>
+
+        {{-- Backdrop to dim page behind modal --}}
+        <div class="cantina-modal-backdrop" 
+             x-show="activeModal !== null" 
+             @click="closeModal()" 
+             x-transition.opacity 
+             style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 999;"
+             x-cloak></div>
+
+        {{-- Interactive Modal / Drawer --}}
+        <div class="cantina-modal" :class="{ 'open': activeModal !== null }" x-show="activeModal !== null" x-cloak>
+            <button @click="closeModal()" class="cantina-modal-close" aria-label="Schließen">&times;</button>
+            
+            {{-- Merchant items listing --}}
+            @if ($merchantVisit !== null)
+            <div x-show="activeModal === 'merchant'">
+                <div style="margin-bottom:1rem">
+                    <h3 style="margin:0;font-size:1.25rem;">🛸 {{ __('colony.merchant_title') }}</h3>
+                    <small style="color:var(--pico-muted-color)">
+                        {{ __('colony.merchant_until_sol') }} {{ $merchantVisit->tick_end }}
+                    </small>
+                </div>
+
+                {{-- Toast feedback --}}
+                <div x-show="toast.visible"
+                     x-transition
+                     :class="'merchant-toast merchant-toast--' + toast.type"
+                     x-text="toast.message"
+                     aria-live="polite"
+                     role="status"></div>
+
+                <div class="merchant-items-bar" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                    <template x-for="item in merchantItems" :key="item.id">
+                        <article class="merchant-item-bar"
+                                 :class="{ 'merchant-item-bar--sold': item.sold }">
+                            <div class="merchant-item-bar__label" x-text="item.label"></div>
+                            <div class="merchant-item-bar__cost" x-text="`${item.cost_credits} Cr`"></div>
+                            <button class="merchant-item-bar__buy"
+                                    :disabled="item.sold || buyLoading"
+                                    @click="buyItem(item.id)">
+                                <span x-show="!item.sold">{{ __('colony.merchant_buy') }}</span>
+                                <span x-show="item.sold">{{ __('colony.merchant_sold') }}</span>
+                            </button>
+                        </article>
+                    </template>
+                </div>
+            </div>
+            @endif
+
+            {{-- Offers listings --}}
+            @foreach ($offers as $offer)
+                @php
+                    $offerId = $offer->id;
+                    $name = $names[$offerId % count($names)];
+                    $role = $roles[$offerId % count($roles)];
+                @endphp
+                <div x-show="activeModal === 'offer_{{ $offerId }}'">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">
+                        <div class="guest-avatar">
+                            <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.15rem;">{{ $name }}</h3>
+                            <small style="color:var(--pico-muted-color); font-weight: 500;">{{ $role }}</small>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1.5rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
+                        <div>
+                            <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                {{ __('colony.bar_offer_give') }}
+                            </div>
+                            <strong style="font-size: 1.15rem;">{{ $offer->give_amount }}×</strong>
+                            {{ $resourceLabels[$offer->give_resource_id] ?? $offer->give_resource_id }}
+                        </div>
+                        <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
+                        <div>
+                            <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                {{ __('colony.bar_offer_get') }}
+                            </div>
+                            <strong style="font-size: 1.15rem;">{{ $offer->get_amount }}×</strong>
+                            {{ $resourceLabels[$offer->get_resource_id] ?? $offer->get_resource_id }}
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                        <small style="color:var(--pico-muted-color)">
+                            {{ __('colony.bar_offer_expires') }} {{ $offer->expires_tick }}
+                        </small>
+                        <div style="display:flex;gap:0.5rem">
+                            <button
+                                @click="accept({{ $offerId }}, $el)"
+                                :disabled="accepted[{{ $offerId }}] || loading"
+                                style="margin:0;padding: 0.35rem 1rem;font-size:0.85rem;"
+                            >
+                                <span x-show="!accepted[{{ $offerId }}]">{{ __('colony.bar_offer_accept') }}</span>
+                                <span x-show="accepted[{{ $offerId }}]">✓</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
+                         style="color:var(--pico-del-color);font-size:0.85rem;margin-top:0.5rem"></div>
+                </div>
             @endforeach
         </div>
     @endif
@@ -112,9 +183,15 @@
 </div>
 
 <script>
-function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute) {
+function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, offersCount = 0) {
+    const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
+    const panelCount = hasGuests ? 4 : 1;
+
     return {
-        // Bar offer state — plain object for Alpine reactivity compatibility (Set is not tracked)
+        // Inherit swipe carousel properties & methods from swipe.js
+        ...swipeCarousel(panelCount, 0),
+
+        // Offers state
         accepted: {},
         loading: false,
         error: {},
@@ -126,7 +203,23 @@ function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute)
         toast: { visible: false, message: '', type: 'info' },
         _toastTimer: null,
 
-        // Mark visit as seen on first render (fire-and-forget)
+        // Modal Drawer state
+        activeModal: null,
+
+        openMerchant() {
+            this.activeModal = 'merchant';
+            this.markVisitSeen();
+        },
+
+        openOffer(offerId) {
+            this.activeModal = 'offer_' + offerId;
+        },
+
+        closeModal() {
+            this.activeModal = null;
+        },
+
+        // Mark visit as seen (fire-and-forget)
         markVisitSeen() {
             if (!this.merchantVisit || this.merchantVisit.was_visited) return;
             const url = openRoute.replace('__VISIT__', this.merchantVisit.id);
