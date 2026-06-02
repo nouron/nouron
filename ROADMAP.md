@@ -563,24 +563,24 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 | **Angriffe auf Kolonien** | Nicht implementieren | Nur PvP-Schiffskämpfe (Schiff vs. Schiff). Kolonien sind kein Angriffsziel. |
 | **Kolonisierung** | Nicht implementieren | Jeder Spieler hat genau eine Kolonie. |
 | **Rassen-System** | Abgekündigt | Konzeptuell aufgegeben (GDD §3) — zusammen mit ENrg/LNrg/ANrg. `race_id` wird per DB-Cleanup entfernt (Phase 4), keine rassenspezifischen Effekte geplant. |
-| **Gruppen/Gilden** | Zurückstellen auf Phase 4 | Kein Datenmodell vorhanden. Soziale Mechaniken entfalten erst Wert wenn eine aktive Spielerbasis existiert. |
-| **Klassische Diplomatie** | Abgekündigt | Krieg/Allianz/Fraktionszustände inkompatibel mit Singleplayer-Roguelike ohne organisierte Gegner (GDD §1.1). Ersetzt durch NPC-Vereinbarungen (Phase 4) und `treaty_signed`-Events. |
-| **Außenposten** | Zurückstellen auf Phase 5 | Ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird, lässt sich erst nach echtem Betrieb beurteilen. |
-| **Benannte Chef-Berater** | Zurückstellen auf Phase 4 | Aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12); individuelle Charaktere erst nach Phase-3-Playtest sinnvoll. |
-| **Steuersystem** | Zurückstellen auf Phase 4 | `steuerfaktor` in Moral-Formel ist Platzhalter (= 0). Implementierung setzt stabile Moral-Balance aus Phase 3 voraus. |
+| **Gruppen/Gilden** | Zurückstellen auf Phase 6 | Kein Datenmodell vorhanden. Soziale Mechaniken entfalten erst Wert wenn eine aktive Spielerbasis existiert. |
+| **Klassische Diplomatie** | Abgekündigt | Krieg/Allianz/Fraktionszustände inkompatibel mit Singleplayer-Roguelike ohne organisierte Gegner (GDD §1.1). Ersetzt durch NPC-Vereinbarungen (Phase 5) und `treaty_signed`-Events. |
+| **Außenposten** | Zurückstellen auf Phase 7 | Ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird, lässt sich erst nach echtem Betrieb beurteilen. |
+| **Benannte Chef-Berater** | Zurückstellen auf Phase 6 | Aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12); individuelle Charaktere erst nach Phase-3-Playtest sinnvoll. |
+| **Steuersystem** | Zurückstellen auf Phase 5 | `steuerfaktor` in Moral-Formel ist Platzhalter (= 0). Implementierung setzt stabile Moral-Balance aus Phase 3 voraus. |
 
 ---
 
-## Phase 4: "Das Spiel vertiefen"
+## Phase 4: "Das Spiel vertiefen — Infrastruktur & Discovery"
 *(nach Phase 3)*
 
 **Ziel:** Spieler, die das Basisspiel kennen, bekommen neue Strategiepfade und Interaktionsebenen.
 
-> **Aufteilung in 3 Unterphasen:** Phase 3 hat gezeigt, dass ein einzelner "Vertiefungs-Block" zu groß wird. Phase 4 wird daher in 4a (technische Infrastruktur + Discovery, kein Playtest nötig), 4b (Balance-Mechaniken nach Playtest) und 4c (soziale Schicht, setzt aktive Spielerbasis voraus) aufgeteilt. Jede Phase liefert eigenständigen Spielerwert und kann einzeln abgeschlossen werden.
+> **Aufteilung in 3 Phasen:** Phase 3 hat gezeigt, dass ein einzelner "Vertiefungs-Block" zu groß wird. Der Vertiefungs-Block wird daher auf Phase 4 (technische Infrastruktur + Discovery, kein Playtest nötig), Phase 5 (Balance-Mechaniken nach Playtest) und Phase 6 (soziale Schicht, setzt aktive Spielerbasis voraus) aufgeteilt. Jede Phase liefert eigenständigen Spielerwert und kann einzeln abgeschlossen werden.
 
 ---
 
-### Phase 4a: Infrastruktur & Discovery
+### Phase 4: Infrastruktur & Discovery
 *(Voraussetzung: Phase 3 abgeschlossen — kein Playtest-Feedback erforderlich)*
 
 **Ziel:** Technische Schulden abbauen und das Progressive-Discovery-System einführen, das als roter Faden durch alle späteren Phasen läuft. Diese Items haben klare Specs, keine Design-Unsicherheit und liefern direkt sichtbaren Spielerwert.
@@ -597,14 +597,14 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
   - **Objective Discovery via Sol-Threshold:** Neue Spalten `revealed_at_tick` + `reveal_trigger` auf `run_objectives`; "Unbekannt"-Zustand im Objectives-Screen (Fragezeichen-Icon); gestaffelte Enthüllung der Phase-2-Objectives bis spätestens Sol +15 nach Phasenübergang (Fallback); Sol-Threshold-Fallback als Sicherheitsnetz. Zweiter Implementierungsschritt.
   - **Advisor Dialogs:** Neue Tabelle `advisor_dialogs`; Dialog-Lifecycle (pending → offered → accepted/declined/expired); AP-Kosten beim Annehmen; Config-Block `config/advisor_dialogs.php`; Tick-Schritt-7-Integration; erster Katalog: 3–5 Dialog-Definitionen je Berater-Typ. Dritter Implementierungsschritt, setzt Almanach + Objective Discovery voraus.
   - Schema-Erweiterung `runs.almanac_read_bonuses` (JSON) + `config/game.php → progressive_discovery`-Block.
-  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4a-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
+  - Design-Voraussetzung: Almanach-Artikel-Texte via `content-writer` erstellen (mindestens 10 Artikel für Phase-4-Launch: 2 immer verfügbar, 4 fortschrittsabhängig, 4 entdeckungsabhängig).
 
 ---
 
-### Phase 4b: Vertiefung nach Playtest
-*(Voraussetzung: Phase-4a abgeschlossen + Playtest-Feedback aus echtem Betrieb)*
+## Phase 5: "Das Spiel vertiefen — Vertiefung"
+*(Voraussetzung: Phase 4 abgeschlossen + Playtest-Feedback aus echtem Betrieb)*
 
-**Ziel:** Mechaniken einführen, deren Balance direkt von Beobachtungen aus dem echten Spielbetrieb abhängt. Ohne Playtest sind diese Entscheidungen zu riskant. Jede Mechanik hier baut auf Daten auf, die erst nach Phase-3/4a-Betrieb vorliegen.
+**Ziel:** Mechaniken einführen, deren Balance direkt von Beobachtungen aus dem echten Spielbetrieb abhängt. Ohne Playtest sind diese Entscheidungen zu riskant. Jede Mechanik hier baut auf Daten auf, die erst nach Phase-3/4-Betrieb vorliegen.
 
 - [ ] **Berater als Informationsebene** (GDD §13) — Jeder Berater liefert QoL-Informationen in seinem zugehörigen Screen: Baumeister → Decay-Prognosen in Colony-View; Analytiker → AP-Fluss-Prognose im Techtree; Konsul → kontextuelle Händler-Einschätzung in Cantina; Raumfahrer → Reisezeitprognose in Systemkarte; Stratege → Ziel-Erreichbarkeits-Prognose im Run-Ziel-Panel. Reine UI-Logik, keine neuen Datenpunkte nötig. Setzt Playtest voraus (sonst unbekannt welche Screens Spieler tatsächlich nutzen).
 - [ ] **Steuersystem** — `steuerfaktor` in Moral-Formel als Platzhalter (= 0); GDD-Design steht; Implementierung setzt stabile Moral-Balance aus Playtest voraus. Playtest zeigt ob Credits-Einnahmen im echten Spielbetrieb als zu hoch/niedrig wahrgenommen werden.
@@ -614,23 +614,23 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 
 ---
 
-### Phase 4c: Soziale Schicht
-*(Voraussetzung: Phase-4b abgeschlossen + aktive Spielerbasis vorhanden)*
+## Phase 6: "Das Spiel vertiefen — Soziale Schicht"
+*(Voraussetzung: Phase 5 abgeschlossen + aktive Spielerbasis vorhanden)*
 
 **Ziel:** Mechaniken für mehrere Spieler, die nur dann Wert erzeugen wenn eine Gemeinschaft existiert. Kein Schema vorhanden — erst ausarbeiten wenn echte Nutzerzahlen vorliegen. Bewusst als letzter Block, weil soziale Features ohne Spielerbasis wertlos sind.
 
 - [ ] **Berater-Vertiefung (Design-Sprint nötig)** — Beim Einstellen eine Auswahl aus mehreren Kandidaten (zufällig generiert pro Run); Berater haben positive und negative Traits (z.B. "Pragmatiker: +1 Bau-AP / −5% Moral", "Intrigant: +2 Strategie-AP / Vertrauensmalus"); individuelle Namen und Portrait-Grafiken; aktuelles Berater-Modell ist als Fundament ausgelegt (GDD §12). Design-Sprint vor Implementierung Pflicht.
 - [ ] **Gruppen/Gilden** — Datenmodell für Gruppen (kein Schema vorhanden); Grundlage für `restriction = 1` im Handelssystem; bewusst einfach gehalten: gründen, beitreten, verlassen. Setzt aktive Spielerbasis voraus.
-- [ ] **Multiplayer-Lobby (echter Multiplayer)** — Für mehrere User pro Run: `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`). Baut auf Multi-Run-Support aus Phase 4a auf.
+- [ ] **Multiplayer-Lobby (echter Multiplayer)** — Für mehrere User pro Run: `run_players`-Pivot-Tabelle (`run_id`, `user_id`, `joined_at`); Run-Status-Logik überarbeiten (tick feuert wenn alle Spieler bestätigt haben oder Timeout abläuft — `game.run.playbymailmode`). Baut auf Multi-Run-Support aus Phase 4 auf.
 
 ---
 
-## Phase 5: "Das Spiel erweitern"
-*(nach Phase 4)*
+## Phase 7: "Das Spiel erweitern"
+*(nach Phase 6)*
 
 **Ziel:** Strukturelle Erweiterungen auf Basis von echtem Spieler-Feedback aus dem Betrieb.
 
-**Voraussetzung:** Phase-4-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 5 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
+**Voraussetzung:** Phase-6-Betrieb mit echter Spielerbasis; Entscheidung ob das Einzelkolonie-Konzept erweitert werden soll. Phase 7 wird bewusst erst dann konkret ausgearbeitet — die Themen hier sind Hypothesen, keine Commitments.
 
 - [ ] **Außenposten** — `home_colony_id` pro Flotte (GDD §12); ob Außenposten kommen, hängt davon ab ob das Einzelkolonie-Konzept als zu einschränkend empfunden wird; minimal halten (kein vollständiges Kolonie-System)
 - [ ] **Neue Schiffstypen** — Scout/Sonde (Supply 1) und weitere; setzt stabiles Combat-Balancing aus Phase 4 voraus
