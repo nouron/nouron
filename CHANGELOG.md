@@ -2,11 +2,15 @@
 
 ## 2026-06-03
 
-Cantina Character System + Dev-Panel Hotspot Tool.
+Hangar Screen (Carousel-basiert) + Cantina Character System + Dev-Panel Hotspot Tool.
 
 - 15 NPC-Character-Sheets nach `docs/characters/` migriert (English, enriched: Background, Personality, Appearance, Dialogue Tone, Cantina Placement)
 - Image-Gen-Prompts extrahiert nach `.prompts/images/characters/` (abgeleitet von Character Sheets); `_config.json` 2:3 Format
 - Alte `.md`-Dateien aus `public/img/characters/` entfernt (nur noch `.webp`-Assets dort)
+- **Hangar Screen**: Carousel-View (1 Karte pro Hangar-Instanz, Swipe-Navigation); Aktionen: Schiff bauen, Entsenden, Zurückrufen, Reparieren; Raumfahrer-Badge wenn Pilot-Berater aktiv
+- `HangarService`: `getHangarSlots`, `buildShip`, `dispatchShip`, `recallShip`, `repairShip`; Missionslog via `colony_hangar_missions`-Tabelle
+- DB: `colony_ships` um `hangar_instance_id` + `ship_state` erweitert; neue Tabelle `colony_hangar_missions`
+- 53 neue Tests (HangarServiceTest + HangarControllerTest)
 - `data/cantina_hotspots.json`: 6 generische Spots (spot_0–5), Koordinaten per Device (desktop/tablet/mobile), Character-Zuweisung pro Spot
 - `bar.blade.php`: Hotspot-Positionen aus JSON statt hardcoded; CSS-Klassen `hs-slot-spot_*` via `@push('styles')` pro Breakpoint
 - Dev-Panel: neuer Tab "Cantina Hotspots" — visueller Positionseditor (Klick auf Bild setzt %) + Character-Mapping-Matrix; Spot-Farben konsistent zwischen Bild-Dots und Tabelle

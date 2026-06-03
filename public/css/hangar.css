@@ -1,0 +1,438 @@
+/* Hangar carousel — Alpine.js + PicoCSS screen */
+
+/* ── Page wrapper ─────────────────────────────────────────────────────────── */
+
+.hangar-page {
+    padding: 1.5rem 2rem 2rem;
+    max-width: none;
+}
+
+@media (max-width: 767px) {
+    .hangar-page {
+        padding: 1rem 0 0;
+    }
+}
+
+/* ── Header bar ───────────────────────────────────────────────────────────── */
+
+.hangar-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.hangar-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+}
+
+.hangar-slot-badge {
+    font-size: 0.78rem;
+    color: #888;
+    margin-left: auto;
+}
+
+/* ── Carousel layout ──────────────────────────────────────────────────────── */
+
+/* .carousel-wrapper, .carousel-viewport, .carousel-track,
+   .carousel-arrow, .carousel-dots, .carousel-dot are shared
+   with advisors.css and defined there. If hangar.css is loaded
+   without advisors.css, duplicate the definitions below. */
+
+/* ── Hangar card ──────────────────────────────────────────────────────────── */
+
+.hangar-card {
+    width: 200px;
+    /* Fill as much of the viewport as possible;
+       230px = nav(84) + page-padding(56) + header(58) + dots(32) */
+    height: calc(100vh - 230px);
+    min-height: 340px;
+    max-height: 680px;
+    border-radius: 12px;
+    border: 1px solid #e4e4ef;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: 0 2px 8px rgba(26, 26, 46, 0.06);
+}
+
+@media (max-width: 900px) {
+    .hangar-card {
+        width: calc(100vw - 3rem);
+        max-width: 320px;
+        height: calc(100vh - 200px);
+        min-height: 340px;
+    }
+}
+
+@media (max-width: 767px) {
+    .hangar-card {
+        width: 100vw;
+        max-width: none;
+        height: calc(100vh - 160px);
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+}
+
+/* Desktop: all cards side by side */
+@media (min-width: 900px) {
+    .carousel-track {
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+    .hangar-card {
+        flex: 1 1 0;
+        width: auto;
+        min-width: 0;
+        max-width: 380px;
+    }
+}
+
+/* Highlighted card (active index) */
+.hangar-card--current {
+    box-shadow: 0 8px 28px rgba(26, 26, 46, 0.14);
+    transform: translateY(-4px);
+    border-color: #c0c0d8;
+}
+
+/* ── Icon area — top section of card ──────────────────────────────────────── */
+
+.hangar-icon-area {
+    flex: 0 0 40%;
+    background-color: #f5f5f8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.hangar-icon-placeholder {
+    width: 64px;
+    height: 64px;
+    color: #c8cdd6;
+}
+
+/* ── Info panel — bottom section of card ─────────────────────────────────── */
+
+.hangar-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 0.65rem 0.85rem 0.75rem;
+    border-top: 1px solid #eeeef4;
+    overflow: hidden;
+    overflow-y: auto;
+}
+
+/* Name row: bold name left, level badge right */
+.hangar-name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-bottom: 0.1rem;
+}
+
+.hangar-name {
+    font-size: 0.73rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a1a2e;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hangar-subtitle {
+    font-size: 0.68rem;
+    color: #bbb;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Status bar (ship condition: 0–20) ────────────────────────────────────── */
+
+.hangar-status-track {
+    height: 6px;
+    background: #e8e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0.3rem 0;
+}
+
+.hangar-status-fill {
+    height: 100%;
+    background: var(--color-accent, #c0392b);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* ── Pilot badge (green chip) ─────────────────────────────────────────────── */
+
+.hangar-pilot-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 20px;
+    white-space: nowrap;
+    background: #f0faf4;
+    color: #1b7a3e;
+    border: 1px solid #b2dfca;
+    margin-bottom: 0.35rem;
+}
+
+/* ── Mission info box ─────────────────────────────────────────────────────── */
+
+.hangar-mission-info {
+    background: #f5f7fa;
+    border: 1px solid #e4e8f0;
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    margin: 0.35rem 0;
+    font-size: 0.72rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.hangar-mission-info strong {
+    color: #1a1a2e;
+}
+
+/* ── Status chips ─────────────────────────────────────────────────────────── */
+
+.hangar-status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.hangar-status-chip--docked     { background: #f2faf2; color: #2e7d32; border: 1px solid #c8e6c9; }
+.hangar-status-chip--dispatched { background: #fef9ec; color: #78350f; border: 1px solid #fde68a; }
+.hangar-status-chip--building   { background: #f4f6ff; color: #3b5ac6; border: 1px solid #c5cff0; }
+.hangar-status-chip--empty      { background: #f4f4f4; color: #999;    border: 1px solid #ddd; }
+
+/* ── Stats rows (shared with advisors style) ──────────────────────────────── */
+
+.hangar-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.18rem;
+}
+
+.hangar-stat-label {
+    color: #aaa;
+    font-size: 0.71rem;
+    font-weight: 400;
+}
+
+.hangar-stat-value {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+/* ── Card footer ──────────────────────────────────────────────────────────── */
+
+.hangar-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ── Action buttons inside cards ──────────────────────────────────────────── */
+
+.btn-hangar-action {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    border: 1px solid #c8e6c9;
+    background: transparent;
+    color: #2e7d32;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+.btn-hangar-action:hover:not(:disabled) { background: #f2faf2; }
+
+.btn-hangar-action--danger {
+    border-color: #ddd;
+    color: #c0392b;
+}
+
+.btn-hangar-action--danger:hover:not(:disabled) { background: #fff5f5; }
+
+.btn-hangar-action--secondary {
+    border-color: #c5cff0;
+    color: #3b5ac6;
+}
+
+.btn-hangar-action--secondary:hover:not(:disabled) { background: #f4f6ff; }
+
+.btn-hangar-action:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+/* ── Inline forms inside cards ────────────────────────────────────────────── */
+
+.hangar-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.hangar-form label {
+    font-size: 0.72rem;
+    color: #555;
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+
+.hangar-form input[type="text"],
+.hangar-form input[type="number"],
+.hangar-form select {
+    width: 100%;
+    font-size: 0.8rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #d0d0dc;
+    border-radius: 6px;
+    background: #fafafa;
+    color: #1a1a2e;
+    box-sizing: border-box;
+}
+
+.hangar-form input[type="range"] {
+    width: 100%;
+}
+
+.hangar-form .form-row-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: #555;
+    font-weight: 600;
+}
+
+/* Radio group for ship type selection */
+.hangar-ship-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.hangar-ship-radio-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #333;
+    cursor: pointer;
+    padding: 0.25rem 0.4rem;
+    border-radius: 5px;
+    transition: background 0.1s;
+}
+
+.hangar-ship-radio-group label:hover {
+    background: #f5f5f8;
+}
+
+.hangar-form-actions {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: flex-end;
+    padding-top: 0.3rem;
+}
+
+/* ── Inline error message ─────────────────────────────────────────────────── */
+
+.hangar-error {
+    color: #c0392b;
+    font-size: 0.75rem;
+    min-height: 1em;
+    margin-top: 0.25rem;
+}
+
+/* ── Slot label (hangar bay number) ───────────────────────────────────────── */
+
+.hangar-bay-label {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ── Building progress placeholder ───────────────────────────────────────── */
+
+.hangar-construction-anim {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+}
+
+.hangar-construction-bar {
+    width: 100%;
+    height: 6px;
+    background: #e8e8f0;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.hangar-construction-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -40%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #3b5ac6, transparent);
+    animation: hangar-scan 1.8s linear infinite;
+}
+
+@keyframes hangar-scan {
+    to { left: 100%; }
+}

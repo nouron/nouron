@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Colony\BarController;
+use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -85,6 +86,13 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
     // Traveling Merchant
     Route::post('/merchant/buy/{itemId}',         [MerchantController::class, 'buy'])->name('merchant.buy')->where('itemId', '[0-9]+');
     Route::post('/merchant/visit/{visitId}/open', [MerchantController::class, 'markVisited'])->name('merchant.open')->where('visitId', '[0-9]+');
+
+    // Hangar
+    Route::get('/hangar',                              [HangarController::class, 'index'])->name('hangar');
+    Route::post('/hangar/{instanceId}/build',    [HangarController::class, 'build'])->name('hangar.build');
+    Route::post('/hangar/{instanceId}/dispatch', [HangarController::class, 'dispatch'])->name('hangar.dispatch');
+    Route::post('/hangar/{instanceId}/recall',   [HangarController::class, 'recall'])->name('hangar.recall');
+    Route::post('/hangar/{instanceId}/repair',   [HangarController::class, 'repair'])->name('hangar.repair');
 });
 
 // ── Resources (Schritt 5) ─────────────────────────────────────────────────────

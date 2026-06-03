@@ -23,7 +23,7 @@
 
         {{-- Desktop nav (visible from 600px up) --}}
         <ul class="nav-desktop">
-            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])><i class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
+            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*') && !request()->routeIs('colony.hangar*')])><i class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
             <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
             <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
             @if($barBuilt ?? false)
@@ -31,6 +31,7 @@
             @else
             <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
             @endif
+            <li><a href="{{ route('colony.hangar') }}" @class(['active' => request()->routeIs('colony.hangar*')])><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></a></li>
             <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
             <li><a href="{{ route('nexusdb.index') }}" @class(['active' => request()->routeIs('nexusdb.*')])><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
         </ul>
@@ -66,7 +67,7 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="nav-flyout" x-show="open" @click.outside="open = false" x-cloak>
-                    <a href="{{ route('colony.view') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*')])>
+                    <a href="{{ route('colony.view') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*') && !request()->routeIs('colony.hangar*')])>
                         <i class="bi bi-hexagon"></i> Kolonie
                     </a>
                     <a href="{{ route('advisors.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('advisors.*')])>
@@ -84,6 +85,9 @@
                         <i class="bi bi-cup-hot"></i> Cantina
                     </span>
                     @endif
+                    <a href="{{ route('colony.hangar') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.hangar*')])>
+                        <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
+                    </a>
                     <a href="{{ route('messages.inbox') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('messages.*')])>
                         <i class="bi bi-envelope"></i> Nachrichten
                     </a>
