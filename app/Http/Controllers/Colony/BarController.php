@@ -46,9 +46,14 @@ class BarController extends BaseController
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
+        $hotspotsFile = base_path('data/cantina_hotspots.json');
+        $hotspots = file_exists($hotspotsFile)
+            ? (json_decode(file_get_contents($hotspotsFile), true) ?: [])
+            : [];
+
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
-            'merchantVisit', 'merchantItems',
+            'merchantVisit', 'merchantItems', 'hotspots',
         ));
     }
 

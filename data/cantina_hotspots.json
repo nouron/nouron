@@ -1,0 +1,118 @@
+{
+    "spot_0": {
+        "desktop": {
+            "left": 12.36,
+            "top": 44.6
+        },
+        "tablet": {
+            "left": 17,
+            "top": 58
+        },
+        "mobile": {
+            "left": 17,
+            "top": 58
+        },
+        "characters": [
+            "bartender"
+        ]
+    },
+    "spot_1": {
+        "desktop": {
+            "left": 27.1,
+            "top": 48.32
+        },
+        "tablet": {
+            "left": 27,
+            "top": 45
+        },
+        "mobile": {
+            "left": 27,
+            "top": 45
+        },
+        "characters": [
+            "mechanic",
+            "gambler",
+            "corporate_rep",
+            "doctor",
+            "founder",
+            "mercenary",
+            "veteran"
+        ]
+    },
+    "spot_2": {
+        "desktop": {
+            "left": 40.48,
+            "top": 76.79
+        },
+        "tablet": {
+            "left": 39,
+            "top": 40
+        },
+        "mobile": {
+            "left": 39,
+            "top": 40
+        },
+        "characters": [
+            "preacher"
+        ]
+    },
+    "spot_3": {
+        "desktop": {
+            "left": 53.67,
+            "top": 49.78
+        },
+        "tablet": {
+            "left": 55,
+            "top": 50
+        },
+        "mobile": {
+            "left": 55,
+            "top": 50
+        },
+        "characters": [
+            "gambler",
+            "ai_researcher",
+            "scrap_dealer",
+            "prospector"
+        ]
+    },
+    "spot_4": {
+        "desktop": {
+            "left": 69.24,
+            "top": 56.9
+        },
+        "tablet": {
+            "left": 67,
+            "top": 44
+        },
+        "mobile": {
+            "left": 67,
+            "top": 44
+        },
+        "characters": [
+            "gambler",
+            "ai_researcher",
+            "prospector",
+            "scrap_dealer"
+        ]
+    },
+    "spot_5": {
+        "desktop": {
+            "left": 86.89,
+            "top": 51.07
+        },
+        "tablet": {
+            "left": 83,
+            "top": 52
+        },
+        "mobile": {
+            "left": 83,
+            "top": 52
+        },
+        "characters": [
+            "informationsagent",
+            "smuggler",
+            "stranger"
+        ]
+    }
+}

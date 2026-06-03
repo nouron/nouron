@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-03
+
+Cantina Character System + Dev-Panel Hotspot Tool.
+
+- 15 NPC-Character-Sheets nach `docs/characters/` migriert (English, enriched: Background, Personality, Appearance, Dialogue Tone, Cantina Placement)
+- Image-Gen-Prompts extrahiert nach `.prompts/images/characters/` (abgeleitet von Character Sheets); `_config.json` 2:3 Format
+- Alte `.md`-Dateien aus `public/img/characters/` entfernt (nur noch `.webp`-Assets dort)
+- `data/cantina_hotspots.json`: 6 generische Spots (spot_0–5), Koordinaten per Device (desktop/tablet/mobile), Character-Zuweisung pro Spot
+- `bar.blade.php`: Hotspot-Positionen aus JSON statt hardcoded; CSS-Klassen `hs-slot-spot_*` via `@push('styles')` pro Breakpoint
+- Dev-Panel: neuer Tab "Cantina Hotspots" — visueller Positionseditor (Klick auf Bild setzt %) + Character-Mapping-Matrix; Spot-Farben konsistent zwischen Bild-Dots und Tabelle
+- Dev-Panel refactored: monolithische `dev-panel.php` aufgeteilt in `_tool_resources.php`, `_tool_techtree.php`, `_tool_cantina.php` + `tools/assets/` (CSS + JS)
+
 ## 2026-06-02
 
 Cantina-Redesign (Bar-Screen): Hotspot-basiertes Viewport-Layout mit NPC-Interaktion.
