@@ -32,8 +32,7 @@ $hs = fn(string $slot, string $device): array =>
         4 => __('resources.res_werkstoffe'),
         5 => __('resources.res_organika'),
     ];
-    $names = ['Sarkis', 'Kael', 'Zara', 'Dax', 'Talon', 'Vesper', 'Lyra', 'Orin'];
-    $roles = ['Schmuggler', 'Reisender', 'Grenzland-Siedler', 'Scrap-Sammler', 'Techniker', 'Informant'];
+    $spotForOffer = ['spot_1', 'spot_2'];  // offer index → spot key
 @endphp
 
 <div class="bar-page" x-data='barPage(
@@ -67,14 +66,15 @@ $hs = fn(string $slot, string $device): array =>
                 {{-- Offer Hotspots — Panel 1 center: 39%, Panel 2 center: 61% --}}
                 @foreach ($offers as $idx => $offer)
                     @php
-                        $hsSlot  = $idx === 0 ? 'spot_1' : 'spot_2';
+                        $hsSlot  = $spotForOffer[$idx] ?? 'spot_1';
                         $offerId = $offer->id;
-                        $name = $names[$offerId % count($names)];
+                        $char    = $characterAssignment[$hsSlot] ?? null;
+                        $charName = $char['name'] ?? '???';
                     @endphp
                     <button class="cantina-hotspot hs-slot-{{ $hsSlot }}" @click="openOffer({{ $offerId }})">
                         <span class="hotspot-pulse"></span>
                         <i class="bi bi-chat-right-text"></i>
-                        <span class="hotspot-label">{{ $name }}</span>
+                        <span class="hotspot-label">{{ $charName }}</span>
                     </button>
                 @endforeach
 
@@ -145,11 +145,12 @@ $hs = fn(string $slot, string $device): array =>
             @endif
 
             {{-- Offers listings --}}
-            @foreach ($offers as $offer)
+            @foreach ($offers as $idx => $offer)
                 @php
-                    $offerId = $offer->id;
-                    $name = $names[$offerId % count($names)];
-                    $role = $roles[$offerId % count($roles)];
+                    $offerId  = $offer->id;
+                    $char     = $characterAssignment[$spotForOffer[$idx] ?? 'spot_1'] ?? null;
+                    $name     = $char['name'] ?? '???';
+                    $role     = $char['role'] ?? '';
                 @endphp
                 <div x-show="activeModal === 'offer_{{ $offerId }}'">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">

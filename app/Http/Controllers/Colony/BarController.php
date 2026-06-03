@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Colony;
 
 use App\Http\Controllers\BaseController;
+use App\Models\Run;
 use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\MerchantService;
@@ -51,9 +52,24 @@ class BarController extends BaseController
             ? (json_decode(file_get_contents($hotspotsFile), true) ?: [])
             : [];
 
+        $run = Run::where('colony_id', $colony->id)->active()->first();
+        $seed = $run ? $run->id : $colony->id;
+        $characters = config('characters');
+
+        $characterAssignment = [];
+        foreach ($hotspots as $spotKey => $spot) {
+            if (empty($spot['characters'])) continue;
+            $idx = abs(crc32($seed . $spotKey)) % count($spot['characters']);
+            $slug = $spot['characters'][$idx];
+            $char = $characters[$slug] ?? null;
+            if ($char) {
+                $characterAssignment[$spotKey] = ['slug' => $slug] + $char;
+            }
+        }
+
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
-            'merchantVisit', 'merchantItems', 'hotspots',
+            'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
         ));
     }
 
