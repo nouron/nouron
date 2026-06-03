@@ -1,6 +1,29 @@
 @extends('layouts.colony')
 @section('title', __('colony.bar_title') . ' — Nouron')
 
+@php
+$hs = fn(string $slot, string $device): array =>
+    $hotspots[$slot][$device] ?? ['left' => 50, 'top' => 50];
+@endphp
+
+@push('styles')
+<style>
+@foreach(['spot_0','spot_1','spot_2','spot_3','spot_4','spot_5'] as $s)
+.hs-slot-{{ $s }} { left: {{ $hs($s,'desktop')['left'] }}%; top: {{ $hs($s,'desktop')['top'] }}%; }
+@endforeach
+@@media (min-width: 768px) and (max-width: 1023px) {
+@foreach(['spot_0','spot_1','spot_2','spot_3','spot_4','spot_5'] as $s)
+    .hs-slot-{{ $s }} { left: {{ $hs($s,'tablet')['left'] }}%; top: {{ $hs($s,'tablet')['top'] }}%; }
+@endforeach
+}
+@@media (max-width: 767px) {
+@foreach(['spot_0','spot_1','spot_2','spot_3','spot_4','spot_5'] as $s)
+    .hs-slot-{{ $s }} { left: {{ $hs($s,'mobile')['left'] }}%; top: {{ $hs($s,'mobile')['top'] }}%; }
+@endforeach
+}
+</style>
+@endpush
+
 @section('content')
 @php
     $resourceLabels = [
@@ -9,8 +32,7 @@
         4 => __('resources.res_werkstoffe'),
         5 => __('resources.res_organika'),
     ];
-    $names = ['Sarkis', 'Kael', 'Zara', 'Dax', 'Talon', 'Vesper', 'Lyra', 'Orin'];
-    $roles = ['Schmuggler', 'Reisender', 'Grenzland-Siedler', 'Scrap-Sammler', 'Techniker', 'Informant'];
+    $spotForOffer = ['spot_1', 'spot_2'];  // offer index → spot key
 @endphp
 
 <div class="bar-page" x-data='barPage(
@@ -34,7 +56,7 @@
                 
                 {{-- Merchant Hotspot (Jara) — Panel 0 center: 16.7% --}}
                 @if ($merchantVisit !== null)
-                    <button class="cantina-hotspot" style="left: 17%; top: 58%;" @click="openMerchant()">
+                    <button class="cantina-hotspot hs-slot-spot_0" @click="openMerchant()">
                         <span class="hotspot-pulse"></span>
                         <i class="bi bi-shop"></i>
                         <span class="hotspot-label">{{ __('colony.merchant_title') }}</span>
@@ -44,15 +66,15 @@
                 {{-- Offer Hotspots — Panel 1 center: 39%, Panel 2 center: 61% --}}
                 @foreach ($offers as $idx => $offer)
                     @php
-                        $posLeft = $idx === 0 ? '39%' : '61%';
-                        $posTop = $idx === 0 ? '40%' : '47%';
+                        $hsSlot  = $spotForOffer[$idx] ?? 'spot_1';
                         $offerId = $offer->id;
-                        $name = $names[$offerId % count($names)];
+                        $char    = $characterAssignment[$hsSlot] ?? null;
+                        $charName = $char['name'] ?? '???';
                     @endphp
-                    <button class="cantina-hotspot" style="left: {{ $posLeft }}; top: {{ $posTop }};" @click="openOffer({{ $offerId }})">
+                    <button class="cantina-hotspot hs-slot-{{ $hsSlot }}" @click="openOffer({{ $offerId }})">
                         <span class="hotspot-pulse"></span>
                         <i class="bi bi-chat-right-text"></i>
-                        <span class="hotspot-label">{{ $name }}</span>
+                        <span class="hotspot-label">{{ $charName }}</span>
                     </button>
                 @endforeach
 
@@ -123,11 +145,12 @@
             @endif
 
             {{-- Offers listings --}}
-            @foreach ($offers as $offer)
+            @foreach ($offers as $idx => $offer)
                 @php
-                    $offerId = $offer->id;
-                    $name = $names[$offerId % count($names)];
-                    $role = $roles[$offerId % count($roles)];
+                    $offerId  = $offer->id;
+                    $char     = $characterAssignment[$spotForOffer[$idx] ?? 'spot_1'] ?? null;
+                    $name     = $char['name'] ?? '???';
+                    $role     = $char['role'] ?? '';
                 @endphp
                 <div x-show="activeModal === 'offer_{{ $offerId }}'">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">
