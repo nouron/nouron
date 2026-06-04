@@ -333,7 +333,7 @@ resource_cap = base_cap + (depot_level × cap_per_level)
 
 ---
 
-### Sicherheits-Hub (securityHub) — Mechanik ¹
+### Sicherheits-Hub (securityHub) — Mechanik
 
 Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv2). Er bietet zwei unabhängige Effekte:
 
@@ -347,7 +347,7 @@ Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch e
 
 ---
 
-### Uplink-Station (uplinkStation) — Mechanik ¹
+### Uplink-Station (uplinkStation) — Mechanik
 
 Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Handelsschiff anfordern, Verwaltungsanfragen). Eingehende INNN-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
 
@@ -363,7 +363,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 
 ---
 
-### Handelsposten (tradingPost) — Mechanik ¹
+### Handelsposten (tradingPost) — Mechanik
 
 Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
 
