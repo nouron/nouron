@@ -146,6 +146,14 @@ class AppServiceProvider extends ServiceProvider
                     ->where('level', '>', 0)
                     ->exists();
                 $view->with('barBuilt', $barBuilt);
+
+                // Hangar nav-link gating: grey out when no hangar built
+                $hangarBuilt = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyIdForBar)
+                    ->where('building_id', 44)
+                    ->where('level', '>', 0)
+                    ->exists();
+                $view->with('hangarBuilt', $hangarBuilt);
             }
         });
     }

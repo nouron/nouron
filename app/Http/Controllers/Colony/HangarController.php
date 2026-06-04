@@ -33,12 +33,19 @@ class HangarController extends BaseController
             ->where('is_active', 1)
             ->get(['id', 'name']);
 
+        // Ship IDs already commissioned in a hangar — cannot be commissioned twice
+        $commissionedShipIds = DB::table('colony_ships')
+            ->where('colony_id', $colony->id)
+            ->whereNotNull('hangar_instance_id')
+            ->pluck('ship_id')
+            ->toArray();
+
         $hasPilot = DB::table('advisors')
             ->where('colony_id', $colony->id)
             ->where('personell_id', 89)
             ->exists();
 
-        return view('colony.hangar', compact('slots', 'shipTypes', 'hasPilot'));
+        return view('colony.hangar', compact('slots', 'shipTypes', 'commissionedShipIds', 'hasPilot'));
     }
 
     public function build(Request $request, int $instanceId): JsonResponse

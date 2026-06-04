@@ -12,9 +12,10 @@
 @section('content')
 <script>
 window.__hangarData = {
-    slots:     @json($slots),
-    shipTypes: @json($shipTypes),
-    hasPilot:  @json($hasPilot),
+    slots:              @json($slots),
+    shipTypes:          @json($shipTypes),
+    commissionedShipIds:@json($commissionedShipIds),
+    hasPilot:           @json($hasPilot),
     routes: {
         build:    @json(route('colony.hangar.build',    ['instanceId' => '__ID__'])),
         dispatch: @json(route('colony.hangar.dispatch', ['instanceId' => '__ID__'])),
@@ -46,12 +47,20 @@ window.__hangarData = {
     <div class="hangar-header">
         <h2>{{ __('colony.hangar_title') }}</h2>
 
+        @if(count($slots) > 0)
         <span class="hangar-slot-badge">
             {{ __('colony.hangar_slot_count') }}:
             <strong x-text="slotInfo.used + '/' + slotInfo.total"></strong>
         </span>
+        @endif
     </div>
 
+    {{-- ── No hangar built ─────────────────────────────────────────────────── --}}
+    @if(count($slots) === 0)
+        <p style="color: var(--pico-muted-color); margin-top: 2rem;">
+            {{ __('colony.hangar_none_built') }}
+        </p>
+    @else
     {{-- ── Carousel ─────────────────────────────────────────────────────────── --}}
     <div class="carousel-wrapper">
 
@@ -62,6 +71,7 @@ window.__hangarData = {
 
         <div class="carousel-viewport"
              @touchstart.passive="onTouchStart($event)"
+             @touchmove.passive="onTouchMove($event)"
              @touchend.passive="onTouchEnd($event)">
 
             <div class="carousel-track" :style="trackStyle()">
@@ -140,43 +150,20 @@ window.__hangarData = {
                                         <span class="hangar-status-chip hangar-status-chip--empty">{{ __('colony.hangar_empty') }}</span>
                                     </div>
 
-                                    {{-- Build form (inline, shown on demand) --}}
-                                    <template x-if="modalType[slot.instance_id] === 'build'">
-                                        <div class="hangar-form">
-                                            <div class="hangar-ship-radio-group">
-                                                <template x-for="type in shipTypes" :key="type.id">
-                                                    <label>
-                                                        <input type="radio"
-                                                               :name="'ship-type-' + slot.instance_id"
-                                                               :value="type.id"
-                                                               x-model="buildShipId[slot.instance_id]">
-                                                        <span x-text="shipLabel(type.name)"></span>
-                                                    </label>
-                                                </template>
-                                            </div>
-                                            <div class="hangar-error" x-text="error[slot.instance_id]"></div>
-                                            <div class="hangar-form-actions">
-                                                <button class="btn-hangar-action btn-hangar-action--secondary"
-                                                        @click="closeModal(slot.instance_id)">
-                                                    {{ __('colony.cancel') }}
-                                                </button>
-                                                <button class="btn-hangar-action"
-                                                        @click="buildShip(slot.instance_id)"
-                                                        :disabled="loading[slot.instance_id]">
-                                                    <span x-text="loading[slot.instance_id] ? '…' : i18n.buildShip"></span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <div class="hangar-card-footer">
-                                        <span></span>
-                                        <template x-if="modalType[slot.instance_id] !== 'build'">
-                                            <button class="btn-hangar-action"
-                                                    @click="openModal(slot.instance_id, 'build')">
-                                                {{ __('colony.hangar_build_ship') }}
+                                    {{-- 3 commission buttons — greyed out if already in another hangar --}}
+                                    <div class="hangar-commission-group">
+                                        <template x-for="type in shipTypes" :key="type.id">
+                                            <button class="btn-hangar-commission"
+                                                    :disabled="commissionedShipIds.includes(type.id) || loading[slot.instance_id]"
+                                                    @click="buildShipDirect(slot.instance_id, type.id)">
+                                                <span x-text="shipBuildLabel(type.name)"></span>
+                                                <span class="btn-commission-locked"
+                                                      x-show="commissionedShipIds.includes(type.id)">
+                                                    ✓ {{ __('colony.hangar_already_commissioned') }}
+                                                </span>
                                             </button>
                                         </template>
+                                        <div class="hangar-error" x-show="error[slot.instance_id]" x-text="error[slot.instance_id]"></div>
                                     </div>
 
                                 </div>
@@ -369,6 +356,8 @@ window.__hangarData = {
                     :aria-label="'Bay ' + (i + 1)"></button>
         </template>
     </div>
+
+    @endif {{-- hangar slots exist --}}
 
 </div>{{-- /.hangar-page --}}
 @endsection

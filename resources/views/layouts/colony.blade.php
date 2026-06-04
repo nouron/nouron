@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
     <link rel="stylesheet" href="{{ asset('css/colony.css') }}">
     <link rel="stylesheet" href="{{ asset('css/swipe.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/carousel.css') }}">
     @stack('styles')
 </head>
 <body class="@if(request()->routeIs('colony.view')) page-colony @endif">
@@ -31,7 +32,11 @@
             @else
             <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
             @endif
+            @if($hangarBuilt ?? false)
             <li><a href="{{ route('colony.hangar') }}" @class(['active' => request()->routeIs('colony.hangar*')])><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></a></li>
+            @else
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></span></li>
+            @endif
             <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
             <li><a href="{{ route('nexusdb.index') }}" @class(['active' => request()->routeIs('nexusdb.*')])><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
         </ul>
@@ -85,9 +90,15 @@
                         <i class="bi bi-cup-hot"></i> Cantina
                     </span>
                     @endif
+                    @if($hangarBuilt ?? false)
                     <a href="{{ route('colony.hangar') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.hangar*')])>
                         <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
                     </a>
+                    @else
+                    <span class="nav-flyout-item nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}">
+                        <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
+                    </span>
+                    @endif
                     <a href="{{ route('messages.inbox') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('messages.*')])>
                         <i class="bi bi-envelope"></i> Nachrichten
                     </a>
@@ -128,6 +139,7 @@
 
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 <script src="{{ asset('js/swipe.js') }}"></script>
+<script src="{{ asset('js/carousel.js') }}"></script>
 <script src="{{ asset('js/colony-hexgrid.js') }}"></script>
 @stack('scripts')
 </body>

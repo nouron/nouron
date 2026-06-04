@@ -38,12 +38,7 @@
     margin-left: auto;
 }
 
-/* ── Carousel layout ──────────────────────────────────────────────────────── */
-
-/* .carousel-wrapper, .carousel-viewport, .carousel-track,
-   .carousel-arrow, .carousel-dots, .carousel-dot are shared
-   with advisors.css and defined there. If hangar.css is loaded
-   without advisors.css, duplicate the definitions below. */
+/* ── Carousel layout — shared primitives in carousel.css ─────────────────── */
 
 /* ── Hangar card ──────────────────────────────────────────────────────────── */
 
@@ -75,13 +70,77 @@
 }
 
 @media (max-width: 767px) {
+    /* Full-screen slide experience: page fills viewport, card fills page */
+    .hangar-page {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: calc(100dvh - 100px); /* 100px = colony nav (60px) + resource bar (~40px) */
+        overflow: hidden;
+    }
+
+    .hangar-header {
+        padding: 0.6rem 1rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .carousel-wrapper {
+        flex: 1;
+        min-height: 0;
+        margin-bottom: 0;
+        align-items: stretch; /* override 'center' so viewport fills full height */
+    }
+
+    /* viewport stretches to wrapper height via align-items: stretch above */
+    .carousel-viewport {
+        min-height: 0;
+    }
+
+    .carousel-track {
+        min-height: 100%;
+        align-items: stretch;
+    }
+
     .hangar-card {
         width: 100vw;
         max-width: none;
-        height: calc(100vh - 160px);
+        min-height: 0;
+        max-height: none;
+        /* height: auto — stretched by track's align-items: stretch */
         border-radius: 0;
         border-left: none;
         border-right: none;
+        border-top: none;
+        box-shadow: none;
+    }
+
+    /* Larger info panel text */
+    .hangar-name      { font-size: 1.05rem; }
+    .hangar-subtitle  { font-size: 0.88rem; color: #888; }
+
+    .hangar-info {
+        padding: 1rem 1.25rem 1.25rem;
+        overflow-y: auto;
+    }
+
+    /* Big full-width action buttons */
+    .btn-hangar-action {
+        width: 100%;
+        padding: 0.9rem 1.25rem;
+        font-size: 1rem;
+        font-weight: 600;
+        min-height: 52px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .hangar-card-footer {
+        flex-direction: column;
+        gap: 0;
     }
 }
 
@@ -435,4 +494,68 @@
 
 @keyframes hangar-scan {
     to { left: 100%; }
+}
+
+/* ── Commission buttons (ship type selector, replaces radio group) ────────── */
+
+.hangar-commission-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    flex: 1;
+}
+
+.btn-hangar-commission {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid #c8e6c9;
+    background: transparent;
+    color: #2e7d32;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+    position: relative;
+}
+
+.btn-hangar-commission:hover:not(:disabled) {
+    background: #f2faf2;
+}
+
+.btn-hangar-commission:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    border-color: #ddd;
+    color: #999;
+}
+
+.btn-commission-locked {
+    font-size: 0.68rem;
+    font-weight: 400;
+    color: #aaa;
+    display: block;
+    margin-top: 2px;
+}
+
+/* ── Mobile: dots inside flex column, always visible ─────────────────────── */
+
+@media (max-width: 767px) {
+    .carousel-dots {
+        flex-shrink: 0;
+        padding: 0.5rem 0 0.25rem;
+    }
+}
+
+/* ── Mobile: commission buttons full-height ──────────────────────────────── */
+
+@media (max-width: 767px) {
+    .btn-hangar-commission {
+        padding: 1rem 1.25rem;
+        font-size: 1rem;
+        min-height: 60px;
+        border-radius: 10px;
+    }
 }

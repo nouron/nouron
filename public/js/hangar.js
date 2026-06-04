@@ -9,33 +9,29 @@
  */
 function hangarCarousel(config) {
     return {
-        slots:       config.slots,
-        shipTypes:   config.shipTypes,
-        hasPilot:    config.hasPilot,
-        routes:      config.routes,
-        csrfToken:   config.csrfToken,
+        ...carouselMixin(config.slots.length),
 
-        activeIndex: 0,
-        isMobile:    false,
-        touchStartX: 0,
-        touchStartY: 0,
+        slots:               config.slots,
+        shipTypes:           config.shipTypes,
+        commissionedShipIds: config.commissionedShipIds,
+        hasPilot:            config.hasPilot,
+        routes:              config.routes,
+        csrfToken:           config.csrfToken,
+        i18n:                config.i18n,
 
         // Per-instance UI state: keyed by instance_id
-        modalType:    {},  // instance_id → 'build'|'dispatch'|'repair'|null
-        loading:      {},  // instance_id → bool
-        error:        {},  // instance_id → string|null
+        modalType:    {},
+        loading:      {},
+        error:        {},
 
         // Per-instance form values
-        buildShipId:  {},  // instance_id → selected ship_id (int)
-        dispatchDest: {},  // instance_id → destination string
-        dispatchSol:  {},  // instance_id → sol_distance int
-        repairAp:     {},  // instance_id → ap_spent int
+        buildShipId:  {},
+        dispatchDest: {},
+        dispatchSol:  {},
+        repairAp:     {},
 
         init() {
-            this.checkBreakpoint();
-            window.addEventListener('resize', () => this.checkBreakpoint());
-
-            // Initialize per-slot defaults
+            this._carouselInit();
             this.slots.forEach(slot => {
                 const id = slot.instance_id;
                 this.modalType[id]    = null;
@@ -48,47 +44,9 @@ function hangarCarousel(config) {
             });
         },
 
-        checkBreakpoint() {
-            this.isMobile = window.innerWidth < 900;
-        },
-
-        prev() {
-            if (this.activeIndex > 0) this.activeIndex--;
-        },
-
-        next() {
-            if (this.activeIndex < this.slots.length - 1) this.activeIndex++;
-        },
-
-        goTo(i) {
-            this.activeIndex = i;
-        },
-
-        /**
-         * Returns the inline style string for the carousel track.
-         * On desktop the track wraps naturally; on mobile it slides by card width + gap.
-         */
-        trackStyle() {
-            if (!this.isMobile) return '';
-            const cardWidth = Math.min(window.innerWidth - 48, 320);
-            const gap = 16; // 1rem in px
-            const offset = this.activeIndex * (cardWidth + gap);
-            return `transform: translateX(-${offset}px)`;
-        },
-
-        onTouchStart(e) {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-        },
-
-        onTouchEnd(e) {
-            const dx = e.changedTouches[0].clientX - this.touchStartX;
-            const dy = e.changedTouches[0].clientY - this.touchStartY;
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-                if (dx < 0) this.next();
-                else this.prev();
-            }
-        },
+        prev()    { this._carouselPrev(); },
+        next()    { this._carouselNext(); },
+        goTo(i)   { this._carouselGoTo(i); },
 
         /**
          * Returns slot count info: how many slots have a ship vs total slots.
@@ -121,6 +79,34 @@ function hangarCarousel(config) {
                 ship_drone:     'Drohne',
             };
             return map[name] ?? name;
+        },
+
+        shipBuildLabel(name) {
+            const map = {
+                ship_corvette:  'Korvette in Dienst stellen',
+                ship_freighter: 'Frachter in Dienst stellen',
+                ship_drone:     'Drohne in Dienst stellen',
+            };
+            return map[name] ?? name;
+        },
+
+        async buildShipDirect(instanceId, shipId) {
+            this.loading[instanceId] = true;
+            this.error[instanceId]   = null;
+            try {
+                const url = this.routes.build.replace('__ID__', instanceId);
+                const res = await this._post(url, { ship_id: shipId });
+                if (res.ok) {
+                    this._updateSlot(instanceId, res.slot);
+                    this.commissionedShipIds = [...this.commissionedShipIds, shipId];
+                } else {
+                    this.error[instanceId] = res.error ?? 'Fehler.';
+                }
+            } catch {
+                this.error[instanceId] = 'Netzwerkfehler.';
+            } finally {
+                this.loading[instanceId] = false;
+            }
         },
 
         /**

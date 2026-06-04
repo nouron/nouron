@@ -152,7 +152,9 @@ return [
     'hangar_in_construction'  => 'Im Bau',
     'hangar_pilot_ready'      => 'Raumfahrer bereit',
     'hangar_status'           => 'Status',
+    'hangar_already_commissioned' => 'Bereits aktiv',
+    'hangar_none_built'       => 'Kein Hangar gebaut. Baue einen Hangar in der Kolonie, um Schiffe zu stationieren.',
     'nav_hangar'              => 'Hangar',
-    'nav_hangar_locked'       => 'Hangar nicht gebaut — Kommandozentrale lv2 erforderlich.',
+    'nav_hangar_locked'       => 'Kein Hangar gebaut.',
 
 ];

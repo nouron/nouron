@@ -1,0 +1,114 @@
+/* carousel.css — shared card-carousel primitives (Berater, Hangar, future screens)
+ *
+ * Pattern: horizontal swipe carousel with arrow nav (tablet) + dot pager (mobile).
+ * NOT for the Cantina panorama swipe — that uses swipe.css / swipe.js.
+ *
+ * Breakpoints:
+ *   ≥900px  — all cards visible in a row, arrows + dots hidden
+ *   768–899 — one card at a time, arrow buttons visible
+ *   <768px  — one card full-width, arrows hidden, dots visible, touch-swipe only
+ */
+
+/* ── Wrapper: arrows + viewport row ──────────────────────────────────────── */
+
+.carousel-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.carousel-viewport {
+    overflow: hidden;
+    flex: 1;
+    touch-action: pan-y; /* allow vertical scroll; horizontal swipe handled by JS */
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1rem;
+    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Desktop: all cards in a single row, no programmatic transform needed */
+@media (min-width: 900px) {
+    .carousel-track {
+        flex-wrap: nowrap;
+        justify-content: center;
+    }
+}
+
+/* ── Arrow buttons ────────────────────────────────────────────────────────── */
+
+.carousel-arrow {
+    background: #fff;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    color: var(--color-anthracite);
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.carousel-arrow:hover:not(:disabled) {
+    background: #f0f0f0;
+}
+
+.carousel-arrow:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+/* Arrows only on tablet (900–768px); hidden on desktop (not needed) and mobile (swipe only) */
+@media (min-width: 900px) {
+    .carousel-arrow {
+        display: none;
+    }
+}
+
+@media (max-width: 767px) {
+    .carousel-arrow {
+        display: none;
+    }
+    .carousel-wrapper {
+        gap: 0;
+    }
+}
+
+/* ── Dot pager (mobile only) ──────────────────────────────────────────────── */
+
+.carousel-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 0.5rem;
+}
+
+.carousel-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #ccc;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.carousel-dot--active {
+    background: var(--color-accent);
+}
+
+@media (min-width: 900px) {
+    .carousel-dots {
+        display: none;
+    }
+}

@@ -57,112 +57,15 @@
     color: var(--color-anthracite);
 }
 
-/* ── Carousel layout ──────────────────────────────────────────────────────── */
+/* ── Carousel layout — shared primitives in carousel.css ─────────────────── */
 
-.carousel-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.carousel-viewport {
-    overflow: hidden;
-    flex: 1;
-}
-
-.carousel-track {
-    display: flex;
-    gap: 1rem;
-    transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-}
-
-/* Desktop: all 5 cards in a single row, no wrapping */
+/* Desktop: advisor cards fill available width in the shared carousel-track */
 @media (min-width: 900px) {
-    .carousel-track {
-        flex-wrap: nowrap;
-        justify-content: center;
-    }
     .advisor-card {
         flex: 1 1 0;
         width: auto;
         min-width: 0;
         max-width: 380px;
-    }
-}
-
-/* ── Nav arrows ───────────────────────────────────────────────────────────── */
-
-.carousel-arrow {
-    background: #fff;
-    border: 1px solid var(--color-border);
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 1.2rem;
-    line-height: 1;
-    color: var(--color-anthracite);
-    transition: background 0.15s;
-    flex-shrink: 0;
-}
-
-.carousel-arrow:hover:not(:disabled) {
-    background: #f0f0f0;
-}
-
-.carousel-arrow:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-/* Arrows hidden on desktop (swipe unused) and on small mobile (swipe covers it) */
-@media (min-width: 900px) {
-    .carousel-arrow {
-        display: none;
-    }
-}
-
-@media (max-width: 767px) {
-    .carousel-arrow {
-        display: none;
-    }
-    .carousel-wrapper {
-        gap: 0;
-    }
-}
-
-/* ── Dots (mobile pager) ──────────────────────────────────────────────────── */
-
-.carousel-dots {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    margin-top: 0.5rem;
-}
-
-.carousel-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #ccc;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.carousel-dot--active {
-    background: var(--color-accent);
-}
-
-@media (min-width: 900px) {
-    .carousel-dots {
-        display: none;
     }
 }
 
@@ -195,13 +98,46 @@
 }
 
 @media (max-width: 767px) {
+    .advisors-page {
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: calc(100dvh - 84px);
+        overflow: hidden;
+    }
+
+    .advisors-header {
+        padding: 0.6rem 1rem;
+        margin-bottom: 0;
+        flex-shrink: 0;
+    }
+
+    .carousel-wrapper {
+        flex: 1;
+        min-height: 0;
+        margin-bottom: 0;
+        align-items: stretch;
+    }
+
+    .carousel-viewport {
+        min-height: 0;
+    }
+
+    .carousel-track {
+        min-height: 100%;
+        align-items: stretch;
+    }
+
     .advisor-card {
         width: 100vw;
         max-width: none;
-        height: calc(100vh - 160px);
+        min-height: 0;
+        max-height: none;
         border-radius: 0;
         border-left: none;
         border-right: none;
+        border-top: none;
+        box-shadow: none;
     }
 }
 
