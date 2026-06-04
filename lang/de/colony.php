@@ -137,4 +137,24 @@ return [
     'nexus_debt_label'  => 'Nexus-Kredit',
     'nexus_debt_format' => ':amount / 12.000 Cr',
 
+    // ── Hangar screen ─────────────────────────────────────────────────────────
+
+    'hangar_title'            => 'Hangar',
+    'hangar_slot_count'       => 'Slots',
+    'hangar_empty'            => 'Leer',
+    'hangar_build_ship'       => 'Schiff bauen',
+    'hangar_dispatch'         => 'Entsenden',
+    'hangar_recall'           => 'Zurückrufen',
+    'hangar_repair'           => 'Reparieren',
+    'hangar_destination'      => 'Ziel',
+    'hangar_sol_distance'     => 'Sol-Distanz',
+    'hangar_in_transit'       => 'Unterwegs',
+    'hangar_in_construction'  => 'Im Bau',
+    'hangar_pilot_ready'      => 'Raumfahrer bereit',
+    'hangar_status'           => 'Status',
+    'hangar_already_commissioned' => 'Bereits aktiv',
+    'hangar_none_built'       => 'Kein Hangar gebaut. Baue einen Hangar in der Kolonie, um Schiffe zu stationieren.',
+    'nav_hangar'              => 'Hangar',
+    'nav_hangar_locked'       => 'Kein Hangar gebaut.',
+
 ];

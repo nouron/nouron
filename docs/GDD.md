@@ -20,6 +20,7 @@
 7. [Verfall & Entropie](#7-verfall--entropie)
 8. [Flotten & Flottenorders](#8-flotten--flottenorders)
    - 8a. [Systemansicht](#8a-systemansicht)
+   - 8b. [Hangar-Screen](#8b-hangar-screen)
 9. [Begegnungen & Gefahren](#9-begegnungen--gefahren)
 10. [Forschung](#10-forschung)
 11. [Techtree](#11-techtree)
@@ -97,6 +98,8 @@ Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einma
 
 **3. Nur eine Kolonie — Tiefe statt Breite**
 Kein Ausbreiten über eine halbe Galaxie, kein Micromanagement von zehn Außenposten. Eine Kolonie, ein Direktor — alle Entscheidungen betreffen denselben Ort und dieselbe Gemeinschaft.
+
+> **Außenposten:** Außenposten (nicht Kolonien) sind als Phase-4-Konzept vorgesehen — kein Kolonisierungssystem. Design noch nicht definiert. Der Spieler betreibt im gesamten Spiel genau eine Kolonie; Außenposten wären ressourcenextrahierende Außenstellen ohne eigene Verwaltungsebene.
 
 **4. Roguelike-Elemente im Strategieformat**
 Jeder Run hat variable Aufgaben, zufällige Ereignisse und echte Konsequenzen. Das Scheitern ist möglich und lehrreich. Kein Run ist identisch — aber die Kolonie bleibt immer dieselbe Art von Ort.
@@ -249,7 +252,7 @@ Credits werden durch vier Quellen erworben:
 
 | Quelle | Beschreibung |
 |--------|-------------|
-| Kolonistensteuern | Automatische Abgaben pro Sol — abhängig von der Koloniegröße (Wohnhabitat-Anzahl) |
+| Koloniebeiträge (Arbeitstitel) | Automatische Abgaben pro Sol — abhängig von der Koloniegröße (Wohnhabitat-Anzahl). Begriff und Mechanik offen — Design-TODO in §14 |
 | Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Sol (Arbeitstitel: Name noch offen) |
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
@@ -1023,6 +1026,45 @@ Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. I
 
 ---
 
+## 8b. Hangar-Screen
+
+Der Hangar-Screen ist die Verwaltungsansicht aller Schiffe einer Kolonie. Er wird aktiv sobald mindestens ein Hangar (CC Lv3) gebaut wurde.
+
+### Carousel-View
+
+Der Screen zeigt Schiffe in einer **Carousel-Navigation** — eine Karte pro Hangar-Slot, Swipe-Navigation auf Mobile, Dots-Pager für die Positionsanzeige. Jede Karte repräsentiert einen Slot; der Spieler navigiert durch die Slots wie durch Seiten.
+
+### Karten-States
+
+| State | Beschreibung | Aktion |
+|-------|-------------|--------|
+| Leer | Slot verfügbar, kein Schiff | Kommissionierung starten |
+| Im Bau (`ship_state: building`) | Schiff im Bau, Fortschrittsanzeige | Wartet auf Abschluss |
+| Angedockt (`docked`) | Schiff einsatzbereit im Hangar | Entsenden / Reparieren |
+| Unterwegs (`dispatched`) | Schiff auf aktiver Mission | Recall / Missionslog anzeigen |
+
+### Constraint: Kein Duplikat-Schiffstyp
+
+Pro Kolonie ist jeder Schiffstyp nur einmal erlaubt — kein zweites Schiff desselben Typs. Das begrenzt die Flottenkomposition bewusst und verhindert Massenproduktion eines einzelnen Typs.
+
+### Missionslog
+
+Jede abgeschlossene Mission wird in `colony_hangar_missions` gespeichert. Gespeicherte Felder: Zielkoordinaten, Sol-Distanz, Ergebnis. Das Log ist im Screen einsehbar (Swipe oder separater Tab).
+
+### UI-Buttons
+
+| Button | Zustand | Funktion |
+|--------|---------|---------|
+| Entsenden | `docked` | Flottenorder erteilen |
+| Recall | `dispatched` | Schiff zurückrufen |
+| Reparieren | `docked`, SP < max | Repair-Order erteilen (Construction-AP) |
+
+### Technischer Stack
+
+Alpine.js + PicoCSS — kein jQuery, kein Bootstrap. Carousel-Logik in `public/js/carousel.js`, Styles in `public/css/carousel.css`.
+
+---
+
 ## 9. Begegnungen & Gefahren
 
 Die Kolonie existiert nicht im Vakuum. Im System gibt es vereinzelte Präsenzen — Piraten, fremde Sonden, verlassene Stationen — die gelegentlich zu Zwischenfällen führen. Diese Begegnungen sind keine Schlachten; sie sind Ereignisse mit Konsequenzen.
@@ -1474,27 +1516,21 @@ advisors
 ├── user_id                 ← Eigentümer (immer gesetzt)
 ├── personell_type          ← 'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
-├── fleet_id                ← nullable: auf dieser Flotte
-├── is_commander            ← boolean: führt die Flotte als Kommandant (nur navigation-Typ)
 ├── rank                    ← 1 = Junior | 2 = Senior | 3 = Experte
 ├── active_ticks            ← kumulierter Zähler für Rang-Aufstieg
-└── unavailable_until_tick  ← Erholungsphase nach Kampfverlust (NULL = verfügbar)
-
-CHECK: colony_id IS NULL OR fleet_id IS NULL
+└── unavailable_until_tick  ← Erholungsphase nach Burnout (NULL = verfügbar)
 ```
+
+> **Verworfen (Option A):** Frühere Entwürfe sahen `fleet_id` und `is_commander`-Felder vor, um den Raumfahrer als Flottenkommandanten zu modellieren. Dieser Pfad wurde nicht weiterverfolgt. Berater sind colony-scoped — sie verlassen die Kolonie nicht. Die Flottenkommandanten-Mechanik ist für Phase 4+ zurückgestellt und noch nicht definiert.
 
 **Mögliche Zustände eines Beraters:**
 
-| colony_id | fleet_id | is_commander | Bedeutung | Gilt für |
-|-----------|----------|--------------|-----------|----------|
-| gesetzt | NULL | false | Aktiv auf Kolonie, generiert AP | Alle Typen |
-| NULL | gesetzt | **true** | Führt Flotte als Kommandant, generiert Navigation-AP | **Nur navigation-Typ** |
-| NULL | gesetzt | false | Passagier auf Flotte (Transport oder Begleitung) | Alle Typen |
-| NULL | NULL | false | Arbeitslos — re-assignierbar oder handelbar | Alle Typen |
+| colony_id | Bedeutung | Gilt für |
+|-----------|-----------|----------|
+| gesetzt | Aktiv auf Kolonie, generiert AP | Alle Typen |
+| NULL | Arbeitslos — re-assignierbar oder handelbar | Alle Typen |
 
-**Validierungsregel:** `is_commander = true` ist nur erlaubt, wenn `personell_type = 'navigation'`. Das wird auf Service-Ebene erzwungen.
-
-**Entlassung** löscht keinen Berater — `colony_id` und `fleet_id` werden auf NULL gesetzt. Der Berater bleibt als arbeitsloser Datensatz erhalten und kann erneut zugewiesen oder gehandelt werden. Rang und `active_ticks` bleiben erhalten.
+**Entlassung** löscht keinen Berater — `colony_id` wird auf NULL gesetzt. Der Berater bleibt als arbeitsloser Datensatz erhalten und kann erneut zugewiesen oder gehandelt werden. Rang und `active_ticks` bleiben erhalten.
 
 ---
 
@@ -1504,17 +1540,17 @@ CHECK: colony_id IS NULL OR fleet_id IS NULL
 |------------|-----------------|------------------|
 | Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
 | Analytiker | `research` | Kenntnisse, Wissensarbeit |
-| Raumfahrer | `navigation` | Flottenführung, Bewegung, Fleet-Trade; kann Flotten kommandieren |
+| Raumfahrer | `navigation` | Flottenorders erteilen, Bewegung, Fleet-Trade; colony-scoped AP-Produzent |
 | Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
 | Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
-Der Raumfahrer ist eine Doppelrolle: Auf der Kolonie generiert er Navigation-AP für das Erteilen von Flottenorders. Wenn er einer Flotte zugewiesen wird (als Kommandant), verschiebt sich sein AP-Beitrag von der Kolonie zur Flotte. Dieser Transfer ist die einzige Situation, in der ein Beraterslot auf der Kolonie temporär leer wird, ohne dass eine Entlassung stattgefunden hat.
+Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP sind die Voraussetzung für das Erteilen von Flottenorders. Er ist kein Flottenkommandant und verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
 
 ### Außenmissionen (Berater-Außendienst)
 
 > **Phase 4** — Vollständig ausgearbeitet, Implementierung ab Phase 4 geplant.
 
-Der Raumfahrer hat den Flottenkommandanten-Pfad als eigene Außendienst-Mechanik (§14). Alle übrigen vier Beratertypen können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr.
+Vier Beratertypen (Baumeister, Analytiker, Konsul, Stratege) können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr. Der Raumfahrer erscheint nicht in der Missions-Auswahl — eine spezifische Außendienst-Mechanik für ihn wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert).
 
 ---
 
@@ -1577,7 +1613,7 @@ Jede Außenmission hat drei mögliche Ausgänge. Der Rang des Beraters bestimmt 
 | **Concurrent-Limit** | Maximal 2 Berater gleichzeitig auf Mission (kolonieweites Limit). Ein dritter kann erst starten, wenn einer zurückgekehrt ist. |
 | **Missionsdauer-Transparenz** | Das Missions-UI zeigt die verbleibenden Sole bis Rückkehr neben der aktuellen Sol-Nummer an. |
 | **AP-Nutzungsrate** | Run-Aufgabe "Effizienzsprung" (AP-Nutzungsrate ≥ 90%, §15) und Außenmissionen schließen sich nicht aus — der Spieler muss aktiv abwägen ob er einen AP-Produzenten für die Missionsdauer opfert. |
-| **Raumfahrer ausgenommen** | Der Raumfahrer erscheint in der Missions-Auswahl nicht — seine Außendienst-Mechanik ist der Flottenkommandanten-Pfad. |
+| **Raumfahrer ausgenommen** | Der Raumfahrer erscheint in der Missions-Auswahl nicht — Außendienst-Mechanik für den Raumfahrer wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert). |
 
 ---
 
@@ -1629,7 +1665,7 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol
 | Konsul | 350 | Handelssupport — mittlere Priorität |
 | Stratege | 600 | Teuerster — typischerweise Late-Game |
 
-- **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` oder `fleet_id` hat.
+- **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` gesetzt hat (Berater ist aktiv zugewiesen).
 - **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
 - Alle Werte stehen in `config/advisors.php` (Einstellungskosten) und `config/game.php → advisors` (AP, Upkeep, Rang-Thresholds).
 
@@ -1648,21 +1684,19 @@ Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Persona
 
 Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berater verbrauchen kein Supply.
 
-**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt (Designentscheidung Phase 3, noch offen). Aktuell: kein Raumfahrer-pro-Flotte-Pflichtmodell.
+**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt. Konkrete Obergrenze noch offen — konfigurierbar, Phase 4+. Kein Flottenkommandanten-Pflichtmodell: Flotten benötigen keinen zugewiesenen Raumfahrer.
 
 ---
 
-### Raumfahrer: Kolonie vs. Flotte
+### Raumfahrer: Colony-Scope
 
-Der Raumfahrer ist der einzige Beratertyp, der seinen Koloniebezug aufgeben kann, um eine Flotte zu führen.
+Der Raumfahrer ist ein colony-scoped AP-Produzent für den `navigation`-Pool. Er bleibt der Kolonie zugewiesen und verlässt sie nicht.
 
-- **Kolonie-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
-- **Flotte-zugewiesen (Kommandant):** Generiert Navigation-AP direkt auf der Flotte; Kolonie-Slot ist leer bis zur Rückkehr.
-- **Rückkehr:** Beim Auflösen einer Flotte wird der Raumfahrer automatisch wieder der Kolonie zugewiesen (`colony_id` gesetzt, `fleet_id` = NULL, `is_commander` = false).
-- **Flottenverlust im Kampf:** Der Raumfahrer ist für 2–3 Sole nicht verfügbar (`unavailable_until_tick` gesetzt), geht aber nicht dauerhaft verloren.
-- **Einzelne Schiffe** brauchen keine eigenen Raumfahrer. Nur die Flotte als Ganzes braucht einen Kommandanten.
+- **Colony-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
+- **Flottenorders:** Navigation-AP, die der Raumfahrer generiert, werden verbraucht wenn der Spieler Flottenorders erteilt — der Raumfahrer selbst "geht" dabei nicht mit.
+- **Burnout:** Bei Burnout ist der Raumfahrer für N Sole nicht verfügbar (`unavailable_until_tick` gesetzt), der Navigation-AP-Pool fällt auf den Grundwert.
 
-> **TODO — Kommandanten-Zuweisung (UI nicht implementiert):** Die UI zur Zuweisung eines Kommandanten zu einer Flotte existiert noch nicht. Aktuell kann ein Raumfahrer nur auf Kolonieebene verwaltet werden. Flottenkommandanten müssen als eigener UI-Flow implementiert werden: Flottendetailansicht → Kommandant auswählen → Transfer bestätigen → Kolonie-Slot wird leer markiert.
+> **Phase 4+ — Flottenkommandanten-Mechanik:** Eine Mechanik, bei der der Raumfahrer physisch einer Flotte zugewiesen wird (als Kommandant), ist für Phase 4+ zurückgestellt. Datenmodell (eventuelles `fleet_id`-Feld, `is_commander`-Flag) ist noch nicht definiert. Keine Implementierung vor Playtest-Auswertung.
 
 ---
 

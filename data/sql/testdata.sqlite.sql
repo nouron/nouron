@@ -238,17 +238,35 @@ INSERT INTO "colony_resources" VALUES(3,1,250);
 INSERT INTO "colony_resources" VALUES(4,1,50);
 INSERT INTO "colony_resources" VALUES(5,1,50);
 INSERT INTO "colony_resources" VALUES(12,1,0);
-INSERT INTO "colony_ships" VALUES(1,29,0,10,1);
-INSERT INTO "colony_ships" VALUES(1,37,9,10,1);
-INSERT INTO "colony_ships" VALUES(1,49,12,10,1);
-INSERT INTO "colony_ships" VALUES(1,83,17,10,1);
-INSERT INTO "colony_ships" VALUES(1,84,16,10,1);
-INSERT INTO "colony_ships" VALUES(2,29,19,10,1);
-INSERT INTO "colony_ships" VALUES(2,37,19,10,1);
-INSERT INTO "colony_ships" VALUES(2,47,19,10,1);
-INSERT INTO "colony_ships" VALUES(2,49,19,10,1);
-INSERT INTO "colony_ships" VALUES(2,83,19,10,1);
-INSERT INTO "colony_ships" VALUES(2,84,19,10,1);
+-- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield)
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,1,1,20,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,2,1,20,0);
+
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,29,0,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,37,9,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,47,3,10,0);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,49,12,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,83,17,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,84,16,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,85,5,3,0);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,29,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,37,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,47,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,49,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,83,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,84,19,10,1);
+
+-- Assign hangar bays: corvette (ship_id=37) → hangar 1, freighter (ship_id=47) → hangar 2 on colony 1
+-- Drone (ship_id=85) dispatched from hangar 1, so ship_state=dispatched
+UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='dispatched' WHERE colony_id=1 AND ship_id=85;
+UPDATE "colony_ships" SET hangar_instance_id=1, ship_state='docked'     WHERE colony_id=1 AND ship_id=37;
+UPDATE "colony_ships" SET hangar_instance_id=2, ship_state='docked'     WHERE colony_id=1 AND ship_id=47;
+
+-- Hangar missions for colony 1:
+-- Mission 1: drone dispatched from hangar 1, currently active
+-- Mission 2: freighter recalled from hangar 2, completed
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'Asteroid Belt Proxima',4,1,NULL,'active','2026-06-03 00:00:00');
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'Raani Trading Post',8,1,3,'recalled','2026-06-03 00:00:00');
 INSERT INTO "colony_personell" VALUES(1,35,9,10);
 INSERT INTO "colony_personell" VALUES(1,36,2,10);
 INSERT INTO "colony_personell" VALUES(1,89,0,10);

@@ -44,6 +44,7 @@
 
         <div class="carousel-viewport"
              @touchstart.passive="onTouchStart($event)"
+             @touchmove.passive="onTouchMove($event)"
              @touchend.passive="onTouchEnd($event)">
 
             <div class="carousel-track" :style="trackStyle()">

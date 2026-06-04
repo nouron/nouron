@@ -23,7 +23,8 @@
 6. [Screen-Typen](#6-screen-typen)
    - 6.1 [Lobby](#61-lobby)
    - 6.2 [In-Run Screens (Standard)](#62-in-run-screens-standard)
-   - 6.3 [Cantina / Bar](#63-cantina--bar)
+   - 6.3 [Carousel-Screens](#63-carousel-screens)
+   - 6.4 [Cantina / Bar](#64-cantina--bar)
 7. [Grafik-Assets](#7-grafik-assets)
 8. [Do / Don't Kurzreferenz](#8-do--dont-kurzreferenz)
 
@@ -42,6 +43,8 @@ Nouron ist ein Browserspiel mit dem Anspruch, elegant und konzentriert zu wirken
 **Akzentfarbe sparsam.** Nouron-Rot (`#8c2030`) ist eine elegante Markenfarbe, kein Signal-Rot. Sie markiert aktive Zustände und primäre Aktionen — nicht Warnungen, nicht Fehler. Für Warnungen und Fehler gelten eigene semantische Farben.
 
 **Keine Dark-Mode-Defaults.** Neue Screens sind hell by default. `data-theme="light"` explizit setzen wenn PicoCSS geladen wird, damit Systemeinstellungen nicht durchschlagen.
+
+**Kein jQuery.** jQuery wurde vollständig entfernt (Mai 2026). Legacy-Screens (Bootstrap 5) nutzen Vanilla JS — kein jQuery mehr, auch nicht in Legacy-Screens. Neue Screens: ausschließlich Alpine.js und Vanilla `fetch()`. Interaktivität wird über `x-data`, `x-on`, `x-show` und `x-bind` realisiert.
 
 ---
 
@@ -334,7 +337,27 @@ Gilt für: Colony, Berater, Techtree, Handel, Nachrichten, Flotte, Galaxis, Syst
 
 ---
 
-### 6.3 Cantina / Bar
+### 6.3 Carousel-Screens
+
+Screens mit Carousel-Navigation (aktuell: Berater-Screen, Hangar-Screen) folgen einem eigenen Muster.
+
+**Merkmale:**
+- Card-basierte Darstellung: eine Entität pro Card (ein Berater, ein Hangar-Slot)
+- Navigation: Swipe auf Mobile, Pfeil-Buttons auf Desktop
+- Dots-Pager unterhalb der Cards als Positionsanzeige
+- Kein horizontales Scrolling der gesamten Seite — nur der Carousel-Bereich scrollt
+
+**Technischer Stack:**
+- Alpine.js für State (aktiver Index, Swipe-Events)
+- PicoCSS für Card-Grundlayout
+- Carousel-Logik in `public/js/carousel.js`, Styles in `public/css/carousel.css`
+- Kein jQuery, kein Bootstrap
+
+**Card-States:** Jede Card zeigt genau einen Zustand an (leer / aktiv / inaktiv / abwesend). State-Übergänge werden durch Alpine.js `x-show` / `x-data` gesteuert, nicht durch DOM-Neuladen.
+
+---
+
+### 6.4 Cantina / Bar
 
 Die Cantina hat einen eigenen visuellen Charakter: ein Bar-Hintergrundbild als atmosphärisches Element.
 
@@ -393,6 +416,7 @@ public/img/tiles/       -- Hex-Tile-Texturen
 | Cards nur für abgegrenzte Entitäten | Cards als generelles Layout-Werkzeug |
 | Border oder Shadow — eines davon | Border und Shadow kombinieren |
 | `data-theme="light"` bei PicoCSS setzen | Dark-Mode von Systemeinstellung erben lassen |
+| Alpine.js + Vanilla fetch() für alle Interaktionen | jQuery verwenden (vollständig entfernt, Mai 2026) |
 | Container in `em`/`rem` | Fixe `px`-Grössen für Icons und Portraits |
 | WebP 2× für alle Illustrationen | PNG, SVG für illustrierte Spielgrafiken |
 | system-ui für alle funktionalen Texte | Mixed Fonts innerhalb einer Ebene |

@@ -8,63 +8,22 @@
  */
 function advisorCarousel(config) {
     return {
+        ...carouselMixin(config.slots.length),
+
         slots:        config.slots,
         slotInfo:     config.slotInfo,
         routes:       config.routes,
         juniorUpkeep: config.junior_upkeep ?? 10,
-        activeIndex: 0,
-        isMobile:    false,
-        touchStartX: 0,
-        touchStartY: 0,
-        dialogSlot:  null,
-        errorMsg:    null,
+        dialogSlot:   null,
+        errorMsg:     null,
 
         init() {
-            this.checkBreakpoint();
-            window.addEventListener('resize', () => this.checkBreakpoint());
+            this._carouselInit();
         },
 
-        checkBreakpoint() {
-            this.isMobile = window.innerWidth < 900;
-        },
-
-        prev() {
-            if (this.activeIndex > 0) this.activeIndex--;
-        },
-
-        next() {
-            if (this.activeIndex < this.slots.length - 1) this.activeIndex++;
-        },
-
-        goTo(i) {
-            this.activeIndex = i;
-        },
-
-        /**
-         * Returns the inline style string for the carousel track.
-         * On desktop the track wraps naturally; on mobile it slides by card width + gap.
-         */
-        trackStyle() {
-            if (!this.isMobile) return '';
-            const cardWidth = Math.min(window.innerWidth - 48, 320);
-            const gap = 16; // 1rem in px
-            const offset = this.activeIndex * (cardWidth + gap);
-            return `transform: translateX(-${offset}px)`;
-        },
-
-        onTouchStart(e) {
-            this.touchStartX = e.touches[0].clientX;
-            this.touchStartY = e.touches[0].clientY;
-        },
-
-        onTouchEnd(e) {
-            const dx = e.changedTouches[0].clientX - this.touchStartX;
-            const dy = e.changedTouches[0].clientY - this.touchStartY;
-            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-                if (dx < 0) this.next();
-                else this.prev();
-            }
-        },
+        prev()    { this._carouselPrev(); },
+        next()    { this._carouselNext(); },
+        goTo(i)   { this._carouselGoTo(i); },
 
         openHireDialog(slot) {
             this.dialogSlot = slot;

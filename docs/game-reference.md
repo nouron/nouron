@@ -13,7 +13,7 @@ Spieler:    user → user_resources (Credits, Supply auf User-Ebene)
 Kolonie:    colony_buildings, colony_resources, colony_researches, colony_ships, colony_personell
 Flotten:    fleets → fleet_ships, fleet_resources, fleet_personell, fleet_researches
 Befehle:    fleet_orders (tick-basiert, serialisierte PHP-Daten)
-Handel:     trade_resources, trade_researches
+Handel:     trade_resources, trade_researches (inaktiv — Forschungshandel verworfen, April 2026)
 Nachrichten: innn_messages, innn_events, innn_news, innn_message_types
 Stammdaten: buildings, researches, ships, personell, resources + jeweilige _costs-Tabellen
 ```
