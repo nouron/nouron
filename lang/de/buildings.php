@@ -45,4 +45,15 @@ return [
     'temple'      => 'Religiöse Stätte',
     'temple_desc' => 'Kein prunkvoller Bau — ein abgetrennter Raum, ein Symbol, ein stiller Ort. Auf einem Planeten fernab der Heimat brauchen Menschen irgendwo einen Anker. Welche Überzeugung dahintersteht, ist Sache der Kolonisten.',
 
+    // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
+
+    'securityHub'      => 'Sicherheitszentrum',
+    'securityHub_desc' => 'Koordinationspunkt für Patrouilleneinsätze und Koloniesicherheit. Reduziert den operativen Aufwand für Verteidigungsoperationen und stellt sicher, dass beim Rückbau eines Gebäudes zumindest ein Teil der verbauten Materialien geborgen wird.',
+
+    'uplinkStation'      => 'Uplink-Station',
+    'uplinkStation_desc' => 'Leistungsstarke Kommunikations- und Scananlage. Ermöglicht präzisere Tiefenscans der Umgebung und verbessert die Handelsverbindungen zu Nexus-Konvois. Ab der dritten Ausbaustufe: Direktzugang zur Nexus-Abschlussübertragung.',
+
+    'tradingPost'      => 'Handelsposten',
+    'tradingPost_desc' => 'Ausgewiesener Anlaufpunkt für reisende Händler. Wer einen eingerichteten Handelsposten vorfindet, bietet bessere Konditionen — Angebote fallen großzügiger aus als bei einem improvisierten Treff in der Cantina.',
+
 ];

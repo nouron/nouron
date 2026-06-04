@@ -135,7 +135,7 @@ Die Navbar ist immer hell.
 **Struktur:**
 - Hintergrund: `#ffffff`
 - Border-bottom: `1px solid #e8e8ec`
-- Position: `fixed-top` (über Spielinhalt)
+- Position: `position: fixed; top: 0; width: 100%` (über Spielinhalt)
 
 **Logo / Markenname "Nouron":**
 - Schrift: Libre Baskerville
@@ -321,7 +321,7 @@ Der Lobby-Screen ist der Einstiegspunkt vor und nach einem Run.
 Gilt für: Colony, Berater, Techtree, Handel, Nachrichten, Flotte, Galaxis, Systemkarte.
 
 **Schichtung (von oben nach unten):**
-1. Navbar (fixed-top, hell)
+1. Navbar (position: fixed; top: 0; width: 100%, hell)
 2. Resource Bar (direkt darunter, horizontale Leiste)
 3. Subnav / Tabs (wenn der Screen interne Sektionen hat)
 4. Screen-Content (`container-fluid`, `margin-top: 1rem`)
