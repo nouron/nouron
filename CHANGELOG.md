@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-04
+
+- **Carousel-Refactor**: Gemeinsame Carousel-Primitives aus Advisors extrahiert in `carousel.css` + `carousel.js`; Berater- und Hangar-Screen nutzen dieselbe Basis
+- **Hangar Mobile-Fix**: Viewport-Calc korrigiert (84px → 100px — nav 60px + resbar ~40px); Pagination-Dots auf Mobile ohne Scrollen sichtbar
+- **GDD-Audit**: Flottenkommandanten-Pfad (Option A, verworfen) aus §13 entfernt; Raumfahrer als colony-scoped AP-Produzent dokumentiert; §8b Hangar-Screen neu; Design-Guide um Carousel-Screen-Typ + jQuery-Entfernung (Mai 2026) ergänzt; `trade_researches` als inaktiv markiert
+
 ## 2026-06-03
 
 Hangar Screen (Carousel-basiert) + Cantina Character System + Dev-Panel Hotspot Tool.
