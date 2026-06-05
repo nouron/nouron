@@ -1063,7 +1063,7 @@ Hangare sind **operationale Slots** — nur ein Schiff pro Hangar-Instanz kann e
 - Verfällt automatisch nach N Solen (TickService) wenn nicht einem Hangar zugewiesen
 - **Decay-Zeit:** nach Playtest kalibrieren (Richtwert: 5 Sole)
 
-Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt sich aus dem Koloniebauplatz — ein Spieler kann realistisch 2–3 Hangare errichten bevor der Platz für wichtigere Gebäude fehlt. Kein Hard-Cap nötig.
+Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt sich aus drei Faktoren: Koloniebauplatz, Supply-Kosten des Hangars und Credits für Nexus-Anfragen. Kein Hard-Cap nötig.
 
 ### Karten-States (Carousel)
 
