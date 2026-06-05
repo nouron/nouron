@@ -193,6 +193,24 @@ class LobbyController extends Controller
         return redirect()->route('lobby')->with('success', __('run.new_run_started'));
     }
 
+    public function abandon(Run $run): RedirectResponse
+    {
+        if ($run->user_id !== Auth::id()) {
+            abort(403);
+        }
+
+        if ($run->status !== 'active') {
+            return redirect()->route('lobby')->with('error', __('lobby.abandon_not_active'));
+        }
+
+        $run->update([
+            'status'   => 'failed',
+            'ended_at' => now(),
+        ]);
+
+        return redirect()->route('lobby')->with('success', __('lobby.abandon_success'));
+    }
+
     public function start(Request $request): RedirectResponse
     {
         $run = Run::where('user_id', auth()->id())
