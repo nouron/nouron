@@ -8,6 +8,8 @@
 - **GDD §5**: Harvester-Produktionsrate — feste Rate `×10/level` dokumentiert (Phase 3); tile-abhängige Mechanik auf Phase 4+ verschoben.
 - **GDD §4a**: `terrain_fog` / `terrain_locked` als UI-Render-States dokumentiert (kein `tile_type` in DB — abgeleitet aus `is_explored` + `is_colony_zone`).
 - **Characters**: `informationsagent` → `information_broker` (Slug-Konsistenz; alle anderen Slugs englisch).
+- **GDD §8b Hangar-Redesign**: Schiffsakquise vollständig überarbeitet — Nexus als Lieferant statt Selbstbau. 4 Akquise-Pfade: Standardkauf (Credits + Lieferzeit), Nexus-Kredit (ab CC Lv2, Trust-Penalty), Konsul-Verhandlung (AP-Rabatt 50 Cr/AP), Event/Händler. Kein Duplikat-Constraint mehr. Pending-State für Schiffe ohne Hangar-Zuweisung (Decay 5 Sole).
+- **feat(hangar)**: `requestShip()` ersetzt `buildShip()`; `getPendingShips()`, `assignToHangar()` neu. `colony_ships` PK auto-increment. TickService `processHangarDeliveries()`. Config: `nexus_cost`/`nexus_delivery_ticks` in ships.php, `hangar`-Block in game.php. UI: "Nexus anfragen"-Dialog, Lieferung-State, "Nicht zugewiesen"-Sektion. 760 Tests grün.
 
 ## 2026-06-04
 
