@@ -167,16 +167,16 @@ return [
         'ap_cost_threshold' => 1000,  // divisor: amount × price / threshold = AP cost
     ],
 
-    // Moral system — formula and multiplier bands (see GDD §13).
+    // Trust system — formula and multiplier bands (see GDD §13).
     // Formula: clamp(Σbuildings + Σresearches + clamp(Σships, -30, +30) + events, -100, +100)
-    // Per-entity moral_per_lv / moral_per_unit values live in config/buildings.php,
-    // config/techs.php and config/ships.php — MoralService reads from those files.
-    'moral' => [
-        // resource_id in colony_resources where the moral value is stored (res_moral).
+    // Per-entity trust_per_lv / trust_per_unit values live in config/buildings.php,
+    // config/techs.php and config/ships.php — TrustService reads from those files.
+    'trust' => [
+        // resource_id in colony_resources where the trust value is stored (res_moral).
         'resource_id' => 12,
-        // Hard cap for total ship moral contribution (before global clamp).
+        // Hard cap for total ship trust contribution (before global clamp).
         'ships_cap' => 30,
-        // Production multipliers by moral band (see GDD §13 "Effekte der Moral").
+        // Production multipliers by trust band (see GDD §13 "Effekte der Moral").
         'production_multiplier' => [
             ['min' =>  61, 'max' => 100, 'factor' => 1.20],
             ['min' =>  21, 'max' =>  60, 'factor' => 1.10],
@@ -184,7 +184,7 @@ return [
             ['min' => -60, 'max' => -21, 'factor' => 0.85],
             ['min' => -100,'max' => -61, 'factor' => 0.70],
         ],
-        // AP multipliers by moral band.
+        // AP multipliers by trust band.
         'ap_multiplier' => [
             ['min' =>  61, 'max' => 100, 'factor' => 1.10],
             ['min' =>  21, 'max' =>  60, 'factor' => 1.05],
@@ -192,7 +192,7 @@ return [
             ['min' => -60, 'max' => -21, 'factor' => 0.90],
             ['min' => -100,'max' => -61, 'factor' => 0.80],
         ],
-        // Event moral effects (one-shot, active for exactly 1 tick).
+        // Event trust effects (one-shot, active for exactly 1 tick).
         // Multiple events of the same key in one tick do NOT stack — strongest wins.
         'events' => [
             'building_level_up'     =>  1,

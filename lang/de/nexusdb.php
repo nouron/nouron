@@ -27,8 +27,8 @@ return [
     'speed_unit'      => 'Felder/Sol',
     'supply_cost_ship'=> 'Versorgungskosten',
     'supply_unmanned' => 'Unbemannt',
-    'moral_effect'    => 'Moraleffekt',
-    'moral_neutral'   => 'Neutral',
+    'trust_effect'    => 'Vertrauenseffekt',
+    'trust_neutral'   => 'Neutral',
 
     // Knowledge tab — card field labels
     'knowledge_max_level'    => 'Max. Stufe',

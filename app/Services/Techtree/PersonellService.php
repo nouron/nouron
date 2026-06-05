@@ -4,7 +4,7 @@ namespace App\Services\Techtree;
 
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
-use App\Services\MoralService;
+use App\Services\TrustService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Support\Collection;
@@ -45,7 +45,7 @@ class PersonellService
 
     public function __construct(
         private readonly TickService      $tickService,
-        private readonly MoralService     $moralService,
+        private readonly TrustService     $trustService,
         private readonly ResourcesService $resourcesService,
     ) {}
 
@@ -64,9 +64,9 @@ class PersonellService
             ->get()
             ->sum(fn(Advisor $a) => $a->getApPerTick());
 
-        // Apply moral AP multiplier for colony-scoped types.
-        $moral      = $this->moralService->getMoral($scopeId);
-        $multiplier = $this->moralService->getApMultiplier($moral);
+        // Apply trust AP multiplier for colony-scoped types.
+        $trust      = $this->trustService->getTrust($scopeId);
+        $multiplier = $this->trustService->getApMultiplier($trust);
         return (int) round($baseAp * $multiplier);
     }
 

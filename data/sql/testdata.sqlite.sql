@@ -3,7 +3,7 @@ INSERT INTO "resources" VALUES(2,'res_supply','Sup','Event',0,200,'resicon-suppl
 INSERT INTO "resources" VALUES(3,'res_regolith','Rg','Level',1,200,'resicon-regolith');
 INSERT INTO "resources" VALUES(4,'res_werkstoffe','Co','Level',1,0,'resicon-iron');
 INSERT INTO "resources" VALUES(5,'res_organika','Or','Level',1,0,'resicon-silicates');
-INSERT INTO "resources" VALUES(12,'res_moral','Tr','Event',0,0,'resicon-moral');
+INSERT INTO "resources" VALUES(12,'res_trust','Tr','Event',0,0,'resicon-moral');
 INSERT INTO "glx_system_types" VALUES(1,'stellar_class_A',8,'stellars/s_white.png','stellars/s_white_quarter.png');
 INSERT INTO "glx_system_types" VALUES(2,'stellar_class_O',12,'stellars/s_blue.png','stellars/s_blue_quarter.png');
 INSERT INTO "glx_system_types" VALUES(3,'stellar_class_B',11,'stellars/s_cyan.png','stellars/s_cyan_quarter.png');

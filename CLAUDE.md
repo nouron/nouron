@@ -12,7 +12,7 @@
 
 **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Moralsystem, Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Trust-System (Vertrauen), Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
 
 **Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Cantina-Redesign (Bar-Hintergrund + NPC-Charaktere geplant).
 
@@ -30,7 +30,7 @@
 ```
 app/
   Http/Controllers/   -- Route Handler (Techtree, Colony, Fleet, INNN, ...)
-  Services/           -- Game Logic (TickService, MoralService, AdvisorService, ...)
+  Services/           -- Game Logic (TickService, TrustService, AdvisorService, ...)
   Models/             -- Eloquent Models
   Console/Commands/   -- game:tick, game:sync-techs
 config/
@@ -54,7 +54,8 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 - Legacy-Screens: noch Bootstrap 5 — werden schrittweise auf Alpine.js + PicoCSS migriert (jQuery vollständig entfernt)
 - `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
-- Moral-Events: Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
+- Trust-Events (`game.trust.*`): Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
+- `moral` in Code, Config und DB ist vollständig zu `trust` umbenannt; deutscher UI-Label ist `Vertrauen` (via `__('resources.res_trust')`)
 
 ## Grafik-Assets
 

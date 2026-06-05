@@ -17,7 +17,7 @@ return [
     // TODO: trigger when a building first drops a status level in the player's session
     'onboarding_decay'            => 'Struktur :tech auf Kolonie :colony zeigt Verfallsschäden — Reparatur-AP einplanen.',
 
-    // TODO: trigger when colony moral first drops below threshold
+    // TODO: trigger when colony trust first drops below threshold
     'onboarding_trust'            => 'Vertrauen der Kolonisten auf :colony gesunken — Ursache prüfen.',
 
     // Merchant events

@@ -344,7 +344,7 @@ CREATE TABLE advisors (
   unavailable_until_tick  INTEGER DEFAULT NULL
 );
 CREATE UNIQUE INDEX advisors_colony_personell_unique ON advisors (colony_id, personell_id) WHERE colony_id IS NOT NULL;
-CREATE TABLE moral_events (
+CREATE TABLE trust_events (
   id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
   colony_id   INTEGER NOT NULL REFERENCES glx_colonies(id),
   tick        INTEGER NOT NULL,

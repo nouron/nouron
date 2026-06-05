@@ -142,12 +142,12 @@
         font-variant-numeric: tabular-nums;
     }
 
-    /* ── Moral effect badges ─────────────────────────────────────────────── */
-    .nexusdb-moral-pos {
+    /* ── Trust effect badges ─────────────────────────────────────────────── */
+    .nexusdb-trust-pos {
         color: var(--pico-ins-color, #2d8a4e);
     }
 
-    .nexusdb-moral-neg {
+    .nexusdb-trust-neg {
         color: var(--pico-del-color, #c0392b);
     }
 
@@ -264,14 +264,14 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>{{ __('nexusdb.moral_effect') }}</td>
+                            <td>{{ __('nexusdb.trust_effect') }}</td>
                             <td>
-                                @if($data['moral_per_unit'] === 0)
-                                    <span>{{ __('nexusdb.moral_neutral') }}</span>
-                                @elseif($data['moral_per_unit'] > 0)
-                                    <span class="nexusdb-moral-pos">+{{ $data['moral_per_unit'] }}</span>
+                                @if($data['trust_per_unit'] === 0)
+                                    <span>{{ __('nexusdb.trust_neutral') }}</span>
+                                @elseif($data['trust_per_unit'] > 0)
+                                    <span class="nexusdb-trust-pos">+{{ $data['trust_per_unit'] }}</span>
                                 @else
-                                    <span class="nexusdb-moral-neg">{{ $data['moral_per_unit'] }}</span>
+                                    <span class="nexusdb-trust-neg">{{ $data['trust_per_unit'] }}</span>
                                 @endif
                             </td>
                         </tr>

@@ -8,7 +8,7 @@
     $cfgSupply = config('game.supply');
     $cfgCredit = config('game.credits');
     $cfgFleet  = config('game.fleet.order_costs');
-    $cfgMoral  = config('game.moral.events');
+    $cfgTrust  = config('game.trust.events');
     $cfgTick   = config('game.tick');
 @endphp
 
@@ -93,10 +93,10 @@
             @endforeach
         </div>
 
-        {{-- Moral Events --}}
+        {{-- Trust Events --}}
         <div>
-            <div style="color:#ff0;margin-bottom:4px;">Moral Events</div>
-            @foreach($cfgMoral as $event => $val)
+            <div style="color:#ff0;margin-bottom:4px;">Trust Events</div>
+            @foreach($cfgTrust as $event => $val)
                 <div>
                     <span style="color:#666;">{{ $event }}:</span>
                     <span style="color:{{ $val >= 0 ? '#4c4' : '#f55' }};">{{ $val >= 0 ? '+' : '' }}{{ $val }}</span>

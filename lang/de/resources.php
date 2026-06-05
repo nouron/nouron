@@ -7,7 +7,7 @@ return [
     'res_regolith'   => 'Regolith',
     'res_werkstoffe' => 'Werkstoffe',
     'res_organika'   => 'Organika',
-    'res_moral'      => 'Vertrauen',
+    'res_trust'      => 'Vertrauen',
 
     // Chip popup descriptions
     'popup_sol_title' => 'Sol',

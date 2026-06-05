@@ -17,7 +17,7 @@ use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EventService;
 use App\Services\MerchantService;
-use App\Services\MoralService;
+use App\Services\TrustService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
@@ -40,7 +40,7 @@ use Illuminate\Support\Facades\DB;
  *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
  *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
  *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
- *  8b. Moral calculation  — recalculate colony moral and store in colony_resources (resource_id=12)
+ *  8b. Trust calculation  — recalculate colony trust and store in colony_resources (resource_id=12)
  *  8c. Passive Credits    — Nexus subsidy (30 Cr) + colony tax per housing level (20 Cr/level) added to user Credits
  *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
  *  9. Advisor ticks       — increment active_ticks, check rank promotions
@@ -60,7 +60,7 @@ class GameTick extends Command
     public function __construct(
         private readonly TickService               $tickService,
         private readonly EventService              $eventService,
-        private readonly MoralService              $moralService,
+        private readonly TrustService              $trustService,
         private readonly ResourcesService          $resourcesService,
         private readonly OnboardingTriggerService  $onboardingTriggerService,
         private readonly BarService                $barService,
@@ -126,8 +126,8 @@ class GameTick extends Command
             $n = $this->generateResources($tick);
             $this->line("  Colonies with resources:  {$n}");
 
-            $n = $this->calculateMoral($tick);
-            $this->line("  Colonies moral updated:   {$n}");
+            $n = $this->calculateTrust($tick);
+            $this->line("  Colonies trust updated:   {$n}");
 
             $n = $this->generatePassiveCredits($tick);
             $this->line("  Users passive credits:    {$n}");
@@ -415,7 +415,7 @@ class GameTick extends Command
 
             $initiatorColonyId = $this->getColonyIdByUserId($initiator->user_id);
             if ($initiatorColonyId) {
-                $this->moralService->fireEvent(
+                $this->trustService->fireEvent(
                     $initiatorColonyId,
                     $initiatorPower >= $encounteredPower ? 'encounter_won' : 'encounter_lost',
                     $tick
@@ -438,8 +438,8 @@ class GameTick extends Command
 
                 $encounteredColonyId = $this->getColonyIdByUserId($encFleet->user_id);
                 if ($encounteredColonyId) {
-                    $this->moralService->fireEvent($encounteredColonyId, 'colony_threatened', $tick);
-                    $this->moralService->fireEvent(
+                    $this->trustService->fireEvent($encounteredColonyId, 'colony_threatened', $tick);
+                    $this->trustService->fireEvent(
                         $encounteredColonyId,
                         $encounteredPower >= $initiatorPower ? 'encounter_won' : 'encounter_lost',
                         $tick
@@ -776,10 +776,10 @@ class GameTick extends Command
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
-            // Apply moral production multiplier based on the colony's CURRENT moral
-            // (stored from the previous tick's moral calculation — no circular dependency).
-            $moral      = $this->moralService->getMoral($colony->id);
-            $multiplier = $this->moralService->getProductionMultiplier($moral);
+            // Apply trust production multiplier based on the colony's CURRENT trust
+            // (stored from the previous tick's trust calculation — no circular dependency).
+            $trust      = $this->trustService->getTrust($colony->id);
+            $multiplier = $this->trustService->getProductionMultiplier($trust);
 
             foreach ($productionConfig as $buildingId => $outputs) {
                 $building = DB::table('colony_buildings')
@@ -803,9 +803,9 @@ class GameTick extends Command
         return $colonies->count();
     }
 
-    // ── 8b. Moral calculation ─────────────────────────────────────────────────
+    // ── 8b. Trust calculation ─────────────────────────────────────────────────
 
-    private function calculateMoral(int $tick): int
+    private function calculateTrust(int $tick): int
     {
         $colonies = Colony::all();
 
@@ -821,7 +821,7 @@ class GameTick extends Command
                     ->value('amount') ?? 0);
             }
 
-            $this->moralService->calculateAndStore($colony, $tick);
+            $this->trustService->calculateAndStore($colony, $tick);
 
             if ($userId !== null && $trustBefore !== null && $trustBefore >= 0) {
                 $trustAfter = (int) (DB::table('colony_resources')

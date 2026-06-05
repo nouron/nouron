@@ -7,13 +7,13 @@ use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
 
 /**
- * MoralService — calculates and stores colony moral.
+ * TrustService — calculates and stores colony trust.
  *
- * Moral ranges from -100 to +100 (neutral = 0, start = 0).
+ * Trust ranges from -100 to +100 (neutral = 0, start = 0).
  * It is recalculated every tick from static factors (buildings, researches, ships)
- * and one-shot events (stored in moral_events for the current tick).
+ * and one-shot events (stored in trust_events for the current tick).
  *
- * Stored in colony_resources.amount WHERE resource_id = 12 (res_moral).
+ * Stored in colony_resources.amount WHERE resource_id = 12 (res_trust).
  *
  * Bands:
  *   +61 .. +100  Euphorisch
@@ -28,9 +28,9 @@ use Illuminate\Support\Facades\DB;
  *
  * See GDD §13 for full design documentation.
  */
-class MoralService
+class TrustService
 {
-    /** Fallback if config('game.moral.resource_id') is not set. */
+    /** Fallback if config('game.trust.resource_id') is not set. */
     public const RESOURCE_ID = 12;
 
     public function __construct(
@@ -40,40 +40,40 @@ class MoralService
     // ── Calculation ───────────────────────────────────────────────────────────
 
     /**
-     * Calculate moral for a colony and persist it in colony_resources.
+     * Calculate trust for a colony and persist it in colony_resources.
      * Called by GameTick step 8b (after resource generation).
      */
     public function calculateAndStore(Colony $colony, int $tick): int
     {
-        $moral = $this->calculateMoral($colony->id, $tick);
+        $trust = $this->calculateTrust($colony->id, $tick);
 
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => $colony->id, 'resource_id' => $this->resourceId()],
-            ['amount' => $moral]
+            ['amount' => $trust]
         );
 
-        return $moral;
+        return $trust;
     }
 
     /**
-     * Calculate raw moral value for a colony at the given tick.
+     * Calculate raw trust value for a colony at the given tick.
      * Does NOT persist the result.
      */
-    public function calculateMoral(int $colonyId, int $tick): int
+    public function calculateTrust(int $colonyId, int $tick): int
     {
-        $moral = 0;
-        $moral += $this->buildingContribution($colonyId);
-        $moral += $this->researchContribution($colonyId);
-        $moral += $this->shipContribution($colonyId);
-        $moral += $this->eventContribution($colonyId, $tick);
+        $trust = 0;
+        $trust += $this->buildingContribution($colonyId);
+        $trust += $this->researchContribution($colonyId);
+        $trust += $this->shipContribution($colonyId);
+        $trust += $this->eventContribution($colonyId, $tick);
 
-        return max(-100, min(100, $moral));
+        return max(-100, min(100, $trust));
     }
 
     /**
-     * Read the current stored moral for a colony (-100..+100).
+     * Read the current stored trust for a colony (-100..+100).
      */
-    public function getMoral(int $colonyId): int
+    public function getTrust(int $colonyId): int
     {
         $row = DB::table('colony_resources')
             ->where('colony_id', $colonyId)
@@ -85,62 +85,62 @@ class MoralService
 
     private function resourceId(): int
     {
-        return (int) config('game.moral.resource_id', self::RESOURCE_ID);
+        return (int) config('game.trust.resource_id', self::RESOURCE_ID);
     }
 
     // ── Multipliers ───────────────────────────────────────────────────────────
 
     /**
-     * Return the production multiplier for the given moral value.
+     * Return the production multiplier for the given trust value.
      */
-    public function getProductionMultiplier(int $moral): float
+    public function getProductionMultiplier(int $trust): float
     {
-        return $this->lookupMultiplier($moral, 'production_multiplier');
+        return $this->lookupMultiplier($trust, 'production_multiplier');
     }
 
     /**
-     * Return the AP multiplier for the given moral value.
+     * Return the AP multiplier for the given trust value.
      */
-    public function getApMultiplier(int $moral): float
+    public function getApMultiplier(int $trust): float
     {
-        return $this->lookupMultiplier($moral, 'ap_multiplier');
+        return $this->lookupMultiplier($trust, 'ap_multiplier');
     }
 
     /**
-     * Return the display name of the moral band.
+     * Return the display name of the trust band.
      */
-    public function getBand(int $moral): string
+    public function getBand(int $trust): string
     {
-        if ($moral >= 61)  return __('moral.band_euphorisch');
-        if ($moral >= 21)  return __('moral.band_zufrieden');
-        if ($moral >= -20) return __('moral.band_stabil');
-        if ($moral >= -61) return __('moral.band_unruhig');
-        return __('moral.band_aufruhr');
+        if ($trust >= 61)  return __('trust.band_euphorisch');
+        if ($trust >= 21)  return __('trust.band_zufrieden');
+        if ($trust >= -20) return __('trust.band_stabil');
+        if ($trust >= -61) return __('trust.band_unruhig');
+        return __('trust.band_aufruhr');
     }
 
     // ── Events ────────────────────────────────────────────────────────────────
 
     /**
-     * Fire a moral event for a colony.
+     * Fire a trust event for a colony.
      *
-     * Events are one-shot: they contribute to exactly one tick's moral calculation.
+     * Events are one-shot: they contribute to exactly one tick's trust calculation.
      * For events fired outside the tick cycle (e.g. from controllers), use the
      * next tick so they are picked up at the next recalculation.
      *
      * @param  int    $colonyId
-     * @param  string $eventType  Key from config('game.moral.events')
+     * @param  string $eventType  Key from config('game.trust.events')
      * @param  int|null $tick     Defaults to current tick + 1 (for out-of-tick callers).
      *                            Pass current tick when called from within GameTick.
      */
     public function fireEvent(int $colonyId, string $eventType, ?int $tick = null): void
     {
-        if (!array_key_exists($eventType, config('game.moral.events', []))) {
+        if (!array_key_exists($eventType, config('game.trust.events', []))) {
             return; // unknown event type — silently ignore
         }
 
         $tick ??= $this->tickService->getTickCount() + 1;
 
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $colonyId,
             'tick'       => $tick,
             'event_type' => $eventType,
@@ -151,8 +151,8 @@ class MoralService
 
     private function buildingContribution(int $colonyId): int
     {
-        // Build [id => moral_per_lv] map from config/buildings.php
-        $cfg = collect(config('buildings', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
+        // Build [id => trust_per_lv] map from config/buildings.php
+        $cfg = collect(config('buildings', []))->pluck('trust_per_lv', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
@@ -172,8 +172,8 @@ class MoralService
 
     private function researchContribution(int $colonyId): int
     {
-        // Build [id => moral_per_lv] map from config/knowledge.php
-        $cfg = collect(config('knowledge', []))->pluck('moral_per_lv', 'id')->filter()->toArray();
+        // Build [id => trust_per_lv] map from config/knowledge.php
+        $cfg = collect(config('knowledge', []))->pluck('trust_per_lv', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
@@ -192,8 +192,8 @@ class MoralService
 
     private function shipContribution(int $colonyId): int
     {
-        // Build [id => moral_per_unit] map from config/ships.php
-        $cfg = collect(config('ships', []))->pluck('moral_per_unit', 'id')->filter()->toArray();
+        // Build [id => trust_per_unit] map from config/ships.php
+        $cfg = collect(config('ships', []))->pluck('trust_per_unit', 'id')->filter()->toArray();
         if (empty($cfg)) {
             return 0;
         }
@@ -208,7 +208,7 @@ class MoralService
             $sum += ($cfg[$s->ship_id] ?? 0) * $s->level;
         }
 
-        $cap = (int) config('game.moral.ships_cap', 30);
+        $cap = (int) config('game.trust.ships_cap', 30);
         return max(-$cap, min($cap, $sum));
     }
 
@@ -218,12 +218,12 @@ class MoralService
      */
     private function eventContribution(int $colonyId, int $tick): int
     {
-        $cfg = config('game.moral.events', []);
+        $cfg = config('game.trust.events', []);
         if (empty($cfg)) {
             return 0;
         }
 
-        $events = DB::table('moral_events')
+        $events = DB::table('trust_events')
             ->where('colony_id', $colonyId)
             ->where('tick', $tick)
             ->pluck('event_type');
@@ -240,10 +240,10 @@ class MoralService
         return array_sum($byType);
     }
 
-    private function lookupMultiplier(int $moral, string $configKey): float
+    private function lookupMultiplier(int $trust, string $configKey): float
     {
-        foreach (config("game.moral.{$configKey}", []) as $band) {
-            if ($moral >= $band['min'] && $moral <= $band['max']) {
+        foreach (config("game.trust.{$configKey}", []) as $band) {
+            if ($trust >= $band['min'] && $trust <= $band['max']) {
                 return (float) $band['factor'];
             }
         }

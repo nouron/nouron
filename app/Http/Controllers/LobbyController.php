@@ -129,7 +129,7 @@ class LobbyController extends Controller
                 ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 200], // regolith
                 ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],   // werkstoffe
                 ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],   // organika
-                ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],   // moral/trust
+                ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],   // trust
             ]);
 
             // Reset user-level resources (credits + supply).

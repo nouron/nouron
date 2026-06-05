@@ -7,7 +7,7 @@
  *   id               — DB primary key in `buildings` table
  *   supply_cap       — flat supply cap granted (commandCenter) or per-unit cap (housingComplex)
  *   supply_cost      — supply consumed while the building exists at level > 0
- *   moral_per_lv     — moral change per building level (used by MoralService)
+ *   trust_per_lv     — trust change per building level (used by TrustService)
  *   decay_rate       — status_points lost per tick (also stored in DB, used by GameTick decay)
  *   max_status_points — status_points reset value after level-down (also stored in DB)
  *   max_level        — hard level cap (null = uncapped, practically limited by supply)
@@ -29,7 +29,7 @@ return [
         'id'                => 25,
         'supply_cap'        => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
         'supply_cost'       => 0,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.33,    // 60 days
         'max_status_points' => 20,
         'max_level'         => 5,
@@ -39,7 +39,7 @@ return [
         'id'                => 28,
         'supply_cap'        => 8,       // per unit (instance), max 6 units → +48 cap
         'supply_cost'       => 0,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.44,    // 45 days
         'max_status_points' => 20,
         'max_level'         => 6,       // max 6 instances (instanced building)
@@ -50,7 +50,7 @@ return [
     'harvester' => [                    // ex industrieMine/oremine (ID 27) — produces Regolith (resource 3)
         'id'                => 27,
         'supply_cost'       => 2,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.95,    // 21 days
         'max_status_points' => 20,
         'max_level'         => null,
@@ -59,7 +59,7 @@ return [
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id'                => 41,
         'supply_cost'       => 2,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.95,
         'max_status_points' => 20,
         'max_level'         => null,
@@ -68,7 +68,7 @@ return [
     'depot' => [
         'id'                => 30,
         'supply_cost'       => 3,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
         'max_level'         => null,
@@ -79,7 +79,7 @@ return [
     'sciencelab' => [
         'id'                => 31,
         'supply_cost'       => 8,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.95,    // 21 days
         'max_status_points' => 20,
         'max_level'         => null,
@@ -90,7 +90,7 @@ return [
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id'                => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
         'supply_cost'       => 12,      // limits fleet naturally: 3 hangars = 36 supply
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days
         'max_status_points' => 20,
         'max_level'         => null,    // repeatable, supply-limited
@@ -101,7 +101,7 @@ return [
     'infirmary' => [
         'id'                => 46,
         'supply_cost'       => 10,
-        'moral_per_lv'      => 3,
+        'trust_per_lv'      => 3,
         'decay_rate'        => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
         'max_status_points' => 20,
         'max_level'         => null,
@@ -110,7 +110,7 @@ return [
     'bar' => [
         'id'                => 52,
         'supply_cost'       => 4,
-        'moral_per_lv'      => 2,       // social hub — leisure in an otherwise bleak colony life
+        'trust_per_lv'      => 2,       // social hub — leisure in an otherwise bleak colony life
         'decay_rate'        => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
         'max_status_points' => 20,
         'max_level'         => null,
@@ -119,7 +119,7 @@ return [
     'monument' => [
         'id'                => 50,
         'supply_cost'       => 2,
-        'moral_per_lv'      => 2,
+        'trust_per_lv'      => 2,
         'decay_rate'        => 0.33,    // 60 days — monuments are built to last
         'max_status_points' => 20,
         'max_level'         => null,
@@ -128,7 +128,7 @@ return [
     'temple' => [
         'id'                => 32,
         'supply_cost'       => 4,
-        'moral_per_lv'      => 2,
+        'trust_per_lv'      => 2,
         'decay_rate'        => 2.0,     // 10 days — needs regular upkeep
         'max_status_points' => 20,
         'max_level'         => null,
@@ -144,7 +144,7 @@ return [
     'securityHub' => [
         'id'                  => 53,
         'supply_cost'         => 8,
-        'moral_per_lv'        => 0,
+        'trust_per_lv'        => 0,
         'decay_rate'          => 0.67,    // 30 days — provisional
         'max_status_points'   => 20,
         'max_level'           => 3,
@@ -160,7 +160,7 @@ return [
     'uplinkStation' => [
         'id'                => 54,
         'supply_cost'       => 6,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0.67,    // 30 days — provisional
         'max_status_points' => 20,
         'max_level'         => 3,
@@ -173,7 +173,7 @@ return [
     'tradingPost' => [
         'id'                   => 55,
         'supply_cost'          => 6,
-        'moral_per_lv'         => 0,
+        'trust_per_lv'         => 0,
         'decay_rate'           => 0.67,    // 30 days — provisional
         'max_status_points'    => 20,
         'max_level'            => 3,

@@ -63,7 +63,7 @@ class GameTickResourceGenerationTest extends TestCase
             ['amount' => 0]
         );
         // Ensure moral events table is clean (no pending events that would shift moral)
-        DB::table('moral_events')->where('colony_id', self::COLONY_ID)->delete();
+        DB::table('trust_events')->where('colony_id', self::COLONY_ID)->delete();
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
