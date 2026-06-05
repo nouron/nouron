@@ -169,7 +169,7 @@ Jeder Run startet auf einem von fünf Planetentypen. Die Lore bleibt dieselbe �
 
 ---
 
-## Kolonieachitektur — Entscheidung
+## Koloniearchitektur — Entscheidung
 
 **Stil: Provisorisch-modular, nicht etabliert.**
 

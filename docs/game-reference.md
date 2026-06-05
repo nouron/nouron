@@ -53,7 +53,7 @@ Stammdaten: buildings, researches, ships, personell, resources + jeweilige _cost
 
 | Key | Name | Supply | Stärkewert | Hangar nötig |
 |-----|------|--------|-----------|--------------|
-| `drone` | Sonde | 0 | 0 | Nein |
+| `drone` | Drohne | 0 | 0 | Nein |
 | `corvette` | Korvette | 14 | 3 | Ja |
 | `freighter` | Frachter | 6 | 0 | Ja |
 
@@ -76,7 +76,7 @@ Stammdaten: buildings, researches, ships, personell, resources + jeweilige _cost
 - **Encounters**: `attack`-Orders lösen Zwischenfälle aus; Korvette (Stärke 3) vs. NPC-Schiffe
 - **Koordinatensystem**: 12×12-Grid pro System; Stern bei (6,6)
 
-## Progressive Discovery System (GDD §17)
+## Progressive Discovery System (Phase 4 — noch nicht im GDD dokumentiert)
 
 ### Almanach-Artikel-Kategorien
 

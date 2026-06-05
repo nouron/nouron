@@ -33,6 +33,7 @@
 14. [Moralsystem](#14-moralsystem)
 15. [Run-Struktur (Roguelike-Modus)](#15-run-struktur-roguelike-modus)
 16. [Onboarding](#16-onboarding)
+17. [Progressive Discovery System](#17-progressive-discovery-system)
 
 ---
 
@@ -263,12 +264,12 @@ Ausgaben: Berater-Upkeep (§13), Gebäudebaukosten, Schiffsbaukosten, Werkstoffe
 
 Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics** (Arbeitstitel) — seltene Materialien die auf der Heimatkolonie nicht abgebaut werden können. Quellen: Exploration anderer Systeme via Flotte, oder Handel mit anderen Spielern/Fraktionen. Gibt der interstellaren Bewegung einen konkreten wirtschaftlichen Zweck.
 
-### Abgekündigte Ressourcen (konzeptionell entfernt, DB-Cleanup ausstehend)
+### Abgekündigte Ressourcen (konzeptionell entfernt, DB-Cleanup abgeschlossen Mai 2026)
 
 - Wasser (ID 3) — wird durch Versorgung (Supply) abstrahiert; kein eigenständiges Rohstoff-Modell nötig.
 - ENrg (ID 6), LNrg (ID 8), ANrg (ID 10) — rassenspezifische Energieressourcen aus dem alten Konzept. Rassen wurden abgekündigt; Supply übernimmt die Energieversorgungsrolle konzeptionell.
 
-> Die IDs 3, 6, 8, 10 existieren noch im DB-Schema (historisch), werden aber vom Spiel nicht mehr genutzt. Ein dedizierter DB-Cleanup-Migration-Task steht noch aus.
+> Die IDs 3, 6, 8, 10 wurden per DB-Cleanup-Migration (Mai 2026) entfernt und werden vom Spiel nicht mehr genutzt.
 
 ---
 
@@ -282,8 +283,8 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 |----|------------|-----------|-----------|-----------|---------------|
 | 25 | commandCenter | Kommandozentrale | Command Center | 5 | — |
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
-| 27 | harvester | Harvester | Harvester | 1 | CC Lv1 |
-| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 |
+| 27 | harvester | Harvester | Harvester | — | CC Lv1 |
+| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 + Harvester Lv1 |
 | 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
 | 46 | infirmary | Krankenstation | Medical Station | — | CC Lv2 |
@@ -291,11 +292,9 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 44 | hangar | Hangar | Hangar | — | CC Lv3 |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | CC Lv4 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | — | CC Lv5 |
-| — | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv2 ¹ |
-| — | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 ¹ |
-| — | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 ¹ |
-
-¹ Geplant — noch nicht implementiert; DB-ID noch nicht vergeben.
+| 53 | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv2 |
+| 54 | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 |
+| 55 | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 |
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
@@ -334,7 +333,7 @@ resource_cap = base_cap + (depot_level × cap_per_level)
 
 ---
 
-### Sicherheits-Hub (securityHub) — Mechanik ¹
+### Sicherheits-Hub (securityHub) — Mechanik
 
 Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv2). Er bietet zwei unabhängige Effekte:
 
@@ -348,7 +347,7 @@ Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch e
 
 ---
 
-### Uplink-Station (uplinkStation) — Mechanik ¹
+### Uplink-Station (uplinkStation) — Mechanik
 
 Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Handelsschiff anfordern, Verwaltungsanfragen). Eingehende INNN-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
 
@@ -364,7 +363,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 
 ---
 
-### Handelsposten (tradingPost) — Mechanik ¹
+### Handelsposten (tradingPost) — Mechanik
 
 Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
 
@@ -617,7 +616,7 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 ### Supply-Kosten der Schiffstypen
 
-Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport (siehe §1.1). Sonden kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
+Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport (siehe §1.1). Drohnen kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
 
 | Schiff | ship_id | Supply (Unterhalt) | Bemerkung |
 |--------|---------|-------------------|-----------|
@@ -645,7 +644,8 @@ Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport 
 | Kolonialdenkmal | 2 |
 | Lagerhalle | 3 |
 | Cantina, Religiöse Stätte | 4 (je) |
-| Analytik-Labor | 8 |
+| Uplink-Station, Handelsposten | 6 (je) |
+| Analytik-Labor, Sicherheits-Hub | 8 (je) |
 | Krankenstation | 10 |
 | Hangar | 12 (je Instanz) |
 
@@ -822,7 +822,7 @@ Wenn `status_points ≤ 0`, wird das Schiff **deaktiviert** (nicht zerstört). E
 
 | Schiffstyp | wear_per_order (Richtwert) | Begründung |
 |------------|---------------------------|------------|
-| sonde | 0.05 | Unbemannte Sonde — minimalster Verschleiß |
+| drone | 0.05 | Unbemannte Drohne — minimalster Verschleiß |
 | korvette | 0.20 | Militärisches Manövrieren — höherer Verschleiß |
 | frachter | 0.10 | Routinebetrieb — moderater Verschleiß |
 
@@ -1071,7 +1071,7 @@ Die Kolonie existiert nicht im Vakuum. Im System gibt es vereinzelte Präsenzen 
 
 ### Arten von Begegnungen
 
-**Erkundungsbegegnungen (Drone/Korvette):** Eine Sonde stößt auf etwas Unbekanntes — ein Schiffswrack, ein Signal, eine verlassene Station. Ergebnis: INNN-Ereignis, mögliche Ressource oder Gefahr.
+**Erkundungsbegegnungen (Drohne/Korvette):** Eine Drohne stößt auf etwas Unbekanntes — ein Schiffswrack, ein Signal, eine verlassene Station. Ergebnis: INNN-Ereignis, mögliche Ressource oder Gefahr.
 
 **Zwischenfälle im System:** Ein fremdes Schiff kreuzt den Orbit. Eine Korvette kann es mit einer `defend`- oder `attack`-Order konfrontieren — oder ignorieren. Die Entscheidung hat Konsequenzen für Vertrauen und Supply.
 
@@ -1095,11 +1095,11 @@ Stärke einer Flotte = Σ(Schiffanzahl × Stärkewert des Typs)
 
 | Schiff | ship_id | Stärkewert |
 |--------|---------|------------|
-| Sonde | 85 | 0 |
+| Drohne | 85 | 0 |
 | Korvette | 37 | 3 |
 | Frachter | 47 | 0 |
 
-Schiffe mit Stärkewert 0 sind **nicht-kampffähig** und werden im Zwischenfall nicht zerstört. Sonden können jedoch durch nahe Konfrontationen verloren gehen.
+Schiffe mit Stärkewert 0 sind **nicht-kampffähig** und werden im Zwischenfall nicht zerstört. Drohnen können jedoch durch nahe Konfrontationen verloren gehen.
 
 > Der absolute Stärkewert der Korvette ist erst relevant wenn NPC-Schiffe eigene Stärkewerte erhalten (z.B. Piraten-Sonde = 1, schwerer Wächter = 5). Bis dahin bestimmt der Wert nur die Verlustquote gegen NPC-Begegnungen.
 
@@ -1125,7 +1125,7 @@ Sinkt eine Schiffsklasse auf 0 oder darunter, wird der Eintrag aus `fleet_ships`
 'combat' => [
     'ship_power' => [
         85 => 0,   // drone
-        37 => 1,   // corvette
+        37 => 3,   // corvette
         47 => 0,   // freighter
     ],
 ],
@@ -1244,13 +1244,11 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
 | `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert |
-| `securityHub` | Sicherheits-Hub | CC Lv 2 | max. 1 Instanz ¹ |
-| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 ¹ |
+| `securityHub` | Sicherheits-Hub | CC Lv 2 | max. 1 Instanz |
+| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 |
 | `temple` | Religiöse Stätte | CC Lv 4 | supply-limitiert |
-| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz ¹ |
+| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz |
 | `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
-
-¹ Geplant — noch nicht implementiert.
 
 Die 14 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
@@ -1409,7 +1407,7 @@ Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kau
 
 ### Kanal 1: Bar/Cantina (primär, früh, informell)
 
-Die Bar ist ab CC Lv1 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
+Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
 
 **Angebotstypen:**
 - Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
@@ -1667,7 +1665,7 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol
 
 - **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` gesetzt hat (Berater ist aktiv zugewiesen).
 - **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
-- Alle Werte stehen in `config/advisors.php` (Einstellungskosten) und `config/game.php → advisors` (AP, Upkeep, Rang-Thresholds).
+- Alle Werte stehen in `config/game.php → advisor` (Einstellungskosten, AP, Upkeep, Rang-Thresholds).
 
 > **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
 
@@ -1843,11 +1841,11 @@ Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h
 
 | Schiff-ID | Bezeichner | Vertrauen/Schiff |
 |-----------|------------|------------------|
-| 85 | sonde | 0 |
+| 85 | drone | 0 |
 | 37 | korvette | -1 |
 | 47 | frachter | +1 |
 
-**Rationale:** Die Korvette signalisiert Wachsamkeit und Anspannung (-1/Schiff). Der Frachter steht für Versorgung und Normalität (+1/Schiff). Sonden sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion bei den Bewohnern.
+**Rationale:** Die Korvette signalisiert Wachsamkeit und Anspannung (-1/Schiff). Der Frachter steht für Versorgung und Normalität (+1/Schiff). Drohnen sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion bei den Bewohnern.
 
 **Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Vertrauen-Summe eingeht:
 
@@ -1970,7 +1968,7 @@ Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separa
 
 **Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer im Bereich -100 bis +100. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
-**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `vertrauen`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `moral`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
 ### Sol-Integration
 
@@ -1986,7 +1984,7 @@ Die Reihenfolge ist bewusst: Die Produktion von Sol N verwendet den Vertrauenswe
 
 ### Implementierungsschritte
 
-1. `config/game.php` — `vertrauen`-Block hinzufügen (alle Werte aus obiger Tabelle)
+1. `config/game.php` — `moral`-Block hinzufügen (alle Werte aus obiger Tabelle)
 2. `app/Services/VertrauenService.php` — Service mit Methode `calculate(int $colonyId): int`
 3. `app/Services/ResourceService.php` (oder TickService) — `VertrauenService::calculate()` in Schritt 6b aufrufen und `colony_resources` (res_id=12) schreiben
 4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `vertrauen_multiplier` erweitern

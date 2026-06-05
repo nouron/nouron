@@ -2,6 +2,18 @@
 
 ## 2026-06-04
 
+- **Docs-Review**: Vollständiger Audit aller `docs/`-Dateien. 21 Findings, 15 direkt behoben:
+  GDD: DB-Cleanup-Status, Harvester Max-Level, bioFacility-Voraussetzung, securityHub/uplinkStation/tradingPost "geplant" entfernt (IDs 53–55), Supply-Kosten-Tabelle ergänzt, Sonde→Drohne, Korvetten-Stärkewert (1→3), Bar CC Lv1→Lv2, config/advisors.php-Referenz entfernt.
+  Weitere Fixes: Veraltet-Header in Balancing-Dokument, Umlaute + "Industriemine"→"Harvester" in narrative/resources.md, 3 fehlende lang/de/buildings.php-Einträge (securityHub, uplinkStation, tradingPost), Tippfehler planet.md, design-guide fixed-top→CSS, game-reference §17-Referenz bereinigt.
+
+**Offene TODOs (Docs-Review-Rest):**
+- [ ] GDD §2 vs §6: Supply-Cap Tick-Schritt — §2 nennt Schritt 5, §6 nennt Schritt 7; `TickService` prüfen welcher Schritt korrekt ist
+- [ ] GDD §5: Harvester-Produktionsrate — GDD-Text sagt "tile-abhängig", `config/game.php` hat feste Rate `× 10/level`; Design-Entscheidung klären
+- [ ] GDD §13: Burnout-Config-Block — GDD referenziert `config/game.php → advisors.burnout`, der Block existiert nicht; entweder Config ergänzen oder GDD-Referenz entfernen
+- [ ] lore/tiles.md: `terrain_fog` + `terrain_locked` fehlen im GDD §4a Tile-Typ-Katalog; klären ob DB-gespeicherte Typen oder nur UI-Render-States (→ dann in GDD als UI-only kennzeichnen)
+- [ ] characters/informationsagent.md: Slug auf Deutsch (`informationsagent`) während alle anderen englisch sind — auf `information_broker` umbenennen (inkl. Dateiname)
+- [ ] CLAUDE.md/GDD §14: Erklärung der Moral/Vertrauen-Zweigleisigkeit ergänzen (technisch `moral` in config/DB, UI-Label `Vertrauen` in lang/de)
+
 - **Carousel-Refactor**: Gemeinsame Carousel-Primitives aus Advisors extrahiert in `carousel.css` + `carousel.js`; Berater- und Hangar-Screen nutzen dieselbe Basis
 - **Hangar Mobile-Fix**: Viewport-Calc korrigiert (84px → 100px — nav 60px + resbar ~40px); Pagination-Dots auf Mobile ohne Scrollen sichtbar
 - **GDD-Audit**: Flottenkommandanten-Pfad (Option A, verworfen) aus §13 entfernt; Raumfahrer als colony-scoped AP-Produzent dokumentiert; §8b Hangar-Screen neu; Design-Guide um Carousel-Screen-Typ + jQuery-Entfernung (Mai 2026) ergänzt; `trade_researches` als inaktiv markiert

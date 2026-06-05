@@ -12,11 +12,11 @@ Es dient als Referenz für Tooltips, Gebäudebeschreibungen, Event-Texte und Alm
 Mondgestein, Mineralstaub, Silikate — roh, unverfeinert, direkt vor Ort verwertbar.
 Auf allen Gesteinsplaneten und -monden vorhanden.
 
-- Produktion: Industriemine (lokal)
-- Verwendung: Rohbaukosten fur Gebaude
+- Produktion: Harvester (lokal)
+- Verwendung: Rohbaukosten für Gebäude
 - Startwert: 200 Rg (Frontier-Depot)
 
-**Narrativer Kontext:** Vor Ankunft des Spielers haben automatisierte Vorausmaschinen bereits einen Grundstock bereitgestellt. Der Spieler ubernimmt eine vorbereitete, aber heruntergekommene Basis — kein leeres Stuck Fels.
+**Narrativer Kontext:** Vor Ankunft des Spielers haben automatisierte Vorausmaschinen bereits einen Grundstock bereitgestellt. Der Spieler übernimmt eine vorbereitete, aber heruntergekommene Basis — kein leeres Stück Fels.
 
 ---
 
@@ -24,32 +24,32 @@ Auf allen Gesteinsplaneten und -monden vorhanden.
 
 Raffinierte Metalle, Legierungen, technische Komponenten — industriell veredelt, nicht lokal herstellbar.
 
-- Produktion: NICHT vor Ort moglich (keine Raffinerie, keine Schwer industrie)
-- Quellen: KI-Handlerkonvois, Spieler-zu-Spieler-Handel, Events (strandete Frachter, Trummerfelder)
-- Verwendung: Schiffbau, High-Tech-Gebaude, Reparaturen
+- Produktion: NICHT vor Ort möglich (keine Raffinerie, keine Schwerindustrie)
+- Quellen: KI-Händlerkonvois, Spieler-zu-Spieler-Handel, Events (gestrandete Frachter, Trümmerfelder)
+- Verwendung: Schiffbau, High-Tech-Gebäude, Reparaturen
 
-**Narrativer Kontext:** Eine Frontier-Kolonie kann Steine schurfen, aber keine Titanlegierungen schmelzen. Werkstoffe sind das sichtbare Zeichen externer Abhangigkeit — wer keine Handelsroute hat, sitzt irgendwann fest.
+**Narrativer Kontext:** Eine Frontier-Kolonie kann Steine schürfen, aber keine Titanlegierungen schmelzen. Werkstoffe sind das sichtbare Zeichen externer Abhängigkeit — wer keine Handelsroute hat, sitzt irgendwann fest.
 
 ---
 
 ## Organika (Or)
 
-Nahrung, Medizin, Biodunger, organische Verbindungen — alles Lebende, was die Kolonie am Laufen halt.
+Nahrung, Medizin, Biodünger, organische Verbindungen — alles Lebende, was die Kolonie am Laufen hält.
 
 - Produktion: Agrardom (lokal, geschlossene Kreislaufwirtschaft unter Kuppel/Habitat)
-- Verwendung: Bevolkerungswachstum, Moral
+- Verwendung: Bevölkerungswachstum, Moral
 
 **Narrativer Kontext:** Ohne Organika verhungert die Kolonie oder verliert die Moral. Der Agrardom ist kein Luxus — er ist Lebenserhaltungssystem.
 
 ---
 
-## Spielereinstieg / Atmosphare
+## Spielereinstieg / Atmosphäre
 
-- Der Spieler ubernimmt eine bereits vorbereitete Basis, nicht eine leere Flache.
-- Tonalitat: Frontier-Kolonie. Kleine Gemeinschaft, harte Bedingungen, knappe Mittel.
-- Scope: personlich und uberschaubar — kein galaktisches Imperium, keine Massenproduktion.
-- Referenzatmosphare: Reunion (Amiga/DOS), Imperium Galactica 2, Master of Orion.
-- Spielgrosse: Singleplayer Roguelike oder 2-4 Spieler, Brettspiel-Nahe (Catan/MoO-Stil).
+- Der Spieler übernimmt eine bereits vorbereitete Basis, nicht eine leere Fläche.
+- Tonalität: Frontier-Kolonie. Kleine Gemeinschaft, harte Bedingungen, knappe Mittel.
+- Scope: persönlich und überschaubar — kein galaktisches Imperium, keine Massenproduktion.
+- Referenzatmosphäre: Reunion (Amiga/DOS), Imperium Galactica 2, Master of Orion.
+- Spielgröße: Singleplayer Roguelike oder 2-4 Spieler, Brettspiel-Nähe (Catan/MoO-Stil).
 
 ---
 

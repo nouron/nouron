@@ -1,3 +1,7 @@
+> **⚠ Veraltet (Stand: 2026-04)** — Dieses Dokument spiegelt ein früheres Spielkonzept wider.
+> Event-Keys und Gebäude-IDs stimmen nicht mehr mit der aktuellen Codebasis überein.
+> Aktuelle Werte: `config/game.php → moral` (Event-Keys: `encounter_won`, `encounter_lost`, `colony_threatened`).
+
 ## Change: Moralsystem — Initiales Design (Phase 2)
 
 **Datum:** 2026-04-03
