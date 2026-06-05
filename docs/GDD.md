@@ -562,12 +562,12 @@ produzierte Menge = Gebäude-Level × Rate
 
 | Gebäude | building_id | Ressource | resource_id | Rate |
 |---------|-------------|-----------|-------------|------|
-| Harvester | 27 | Regolith | 3 | tile-abhängig |
+| Harvester | 27 | Regolith | 3 | 10 pro Level |
 | Agrardom | 41 | Organika | 5 | 10 pro Level |
 
 > **Designentscheidung:** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
 
-> **Harvester-Produktion:** Die produzierte Menge hängt vom Tile-Typ ab (z.B. "Reicher Erzknoten" = +50% Bonus). Quellen versiegen graduell — ein sichtbarer Erschöpfungs-Counter auf dem Tile zeigt den verbleibenden Vorrat.
+> **Harvester-Produktion (Phase 4+):** Geplant ist eine tile-abhängige Rate mit Tile-Boni (z.B. "Reicher Erzknoten" = +50%) und gradueller Erschöpfung. Aktuell (Phase 3): feste Rate `×10/level` identisch zum Agrardom — nach erstem Playtest evaluieren ob Tile-Varianz den Aufwand rechtfertigt.
 
 ### Konfiguration
 
@@ -575,8 +575,8 @@ produzierte Menge = Gebäude-Level × Rate
 
 ```php
 'production' => [
-    27 => [3 => 'tile'],   // harvester      → Regolith  tile-abhängig
-    41 => [5 => 10],       // bioFacility    → Organika  × 10/level
+    27 => [3 => 10],   // harvester   → Regolith  × 10/level
+    41 => [5 => 10],   // bioFacility → Organika  × 10/level
 ],
 ```
 
