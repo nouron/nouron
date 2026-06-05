@@ -187,18 +187,17 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 - Konfiguration: `config/game.php → tick`
 - Alle Schritte eines Ticks laufen in einer einzigen DB-Transaktion (atomar)
 
-### Reihenfolge der Tick-Schritte
+### Reihenfolge der Tick-Phasen
 
-| Schritt | Beschreibung |
-|---------|-------------|
-| 1 | Fleet Move Orders — Flotten bewegen sich zu Zielkoordinaten |
-| 2 | Fleet Trade Orders — Ressourcentransfer Flotte ↔ Kolonie |
-| 3 | Fleet Encounter Orders — Zwischenfälle aufgelöst; Schiffs-Verschleiß (`wear_per_order`) abgezogen |
-| 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 (§7) |
-| 5 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
-| 6 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
-| 6b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (§14) |
-| 7 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen, Burnout-Wahrscheinlichkeit würfeln (§7, §13) |
+| Phase | Beschreibung |
+|-------|-------------|
+| 1. Fleet | Flottenbewegung, Ressourcentransfer, Zwischenfälle |
+| 2. Decay | Gebäude-, Schiffs- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
+| 3. Supply & Ressourcen | Supply-Cap neu berechnen (§6), dann Rohstoffproduktion (Vertrauens-Multiplikator angewendet) |
+| 4. Vertrauen | Vertrauenswert neu berechnen, `colony_resources` aktualisieren (§14) |
+| 5. Beratung & Events | Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
+
+> Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten.
 
 ---
 
