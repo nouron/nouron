@@ -876,7 +876,7 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 > **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Sol".
 
-> **Implementierungshinweis:** Die Burnout-Prüfung erfolgt in Tick-Schritt 7 (Advisor Ticks), nach dem AP-Bonus-Update. Die Zufallsziehung passiert einmal pro Berater pro Tick. Alle Konfigurations-Parameter stehen in `config/game.php → advisors.burnout`.
+> **Implementierungsstand:** Die Burnout-Wahrscheinlichkeits-Formel ist noch nicht implementiert. `unavailable_until_tick` existiert in der DB und wird gecheckt; die probabilistische Prüfung folgt nach dem ersten Playtest (Phase 4+).
 
 ---
 
