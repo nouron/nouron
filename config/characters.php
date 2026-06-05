@@ -3,7 +3,7 @@
 return [
     'bartender'        => ['name' => 'Tomas',  'role' => 'Bartender'],
     'smuggler'         => ['name' => 'Dax',    'role' => 'Smuggler'],
-    'informationsagent'=> ['name' => 'Vesper', 'role' => 'Information Broker'],
+    'information_broker'=> ['name' => 'Vesper', 'role' => 'Information Broker'],
     'mechanic'         => ['name' => 'Sarka',  'role' => 'Exhausted Mechanic'],
     'corporate_rep'    => ['name' => 'Orin',   'role' => 'Corporate Representative'],
     'founder'          => ['name' => 'Aldra',  'role' => 'Former Colony Founder'],

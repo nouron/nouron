@@ -77,7 +77,7 @@ class OnboardingService
             ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 200],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
-            ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // moral
+            ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust
         ];
 
         DB::table('colony_resources')->insert($colonyResources);

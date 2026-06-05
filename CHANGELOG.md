@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-05
+
+- **Moral → Trust/Vertrauen**: Vollständige Umbenennung — `MoralService` → `TrustService`, `game.moral.*` → `game.trust.*`, `moral_per_lv` → `trust_per_lv`, DB-Tabelle `moral_events` → `trust_events`, Resource-Slug `res_moral` → `res_trust`, `lang/de/moral.php` → `trust.php`. CLAUDE.md aktualisiert. 759 Tests grün.
+- **GDD §2**: Tick-Phasen auf 5 Konzeptphasen komprimiert (Fleet / Decay / Supply & Ressourcen / Vertrauen / Beratung & Events). Detail-Reihenfolge in `GameTick.php`-Docblock als kanonische Quelle.
+- **GDD §13**: Burnout-Implementierungshinweis korrigiert — probabilistische Prüfung Phase 4+; `unavailable_until_tick` existiert bereits in DB.
+- **GDD §5**: Harvester-Produktionsrate — feste Rate `×10/level` dokumentiert (Phase 3); tile-abhängige Mechanik auf Phase 4+ verschoben.
+- **GDD §4a**: `terrain_fog` / `terrain_locked` als UI-Render-States dokumentiert (kein `tile_type` in DB — abgeleitet aus `is_explored` + `is_colony_zone`).
+- **Characters**: `informationsagent` → `information_broker` (Slug-Konsistenz; alle anderen Slugs englisch).
+
 ## 2026-06-04
 
 - **Docs-Review**: Vollständiger Audit aller `docs/`-Dateien. 21 Findings, 15 direkt behoben:

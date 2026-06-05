@@ -6,5 +6,5 @@ return [
     'res_regolith'   => 'Regolith',
     'res_werkstoffe' => 'Compounds',
     'res_organika'   => 'Organics',
-    'res_moral'      => 'Morale',
+    'res_trust'      => 'Trust',
 ];

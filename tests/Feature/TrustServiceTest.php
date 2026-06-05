@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 /**
- * MoralServiceTest — comprehensive feature tests for MoralService.
+ * TrustServiceTest — comprehensive feature tests for TrustService.
  *
  * Covered scenarios:
  *
@@ -11,69 +11,69 @@ namespace Tests\Feature;
  *   - All five bands with exact lower/upper boundary values; assertions use __() so
  *     they stay locale-agnostic and pass regardless of APP_LOCALE
  *   - Boundary note: the code uses `>= -61` for Unruhig, so -61 maps to Unruhig and
- *     Aufruhr starts at -62 (the docblock in MoralService has a typo — code wins)
+ *     Aufruhr starts at -62 (the docblock in TrustService has a typo — code wins)
  *   - Locale-switch test: switching to a hypothetical 'en' locale returns English strings
  *     (or falls back gracefully to the translation key if no en file exists)
  *
  * getProductionMultiplier() / getApMultiplier():
- *   - Neutral moral (0) returns 1.0×
- *   - Euphorisch moral (80) returns the configured factor
- *   - Aufruhr moral (-80) returns the configured factor
- *   - Out-of-range moral that misses all bands falls back to 1.0
+ *   - Neutral trust (0) returns 1.0×
+ *   - Euphorisch trust (80) returns the configured factor
+ *   - Aufruhr trust (-80) returns the configured factor
+ *   - Out-of-range trust that misses all bands falls back to 1.0
  *
- * getMoral():
+ * getTrust():
  *   - Returns 0 when no colony_resources row exists for resource_id=12
  *   - Returns the stored integer value when the row exists
- *   - Handles stored negative moral correctly
+ *   - Handles stored negative trust correctly
  *
  * fireEvent():
- *   - Known event inserts a row into moral_events with correct colony_id/tick/event_type
+ *   - Known event inserts a row into trust_events with correct colony_id/tick/event_type
  *   - Unknown event type is silently ignored (no row inserted)
  *   - Default tick is current tick + 1 when no tick is passed
  *   - Explicit tick is respected when passed
  *
- * calculateMoral() — building contribution:
- *   - A positive-moral building (hospital, id=46) adds level × 3 to moral
+ * calculateTrust() — building contribution:
+ *   - A positive-trust building (hospital, id=46) adds level × 3 to trust
  *   - Building with status_points=0 is excluded from calculation
  *
- * calculateMoral() — research contribution:
- *   - A positive-moral research (health, id=94) adds level × 2
- *   - A negative-moral research (defense, id=96) subtracts level × 1
+ * calculateTrust() — research contribution:
+ *   - A positive-trust research (health, id=94) adds level × 2
+ *   - A negative-trust research (defense, id=96) subtracts level × 1
  *
- * calculateMoral() — ship contribution:
- *   - A positive-moral ship (frachter, id=47) adds level × 1
- *   - A negative-moral ship (korvette, id=37) subtracts level × 1
+ * calculateTrust() — ship contribution:
+ *   - A positive-trust ship (frachter, id=47) adds level × 1
+ *   - A negative-trust ship (korvette, id=37) subtracts level × 1
  *   - Total ship contribution is capped at ±30 before global clamp
  *
- * calculateMoral() — event contribution:
+ * calculateTrust() — event contribution:
  *   - A fired event contributes its delta at the matching tick
  *   - Same event type fired twice is counted only once (no stacking)
  *   - Events for a different tick are NOT included
  *   - Multiple distinct event types are summed
  *
- * calculateMoral() — global clamp:
+ * calculateTrust() — global clamp:
  *   - Result is clamped to +100 even when raw sum exceeds 100
  *   - Result is clamped to -100 even when raw sum exceeds -100
  *
  * calculateAndStore():
- *   - Persists the calculated moral in colony_resources (resource_id=12)
+ *   - Persists the calculated trust in colony_resources (resource_id=12)
  *   - Updates existing row rather than inserting a duplicate
  *   - Returns the clamped integer value
  */
 
 use App\Models\Colony;
-use App\Services\MoralService;
+use App\Services\TrustService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class MoralServiceTest extends TestCase
+class TrustServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected MoralService $service;
+    protected TrustService $service;
     protected TickService $tickService;
     protected int $colonyId = 1;   // Springfield — owned by Bart (user_id=3)
     protected int $tick     = 100; // fixed tick, avoids wall-clock dependency
@@ -87,15 +87,15 @@ class MoralServiceTest extends TestCase
         $this->tickService = $this->app->make(TickService::class);
         $this->tickService->setTickCount($this->tick);
 
-        $this->service = $this->app->make(MoralService::class);
+        $this->service = $this->app->make(TrustService::class);
 
-        // Remove all seeded colony_resources rows for moral (resource_id=12) and all
-        // moral_events so each test starts from a known blank state.
+        // Remove all seeded colony_resources rows for trust (resource_id=12) and all
+        // trust_events so each test starts from a known blank state.
         DB::table('colony_resources')
-            ->where('resource_id', MoralService::RESOURCE_ID)
+            ->where('resource_id', TrustService::RESOURCE_ID)
             ->delete();
 
-        DB::table('moral_events')->delete();
+        DB::table('trust_events')->delete();
 
         // Remove seeded colony_buildings / colony_researches / colony_ships for
         // colony 1 so building/research/ship tests can insert exactly what they need.
@@ -106,70 +106,70 @@ class MoralServiceTest extends TestCase
 
     // ── getBand() ─────────────────────────────────────────────────────────────
     //
-    // Assertions compare against __('moral.band_*') so they pass regardless of which
+    // Assertions compare against __('trust.band_*') so they pass regardless of which
     // locale is active — the translation layer is tested separately below.
 
     public function testGetBand_returnsAufruhr_atMinus100(): void
     {
-        $this->assertSame(__('moral.band_aufruhr'), $this->service->getBand(-100));
+        $this->assertSame(__('trust.band_aufruhr'), $this->service->getBand(-100));
     }
 
     public function testGetBand_returnsUnruhig_atMinus61(): void
     {
         // The code uses `>= -61` for Unruhig, so -61 is the lower boundary of Unruhig.
-        // The docblock in MoralService is incorrect — the implementation is the source of truth.
-        $this->assertSame(__('moral.band_unruhig'), $this->service->getBand(-61));
+        // The docblock in TrustService is incorrect — the implementation is the source of truth.
+        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-61));
     }
 
     public function testGetBand_returnsAufruhr_atMinus62(): void
     {
-        // Aufruhr starts at -62 (first value where `$moral >= -61` is false).
-        $this->assertSame(__('moral.band_aufruhr'), $this->service->getBand(-62));
+        // Aufruhr starts at -62 (first value where `$trust >= -61` is false).
+        $this->assertSame(__('trust.band_aufruhr'), $this->service->getBand(-62));
     }
 
     public function testGetBand_returnsUnruhig_atMinus60(): void
     {
-        $this->assertSame(__('moral.band_unruhig'), $this->service->getBand(-60));
+        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-60));
     }
 
     public function testGetBand_returnsUnruhig_atMinus21(): void
     {
-        $this->assertSame(__('moral.band_unruhig'), $this->service->getBand(-21));
+        $this->assertSame(__('trust.band_unruhig'), $this->service->getBand(-21));
     }
 
     public function testGetBand_returnsStabil_atMinus20(): void
     {
-        $this->assertSame(__('moral.band_stabil'), $this->service->getBand(-20));
+        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(-20));
     }
 
     public function testGetBand_returnsStabil_atZero(): void
     {
-        $this->assertSame(__('moral.band_stabil'), $this->service->getBand(0));
+        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(0));
     }
 
     public function testGetBand_returnsStabil_at20(): void
     {
-        $this->assertSame(__('moral.band_stabil'), $this->service->getBand(20));
+        $this->assertSame(__('trust.band_stabil'), $this->service->getBand(20));
     }
 
     public function testGetBand_returnsZufrieden_at21(): void
     {
-        $this->assertSame(__('moral.band_zufrieden'), $this->service->getBand(21));
+        $this->assertSame(__('trust.band_zufrieden'), $this->service->getBand(21));
     }
 
     public function testGetBand_returnsZufrieden_at60(): void
     {
-        $this->assertSame(__('moral.band_zufrieden'), $this->service->getBand(60));
+        $this->assertSame(__('trust.band_zufrieden'), $this->service->getBand(60));
     }
 
     public function testGetBand_returnsEuphorisch_at61(): void
     {
-        $this->assertSame(__('moral.band_euphorisch'), $this->service->getBand(61));
+        $this->assertSame(__('trust.band_euphorisch'), $this->service->getBand(61));
     }
 
     public function testGetBand_returnsEuphorisch_at100(): void
     {
-        $this->assertSame(__('moral.band_euphorisch'), $this->service->getBand(100));
+        $this->assertSame(__('trust.band_euphorisch'), $this->service->getBand(100));
     }
 
     // ── getBand() — locale translation ───────────────────────────────────────
@@ -189,16 +189,16 @@ class MoralServiceTest extends TestCase
     {
         // When a locale has no translation file at all (not even in the fallback chain),
         // Laravel returns the translation key verbatim. This documents that behaviour:
-        // callers must ensure the active locale has a moral.php file.
+        // callers must ensure the active locale has a trust.php file.
         app()->setLocale('xx');
 
-        $this->assertSame('moral.band_euphorisch', $this->service->getBand(100));
-        $this->assertSame('moral.band_aufruhr',    $this->service->getBand(-100));
+        $this->assertSame('trust.band_euphorisch', $this->service->getBand(100));
+        $this->assertSame('trust.band_aufruhr',    $this->service->getBand(-100));
     }
 
     // ── getProductionMultiplier() ─────────────────────────────────────────────
 
-    public function testGetProductionMultiplier_neutralMoral_returnsOne(): void
+    public function testGetProductionMultiplier_neutralTrust_returnsOne(): void
     {
         $this->assertSame(1.0, $this->service->getProductionMultiplier(0));
     }
@@ -229,7 +229,7 @@ class MoralServiceTest extends TestCase
 
     // ── getApMultiplier() ────────────────────────────────────────────────────
 
-    public function testGetApMultiplier_neutralMoral_returnsOne(): void
+    public function testGetApMultiplier_neutralTrust_returnsOne(): void
     {
         $this->assertSame(1.0, $this->service->getApMultiplier(0));
     }
@@ -246,39 +246,39 @@ class MoralServiceTest extends TestCase
         $this->assertSame(0.80, $this->service->getApMultiplier(-80));
     }
 
-    // ── getMoral() ───────────────────────────────────────────────────────────
+    // ── getTrust() ───────────────────────────────────────────────────────────
 
-    public function testGetMoral_returnsZero_whenNoRowExists(): void
+    public function testGetTrust_returnsZero_whenNoRowExists(): void
     {
         // setUp already deleted all resource_id=12 rows
-        $this->assertSame(0, $this->service->getMoral($this->colonyId));
+        $this->assertSame(0, $this->service->getTrust($this->colonyId));
     }
 
-    public function testGetMoral_returnsStoredPositiveValue(): void
+    public function testGetTrust_returnsStoredPositiveValue(): void
     {
         DB::table('colony_resources')->insert([
-            'resource_id' => MoralService::RESOURCE_ID,
+            'resource_id' => TrustService::RESOURCE_ID,
             'colony_id'   => $this->colonyId,
             'amount'      => 42,
         ]);
 
-        $this->assertSame(42, $this->service->getMoral($this->colonyId));
+        $this->assertSame(42, $this->service->getTrust($this->colonyId));
     }
 
-    public function testGetMoral_returnsStoredNegativeValue(): void
+    public function testGetTrust_returnsStoredNegativeValue(): void
     {
         DB::table('colony_resources')->insert([
-            'resource_id' => MoralService::RESOURCE_ID,
+            'resource_id' => TrustService::RESOURCE_ID,
             'colony_id'   => $this->colonyId,
             'amount'      => -35,
         ]);
 
-        $this->assertSame(-35, $this->service->getMoral($this->colonyId));
+        $this->assertSame(-35, $this->service->getTrust($this->colonyId));
     }
 
-    public function testGetMoral_returnsZero_forUnknownColony(): void
+    public function testGetTrust_returnsZero_forUnknownColony(): void
     {
-        $this->assertSame(0, $this->service->getMoral(99999));
+        $this->assertSame(0, $this->service->getTrust(99999));
     }
 
     // ── fireEvent() ──────────────────────────────────────────────────────────
@@ -287,7 +287,7 @@ class MoralServiceTest extends TestCase
     {
         $this->service->fireEvent($this->colonyId, 'trade_success', $this->tick);
 
-        $this->assertDatabaseHas('moral_events', [
+        $this->assertDatabaseHas('trust_events', [
             'colony_id'  => $this->colonyId,
             'tick'       => $this->tick,
             'event_type' => 'trade_success',
@@ -298,7 +298,7 @@ class MoralServiceTest extends TestCase
     {
         $this->service->fireEvent($this->colonyId, 'made_up_event', $this->tick);
 
-        $this->assertDatabaseMissing('moral_events', [
+        $this->assertDatabaseMissing('trust_events', [
             'colony_id' => $this->colonyId,
         ]);
     }
@@ -310,7 +310,7 @@ class MoralServiceTest extends TestCase
 
         $expectedTick = $this->tickService->getTickCount() + 1;
 
-        $this->assertDatabaseHas('moral_events', [
+        $this->assertDatabaseHas('trust_events', [
             'colony_id'  => $this->colonyId,
             'tick'       => $expectedTick,
             'event_type' => 'encounter_won',
@@ -322,16 +322,16 @@ class MoralServiceTest extends TestCase
         $customTick = 9999;
         $this->service->fireEvent($this->colonyId, 'treaty_signed', $customTick);
 
-        $this->assertDatabaseHas('moral_events', [
+        $this->assertDatabaseHas('trust_events', [
             'colony_id'  => $this->colonyId,
             'tick'       => $customTick,
             'event_type' => 'treaty_signed',
         ]);
     }
 
-    // ── calculateMoral() — building contribution ─────────────────────────────
+    // ── calculateTrust() — building contribution ─────────────────────────────
 
-    public function testCalculateMoral_positiveBuildingContribution(): void
+    public function testCalculateTrust_positiveBuildingContribution(): void
     {
         // hospital (id=46): +3 per level; level=4 → +12
         DB::table('colony_buildings')->insert([
@@ -342,12 +342,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(12, $moral);
+        $this->assertSame(12, $trust);
     }
 
-    public function testCalculateMoral_buildingWithZeroStatusPoints_isExcluded(): void
+    public function testCalculateTrust_buildingWithZeroStatusPoints_isExcluded(): void
     {
         // hospital (id=46): status_points=0 → should not contribute
         DB::table('colony_buildings')->insert([
@@ -358,14 +358,14 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $moral);
+        $this->assertSame(0, $trust);
     }
 
-    public function testCalculateMoral_buildingNotInConfig_isIgnored(): void
+    public function testCalculateTrust_buildingNotInConfig_isIgnored(): void
     {
-        // commandCenter (id=25) is not in game.moral.buildings → no contribution
+        // commandCenter (id=25) is not in trust config → no contribution
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
             'building_id'  => 25,
@@ -374,14 +374,14 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $moral);
+        $this->assertSame(0, $trust);
     }
 
-    // ── calculateMoral() — research contribution ─────────────────────────────
+    // ── calculateTrust() — research contribution ─────────────────────────────
 
-    public function testCalculateMoral_positiveResearchContribution(): void
+    public function testCalculateTrust_positiveResearchContribution(): void
     {
         // health (id=94): +2 per level; level=3 → +6
         DB::table('colony_researches')->insert([
@@ -392,12 +392,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(6, $moral);
+        $this->assertSame(6, $trust);
     }
 
-    public function testCalculateMoral_negativeResearchContribution(): void
+    public function testCalculateTrust_negativeResearchContribution(): void
     {
         // defense (id=96): -1 per level; level=10 → -10
         DB::table('colony_researches')->insert([
@@ -408,14 +408,14 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-10, $moral);
+        $this->assertSame(-10, $trust);
     }
 
-    public function testCalculateMoral_researchNotInConfig_isIgnored(): void
+    public function testCalculateTrust_researchNotInConfig_isIgnored(): void
     {
-        // mathematics (research_id=73 in testdata, not in moral.researches config)
+        // mathematics (research_id=73 in testdata, not in trust config)
         DB::table('colony_researches')->insert([
             'colony_id'    => $this->colonyId,
             'research_id'  => 73,
@@ -424,14 +424,14 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $moral);
+        $this->assertSame(0, $trust);
     }
 
-    // ── calculateMoral() — ship contribution ─────────────────────────────────
+    // ── calculateTrust() — ship contribution ─────────────────────────────────
 
-    public function testCalculateMoral_positiveShipContribution(): void
+    public function testCalculateTrust_positiveShipContribution(): void
     {
         // frachter (id=47): +1 per unit; level=6 → +6
         DB::table('colony_ships')->insert([
@@ -442,12 +442,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(6, $moral);
+        $this->assertSame(6, $trust);
     }
 
-    public function testCalculateMoral_negativeShipContribution(): void
+    public function testCalculateTrust_negativeShipContribution(): void
     {
         // korvette (id=37): -1 per unit; level=20 → -20
         DB::table('colony_ships')->insert([
@@ -458,12 +458,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-20, $moral);
+        $this->assertSame(-20, $trust);
     }
 
-    public function testCalculateMoral_shipContribution_isCapppedAtPositive30(): void
+    public function testCalculateTrust_shipContribution_isCapppedAtPositive30(): void
     {
         // frachter (id=47): +1 per unit; level=100 → raw +100, capped to +30
         DB::table('colony_ships')->insert([
@@ -474,12 +474,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(30, $moral);
+        $this->assertSame(30, $trust);
     }
 
-    public function testCalculateMoral_shipContribution_isCappedAtNegative30(): void
+    public function testCalculateTrust_shipContribution_isCappedAtNegative30(): void
     {
         // korvette (id=37): -1 per unit; level=100 → raw -100, capped to -30
         DB::table('colony_ships')->insert([
@@ -490,86 +490,86 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-30, $moral);
+        $this->assertSame(-30, $trust);
     }
 
-    // ── calculateMoral() — event contribution ────────────────────────────────
+    // ── calculateTrust() — event contribution ────────────────────────────────
 
-    public function testCalculateMoral_eventContribution_addsDeltaForMatchingTick(): void
+    public function testCalculateTrust_eventContribution_addsDeltaForMatchingTick(): void
     {
         // trade_success: +2
         $this->service->fireEvent($this->colonyId, 'trade_success', $this->tick);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(2, $moral);
+        $this->assertSame(2, $trust);
     }
 
-    public function testCalculateMoral_sameEventTypeFiredTwice_countsOnlyOnce(): void
+    public function testCalculateTrust_sameEventTypeFiredTwice_countsOnlyOnce(): void
     {
         // trade_success: +2, fired twice — must NOT stack
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => $this->tick,
             'event_type' => 'trade_success',
         ]);
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => $this->tick,
             'event_type' => 'trade_success',
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
         // trade_success = +2, counted once
-        $this->assertSame(2, $moral);
+        $this->assertSame(2, $trust);
     }
 
-    public function testCalculateMoral_eventForDifferentTick_isNotIncluded(): void
+    public function testCalculateTrust_eventForDifferentTick_isNotIncluded(): void
     {
         // Fire event for tick+1 — should NOT appear in calculation for $this->tick
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => $this->tick + 1,
             'event_type' => 'trade_success',
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(0, $moral);
+        $this->assertSame(0, $trust);
     }
 
-    public function testCalculateMoral_multipleDistinctEvents_areSummed(): void
+    public function testCalculateTrust_multipleDistinctEvents_areSummed(): void
     {
         // trade_success (+2) + encounter_won (+2) + treaty_signed (+3) = +7
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'trade_success'],
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'encounter_won'],
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'treaty_signed'],
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(7, $moral);
+        $this->assertSame(7, $trust);
     }
 
-    public function testCalculateMoral_negativeEventContribution(): void
+    public function testCalculateTrust_negativeEventContribution(): void
     {
         // encounter_lost: -5
         $this->service->fireEvent($this->colonyId, 'encounter_lost', $this->tick);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-5, $moral);
+        $this->assertSame(-5, $trust);
     }
 
-    // ── calculateMoral() — global clamp ──────────────────────────────────────
+    // ── calculateTrust() — global clamp ──────────────────────────────────────
 
-    public function testCalculateMoral_isClampedToPositive100(): void
+    public function testCalculateTrust_isClampedToPositive100(): void
     {
-        // Insert many positive-moral hospitals to push raw sum well above 100
+        // Insert many positive-trust hospitals to push raw sum well above 100
         // hospital (id=46): +3/level; level=50 → raw building contribution = 150
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
@@ -579,12 +579,12 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(100, $moral);
+        $this->assertSame(100, $trust);
     }
 
-    public function testCalculateMoral_isClampedToNegative100(): void
+    public function testCalculateTrust_isClampedToNegative100(): void
     {
         // defense (id=96): -1/level; level=200 → raw -200, clamped to -100
         DB::table('colony_researches')->insert([
@@ -595,16 +595,16 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-100, $moral);
+        $this->assertSame(-100, $trust);
     }
 
     // ── calculateAndStore() ───────────────────────────────────────────────────
 
-    public function testCalculateAndStore_persistsMoralInColonyResources(): void
+    public function testCalculateAndStore_persistsTrustInColonyResources(): void
     {
-        // hospital (id=46): +3/level; level=5 → moral = +15
+        // hospital (id=46): +3/level; level=5 → trust = +15
         DB::table('colony_buildings')->insert([
             'colony_id'    => $this->colonyId,
             'building_id'  => 46,
@@ -620,21 +620,21 @@ class MoralServiceTest extends TestCase
 
         $this->assertDatabaseHas('colony_resources', [
             'colony_id'   => $this->colonyId,
-            'resource_id' => MoralService::RESOURCE_ID,
+            'resource_id' => TrustService::RESOURCE_ID,
             'amount'      => 15,
         ]);
     }
 
     public function testCalculateAndStore_updatesExistingRow(): void
     {
-        // Pre-insert a stale moral value
+        // Pre-insert a stale trust value
         DB::table('colony_resources')->insert([
-            'resource_id' => MoralService::RESOURCE_ID,
+            'resource_id' => TrustService::RESOURCE_ID,
             'colony_id'   => $this->colonyId,
             'amount'      => 99,
         ]);
 
-        // No buildings/events → moral = 0
+        // No buildings/events → trust = 0
         $colony = Colony::find($this->colonyId);
         $result = $this->service->calculateAndStore($colony, $this->tick);
 
@@ -643,14 +643,14 @@ class MoralServiceTest extends TestCase
         // Must update, not insert a second row
         $count = DB::table('colony_resources')
             ->where('colony_id', $this->colonyId)
-            ->where('resource_id', MoralService::RESOURCE_ID)
+            ->where('resource_id', TrustService::RESOURCE_ID)
             ->count();
 
         $this->assertSame(1, $count);
 
         $this->assertDatabaseHas('colony_resources', [
             'colony_id'   => $this->colonyId,
-            'resource_id' => MoralService::RESOURCE_ID,
+            'resource_id' => TrustService::RESOURCE_ID,
             'amount'      => 0,
         ]);
     }
@@ -683,9 +683,9 @@ class MoralServiceTest extends TestCase
             'ap_spend'     => 0,
         ]);
 
-        $colony = Colony::find($this->colonyId);
+        $colony   = Colony::find($this->colonyId);
         $returned = $this->service->calculateAndStore($colony, $this->tick);
-        $stored   = $this->service->getMoral($this->colonyId);
+        $stored   = $this->service->getTrust($this->colonyId);
 
         $this->assertSame(14, $returned);
         $this->assertSame($returned, $stored);
@@ -693,7 +693,7 @@ class MoralServiceTest extends TestCase
 
     // ── Combined contributions ────────────────────────────────────────────────
 
-    public function testCalculateMoral_combinesAllSources(): void
+    public function testCalculateTrust_combinesAllSources(): void
     {
         // hospital (id=46): +3/level; level=2 → +6
         DB::table('colony_buildings')->insert([
@@ -723,15 +723,15 @@ class MoralServiceTest extends TestCase
         ]);
 
         // trade_success: +2
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => $this->tick,
             'event_type' => 'trade_success',
         ]);
 
-        $moral = $this->service->calculateMoral($this->colonyId, $this->tick);
+        $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
         // +6 (buildings) + +6 (researches) + +2 (ships) + +2 (events) = +16
-        $this->assertSame(16, $moral);
+        $this->assertSame(16, $trust);
     }
 }

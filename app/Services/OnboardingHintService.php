@@ -235,7 +235,7 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 5: Colony moral/trust (resource_id=12) is below the trust threshold AND
+     * Hint 5: Colony trust (resource_id=12) is below the trust threshold AND
      *         current tick >= hint_trust_min_ticks threshold.
      */
     private function checkHint5(int $colonyId, int $currentTick): bool

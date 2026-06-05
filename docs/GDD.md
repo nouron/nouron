@@ -187,18 +187,17 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 - Konfiguration: `config/game.php → tick`
 - Alle Schritte eines Ticks laufen in einer einzigen DB-Transaktion (atomar)
 
-### Reihenfolge der Tick-Schritte
+### Reihenfolge der Tick-Phasen
 
-| Schritt | Beschreibung |
-|---------|-------------|
-| 1 | Fleet Move Orders — Flotten bewegen sich zu Zielkoordinaten |
-| 2 | Fleet Trade Orders — Ressourcentransfer Flotte ↔ Kolonie |
-| 3 | Fleet Encounter Orders — Zwischenfälle aufgelöst; Schiffs-Verschleiß (`wear_per_order`) abgezogen |
-| 4 | Building Decay — Gebäude verlieren `decay_rate` SP; Level-Down bei SP ≤ 0 (§7) |
-| 5 | Supply Cap — `user_resources.supply` neu berechnen und setzen (Formel: siehe §6) |
-| 6 | Resource Generation — Rohstoffproduktion pro Kolonie und Produktionsgebäude |
-| 6b | Vertrauen Calculation — Vertrauen neu berechnen, `colony_resources` (res_id=12) aktualisieren (§14) |
-| 7 | Advisor Ticks — `active_ticks` erhöhen, Rang-Aufstieg prüfen, Burnout-Wahrscheinlichkeit würfeln (§7, §13) |
+| Phase | Beschreibung |
+|-------|-------------|
+| 1. Fleet | Flottenbewegung, Ressourcentransfer, Zwischenfälle |
+| 2. Decay | Gebäude-, Schiffs- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
+| 3. Supply & Ressourcen | Supply-Cap neu berechnen (§6), dann Rohstoffproduktion (Vertrauens-Multiplikator angewendet) |
+| 4. Vertrauen | Vertrauenswert neu berechnen, `colony_resources` aktualisieren (§14) |
+| 5. Beratung & Events | Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
+
+> Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten.
 
 ---
 
@@ -471,6 +470,8 @@ Tile-Typen definieren die **Mechanik** eines Tiles — nicht sein Aussehen. Die 
 | `terrain_hazard` | Gefahr — Korvette/Sonde nötig zur Neutralisierung. Wird danach zu `terrain_empty` |
 | `terrain_impassable` | Nicht begehbar, nicht bebaubar (Klippen, Abgründe, Lavaströme — je nach Planetentyp) |
 
+> **UI-Render-States (kein DB-Typ):** `terrain_fog` und `terrain_locked` sind keine `tile_type`-Werte in der DB — sie sind visuelle Zustände die das Hex-Grid aus `is_explored` + `is_colony_zone` ableitet. `terrain_fog` = unerkundetes Kolonie-Zone-Tile; `terrain_locked` = unerkundetes Exploration-Zone-Tile. Beschreibung in `docs/lore/tiles.md`.
+
 **Ressource-Tiles (für Harvester):**
 
 | Typ-Key | Ressource | Qualität |
@@ -563,12 +564,12 @@ produzierte Menge = Gebäude-Level × Rate
 
 | Gebäude | building_id | Ressource | resource_id | Rate |
 |---------|-------------|-----------|-------------|------|
-| Harvester | 27 | Regolith | 3 | tile-abhängig |
+| Harvester | 27 | Regolith | 3 | 10 pro Level |
 | Agrardom | 41 | Organika | 5 | 10 pro Level |
 
 > **Designentscheidung:** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
 
-> **Harvester-Produktion:** Die produzierte Menge hängt vom Tile-Typ ab (z.B. "Reicher Erzknoten" = +50% Bonus). Quellen versiegen graduell — ein sichtbarer Erschöpfungs-Counter auf dem Tile zeigt den verbleibenden Vorrat.
+> **Harvester-Produktion (Phase 4+):** Geplant ist eine tile-abhängige Rate mit Tile-Boni (z.B. "Reicher Erzknoten" = +50%) und gradueller Erschöpfung. Aktuell (Phase 3): feste Rate `×10/level` identisch zum Agrardom — nach erstem Playtest evaluieren ob Tile-Varianz den Aufwand rechtfertigt.
 
 ### Konfiguration
 
@@ -576,8 +577,8 @@ produzierte Menge = Gebäude-Level × Rate
 
 ```php
 'production' => [
-    27 => [3 => 'tile'],   // harvester      → Regolith  tile-abhängig
-    41 => [5 => 10],       // bioFacility    → Organika  × 10/level
+    27 => [3 => 10],   // harvester   → Regolith  × 10/level
+    41 => [5 => 10],   // bioFacility → Organika  × 10/level
 ],
 ```
 
@@ -877,7 +878,7 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 > **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Sol".
 
-> **Implementierungshinweis:** Die Burnout-Prüfung erfolgt in Tick-Schritt 7 (Advisor Ticks), nach dem AP-Bonus-Update. Die Zufallsziehung passiert einmal pro Berater pro Tick. Alle Konfigurations-Parameter stehen in `config/game.php → advisors.burnout`.
+> **Implementierungsstand:** Die Burnout-Wahrscheinlichkeits-Formel ist noch nicht implementiert. `unavailable_until_tick` existiert in der DB und wird gecheckt; die probabilistische Prüfung folgt nach dem ersten Playtest (Phase 4+).
 
 ---
 

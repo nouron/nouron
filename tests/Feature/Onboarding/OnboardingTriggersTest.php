@@ -29,7 +29,7 @@ use Tests\TestCase;
  *   - Below cap: used supply < cap → trigger does NOT fire
  *
  * Trigger 3 — onboarding_trust (trust crosses from >= 0 to < 0)
- *   - Happy path:  trust was 0, MoralService drives it negative → INNN event + markFired
+ *   - Happy path:  trust was 0, TrustService drives it negative → INNN event + markFired
  *   - Already fired: trigger in fired_triggers → no second event
  *   - Already negative before tick: trust was -1 before tick → no event (transition already happened)
  *   - NPC colony (user_id = null): trust going negative must NOT fire trigger
@@ -55,7 +55,7 @@ class OnboardingTriggersTest extends TestCase
 
         $this->triggerService = $this->app->make(OnboardingTriggerService::class);
 
-        // Pin the tick to a known value so moral_events rows can be inserted at
+        // Pin the tick to a known value so trust_events rows can be inserted at
         // the correct tick number before calling game:tick.
         $this->app->make(\App\Services\TickService::class)->setTickCount(500);
 
@@ -344,11 +344,11 @@ class OnboardingTriggersTest extends TestCase
 
     /**
      * When trust (resource_id=12) transitions from >= 0 (before tick) to < 0 (after
-     * MoralService recalculates), the trigger must emit an onboarding_trust INNN event.
+     * TrustService recalculates), the trigger must emit an onboarding_trust INNN event.
      *
-     * We drive moral negative by inserting an 'encounter_lost' moral event (value = -5)
-     * into the moral_events table at the pinned tick (500) for this colony.
-     * After the tick, MoralService will store moral = -5 in colony_resources, which
+     * We drive trust negative by inserting an 'encounter_lost' moral event (value = -5)
+     * into the trust_events table at the pinned tick (500) for this colony.
+     * After the tick, TrustService will store trust = -5 in colony_resources, which
      * satisfies the onboarding_trust trigger condition (trustBefore=0 >= 0, trustAfter=-5 < 0).
      */
     public function test_trust_trigger_fires_when_trust_crosses_zero_to_negative(): void
@@ -356,8 +356,8 @@ class OnboardingTriggersTest extends TestCase
         // Trust starts at 0 (set in setUp); trigger not yet fired.
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_trust'));
 
-        // Insert a negative moral event at the pinned tick so MoralService produces -5.
-        DB::table('moral_events')->insert([
+        // Insert a negative moral event at the pinned tick so TrustService produces -5.
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => 500, // matches the tick pinned in setUp
             'event_type' => 'encounter_lost',
@@ -399,7 +399,7 @@ class OnboardingTriggersTest extends TestCase
         $this->triggerService->markFired($this->userId, 'onboarding_trust');
 
         // Force moral to go negative via encounter_lost event.
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => 500,
             'event_type' => 'encounter_lost',
@@ -431,7 +431,7 @@ class OnboardingTriggersTest extends TestCase
             ->update(['amount' => -5]);
 
         // Also insert a moral event so the result stays negative after recalculation.
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => $this->colonyId,
             'tick'       => 500,
             'event_type' => 'encounter_lost',
@@ -477,7 +477,7 @@ class OnboardingTriggersTest extends TestCase
         ]);
 
         // Moral event for the NPC colony so trust would go negative.
-        DB::table('moral_events')->insert([
+        DB::table('trust_events')->insert([
             'colony_id'  => 9999,
             'tick'       => 500,
             'event_type' => 'encounter_lost',

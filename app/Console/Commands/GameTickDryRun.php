@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\MoralService;
+use App\Services\TrustService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +18,7 @@ class GameTickDryRun extends Command
     protected $signature   = 'game:tick-dry-run {--colony= : Limit output to a single colony ID}';
     protected $description = 'Simulate one game tick and show a resource/decay diff (no DB writes)';
 
-    public function __construct(private readonly MoralService $moralService)
+    public function __construct(private readonly TrustService $trustService)
     {
         parent::__construct();
     }
@@ -140,8 +140,8 @@ class GameTickDryRun extends Command
             ->pluck('amount', 'resource_id');
 
         $production = config('game.production', []);
-        $moral      = $this->moralService->getMoral($cid);
-        $multiplier = $this->moralService->getProductionMultiplier($moral);
+        $moral      = $this->trustService->getTrust($cid);
+        $multiplier = $this->trustService->getProductionMultiplier($moral);
 
         $resNames = [3 => 'Regolith', 4 => 'Werkstoffe', 5 => 'Organika'];
         $this->line('  Resources:');
@@ -161,10 +161,10 @@ class GameTickDryRun extends Command
             $this->line(sprintf('    %-14s %6d → %6d  (%s)', $rname . ':', $cur, $new, $yieldStr));
         }
 
-        $moralColor = $moral >= 0 ? 'green' : 'red';
+        $trustColor = $moral >= 0 ? 'green' : 'red';
         $this->line(sprintf(
-            '    Moral:        <fg=%s>%d</> (production ×%.2f)',
-            $moralColor, $moral, $multiplier
+            '    Trust:        <fg=%s>%d</> (production ×%.2f)',
+            $trustColor, $moral, $multiplier
         ));
 
         // ── Building decay ────────────────────────────────────────────────

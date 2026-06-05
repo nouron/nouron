@@ -7,7 +7,7 @@
  *   id           — DB primary key in `personell` table
  *   ap_type      — which action-point pool this advisor fills
  *                  'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
- *   moral_per_unit — moral change per active advisor (minor effects)
+ *   trust_per_unit — trust change per active advisor (minor effects)
  *   credits      — hire cost in credits
  *
  * Advisors do NOT consume Supply — their cost runs through Credits only (see GDD §12).
@@ -22,35 +22,35 @@ return [
     'engineer' => [
         'id'             => 35,
         'ap_type'        => 'construction',
-        'moral_per_unit' => 0,
+        'trust_per_unit' => 0,
         'credits'        => 300,    // critical for early building — first hire
     ],
 
     'scientist' => [
         'id'             => 36,
         'ap_type'        => 'research',
-        'moral_per_unit' => 0,
+        'trust_per_unit' => 0,
         'credits'        => 400,
     ],
 
     'pilot' => [
         'id'             => 89,
         'ap_type'        => 'navigation',
-        'moral_per_unit' => 0,
+        'trust_per_unit' => 0,
         'credits'        => 500,    // fleet-focused, later priority
     ],
 
     'trader' => [
         'id'             => 92,
         'ap_type'        => 'economy',
-        'moral_per_unit' => 0,
+        'trust_per_unit' => 0,
         'credits'        => 350,
     ],
 
     'strategist' => [
         'id'             => 93,
         'ap_type'        => 'strategy',
-        'moral_per_unit' => 0,
+        'trust_per_unit' => 0,
         'credits'        => 600,    // military/strategy — typically late-game hire
     ],
 

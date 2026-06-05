@@ -188,7 +188,7 @@ class RunProgressService
     /**
      * Evaluate and persist progress for every open objective of the given run.
      *
-     * Called once per tick, after resource generation and moral recalculation.
+     * Called once per tick, after resource generation and trust recalculation.
      */
     public function updateObjectiveProgress(Run $run): void
     {

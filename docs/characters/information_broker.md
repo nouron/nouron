@@ -1,5 +1,5 @@
 ---
-slug: informationsagent
+slug: information_broker
 status: draft
 ---
 
@@ -29,5 +29,5 @@ A middle-aged woman with dark, closely cropped hair and a calm, expressionless f
 - **Frequency:** rare
 
 ## Artwork
-- **File:** public/img/characters/informationsagent.webp
-- **Prompt:** .prompts/images/characters/informationsagent.prompt.md
+- **File:** public/img/characters/information_broker.webp
+- **Prompt:** .prompts/images/characters/information_broker.prompt.md

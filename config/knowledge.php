@@ -7,7 +7,7 @@
  *
  * Fields:
  *   id               — DB primary key in `researches` table
- *   moral_per_lv     — moral change per knowledge level (used by MoralService)
+ *   trust_per_lv     — trust change per knowledge level (used by TrustService)
  *   decay_rate       — always 0; knowledge never decays (GDD §10). GameTick skips Kenntnisse in decay loop.
  *   max_status_points — status_points reset value (kept for compatibility with colony_researches schema)
  *   credits          — base cost in credits to invest one level
@@ -28,7 +28,7 @@ return [
 
     'construction' => [
         'id'                => 90,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -37,7 +37,7 @@ return [
 
     'cartography' => [
         'id'                => 91,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -46,7 +46,7 @@ return [
 
     'geology' => [
         'id'                => 92,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -55,7 +55,7 @@ return [
 
     'agronomy' => [
         'id'                => 93,
-        'moral_per_lv'      => 1,       // see GDD §13
+        'trust_per_lv'      => 1,       // see GDD §13
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -64,7 +64,7 @@ return [
 
     'health' => [
         'id'                => 94,
-        'moral_per_lv'      => 2,       // see GDD §13
+        'trust_per_lv'      => 2,       // see GDD §13
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -73,7 +73,7 @@ return [
 
     'trade' => [
         'id'                => 95,
-        'moral_per_lv'      => 0,
+        'trust_per_lv'      => 0,
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,
@@ -82,7 +82,7 @@ return [
 
     'defense' => [
         'id'                => 96,
-        'moral_per_lv'      => -1,      // see GDD §13 — vigilance dampens morale slightly
+        'trust_per_lv'      => -1,      // see GDD §13 — vigilance dampens morale slightly
         'decay_rate'        => 0,
         'max_status_points' => 20,
         'credits'           => 100,

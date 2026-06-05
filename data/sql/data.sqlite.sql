@@ -412,7 +412,7 @@ INSERT INTO "resources" VALUES(2,'res_supply','Sup','Event',0,200,'resicon-suppl
 INSERT INTO "resources" VALUES(3,'res_water','W','Level',1,500,'resicon-water');
 INSERT INTO "resources" VALUES(4,'res_ferum','E','Level',1,500,'resicon-iron');
 INSERT INTO "resources" VALUES(5,'res_silicates','S','Level',1,500,'resicon-silicates');
-INSERT INTO "resources" VALUES(12,'res_moral','M','Event',0,0,'resicon-moral');
+INSERT INTO "resources" VALUES(12,'res_trust','M','Event',0,0,'resicon-moral');
 INSERT INTO "ships" VALUES(29,'military','techs_frigate1',NULL,NULL,NULL,NULL,0,10,5,15,10,500);
 INSERT INTO "ships" VALUES(37,'military','techs_fighter1',NULL,NULL,NULL,NULL,0,8,5,15,10,500);
 INSERT INTO "ships" VALUES(47,'economy','techs_smallTransporter',NULL,NULL,NULL,NULL,0,7,4,15,10,500);
