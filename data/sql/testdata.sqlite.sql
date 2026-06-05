@@ -242,19 +242,19 @@ INSERT INTO "colony_resources" VALUES(12,1,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,1,1,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,2,1,20,0);
 
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,29,0,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,37,9,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,47,3,10,0);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,49,12,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,83,17,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,84,16,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(1,85,5,3,0);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,29,19,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,37,19,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,47,19,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,49,19,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,83,19,10,1);
-INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend) VALUES(2,84,19,10,1);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,9,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,47,3,10,0,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,49,12,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,83,17,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,84,16,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,85,5,3,0,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,29,19,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,37,19,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,47,19,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,49,19,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,83,19,10,1,NULL,'docked',NULL,NULL);
+INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(2,84,19,10,1,NULL,'docked',NULL,NULL);
 
 -- Assign hangar bays: corvette (ship_id=37) → hangar 1, freighter (ship_id=47) → hangar 2 on colony 1
 -- Drone (ship_id=85) dispatched from hangar 1, so ship_state=dispatched

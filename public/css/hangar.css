@@ -496,48 +496,277 @@
     to { left: 100%; }
 }
 
-/* ── Commission buttons (ship type selector, replaces radio group) ────────── */
+/* ── Nexus request button (empty slot CTA) ────────────────────────────────── */
 
-.hangar-commission-group {
+.hangar-nexus-request-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
+}
+
+.btn-hangar-nexus-request {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1.5px solid #3b5ac6;
+    background: transparent;
+    color: #3b5ac6;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.15s, color 0.15s;
+}
+
+.btn-hangar-nexus-request:hover:not(:disabled) {
+    background: #f0f3ff;
+}
+
+.btn-hangar-nexus-request:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.hangar-nexus-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ── Arrival tick display (building state) ────────────────────────────────── */
+
+.hangar-arrival-tick {
+    color: #3b5ac6;
+}
+
+/* ── Native <dialog> — Nexus request modal ────────────────────────────────── */
+
+.hangar-request-dialog {
+    border: 1px solid #d0d4e8;
+    border-radius: 12px;
+    padding: 0;
+    width: min(90vw, 380px);
+    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.18);
+    background: #fff;
+}
+
+.hangar-request-dialog::backdrop {
+    background: rgba(26, 26, 46, 0.45);
+}
+
+/* PicoCSS <article> inside dialog — override default margins */
+.hangar-request-dialog article {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+.hangar-dialog-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem 0.6rem;
+    border-bottom: 1px solid #eeeef4;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+
+.hangar-dialog-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #aaa;
+    padding: 0 0.2rem;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.hangar-dialog-close:hover { color: #555; }
+
+.hangar-dialog-fieldset {
+    border: none;
+    margin: 0;
+    padding: 0.6rem 1rem 0;
+}
+
+.hangar-dialog-fieldset legend {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #888;
+    padding: 0;
+    margin-bottom: 0.35rem;
+}
+
+.hangar-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 400;
+    color: #333;
+    cursor: pointer;
+    padding: 0.2rem 0.3rem;
+    border-radius: 5px;
+    transition: background 0.1s;
+}
+
+.hangar-radio-label:hover {
+    background: #f5f5f8;
+}
+
+.hangar-radio-label input[type="radio"] {
+    flex-shrink: 0;
+    margin: 0;
+    accent-color: #3b5ac6;
+}
+
+/* Cost hint next to ship type */
+.hangar-ship-cost {
+    margin-left: auto;
+    font-size: 0.71rem;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Nexus credit hint text */
+.hangar-nexus-credit-hint {
+    font-size: 0.68rem;
+    color: #888;
+    margin-left: auto;
+}
+
+/* Consul AP label layout */
+.hangar-consul-ap-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.8rem;
+    color: #555;
+    font-weight: 600;
+}
+
+.hangar-consul-ap-label input[type="range"] {
+    width: 100%;
+    accent-color: #3b5ac6;
+}
+
+.hangar-dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 0.85rem;
+    border-top: 1px solid #eeeef4;
+    margin-top: 0.6rem;
+}
+
+/* ── Pending ships section ─────────────────────────────────────────────────── */
+
+.hangar-pending-section {
+    margin-top: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+/* PicoCSS <details> / <summary> override for inline look */
+.hangar-pending-section details {
+    border: 1px solid #e4e4ef;
+    border-radius: 10px;
+    background: #fafafa;
+    overflow: hidden;
+}
+
+.hangar-pending-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    cursor: pointer;
+    user-select: none;
+}
+
+.hangar-pending-summary::-webkit-details-marker { display: none; }
+
+.hangar-pending-summary::before {
+    content: '▸';
+    font-size: 0.65rem;
+    color: #aaa;
+    transition: transform 0.15s;
+}
+
+details[open] .hangar-pending-summary::before {
+    transform: rotate(90deg);
+}
+
+.hangar-pending-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    margin-top: 0.5rem;
-    flex: 1;
+    padding: 0 0.75rem 0.75rem;
 }
 
-.btn-hangar-commission {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    font-size: 0.88rem;
-    font-weight: 600;
+/* PicoCSS <article> override for pending ship cards */
+.hangar-pending-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #e8e8f0;
     border-radius: 8px;
-    border: 1px solid #c8e6c9;
-    background: transparent;
-    color: #2e7d32;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s;
-    position: relative;
+    background: #fff;
+    margin: 0;
+    box-shadow: none;
 }
 
-.btn-hangar-commission:hover:not(:disabled) {
-    background: #f2faf2;
+.hangar-pending-card-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
-.btn-hangar-commission:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-    border-color: #ddd;
-    color: #999;
+.hangar-pending-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1a1a2e;
 }
 
-.btn-commission-locked {
-    font-size: 0.68rem;
-    font-weight: 400;
-    color: #aaa;
-    display: block;
-    margin-top: 2px;
+.hangar-pending-expires {
+    font-size: 0.7rem;
+    color: #c0392b;
+    font-variant-numeric: tabular-nums;
+}
+
+.hangar-pending-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.hangar-pending-select {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.78rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid #d0d0dc;
+    border-radius: 6px;
+    background: #fafafa;
+    color: #1a1a2e;
 }
 
 /* ── Mobile: dots inside flex column, always visible ─────────────────────── */
@@ -549,13 +778,18 @@
     }
 }
 
-/* ── Mobile: commission buttons full-height ──────────────────────────────── */
+/* ── Mobile: Nexus request button full-width ─────────────────────────────── */
 
 @media (max-width: 767px) {
-    .btn-hangar-commission {
-        padding: 1rem 1.25rem;
+    .btn-hangar-nexus-request {
+        padding: 0.9rem 1.25rem;
         font-size: 1rem;
-        min-height: 60px;
+        font-weight: 600;
+        min-height: 52px;
         border-radius: 10px;
+    }
+
+    .hangar-pending-section {
+        padding: 0;
     }
 }

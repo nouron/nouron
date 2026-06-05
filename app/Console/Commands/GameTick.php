@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
  * Override tick number: php artisan game:tick --tick=16300
  *
  * Steps per tick:
+ *  0. Hangar deliveries   — transition building→docked ships; expire pending ships
  *  1. Fleet move orders   — update fleet position to ordered coordinates
  *  2. Fleet trade orders  — transfer resources between fleet and colony
  *  3. Fleet combat orders — resolve combat between attacking and defending fleets
@@ -102,6 +103,10 @@ class GameTick extends Command
         $this->info("Processing tick {$tick} (Run #{$run->id})…");
 
         DB::transaction(function () use ($tick) {
+            [$delivered, $expired] = $this->processHangarDeliveries($tick);
+            $this->line("  Hangar ships delivered:   {$delivered}");
+            $this->line("  Hangar ships expired:     {$expired}");
+
             $n = $this->processMoveOrders($tick);
             $this->line("  Fleet move orders:        {$n}");
 
@@ -194,6 +199,35 @@ class GameTick extends Command
 
         $this->info("Tick {$tick} done.");
         return self::SUCCESS;
+    }
+
+    // ── 0. Hangar deliveries ────────────────────────────────────────────────
+
+    /**
+     * Processes Nexus ship deliveries and pending-ship expiry.
+     *
+     * Delivery:  building → docked  when deliver_at_tick <= current tick.
+     * Expiry:    pending ships whose pending_until_tick < current tick are deleted.
+     *
+     * @return array{int, int}  [$deliveredCount, $expiredCount]
+     */
+    private function processHangarDeliveries(int $tick): array
+    {
+        // 1. Deliver ships: building → docked (deliver_at_tick reached).
+        $delivered = DB::table('colony_ships')
+            ->where('ship_state', 'building')
+            ->whereNotNull('deliver_at_tick')
+            ->where('deliver_at_tick', '<=', $tick)
+            ->update(['ship_state' => 'docked', 'deliver_at_tick' => null]);
+
+        // 2. Decay pending ships (no hangar assigned, deadline expired).
+        $expired = DB::table('colony_ships')
+            ->where('ship_state', 'pending')
+            ->whereNotNull('pending_until_tick')
+            ->where('pending_until_tick', '<', $tick)
+            ->delete();
+
+        return [$delivered, $expired];
     }
 
     // ── 1. Fleet: move orders ────────────────────────────────────────────────

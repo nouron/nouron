@@ -70,6 +70,18 @@ return [
         ],
     ],
 
+    // Hangar — Nexus ship ordering and pending-ship lifecycle.
+    'hangar' => [
+        // Min CC level required to use Nexus-Kredit (take ship on debt)
+        'nexus_credit_min_cc_level' => 2,
+
+        // Trust penalty when using Nexus-Kredit (one-shot event)
+        'nexus_credit_trust_penalty' => -5,
+
+        // Ticks before an unassigned (pending) ship decays and is removed
+        'pending_decay_ticks' => 5,
+    ],
+
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
@@ -204,6 +216,7 @@ return [
             'encounter_lost'        => -5,
             'colony_threatened'     => -4,
             'treaty_signed'         =>  3,
+            'nexus_credit'          => -5,  // trust penalty when ship is acquired on Nexus-Kredit
         ],
     ],
 
