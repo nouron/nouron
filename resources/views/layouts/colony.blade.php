@@ -42,9 +42,9 @@
         </ul>
 
         <ul>
-            {{-- Sol-Button: always visible on desktop; mobile only on colony.view (via .sol-btn-wrap) --}}
+            {{-- Sol-Button: only on the main colony screen --}}
             @auth
-            @if($inActiveRun ?? false)
+            @if(($inActiveRun ?? false) && request()->routeIs('colony.view'))
             <li class="sol-btn-wrap">@include('partials.sol-button')</li>
             @endif
             @endauth
