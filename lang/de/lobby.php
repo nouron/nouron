@@ -46,4 +46,11 @@ return [
 
     // New run button (Feature 2)
     'new_run_confirm'        => 'Neuen Run starten — Kolonie wird zurückgesetzt. Fortfahren?',
+
+    // Abandon run
+    'abandon_button'         => 'Mission abbrechen',
+    'abandon_confirm'        => 'Mission wirklich abbrechen? Der Run gilt dann als gescheitert und kann nicht fortgesetzt werden.',
+    'abandon_success'        => 'Mission abgebrochen.',
+    'abandon_not_active'     => 'Dieser Run ist nicht mehr aktiv.',
+    'nav_runs'               => 'Run-Übersicht',
 ];

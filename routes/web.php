@@ -24,7 +24,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     Route::get('/lobby',          [LobbyController::class, 'index'])->name('lobby');
-    Route::post('/lobby/start',   [LobbyController::class, 'start'])->name('lobby.start');
+    Route::post('/lobby/start',          [LobbyController::class, 'start'])->name('lobby.start');
+    Route::post('/lobby/{run}/abandon',  [LobbyController::class, 'abandon'])->name('lobby.abandon');
     Route::get('/run/{id}/result', [RunResultController::class, 'show'])->name('run.result')->where('id', '[0-9]+');
     Route::post('/run/new',        [LobbyController::class, 'newRun'])->name('run.new');
 });

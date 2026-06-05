@@ -307,6 +307,15 @@
                         <a href="{{ route('colony.view') }}" role="button">
                             {{ __('lobby.continue_button') }}
                         </a>
+                        <form method="POST"
+                              action="{{ route('lobby.abandon', $run->id) }}"
+                              style="margin: 0;"
+                              onsubmit="return confirm(@json(__('lobby.abandon_confirm')))">
+                            @csrf
+                            <button type="submit" class="secondary outline" style="color:#c0392b; border-color:#c0392b;">
+                                {{ __('lobby.abandon_button') }}
+                            </button>
+                        </form>
                     </footer>
                 </article>
             @endforeach

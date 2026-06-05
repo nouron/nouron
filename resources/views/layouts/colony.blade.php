@@ -54,6 +54,7 @@
                 <details class="dropdown colony-user-dropdown">
                     <summary>{{ Auth::user()->username }}</summary>
                     <ul>
+                        <li><a href="{{ route('lobby') }}">{{ __('lobby.nav_runs') }}</a></li>
                         <li><a href="{{ route('user.show') }}">Profil</a></li>
                         <li><a href="{{ route('user.settings') }}">Einstellungen</a></li>
                         <li>
@@ -106,6 +107,7 @@
                         <i class="bi bi-database"></i> Nexus-DB
                     </a>
                     <div class="nav-flyout-divider"></div>
+                    <a href="{{ route('lobby') }}" class="nav-flyout-item"><i class="bi bi-list-check"></i> {{ __('lobby.nav_runs') }}</a>
                     <a href="{{ route('user.show') }}" class="nav-flyout-item"><i class="bi bi-person"></i> Profil</a>
                     <a href="{{ route('user.settings') }}" class="nav-flyout-item"><i class="bi bi-gear"></i> Einstellungen</a>
                     <form method="POST" action="{{ route('logout') }}" style="margin:0">
