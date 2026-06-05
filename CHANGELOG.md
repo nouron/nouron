@@ -10,6 +10,7 @@
 - **Characters**: `informationsagent` → `information_broker` (Slug-Konsistenz; alle anderen Slugs englisch).
 - **GDD §8b Hangar-Redesign**: Schiffsakquise vollständig überarbeitet — Nexus als Lieferant statt Selbstbau. 4 Akquise-Pfade: Standardkauf (Credits + Lieferzeit), Nexus-Kredit (ab CC Lv2, Trust-Penalty), Konsul-Verhandlung (AP-Rabatt 50 Cr/AP), Event/Händler. Kein Duplikat-Constraint mehr. Pending-State für Schiffe ohne Hangar-Zuweisung (Decay 5 Sole).
 - **feat(hangar)**: `requestShip()` ersetzt `buildShip()`; `getPendingShips()`, `assignToHangar()` neu. `colony_ships` PK auto-increment. TickService `processHangarDeliveries()`. Config: `nexus_cost`/`nexus_delivery_ticks` in ships.php, `hangar`-Block in game.php. UI: "Nexus anfragen"-Dialog, Lieferung-State, "Nicht zugewiesen"-Sektion. 760 Tests grün.
+- **feat(hangar) UI**: Nexus-Request-Dialog auf Sofort-Buttons umgestellt — je Schiffstyp (Drohne/Frachter/Korvette) ein großer Button, Klick führt Request direkt aus ohne Bestätigungsschritt. Optionale Controls (Nexus-Kredit, Konsul-AP) nur bei Verfügbarkeit sichtbar.
 
 ## 2026-06-04
 

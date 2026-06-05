@@ -409,29 +409,7 @@
     font-weight: 600;
 }
 
-/* Radio group for ship type selection */
-.hangar-ship-radio-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.hangar-ship-radio-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.8rem;
-    font-weight: 400;
-    color: #333;
-    cursor: pointer;
-    padding: 0.25rem 0.4rem;
-    border-radius: 5px;
-    transition: background 0.1s;
-}
-
-.hangar-ship-radio-group label:hover {
-    background: #f5f5f8;
-}
+/* (Radio group styles removed — replaced by .hangar-ship-btn-list) */
 
 .hangar-form-actions {
     display: flex;
@@ -609,37 +587,6 @@
     margin-bottom: 0.35rem;
 }
 
-.hangar-radio-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.82rem;
-    font-weight: 400;
-    color: #333;
-    cursor: pointer;
-    padding: 0.2rem 0.3rem;
-    border-radius: 5px;
-    transition: background 0.1s;
-}
-
-.hangar-radio-label:hover {
-    background: #f5f5f8;
-}
-
-.hangar-radio-label input[type="radio"] {
-    flex-shrink: 0;
-    margin: 0;
-    accent-color: #3b5ac6;
-}
-
-/* Cost hint next to ship type */
-.hangar-ship-cost {
-    margin-left: auto;
-    font-size: 0.71rem;
-    color: #888;
-    font-variant-numeric: tabular-nums;
-}
-
 /* Nexus credit hint text */
 .hangar-nexus-credit-hint {
     font-size: 0.68rem;
@@ -662,13 +609,108 @@
     accent-color: #3b5ac6;
 }
 
-.hangar-dialog-footer {
+/* ── Dialog optional controls (Nexus toggle + Consul AP range) ─────────────── */
+
+.hangar-dialog-controls {
     display: flex;
-    justify-content: flex-end;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem 0.85rem;
-    border-top: 1px solid #eeeef4;
-    margin-top: 0.6rem;
+    flex-direction: column;
+    gap: 0.55rem;
+    padding: 0.6rem 1rem 0;
+}
+
+/* Nexus credit toggle row */
+.hangar-nexus-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-size: 0.82rem;
+    color: #333;
+    cursor: pointer;
+    user-select: none;
+}
+
+.hangar-nexus-toggle input[type="checkbox"] {
+    flex-shrink: 0;
+    margin: 0;
+    accent-color: #3b5ac6;
+}
+
+.hangar-nexus-toggle span {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+/* ── Ship action buttons (quick-pick, one click = submit) ──────────────────── */
+
+.hangar-ship-btn-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.75rem 1rem 0;
+}
+
+.hangar-ship-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 0.9rem 1.1rem;
+    background: #fff;
+    border: 1.5px solid #dde0ee;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.hangar-ship-btn:hover:not(:disabled) {
+    border-color: #3b5ac6;
+    background: #f4f6ff;
+}
+
+.hangar-ship-btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.hangar-ship-btn-name {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #1a1a2e;
+    line-height: 1.2;
+}
+
+.hangar-ship-btn-meta {
+    font-size: 0.8rem;
+    color: var(--pico-muted-color, #888);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    margin-left: 0.75rem;
+}
+
+/* ── Dialog error + cancel footer ─────────────────────────────────────────── */
+
+.hangar-dialog-error {
+    padding: 0 1rem;
+    margin-top: 0.5rem;
+}
+
+.hangar-dialog-cancel {
+    text-align: center;
+    padding: 0.65rem 1rem 0.9rem;
+}
+
+.hangar-dialog-cancel a {
+    font-size: 0.8rem;
+    color: #888;
+    text-decoration: none;
+}
+
+.hangar-dialog-cancel a:hover {
+    color: #555;
+    text-decoration: underline;
 }
 
 /* ── Pending ships section ─────────────────────────────────────────────────── */
