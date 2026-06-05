@@ -1029,40 +1029,70 @@ Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. I
 
 ## 8b. Hangar-Screen
 
-Der Hangar-Screen ist die Verwaltungsansicht aller Schiffe einer Kolonie. Er wird aktiv sobald mindestens ein Hangar (CC Lv3) gebaut wurde.
+Der Hangar-Screen ist die Verwaltungsansicht aller Schiffe einer Kolonie. Er wird aktiv sobald mindestens ein Hangar (building_id 44, CC Lv3) gebaut wurde.
 
-### Carousel-View
+### Schiffsakquise — Grundprinzip
 
-Der Screen zeigt Schiffe in einer **Carousel-Navigation** — eine Karte pro Hangar-Slot, Swipe-Navigation auf Mobile, Dots-Pager für die Positionsanzeige. Jede Karte repräsentiert einen Slot; der Spieler navigiert durch die Slots wie durch Seiten.
+Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftkapazität — Schiffe kommen ausschließlich von Nexus oder durch externe Ereignisse. Der Hangar ist Anforderungsstelle und Operationsbasis, keine Produktionsstätte.
 
-### Karten-States
+### Akquise-Pfade
+
+| Pfad | Kosten | Ergebnis |
+|------|--------|---------|
+| **Nexus-Anfrage (Standard)** | Credits + Lieferzeit (N Sole) | Schiff landet nach N Solen auf `docked` |
+| **Nexus-Kredit** | 0 Cr jetzt + Nexus-Schulden ↑ | Schiff sofort verfügbar; Schulden-Risiko (§15) |
+| **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis |
+| **Event / Händler** | situativ (Wrackbergung, Sonderdeal) | Schiff direkt `docked` oder `pending` |
+
+**Lieferzeiten Nexus-Anfrage** (Richtwerte — nach erstem Playtest kalibrieren):
+
+| Schiffstyp | Lieferzeit |
+|------------|-----------|
+| Drohne | 1–2 Sole |
+| Frachter | 3 Sole |
+| Korvette | 5 Sole |
+
+**Nexus-Kredit** erst ab CC Lv2 verfügbar. Nutzung erzeugt kleinen Trust-Abzug ("Die Kolonisten machen sich Sorgen über wachsende Schulden").
+
+### Schiffs-Besitz-Modell
+
+Hangare sind **operationale Slots** — nur ein Schiff pro Hangar-Instanz kann entsendet werden. Darüber hinaus können Schiffe **ohne Hangar-Zuweisung** existieren (`hangar_instance_id = NULL`, `ship_state = 'pending'`):
+
+- Entsteht durch Wrackbergung, Händler-Kauf oder Nexus-Lieferung wenn kein freier Hangar-Slot vorhanden
+- Sichtbar im Hangar-Screen als separater Bereich "Nicht zugewiesen" mit Decay-Countdown
+- Verfällt automatisch nach N Solen (TickService) wenn nicht einem Hangar zugewiesen
+- **Decay-Zeit:** nach Playtest kalibrieren (Richtwert: 5 Sole)
+
+Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt sich aus dem Koloniebauplatz — ein Spieler kann realistisch 2–3 Hangare errichten bevor der Platz für wichtigere Gebäude fehlt. Kein Hard-Cap nötig.
+
+### Karten-States (Carousel)
 
 | State | Beschreibung | Aktion |
 |-------|-------------|--------|
-| Leer | Slot verfügbar, kein Schiff | Kommissionierung starten |
-| Im Bau (`ship_state: building`) | Schiff im Bau, Fortschrittsanzeige | Wartet auf Abschluss |
-| Angedockt (`docked`) | Schiff einsatzbereit im Hangar | Entsenden / Reparieren |
-| Unterwegs (`dispatched`) | Schiff auf aktiver Mission | Recall / Missionslog anzeigen |
+| Leer | Slot verfügbar | Nexus-Anfrage starten |
+| Lieferung (`building`) | Schiff unterwegs von Nexus | Wartet N Sole |
+| Angedockt (`docked`) | Schiff einsatzbereit | Entsenden / Reparieren |
+| Unterwegs (`dispatched`) | Schiff auf aktiver Mission | Zurückrufen / Missionslog |
 
-### Constraint: Kein Duplikat-Schiffstyp
-
-Pro Kolonie ist jeder Schiffstyp nur einmal erlaubt — kein zweites Schiff desselben Typs. Das begrenzt die Flottenkomposition bewusst und verhindert Massenproduktion eines einzelnen Typs.
+Nicht zugewiesene Schiffe (`pending`) erscheinen als separate Karten am Ende des Carousels mit sichtbarem Decay-Timer.
 
 ### Missionslog
 
-Jede abgeschlossene Mission wird in `colony_hangar_missions` gespeichert. Gespeicherte Felder: Zielkoordinaten, Sol-Distanz, Ergebnis. Das Log ist im Screen einsehbar (Swipe oder separater Tab).
+Jede abgeschlossene Mission wird in `colony_hangar_missions` gespeichert (Zielkoordinaten, Sol-Distanz, Ergebnis). Im Screen einsehbar.
 
 ### UI-Buttons
 
 | Button | Zustand | Funktion |
 |--------|---------|---------|
+| Nexus anfragen | Leer | Schiffstyp wählen, Akquise-Pfad wählen |
 | Entsenden | `docked` | Flottenorder erteilen |
-| Recall | `dispatched` | Schiff zurückrufen |
-| Reparieren | `docked`, SP < max | Repair-Order erteilen (Construction-AP) |
+| Zurückrufen | `dispatched` | Schiff zurückrufen |
+| Reparieren | `docked`, SP < max | Repair-Order (Construction-AP) |
+| Hangar zuweisen | `pending` | Schiff einem freien Hangar-Slot zuordnen |
 
 ### Technischer Stack
 
-Alpine.js + PicoCSS — kein jQuery, kein Bootstrap. Carousel-Logik in `public/js/carousel.js`, Styles in `public/css/carousel.css`.
+Alpine.js + PicoCSS. Carousel-Logik in `public/js/carousel.js`, Styles in `public/css/carousel.css`.
 
 ---
 
