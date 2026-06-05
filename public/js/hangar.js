@@ -39,13 +39,12 @@ function hangarCarousel(config) {
 
         // Nexus request modal state (shared across all slots)
         requestModal: {
-            open:           false,
-            instanceId:     null,
-            shipId:         null,
-            useNexusCredit: false,
-            consulAp:       0,
-            loading:        false,
-            error:          null,
+            open:            false,
+            instanceId:      null,
+            useNexusCredit:  false,
+            consulApSpent:   0,
+            loading:         false,
+            error:           null,
         },
 
         // Pending ship assignment state: keyed by ship row id
@@ -95,8 +94,21 @@ function hangarCarousel(config) {
          * Returns the credit savings for the current consul AP selection (50 Cr per AP).
          */
         get consulApSavings() {
-            const ap = this.requestModal.consulAp ?? 0;
+            const ap = this.requestModal.consulApSpent ?? 0;
             return ap > 0 ? '−' + (ap * 50) + ' Cr' : '';
+        },
+
+        /**
+         * Returns the effective cost for a given ship after applying consul AP discount.
+         * Each AP spent reduces cost by 50 Cr; result is clamped to 0.
+         * @param {number} shipId
+         * @returns {number}
+         */
+        effectiveCostFor(shipId) {
+            const entry = this.shipCosts[shipId];
+            if (!entry) return 0;
+            const discount = (this.requestModal.consulApSpent ?? 0) * 50;
+            return Math.max(0, entry.cost - discount);
         },
 
         openModal(instanceId, type) {
@@ -118,9 +130,8 @@ function hangarCarousel(config) {
             this.requestModal = {
                 open:           true,
                 instanceId,
-                shipId:         this.shipTypes.length > 0 ? this.shipTypes[0].id : null,
                 useNexusCredit: false,
-                consulAp:       0,
+                consulApSpent:  0,
                 loading:        false,
                 error:          null,
             };
@@ -135,22 +146,22 @@ function hangarCarousel(config) {
         },
 
         /**
-         * POST: request a ship from Nexus for an empty hangar slot.
+         * POST: request a specific ship from Nexus for the currently open empty slot.
+         * Called directly from each ship button — no separate confirm step.
          * Endpoint: POST /colony/hangar/request
          * Payload: { instance_id, ship_id, use_nexus_credit, consul_ap_spent }
+         * @param {number} shipId
          */
-        async submitRequest() {
-            if (!this.requestModal.shipId) return;
-
+        async submitRequestFor(shipId) {
             this.requestModal.loading = true;
             this.requestModal.error   = null;
 
             try {
                 const res = await this._post(this.routes.request, {
                     instance_id:      this.requestModal.instanceId,
-                    ship_id:          this.requestModal.shipId,
+                    ship_id:          shipId,
                     use_nexus_credit: this.requestModal.useNexusCredit ? 1 : 0,
-                    consul_ap_spent:  this.requestModal.consulAp ?? 0,
+                    consul_ap_spent:  this.requestModal.consulApSpent ?? 0,
                 });
                 if (res.ok) {
                     this._updateSlot(this.requestModal.instanceId, res.slot);

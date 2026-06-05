@@ -457,79 +457,64 @@ window.__hangarData = {
                 <button class="hangar-dialog-close" @click="closeRequestModal()" aria-label="Close">&#x2715;</button>
             </header>
 
-            {{-- Ship type selection --}}
-            <fieldset class="hangar-dialog-fieldset">
-                <legend x-text="i18n.shipType"></legend>
-                <div class="hangar-ship-radio-group">
-                    <template x-for="type in shipTypes" :key="type.id">
-                        <label class="hangar-radio-label">
-                            <input type="radio"
-                                   :value="type.id"
-                                   x-model.number="requestModal.shipId">
-                            <span x-text="shipLabel(type.name)"></span>
-                            {{-- Cost hint from shipCosts map --}}
-                            <span class="hangar-ship-cost"
-                                  x-show="shipCosts[type.id]"
-                                  x-text="shipCosts[type.id] ? shipCosts[type.id].cost + ' Cr · Sol +' + shipCosts[type.id].delivery_ticks : ''">
-                            </span>
-                        </label>
-                    </template>
-                </div>
-            </fieldset>
+            {{-- ── Optional top controls ────────────────────────────────────── --}}
+            <div class="hangar-dialog-controls">
 
-            {{-- Payment method --}}
-            <fieldset class="hangar-dialog-fieldset">
-                <legend x-text="i18n.paymentMethod"></legend>
-
-                <label class="hangar-radio-label">
-                    <input type="radio" :value="false" x-model="requestModal.useNexusCredit">
-                    <span x-text="i18n.standardPurchase"></span>
-                </label>
-
-                {{-- Nexus credit option — only if CC level >= 2 --}}
+                {{-- Nexus credit toggle — only if CC level >= 2 --}}
                 <template x-if="canUseNexusCredit">
-                    <label class="hangar-radio-label">
-                        <input type="radio" :value="true" x-model="requestModal.useNexusCredit">
-                        <span x-text="i18n.nexusCredit"></span>
-                        <span class="hangar-nexus-credit-hint" x-text="i18n.nexusCreditHint"></span>
+                    <label class="hangar-nexus-toggle">
+                        <input type="checkbox" role="switch" x-model="requestModal.useNexusCredit">
+                        <span>
+                            <span x-text="i18n.nexusCredit"></span>
+                            <small class="hangar-nexus-credit-hint" x-text="i18n.nexusCreditHint"></small>
+                        </span>
                     </label>
                 </template>
-            </fieldset>
 
-            {{-- Consul AP negotiation — only if an active Konsul advisor exists with AP available --}}
-            <template x-if="hasAktivierterKonsul && verfuegbareVerhandlungsAP > 0">
-                <fieldset class="hangar-dialog-fieldset">
-                    <legend x-text="i18n.consulApTitle"></legend>
+                {{-- Consul AP range — only if an active Konsul advisor exists with AP available --}}
+                <template x-if="hasAktivierterKonsul && verfuegbareVerhandlungsAP > 0">
                     <label class="hangar-consul-ap-label">
                         <div class="form-row-label">
-                            <span>AP (1–<span x-text="verfuegbareVerhandlungsAP"></span>)</span>
+                            <span x-text="i18n.consulApTitle"></span>
                             <strong x-text="consulApSavings"></strong>
                         </div>
                         <input type="range"
                                min="0"
                                :max="verfuegbareVerhandlungsAP"
-                               x-model.number="requestModal.consulAp">
+                               x-model.number="requestModal.consulApSpent">
                     </label>
-                </fieldset>
-            </template>
+                </template>
+
+            </div>{{-- /.hangar-dialog-controls --}}
+
+            {{-- ── Ship buttons ─────────────────────────────────────────────── --}}
+            <div class="hangar-ship-btn-list">
+                <template x-for="type in shipTypes" :key="type.id">
+                    <button class="hangar-ship-btn"
+                            @click="submitRequestFor(type.id)"
+                            :disabled="requestModal.loading">
+                        <span class="hangar-ship-btn-name" x-text="shipLabel(type.name)"></span>
+                        <span class="hangar-ship-btn-meta"
+                              x-show="shipCosts[type.id]"
+                              x-text="shipCosts[type.id]
+                                  ? effectiveCostFor(type.id) + ' Cr · Sol +' + shipCosts[type.id].delivery_ticks
+                                  : ''">
+                        </span>
+                    </button>
+                </template>
+            </div>
 
             {{-- Error display --}}
-            <div class="hangar-error"
+            <div class="hangar-error hangar-dialog-error"
                  x-show="requestModal.error"
                  x-text="requestModal.error">
             </div>
 
-            <footer class="hangar-dialog-footer">
-                <button class="btn-hangar-action btn-hangar-action--secondary"
-                        @click="closeRequestModal()">
-                    <span x-text="i18n.cancel"></span>
-                </button>
-                <button class="btn-hangar-action"
-                        @click="submitRequest()"
-                        :disabled="!requestModal.shipId || requestModal.loading">
-                    <span x-text="requestModal.loading ? '…' : i18n.nexusRequestSubmit"></span>
-                </button>
-            </footer>
+            {{-- Cancel link --}}
+            <div class="hangar-dialog-cancel">
+                <a href="#" @click.prevent="closeRequestModal()" x-text="i18n.cancel"></a>
+            </div>
+
         </article>
 
     </dialog>
