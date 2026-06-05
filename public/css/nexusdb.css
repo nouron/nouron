@@ -1,0 +1,108 @@
+/* NexusDB concept glossary */
+
+/* ── Page wrapper ─────────────────────────────────────────────────────────── */
+
+.nexusdb-page {
+    padding: 1.5rem 1rem 3rem;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+/* ── Intro text ───────────────────────────────────────────────────────────── */
+
+.nexusdb-intro {
+    color: #888;
+    font-size: 0.85rem;
+    margin: 0 0 1.5rem;
+}
+
+/* ── Accordion container ──────────────────────────────────────────────────── */
+
+.nexusdb-accordion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ── Individual accordion item ────────────────────────────────────────────── */
+
+.nexusdb-item {
+    background: #fff;
+    border: 1px solid #e4e4ef;
+    border-radius: 10px;
+    overflow: hidden;
+    /* Override PicoCSS <details> default padding/margin */
+    padding: 0;
+    margin: 0;
+    /* Reset PicoCSS color cascade that bleeds into <details> content */
+    color: #1a1a2e;
+}
+
+.nexusdb-item[open] {
+    border-color: #c5cff0;
+}
+
+/* Summary row ────────────────────────────────────────────────────────────── */
+
+.nexusdb-item-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #1a1a2e;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    /* Override PicoCSS <summary> block color */
+    background: transparent;
+}
+
+/* Remove browser default marker */
+.nexusdb-item-title::-webkit-details-marker { display: none; }
+.nexusdb-item-title::marker { display: none; }
+
+/* CSS-drawn chevron — avoids character-rotation artifacts */
+.nexusdb-item-title::after {
+    content: '';
+    flex-shrink: 0;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #bbb;
+    border-bottom: 2px solid #bbb;
+    transform: rotate(-45deg);
+    transition: transform 0.18s ease;
+    margin-left: 0.5rem;
+    margin-bottom: 1px; /* optical alignment */
+}
+
+.nexusdb-item[open] > .nexusdb-item-title::after {
+    transform: rotate(45deg);
+    margin-bottom: -3px;
+}
+
+.nexusdb-item-title:hover {
+    background: #f8f8fc;
+}
+
+/* Body text — explicit color overrides PicoCSS <details> cascade ─────────── */
+
+.nexusdb-item-body {
+    margin: 0;
+    padding: 0.75rem 1.1rem 1rem;
+    font-size: 0.85rem;
+    color: #555;
+    line-height: 1.65;
+    border-top: 1px solid #eeeef4;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+    .nexusdb-page {
+        padding: 1rem 1rem 2rem;
+    }
+}
