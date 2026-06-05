@@ -157,4 +157,28 @@ return [
     'nav_hangar'              => 'Hangar',
     'nav_hangar_locked'       => 'Kein Hangar gebaut.',
 
+    // ── Hangar — Nexus-Anfrage (ship acquisition redesign) ───────────────────
+
+    'hangar_nexus_request'         => 'Nexus anfragen',
+    'hangar_nexus_request_title'   => 'Schiff anfordern',
+    'hangar_nexus_request_submit'  => 'Anfordern',
+    'hangar_ship_type'             => 'Schiffstyp',
+    'hangar_payment_method'        => 'Bezahlung',
+    'hangar_standard_purchase'     => 'Standardkauf',
+    'hangar_nexus_credit'          => 'Nexus-Kredit',
+    'hangar_nexus_credit_hint'     => '0 Cr jetzt — Nexus-Schulden steigen',
+    'hangar_consul_ap_title'       => 'Konsul-Verhandlung',
+    'hangar_consul_ap_label'       => 'AP investieren (spart :amount Cr)',
+    'hangar_consul_ap_hint'        => ':ap AP → spart :saved Cr',
+    'hangar_delivery_pending'      => 'Lieferung ausstehend',
+    'hangar_arrival'               => 'Ankunft: Sol :tick',
+    'hangar_pending_section'       => 'Nicht zugewiesen',
+    'hangar_pending_expires'       => 'Verfällt: Sol :tick',
+    'hangar_assign_hangar'         => 'Hangar zuweisen',
+    'hangar_assign_select'         => 'Bay auswählen…',
+    'hangar_ship_drone'            => 'Drohne',
+    'hangar_ship_freighter'        => 'Frachter',
+    'hangar_ship_corvette'         => 'Korvette',
+
 ];
+

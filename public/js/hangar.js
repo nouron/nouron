@@ -2,22 +2,30 @@
  * hangar.js — Alpine.js component for the hangar carousel screen.
  *
  * Manages hangar bay slots in a swipe carousel.
- * Supports building, dispatching, recalling, and repairing ships.
+ * Ships are requested from Nexus (not built locally).
+ * Supports: Nexus request, dispatching, recalling, repairing, and assigning pending ships.
  * Data is injected server-side via window.__hangarData (set in the Blade view).
  *
- * @param {object} config - Matches the $pageData structure from HangarController.
+ * @param {object} config - Matches the window.__hangarData structure from HangarController.
  */
 function hangarCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
 
-        slots:               config.slots,
-        shipTypes:           config.shipTypes,
-        commissionedShipIds: config.commissionedShipIds,
-        hasPilot:            config.hasPilot,
-        routes:              config.routes,
-        csrfToken:           config.csrfToken,
-        i18n:                config.i18n,
+        slots:                      config.slots,
+        shipTypes:                  config.shipTypes,
+        commissionedShipIds:        config.commissionedShipIds,
+        hasPilot:                   config.hasPilot,
+        routes:                     config.routes,
+        csrfToken:                  config.csrfToken,
+        i18n:                       config.i18n,
+
+        // New acquisition model data
+        shipCosts:                  config.shipCosts ?? {},
+        canUseNexusCredit:          config.canUseNexusCredit ?? false,
+        hasAktivierterKonsul:       config.hasAktivierterKonsul ?? false,
+        verfuegbareVerhandlungsAP:  config.verfuegbareVerhandlungsAP ?? 0,
+        pendingShips:               config.pendingShips ?? [],
 
         // Per-instance UI state: keyed by instance_id
         modalType:    {},
@@ -25,10 +33,25 @@ function hangarCarousel(config) {
         error:        {},
 
         // Per-instance form values
-        buildShipId:  {},
         dispatchDest: {},
         dispatchSol:  {},
         repairAp:     {},
+
+        // Nexus request modal state (shared across all slots)
+        requestModal: {
+            open:           false,
+            instanceId:     null,
+            shipId:         null,
+            useNexusCredit: false,
+            consulAp:       0,
+            loading:        false,
+            error:          null,
+        },
+
+        // Pending ship assignment state: keyed by ship row id
+        pendingAssignTarget: {},
+        pendingLoading:      {},
+        pendingError:        {},
 
         init() {
             this._carouselInit();
@@ -37,10 +60,14 @@ function hangarCarousel(config) {
                 this.modalType[id]    = null;
                 this.loading[id]      = false;
                 this.error[id]        = null;
-                this.buildShipId[id]  = this.shipTypes.length > 0 ? this.shipTypes[0].id : null;
                 this.dispatchDest[id] = '';
                 this.dispatchSol[id]  = 1;
                 this.repairAp[id]     = 3;
+            });
+            this.pendingShips.forEach(ship => {
+                this.pendingAssignTarget[ship.id] = '';
+                this.pendingLoading[ship.id]      = false;
+                this.pendingError[ship.id]        = null;
             });
         },
 
@@ -57,6 +84,21 @@ function hangarCarousel(config) {
             return { used, total };
         },
 
+        /**
+         * Returns slots that have no ship assigned (free bays for pending ship assignment).
+         */
+        get freeSlots() {
+            return this.slots.filter(s => s.ship === null);
+        },
+
+        /**
+         * Returns the credit savings for the current consul AP selection (50 Cr per AP).
+         */
+        get consulApSavings() {
+            const ap = this.requestModal.consulAp ?? 0;
+            return ap > 0 ? '−' + (ap * 50) + ' Cr' : '';
+        },
+
         openModal(instanceId, type) {
             this.error[instanceId] = null;
             this.modalType[instanceId] = type;
@@ -68,45 +110,73 @@ function hangarCarousel(config) {
         },
 
         /**
-         * Maps ship name key to German display label.
+         * Opens the Nexus request dialog for a given empty slot.
+         * Resets modal state and pre-selects first ship type.
+         * @param {number} instanceId
+         */
+        openRequestModal(instanceId) {
+            this.requestModal = {
+                open:           true,
+                instanceId,
+                shipId:         this.shipTypes.length > 0 ? this.shipTypes[0].id : null,
+                useNexusCredit: false,
+                consulAp:       0,
+                loading:        false,
+                error:          null,
+            };
+        },
+
+        /**
+         * Closes the Nexus request dialog and resets modal state.
+         */
+        closeRequestModal() {
+            this.requestModal.open = false;
+            this.requestModal.error = null;
+        },
+
+        /**
+         * POST: request a ship from Nexus for an empty hangar slot.
+         * Endpoint: POST /colony/hangar/request
+         * Payload: { instance_id, ship_id, use_nexus_credit, consul_ap_spent }
+         */
+        async submitRequest() {
+            if (!this.requestModal.shipId) return;
+
+            this.requestModal.loading = true;
+            this.requestModal.error   = null;
+
+            try {
+                const res = await this._post(this.routes.request, {
+                    instance_id:      this.requestModal.instanceId,
+                    ship_id:          this.requestModal.shipId,
+                    use_nexus_credit: this.requestModal.useNexusCredit ? 1 : 0,
+                    consul_ap_spent:  this.requestModal.consulAp ?? 0,
+                });
+                if (res.ok) {
+                    this._updateSlot(this.requestModal.instanceId, res.slot);
+                    this.closeRequestModal();
+                } else {
+                    this.requestModal.error = res.error ?? 'Error.';
+                }
+            } catch {
+                this.requestModal.error = 'Network error.';
+            } finally {
+                this.requestModal.loading = false;
+            }
+        },
+
+        /**
+         * Maps ship name key to display label using i18n strings.
          * @param {string} name - ship name key (e.g. 'ship_corvette')
          * @returns {string}
          */
         shipLabel(name) {
             const map = {
-                ship_corvette:  'Korvette',
-                ship_freighter: 'Frachter',
-                ship_drone:     'Drohne',
+                ship_corvette:  this.i18n.shipCorvette,
+                ship_freighter: this.i18n.shipFreighter,
+                ship_drone:     this.i18n.shipDrone,
             };
             return map[name] ?? name;
-        },
-
-        shipBuildLabel(name) {
-            const map = {
-                ship_corvette:  'Korvette in Dienst stellen',
-                ship_freighter: 'Frachter in Dienst stellen',
-                ship_drone:     'Drohne in Dienst stellen',
-            };
-            return map[name] ?? name;
-        },
-
-        async buildShipDirect(instanceId, shipId) {
-            this.loading[instanceId] = true;
-            this.error[instanceId]   = null;
-            try {
-                const url = this.routes.build.replace('__ID__', instanceId);
-                const res = await this._post(url, { ship_id: shipId });
-                if (res.ok) {
-                    this._updateSlot(instanceId, res.slot);
-                    this.commissionedShipIds = [...this.commissionedShipIds, shipId];
-                } else {
-                    this.error[instanceId] = res.error ?? 'Fehler.';
-                }
-            } catch {
-                this.error[instanceId] = 'Netzwerkfehler.';
-            } finally {
-                this.loading[instanceId] = false;
-            }
         },
 
         /**
@@ -117,29 +187,6 @@ function hangarCarousel(config) {
          */
         statusBarWidth(points) {
             return Math.max(0, Math.min(100, (points / 20) * 100)) + '%';
-        },
-
-        /**
-         * POST: build a new ship in an empty slot.
-         * @param {number} instanceId
-         */
-        async buildShip(instanceId) {
-            this.loading[instanceId] = true;
-            this.error[instanceId]   = null;
-            try {
-                const url = this.routes.build.replace('__ID__', instanceId);
-                const res = await this._post(url, { ship_id: this.buildShipId[instanceId] });
-                if (res.ok) {
-                    this._updateSlot(instanceId, res.slot);
-                    this.closeModal(instanceId);
-                } else {
-                    this.error[instanceId] = res.error ?? 'Fehler beim Bau.';
-                }
-            } catch (e) {
-                this.error[instanceId] = 'Netzwerkfehler.';
-            } finally {
-                this.loading[instanceId] = false;
-            }
         },
 
         /**
@@ -159,10 +206,10 @@ function hangarCarousel(config) {
                     this._updateSlot(instanceId, res.slot);
                     this.closeModal(instanceId);
                 } else {
-                    this.error[instanceId] = res.error ?? 'Fehler beim Entsenden.';
+                    this.error[instanceId] = res.error ?? 'Error.';
                 }
-            } catch (e) {
-                this.error[instanceId] = 'Netzwerkfehler.';
+            } catch {
+                this.error[instanceId] = 'Network error.';
             } finally {
                 this.loading[instanceId] = false;
             }
@@ -181,10 +228,10 @@ function hangarCarousel(config) {
                 if (res.ok) {
                     this._updateSlot(instanceId, res.slot);
                 } else {
-                    this.error[instanceId] = res.error ?? 'Fehler beim Zurückrufen.';
+                    this.error[instanceId] = res.error ?? 'Error.';
                 }
-            } catch (e) {
-                this.error[instanceId] = 'Netzwerkfehler.';
+            } catch {
+                this.error[instanceId] = 'Network error.';
             } finally {
                 this.loading[instanceId] = false;
             }
@@ -204,12 +251,48 @@ function hangarCarousel(config) {
                     this._updateSlot(instanceId, res.slot);
                     this.closeModal(instanceId);
                 } else {
-                    this.error[instanceId] = res.error ?? 'Fehler beim Reparieren.';
+                    this.error[instanceId] = res.error ?? 'Error.';
                 }
-            } catch (e) {
-                this.error[instanceId] = 'Netzwerkfehler.';
+            } catch {
+                this.error[instanceId] = 'Network error.';
             } finally {
                 this.loading[instanceId] = false;
+            }
+        },
+
+        /**
+         * POST: assign a pending (unassigned) ship to a free hangar bay.
+         * Endpoint: POST /colony/hangar/assign
+         * Payload: { ship_row_id, instance_id }
+         * @param {number} shipRowId - pending ship's row id
+         */
+        async assignShip(shipRowId) {
+            const instanceId = this.pendingAssignTarget[shipRowId];
+            if (!instanceId) return;
+
+            this.pendingLoading[shipRowId] = true;
+            this.pendingError[shipRowId]   = null;
+
+            try {
+                const res = await this._post(this.routes.assign, {
+                    ship_row_id: shipRowId,
+                    instance_id: parseInt(instanceId, 10),
+                });
+                if (res.ok) {
+                    // Remove from pending list
+                    this.pendingShips = this.pendingShips.filter(s => s.id !== shipRowId);
+                    // Update the newly assigned slot
+                    if (res.slot) {
+                        this._updateSlot(parseInt(instanceId, 10), res.slot);
+                    }
+                    delete this.pendingAssignTarget[shipRowId];
+                } else {
+                    this.pendingError[shipRowId] = res.error ?? 'Error.';
+                }
+            } catch {
+                this.pendingError[shipRowId] = 'Network error.';
+            } finally {
+                this.pendingLoading[shipRowId] = false;
             }
         },
 

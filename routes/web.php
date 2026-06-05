@@ -89,7 +89,8 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
 
     // Hangar
     Route::get('/hangar',                              [HangarController::class, 'index'])->name('hangar');
-    Route::post('/hangar/{instanceId}/build',    [HangarController::class, 'build'])->name('hangar.build');
+    Route::post('/hangar/request',                     [HangarController::class, 'requestShip'])->name('hangar.request');
+    Route::post('/hangar/assign',                      [HangarController::class, 'assignToHangar'])->name('hangar.assign');
     Route::post('/hangar/{instanceId}/dispatch', [HangarController::class, 'dispatch'])->name('hangar.dispatch');
     Route::post('/hangar/{instanceId}/recall',   [HangarController::class, 'recall'])->name('hangar.recall');
     Route::post('/hangar/{instanceId}/repair',   [HangarController::class, 'repair'])->name('hangar.repair');

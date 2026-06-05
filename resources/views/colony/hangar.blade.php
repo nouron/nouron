@@ -16,27 +16,54 @@ window.__hangarData = {
     shipTypes:          @json($shipTypes),
     commissionedShipIds:@json($commissionedShipIds),
     hasPilot:           @json($hasPilot),
+
+    {{-- New acquisition model data — controller provides these; fall back to safe defaults --}}
+    shipCosts:          @json($shipCosts ?? []),
+    canUseNexusCredit:  @json($canUseNexusCredit ?? false),
+    hasAktivierterKonsul: @json($hasAktivierterKonsul ?? false),
+    verfuegbareVerhandlungsAP: @json($verfuegbareVerhandlungsAP ?? 0),
+    pendingShips:       @json($pendingShips ?? []),
+
     routes: {
-        build:    @json(route('colony.hangar.build',    ['instanceId' => '__ID__'])),
         dispatch: @json(route('colony.hangar.dispatch', ['instanceId' => '__ID__'])),
         recall:   @json(route('colony.hangar.recall',   ['instanceId' => '__ID__'])),
         repair:   @json(route('colony.hangar.repair',   ['instanceId' => '__ID__'])),
+        request:  @json(route('colony.hangar.request')),
+        assign:   @json(route('colony.hangar.assign')),
     },
     csrfToken: @json(csrf_token()),
 
     {{-- Pre-translated strings for Alpine (never hardcode German in JS) --}}
     i18n: {
-        empty:           @json(__('colony.hangar_empty')),
-        buildShip:       @json(__('colony.hangar_build_ship')),
-        dispatch:        @json(__('colony.hangar_dispatch')),
-        recall:          @json(__('colony.hangar_recall')),
-        repair:          @json(__('colony.hangar_repair')),
-        destination:     @json(__('colony.hangar_destination')),
-        solDistance:     @json(__('colony.hangar_sol_distance')),
-        inTransit:       @json(__('colony.hangar_in_transit')),
-        inConstruction:  @json(__('colony.hangar_in_construction')),
-        pilotReady:      @json(__('colony.hangar_pilot_ready')),
-        status:          @json(__('colony.hangar_status')),
+        empty:                @json(__('colony.hangar_empty')),
+        buildShip:            @json(__('colony.hangar_build_ship')),
+        dispatch:             @json(__('colony.hangar_dispatch')),
+        recall:               @json(__('colony.hangar_recall')),
+        repair:               @json(__('colony.hangar_repair')),
+        destination:          @json(__('colony.hangar_destination')),
+        solDistance:          @json(__('colony.hangar_sol_distance')),
+        inTransit:            @json(__('colony.hangar_in_transit')),
+        inConstruction:       @json(__('colony.hangar_in_construction')),
+        pilotReady:           @json(__('colony.hangar_pilot_ready')),
+        status:               @json(__('colony.hangar_status')),
+        nexusRequest:         @json(__('colony.hangar_nexus_request')),
+        nexusRequestTitle:    @json(__('colony.hangar_nexus_request_title')),
+        nexusRequestSubmit:   @json(__('colony.hangar_nexus_request_submit')),
+        shipType:             @json(__('colony.hangar_ship_type')),
+        paymentMethod:        @json(__('colony.hangar_payment_method')),
+        standardPurchase:     @json(__('colony.hangar_standard_purchase')),
+        nexusCredit:          @json(__('colony.hangar_nexus_credit')),
+        nexusCreditHint:      @json(__('colony.hangar_nexus_credit_hint')),
+        consulApTitle:        @json(__('colony.hangar_consul_ap_title')),
+        deliveryPending:      @json(__('colony.hangar_delivery_pending')),
+        pendingSection:       @json(__('colony.hangar_pending_section')),
+        assignHangar:         @json(__('colony.hangar_assign_hangar')),
+        assignSelect:         @json(__('colony.hangar_assign_select')),
+        pendingExpires:       @json(__('colony.hangar_pending_expires')),
+        cancel:               @json(__('colony.cancel')),
+        shipDrone:            @json(__('colony.hangar_ship_drone')),
+        shipFreighter:        @json(__('colony.hangar_ship_freighter')),
+        shipCorvette:         @json(__('colony.hangar_ship_corvette')),
     },
 };
 </script>
@@ -135,7 +162,7 @@ window.__hangarData = {
                                 <span class="hangar-subtitle">{{ __('colony.hangar_status') }}: <span x-text="slot.ship.status_points + '/20'"></span></span>
                             </template>
                             <template x-if="slot.ship !== null && slot.ship.ship_state === 'building'">
-                                <span class="hangar-subtitle" x-text="i18n.inConstruction"></span>
+                                <span class="hangar-subtitle" x-text="i18n.deliveryPending"></span>
                             </template>
                             <template x-if="slot.ship !== null && slot.ship.ship_state === 'dispatched'">
                                 <span class="hangar-subtitle" x-text="i18n.inTransit"></span>
@@ -150,33 +177,34 @@ window.__hangarData = {
                                         <span class="hangar-status-chip hangar-status-chip--empty">{{ __('colony.hangar_empty') }}</span>
                                     </div>
 
-                                    {{-- 3 commission buttons — greyed out if already in another hangar --}}
-                                    <div class="hangar-commission-group">
-                                        <template x-for="type in shipTypes" :key="type.id">
-                                            <button class="btn-hangar-commission"
-                                                    :disabled="commissionedShipIds.includes(type.id) || loading[slot.instance_id]"
-                                                    @click="buildShipDirect(slot.instance_id, type.id)">
-                                                <span x-text="shipBuildLabel(type.name)"></span>
-                                                <span class="btn-commission-locked"
-                                                      x-show="commissionedShipIds.includes(type.id)">
-                                                    ✓ {{ __('colony.hangar_already_commissioned') }}
-                                                </span>
-                                            </button>
-                                        </template>
+                                    {{-- "Nexus anfragen" button — opens native <dialog> modal --}}
+                                    <div class="hangar-nexus-request-wrap">
+                                        <button class="btn-hangar-nexus-request"
+                                                @click="openRequestModal(slot.instance_id)"
+                                                :disabled="loading[slot.instance_id]">
+                                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor"
+                                                 stroke-width="1.5" stroke-linecap="round"
+                                                 stroke-linejoin="round" aria-hidden="true"
+                                                 class="hangar-nexus-icon">
+                                                <circle cx="10" cy="10" r="8"/>
+                                                <path d="M10 6v4l3 3"/>
+                                            </svg>
+                                            <span x-text="i18n.nexusRequest"></span>
+                                        </button>
                                         <div class="hangar-error" x-show="error[slot.instance_id]" x-text="error[slot.instance_id]"></div>
                                     </div>
 
                                 </div>
                             </template>
 
-                            {{-- ── BUILDING ──────────────────────────────────────────────── --}}
+                            {{-- ── BUILDING (delivery pending) ──────────────────────────── --}}
                             <template x-if="slot.ship !== null && slot.ship.ship_state === 'building'">
                                 <div style="display:contents">
 
                                     <div class="hangar-stat-row">
                                         <span class="hangar-stat-label">{{ __('colony.hangar_status') }}</span>
                                         <span class="hangar-status-chip hangar-status-chip--building"
-                                              x-text="i18n.inConstruction">
+                                              x-text="i18n.deliveryPending">
                                         </span>
                                     </div>
 
@@ -184,10 +212,17 @@ window.__hangarData = {
                                         <div class="hangar-construction-bar"></div>
                                     </div>
 
-                                    <div class="hangar-stat-row">
-                                        <span class="hangar-stat-label">AP investiert</span>
-                                        <span class="hangar-stat-value" x-text="slot.ship.ap_spend"></span>
-                                    </div>
+                                    {{-- Arrival tick — shown when deliver_at_tick is present --}}
+                                    <template x-if="slot.ship.deliver_at_tick != null">
+                                        <div class="hangar-stat-row">
+                                            <span class="hangar-stat-label">{{ __('colony.hangar_delivery_pending') }}</span>
+                                            <span class="hangar-stat-value hangar-arrival-tick"
+                                                  x-text="'Sol ' + slot.ship.deliver_at_tick">
+                                            </span>
+                                        </div>
+                                    </template>
+
+                                    {{-- No action buttons while delivery is pending --}}
 
                                 </div>
                             </template>
@@ -357,7 +392,147 @@ window.__hangarData = {
         </template>
     </div>
 
+    {{-- ── Pending ships section (ships without hangar assignment) ─────────── --}}
+    <template x-if="pendingShips.length > 0">
+        <section class="hangar-pending-section">
+            <details>
+                <summary class="hangar-pending-summary">
+                    <span x-text="i18n.pendingSection + ' (' + pendingShips.length + ')'"></span>
+                </summary>
+
+                <div class="hangar-pending-list">
+                    <template x-for="ship in pendingShips" :key="ship.id">
+                        <article class="hangar-pending-card">
+                            <div class="hangar-pending-card-info">
+                                <span class="hangar-pending-name" x-text="shipLabel(ship.name)"></span>
+                                <span class="hangar-pending-expires"
+                                      x-text="i18n.pendingExpires.replace(':tick', ship.expires_at_tick)">
+                                </span>
+                            </div>
+
+                            <div class="hangar-pending-card-actions">
+                                {{-- Assign select --}}
+                                <select class="hangar-pending-select"
+                                        x-model="pendingAssignTarget[ship.id]">
+                                    <option value="" x-text="i18n.assignSelect"></option>
+                                    <template x-for="freeSlot in freeSlots" :key="freeSlot.instance_id">
+                                        <option :value="freeSlot.instance_id"
+                                                x-text="'Bay ' + (slots.indexOf(freeSlot) + 1)">
+                                        </option>
+                                    </template>
+                                </select>
+                                <button class="btn-hangar-action"
+                                        @click="assignShip(ship.id)"
+                                        :disabled="!pendingAssignTarget[ship.id] || pendingLoading[ship.id]">
+                                    <span x-text="pendingLoading[ship.id] ? '…' : i18n.assignHangar"></span>
+                                </button>
+                            </div>
+
+                            <div class="hangar-error"
+                                 x-show="pendingError[ship.id]"
+                                 x-text="pendingError[ship.id]">
+                            </div>
+                        </article>
+                    </template>
+                </div>
+            </details>
+        </section>
+    </template>
+
     @endif {{-- hangar slots exist --}}
+
+    {{-- ── Nexus-Request modal (native <dialog>, shared for all slots) ────── --}}
+    {{--
+        Uses showModal() via x-effect to get browser backdrop + focus-trap + Escape-key.
+        Instance data is stored in requestModal.* on the Alpine component.
+    --}}
+    <dialog x-ref="requestDialog"
+            class="hangar-request-dialog"
+            x-effect="requestModal.open ? $refs.requestDialog.showModal() : $refs.requestDialog.close()"
+            @close="closeRequestModal()">
+
+        <article>
+            <header class="hangar-dialog-header">
+                <strong x-text="i18n.nexusRequestTitle"></strong>
+                <button class="hangar-dialog-close" @click="closeRequestModal()" aria-label="Close">&#x2715;</button>
+            </header>
+
+            {{-- Ship type selection --}}
+            <fieldset class="hangar-dialog-fieldset">
+                <legend x-text="i18n.shipType"></legend>
+                <div class="hangar-ship-radio-group">
+                    <template x-for="type in shipTypes" :key="type.id">
+                        <label class="hangar-radio-label">
+                            <input type="radio"
+                                   :value="type.id"
+                                   x-model.number="requestModal.shipId">
+                            <span x-text="shipLabel(type.name)"></span>
+                            {{-- Cost hint from shipCosts map --}}
+                            <span class="hangar-ship-cost"
+                                  x-show="shipCosts[type.id]"
+                                  x-text="shipCosts[type.id] ? shipCosts[type.id].cost + ' Cr · Sol +' + shipCosts[type.id].delivery_ticks : ''">
+                            </span>
+                        </label>
+                    </template>
+                </div>
+            </fieldset>
+
+            {{-- Payment method --}}
+            <fieldset class="hangar-dialog-fieldset">
+                <legend x-text="i18n.paymentMethod"></legend>
+
+                <label class="hangar-radio-label">
+                    <input type="radio" :value="false" x-model="requestModal.useNexusCredit">
+                    <span x-text="i18n.standardPurchase"></span>
+                </label>
+
+                {{-- Nexus credit option — only if CC level >= 2 --}}
+                <template x-if="canUseNexusCredit">
+                    <label class="hangar-radio-label">
+                        <input type="radio" :value="true" x-model="requestModal.useNexusCredit">
+                        <span x-text="i18n.nexusCredit"></span>
+                        <span class="hangar-nexus-credit-hint" x-text="i18n.nexusCreditHint"></span>
+                    </label>
+                </template>
+            </fieldset>
+
+            {{-- Consul AP negotiation — only if an active Konsul advisor exists with AP available --}}
+            <template x-if="hasAktivierterKonsul && verfuegbareVerhandlungsAP > 0">
+                <fieldset class="hangar-dialog-fieldset">
+                    <legend x-text="i18n.consulApTitle"></legend>
+                    <label class="hangar-consul-ap-label">
+                        <div class="form-row-label">
+                            <span>AP (1–<span x-text="verfuegbareVerhandlungsAP"></span>)</span>
+                            <strong x-text="consulApSavings"></strong>
+                        </div>
+                        <input type="range"
+                               min="0"
+                               :max="verfuegbareVerhandlungsAP"
+                               x-model.number="requestModal.consulAp">
+                    </label>
+                </fieldset>
+            </template>
+
+            {{-- Error display --}}
+            <div class="hangar-error"
+                 x-show="requestModal.error"
+                 x-text="requestModal.error">
+            </div>
+
+            <footer class="hangar-dialog-footer">
+                <button class="btn-hangar-action btn-hangar-action--secondary"
+                        @click="closeRequestModal()">
+                    <span x-text="i18n.cancel"></span>
+                </button>
+                <button class="btn-hangar-action"
+                        @click="submitRequest()"
+                        :disabled="!requestModal.shipId || requestModal.loading">
+                    <span x-text="requestModal.loading ? '…' : i18n.nexusRequestSubmit"></span>
+                </button>
+            </footer>
+        </article>
+
+    </dialog>
 
 </div>{{-- /.hangar-page --}}
 @endsection

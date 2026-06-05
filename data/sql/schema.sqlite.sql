@@ -55,12 +55,16 @@ CREATE TABLE colony_resources (
   PRIMARY KEY (resource_id,colony_id)
 );
 CREATE TABLE colony_ships (
-  colony_id INTEGER  NOT NULL REFERENCES glx_colonies(id),
-  ship_id INTEGER  NOT NULL REFERENCES ships(id),
-  level INTEGER  NOT NULL DEFAULT '0',
-  status_points INTEGER  NOT NULL DEFAULT '10',
-  ap_spend INTEGER  NOT NULL DEFAULT '0',
-  PRIMARY KEY (colony_id,ship_id)
+  id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+  colony_id           INTEGER NOT NULL REFERENCES glx_colonies(id),
+  ship_id             INTEGER NOT NULL REFERENCES ships(id),
+  level               INTEGER NOT NULL DEFAULT '0',
+  status_points       INTEGER NOT NULL DEFAULT '10',
+  ap_spend            INTEGER NOT NULL DEFAULT '0',
+  hangar_instance_id  INTEGER NULL,
+  ship_state          TEXT    NOT NULL DEFAULT 'docked',
+  deliver_at_tick     INTEGER NULL,
+  pending_until_tick  INTEGER NULL
 );
 CREATE TABLE colony_tiles (
   id            INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,

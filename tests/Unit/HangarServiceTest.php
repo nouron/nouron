@@ -15,12 +15,13 @@ namespace Tests\Unit;
  *    - test_get_hangar_slots_active_mission_is_populated
  *    - test_get_hangar_slots_recalled_mission_is_not_active_mission
  *
- *  buildShip
- *    - test_build_ship_creates_row_with_building_state
- *    - test_build_ship_throws_for_unknown_hangar_instance
- *    - test_build_ship_throws_when_bay_already_occupied
- *    - test_build_ship_throws_when_ship_type_assigned_to_another_bay
- *    - test_build_ship_throws_for_invalid_ship_id
+ *  requestShip
+ *    - test_request_ship_creates_row_with_building_state
+ *    - test_request_ship_throws_for_invalid_ship_id
+ *    - test_request_ship_throws_for_insufficient_credits
+ *    - test_request_ship_deducts_credits_on_success
+ *    - test_request_ship_second_of_same_type_is_allowed
+ *    - test_request_ship_creates_pending_when_no_free_slot
  *
  *  dispatchShip
  *    - test_dispatch_ship_sets_dispatched_state_and_creates_mission
@@ -240,63 +241,97 @@ class HangarServiceTest extends TestCase
         $this->assertNull($ship['active_mission'], 'Recalled mission must not populate active_mission');
     }
 
-    // ── buildShip ─────────────────────────────────────────────────────────────
+    // ── requestShip ───────────────────────────────────────────────────────────
 
-    public function test_build_ship_creates_row_with_building_state(): void
+    public function test_request_ship_creates_row_with_building_state(): void
     {
+        // Free slot available — ship must be auto-assigned to it.
         $this->insertHangar(1);
 
-        $this->hangarService->buildShip(self::COLONY_ID, 1, self::SHIP_DRONE);
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
 
         $row = DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)
             ->where('ship_id', self::SHIP_DRONE)
             ->first();
 
-        $this->assertNotNull($row, 'colony_ships row must be created after buildShip');
+        $this->assertNotNull($row, 'colony_ships row must be created after requestShip');
         $this->assertSame('building', $row->ship_state);
         $this->assertSame(1, (int) $row->hangar_instance_id);
+        // deliver_at_tick = currentTick + delivery_ticks (drone = 2)
+        $this->assertSame(self::FIXED_TICK + 2, (int) $row->deliver_at_tick);
     }
 
-    public function test_build_ship_throws_for_unknown_hangar_instance(): void
-    {
-        // No hangar with instance_id=99 exists
-        $this->expectException(\RuntimeException::class);
-
-        $this->hangarService->buildShip(self::COLONY_ID, 99, self::SHIP_DRONE);
-    }
-
-    public function test_build_ship_throws_when_bay_already_occupied(): void
+    public function test_request_ship_throws_for_invalid_ship_id(): void
     {
         $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->buildShip(self::COLONY_ID, 1, self::SHIP_DRONE);
+        $this->hangarService->requestShip(self::COLONY_ID, 999, false, 0);
     }
 
-    public function test_build_ship_throws_when_ship_type_assigned_to_another_bay(): void
+    public function test_request_ship_throws_for_insufficient_credits(): void
     {
+        $this->insertHangar(1);
+        // Zero out credits for Bart (user_id=3)
+        DB::table('user_resources')
+            ->where('user_id', 3)
+            ->update(['credits' => 0]);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+    }
+
+    public function test_request_ship_deducts_credits_on_success(): void
+    {
+        $this->insertHangar(1);
+        // Drone costs 300 Cr; test seeder gives Bart 2700 Cr
+        $before = (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+
+        $after = (int) DB::table('user_resources')->where('user_id', 3)->value('credits');
+        $this->assertSame($before - 300, $after, 'Credits must be reduced by nexus_cost (drone=300)');
+    }
+
+    public function test_request_ship_second_of_same_type_is_allowed(): void
+    {
+        // requestShip has no per-type uniqueness constraint — two drones are valid.
         $this->insertHangar(1);
         $this->insertHangar(2);
 
-        // Assign corvette to bay 1 first
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
+        // Second request of same ship type must not throw.
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
 
-        // Now attempt to build corvette again in bay 2 — must be rejected
-        $this->expectException(\RuntimeException::class);
+        $count = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->count();
 
-        $this->hangarService->buildShip(self::COLONY_ID, 2, self::SHIP_CORVETTE);
+        $this->assertSame(2, $count, 'Two separate colony_ships rows must exist for two drones');
     }
 
-    public function test_build_ship_throws_for_invalid_ship_id(): void
+    public function test_request_ship_creates_pending_when_no_free_slot(): void
     {
+        // All hangar slots occupied — ship must be created in pending state with no hangar.
         $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        // No further free slots.
 
-        $this->expectException(\RuntimeException::class);
+        $this->hangarService->requestShip(self::COLONY_ID, self::SHIP_DRONE, false, 0);
 
-        $this->hangarService->buildShip(self::COLONY_ID, 1, 999);
+        $row = DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('ship_id', self::SHIP_DRONE)
+            ->whereNull('hangar_instance_id')
+            ->first();
+
+        $this->assertNotNull($row, 'Pending ship must be created when no free hangar slot');
+        $this->assertSame('pending', $row->ship_state);
+        $this->assertNotNull($row->pending_until_tick, 'pending_until_tick must be set');
     }
 
     // ── dispatchShip ──────────────────────────────────────────────────────────

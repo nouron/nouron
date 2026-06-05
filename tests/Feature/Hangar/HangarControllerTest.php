@@ -9,7 +9,7 @@ namespace Tests\Feature\Hangar;
  *
  *  AUTH GUARD
  *    - test_index_requires_auth
- *    - test_build_requires_auth
+ *    - test_request_ship_requires_auth
  *    - test_dispatch_requires_auth
  *    - test_recall_requires_auth
  *    - test_repair_requires_auth
@@ -17,12 +17,14 @@ namespace Tests\Feature\Hangar;
  *  INDEX
  *    - test_index_returns_200_with_required_view_data
  *    - test_index_view_has_pilot_false_when_no_advisor
+ *    - test_index_view_slots_count_matches_hangar_bays
  *
- *  BUILD
- *    - test_build_returns_ok_with_slot
- *    - test_build_returns_422_for_invalid_ship_id
- *    - test_build_returns_422_when_bay_already_occupied
- *    - test_build_returns_422_when_ship_type_duplicate
+ *  REQUEST SHIP
+ *    - test_request_ship_returns_ok_with_slots_and_pending
+ *    - test_request_ship_returns_422_for_invalid_ship_id
+ *    - test_request_ship_returns_422_for_missing_ship_id
+ *    - test_request_ship_returns_422_for_insufficient_credits
+ *    - test_request_ship_returns_422_for_negative_consul_ap
  *
  *  DISPATCH
  *    - test_dispatch_returns_ok_with_slot
@@ -145,9 +147,9 @@ class HangarControllerTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_build_requires_auth(): void
+    public function test_request_ship_requires_auth(): void
     {
-        $this->postJson(route('colony.hangar.build', ['instanceId' => 1]))
+        $this->postJson(route('colony.hangar.request'))
             ->assertUnauthorized();
     }
 
@@ -180,7 +182,17 @@ class HangarControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertViewIs('colony.hangar');
-        $response->assertViewHasAll(['slots', 'shipTypes', 'hasPilot']);
+        $response->assertViewHasAll([
+            'slots',
+            'shipTypes',
+            'hasPilot',
+            'pendingShips',
+            'shipCosts',
+            'canUseNexusCredit',
+            'hasAktivierterKonsul',
+            'verfuegbareVerhandlungsAP',
+            'commissionedShipIds',
+        ]);
     }
 
     public function test_index_view_has_pilot_false_when_no_advisor(): void
@@ -211,35 +223,39 @@ class HangarControllerTest extends TestCase
         $this->assertCount(2, $slots);
     }
 
-    // ── BUILD ─────────────────────────────────────────────────────────────────
+    // ── REQUEST SHIP ──────────────────────────────────────────────────────────
 
-    public function test_build_returns_ok_with_slot(): void
+    public function test_request_ship_returns_ok_with_slots_and_pending(): void
     {
         $this->insertHangar(1);
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 1]), [
-                'ship_id' => self::SHIP_DRONE,
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id'          => self::SHIP_DRONE,
+                'use_nexus_credit' => 0,
+                'consul_ap_spent'  => 0,
             ]);
 
         $response->assertOk()
             ->assertJson(['ok' => true])
-            ->assertJsonStructure(['ok', 'slot']);
+            ->assertJsonStructure(['ok', 'slots', 'pending']);
 
-        $slot = $response->json('slot');
-        $this->assertSame(1, $slot['instance_id']);
-        $this->assertNotNull($slot['ship']);
-        $this->assertSame(self::SHIP_DRONE, $slot['ship']['ship_id']);
-        $this->assertSame('building', $slot['ship']['ship_state']);
+        // Drone must appear in slots for hangar bay 1, with state=building
+        $slots = $response->json('slots');
+        $this->assertNotEmpty($slots);
+        $droneSlot = collect($slots)->firstWhere('instance_id', 1);
+        $this->assertNotNull($droneSlot);
+        $this->assertSame(self::SHIP_DRONE, $droneSlot['ship']['ship_id']);
+        $this->assertSame('building', $droneSlot['ship']['ship_state']);
     }
 
-    public function test_build_returns_422_for_invalid_ship_id(): void
+    public function test_request_ship_returns_422_for_invalid_ship_id(): void
     {
         $this->insertHangar(1);
 
         // ship_id=999 is not in the allowed list [37, 47, 85]
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 1]), [
+            ->postJson(route('colony.hangar.request'), [
                 'ship_id' => 999,
             ]);
 
@@ -247,25 +263,29 @@ class HangarControllerTest extends TestCase
         $response->assertStatus(422);
     }
 
-    public function test_build_returns_422_for_missing_ship_id(): void
+    public function test_request_ship_returns_422_for_missing_ship_id(): void
     {
         $this->insertHangar(1);
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 1]), []);
+            ->postJson(route('colony.hangar.request'), []);
 
         $response->assertStatus(422);
     }
 
-    public function test_build_returns_422_when_bay_already_occupied(): void
+    public function test_request_ship_returns_422_for_insufficient_credits(): void
     {
         $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
+        // Zero out Bart's credits so the purchase cannot proceed
+        DB::table('user_resources')
+            ->where('user_id', self::USER_ID_BART)
+            ->update(['credits' => 0]);
 
-        // Bay 1 is occupied; trying to build drone there must fail
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 1]), [
-                'ship_id' => self::SHIP_DRONE,
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id'          => self::SHIP_DRONE,
+                'use_nexus_credit' => 0,
+                'consul_ap_spent'  => 0,
             ]);
 
         $response->assertStatus(422)
@@ -273,22 +293,18 @@ class HangarControllerTest extends TestCase
             ->assertJsonStructure(['ok', 'error']);
     }
 
-    public function test_build_returns_422_when_ship_type_duplicate(): void
+    public function test_request_ship_returns_422_for_negative_consul_ap(): void
     {
         $this->insertHangar(1);
-        $this->insertHangar(2);
 
-        // Assign corvette to bay 1 first
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
-
-        // Attempt to build corvette in bay 2 — duplicate type, same colony
+        // consul_ap_spent must be >= 0 (Laravel validation rule min:0)
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 2]), [
-                'ship_id' => self::SHIP_CORVETTE,
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id'         => self::SHIP_DRONE,
+                'consul_ap_spent' => -1,
             ]);
 
-        $response->assertStatus(422)
-            ->assertJson(['ok' => false]);
+        $response->assertStatus(422);
     }
 
     // ── DISPATCH ──────────────────────────────────────────────────────────────
@@ -470,29 +486,36 @@ class HangarControllerTest extends TestCase
 
     // ── Adversarial / cross-colony ────────────────────────────────────────────
 
-    public function test_build_does_not_affect_another_colony_hangar(): void
+    public function test_request_ship_only_deducts_credits_from_requesting_user(): void
     {
-        // Colony 2 has a hangar with instance_id=1 (from seeder — building_id=44, no instance in seeder)
-        // Here we insert a fresh hangar for colony 2 at instance_id=99 to avoid seeder overlap
-        DB::table('colony_buildings')->insert([
-            'colony_id'     => 2,
-            'building_id'   => self::HANGAR_BUILDING,
-            'instance_id'   => 99,
-            'level'         => 1,
-            'status_points' => 20.0,
-            'ap_spend'      => 0,
-        ]);
-
-        // Bart builds in his own colony bay 1
+        // Bart requests a drone — only Bart's credits should decrease,
+        // not the credits of any other user.
         $this->insertHangar(1);
 
-        $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.build', ['instanceId' => 99]), [
-                'ship_id' => self::SHIP_DRONE,
-            ]);
+        // Record credits for both users before the request.
+        // user_id=1 (Homer), user_id=3 (Bart)
+        $bartCreditsBefore  = (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits');
+        $otherUsersBefore   = DB::table('user_resources')
+            ->where('user_id', '!=', self::USER_ID_BART)
+            ->pluck('credits', 'user_id')
+            ->all();
 
-        // Instance 99 belongs to colony 2, not Bart's colony — service rejects it
-        $response->assertStatus(422)
-            ->assertJson(['ok' => false]);
+        $this->actingAs($this->bart())
+            ->postJson(route('colony.hangar.request'), [
+                'ship_id'          => self::SHIP_DRONE,
+                'use_nexus_credit' => 0,
+                'consul_ap_spent'  => 0,
+            ])
+            ->assertOk();
+
+        // Bart's credits must have been reduced by drone cost (300 Cr).
+        $bartCreditsAfter = (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits');
+        $this->assertSame($bartCreditsBefore - 300, $bartCreditsAfter);
+
+        // All other users' credits must be unchanged.
+        foreach ($otherUsersBefore as $userId => $creditsBefore) {
+            $creditsAfter = (int) DB::table('user_resources')->where('user_id', $userId)->value('credits');
+            $this->assertSame((int) $creditsBefore, $creditsAfter, "Credits for user {$userId} must not change");
+        }
     }
 }
