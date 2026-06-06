@@ -1153,6 +1153,25 @@ dialog[x-ref="discoveryDialog"] {
 .nav-flyout-item:hover { background: var(--color-surface, #f7f7f5); text-decoration: none; color: var(--color-text-primary, #1a1a1e); }
 .nav-flyout-item.active { color: var(--color-accent, #8c2030); font-weight: 600; }
 .nav-flyout-item--btn { /* no extra overrides needed — font-family set above */ }
+
+/* Unread notification badge on nav items (e.g. Nexus-Funk) */
+.nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.1em;
+    height: 1.1em;
+    padding: 0 0.25em;
+    border-radius: 9999px;
+    background: #c0392b;
+    color: #fff;
+    font-size: 0.65em;
+    font-weight: 700;
+    line-height: 1;
+    margin-left: 0.3em;
+    vertical-align: middle;
+}
+
 .nav-flyout-divider {
     height: 1px;
     background: var(--color-border, #e8e8ec);

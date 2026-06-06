@@ -24,7 +24,7 @@ use Tests\TestCase;
  * Covered scenarios:
  *  Happy path:
  *  - Merchant spawn creates merchant_visits row and merchant_items rows
- *  - A merchant.visit event is created in innn_events for the colony owner
+ *  - A merchant.visit event is created in colony_log for the colony owner
  *  - Spawned visit has correct tick_start and tick_end
  *
  *  Edge cases:
@@ -123,7 +123,7 @@ class GameTickMerchantTest extends TestCase
      * When all conditions are met, the merchant spawns:
      *   - merchant_visits row is created
      *   - merchant_items rows are created (up to items_count)
-     *   - merchant.visit event is created in innn_events
+     *   - merchant.visit event is created in colony_log
      */
     public function test_merchant_spawns_when_all_conditions_met(): void
     {
@@ -185,7 +185,7 @@ class GameTickMerchantTest extends TestCase
     }
 
     /**
-     * A merchant.visit event must be created in innn_events for the colony owner.
+     * A merchant.visit event must be created in colony_log for the colony owner.
      */
     public function test_merchant_visit_creates_innn_event(): void
     {
@@ -198,13 +198,13 @@ class GameTickMerchantTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => $spawnTick]);
 
-        $event = DB::table('innn_events')
+        $event = DB::table('colony_log')
             ->where('user', self::USER_ID)
             ->where('event', 'merchant.visit')
             ->where('tick', $spawnTick)
             ->first();
 
-        $this->assertNotNull($event, 'merchant.visit event must be created in innn_events on spawn');
+        $this->assertNotNull($event, 'merchant.visit event must be created in colony_log on spawn');
     }
 
     // ── Edge cases ─────────────────────────────────────────────────────────────

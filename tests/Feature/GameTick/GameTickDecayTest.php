@@ -145,7 +145,7 @@ class GameTickDecayTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11003]);
 
-        $event = DB::table('innn_events')
+        $event = DB::table('colony_log')
             ->where('user', 3)
             ->where('event', 'techtree.level_down')
             ->where('tick', 11003)

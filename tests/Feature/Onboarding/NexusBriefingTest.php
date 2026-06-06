@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Onboarding;
 
-use App\Models\InnnEvent;
+use App\Models\ColonyLog;
 use App\Models\User;
 use App\Services\EventService;
 use App\Services\OnboardingService;
@@ -43,7 +43,7 @@ class NexusBriefingTest extends TestCase
 
         $colony = $this->onboardingService->setupNewPlayer($user->user_id, 'TestColony');
 
-        $events = InnnEvent::where('user', $user->user_id)
+        $events = ColonyLog::where('user', $user->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->get();
 
@@ -68,7 +68,7 @@ class NexusBriefingTest extends TestCase
         $this->eventService->createNexusBriefing($user->user_id, 1, 999);
         $this->eventService->createNexusBriefing($user->user_id, 2, 999);
 
-        $count = InnnEvent::where('user', $user->user_id)
+        $count = ColonyLog::where('user', $user->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->count();
 
@@ -87,7 +87,7 @@ class NexusBriefingTest extends TestCase
         // Second setup — uses a different planet but must not duplicate the event
         $this->onboardingService->setupNewPlayer($user->user_id, 'SecondColony');
 
-        $count = InnnEvent::where('user', $user->user_id)
+        $count = ColonyLog::where('user', $user->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->count();
 
@@ -104,15 +104,15 @@ class NexusBriefingTest extends TestCase
         $this->onboardingService->setupNewPlayer($userAlpha->user_id, 'AlphaColony');
         $this->onboardingService->setupNewPlayer($userBeta->user_id, 'BetaColony');
 
-        $totalEvents = InnnEvent::where('event', 'onboarding.nexus_briefing')->count();
+        $totalEvents = ColonyLog::where('event', 'onboarding.nexus_briefing')->count();
         $this->assertEquals(2, $totalEvents, 'Each player must have their own nexus_briefing event');
 
-        $alphaCount = InnnEvent::where('user', $userAlpha->user_id)
+        $alphaCount = ColonyLog::where('user', $userAlpha->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->count();
         $this->assertEquals(1, $alphaCount, 'Alpha must have exactly 1 nexus_briefing');
 
-        $betaCount = InnnEvent::where('user', $userBeta->user_id)
+        $betaCount = ColonyLog::where('user', $userBeta->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->count();
         $this->assertEquals(1, $betaCount, 'Beta must have exactly 1 nexus_briefing');
@@ -129,11 +129,11 @@ class NexusBriefingTest extends TestCase
         $colonyAlpha = $this->onboardingService->setupNewPlayer($userAlpha->user_id, 'AlphaColony');
         $colonyBeta  = $this->onboardingService->setupNewPlayer($userBeta->user_id, 'BetaColony');
 
-        $alphaEvent = InnnEvent::where('user', $userAlpha->user_id)
+        $alphaEvent = ColonyLog::where('user', $userAlpha->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->first();
 
-        $betaEvent = InnnEvent::where('user', $userBeta->user_id)
+        $betaEvent = ColonyLog::where('user', $userBeta->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->first();
 
@@ -151,18 +151,20 @@ class NexusBriefingTest extends TestCase
         // overwrite the original tick value, proving the guard short-circuits.
         $user = User::factory()->create();
 
-        InnnEvent::create([
+        ColonyLog::create([
             'user'       => $user->user_id,
             'tick'       => 42,
             'event'      => 'onboarding.nexus_briefing',
             'area'       => 'nexus',
             'parameters' => json_encode(['colony_id' => 1]),
+            'is_read'    => false,
+            'created_at' => now(),
         ]);
 
         // Now call the service with a different tick — must not insert a new row
         $this->eventService->createNexusBriefing($user->user_id, 9999, 1);
 
-        $events = InnnEvent::where('user', $user->user_id)
+        $events = ColonyLog::where('user', $user->user_id)
             ->where('event', 'onboarding.nexus_briefing')
             ->get();
 

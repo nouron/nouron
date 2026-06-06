@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Onboarding;
 
-use App\Models\InnnEvent;
+use App\Models\ColonyLog;
 use App\Services\OnboardingTriggerService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -146,7 +146,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $event = InnnEvent::where('user', $this->userId)
+        $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
             ->first();
 
@@ -184,7 +184,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
             ->count();
 
@@ -214,7 +214,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
             ->count();
 
@@ -242,7 +242,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_decay')
             ->count();
 
@@ -288,7 +288,7 @@ class OnboardingTriggersTest extends TestCase
         );
 
         // Confirm no INNN event was created for this trigger (it is UI-only).
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'supply_cap_full')
             ->count();
         $this->assertEquals(0, $count, 'supply_cap_full must not produce an INNN event');
@@ -372,7 +372,7 @@ class OnboardingTriggersTest extends TestCase
 
         $this->assertLessThan(0, $moralAfter, 'Trust must be negative after encounter_lost moral event');
 
-        $event = InnnEvent::where('user', $this->userId)
+        $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
             ->first();
 
@@ -407,7 +407,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
             ->count();
 
@@ -439,7 +439,7 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
             ->count();
 
@@ -491,7 +491,7 @@ class OnboardingTriggersTest extends TestCase
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
         // No onboarding_trust event must exist for any user because user_id is null.
-        $count = InnnEvent::where('event', 'onboarding_trust')->count();
+        $count = ColonyLog::where('event', 'onboarding_trust')->count();
 
         $this->assertEquals(0, $count, 'onboarding_trust must not be created for NPC colonies (user_id = null)');
     }

@@ -37,7 +37,14 @@
             @else
             <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></span></li>
             @endif
-            <li><a href="{{ route('messages.inbox') }}" @class(['active' => request()->routeIs('messages.*')])><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a></li>
+            <li>
+                <a href="{{ route('comm.log') }}" @class(['active' => request()->routeIs('comm.*')])>
+                    <i class="bi bi-journal-text"></i><span class="nav-label"> Protokoll</span>
+                    @if(($unreadNexusCount ?? 0) > 0)
+                        <span class="nav-badge">{{ $unreadNexusCount }}</span>
+                    @endif
+                </a>
+            </li>
             <li><a href="{{ route('nexusdb.index') }}" @class(['active' => request()->routeIs('nexusdb.*')])><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
         </ul>
 
@@ -100,8 +107,11 @@
                         <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
                     </span>
                     @endif
-                    <a href="{{ route('messages.inbox') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('messages.*')])>
-                        <i class="bi bi-envelope"></i> Nachrichten
+                    <a href="{{ route('comm.log') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('comm.*')])>
+                        <i class="bi bi-journal-text"></i> Protokoll
+                        @if(($unreadNexusCount ?? 0) > 0)
+                            <span class="nav-badge">{{ $unreadNexusCount }}</span>
+                        @endif
                     </a>
                     <a href="{{ route('nexusdb.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('nexusdb.*')])>
                         <i class="bi bi-database"></i> Nexus-DB

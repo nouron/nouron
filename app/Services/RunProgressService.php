@@ -392,7 +392,7 @@ class RunProgressService
      */
     private function updateCombatRecord(RunObjective $objective, Run $run): void
     {
-        $count = (int) DB::table('innn_events')
+        $count = (int) DB::table('colony_log')
             ->where('user', $run->user_id)
             ->where('event', 'encounter_won')
             ->where('created_at', '>=', $run->started_at)
@@ -413,7 +413,7 @@ class RunProgressService
      * Check Phase-2 Nexus intervention checkpoints and fire INNN events or penalties.
      *
      * Called once per tick, only when run is in Phase 2.
-     * Each checkpoint fires at most once per run (guarded by innn_events lookup).
+     * Each checkpoint fires at most once per run (guarded by colony_log lookup).
      *
      * Checkpoints by Phase-2 sol:
      *  Sol 30  — < 1 task at > 50% progress → warning event
@@ -546,12 +546,12 @@ class RunProgressService
     }
 
     /**
-     * Return true if an innn_events row with this event key already exists
+     * Return true if an colony_log row with this event key already exists
      * for this user, created at or after the run's start time.
      */
     private function eventAlreadyFired(Run $run, string $eventKey): bool
     {
-        return DB::table('innn_events')
+        return DB::table('colony_log')
             ->where('user', $run->user_id)
             ->where('event', $eventKey)
             ->where('created_at', '>=', $run->started_at)
@@ -673,13 +673,21 @@ class RunProgressService
         string $area,
         array  $parameters = []
     ): void {
-        DB::table('innn_events')->insert([
+        $isNexus = $area === 'nexus' || in_array($event, [
+            'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
+            'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80',
+            'run.run_completed', 'run.run_failed_trust',
+            'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.phase1_complete',
+        ], true);
+
+        DB::table('colony_log')->insert([
             'user'       => $userId,
             'tick'       => $tick,
             'event'      => $event,
             'area'       => $area,
             'parameters' => json_encode($parameters),
             'created_at' => now(),
+            'is_read'    => $isNexus ? 0 : 1,
         ]);
     }
 }

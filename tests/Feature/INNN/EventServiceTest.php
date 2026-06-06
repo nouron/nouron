@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\INNN;
 
-use App\Models\InnnEvent;
+use App\Models\ColonyLog;
 use App\Services\EventService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -42,7 +42,7 @@ class EventServiceTest extends TestCase
     {
         $event = $this->service->getEvent($this->eventId);
         $this->assertNotFalse($event);
-        $this->assertInstanceOf(InnnEvent::class, $event);
+        $this->assertInstanceOf(ColonyLog::class, $event);
         $this->assertEquals($this->eventId, $event->id);
     }
 
