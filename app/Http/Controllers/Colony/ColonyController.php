@@ -366,6 +366,21 @@ class ColonyController extends BaseController
             $leveledUp = true;
         }
 
+        $this->eventService->createEvent([
+            'user'       => Auth::id(),
+            'tick'       => $this->getTick(),
+            'event'      => 'colony.building_invested',
+            'area'       => 'colony',
+            'parameters' => json_encode([
+                'building_id'    => $buildingId,
+                'building_name'  => $building->name ?? '',
+                'ap_spend'       => $newApSpend,
+                'ap_for_levelup' => (int) $building->ap_for_levelup,
+                'level_up'       => $leveledUp,
+                'new_level'      => $leveledUp ? $row->level + 1 : $row->level,
+            ]),
+        ]);
+
         // CC level-up: recalculate colony zone and include updated tiles in response
         if ($leveledUp && $buildingId === BuildingId::CommandCenter->value) {
             $this->tileService->assignColonyZone($colony->id, $row->level + 1);

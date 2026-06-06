@@ -101,14 +101,13 @@
                         <i class="bi {{ $iconClass }}"></i>
                     </span>
                     <span class="comm-entry-label">
-                        @if($hasEvent)
+                        @if($entry['description'])
+                            {{ $entry['description'] }}
+                        @elseif($hasEvent)
                             {{ __($eventKey) }}
                         @else
                             {{ $entry['event'] }}
                         @endif
-                    </span>
-                    <span class="comm-entry-sol">
-                        {{ __('comm_log.sol_label', ['sol' => $entry['sol']]) }}
                     </span>
                 </div>
 

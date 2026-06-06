@@ -96,6 +96,25 @@ return [
         ],
     ],
 
+    // Rich descriptions for Protokoll entries (with :param placeholders)
+    'desc' => [
+        'building_placed'     => ':name platziert.',
+        'building_invested'   => '1 AP in :name investiert (:ap / :total AP).',
+        'building_leveled_up' => ':name auf Level :level aufgestuft.',
+        'level_up'            => ':name Forschung abgeschlossen.',
+        'level_down'          => ':name durch Verfall abgestuft.',
+        'advisor_hired'       => 'Berater ":type" eingestellt.',
+        'bar_accepted'        => 'Cantina-Angebot angenommen.',
+        'merchant_purchase'   => 'Beim Reisenden Händler eingekauft.',
+        'merchant_visit'      => 'Reisender Händler in der Nähe angekündigt.',
+        'fleet_arrived'       => 'Flotte am Ziel angekommen.',
+        'galaxy_trade'        => 'Handelsroute erfolgreich abgeschlossen.',
+        'encounter'           => 'Begegnung mit fremder Flotte.',
+        'tile_explored'       => 'Neuen Sektor erkundet.',
+        'tile_deep_scanned'   => 'Tiefen-Scan eines Sektors durchgeführt.',
+        'colony_renamed'      => 'Kolonie umbenannt.',
+    ],
+
     // Area icons (Bootstrap Icons class) — flat, keys are simple strings (no dots)
     'area_icons' => [
         'colony'   => 'bi-hexagon',
