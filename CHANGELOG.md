@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-06
+
+- **Phase 3j: Kolonieprotokoll** (INNN-Redesign): INNN-Nachrichtensystem vollständig ersetzt. Neuer Screen `/comm-log` mit zwei Tabs — "Protokoll" (chronologisches Aktions- + Ereignis-Log) und "Nexus-Funk" (game-generierte Nexus-Nachrichten mit Ungelesen-Badge). Player-Messaging, Inbox/Outbox, Compose-Screen, Galaxy-News entfallen. DB: `innn_events` → `colony_log` (+`is_read`-Spalte); `innn_messages`, `innn_news`, `innn_message_types`, `v_innn_messages` View gedroppt. `EventService` setzt `is_read=false` automatisch für Nexus-Events. Colony-Nav: "Nachrichten" → "Protokoll" mit rotem Badge. 725 Tests grün.
+
 ## 2026-06-05
 
 - **Moral → Trust/Vertrauen**: Vollständige Umbenennung — `MoralService` → `TrustService`, `game.moral.*` → `game.trust.*`, `moral_per_lv` → `trust_per_lv`, DB-Tabelle `moral_events` → `trust_events`, Resource-Slug `res_moral` → `res_trust`, `lang/de/moral.php` → `trust.php`. CLAUDE.md aktualisiert. 759 Tests grün.
