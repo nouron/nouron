@@ -16,8 +16,9 @@ use Tests\TestCase;
  * Test data (Simpsons fixture via TestSeeder):
  *   - event 16: user=3(Bart), tick=15405, event=techtree.level_up_finished
  *   - event 19: user=3(Bart), tick=15405, event=galaxy.trade
+ *   - events 26-42: Bart test data covering all event types (inserted by testdata.sqlite.sql)
  *
- * Bart (user=3) has 2 events; Homer (user=0) has 0 events.
+ * Bart (user=3) has 19 events; Homer (user=0) has 0 events.
  */
 class EventServiceTest extends TestCase
 {
@@ -74,7 +75,7 @@ class EventServiceTest extends TestCase
     public function test_bart_has_two_events(): void
     {
         $events = $this->service->getEvents($this->userB);
-        $this->assertEquals(2, $events->count());
+        $this->assertEquals(19, $events->count());
     }
 
     public function test_homer_has_zero_events(): void

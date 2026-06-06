@@ -28,7 +28,9 @@ class CommLogController extends BaseController
         'run.sol_advanced',
     ];
 
-    private ?array $buildingNameMap = null;
+    private ?array $buildingNameMap  = null;
+    private ?array $shipNameMap      = null;
+    private ?array $researchNameMap  = null;
 
     public function __construct(
         TickService $tick,
@@ -149,34 +151,52 @@ class CommLogController extends BaseController
 
     private function descBuildingInvested(array $params): string
     {
-        $name      = $this->resolveBuildingName($params['building_id'] ?? null, $params['building_name'] ?? null);
-        $ap        = (int) ($params['ap_spend'] ?? 0);
-        $apNeeded  = (int) ($params['ap_for_levelup'] ?? 0);
-        $levelUp   = (bool) ($params['level_up'] ?? false);
-        $newLevel  = (int) ($params['new_level'] ?? 0);
+        $name     = $this->resolveBuildingName($params['building_id'] ?? null, $params['building_name'] ?? null);
+        $ap       = (int) ($params['ap_spend'] ?? 1);
+        $apNeeded = (int) ($params['ap_for_levelup'] ?? 0);
+        $levelUp  = (bool) ($params['level_up'] ?? false);
+        $newLevel = (int) ($params['new_level'] ?? 0);
 
         if ($levelUp) {
-            return __('comm_log.desc.building_leveled_up', ['name' => $name, 'level' => $newLevel]);
+            return __('comm_log.desc.building_leveled_up', ['ap' => $ap, 'name' => $name, 'level' => $newLevel]);
         }
 
-        $remaining = $apNeeded - $ap;
         return __('comm_log.desc.building_invested', [
-            'name'      => $name,
-            'ap'        => $ap,
-            'total'     => $apNeeded,
-            'remaining' => $remaining,
+            'ap'    => $ap,
+            'name'  => $name,
+            'done'  => $apNeeded > 0 ? ($apNeeded - $ap) : '?',
+            'total' => $apNeeded ?: '?',
         ]);
     }
 
     private function descLevelUp(array $params): string
     {
-        $name = $this->resolveBuildingName($params['tech_id'] ?? null, null);
+        $name = $this->resolveEntityName(
+            $params['entity_name'] ?? null,
+            $params['entity_type'] ?? 'building',
+            $params['tech_id'] ?? null,
+        );
         return __('comm_log.desc.level_up', ['name' => $name]);
     }
 
     private function descLevelDown(array $params): string
     {
-        $name = $this->resolveBuildingName($params['tech_id'] ?? null, null);
+        $entityType = $params['entity_type'] ?? 'building';
+        $newLevel   = isset($params['new_level']) ? (int) $params['new_level'] : null;
+        $name       = $this->resolveEntityName(
+            $params['entity_name'] ?? null,
+            $entityType,
+            $params['tech_id'] ?? null,
+        );
+
+        if ($entityType === 'ship') {
+            return __('comm_log.desc.level_down_ship', ['name' => $name]);
+        }
+
+        if ($newLevel !== null) {
+            return __('comm_log.desc.level_down_level', ['name' => $name, 'level' => $newLevel]);
+        }
+
         return __('comm_log.desc.level_down', ['name' => $name]);
     }
 
@@ -211,6 +231,47 @@ class CommLogController extends BaseController
         return (string) ($buildingId ?? '?');
     }
 
+    private function resolveEntityName(?string $entityName, string $entityType, mixed $techId): string
+    {
+        if ($entityName) {
+            $translated = __('techtree.' . $entityName);
+            if ($translated !== 'techtree.' . $entityName) {
+                return $translated;
+            }
+            return $entityName;
+        }
+
+        if ($techId !== null) {
+            $id  = (int) $techId;
+            $map = match ($entityType) {
+                'ship'     => $this->getShipNameMap(),
+                'research' => $this->getResearchNameMap(),
+                default    => $this->getBuildingNameMap(),
+            };
+            $key = $map[$id] ?? null;
+            if ($key) {
+                $translated = __('techtree.' . $key);
+                if ($translated !== 'techtree.' . $key) {
+                    return $translated;
+                }
+                return $key;
+            }
+
+            // Unknown entity_type — try all three tables
+            foreach ([$this->getBuildingNameMap(), $this->getShipNameMap(), $this->getResearchNameMap()] as $fallbackMap) {
+                $key = $fallbackMap[$id] ?? null;
+                if ($key) {
+                    $translated = __('techtree.' . $key);
+                    return $translated !== 'techtree.' . $key ? $translated : $key;
+                }
+            }
+
+            return (string) $id;
+        }
+
+        return '?';
+    }
+
     private function getBuildingNameMap(): array
     {
         if ($this->buildingNameMap === null) {
@@ -218,5 +279,23 @@ class CommLogController extends BaseController
         }
 
         return $this->buildingNameMap;
+    }
+
+    private function getShipNameMap(): array
+    {
+        if ($this->shipNameMap === null) {
+            $this->shipNameMap = DB::table('ships')->pluck('name', 'id')->all();
+        }
+
+        return $this->shipNameMap;
+    }
+
+    private function getResearchNameMap(): array
+    {
+        if ($this->researchNameMap === null) {
+            $this->researchNameMap = DB::table('researches')->pluck('name', 'id')->all();
+        }
+
+        return $this->researchNameMap;
     }
 }

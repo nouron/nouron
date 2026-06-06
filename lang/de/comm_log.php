@@ -99,10 +99,12 @@ return [
     // Rich descriptions for Protokoll entries (with :param placeholders)
     'desc' => [
         'building_placed'     => ':name platziert.',
-        'building_invested'   => '1 AP in :name investiert (:ap / :total AP).',
-        'building_leveled_up' => ':name auf Level :level aufgestuft.',
-        'level_up'            => ':name Forschung abgeschlossen.',
-        'level_down'          => ':name durch Verfall abgestuft.',
+        'building_invested'   => ':ap AP in :name investiert (:done / :total AP).',
+        'building_leveled_up' => ':ap AP in :name investiert. Bau abgeschlossen — Level :level erreicht.',
+        'level_up'            => ':name: Forschung abgeschlossen.',
+        'level_down'          => 'Level für :name mangels Wartung gesunken.',
+        'level_down_level'    => 'Level für :name mangels Wartung auf :level gesunken.',
+        'level_down_ship'     => 'Schiff :name durch Verfall zerstört.',
         'advisor_hired'       => 'Berater ":type" eingestellt.',
         'bar_accepted'        => 'Cantina-Angebot angenommen.',
         'merchant_purchase'   => 'Beim Reisenden Händler eingekauft.',
