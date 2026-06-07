@@ -7,7 +7,7 @@ use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Galaxy\GalaxyController;
-use App\Http\Controllers\INNN\MessageController;
+use App\Http\Controllers\CommLog\CommLogController;
 use App\Http\Controllers\Resources\JsonController as ResourcesController;
 use App\Http\Controllers\Fleet\FleetController;
 use App\Http\Controllers\Techtree\AdvisorController;
@@ -115,20 +115,11 @@ Route::middleware('auth')->prefix('galaxy')->name('galaxy.')->group(function () 
     Route::get('/json/getmapdata/{x}/{y}',   [GalaxyController::class, 'getMapData'])->name('json.getmapdata');
 });
 
-// ── INNN Messages (Schritt 7) ─────────────────────────────────────────────────
+// ── Kolonieprotokoll ──────────────────────────────────────────────────────────
 
-Route::middleware('auth')->prefix('messages')->name('messages.')->group(function () {
-    Route::get('/',              [MessageController::class, 'inbox'])->name('inbox');
-    Route::get('/outbox',        [MessageController::class, 'outbox'])->name('outbox');
-    Route::get('/archive',       [MessageController::class, 'showArchive'])->name('archive');
-    Route::get('/events',        [MessageController::class, 'events'])->name('events');
-    Route::get('/actions',       [MessageController::class, 'actions'])->name('actions');
-    Route::get('/news',          [MessageController::class, 'news'])->name('news');
-    Route::get('/new',           [MessageController::class, 'compose'])->name('compose');
-    Route::post('/send',         [MessageController::class, 'send'])->name('send');
-    Route::post('/react',        [MessageController::class, 'react'])->name('react');
-    Route::post('/archive/{id}', [MessageController::class, 'archiveMessage'])->name('archive.message');
-    Route::post('/remove/{id}',  [MessageController::class, 'remove'])->name('remove');
+Route::middleware('auth')->prefix('comm-log')->name('comm.')->group(function () {
+    Route::get('/',      [CommLogController::class, 'log'])->name('log');
+    Route::get('/nexus', [CommLogController::class, 'nexus'])->name('nexus');
 });
 
 // ── Trade (Schritt 8) ─────────────────────────────────────────────────────────

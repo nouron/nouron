@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-07
+
+- **Kolonieprotokoll: reichere Log-Beschreibungen**: Entity-Namen in Log-Nachrichten werden korrekt aufgelöst — `techtree.level_down` speichert jetzt `entity_type`, `entity_name`, `new_level` direkt in den Params (kein nachträgliches DB-Raten). `resolveEntityName()` sucht fallback über Buildings/Ships/Researches-Tabellen. Gebäude-Verfall zeigt "Level für X mangels Wartung auf Y gesunken.", Schiffs-Verfall "Schiff X zerstört."
+- **Cantina, Berater, Handelsroute, Tiefen-Scan**: Log-Beschreibungen zeigen jetzt Kontext — Bar-Tausch ("80 Regolith gegen 200 Credits getauscht."), Berater ohne "Berater"-Präfix mit Kosten ("Analytiker eingestellt. Kosten: 400 CR."), Handelsroute mit Erlös ("+75 CR"), Tiefen-Scan mit Koordinaten ("Sektor (2/0)"). `BarService::acceptOffer` gibt Offer-Details zurück; `AdvisorController` speichert `credits_cost` im Event.
+- **i18n**: `techs_*` Forschungs-Keys (altes Konzept) aus `lang/de/techtree.php` entfernt. `knowledge_*` Kenntnisse bleiben.
+- **Testdaten**: 17 neue `colony_log`-Einträge in `testdata.sqlite.sql` + Dev-DB, decken alle Event-Typen ab.
+- **Planung Entity-Chips**: ADR 0002 (Option A: Structured Segments), GDD-Spec `docs/gdd/entity-chips.md`, ROADMAP.md als Phase 3k eingetragen.
+
+## 2026-06-06
+
+- **Phase 3j: Kolonieprotokoll** (INNN-Redesign): INNN-Nachrichtensystem vollständig ersetzt. Neuer Screen `/comm-log` mit zwei Tabs — "Protokoll" (chronologisches Aktions- + Ereignis-Log) und "Nexus-Funk" (game-generierte Nexus-Nachrichten mit Ungelesen-Badge). Player-Messaging, Inbox/Outbox, Compose-Screen, Galaxy-News entfallen. DB: `innn_events` → `colony_log` (+`is_read`-Spalte); `innn_messages`, `innn_news`, `innn_message_types`, `v_innn_messages` View gedroppt. `EventService` setzt `is_read=false` automatisch für Nexus-Events. Colony-Nav: "Nachrichten" → "Protokoll" mit rotem Badge. 725 Tests grün.
+
 ## 2026-06-05
 
 - **Moral → Trust/Vertrauen**: Vollständige Umbenennung — `MoralService` → `TrustService`, `game.moral.*` → `game.trust.*`, `moral_per_lv` → `trust_per_lv`, DB-Tabelle `moral_events` → `trust_events`, Resource-Slug `res_moral` → `res_trust`, `lang/de/moral.php` → `trust.php`. CLAUDE.md aktualisiert. 759 Tests grün.

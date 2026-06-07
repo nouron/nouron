@@ -59,8 +59,8 @@
                        href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i><span class="nav-label"> Handel</span></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link @if(request()->routeIs('messages.*')) active @endif"
-                       href="{{ route('messages.inbox') }}"><i class="bi bi-envelope"></i><span class="nav-label"> Nachrichten</span></a>
+                    <a class="nav-link @if(request()->routeIs('comm.*')) active @endif"
+                       href="{{ route('comm.log') }}"><i class="bi bi-journal-text"></i><span class="nav-label"> Protokoll</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('nexusdb.*')) active @endif"

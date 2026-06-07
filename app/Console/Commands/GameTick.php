@@ -525,6 +525,7 @@ class GameTick extends Command
         $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
         $decayRates    = DB::table('buildings')->pluck('decay_rate', 'id');
         $maxSPMap      = DB::table('buildings')->pluck('max_status_points', 'id');
+        $buildingNames = DB::table('buildings')->pluck('name', 'id');
         $levelled      = 0;
 
         // Build the over-cap set once before iterating — O(colonies), not O(buildings).
@@ -575,8 +576,11 @@ class GameTick extends Command
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
                     'parameters' => json_encode([
-                        'colony_id' => $cb->colony_id,
-                        'tech_id'   => $cb->building_id,
+                        'entity_type' => 'building',
+                        'entity_name' => $buildingNames[$cb->building_id] ?? '',
+                        'new_level'   => $newLevel,
+                        'tech_id'     => $cb->building_id,
+                        'colony_id'   => $cb->colony_id,
                     ]),
                 ]);
 
@@ -627,6 +631,7 @@ class GameTick extends Command
         $combatFactor  = (float) config('game.decay.combat_factor', 2);
         $decayRates    = DB::table('ships')->pluck('decay_rate', 'id');
         $maxSPMap      = DB::table('ships')->pluck('max_status_points', 'id');
+        $shipNames     = DB::table('ships')->pluck('name', 'id');
         $destroyed     = 0;
 
         FleetShip::orderBy('fleet_id')->orderBy('ship_id')->chunk(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, $maxSPMap, &$destroyed, $tick) {
@@ -649,8 +654,9 @@ class GameTick extends Command
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
                     'parameters' => json_encode([
-                        'colony_id' => 0,
-                        'tech_id'   => $fs->ship_id,
+                        'entity_type' => 'ship',
+                        'entity_name' => $shipNames[$fs->ship_id] ?? '',
+                        'tech_id'     => $fs->ship_id,
                     ]),
                 ]);
                 DB::table('fleet_ships')->where($where)->delete();
@@ -672,6 +678,7 @@ class GameTick extends Command
         $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
         $decayRates    = DB::table('researches')->pluck('decay_rate', 'id');
         $maxSPMap      = DB::table('researches')->pluck('max_status_points', 'id');
+        $researchNames = DB::table('researches')->pluck('name', 'id');
         $levelled      = 0;
 
         // Build the over-cap set once before iterating — O(colonies), not O(researches).
@@ -706,8 +713,10 @@ class GameTick extends Command
                     'event'      => 'techtree.level_down',
                     'area'       => 'techtree',
                     'parameters' => json_encode([
-                        'colony_id' => $cr->colony_id,
-                        'tech_id'   => $cr->research_id,
+                        'entity_type' => 'research',
+                        'entity_name' => $researchNames[$cr->research_id] ?? '',
+                        'new_level'   => $newLevel,
+                        'tech_id'     => $cr->research_id,
                     ]),
                 ]);
                 $levelled++;

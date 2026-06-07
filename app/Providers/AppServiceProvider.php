@@ -3,10 +3,9 @@
 namespace App\Providers;
 
 use App\Services\ColonyService;
-use App\Services\EventService;
 use App\Services\GalaxyService;
 use App\Services\MerchantService;
-use App\Services\MessageService;
+use App\Services\EventService;
 use App\Services\TrustService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
@@ -53,7 +52,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(PersonellService::class),
         ));
         $this->app->bind(GalaxyService::class, GalaxyService::class);
-        $this->app->bind(MessageService::class, MessageService::class);
+
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn($app) => new TrustService(
             $app->make(TickService::class),
@@ -154,6 +153,10 @@ class AppServiceProvider extends ServiceProvider
                     ->where('level', '>', 0)
                     ->exists();
                 $view->with('hangarBuilt', $hangarBuilt);
+
+                // Nexus-Funk unread badge count for colony nav
+                $unreadNexusCount = app(EventService::class)->countUnreadNexus(Auth::id());
+                $view->with('unreadNexusCount', $unreadNexusCount);
             }
         });
     }

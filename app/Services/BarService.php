@@ -123,7 +123,13 @@ class BarService
             'get_amount'       => $offer->get_amount,
         ]);
 
-        return ['ok' => true];
+        return [
+            'ok'              => true,
+            'give_resource_id' => $offer->give_resource_id,
+            'give_amount'      => $offer->give_amount,
+            'get_resource_id'  => $offer->get_resource_id,
+            'get_amount'       => $offer->get_amount,
+        ];
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int

@@ -864,12 +864,13 @@ class RunProgressServiceTest extends TestCase
         $objective = $this->makeObjective($run, 'task_combat_record', 3);
 
         for ($i = 0; $i < 3; $i++) {
-            DB::table('innn_events')->insert([
+            DB::table('colony_log')->insert([
                 'user'       => $this->userId,
                 'tick'       => 7 + $i,
                 'event'      => 'encounter_won',
                 'area'       => 'combat',
                 'parameters' => json_encode([]),
+                'is_read'    => 1,
                 'created_at' => now(),
             ]);
         }
@@ -893,12 +894,13 @@ class RunProgressServiceTest extends TestCase
 
         // Insert 3 encounter_won events with created_at BEFORE started_at
         for ($i = 0; $i < 3; $i++) {
-            DB::table('innn_events')->insert([
+            DB::table('colony_log')->insert([
                 'user'       => $this->userId,
                 'tick'       => 2 + $i,
                 'event'      => 'encounter_won',
                 'area'       => 'combat',
                 'parameters' => json_encode([]),
+                'is_read'    => 1,
                 'created_at' => now()->subDay(),
             ]);
         }
@@ -972,7 +974,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_warning_sol30')
             ->exists();
@@ -996,7 +998,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_warning_sol30')
             ->exists();
@@ -1013,7 +1015,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_warning_sol50')
             ->exists();
@@ -1033,7 +1035,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_sanction_sol65')
             ->exists();
@@ -1064,7 +1066,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_sanction_sol65')
             ->exists();
@@ -1097,7 +1099,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_countdown_sol80')
             ->exists();
@@ -1207,7 +1209,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_countdown_sol80')
             ->exists();
@@ -1223,7 +1225,7 @@ class RunProgressServiceTest extends TestCase
 
         $this->service->checkNexusInterventions($run);
 
-        $fired = DB::table('innn_events')
+        $fired = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_sanction_sol65')
             ->exists();
@@ -1240,7 +1242,7 @@ class RunProgressServiceTest extends TestCase
         $this->service->checkNexusInterventions($run);
         $this->service->checkNexusInterventions($run);
 
-        $count = DB::table('innn_events')
+        $count = DB::table('colony_log')
             ->where('user', $this->userId)
             ->where('event', 'run.nexus_warning_sol50')
             ->count();

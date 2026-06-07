@@ -1,0 +1,315 @@
+/* CommLog — Kolonieprotokoll screen (Alpine.js + PicoCSS, Phase 3j+) */
+
+/* ── Page wrapper ─────────────────────────────────────────────────────────── */
+
+.comm-log-page {
+    padding: 1.5rem 1rem 3rem;
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+/* ── Tab navigation bar ───────────────────────────────────────────────────── */
+
+.comm-tabs {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-bottom: 1px solid #e8e8ec;
+    margin-bottom: 1.5rem;
+    /* Override PicoCSS <nav> padding */
+    padding: 0;
+}
+
+.comm-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.875rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 400;
+    color: #6b6b7a;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px; /* overlap .comm-tabs border-bottom */
+    transition: color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    position: relative;
+}
+
+.comm-tab:hover {
+    color: #1a1a1e;
+    text-decoration: none;
+}
+
+.comm-tab-active {
+    color: #8c2030;
+    border-bottom-color: #8c2030;
+    font-weight: 600;
+}
+
+/* ── Unread badge on Nexus-Funk tab ───────────────────────────────────────── */
+
+.comm-unread-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: #c0392b;
+    color: #ffffff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 1;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Offset slightly so it sits above the tab text baseline */
+    vertical-align: middle;
+    margin-left: 0.1rem;
+}
+
+/* ── Sol group divider ────────────────────────────────────────────────────── */
+
+.comm-sol-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.72rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #b0b0bc;
+    margin: 1.25rem 0 0.5rem;
+}
+
+/* Hairline on each side of the Sol label */
+.comm-sol-divider::before,
+.comm-sol-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e8e8ec;
+}
+
+/* First divider at top of the list needs no top margin */
+.comm-sol-divider:first-child {
+    margin-top: 0;
+}
+
+/* ── Protokoll entry row ──────────────────────────────────────────────────── */
+
+.comm-entry {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.55rem 0;
+    border-bottom: 1px solid #f0f0f4;
+    font-size: 0.875rem;
+    color: #1a1a1e;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.comm-entry:last-child {
+    border-bottom: none;
+}
+
+/* ── Entry icon ───────────────────────────────────────────────────────────── */
+
+.comm-entry-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: #f4f4f8;
+    color: #6b6b7a;
+    font-size: 0.85rem;
+}
+
+/* ── Entry label ──────────────────────────────────────────────────────────── */
+
+.comm-entry-label {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Sol timestamp (right-aligned, muted) ─────────────────────────────────── */
+
+.comm-entry-sol {
+    flex-shrink: 0;
+    font-size: 0.78rem;
+    color: #a0a0ac;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ── Nexus-Funk card ──────────────────────────────────────────────────────── */
+
+.comm-nexus-card {
+    background: #ffffff;
+    border: 1px solid #e4e4ef;
+    border-radius: 8px;
+    padding: 1rem 1.1rem 0.8rem;
+    margin-bottom: 0.75rem;
+    /* Use border only — no shadow; consistent with design guide rule */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    /* Override PicoCSS <article> default margin/padding */
+    display: block;
+}
+
+.comm-nexus-card:last-child {
+    margin-bottom: 0;
+}
+
+/* ── Nexus card header: title + badge row ─────────────────────────────────── */
+
+.comm-nexus-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.55rem;
+}
+
+/* ── Nexus card title ─────────────────────────────────────────────────────── */
+
+.comm-nexus-card-title {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1a1a1e;
+    line-height: 1.3;
+}
+
+.comm-nexus-card-title .bi {
+    font-size: 0.9rem;
+    color: #6b6b7a;
+    flex-shrink: 0;
+}
+
+/* ── Nexus card body text ─────────────────────────────────────────────────── */
+
+.comm-nexus-card-body {
+    font-size: 0.85rem;
+    color: #555563;
+    line-height: 1.65;
+    margin: 0 0 0.6rem;
+}
+
+/* ── Nexus card footer: sol timestamp ─────────────────────────────────────── */
+
+.comm-nexus-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+/* ── Nexus badge pill ─────────────────────────────────────────────────────── */
+
+/*
+ * Base pill — all nexus badges share this foundation.
+ * Color variants below map badge text slugs to semantic colors.
+ *
+ * Badge slug mapping (Str::slug of badge text):
+ *   Erstkontakt            → --neutral  (gray)
+ *   Phase abgeschlossen    → --neutral  (gray)   [slug: phase-abgeschlossen]
+ *   Warnung                → --warning  (orange)
+ *   Kritische Warnung      → --critical (orange) [slug: kritische-warnung]
+ *   Countdown              → --critical (orange)
+ *   Sanktion               → --danger   (red)
+ *   Gescheitert            → --danger   (red)
+ *   Erfolg                 → --success  (green)
+ */
+
+.comm-nexus-badge {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 0.18em 0.65em;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.4;
+}
+
+/* Neutral — Erstkontakt, Phase abgeschlossen */
+.comm-nexus-badge--neutral,
+.comm-nexus-badge--erstkontakt,
+.comm-nexus-badge--phase-abgeschlossen {
+    background: #f0f0f4;
+    color: #6b6b7a;
+    border: 1px solid #d8d8e4;
+}
+
+/* Warning — Warnung */
+.comm-nexus-badge--warnung {
+    background: #fef3e2;
+    color: #9a4e00;
+    border: 1px solid #f6d9a8;
+}
+
+/* Critical — Kritische Warnung, Countdown */
+.comm-nexus-badge--kritische-warnung,
+.comm-nexus-badge--countdown {
+    background: #fff0e0;
+    color: #8a3a00;
+    border: 1px solid #f6c89a;
+}
+
+/* Danger — Sanktion, Gescheitert */
+.comm-nexus-badge--sanktion,
+.comm-nexus-badge--gescheitert {
+    background: #fdecea;
+    color: #8c1a12;
+    border: 1px solid #f4b8b4;
+}
+
+/* Success — Erfolg */
+.comm-nexus-badge--erfolg {
+    background: #e8f5e9;
+    color: #1b5e20;
+    border: 1px solid #b8deba;
+}
+
+/* ── Empty state ──────────────────────────────────────────────────────────── */
+
+.comm-empty {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: #a0a0ac;
+    font-size: 0.9rem;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* ── Mobile ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+    .comm-log-page {
+        padding: 1rem 0.75rem 2rem;
+    }
+
+    .comm-tabs {
+        margin-left: -0.75rem;
+        margin-right: -0.75rem;
+        padding-left: 0.75rem;
+    }
+
+    .comm-nexus-card-header {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+}

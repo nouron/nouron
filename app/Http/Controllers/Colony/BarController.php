@@ -88,7 +88,13 @@ class BarController extends BaseController
                 'tick'       => $tick,
                 'event'      => 'trade.bar_accepted',
                 'area'       => 'trade',
-                'parameters' => json_encode(['colony_id' => $colony->id]),
+                'parameters' => json_encode([
+                    'colony_id'       => $colony->id,
+                    'give_resource_id' => $result['give_resource_id'],
+                    'give_amount'      => $result['give_amount'],
+                    'get_resource_id'  => $result['get_resource_id'],
+                    'get_amount'       => $result['get_amount'],
+                ]),
             ]);
         }
 

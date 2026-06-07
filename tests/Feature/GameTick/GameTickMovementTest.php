@@ -103,7 +103,7 @@ class GameTickMovementTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => $tick]);
 
-        $event = DB::table('innn_events')
+        $event = DB::table('colony_log')
             ->where('user', 3) // Bart owns fleet 11
             ->where('event', 'galaxy.fleet_arrived')
             ->where('tick', $tick)

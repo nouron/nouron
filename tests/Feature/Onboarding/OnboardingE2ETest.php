@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Onboarding;
 
-use App\Models\InnnEvent;
+use App\Models\ColonyLog;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingService;
@@ -63,8 +63,8 @@ class OnboardingE2ETest extends TestCase
         $colony = $this->onboardingService->setupNewPlayer($this->userId, 'E2E-Kolonie');
         $this->assertNotNull($colony);
 
-        // ── 2. Nexus-Briefing exists in INNN ────────────────────────────────
-        $this->assertDatabaseHas('innn_events', [
+        // ── 2. Nexus-Briefing exists in colony_log ──────────────────────────
+        $this->assertDatabaseHas('colony_log', [
             'user'  => $this->userId,
             'event' => 'onboarding.nexus_briefing',
         ]);
@@ -155,7 +155,7 @@ class OnboardingE2ETest extends TestCase
         // Second call must be a no-op.
         $eventService->createNexusBriefing($this->userId, $tick, $colony->id);
 
-        $count = InnnEvent::where('user', $this->userId)
+        $count = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding.nexus_briefing')
             ->count();
 
