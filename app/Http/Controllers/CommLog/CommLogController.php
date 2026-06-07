@@ -185,7 +185,7 @@ class CommLogController extends BaseController
         return [
             $this->entitySeg('building', (string) $bKey, $name, [
                 'level' => null,
-                'link'  => '/colony',
+                'link'  => '/nexus-db',
             ]),
             $this->seg(' platziert.'),
         ];
@@ -209,7 +209,7 @@ class CommLogController extends BaseController
                 $this->seg($ap . ' AP in '),
                 $this->entitySeg('building', (string) $bKey, $name, [
                     'level' => $newLevel,
-                    'link'  => '/colony',
+                    'link'  => '/nexus-db',
                 ]),
                 $this->seg(' investiert. Bau abgeschlossen — Level ' . $newLevel . ' erreicht.'),
             ];
@@ -222,7 +222,7 @@ class CommLogController extends BaseController
             $this->seg($ap . ' AP in '),
             $this->entitySeg('building', (string) $bKey, $name, [
                 'level' => null,
-                'link'  => '/colony',
+                'link'  => '/nexus-db',
             ]),
             $this->seg(' investiert (' . $done . ' / ' . $total . ' AP).'),
         ];
@@ -252,9 +252,9 @@ class CommLogController extends BaseController
         };
 
         $link = match ($chipType) {
-            'knowledge', 'research' => '/techtree',
-            'ship'                  => '/hangar',
-            default                 => '/colony',
+            'knowledge', 'research' => '/nexus-db',
+            'ship'                  => '/nexus-db',
+            default                 => '/nexus-db',
         };
 
         $entityKey = $entityName ?? (string) $techId;
@@ -344,14 +344,14 @@ class CommLogController extends BaseController
                 $this->seg('Schiff '),
                 $this->entitySeg('ship', (string) $entityKey, $name, [
                     'level' => null,
-                    'link'  => '/hangar',
+                    'link'  => '/nexus-db',
                 ]),
                 $this->seg(' durch Verfall zerstört.'),
             ];
         }
 
         $chipType = ($entityType === 'knowledge') ? 'knowledge' : 'building';
-        $link     = ($chipType === 'knowledge') ? '/techtree' : '/colony';
+        $link     = '/nexus-db';
         $suffix   = $newLevel !== null
             ? ' mangels Wartung auf ' . $newLevel . ' gesunken.'
             : ' mangels Wartung gesunken.';
@@ -379,7 +379,7 @@ class CommLogController extends BaseController
         if ($cost > 0) {
             return [
                 $this->entitySeg('advisor', $type, (string) $typeName, [
-                    'link' => '/advisors',
+                    'link' => '/nexus-db',
                 ]),
                 $this->seg(' eingestellt. Kosten: ' . $cost . ' CR.'),
             ];
@@ -387,7 +387,7 @@ class CommLogController extends BaseController
 
         return [
             $this->entitySeg('advisor', $type, (string) $typeName, [
-                'link' => '/advisors',
+                'link' => '/nexus-db',
             ]),
             $this->seg(' eingestellt.'),
         ];

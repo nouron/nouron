@@ -6,48 +6,38 @@
       $entityKey  — string: internal config/DB key (e.g. 'building_commandCenter', 'res_regolith')
       $label      — string: already-translated display name
       $tooltip    — array: optional tooltip data
-                      'level'       (int, optional)   — current level
+                      'level'       (int, optional)    — current level
                       'description' (string, optional) — one-sentence description
-                      'link'        (string, optional) — URL to detail screen
+                      'link'        (string, optional) — URL shown as "Aufrufen" inside tooltip
                       'meta'        (string, optional) — extra info line (pre-translated)
 
-    Usage:
-      <x-entity-chip
-          type="building"
-          entity-key="building_harvester"
-          label="{{ __('techtree.building_harvester') }}"
-          :tooltip="['level' => 3, 'description' => __('buildings.harvester_desc'), 'link' => '/colony']"
-      />
+    Note: outer element is always <span>. Links live only inside the tooltip to avoid
+    nested-<a> invalid HTML when the component is placed inside a link context.
 --}}
 
 @php
-    /** Map entity type to Bootstrap Icon class */
     $iconMap = [
         'building'  => 'bi-hexagon',
         'knowledge' => 'bi-book',
-        'resource'  => 'bi-layers',   // fallback — callers may pass more specific via $tooltip['icon']
+        'resource'  => 'bi-layers',
         'ship'      => 'bi-rocket-takeoff',
         'advisor'   => 'bi-person-badge',
         'research'  => 'bi-diagram-3',
     ];
 
-    $icon     = $iconMap[$type] ?? 'bi-circle';
-    $hasLink  = !empty($tooltip['link'] ?? null);
-    $tag      = $hasLink ? 'a' : 'span';
-    $href     = $hasLink ? e($tooltip['link']) : null;
-
-    // Tooltip content availability flags
-    $hasLevel = isset($tooltip['level']) && $tooltip['level'] !== null && $tooltip['level'] !== '';
-    $hasDesc  = !empty($tooltip['description'] ?? null);
-    $hasMeta  = !empty($tooltip['meta'] ?? null);
-    $hasTooltip = $hasLevel || $hasDesc || $hasMeta;
+    $icon    = $iconMap[$type] ?? 'bi-circle';
+    $link    = $tooltip['link'] ?? null;
+    $hasLevel   = isset($tooltip['level']) && $tooltip['level'] !== null && $tooltip['level'] !== '';
+    $hasDesc    = !empty($tooltip['description'] ?? null);
+    $hasMeta    = !empty($tooltip['meta'] ?? null);
+    $hasLink    = !empty($link);
+    $hasTooltip = $hasLevel || $hasDesc || $hasMeta || $hasLink;
 @endphp
 
-<{{ $tag }}
+<span
     class="entity-chip entity-chip--{{ $type }}"
     data-chip-type="{{ $type }}"
     data-chip-key="{{ $entityKey }}"
-    @if($hasLink) href="{{ $href }}" @endif
     x-data="{ open: false }"
     @mouseenter="open = true"
     @mouseleave="open = false"
@@ -61,21 +51,21 @@
 ><i class="bi {{ $icon }}" aria-hidden="true"></i>{{ $label }}@if($hasTooltip)<span class="entity-chip-tooltip" x-show="open" x-cloak>
         <span class="entity-chip-tooltip-name">{{ $label }}</span>
         @if($hasLevel)
-        <span class="entity-chip-tooltip-row">
-            <span class="entity-chip-tooltip-label">{{ __('entity_chip.label_level') }}</span>
-            <span>{{ $tooltip['level'] }}</span>
-        </span>
+            <span class="entity-chip-tooltip-row">
+                <span class="entity-chip-tooltip-label">{{ __('entity_chip.label_level') }}</span>
+                <span>{{ $tooltip['level'] }}</span>
+            </span>
         @endif
         @if($hasDesc)
-        <span class="entity-chip-tooltip-desc">{{ $tooltip['description'] }}</span>
+            <span class="entity-chip-tooltip-desc">{{ $tooltip['description'] }}</span>
         @endif
         @if($hasMeta)
-        <span class="entity-chip-tooltip-row entity-chip-tooltip-meta">{{ $tooltip['meta'] }}</span>
+            <span class="entity-chip-tooltip-row entity-chip-tooltip-meta">{{ $tooltip['meta'] }}</span>
         @endif
         @if($hasLink)
-        <span class="entity-chip-tooltip-link">
-            <i class="bi bi-arrow-right" aria-hidden="true"></i>
-            <a href="{{ $href }}">{{ __('entity_chip.label_open_link') }}</a>
-        </span>
+            <span class="entity-chip-tooltip-link">
+                <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                <a href="{{ e($link) }}">{{ __('entity_chip.label_open_link') }}</a>
+            </span>
         @endif
-    </span>@endif</{{ $tag }}>
+    </span>@endif</span>
