@@ -31,7 +31,7 @@ return [
     'ship_corvette'           => 'Korvette',
     'ship_freighter'          => 'Frachter',
 
-    // ── Personal ─────────────────────────────────────────────────────────────
+    // ── Personal (advisor type keys) ─────────────────────────────────────────
     'techs_engineer'          => 'Baumeister',
     'techs_scientist'         => 'Analytiker',
     'techs_pilot'             => 'Raumfahrer',

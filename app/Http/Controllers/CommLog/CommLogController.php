@@ -31,6 +31,7 @@ class CommLogController extends BaseController
     private ?array $buildingNameMap  = null;
     private ?array $shipNameMap      = null;
     private ?array $researchNameMap  = null;
+    private ?array $resourceNameMap  = null;
 
     public function __construct(
         TickService $tick,
@@ -125,19 +126,19 @@ class CommLogController extends BaseController
     private function buildDescription(string $event, array $params): string
     {
         return match ($event) {
-            'colony.building_placed'   => $this->descBuildingPlaced($params),
-            'colony.building_invested' => $this->descBuildingInvested($params),
-            'colony.tile_explored'     => __('comm_log.desc.tile_explored'),
-            'colony.tile_deep_scanned' => __('comm_log.desc.tile_deep_scanned'),
-            'colony.renamed'           => __('comm_log.desc.colony_renamed'),
+            'colony.building_placed'     => $this->descBuildingPlaced($params),
+            'colony.building_invested'   => $this->descBuildingInvested($params),
+            'colony.tile_explored'       => __('comm_log.desc.tile_explored'),
+            'colony.tile_deep_scanned'   => $this->descTileDeepScanned($params),
+            'colony.renamed'             => __('comm_log.desc.colony_renamed'),
             'techtree.level_up_finished' => $this->descLevelUp($params),
             'techtree.level_down'        => $this->descLevelDown($params),
             'techtree.advisor_hired'     => $this->descAdvisorHired($params),
-            'trade.bar_accepted'         => __('comm_log.desc.bar_accepted'),
+            'trade.bar_accepted'         => $this->descBarAccepted($params),
             'trade.merchant_purchase'    => __('comm_log.desc.merchant_purchase'),
             'merchant.visit'             => __('comm_log.desc.merchant_visit'),
             'galaxy.fleet_arrived'       => __('comm_log.desc.fleet_arrived'),
-            'galaxy.trade'               => __('comm_log.desc.galaxy_trade'),
+            'galaxy.trade'               => $this->descGalaxyTrade($params),
             'galaxy.encounter'           => __('comm_log.desc.encounter'),
             default                      => '',
         };
@@ -171,12 +172,67 @@ class CommLogController extends BaseController
 
     private function descLevelUp(array $params): string
     {
-        $name = $this->resolveEntityName(
-            $params['entity_name'] ?? null,
-            $params['entity_type'] ?? 'building',
-            $params['tech_id'] ?? null,
-        );
-        return __('comm_log.desc.level_up', ['name' => $name]);
+        $entityName = $params['entity_name'] ?? null;
+        $entityType = $params['entity_type'] ?? null;
+        $techId     = $params['tech_id'] ?? null;
+
+        // Auto-detect entity type from name prefix if not explicitly set
+        if (!$entityType && $entityName) {
+            $entityType = str_starts_with($entityName, 'knowledge_') ? 'knowledge'
+                : (str_starts_with($entityName, 'building_') ? 'building' : 'research');
+        }
+
+        $name     = $this->resolveEntityName($entityName, $entityType ?? 'building', $techId);
+        $level    = isset($params['new_level']) ? (int) $params['new_level'] : null;
+        $descKey  = ($entityType === 'knowledge') ? 'comm_log.desc.level_up_knowledge' : 'comm_log.desc.level_up';
+
+        return $level !== null
+            ? __($descKey . '_level', ['name' => $name, 'level' => $level])
+            : __($descKey, ['name' => $name]);
+    }
+
+    private function descTileDeepScanned(array $params): string
+    {
+        $q = $params['q'] ?? null;
+        $r = $params['r'] ?? null;
+
+        if ($q !== null && $r !== null) {
+            return __('comm_log.desc.tile_deep_scanned_coords', ['q' => $q, 'r' => $r]);
+        }
+
+        return __('comm_log.desc.tile_deep_scanned');
+    }
+
+    private function descBarAccepted(array $params): string
+    {
+        $giveResId  = $params['give_resource_id'] ?? null;
+        $giveAmount = (int) ($params['give_amount'] ?? 0);
+        $getResId   = $params['get_resource_id'] ?? null;
+        $getAmount  = (int) ($params['get_amount'] ?? 0);
+
+        if ($giveResId !== null && $getResId !== null) {
+            $give = $this->resolveResourceName((int) $giveResId);
+            $get  = $this->resolveResourceName((int) $getResId);
+            return __('comm_log.desc.bar_accepted_trade', [
+                'give_amount' => $giveAmount,
+                'give'        => $give,
+                'get_amount'  => $getAmount,
+                'get'         => $get,
+            ]);
+        }
+
+        return __('comm_log.desc.bar_accepted');
+    }
+
+    private function descGalaxyTrade(array $params): string
+    {
+        $credits = (int) ($params['credits_earned'] ?? 0);
+
+        if ($credits > 0) {
+            return __('comm_log.desc.galaxy_trade_credits', ['credits' => $credits]);
+        }
+
+        return __('comm_log.desc.galaxy_trade');
     }
 
     private function descLevelDown(array $params): string
@@ -202,9 +258,31 @@ class CommLogController extends BaseController
 
     private function descAdvisorHired(array $params): string
     {
-        $type        = $params['advisor_type'] ?? '';
-        $typeName    = $type ? __('advisors.' . $type, [], 'de') : $type;
-        return __('comm_log.desc.advisor_hired', ['type' => $typeName]);
+        $type     = $params['advisor_type'] ?? '';
+        $typeName = $type ? __('techtree.' . $type) : $type;
+        if (!$typeName || $typeName === 'techtree.' . $type) {
+            $typeName = $type ? __('advisors.' . $type) : $type;
+        }
+        $cost = (int) ($params['credits_cost'] ?? 0);
+
+        return $cost > 0
+            ? __('comm_log.desc.advisor_hired_cost', ['type' => $typeName, 'credits' => $cost])
+            : __('comm_log.desc.advisor_hired', ['type' => $typeName]);
+    }
+
+    private function resolveResourceName(int $resId): string
+    {
+        if ($this->resourceNameMap === null) {
+            $this->resourceNameMap = DB::table('resources')->pluck('name', 'id')->all();
+        }
+        $key = $this->resourceNameMap[$resId] ?? null;
+        if ($key) {
+            $translated = __('resources.' . $key);
+            if ($translated !== 'resources.' . $key) {
+                return $translated;
+            }
+        }
+        return (string) $resId;
     }
 
     private function resolveBuildingName(?int $buildingId, ?string $nameKey): string

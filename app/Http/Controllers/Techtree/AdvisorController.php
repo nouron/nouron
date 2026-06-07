@@ -193,16 +193,20 @@ class AdvisorController extends BaseController
             return back()->with('error', $errorMessage);
         }
 
-        $advisorType = (string) collect(config('advisors'))
-            ->search(fn(array $cfg) => $cfg['id'] === $personellId)
-            ?: (string) $personellId;
+        $advisorCfg  = collect(config('advisors'))->firstWhere(fn(array $cfg) => $cfg['id'] === $personellId) ?? [];
+        $advisorType = (string) ($advisorCfg ? collect(config('advisors'))->search(fn(array $cfg) => $cfg['id'] === $personellId) : $personellId);
+        $creditsCost = (int) ($advisorCfg['credits'] ?? 0);
 
         $this->eventService->createEvent([
             'user'       => Auth::id(),
             'tick'       => $this->getTick(),
             'event'      => 'techtree.advisor_hired',
             'area'       => 'techtree',
-            'parameters' => json_encode(['colony_id' => $colonyId, 'advisor_type' => $advisorType]),
+            'parameters' => json_encode([
+                'colony_id'    => $colonyId,
+                'advisor_type' => $advisorType,
+                'credits_cost' => $creditsCost,
+            ]),
         ]);
 
         if ($request->expectsJson()) {
