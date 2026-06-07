@@ -97,12 +97,13 @@
                     // Fallback to default icon if the area key is unknown
                     $iconClass  = (Str::startsWith($areaIcon, 'bi-')) ? $areaIcon : 'bi-journal-text';
                     $segments   = $entry['segments'] ?? [];
+                    $hasChips   = collect($segments)->contains(fn($s) => $s['type'] !== 'text');
                 @endphp
                 <div class="comm-entry">
                     <span class="comm-entry-icon" aria-hidden="true">
                         <i class="bi {{ $iconClass }}"></i>
                     </span>
-                    <span class="comm-entry-label">
+                    <span class="comm-entry-label {{ $hasChips ? 'comm-entry-label--has-chips' : '' }}">
                         @if(!empty($segments))
                             @foreach($segments as $seg)
                                 @if($seg['type'] === 'text')

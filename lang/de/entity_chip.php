@@ -12,8 +12,8 @@
 
 return [
     // Label prefix before the level number inside the tooltip ("Level 3")
-    'label_level'     => '', // TODO: e.g. "Level"
+    'label_level'     => 'Level',
 
     // Link row at the bottom of the tooltip when a detail URL is present
-    'label_open_link' => '', // TODO: e.g. "Aufrufen"
+    'label_open_link' => 'Aufrufen'
 ];
