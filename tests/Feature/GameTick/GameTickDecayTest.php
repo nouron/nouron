@@ -33,7 +33,7 @@ use Tests\TestCase;
  *     harvester (building_id=27): level=1, decay_rate=0.95
  *     housing (building_id=28): level=2, decay_rate=0.44
  *   Fleet 8 (user_id=18): frigate1 (ship_id=29, count=20, sp=20.0)
- *   Colony research biology (research_id=33): level=2, status_points=20
+ *   Colony research test decay placeholder (research_id=9901): level=1, status_points=20
  *
  * Uses tick numbers 11000–11099 (no seed orders in this range).
  */
@@ -298,22 +298,22 @@ class GameTickDecayTest extends TestCase
 
     /**
      * Research status_points must decrease by decay_rate each tick.
-     * biology (research_id=33): decay_rate from DB.
+     * test decay placeholder (research_id=9901): decay_rate from DB.
      */
     public function test_research_status_points_decrease_by_decay_rate(): void
     {
         $this->zeroAllSupplyCosts();
 
-        $decayRate = (float) DB::table('researches')->where('id', 33)->value('decay_rate');
-        $this->assertGreaterThan(0.0, $decayRate, 'Research 33 must have a positive decay_rate');
+        $decayRate = (float) DB::table('researches')->where('id', 9901)->value('decay_rate');
+        $this->assertGreaterThan(0.0, $decayRate, 'Research 9901 must have a positive decay_rate');
 
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['level' => 2, 'status_points' => 14.0]);
 
         Artisan::call('game:tick', ['--tick' => 11020]);
 
-        $sp = (float) $this->getResearchRow(1, 33)->status_points;
+        $sp = (float) $this->getResearchRow(1, 9901)->status_points;
         $this->assertEqualsWithDelta(14.0 - $decayRate, $sp, 0.001,
             'Research SP must decrease by its decay_rate each tick');
     }
@@ -325,12 +325,12 @@ class GameTickDecayTest extends TestCase
     public function test_research_levels_down_when_status_points_reach_zero(): void
     {
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['level' => 3, 'status_points' => 0.1]);
 
         Artisan::call('game:tick', ['--tick' => 11021]);
 
-        $row = $this->getResearchRow(1, 33);
+        $row = $this->getResearchRow(1, 9901);
         $this->assertEquals(2, $row->level, 'Research level must decrease by 1 when SP is depleted');
         $this->assertEquals(20, (int) $row->status_points, 'Research SP must reset to max after level-down');
     }

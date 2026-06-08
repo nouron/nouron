@@ -27,7 +27,7 @@ use Tests\TestCase;
  * Test data (TestSeeder):
  *   Colony 1 (Springfield) user_id=3
  *     oremine  (building_id=27): decay_rate=0.17, supply_cost=2 (after over-cap setup)
- *     biology  (research_id=33): decay_rate=0.13
+ *     test_decay_placeholder (research_id=9901): decay_rate=0.13
  *   Colony 2 (Shelbyville) user_id=0 — no user_resources row → cap=0
  */
 class OverCapDecayTest extends TestCase
@@ -187,7 +187,7 @@ class OverCapDecayTest extends TestCase
     /**
      * Research status_points must decrease at 2× decay_rate when colony is over cap.
      *
-     * biology (id 33): decay_rate=0.13, overcap_factor=2.0
+     * test_decay_placeholder (research_id=9901): decay_rate=0.13, overcap_factor=2.0
      * Expected: SP = 15.0 - (0.13 × 2.0) = 14.74
      */
     public function test_research_decays_faster_when_colony_is_over_cap(): void
@@ -201,13 +201,13 @@ class OverCapDecayTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', 2)->update(['level' => 0]);
 
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['level' => 2, 'status_points' => 15.0]);
 
         Artisan::call('game:tick', ['--tick' => 9110]);
 
         $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(15.0 - (0.13 * 2.0), $sp, 0.001,
@@ -218,20 +218,20 @@ class OverCapDecayTest extends TestCase
      * Research status_points must decrease at normal rate when colony is within cap.
      *
      * All supply costs zeroed → used=0, not over-cap.
-     * biology (id 33): decay_rate=0.13
+     * test_decay_placeholder (research_id=9901): decay_rate=0.13
      * Expected: SP = 15.0 - 0.13 = 14.87
      */
     public function test_research_decays_normally_when_colony_is_within_cap(): void
     {
         $this->zeroAllSupplyCosts();
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['level' => 2, 'status_points' => 15.0]);
 
         Artisan::call('game:tick', ['--tick' => 9111]);
 
         $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(15.0 - 0.13, $sp, 0.001,

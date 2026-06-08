@@ -212,8 +212,7 @@ class RunProgressServiceTest extends TestCase
      * Reset all colony_researches for colony 1 to level 0.
      *
      * Required for forschungsvorsprung tests because testdata already seeds
-     * several researches at high levels (e.g. research_id=39 at level 19,
-     * research_id=72 at level 17).
+     * several researches at high levels.
      */
     private function resetAllResearchLevels(): void
     {
@@ -396,17 +395,17 @@ class RunProgressServiceTest extends TestCase
         // Reset all researches first — testdata has some already at level 19/17 etc.
         $this->resetAllResearchLevels();
 
-        // Raise exactly 3 to level 5 (research IDs 33, 34, 39 exist for colony 1)
+        // Raise exactly 3 to level 5 (use knowledge IDs 90, 91, 92 (exist in researches))
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 33],
+            ['colony_id' => $this->colonyId, 'research_id' => 90],
             ['level' => 5]
         );
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 34],
+            ['colony_id' => $this->colonyId, 'research_id' => 91],
             ['level' => 5]
         );
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 39],
+            ['colony_id' => $this->colonyId, 'research_id' => 92],
             ['level' => 5]
         );
 
@@ -427,14 +426,14 @@ class RunProgressServiceTest extends TestCase
 
         // Only 2 researches at level 5
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 33],
+            ['colony_id' => $this->colonyId, 'research_id' => 90],
             ['level' => 5]
         );
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => $this->colonyId, 'research_id' => 34],
+            ['colony_id' => $this->colonyId, 'research_id' => 91],
             ['level' => 5]
         );
-        // research_id=39 stays at level 0 after reset
+        // research_id=92 stays at level 0 after reset
 
         $this->service->updateObjectiveProgress($run);
 
