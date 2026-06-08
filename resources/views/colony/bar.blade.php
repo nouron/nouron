@@ -71,9 +71,13 @@ $hs = fn(string $slot, string $device): array =>
                         $char    = $characterAssignment[$hsSlot] ?? null;
                         $charName = $char['name'] ?? '???';
                     @endphp
-                    <button class="cantina-hotspot hs-slot-{{ $hsSlot }}" @click="openOffer({{ $offerId }})">
+                    <button class="cantina-hotspot{{ $char ? ' has-portrait' : '' }} hs-slot-{{ $hsSlot }}" @click="openOffer({{ $offerId }})">
                         <span class="hotspot-pulse"></span>
-                        <i class="bi bi-chat-right-text"></i>
+                        @if ($char)
+                            <img class="hotspot-portrait" src="{{ asset('img/characters/' . $char['slug'] . '.webp') }}" alt="{{ $charName }}">
+                        @else
+                            <i class="bi bi-chat-right-text"></i>
+                        @endif
                         <span class="hotspot-label">{{ $charName }}</span>
                     </button>
                 @endforeach
@@ -155,7 +159,11 @@ $hs = fn(string $slot, string $device): array =>
                 <div x-show="activeModal === 'offer_{{ $offerId }}'">
                     <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">
                         <div class="guest-avatar">
-                            <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
+                            @if ($char && isset($char['slug']))
+                                <img class="guest-avatar__portrait" src="{{ asset('img/characters/' . $char['slug'] . '.webp') }}" alt="{{ $name }}">
+                            @else
+                                <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
+                            @endif
                         </div>
                         <div>
                             <h3 style="margin: 0; font-size: 1.15rem;">{{ $name }}</h3>

@@ -107,7 +107,7 @@
         for (const slug of characterSlugs) {
             const hasAny = spots.some(s => (hotspots[s].characters ?? []).includes(slug));
             html += `<tr class="${hasAny ? '' : 'row-unassigned'}" data-slug="${slug}">`;
-            html += `<td class="col-char">${slug}</td>`;
+            html += `<td class="col-char"><img src="/public/img/characters/${slug}.webp" style="width:22px;height:22px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:5px" onerror="this.style.display='none'">${slug}</td>`;
             for (const spot of spots) {
                 const checked = (hotspots[spot].characters ?? []).includes(slug);
                 html += `<td data-spot="${spot}"><input type="checkbox" data-spot="${spot}" data-slug="${slug}"${checked ? ' checked' : ''}></td>`;

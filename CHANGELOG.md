@@ -2,6 +2,8 @@
 
 ## 2026-06-08
 
+- **Cantina: NPC-Portraits** — 15 Charakter-Portraits (`public/img/characters/`) eingebunden. Hotspot-Buttons zeigen Portrait-Karten (160×220px) statt Icon-Kreisen; Modal-Avatar zeigt Portrait statt Person-Icon. `colony.css`: `.has-portrait`-Modifier, `.hotspot-portrait`, `.guest-avatar__portrait`. Dev-Tool (Cantina-Tab): Charakter-Matrix zeigt Thumbnail-Portraits. `informationsagent.webp` → `information_broker.webp` (Slug-Konsistenz).
+
 - **Supply-Redesign: Schiffe kosten kein Supply mehr** (GDD §6): `ResourcesService::getFreeSupply()` berücksichtigt Schiffs-Supply-Kosten nicht länger. `config/ships.php`: `supply_cost` aller Schifftypen auf 0 gesetzt + Docstring aktualisiert. DB via `game:sync-config` synchronisiert. Flottenausbau weiterhin begrenzt durch Hangars/Tiles, Credits, Lieferzeit und Navigator-AP. GDD §6 + §13 entsprechend aktualisiert.
 - **Korvette Trust-Malus gestrichen**: `corvette.trust_per_unit` -1 → 0 — Kolonisten begrüßen Schutz, keine Strafwirkung. GDD §13 Trust-Klammer auf `[0, +30]` angepasst. `TrustServiceTest` entsprechend umgestellt.
 
