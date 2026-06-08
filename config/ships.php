@@ -36,8 +36,8 @@ return [
     'corvette' => [
         'id'                   => 37,         // ex fighter1
         'moving_speed'         => 4,
-        'supply_cost'          => 14,         // high — limits fleet size organically
-        'trust_per_unit'       => -1,
+        'supply_cost'          => 14,         // still in DB; supply cost for ships being removed (Phase 3)
+        'trust_per_unit'       => 0,          // neutral — colonists welcome protection, not a military threat
         'nexus_cost'           => 800,        // expensive — military hardware
         'nexus_delivery_ticks' => 5,
     ],

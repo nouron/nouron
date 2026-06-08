@@ -590,13 +590,17 @@ Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erwei
 
 ### Modell
 
-Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Gebäude und Kenntnisse erhöhen den Cap. Schiffe und Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. Es gibt keine Sol-basierte Supply-Generierung.
+Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Modell). Kenntnisse erhöhen den Cap. Gebäude (außer CC und Wohnkomplex) belegen Supply dauerhaft. Berater belegen **kein** Supply — sie kosten Credits. **Schiffe belegen kein Supply** — die Flottensize wird durch Hangar-Slots und Tiles begrenzt (siehe unten). Es gibt keine Sol-basierte Supply-Generierung.
 
 ```
 supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
-laufende_last = Σ(Schiffe × Supply-Kosten) + Σ(Gebäude-Kosten)
+laufende_last = Σ(Gebäude-Kosten)
 freies_supply = supply_cap − laufende_last
 ```
+
+> **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Slots + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
+
+> **Design-Konzept (2026-06-08, nicht implementiert):** Supply könnte langfristig als **Kolonisten-Framing** dargestellt werden — "47 Kolonisten im Einsatz / 60 verfügbar" statt "Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Gebäude brauchen dann eine Anzahl Kolonisten zum Betrieb statt einer abstrakten Supply-Zahl. Implementierungsaufwand: minimal (nur Labels + Tooltips). Einzuplanen wenn Supply-Abstraktheit in Playtest als Verständnis-Problem auftaucht.
 
 Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kosten der neuen Einheit`.
 
@@ -615,19 +619,20 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 > **Designabsicht:** CC-Ausbau und Wohnhabitate sind die primären Cap-Quellen. Kenntnisse liefern einen zusätzlichen Bonus, der den Cap in Richtung 200 schiebt — aber nie alleine reicht. Wer militärisch eskalieren will, muss zuerst zivile Infrastruktur investieren.
 
-### Supply-Kosten der Schiffstypen
+### Schiffe und Supply
 
-Korvetten sind bewusst teurer als Frachter — Schutz kostet mehr als Transport (siehe §1.1). Drohnen kosten kein Supply — sie sind unbemannt. Die Flottengröße wird organisch durch den Supply-Cap begrenzt; es gibt keinen harten Schiffscount-Cap.
+**Schiffe kosten kein Supply.** Die Flottensize wird durch folgende Limiter gebremst:
 
-| Schiff | ship_id | Supply (Unterhalt) | Bemerkung |
-|--------|---------|-------------------|-----------|
-| drone | 85 | **0** | unbemannt, kein Hangar nötig |
-| corvette | 37 | **14** | benötigt Hangar |
-| freighter | 47 | **6** | benötigt Hangar |
+| Limiter | Mechanik |
+|---------|---------|
+| Hangar-Slots | Jede Hangar-Instanz belegt ein Tile; max. Schiffe = Hangar-Instanzen |
+| Credits | Nexus-Kosten pro Schiff (Drohne 300, Frachter 500, Korvette 800 Cr) |
+| Lieferzeit | Korvette 5 Sole Lieferzeit — kein Sofort-Aufbau möglich |
+| Navigator-AP | Flottenorders kosten Raumfahrer-AP — mehr Schiffe = mehr AP-Verbrauch |
 
-**Beispielrechnung:** 2 Korvetten + 2 Frachter = 28 + 12 = 40 Supply — bereits mehr als die Hälfte eines typischen Mid-Game-Caps.
+> **TODO Balance (Playtest):** Prüfen ob Korvetten-Stacking ohne Supply-Limiter auftritt. Falls ja: Credits/Lieferzeit-Werte verschärfen, nicht Supply-Kosten wieder einführen.
 
-**Schiffe haben keinen passiven Decay.** Wartungsdruck entsteht durch aktiven Einsatz (Schiffs-Verschleiß — siehe §7) und durch Hangar-Decay. `fleet_ships.status_points` sinkt durch Flottenorders, nicht durch Zeitablauf.
+**Schiffe haben keinen passiven Decay.** Wartungsdruck entsteht durch aktiven Einsatz (Schiffs-Verschleiß — siehe §7). `fleet_ships.status_points` sinkt durch Flottenorders, nicht durch Zeitablauf.
 
 > **TODO (Design, Phase 4+):** Sonderfall "Schiffe ohne Hangar" — durch Events, Handelsdeals oder andere Mechaniken könnte der Spieler Schiffe erwerben, die normalerweise nicht im Hangar baubar sind (z.B. erbeutete Fraktionsschiffe, Belohnungsschiffe aus Events). Diese wären per Run einzigartig und ein Roguelike-Element das jeden Durchlauf anders macht. Mechanik (Hangar-Pflicht? Supply-Kosten?) und Balance noch offen — für spätere Phase detailliert ausarbeiten.
 
@@ -1229,6 +1234,25 @@ Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht w
 Pro Run ist nicht der vollständige Kenntnisbaum verfügbar — nur eine zufällige Teilmenge (z.B. 5 von 7). Das erzeugt unterschiedliche Spezialisierungspfade ohne das System komplexer zu machen, analog zum variablen Spielfeld bei Catan.
 
 > **TODO Implementierung:** Run-Mechanik mit zufälliger Kenntnisauswahl — ausstehend für Phase 3 Run-Struktur (§15).
+
+### Kolonisten-Ausbildung (Design-Konzept, Phase 4+)
+
+> **Status:** Design-Idee, nicht beschlossen, nicht implementiert. Einzuplanen nach erstem Playtest.
+
+Statt Kenntnisse zu leveln (AP → Kenntnis Lv1→5) würden Kenntnisse durch **Ausbildung von Kolonisten** verbreitet:
+
+- **Berater als Lehrer:** Ein Berater investiert AP → Kolonist erlernt eine Kenntnis. Kosten: Berater-AP + optional Credits.
+- **Kolonisten als Träger:** Jeder Kolonist kann 2–3 Kenntnisse halten (Breite begrenzt durch Kolonistenanzahl, Tiefe durch Berater-AP).
+- **AP-Generierung durch Kolonisten:** Je mehr Kolonisten eine Kenntnis haben, desto mehr AP generiert die Kolonie in dieser Disziplin. Kolonisten liefern 1 AP/Sol pro Kenntnis (Minions); Berater liefern mehr AP und aktivieren Sekundäreffekte (Bosse).
+
+**Offene Fragen vor Implementierung:**
+- Schleifenpotenzial: AP investieren → Kolonisten ausbilden → mehr AP. Hartes Cap notwendig.
+- Wie viele Kenntnisse pro Kolonist? Gleichzeitig aktiv oder Umschulung nötig?
+- Was passiert mit Kolonisten in Encounters / Events — können sie verloren gehen?
+- Wie grenzt sich Berater-Rolle von Kolonisten-Rolle ab wenn beide AP liefern?
+- Kolonisten-Zahl: automatisch durch Wohnhabitate oder aktiv anwerben (Credits/Nexus)?
+
+**Verhältnis zum bestehenden Kenntnisse-System:** Würde Level-Modell (Lv1–5) ersetzen oder ergänzen. Erst nach Playtest-Feedback entscheiden ob der Umbau den Gewinn rechtfertigt.
 
 ### Supply-Cap-Bonus (Primäreffekt, bleibt erhalten)
 
@@ -1873,18 +1897,16 @@ Schiffe tragen zum Vertrauen bei, solange sie einer Kolonie zugewiesen sind (d.h
 | Schiff-ID | Bezeichner | Vertrauen/Schiff |
 |-----------|------------|------------------|
 | 85 | drone | 0 |
-| 37 | korvette | -1 |
+| 37 | korvette | 0 |
 | 47 | frachter | +1 |
 
-**Rationale:** Die Korvette signalisiert Wachsamkeit und Anspannung (-1/Schiff). Der Frachter steht für Versorgung und Normalität (+1/Schiff). Drohnen sind neutral — unbemannte Geräte erzeugen keine emotionale Reaktion bei den Bewohnern.
+**Rationale:** Der Frachter steht für Handel und Versorgung (+1/Schiff) — die Kolonisten sehen ihn als Zeichen normaler Aktivität. Die Korvette ist neutral: Kolonisten begrüßen ein Mindestmaß an Schutz, empfinden eine kleine Flotte aber nicht als Bedrohung. Drohnen sind unbemannte Geräte ohne emotionale Wirkung.
 
-**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `±30` gecapped, bevor er in die Vertrauen-Summe eingeht:
+**Skalierungsproblem:** Da Schiffszahlen potenziell groß werden können, wird der Gesamtbeitrag aller Schiffe auf `+30` gecapped, bevor er in die Vertrauen-Summe eingeht:
 
 ```
-ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), -30, +30)
+ship_vertrauen = clamp(Σ(ship_amount × vertrauen_per_ship), 0, +30)
 ```
-
-> ⚠️ BALANCE CONCERN: Der Cap von ±30 für Schiffe muss nach dem ersten Playtest evaluiert werden. Eine Kolonie mit 30 Korvetten wäre bei -30 bereits am Cap — das könnte für defensiv-orientierte Spieler zu früh einsetzen. Alternativ: Cap auf -20 für eine moderatere Wirkung.
 
 ### Einflussfaktoren: Forschungen
 
