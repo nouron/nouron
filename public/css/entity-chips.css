@@ -1,0 +1,260 @@
+/* Entity Chips — inline pills with hover/tap tooltips (Alpine.js + PicoCSS screens)
+ *
+ * Design spec: docs/gdd/entity-chips.md
+ * Design guide: docs/design-guide.md §5.6 (Resource Pills as reference)
+ *
+ * Load order: after resources.css, before screen-specific CSS.
+ * Screens using entity chips must @stack or link this file in their @section('styles').
+ */
+
+/* ── x-cloak guard ───────────────────────────────────────────────────────────
+ * Defined here so screens that don't load colony.css still hide uninitialized
+ * Alpine elements. If [x-cloak] is already defined globally this rule is a
+ * harmless duplicate.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+[x-cloak] { display: none !important; }
+
+/* ── Base chip ───────────────────────────────────────────────────────────────
+ * Inline-flex pill that sits in flow text without breaking the line rhythm.
+ * Dimensions use em so the chip scales with the surrounding font size.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.entity-chip {
+    /* Layout */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+
+    /* Sizing — relative to context font, never fixed px */
+    padding: 0.1em 0.5em;
+    border-radius: 999px;
+    font-size: 0.875em;
+    font-weight: 500;
+    line-height: 1.4;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* Inline flow */
+    white-space: nowrap;
+    vertical-align: baseline;
+
+    /* Tooltip anchor */
+    position: relative;
+
+    /* Interaction */
+    cursor: default;
+    user-select: none;
+
+    /* Transition for future hover effects */
+    transition: opacity 0.12s;
+}
+
+/* Bootstrap Icon inside chip — match the chip line height exactly */
+.entity-chip .bi {
+    font-size: 1em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+/* Clickable chips (tag is <a>) */
+a.entity-chip {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+a.entity-chip:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
+/* ── Type variants ───────────────────────────────────────────────────────────
+ * Each variant applies: border (30% opacity), background (8% opacity), color.
+ * Values from entity-chips.md §CSS-Design-Tokens.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+/* building — dark grey, structural/neutral */
+.entity-chip--building {
+    --chip-accent: #4a4a58;
+    color: var(--chip-accent);
+    background: rgba(74, 74, 88, 0.08);
+    border: 1px solid rgba(74, 74, 88, 0.30);
+}
+
+/* knowledge — blue-grey, knowledge/research connotation */
+.entity-chip--knowledge {
+    --chip-accent: #3a5a7a;
+    color: var(--chip-accent);
+    background: rgba(58, 90, 122, 0.08);
+    border: 1px solid rgba(58, 90, 122, 0.30);
+}
+
+/* resource — uses existing res-chip accent system where possible.
+ * Generic fallback; callers can additionally apply res-Cr, res-Rg, etc. */
+.entity-chip--resource {
+    --chip-accent: #5a5a3a;
+    color: var(--chip-accent);
+    background: rgba(90, 90, 58, 0.08);
+    border: 1px solid rgba(90, 90, 58, 0.30);
+}
+
+/* ship — dark blue, aerospace connotation */
+.entity-chip--ship {
+    --chip-accent: #1e3a5f;
+    color: var(--chip-accent);
+    background: rgba(30, 58, 95, 0.08);
+    border: 1px solid rgba(30, 58, 95, 0.30);
+}
+
+/* advisor — warm grey, human/personnel connotation */
+.entity-chip--advisor {
+    --chip-accent: #5a4a3a;
+    color: var(--chip-accent);
+    background: rgba(90, 74, 58, 0.08);
+    border: 1px solid rgba(90, 74, 58, 0.30);
+}
+
+/* research — dark green, progress/discovery connotation */
+.entity-chip--research {
+    --chip-accent: #2a5a3a;
+    color: var(--chip-accent);
+    background: rgba(42, 90, 58, 0.08);
+    border: 1px solid rgba(42, 90, 58, 0.30);
+}
+
+/* ── Tooltip popup ───────────────────────────────────────────────────────────
+ * Positioned above the chip (bottom: calc(100% + gap)). Falls back gracefully
+ * on narrow viewports via the mobile media query below.
+ * pointer-events: none prevents the tooltip itself from triggering mouseleave.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.entity-chip-tooltip {
+    /* Positioning — above the chip */
+    position: absolute;
+    bottom: calc(100% + 0.4rem);
+    left: 0;
+    z-index: 100; /* above text, below navbar (z-index: 1000+) */
+
+    /* Size constraints */
+    min-width: 14rem;
+    max-width: 22rem;
+
+    /* Appearance — PicoCSS-compatible card style */
+    background: #ffffff;
+    border: 1px solid #e8e8ec;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+    padding: 0.65rem 0.8rem;
+
+    /* Text */
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: #1a1a1e;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    white-space: normal; /* allow wrapping inside tooltip */
+
+    /* Layout — flex column for rows */
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+
+    /* Block hover-loop: tooltip mouse-entry must not trigger the chip's mouseleave */
+    pointer-events: none;
+}
+
+/* Tooltip name — bold heading */
+.entity-chip-tooltip-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #1a1a1e;
+    margin-bottom: 0.1rem;
+}
+
+/* Key-value row (level, meta info) */
+.entity-chip-tooltip-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: #1a1a1e;
+}
+
+/* Label within a row — muted, small-caps style */
+.entity-chip-tooltip-label {
+    color: #6b6b7a;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    flex-shrink: 0;
+}
+
+/* Description — slightly muted */
+.entity-chip-tooltip-desc {
+    font-size: 0.78rem;
+    color: #555563;
+    line-height: 1.45;
+}
+
+/* Optional extra metadata row */
+.entity-chip-tooltip-meta {
+    color: #6b6b7a;
+    font-size: 0.75rem;
+}
+
+/* Link row at the bottom of tooltip.
+ * pointer-events: auto re-enables interactivity for the link inside the
+ * otherwise pointer-events: none tooltip container. */
+.entity-chip-tooltip-link {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 0.25rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid #e8e8ec;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+    pointer-events: auto;
+}
+
+.entity-chip-tooltip-link a {
+    color: #3a5a7a;
+    text-decoration: none;
+}
+
+.entity-chip-tooltip-link a:hover {
+    text-decoration: underline;
+}
+
+/* ── CommLog integration ─────────────────────────────────────────────────────
+ * .comm-entry-label has white-space: nowrap + overflow: hidden which clips
+ * long chip names. When a label contains entity chips, allow wrapping.
+ * Applied via a sibling class on the same element in the Blade template.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+.comm-entry-label--has-chips {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
+/* ── Mobile ──────────────────────────────────────────────────────────────────
+ * On small screens the tooltip repositions to near-full viewport width,
+ * centred below or above the chip based on available space. Since we cannot
+ * detect viewport position in CSS alone we simply override left/right to keep
+ * the tooltip within the viewport margins.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 767px) {
+    .entity-chip-tooltip {
+        /* Snap to a reasonable width just inside viewport edge padding */
+        min-width: 0;
+        max-width: calc(100vw - 2rem);
+
+        /* Anchor to left edge of chip but clamp so it does not escape viewport */
+        left: 50%;
+        transform: translateX(-50%);
+
+        /* Keep it above by default — same bottom anchor as desktop */
+        bottom: calc(100% + 0.4rem);
+    }
+}

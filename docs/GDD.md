@@ -92,7 +92,7 @@ Nouron teilt sich das Genre "Browser-Strategiespiel" mit Dutzenden von Titeln. W
 ### Die sechs Merkmale
 
 **1. Verfall als durchgängiges Systemprinzip**
-Gebäude und Kenntnisse verfallen ohne aktive Pflege. Wer seine Kolonie vernachlässigt, verliert sie langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Sol zu einer echten Ressourcenentscheidung.
+Gebäude und Flotte verfallen ohne aktive Pflege. Wer seine Kolonie vernachlässigt, verliert sie langsam — nicht durch Gegner, sondern durch Entropie. Der Verfall zwingt zur Priorisierung und macht jeden Sol zu einer echten Ressourcenentscheidung. Kenntnisse verfallen nicht — einmal erarbeitetes Wissen bleibt permanent.
 
 **2. Sol-basiertes Spieltempo (1 Sol = 1 Tag)**
 Keine Echtzeit-Hektik. Entscheidungen werden einmal täglich getroffen und einmal täglich ausgeführt. Das Spiel passt sich dem Spieler an, nicht umgekehrt.
@@ -779,7 +779,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
 > **Sol-Skalierung:** Bei 24 Solen/Tag entspricht "133 Sole" ~5,5 Echtzeit-Tagen. Bei 1 Sol/Tag sind es 133 Tage. Die Sol-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des Sol-basierten Systems (intern: tick-basiert).
 
-> Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). Kenntnisse und Schiffe haben kein Decay-System; `researches.decay_rate` und `ships.decay_rate` entfallen.
+> Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). **Kenntnisse haben kein Decay-System** — `researches.decay_rate` ist für alle `knowledge_*`-Einträge 0 und wird im Tick-Loop übersprungen (GDD §10). **Schiffe haben Decay** — `ships.decay_rate` ist aktiv; Fleet-Schiffe im Kampf nehmen 2× Decay.
 
 **Minimum:** Jede Entität hat mindestens **5 max_status_points**.
 

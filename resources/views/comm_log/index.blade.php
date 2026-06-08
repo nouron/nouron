@@ -3,6 +3,7 @@
 
 @push('styles')
     <link rel="stylesheet" href="{{ asset('css/comm_log.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/entity-chips.css') }}">
 @endpush
 
 @section('content')
@@ -95,14 +96,27 @@
                     $areaIcon   = __('comm_log.area_icons.' . $entry['area']);
                     // Fallback to default icon if the area key is unknown
                     $iconClass  = (Str::startsWith($areaIcon, 'bi-')) ? $areaIcon : 'bi-journal-text';
+                    $segments   = $entry['segments'] ?? [];
+                    $hasChips   = collect($segments)->contains(fn($s) => $s['type'] !== 'text');
                 @endphp
                 <div class="comm-entry">
                     <span class="comm-entry-icon" aria-hidden="true">
                         <i class="bi {{ $iconClass }}"></i>
                     </span>
-                    <span class="comm-entry-label">
-                        @if($entry['description'])
-                            {{ $entry['description'] }}
+                    <span class="comm-entry-label {{ $hasChips ? 'comm-entry-label--has-chips' : '' }}">
+                        @if(!empty($segments))
+                            @foreach($segments as $seg)
+                                @if($seg['type'] === 'text')
+                                    {{ $seg['value'] }}
+                                @else
+                                    <x-entity-chip
+                                        :type="$seg['type']"
+                                        :entity-key="$seg['key']"
+                                        :label="$seg['label']"
+                                        :tooltip="$seg['tooltip'] ?? []"
+                                    />
+                                @endif
+                            @endforeach
                         @elseif($hasEvent)
                             {{ __($eventKey) }}
                         @else

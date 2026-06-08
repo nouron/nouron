@@ -94,12 +94,12 @@ class CommLogController extends BaseController
         $params = $this->parseParams($entry->parameters);
 
         return [
-            'id'          => $entry->id,
-            'sol'         => $entry->tick,
-            'event'       => $entry->event,
-            'area'        => $entry->area,
-            'params'      => $params,
-            'description' => $this->buildDescription($entry->event, $params),
+            'id'       => $entry->id,
+            'sol'      => $entry->tick,
+            'event'    => $entry->event,
+            'area'     => $entry->area,
+            'params'   => $params,
+            'segments' => $this->buildDescription($entry->event, $params),
         ];
     }
 
@@ -123,87 +123,175 @@ class CommLogController extends BaseController
         return [];
     }
 
-    private function buildDescription(string $event, array $params): string
+    /**
+     * Returns a segment array representing a rich description for the given event.
+     * Each segment is either ['type'=>'text','value'=>'...'] or an entity segment.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function buildDescription(string $event, array $params): array
     {
         return match ($event) {
             'colony.building_placed'     => $this->descBuildingPlaced($params),
             'colony.building_invested'   => $this->descBuildingInvested($params),
-            'colony.tile_explored'       => __('comm_log.desc.tile_explored'),
+            'colony.tile_explored'       => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned'   => $this->descTileDeepScanned($params),
-            'colony.renamed'             => __('comm_log.desc.colony_renamed'),
+            'colony.renamed'             => [$this->seg(__('comm_log.desc.colony_renamed'))],
             'techtree.level_up_finished' => $this->descLevelUp($params),
             'techtree.level_down'        => $this->descLevelDown($params),
             'techtree.advisor_hired'     => $this->descAdvisorHired($params),
             'trade.bar_accepted'         => $this->descBarAccepted($params),
-            'trade.merchant_purchase'    => __('comm_log.desc.merchant_purchase'),
-            'merchant.visit'             => __('comm_log.desc.merchant_visit'),
-            'galaxy.fleet_arrived'       => __('comm_log.desc.fleet_arrived'),
+            'trade.merchant_purchase'    => [$this->seg(__('comm_log.desc.merchant_purchase'))],
+            'merchant.visit'             => [$this->seg(__('comm_log.desc.merchant_visit'))],
+            'galaxy.fleet_arrived'       => [$this->seg(__('comm_log.desc.fleet_arrived'))],
             'galaxy.trade'               => $this->descGalaxyTrade($params),
-            'galaxy.encounter'           => __('comm_log.desc.encounter'),
-            default                      => '',
+            'galaxy.encounter'           => [$this->seg(__('comm_log.desc.encounter'))],
+            default                      => [],
         };
     }
 
-    private function descBuildingPlaced(array $params): string
+    /** Text segment shorthand. */
+    private function seg(string $text): array
     {
-        $name = $this->resolveBuildingName($params['building_id'] ?? null, $params['building_name'] ?? null);
-        return __('comm_log.desc.building_placed', ['name' => $name]);
+        return ['type' => 'text', 'value' => $text];
     }
 
-    private function descBuildingInvested(array $params): string
+    /**
+     * Entity segment for a typed game entity.
+     *
+     * @param array<string, mixed> $tooltip
+     * @return array<string, mixed>
+     */
+    private function entitySeg(string $type, string $key, string $label, array $tooltip = []): array
     {
-        $name     = $this->resolveBuildingName($params['building_id'] ?? null, $params['building_name'] ?? null);
+        return [
+            'type'    => $type,
+            'key'     => $key,
+            'label'   => $label,
+            'tooltip' => $tooltip,
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descBuildingPlaced(array $params): array
+    {
+        $key  = $params['building_name'] ?? null;
+        $id   = $params['building_id'] ?? null;
+        $intId = $id !== null ? (int) $id : null;
+        $name = $this->resolveBuildingName($intId, $key);
+        $bKey = $key ?? ($intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?');
+
+        // lang: comm_log.desc.building_placed = ':name platziert.'
+        return [
+            $this->entitySeg('building', (string) $bKey, $name, [
+                'level' => null,
+                'link'  => '/nexus-db',
+            ]),
+            $this->seg(' platziert.'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descBuildingInvested(array $params): array
+    {
+        $id    = $params['building_id'] ?? null;
+        $key   = $params['building_name'] ?? null;
+        $intId = $id !== null ? (int) $id : null;
+        $name  = $this->resolveBuildingName($intId, $key);
+        $bKey  = $key ?? ($intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?');
         $ap       = (int) ($params['ap_spend'] ?? 1);
         $apNeeded = (int) ($params['ap_for_levelup'] ?? 0);
         $levelUp  = (bool) ($params['level_up'] ?? false);
         $newLevel = (int) ($params['new_level'] ?? 0);
 
         if ($levelUp) {
-            return __('comm_log.desc.building_leveled_up', ['ap' => $ap, 'name' => $name, 'level' => $newLevel]);
+            return [
+                $this->seg($ap . ' AP in '),
+                $this->entitySeg('building', (string) $bKey, $name, [
+                    'level' => $newLevel,
+                    'link'  => '/nexus-db',
+                ]),
+                $this->seg(' investiert. Bau abgeschlossen — Level ' . $newLevel . ' erreicht.'),
+            ];
         }
 
-        return __('comm_log.desc.building_invested', [
-            'ap'    => $ap,
-            'name'  => $name,
-            'done'  => $apNeeded > 0 ? ($apNeeded - $ap) : '?',
-            'total' => $apNeeded ?: '?',
-        ]);
+        $done  = $apNeeded > 0 ? ($apNeeded - $ap) : '?';
+        $total = $apNeeded ?: '?';
+
+        return [
+            $this->seg($ap . ' AP in '),
+            $this->entitySeg('building', (string) $bKey, $name, [
+                'level' => null,
+                'link'  => '/nexus-db',
+            ]),
+            $this->seg(' investiert (' . $done . ' / ' . $total . ' AP).'),
+        ];
     }
 
-    private function descLevelUp(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descLevelUp(array $params): array
     {
         $entityName = $params['entity_name'] ?? null;
         $entityType = $params['entity_type'] ?? null;
         $techId     = $params['tech_id'] ?? null;
 
-        // Auto-detect entity type from name prefix if not explicitly set
         if (!$entityType && $entityName) {
             $entityType = str_starts_with($entityName, 'knowledge_') ? 'knowledge'
                 : (str_starts_with($entityName, 'building_') ? 'building' : 'research');
         }
 
-        $name     = $this->resolveEntityName($entityName, $entityType ?? 'building', $techId);
-        $level    = isset($params['new_level']) ? (int) $params['new_level'] : null;
-        $descKey  = ($entityType === 'knowledge') ? 'comm_log.desc.level_up_knowledge' : 'comm_log.desc.level_up';
+        $resolvedType = $entityType ?? 'building';
+        $name         = $this->resolveEntityName($entityName, $resolvedType, $techId);
+        $level        = isset($params['new_level']) ? (int) $params['new_level'] : null;
 
-        return $level !== null
-            ? __($descKey . '_level', ['name' => $name, 'level' => $level])
-            : __($descKey, ['name' => $name]);
+        $chipType = match ($resolvedType) {
+            'knowledge' => 'knowledge',
+            'ship'      => 'ship',
+            'research'  => 'research',
+            default     => 'building',
+        };
+
+        $link = match ($chipType) {
+            'knowledge', 'research' => '/nexus-db',
+            'ship'                  => '/nexus-db',
+            default                 => '/nexus-db',
+        };
+
+        $entityKey = $entityName ?? (string) $techId;
+
+        if ($chipType === 'knowledge') {
+            $prefix = 'Kenntnis ';
+            $suffix = $level !== null ? ' auf Level ' . $level . ' gestiegen.' : ' erworben.';
+        } else {
+            $prefix = 'Forschung ';
+            $suffix = $level !== null ? ' auf Level ' . $level . ' gestiegen.' : ' abgeschlossen.';
+        }
+
+        return [
+            $this->seg($prefix),
+            $this->entitySeg($chipType, (string) $entityKey, $name, [
+                'level' => $level,
+                'link'  => $link,
+            ]),
+            $this->seg($suffix),
+        ];
     }
 
-    private function descTileDeepScanned(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descTileDeepScanned(array $params): array
     {
         $q = $params['q'] ?? null;
         $r = $params['r'] ?? null;
 
         if ($q !== null && $r !== null) {
-            return __('comm_log.desc.tile_deep_scanned_coords', ['q' => $q, 'r' => $r]);
+            return [$this->seg(__('comm_log.desc.tile_deep_scanned_coords', ['q' => $q, 'r' => $r]))];
         }
 
-        return __('comm_log.desc.tile_deep_scanned');
+        return [$this->seg(__('comm_log.desc.tile_deep_scanned'))];
     }
 
-    private function descBarAccepted(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descBarAccepted(array $params): array
     {
         $giveResId  = $params['give_resource_id'] ?? null;
         $giveAmount = (int) ($params['give_amount'] ?? 0);
@@ -211,52 +299,75 @@ class CommLogController extends BaseController
         $getAmount  = (int) ($params['get_amount'] ?? 0);
 
         if ($giveResId !== null && $getResId !== null) {
-            $give = $this->resolveResourceName((int) $giveResId);
-            $get  = $this->resolveResourceName((int) $getResId);
-            return __('comm_log.desc.bar_accepted_trade', [
-                'give_amount' => $giveAmount,
-                'give'        => $give,
-                'get_amount'  => $getAmount,
-                'get'         => $get,
-            ]);
+            $giveKey   = $this->resolveResourceKey((int) $giveResId);
+            $giveLabel = $this->resolveResourceName((int) $giveResId);
+            $getKey    = $this->resolveResourceKey((int) $getResId);
+            $getLabel  = $this->resolveResourceName((int) $getResId);
+
+            return [
+                $this->seg($giveAmount . ' '),
+                $this->entitySeg('resource', $giveKey, $giveLabel, []),
+                $this->seg(' gegen ' . $getAmount . ' '),
+                $this->entitySeg('resource', $getKey, $getLabel, []),
+                $this->seg(' getauscht.'),
+            ];
         }
 
-        return __('comm_log.desc.bar_accepted');
+        return [$this->seg(__('comm_log.desc.bar_accepted'))];
     }
 
-    private function descGalaxyTrade(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descGalaxyTrade(array $params): array
     {
         $credits = (int) ($params['credits_earned'] ?? 0);
 
         if ($credits > 0) {
-            return __('comm_log.desc.galaxy_trade_credits', ['credits' => $credits]);
+            return [$this->seg(__('comm_log.desc.galaxy_trade_credits', ['credits' => $credits]))];
         }
 
-        return __('comm_log.desc.galaxy_trade');
+        return [$this->seg(__('comm_log.desc.galaxy_trade'))];
     }
 
-    private function descLevelDown(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descLevelDown(array $params): array
     {
         $entityType = $params['entity_type'] ?? 'building';
         $newLevel   = isset($params['new_level']) ? (int) $params['new_level'] : null;
-        $name       = $this->resolveEntityName(
-            $params['entity_name'] ?? null,
-            $entityType,
-            $params['tech_id'] ?? null,
-        );
+        $entityName = $params['entity_name'] ?? null;
+        $techId     = $params['tech_id'] ?? null;
+        $name       = $this->resolveEntityName($entityName, $entityType, $techId);
+
+        $entityKey = $entityName ?? (string) $techId;
 
         if ($entityType === 'ship') {
-            return __('comm_log.desc.level_down_ship', ['name' => $name]);
+            return [
+                $this->seg('Schiff '),
+                $this->entitySeg('ship', (string) $entityKey, $name, [
+                    'level' => null,
+                    'link'  => '/nexus-db',
+                ]),
+                $this->seg(' durch Verfall zerstört.'),
+            ];
         }
 
-        if ($newLevel !== null) {
-            return __('comm_log.desc.level_down_level', ['name' => $name, 'level' => $newLevel]);
-        }
+        $chipType = ($entityType === 'knowledge') ? 'knowledge' : 'building';
+        $link     = '/nexus-db';
+        $suffix   = $newLevel !== null
+            ? ' mangels Wartung auf ' . $newLevel . ' gesunken.'
+            : ' mangels Wartung gesunken.';
 
-        return __('comm_log.desc.level_down', ['name' => $name]);
+        return [
+            $this->seg('Level für '),
+            $this->entitySeg($chipType, (string) $entityKey, $name, [
+                'level' => $newLevel,
+                'link'  => $link,
+            ]),
+            $this->seg($suffix),
+        ];
     }
 
-    private function descAdvisorHired(array $params): string
+    /** @return array<int, array<string, mixed>> */
+    private function descAdvisorHired(array $params): array
     {
         $type     = $params['advisor_type'] ?? '';
         $typeName = $type ? __('techtree.' . $type) : $type;
@@ -265,17 +376,38 @@ class CommLogController extends BaseController
         }
         $cost = (int) ($params['credits_cost'] ?? 0);
 
-        return $cost > 0
-            ? __('comm_log.desc.advisor_hired_cost', ['type' => $typeName, 'credits' => $cost])
-            : __('comm_log.desc.advisor_hired', ['type' => $typeName]);
+        if ($cost > 0) {
+            return [
+                $this->entitySeg('advisor', $type, (string) $typeName, [
+                    'link' => '/nexus-db',
+                ]),
+                $this->seg(' eingestellt. Kosten: ' . $cost . ' CR.'),
+            ];
+        }
+
+        return [
+            $this->entitySeg('advisor', $type, (string) $typeName, [
+                'link' => '/nexus-db',
+            ]),
+            $this->seg(' eingestellt.'),
+        ];
     }
 
-    private function resolveResourceName(int $resId): string
+    /**
+     * Resolves the internal resource key (e.g. "res_regolith") for a resource ID.
+     * Falls back to a stringified ID if the DB row or lang key cannot be found.
+     */
+    private function resolveResourceKey(int $resId): string
     {
         if ($this->resourceNameMap === null) {
             $this->resourceNameMap = DB::table('resources')->pluck('name', 'id')->all();
         }
-        $key = $this->resourceNameMap[$resId] ?? null;
+        return $this->resourceNameMap[$resId] ?? 'res_' . $resId;
+    }
+
+    private function resolveResourceName(int $resId): string
+    {
+        $key = $this->resolveResourceKey($resId);
         if ($key) {
             $translated = __('resources.' . $key);
             if ($translated !== 'resources.' . $key) {

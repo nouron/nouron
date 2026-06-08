@@ -415,10 +415,10 @@ class TrustServiceTest extends TestCase
 
     public function testCalculateTrust_researchNotInConfig_isIgnored(): void
     {
-        // mathematics (research_id=73 in testdata, not in trust config)
+        // knowledge_construction (research_id=90, trust_per_lv=0 → filtered from trust config)
         DB::table('colony_researches')->insert([
             'colony_id'    => $this->colonyId,
-            'research_id'  => 73,
+            'research_id'  => 90,
             'level'        => 10,
             'status_points'=> 10,
             'ap_spend'     => 0,

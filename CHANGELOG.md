@@ -5,8 +5,10 @@
 - **Kolonieprotokoll: reichere Log-Beschreibungen**: Entity-Namen in Log-Nachrichten werden korrekt aufgelöst — `techtree.level_down` speichert jetzt `entity_type`, `entity_name`, `new_level` direkt in den Params (kein nachträgliches DB-Raten). `resolveEntityName()` sucht fallback über Buildings/Ships/Researches-Tabellen. Gebäude-Verfall zeigt "Level für X mangels Wartung auf Y gesunken.", Schiffs-Verfall "Schiff X zerstört."
 - **Cantina, Berater, Handelsroute, Tiefen-Scan**: Log-Beschreibungen zeigen jetzt Kontext — Bar-Tausch ("80 Regolith gegen 200 Credits getauscht."), Berater ohne "Berater"-Präfix mit Kosten ("Analytiker eingestellt. Kosten: 400 CR."), Handelsroute mit Erlös ("+75 CR"), Tiefen-Scan mit Koordinaten ("Sektor (2/0)"). `BarService::acceptOffer` gibt Offer-Details zurück; `AdvisorController` speichert `credits_cost` im Event.
 - **i18n**: `techs_*` Forschungs-Keys (altes Konzept) aus `lang/de/techtree.php` entfernt. `knowledge_*` Kenntnisse bleiben.
+- **techs_* DB-Cleanup**: 10 veraltete `techs_*`-Einträge aus `researches` + abhängige Zeilen aus `colony_researches`, `fleet_researches`, `research_costs` entfernt (Migration `2026_06_07_000001_remove_techs_researches`). `testdata.sqlite.sql` bereinigt. 6 Test-Dateien auf `knowledge_*`-IDs umgestellt. GDD §1/§7 Widersprüche bzgl. Kenntnis-Decay korrigiert: Kenntnisse verfallen nicht, Schiffe haben Decay.
+
 - **Testdaten**: 17 neue `colony_log`-Einträge in `testdata.sqlite.sql` + Dev-DB, decken alle Event-Typen ab.
-- **Planung Entity-Chips**: ADR 0002 (Option A: Structured Segments), GDD-Spec `docs/gdd/entity-chips.md`, ROADMAP.md als Phase 3k eingetragen.
+- **Phase 3k Entity-Chips** (PR #165): Neue wiederverwendbare Blade-Komponente `<x-entity-chip>` — Inline-Pills mit Hover/Tap-Tooltip (Alpine.js). `CommLogController::buildDescription()` gibt Segment-Array zurück (ADR 0002) statt String. Protokoll-Tab zeigt Gebäude, Kenntnis, Schiff, Ressource, Berater als farbige Chips mit Level + "Aufrufen"-Link → `/nexus-db`. CSS: 6 Typ-Varianten, Tooltip-Positionierung, Mobile-Responsive. Fix: verschachtelter `<a>`-Bug behoben (outer-Element immer `<span>`).
 
 ## 2026-06-06
 

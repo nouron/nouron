@@ -210,7 +210,7 @@ class GameTickTest extends TestCase
 
     /**
      * Research status_points decreases by decay_rate each tick.
-     * biology (id 33): decay_rate=0.13; level=2, SP=20 → 19.87
+     * test_decay_placeholder (id 9901): decay_rate=0.13; level=2, SP=20 → 19.87
      *
      * Supply costs are zeroed so colony 1 is never over-cap (overcap would double the rate).
      */
@@ -222,13 +222,13 @@ class GameTickTest extends TestCase
         DB::table('ships')->update(['supply_cost' => 0]);
 
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['status_points' => 20.0, 'level' => 2]);
 
         Artisan::call('game:tick', ['--tick' => 9030]);
 
         $sp = (float) DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->value('status_points');
 
         $this->assertEqualsWithDelta(20.0 - 0.13, $sp, 0.001);
@@ -240,13 +240,13 @@ class GameTickTest extends TestCase
     public function test_research_levels_down_when_status_points_depleted(): void
     {
         DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->update(['status_points' => 0.1, 'level' => 2]);
 
         Artisan::call('game:tick', ['--tick' => 9031]);
 
         $row = DB::table('colony_researches')
-            ->where('colony_id', 1)->where('research_id', 33)
+            ->where('colony_id', 1)->where('research_id', 9901)
             ->first();
 
         $this->assertEquals(1, $row->level);
