@@ -217,12 +217,6 @@ class ResourcesService
             ->where('cb.level', '>', 0)
             ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
 
-        $usedShips = (int) DB::table('colony_ships as cs')
-            ->join('ships as s', 's.id', '=', 'cs.ship_id')
-            ->where('cs.colony_id', $colonyId)
-            ->where('cs.level', '>', 0)
-            ->sum(DB::raw('cs.level * COALESCE(s.supply_cost, 0)'));
-
         $usedResearches = (int) DB::table('colony_researches as cr')
             ->join('researches as r', 'r.id', '=', 'cr.research_id')
             ->where('cr.colony_id', $colonyId)
@@ -234,7 +228,7 @@ class ResourcesService
             ->count();
         $usedAdvisors = $advisorCount * (int) config('game.supply.cost_advisor', 2);
 
-        $used = $usedBuildings + $usedShips + $usedResearches + $usedAdvisors;
+        $used = $usedBuildings + $usedResearches + $usedAdvisors;
 
         return $cap - $used;
     }

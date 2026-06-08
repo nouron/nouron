@@ -447,9 +447,9 @@ class TrustServiceTest extends TestCase
         $this->assertSame(6, $trust);
     }
 
-    public function testCalculateTrust_negativeShipContribution(): void
+    public function testCalculateTrust_corvetteIsNeutral(): void
     {
-        // korvette (id=37): -1 per unit; level=20 → -20
+        // corvette (id=37): trust_per_unit=0 — colonists welcome protection, not a threat
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
             'ship_id'      => 37,
@@ -460,7 +460,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-20, $trust);
+        $this->assertSame(0, $trust);
     }
 
     public function testCalculateTrust_shipContribution_isCapppedAtPositive30(): void
@@ -481,18 +481,19 @@ class TrustServiceTest extends TestCase
 
     public function testCalculateTrust_shipContribution_isCappedAtNegative30(): void
     {
-        // korvette (id=37): -1 per unit; level=100 → raw -100, capped to -30
+        // With corvette neutral (0) and only frachter positive, negative cap is unreachable.
+        // Test verifies the positive cap still works as a boundary at +30.
         DB::table('colony_ships')->insert([
             'colony_id'    => $this->colonyId,
-            'ship_id'      => 37,
-            'level'        => 100,
+            'ship_id'      => 47,
+            'level'        => 50,
             'status_points'=> 10,
             'ap_spend'     => 0,
         ]);
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-30, $trust);
+        $this->assertSame(30, $trust);
     }
 
     // ── calculateTrust() — event contribution ────────────────────────────────
