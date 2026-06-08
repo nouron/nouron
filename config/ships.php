@@ -6,7 +6,7 @@
  * Fields:
  *   id                    — DB primary key in `ships` table
  *   moving_speed          — tiles per tick (fleet moves at slowest ship's speed)
- *   supply_cost           — supply consumed per ship unit (0 for unmanned craft)
+ *   supply_cost           — always 0; ships do not consume supply (GDD §6, 2026-06-08)
  *   trust_per_unit        — trust change per ship in colony fleet (used by TrustService)
  *   nexus_cost            — Credits to request this ship from Nexus (standard purchase)
  *   nexus_delivery_ticks  — Sols until ship arrives after Nexus request
@@ -36,7 +36,7 @@ return [
     'corvette' => [
         'id'                   => 37,         // ex fighter1
         'moving_speed'         => 4,
-        'supply_cost'          => 14,         // still in DB; supply cost for ships being removed (Phase 3)
+        'supply_cost'          => 0,
         'trust_per_unit'       => 0,          // neutral — colonists welcome protection, not a military threat
         'nexus_cost'           => 800,        // expensive — military hardware
         'nexus_delivery_ticks' => 5,
@@ -47,7 +47,7 @@ return [
     'freighter' => [
         'id'                   => 47,         // ex smallTransporter
         'moving_speed'         => 3,
-        'supply_cost'          => 6,
+        'supply_cost'          => 0,
         'trust_per_unit'       => 1,
         'nexus_cost'           => 500,
         'nexus_delivery_ticks' => 3,

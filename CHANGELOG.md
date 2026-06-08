@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-08
+
+- **Supply-Redesign: Schiffe kosten kein Supply mehr** (GDD §6): `ResourcesService::getFreeSupply()` berücksichtigt Schiffs-Supply-Kosten nicht länger. `config/ships.php`: `supply_cost` aller Schifftypen auf 0 gesetzt + Docstring aktualisiert. DB via `game:sync-config` synchronisiert. Flottenausbau weiterhin begrenzt durch Hangars/Tiles, Credits, Lieferzeit und Navigator-AP. GDD §6 + §13 entsprechend aktualisiert.
+- **Korvette Trust-Malus gestrichen**: `corvette.trust_per_unit` -1 → 0 — Kolonisten begrüßen Schutz, keine Strafwirkung. GDD §13 Trust-Klammer auf `[0, +30]` angepasst. `TrustServiceTest` entsprechend umgestellt.
+
 ## 2026-06-07
 
 - **Kolonieprotokoll: reichere Log-Beschreibungen**: Entity-Namen in Log-Nachrichten werden korrekt aufgelöst — `techtree.level_down` speichert jetzt `entity_type`, `entity_name`, `new_level` direkt in den Params (kein nachträgliches DB-Raten). `resolveEntityName()` sucht fallback über Buildings/Ships/Researches-Tabellen. Gebäude-Verfall zeigt "Level für X mangels Wartung auf Y gesunken.", Schiffs-Verfall "Schiff X zerstört."
