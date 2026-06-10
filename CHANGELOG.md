@@ -2,7 +2,7 @@
 
 ## 2026-06-10
 
-- **Website (gh-pages) aktualisiert**: Decay-Beschreibung korrigiert (Kenntnisse verfallen nicht — nur Gebäude und Schiffe). Status-Sektion ersetzt: statt detaillierter Implementiert/Geplant-Listen jetzt drei Phasen-Cards (1–2 Fundament, 3 aktiv, 4 Vertiefung) mit Hinweis auf nicht-lineare Entwicklung. Feature-Chips listen alle Kern-Systeme ohne Statusangabe (inkl. Vertrauenssystem, Hangar, Cantina & NPC-Charaktere, Kolonieprotokoll). „Moralsystem" überall durch „Vertrauenssystem" ersetzt.
+- **Website (gh-pages) aktualisiert**: Decay-Beschreibung korrigiert (Kenntnisse verfallen nicht — nur Gebäude und Schiffe). Status-Sektion ersetzt: statt detaillierter Implementiert/Geplant-Listen jetzt drei Phasen-Cards (1–2 Fundament, 3 aktiv, 4 Vertiefung) mit Hinweis auf nicht-lineare Entwicklung. Feature-Chips listen alle Kern-Systeme ohne Statusangabe (inkl. Vertrauenssystem, Hangar, Cantina & NPC-Charaktere, Kolonieprotokoll). „Moralsystem" überall durch „Vertrauenssystem" ersetzt. Feature-Karte „Kleine, handverlesene Galaxie" (nicht mehr zutreffend) ersetzt durch „Direktiven von oben, Vertrauen von unten" (Nexus-Direktiven vs. Kolonisten-Vertrauen als zwei gleichzeitige Anforderungen). Allgemeiner Copywriting-Pass: Hero-Sub, Gameplay-Lead, Phase-1-Card und Ende-Card mit lebendigerem Ton neu formuliert.
 
 ## 2026-06-08
 
