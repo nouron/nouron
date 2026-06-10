@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-10
+
+- **Website (gh-pages) aktualisiert**: Decay-Beschreibung korrigiert (Kenntnisse verfallen nicht — nur Gebäude und Schiffe). Status-Sektion ersetzt: statt detaillierter Implementiert/Geplant-Listen jetzt drei Phasen-Cards (1–2 Fundament, 3 aktiv, 4 Vertiefung) mit Hinweis auf nicht-lineare Entwicklung. Feature-Chips listen alle Kern-Systeme ohne Statusangabe (inkl. Vertrauenssystem, Hangar, Cantina & NPC-Charaktere, Kolonieprotokoll). „Moralsystem" überall durch „Vertrauenssystem" ersetzt.
+
 ## 2026-06-08
 
 - **Cantina: NPC-Portraits** — 15 Charakter-Portraits (`public/img/characters/`) eingebunden. Hotspot-Buttons zeigen Portrait-Karten (160×220px) statt Icon-Kreisen; Modal-Avatar zeigt Portrait statt Person-Icon. `colony.css`: `.has-portrait`-Modifier, `.hotspot-portrait`, `.guest-avatar__portrait`. Dev-Tool (Cantina-Tab): Charakter-Matrix zeigt Thumbnail-Portraits. `informationsagent.webp` → `information_broker.webp` (Slug-Konsistenz).
