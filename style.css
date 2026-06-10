@@ -192,6 +192,18 @@ section:last-of-type { border-bottom: none; }
   font-family: system-ui, sans-serif;
 }
 .lead { font-size: 1.05rem; color: var(--color-muted); line-height: 1.75;}
+.status-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  margin-top: 1.75rem;
+}
+.status-links a {
+  font-family: system-ui, sans-serif;
+  font-size: .9rem;
+  font-weight: 600;
+  text-decoration: none;
+}
 
 /* ── Feature grid ── */
 .feature-grid {
