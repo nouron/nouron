@@ -91,7 +91,7 @@ class OnboardingService
             ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
             ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
             // ── Ring 2 (fog) ──────────────────────────────────────────────────
-            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
             ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],

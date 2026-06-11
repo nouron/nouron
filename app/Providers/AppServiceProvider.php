@@ -103,9 +103,16 @@ class AppServiceProvider extends ServiceProvider
         // Inject resource bar data into game layouts for authenticated users
         View::composer(['layouts.app', 'layouts.colony'], function ($view) {
             if (Auth::check()) {
-                $colonyId = session('activeIds.colonyId', 1);
+                $colonyId = (int) session('activeIds.colonyId', 0);
+                // Validate the session colony belongs to the current user; heal stale sessions.
+                if (!$colonyId || !DB::table('glx_colonies')->where('id', $colonyId)->where('user_id', Auth::id())->exists()) {
+                    $colonyId = (int) DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->value('id');
+                    if ($colonyId) {
+                        session(['activeIds.colonyId' => $colonyId]);
+                    }
+                }
                 $resourcesService = app(ResourcesService::class);
-                $possessions  = $resourcesService->getPossessionsByColonyId($colonyId);
+                $possessions = $colonyId ? $resourcesService->getPossessionsByColonyId($colonyId) : [];
                 $resourceTypes = $resourcesService->getResources()->keyBy('id');
                 foreach ($possessions as $resId => $poss) {
                     if (isset($resourceTypes[$resId])) {

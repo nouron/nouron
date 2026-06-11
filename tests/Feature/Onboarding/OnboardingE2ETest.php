@@ -76,7 +76,7 @@ class OnboardingE2ETest extends TestCase
         $this->assertSame('hint_1', $hint['key']);
         $this->assertStringContainsString('/advisors', $hint['target_url']);
 
-        // ── 4. Hire engineer → rank-1 resolved; rank-2 (CC upgrade) surfaces ──
+        // ── 4. Hire engineer → rank-1 resolved; rank-2 (Harvester in colony zone) surfaces ──
         $engineerId = \App\Services\Techtree\PersonellService::idFor('engineer');
         DB::table('advisors')->insert([
             'user_id'      => $this->userId,
@@ -92,11 +92,12 @@ class OnboardingE2ETest extends TestCase
         $this->assertSame('hint_2', $hint['key']);
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
-        // ── 5. Upgrade CC to level 2 → rank-2 condition resolved ─────────────
+        // ── 5. Move Harvester outside colony zone → rank-2 resolved ──────────
+        // Tile (2,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer.
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', 25)
-            ->update(['level' => 2, 'ap_spend' => 0]);
+            ->where('building_id', 27)
+            ->update(['tile_x' => 2, 'tile_y' => 0]);
 
         // ── 6. Disable onboarding hints → no hint returned ─────────────────
         DB::table('user_preferences')->updateOrInsert(

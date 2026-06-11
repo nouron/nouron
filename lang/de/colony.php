@@ -51,8 +51,8 @@ return [
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
     'onboarding_hint_1' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
-    'onboarding_hint_2' => 'Kommandozentrale noch auf Level 1 — Ausbau auf Level 2 schaltet zweiten Berater-Slot frei.',
-    'onboarding_hint_3' => 'Harvester produziert nichts — auf ein Regolith-Tile verlegen.',
+    'onboarding_hint_2' => 'Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen.',
+    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
     'onboarding_hint_6' => 'Cantina noch nicht gebaut — hier erscheinen Händler und NPC-Gäste mit Tauschangeboten und Einmal-Items.',

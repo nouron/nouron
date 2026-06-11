@@ -117,7 +117,7 @@ class OnboardingHintService
             [
                 'rank'       => 3,
                 'key'        => 'hint_3',
-                'active'     => $this->checkHint3($colonyId),
+                'active'     => $this->checkHint3($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_3',
                 'target_url' => '/colony/view',
             ],
@@ -160,54 +160,46 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 2: CommandCenter (building_id=25) still at level 1.
-     * Upgrading to level 2 unlocks a second advisor slot.
+     * Hint 2: Harvester (building_id=27) is placed inside the colony zone (is_colony_zone=1).
+     * Player should move it to the pre-explored ring-2 regolith tile outside colony borders.
      */
     private function checkHint2(int $colonyId): bool
     {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 27)
+            ->whereNotNull('tile_x')
+            ->first(['tile_x', 'tile_y']);
+
+        if (!$harvester) {
+            return false;
+        }
+
+        return DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('q', $harvester->tile_x)
+            ->where('r', $harvester->tile_y)
+            ->where('is_colony_zone', 1)
+            ->exists();
+    }
+
+    /**
+     * Hint 3: CC (building_id=25) still at level 1. Fires from Sol 2 onward
+     * so player has time to gather AP before the suggestion appears.
+     */
+    private function checkHint3(int $colonyId, int $currentTick): bool
+    {
+        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 2);
+        if ($currentTick < $afterTick) {
+            return false;
+        }
+
         $level = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level');
 
         return $level < 2;
-    }
-
-    /**
-     * Hint 3: Harvester (building_id=27) is placed on a tile, but that tile's
-     *         tile_type is NOT a regolith variant.
-     *
-     * Returns true only when a harvester is placed AND its tile is non-regolith.
-     */
-    private function checkHint3(int $colonyId): bool
-    {
-        // Find placed harvesters (tile_x must be set).
-        $harvesters = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 27)
-            ->whereNotNull('tile_x')
-            ->select(['tile_x', 'tile_y'])
-            ->get();
-
-        if ($harvesters->isEmpty()) {
-            return false;
-        }
-
-        // Check whether any harvester sits on a non-regolith tile.
-        foreach ($harvesters as $harvester) {
-            $isRegolith = DB::table('colony_tiles')
-                ->where('colony_id', $colonyId)
-                ->where('q', $harvester->tile_x)
-                ->where('r', $harvester->tile_y)
-                ->where('tile_type', 'LIKE', 'regolith_%')
-                ->exists();
-
-            if (!$isRegolith) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
