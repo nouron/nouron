@@ -87,15 +87,11 @@ class OnboardingE2ETest extends TestCase
             'is_explored'    => 1,
         ]);
 
-        DB::table('colony_buildings')->insert([
-            'colony_id'     => $colony->id,
-            'building_id'   => 28,   // housingComplex
-            'level'         => 1,
-            'status_points' => 20,
-            'ap_spend'      => 0,
-            'tile_x'        => 1,
-            'tile_y'        => 0,
-        ]);
+        // Housing is pre-seeded by setupNewPlayer (level 0, unplaced). Simulate placement + completion.
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', 28)
+            ->update(['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]);
 
         // ── 5. Rank-2 hint active (no engineer, tick above threshold) ────────
         $threshold = (int) config('game.onboarding.hint_no_engineer_ticks', 3);

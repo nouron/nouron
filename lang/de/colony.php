@@ -80,7 +80,7 @@ return [
     'onboarding_trigger_ap_limit'       => 'Keine Bau-AP mehr in diesem Sol verfügbar.',
 
     // Trigger 5 — Harvester-Verlagerung (Tooltip)
-    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP — der Harvester produziert danach auf dem neuen Tile.',
+    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP pro Tile-Distanz — der Harvester produziert danach auf dem neuen Tile.',
 
     // ── Error messages ────────────────────────────────────────────────────────
 

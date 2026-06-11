@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-11
+
+- **AP-Grundwert implementiert** (GDD §13): `PersonellService::getTotalActionPoints()` addiert jetzt 6 Basis-AP für alle Bereiche (Bau/Forschung/Wirtschaft/Strategie), unabhängig von Beratern. Neuer Config-Key `game.ap.base = 6`. Verhindert Deadlocks zu Spielbeginn. Alle betroffenen Tests (`PersonellServiceTest`, `TradeApTest`) auf neue Baseline angepasst.
+- **Onboarding-Startszenario überarbeitet**: Harvester (ID 27) und Wohndepot (ID 28) werden beim Setup nicht mehr auf Level 1 gesetzt, sondern als `level=0, ap_spend=7` (7/10 AP bereits investiert) und `tile_x=null` vorseeded. Spieler muss Sol 1 beide Gebäude fertigstellen und platzieren. Narrativ: Spieler übernimmt Kolonie im Aufbau. `OnboardingTest` + `OnboardingE2ETest` entsprechend aktualisiert.
+- **Harvester versetzen: distanzbasierte AP-Kosten** — Kolonie-Controller berechnet Hex-Distanz (axiale Koordinaten) zwischen altem und neuem Tile; Kosten = 1 Bau-AP pro Tile-Distanz. Neuer Hilfs-Methode `hexDistance()`. I18n-String (`onboarding_trigger_harvester_move`) aktualisiert.
+
 ## 2026-06-08
 
 - **Cantina: NPC-Portraits** — 15 Charakter-Portraits (`public/img/characters/`) eingebunden. Hotspot-Buttons zeigen Portrait-Karten (160×220px) statt Icon-Kreisen; Modal-Avatar zeigt Portrait statt Person-Icon. `colony.css`: `.has-portrait`-Modifier, `.hotspot-portrait`, `.guest-avatar__portrait`. Dev-Tool (Cantina-Tab): Charakter-Matrix zeigt Thumbnail-Portraits. `informationsagent.webp` → `information_broker.webp` (Slug-Konsistenz).

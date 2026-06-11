@@ -55,14 +55,24 @@ class OnboardingTest extends TestCase
         $this->assertNotNull($cc, 'CommandCenter must be placed');
         $this->assertEquals(1, $cc->level);
 
-        // Harvester at level 1 — immediately operational from day one
+        // Harvester at level 0, ap_spend=7 — "almost done", player places + finishes it Sol 1
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
             ->first();
-        $this->assertNotNull($harvester, 'Harvester must be placed at game start');
-        $this->assertEquals(1, $harvester->level);
-        $this->assertEquals(20, $harvester->status_points, 'Harvester must start fully intact');
+        $this->assertNotNull($harvester, 'Harvester must exist at game start');
+        $this->assertEquals(0, $harvester->level, 'Harvester starts unfinished (level 0)');
+        $this->assertEquals(7, $harvester->ap_spend, 'Harvester has 7/10 AP pre-invested');
+        $this->assertNull($harvester->tile_x, 'Harvester starts unplaced — player positions it');
+
+        // HousingComplex at level 0, ap_spend=7 — same as harvester
+        $housing = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', 28)
+            ->first();
+        $this->assertNotNull($housing, 'HousingComplex must exist at game start');
+        $this->assertEquals(0, $housing->level, 'HousingComplex starts unfinished (level 0)');
+        $this->assertEquals(7, $housing->ap_spend, 'HousingComplex has 7/10 AP pre-invested');
     }
 
     public function test_setup_new_player_uses_free_planet(): void

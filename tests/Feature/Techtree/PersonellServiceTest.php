@@ -39,17 +39,17 @@ class PersonellServiceTest extends TestCase
 
     public function testGetTotalActionPoints(): void
     {
-        // 1 engineer rank2 = 7
-        $this->assertEquals(7, $this->service->getTotalActionPoints('construction', $this->colonyId));
-        // 1 scientist rank1 = 4
-        $this->assertEquals(4, $this->service->getTotalActionPoints('research', $this->colonyId));
-        // unknown = 0
+        // 6 base + engineer rank2 (7) = 13
+        $this->assertEquals(13, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        // 6 base + scientist rank1 (4) = 10
+        $this->assertEquals(10, $this->service->getTotalActionPoints('research', $this->colonyId));
+        // unknown type: no base AP (early return)
         $this->assertEquals(0, $this->service->getTotalActionPoints('unknown', $this->colonyId));
     }
 
     public function testGetAvailableActionPoints(): void
     {
-        $this->assertEquals(7, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->assertEquals(13, $this->service->getAvailableActionPoints('construction', $this->colonyId));
         $this->assertEquals(0,  $this->service->getAvailableActionPoints('unknown', $this->colonyId));
     }
 
@@ -179,8 +179,8 @@ class PersonellServiceTest extends TestCase
             'unavailable_until_tick' => 99999,
         ]);
 
-        // Economy AP should be 0 — the unavailable trader is excluded
-        $this->assertEquals(0, $this->service->getTotalActionPoints('economy', $this->colonyId));
+        // Economy AP should be base 6 only — the unavailable trader is excluded
+        $this->assertEquals(6, $this->service->getTotalActionPoints('economy', $this->colonyId));
     }
 
     // ── hire(): rank clamping and validation ──────────────────────────────────
@@ -238,8 +238,8 @@ class PersonellServiceTest extends TestCase
     {
         $this->service->lockActionPoints('construction', $this->colonyId, 3);
         $this->service->lockActionPoints('construction', $this->colonyId, 2);
-        // 7 total − 5 locked = 2
-        $this->assertEquals(2, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        // 13 total − 5 locked = 8
+        $this->assertEquals(8, $this->service->getAvailableActionPoints('construction', $this->colonyId));
     }
 
     public function testLockActionPointsWithNegativeAmountIsSanitised(): void
@@ -310,9 +310,10 @@ class PersonellServiceTest extends TestCase
 
     // ── getEconomyPoints() convenience wrapper ────────────────────────────────
 
-    public function testGetEconomyPointsReturnsZeroWithNoTraders(): void
+    public function testGetEconomyPointsReturnsBaseWithNoTraders(): void
     {
-        $this->assertEquals(0, $this->service->getEconomyPoints($this->colonyId));
+        // Base 6 AP always present even without advisor
+        $this->assertEquals(6, $this->service->getEconomyPoints($this->colonyId));
     }
 
     public function testGetEconomyPointsWithTrader(): void
@@ -324,7 +325,8 @@ class PersonellServiceTest extends TestCase
             'rank'         => 2,
             'active_ticks' => 0,
         ]);
-        $this->assertEquals(7, $this->service->getEconomyPoints($this->colonyId));
+        // 6 base + trader rank2 (7) = 13
+        $this->assertEquals(13, $this->service->getEconomyPoints($this->colonyId));
     }
 
     // ── incrementAdvisorTicks() via GameTick command ──────────────────────────
