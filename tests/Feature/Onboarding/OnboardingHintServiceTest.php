@@ -84,11 +84,11 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
 
-    // ── Hint 1: no housing placed ─────────────────────────────────────────────
+    // ── Hint 1: no engineer ──────────────────────────────────────────────────
 
-    public function test_hint_1_fires_when_no_housing_placed(): void
+    public function test_hint_1_fires_when_no_engineer(): void
     {
-        // No housing rows at all.
+        // Baseline: no advisor rows for this colony.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
@@ -96,24 +96,55 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertEquals('hint_1', $hint['key']);
     }
 
-    public function test_hint_1_silent_when_housing_placed(): void
+    public function test_hint_1_fires_even_when_housing_placed(): void
     {
-        // Housing with tile_x set = placed on the map.
-        DB::table('colony_buildings')->insert([
-            'colony_id' => $this->colonyId, 'building_id' => 28,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 1, 'tile_y' => 0,
-        ]);
+        // Placing housing does NOT silence hint 1 — engineer is still missing.
+        $this->placeHousing();
 
-        // With tick=1, hint 2 also shouldn't fire (below threshold).
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertEquals(1, $hint['rank']);
+    }
+
+    public function test_hint_1_silent_when_engineer_present(): void
+    {
+        // Engineer present + housing placed + other hints suppressed → null.
+        $this->placeEngineer();
+        $this->placeHousing();
+        $this->suppressHints4and5();
+
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNull($hint);
     }
 
-    public function test_hint_1_requires_tile_x_to_be_set(): void
+    // ── Hint 2: housing not placed ────────────────────────────────────────────
+
+    public function test_hint_2_fires_when_housing_not_placed(): void
     {
-        // Housing row exists but NOT placed (tile_x = null).
+        // Engineer present (hint 1 resolved), no housing → hint 2 fires immediately.
+        $this->placeEngineer();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertEquals(2, $hint['rank']);
+    }
+
+    public function test_hint_2_silent_when_housing_placed(): void
+    {
+        $this->placeEngineer();
+        $this->placeHousing();
+        $this->suppressHints4and5();
+
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
+    public function test_hint_2_fires_with_unplaced_housing_row(): void
+    {
+        // Housing row exists but NOT placed (tile_x = null) — hint 2 still fires.
+        $this->placeEngineer();
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId, 'building_id' => 28,
             'instance_id' => 1, 'level' => 0, 'status_points' => 20, 'ap_spend' => 0,
@@ -123,38 +154,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(1, $hint['rank'], 'Unplaced housing must not satisfy hint 1');
-    }
-
-    // ── Hint 2: no engineer ───────────────────────────────────────────────────
-
-    public function test_hint_2_fires_after_tick_threshold(): void
-    {
-        $this->placeHousing();
-        $this->tickService->setTickCount(15); // above threshold of 3
-
-        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-
-        $this->assertNotNull($hint);
         $this->assertEquals(2, $hint['rank']);
-    }
-
-    public function test_hint_2_silent_before_tick_threshold(): void
-    {
-        $this->placeHousing();
-        $this->tickService->setTickCount(1); // below threshold
-
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
-    }
-
-    public function test_hint_2_silent_when_engineer_is_present(): void
-    {
-        $this->placeHousing();
-        $this->tickService->setTickCount(15);
-        $this->placeEngineer();
-        $this->suppressHints4and5(); // prevent hint_4 from surfacing at tick=15
-
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
 
     // ── Hint 3: harvester on wrong tile ──────────────────────────────────────
@@ -268,9 +268,8 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_dismissed_hint_skipped_returns_next_active(): void
     {
-        // Dismiss hint_1; hint_2 should surface (tick above threshold, no engineer).
+        // Dismiss hint_1 (engineer); hint_2 (housing) should surface — no housing placed.
         $this->service->dismissHint($this->userId, 'hint_1');
-        $this->tickService->setTickCount(15);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -296,7 +295,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertArrayHasKey('text_key', $hint);
         $this->assertArrayHasKey('target_url', $hint);
         $this->assertEquals('colony.onboarding_hint_1', $hint['text_key']);
-        $this->assertEquals('/colony/view', $hint['target_url']);
+        $this->assertEquals('/techtree/personell', $hint['target_url']);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
