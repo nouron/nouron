@@ -93,11 +93,11 @@ class OnboardingE2ETest extends TestCase
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
         // ── 5. Move Harvester outside colony zone → rank-2 resolved ──────────
-        // Tile (2,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer.
+        // Tile (3,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer (ring-3 pre-explored).
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
-            ->update(['tile_x' => 2, 'tile_y' => 0]);
+            ->update(['tile_x' => 3, 'tile_y' => 0]);
 
         // ── 6. Disable onboarding hints → no hint returned ─────────────────
         DB::table('user_preferences')->updateOrInsert(

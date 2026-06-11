@@ -78,15 +78,21 @@ class OnboardingHintServiceTest extends TestCase
             'tile_x' => 0, 'tile_y' => 1,
         ]);
 
-        // Tile for Harvester start position (ring 1, colony_zone=1)
+        // Harvester start position: ring 1, colony_zone=1, no regolith (colony zone is building area).
         DB::table('colony_tiles')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'q' => 1, 'r' => 0, 'ring' => 1,
-            'tile_type' => 'regolith_normal', 'is_explored' => 1,
+            'tile_type' => 'terrain_empty', 'is_explored' => 1,
             'is_colony_zone' => 1, 'is_deep_scanned' => 0,
         ]);
-        // Pre-explored ring-2 regolith (Nexus scout tile — Harvester move target)
+        // Ring 2: fog at CC Level 1 — NOT colony zone yet (unlocked by CC upgrade).
         DB::table('colony_tiles')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'q' => 2, 'r' => 0, 'ring' => 2,
+            'tile_type' => 'terrain_empty', 'is_explored' => 0,
+            'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+        ]);
+        // Pre-explored ring-3 regolith (Nexus scout tile — guaranteed Harvester move target).
+        DB::table('colony_tiles')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'q' => 3, 'r' => 0, 'ring' => 3,
             'tile_type' => 'regolith_normal', 'is_explored' => 1,
             'is_colony_zone' => 0, 'is_deep_scanned' => 0,
         ]);
@@ -289,11 +295,11 @@ class OnboardingHintServiceTest extends TestCase
 
     private function moveHarvesterOutside(): void
     {
-        // Move Harvester to pre-explored ring-2 tile (2,0) — colony_zone=0.
+        // Move Harvester to pre-explored ring-3 tile (3,0) — colony_zone=0, regolith_normal.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', 27)
-            ->update(['tile_x' => 2, 'tile_y' => 0]);
+            ->update(['tile_x' => 3, 'tile_y' => 0]);
     }
 
     private function upgradeCc(): void

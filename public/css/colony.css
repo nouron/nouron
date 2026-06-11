@@ -621,6 +621,18 @@ button.btn-sol:hover,
     cursor: not-allowed;
 }
 
+.sidebar-action-btn--secondary {
+    background: transparent;
+    border-color: #7a9ab8;
+    color: #4a6a88;
+}
+
+.sidebar-action-btn--secondary:hover:not(:disabled) {
+    background: #e8f0f8;
+    border-color: #4a6a88;
+    color: #2a4a68;
+}
+
 /* ── Canvas-header build button ─────────────────────────────────────────── */
 
 .build-btn {
@@ -804,6 +816,16 @@ button.btn-sol:hover,
 
 .onboarding-pulse {
     animation: onboarding-ring-pulse 2s ease-in-out infinite;
+}
+
+/* ── Harvester move animation (SVG circle, slides old → new tile) ─────────── */
+@keyframes hv-move {
+    0%   { transform: translate(0, 0);                       opacity: 1;   }
+    70%  { transform: translate(var(--dx), var(--dy));       opacity: 0.8; }
+    100% { transform: translate(var(--dx), var(--dy));       opacity: 0;   }
+}
+.hv-move-dot {
+    animation: hv-move 380ms ease-out forwards;
 }
 
 /* ── Event discovery dialog ──────────────────────────────────────────────── */

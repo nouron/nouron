@@ -15,9 +15,10 @@ use Illuminate\Support\Facades\DB;
 class OnboardingService
 {
     public function __construct(
-        private readonly ColonyService $colonyService,
-        private readonly TickService   $tickService,
-        private readonly EventService  $eventService,
+        private readonly ColonyService     $colonyService,
+        private readonly TickService       $tickService,
+        private readonly EventService      $eventService,
+        private readonly ColonyTileService $tileService,
     ) {}
 
     /**
@@ -78,35 +79,50 @@ class OnboardingService
 
     private function seedStartingTiles(int $colonyId): void
     {
-        // Ring 0 (CC center) + ring 1 (6 tiles): colony_zone, explored.
-        // Ring 2 (12 tiles): fog of war, not colony_zone.
+        // Ring 0+1: explored from start. is_colony_zone assigned by assignColonyZone() below.
+        // Ring 2: fog — auto-explored when CC is upgraded (assignColonyZone).
+        // Ring 3+ (exploration zone): fog, except (3,0) pre-explored by Nexus Scout (Harvester target).
+        // Regolith only on ring 3+ — no regolith inside colony zone.
         $tiles = [
             // ── Ring 0 ────────────────────────────────────────────────────────
-            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
             // ── Ring 1 ────────────────────────────────────────────────────────
-            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            // ── Ring 2 (fog) ──────────────────────────────────────────────────
-            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            // ── Ring 2 (fog — unlocked by CC upgrade) ─────────────────────────
+            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  0, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -1, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -2, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_impassable', 'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -2, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -1, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  0, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            // ── Ring 3 (exploration zone, fog) ────────────────────────────────
+            ['q' =>  3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  3, 'r' => -1, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  3, 'r' => -2, 'ring' => 3, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' =>  1, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  2, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' =>  3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' =>  3, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' => -3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
         ];
 
         $rows = array_map(fn($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
         DB::table('colony_tiles')->insert($rows);
+
+        // Assign colony zone based on CC Level 1 — auto-explores ring 0+1.
+        $this->tileService->assignColonyZone($colonyId, 1);
     }
 
     private function seedStartingBuilding(int $colonyId): void

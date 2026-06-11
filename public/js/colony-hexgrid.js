@@ -107,10 +107,17 @@ function colonyHexView(config) {
         _toastTimer:        null,
         levelupNotice:      null,   // set to label string when a building levels up
         _lvlTimer:          null,
+        harvesterMoveMode:  false,
         _svgPolygons:       new Map(),
+        _tilePositions:     new Map(),
+        _gridEl:            null,
 
         init() {
             this.$nextTick(async () => {
+                // Cache the grid container: $refs lookups fail when redrawGrid is
+                // triggered from a button inside an x-if template that Alpine has
+                // already removed from the DOM (e.g. the relocate button).
+                this._gridEl = this.$refs.hexgrid;
                 this.redrawGrid();
                 const params  = new URLSearchParams(window.location.search);
                 const buildId = parseInt(params.get('build'), 10);
@@ -125,19 +132,29 @@ function colonyHexView(config) {
         // ── Grid rendering ────────────────────────────────────────────────────
 
         redrawGrid() {
-            initHexGrid(this.$refs.hexgrid, this.tiles, {
-                onSelect:        (tile) => this.onTileClick(tile),
-                polygonMap:      this._svgPolygons,
-                buildings:       this.buildings,
-                buildMode:       this.buildMode,
-                pendingBuilding: this.pendingBuilding,
-                activeHint:      this.activeHint ?? null,
+            this._tilePositions.clear();
+            initHexGrid(this._gridEl ?? this.$refs.hexgrid, this.tiles, {
+                onSelect:          (tile) => this.onTileClick(tile),
+                polygonMap:        this._svgPolygons,
+                positionMap:       this._tilePositions,
+                buildings:         this.buildings,
+                buildMode:         this.buildMode,
+                pendingBuilding:   this.pendingBuilding,
+                activeHint:        this.activeHint ?? null,
+                harvesterMoveMode: this.harvesterMoveMode,
+                harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
             });
         },
 
         // ── Tile selection ────────────────────────────────────────────────────
 
         onTileClick(tile) {
+            // Harvester move mode: clicking a valid target triggers the move.
+            if (this.harvesterMoveMode) {
+                if (this.isHarvesterTarget(tile))
+                    this.doMoveHarvester(tile);
+                return;
+            }
             if (this.buildMode && this.pendingBuilding) {
                 if (isBuildableTile(tile) && !this.buildingForTile(tile))
                     this.doPlaceBuilding(tile);
@@ -146,8 +163,9 @@ function colonyHexView(config) {
             // Tile has a building but build mode is active without selection:
             // exit build mode so the tile-info panel (with AP invest button) renders.
             if (this.buildMode && this.buildingForTile(tile)) {
-                this.buildMode       = false;
-                this.pendingBuilding = null;
+                this.buildMode         = false;
+                this.pendingBuilding   = null;
+                this.harvesterMoveMode = false;
                 this.$nextTick(() => this.redrawGrid());
             }
             this.selectTile(tile);
@@ -280,6 +298,87 @@ function colonyHexView(config) {
             }
         },
 
+        // ── Harvester relocation ──────────────────────────────────────────────
+
+        startHarvesterMove() {
+            this.harvesterMoveMode = true;
+            this.buildMode         = false;
+            this.pendingBuilding   = null;
+            this.selectedTile      = null;
+            this.$nextTick(() => this.redrawGrid());
+        },
+
+        cancelHarvesterMove() {
+            this.harvesterMoveMode = false;
+            this.$nextTick(() => this.redrawGrid());
+        },
+
+        isHarvesterTarget(tile) {
+            if (!tile.is_explored) return false;
+            if (!tile.tile_type.startsWith('regolith_')) return false;
+            return !this.buildings.some(b => b.tile_x === tile.q && b.tile_y === tile.r);
+        },
+
+        harvesterBuilding() {
+            return this.buildings.find(b => b.building_key === 'building_harvester') ?? null;
+        },
+
+        hasHarvesterTargets() {
+            return this.tiles.some(t => this.isHarvesterTarget(t));
+        },
+
+        async doMoveHarvester(tile) {
+            const hv = this.harvesterBuilding();
+            if (!hv) return;
+            const oldPos = hv.tile_x !== null
+                ? this._tilePositions.get(`${hv.tile_x},${hv.tile_y}`) : null;
+            const newPos = this._tilePositions.get(`${tile.q},${tile.r}`);
+            const res = await this.post(this.routes.placeBuilding, {
+                building_id: hv.building_id,
+                q: tile.q,
+                r: tile.r,
+            });
+            if (res.ok) {
+                this.updateBuilding(res.building);
+                this.harvesterMoveMode = false;
+                this.selectedTile      = tile;
+                this.updateAp(res);
+                this.updateHint(res);
+                if (oldPos && newPos) {
+                    this.animateHarvesterMove(oldPos, newPos);
+                    setTimeout(() => this.$nextTick(() => this.redrawGrid()), 400);
+                } else {
+                    this.$nextTick(() => this.redrawGrid());
+                }
+            } else {
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
+            }
+        },
+
+        animateHarvesterMove(oldPos, newPos) {
+            const svg = (this._gridEl ?? this.$refs.hexgrid)?.querySelector('svg');
+            if (!svg) return;
+            const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            dot.setAttribute('cx', oldPos.cx);
+            dot.setAttribute('cy', oldPos.cy);
+            dot.setAttribute('r', '10');
+            dot.setAttribute('fill', '#f59e0b');
+            dot.setAttribute('stroke', '#b45309');
+            dot.setAttribute('stroke-width', '2');
+            dot.setAttribute('pointer-events', 'none');
+            dot.setAttribute('class', 'hv-move-dot');
+            dot.style.setProperty('--dx', `${newPos.cx - oldPos.cx}px`);
+            dot.style.setProperty('--dy', `${newPos.cy - oldPos.cy}px`);
+            svg.appendChild(dot);
+            setTimeout(() => dot.remove(), 450);
+        },
+
+        hexDistance(q1, r1, q2, r2) {
+            const dq = q1 - q2, dr = r1 - r2;
+            return Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr));
+        },
+
         // ── State helpers ─────────────────────────────────────────────────────
 
         updateAp(res) {
@@ -398,6 +497,43 @@ function isBuildableTile(tile) {
         && tile.tile_type !== 'terrain_impassable';
 }
 
+function isHarvesterTargetTile(tile, buildingsByTile) {
+    return tile.is_explored
+        && tile.tile_type.startsWith('regolith_')
+        && !buildingsByTile?.has(`${tile.q},${tile.r}`);
+}
+
+function drawHarvesterArrow(group, x1, y1, x2, y2) {
+    group.innerHTML = '';
+    group.style.display = '';
+    const dx = x2 - x1, dy = y2 - y1;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = dx / len, ny = dy / len;
+    // Shorten: start 12px from HV center, end 16px from target center
+    const sx = x1 + nx * 12, sy = y1 + ny * 12;
+    const ex = x2 - nx * 16, ey = y2 - ny * 16;
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', sx); line.setAttribute('y1', sy);
+    line.setAttribute('x2', ex); line.setAttribute('y2', ey);
+    line.setAttribute('stroke', '#f59e0b');
+    line.setAttribute('stroke-width', '2.5');
+    line.setAttribute('stroke-dasharray', '7 3');
+    group.appendChild(line);
+
+    const angle = Math.atan2(ey - sy, ex - sx);
+    const hl = 11;
+    const pts = [
+        `${ex},${ey}`,
+        `${ex + hl * Math.cos(angle - 2.6)},${ey + hl * Math.sin(angle - 2.6)}`,
+        `${ex + hl * Math.cos(angle + 2.6)},${ey + hl * Math.sin(angle + 2.6)}`,
+    ].join(' ');
+    const head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+    head.setAttribute('points', pts);
+    head.setAttribute('fill', '#f59e0b');
+    group.appendChild(head);
+}
+
 // ── SVG hex grid renderer ─────────────────────────────────────────────────────
 
 function initHexGrid(container, tiles, opts = {}) {
@@ -442,6 +578,15 @@ function initHexGrid(container, tiles, opts = {}) {
     svg.setAttribute('width', '100%');
     svg.style.display = 'block';
 
+    // Build pixel position map (needed for arrow + move animation)
+    const tilePixelMap = new Map();
+    for (const { tile, px, py } of positions) {
+        tilePixelMap.set(`${tile.q},${tile.r}`, { cx: px + offX, cy: py + offY });
+    }
+    if (opts.positionMap) {
+        for (const [k, v] of tilePixelMap) opts.positionMap.set(k, v);
+    }
+
     for (const { tile, px, py } of positions) {
         const cx       = px + offX;
         const cy       = py + offY;
@@ -450,12 +595,39 @@ function initHexGrid(container, tiles, opts = {}) {
         svg.appendChild(g);
     }
 
+    // Arrow overlay: drawn on top of all tiles, visible on target hover
+    if (opts.harvesterMoveMode && opts.harvesterBuilding?.tile_x !== null) {
+        const hvKey = `${opts.harvesterBuilding.tile_x},${opts.harvesterBuilding.tile_y}`;
+        const hvPos = tilePixelMap.get(hvKey);
+        if (hvPos) {
+            const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            arrowGroup.setAttribute('pointer-events', 'none');
+            arrowGroup.style.display = 'none';
+            svg.appendChild(arrowGroup);
+
+            for (const { tile } of positions) {
+                if (!isHarvesterTargetTile(tile, buildingsByTile)) continue;
+                const targetPos = tilePixelMap.get(`${tile.q},${tile.r}`);
+                if (!targetPos) continue;
+                const tileGroup = opts.polygonMap?.get(`${tile.q},${tile.r}`)?.parentElement;
+                if (!tileGroup) continue;
+                tileGroup.addEventListener('mouseenter', () =>
+                    drawHarvesterArrow(arrowGroup, hvPos.cx, hvPos.cy, targetPos.cx, targetPos.cy));
+                tileGroup.addEventListener('mouseleave', () => {
+                    arrowGroup.style.display = 'none';
+                });
+            }
+        }
+    }
+
     container.innerHTML = '';
     container.appendChild(svg);
 }
 
 function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('data-q', tile.q);
+    g.setAttribute('data-r', tile.r);
 
     const isCC         = tile.q === 0 && tile.r === 0;
     const isImpassable = tile.tile_type === 'terrain_impassable' && tile.is_explored;
@@ -465,12 +637,19 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         && isBuildableTile(tile)
         && !buildingsByTile?.has(`${tile.q},${tile.r}`);
 
+    // Harvester move mode: valid relocation target (explored regolith, not occupied)
+    const isHarvesterTarget = opts.harvesterMoveMode
+        && tile.is_explored
+        && tile.tile_type.startsWith('regolith_')
+        && !buildingsByTile?.has(`${tile.q},${tile.r}`);
+
     const points  = hexCorners(cx, cy, size);
     const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
     polygon.setAttribute('points', points.join(' '));
 
     let fillColor = getTileColor(tile);
-    if (isBuildTarget) fillColor = '#b8e8b8';  // light-green build-target highlight
+    if (isBuildTarget)     fillColor = '#b8e8b8';  // light-green build target
+    if (isHarvesterTarget) fillColor = '#b0d8f8';  // light-blue harvester target
     polygon.setAttribute('fill', fillColor);
 
     const [stroke, strokeW] = getTileStroke(tile, isCC);
@@ -497,19 +676,25 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // Onboarding pulse ring — drawn behind the fill polygon
     const hintRank = opts.activeHint?.rank ?? 0;
 
-    // Rank 1: colony-zone terrain tile, explored, buildable, not occupied by any building
+    // Rank 1: buildable colony-zone tile (guide first building placement)
     const isPulseRank1 = hintRank === 1
-        && tile.is_colony_zone
-        && tile.is_explored
-        && tile.tile_type.startsWith('terrain_')
-        && tile.tile_type !== 'terrain_impassable'
+        && tile.is_colony_zone && tile.is_explored
+        && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable'
         && !buildingsByTile?.has(`${tile.q},${tile.r}`);
 
-    // Rank 3: the tile on which any Harvester (building_key='building_harvester') sits
-    const isPulseRank3 = hintRank === 3
+    // Rank 2: Harvester tile in colony zone (guide relocation)
+    const isPulseRank2 = hintRank === 2
         && building?.building_key === 'building_harvester';
 
-    const shouldPulse = isPulseRank1 || isPulseRank3;
+    // Rank 3: CC tile (guide upgrade)
+    const isPulseRank3 = hintRank === 3
+        && tile.q === 0 && tile.r === 0;
+
+    // Harvester current position highlight while in move mode
+    const isHarvesterCurrent = opts.harvesterMoveMode
+        && building?.building_key === 'building_harvester';
+
+    const shouldPulse = isPulseRank1 || isPulseRank2 || isPulseRank3 || isHarvesterCurrent;
 
     if (shouldPulse) {
         const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

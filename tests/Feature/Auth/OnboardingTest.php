@@ -64,8 +64,8 @@ class OnboardingTest extends TestCase
         $this->assertNotNull($harvester, 'Harvester must exist at game start');
         $this->assertEquals(1, $harvester->level, 'Harvester starts at level 1');
         $this->assertEquals(0, $harvester->ap_spend);
-        $this->assertEquals(1, $harvester->tile_x, 'Harvester pre-placed at regolith tile (1,0)');
-        $this->assertEquals(0, $harvester->tile_y, 'Harvester pre-placed at regolith tile (1,0)');
+        $this->assertEquals(1, $harvester->tile_x, 'Harvester pre-placed at colony zone tile (1,0)');
+        $this->assertEquals(0, $harvester->tile_y, 'Harvester pre-placed at colony zone tile (1,0)');
 
         // HousingComplex: level 1, placed at (0,1), slightly damaged.
         $housing = DB::table('colony_buildings')
