@@ -2,6 +2,9 @@
 
 ## 2026-06-11
 
+- **Sol-1 Startszenario: alle drei Gebäude Level 1 beschädigt** — CC, Harvester und Wohnhabitat starten auf Level 1 mit `status_points=16/20` (80% Zustand). Gebäude funktionieren voll, zeigen aber sichtbare Beschädigung; natürlicher Verfall macht Reparatur nach ~5–10 Sols nötig. Repair-Mechanik (AP → `status_points`) folgt in Phase 4. Hint 2 neu: "Kommandozentrale auf Level 2 ausbauen" (schaltet zweiten Berater-Slot frei) statt "Wohnhabitat fertigbauen". `game:reset-player`-Artisan-Command (Dev-Tool): setzt kompletten Spielstand zurück auf Sol 1 ohne erneute Registrierung. Weitere Sol-1-Fixes: Root-Redirect `/` → Lobby (war `/galaxy` → 404), Hint-1-Link → `/advisors` (war `/techtree/personell` → 404), Hint 4–6 nutzen Run-lokalen Sol-Zähler statt globalem Tick.
+- **Kolonien ohne Planeten** (Migration): `glx_colonies.system_object_id` nullable — Koloniengründung benötigt keinen zugewiesenen Planeten mehr in `glx_system_objects`. Beide Views (`v_glx_colonies`, `v_trade_resources`) via SQLite-Recreate-Pattern migriert.
+
 - **Playtest-Blocker Sol 1 behoben** (4 Fixes): Run startet jetzt bei `current_tick=0` statt globalem Tick; Nexus-Briefing zeigt Sol 0. `OnboardingService` seeded 19 Starttiles (Ring 0/1 colony_zone + Ring-2-Fog) inkl. Regolith-Tile für Harvester-Platzierung. Onboarding-Hint 1 = Baumeister einstellen (kein Tick-Threshold), Hint 2 = Wohnhabitat platzieren — Reihenfolge korrigiert. `lang/de/validation.php` ergänzt (war komplett fehlend → Validierungsfehler zeigten Rohkeys). Globaler CSRF-Fix in `tests/TestCase.php` behebt 138 pre-existing HTTP-Test-Failures.
 
 - **AP-Grundwert implementiert** (GDD §13): `PersonellService::getTotalActionPoints()` addiert jetzt 6 Basis-AP für alle Bereiche (Bau/Forschung/Wirtschaft/Strategie), unabhängig von Beratern. Neuer Config-Key `game.ap.base = 6`. Verhindert Deadlocks zu Spielbeginn. Alle betroffenen Tests (`PersonellServiceTest`, `TradeApTest`) auf neue Baseline angepasst.
