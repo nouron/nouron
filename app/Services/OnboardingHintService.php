@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\DB;
  */
 class OnboardingHintService
 {
-    public function __construct(
-        private readonly TickService $tickService,
-    ) {}
+    public function __construct() {}
 
     /**
      * Returns the highest-priority active and non-dismissed hint for the given
@@ -39,10 +37,13 @@ class OnboardingHintService
 
         $dismissed = $this->parseDismissed($prefs?->dismissed_hints ?? null);
 
-        $currentTick = $this->tickService->getTickCount();
+        // Use run-local Sol counter (current_tick on the active Run) so that
+        // tick-threshold hints don't fire on Sol 1 due to the global tick being large.
+        $run    = DB::table('runs')->where('colony_id', $colonyId)->where('status', 'active')->first();
+        $solTick = $run ? (int) $run->current_tick : 0;
 
         // Build the ordered list of hints to evaluate (rank 1 first).
-        $hints = $this->buildHintList($colonyId, $currentTick);
+        $hints = $this->buildHintList($colonyId, $solTick);
 
         foreach ($hints as $hint) {
             if (!$hint['active']) {
@@ -104,7 +105,7 @@ class OnboardingHintService
                 'key'        => 'hint_1',
                 'active'     => $this->checkHint1($colonyId),
                 'text_key'   => 'colony.onboarding_hint_1',
-                'target_url' => '/techtree/personell',
+                'target_url' => '/advisors',
             ],
             [
                 'rank'       => 2,
@@ -159,15 +160,17 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 2: No Wohnhabitat (building_id=28) placed on any tile yet.
+     * Hint 2: CommandCenter (building_id=25) still at level 1.
+     * Upgrading to level 2 unlocks a second advisor slot.
      */
     private function checkHint2(int $colonyId): bool
     {
-        return DB::table('colony_buildings')
+        $level = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 28)
-            ->whereNotNull('tile_x')
-            ->count() === 0;
+            ->where('building_id', 25)
+            ->value('level');
+
+        return $level < 2;
     }
 
     /**

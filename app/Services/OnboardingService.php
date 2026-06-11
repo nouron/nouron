@@ -111,37 +111,36 @@ class OnboardingService
 
     private function seedStartingBuilding(int $colonyId): void
     {
-        // CommandCenter (building_id=25) at level 1 — operational base, 1 advisor slot open.
-        // Harvester (building_id=27) at level 0, ap_spend=7 — "almost done", needs 3 more AP.
-        // HousingComplex (building_id=28) at level 0, ap_spend=7 — same; unplaced, player positions it.
-        // Narrative: player takes over a colony mid-construction and finishes the job Sol 1.
+        // All three start at level 1 but with reduced status (16/20 = 80%) —
+        // functional but visibly damaged. Repair mechanic is a future feature;
+        // natural decay will make repair critical within 5-10 Sols.
         DB::table('colony_buildings')->insert([
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 25,
+                'building_id'   => 25, // CommandCenter
                 'level'         => 1,
-                'status_points' => 20,
+                'status_points' => 16,
                 'ap_spend'      => 0,
                 'tile_x'        => null,
                 'tile_y'        => null,
             ],
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 27,
-                'level'         => 0,
-                'status_points' => 20,
-                'ap_spend'      => 7,
-                'tile_x'        => null,
-                'tile_y'        => null,
+                'building_id'   => 27, // Harvester
+                'level'         => 1,
+                'status_points' => 16,
+                'ap_spend'      => 0,
+                'tile_x'        => 1,
+                'tile_y'        => 0,
             ],
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 28,
-                'level'         => 0,
-                'status_points' => 20,
-                'ap_spend'      => 7,
-                'tile_x'        => null,
-                'tile_y'        => null,
+                'building_id'   => 28, // HousingComplex
+                'level'         => 1,
+                'status_points' => 16,
+                'ap_spend'      => 0,
+                'tile_x'        => 0,
+                'tile_y'        => 1,
             ],
         ]);
     }

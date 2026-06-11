@@ -47,32 +47,34 @@ class OnboardingTest extends TestCase
         $this->assertEquals(0,   $res[4]);   // werkstoffe — produced by harvester, no starting stock
         $this->assertEquals(0,   $res[5]);   // organika   — produced by bioFacility, no starting stock
 
-        // CommandCenter at level 1
+        // CommandCenter: level 1, status 16/20 (80% — slightly damaged, functional).
         $cc = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 25)
             ->first();
         $this->assertNotNull($cc, 'CommandCenter must be placed');
         $this->assertEquals(1, $cc->level);
+        $this->assertEquals(16, $cc->status_points, 'CC starts at 80% status — damaged but operational');
 
-        // Harvester at level 0, ap_spend=7 — "almost done", player places + finishes it Sol 1
+        // Harvester: level 1, placed on regolith (1,0), slightly damaged.
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
             ->first();
         $this->assertNotNull($harvester, 'Harvester must exist at game start');
-        $this->assertEquals(0, $harvester->level, 'Harvester starts unfinished (level 0)');
-        $this->assertEquals(7, $harvester->ap_spend, 'Harvester has 7/10 AP pre-invested');
-        $this->assertNull($harvester->tile_x, 'Harvester starts unplaced — player positions it');
+        $this->assertEquals(1, $harvester->level, 'Harvester starts at level 1');
+        $this->assertEquals(0, $harvester->ap_spend);
+        $this->assertEquals(1, $harvester->tile_x, 'Harvester pre-placed at regolith tile (1,0)');
+        $this->assertEquals(0, $harvester->tile_y, 'Harvester pre-placed at regolith tile (1,0)');
 
-        // HousingComplex at level 0, ap_spend=7 — same as harvester
+        // HousingComplex: level 1, placed at (0,1), slightly damaged.
         $housing = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 28)
             ->first();
         $this->assertNotNull($housing, 'HousingComplex must exist at game start');
-        $this->assertEquals(0, $housing->level, 'HousingComplex starts unfinished (level 0)');
-        $this->assertEquals(7, $housing->ap_spend, 'HousingComplex has 7/10 AP pre-invested');
+        $this->assertEquals(1, $housing->level, 'HousingComplex starts at level 1');
+        $this->assertEquals(0, $housing->ap_spend);
     }
 
     public function test_setup_new_player_creates_colony_without_planet(): void
