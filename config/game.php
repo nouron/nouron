@@ -53,6 +53,13 @@ return [
         41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
     ],
 
+    // Action Points — base value per AP type per Sol, regardless of advisors.
+    // Advisors add their rank bonus on top. See GDD §13.
+    // Formula: availableAP = base + AP_bonus(advisor_rank) - lockedAP(tick)
+    'ap' => [
+        'base' => 6,
+    ],
+
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
     // Formula: CC-Level × cap_commandcenter + housing_units × cap_housingcomplex + Σ(knowledge_cap_per_level)
     // Per-entity supply_cost values live in config/buildings.php and config/ships.php.

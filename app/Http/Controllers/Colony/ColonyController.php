@@ -223,18 +223,32 @@ class ColonyController extends BaseController
         if ($occupied)
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_occupied')]);
 
-        if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
+        $building = DB::table('buildings')->where('id', $data['building_id'])->first();
+        if (!$building)
+            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+
+        // Determine AP cost: Harvester move costs 1 AP per hex tile distance.
+        $existingBuilding = $building->is_instanced ? null : DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $data['building_id'])
+            ->first();
+
+        $isHarvesterMove = (int) $data['building_id'] === BuildingId::Harvester->value
+            && $existingBuilding !== null
+            && $existingBuilding->tile_x !== null;
+
+        $apCost = $isHarvesterMove
+            ? max(1, $this->hexDistance((int)$existingBuilding->tile_x, (int)$existingBuilding->tile_y, (int)$data['q'], (int)$data['r']))
+            : 1;
+
+        if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < $apCost)
             return response()->json([
                 'ok'      => false,
                 'error'   => 'ap_limit',
                 'ap_type' => 'construction',
-                'current' => 0,
+                'current' => $this->personellService->getConstructionPoints($colony->id),
                 'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
-
-        $building = DB::table('buildings')->where('id', $data['building_id'])->first();
-        if (!$building)
-            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
         if ($building->is_instanced) {
             $nextInstanceId = (int) DB::table('colony_buildings')
@@ -258,12 +272,20 @@ class ColonyController extends BaseController
                 ->where('building_id', $data['building_id'])
                 ->first();
 
-            if ($existing) {
+            if ($existingBuilding) {
+                $update = ['tile_x' => $data['q'], 'tile_y' => $data['r']];
+                // Preserve pre-invested ap_spend (seeded buildings); reset only on fresh placements.
+                if ($existingBuilding->tile_x === null) {
+                    $update['ap_spend'] = max((int) $existingBuilding->ap_spend, 1);
+                } elseif (!$isHarvesterMove) {
+                    $update['ap_spend'] = 1;
+                }
+                // Harvester move: tile updates, ap_spend unchanged.
                 DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)
                     ->where('building_id', $data['building_id'])
-                    ->update(['tile_x' => $data['q'], 'tile_y' => $data['r'], 'ap_spend' => 1]);
-                $nextInstanceId = (int) $existing->instance_id;
+                    ->update($update);
+                $nextInstanceId = (int) $existingBuilding->instance_id;
             } else {
                 DB::table('colony_buildings')->insert([
                     'colony_id'     => $colony->id,
@@ -279,7 +301,7 @@ class ColonyController extends BaseController
         }
 
         if (!config('game.bypass.ap_checks'))
-            $this->personellService->lockActionPoints('construction', $colony->id, 1);
+            $this->personellService->lockActionPoints('construction', $colony->id, $apCost);
 
         $this->eventService->createEvent([
             'user'       => Auth::id(),
@@ -445,6 +467,13 @@ class ColonyController extends BaseController
             'apNav'          => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
             'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
         ];
+    }
+
+    private function hexDistance(int $q1, int $r1, int $q2, int $r2): int
+    {
+        $dq = $q2 - $q1;
+        $dr = $r2 - $r1;
+        return (abs($dq) + abs($dr) + abs($dq + $dr)) / 2;
     }
 
     private function fetchBuildingRow(int $colonyId, int $buildingId, int $instanceId = 1): object

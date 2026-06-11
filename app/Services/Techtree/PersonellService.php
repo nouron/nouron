@@ -58,7 +58,8 @@ class PersonellService
             return 0;
         }
 
-        $baseAp = Advisor::where('personell_id', $personellId)
+        $baseAp    = (int) config('game.ap.base', 6);
+        $advisorAp = Advisor::where('personell_id', $personellId)
             ->whereNull('unavailable_until_tick')
             ->where('colony_id', $scopeId)
             ->get()
@@ -67,7 +68,7 @@ class PersonellService
         // Apply trust AP multiplier for colony-scoped types.
         $trust      = $this->trustService->getTrust($scopeId);
         $multiplier = $this->trustService->getApMultiplier($trust);
-        return (int) round($baseAp * $multiplier);
+        return (int) round(($baseAp + $advisorAp) * $multiplier);
     }
 
     public function getAvailableActionPoints(string $type, int $scopeId): int
