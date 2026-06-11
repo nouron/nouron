@@ -152,7 +152,7 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 <script src="{{ asset('js/swipe.js') }}"></script>
 <script src="{{ asset('js/carousel.js') }}"></script>
-<script src="{{ asset('js/colony-hexgrid.js') }}"></script>
+<script src="{{ asset('js/colony-hexgrid.js') }}?v={{ filemtime(public_path('js/colony-hexgrid.js')) }}"></script>
 @stack('scripts')
 </body>
 </html>

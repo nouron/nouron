@@ -2365,13 +2365,18 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 **Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
 
-| Rang | Bedingung | Hinweistext | Ziel-Link |
-|------|-----------|-------------|-----------|
-| 1 | Kein Wohnhabitat vorhanden (Supply-Cap = 10) | "Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10." | Colony-Screen, Bauen-Aktion |
-| 2 | Kein Ingenieur-Berater aktiv (0 Construction-AP-Bonus) | "Noch kein Ingenieur eingestellt — Construction-AP bleibt bei Grundwert." | Berater-Screen |
-| 3 | Harvester steht auf keinem Regolith-Tile | "Harvester produziert nichts — auf Regolith-Tile verlegen." | Colony-Screen, Harvester-Tile |
-| 4 | Kein Wissen freigeschaltet nach Sol 10 | "Noch keine Kenntnis erforscht — Analytik-Labor baut AP auf." | Techtree-Screen, Kenntnisse |
-| 5 | Vertrauen unter -20 für >= 3 Sole | "Vertrauen sinkt — Zivilgebäude bauen oder reparieren." | Techtree-Screen, Gebäude |
+| Rang | Key | Bedingung | Hinweistext | Ziel-Link | Sol-Schwelle |
+|------|-----|-----------|-------------|-----------|--------------|
+| 1 | `hint_1` | Kein Baumeister-Berater aktiv | "Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert von 6." | `/advisors` | — |
+| 2 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1 — Kolonie-Zone) | "Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen." | Colony-Screen | — |
+| 3 | `hint_3` | CC Level < 2 | "Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei." | Colony-Screen | Sol 2 |
+| 4 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht — Analytik-Labor bauen und erste Kenntnis auf Level 1 bringen." | `/techtree` | Sol 8 |
+| 5 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt — Zivilgebäude bauen oder Wohnhabitate pflegen." | Colony-Screen | Sol 5 |
+| 6 | `hint_6` | CC ≥ Lv2, keine Cantina gebaut | "Cantina noch nicht gebaut — hier erscheinen Händler und Gäste mit Tauschangeboten." | `/colony/view?build=52` | Sol 8 |
+
+> **Designentscheidung zu Rang 2 (Harvester):** Der Harvester startet auf Ring-1-Tile (1,0) = `regolith_normal, is_colony_zone=1`. Das ist technisch ein Regolith-Tile, liegt aber in der Kolonie-Zone — die für Gebäude reserviert ist. Der Hint motiviert, ihn auf Ring 2 zu verlegen. Ring-2-Tile (2,0) ist `regolith_normal, is_explored=1` (Nexus-Scout hat es bei Ankunft vorab erkundet, Nexus-Briefing erklärt das). Nach dem Verlegen ist das Ring-1-Tile für Gebäude frei.
+
+> **Designentscheidung zu Rang 3 (Sol-Schwelle):** CC-Ausbau kostet `ap_for_levelup = 10` Construction-AP. Mit 6 Basis-AP + 4 Baumeister-Junior = 10 AP/Sol ist CC Lv2 frühestens nach Sol 1 erreichbar. Die Schwelle Sol 2 verhindert, dass der Hint sofort nach dem Baumeister-Hire erscheint bevor der Spieler auch nur einen AP ausgegeben hat.
 
 **Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
 
@@ -2379,7 +2384,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
 
-> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Sol 10) setzt voraus, dass das Analytik-Labor (CC Lv2) bis dahin baubar ist. Bei CC-Ausbau-Tempo sollte geprüft werden ob Sol 10 realistisch ist oder ob der Schwellwert auf Sol 15–20 angepasst werden muss.
+> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Sol 8) setzt voraus, dass CC Lv2 + Analytik-Labor bis dahin erreichbar sind. Nach Playtest evaluieren ob Sol 8 realistisch ist oder auf Sol 10–12 verschoben werden muss.
 
 ---
 
@@ -2393,11 +2398,12 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 | Hint-Rang | Pulsierendes Element |
 |-----------|----------------------|
-| 1 (kein Wohnhabitat) | Wohnhabitat-Kachel im Techtree, und freie Terrain-Tiles auf der Koloniekarte |
-| 2 (kein Ingenieur) | Ingenieur-Slot im Berater-Screen |
-| 3 (Harvester falsch) | Harvester-Tile auf der Koloniekarte |
-| 4 (kein Wissen) | Analytik-Labor-Kachel im Techtree |
+| 1 (kein Baumeister) | Baumeister-Slot im Berater-Screen |
+| 2 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
+| 3 (CC Level < 2) | CC-Tile auf Koloniekarte |
+| 4 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
 | 5 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
+| 6 (keine Cantina) | Cantina-Kachel im Techtree |
 
 **Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
 
@@ -2431,44 +2437,41 @@ Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwische
 
 ### § 16.5 — Die ersten 3–5 Aktionen: natürlicher Pfad
 
-Der Startzustand (CC Lv1, Harvester Lv1, 3.000 Cr, 200 Rg) erzwingt einen natürlichen Pfad, wenn der Spieler dem Hint-System folgt. Der Pfad ist nicht zwingend — aber er ist der offensichtlich sinnvolle:
+Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 beschädigt, 3.000 Cr, 200 Rg) erzwingt einen natürlichen Pfad, wenn der Spieler dem Hint-System folgt. Der Pfad ist nicht zwingend — aber er ist der offensichtlich sinnvolle:
 
-**Aktion 1 — Wohnhabitat bauen (Colony-Screen)**
+> **Startzustand (implementiert 2026-06-11):** CC, Harvester und Wohnhabitat starten auf Level 1 mit `status_points=16/20` (80% Zustand) — funktionsfähig, aber sichtbar beschädigt. Repair-Mechanik (AP → `status_points`) ist noch nicht implementiert; natürlicher Verfall macht Reparatur nach ~5–10 Solen nötig. Harvester startet auf Ring-1-Tile (1,0) = `regolith_normal, is_colony_zone=1`. Ring-2-Tile (2,0) = `regolith_normal, is_explored=1` ist vorab erkundet (Nexus-Scout).
 
-- Warum: Supply-Cap von 10 ist ohne Wohnhabitat zu niedrig für Berater + Schiffe
-- Kosten: Credits + Regolith (CC Lv1 verfügbar, kein Construction-AP nötig wenn Dev-Mode off)
-- Ergebnis: Supply-Cap springt auf 18. Visuell: Kolonie-Zone-Tile ist jetzt bebaut.
-- Feedback-Loop klar: Ressourcenleiste aktualisiert sich sofort (Alpine.js live-update)
+**Aktion 1 — Baumeister einstellen (Berater-Screen)**
 
-**Aktion 2 — Ingenieur-Berater einstellen (Berater-Screen)**
+- Warum: Baumeister (+4 Construction-AP/Sol Junior) erhöht Bau-Tempo ab Sol 1; hint_1 zeigt auf `/advisors`
+- Kosten: 300 Cr (Junior-Baumeister)
+- Ergebnis: Construction-AP springt von 6 auf 10. AP-Chips aktualisieren sich sofort.
+- Feedback-Loop klar: Berater-Card erscheint, Construction-AP-Anzeige springt hoch
 
-- Warum: +6 Construction-AP/Sol durch Junior-Ingenieur verdoppelt den Grundwert
-- Kosten: 50 Cr (Junior — erster Berater ist bewusst günstig)
-- Ergebnis: Construction-AP-Anzeige springt von 6 auf 12. Berater-Card zeigt "Junior Ingenieur — aktiv"
-- Feedback-Loop klar: AP-Chips auf allen Screens aktualisieren sich sofort
+**Aktion 2 — Harvester auf Ring-2-Regolith verlegen (Colony-Screen)**
 
-**Aktion 3 — CC ausbauen (Techtree-Screen → CC-Kachel)**
+- Warum: Harvester steht in der Kolonie-Zone (Ring 1) — dieser Slot ist für Gebäude reserviert. Nexus-Scout hat Ring-2-Tile (2,0) vorab erkundet; Ziel ist sichtbar.
+- Kosten: 1 Construction-AP (Distanz 1 Hex)
+- Ergebnis: Tile (1,0) in Ring 1 wird frei für Gebäude; Harvester produziert weiterhin Regolith
+- Feedback-Loop klar: Harvester-Sprite bewegt sich auf neues Tile
 
-- Warum: CC Lv2 schaltet Wissenschaftler-Slot frei; 2 weitere Kolonie-Zone-Tiles
-- Kosten: Construction-AP (erster Sol mit Ingenieur macht das spürbar) + Credits
-- Ergebnis: Neue Tiles leuchten auf der Karte auf. Wissenschaftler-Slot in Berater-UI erscheint.
-- Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion § 4a)
+**Aktion 3 — CC auf Level 2 ausbauen (Colony-Screen, ab Sol 2)**
 
-**Aktion 4 — Exploration: erstes Tile erkunden (Colony-Screen)**
+- Warum: CC Lv2 schaltet zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles
+- Kosten: 10 Construction-AP (kumuliert; mit 10 AP/Sol in Sol 2 erreichbar)
+- Ergebnis: Neue Ring-2-Tiles leuchten auf Koloniekarte auf. Zweiter Berater-Slot erscheint.
+- Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion §4a)
 
-- Warum: Regolith-Vorräte sind sichtbar nach Exploration; Event-Tiles können etwas enthalten
-- Kosten: 1 Navigation-AP (Grundwert von 6 — kein Raumfahrer nötig)
-- Ergebnis: Ein Exploration-Zone-Tile wird aufgedeckt. Typ sichtbar (Regolith/Terrain/Event).
-- Feedback-Loop klar: Tile-Animation beim Aufdecken (Fog of War lüftet)
+**Aktion 4 — Weitere Tiles erkunden / zweiten Berater einstellen**
 
-**Aktion 5 — Zweiten Berater einstellen oder erste Kenntnis erforschen**
-
-- Warum: Ab hier verzweigen sich sinnvolle Strategien — Aufbau, Exploration, Handel
-- An diesem Punkt ist das Onboarding erledigt: Der Spieler hat die Kernsysteme berührt
+- Warum: Ab hier verzweigen sich Strategien — Exploration, Forschung, Handel
+- An diesem Punkt hat der Spieler die Kernsysteme berührt: Berater, Tile-Management, CC-Ausbau
 
 **Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
 
-> ⚠️ BALANCE CONCERN: Aktion 2 (Ingenieur-Berater, 50 Cr) muss nach dem ersten Playtest daraufhin geprüft werden, ob 50 Cr nach dem Wohnhabitat-Bau noch sicher verfügbar sind. Wenn der Wohnhabitat-Bau mehr als ~2.800 Cr kostet, ist der Junior-Ingenieur knapp. Einstellungskosten sind in `config/game.php → advisors` konfigurierbar.
+> ⚠️ BALANCE CONCERN: Baumeister-Kosten (300 Cr, Junior) müssen nach Playtest geprüft werden — 300 Cr von 3.000 Startguthaben ist 10%, sollte kein Problem sein. Einstellungskosten in `config/advisors.php` konfigurierbar.
+
+> ⚠️ BALANCE CONCERN: Repair-Mechanik fehlt noch. Gebäude bei 80% sind 5–10 Sole lang funktionsfähig; sobald Verfall sie unter ~30% bringt, wirken sich Statusmalus-Effekte aus. Die Schwelle für "kritisch beschädigt" (aktuell: `80%`-Trigger in OnboardingTriggersService) soll nach erstem Playtest kalibriert werden.
 
 ---
 

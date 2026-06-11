@@ -34,7 +34,7 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/', function () {
     return auth()->check()
-        ? redirect()->route('galaxy.index')
+        ? redirect()->route('lobby')
         : redirect()->route('login');
 });
 

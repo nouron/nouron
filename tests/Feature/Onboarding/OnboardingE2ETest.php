@@ -74,9 +74,9 @@ class OnboardingE2ETest extends TestCase
         $this->assertNotNull($hint, 'Rank-1 hint should be active after setup');
         $this->assertSame(1, $hint['rank']);
         $this->assertSame('hint_1', $hint['key']);
-        $this->assertStringContainsString('/techtree', $hint['target_url']);
+        $this->assertStringContainsString('/advisors', $hint['target_url']);
 
-        // ── 4. Hire engineer → rank-1 resolved; rank-2 (housing) surfaces ───
+        // ── 4. Hire engineer → rank-1 resolved; rank-2 (Harvester in colony zone) surfaces ──
         $engineerId = \App\Services\Techtree\PersonellService::idFor('engineer');
         DB::table('advisors')->insert([
             'user_id'      => $this->userId,
@@ -92,12 +92,12 @@ class OnboardingE2ETest extends TestCase
         $this->assertSame('hint_2', $hint['key']);
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
-        // ── 5. Place housing complex → rank-2 condition resolved ─────────────
-        // Tiles are seeded by setupNewPlayer (ring 0+1+2). Use existing tile (1,0).
+        // ── 5. Move Harvester outside colony zone → rank-2 resolved ──────────
+        // Tile (3,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer (ring-3 pre-explored).
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', 28)
-            ->update(['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 0, 'tile_y' => 1]);
+            ->where('building_id', 27)
+            ->update(['tile_x' => 3, 'tile_y' => 0]);
 
         // ── 6. Disable onboarding hints → no hint returned ─────────────────
         DB::table('user_preferences')->updateOrInsert(

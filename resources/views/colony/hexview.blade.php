@@ -37,7 +37,10 @@ window.__colonyViewData = {
         constructionSite:   '{{ __('colony.construction_site') }}',
         discoveryTitle:     '{{ __('colony.discovery_title') }}',
         discoveryDismiss:   '{{ __('colony.discovery_dismiss') }}',
-        harvesterMoveTip:   @json(__('colony.onboarding_trigger_harvester_move')),
+        harvesterMoveTip:      @json(__('colony.onboarding_trigger_harvester_move')),
+        harvesterMove:         '{{ __('colony.harvester_move') }}',
+        harvesterMoveModeHint: @json(__('colony.harvester_move_mode_hint')),
+        harvesterMoveNoTargets: @json(__('colony.harvester_move_no_targets')),
     },
 };
 </script>
@@ -121,13 +124,24 @@ window.__colonyViewData = {
         {{-- Tile info / build mode sidebar --}}
         <aside class="tile-panel">
             <div class="tile-panel-header">
-                <h3 x-text="buildMode ? '{{ __('colony.build_mode_title') }}' : '{{ __('colony.tile_info') }}'"></h3>
+                <h3 x-text="harvesterMoveMode ? '{{ __('colony.harvester_move') }}' : (buildMode ? '{{ __('colony.build_mode_title') }}' : '{{ __('colony.tile_info') }}')"></h3>
             </div>
 
             <div class="tile-panel-body">
 
+                {{-- Harvester move mode panel --}}
+                <template x-if="harvesterMoveMode">
+                    <div>
+                        <p class="build-mode-hint"
+                           x-text="hasHarvesterTargets() ? i18n.harvesterMoveModeHint : i18n.harvesterMoveNoTargets"></p>
+                        <button class="sidebar-action-btn" @click="cancelHarvesterMove()">
+                            {{ __('colony.cancel') }}
+                        </button>
+                    </div>
+                </template>
+
                 {{-- Build mode: building list --}}
-                <template x-if="buildMode">
+                <template x-if="!harvesterMoveMode && buildMode">
                     <div>
                         <p class="build-mode-hint">{{ __('colony.build_mode_hint') }}</p>
 
@@ -175,7 +189,7 @@ window.__colonyViewData = {
                 </template>
 
                 {{-- Normal mode: selected tile info --}}
-                <template x-if="!buildMode && selectedTile">
+                <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
                     <div>
                         <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
 
@@ -259,16 +273,18 @@ window.__colonyViewData = {
                                     </div>
                                 </template>
 
-                                <div class="sidebar-bar-group">
-                                    <div class="sidebar-bar-label">
-                                        <span>{{ __('colony.ap_invested') }}</span>
-                                        <span x-text="`${buildingForTile(selectedTile).ap_spend} / ${buildingForTile(selectedTile).ap_for_levelup}`"></span>
+                                <template x-if="buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level">
+                                    <div class="sidebar-bar-group">
+                                        <div class="sidebar-bar-label">
+                                            <span>{{ __('colony.ap_invested') }}</span>
+                                            <span x-text="`${buildingForTile(selectedTile).ap_spend} / ${buildingForTile(selectedTile).ap_for_levelup}`"></span>
+                                        </div>
+                                        <div class="sidebar-bar-wrap">
+                                            <div class="sidebar-bar sidebar-bar--ap"
+                                                 :style="`width:${Math.round(buildingForTile(selectedTile).ap_spend / buildingForTile(selectedTile).ap_for_levelup * 100)}%`"></div>
+                                        </div>
                                     </div>
-                                    <div class="sidebar-bar-wrap">
-                                        <div class="sidebar-bar sidebar-bar--ap"
-                                             :style="`width:${Math.round(buildingForTile(selectedTile).ap_spend / buildingForTile(selectedTile).ap_for_levelup * 100)}%`"></div>
-                                    </div>
-                                </div>
+                                </template>
                             </div>
                         </template>
 
@@ -291,12 +307,18 @@ window.__colonyViewData = {
                                     {{ __('colony.invest_ap') }}
                                 </button>
                             </template>
+
+                            <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.level > 0">
+                                <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startHarvesterMove()">
+                                    {{ __('colony.harvester_move') }}
+                                </button>
+                            </template>
                         </div>
                     </div>
                 </template>
 
                 {{-- Normal mode: nothing selected --}}
-                <template x-if="!buildMode && !selectedTile">
+                <template x-if="!harvesterMoveMode && !buildMode && !selectedTile">
                     <div class="tile-panel-empty">
                         <p>{{ __('colony.click_tile_hint') }}</p>
                     </div>

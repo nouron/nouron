@@ -15,9 +15,10 @@ use Illuminate\Support\Facades\DB;
 class OnboardingService
 {
     public function __construct(
-        private readonly ColonyService $colonyService,
-        private readonly TickService   $tickService,
-        private readonly EventService  $eventService,
+        private readonly ColonyService     $colonyService,
+        private readonly TickService       $tickService,
+        private readonly EventService      $eventService,
+        private readonly ColonyTileService $tileService,
     ) {}
 
     /**
@@ -30,16 +31,8 @@ class OnboardingService
         return DB::transaction(function () use ($userId, $colonyName) {
             $name = $colonyName ?: 'Kolonie';
 
-            $freePlanet = DB::table('glx_system_objects')
-                ->whereNotIn('id', DB::table('glx_colonies')->pluck('system_object_id'))
-                ->value('id');
-
-            if (!$freePlanet) {
-                throw new \RuntimeException('No free planets available for new player.');
-            }
-
             $globalTick = $this->tickService->getTickCount();
-            $colony     = $this->colonyService->createColony($userId, $freePlanet, $name, $globalTick);
+            $colony     = $this->colonyService->createColony($userId, null, $name, $globalTick);
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
@@ -86,70 +79,84 @@ class OnboardingService
 
     private function seedStartingTiles(int $colonyId): void
     {
-        // Ring 0 (CC center) + ring 1 (6 tiles): colony_zone, explored.
-        // Ring 2 (12 tiles): fog of war, not colony_zone.
+        // Ring 0+1: explored from start. is_colony_zone assigned by assignColonyZone() below.
+        // Ring 2: fog — auto-explored when CC is upgraded (assignColonyZone).
+        // Ring 3+ (exploration zone): fog, except (3,0) pre-explored by Nexus Scout (Harvester target).
+        // Regolith only on ring 3+ — no regolith inside colony zone.
         $tiles = [
             // ── Ring 0 ────────────────────────────────────────────────────────
-            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
             // ── Ring 1 ────────────────────────────────────────────────────────
-            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
-            // ── Ring 2 (fog) ──────────────────────────────────────────────────
+            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            // ── Ring 2 (fog — unlocked by CC upgrade) ─────────────────────────
             ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  0, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -1, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -2, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_impassable', 'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -2, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -1, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' =>  0, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            // ── Ring 3 (exploration zone, fog) ────────────────────────────────
+            ['q' =>  3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' =>  3, 'r' => -1, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  3, 'r' => -2, 'ring' => 3, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' =>  1, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  2, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' =>  3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' =>  3, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' => -3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
         ];
 
         $rows = array_map(fn($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
         DB::table('colony_tiles')->insert($rows);
+
+        // Assign colony zone based on CC Level 1 — auto-explores ring 0+1.
+        $this->tileService->assignColonyZone($colonyId, 1);
     }
 
     private function seedStartingBuilding(int $colonyId): void
     {
-        // CommandCenter (building_id=25) at level 1 — operational base, 1 advisor slot open.
-        // Harvester (building_id=27) at level 0, ap_spend=7 — "almost done", needs 3 more AP.
-        // HousingComplex (building_id=28) at level 0, ap_spend=7 — same; unplaced, player positions it.
-        // Narrative: player takes over a colony mid-construction and finishes the job Sol 1.
+        // All three start at level 1 but with reduced status (16/20 = 80%) —
+        // functional but visibly damaged. Repair mechanic is a future feature;
+        // natural decay will make repair critical within 5-10 Sols.
         DB::table('colony_buildings')->insert([
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 25,
+                'building_id'   => 25, // CommandCenter
                 'level'         => 1,
-                'status_points' => 20,
+                'status_points' => 16,
                 'ap_spend'      => 0,
                 'tile_x'        => null,
                 'tile_y'        => null,
             ],
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 27,
-                'level'         => 0,
-                'status_points' => 20,
-                'ap_spend'      => 7,
-                'tile_x'        => null,
-                'tile_y'        => null,
+                'building_id'   => 27, // Harvester
+                'level'         => 1,
+                'status_points' => 16,
+                'ap_spend'      => 0,
+                'tile_x'        => 1,
+                'tile_y'        => 0,
             ],
             [
                 'colony_id'     => $colonyId,
-                'building_id'   => 28,
-                'level'         => 0,
-                'status_points' => 20,
-                'ap_spend'      => 7,
-                'tile_x'        => null,
-                'tile_y'        => null,
+                'building_id'   => 28, // HousingComplex
+                'level'         => 1,
+                'status_points' => 16,
+                'ap_spend'      => 0,
+                'tile_x'        => 0,
+                'tile_y'        => 1,
             ],
         ]);
     }

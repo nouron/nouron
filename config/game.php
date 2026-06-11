@@ -305,7 +305,7 @@ return [
         'hint_no_engineer_ticks' => 3,
 
         // Ticks elapsed without any knowledge researched before Rank-4 hint fires
-        'hint_no_knowledge_after_tick' => 10,
+        'hint_no_knowledge_after_tick' => 8,
 
         // Trust value below which Rank-5 hint fires
         'hint_trust_threshold' => -20,
@@ -314,6 +314,9 @@ return [
         'hint_trust_min_ticks' => 5,
 
         // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing)
-        'hint_no_cantina_after_tick' => 5,
+        'hint_no_cantina_after_tick' => 8,
+
+        // Minimum Sol before CC-upgrade hint (hint_3) fires — player needs time to gather AP
+        'hint_cc_upgrade_after_tick' => 2,
     ],
 ];

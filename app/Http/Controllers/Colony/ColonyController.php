@@ -210,10 +210,20 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_found')]);
         if (!$tile->is_explored)
             return response()->json(['ok' => false, 'error' => __('colony.error_not_explored')]);
-        if (!$tile->is_colony_zone)
-            return response()->json(['ok' => false, 'error' => __('colony.error_tile_outside_colony')]);
-        if (!str_starts_with($tile->tile_type, 'terrain_') || $tile->tile_type === 'terrain_impassable')
-            return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_buildable')]);
+
+        $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;
+
+        if ($isHarvester) {
+            // Harvester goes to regolith tiles in the exploration zone (ring 3+, is_colony_zone=0).
+            if (!str_starts_with($tile->tile_type, 'regolith_'))
+                return response()->json(['ok' => false, 'error' => __('colony.error_harvester_needs_regolith')]);
+        } else {
+            // Regular buildings: colony zone only, buildable terrain.
+            if (!$tile->is_colony_zone)
+                return response()->json(['ok' => false, 'error' => __('colony.error_tile_outside_colony')]);
+            if (!str_starts_with($tile->tile_type, 'terrain_') || $tile->tile_type === 'terrain_impassable')
+                return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_buildable')]);
+        }
 
         $occupied = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -227,13 +237,16 @@ class ColonyController extends BaseController
         if (!$building)
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
 
-        // Determine AP cost: Harvester move costs 1 AP per hex tile distance.
-        $existingBuilding = $building->is_instanced ? null : DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->where('building_id', $data['building_id'])
-            ->first();
+        // Harvester is marked is_instanced=1 in schema but has exactly one instance per colony
+        // and must always be moved (UPDATE), never duplicated (INSERT).
+        $existingBuilding = ($isHarvester || !$building->is_instanced)
+            ? DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', $data['building_id'])
+                ->first()
+            : null;
 
-        $isHarvesterMove = (int) $data['building_id'] === BuildingId::Harvester->value
+        $isHarvesterMove = $isHarvester
             && $existingBuilding !== null
             && $existingBuilding->tile_x !== null;
 
@@ -250,7 +263,7 @@ class ColonyController extends BaseController
                 'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
 
-        if ($building->is_instanced) {
+        if ($building->is_instanced && !$isHarvester) {
             $nextInstanceId = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $data['building_id'])

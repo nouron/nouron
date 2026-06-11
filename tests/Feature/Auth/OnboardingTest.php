@@ -47,35 +47,37 @@ class OnboardingTest extends TestCase
         $this->assertEquals(0,   $res[4]);   // werkstoffe — produced by harvester, no starting stock
         $this->assertEquals(0,   $res[5]);   // organika   — produced by bioFacility, no starting stock
 
-        // CommandCenter at level 1
+        // CommandCenter: level 1, status 16/20 (80% — slightly damaged, functional).
         $cc = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 25)
             ->first();
         $this->assertNotNull($cc, 'CommandCenter must be placed');
         $this->assertEquals(1, $cc->level);
+        $this->assertEquals(16, $cc->status_points, 'CC starts at 80% status — damaged but operational');
 
-        // Harvester at level 0, ap_spend=7 — "almost done", player places + finishes it Sol 1
+        // Harvester: level 1, placed on regolith (1,0), slightly damaged.
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
             ->first();
         $this->assertNotNull($harvester, 'Harvester must exist at game start');
-        $this->assertEquals(0, $harvester->level, 'Harvester starts unfinished (level 0)');
-        $this->assertEquals(7, $harvester->ap_spend, 'Harvester has 7/10 AP pre-invested');
-        $this->assertNull($harvester->tile_x, 'Harvester starts unplaced — player positions it');
+        $this->assertEquals(1, $harvester->level, 'Harvester starts at level 1');
+        $this->assertEquals(0, $harvester->ap_spend);
+        $this->assertEquals(1, $harvester->tile_x, 'Harvester pre-placed at colony zone tile (1,0)');
+        $this->assertEquals(0, $harvester->tile_y, 'Harvester pre-placed at colony zone tile (1,0)');
 
-        // HousingComplex at level 0, ap_spend=7 — same as harvester
+        // HousingComplex: level 1, placed at (0,1), slightly damaged.
         $housing = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 28)
             ->first();
         $this->assertNotNull($housing, 'HousingComplex must exist at game start');
-        $this->assertEquals(0, $housing->level, 'HousingComplex starts unfinished (level 0)');
-        $this->assertEquals(7, $housing->ap_spend, 'HousingComplex has 7/10 AP pre-invested');
+        $this->assertEquals(1, $housing->level, 'HousingComplex starts at level 1');
+        $this->assertEquals(0, $housing->ap_spend);
     }
 
-    public function test_setup_new_player_uses_free_planet(): void
+    public function test_setup_new_player_creates_colony_without_planet(): void
     {
         $service = $this->app->make(OnboardingService::class);
         $user    = User::factory()->create();
@@ -84,51 +86,7 @@ class OnboardingTest extends TestCase
 
         $this->assertNotNull($colony);
         $this->assertEquals($user->user_id, $colony->user_id);
-
-        // Planet must not be shared with another colony from the same setup call
-        $count = DB::table('glx_colonies')
-            ->where('system_object_id', $colony->system_object_id)
-            ->where('user_id', $user->user_id)
-            ->count();
-        $this->assertEquals(1, $count);
-    }
-
-    public function test_registration_fails_when_no_free_planets(): void
-    {
-        // Block all 14 system_objects with fake colonies.
-        // system_object_id=1 is already occupied by the TestSeeder (Springfield + Shelbyville).
-        // We insert one fake colony each for the remaining 13 objects (IDs 2–18).
-        $fakeColonyId = 100;
-        foreach ([2, 3, 4, 5, 10, 11, 12, 13, 14, 15, 16, 17, 18] as $systemObjectId) {
-            DB::table('glx_colonies')->insert([
-                'id'               => $fakeColonyId++,
-                'name'             => 'FakeColony_' . $systemObjectId,
-                'system_object_id' => $systemObjectId,
-                'spot'             => 1,
-                'user_id'          => null,
-                'since_tick'       => 0,
-                'is_primary'       => 0,
-            ]);
-        }
-
-        // Set Referer so that back() in the controller resolves to the register route,
-        // which is what a real browser would send after submitting the registration form.
-        $response = $this->withHeaders(['Referer' => route('register')])
-            ->post(route('register'), [
-                'username'              => 'blockedplayer',
-                'email'                 => 'blocked@example.com',
-                'password'              => 'secret1234',
-                'password_confirmation' => 'secret1234',
-            ]);
-
-        // Must not redirect to galaxy — expect redirect back to registration form
-        $response->assertRedirectContains(route('register'));
-
-        // An error must be present in the session
-        $response->assertSessionHasErrors('username');
-
-        // No user account must have been created (transaction rolled back)
-        $this->assertDatabaseMissing('user', ['username' => 'blockedplayer']);
+        $this->assertNull($colony->system_object_id, 'Colonies no longer require a planet assignment');
     }
 
     public function test_login_triggers_onboarding_for_user_without_colony(): void

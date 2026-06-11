@@ -3,7 +3,6 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Services\OnboardingHintService;
-use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,6 @@ class OnboardingHintServiceTest extends TestCase
     use RefreshDatabase;
 
     private OnboardingHintService $service;
-    private TickService $tickService;
 
     private int $userId   = 999;
     private int $colonyId = 999;
@@ -27,11 +25,8 @@ class OnboardingHintServiceTest extends TestCase
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
 
-        $this->service     = $this->app->make(OnboardingHintService::class);
-        $this->tickService = $this->app->make(TickService::class);
+        $this->service = $this->app->make(OnboardingHintService::class);
 
-        // Baseline: user + colony.
-        // Reuse glx_system_objects id=3 (free — not used by testdata colonies 1/2).
         DB::table('user')->insertOrIgnore([
             'user_id'        => $this->userId,
             'username'       => 'TestUser',
@@ -44,29 +39,69 @@ class OnboardingHintServiceTest extends TestCase
         ]);
         DB::table('glx_colonies')->insertOrIgnore([
             'id' => $this->colonyId, 'user_id' => $this->userId,
-            'system_object_id' => 3, 'name' => 'TestColony',
+            'system_object_id' => null, 'name' => 'TestColony',
             'spot' => 1, 'since_tick' => 1, 'is_primary' => 1,
         ]);
 
-        // Baseline preferences: onboarding enabled, nothing dismissed.
+        // Run at Sol 0 — keeps tick-gated hints (3/4/5/6) below their thresholds.
+        DB::table('runs')->insertOrIgnore([
+            'id'           => $this->colonyId,
+            'user_id'      => $this->userId,
+            'colony_id'    => $this->colonyId,
+            'current_tick' => 0,
+            'status'       => 'active',
+            'settings'     => json_encode(['tick_limit' => 100, 'bypass' => ['ap_checks' => false, 'resource_costs' => false, 'supply_checks' => false], 'supply_cap_max' => 200]),
+        ]);
+
         DB::table('user_preferences')->insertOrIgnore([
             'user_id' => $this->userId, 'onboarding_hints' => 1, 'dismissed_hints' => null,
         ]);
 
-        // Moral (resource_id=12) above threshold.
         DB::table('colony_resources')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'resource_id' => 12, 'amount' => 0,
         ]);
 
-        // Tick well below all thresholds by default.
-        $this->tickService->setTickCount(1);
+        // Baseline buildings: CC, Harvester, Housing at level 1 — mirrors real game start state.
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 25,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 16, 'ap_spend' => 0,
+            'tile_x' => null, 'tile_y' => null,
+        ]);
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 27,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 16, 'ap_spend' => 0,
+            'tile_x' => 1, 'tile_y' => 0, // ring 1 — inside colony zone
+        ]);
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 28,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 16, 'ap_spend' => 0,
+            'tile_x' => 0, 'tile_y' => 1,
+        ]);
+
+        // Harvester start position: ring 1, colony_zone=1, no regolith (colony zone is building area).
+        DB::table('colony_tiles')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'q' => 1, 'r' => 0, 'ring' => 1,
+            'tile_type' => 'terrain_empty', 'is_explored' => 1,
+            'is_colony_zone' => 1, 'is_deep_scanned' => 0,
+        ]);
+        // Ring 2: fog at CC Level 1 — NOT colony zone yet (unlocked by CC upgrade).
+        DB::table('colony_tiles')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'q' => 2, 'r' => 0, 'ring' => 2,
+            'tile_type' => 'terrain_empty', 'is_explored' => 0,
+            'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+        ]);
+        // Pre-explored ring-3 regolith (Nexus scout tile — guaranteed Harvester move target).
+        DB::table('colony_tiles')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'q' => 3, 'r' => 0, 'ring' => 3,
+            'tile_type' => 'regolith_normal', 'is_explored' => 1,
+            'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+        ]);
     }
 
     // ── Guard: disabled / missing prefs ──────────────────────────────────────
 
     public function test_returns_hint_when_no_prefs_row(): void
     {
-        // Missing row = hints enabled by default. Hint 1 should still fire.
         DB::table('user_preferences')->where('user_id', $this->userId)->delete();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -88,7 +123,6 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_hint_1_fires_when_no_engineer(): void
     {
-        // Baseline: no advisor rows for this colony.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
@@ -96,10 +130,10 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertEquals('hint_1', $hint['key']);
     }
 
-    public function test_hint_1_fires_even_when_housing_placed(): void
+    public function test_hint_1_fires_even_when_harvester_moved_outside(): void
     {
-        // Placing housing does NOT silence hint 1 — engineer is still missing.
-        $this->placeHousing();
+        // Moving harvester doesn't silence hint 1 — engineer still missing.
+        $this->moveHarvesterOutside();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -109,108 +143,84 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_hint_1_silent_when_engineer_present(): void
     {
-        // Engineer present + housing placed + other hints suppressed → null.
         $this->placeEngineer();
-        $this->placeHousing();
-        $this->suppressHints4and5();
-
-        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-
-        $this->assertNull($hint);
-    }
-
-    // ── Hint 2: housing not placed ────────────────────────────────────────────
-
-    public function test_hint_2_fires_when_housing_not_placed(): void
-    {
-        // Engineer present (hint 1 resolved), no housing → hint 2 fires immediately.
-        $this->placeEngineer();
-
-        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-
-        $this->assertNotNull($hint);
-        $this->assertEquals(2, $hint['rank']);
-    }
-
-    public function test_hint_2_silent_when_housing_placed(): void
-    {
-        $this->placeEngineer();
-        $this->placeHousing();
-        $this->suppressHints4and5();
+        $this->moveHarvesterOutside(); // silence hint 2
+        // Sol=0 → hint 3 (CC upgrade) below threshold → silent
+        $this->suppressLateHints();
 
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
 
-    public function test_hint_2_fires_with_unplaced_housing_row(): void
+    // ── Hint 2: harvester inside colony zone ─────────────────────────────────
+
+    public function test_hint_2_fires_when_harvester_in_colony_zone(): void
     {
-        // Housing row exists but NOT placed (tile_x = null) — hint 2 still fires.
+        // Engineer hired (hint 1 resolved); harvester at (1,0) = colony_zone=1 → hint 2 fires.
         $this->placeEngineer();
-        DB::table('colony_buildings')->insert([
-            'colony_id' => $this->colonyId, 'building_id' => 28,
-            'instance_id' => 1, 'level' => 0, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => null, 'tile_y' => null,
-        ]);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
         $this->assertEquals(2, $hint['rank']);
+        $this->assertEquals('hint_2', $hint['key']);
     }
 
-    // ── Hint 3: harvester on wrong tile ──────────────────────────────────────
-
-    public function test_hint_3_fires_when_harvester_on_terrain(): void
+    public function test_hint_2_silent_when_harvester_outside_colony_zone(): void
     {
-        $this->placeHousing();
         $this->placeEngineer();
-        $this->tickService->setTickCount(15);
+        $this->moveHarvesterOutside(); // tile (2,0) = colony_zone=0
+        // Sol=0 → hint 3 threshold not met → silent
+        $this->suppressLateHints();
 
-        // Harvester placed on a terrain_empty tile.
-        DB::table('colony_buildings')->insert([
-            'colony_id' => $this->colonyId, 'building_id' => 27,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 2, 'tile_y' => 0,
-        ]);
-        DB::table('colony_tiles')->insertOrIgnore([
-            'colony_id' => $this->colonyId, 'q' => 2, 'r' => 0, 'ring' => 2,
-            'tile_type' => 'terrain_empty', 'is_explored' => 1,
-            'is_colony_zone' => 1, 'is_deep_scanned' => 0,
-        ]);
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
+    public function test_hint_2_silent_when_no_harvester_placed(): void
+    {
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 27)
+            ->update(['tile_x' => null, 'tile_y' => null]);
+
+        $this->placeEngineer();
+        // Sol=0 → hint 3 silent
+        $this->suppressLateHints();
+
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
+    // ── Hint 3: CC level < 2 (fires from Sol 2) ──────────────────────────────
+
+    public function test_hint_3_fires_when_cc_level_1_after_sol2(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->setRunTick(2); // meet Sol threshold
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
         $this->assertEquals(3, $hint['rank']);
+        $this->assertEquals('hint_3', $hint['key']);
     }
 
-    public function test_hint_3_silent_when_harvester_on_regolith(): void
+    public function test_hint_3_silent_before_sol2(): void
     {
-        $this->placeHousing();
         $this->placeEngineer();
-        $this->tickService->setTickCount(15);
-        $this->suppressHints4and5();
-
-        DB::table('colony_buildings')->insert([
-            'colony_id' => $this->colonyId, 'building_id' => 27,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 2, 'tile_y' => 0,
-        ]);
-        DB::table('colony_tiles')->insertOrIgnore([
-            'colony_id' => $this->colonyId, 'q' => 2, 'r' => 0, 'ring' => 2,
-            'tile_type' => 'regolith_normal', 'is_explored' => 1,
-            'is_colony_zone' => 0, 'is_deep_scanned' => 0,
-        ]);
+        $this->moveHarvesterOutside();
+        // Sol stays at 0 (below threshold of 2)
+        $this->suppressLateHints();
 
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
 
-    public function test_hint_3_silent_when_no_harvester_placed(): void
+    public function test_hint_3_silent_when_cc_level_2(): void
     {
-        $this->placeHousing();
         $this->placeEngineer();
-        $this->tickService->setTickCount(15);
-        $this->suppressHints4and5();
-        // No harvester row at all.
+        $this->moveHarvesterOutside();
+        $this->setRunTick(2);
+        $this->upgradeCc();
+        $this->suppressLateHints();
 
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
@@ -219,24 +229,13 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_higher_rank_wins_over_lower_rank(): void
     {
-        // Hint 1 active (no housing) and hint 3 would also be active — rank 1 wins.
-        $this->tickService->setTickCount(15);
-
-        // Place harvester on terrain to trigger hint 3 as well.
-        DB::table('colony_buildings')->insert([
-            'colony_id' => $this->colonyId, 'building_id' => 27,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 2, 'tile_y' => 0,
-        ]);
-        DB::table('colony_tiles')->insertOrIgnore([
-            'colony_id' => $this->colonyId, 'q' => 2, 'r' => 0, 'ring' => 2,
-            'tile_type' => 'terrain_empty', 'is_explored' => 1,
-            'is_colony_zone' => 1, 'is_deep_scanned' => 0,
-        ]);
+        // hint_1 (no engineer), hint_2 (harvester in colony zone), hint_3 (CC lv1, Sol>=2) all active.
+        $this->setRunTick(2);
+        // No engineer and harvester still in colony zone — rank 1 must win.
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
-        $this->assertEquals(1, $hint['rank'], 'Rank 1 must win over rank 3');
+        $this->assertEquals(1, $hint['rank'], 'Rank 1 must win over rank 2 and 3');
     }
 
     // ── Dismiss ───────────────────────────────────────────────────────────────
@@ -245,10 +244,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->service->dismissHint($this->userId, 'hint_1');
 
-        $raw = DB::table('user_preferences')
-            ->where('user_id', $this->userId)
-            ->value('dismissed_hints');
-
+        $raw      = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
         $dismissed = json_decode($raw, true);
         $this->assertContains('hint_1', $dismissed);
     }
@@ -258,17 +254,14 @@ class OnboardingHintServiceTest extends TestCase
         $this->service->dismissHint($this->userId, 'hint_1');
         $this->service->dismissHint($this->userId, 'hint_1');
 
-        $raw = DB::table('user_preferences')
-            ->where('user_id', $this->userId)
-            ->value('dismissed_hints');
-
+        $raw      = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
         $dismissed = json_decode($raw, true);
         $this->assertCount(1, array_filter($dismissed, fn($k) => $k === 'hint_1'));
     }
 
     public function test_dismissed_hint_skipped_returns_next_active(): void
     {
-        // Dismiss hint_1 (engineer); hint_2 (housing) should surface — no housing placed.
+        // Dismiss hint_1 (engineer); hint_2 (Harvester in colony zone) surfaces.
         $this->service->dismissHint($this->userId, 'hint_1');
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -279,10 +272,10 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_all_hints_dismissed_returns_null(): void
     {
-        foreach (['hint_1', 'hint_2', 'hint_3', 'hint_4', 'hint_5'] as $key) {
+        foreach (['hint_1', 'hint_2', 'hint_3', 'hint_4', 'hint_5', 'hint_6'] as $key) {
             $this->service->dismissHint($this->userId, $key);
         }
-        $this->tickService->setTickCount(99);
+        $this->setRunTick(99);
 
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
@@ -295,38 +288,61 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertArrayHasKey('text_key', $hint);
         $this->assertArrayHasKey('target_url', $hint);
         $this->assertEquals('colony.onboarding_hint_1', $hint['text_key']);
-        $this->assertEquals('/techtree/personell', $hint['target_url']);
+        $this->assertEquals('/advisors', $hint['target_url']);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private function placeHousing(): void
+    private function moveHarvesterOutside(): void
     {
-        DB::table('colony_buildings')->insertOrIgnore([
-            'colony_id' => $this->colonyId, 'building_id' => 28,
-            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 1, 'tile_y' => 0,
-        ]);
+        // Move Harvester to pre-explored ring-3 tile (3,0) — colony_zone=0, regolith_normal.
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 27)
+            ->update(['tile_x' => 3, 'tile_y' => 0]);
     }
 
-    /** Insert a knowledge research at level 1 and set trust above threshold so hints 4+5 stay silent. */
-    private function suppressHints4and5(): void
+    private function upgradeCc(): void
     {
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['level' => 2, 'ap_spend' => 0]);
+    }
+
+    private function setRunTick(int $tick): void
+    {
+        DB::table('runs')
+            ->where('colony_id', $this->colonyId)
+            ->update(['current_tick' => $tick]);
+    }
+
+    /** Suppress hints 4, 5, and 6 so they don't interfere with lower-rank tests. */
+    private function suppressLateHints(): void
+    {
+        // hint 4: knowledge present
         DB::table('colony_researches')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
             'status_points' => 20, 'ap_spend' => 0,
         ]);
+        // hint 5: trust above threshold
         DB::table('colony_resources')
             ->where('colony_id', $this->colonyId)
             ->where('resource_id', 12)
-            ->update(['amount' => 0]); // trust = 0, above -20 threshold
+            ->update(['amount' => 0]);
+        // hint 6: cantina exists
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 52,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => null, 'tile_y' => null,
+        ]);
     }
 
     private function placeEngineer(): void
     {
         DB::table('advisors')->insertOrIgnore([
             'user_id'      => $this->userId,
-            'personell_id' => 35, // engineer — config('advisors.engineer.id')
+            'personell_id' => 35,
             'colony_id'    => $this->colonyId,
             'rank'         => 1,
             'active_ticks' => 0,

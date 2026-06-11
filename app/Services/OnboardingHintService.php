@@ -15,9 +15,7 @@ use Illuminate\Support\Facades\DB;
  */
 class OnboardingHintService
 {
-    public function __construct(
-        private readonly TickService $tickService,
-    ) {}
+    public function __construct() {}
 
     /**
      * Returns the highest-priority active and non-dismissed hint for the given
@@ -39,10 +37,13 @@ class OnboardingHintService
 
         $dismissed = $this->parseDismissed($prefs?->dismissed_hints ?? null);
 
-        $currentTick = $this->tickService->getTickCount();
+        // Use run-local Sol counter (current_tick on the active Run) so that
+        // tick-threshold hints don't fire on Sol 1 due to the global tick being large.
+        $run    = DB::table('runs')->where('colony_id', $colonyId)->where('status', 'active')->first();
+        $solTick = $run ? (int) $run->current_tick : 0;
 
         // Build the ordered list of hints to evaluate (rank 1 first).
-        $hints = $this->buildHintList($colonyId, $currentTick);
+        $hints = $this->buildHintList($colonyId, $solTick);
 
         foreach ($hints as $hint) {
             if (!$hint['active']) {
@@ -104,7 +105,7 @@ class OnboardingHintService
                 'key'        => 'hint_1',
                 'active'     => $this->checkHint1($colonyId),
                 'text_key'   => 'colony.onboarding_hint_1',
-                'target_url' => '/techtree/personell',
+                'target_url' => '/advisors',
             ],
             [
                 'rank'       => 2,
@@ -116,7 +117,7 @@ class OnboardingHintService
             [
                 'rank'       => 3,
                 'key'        => 'hint_3',
-                'active'     => $this->checkHint3($colonyId),
+                'active'     => $this->checkHint3($colonyId, $currentTick),
                 'text_key'   => 'colony.onboarding_hint_3',
                 'target_url' => '/colony/view',
             ],
@@ -159,52 +160,46 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 2: No Wohnhabitat (building_id=28) placed on any tile yet.
+     * Hint 2: Harvester (building_id=27) is placed inside the colony zone (is_colony_zone=1).
+     * Player should move it to the pre-explored ring-2 regolith tile outside colony borders.
      */
     private function checkHint2(int $colonyId): bool
     {
-        return DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 28)
-            ->whereNotNull('tile_x')
-            ->count() === 0;
-    }
-
-    /**
-     * Hint 3: Harvester (building_id=27) is placed on a tile, but that tile's
-     *         tile_type is NOT a regolith variant.
-     *
-     * Returns true only when a harvester is placed AND its tile is non-regolith.
-     */
-    private function checkHint3(int $colonyId): bool
-    {
-        // Find placed harvesters (tile_x must be set).
-        $harvesters = DB::table('colony_buildings')
+        $harvester = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 27)
             ->whereNotNull('tile_x')
-            ->select(['tile_x', 'tile_y'])
-            ->get();
+            ->first(['tile_x', 'tile_y']);
 
-        if ($harvesters->isEmpty()) {
+        if (!$harvester) {
             return false;
         }
 
-        // Check whether any harvester sits on a non-regolith tile.
-        foreach ($harvesters as $harvester) {
-            $isRegolith = DB::table('colony_tiles')
-                ->where('colony_id', $colonyId)
-                ->where('q', $harvester->tile_x)
-                ->where('r', $harvester->tile_y)
-                ->where('tile_type', 'LIKE', 'regolith_%')
-                ->exists();
+        return DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('q', $harvester->tile_x)
+            ->where('r', $harvester->tile_y)
+            ->where('is_colony_zone', 1)
+            ->exists();
+    }
 
-            if (!$isRegolith) {
-                return true;
-            }
+    /**
+     * Hint 3: CC (building_id=25) still at level 1. Fires from Sol 2 onward
+     * so player has time to gather AP before the suggestion appears.
+     */
+    private function checkHint3(int $colonyId, int $currentTick): bool
+    {
+        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 2);
+        if ($currentTick < $afterTick) {
+            return false;
         }
 
-        return false;
+        $level = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+
+        return $level < 2;
     }
 
     /**
