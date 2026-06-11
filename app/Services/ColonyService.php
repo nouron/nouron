@@ -140,12 +140,12 @@ class ColonyService
      * glx_colonies uses a manual integer PK (not auto-increment).
      * Writes go to the base table, not the v_glx_colonies view.
      */
-    public function createColony(int $userId, int $systemObjectId, string $name, int $sinceTick = 0): Colony
+    public function createColony(int $userId, ?int $systemObjectId, string $name, int $sinceTick = 0): Colony
     {
         $nextId   = (int) DB::table('glx_colonies')->max('id') + 1;
-        $nextSpot = (int) DB::table('glx_colonies')
-            ->where('system_object_id', $systemObjectId)
-            ->max('spot') + 1;
+        $nextSpot = $systemObjectId
+            ? (int) DB::table('glx_colonies')->where('system_object_id', $systemObjectId)->max('spot') + 1
+            : 1;
 
         DB::table('glx_colonies')->insert([
             'id'               => $nextId,

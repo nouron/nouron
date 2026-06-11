@@ -30,16 +30,8 @@ class OnboardingService
         return DB::transaction(function () use ($userId, $colonyName) {
             $name = $colonyName ?: 'Kolonie';
 
-            $freePlanet = DB::table('glx_system_objects')
-                ->whereNotIn('id', DB::table('glx_colonies')->pluck('system_object_id'))
-                ->value('id');
-
-            if (!$freePlanet) {
-                throw new \RuntimeException('No free planets available for new player.');
-            }
-
             $globalTick = $this->tickService->getTickCount();
-            $colony     = $this->colonyService->createColony($userId, $freePlanet, $name, $globalTick);
+            $colony     = $this->colonyService->createColony($userId, null, $name, $globalTick);
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
