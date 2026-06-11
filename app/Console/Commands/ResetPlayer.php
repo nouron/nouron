@@ -31,11 +31,21 @@ class ResetPlayer extends Command
 
         $user = is_numeric($input)
             ? User::find((int) $input)
-            : User::where('username', $input)->first();
+            : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
 
         if (!$user) {
-            $this->error("User not found: {$input}");
-            return self::FAILURE;
+            // Dev DB wiped (migrate:fresh without --seed) — auto-seed and retry once.
+            if (DB::table('user')->count() === 0) {
+                $this->warn('Dev DB appears empty — running db:seed automatically...');
+                $this->call('db:seed');
+                $user = is_numeric($input)
+                    ? User::find((int) $input)
+                    : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
+            }
+            if (!$user) {
+                $this->error("User not found: {$input}");
+                return self::FAILURE;
+            }
         }
 
         if (!$this->option('yes')) {
@@ -57,16 +67,25 @@ class ResetPlayer extends Command
                 DB::table('colony_tiles')->where('colony_id', $cid)->delete();
                 // colony_log has no colony_id column — deleted below by user_id.
                 DB::table('advisors')->where('colony_id', $cid)->delete();
-                DB::table('locked_actionpoints')->where('colony_id', $cid)->delete();
+                // locked_actionpoints is keyed by scope_type/scope_id, not colony_id.
+                // SQLite would silently treat a nonexistent "colony_id" as a string
+                // literal and delete nothing — so match the real columns.
+                DB::table('locked_actionpoints')
+                    ->where('scope_type', 'colony')
+                    ->where('scope_id', $cid)
+                    ->delete();
                 DB::table('colony_ships')->where('colony_id', $cid)->delete();
                 DB::table('colony_researches')->where('colony_id', $cid)->delete();
                 DB::table('colony_personell')->where('colony_id', $cid)->delete();
-                DB::table('run_objectives')->where('colony_id', $cid)->delete();
                 DB::table('trade_resources')->where('colony_id', $cid)->delete();
                 DB::table('trust_events')->where('colony_id', $cid)->delete();
                 DB::table('merchant_visits')->where('colony_id', $cid)->delete();
                 DB::table('colony_hangar_missions')->where('colony_id', $cid)->delete();
             }
+
+            // run_objectives is keyed by run_id, not colony_id.
+            $runIds = DB::table('runs')->where('user_id', $user->user_id)->pluck('id');
+            DB::table('run_objectives')->whereIn('run_id', $runIds)->delete();
 
             DB::table('runs')->where('user_id', $user->user_id)->delete();
             DB::table('glx_colonies')->where('user_id', $user->user_id)->delete();
