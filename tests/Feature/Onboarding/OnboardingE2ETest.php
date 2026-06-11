@@ -69,41 +69,37 @@ class OnboardingE2ETest extends TestCase
             'event' => 'onboarding.nexus_briefing',
         ]);
 
-        // ── 3. Rank-1 hint active (no housing complex placed) ───────────────
+        // ── 3. Rank-1 hint active (no engineer hired yet) ──────────────────
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
         $this->assertNotNull($hint, 'Rank-1 hint should be active after setup');
         $this->assertSame(1, $hint['rank']);
         $this->assertSame('hint_1', $hint['key']);
-        $this->assertStringContainsString('/colony', $hint['target_url']);
+        $this->assertStringContainsString('/techtree', $hint['target_url']);
 
-        // ── 4. Place housing complex → rank-1 condition resolved ─────────────
-        // Need a colony tile to place on (tile_x must be NOT NULL for hint check).
-        DB::table('colony_tiles')->insertOrIgnore([
-            'colony_id' => $colony->id,
-            'q'         => 1,
-            'r'         => 0,
-            'tile_type' => 'terrain_plains',
-            'is_colony_zone' => 1,
-            'is_explored'    => 1,
+        // ── 4. Hire engineer → rank-1 resolved; rank-2 (housing) surfaces ───
+        $engineerId = \App\Services\Techtree\PersonellService::idFor('engineer');
+        DB::table('advisors')->insert([
+            'user_id'      => $this->userId,
+            'colony_id'    => $colony->id,
+            'personell_id' => $engineerId,
+            'rank'         => 1,
+            'active_ticks' => 0,
         ]);
 
-        // Housing is pre-seeded by setupNewPlayer (level 0, unplaced). Simulate placement + completion.
+        $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
+        $this->assertNotNull($hint, 'Rank-2 hint should appear after engineer is hired');
+        $this->assertSame(2, $hint['rank']);
+        $this->assertSame('hint_2', $hint['key']);
+        $this->assertStringContainsString('/colony', $hint['target_url']);
+
+        // ── 5. Place housing complex → rank-2 condition resolved ─────────────
+        // Tiles are seeded by setupNewPlayer (ring 0+1+2). Use existing tile (1,0).
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 28)
-            ->update(['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0]);
+            ->update(['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 0, 'tile_y' => 1]);
 
-        // ── 5. Rank-2 hint active (no engineer, tick above threshold) ────────
-        $threshold = (int) config('game.onboarding.hint_no_engineer_ticks', 3);
-        $this->tickService->setTickCount($threshold + 1);
-
-        $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
-        $this->assertNotNull($hint, 'Rank-2 hint should appear after housing is placed');
-        $this->assertSame(2, $hint['rank']);
-        $this->assertSame('hint_2', $hint['key']);
-        $this->assertStringContainsString('/techtree', $hint['target_url']);
-
-        // ── 6. Disable onboarding hints → no hint returned ──────────────────
+        // ── 6. Disable onboarding hints → no hint returned ─────────────────
         DB::table('user_preferences')->updateOrInsert(
             ['user_id' => $this->userId],
             ['onboarding_hints' => 0]
@@ -123,7 +119,7 @@ class OnboardingE2ETest extends TestCase
     {
         $colony = $this->onboardingService->setupNewPlayer($this->userId, 'Dismiss-Test');
 
-        // Rank 1 is active (no housing).
+        // Rank 1 is active (no engineer hired).
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
         $this->assertSame('hint_1', $hint['key']);
 

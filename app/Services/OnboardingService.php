@@ -38,17 +38,18 @@ class OnboardingService
                 throw new \RuntimeException('No free planets available for new player.');
             }
 
-            $tick   = $this->tickService->getTickCount();
-            $colony = $this->colonyService->createColony($userId, $freePlanet, $name, $tick);
+            $globalTick = $this->tickService->getTickCount();
+            $colony     = $this->colonyService->createColony($userId, $freePlanet, $name, $globalTick);
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
-            $this->eventService->createNexusBriefing($userId, $tick, $colony->id);
+            $this->seedStartingTiles($colony->id);
+            $this->eventService->createNexusBriefing($userId, 0, $colony->id);
 
             Run::create([
                 'user_id'      => $userId,
                 'colony_id'    => $colony->id,
-                'current_tick' => $tick,
+                'current_tick' => 0,
                 'status'       => 'active',
                 'started_at'   => null, // set when player clicks "Mission starten" in lobby
                 'settings'     => [
@@ -81,6 +82,39 @@ class OnboardingService
         ];
 
         DB::table('colony_resources')->insert($colonyResources);
+    }
+
+    private function seedStartingTiles(int $colonyId): void
+    {
+        // Ring 0 (CC center) + ring 1 (6 tiles): colony_zone, explored.
+        // Ring 2 (12 tiles): fog of war, not colony_zone.
+        $tiles = [
+            // ── Ring 0 ────────────────────────────────────────────────────────
+            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            // ── Ring 1 ────────────────────────────────────────────────────────
+            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 1, 'is_explored' => 1],
+            // ── Ring 2 (fog) ──────────────────────────────────────────────────
+            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_impassable', 'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  0, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+        ];
+
+        $rows = array_map(fn($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
+        DB::table('colony_tiles')->insert($rows);
     }
 
     private function seedStartingBuilding(int $colonyId): void

@@ -2,6 +2,8 @@
 
 ## 2026-06-11
 
+- **Playtest-Blocker Sol 1 behoben** (4 Fixes): Run startet jetzt bei `current_tick=0` statt globalem Tick; Nexus-Briefing zeigt Sol 0. `OnboardingService` seeded 19 Starttiles (Ring 0/1 colony_zone + Ring-2-Fog) inkl. Regolith-Tile für Harvester-Platzierung. Onboarding-Hint 1 = Baumeister einstellen (kein Tick-Threshold), Hint 2 = Wohnhabitat platzieren — Reihenfolge korrigiert. `lang/de/validation.php` ergänzt (war komplett fehlend → Validierungsfehler zeigten Rohkeys). Globaler CSRF-Fix in `tests/TestCase.php` behebt 138 pre-existing HTTP-Test-Failures.
+
 - **AP-Grundwert implementiert** (GDD §13): `PersonellService::getTotalActionPoints()` addiert jetzt 6 Basis-AP für alle Bereiche (Bau/Forschung/Wirtschaft/Strategie), unabhängig von Beratern. Neuer Config-Key `game.ap.base = 6`. Verhindert Deadlocks zu Spielbeginn. Alle betroffenen Tests (`PersonellServiceTest`, `TradeApTest`) auf neue Baseline angepasst.
 - **Onboarding-Startszenario überarbeitet**: Harvester (ID 27) und Wohndepot (ID 28) werden beim Setup nicht mehr auf Level 1 gesetzt, sondern als `level=0, ap_spend=7` (7/10 AP bereits investiert) und `tile_x=null` vorseeded. Spieler muss Sol 1 beide Gebäude fertigstellen und platzieren. Narrativ: Spieler übernimmt Kolonie im Aufbau. `OnboardingTest` + `OnboardingE2ETest` entsprechend aktualisiert.
 - **Harvester versetzen: distanzbasierte AP-Kosten** — Kolonie-Controller berechnet Hex-Distanz (axiale Koordinaten) zwischen altem und neuem Tile; Kosten = 1 Bau-AP pro Tile-Distanz. Neuer Hilfs-Methode `hexDistance()`. I18n-String (`onboarding_trigger_harvester_move`) aktualisiert.

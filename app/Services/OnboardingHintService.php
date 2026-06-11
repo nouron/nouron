@@ -104,14 +104,14 @@ class OnboardingHintService
                 'key'        => 'hint_1',
                 'active'     => $this->checkHint1($colonyId),
                 'text_key'   => 'colony.onboarding_hint_1',
-                'target_url' => '/colony/view',
+                'target_url' => '/techtree/personell',
             ],
             [
                 'rank'       => 2,
                 'key'        => 'hint_2',
-                'active'     => $this->checkHint2($colonyId, $currentTick),
+                'active'     => $this->checkHint2($colonyId),
                 'text_key'   => 'colony.onboarding_hint_2',
-                'target_url' => '/techtree/personell',
+                'target_url' => '/colony/view',
             ],
             [
                 'rank'       => 3,
@@ -145,34 +145,28 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 1: No Wohnhabitat (building_id=28) placed on any tile yet.
+     * Hint 1: No engineer advisor active on this colony.
+     * Active from Sol 1 — engineer provides build AP beyond the 6-AP base.
      */
     private function checkHint1(int $colonyId): bool
     {
-        return DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 28)
-            ->whereNotNull('tile_x')
-            ->count() === 0;
-    }
-
-    /**
-     * Hint 2: No engineer advisor active on this colony AND
-     *         current tick >= hint_no_engineer_ticks threshold.
-     */
-    private function checkHint2(int $colonyId, int $currentTick): bool
-    {
-        $threshold = (int) config('game.onboarding.hint_no_engineer_ticks', 3);
-
-        if ($currentTick < $threshold) {
-            return false;
-        }
-
         $engineerId = PersonellService::idFor('engineer');
 
         return DB::table('advisors')
             ->where('colony_id', $colonyId)
             ->where('personell_id', $engineerId)
+            ->count() === 0;
+    }
+
+    /**
+     * Hint 2: No Wohnhabitat (building_id=28) placed on any tile yet.
+     */
+    private function checkHint2(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 28)
+            ->whereNotNull('tile_x')
             ->count() === 0;
     }
 
