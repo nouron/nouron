@@ -346,6 +346,18 @@ button.btn-sol:hover,
     flex-direction: column;
 }
 
+/* Action strip: quick-action bar above the section header */
+.tile-panel-action-strip {
+    padding: 0.5rem 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.tile-panel-action-strip .sidebar-actions {
+    margin-top: 0;
+}
+
 /* Sticky section header inside the sidebar */
 .tile-panel-header {
     padding: 0.65rem 1.25rem 0.55rem;
@@ -1214,21 +1226,48 @@ dialog[x-ref="discoveryDialog"] {
         border-bottom: 1px solid var(--color-border);
     }
 
+    /* Header row (title · status · AP chips · build button) must wrap on
+       narrow screens — otherwise its min-content width forces the whole
+       canvas column beyond the viewport (horizontal scroll). */
+    .hex-canvas-header {
+        flex-wrap: wrap;
+        row-gap: 0.4rem;
+    }
+
+    .hex-canvas-header .ap-chips {
+        flex-wrap: wrap;
+    }
+
     .hex-canvas {
-        min-height: 320px;
+        min-height: 48dvh;
+        padding: 0.4rem;
+    }
+
+    .hex-canvas svg {
+        max-width: 100%;
     }
 
     .tile-panel {
         border-left: none;
         border-top: 1px solid var(--color-border);
         /* Limit sidebar height on mobile so it doesn't push the grid far up */
-        max-height: 380px;
+        max-height: 360px;
     }
 
     .tile-panel-empty {
         justify-content: flex-start;
         padding: 1rem;
     }
+
+    /* Hide status line and build button in header on mobile (tile-first build flow) */
+    .hex-canvas-header .status-line { display: none; }
+
+    /* Hide section header — action strip + tile heading give enough context */
+    .tile-panel-header--hideable { display: none; }
+
+    /* Hide coordinate row in tile info on mobile */
+    .tile-dl-coords { display: none; }
+
 }
 
 /* ── Sol Button Overlay & Dialog (colony layout) ───────────────────────── */

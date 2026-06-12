@@ -55,6 +55,8 @@ return [
     'harvester_move'           => 'Relocate',
     'harvester_move_mode_hint' => 'Select an explored regolith tile outside the colony zone — 1 construction AP per hex distance.',
     'harvester_move_no_targets' => 'No free explored regolith tile available — explore new tiles first (Nav AP).',
+    'error_harvester_in_transit' => 'The harvester is still in transit — relocation possible after arrival.',
+    'harvester_in_transit'       => 'In transit — arrives next Sol.',
     'error_tile_occupied'       => 'Tile already occupied.',
     'error_no_construction_ap'  => 'Not enough construction AP.',
     'error_building_not_found'  => 'Building not found.',

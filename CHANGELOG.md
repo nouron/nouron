@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-12
+
+- **Harvester-Transit (1-Sol Verzögerung)** — Verlegen setzt `pending_until_tick` (Migration); in-transit Harvester produziert nicht (`GameTick`), ist nicht erneut verlegbar; Transit-Badge "HV →" im Grid; Controller blockiert Doppelmove; 6 Feature-Tests (`HarvesterTransitTest`).
+- **Baumeister-Dialog neu gestaltet** — Hire-Dialog zeigt Portrait, Name, JUNIOR-Badge, Beschreibung, AP-Typ, Einmalkosten, Unterhalt/Sol; PicoCSS-`<dialog>`-Override behebt Fullscreen-Bug; `AdvisorController::buildSlots()` liefert `desc`, `junior_ap`, `junior_upkeep`.
+- **Mobile: Colony-Zone-Viewport & SVG-Pan** — Hex-Grid clippt ViewBox auf Colony-Zone + Ring-3-Randstreifen (größere, tappbare Tiles); Touch-Drag verschiebt ViewBox um Ring-3-Tiles (Regolith-Ziele) zu erreichen; Pan-State überlebt Redraws.
+- **Mobile-First Layout** — Nav-Logo zeigt Seitennamen ("Kolonie") statt "NOURON"; Statuszeile, "TILE-INFO"-Header, Koordinaten-Zeile ausgeblendet; AP-Header-Row bricht auf Mobilgeräten korrekt um (kein horizontaler Overflow).
+- **Tile-First Build-Flow** — "Bauen"-Button aus Header entfernt; Tile antippen → Action-Strip zeigt "Bauen" (wenn bebaubar + leer); Klick öffnet Gebäudeliste; Gebäude wählen platziert sofort auf vorgemerktem Tile. Flow gilt für alle Screens (Mobile-first-Prinzip).
+- **Action-Strip über Tile-Info** — Kontext-Aktionen (Erkunden, Sondieren, AP investieren, Verlegen, Bauen) immer oben im Tile-Panel sichtbar, kein Scrollen nötig.
+
 ## 2026-06-11
 
 - **Harvester-Verlegung im Frontend** — "Verlegen"-Button am Harvester-Tile startet Move-Mode: gültige Ziele (erkundete, freie Regolith-Tiles) blau markiert, Hover zeigt gestrichelte Pfeil-Vorschau vom Harvester zum Ziel, Klick verlegt mit Move-Animation (1 Bau-AP pro Hex-Distanz). Ohne verfügbares Ziel zeigt das Panel einen Hinweis ("erst neue Tiles erkunden"). Bugfix dabei: Harvester (`is_instanced=1`) wurde beim Verlegen als neue Instanz eingefügt statt verschoben — Controller behandelt Harvester jetzt explizit als Move (UPDATE).

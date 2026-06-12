@@ -9,7 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
-    <link rel="stylesheet" href="{{ asset('css/colony.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/colony.css') }}?v={{ filemtime(public_path('css/colony.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/swipe.css') }}">
     <link rel="stylesheet" href="{{ asset('css/carousel.css') }}">
     @stack('styles')
@@ -19,7 +19,7 @@
 <header class="colony-header">
     <nav>
         <ul>
-            <li><a href="{{ route('colony.view') }}" class="colony-logo">Nouron</a></li>
+            <li><a href="{{ route('colony.view') }}" class="colony-logo">@yield('page-nav-title', 'Nouron')</a></li>
         </ul>
 
         {{-- Desktop nav (visible from 600px up) --}}

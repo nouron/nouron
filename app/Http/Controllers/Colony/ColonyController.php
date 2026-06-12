@@ -56,6 +56,8 @@ class ColonyController extends BaseController
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0;
 
+        $globalTick = $this->getTick();
+
         $buildings = DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colony->id)
@@ -67,15 +69,17 @@ class ColonyController extends BaseController
                 'colony_buildings.ap_spend',
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
+                'colony_buildings.pending_until_tick',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
             )
             ->get()
-            ->map(function ($b) {
+            ->map(function ($b) use ($globalTick) {
                 $b->label      = __('techtree.' . $b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
+                $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 return $b;
             });
 
@@ -87,7 +91,6 @@ class ColonyController extends BaseController
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
         $trust      = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
-        $globalTick = $this->getTick();
         $currentSol = max(1, $globalTick - (int) $colony->since_tick + 1);
         $solLimit   = (int) config('game.run.tick_limit', 100);
 
@@ -250,6 +253,12 @@ class ColonyController extends BaseController
             && $existingBuilding !== null
             && $existingBuilding->tile_x !== null;
 
+        if ($isHarvesterMove
+                && $existingBuilding->pending_until_tick !== null
+                && (int) $existingBuilding->pending_until_tick >= $this->getTick()) {
+            return response()->json(['ok' => false, 'error' => __('colony.error_harvester_in_transit')]);
+        }
+
         $apCost = $isHarvesterMove
             ? max(1, $this->hexDistance((int)$existingBuilding->tile_x, (int)$existingBuilding->tile_y, (int)$data['q'], (int)$data['r']))
             : 1;
@@ -294,6 +303,10 @@ class ColonyController extends BaseController
                     $update['ap_spend'] = 1;
                 }
                 // Harvester move: tile updates, ap_spend unchanged.
+                // Relocation takes 1 Sol — no production until arrival.
+                if ($isHarvesterMove) {
+                    $update['pending_until_tick'] = $this->getTick() + 1;
+                }
                 DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)
                     ->where('building_id', $data['building_id'])
@@ -504,6 +517,7 @@ class ColonyController extends BaseController
                 'colony_buildings.ap_spend',
                 'colony_buildings.tile_x',
                 'colony_buildings.tile_y',
+                'colony_buildings.pending_until_tick',
                 'buildings.name as building_key',
                 'buildings.max_level',
                 'buildings.ap_for_levelup',
@@ -513,6 +527,7 @@ class ColonyController extends BaseController
 
         $row->label      = __('techtree.' . $row->building_key);
         $row->image_slug = self::buildingImageSlug($row->building_key);
+        $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
 
         return $row;
     }

@@ -2,11 +2,11 @@
 @section('title', 'Berater — Nouron')
 
 @push('styles')
-    <link rel="stylesheet" href="{{ asset('css/advisors.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/advisors.css') }}?v={{ filemtime(public_path('css/advisors.css')) }}">
 @endpush
 
 @push('scripts')
-    <script src="{{ asset('js/advisors.js') }}"></script>
+    <script src="{{ asset('js/advisors.js') }}?v={{ filemtime(public_path('js/advisors.js')) }}"></script>
 @endpush
 
 @section('content')
@@ -225,17 +225,43 @@
 
     {{-- ── Hire confirmation dialog ─────────────────────────────────────────── --}}
     <dialog class="advisor-dialog" x-ref="hireDialog" @close="closeDialogs()">
-        <h3>Berater einstellen</h3>
+        <h3>{{ __('advisors.dialog_hire_title') }}</h3>
         <template x-if="dialogSlot">
             <div>
-                <p class="dialog-cost">
-                    <strong x-text="dialogSlot.name"></strong> &middot; Junior &middot; 4 AP/Tick<br>
-                    Kosten: <strong x-text="dialogSlot.hire_cost + ' Cr'"></strong>
-                </p>
+                <div class="dialog-advisor">
+                    <div class="dialog-portrait"
+                         :style="portraitImageUrl(dialogSlot.key)
+                             ? 'background-image: url(' + portraitImageUrl(dialogSlot.key) + ')'
+                             : ''"></div>
+                    <div class="dialog-advisor-info">
+                        <div class="dialog-advisor-name">
+                            <strong x-text="dialogSlot.name"></strong>
+                            <span class="dialog-rank-badge">{{ __('advisors.dialog_rank_junior') }}</span>
+                        </div>
+                        <p class="dialog-advisor-desc" x-text="dialogSlot.desc"></p>
+                    </div>
+                </div>
+
+                <dl class="dialog-stats">
+                    <div class="dialog-stat">
+                        <dt x-text="apTypeLabel(dialogSlot.ap_type)"></dt>
+                        <dd class="dialog-stat-positive"
+                            x-text="'+' + dialogSlot.junior_ap + ' {{ __('advisors.dialog_ap_label') }}'"></dd>
+                    </div>
+                    <div class="dialog-stat">
+                        <dt>{{ __('advisors.dialog_cost_once') }}</dt>
+                        <dd x-text="dialogSlot.hire_cost + ' Cr'"></dd>
+                    </div>
+                    <div class="dialog-stat">
+                        <dt>{{ __('advisors.dialog_upkeep') }}</dt>
+                        <dd x-text="dialogSlot.junior_upkeep + ' {{ __('advisors.dialog_per_sol') }}'"></dd>
+                    </div>
+                </dl>
+
                 <div class="dialog-error" x-text="errorMsg"></div>
                 <div class="dialog-actions">
-                    <button class="btn-cancel" @click="closeDialogs()">Abbrechen</button>
-                    <button class="btn-confirm-hire" @click="doHire()">Einstellen</button>
+                    <button class="btn-cancel" @click="closeDialogs()">{{ __('advisors.dialog_cancel') }}</button>
+                    <button class="btn-confirm-hire" @click="doHire()">{{ __('advisors.dialog_hire') }}</button>
                 </div>
             </div>
         </template>
@@ -243,16 +269,16 @@
 
     {{-- ── Fire confirmation dialog ─────────────────────────────────────────── --}}
     <dialog class="advisor-dialog" x-ref="fireDialog" @close="closeDialogs()">
-        <h3>Berater entlassen</h3>
+        <h3>{{ __('advisors.dialog_fire_title') }}</h3>
         <template x-if="dialogSlot">
             <div>
                 <p class="dialog-cost">
-                    <strong x-text="dialogSlot.name"></strong> wirklich entlassen?
+                    <strong x-text="dialogSlot.name"></strong> {{ __('advisors.dialog_fire_confirm') }}
                 </p>
                 <div class="dialog-error" x-text="errorMsg"></div>
                 <div class="dialog-actions">
-                    <button class="btn-cancel" @click="closeDialogs()">Abbrechen</button>
-                    <button class="btn-confirm-fire" @click="doFire()">Entlassen</button>
+                    <button class="btn-cancel" @click="closeDialogs()">{{ __('advisors.dialog_cancel') }}</button>
+                    <button class="btn-confirm-fire" @click="doFire()">{{ __('advisors.dialog_fire') }}</button>
                 </div>
             </div>
         </template>

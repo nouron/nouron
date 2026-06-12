@@ -362,17 +362,130 @@
 
 /* ── Hire / fire confirmation dialogs ─────────────────────────────────────── */
 
+/* Reset PicoCSS dialog (fullscreen flex overlay expecting an <article>)
+   back to a native centered dialog box. */
 dialog.advisor-dialog {
-    max-width: 360px;
+    display: block;
+    position: fixed;
+    inset: 0;
+    margin: auto;
     width: 90%;
-    border-radius: 10px;
+    min-width: 0;
+    max-width: 380px;
+    height: fit-content;
+    min-height: 0;
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border-radius: 12px;
     border: 1px solid var(--color-border);
     padding: 1.5rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+dialog.advisor-dialog:not([open]) {
+    display: none;
+}
+
+dialog.advisor-dialog::backdrop {
+    background: rgba(20, 20, 25, 0.45);
 }
 
 dialog.advisor-dialog h3 {
     margin: 0 0 1rem;
     font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-anthracite);
+    border-bottom: 2px solid #c0392b;
+    padding-bottom: 0.5rem;
+}
+
+/* Advisor summary: portrait + name/desc */
+.dialog-advisor {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.dialog-portrait {
+    flex: 0 0 auto;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background-color: #eceff1;
+    background-size: cover;
+    background-position: center top;
+    border: 2px solid var(--color-border);
+}
+
+.dialog-advisor-info {
+    min-width: 0;
+}
+
+.dialog-advisor-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.dialog-advisor-name strong {
+    font-size: 1rem;
+    color: var(--color-anthracite);
+}
+
+.dialog-rank-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: #eceff1;
+    color: #546e7a;
+}
+
+.dialog-advisor-desc {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: #777;
+}
+
+/* Stat rows: AP gain, one-time cost, upkeep */
+.dialog-stats {
+    margin: 0 0 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dialog-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.45rem 0.75rem;
+    font-size: 0.82rem;
+}
+
+.dialog-stat + .dialog-stat {
+    border-top: 1px solid var(--color-border);
+}
+
+.dialog-stat dt {
+    color: #666;
+}
+
+.dialog-stat dd {
+    margin: 0;
+    font-weight: 700;
+    color: var(--color-anthracite);
+}
+
+.dialog-stat-positive {
+    color: #2e7d32 !important;
 }
 
 .dialog-cost {
