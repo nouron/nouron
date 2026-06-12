@@ -17,7 +17,7 @@ function techtreeView(config) {
         },
 
         checkBreakpoint() {
-            this.isMobile = window.innerWidth < 640;
+            this.isMobile = window.innerWidth < 600;
         },
 
         prevPhase() {

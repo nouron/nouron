@@ -30,12 +30,12 @@
             @if($barBuilt ?? false)
             <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
             @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span><i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i></span></li>
             @endif
             @if($hangarBuilt ?? false)
             <li><a href="{{ route('colony.hangar') }}" @class(['active' => request()->routeIs('colony.hangar*')])><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></a></li>
             @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></span></li>
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span><i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i></span></li>
             @endif
             <li>
                 <a href="{{ route('comm.log') }}" @class(['active' => request()->routeIs('comm.*')])>
@@ -94,8 +94,11 @@
                         <i class="bi bi-cup-hot"></i> Cantina
                     </a>
                     @else
-                    <span class="nav-flyout-item nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}">
-                        <i class="bi bi-cup-hot"></i> Cantina
+                    <span class="nav-flyout-item nav-link-locked">
+                        <i class="bi bi-cup-hot"></i>
+                        <span>Cantina <i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i>
+                            <small class="nav-flyout-locked-hint">{{ __('colony.nav_cantina_locked') }}</small>
+                        </span>
                     </span>
                     @endif
                     @if($hangarBuilt ?? false)
@@ -103,8 +106,11 @@
                         <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
                     </a>
                     @else
-                    <span class="nav-flyout-item nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}">
-                        <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
+                    <span class="nav-flyout-item nav-link-locked">
+                        <i class="bi bi-rocket"></i>
+                        <span>{{ __('colony.nav_hangar') }} <i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i>
+                            <small class="nav-flyout-locked-hint">{{ __('colony.nav_hangar_locked') }}</small>
+                        </span>
                     </span>
                     @endif
                     <a href="{{ route('comm.log') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('comm.*')])>

@@ -311,7 +311,7 @@
 .tech-panel-hidden  { transform: translateX(100%); }
 .tech-panel-visible { transform: translateX(0); }
 
-@media (max-width: 640px) {
+@media (max-width: 599px) {
     .tech-panel {
         top: auto;
         left: 0;
@@ -533,7 +533,7 @@
     margin-bottom: 0.2rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 599px) {
     .detail-inner { padding: 1.25rem 1.25rem 1.5rem; }
 }
 
@@ -553,7 +553,7 @@
 }
 
 /* ── Mobile tweaks ───────────────────────────────────────── */
-@media (max-width: 480px) {
+@media (max-width: 599px) {
     .techtree-sections {
         padding: 0.6rem 0.5rem;
     }

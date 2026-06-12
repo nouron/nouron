@@ -56,7 +56,7 @@ window.__colonyViewData = {
                 <small class="status-line" x-text="statusLine()"></small>
                 <div class="ap-chips">
                     <span class="ap-chip ap-chip--nav" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                           style="position:relative;cursor:default">
                         <span x-text="`Nav ${apNav} AP`"></span>
                         @include('partials.res-popup', [
@@ -65,7 +65,7 @@ window.__colonyViewData = {
                         ])
                     </span>
                     <span class="ap-chip ap-chip--build" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                           style="position:relative;cursor:default">
                         <span x-text="`Bau ${apConstruction} AP`"></span>
                         @include('partials.res-popup', [
@@ -75,7 +75,7 @@ window.__colonyViewData = {
                     </span>
                     <span class="ap-chip" x-data="{ open: false }"
                           :class="trust >= 20 ? 'ap-chip--trust-pos' : trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                           style="position:relative;cursor:default">
                         <span x-text="`Vertrauen ${trust}`"></span>
                         @include('partials.res-popup', [

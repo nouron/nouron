@@ -22,22 +22,33 @@
 .swipe-dots {
     display: flex;
     justify-content: center;
-    gap: 6px;
+    gap: 0;
     padding: 0.6rem 0 0.25rem;
 }
 
+/* 24px hit area (touch target); the visible 6px dot is drawn via ::before */
 .swipe-dot {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.swipe-dot::before {
+    content: "";
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background: var(--color-border, #e8e8ec);
     transition: background 0.2s, transform 0.2s;
-    cursor: pointer;
-    border: none;
-    padding: 0;
 }
 
-.swipe-dot--active {
+.swipe-dot--active::before {
     background: var(--color-accent, #8c2030);
     transform: scale(1.25);
 }

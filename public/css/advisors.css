@@ -75,6 +75,7 @@
     width: 200px;
     /* Fill as much of the viewport as possible; 230px = nav(84) + page-padding(56) + header(58) + dots(32) */
     height: calc(100vh - 230px);
+    height: calc(100dvh - 230px); /* dynamic viewport — mobile address bar safe */
     min-height: 340px;
     max-height: 680px;
     border-radius: 12px;
@@ -88,11 +89,12 @@
     box-shadow: 0 2px 8px rgba(26, 26, 46, 0.06);
 }
 
-@media (max-width: 900px) {
+@media (max-width: 899px) {
     .advisor-card {
         width: calc(100vw - 3rem);
         max-width: 320px;
         height: calc(100vh - 200px);
+        height: calc(100dvh - 200px);
         min-height: 340px;
     }
 }

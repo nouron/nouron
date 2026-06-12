@@ -29,6 +29,14 @@ hr {border-color: #ccc}
     color: rgba(255,255,255,0.45);
 }
 
+/* Lock marker on gated nav items — visible on touch where title tooltips are not */
+.nav-lock-icon {
+    font-size: 0.7em;
+    opacity: 0.8;
+    margin-left: 0.2em;
+    vertical-align: text-top;
+}
+
 a {color: #000; white-space: nowrap;}
 a:hover {color: #000; text-decoration: underline;}
 

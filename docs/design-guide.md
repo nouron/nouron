@@ -26,7 +26,8 @@
    - 6.3 [Carousel-Screens](#63-carousel-screens)
    - 6.4 [Cantina / Bar](#64-cantina--bar)
 7. [Grafik-Assets](#7-grafik-assets)
-8. [Do / Don't Kurzreferenz](#8-do--dont-kurzreferenz)
+8. [Responsive Breakpoints](#8-responsive-breakpoints)
+9. [Do / Don't Kurzreferenz](#9-do--dont-kurzreferenz)
 
 ---
 
@@ -405,7 +406,29 @@ public/img/tiles/       -- Hex-Tile-Texturen
 
 ---
 
-## 8. Do / Don't Kurzreferenz
+## 8. Responsive Breakpoints
+
+Verbindliches Set — keine weiteren Schwellwerte einführen (Stand: Konsolidierung 2026-06-12):
+
+| Stufe | CSS-Query | Geräteklasse |
+|---|---|---|
+| Mobile | `@media (max-width: 599px)` | Smartphones (Hochformat) |
+| Tablet schmal | 600–767px (Basis bzw. `max-width: 767px`) | kleine Tablets, Phones quer |
+| Desktop | `@media (min-width: 768px)` | Tablets quer, Laptops |
+| Wide | `@media (min-width: 900px)` | volle Desktop-Breite |
+
+**Regeln:**
+
+- **Mobile-first:** Neue Styles mobil als Basis schreiben, Desktop additiv über `min-width`. Bestehende `max-width`-Blöcke werden bei Migrationen schrittweise umgedreht.
+- **Komplemente:** `max-width` immer 599 / 767 / 899 — nie 600 / 768 / 900, sonst matchen `min`- und `max`-Query bei exakter Breite gleichzeitig.
+- **Viewport-Höhen:** `dvh` statt `vh` (mobile Adressleiste); `vh`-Zeile als Fallback davor stehen lassen.
+- **JS spiegelt CSS:** `innerWidth < 600` (Techtree `isMobile`), `< 768` (Carousel Full-width-Card), `< 900` (Carousel Arrow-Modus, `carousel.js` BREAKPOINT).
+- **Navigation (Colony-Layout):** Burger-Menü < 600, Icon-only-Leiste 600–767, Icons + Labels ≥ 768.
+- **Touch-Targets:** Interaktive Elemente min. 24×24 px Hitbox (Dots: sichtbarer Punkt via `::before`, Hitbox über Elementgröße).
+
+---
+
+## 9. Do / Don't Kurzreferenz
 
 | Do | Don't |
 |---|---|
