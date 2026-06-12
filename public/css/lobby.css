@@ -1,0 +1,220 @@
+/* Alpine x-cloak */
+[x-cloak] { display: none !important; }
+
+/* ── Run card grid ──────────────────────────────────────────────────────── */
+.lobby-run-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+/* PicoCSS article cards — force light background */
+.lobby-run-card {
+    margin: 0;
+    padding: 1.25rem;
+    background: #ffffff;
+    color: #333;
+}
+
+.lobby-run-card header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0;
+    margin-bottom: 0.5rem;
+    background: none;
+    border: none;
+    color: inherit;
+}
+
+.lobby-run-card header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #1a1a2e;
+}
+
+.lobby-run-card footer {
+    padding: 0;
+    margin-top: 1rem;
+    background: none;
+    border: none;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Sol progress label */
+.lobby-sol-progress {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color, #6c757d);
+    margin-bottom: 0.25rem;
+}
+
+/* PicoCSS <progress> */
+.lobby-run-card progress {
+    margin-bottom: 0.5rem;
+    height: 0.5rem;
+}
+
+/* Bypass warning badge */
+.lobby-bypass-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15em 0.55em;
+    border-radius: 0.3em;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--pico-del-color, #c0392b);
+    color: #fff;
+    white-space: nowrap;
+}
+
+/* Settings meta list */
+.lobby-meta {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color, #6c757d);
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 1rem;
+}
+.lobby-meta li::before { content: none; }
+
+/* Status pills */
+.lobby-status-pill {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 0.3em;
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+}
+.lobby-status-pill--completed {
+    background: var(--pico-ins-color, #27ae60);
+    color: #fff;
+}
+.lobby-status-pill--failed {
+    background: var(--pico-del-color, #c0392b);
+    color: #fff;
+}
+
+/* PicoCSS <details>/<summary> in cards */
+.lobby-run-card details {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+}
+.lobby-run-card details summary {
+    cursor: pointer;
+    color: var(--pico-primary, #1095c1);
+    font-size: 0.85rem;
+    padding: 0.25rem 0;
+}
+
+/* Details meta list */
+.lobby-details-meta {
+    list-style: none;
+    padding: 0.5rem 0 0;
+    margin: 0;
+}
+.lobby-details-meta li { padding: 0.15rem 0; }
+.lobby-details-meta li::before { content: none; }
+
+/* Colony rename form */
+.lobby-rename-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 0.5rem 0 0;
+}
+.lobby-rename-form input {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    font-size: 1rem; /* ≥16px prevents iOS focus zoom */
+}
+.lobby-rename-form button {
+    margin: 0;
+    white-space: nowrap;
+    width: auto;
+}
+.lobby-rename-error {
+    color: var(--pico-del-color, #c0392b);
+    font-size: 0.8rem;
+    margin: 0.25rem 0 0;
+}
+
+/* Empty state */
+.lobby-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--pico-muted-color, #6c757d);
+}
+
+/* Section headings */
+.lobby-section-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 1.75rem 0 0.25rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
+}
+.lobby-section-heading:first-child { margin-top: 0; }
+
+/* Disabled coming-soon button */
+button[disabled].lobby-btn-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.lobby-coming-soon-note {
+    font-size: 0.8rem;
+    color: var(--pico-muted-color, #6c757d);
+    margin-top: 0.35rem;
+}
+
+/* ── Highscore table ────────────────────────────────────────────────────── */
+.lobby-highscore-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.lobby-highscore-table th,
+.lobby-highscore-table td {
+    padding: 0.55rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
+    vertical-align: middle;
+}
+.lobby-highscore-table thead th {
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--pico-muted-color, #6c757d);
+    border-bottom: 2px solid var(--pico-muted-border-color, #ddd);
+}
+.lobby-highscore-table tbody tr:last-child td { border-bottom: none; }
+.lobby-highscore-table tbody tr:hover td {
+    background: var(--pico-card-background-color, #f9f9f9);
+}
+.lobby-highscore-score {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+}
+.lobby-hs-meta {
+    font-size: 0.78rem;
+    color: var(--pico-muted-color, #6c757d);
+}
+.lobby-hs-empty {
+    font-size: 0.9rem;
+    color: var(--pico-muted-color, #6c757d);
+    margin-top: 0.75rem;
+}

@@ -1,29 +1,29 @@
-@extends('layouts.app')
+@extends('layouts.infra')
 
 @section('title', 'Profil – ' . $user->username)
 
 @section('content')
-<h2><i class="bi bi-person-circle"></i> {{ $user->username }}</h2>
+<div style="max-width: 32rem;">
+    <h2 style="display:flex; align-items:center; gap:0.5rem;">
+        <i class="bi bi-person-circle"></i> {{ $user->username }}
+    </h2>
 
-<div class="row">
-    <div class="col-md-4">
-        <dl class="row">
-            <dt class="col-sm-5">Anzeigename</dt>
-            <dd class="col-sm-7">{{ $user->display_name }}</dd>
+    <dl>
+        <dt>Anzeigename</dt>
+        <dd>{{ $user->display_name }}</dd>
 
-            <dt class="col-sm-5">E-Mail</dt>
-            <dd class="col-sm-7">{{ $user->email }}</dd>
+        <dt>E-Mail</dt>
+        <dd>{{ $user->email }}</dd>
 
-            <dt class="col-sm-5">Rolle</dt>
-            <dd class="col-sm-7">{{ $user->role }}</dd>
+        <dt>Rolle</dt>
+        <dd>{{ $user->role }}</dd>
 
-            <dt class="col-sm-5">Registriert</dt>
-            <dd class="col-sm-7">{{ $user->registration }}</dd>
-        </dl>
+        <dt>Registriert</dt>
+        <dd>{{ $user->registration }}</dd>
+    </dl>
 
-        <a href="{{ route('user.settings') }}" class="btn btn-secondary btn-sm">
-            <i class="bi bi-gear"></i> Einstellungen
-        </a>
-    </div>
+    <a href="{{ route('user.settings') }}" role="button" class="secondary outline" style="width:auto;">
+        <i class="bi bi-gear"></i> Einstellungen
+    </a>
 </div>
 @endsection

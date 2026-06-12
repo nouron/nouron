@@ -1,59 +1,46 @@
-@extends('layouts.app')
+@extends('layouts.infra')
 
 @section('title', 'Registrieren – Nouron')
 
 @section('content')
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">Registrieren</div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('register') }}">
-                    @csrf
+<div class="infra-auth-wrap">
+    <hgroup>
+        <h1>Registrieren</h1>
+    </hgroup>
 
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Benutzername</label>
-                        <input type="text" id="username" name="username"
-                               class="form-control @error('username') is-invalid @enderror"
-                               value="{{ old('username') }}" required autofocus>
-                        @error('username')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+    <form method="POST" action="{{ route('register') }}">
+        @csrf
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">E-Mail</label>
-                        <input type="email" id="email" name="email"
-                               class="form-control @error('email') is-invalid @enderror"
-                               value="{{ old('email') }}" required>
-                        @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+        <label for="username">Benutzername
+            <input type="text" id="username" name="username"
+                   value="{{ old('username') }}" required autofocus
+                   aria-invalid="{{ $errors->has('username') ? 'true' : 'false' }}">
+            @error('username')<small>{{ $message }}</small>@enderror
+        </label>
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Passwort</label>
-                        <input type="password" id="password" name="password"
-                               class="form-control @error('password') is-invalid @enderror"
-                               required>
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+        <label for="email">E-Mail
+            <input type="email" id="email" name="email"
+                   value="{{ old('email') }}" required
+                   aria-invalid="{{ $errors->has('email') ? 'true' : 'false' }}">
+            @error('email')<small>{{ $message }}</small>@enderror
+        </label>
 
-                    <div class="mb-3">
-                        <label for="password_confirmation" class="form-label">Passwort bestätigen</label>
-                        <input type="password" id="password_confirmation" name="password_confirmation"
-                               class="form-control" required>
-                    </div>
+        <label for="password">Passwort
+            <input type="password" id="password" name="password" required
+                   aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}">
+            @error('password')<small>{{ $message }}</small>@enderror
+        </label>
 
-                    <button type="submit" class="btn btn-primary w-100">Registrieren</button>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                Bereits registriert? <a href="{{ route('login') }}">Anmelden</a>
-            </div>
-        </div>
-    </div>
+        <label for="password_confirmation">Passwort bestätigen
+            <input type="password" id="password_confirmation"
+                   name="password_confirmation" required>
+        </label>
+
+        <button type="submit">Registrieren</button>
+    </form>
+
+    <p class="infra-auth-footer">
+        Bereits registriert? <a href="{{ route('login') }}">Anmelden</a>
+    </p>
 </div>
 @endsection

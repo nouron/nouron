@@ -158,7 +158,15 @@
 <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
 <script src="{{ asset('js/swipe.js') }}"></script>
 <script src="{{ asset('js/carousel.js') }}"></script>
+@if(request()->routeIs('colony.view'))
 <script src="{{ asset('js/colony-hexgrid.js') }}?v={{ filemtime(public_path('js/colony-hexgrid.js')) }}"></script>
+@endif
 @stack('scripts')
+
+@auth
+    @if(Auth::user()->role === 'admin')
+        @include('partials.debug-bar')
+    @endif
+@endauth
 </body>
 </html>
