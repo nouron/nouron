@@ -38,4 +38,17 @@ return [
     'error_dismissed_this_tick'   => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic'               => 'Berater konnte nicht eingestellt werden.',
 
+    // Hire/fire confirmation dialogs
+    'dialog_hire_title'   => 'Berater einstellen',
+    'dialog_fire_title'   => 'Berater entlassen',
+    'dialog_rank_junior'  => 'Junior',
+    'dialog_ap_label'     => 'pro Sol',
+    'dialog_cost_once'    => 'Einmalige Kosten',
+    'dialog_upkeep'       => 'Unterhalt',
+    'dialog_per_sol'      => 'Cr / Sol',
+    'dialog_fire_confirm' => 'wirklich entlassen? Bereits gesammelte Erfahrung (Rang) geht verloren.',
+    'dialog_hire'         => 'Einstellen',
+    'dialog_fire'         => 'Entlassen',
+    'dialog_cancel'       => 'Abbrechen',
+
 ];

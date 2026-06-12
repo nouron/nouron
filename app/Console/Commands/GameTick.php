@@ -816,6 +816,12 @@ class GameTick extends Command
             return 0;
         }
 
+        // Buildings whose transit ended before this tick have arrived.
+        DB::table('colony_buildings')
+            ->whereNotNull('pending_until_tick')
+            ->where('pending_until_tick', '<', $tick)
+            ->update(['pending_until_tick' => null]);
+
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
@@ -831,6 +837,11 @@ class GameTick extends Command
                     ->first();
 
                 if (!$building || $building->level <= 0) {
+                    continue;
+                }
+
+                // In transit (harvester relocation): no production this Sol.
+                if ($building->pending_until_tick !== null && (int) $building->pending_until_tick >= $tick) {
                     continue;
                 }
 

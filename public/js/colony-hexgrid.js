@@ -108,9 +108,11 @@ function colonyHexView(config) {
         levelupNotice:      null,   // set to label string when a building levels up
         _lvlTimer:          null,
         harvesterMoveMode:  false,
+        buildTargetTile:    null,
         _svgPolygons:       new Map(),
         _tilePositions:     new Map(),
         _gridEl:            null,
+        _panState:          { x: 0, y: 0 },
 
         init() {
             this.$nextTick(async () => {
@@ -143,6 +145,7 @@ function colonyHexView(config) {
                 activeHint:        this.activeHint ?? null,
                 harvesterMoveMode: this.harvesterMoveMode,
                 harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
+                panState:          this._panState,
             });
         },
 
@@ -191,8 +194,9 @@ function colonyHexView(config) {
 
         async toggleBuildMode() {
             if (this.buildMode) {
-                this.buildMode       = false;
-                this.pendingBuilding = null;
+                this.buildMode         = false;
+                this.pendingBuilding   = null;
+                this.buildTargetTile   = null;
                 this.$nextTick(() => this.redrawGrid());
                 return;
             }
@@ -203,11 +207,31 @@ function colonyHexView(config) {
             this.$nextTick(() => this.redrawGrid());
         },
 
+        async startBuildForTile(tile) {
+            const data              = await this.get(this.routes.buildingsAvailable);
+            this.availableBuildings = data.buildings ?? [];
+            this.buildTargetTile    = tile;
+            this.buildMode          = true;
+            this.selectedTile       = null;
+            this.$nextTick(() => this.redrawGrid());
+        },
+
+        cancelBuildMode() {
+            this.buildMode         = false;
+            this.pendingBuilding   = null;
+            this.buildTargetTile   = null;
+            this.$nextTick(() => this.redrawGrid());
+        },
+
         selectPendingBuilding(building) {
             this.pendingBuilding = (this.pendingBuilding?.building_id === building.building_id)
                 ? null
                 : building;
-            this.$nextTick(() => this.redrawGrid());
+            if (this.pendingBuilding && this.buildTargetTile) {
+                this.doPlaceBuilding(this.buildTargetTile);
+            } else {
+                this.$nextTick(() => this.redrawGrid());
+            }
         },
 
         // ── Tile actions ──────────────────────────────────────────────────────
@@ -254,9 +278,10 @@ function colonyHexView(config) {
             });
             if (res.ok) {
                 this.updateBuilding(res.building);
-                this.buildMode       = false;
-                this.pendingBuilding = null;
-                this.selectedTile    = tile;
+                this.buildMode         = false;
+                this.pendingBuilding   = null;
+                this.buildTargetTile   = null;
+                this.selectedTile      = tile;
                 this.updateAp(res);
                 this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
@@ -460,6 +485,12 @@ function colonyHexView(config) {
             return this.buildings.find(b => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },
 
+        isBuildableTile(tile) {
+            return tile && tile.is_colony_zone && tile.is_explored
+                && tile.tile_type.startsWith('terrain_')
+                && tile.tile_type !== 'terrain_impassable';
+        },
+
         statusLine() {
             const total    = this.tiles.length;
             const explored = this.tiles.filter(t => t.is_explored).length;
@@ -539,8 +570,10 @@ function drawHarvesterArrow(group, x1, y1, x2, y2) {
 function initHexGrid(container, tiles, opts = {}) {
     if (!container || tiles.length === 0) return;
 
-    const SIZE    = 40;
-    const PADDING = SIZE * 1.5;
+    const SIZE = 40;
+    // On narrow screens, use tighter padding so the colony zone fills the viewport.
+    const isMobile = container.clientWidth > 0 && container.clientWidth < 600;
+    const PADDING  = isMobile ? SIZE * 0.6 : SIZE * 1.5;
 
     // Build tile-coordinate → building lookup
     const buildingsByTile = new Map();
@@ -554,27 +587,52 @@ function initHexGrid(container, tiles, opts = {}) {
         }
     }
 
-    // Compute bounding box from actual tile positions
+    // Compute bounding boxes: full grid + colony zone only
     let minPx = Infinity, maxPx = -Infinity;
     let minPy = Infinity, maxPy = -Infinity;
+    let czMinPx = Infinity, czMaxPx = -Infinity;
+    let czMinPy = Infinity, czMaxPy = -Infinity;
 
     const positions = tiles.map(t => {
         const px = SIZE * Math.sqrt(3) * (t.q + t.r / 2);
         const py = SIZE * 1.5 * t.r;
-        minPx = Math.min(minPx, px);
-        maxPx = Math.max(maxPx, px);
-        minPy = Math.min(minPy, py);
-        maxPy = Math.max(maxPy, py);
+        minPx = Math.min(minPx, px); maxPx = Math.max(maxPx, px);
+        minPy = Math.min(minPy, py); maxPy = Math.max(maxPy, py);
+        if (t.is_colony_zone) {
+            czMinPx = Math.min(czMinPx, px); czMaxPx = Math.max(czMaxPx, px);
+            czMinPy = Math.min(czMinPy, py); czMaxPy = Math.max(czMaxPy, py);
+        }
         return { tile: t, px, py };
     });
 
-    const svgW = maxPx - minPx + SIZE * Math.sqrt(3) + PADDING * 2;
-    const svgH = maxPy - minPy + SIZE * 2 + PADDING * 2;
-    const offX = -minPx + PADDING + SIZE * Math.sqrt(3) / 2;
-    const offY = -minPy + PADDING + SIZE;
+    // On mobile, clip the viewBox to the colony zone + one hex margin so ring 3
+    // is partially visible ("hinted") while the colony zone fills most of the screen.
+    const hasCZ = czMinPx !== Infinity;
+    const margin = SIZE * 1.1;
+    const vbMinPx = isMobile && hasCZ ? czMinPx - margin : minPx;
+    const vbMaxPx = isMobile && hasCZ ? czMaxPx + margin : maxPx;
+    const vbMinPy = isMobile && hasCZ ? czMinPy - margin : minPy;
+    const vbMaxPy = isMobile && hasCZ ? czMaxPy + margin : maxPy;
+
+    const svgW = vbMaxPx - vbMinPx + SIZE * Math.sqrt(3) + PADDING * 2;
+    const svgH = vbMaxPy - vbMinPy + SIZE * 2 + PADDING * 2;
+    const offX = -vbMinPx + PADDING + SIZE * Math.sqrt(3) / 2;
+    const offY = -vbMinPy + PADDING + SIZE;
+
+    // Restore pan offset (persists across redraws so the user keeps their position)
+    let panX = opts.panState?.x ?? 0;
+    let panY = opts.panState?.y ?? 0;
+
+    // Clamp bounds: leftmost/rightmost tile edges within SVG coordinate space
+    const panXMin = minPx + offX - PADDING;
+    const panXMax = Math.max(0, maxPx + offX + SIZE * Math.sqrt(3) + PADDING - svgW);
+    const panYMin = minPy + offY - PADDING;
+    const panYMax = Math.max(0, maxPy + offY + SIZE * 2 + PADDING - svgH);
+    panX = Math.max(panXMin, Math.min(panX, panXMax));
+    panY = Math.max(panYMin, Math.min(panY, panYMax));
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+    svg.setAttribute('viewBox', `${panX} ${panY} ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
     svg.style.display = 'block';
 
@@ -618,6 +676,41 @@ function initHexGrid(container, tiles, opts = {}) {
                 });
             }
         }
+    }
+
+    // Touch-drag pan (mobile only): lets the user slide the grid to reach ring 3+ tiles.
+    if (isMobile) {
+        let touchStartX, touchStartY, touchStartPanX, touchStartPanY, touchMoved = false;
+
+        svg.addEventListener('touchstart', e => {
+            if (e.touches.length !== 1) return;
+            touchStartX    = e.touches[0].clientX;
+            touchStartY    = e.touches[0].clientY;
+            touchStartPanX = panX;
+            touchStartPanY = panY;
+            touchMoved     = false;
+        }, { passive: true });
+
+        svg.addEventListener('touchmove', e => {
+            if (e.touches.length !== 1) return;
+            const dx = e.touches[0].clientX - touchStartX;
+            const dy = e.touches[0].clientY - touchStartY;
+            if (!touchMoved && Math.hypot(dx, dy) < 6) return;
+            touchMoved = true;
+            const scale = svgW / (svg.clientWidth || svgW);
+            panX = Math.max(panXMin, Math.min(touchStartPanX - dx * scale, panXMax));
+            panY = Math.max(panYMin, Math.min(touchStartPanY - dy * scale, panYMax));
+            svg.setAttribute('viewBox', `${panX} ${panY} ${svgW} ${svgH}`);
+            if (opts.panState) { opts.panState.x = panX; opts.panState.y = panY; }
+            e.preventDefault();
+        }, { passive: false });
+
+        svg.addEventListener('touchend', () => {
+            if (touchMoved) {
+                // Suppress the synthetic click that fires after a drag gesture.
+                svg.addEventListener('click', e => e.stopPropagation(), { once: true, capture: true });
+            }
+        }, { passive: true });
     }
 
     container.innerHTML = '';
@@ -741,7 +834,9 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     if (building && !isCC && tile.is_explored) {
         const abbr        = BUILDING_ABBR[building.building_key] ?? '?';
         const isBuilt     = building.level > 0;
+        const inTransit   = !!building.in_transit;
         const levelSuffix = isBuilt ? ` ${building.level}` : '';
+        const badgeText   = inTransit ? `${abbr} →` : abbr + levelSuffix;
         const badgeW      = isBuilt ? 28 : 22;
         const badgeH      = 12;
         const bx          = cx - badgeW / 2;
@@ -753,11 +848,11 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         rect.setAttribute('width',  badgeW);
         rect.setAttribute('height', badgeH);
         rect.setAttribute('rx',     '3');
-        rect.setAttribute('fill', isBuilt ? 'rgba(30,30,30,0.72)' : 'rgba(80,80,80,0.55)');
+        rect.setAttribute('fill', inTransit ? 'rgba(180,83,9,0.85)' : (isBuilt ? 'rgba(30,30,30,0.72)' : 'rgba(80,80,80,0.55)'));
         rect.setAttribute('pointer-events', 'none');
         g.appendChild(rect);
 
-        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, abbr + levelSuffix, 8, '#fff', 700));
+        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, badgeText, 8, '#fff', 700));
 
         // Red warning dot (top-right of badge) when condition < 10%
         if (isBuilt) {

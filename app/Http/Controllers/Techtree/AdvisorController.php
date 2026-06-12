@@ -62,6 +62,8 @@ class AdvisorController extends BaseController
     private function buildSlots(Collection $advisors, array $slotInfo, int $currentTick): array
     {
         $rankThresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        $upkeepMap      = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $apPerRank      = config('game.advisor.ap_per_rank', [1 => 4]);
         $ccLevel        = $slotInfo['cc_level'];
 
         // Index active advisors by personell_id for O(1) lookup.
@@ -103,7 +105,6 @@ class AdvisorController extends BaseController
                     $progressPct = min(100, (int) round($advisor->active_ticks / $nextThreshold * 100));
                 }
 
-                $upkeepMap   = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
                 $advisorData = [
                     'id'                     => $advisor->id,
                     'rank'                   => $advisor->rank,
@@ -127,15 +128,18 @@ class AdvisorController extends BaseController
             }
 
             $slots[] = [
-                'position'     => $position,
-                'key'          => $key,
-                'name'         => trans("advisors.{$key}"),
-                'personell_id' => $personellId,
-                'ap_type'      => $apType,
-                'hire_cost'    => $hireCost,
-                'cc_required'  => $position,
-                'state'        => $state,
-                'advisor'      => $advisorData,
+                'position'      => $position,
+                'key'           => $key,
+                'name'          => trans("advisors.{$key}"),
+                'desc'          => trans("advisors.{$key}_desc"),
+                'personell_id'  => $personellId,
+                'ap_type'       => $apType,
+                'hire_cost'     => $hireCost,
+                'junior_ap'     => (int) ($apPerRank[1] ?? 4),
+                'junior_upkeep' => (int) ($upkeepMap[1] ?? 10),
+                'cc_required'   => $position,
+                'state'         => $state,
+                'advisor'       => $advisorData,
             ];
         }
 

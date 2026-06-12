@@ -1,5 +1,6 @@
 @extends('layouts.colony')
 @section('title', $colony->name . ' — Kolonie')
+@section('page-nav-title', 'Kolonie')
 
 @section('content')
 <script>
@@ -52,7 +53,7 @@ window.__colonyViewData = {
         <div class="hex-canvas-wrap">
             <div class="hex-canvas-header">
                 <h2>{{ $colony->name }}</h2>
-                <small x-text="statusLine()"></small>
+                <small class="status-line" x-text="statusLine()"></small>
                 <div class="ap-chips">
                     <span class="ap-chip ap-chip--nav" x-data="{ open: false }"
                           @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
@@ -91,11 +92,6 @@ window.__colonyViewData = {
                     🛸 {{ __('colony.merchant_in_system') }}
                 </a>
 
-                <button class="build-btn"
-                        :class="{ 'build-btn--active': buildMode }"
-                        @click="toggleBuildMode()">
-                    <span x-text="buildMode ? '{{ __('colony.cancel') }}' : '{{ __('colony.build') }}'"></span>
-                </button>
             </div>
 
             {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
@@ -123,7 +119,65 @@ window.__colonyViewData = {
 
         {{-- Tile info / build mode sidebar --}}
         <aside class="tile-panel">
-            <div class="tile-panel-header">
+
+            {{-- Action strip: always visible above the section header.
+                 On desktop this serves as a top-of-panel quick-action bar.
+                 On mobile this is the primary action surface (no scrolling needed). --}}
+            <div class="tile-panel-action-strip"
+                 x-show="harvesterMoveMode || buildMode || selectedTile"
+                 x-cloak>
+                {{-- Harvester move mode: cancel --}}
+                <template x-if="harvesterMoveMode">
+                    <div class="sidebar-actions">
+                        <button class="sidebar-action-btn" @click="cancelHarvesterMove()">
+                            {{ __('colony.cancel') }}
+                        </button>
+                    </div>
+                </template>
+                {{-- Normal mode tile actions --}}
+                <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
+                    <div class="sidebar-actions">
+                        <template x-if="!selectedTile.is_explored">
+                            <button class="sidebar-action-btn" @click="doExploreTile(selectedTile)">
+                                {{ __('colony.explore') }}
+                            </button>
+                        </template>
+                        <template x-if="selectedTile.has_signal && !selectedTile.is_deep_scanned">
+                            <button class="sidebar-action-btn" @click="doDeepScan(selectedTile)">
+                                {{ __('colony.deep_scan') }}
+                            </button>
+                        </template>
+                        <template x-if="buildingForTile(selectedTile) && (buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level)">
+                            <button class="sidebar-action-btn" @click="doInvestAp(buildingForTile(selectedTile))">
+                                {{ __('colony.invest_ap') }}
+                            </button>
+                        </template>
+                        <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.level > 0 && !buildingForTile(selectedTile)?.in_transit">
+                            <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startHarvesterMove()">
+                                {{ __('colony.harvester_move') }}
+                            </button>
+                        </template>
+                        <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.in_transit">
+                            <p class="build-mode-hint" style="margin:0">{{ __('colony.harvester_in_transit') }}</p>
+                        </template>
+                        <template x-if="isBuildableTile(selectedTile) && !buildingForTile(selectedTile)">
+                            <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startBuildForTile(selectedTile)">
+                                {{ __('colony.build') }}
+                            </button>
+                        </template>
+                    </div>
+                </template>
+                {{-- Build mode: cancel button in strip --}}
+                <template x-if="buildMode">
+                    <div class="sidebar-actions">
+                        <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="cancelBuildMode()">
+                            {{ __('colony.cancel') }}
+                        </button>
+                    </div>
+                </template>
+            </div>
+
+            <div class="tile-panel-header tile-panel-header--hideable">
                 <h3 x-text="harvesterMoveMode ? '{{ __('colony.harvester_move') }}' : (buildMode ? '{{ __('colony.build_mode_title') }}' : '{{ __('colony.tile_info') }}')"></h3>
             </div>
 
@@ -134,9 +188,6 @@ window.__colonyViewData = {
                     <div>
                         <p class="build-mode-hint"
                            x-text="hasHarvesterTargets() ? i18n.harvesterMoveModeHint : i18n.harvesterMoveNoTargets"></p>
-                        <button class="sidebar-action-btn" @click="cancelHarvesterMove()">
-                            {{ __('colony.cancel') }}
-                        </button>
                     </div>
                 </template>
 
@@ -190,7 +241,7 @@ window.__colonyViewData = {
 
                 {{-- Normal mode: selected tile info --}}
                 <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
-                    <div>
+                    <div class="tile-info-container">
                         <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
 
                         <div class="tile-status-chips">
@@ -207,8 +258,10 @@ window.__colonyViewData = {
                         </div>
 
                         <dl class="tile-dl">
-                            <dt>Koordinaten</dt>
-                            <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
+                            <div class="tile-dl-coords">
+                                <dt>Koordinaten</dt>
+                                <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
+                            </div>
 
                             <template x-if="selectedTile.is_explored">
                                 <div>
@@ -288,32 +341,6 @@ window.__colonyViewData = {
                             </div>
                         </template>
 
-                        {{-- Context action buttons --}}
-                        <div class="sidebar-actions">
-                            <template x-if="!selectedTile.is_explored">
-                                <button class="sidebar-action-btn" @click="doExploreTile(selectedTile)">
-                                    {{ __('colony.explore') }}
-                                </button>
-                            </template>
-
-                            <template x-if="selectedTile.has_signal && !selectedTile.is_deep_scanned">
-                                <button class="sidebar-action-btn" @click="doDeepScan(selectedTile)">
-                                    {{ __('colony.deep_scan') }}
-                                </button>
-                            </template>
-
-                            <template x-if="buildingForTile(selectedTile) && (buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level)">
-                                <button class="sidebar-action-btn" @click="doInvestAp(buildingForTile(selectedTile))">
-                                    {{ __('colony.invest_ap') }}
-                                </button>
-                            </template>
-
-                            <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.level > 0">
-                                <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startHarvesterMove()">
-                                    {{ __('colony.harvester_move') }}
-                                </button>
-                            </template>
-                        </div>
                     </div>
                 </template>
 
