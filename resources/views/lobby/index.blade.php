@@ -161,6 +161,30 @@
         content: none;
     }
 
+    /* Colony rename form (pending run card) */
+    .lobby-rename-form {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        margin: 0.5rem 0 0;
+    }
+    .lobby-rename-form input {
+        flex: 1;
+        min-width: 0;
+        margin: 0;
+        font-size: 1rem; /* ≥16px — prevents iOS focus zoom */
+    }
+    .lobby-rename-form button {
+        margin: 0;
+        white-space: nowrap;
+        width: auto;
+    }
+    .lobby-rename-error {
+        color: var(--pico-del-color, #c0392b);
+        font-size: 0.8rem;
+        margin: 0.25rem 0 0;
+    }
+
     /* Empty state */
     .lobby-empty {
         text-align: center;
@@ -348,6 +372,20 @@
                     </header>
 
                     <p class="lobby-sol-progress">{{ __('lobby.colony_ready') }}</p>
+
+                    {{-- Colony rename — moved here from the removed colony/index screen --}}
+                    <form method="POST" action="{{ route('colony.rename') }}" class="lobby-rename-form">
+                        @csrf
+                        @method('PATCH')
+                        <input type="text" name="name"
+                               value="{{ old('name', $colonyName) }}"
+                               minlength="2" maxlength="50" required
+                               aria-label="{{ __('lobby.rename_label') }}">
+                        <button type="submit" class="secondary outline">{{ __('lobby.rename_button') }}</button>
+                    </form>
+                    @error('name')
+                        <p class="lobby-rename-error">{{ $message }}</p>
+                    @enderror
 
                     <ul class="lobby-meta">
                         <li>{{ __('lobby.tick_limit') }}: <strong>{{ $tickLimit }}</strong></li>

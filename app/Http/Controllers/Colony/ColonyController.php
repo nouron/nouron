@@ -34,13 +34,6 @@ class ColonyController extends BaseController
         parent::__construct($tick);
     }
 
-    public function index(): View
-    {
-        $colony = $this->colonyService->getPrimeColony(Auth::id());
-
-        return view('colony.index', compact('colony'));
-    }
-
     public function hexview(): View
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -474,7 +467,7 @@ class ColonyController extends BaseController
             ->where('id', $colony->id)
             ->update(['name' => $request->input('name')]);
 
-        return redirect()->route('colony.index')
+        return redirect()->route('lobby')
             ->with('success', 'Kolonienname wurde aktualisiert.');
     }
 

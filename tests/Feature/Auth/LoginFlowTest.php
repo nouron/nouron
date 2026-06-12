@@ -15,8 +15,8 @@ use Tests\TestCase;
  * - LOW-1 (throttle): 5 failed attempts are allowed; the 6th returns 429
  * - Wrong password shows error on username field, guest remains unauthenticated
  * - Non-existent username shows error, guest remains unauthenticated
- * - Successful login with username → redirect to galaxy.index
- * - Successful login with email → redirect to galaxy.index
+ * - Successful login with username → redirect to lobby
+ * - Successful login with email → redirect to lobby
  * - Throttle is per IP key — a different IP (different key) is not blocked
  * - After throttle triggers, the correct password also returns 429 (locked out)
  *
@@ -80,7 +80,7 @@ class LoginFlowTest extends TestCase
     // ── Auth flow: successful login ──────────────────────────────────────────
 
     /**
-     * Correct credentials with username → redirected to galaxy.index.
+     * Correct credentials with username → redirected to lobby.
      */
     public function test_successful_login_with_username_redirects_to_galaxy(): void
     {
@@ -98,7 +98,7 @@ class LoginFlowTest extends TestCase
     }
 
     /**
-     * Correct credentials with email address → redirected to galaxy.index.
+     * Correct credentials with email address → redirected to lobby.
      */
     public function test_successful_login_with_email_redirects_to_galaxy(): void
     {

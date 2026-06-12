@@ -11,7 +11,7 @@ use Tests\TestCase;
  * MED-3: Colony rename — input validation and flash messenger.
  *
  * Covers:
- * - Happy path: valid name → colony name updated in DB, redirect to colony.index
+ * - Happy path: valid name → colony name updated in DB, redirect to lobby
  * - Flash success message appears after successful rename
  * - HTML injection guard: names containing <, > or { } must be rejected
  * - XSS attempt: <script>…</script> in name → validation error, DB unchanged
@@ -52,16 +52,16 @@ class ColonyRenameTest extends TestCase
     {
         $this->actingAs($this->makeUser($this->bartUserId))
             ->patch(route('colony.rename'), ['name' => 'New Springfield'])
-            ->assertRedirect(route('colony.index'));
+            ->assertRedirect(route('lobby'));
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'New Springfield']);
     }
 
-    public function test_rename_redirects_to_colony_index(): void
+    public function test_rename_redirects_to_lobby(): void
     {
         $this->actingAs($this->makeUser($this->bartUserId))
             ->patch(route('colony.rename'), ['name' => 'Renamed'])
-            ->assertRedirect(route('colony.index'));
+            ->assertRedirect(route('lobby'));
     }
 
     // ── Flash messenger ──────────────────────────────────────────────────────
@@ -160,7 +160,7 @@ class ColonyRenameTest extends TestCase
     {
         $this->actingAs($this->makeUser($this->bartUserId))
             ->patch(route('colony.rename'), ['name' => 'AB'])
-            ->assertRedirect(route('colony.index'))
+            ->assertRedirect(route('lobby'))
             ->assertSessionMissing('errors');
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => 'AB']);
@@ -181,7 +181,7 @@ class ColonyRenameTest extends TestCase
 
         $this->actingAs($this->makeUser($this->bartUserId))
             ->patch(route('colony.rename'), ['name' => $exactly50])
-            ->assertRedirect(route('colony.index'));
+            ->assertRedirect(route('lobby'));
 
         $this->assertDatabaseHas('glx_colonies', ['id' => $this->colonyId, 'name' => $exactly50]);
     }
