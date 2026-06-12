@@ -45,7 +45,7 @@
     {{-- Sol chip: no border, no max --}}
     @if($solDisplay !== null)
         <span class="res-chip res-chip--sol" x-data="{ open: false }"
-              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
               style="position:relative;cursor:default">
             <span class="res-abbr">Sol</span>
             <span class="res-amount">{{ $solDisplay }}</span>
@@ -60,7 +60,7 @@
     {{-- Credits chip — NX shown in popup --}}
     @if($crResource !== null)
         <span class="res-chip res-Cr {{ $nexusChipMod }}" x-data="{ open: false }"
-              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
               style="position:relative;cursor:default">
             <span class="res-abbr">CR</span>
             <span class="res-amount">{{ number_format($crResource['amount'] ?? 0, 0, ',', '.') }}</span>
@@ -75,7 +75,7 @@
     {{-- Supply chip --}}
     @if(isset($primary[2]))
         <span class="res-chip res-Sup" x-data="{ open: false }"
-              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
               style="position:relative;cursor:default">
             <span class="res-abbr">SUP</span>
             <span class="res-amount">{{ number_format($primary[2]['amount'] ?? 0, 0, ',', '.') }}</span>
@@ -101,7 +101,7 @@
                         $langKey = 'popup_' . strtolower($abbr);
                     @endphp
                     <span class="res-chip res-{{ $abbr }}" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                           style="position:relative;cursor:default">
                         <span class="res-abbr">{{ $abbr }}</span>
                         <span class="res-amount">{{ number_format($resource['amount'], 0, ',', '.') }}</span>

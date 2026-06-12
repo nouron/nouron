@@ -87,23 +87,34 @@
 
 .carousel-dots {
     display: flex;
-    gap: 6px;
+    gap: 0;
     justify-content: center;
     margin-top: 0.5rem;
 }
 
+/* 24px hit area (touch target); the visible 8px dot is drawn via ::before */
 .carousel-dot {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.carousel-dot::before {
+    content: "";
     width: 8px;
     height: 8px;
     border-radius: 50%;
     background: #ccc;
-    border: none;
-    padding: 0;
-    cursor: pointer;
     transition: background 0.15s;
 }
 
-.carousel-dot--active {
+.carousel-dot--active::before {
     background: var(--color-accent);
 }
 

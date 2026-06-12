@@ -43,7 +43,7 @@
                            href="{{ route('colony.bar') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a>
                     @else
                         <span class="nav-link nav-link-locked"
-                              title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span>
+                              title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span><i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i></span>
                     @endif
                 </li>
                 <li class="nav-item">

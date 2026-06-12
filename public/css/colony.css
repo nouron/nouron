@@ -263,7 +263,8 @@ button.btn-sol:hover,
     display: grid;
     grid-template-columns: 1fr 320px;
     align-items: start;
-    min-height: calc(100vh - 84px);
+    min-height: calc(100vh - 84px);  /* fallback for browsers without dvh */
+    min-height: calc(100dvh - 84px); /* dynamic viewport — mobile address bar safe */
 }
 
 /* ── Canvas wrap (left column) ───────────────────────────────────────────── */
@@ -1212,10 +1213,27 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0.25rem 0;
 }
 
+/* Lock marker on gated nav items — visible on touch where title tooltips are not */
+.nav-lock-icon {
+    font-size: 0.7em;
+    opacity: 0.8;
+    margin-left: 0.2em;
+    vertical-align: text-top;
+}
+
+/* Locked reason sub-line in the mobile flyout */
+.nav-flyout-locked-hint {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    line-height: 1.3;
+    white-space: normal;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 
 /* Stack grid + sidebar at 900px and below */
-@media (max-width: 900px) {
+@media (max-width: 899px) {
     .hex-layout {
         grid-template-columns: 1fr;
         min-height: unset;
@@ -1400,7 +1418,8 @@ dialog[x-ref="discoveryDialog"] {
 /* On mobile, full-bleed viewport — breaks out of any parent padding */
 @media (max-width: 767px) {
     .cantina-viewport {
-        height: calc(100vh - 105px);
+        height: calc(100vh - 105px);  /* fallback for browsers without dvh */
+        height: calc(100dvh - 105px);
         aspect-ratio: unset;
         border-radius: 0;
         border: none;

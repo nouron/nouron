@@ -105,7 +105,7 @@ $hs = fn(string $slot, string $device): array =>
              x-show="activeModal !== null" 
              @click="closeModal()" 
              x-transition.opacity 
-             style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); z-index: 999;"
+             style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;"
              x-cloak></div>
 
         {{-- Interactive Modal / Drawer --}}
