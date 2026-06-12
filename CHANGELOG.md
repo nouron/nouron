@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-13
+
+- **Infra-Screens auf PicoCSS migriert** — Login, Register, Lobby, Run-Result, User-Profil/-Einstellungen, 404/500 verwenden jetzt `layouts.infra` (neues Layout: Pico, Alpine.js, Bootstrap-Icons, kein Bootstrap). Lobby-Inline-CSS (~280 Zeilen) nach `public/css/lobby.css` extrahiert. `layouts/app.blade.php` und `public/css/style.css` gelöscht — Bootstrap vollständig entfernt. Debug-Bar (Admin) in `layouts.colony` übernommen. `colony-hexgrid.js` nur noch auf `colony.view` geladen (war global). `a.technology.btn` + `resicon-*` Styles in `techtree-view.css` verschoben (waren in style.css, aber nie für colony-Layout geladen).
+
 ## 2026-06-12
 
 - **Legacy-Spiel-Screens entfernt** — Flotte (Liste + Konfiguration), Rohstoff-Handel und Galaxis-/Systemkarte (Leaflet) komplett gelöscht: Views, Routes (`fleet.*`, `trade.*`, `galaxy.*`), Controller (Fleet/Trade/Galaxy), `TradeGateway`-Service samt Tests sowie Assets (galaxy.js/css, fleets.js/css, fleet-config.css, trade.js). `FleetService`/`GalaxyService` bleiben (Tick). Navbar-Links + fleets.js-Init aus dem App-Layout entfernt, Brand-Link zeigt auf die Lobby.

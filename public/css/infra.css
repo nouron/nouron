@@ -1,0 +1,71 @@
+/* ── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+    --infra-accent:      #8c2030;
+    --infra-bg:          #ffffff;
+    --infra-surface:     #f7f7f5;
+    --infra-text:        #1a1a1e;
+    --infra-text-muted:  #6b6b7a;
+    --infra-border:      #e8e8ec;
+}
+
+/* ── Brand ──────────────────────────────────────────────────────────────── */
+.infra-brand {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    text-decoration: none !important;
+    color: var(--infra-text) !important;
+}
+.infra-brand:hover { color: var(--infra-accent) !important; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.infra-header {
+    border-bottom: 1px solid var(--infra-border);
+    background: var(--infra-bg);
+    padding: 0 1rem;
+}
+
+/* ── Main ───────────────────────────────────────────────────────────────── */
+.infra-main {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
+}
+
+/* ── Alerts ─────────────────────────────────────────────────────────────── */
+.infra-alert {
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+.infra-alert--success {
+    background: #d1e7dd;
+    border: 1px solid #a3cfbb;
+    color: #0a3622;
+}
+.infra-alert--error {
+    background: #f8d7da;
+    border: 1px solid #f1aeb5;
+    color: #58151c;
+}
+
+/* ── Auth forms (login / register) ──────────────────────────────────────── */
+.infra-auth-wrap {
+    max-width: 26rem;
+    margin: 3rem auto 0;
+}
+.infra-auth-wrap hgroup { margin-bottom: 1.5rem; }
+.infra-auth-wrap hgroup h1 { margin: 0; }
+.infra-auth-wrap .infra-auth-footer {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}
+
+/* ── Nav label hidden on mobile ─────────────────────────────────────────── */
+@media (max-width: 599px) {
+    .infra-nav-label { display: none; }
+}

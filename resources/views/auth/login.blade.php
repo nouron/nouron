@@ -1,48 +1,39 @@
-@extends('layouts.app')
+@extends('layouts.infra')
 
 @section('title', 'Anmelden – Nouron')
 
 @section('content')
-<div class="row justify-content-center mt-5">
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">Anmelden</div>
-            <div class="card-body">
-                <form method="POST" action="{{ route('login') }}">
-                    @csrf
+<div class="infra-auth-wrap">
+    <hgroup>
+        <h1>Anmelden</h1>
+    </hgroup>
 
-                    <div class="mb-3">
-                        <label for="username" class="form-label">Benutzername</label>
-                        <input type="text" id="username" name="username"
-                               class="form-control @error('username') is-invalid @enderror"
-                               value="{{ old('username') }}" required autofocus>
-                        @error('username')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+    <form method="POST" action="{{ route('login') }}">
+        @csrf
 
-                    <div class="mb-3">
-                        <label for="password" class="form-label">Passwort</label>
-                        <input type="password" id="password" name="password"
-                               class="form-control @error('password') is-invalid @enderror"
-                               required>
-                        @error('password')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
+        <label for="username">Benutzername
+            <input type="text" id="username" name="username"
+                   value="{{ old('username') }}" required autofocus
+                   aria-invalid="{{ $errors->has('username') ? 'true' : 'false' }}">
+            @error('username')<small>{{ $message }}</small>@enderror
+        </label>
 
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" id="remember" name="remember" class="form-check-input">
-                        <label for="remember" class="form-check-label">Angemeldet bleiben</label>
-                    </div>
+        <label for="password">Passwort
+            <input type="password" id="password" name="password" required
+                   aria-invalid="{{ $errors->has('password') ? 'true' : 'false' }}">
+            @error('password')<small>{{ $message }}</small>@enderror
+        </label>
 
-                    <button type="submit" class="btn btn-primary w-100">Anmelden</button>
-                </form>
-            </div>
-            <div class="card-footer text-center">
-                Noch kein Konto? <a href="{{ route('register') }}">Registrieren</a>
-            </div>
-        </div>
-    </div>
+        <label>
+            <input type="checkbox" name="remember">
+            Angemeldet bleiben
+        </label>
+
+        <button type="submit">Anmelden</button>
+    </form>
+
+    <p class="infra-auth-footer">
+        Noch kein Konto? <a href="{{ route('register') }}">Registrieren</a>
+    </p>
 </div>
 @endsection
