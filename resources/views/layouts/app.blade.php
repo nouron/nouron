@@ -17,7 +17,7 @@
 @auth
 <nav class="navbar navbar-expand-lg navbar-nouron fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand navbar-brand-nouron" href="{{ route('galaxy.index') }}">Nouron</a>
+        <a class="navbar-brand navbar-brand-nouron" href="{{ route('lobby') }}">Nouron</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
                 aria-controls="navbarMain" aria-expanded="false" aria-label="Navigation">
             <span class="navbar-toggler-icon"></span>
@@ -25,14 +25,6 @@
         <div class="collapse navbar-collapse" id="navbarMain">
             <ul class="navbar-nav me-auto">
                 @if(($inActiveRun ?? false) && !request()->routeIs('lobby*'))
-                <li class="nav-item">
-                    <a class="nav-link @if(request()->routeIs('galaxy.*')) active @endif"
-                       href="{{ route('galaxy.index') }}"><i class="bi bi-globe2"></i><span class="nav-label"> Galaxis</span></a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @if(request()->routeIs('fleet.*')) active @endif"
-                       href="{{ route('fleet.index') }}"><i class="bi bi-send"></i><span class="nav-label"> Flotte</span></a>
-                </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('colony.*')) active @endif"
                        href="{{ route('colony.view') }}"><i class="bi bi-globe2"></i><span class="nav-label"> Kolonie</span></a>
@@ -53,10 +45,6 @@
                         <span class="nav-link nav-link-locked"
                               title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span>
                     @endif
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link @if(request()->routeIs('trade.*')) active @endif"
-                       href="{{ route('trade.resources') }}"><i class="bi bi-cart3"></i><span class="nav-label"> Handel</span></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link @if(request()->routeIs('comm.*')) active @endif"
@@ -151,13 +139,7 @@
 @endauth
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ asset('js/nouron.js') }}"></script>
-<script src="{{ asset('js/fleets.js') }}"></script>
 <script src="{{ asset('js/innn.js') }}"></script>
 @stack('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    if (document.getElementById('fleetconfig')) { fleetconfig.init(); }
-});
-</script>
 </body>
 </html>

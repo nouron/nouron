@@ -6,13 +6,10 @@ use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\ColonyController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Galaxy\GalaxyController;
 use App\Http\Controllers\CommLog\CommLogController;
 use App\Http\Controllers\Resources\JsonController as ResourcesController;
-use App\Http\Controllers\Fleet\FleetController;
 use App\Http\Controllers\Techtree\AdvisorController;
 use App\Http\Controllers\Techtree\TechtreeController;
-use App\Http\Controllers\Trade\TradeController;
 use App\Http\Controllers\LobbyController;
 use App\Http\Controllers\NexusDbController;
 use App\Http\Controllers\RunResultController;
@@ -64,7 +61,6 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
 // ── Colony ────────────────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () {
-    Route::get('/',       [ColonyController::class, 'index'])->name('index');
     Route::get('/view',   [ColonyController::class, 'hexview'])->name('view');
     Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
 
@@ -105,47 +101,11 @@ Route::middleware('auth')->prefix('resources')->name('resources.')->group(functi
     Route::get('/resourcebar',   [ResourcesController::class, 'reloadResourceBar'])->name('resourcebar');
 });
 
-// ── Galaxy (Schritt 6) ────────────────────────────────────────────────────────
-
-Route::middleware('auth')->prefix('galaxy')->name('galaxy.')->group(function () {
-    Route::get('/',                          [GalaxyController::class, 'index'])->name('index');
-    Route::get('/system/{sid}',              [GalaxyController::class, 'showSystem'])->name('system')->where('sid', '[0-9]+');
-    Route::get('/{sid}',                     [GalaxyController::class, 'showSystem'])->where('sid', '[0-9]+');
-    Route::get('/json/mapdata',              [GalaxyController::class, 'getMapData'])->name('json.mapdata');
-    Route::get('/json/getmapdata/{x}/{y}',   [GalaxyController::class, 'getMapData'])->name('json.getmapdata');
-});
-
 // ── Kolonieprotokoll ──────────────────────────────────────────────────────────
 
 Route::middleware('auth')->prefix('comm-log')->name('comm.')->group(function () {
     Route::get('/',      [CommLogController::class, 'log'])->name('log');
     Route::get('/nexus', [CommLogController::class, 'nexus'])->name('nexus');
-});
-
-// ── Trade (Schritt 8) ─────────────────────────────────────────────────────────
-
-Route::middleware('auth')->prefix('trade')->name('trade.')->group(function () {
-    Route::match(['get', 'post'], '/resources', [TradeController::class, 'resources'])->name('resources');
-    Route::post('/offer/resource', [TradeController::class, 'addResourceOffer'])->name('offer.resource');
-    Route::post('/offer/remove',   [TradeController::class, 'removeOffer'])->name('offer.remove');
-    Route::post('/offer/accept',   [TradeController::class, 'acceptResourceOffer'])->name('offer.accept');
-});
-
-// ── Fleet (Schritt 9) ─────────────────────────────────────────────────────────
-
-Route::middleware('auth')->prefix('fleet')->name('fleet.')->group(function () {
-    Route::get('/',                        [FleetController::class, 'index'])->name('index');
-    Route::post('/',                       [FleetController::class, 'store'])->name('store');
-    Route::delete('/{id}',                 [FleetController::class, 'destroy'])->name('destroy')->where('id', '[0-9]+');
-    Route::get('/{id}/config',             [FleetController::class, 'config'])->name('config')->where('id', '[0-9]+');
-    Route::post('/{id}/orders',            [FleetController::class, 'storeOrder'])->name('orders.store')->where('id', '[0-9]+');
-    // JSON endpoints — path matches fleets.js expectations
-    Route::post('/json/addToFleet/{id}',   [FleetController::class, 'addToFleet'])->name('json.addtofleet')->where('id', '[0-9]+');
-    Route::get('/json/getFleetTechnologies/{id}', [FleetController::class, 'getFleetTechnologies'])->name('json.technologies')->where('id', '[0-9]+');
-    Route::get('/json/getFleetResources/{id}',    [FleetController::class, 'getFleetResources'])->name('json.resources')->where('id', '[0-9]+');
-    // Commander assignment
-    Route::post('/{id}/commander/assign', [FleetController::class, 'assignCommander'])->name('commander.assign')->where('id', '[0-9]+');
-    Route::post('/{id}/commander/remove', [FleetController::class, 'removeCommander'])->name('commander.remove')->where('id', '[0-9]+');
 });
 
 // ── Advisors ──────────────────────────────────────────────────────────────────

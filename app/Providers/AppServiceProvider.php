@@ -15,7 +15,6 @@ use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use App\Services\FleetService;
-use App\Services\TradeGateway;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -56,11 +55,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn($app) => new TrustService(
             $app->make(TickService::class),
-        ));
-        $this->app->bind(TradeGateway::class, fn($app) => new TradeGateway(
-            $app->make(ColonyService::class),
-            $app->make(TrustService::class),
-            $app->make(PersonellService::class),
         ));
         $this->app->bind(FleetService::class, FleetService::class);
 

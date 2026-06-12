@@ -16,13 +16,13 @@ use Tests\TestCase;
  * Security tests covering cross-colony access vectors.
  *
  * Scenarios covered:
- *   1. Trade: addResourceOffer with a foreign colony_id returns 403
- *   2. Trade: removeOffer with a foreign colony_id returns 403
- *   3. Fleet: user_id injected in store request is ignored; fleet is owned by authenticated user
- *   4. Fleet: fleet store with spoofed user_id does not assign fleet to the spoofed user
- *   5. Knowledge CC-level gate: levelup to level 4 blocked when CC is at level 3
- *   6. Knowledge CC-level gate: levelup to level 4 succeeds when CC is at level 4 (positive baseline)
- *   7. Knowledge CC-level gate: levelup to level 5 blocked when CC is at level 4
+ *   1. Fleet: user_id not mass-assignable (structural guard — Fleet::$fillable)
+ *   2. Knowledge CC-level gate: levelup to level 4 blocked when CC is at level 3
+ *   3. Knowledge CC-level gate: levelup to level 4 succeeds when CC is at level 4 (positive baseline)
+ *   4. Knowledge CC-level gate: levelup to level 5 blocked when CC is at level 4
+ *
+ * Trade- and fleet-route scenarios were removed together with the legacy
+ * trade/fleet screens (controllers + routes deleted 2026-06).
  *
  * Fixture (TestSeeder / testdata.sqlite.sql):
  *   User 3 (Bart)  → colony 1 "Springfield"  (CC level=3)
@@ -43,90 +43,7 @@ class CrossColonyAccessTest extends TestCase
         $this->homer = User::where('user_id', 0)->firstOrFail();
     }
 
-    // ── Trade: addResourceOffer cross-colony ─────────────────────────────────
-
-    /**
-     * Bart (user 3, colony 1) must not be able to post an offer on Homer's colony 2.
-     * After the security fix the controller calls abort(403), so the HTTP response
-     * must be 403 Forbidden — not a redirect with an error flash.
-     */
-    public function test_add_resource_offer_with_foreign_colony_returns_403(): void
-    {
-        $this->actingAs($this->bart)
-            ->post(route('trade.offer.resource'), [
-                'colony_id'   => 2,   // Homer's colony — Bart does NOT own this
-                'direction'   => 1,
-                'resource_id' => 3,
-                'amount'      => 50,
-                'price'       => 5,
-            ])
-            ->assertForbidden();
-
-        // No offer row must have been written for colony 2
-        $this->assertSame(0, DB::table('trade_resources')
-            ->where('colony_id', 2)
-            ->where('resource_id', 3)
-            ->where('direction', 1)
-            ->count());
-    }
-
-    /**
-     * Homer (user 0, colony 2) must not be able to modify an offer on Bart's colony 1.
-     * After the security fix the controller calls abort(403) in removeOffer as well.
-     */
-    public function test_remove_offer_with_foreign_colony_returns_403(): void
-    {
-        // Seed data: colony 1, direction=0, resource_id=3 belongs to Bart
-        $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
-            ->count(), 'precondition: Bart\'s offer must exist before the attack');
-
-        $this->actingAs($this->homer)
-            ->postJson(route('trade.offer.remove'), [
-                'colony_id'   => 1,   // Bart's colony — Homer does NOT own this
-                'direction'   => 0,
-                'resource_id' => 3,
-            ])
-            ->assertForbidden();
-
-        // Bart's offer must still be intact
-        $this->assertSame(1, DB::table('trade_resources')
-            ->where('colony_id', 1)->where('direction', 0)->where('resource_id', 3)
-            ->count());
-    }
-
     // ── Fleet: user_id mass-assignment guard ─────────────────────────────────
-
-    /**
-     * An attacker sends user_id=homer in the request body when creating a fleet
-     * while authenticated as Bart.  The mass-assignment guard (user_id not in
-     * Fleet::$fillable) ensures the spoofed value is never written to the DB.
-     *
-     * NOTE: As of the current codebase, FleetController::store() passes user_id
-     * via Fleet::create(), but because user_id is absent from $fillable the value
-     * is silently stripped by Eloquent, causing a NOT NULL constraint violation (500).
-     * BUG: The controller must assign user_id outside of create() — e.g.
-     *   $fleet = new Fleet([...]); $fleet->user_id = $userId; $fleet->save();
-     * This test documents the existing structural guard and the side-effect bug.
-     *
-     * @see test_fleet_fillable_does_not_include_user_id — structural guard assertion
-     */
-    public function test_fleet_store_with_spoofed_user_id_never_writes_homer_as_owner(): void
-    {
-        // Regardless of the 500 that the current controller bug produces, Homer must
-        // NEVER end up owning a fleet created during Bart's session.
-        $this->actingAs($this->bart)
-            ->post(route('fleet.store'), [
-                'fleet'   => 'Spoofed Fleet',
-                'user_id' => $this->homer->user_id,   // adversarial: try to claim Homer's identity
-            ]);
-        // We do not assert the HTTP status here — a 500 is a separate (production) bug.
-        // The security invariant: Homer must NOT own the fleet, regardless of outcome.
-        $this->assertDatabaseMissing('fleets', [
-            'fleet'   => 'Spoofed Fleet',
-            'user_id' => $this->homer->user_id,
-        ]);
-    }
 
     /**
      * Complement: verify user_id is not in Fleet::$fillable, which is the

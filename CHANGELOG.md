@@ -2,6 +2,10 @@
 
 ## 2026-06-12
 
+- **Legacy-Spiel-Screens entfernt** — Flotte (Liste + Konfiguration), Rohstoff-Handel und Galaxis-/Systemkarte (Leaflet) komplett gelöscht: Views, Routes (`fleet.*`, `trade.*`, `galaxy.*`), Controller (Fleet/Trade/Galaxy), `TradeGateway`-Service samt Tests sowie Assets (galaxy.js/css, fleets.js/css, fleet-config.css, trade.js). `FleetService`/`GalaxyService` bleiben (Tick). Navbar-Links + fleets.js-Init aus dem App-Layout entfernt, Brand-Link zeigt auf die Lobby.
+- **Kolonie-Umbenennen in Lobby verlagert** — alte `colony/index`-Seite gelöscht; Pending-Run-Karte in der Lobby enthält jetzt das Umbenennen-Formular (`colony.rename`-Redirect → Lobby).
+- **Mobile-First-Audit** — komplettes Frontend auditiert; Findings als Task-Liste: 100dvh-Umstellung, Touch-Targets, Popup-Touch-Verhalten, Breakpoint-Konsolidierung, Infra-Screens-Migration auf PicoCSS (danach Bootstrap-Entfernung).
+
 - **Harvester-Transit (1-Sol Verzögerung)** — Verlegen setzt `pending_until_tick` (Migration); in-transit Harvester produziert nicht (`GameTick`), ist nicht erneut verlegbar; Transit-Badge "HV →" im Grid; Controller blockiert Doppelmove; 6 Feature-Tests (`HarvesterTransitTest`).
 - **Baumeister-Dialog neu gestaltet** — Hire-Dialog zeigt Portrait, Name, JUNIOR-Badge, Beschreibung, AP-Typ, Einmalkosten, Unterhalt/Sol; PicoCSS-`<dialog>`-Override behebt Fullscreen-Bug; `AdvisorController::buildSlots()` liefert `desc`, `junior_ap`, `junior_upkeep`.
 - **Mobile: Colony-Zone-Viewport & SVG-Pan** — Hex-Grid clippt ViewBox auf Colony-Zone + Ring-3-Randstreifen (größere, tappbare Tiles); Touch-Drag verschiebt ViewBox um Ring-3-Tiles (Regolith-Ziele) zu erreichen; Pan-State überlebt Redraws.

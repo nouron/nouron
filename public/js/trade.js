@@ -1,1 +1,0 @@
-var trade = { init: function () {} };

@@ -53,4 +53,8 @@ return [
     'abandon_success'        => 'Mission abgebrochen.',
     'abandon_not_active'     => 'Dieser Run ist nicht mehr aktiv.',
     'nav_runs'               => 'Run-Übersicht',
+
+    // Colony rename (moved here from the removed colony/index screen)
+    'rename_label'           => 'Kolonienname',
+    'rename_button'          => 'Umbenennen',
 ];
