@@ -107,6 +107,7 @@ function colonyHexView(config) {
         _toastTimer:        null,
         levelupNotice:      null,   // set to label string when a building levels up
         _lvlTimer:          null,
+        _apFlashTimers:     {},     // per-chip flash timers (resbar AP chips)
         harvesterMoveMode:  false,
         buildTargetTile:    null,
         _svgPolygons:       new Map(),
@@ -323,6 +324,40 @@ function colonyHexView(config) {
             }
         },
 
+        canRepair(building) {
+            if (!building || building.level < 1) return false;
+            const maxSp = building.max_status_points ?? 20;
+            return building.status_points < maxSp;
+        },
+
+        conditionPct(building) {
+            if (!building) return 0;
+            const maxSp = building.max_status_points ?? 20;
+            return Math.round(building.status_points / maxSp * 100);
+        },
+
+        // Percent gained per repair click (1 status point as % of max).
+        repairStepPct(building) {
+            const maxSp = building?.max_status_points ?? 20;
+            return Math.round(100 / maxSp);
+        },
+
+        async doRepair(building) {
+            const res = await this.post(this.routes.repairBuilding, {
+                building_id: building.building_id,
+                instance_id: building.instance_id ?? 1,
+            });
+            if (res.ok) {
+                this.updateBuilding(res.building);
+                this.updateAp(res);
+                this.updateHint(res);
+                if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+            } else {
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
+            }
+        },
+
         // ── Harvester relocation ──────────────────────────────────────────────
 
         startHarvesterMove() {
@@ -407,8 +442,37 @@ function colonyHexView(config) {
         // ── State helpers ─────────────────────────────────────────────────────
 
         updateAp(res) {
-            if (res.apNav          !== undefined) this.apNav          = res.apNav;
-            if (res.apConstruction !== undefined) this.apConstruction = res.apConstruction;
+            if (res.apNav !== undefined) {
+                if (res.apNav < this.apNav) this.flashApChip('resbar-ap-nav');
+                this.apNav = res.apNav;
+                this.syncResbarAp('resbar-ap-nav', res.apNav);
+            }
+            if (res.apConstruction !== undefined) {
+                if (res.apConstruction < this.apConstruction) this.flashApChip('resbar-ap-build');
+                this.apConstruction = res.apConstruction;
+                this.syncResbarAp('resbar-ap-build', res.apConstruction);
+            }
+        },
+
+        // The AP chips live in the resource bar (layout header), outside this
+        // Alpine component — sync them via DOM after every AJAX action.
+        syncResbarAp(chipId, value) {
+            const el = document.querySelector(`#${chipId} .res-amount`);
+            if (el) el.textContent = value;
+        },
+
+        // Briefly pulse an AP chip so the player notices the pool shrinking.
+        flashApChip(chipId) {
+            const chip = document.getElementById(chipId);
+            if (!chip) return;
+            clearTimeout(this._apFlashTimers[chipId]);
+            chip.classList.remove('ap-chip--flash');
+            // force reflow so the animation restarts even mid-flash
+            void chip.offsetWidth;
+            chip.classList.add('ap-chip--flash');
+            this._apFlashTimers[chipId] = setTimeout(
+                () => chip.classList.remove('ap-chip--flash'), 700
+            );
         },
 
         updateHint(res) {
@@ -489,12 +553,6 @@ function colonyHexView(config) {
             return tile && tile.is_colony_zone && tile.is_explored
                 && tile.tile_type.startsWith('terrain_')
                 && tile.tile_type !== 'terrain_impassable';
-        },
-
-        statusLine() {
-            const total    = this.tiles.length;
-            const explored = this.tiles.filter(t => t.is_explored).length;
-            return `${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
         },
 
         // ── HTTP helpers ──────────────────────────────────────────────────────

@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
+    <link rel="stylesheet" href="{{ asset('css/resources.css') }}?v={{ filemtime(public_path('css/resources.css')) }}">
     <link rel="stylesheet" href="{{ asset('css/colony.css') }}?v={{ filemtime(public_path('css/colony.css')) }}">
-    <link rel="stylesheet" href="{{ asset('css/swipe.css') }}">
-    <link rel="stylesheet" href="{{ asset('css/carousel.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/swipe.css') }}?v={{ filemtime(public_path('css/swipe.css')) }}">
+    <link rel="stylesheet" href="{{ asset('css/carousel.css') }}?v={{ filemtime(public_path('css/carousel.css')) }}">
     @stack('styles')
 </head>
 <body class="@if(request()->routeIs('colony.view')) page-colony @endif">
@@ -30,12 +31,12 @@
             @if($barBuilt ?? false)
             <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
             @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span><i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i></span></li>
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
             @endif
             @if($hangarBuilt ?? false)
             <li><a href="{{ route('colony.hangar') }}" @class(['active' => request()->routeIs('colony.hangar*')])><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></a></li>
             @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span><i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i></span></li>
+            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></span></li>
             @endif
             <li>
                 <a href="{{ route('comm.log') }}" @class(['active' => request()->routeIs('comm.*')])>
@@ -96,7 +97,7 @@
                     @else
                     <span class="nav-flyout-item nav-link-locked">
                         <i class="bi bi-cup-hot"></i>
-                        <span>Cantina <i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i>
+                        <span>Cantina
                             <small class="nav-flyout-locked-hint">{{ __('colony.nav_cantina_locked') }}</small>
                         </span>
                     </span>
@@ -108,7 +109,7 @@
                     @else
                     <span class="nav-flyout-item nav-link-locked">
                         <i class="bi bi-rocket"></i>
-                        <span>{{ __('colony.nav_hangar') }} <i class="bi bi-lock-fill nav-lock-icon" aria-hidden="true"></i>
+                        <span>{{ __('colony.nav_hangar') }}
                             <small class="nav-flyout-locked-hint">{{ __('colony.nav_hangar_locked') }}</small>
                         </span>
                     </span>

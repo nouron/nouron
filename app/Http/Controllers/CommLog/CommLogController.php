@@ -134,6 +134,7 @@ class CommLogController extends BaseController
         return match ($event) {
             'colony.building_placed'     => $this->descBuildingPlaced($params),
             'colony.building_invested'   => $this->descBuildingInvested($params),
+            'colony.building_repaired'   => $this->descBuildingRepaired($params),
             'colony.tile_explored'       => [$this->seg(__('comm_log.desc.tile_explored'))],
             'colony.tile_deep_scanned'   => $this->descTileDeepScanned($params),
             'colony.renamed'             => [$this->seg(__('comm_log.desc.colony_renamed'))],
@@ -225,6 +226,27 @@ class CommLogController extends BaseController
                 'link'  => '/nexus-db',
             ]),
             $this->seg(' investiert (' . $done . ' / ' . $total . ' AP).'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descBuildingRepaired(array $params): array
+    {
+        $id    = $params['building_id'] ?? null;
+        $key   = $params['building_name'] ?? null;
+        $intId = $id !== null ? (int) $id : null;
+        $name  = $this->resolveBuildingName($intId, $key);
+        $bKey  = $key ?? ($intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?');
+        $sp    = (int) ($params['status_points'] ?? 0);
+        $maxSp = (int) ($params['max_status_points'] ?? 0);
+
+        // lang: comm_log.desc.building_repaired = ':name repariert (:current / :max Zustand).'
+        return [
+            $this->entitySeg('building', (string) $bKey, $name, [
+                'level' => null,
+                'link'  => '/nexus-db',
+            ]),
+            $this->seg(' repariert (' . $sp . ' / ' . ($maxSp ?: '?') . ' Zustand).'),
         ];
     }
 

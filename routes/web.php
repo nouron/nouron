@@ -72,6 +72,7 @@ Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () 
     Route::get('/buildings/available', [ColonyController::class, 'availableBuildings'])->name('buildings.available');
     Route::post('/building/place',     [ColonyController::class, 'placeBuilding'])->name('building.place');
     Route::post('/building/invest',    [ColonyController::class, 'investBuilding'])->name('building.invest');
+    Route::post('/building/repair',    [ColonyController::class, 'repairBuilding'])->name('building.repair');
 
     // Onboarding hint actions (AJAX)
     Route::post('/hint/dismiss', [ColonyController::class, 'dismissHint'])->name('hint.dismiss');

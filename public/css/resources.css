@@ -182,12 +182,6 @@
 
 /* ── AP chips (colony canvas header) ────────────────────────────────────── */
 
-.ap-chips {
-    display: flex;
-    gap: 0.4rem;
-    margin-left: auto;
-}
-
 .ap-chip {
     font-size: 0.72rem;
     font-weight: 600;
@@ -219,4 +213,13 @@
 .ap-chip--trust-neg {
     background: #fee2e2;
     color: #991b1b;
+}
+
+/* Pulse when the AP pool shrinks — value change alone is easy to miss */
+@keyframes ap-chip-flash {
+    0%   { transform: scale(1.18); background: #8c2030; color: #fff; }
+    100% { transform: scale(1); }
+}
+.ap-chip--flash {
+    animation: ap-chip-flash 0.6s ease-out;
 }

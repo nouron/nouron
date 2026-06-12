@@ -6,7 +6,14 @@ return [
 
     'explore'           => 'Erkunden',
     'deep_scan'         => 'Sondieren',
-    'invest_ap'         => 'AP investieren',
+    'invest_ap'         => 'Ausbauen',
+    'repair'            => 'Reparieren',
+    'ap_per_click'      => '1 AP pro Klick',
+
+    // ── Repair errors ─────────────────────────────────────────────────────────
+
+    'error_repair_under_construction' => 'Gebäude ist noch im Bau und kann nicht repariert werden.',
+    'error_repair_full'               => 'Gebäude ist bereits voll instand.',
 
     // ── Building actions ──────────────────────────────────────────────────────
 

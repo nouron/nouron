@@ -1,6 +1,5 @@
 /* Colony view — helles UI: Weiß 60%, Anthrazit 30%, Rot 10% */
-
-@import url("resources.css");
+/* resources.css is loaded separately by layouts/colony.blade.php (cache-busted) */
 
 :root {
     --color-anthracite: #333;
@@ -69,19 +68,91 @@ body {
 .colony-header nav > ul > li {
     padding: 0;
     margin: 0;
+    flex-shrink: 0;
+    /* flex layout ignores whitespace text nodes from multi-line Blade markup —
+       keeps item widths identical regardless of markup formatting */
+    display: flex;
+    align-items: center;
 }
 
-/* Nav links: slightly smaller text, no PicoCSS vertical padding */
-.colony-header nav a {
+/* Main nav group sits centered between logo (left) and user (right). */
+.colony-header nav > ul.nav-desktop {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+/* ── Nav: icon-only below 1100px ──────────────────────────────────────────
+   All 7 items + logo + sol button + user need ~1100px with labels.
+   Below that, labels disappear and the icons carry the nav (no wrapping,
+   no scrolling — header height stays stable). */
+@media (max-width: 1099px) {
+    .colony-header nav a .nav-label,
+    .colony-header .nav-link-locked .nav-label {
+        display: none;
+    }
+
+    /* Uniform icon cells — fixed width so spacing is identical regardless
+       of icon glyph width or locked/unlocked markup differences */
+    .colony-header .nav-desktop > li > a,
+    .colony-header .nav-desktop > li > .nav-link-locked {
+        width: 2.5rem;
+        padding: 10px 0;
+        justify-content: center;
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    /* Unread badge docks to the icon's top-right corner instead of
+       widening the item (keeps spacing even across all items) */
+    .colony-header .nav-desktop .nav-badge {
+        position: absolute;
+        top: 4px;
+        right: -2px;
+        margin-left: 0;
+    }
+}
+
+/* Tighten colony nav spacing on small screens */
+@media (max-width: 767px) {
+    .colony-header nav > ul {
+        gap: 0;
+    }
+    .colony-header nav > ul > li > a {
+        padding: 0 0.5rem;
+    }
+}
+
+/* Top-level nav links only — flyout items style themselves (see .nav-flyout-item).
+   inline-flex drops stray whitespace between icon/label/badge — spacing
+   comes solely from the gap, so every item measures the same. */
+.colony-header nav > ul > li > a {
     font-size: 0.85rem;
     color: #4a4a58;
     text-decoration: none;
+    margin: 0; /* PicoCSS gives nav links negative margins — kill them so <a> and locked <span> items measure the same */
     padding: 10px;
     line-height: 40px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
 }
 
-.colony-header nav a:hover {
+/* Locked nav items (Cantina/Hangar before unlock) — dimmed, not clickable */
+.colony-header .nav-desktop .nav-link-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    padding: 10px;
+    line-height: 40px;
+    white-space: nowrap;
+    opacity: 0.45;
+    cursor: default;
+}
+
+.colony-header nav > ul > li > a:hover {
     color: var(--color-text-primary, #1a1a1e);
     background: rgba(0,0,0,0.04);
     border-radius: 6px;
@@ -276,32 +347,10 @@ button.btn-sol:hover,
     align-self: stretch;
     display: flex;
     flex-direction: column;
-}
-
-/* Colony name + status line above the grid */
-.hex-canvas-header {
-    padding: 0.65rem 1.25rem 0.55rem;
-    border-bottom: 1px solid var(--color-border);
-    background: #fff;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0;
+    position: relative; /* anchor for .merchant-notify--floating */
 }
 
 /* AP chip styles live in resources.css (imported at top of file) */
-
-.hex-canvas-header h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--color-anthracite);
-}
-
-.hex-canvas-header small {
-    font-size: 0.78rem;
-    color: #777;
-}
 
 /*
  * The SVG canvas container.
@@ -627,6 +676,19 @@ button.btn-sol:hover,
 
 .sidebar-action-btn:hover:not(:disabled) {
     background: #a93226;
+}
+
+/* Two-line action buttons: bold main label + smaller cost/effect hint */
+.sidebar-action-btn__main {
+    display: block;
+}
+
+.sidebar-action-btn__sub {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-top: 0.1rem;
 }
 
 .sidebar-action-btn:disabled {
@@ -1047,6 +1109,14 @@ dialog[x-ref="discoveryDialog"] {
     color: #5a4000;
 }
 
+/* Floating variant — overlays the grid top-right (canvas header row removed) */
+.merchant-notify--floating {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    z-index: 5;
+}
+
 /* ── Merchant section (bar/cantina page) ─────────────────────────────────── */
 
 .merchant-section {
@@ -1125,6 +1195,8 @@ dialog[x-ref="discoveryDialog"] {
 
 /* ── Desktop / Mobile nav toggle ────────────────────────────────────────── */
 
+/* Specificity must beat `.colony-header nav > ul > li { display: flex }` */
+.colony-header nav > ul > li.nav-mobile,
 .nav-mobile { display: none; }
 
 @media (max-width: 599px) {
@@ -1159,7 +1231,8 @@ dialog[x-ref="discoveryDialog"] {
     position: absolute;
     top: 48px;
     right: 0.5rem;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: min(320px, calc(100vw - 1rem)); /* locked-hint sub-lines wrap instead of stretching the panel */
     background: #ffffff;
     border: 1px solid var(--color-border, #e8e8ec);
     border-radius: 6px;
@@ -1169,10 +1242,11 @@ dialog[x-ref="discoveryDialog"] {
     display: flex;
     flex-direction: column;
 }
-.nav-flyout-item {
+.colony-header .nav-flyout .nav-flyout-item {
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    margin: 0; /* override PicoCSS negative nav-link margins */
     padding: 0.6rem 1rem;
     font-size: 0.875rem;
     color: var(--color-text-primary, #1a1a1e);
@@ -1184,9 +1258,20 @@ dialog[x-ref="discoveryDialog"] {
     text-align: left;
     font-family: inherit;
     line-height: 1.4;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 .nav-flyout-item:hover { background: var(--color-surface, #f7f7f5); text-decoration: none; color: var(--color-text-primary, #1a1a1e); }
 .nav-flyout-item.active { color: var(--color-accent, #8c2030); font-weight: 600; }
+
+/* Locked entries in the flyout: dimmed, icon top-aligned next to the
+   two-line label (name + locked reason), reason text wraps */
+.colony-header .nav-flyout .nav-flyout-item.nav-link-locked {
+    opacity: 0.55;
+    cursor: default;
+    align-items: flex-start;
+    white-space: normal;
+}
 .nav-flyout-item--btn { /* no extra overrides needed — font-family set above */ }
 
 /* Unread notification badge on nav items (e.g. Nexus-Funk) */
@@ -1213,14 +1298,6 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0.25rem 0;
 }
 
-/* Lock marker on gated nav items — visible on touch where title tooltips are not */
-.nav-lock-icon {
-    font-size: 0.7em;
-    opacity: 0.8;
-    margin-left: 0.2em;
-    vertical-align: text-top;
-}
-
 /* Locked reason sub-line in the mobile flyout */
 .nav-flyout-locked-hint {
     display: block;
@@ -1244,18 +1321,6 @@ dialog[x-ref="discoveryDialog"] {
         border-bottom: 1px solid var(--color-border);
     }
 
-    /* Header row (title · status · AP chips · build button) must wrap on
-       narrow screens — otherwise its min-content width forces the whole
-       canvas column beyond the viewport (horizontal scroll). */
-    .hex-canvas-header {
-        flex-wrap: wrap;
-        row-gap: 0.4rem;
-    }
-
-    .hex-canvas-header .ap-chips {
-        flex-wrap: wrap;
-    }
-
     .hex-canvas {
         min-height: 48dvh;
         padding: 0.4rem;
@@ -1276,9 +1341,6 @@ dialog[x-ref="discoveryDialog"] {
         justify-content: flex-start;
         padding: 1rem;
     }
-
-    /* Hide status line and build button in header on mobile (tile-first build flow) */
-    .hex-canvas-header .status-line { display: none; }
 
     /* Hide section header — action strip + tile heading give enough context */
     .tile-panel-header--hideable { display: none; }

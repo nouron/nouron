@@ -23,12 +23,14 @@ window.__colonyViewData = {
         buildingsAvailable: '{{ route('colony.buildings.available') }}',
         placeBuilding:      '{{ route('colony.building.place') }}',
         investBuilding:     '{{ route('colony.building.invest') }}',
+        repairBuilding:     '{{ route('colony.building.repair') }}',
         dismissHint:        '{{ route('colony.hint.dismiss') }}',
     },
     i18n: {
         explore:            '{{ __('colony.explore') }}',
         deepScan:           '{{ __('colony.deep_scan') }}',
         investAp:           '{{ __('colony.invest_ap') }}',
+        repair:             '{{ __('colony.repair') }}',
         build:              '{{ __('colony.build') }}',
         cancel:             '{{ __('colony.cancel') }}',
         selectTileHint:     '{{ __('colony.select_tile_hint') }}',
@@ -51,48 +53,13 @@ window.__colonyViewData = {
 
         {{-- Hex grid canvas --}}
         <div class="hex-canvas-wrap">
-            <div class="hex-canvas-header">
-                <h2>{{ $colony->name }}</h2>
-                <small class="status-line" x-text="statusLine()"></small>
-                <div class="ap-chips">
-                    <span class="ap-chip ap-chip--nav" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Nav ${apNav} AP`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_nav_ap_title'),
-                            'popup_desc'  => __('resources.popup_nav_ap_desc'),
-                        ])
-                    </span>
-                    <span class="ap-chip ap-chip--build" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Bau ${apConstruction} AP`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_bau_ap_title'),
-                            'popup_desc'  => __('resources.popup_bau_ap_desc'),
-                        ])
-                    </span>
-                    <span class="ap-chip" x-data="{ open: false }"
-                          :class="trust >= 20 ? 'ap-chip--trust-pos' : trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Vertrauen ${trust}`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_trust_title'),
-                            'popup_desc'  => __('resources.popup_trust_desc'),
-                        ])
-                    </span>
-                </div>
-                {{-- Merchant notification — links to Bar when merchant is present --}}
-                <a href="{{ route('colony.bar') }}"
-                   class="merchant-notify"
-                   x-show="hasMerchant()"
-                   x-cloak>
-                    🛸 {{ __('colony.merchant_in_system') }}
-                </a>
-
-            </div>
+            {{-- Merchant notification — links to Bar when merchant is present --}}
+            <a href="{{ route('colony.bar') }}"
+               class="merchant-notify merchant-notify--floating"
+               x-show="hasMerchant()"
+               x-cloak>
+                🛸 {{ __('colony.merchant_in_system') }}
+            </a>
 
             {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
                  Updates automatically after any AJAX action that changes hint state. --}}
@@ -147,9 +114,22 @@ window.__colonyViewData = {
                                 {{ __('colony.deep_scan') }}
                             </button>
                         </template>
+                        <template x-if="canRepair(buildingForTile(selectedTile))">
+                            <button class="sidebar-action-btn"
+                                    @click="doRepair(buildingForTile(selectedTile))">
+                                <span class="sidebar-action-btn__main"
+                                      x-text="`{{ __('colony.repair') }} (${conditionPct(buildingForTile(selectedTile))} %)`"></span>
+                                <span class="sidebar-action-btn__sub"
+                                      x-text="`1 AP → +${repairStepPct(buildingForTile(selectedTile))} % {{ __('colony.condition') }}`"></span>
+                            </button>
+                        </template>
                         <template x-if="buildingForTile(selectedTile) && (buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level)">
-                            <button class="sidebar-action-btn" @click="doInvestAp(buildingForTile(selectedTile))">
-                                {{ __('colony.invest_ap') }}
+                            <button class="sidebar-action-btn"
+                                    :class="canRepair(buildingForTile(selectedTile)) ? 'sidebar-action-btn--secondary' : ''"
+                                    @click="doInvestAp(buildingForTile(selectedTile))">
+                                <span class="sidebar-action-btn__main"
+                                      x-text="`{{ __('colony.invest_ap') }} (${buildingForTile(selectedTile).ap_spend}/${buildingForTile(selectedTile).ap_for_levelup} AP)`"></span>
+                                <span class="sidebar-action-btn__sub">{{ __('colony.ap_per_click') }}</span>
                             </button>
                         </template>
                         <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.level > 0 && !buildingForTile(selectedTile)?.in_transit">
