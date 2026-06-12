@@ -7,8 +7,7 @@
       - Segments up to status_points   → bg-warning (healthy, click = remove/demolish)
       - Segments above status_points   → bg-danger  (damaged, click = repair)
 
-    Button IDs follow the pattern "{type}-{id}|remove-{n}" / "{type}-{id}|repair-{n}"
-    so that techtree.js can parse type, id, order and AP count from the id attribute.
+    Button IDs follow the pattern "{type}-{id}|remove-{n}" / "{type}-{id}|repair-{n}".
 --}}
 @if(($tech['level'] ?? 0) > 0)
 @php

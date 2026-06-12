@@ -2,6 +2,10 @@
 
 ## 2026-06-13
 
+- **Code-Leichen entsorgt** — `PersonellService::assignCommander/removeCommander` (FleetController-Abhängigkeit, seit PR #172 ohne Aufrufer) + `CommanderAssignmentServiceTest` gelöscht; `public/js/techtree.js`, `public/css/techtree.css` (nie in colony-Layout geladen), `public/js/nouron.js` (Bootstrap-Tooltip-Init), `public/js/innn.js` (Bootstrap-abhängig, nirgends mehr geladen) gelöscht; stale `techtree.js`-Kommentare in drei Techtree-Partials bereinigt.
+
+## 2026-06-13
+
 - **Infra-Screens auf PicoCSS migriert** — Login, Register, Lobby, Run-Result, User-Profil/-Einstellungen, 404/500 verwenden jetzt `layouts.infra` (neues Layout: Pico, Alpine.js, Bootstrap-Icons, kein Bootstrap). Lobby-Inline-CSS (~280 Zeilen) nach `public/css/lobby.css` extrahiert. `layouts/app.blade.php` und `public/css/style.css` gelöscht — Bootstrap vollständig entfernt. Debug-Bar (Admin) in `layouts.colony` übernommen. `colony-hexgrid.js` nur noch auf `colony.view` geladen (war global). `a.technology.btn` + `resicon-*` Styles in `techtree-view.css` verschoben (waren in style.css, aber nie für colony-Layout geladen).
 
 ## 2026-06-12

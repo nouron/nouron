@@ -1,9 +1,8 @@
 {{--
-    techtree/technology.blade.php — AJAX modal partial, NO @extends
+    techtree/technology.blade.php — AJAX partial, NO @extends
 
-    Loaded via fetch() into .techModal .modal-dialog when a tech button is clicked.
-    techtree.js replaces the entire .modal-dialog element with this response HTML,
-    so this file renders a full .modal-dialog/.modal-content structure.
+    Rendered via fetch() when a tech button is clicked.
+    Renders a full .modal-dialog/.modal-content structure.
 
     Variables (from TechtreeController::technology):
       $type                  — 'building' | 'research' | 'ship' | 'personell'

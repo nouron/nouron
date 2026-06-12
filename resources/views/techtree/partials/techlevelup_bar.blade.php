@@ -8,7 +8,6 @@
       - Remaining segments             → bg-info    (clickable if AP available)
 
     Button IDs follow "{type}-{id}|add-{n}" where n = AP count to invest.
-    techtree.js parses type, id, order="add", ap=n from the id attribute.
 --}}
 @php
     $apTotal  = (int)($tech['ap_for_levelup'] ?? 1);
