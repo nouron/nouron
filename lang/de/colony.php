@@ -24,6 +24,8 @@ return [
     // ── Sidebar labels ────────────────────────────────────────────────────────
 
     'tile_info'         => 'Tile-Info',
+    'tab_building'      => 'Gebäude',
+    'tab_terrain'      => 'Terrain',
     'click_tile_hint'   => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section'  => 'Gebäude',
     'construction_site'    => 'Baustelle',

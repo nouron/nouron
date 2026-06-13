@@ -404,7 +404,7 @@ button.btn-sol:hover,
     flex-shrink: 0;
 }
 
-.tile-panel-action-strip .sidebar-actions {
+.tile-panel-action-strip .tile-actions {
     margin-top: 0;
 }
 
@@ -431,30 +431,36 @@ button.btn-sol:hover,
     flex: 1;
 }
 
-/* Selected-tile heading (the tile type name) */
-.tile-panel-body h3 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
-    color: var(--color-anthracite);
+/* ── Tile sidebar tabs (Gebäude / Terrain) ──────────────────────────────────
+   Negative side margins cancel the .tile-panel-body padding so the tab strip
+   spans the full sidebar width. Only the active tab carries an underline —
+   no full-width separator line. Body padding (and thus the content below)
+   is left untouched. */
+.tile-tabs {
+    display: flex;
+    margin: 0 -1.25rem 0.85rem;
+}
+.tile-tab {
+    flex: 1;
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 0.5rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b6b7a);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tile-tab:hover { color: var(--color-anthracite, #333); }
+.tile-tab--active {
+    color: var(--color-accent, #c0392b);
+    border-bottom-color: var(--color-accent, #c0392b);
 }
 
-.tile-panel dl {
-    margin: 0;
-}
-
-.tile-panel dt {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    margin-top: 0.75rem;
-}
-
-.tile-panel dd {
-    margin: 0.15rem 0 0;
-    font-size: 0.9rem;
-}
+/* dl/dt/dd styling lives in the .tile-dl block below (single source). */
 
 /* Empty-state: centred hint with a pseudo-icon */
 .tile-panel-empty {
@@ -533,15 +539,15 @@ button.btn-sol:hover,
 
 /* ── Sidebar resource + progress bars ───────────────────────────────────── */
 
-.sidebar-resource {
+.tile-resource {
     margin-top: 0.75rem;
 }
 
-.sidebar-bar-group {
+.tile-bar-group {
     margin-top: 0.75rem;
 }
 
-.sidebar-bar-label {
+.tile-bar-label {
     display: flex;
     justify-content: space-between;
     font-size: 0.72rem;
@@ -549,22 +555,22 @@ button.btn-sol:hover,
     margin-bottom: 0.25rem;
 }
 
-.sidebar-bar-wrap {
+.tile-bar-wrap {
     height: 8px;
     background: #eee;
     border-radius: 4px;
     overflow: hidden;
 }
 
-.sidebar-bar {
+.tile-bar {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
 }
 
-.sidebar-bar--status   { background: #e74c3c; }
-.sidebar-bar--ap       { background: #27ae60; }
-.sidebar-bar--resource { background: #2196f3; }
+.tile-bar--status   { background: #e74c3c; }
+.tile-bar--ap       { background: #27ae60; }
+.tile-bar--resource { background: #2196f3; }
 
 /* ── Shared building detail partial (.building-detail-*) ─────────────────── */
 
@@ -603,33 +609,7 @@ button.btn-sol:hover,
     color: var(--color-anthracite, #333);
 }
 
-/* ── Sidebar building section ────────────────────────────────────────────── */
-
-.sidebar-building {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-border);
-}
-
-.sidebar-section-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
-    margin: 0 0 0.4rem;
-}
-
-.sidebar-building-name {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.sidebar-building-name strong {
-    font-size: 0.95rem;
-    color: var(--color-anthracite);
-}
+/* ── Building level badge (shared building-detail partial) ───────────────── */
 
 .sidebar-level-badge {
     font-size: 0.7rem;
@@ -641,7 +621,7 @@ button.btn-sol:hover,
     border: 1px solid #a5d6a7;
 }
 
-.sidebar-under-construction {
+.tile-under-construction {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
@@ -655,15 +635,18 @@ button.btn-sol:hover,
 
 /* ── Sidebar action buttons ──────────────────────────────────────────────── */
 
-.sidebar-actions {
+/* Stacked full-width buttons: two-line labels (e.g. "Reparieren (80 %)" +
+   "1 AP → +5 % Zustand") need the full sidebar width to stay single-line. */
+.tile-actions {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
     margin-top: 1.25rem;
 }
 
-.sidebar-action-btn {
-    flex: 1;
-    padding: 0.4rem 0.5rem;
+.tile-action-btn {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
     font-size: 0.8rem;
     font-weight: 600;
     border-radius: 4px;
@@ -674,65 +657,46 @@ button.btn-sol:hover,
     transition: background 0.15s ease;
 }
 
-.sidebar-action-btn:hover:not(:disabled) {
+.tile-action-btn:hover:not(:disabled) {
     background: #a93226;
 }
 
 /* Two-line action buttons: bold main label + smaller cost/effect hint */
-.sidebar-action-btn__main {
+.tile-action-btn__main {
     display: block;
 }
 
-.sidebar-action-btn__sub {
+.tile-action-btn__sub {
     display: block;
     font-size: 0.68rem;
     font-weight: 400;
     opacity: 0.85;
     margin-top: 0.1rem;
+    white-space: nowrap;
 }
 
-.sidebar-action-btn:disabled {
+.tile-action-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.sidebar-action-btn--secondary {
+.tile-action-btn--secondary {
     background: transparent;
     border-color: #7a9ab8;
     color: #4a6a88;
 }
 
-.sidebar-action-btn--secondary:hover:not(:disabled) {
+.tile-action-btn--secondary:hover:not(:disabled) {
     background: #e8f0f8;
     border-color: #4a6a88;
     color: #2a4a68;
 }
 
-/* ── Canvas-header build button ─────────────────────────────────────────── */
-
-.build-btn {
-    margin-left: auto;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border-radius: 4px;
-    border: 1px solid var(--color-accent);
-    background: transparent;
-    color: var(--color-accent);
-    cursor: pointer;
-    letter-spacing: 0.03em;
-    transition: background 0.15s ease, color 0.15s ease;
-    flex-shrink: 0;
-}
-
-.build-btn:hover {
-    background: var(--color-accent);
-    color: #fff;
-}
-
-.build-btn--active {
-    background: var(--color-accent);
-    color: #fff;
+/* Inline note shown in the action strip (e.g. harvester in transit) */
+.tile-action-note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #777;
 }
 
 /* ── Build mode sidebar ──────────────────────────────────────────────────── */
@@ -1432,7 +1396,6 @@ dialog[x-ref="discoveryDialog"] {
     opacity: 0.55;
     margin: 0;
     letter-spacing: 0.05em;
-}
 }
 @keyframes sol-spin {
     to { transform: rotate(360deg); }
