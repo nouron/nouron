@@ -97,6 +97,10 @@ function colonyHexView(config) {
         merchantVisit:      config.merchantVisit ?? null,
         merchantItems:      config.merchantItems ?? [],
         selectedTile:       null,
+        tileTab:            'building', // tile-info sidebar: 'building' | 'terrain'
+        _tabTileKey:        null,       // coords of the tile the tab state belongs to
+        _panelX0:           0,          // touch start X for panel swipe
+        _panelY0:           0,
         buildMode:          false,
         pendingBuilding:    null,
         availableBuildings: [],
@@ -107,6 +111,7 @@ function colonyHexView(config) {
         _toastTimer:        null,
         levelupNotice:      null,   // set to label string when a building levels up
         _lvlTimer:          null,
+        _apFlashTimers:     {},     // per-chip flash timers (resbar AP chips)
         harvesterMoveMode:  false,
         buildTargetTile:    null,
         _svgPolygons:       new Map(),
@@ -323,6 +328,40 @@ function colonyHexView(config) {
             }
         },
 
+        canRepair(building) {
+            if (!building || building.level < 1) return false;
+            const maxSp = building.max_status_points ?? 20;
+            return building.status_points < maxSp;
+        },
+
+        conditionPct(building) {
+            if (!building) return 0;
+            const maxSp = building.max_status_points ?? 20;
+            return Math.round(building.status_points / maxSp * 100);
+        },
+
+        // Percent gained per repair click (1 status point as % of max).
+        repairStepPct(building) {
+            const maxSp = building?.max_status_points ?? 20;
+            return Math.round(100 / maxSp);
+        },
+
+        async doRepair(building) {
+            const res = await this.post(this.routes.repairBuilding, {
+                building_id: building.building_id,
+                instance_id: building.instance_id ?? 1,
+            });
+            if (res.ok) {
+                this.updateBuilding(res.building);
+                this.updateAp(res);
+                this.updateHint(res);
+                if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+            } else {
+                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                this.showToast(msg, 'error');
+            }
+        },
+
         // ── Harvester relocation ──────────────────────────────────────────────
 
         startHarvesterMove() {
@@ -407,8 +446,37 @@ function colonyHexView(config) {
         // ── State helpers ─────────────────────────────────────────────────────
 
         updateAp(res) {
-            if (res.apNav          !== undefined) this.apNav          = res.apNav;
-            if (res.apConstruction !== undefined) this.apConstruction = res.apConstruction;
+            if (res.apNav !== undefined) {
+                if (res.apNav < this.apNav) this.flashApChip('resbar-ap-nav');
+                this.apNav = res.apNav;
+                this.syncResbarAp('resbar-ap-nav', res.apNav);
+            }
+            if (res.apConstruction !== undefined) {
+                if (res.apConstruction < this.apConstruction) this.flashApChip('resbar-ap-build');
+                this.apConstruction = res.apConstruction;
+                this.syncResbarAp('resbar-ap-build', res.apConstruction);
+            }
+        },
+
+        // The AP chips live in the resource bar (layout header), outside this
+        // Alpine component — sync them via DOM after every AJAX action.
+        syncResbarAp(chipId, value) {
+            const el = document.querySelector(`#${chipId} .res-amount`);
+            if (el) el.textContent = value;
+        },
+
+        // Briefly pulse an AP chip so the player notices the pool shrinking.
+        flashApChip(chipId) {
+            const chip = document.getElementById(chipId);
+            if (!chip) return;
+            clearTimeout(this._apFlashTimers[chipId]);
+            chip.classList.remove('ap-chip--flash');
+            // force reflow so the animation restarts even mid-flash
+            void chip.offsetWidth;
+            chip.classList.add('ap-chip--flash');
+            this._apFlashTimers[chipId] = setTimeout(
+                () => chip.classList.remove('ap-chip--flash'), 700
+            );
         },
 
         updateHint(res) {
@@ -449,6 +517,32 @@ function colonyHexView(config) {
             return TILE_LABELS[tile.tile_type] ?? tile.tile_type;
         },
 
+        // Reset the sidebar tab to "Gebäude" when a *different* tile is
+        // selected. Compares coords so same-tile refreshes (e.g. after a
+        // repair click re-assigns selectedTile) keep the chosen tab.
+        onTilePanel() {
+            const t = this.selectedTile;
+            if (!t) return;
+            const key = `${t.q},${t.r}`;
+            if (key === this._tabTileKey) return;
+            this._tabTileKey = key;
+            this.tileTab = this.buildingForTile(t) ? 'building' : 'terrain';
+        },
+
+        panelTouchStart(e) {
+            this._panelX0 = e.touches[0].clientX;
+            this._panelY0 = e.touches[0].clientY;
+        },
+
+        // Horizontal swipe flips the tab (only meaningful when both tabs exist).
+        panelTouchEnd(e) {
+            if (!this.selectedTile || !this.buildingForTile(this.selectedTile)) return;
+            const dx = e.changedTouches[0].clientX - this._panelX0;
+            const dy = e.changedTouches[0].clientY - this._panelY0;
+            if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
+            this.tileTab = dx < 0 ? 'terrain' : 'building';
+        },
+
         tileTypeName(type) {
             return TILE_LABELS[type] ?? type;
         },
@@ -485,16 +579,35 @@ function colonyHexView(config) {
             return this.buildings.find(b => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },
 
+        // The building on the currently selected tile, or null. Single source
+        // of truth for the sidebar so the markup never repeats buildingForTile().
+        get selectedBuilding() {
+            return this.buildingForTile(this.selectedTile);
+        },
+
+        // Levelling up is possible while the building is below its max level
+        // (null max_level = unlimited).
+        buildingCanLevelUp(building) {
+            return !!building
+                && (building.max_level === null || building.level < building.max_level);
+        },
+
+        // AP invested towards the next level, as a percentage.
+        apProgressPct(building) {
+            if (!building || !building.ap_for_levelup) return 0;
+            return Math.round(building.ap_spend / building.ap_for_levelup * 100);
+        },
+
+        // Remaining tile resource (regolith), as a percentage of its maximum.
+        resourcePct(tile) {
+            if (!tile || !tile.resource_max) return 0;
+            return Math.round(tile.resource_amount / tile.resource_max * 100);
+        },
+
         isBuildableTile(tile) {
             return tile && tile.is_colony_zone && tile.is_explored
                 && tile.tile_type.startsWith('terrain_')
                 && tile.tile_type !== 'terrain_impassable';
-        },
-
-        statusLine() {
-            const total    = this.tiles.length;
-            const explored = this.tiles.filter(t => t.is_explored).length;
-            return `${explored} / ${total} Tiles erkundet · CC Level ${this.ccLevel}`;
         },
 
         // ── HTTP helpers ──────────────────────────────────────────────────────

@@ -1,6 +1,5 @@
 /* Colony view — helles UI: Weiß 60%, Anthrazit 30%, Rot 10% */
-
-@import url("resources.css");
+/* resources.css is loaded separately by layouts/colony.blade.php (cache-busted) */
 
 :root {
     --color-anthracite: #333;
@@ -69,19 +68,91 @@ body {
 .colony-header nav > ul > li {
     padding: 0;
     margin: 0;
+    flex-shrink: 0;
+    /* flex layout ignores whitespace text nodes from multi-line Blade markup —
+       keeps item widths identical regardless of markup formatting */
+    display: flex;
+    align-items: center;
 }
 
-/* Nav links: slightly smaller text, no PicoCSS vertical padding */
-.colony-header nav a {
+/* Main nav group sits centered between logo (left) and user (right). */
+.colony-header nav > ul.nav-desktop {
+    flex: 1;
+    min-width: 0;
+    justify-content: center;
+}
+
+/* ── Nav: icon-only below 1100px ──────────────────────────────────────────
+   All 7 items + logo + sol button + user need ~1100px with labels.
+   Below that, labels disappear and the icons carry the nav (no wrapping,
+   no scrolling — header height stays stable). */
+@media (max-width: 1099px) {
+    .colony-header nav a .nav-label,
+    .colony-header .nav-link-locked .nav-label {
+        display: none;
+    }
+
+    /* Uniform icon cells — fixed width so spacing is identical regardless
+       of icon glyph width or locked/unlocked markup differences */
+    .colony-header .nav-desktop > li > a,
+    .colony-header .nav-desktop > li > .nav-link-locked {
+        width: 2.5rem;
+        padding: 10px 0;
+        justify-content: center;
+        position: relative;
+        box-sizing: border-box;
+    }
+
+    /* Unread badge docks to the icon's top-right corner instead of
+       widening the item (keeps spacing even across all items) */
+    .colony-header .nav-desktop .nav-badge {
+        position: absolute;
+        top: 4px;
+        right: -2px;
+        margin-left: 0;
+    }
+}
+
+/* Tighten colony nav spacing on small screens */
+@media (max-width: 767px) {
+    .colony-header nav > ul {
+        gap: 0;
+    }
+    .colony-header nav > ul > li > a {
+        padding: 0 0.5rem;
+    }
+}
+
+/* Top-level nav links only — flyout items style themselves (see .nav-flyout-item).
+   inline-flex drops stray whitespace between icon/label/badge — spacing
+   comes solely from the gap, so every item measures the same. */
+.colony-header nav > ul > li > a {
     font-size: 0.85rem;
     color: #4a4a58;
     text-decoration: none;
+    margin: 0; /* PicoCSS gives nav links negative margins — kill them so <a> and locked <span> items measure the same */
     padding: 10px;
     line-height: 40px;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    white-space: nowrap;
 }
 
-.colony-header nav a:hover {
+/* Locked nav items (Cantina/Hangar before unlock) — dimmed, not clickable */
+.colony-header .nav-desktop .nav-link-locked {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    padding: 10px;
+    line-height: 40px;
+    white-space: nowrap;
+    opacity: 0.45;
+    cursor: default;
+}
+
+.colony-header nav > ul > li > a:hover {
     color: var(--color-text-primary, #1a1a1e);
     background: rgba(0,0,0,0.04);
     border-radius: 6px;
@@ -276,32 +347,10 @@ button.btn-sol:hover,
     align-self: stretch;
     display: flex;
     flex-direction: column;
-}
-
-/* Colony name + status line above the grid */
-.hex-canvas-header {
-    padding: 0.65rem 1.25rem 0.55rem;
-    border-bottom: 1px solid var(--color-border);
-    background: #fff;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex-shrink: 0;
+    position: relative; /* anchor for .merchant-notify--floating */
 }
 
 /* AP chip styles live in resources.css (imported at top of file) */
-
-.hex-canvas-header h2 {
-    margin: 0;
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: var(--color-anthracite);
-}
-
-.hex-canvas-header small {
-    font-size: 0.78rem;
-    color: #777;
-}
 
 /*
  * The SVG canvas container.
@@ -355,7 +404,7 @@ button.btn-sol:hover,
     flex-shrink: 0;
 }
 
-.tile-panel-action-strip .sidebar-actions {
+.tile-panel-action-strip .tile-actions {
     margin-top: 0;
 }
 
@@ -382,30 +431,36 @@ button.btn-sol:hover,
     flex: 1;
 }
 
-/* Selected-tile heading (the tile type name) */
-.tile-panel-body h3 {
-    margin: 0 0 0.75rem;
-    font-size: 1rem;
-    color: var(--color-anthracite);
+/* ── Tile sidebar tabs (Gebäude / Terrain) ──────────────────────────────────
+   Negative side margins cancel the .tile-panel-body padding so the tab strip
+   spans the full sidebar width. Only the active tab carries an underline —
+   no full-width separator line. Body padding (and thus the content below)
+   is left untouched. */
+.tile-tabs {
+    display: flex;
+    margin: 0 -1.25rem 0.85rem;
+}
+.tile-tab {
+    flex: 1;
+    appearance: none;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 0.6rem 0.5rem;
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-secondary, #6b6b7a);
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tile-tab:hover { color: var(--color-anthracite, #333); }
+.tile-tab--active {
+    color: var(--color-accent, #c0392b);
+    border-bottom-color: var(--color-accent, #c0392b);
 }
 
-.tile-panel dl {
-    margin: 0;
-}
-
-.tile-panel dt {
-    font-size: 0.72rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #888;
-    margin-top: 0.75rem;
-}
-
-.tile-panel dd {
-    margin: 0.15rem 0 0;
-    font-size: 0.9rem;
-}
+/* dl/dt/dd styling lives in the .tile-dl block below (single source). */
 
 /* Empty-state: centred hint with a pseudo-icon */
 .tile-panel-empty {
@@ -484,15 +539,15 @@ button.btn-sol:hover,
 
 /* ── Sidebar resource + progress bars ───────────────────────────────────── */
 
-.sidebar-resource {
+.tile-resource {
     margin-top: 0.75rem;
 }
 
-.sidebar-bar-group {
+.tile-bar-group {
     margin-top: 0.75rem;
 }
 
-.sidebar-bar-label {
+.tile-bar-label {
     display: flex;
     justify-content: space-between;
     font-size: 0.72rem;
@@ -500,22 +555,22 @@ button.btn-sol:hover,
     margin-bottom: 0.25rem;
 }
 
-.sidebar-bar-wrap {
+.tile-bar-wrap {
     height: 8px;
     background: #eee;
     border-radius: 4px;
     overflow: hidden;
 }
 
-.sidebar-bar {
+.tile-bar {
     height: 100%;
     border-radius: 4px;
     transition: width 0.3s ease;
 }
 
-.sidebar-bar--status   { background: #e74c3c; }
-.sidebar-bar--ap       { background: #27ae60; }
-.sidebar-bar--resource { background: #2196f3; }
+.tile-bar--status   { background: #e74c3c; }
+.tile-bar--ap       { background: #27ae60; }
+.tile-bar--resource { background: #2196f3; }
 
 /* ── Shared building detail partial (.building-detail-*) ─────────────────── */
 
@@ -554,33 +609,7 @@ button.btn-sol:hover,
     color: var(--color-anthracite, #333);
 }
 
-/* ── Sidebar building section ────────────────────────────────────────────── */
-
-.sidebar-building {
-    margin-top: 1rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--color-border);
-}
-
-.sidebar-section-title {
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #888;
-    margin: 0 0 0.4rem;
-}
-
-.sidebar-building-name {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.sidebar-building-name strong {
-    font-size: 0.95rem;
-    color: var(--color-anthracite);
-}
+/* ── Building level badge (shared building-detail partial) ───────────────── */
 
 .sidebar-level-badge {
     font-size: 0.7rem;
@@ -592,7 +621,7 @@ button.btn-sol:hover,
     border: 1px solid #a5d6a7;
 }
 
-.sidebar-under-construction {
+.tile-under-construction {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
@@ -606,15 +635,18 @@ button.btn-sol:hover,
 
 /* ── Sidebar action buttons ──────────────────────────────────────────────── */
 
-.sidebar-actions {
+/* Stacked full-width buttons: two-line labels (e.g. "Reparieren (80 %)" +
+   "1 AP → +5 % Zustand") need the full sidebar width to stay single-line. */
+.tile-actions {
     display: flex;
+    flex-direction: column;
     gap: 0.5rem;
     margin-top: 1.25rem;
 }
 
-.sidebar-action-btn {
-    flex: 1;
-    padding: 0.4rem 0.5rem;
+.tile-action-btn {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
     font-size: 0.8rem;
     font-weight: 600;
     border-radius: 4px;
@@ -625,52 +657,46 @@ button.btn-sol:hover,
     transition: background 0.15s ease;
 }
 
-.sidebar-action-btn:hover:not(:disabled) {
+.tile-action-btn:hover:not(:disabled) {
     background: #a93226;
 }
 
-.sidebar-action-btn:disabled {
+/* Two-line action buttons: bold main label + smaller cost/effect hint */
+.tile-action-btn__main {
+    display: block;
+}
+
+.tile-action-btn__sub {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-top: 0.1rem;
+    white-space: nowrap;
+}
+
+.tile-action-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
 
-.sidebar-action-btn--secondary {
+.tile-action-btn--secondary {
     background: transparent;
     border-color: #7a9ab8;
     color: #4a6a88;
 }
 
-.sidebar-action-btn--secondary:hover:not(:disabled) {
+.tile-action-btn--secondary:hover:not(:disabled) {
     background: #e8f0f8;
     border-color: #4a6a88;
     color: #2a4a68;
 }
 
-/* ── Canvas-header build button ─────────────────────────────────────────── */
-
-.build-btn {
-    margin-left: auto;
-    padding: 0.3rem 0.85rem;
-    font-size: 0.8rem;
-    font-weight: 700;
-    border-radius: 4px;
-    border: 1px solid var(--color-accent);
-    background: transparent;
-    color: var(--color-accent);
-    cursor: pointer;
-    letter-spacing: 0.03em;
-    transition: background 0.15s ease, color 0.15s ease;
-    flex-shrink: 0;
-}
-
-.build-btn:hover {
-    background: var(--color-accent);
-    color: #fff;
-}
-
-.build-btn--active {
-    background: var(--color-accent);
-    color: #fff;
+/* Inline note shown in the action strip (e.g. harvester in transit) */
+.tile-action-note {
+    margin: 0;
+    font-size: 0.82rem;
+    color: #777;
 }
 
 /* ── Build mode sidebar ──────────────────────────────────────────────────── */
@@ -1047,6 +1073,14 @@ dialog[x-ref="discoveryDialog"] {
     color: #5a4000;
 }
 
+/* Floating variant — overlays the grid top-right (canvas header row removed) */
+.merchant-notify--floating {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.75rem;
+    z-index: 5;
+}
+
 /* ── Merchant section (bar/cantina page) ─────────────────────────────────── */
 
 .merchant-section {
@@ -1125,6 +1159,8 @@ dialog[x-ref="discoveryDialog"] {
 
 /* ── Desktop / Mobile nav toggle ────────────────────────────────────────── */
 
+/* Specificity must beat `.colony-header nav > ul > li { display: flex }` */
+.colony-header nav > ul > li.nav-mobile,
 .nav-mobile { display: none; }
 
 @media (max-width: 599px) {
@@ -1159,7 +1195,8 @@ dialog[x-ref="discoveryDialog"] {
     position: absolute;
     top: 48px;
     right: 0.5rem;
-    min-width: 180px;
+    min-width: 200px;
+    max-width: min(320px, calc(100vw - 1rem)); /* locked-hint sub-lines wrap instead of stretching the panel */
     background: #ffffff;
     border: 1px solid var(--color-border, #e8e8ec);
     border-radius: 6px;
@@ -1169,10 +1206,11 @@ dialog[x-ref="discoveryDialog"] {
     display: flex;
     flex-direction: column;
 }
-.nav-flyout-item {
+.colony-header .nav-flyout .nav-flyout-item {
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    margin: 0; /* override PicoCSS negative nav-link margins */
     padding: 0.6rem 1rem;
     font-size: 0.875rem;
     color: var(--color-text-primary, #1a1a1e);
@@ -1184,9 +1222,20 @@ dialog[x-ref="discoveryDialog"] {
     text-align: left;
     font-family: inherit;
     line-height: 1.4;
+    white-space: nowrap;
+    box-sizing: border-box;
 }
 .nav-flyout-item:hover { background: var(--color-surface, #f7f7f5); text-decoration: none; color: var(--color-text-primary, #1a1a1e); }
 .nav-flyout-item.active { color: var(--color-accent, #8c2030); font-weight: 600; }
+
+/* Locked entries in the flyout: dimmed, icon top-aligned next to the
+   two-line label (name + locked reason), reason text wraps */
+.colony-header .nav-flyout .nav-flyout-item.nav-link-locked {
+    opacity: 0.55;
+    cursor: default;
+    align-items: flex-start;
+    white-space: normal;
+}
 .nav-flyout-item--btn { /* no extra overrides needed — font-family set above */ }
 
 /* Unread notification badge on nav items (e.g. Nexus-Funk) */
@@ -1213,14 +1262,6 @@ dialog[x-ref="discoveryDialog"] {
     margin: 0.25rem 0;
 }
 
-/* Lock marker on gated nav items — visible on touch where title tooltips are not */
-.nav-lock-icon {
-    font-size: 0.7em;
-    opacity: 0.8;
-    margin-left: 0.2em;
-    vertical-align: text-top;
-}
-
 /* Locked reason sub-line in the mobile flyout */
 .nav-flyout-locked-hint {
     display: block;
@@ -1244,18 +1285,6 @@ dialog[x-ref="discoveryDialog"] {
         border-bottom: 1px solid var(--color-border);
     }
 
-    /* Header row (title · status · AP chips · build button) must wrap on
-       narrow screens — otherwise its min-content width forces the whole
-       canvas column beyond the viewport (horizontal scroll). */
-    .hex-canvas-header {
-        flex-wrap: wrap;
-        row-gap: 0.4rem;
-    }
-
-    .hex-canvas-header .ap-chips {
-        flex-wrap: wrap;
-    }
-
     .hex-canvas {
         min-height: 48dvh;
         padding: 0.4rem;
@@ -1276,9 +1305,6 @@ dialog[x-ref="discoveryDialog"] {
         justify-content: flex-start;
         padding: 1rem;
     }
-
-    /* Hide status line and build button in header on mobile (tile-first build flow) */
-    .hex-canvas-header .status-line { display: none; }
 
     /* Hide section header — action strip + tile heading give enough context */
     .tile-panel-header--hideable { display: none; }
@@ -1370,7 +1396,6 @@ dialog[x-ref="discoveryDialog"] {
     opacity: 0.55;
     margin: 0;
     letter-spacing: 0.05em;
-}
 }
 @keyframes sol-spin {
     to { transform: rotate(360deg); }

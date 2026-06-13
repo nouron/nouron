@@ -53,28 +53,8 @@
     transform: scale(1.25);
 }
 
-/* ── Mobile nav: icon-only ─────────────────────────────────────────────── */
-@media (max-width: 767px) {
-    /* Colony layout nav */
-    .colony-header nav a .nav-label,
-    /* Bootstrap layout nav */
-    .navbar-nouron .nav-link .nav-label {
-        display: none;
-    }
-
-    /* Tighten colony nav spacing on small screens */
-    .colony-header nav > ul {
-        gap: 0;
-    }
-    .colony-header nav a {
-        padding: 0 0.5rem;
-    }
-    /* Tighten Bootstrap nav */
-    .navbar-nouron .nav-link {
-        padding-left: 0.4rem !important;
-        padding-right: 0.4rem !important;
-    }
-}
+/* Nav icon-only rules moved to colony.css (kept with the other nav styles
+   and served with a cache-busting query string). */
 
 /* ── Messages swipe hint (mobile only) ────────────────────────────────── */
 @media (max-width: 767px) {

@@ -23,12 +23,14 @@ window.__colonyViewData = {
         buildingsAvailable: '{{ route('colony.buildings.available') }}',
         placeBuilding:      '{{ route('colony.building.place') }}',
         investBuilding:     '{{ route('colony.building.invest') }}',
+        repairBuilding:     '{{ route('colony.building.repair') }}',
         dismissHint:        '{{ route('colony.hint.dismiss') }}',
     },
     i18n: {
         explore:            '{{ __('colony.explore') }}',
         deepScan:           '{{ __('colony.deep_scan') }}',
         investAp:           '{{ __('colony.invest_ap') }}',
+        repair:             '{{ __('colony.repair') }}',
         build:              '{{ __('colony.build') }}',
         cancel:             '{{ __('colony.cancel') }}',
         selectTileHint:     '{{ __('colony.select_tile_hint') }}',
@@ -51,48 +53,13 @@ window.__colonyViewData = {
 
         {{-- Hex grid canvas --}}
         <div class="hex-canvas-wrap">
-            <div class="hex-canvas-header">
-                <h2>{{ $colony->name }}</h2>
-                <small class="status-line" x-text="statusLine()"></small>
-                <div class="ap-chips">
-                    <span class="ap-chip ap-chip--nav" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Nav ${apNav} AP`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_nav_ap_title'),
-                            'popup_desc'  => __('resources.popup_nav_ap_desc'),
-                        ])
-                    </span>
-                    <span class="ap-chip ap-chip--build" x-data="{ open: false }"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Bau ${apConstruction} AP`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_bau_ap_title'),
-                            'popup_desc'  => __('resources.popup_bau_ap_desc'),
-                        ])
-                    </span>
-                    <span class="ap-chip" x-data="{ open: false }"
-                          :class="trust >= 20 ? 'ap-chip--trust-pos' : trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu'"
-                          @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
-                          style="position:relative;cursor:default">
-                        <span x-text="`Vertrauen ${trust}`"></span>
-                        @include('partials.res-popup', [
-                            'popup_title' => __('resources.popup_trust_title'),
-                            'popup_desc'  => __('resources.popup_trust_desc'),
-                        ])
-                    </span>
-                </div>
-                {{-- Merchant notification — links to Bar when merchant is present --}}
-                <a href="{{ route('colony.bar') }}"
-                   class="merchant-notify"
-                   x-show="hasMerchant()"
-                   x-cloak>
-                    🛸 {{ __('colony.merchant_in_system') }}
-                </a>
-
-            </div>
+            {{-- Merchant notification — links to Bar when merchant is present --}}
+            <a href="{{ route('colony.bar') }}"
+               class="merchant-notify merchant-notify--floating"
+               x-show="hasMerchant()"
+               x-cloak>
+                🛸 {{ __('colony.merchant_in_system') }}
+            </a>
 
             {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
                  Updates automatically after any AJAX action that changes hint state. --}}
@@ -128,40 +95,52 @@ window.__colonyViewData = {
                  x-cloak>
                 {{-- Harvester move mode: cancel --}}
                 <template x-if="harvesterMoveMode">
-                    <div class="sidebar-actions">
-                        <button class="sidebar-action-btn" @click="cancelHarvesterMove()">
+                    <div class="tile-actions">
+                        <button class="tile-action-btn" @click="cancelHarvesterMove()">
                             {{ __('colony.cancel') }}
                         </button>
                     </div>
                 </template>
                 {{-- Normal mode tile actions --}}
                 <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
-                    <div class="sidebar-actions">
+                    <div class="tile-actions">
                         <template x-if="!selectedTile.is_explored">
-                            <button class="sidebar-action-btn" @click="doExploreTile(selectedTile)">
+                            <button class="tile-action-btn" @click="doExploreTile(selectedTile)">
                                 {{ __('colony.explore') }}
                             </button>
                         </template>
                         <template x-if="selectedTile.has_signal && !selectedTile.is_deep_scanned">
-                            <button class="sidebar-action-btn" @click="doDeepScan(selectedTile)">
+                            <button class="tile-action-btn" @click="doDeepScan(selectedTile)">
                                 {{ __('colony.deep_scan') }}
                             </button>
                         </template>
-                        <template x-if="buildingForTile(selectedTile) && (buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level)">
-                            <button class="sidebar-action-btn" @click="doInvestAp(buildingForTile(selectedTile))">
-                                {{ __('colony.invest_ap') }}
+                        <template x-if="canRepair(selectedBuilding)">
+                            <button class="tile-action-btn" @click="doRepair(selectedBuilding)">
+                                <span class="tile-action-btn__main"
+                                      x-text="`{{ __('colony.repair') }} (${conditionPct(selectedBuilding)} %)`"></span>
+                                <span class="tile-action-btn__sub"
+                                      x-text="`1 AP → +${repairStepPct(selectedBuilding)} % {{ __('colony.condition') }}`"></span>
                             </button>
                         </template>
-                        <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.level > 0 && !buildingForTile(selectedTile)?.in_transit">
-                            <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startHarvesterMove()">
+                        <template x-if="buildingCanLevelUp(selectedBuilding)">
+                            <button class="tile-action-btn"
+                                    :class="canRepair(selectedBuilding) ? 'tile-action-btn--secondary' : ''"
+                                    @click="doInvestAp(selectedBuilding)">
+                                <span class="tile-action-btn__main"
+                                      x-text="`{{ __('colony.invest_ap') }} (${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup} AP)`"></span>
+                                <span class="tile-action-btn__sub">{{ __('colony.ap_per_click') }}</span>
+                            </button>
+                        </template>
+                        <template x-if="selectedBuilding?.building_key === 'building_harvester' && selectedBuilding?.level > 0 && !selectedBuilding?.in_transit">
+                            <button class="tile-action-btn tile-action-btn--secondary" @click="startHarvesterMove()">
                                 {{ __('colony.harvester_move') }}
                             </button>
                         </template>
-                        <template x-if="buildingForTile(selectedTile)?.building_key === 'building_harvester' && buildingForTile(selectedTile)?.in_transit">
-                            <p class="build-mode-hint" style="margin:0">{{ __('colony.harvester_in_transit') }}</p>
+                        <template x-if="selectedBuilding?.building_key === 'building_harvester' && selectedBuilding?.in_transit">
+                            <p class="tile-action-note">{{ __('colony.harvester_in_transit') }}</p>
                         </template>
-                        <template x-if="isBuildableTile(selectedTile) && !buildingForTile(selectedTile)">
-                            <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="startBuildForTile(selectedTile)">
+                        <template x-if="isBuildableTile(selectedTile) && !selectedBuilding">
+                            <button class="tile-action-btn tile-action-btn--secondary" @click="startBuildForTile(selectedTile)">
                                 {{ __('colony.build') }}
                             </button>
                         </template>
@@ -169,16 +148,19 @@ window.__colonyViewData = {
                 </template>
                 {{-- Build mode: cancel button in strip --}}
                 <template x-if="buildMode">
-                    <div class="sidebar-actions">
-                        <button class="sidebar-action-btn sidebar-action-btn--secondary" @click="cancelBuildMode()">
+                    <div class="tile-actions">
+                        <button class="tile-action-btn tile-action-btn--secondary" @click="cancelBuildMode()">
                             {{ __('colony.cancel') }}
                         </button>
                     </div>
                 </template>
             </div>
 
-            <div class="tile-panel-header tile-panel-header--hideable">
-                <h3 x-text="harvesterMoveMode ? '{{ __('colony.harvester_move') }}' : (buildMode ? '{{ __('colony.build_mode_title') }}' : '{{ __('colony.tile_info') }}')"></h3>
+            {{-- Only labels build/harvester modes. In normal tile mode the tabs
+                 (building) or the terrain <h3> name the content themselves. --}}
+            <div class="tile-panel-header tile-panel-header--hideable"
+                 x-show="harvesterMoveMode || buildMode" x-cloak>
+                <h3 x-text="harvesterMoveMode ? '{{ __('colony.harvester_move') }}' : '{{ __('colony.build_mode_title') }}'"></h3>
             </div>
 
             <div class="tile-panel-body">
@@ -239,102 +221,128 @@ window.__colonyViewData = {
                     </div>
                 </template>
 
-                {{-- Normal mode: selected tile info --}}
+                {{-- Normal mode: selected tile info.
+                     x-effect resets the active tab to "Gebäude" whenever a
+                     different tile is selected (compares coords, so refreshes
+                     of the same tile keep the player's chosen tab). --}}
+                {{-- x-effect resets the active tab to "Gebäude" on tile change
+                     (compares coords, so same-tile refreshes keep the chosen
+                     tab). Horizontal swipe flips tabs on mobile. --}}
                 <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
-                    <div class="tile-info-container">
-                        <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
+                    <div class="tile-tab-body"
+                         x-effect="onTilePanel()"
+                         @touchstart.passive="panelTouchStart($event)"
+                         @touchend.passive="panelTouchEnd($event)">
 
-                        <div class="tile-status-chips">
-                            <span x-show="!selectedTile.is_explored && !selectedTile.is_colony_zone"
-                                  class="chip chip--locked">{{ __('colony.chip_locked') }}</span>
-                            <span x-show="!selectedTile.is_explored && selectedTile.is_colony_zone"
-                                  class="chip chip--fog">{{ __('colony.chip_unexplored') }}</span>
-                            <span x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned && !selectedTile.has_signal"
-                                  class="chip chip--explored">{{ __('colony.chip_explored') }}</span>
-                            <span x-show="selectedTile.is_explored && selectedTile.has_signal"
-                                  class="chip chip--signal">{{ __('colony.chip_signal') }}</span>
-                            <span x-show="selectedTile.is_deep_scanned"
-                                  class="chip chip--scanned">{{ __('colony.chip_scanned') }}</span>
-                        </div>
-
-                        <dl class="tile-dl">
-                            <div class="tile-dl-coords">
-                                <dt>Koordinaten</dt>
-                                <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
-                            </div>
-
-                            <template x-if="selectedTile.is_explored">
-                                <div>
-                                    <dt>Typ</dt>
-                                    <dd x-text="tileTypeName(selectedTile.tile_type)"></dd>
-                                </div>
-                            </template>
-
-                            <template x-if="selectedTile.is_deep_scanned && selectedTile.event_type">
-                                <div>
-                                    <dt>Event</dt>
-                                    <dd x-text="eventTypeName(selectedTile.event_type)"></dd>
-                                </div>
-                            </template>
-                        </dl>
-
-                        <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
-                            <div class="sidebar-resource">
-                                <div class="sidebar-bar-group">
-                                    <div class="sidebar-bar-label">
-                                        <span>{{ __('colony.resource_regolith') }}</span>
-                                        <span x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></span>
-                                    </div>
-                                    <div class="sidebar-bar-wrap">
-                                        <div class="sidebar-bar sidebar-bar--resource"
-                                             :style="`width:${Math.round(selectedTile.resource_amount / selectedTile.resource_max * 100)}%`"></div>
-                                    </div>
-                                </div>
+                        {{-- Tabs — only when a building occupies the tile.
+                             Empty terrain has no building info, so no tab chrome. --}}
+                        <template x-if="selectedBuilding">
+                            <div class="tile-tabs" role="tablist">
+                                <button type="button" class="tile-tab" role="tab"
+                                        :class="{ 'tile-tab--active': tileTab === 'building' }"
+                                        :aria-selected="tileTab === 'building'"
+                                        @click="tileTab = 'building'">
+                                    {{ __('colony.tab_building') }}
+                                </button>
+                                <button type="button" class="tile-tab" role="tab"
+                                        :class="{ 'tile-tab--active': tileTab === 'terrain' }"
+                                        :aria-selected="tileTab === 'terrain'"
+                                        @click="tileTab = 'terrain'">
+                                    {{ __('colony.tab_terrain') }}
+                                </button>
                             </div>
                         </template>
 
-                        <template x-if="buildingForTile(selectedTile)">
-                            <div class="sidebar-building">
-                                <div class="sidebar-section-title">{{ __('colony.building_section') }}</div>
-
+                        {{-- ── Building tab ──────────────────────────────────── --}}
+                        <template x-if="selectedBuilding && tileTab === 'building'">
+                            <div class="tile-building">
                                 @include('partials.building-detail', [
-                                    'expr'       => 'buildingForTile(selectedTile)',
+                                    'expr'       => 'selectedBuilding',
                                     'name_field' => 'label',
                                 ])
 
-                                <dl class="tile-dl" style="margin-top:.5rem">
+                                <dl class="tile-dl">
                                     <dt>{{ __('colony.max_level') }}</dt>
-                                    <dd x-text="buildingForTile(selectedTile).max_level ?? '∞'"></dd>
+                                    <dd x-text="selectedBuilding.max_level ?? '∞'"></dd>
                                 </dl>
 
-                                <template x-if="buildingForTile(selectedTile).level === 0">
-                                    <div class="sidebar-under-construction">
+                                <template x-if="selectedBuilding.level === 0">
+                                    <div class="tile-under-construction">
                                         {{ __('colony.under_construction') }}
                                     </div>
                                 </template>
 
-                                <template x-if="buildingForTile(selectedTile).level > 0">
-                                    <div class="sidebar-bar-group">
-                                        <div class="sidebar-bar-label">
+                                <template x-if="selectedBuilding.level > 0">
+                                    <div class="tile-bar-group">
+                                        <div class="tile-bar-label">
                                             <span>{{ __('colony.condition') }}</span>
-                                            <span x-text="`${Math.round(buildingForTile(selectedTile).status_points / (buildingForTile(selectedTile).max_status_points ?? 20) * 100)} %`"></span>
+                                            <span x-text="`${conditionPct(selectedBuilding)} %`"></span>
                                         </div>
-                                        <div class="sidebar-bar-wrap">
-                                            <div class="sidebar-bar sidebar-bar--status"
-                                                 :style="`width:${Math.round(buildingForTile(selectedTile).status_points / (buildingForTile(selectedTile).max_status_points ?? 20) * 100)}%`"></div>
+                                        <div class="tile-bar-wrap">
+                                            <div class="tile-bar tile-bar--status"
+                                                 :style="`width:${conditionPct(selectedBuilding)}%`"></div>
                                         </div>
                                     </div>
                                 </template>
 
-                                <template x-if="buildingForTile(selectedTile).max_level === null || buildingForTile(selectedTile).level < buildingForTile(selectedTile).max_level">
-                                    <div class="sidebar-bar-group">
-                                        <div class="sidebar-bar-label">
+                                <template x-if="buildingCanLevelUp(selectedBuilding)">
+                                    <div class="tile-bar-group">
+                                        <div class="tile-bar-label">
                                             <span>{{ __('colony.ap_invested') }}</span>
-                                            <span x-text="`${buildingForTile(selectedTile).ap_spend} / ${buildingForTile(selectedTile).ap_for_levelup}`"></span>
+                                            <span x-text="`${selectedBuilding.ap_spend} / ${selectedBuilding.ap_for_levelup}`"></span>
                                         </div>
-                                        <div class="sidebar-bar-wrap">
-                                            <div class="sidebar-bar sidebar-bar--ap"
-                                                 :style="`width:${Math.round(buildingForTile(selectedTile).ap_spend / buildingForTile(selectedTile).ap_for_levelup * 100)}%`"></div>
+                                        <div class="tile-bar-wrap">
+                                            <div class="tile-bar tile-bar--ap"
+                                                 :style="`width:${apProgressPct(selectedBuilding)}%`"></div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+
+                        {{-- ── Terrain tab (or sole content when no building) ── --}}
+                        <template x-if="!selectedBuilding || tileTab === 'terrain'">
+                            <div class="tile-terrain">
+                                <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
+
+                                <div class="tile-status-chips">
+                                    <span x-show="!selectedTile.is_explored && !selectedTile.is_colony_zone"
+                                          class="chip chip--locked">{{ __('colony.chip_locked') }}</span>
+                                    <span x-show="!selectedTile.is_explored && selectedTile.is_colony_zone"
+                                          class="chip chip--fog">{{ __('colony.chip_unexplored') }}</span>
+                                    <span x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned && !selectedTile.has_signal"
+                                          class="chip chip--explored">{{ __('colony.chip_explored') }}</span>
+                                    <span x-show="selectedTile.is_explored && selectedTile.has_signal"
+                                          class="chip chip--signal">{{ __('colony.chip_signal') }}</span>
+                                    <span x-show="selectedTile.is_deep_scanned"
+                                          class="chip chip--scanned">{{ __('colony.chip_scanned') }}</span>
+                                </div>
+
+                                <dl class="tile-dl">
+                                    <div class="tile-dl-coords">
+                                        <dt>Koordinaten</dt>
+                                        <dd x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`"></dd>
+                                    </div>
+
+                                    <template x-if="selectedTile.is_deep_scanned && selectedTile.event_type">
+                                        <div>
+                                            <dt>Event</dt>
+                                            <dd x-text="eventTypeName(selectedTile.event_type)"></dd>
+                                        </div>
+                                    </template>
+                                </dl>
+
+                                <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
+                                    <div class="tile-resource">
+                                        <div class="tile-bar-group">
+                                            <div class="tile-bar-label">
+                                                <span>{{ __('colony.resource_regolith') }}</span>
+                                                <span x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></span>
+                                            </div>
+                                            <div class="tile-bar-wrap">
+                                                <div class="tile-bar tile-bar--resource"
+                                                     :style="`width:${resourcePct(selectedTile)}%`"></div>
+                                            </div>
                                         </div>
                                     </div>
                                 </template>

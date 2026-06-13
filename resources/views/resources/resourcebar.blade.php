@@ -40,7 +40,7 @@
           . '</div>'
         : null;
 @endphp
-<div class="res-bar-wrap d-flex flex-wrap gap-2 justify-content-center align-items-center resource-bar">
+<div class="res-bar-wrap resource-bar">
 
     {{-- Sol chip: no border, no max --}}
     @if($solDisplay !== null)
@@ -113,6 +113,41 @@
                 @endif
             @endforeach
         @endif
+    @endif
+
+    {{-- AP + trust chips (colony view only — values come from ColonyController::hexview).
+         IDs are used by colony-hexgrid.js to sync values + flash after AJAX actions. --}}
+    @if(isset($navAp, $constructionAp, $trust) && request()->routeIs('colony.view'))
+        <span class="res-divider" aria-hidden="true"></span>
+        <span id="resbar-ap-nav" class="ap-chip ap-chip--nav" x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
+              style="position:relative;cursor:default">
+            <span>Nav <span class="res-amount">{{ (int) $navAp }}</span> AP</span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_nav_ap_title'),
+                'popup_desc'  => __('resources.popup_nav_ap_desc'),
+            ])
+        </span>
+        <span id="resbar-ap-build" class="ap-chip ap-chip--build" x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
+              style="position:relative;cursor:default">
+            <span>Bau <span class="res-amount">{{ (int) $constructionAp }}</span> AP</span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_bau_ap_title'),
+                'popup_desc'  => __('resources.popup_bau_ap_desc'),
+            ])
+        </span>
+        <span id="resbar-ap-trust"
+              class="ap-chip {{ $trust >= 20 ? 'ap-chip--trust-pos' : ($trust < 0 ? 'ap-chip--trust-neg' : 'ap-chip--trust-neu') }}"
+              x-data="{ open: false }"
+              @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
+              style="position:relative;cursor:default">
+            <span>{{ __('resources.res_trust') }} <span class="res-amount">{{ (int) $trust }}</span></span>
+            @include('partials.res-popup', [
+                'popup_title' => __('resources.popup_trust_title'),
+                'popup_desc'  => __('resources.popup_trust_desc'),
+            ])
+        </span>
     @endif
 
 </div>

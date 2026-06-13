@@ -445,6 +445,75 @@ class ColonyController extends BaseController
         ]);
     }
 
+    public function repairBuilding(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'building_id' => 'required|integer',
+            'instance_id' => 'sometimes|integer',
+        ]);
+        $colony     = $this->colonyService->getPrimeColony(Auth::id());
+        $buildingId = (int) $data['building_id'];
+        $instanceId = (int) ($data['instance_id'] ?? 1);
+
+        if (!config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1)
+            return response()->json([
+                'ok'      => false,
+                'error'   => 'ap_limit',
+                'ap_type' => 'construction',
+                'current' => 0,
+                'message' => __('colony.onboarding_trigger_ap_limit'),
+            ]);
+
+        $row = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $buildingId)
+            ->where('instance_id', $instanceId)
+            ->first();
+
+        if (!$row)
+            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+
+        if ((int) $row->level < 1)
+            return response()->json(['ok' => false, 'error' => __('colony.error_repair_under_construction')]);
+
+        $building = DB::table('buildings')->where('id', $buildingId)->first();
+        $maxSp    = (int) ($building->max_status_points ?? 20);
+
+        if ((int) $row->status_points >= $maxSp)
+            return response()->json(['ok' => false, 'error' => __('colony.error_repair_full')]);
+
+        $newSp = min((int) $row->status_points + 1, $maxSp);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $buildingId)
+            ->where('instance_id', $instanceId)
+            ->update(['status_points' => $newSp]);
+
+        if (!config('game.bypass.ap_checks'))
+            $this->personellService->lockActionPoints('construction', $colony->id, 1);
+
+        $this->eventService->createEvent([
+            'user'       => Auth::id(),
+            'tick'       => $this->getTick(),
+            'event'      => 'colony.building_repaired',
+            'area'       => 'colony',
+            'parameters' => json_encode([
+                'building_id'       => $buildingId,
+                'building_name'     => $building->name ?? '',
+                'status_points'     => $newSp,
+                'max_status_points' => $maxSp,
+            ]),
+        ]);
+
+        return response()->json([
+            'ok'         => true,
+            'building'   => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
+            'activeHint' => $this->resolveHint($colony->id),
+            ...$this->currentAp($colony->id),
+        ]);
+    }
+
     public function dismissHint(Request $request): JsonResponse
     {
         $data   = $request->validate(['hint_key' => 'required|string|max:20']);

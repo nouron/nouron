@@ -13,6 +13,7 @@ return [
         'colony' => [
             'building_placed'   => 'Gebäude platziert',
             'building_invested' => 'Gebäude ausgebaut',
+            'building_repaired' => 'Gebäude repariert',
             'renamed'           => 'Kolonie umbenannt',
             'tile_explored'     => 'Sektor erkundet',
             'tile_deep_scanned' => 'Tiefen-Scan durchgeführt',
@@ -100,6 +101,7 @@ return [
     'desc' => [
         'building_placed'           => ':name platziert.',
         'building_invested'         => ':ap AP in :name investiert (:done / :total AP).',
+        'building_repaired'         => ':name repariert (:current / :max Zustand).',
         'building_leveled_up'       => ':ap AP in :name investiert. Bau abgeschlossen — Level :level erreicht.',
         'level_up'                  => 'Forschung :name abgeschlossen.',
         'level_up_level'            => 'Forschung :name auf Level :level gestiegen.',

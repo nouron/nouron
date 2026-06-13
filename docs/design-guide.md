@@ -423,7 +423,7 @@ Verbindliches Set — keine weiteren Schwellwerte einführen (Stand: Konsolidier
 - **Komplemente:** `max-width` immer 599 / 767 / 899 — nie 600 / 768 / 900, sonst matchen `min`- und `max`-Query bei exakter Breite gleichzeitig.
 - **Viewport-Höhen:** `dvh` statt `vh` (mobile Adressleiste); `vh`-Zeile als Fallback davor stehen lassen.
 - **JS spiegelt CSS:** `innerWidth < 600` (Techtree `isMobile`), `< 768` (Carousel Full-width-Card), `< 900` (Carousel Arrow-Modus, `carousel.js` BREAKPOINT).
-- **Navigation (Colony-Layout):** Burger-Menü < 600, Icon-only-Leiste 600–767, Icons + Labels ≥ 768.
+- **Navigation (Colony-Layout):** Burger-Menü < 600, Icon-only-Leiste 600–1099, Icons + Labels ≥ 1100. Nav-Items niemals intern umbrechen (`white-space: nowrap`); kein horizontales Scrollen, kein Mehrzeilen-Umbruch — bei Platzmangel fallen die Labels weg.
 - **Touch-Targets:** Interaktive Elemente min. 24×24 px Hitbox (Dots: sichtbarer Punkt via `::before`, Hitbox über Elementgröße).
 
 ---
