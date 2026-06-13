@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Models\User;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -24,10 +25,14 @@ class HarvesterTransitTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID    = 1;
+    private const COLONY_ID = 1;
+
     private const BART_USER_ID = 3;
+
     private const HARVESTER_ID = 27;
+
     private const RES_REGOLITH = 3;
+
     private const TRUST_RES_ID = 12;
 
     protected function setUp(): void
@@ -56,9 +61,9 @@ class HarvesterTransitTest extends TestCase
         ]);
     }
 
-    private function makeUser(int $userId): \App\Models\User
+    private function makeUser(int $userId): User
     {
-        return \App\Models\User::where('user_id', $userId)->firstOrFail();
+        return User::where('user_id', $userId)->firstOrFail();
     }
 
     private function currentTick(): int
@@ -79,8 +84,8 @@ class HarvesterTransitTest extends TestCase
         return $this->actingAs($this->makeUser(self::BART_USER_ID))
             ->postJson(route('colony.building.place'), [
                 'building_id' => self::HARVESTER_ID,
-                'q'           => $q,
-                'r'           => $r,
+                'q' => $q,
+                'r' => $r,
             ]);
     }
 

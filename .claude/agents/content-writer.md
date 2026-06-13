@@ -84,3 +84,11 @@ Beim Aufruf zuerst prüfen:
 - Texte im Ziel-Sprachdatei-Format liefern (PHP-Array-Einträge)
 - Widersprüche mit etablierter Lore oder GDD-Entscheidungen flaggen
 - Mechanik unklar: fragen vor Lore-Erfindung
+## Code-Style (Linter — Pflicht)
+
+`lang/**/*.php` werden vor jedem Commit von **Laravel Pint** formatiert. Wichtigste Regel für Sprachdateien:
+
+- **Array-`=>` NIE vertikal ausrichten** — genau ein Space: `'key' => 'Wert',`. (Der Altbestand war spaltenweise ausgerichtet; Pint kollabiert das.)
+- Einfache Quotes; Trailing Comma in mehrzeiligen Arrays; Datei endet mit genau einem Newline.
+
+Vollständig: `docs/code-style.md`. Lokal prüfen: `bin/pint --test lang`.

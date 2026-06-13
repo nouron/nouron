@@ -19,17 +19,19 @@ use Illuminate\Console\Command;
  */
 class DbReset extends Command
 {
-    protected $signature   = 'db:reset {--force : Skip the confirmation prompt}';
+    protected $signature = 'db:reset {--force : Skip the confirmation prompt}';
+
     protected $description = 'Drop all tables, run migrations, and seed the development database';
 
     public function handle(): int
     {
-        $db = config('database.connections.' . config('database.default') . '.database');
+        $db = config('database.connections.'.config('database.default').'.database');
 
-        if (!$this->option('force')) {
-            $this->warn('This will DELETE all data in: ' . $db);
-            if (!$this->confirm('Are you sure?', false)) {
+        if (! $this->option('force')) {
+            $this->warn('This will DELETE all data in: '.$db);
+            if (! $this->confirm('Are you sure?', false)) {
                 $this->line('Aborted.');
+
                 return self::SUCCESS;
             }
         }

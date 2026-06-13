@@ -32,7 +32,7 @@ class UserController extends BaseController
         $prefs = DB::table('user_preferences')->where('user_id', Auth::id())->first();
 
         return view('user.settings', [
-            'user'             => Auth::user(),
+            'user' => Auth::user(),
             'onboarding_hints' => $prefs ? (bool) $prefs->onboarding_hints : true,
         ]);
     }
@@ -67,10 +67,10 @@ class UserController extends BaseController
     {
         $request->validate([
             'current_password' => ['required', 'string'],
-            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        if (!Hash::check($request->current_password, Auth::user()->password)) {
+        if (! Hash::check($request->current_password, Auth::user()->password)) {
             return redirect()->route('user.settings')
                 ->withErrors(['current_password' => 'Das aktuelle Passwort ist falsch.']);
         }

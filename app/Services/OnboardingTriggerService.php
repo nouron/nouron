@@ -60,7 +60,7 @@ class OnboardingTriggerService
 
         $decoded = json_decode($raw, true);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return [];
         }
 

@@ -13,8 +13,11 @@ class BuildingServiceTest extends TestCase
     use RefreshDatabase;
 
     protected BuildingService $service;
-    protected int $entityId  = 30; // depot (no max_level, upgradable)
-    protected int $colonyId  = 1;
+
+    protected int $entityId = 30; // depot (no max_level, upgradable)
+
+    protected int $colonyId = 1;
+
     protected int $colonyId2 = 2;
 
     protected function setUp(): void
@@ -26,22 +29,22 @@ class BuildingServiceTest extends TestCase
         // Provide a construction advisor for colony 1 so invest() has AP available.
         DB::table('advisors')->where('colony_id', $this->colonyId)->delete();
         DB::table('advisors')->insert([
-            'user_id'               => 3,
-            'personell_id'          => 35, // engineer (construction AP)
-            'colony_id'             => $this->colonyId,
-            'rank'                  => 3,  // 12 AP — enough for any invest test
-            'active_ticks'          => 0,
+            'user_id' => 3,
+            'personell_id' => 35, // engineer (construction AP)
+            'colony_id' => $this->colonyId,
+            'rank' => 3,  // 12 AP — enough for any invest test
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
     }
 
-    public function testGetEntities(): void
+    public function test_get_entities(): void
     {
         $result = $this->service->getEntities();
         $this->assertTrue($result->isNotEmpty());
     }
 
-    public function testGetEntity(): void
+    public function test_get_entity(): void
     {
         $result = $this->service->getEntity($this->entityId);
         $this->assertNotNull($result);
@@ -52,26 +55,26 @@ class BuildingServiceTest extends TestCase
         $this->service->getEntity(-1);
     }
 
-    public function testGetEntityCosts(): void
+    public function test_get_entity_costs(): void
     {
         $result = $this->service->getEntityCosts($this->entityId);
         $this->assertTrue($result->isNotEmpty());
     }
 
-    public function testGetColonyEntity(): void
+    public function test_get_colony_entity(): void
     {
         $result = $this->service->getColonyEntity($this->colonyId, $this->entityId);
         $this->assertNotNull($result);
         $this->assertEquals(3, $result->level);  // depot level=3 on colony 1 per test data
     }
 
-    public function testGetColonyEntities(): void
+    public function test_get_colony_entities(): void
     {
         $result = $this->service->getColonyEntities($this->colonyId);
         $this->assertTrue($result->isNotEmpty());
     }
 
-    public function testCheckRequiredActionPoints(): void
+    public function test_check_required_action_points(): void
     {
         // depot (30): ap_spend=10, ap_for_levelup=10 -> passes
         $this->assertTrue($this->service->checkRequiredActionPoints($this->colonyId, 30));
@@ -81,7 +84,7 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($this->service->checkRequiredActionPoints($this->colonyId2, 30));
     }
 
-    public function testLevelup(): void
+    public function test_levelup(): void
     {
         $before = $this->service->getColonyEntity($this->colonyId, $this->entityId);
         $result = $this->service->levelup($this->colonyId, $this->entityId);
@@ -98,7 +101,7 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testInvest(): void
+    public function test_invest(): void
     {
         // With real PersonellService: engineer level=9 -> totalAP=50, no locked AP -> availableAP=50
         // oremine ap_spend already=10 (max), invest returns true (no effective change but succeeds)
@@ -117,7 +120,7 @@ class BuildingServiceTest extends TestCase
      * cap=100 → free=91 → levelup passes.
      * After levelup (level=4): uses 12; cap=11 → free=0 < 3 → blocked.
      */
-    public function testLevelupBlockedWhenInsufficientSupply(): void
+    public function test_levelup_blocked_when_insufficient_supply(): void
     {
         config(['game.bypass.supply_checks' => false]);
 
@@ -141,7 +144,7 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($this->service->levelup($this->colonyId, $this->entityId));
     }
 
-    public function testLevelupAllowedWhenSupplyBypassed(): void
+    public function test_levelup_allowed_when_supply_bypassed(): void
     {
         // supply_checks bypassed → levelup succeeds regardless of supply
         config(['game.bypass.supply_checks' => true]);

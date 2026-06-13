@@ -20,38 +20,38 @@ return [
     // credits = one-time hire cost (Rang 1 = Junior). Type-specific — see GDD §13.
 
     'engineer' => [
-        'id'             => 35,
-        'ap_type'        => 'construction',
+        'id' => 35,
+        'ap_type' => 'construction',
         'trust_per_unit' => 0,
-        'credits'        => 300,    // critical for early building — first hire
+        'credits' => 300,    // critical for early building — first hire
     ],
 
     'scientist' => [
-        'id'             => 36,
-        'ap_type'        => 'research',
+        'id' => 36,
+        'ap_type' => 'research',
         'trust_per_unit' => 0,
-        'credits'        => 400,
+        'credits' => 400,
     ],
 
     'pilot' => [
-        'id'             => 89,
-        'ap_type'        => 'navigation',
+        'id' => 89,
+        'ap_type' => 'navigation',
         'trust_per_unit' => 0,
-        'credits'        => 500,    // fleet-focused, later priority
+        'credits' => 500,    // fleet-focused, later priority
     ],
 
     'trader' => [
-        'id'             => 92,
-        'ap_type'        => 'economy',
+        'id' => 92,
+        'ap_type' => 'economy',
         'trust_per_unit' => 0,
-        'credits'        => 350,
+        'credits' => 350,
     ],
 
     'strategist' => [
-        'id'             => 93,
-        'ap_type'        => 'strategy',
+        'id' => 93,
+        'ap_type' => 'strategy',
         'trust_per_unit' => 0,
-        'credits'        => 600,    // military/strategy — typically late-game hire
+        'credits' => 600,    // military/strategy — typically late-game hire
     ],
 
 ];

@@ -20,21 +20,21 @@
  *   }
  */
 function carouselMixin(itemCount, options = {}) {
-    const BREAKPOINT   = options.breakpoint   ?? 900;   // px: below = mobile/tablet mode
-    const CARD_MAX_W   = options.cardMaxWidth  ?? 320;   // px: max card width on tablet
-    const SWIPE_MIN    = options.swipeMin      ?? 40;    // px: min horizontal delta for swipe
-    const GAP_PX       = options.gapPx         ?? 16;    // px: must match CSS gap (1rem)
+    const BREAKPOINT = options.breakpoint ?? 900; // px: below = mobile/tablet mode
+    const CARD_MAX_W = options.cardMaxWidth ?? 320; // px: max card width on tablet
+    const SWIPE_MIN = options.swipeMin ?? 40; // px: min horizontal delta for swipe
+    const GAP_PX = options.gapPx ?? 16; // px: must match CSS gap (1rem)
 
     return {
-        activeIndex:   0,
-        _isMobile:     false,
-        _itemCount:    itemCount,
+        activeIndex: 0,
+        _isMobile: false,
+        _itemCount: itemCount,
 
         // Drag-while-swiping state
-        _dragStartX:   0,
-        _dragStartY:   0,
-        _dragDeltaX:   0,
-        _dragging:     false,
+        _dragStartX: 0,
+        _dragStartY: 0,
+        _dragDeltaX: 0,
+        _dragging: false,
 
         /* ── Init ──────────────────────────────────────────────────────────── */
 
@@ -45,7 +45,7 @@ function carouselMixin(itemCount, options = {}) {
             });
             window.addEventListener('keydown', (e) => {
                 if (e.key === 'ArrowRight') this._carouselNext();
-                if (e.key === 'ArrowLeft')  this._carouselPrev();
+                if (e.key === 'ArrowLeft') this._carouselPrev();
             });
         },
 
@@ -69,11 +69,10 @@ function carouselMixin(itemCount, options = {}) {
             if (!this._isMobile) return '';
             // Below 768px cards are 100vw (full-bleed, no side padding or arrows).
             // Above that cards are min(100vw - 48px, CARD_MAX_W) with arrow buttons.
-            const cardWidth = window.innerWidth < 768
-                ? window.innerWidth
-                : Math.min(window.innerWidth - 48, CARD_MAX_W);
-            const base   = this.activeIndex * (cardWidth + GAP_PX);
-            const drag   = this._dragging ? this._dragDeltaX : 0;
+            const cardWidth =
+                window.innerWidth < 768 ? window.innerWidth : Math.min(window.innerWidth - 48, CARD_MAX_W);
+            const base = this.activeIndex * (cardWidth + GAP_PX);
+            const drag = this._dragging ? this._dragDeltaX : 0;
             const offset = base - drag;
             // Suppress CSS transition while finger drags (instant follow); restore on release.
             return this._dragging
@@ -87,7 +86,7 @@ function carouselMixin(itemCount, options = {}) {
             this._dragStartX = e.touches[0].clientX;
             this._dragStartY = e.touches[0].clientY;
             this._dragDeltaX = 0;
-            this._dragging   = true;
+            this._dragging = true;
         },
 
         onTouchMove(e) {
@@ -102,8 +101,8 @@ function carouselMixin(itemCount, options = {}) {
             }
             // Rubber-band at edges
             const atStart = this.activeIndex === 0 && dx > 0;
-            const atEnd   = this.activeIndex === this._itemCount - 1 && dx < 0;
-            this._dragDeltaX = (atStart || atEnd) ? dx * 0.25 : dx;
+            const atEnd = this.activeIndex === this._itemCount - 1 && dx < 0;
+            this._dragDeltaX = atStart || atEnd ? dx * 0.25 : dx;
         },
 
         onTouchEnd(e) {
@@ -114,7 +113,7 @@ function carouselMixin(itemCount, options = {}) {
             this._dragDeltaX = 0;
             if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > SWIPE_MIN) {
                 if (dx < 0) this._carouselNext();
-                else        this._carouselPrev();
+                else this._carouselPrev();
             }
         },
     };

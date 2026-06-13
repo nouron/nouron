@@ -62,12 +62,16 @@
 }
 
 /* Remove browser default marker */
-.nexusdb-item-title::-webkit-details-marker { display: none; }
-.nexusdb-item-title::marker { display: none; }
+.nexusdb-item-title::-webkit-details-marker {
+    display: none;
+}
+.nexusdb-item-title::marker {
+    display: none;
+}
 
 /* CSS-drawn chevron — avoids character-rotation artifacts */
 .nexusdb-item-title::after {
-    content: '';
+    content: "";
     flex-shrink: 0;
     width: 7px;
     height: 7px;

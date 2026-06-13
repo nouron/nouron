@@ -88,5 +88,4 @@ class NexusDbControllerTest extends TestCase
 
         $response->assertViewIs('nexusdb.index');
     }
-
 }

@@ -17,10 +17,11 @@ use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EventService;
 use App\Services\MerchantService;
-use App\Services\TrustService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
+use App\Services\RunProgressService;
 use App\Services\TickService;
+use App\Services\TrustService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -50,22 +51,23 @@ use Illuminate\Support\Facades\DB;
  */
 class GameTick extends Command
 {
-    protected $signature   = 'game:tick
+    protected $signature = 'game:tick
                                 {--run=  : Run ID to process (omit to use the first active run)}
                                 {--tick= : Override the tick number (default: from run or time-based)}';
+
     protected $description = 'Process one game tick (fleet orders, decay, supply, resources)';
 
     /** Fleet IDs that were involved in an encounter this tick — used for 2× ship decay. */
     private array $encounterFleetIds = [];
 
     public function __construct(
-        private readonly TickService               $tickService,
-        private readonly EventService              $eventService,
-        private readonly TrustService              $trustService,
-        private readonly ResourcesService          $resourcesService,
-        private readonly OnboardingTriggerService  $onboardingTriggerService,
-        private readonly BarService                $barService,
-        private readonly MerchantService           $merchantService,
+        private readonly TickService $tickService,
+        private readonly EventService $eventService,
+        private readonly TrustService $trustService,
+        private readonly ResourcesService $resourcesService,
+        private readonly OnboardingTriggerService $onboardingTriggerService,
+        private readonly BarService $barService,
+        private readonly MerchantService $merchantService,
     ) {
         parent::__construct();
     }
@@ -74,15 +76,16 @@ class GameTick extends Command
     {
         // Resolve the Run record: explicit --run= ID, or first active run as fallback.
         $runId = $this->option('run');
-        $run   = $runId
+        $run = $runId
             ? Run::find((int) $runId)
             : Run::where('status', 'active')->first();
 
-        if (!$run) {
+        if (! $run) {
             $this->error($runId
                 ? "Run #{$runId} not found."
                 : 'No active run found. Start a run before processing a tick.'
             );
+
             return self::FAILURE;
         }
 
@@ -154,7 +157,7 @@ class GameTick extends Command
         // Runs outside the main DB::transaction so that endRun() can commit independently
         // and return early without rolling back the tick's resource/decay work.
         $run->refresh();
-        $runProgressService = $this->laravel->make(\App\Services\RunProgressService::class);
+        $runProgressService = $this->laravel->make(RunProgressService::class);
 
         if ($run->phase === 1) {
             if ($runProgressService->checkPhase1Completion($run)) {
@@ -175,6 +178,7 @@ class GameTick extends Command
             if ($run->status !== 'active') {
                 $this->warn("  Run #{$run->id} ended by Nexus intervention: {$run->fail_reason}");
                 $this->info("Tick {$tick} done.");
+
                 return self::SUCCESS;
             }
 
@@ -185,6 +189,7 @@ class GameTick extends Command
                 $runProgressService->endRun($run, 'completed');
                 $this->info("  Run #{$run->id} completed! Score: {$score}");
                 $this->info("Tick {$tick} done.");
+
                 return self::SUCCESS;
             }
         }
@@ -194,10 +199,12 @@ class GameTick extends Command
             $runProgressService->endRun($run, 'failed', $failReason);
             $this->warn("  Run #{$run->id} failed: {$failReason}");
             $this->info("Tick {$tick} done.");
+
             return self::SUCCESS;
         }
 
         $this->info("Tick {$tick} done.");
+
         return self::SUCCESS;
     }
 
@@ -209,7 +216,7 @@ class GameTick extends Command
      * Delivery:  building → docked  when deliver_at_tick <= current tick.
      * Expiry:    pending ships whose pending_until_tick < current tick are deleted.
      *
-     * @return array{int, int}  [$deliveredCount, $expiredCount]
+     * @return array{int, int} [$deliveredCount, $expiredCount]
      */
     private function processHangarDeliveries(int $tick): array
     {
@@ -241,8 +248,9 @@ class GameTick extends Command
 
         foreach ($orders as $order) {
             $coords = json_decode($order->coordinates, true);
-            if (!is_array($coords) || count($coords) < 2) {
+            if (! is_array($coords) || count($coords) < 2) {
                 $this->warn("  Fleet {$order->fleet_id}: invalid move coordinates, skipping.");
+
                 continue;
             }
 
@@ -256,10 +264,10 @@ class GameTick extends Command
             $fleet = Fleet::find($order->fleet_id);
             if ($fleet) {
                 $this->eventService->createEvent([
-                    'user'       => $fleet->user_id,
-                    'tick'       => $tick,
-                    'event'      => 'galaxy.fleet_arrived',
-                    'area'       => 'galaxy',
+                    'user' => $fleet->user_id,
+                    'tick' => $tick,
+                    'event' => 'galaxy.fleet_arrived',
+                    'area' => 'galaxy',
                     'parameters' => json_encode(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
                 ]);
             }
@@ -281,18 +289,20 @@ class GameTick extends Command
 
         foreach ($orders as $order) {
             $data = json_decode($order->data, true);
-            if (!is_array($data)) {
+            if (! is_array($data)) {
                 $this->warn("  Fleet {$order->fleet_id}: invalid trade data, skipping.");
+
                 continue;
             }
 
-            $colonyId   = (int) ($data['colony_id'] ?? 0);
+            $colonyId = (int) ($data['colony_id'] ?? 0);
             $resourceId = (int) ($data['resource_id'] ?? 0);
-            $amount     = (int) ($data['amount'] ?? 0);
-            $direction  = (int) ($data['direction'] ?? 0); // 0=buy(colony→fleet), 1=sell(fleet→colony)
+            $amount = (int) ($data['amount'] ?? 0);
+            $direction = (int) ($data['direction'] ?? 0); // 0=buy(colony→fleet), 1=sell(fleet→colony)
 
-            if (!$colonyId || !$resourceId || !$amount) {
+            if (! $colonyId || ! $resourceId || ! $amount) {
                 $this->warn("  Fleet {$order->fleet_id}: incomplete trade data (colony_id={$colonyId}), skipping.");
+
                 continue;
             }
 
@@ -304,10 +314,10 @@ class GameTick extends Command
             $fleet = Fleet::find($order->fleet_id);
             if ($fleet) {
                 $this->eventService->createEvent([
-                    'user'       => $fleet->user_id,
-                    'tick'       => $tick,
-                    'event'      => 'galaxy.trade',
-                    'area'       => 'galaxy',
+                    'user' => $fleet->user_id,
+                    'tick' => $tick,
+                    'event' => 'galaxy.trade',
+                    'area' => 'galaxy',
                     'parameters' => json_encode(['colony_id' => $colonyId]),
                 ]);
             }
@@ -357,9 +367,9 @@ class GameTick extends Command
         if ($updated === 0) {
             // Row did not exist yet (new resource on this fleet)
             DB::table('fleet_resources')->insert([
-                'fleet_id'    => $fleetId,
+                'fleet_id' => $fleetId,
                 'resource_id' => $resourceId,
-                'amount'      => $amount,
+                'amount' => $amount,
             ]);
         }
     }
@@ -378,13 +388,14 @@ class GameTick extends Command
 
         foreach ($orders as $order) {
             $coords = json_decode($order->coordinates, true);
-            if (!is_array($coords) || count($coords) < 3) {
+            if (! is_array($coords) || count($coords) < 3) {
                 $this->warn("  Fleet {$order->fleet_id}: invalid encounter coordinates, skipping.");
+
                 continue;
             }
 
             $initiator = Fleet::find($order->fleet_id);
-            if (!$initiator) {
+            if (! $initiator) {
                 continue;
             }
 
@@ -401,20 +412,21 @@ class GameTick extends Command
             if ($encountered->isEmpty()) {
                 $order->update(['was_processed' => 1]);
                 $this->eventService->createEvent([
-                    'user'       => $initiator->user_id,
-                    'tick'       => $tick,
-                    'event'      => 'galaxy.fleet_arrived',
-                    'area'       => 'galaxy',
+                    'user' => $initiator->user_id,
+                    'tick' => $tick,
+                    'event' => 'galaxy.fleet_arrived',
+                    'area' => 'galaxy',
                     'parameters' => json_encode(['fleet_id' => $initiator->id, 'coords' => $coords]),
                 ]);
                 $processed++;
+
                 continue;
             }
 
-            $initiatorPower    = $this->calcFleetPower($initiator->id, $shipPower);
+            $initiatorPower = $this->calcFleetPower($initiator->id, $shipPower);
             $encounteredFleetIds = $encountered->pluck('id')->all();
-            $encounteredPower  = array_sum(array_map(
-                fn($id) => $this->calcFleetPower($id, $shipPower),
+            $encounteredPower = array_sum(array_map(
+                fn ($id) => $this->calcFleetPower($id, $shipPower),
                 $encounteredFleetIds
             ));
 
@@ -436,14 +448,14 @@ class GameTick extends Command
 
             // Notify initiating fleet
             $this->eventService->createEvent([
-                'user'       => $initiator->user_id,
-                'tick'       => $tick,
-                'event'      => 'galaxy.encounter',
-                'area'       => 'galaxy',
+                'user' => $initiator->user_id,
+                'tick' => $tick,
+                'event' => 'galaxy.encounter',
+                'area' => 'galaxy',
                 'parameters' => json_encode([
-                    'initiator_id'   => $initiator->user_id,
+                    'initiator_id' => $initiator->user_id,
                     'encountered_id' => $encountered->first()->user_id,
-                    'colony_id'      => 0,
+                    'colony_id' => 0,
                 ]),
             ]);
 
@@ -459,14 +471,14 @@ class GameTick extends Command
             // Notify each unique encountered fleet
             foreach ($encountered->unique('user_id') as $encFleet) {
                 $this->eventService->createEvent([
-                    'user'       => $encFleet->user_id,
-                    'tick'       => $tick,
-                    'event'      => 'galaxy.encounter',
-                    'area'       => 'galaxy',
+                    'user' => $encFleet->user_id,
+                    'tick' => $tick,
+                    'event' => 'galaxy.encounter',
+                    'area' => 'galaxy',
                     'parameters' => json_encode([
-                        'initiator_id'   => $initiator->user_id,
+                        'initiator_id' => $initiator->user_id,
                         'encountered_id' => $encFleet->user_id,
-                        'colony_id'      => 0,
+                        'colony_id' => 0,
                     ]),
                 ]);
 
@@ -498,7 +510,7 @@ class GameTick extends Command
     {
         return FleetShip::where('fleet_id', $fleetId)
             ->get()
-            ->sum(fn($s) => $s->count * ($shipPower[$s->ship_id] ?? 0));
+            ->sum(fn ($s) => $s->count * ($shipPower[$s->ship_id] ?? 0));
     }
 
     private function applyShipLosses(int $fleetId, float $lossRatio, array $shipPower): void
@@ -521,21 +533,21 @@ class GameTick extends Command
 
     private function processBuildingDecay(int $tick): int
     {
-        $fallbackRate  = (float) config('game.decay.rate', 1);
+        $fallbackRate = (float) config('game.decay.rate', 1);
         $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
-        $decayRates    = DB::table('buildings')->pluck('decay_rate', 'id');
-        $maxSPMap      = DB::table('buildings')->pluck('max_status_points', 'id');
+        $decayRates = DB::table('buildings')->pluck('decay_rate', 'id');
+        $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id');
         $buildingNames = DB::table('buildings')->pluck('name', 'id');
-        $levelled      = 0;
+        $levelled = 0;
 
         // Build the over-cap set once before iterating — O(colonies), not O(buildings).
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         // Sicherheits-Hub recycling: colonies that have securityHub built get a
         // fraction of build costs back on any building level-down.
-        $secHubId         = (int) config('buildings.securityHub.id', 53);
-        $recyclePct       = (float) config('buildings.securityHub.recycle_pct', 0.10);
-        $secHubColonies   = DB::table('colony_buildings')
+        $secHubId = (int) config('buildings.securityHub.id', 53);
+        $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
+        $secHubColonies = DB::table('colony_buildings')
             ->where('building_id', $secHubId)
             ->where('level', '>', 0)
             ->pluck('colony_id')
@@ -544,43 +556,43 @@ class GameTick extends Command
 
         // Build cost map for recycling: building_id → [resource_id => amount]
         // Only tradeable colony resources (3=regolith, 4=compounds, 5=organics).
-        $tradeableIds     = [3, 4, 5];
-        $buildCostMap     = DB::table('building_costs')
+        $tradeableIds = [3, 4, 5];
+        $buildCostMap = DB::table('building_costs')
             ->whereIn('resource_id', $tradeableIds)
             ->get()
             ->groupBy('building_id')
-            ->map(fn($rows) => $rows->pluck('amount', 'resource_id')->all())
+            ->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())
             ->all();
 
         $buildings = ColonyBuilding::where('level', '>', 0)->get();
 
         foreach ($buildings as $cb) {
-            $rate         = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
-            $overCapMult  = in_array($cb->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
-            $newStatus    = (float) $cb->status_points - ($rate * $overCapMult);
-            $where     = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
+            $rate = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
+            $overCapMult = in_array($cb->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
+            $newStatus = (float) $cb->status_points - ($rate * $overCapMult);
+            $where = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
 
             if ($newStatus <= 0) {
-                $maxSP    = (int) ($maxSPMap[$cb->building_id] ?? 20);
+                $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
                 $newLevel = max(0, $cb->level - 1);
 
                 DB::table('colony_buildings')->where($where)->update([
-                    'level'         => $newLevel,
+                    'level' => $newLevel,
                     'status_points' => $maxSP,
                 ]);
 
                 $colony = Colony::find($cb->colony_id);
                 $this->eventService->createEvent([
-                    'user'       => $colony?->user_id ?? 0,
-                    'tick'       => $tick,
-                    'event'      => 'techtree.level_down',
-                    'area'       => 'techtree',
+                    'user' => $colony?->user_id ?? 0,
+                    'tick' => $tick,
+                    'event' => 'techtree.level_down',
+                    'area' => 'techtree',
                     'parameters' => json_encode([
                         'entity_type' => 'building',
                         'entity_name' => $buildingNames[$cb->building_id] ?? '',
-                        'new_level'   => $newLevel,
-                        'tech_id'     => $cb->building_id,
-                        'colony_id'   => $cb->colony_id,
+                        'new_level' => $newLevel,
+                        'tech_id' => $cb->building_id,
+                        'colony_id' => $cb->colony_id,
                     ]),
                 ]);
 
@@ -590,7 +602,7 @@ class GameTick extends Command
                         $returned = (int) max(1, floor($baseAmount * $recyclePct));
                         DB::table('colony_resources')->updateOrInsert(
                             ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
-                            ['amount'    => DB::raw("amount + {$returned}")]
+                            ['amount' => DB::raw("amount + {$returned}")]
                         );
                     }
                 }
@@ -606,12 +618,12 @@ class GameTick extends Command
                 if ($newStatus < ($maxSP * 0.8)) {
                     $colony = Colony::find($cb->colony_id);
                     $userId = $colony?->user_id ?? null;
-                    if ($userId !== null && !$this->onboardingTriggerService->hasFired($userId, 'onboarding_decay')) {
+                    if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_decay')) {
                         $this->eventService->createEvent([
-                            'user'       => $userId,
-                            'tick'       => $tick,
-                            'event'      => 'onboarding_decay',
-                            'area'       => 'techtree',
+                            'user' => $userId,
+                            'tick' => $tick,
+                            'event' => 'onboarding_decay',
+                            'area' => 'techtree',
                             'parameters' => json_encode(['colony_id' => $cb->colony_id, 'tech_id' => $cb->building_id]),
                         ]);
                         $this->onboardingTriggerService->markFired($userId, 'onboarding_decay');
@@ -627,44 +639,44 @@ class GameTick extends Command
 
     private function processShipDecay(int $tick): int
     {
-        $fallbackRate  = (float) config('game.decay.rate', 1);
-        $combatFactor  = (float) config('game.decay.combat_factor', 2);
-        $decayRates    = DB::table('ships')->pluck('decay_rate', 'id');
-        $maxSPMap      = DB::table('ships')->pluck('max_status_points', 'id');
-        $shipNames     = DB::table('ships')->pluck('name', 'id');
-        $destroyed     = 0;
+        $fallbackRate = (float) config('game.decay.rate', 1);
+        $combatFactor = (float) config('game.decay.combat_factor', 2);
+        $decayRates = DB::table('ships')->pluck('decay_rate', 'id');
+        $maxSPMap = DB::table('ships')->pluck('max_status_points', 'id');
+        $shipNames = DB::table('ships')->pluck('name', 'id');
+        $destroyed = 0;
 
-        FleetShip::orderBy('fleet_id')->orderBy('ship_id')->chunk(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, $maxSPMap, &$destroyed, $tick) {
-        foreach ($fleetShips as $fs) {
-            $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
+        FleetShip::orderBy('fleet_id')->orderBy('ship_id')->chunk(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, &$destroyed, $tick) {
+            foreach ($fleetShips as $fs) {
+                $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
 
-            if (in_array($fs->fleet_id, $this->encounterFleetIds)) {
-                $rate *= $combatFactor;
+                if (in_array($fs->fleet_id, $this->encounterFleetIds)) {
+                    $rate *= $combatFactor;
+                }
+
+                $newStatus = (float) $fs->status_points - $rate;
+                $where = ['fleet_id' => $fs->fleet_id, 'ship_id' => $fs->ship_id, 'is_cargo' => $fs->is_cargo];
+
+                if ($newStatus <= 0) {
+                    // Ship fully decayed — remove from fleet
+                    $fleet = Fleet::find($fs->fleet_id);
+                    $this->eventService->createEvent([
+                        'user' => $fleet?->user_id ?? 0,
+                        'tick' => $tick,
+                        'event' => 'techtree.level_down',
+                        'area' => 'techtree',
+                        'parameters' => json_encode([
+                            'entity_type' => 'ship',
+                            'entity_name' => $shipNames[$fs->ship_id] ?? '',
+                            'tech_id' => $fs->ship_id,
+                        ]),
+                    ]);
+                    DB::table('fleet_ships')->where($where)->delete();
+                    $destroyed++;
+                } else {
+                    DB::table('fleet_ships')->where($where)->update(['status_points' => $newStatus]);
+                }
             }
-
-            $newStatus = (float) $fs->status_points - $rate;
-            $where     = ['fleet_id' => $fs->fleet_id, 'ship_id' => $fs->ship_id, 'is_cargo' => $fs->is_cargo];
-
-            if ($newStatus <= 0) {
-                // Ship fully decayed — remove from fleet
-                $fleet = Fleet::find($fs->fleet_id);
-                $this->eventService->createEvent([
-                    'user'       => $fleet?->user_id ?? 0,
-                    'tick'       => $tick,
-                    'event'      => 'techtree.level_down',
-                    'area'       => 'techtree',
-                    'parameters' => json_encode([
-                        'entity_type' => 'ship',
-                        'entity_name' => $shipNames[$fs->ship_id] ?? '',
-                        'tech_id'     => $fs->ship_id,
-                    ]),
-                ]);
-                DB::table('fleet_ships')->where($where)->delete();
-                $destroyed++;
-            } else {
-                DB::table('fleet_ships')->where($where)->update(['status_points' => $newStatus]);
-            }
-        }
         }); // end chunkById
 
         return $destroyed;
@@ -674,12 +686,12 @@ class GameTick extends Command
 
     private function processResearchDecay(int $tick): int
     {
-        $fallbackRate  = (float) config('game.decay.rate', 1);
+        $fallbackRate = (float) config('game.decay.rate', 1);
         $overcapFactor = (float) config('game.decay.overcap_factor', 2.0);
-        $decayRates    = DB::table('researches')->pluck('decay_rate', 'id');
-        $maxSPMap      = DB::table('researches')->pluck('max_status_points', 'id');
+        $decayRates = DB::table('researches')->pluck('decay_rate', 'id');
+        $maxSPMap = DB::table('researches')->pluck('max_status_points', 'id');
         $researchNames = DB::table('researches')->pluck('name', 'id');
-        $levelled      = 0;
+        $levelled = 0;
 
         // Build the over-cap set once before iterating — O(colonies), not O(researches).
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
@@ -692,31 +704,31 @@ class GameTick extends Command
             ->get();
 
         foreach ($researches as $cr) {
-            $rate        = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
+            $rate = (float) ($decayRates[$cr->research_id] ?? $fallbackRate);
             $overCapMult = in_array($cr->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
-            $newStatus   = (float) $cr->status_points - ($rate * $overCapMult);
-            $where     = ['colony_id' => $cr->colony_id, 'research_id' => $cr->research_id];
+            $newStatus = (float) $cr->status_points - ($rate * $overCapMult);
+            $where = ['colony_id' => $cr->colony_id, 'research_id' => $cr->research_id];
 
             if ($newStatus <= 0) {
-                $maxSP    = (int) ($maxSPMap[$cr->research_id] ?? 20);
+                $maxSP = (int) ($maxSPMap[$cr->research_id] ?? 20);
                 $newLevel = max(0, $cr->level - 1);
 
                 DB::table('colony_researches')->where($where)->update([
-                    'level'         => $newLevel,
+                    'level' => $newLevel,
                     'status_points' => $maxSP,
                 ]);
 
                 $colony = Colony::find($cr->colony_id);
                 $this->eventService->createEvent([
-                    'user'       => $colony?->user_id ?? 0,
-                    'tick'       => $tick,
-                    'event'      => 'techtree.level_down',
-                    'area'       => 'techtree',
+                    'user' => $colony?->user_id ?? 0,
+                    'tick' => $tick,
+                    'event' => 'techtree.level_down',
+                    'area' => 'techtree',
                     'parameters' => json_encode([
                         'entity_type' => 'research',
                         'entity_name' => $researchNames[$cr->research_id] ?? '',
-                        'new_level'   => $newLevel,
-                        'tech_id'     => $cr->research_id,
+                        'new_level' => $newLevel,
+                        'tech_id' => $cr->research_id,
                     ]),
                 ]);
                 $levelled++;
@@ -742,17 +754,17 @@ class GameTick extends Command
      */
     private function calculateSupply(): int
     {
-        $capCC         = (int) config('buildings.commandCenter.supply_cap', 10);
-        $capHousing    = (int) config('buildings.housingComplex.supply_cap', 8);
-        $capMax        = (int) config('game.supply.cap_max', 200);
-        $capPerLevel   = config('game.supply.knowledge_cap_per_level', []);
-        $knowledgeIds  = collect(config('knowledge'))->pluck('id')->toArray();
+        $capCC = (int) config('buildings.commandCenter.supply_cap', 10);
+        $capHousing = (int) config('buildings.housingComplex.supply_cap', 8);
+        $capMax = (int) config('game.supply.cap_max', 200);
+        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
+        $knowledgeIds = collect(config('knowledge'))->pluck('id')->toArray();
 
         $userIds = Colony::whereNotNull('user_id')->distinct()->pluck('user_id');
 
         foreach ($userIds as $userId) {
             $colony = Colony::where('user_id', $userId)->first();
-            if (!$colony) {
+            if (! $colony) {
                 continue;
             }
 
@@ -763,6 +775,7 @@ class GameTick extends Command
 
             if ($ccLevel <= 0) {
                 UserResource::where('user_id', $userId)->update(['supply' => 0]);
+
                 continue;
             }
 
@@ -772,7 +785,7 @@ class GameTick extends Command
                 ->sum('level');
 
             $knowledgeCap = 0;
-            if (!empty($knowledgeIds)) {
+            if (! empty($knowledgeIds)) {
                 $levels = DB::table('colony_researches')
                     ->where('colony_id', $colony->id)
                     ->whereIn('research_id', $knowledgeIds)
@@ -790,7 +803,7 @@ class GameTick extends Command
             UserResource::where('user_id', $userId)->update(['supply' => $cap]);
 
             // Trigger 2 — supply_cap_full: fires once when used supply >= cap.
-            if (!$this->onboardingTriggerService->hasFired($userId, 'supply_cap_full')) {
+            if (! $this->onboardingTriggerService->hasFired($userId, 'supply_cap_full')) {
                 $usedSupply = (int) DB::table('colony_buildings as cb')
                     ->join('buildings as b', 'b.id', '=', 'cb.building_id')
                     ->where('cb.colony_id', $colony->id)
@@ -813,6 +826,7 @@ class GameTick extends Command
         $productionConfig = config('game.production', []);
         if (empty($productionConfig)) {
             $this->warn('  No production rates configured in config/game.php → skipping.');
+
             return 0;
         }
 
@@ -827,7 +841,7 @@ class GameTick extends Command
         foreach ($colonies as $colony) {
             // Apply trust production multiplier based on the colony's CURRENT trust
             // (stored from the previous tick's trust calculation — no circular dependency).
-            $trust      = $this->trustService->getTrust($colony->id);
+            $trust = $this->trustService->getTrust($colony->id);
             $multiplier = $this->trustService->getProductionMultiplier($trust);
 
             foreach ($productionConfig as $buildingId => $outputs) {
@@ -836,7 +850,7 @@ class GameTick extends Command
                     ->where('building_id', $buildingId)
                     ->first();
 
-                if (!$building || $building->level <= 0) {
+                if (! $building || $building->level <= 0) {
                     continue;
                 }
 
@@ -868,7 +882,7 @@ class GameTick extends Command
             // non-negative to negative for a real (non-NPC) colony.
             $userId = $colony->user_id ?? null;
             $trustBefore = null;
-            if ($userId !== null && !$this->onboardingTriggerService->hasFired($userId, 'onboarding_trust')) {
+            if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_trust')) {
                 $trustBefore = (int) (DB::table('colony_resources')
                     ->where('colony_id', $colony->id)
                     ->where('resource_id', 12)
@@ -885,10 +899,10 @@ class GameTick extends Command
 
                 if ($trustAfter < 0) {
                     $this->eventService->createEvent([
-                        'user'       => $userId,
-                        'tick'       => $tick,
-                        'event'      => 'onboarding_trust',
-                        'area'       => 'colony',
+                        'user' => $userId,
+                        'tick' => $tick,
+                        'event' => 'onboarding_trust',
+                        'area' => 'colony',
                         'parameters' => json_encode(['colony_id' => $colony->id]),
                     ]);
                     $this->onboardingTriggerService->markFired($userId, 'onboarding_trust');
@@ -916,7 +930,7 @@ class GameTick extends Command
      */
     private function generatePassiveCredits(int $tick): int
     {
-        $nexusSubsidy  = (int) config('game.credits.nexus_subsidy', 30);
+        $nexusSubsidy = (int) config('game.credits.nexus_subsidy', 30);
         $taxPerHousing = (int) config('game.credits.tax_per_housing', 20);
 
         $colonies = Colony::whereNotNull('user_id')->get();
@@ -972,7 +986,7 @@ class GameTick extends Command
         $advisors = Advisor::whereNotNull('colony_id')->with('colony')->get();
 
         foreach ($advisors as $advisor) {
-            if (!$advisor->colony || $advisor->colony->user_id === null) {
+            if (! $advisor->colony || $advisor->colony->user_id === null) {
                 continue; // NPC colony or orphaned advisor — skip
             }
 
@@ -1019,16 +1033,16 @@ class GameTick extends Command
     private function processMerchantSpawn(int $tick): int
     {
         $colonies = Colony::whereNotNull('user_id')->get();
-        $spawned  = 0;
+        $spawned = 0;
 
         foreach ($colonies as $colony) {
             if ($this->merchantService->shouldSpawn($colony->id, $tick)) {
                 $this->merchantService->spawnVisit($colony->id, $tick);
                 $this->eventService->createEvent([
-                    'user'       => $colony->user_id,
-                    'tick'       => $tick,
-                    'event'      => 'merchant.visit',
-                    'area'       => 'colony',
+                    'user' => $colony->user_id,
+                    'tick' => $tick,
+                    'event' => 'merchant.visit',
+                    'area' => 'colony',
                     'parameters' => json_encode(['colony_id' => $colony->id]),
                 ]);
                 $spawned++;
@@ -1045,12 +1059,12 @@ class GameTick extends Command
             ->whereNotNull('colony_id')
             ->increment('active_ticks');
 
-        $thresholds    = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
         $promotionCosts = config('game.advisor.promotion_costs', [2 => 150, 3 => 400]);
 
         foreach ($thresholds as $fromRank => $ticks) {
             $toRank = $fromRank + 1;
-            $cost   = (int) ($promotionCosts[$toRank] ?? 0);
+            $cost = (int) ($promotionCosts[$toRank] ?? 0);
 
             $eligible = DB::table('advisors as a')
                 ->join('glx_colonies as c', 'c.id', '=', 'a.colony_id')
@@ -1069,7 +1083,7 @@ class GameTick extends Command
                         ->first();
 
                     // Guard: already promoted (or demoted) since the eligible query ran.
-                    if (!$current || (int) $current->rank !== $fromRank) {
+                    if (! $current || (int) $current->rank !== $fromRank) {
                         return;
                     }
 

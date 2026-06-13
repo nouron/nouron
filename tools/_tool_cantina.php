@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
     if (str_contains($contentType, 'application/json')) {
         header('Content-Type: application/json');
-        $input        = json_decode(file_get_contents('php://input'), true);
+        $input = json_decode(file_get_contents('php://input'), true);
         $allowedSlots = ['spot_0', 'spot_1', 'spot_2', 'spot_3', 'spot_4', 'spot_5'];
         $allowedDevices = ['desktop', 'tablet', 'mobile'];
 
@@ -16,14 +16,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (isset($input[$slot][$device]['left'], $input[$slot][$device]['top'])) {
                     $hotspots[$slot][$device] = [
                         'left' => round(max(0, min(100, (float) $input[$slot][$device]['left'])), 2),
-                        'top'  => round(max(0, min(100, (float) $input[$slot][$device]['top'])),  2),
+                        'top' => round(max(0, min(100, (float) $input[$slot][$device]['top'])), 2),
                     ];
                 }
             }
             if (isset($input[$slot]['characters']) && is_array($input[$slot]['characters'])) {
                 $hotspots[$slot]['characters'] = array_values(array_filter(
                     array_map('strval', $input[$slot]['characters']),
-                    fn($s) => preg_match('/^[a-z0-9_]+$/', $s)
+                    fn ($s) => preg_match('/^[a-z0-9_]+$/', $s)
                 ));
             }
         }

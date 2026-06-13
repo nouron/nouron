@@ -4,7 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function () {
-
     // Read CSRF token once from the meta tag injected by the layout.
     const csrfToken = document.querySelector('meta[name="csrf-token"]')
         ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
@@ -20,7 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json',
+                Accept: 'application/json',
                 'Content-Type': 'application/x-www-form-urlencoded',
             },
             body: body || '',
@@ -30,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // -------------------------------------------------------------------------
     // Diplomat counter elements
     // -------------------------------------------------------------------------
-    const maxDiplomatsEl  = document.getElementById('maxDiplomats');
+    const maxDiplomatsEl = document.getElementById('maxDiplomats');
     const usedDiplomatsEl = document.getElementById('usedDiplomats');
 
     const max = maxDiplomatsEl ? parseInt(maxDiplomatsEl.textContent, 10) : 0;
@@ -70,11 +69,13 @@ document.addEventListener('DOMContentLoaded', function () {
             setDiplomatLinksVisible(false);
 
             const parent = btn.parentElement;
-            const icons  = parent.querySelectorAll('img');
-            const url    = btn.getAttribute('href');
+            const icons = parent.querySelectorAll('img');
+            const url = btn.getAttribute('href');
 
             fetch(url, postOptions(null))
-                .then(function (res) { return res.json(); })
+                .then(function (res) {
+                    return res.json();
+                })
                 .then(function () {
                     // Clone the last icon and prepend it to the parent container.
                     if (icons.length > 0) {
@@ -106,12 +107,14 @@ document.addEventListener('DOMContentLoaded', function () {
             setDiplomatLinksVisible(false);
 
             const removeIcon = btn;
-            const parent     = btn.parentElement;
-            const icons      = parent.querySelectorAll('img');
-            const url        = btn.getAttribute('href');
+            const parent = btn.parentElement;
+            const icons = parent.querySelectorAll('img');
+            const url = btn.getAttribute('href');
 
             fetch(url, postOptions(null))
-                .then(function (res) { return res.json(); })
+                .then(function (res) {
+                    return res.json();
+                })
                 .then(function () {
                     if (icons.length > 0) {
                         icons[icons.length - 1].remove();
@@ -166,7 +169,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const url = btn.getAttribute('href');
 
         fetch(url, postOptions(null))
-            .then(function (res) { return res.json(); })
+            .then(function (res) {
+                return res.json();
+            })
             .then(function () {
                 // Hide the contact row (btn → td → tr).
                 const row = btn.closest('tr');
@@ -213,16 +218,18 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         };
 
-        var data1 = [{
-            label: '',
-            data: [
-                [0, values1[0].innerHTML],
-                [1, values1[1].innerHTML],
-                [2, values1[2].innerHTML],
-                [3, values1[3].innerHTML],
-            ],
-            spider: { show: true, lineWidth: 0 },
-        }];
+        var data1 = [
+            {
+                label: '',
+                data: [
+                    [0, values1[0].innerHTML],
+                    [1, values1[1].innerHTML],
+                    [2, values1[2].innerHTML],
+                    [3, values1[3].innerHTML],
+                ],
+                spider: { show: true, lineWidth: 0 },
+            },
+        ];
 
         // $.plot() is the Flot charting API — requires flot + flot-spider plugin.
         if (typeof $.plot === 'function') {
@@ -262,17 +269,19 @@ document.addEventListener('DOMContentLoaded', function () {
             },
         };
 
-        var data2 = [{
-            label: '',
-            data: [
-                [0, values2[0].innerHTML],
-                [1, values2[1].innerHTML],
-                [2, values2[2].innerHTML],
-                [3, values2[3].innerHTML],
-                [4, values2[4].innerHTML],
-            ],
-            spider: { show: true, lineWidth: 0 },
-        }];
+        var data2 = [
+            {
+                label: '',
+                data: [
+                    [0, values2[0].innerHTML],
+                    [1, values2[1].innerHTML],
+                    [2, values2[2].innerHTML],
+                    [3, values2[3].innerHTML],
+                    [4, values2[4].innerHTML],
+                ],
+                spider: { show: true, lineWidth: 0 },
+            },
+        ];
 
         // $.plot() is the Flot charting API — requires flot + flot-spider plugin.
         if (typeof $.plot === 'function') {
@@ -283,5 +292,4 @@ document.addEventListener('DOMContentLoaded', function () {
     if (document.getElementById('spider-chart-1')) {
         showSpiderChart();
     }
-
 });

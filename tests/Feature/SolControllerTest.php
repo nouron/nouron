@@ -41,6 +41,8 @@ namespace Tests\Feature;
 use App\Models\Run;
 use App\Models\User;
 use Database\Seeders\TestSeeder;
+use Illuminate\Console\Command;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -52,9 +54,10 @@ class SolControllerTest extends TestCase
     // ── Fixture constants ─────────────────────────────────────────────────────
 
     /** Bart — user_id=3, owns colony_id=1 (Springfield). Has a seeded active run. */
-    private const BART_ID     = 3;
+    private const BART_ID = 3;
+
     /** Springfield — colony_id=1, tied to Bart in the seed. */
-    private const COLONY_ID   = 1;
+    private const COLONY_ID = 1;
 
     // ── Setup ─────────────────────────────────────────────────────────────────
 
@@ -94,9 +97,9 @@ class SolControllerTest extends TestCase
     private function insertRun(int $userId, int $colonyId, string $status = 'active', int $currentTick = 5): Run
     {
         return Run::create([
-            'user_id'      => $userId,
-            'colony_id'    => $colonyId,
-            'status'       => $status,
+            'user_id' => $userId,
+            'colony_id' => $colonyId,
+            'status' => $status,
             'current_tick' => $currentTick,
         ]);
     }
@@ -112,10 +115,12 @@ class SolControllerTest extends TestCase
      */
     private function fakeGameTick(): void
     {
-        $this->app->make(\Illuminate\Contracts\Console\Kernel::class)
+        $this->app->make(Kernel::class)
             ->registerCommand(
-                new class extends \Illuminate\Console\Command {
-                    protected $signature   = 'game:tick {--run=} {--tick=}';
+                new class extends Command
+                {
+                    protected $signature = 'game:tick {--run=} {--tick=}';
+
                     protected $description = 'No-op stub for SolControllerTest';
 
                     public function handle(): int
@@ -206,9 +211,9 @@ class SolControllerTest extends TestCase
         $response->assertSessionHas('sol_advanced', 6);
 
         $this->assertDatabaseHas('runs', [
-            'id'           => $run->id,
+            'id' => $run->id,
             'current_tick' => 6,
-            'status'       => 'active',
+            'status' => 'active',
         ]);
     }
 
@@ -231,7 +236,7 @@ class SolControllerTest extends TestCase
         $response->assertSessionHas('sol_advanced', 1);
 
         $this->assertDatabaseHas('runs', [
-            'id'           => $run->id,
+            'id' => $run->id,
             'current_tick' => 1,
         ]);
     }
@@ -253,7 +258,7 @@ class SolControllerTest extends TestCase
         $this->actingAs($this->bart())->from('/colony')->post(route('sol.next'));
 
         $this->assertDatabaseHas('runs', [
-            'id'           => $run->id,
+            'id' => $run->id,
             'current_tick' => 12,
         ]);
     }
@@ -268,7 +273,7 @@ class SolControllerTest extends TestCase
 
         $this->deleteBartRuns();
         $completedRun = $this->insertRun(self::BART_ID, self::COLONY_ID, 'completed', 50);
-        $activeRun    = $this->insertRun(self::BART_ID, self::COLONY_ID, 'active',    5);
+        $activeRun = $this->insertRun(self::BART_ID, self::COLONY_ID, 'active', 5);
 
         $response = $this->actingAs($this->bart())
             ->from('/colony')
@@ -304,7 +309,7 @@ class SolControllerTest extends TestCase
 
         // Marge's run must be completely untouched.
         $this->assertDatabaseHas('runs', [
-            'id'           => $margeRun->id,
+            'id' => $margeRun->id,
             'current_tick' => 3,
         ]);
     }

@@ -23,25 +23,25 @@ class RunProgressService
     // ── Task metadata ────────────────────────────────────────────────────────
 
     private const TASK_CATEGORIES = [
-        'economy'     => ['task_credit_reserve', 'task_trade_volume'],
-        'research'    => ['task_research_lead', 'task_engineering_output'],
+        'economy' => ['task_credit_reserve', 'task_trade_volume'],
+        'research' => ['task_research_lead', 'task_engineering_output'],
         'exploration' => ['task_expedition_coverage'],
-        'diplomacy'   => ['task_colony_prosperity'],
-        'survival'    => ['task_self_sufficiency'],
-        'combat'      => ['task_combat_record'],
-        'personal'    => ['task_senior_advisors'],
+        'diplomacy' => ['task_colony_prosperity'],
+        'survival' => ['task_self_sufficiency'],
+        'combat' => ['task_combat_record'],
+        'personal' => ['task_senior_advisors'],
     ];
 
     private const TASK_TARGETS = [
-        'task_senior_advisors'        => 1,
-        'task_credit_reserve'      => 10,
-        'task_colony_prosperity'       => 10,
+        'task_senior_advisors' => 1,
+        'task_credit_reserve' => 10,
+        'task_colony_prosperity' => 10,
         'task_research_lead' => 3,
-        'task_self_sufficiency'    => 15,
-        'task_expedition_coverage'   => 19,
-        'task_engineering_output'  => 200,
-        'task_trade_volume'      => 5,
-        'task_combat_record'    => 3,
+        'task_self_sufficiency' => 15,
+        'task_expedition_coverage' => 19,
+        'task_engineering_output' => 200,
+        'task_trade_volume' => 5,
+        'task_combat_record' => 3,
     ];
 
     // ── Phase-1 completion check ─────────────────────────────────────────────
@@ -65,7 +65,7 @@ class RunProgressService
             ->where('level', '>=', 3)
             ->exists();
 
-        if (!$ccReady) {
+        if (! $ccReady) {
             return false;
         }
 
@@ -84,7 +84,7 @@ class RunProgressService
         $activeAdvisors = Advisor::where('colony_id', $run->colony_id)
             ->where(function ($q) use ($run): void {
                 $q->whereNull('unavailable_until_tick')
-                  ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
             })
             ->count();
 
@@ -102,7 +102,7 @@ class RunProgressService
     public function transitionToPhase2(Run $run): void
     {
         DB::transaction(function () use ($run): void {
-            $run->phase             = 2;
+            $run->phase = 2;
             $run->phase2_start_tick = $run->current_tick;
             $run->save();
 
@@ -129,13 +129,13 @@ class RunProgressService
      */
     public function drawObjectives(Run $run): void
     {
-        $pool    = config('game.run.task_pool', array_keys(self::TASK_TARGETS));
+        $pool = config('game.run.task_pool', array_keys(self::TASK_TARGETS));
         $economy = self::TASK_CATEGORIES['economy'];
 
         $shuffled = collect($pool)->shuffle()->values();
 
-        $selected       = [];
-        $economyCount   = 0;
+        $selected = [];
+        $economyCount = 0;
 
         foreach ($shuffled as $taskKey) {
             if (count($selected) >= 3) {
@@ -162,7 +162,7 @@ class RunProgressService
                 if (count($selected) >= 3) {
                     break;
                 }
-                if (!in_array($taskKey, $selected, true) && !in_array($taskKey, $economy, true)) {
+                if (! in_array($taskKey, $selected, true) && ! in_array($taskKey, $economy, true)) {
                     $selected[] = $taskKey;
                 }
             }
@@ -171,12 +171,12 @@ class RunProgressService
         $rows = [];
         foreach ($selected as $taskKey) {
             $rows[] = [
-                'run_id'        => $run->id,
-                'task_key'      => $taskKey,
-                'target_value'  => self::TASK_TARGETS[$taskKey] ?? 1,
+                'run_id' => $run->id,
+                'task_key' => $taskKey,
+                'target_value' => self::TASK_TARGETS[$taskKey] ?? 1,
                 'current_value' => 0,
-                'streak_value'  => 0,
-                'completed_at'  => null,
+                'streak_value' => 0,
+                'completed_at' => null,
             ];
         }
 
@@ -196,16 +196,16 @@ class RunProgressService
 
         foreach ($objectives as $objective) {
             match ($objective->task_key) {
-                'task_senior_advisors'        => $this->updateSeniorAdvisors($objective, $run),
-                'task_credit_reserve'      => $this->updateCreditReserve($objective, $run),
-                'task_colony_prosperity'       => $this->updateColonyProsperity($objective, $run),
+                'task_senior_advisors' => $this->updateSeniorAdvisors($objective, $run),
+                'task_credit_reserve' => $this->updateCreditReserve($objective, $run),
+                'task_colony_prosperity' => $this->updateColonyProsperity($objective, $run),
                 'task_research_lead' => $this->updateResearchLead($objective, $run),
-                'task_self_sufficiency'    => $this->updateSelfSufficiency($objective, $run),
-                'task_expedition_coverage'   => $this->updateExpeditionCoverage($objective, $run),
-                'task_engineering_output'  => $this->updateEngineeringOutput($objective, $run),
-                'task_trade_volume'      => $this->updateTradeVolume($objective, $run),
-                'task_combat_record'    => $this->updateCombatRecord($objective, $run),
-                default                    => null,
+                'task_self_sufficiency' => $this->updateSelfSufficiency($objective, $run),
+                'task_expedition_coverage' => $this->updateExpeditionCoverage($objective, $run),
+                'task_engineering_output' => $this->updateEngineeringOutput($objective, $run),
+                'task_trade_volume' => $this->updateTradeVolume($objective, $run),
+                'task_combat_record' => $this->updateCombatRecord($objective, $run),
+                default => null,
             };
         }
     }
@@ -437,6 +437,7 @@ class RunProgressService
         if ($sol >= 55) {
             if (($run->nexus_debt ?? 0) > 12000) {
                 $this->endRun($run, 'failed', 'nexus_debt');
+
                 return;
             }
         }
@@ -464,11 +465,11 @@ class RunProgressService
         }
 
         $objectives = $run->objectives()->get();
-        $aboveHalf  = $objectives->filter(fn($o) => $o->progressPct() > 50)->count();
+        $aboveHalf = $objectives->filter(fn ($o) => $o->progressPct() > 50)->count();
 
         if ($aboveHalf < 1) {
             $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-                'run_id'    => $run->id,
+                'run_id' => $run->id,
                 'colony_id' => $run->colony_id,
             ]);
         }
@@ -486,7 +487,7 @@ class RunProgressService
 
         if ($completed === 0) {
             $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-                'run_id'    => $run->id,
+                'run_id' => $run->id,
                 'colony_id' => $run->colony_id,
             ]);
         }
@@ -508,7 +509,7 @@ class RunProgressService
 
         // Fire sanction event
         $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-            'run_id'    => $run->id,
+            'run_id' => $run->id,
             'colony_id' => $run->colony_id,
         ]);
 
@@ -516,7 +517,7 @@ class RunProgressService
         $advisor = Advisor::where('colony_id', $run->colony_id)
             ->where(function ($q) use ($run): void {
                 $q->whereNull('unavailable_until_tick')
-                  ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
             })
             ->inRandomOrder()
             ->first();
@@ -540,7 +541,7 @@ class RunProgressService
         }
 
         $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
-            'run_id'    => $run->id,
+            'run_id' => $run->id,
             'colony_id' => $run->colony_id,
         ]);
     }
@@ -601,22 +602,22 @@ class RunProgressService
      *
      * Persists status, fail_reason and ended_at atomically, then fires an INNN event.
      *
-     * @param string      $status     'completed' or 'failed'
-     * @param string|null $failReason e.g. 'trust_collapse', 'time_limit', 'nexus_debt'
+     * @param  string  $status  'completed' or 'failed'
+     * @param  string|null  $failReason  e.g. 'trust_collapse', 'time_limit', 'nexus_debt'
      */
     public function endRun(Run $run, string $status, ?string $failReason = null): void
     {
         DB::transaction(function () use ($run, $status, $failReason): void {
-            $run->status      = $status;
+            $run->status = $status;
             $run->fail_reason = $failReason;
-            $run->ended_at    = now();
+            $run->ended_at = now();
             $run->save();
 
             $eventKey = match (true) {
-                $status === 'completed'          => 'run.run_completed',
+                $status === 'completed' => 'run.run_completed',
                 $failReason === 'trust_collapse' => 'run.run_failed_trust',
-                $failReason === 'nexus_debt'     => 'run.run_failed_nexus_debt',
-                default                          => 'run.run_failed_time',
+                $failReason === 'nexus_debt' => 'run.run_failed_nexus_debt',
+                default => 'run.run_failed_time',
             };
 
             $this->createEvent(
@@ -645,8 +646,8 @@ class RunProgressService
             return 0;
         }
 
-        $completed     = $run->objectives()->whereNotNull('completed_at')->count();
-        $tickLimit     = $run->getTickLimit();
+        $completed = $run->objectives()->whereNotNull('completed_at')->count();
+        $tickLimit = $run->getTickLimit();
         $completedTick = $run->current_tick;
 
         $credits = (int) (DB::table('user_resources')
@@ -667,11 +668,11 @@ class RunProgressService
     // ── Internal helpers ─────────────────────────────────────────────────────
 
     private function createEvent(
-        int    $userId,
-        int    $tick,
+        int $userId,
+        int $tick,
         string $event,
         string $area,
-        array  $parameters = []
+        array $parameters = []
     ): void {
         $isNexus = $area === 'nexus' || in_array($event, [
             'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
@@ -681,13 +682,13 @@ class RunProgressService
         ], true);
 
         DB::table('colony_log')->insert([
-            'user'       => $userId,
-            'tick'       => $tick,
-            'event'      => $event,
-            'area'       => $area,
+            'user' => $userId,
+            'tick' => $tick,
+            'event' => $event,
+            'area' => $area,
             'parameters' => json_encode($parameters),
             'created_at' => now(),
-            'is_read'    => $isNexus ? 0 : 1,
+            'is_read' => $isNexus ? 0 : 1,
         ]);
     }
 }

@@ -24,6 +24,7 @@ class ResourcesServiceTest extends TestCase
     use RefreshDatabase;
 
     private ResourcesService $service;
+
     private int $colonyId = 1;
 
     protected function setUp(): void
@@ -123,14 +124,14 @@ class ResourcesServiceTest extends TestCase
 
         $before = $this->service->getUserResources(['user_id' => 3])->first();
         $creditsBefore = $before->credits;
-        $supplyBefore  = $before->supply;
+        $supplyBefore = $before->supply;
 
         $result = $this->service->payCosts($costs, $this->colonyId);
         $this->assertTrue($result);
 
         $after = $this->service->getUserResources(['user_id' => 3])->first();
         $this->assertEquals($creditsBefore - 100, $after->credits);
-        $this->assertEquals($supplyBefore  - 10,  $after->supply);
+        $this->assertEquals($supplyBefore - 10, $after->supply);
     }
 
     public function test_increase_amount_user_resource(): void

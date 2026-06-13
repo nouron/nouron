@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Colony;
-use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -111,10 +110,19 @@ class TrustService
      */
     public function getBand(int $trust): string
     {
-        if ($trust >= 61)  return __('trust.band_euphorisch');
-        if ($trust >= 21)  return __('trust.band_zufrieden');
-        if ($trust >= -20) return __('trust.band_stabil');
-        if ($trust >= -61) return __('trust.band_unruhig');
+        if ($trust >= 61) {
+            return __('trust.band_euphorisch');
+        }
+        if ($trust >= 21) {
+            return __('trust.band_zufrieden');
+        }
+        if ($trust >= -20) {
+            return __('trust.band_stabil');
+        }
+        if ($trust >= -61) {
+            return __('trust.band_unruhig');
+        }
+
         return __('trust.band_aufruhr');
     }
 
@@ -127,22 +135,21 @@ class TrustService
      * For events fired outside the tick cycle (e.g. from controllers), use the
      * next tick so they are picked up at the next recalculation.
      *
-     * @param  int    $colonyId
-     * @param  string $eventType  Key from config('game.trust.events')
-     * @param  int|null $tick     Defaults to current tick + 1 (for out-of-tick callers).
-     *                            Pass current tick when called from within GameTick.
+     * @param  string  $eventType  Key from config('game.trust.events')
+     * @param  int|null  $tick  Defaults to current tick + 1 (for out-of-tick callers).
+     *                          Pass current tick when called from within GameTick.
      */
     public function fireEvent(int $colonyId, string $eventType, ?int $tick = null): void
     {
-        if (!array_key_exists($eventType, config('game.trust.events', []))) {
+        if (! array_key_exists($eventType, config('game.trust.events', []))) {
             return; // unknown event type — silently ignore
         }
 
         $tick ??= $this->tickService->getTickCount() + 1;
 
         DB::table('trust_events')->insert([
-            'colony_id'  => $colonyId,
-            'tick'       => $tick,
+            'colony_id' => $colonyId,
+            'tick' => $tick,
             'event_type' => $eventType,
         ]);
     }
@@ -167,6 +174,7 @@ class TrustService
         foreach ($buildings as $b) {
             $sum += ($cfg[$b->building_id] ?? 0) * $b->level;
         }
+
         return $sum;
     }
 
@@ -187,6 +195,7 @@ class TrustService
         foreach ($researches as $r) {
             $sum += ($cfg[$r->research_id] ?? 0) * $r->level;
         }
+
         return $sum;
     }
 
@@ -209,6 +218,7 @@ class TrustService
         }
 
         $cap = (int) config('game.trust.ships_cap', 30);
+
         return max(-$cap, min($cap, $sum));
     }
 
@@ -232,7 +242,7 @@ class TrustService
         $byType = [];
         foreach ($events as $type) {
             $delta = $cfg[$type] ?? 0;
-            if (!isset($byType[$type]) || abs($delta) > abs($byType[$type])) {
+            if (! isset($byType[$type]) || abs($delta) > abs($byType[$type])) {
                 $byType[$type] = $delta;
             }
         }
@@ -247,6 +257,7 @@ class TrustService
                 return (float) $band['factor'];
             }
         }
+
         return 1.0;
     }
 }

@@ -20,7 +20,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SyncConfig extends Command
 {
-    protected $signature   = 'game:sync-config {--dry-run : Preview changes without writing to DB}';
+    protected $signature = 'game:sync-config {--dry-run : Preview changes without writing to DB}';
+
     protected $description = 'Sync config/ships.php, config/buildings.php and config/knowledge.php values to the database';
 
     public function handle(): int
@@ -31,7 +32,7 @@ class SyncConfig extends Command
             $this->warn('DRY RUN — no changes will be written.');
         }
 
-        $shipChanges     = $this->syncShips($dry);
+        $shipChanges = $this->syncShips($dry);
         $buildingChanges = $this->syncBuildings($dry);
 
         $total = $shipChanges + $buildingChanges;
@@ -55,24 +56,26 @@ class SyncConfig extends Command
 
         foreach ($configs as $key => $cfg) {
             $id = (int) ($cfg['id'] ?? 0);
-            if (!$id) {
+            if (! $id) {
                 $this->warn("  ships/{$key}: missing 'id' — skipped.");
+
                 continue;
             }
 
             $row = DB::table('ships')->where('id', $id)->first();
-            if (!$row) {
+            if (! $row) {
                 $this->warn("  ships/{$key}: id={$id} not found in DB — skipped.");
+
                 continue;
             }
 
             $updates = [];
 
             foreach ([
-                'moving_speed'      => (int)   ($cfg['moving_speed']      ?? $row->moving_speed),
-                'decay_rate'        => (float)  ($cfg['decay_rate']        ?? $row->decay_rate),
-                'supply_cost'       => (int)    ($cfg['supply_cost']       ?? $row->supply_cost),
-                'max_status_points' => (int)    ($cfg['max_status_points'] ?? $row->max_status_points),
+                'moving_speed' => (int) ($cfg['moving_speed'] ?? $row->moving_speed),
+                'decay_rate' => (float) ($cfg['decay_rate'] ?? $row->decay_rate),
+                'supply_cost' => (int) ($cfg['supply_cost'] ?? $row->supply_cost),
+                'max_status_points' => (int) ($cfg['max_status_points'] ?? $row->max_status_points),
             ] as $col => $newVal) {
                 if ((string) $row->$col !== (string) $newVal) {
                     $updates[$col] = $newVal;
@@ -83,9 +86,9 @@ class SyncConfig extends Command
                 continue;
             }
 
-            $this->line("  [ship] {$key} (id={$id}): " . $this->formatUpdates($row, $updates));
+            $this->line("  [ship] {$key} (id={$id}): ".$this->formatUpdates($row, $updates));
 
-            if (!$dry) {
+            if (! $dry) {
                 DB::table('ships')->where('id', $id)->update($updates);
             }
 
@@ -104,29 +107,31 @@ class SyncConfig extends Command
 
         foreach ($configs as $key => $cfg) {
             $id = (int) ($cfg['id'] ?? 0);
-            if (!$id) {
+            if (! $id) {
                 $this->warn("  buildings/{$key}: missing 'id' — skipped.");
+
                 continue;
             }
 
             $row = DB::table('buildings')->where('id', $id)->first();
-            if (!$row) {
+            if (! $row) {
                 $this->warn("  buildings/{$key}: id={$id} not found in DB — skipped.");
+
                 continue;
             }
 
             $updates = [];
 
             foreach ([
-                'decay_rate'        => (float) ($cfg['decay_rate']        ?? $row->decay_rate),
-                'supply_cost'       => (int)   ($cfg['supply_cost']       ?? $row->supply_cost),
-                'max_status_points' => (int)   ($cfg['max_status_points'] ?? $row->max_status_points),
-                'max_level'         => isset($cfg['max_level'])
+                'decay_rate' => (float) ($cfg['decay_rate'] ?? $row->decay_rate),
+                'supply_cost' => (int) ($cfg['supply_cost'] ?? $row->supply_cost),
+                'max_status_points' => (int) ($cfg['max_status_points'] ?? $row->max_status_points),
+                'max_level' => isset($cfg['max_level'])
                                            ? ($cfg['max_level'] === null ? null : (int) $cfg['max_level'])
                                            : $row->max_level,
             ] as $col => $newVal) {
                 // Loose comparison to handle null vs. empty string
-                if ($row->$col != $newVal || (is_null($newVal) !== is_null($row->$col))) {
+                if ($newVal != $row->$col || (is_null($newVal) !== is_null($row->$col))) {
                     $updates[$col] = $newVal;
                 }
             }
@@ -135,9 +140,9 @@ class SyncConfig extends Command
                 continue;
             }
 
-            $this->line("  [building] {$key} (id={$id}): " . $this->formatUpdates($row, $updates));
+            $this->line("  [building] {$key} (id={$id}): ".$this->formatUpdates($row, $updates));
 
-            if (!$dry) {
+            if (! $dry) {
                 DB::table('buildings')->where('id', $id)->update($updates);
             }
 
@@ -152,7 +157,7 @@ class SyncConfig extends Command
     private function formatUpdates(object $row, array $updates): string
     {
         return implode(', ', array_map(
-            fn($col, $val) => "{$col}: {$row->$col} → " . ($val === null ? 'null' : $val),
+            fn ($col, $val) => "{$col}: {$row->$col} → ".($val === null ? 'null' : $val),
             array_keys($updates),
             $updates
         ));

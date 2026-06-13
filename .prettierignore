@@ -1,0 +1,16 @@
+# Dependencies & build output
+node_modules/
+vendor/
+public/vendor/
+
+# Minified / generated assets
+*.min.js
+*.min.css
+
+# Data & storage
+storage/
+bootstrap/cache/
+data/
+
+# Non-source
+*.md

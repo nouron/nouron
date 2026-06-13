@@ -4,13 +4,13 @@ namespace Tests\Feature\Fleet;
 
 use App\Models\Fleet;
 use App\Models\FleetOrder;
-use App\Models\FleetPersonell;
 use App\Models\FleetResearch;
 use App\Models\FleetResource;
 use App\Models\FleetShip;
 use App\Services\FleetService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class FleetServiceTest extends TestCase
@@ -20,14 +20,21 @@ class FleetServiceTest extends TestCase
     protected FleetService $service;
 
     // Test constants matching the Simpsons fixture in TestSeeder
-    protected int $fleetId    = 10;
-    protected int $shipId     = 29;
+    protected int $fleetId = 10;
+
+    protected int $shipId = 29;
+
     protected int $researchId = 96;
+
     protected int $resourceId = 3;
-    protected int $objectId   = 1;
-    protected int $systemId   = 1;
-    protected int $colonyId   = 1;
-    protected int $userId     = 3;
+
+    protected int $objectId = 1;
+
+    protected int $systemId = 1;
+
+    protected int $colonyId = 1;
+
+    protected int $userId = 3;
 
     protected function setUp(): void
     {
@@ -36,7 +43,7 @@ class FleetServiceTest extends TestCase
         $this->service = $this->app->make(FleetService::class);
     }
 
-    public function testGetFleet(): void
+    public function test_get_fleet(): void
     {
         $result = $this->service->getFleet(8);
         $this->assertInstanceOf(Fleet::class, $result);
@@ -45,7 +52,7 @@ class FleetServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testSaveFleet(): void
+    public function test_save_fleet(): void
     {
         $fleet = $this->service->getFleet(8);
         $this->assertInstanceOf(Fleet::class, $fleet);
@@ -57,14 +64,14 @@ class FleetServiceTest extends TestCase
         $this->assertEquals('UpdatedFleetName', $reloaded->fleet);
     }
 
-    public function testSaveFleetOrder(): void
+    public function test_save_fleet_order(): void
     {
         $before = $this->service->getOrders(['fleet_id' => $this->fleetId])->count();
 
-        $order              = new FleetOrder();
-        $order->tick        = 99999;
-        $order->fleet_id    = $this->fleetId;
-        $order->order       = 'hold';
+        $order = new FleetOrder;
+        $order->tick = 99999;
+        $order->fleet_id = $this->fleetId;
+        $order->order = 'hold';
         $order->coordinates = '[6828,3016,0]';
         $this->service->saveFleetOrder($order);
 
@@ -72,7 +79,7 @@ class FleetServiceTest extends TestCase
         $this->assertEquals($before + 1, $after);
     }
 
-    public function testGetFleetOrdersByFleetIds(): void
+    public function test_get_fleet_orders_by_fleet_ids(): void
     {
         $result = $this->service->getFleetOrdersByFleetIds([$this->fleetId]);
         $this->assertInstanceOf(FleetOrder::class, $result->first());
@@ -83,47 +90,47 @@ class FleetServiceTest extends TestCase
         $this->assertEquals(21, $result->count());
     }
 
-    public function testAddOrder(): void
+    public function test_add_order(): void
     {
         $this->markTestSkipped(
             'addOrder() delegates to GalaxyService::getPath() — requires complex service wiring not tested here.'
         );
     }
 
-    public function testTransferShip(): void
+    public function test_transfer_ship(): void
     {
         // colony 1, ship_id 37: check initial level on colony and count in fleet
-        $colonyBefore = \Illuminate\Support\Facades\DB::table('colony_ships')
+        $colonyBefore = DB::table('colony_ships')
             ->where(['colony_id' => $this->colonyId, 'ship_id' => 37])->first();
-        $fleetBefore = \Illuminate\Support\Facades\DB::table('fleet_ships')
+        $fleetBefore = DB::table('fleet_ships')
             ->where(['fleet_id' => $this->fleetId, 'ship_id' => 37, 'is_cargo' => 0])->first();
 
         $colonyCountBefore = $colonyBefore ? $colonyBefore->level : 0;
-        $fleetCountBefore  = $fleetBefore  ? $fleetBefore->count  : 0;
+        $fleetCountBefore = $fleetBefore ? $fleetBefore->count : 0;
 
         // Transfer 6 — should succeed fully
         $transferred = $this->service->transferShip($this->colonyId, $this->fleetId, 37, 6);
         $this->assertEquals(6, $transferred);
 
-        $colonyAfter = \Illuminate\Support\Facades\DB::table('colony_ships')
+        $colonyAfter = DB::table('colony_ships')
             ->where(['colony_id' => $this->colonyId, 'ship_id' => 37])->first();
-        $fleetAfter = \Illuminate\Support\Facades\DB::table('fleet_ships')
+        $fleetAfter = DB::table('fleet_ships')
             ->where(['fleet_id' => $this->fleetId, 'ship_id' => 37, 'is_cargo' => 0])->first();
 
         $this->assertEquals($colonyCountBefore - 6, $colonyAfter->level);
         $this->assertEquals($fleetCountBefore + 6, $fleetAfter->count);
 
         // Transfer 5 more — only (colonyCountBefore - 6) remain on colony
-        $remaining   = $colonyCountBefore - 6;
-        $expect      = min(5, $remaining);
+        $remaining = $colonyCountBefore - 6;
+        $expect = min(5, $remaining);
         $transferred = $this->service->transferShip($this->colonyId, $this->fleetId, 37, 5);
         $this->assertEquals($expect, $transferred);
     }
 
-    public function testTransferResearch(): void
+    public function test_transfer_research(): void
     {
         // Set colony research level=16 explicitly (testdata seeds it at 0 to avoid supply-cap interference).
-        \Illuminate\Support\Facades\DB::table('colony_researches')
+        DB::table('colony_researches')
             ->where('colony_id', $this->colonyId)->where('research_id', $this->researchId)
             ->update(['level' => 16]);
 
@@ -139,7 +146,7 @@ class FleetServiceTest extends TestCase
         $this->assertEquals(16, $transferred);
     }
 
-    public function testTransferPersonell(): void
+    public function test_transfer_personell(): void
     {
         // initial personell_id=36: colony=2, fleet=2 (from test data)
         $transferred = $this->service->transferPersonell($this->colonyId, $this->fleetId, 36, -5);
@@ -152,10 +159,10 @@ class FleetServiceTest extends TestCase
         $this->assertEquals(2, $transferred);
     }
 
-    public function testTransferTechnology(): void
+    public function test_transfer_technology(): void
     {
         // Set colony research level=5 so we can transfer 5 (testdata seeds it at 0).
-        \Illuminate\Support\Facades\DB::table('colony_researches')
+        DB::table('colony_researches')
             ->where('colony_id', $this->colonyId)->where('research_id', $this->researchId)
             ->update(['level' => 5]);
 
@@ -170,12 +177,12 @@ class FleetServiceTest extends TestCase
         $this->service->transferTechnology('invalid', $this->colonyId, $this->fleetId, 96, 1);
     }
 
-    public function testTransferResource(): void
+    public function test_transfer_resource(): void
     {
         $this->markTestSkipped('transferResource() has known duplicate-key issues in test data — skipped like original.');
     }
 
-    public function testGetFleetShip(): void
+    public function test_get_fleet_ship(): void
     {
         $result = $this->service->getFleetShip(['fleet_id' => $this->fleetId, 'ship_id' => $this->shipId]);
         $this->assertInstanceOf(FleetShip::class, $result);
@@ -188,7 +195,7 @@ class FleetServiceTest extends TestCase
         $this->assertEquals(0, $result->count);
     }
 
-    public function testGetFleetResearch(): void
+    public function test_get_fleet_research(): void
     {
         $result = $this->service->getFleetResearch(['fleet_id' => $this->fleetId, 'research_id' => $this->researchId]);
         $this->assertInstanceOf(FleetResearch::class, $result);
@@ -201,57 +208,57 @@ class FleetServiceTest extends TestCase
         $this->assertEquals(0, $result->count);
     }
 
-    public function testGetFleetShips(): void
+    public function test_get_fleet_ships(): void
     {
         $result = $this->service->getFleetShips(['fleet_id' => $this->fleetId]);
         $this->assertEquals(4, $result->count());
     }
 
-    public function testGetFleetShipsByFleetId(): void
+    public function test_get_fleet_ships_by_fleet_id(): void
     {
         $result = $this->service->getFleetShipsByFleetId($this->fleetId);
         $this->assertEquals(4, $result->count());
     }
 
-    public function testGetFleetResearches(): void
+    public function test_get_fleet_researches(): void
     {
         // Fleet 10 has 1 research entry in testdata (knowledge_defense id=96).
         $result = $this->service->getFleetResearches(['fleet_id' => $this->fleetId]);
         $this->assertEquals(1, $result->count());
     }
 
-    public function testGetFleetResearchesByFleetId(): void
+    public function test_get_fleet_researches_by_fleet_id(): void
     {
         // Fleet 10 has 1 research entry in testdata (knowledge_defense id=96).
         $result = $this->service->getFleetResearchesByFleetId($this->fleetId);
         $this->assertEquals(1, $result->count());
     }
 
-    public function testGetFleetPersonell(): void
+    public function test_get_fleet_personell(): void
     {
         $result = $this->service->getFleetPersonell(['fleet_id' => $this->fleetId]);
         $this->assertEquals(3, $result->count());
     }
 
-    public function testGetFleetPersonellByFleetId(): void
+    public function test_get_fleet_personell_by_fleet_id(): void
     {
         $result = $this->service->getFleetPersonellByFleetId($this->fleetId);
         $this->assertEquals(3, $result->count());
     }
 
-    public function testGetFleetResources(): void
+    public function test_get_fleet_resources(): void
     {
         $result = $this->service->getFleetResources(['fleet_id' => $this->fleetId]);
         $this->assertEquals(3, $result->count()); // Rg, Co, Or (ENrg/LNrg/ANrg removed)
     }
 
-    public function testGetFleetResourcesByFleetId(): void
+    public function test_get_fleet_resources_by_fleet_id(): void
     {
         $result = $this->service->getFleetResourcesByFleetId($this->fleetId);
         $this->assertEquals(3, $result->count()); // Rg, Co, Or
     }
 
-    public function testGetFleetResource(): void
+    public function test_get_fleet_resource(): void
     {
         $result = $this->service->getFleetResource(['fleet_id' => $this->fleetId, 'resource_id' => $this->resourceId]);
         $this->assertInstanceOf(FleetResource::class, $result);
@@ -263,14 +270,14 @@ class FleetServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
-    public function testGetOrders(): void
+    public function test_get_orders(): void
     {
         $result = $this->service->getOrders(['fleet_id' => $this->fleetId]);
         $this->assertNotEmpty($result);
         $this->assertInstanceOf(FleetOrder::class, $result->first());
     }
 
-    public function testGetFleetsByUserId(): void
+    public function test_get_fleets_by_user_id(): void
     {
         $result = $this->service->getFleetsByUserId($this->userId);
         $this->assertTrue($result->isNotEmpty());
@@ -283,7 +290,7 @@ class FleetServiceTest extends TestCase
         $this->service->getFleetsByUserId(-1);
     }
 
-    public function testGetFleetsByEntityId(): void
+    public function test_get_fleets_by_entity_id(): void
     {
         $result = $this->service->getFleetsByEntityId('colony', $this->colonyId);
         $this->assertTrue($result->isNotEmpty());
@@ -301,7 +308,7 @@ class FleetServiceTest extends TestCase
         $this->service->getFleetsByEntityId('colony', -1);
     }
 
-    public function testGetFleetTechnologies(): void
+    public function test_get_fleet_technologies(): void
     {
         $result = $this->service->getFleetTechnologies($this->fleetId);
         $this->assertIsArray($result);

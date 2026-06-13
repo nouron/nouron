@@ -26,7 +26,7 @@ class HangarController extends BaseController
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
-        $slots        = $this->hangarService->getHangarSlots($colony->id);
+        $slots = $this->hangarService->getHangarSlots($colony->id);
         $pendingShips = $this->hangarService->getPendingShips($colony->id);
 
         $shipTypes = DB::table('ships')
@@ -92,9 +92,9 @@ class HangarController extends BaseController
     public function requestShip(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'ship_id'          => 'required|integer|in:37,47,85',
+            'ship_id' => 'required|integer|in:37,47,85',
             'use_nexus_credit' => 'boolean',
-            'consul_ap_spent'  => 'integer|min:0|max:20',
+            'consul_ap_spent' => 'integer|min:0|max:20',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -111,8 +111,8 @@ class HangarController extends BaseController
         }
 
         return response()->json([
-            'ok'      => true,
-            'slots'   => $this->hangarService->getHangarSlots($colony->id),
+            'ok' => true,
+            'slots' => $this->hangarService->getHangarSlots($colony->id),
             'pending' => $this->hangarService->getPendingShips($colony->id),
         ]);
     }
@@ -141,8 +141,8 @@ class HangarController extends BaseController
         }
 
         return response()->json([
-            'ok'      => true,
-            'slots'   => $this->hangarService->getHangarSlots($colony->id),
+            'ok' => true,
+            'slots' => $this->hangarService->getHangarSlots($colony->id),
             'pending' => $this->hangarService->getPendingShips($colony->id),
         ]);
     }
@@ -150,7 +150,7 @@ class HangarController extends BaseController
     public function dispatch(Request $request, int $instanceId): JsonResponse
     {
         $validated = $request->validate([
-            'destination'  => 'required|string|max:80',
+            'destination' => 'required|string|max:80',
             'sol_distance' => 'required|integer|min:1|max:999',
         ]);
 
@@ -208,6 +208,7 @@ class HangarController extends BaseController
                 return $slot;
             }
         }
+
         return null;
     }
 }

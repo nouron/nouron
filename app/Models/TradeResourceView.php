@@ -16,7 +16,9 @@ use Illuminate\Database\Eloquent\Model;
 class TradeResourceView extends Model
 {
     protected $table = 'v_trade_resources';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [];

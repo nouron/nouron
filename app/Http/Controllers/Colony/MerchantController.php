@@ -15,9 +15,9 @@ class MerchantController extends BaseController
 {
     public function __construct(
         TickService $tick,
-        private readonly ColonyService  $colonyService,
+        private readonly ColonyService $colonyService,
         private readonly MerchantService $merchantService,
-        private readonly EventService   $eventService,
+        private readonly EventService $eventService,
     ) {
         parent::__construct($tick);
     }
@@ -35,10 +35,10 @@ class MerchantController extends BaseController
 
         if ($result['ok']) {
             $this->eventService->createEvent([
-                'user'       => $userId,
-                'tick'       => $this->getTick(),
-                'event'      => 'trade.merchant_purchase',
-                'area'       => 'trade',
+                'user' => $userId,
+                'tick' => $this->getTick(),
+                'event' => 'trade.merchant_purchase',
+                'area' => 'trade',
                 'parameters' => json_encode(['colony_id' => $colony->id, 'item_id' => $itemId]),
             ]);
         }

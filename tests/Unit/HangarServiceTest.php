@@ -58,12 +58,17 @@ class HangarServiceTest extends TestCase
     // ── Fixture constants ─────────────────────────────────────────────────────
 
     /** Springfield colony — user_id = 3 (Bart) */
-    private const COLONY_ID       = 1;
+    private const COLONY_ID = 1;
+
     private const HANGAR_BUILDING = 44;
-    private const SHIP_CORVETTE   = 37;
-    private const SHIP_FREIGHTER  = 47;
-    private const SHIP_DRONE      = 85;
-    private const FIXED_TICK      = 100;
+
+    private const SHIP_CORVETTE = 37;
+
+    private const SHIP_FREIGHTER = 47;
+
+    private const SHIP_DRONE = 85;
+
+    private const FIXED_TICK = 100;
 
     private HangarService $hangarService;
 
@@ -109,13 +114,14 @@ class HangarServiceTest extends TestCase
     private function insertHangar(int $instanceId, int $level = 1, float $statusPoints = 20.0): int
     {
         DB::table('colony_buildings')->insert([
-            'colony_id'     => self::COLONY_ID,
-            'building_id'   => self::HANGAR_BUILDING,
-            'instance_id'   => $instanceId,
-            'level'         => $level,
+            'colony_id' => self::COLONY_ID,
+            'building_id' => self::HANGAR_BUILDING,
+            'instance_id' => $instanceId,
+            'level' => $level,
             'status_points' => $statusPoints,
-            'ap_spend'      => 0,
+            'ap_spend' => 0,
         ]);
+
         return $instanceId;
     }
 
@@ -123,21 +129,21 @@ class HangarServiceTest extends TestCase
      * Assign a ship to a hangar bay.
      */
     private function assignShip(
-        int    $instanceId,
-        int    $shipId,
-        string $state        = 'docked',
-        float  $statusPoints = 20.0,
-        int    $level        = 1
+        int $instanceId,
+        int $shipId,
+        string $state = 'docked',
+        float $statusPoints = 20.0,
+        int $level = 1
     ): void {
         // Use updateOrInsert because the seeder may have inserted the ship without instance_id
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'ship_id' => $shipId],
             [
                 'hangar_instance_id' => $instanceId,
-                'ship_state'         => $state,
-                'level'              => $level,
-                'status_points'      => $statusPoints,
-                'ap_spend'           => 0,
+                'ship_state' => $state,
+                'level' => $level,
+                'status_points' => $statusPoints,
+                'ap_spend' => 0,
             ]
         );
     }
@@ -148,15 +154,15 @@ class HangarServiceTest extends TestCase
     private function insertMission(int $instanceId, int $shipId, string $state = 'active', ?int $recallTick = null): int
     {
         return DB::table('colony_hangar_missions')->insertGetId([
-            'colony_id'    => self::COLONY_ID,
-            'instance_id'  => $instanceId,
-            'ship_id'      => $shipId,
-            'destination'  => 'Test Sector',
+            'colony_id' => self::COLONY_ID,
+            'instance_id' => $instanceId,
+            'ship_id' => $shipId,
+            'destination' => 'Test Sector',
             'sol_distance' => 3,
             'dispatch_tick' => self::FIXED_TICK - 10,
-            'recall_tick'  => $recallTick,
-            'state'        => $state,
-            'created_at'   => now(),
+            'recall_tick' => $recallTick,
+            'state' => $state,
+            'created_at' => now(),
         ]);
     }
 
@@ -180,8 +186,8 @@ class HangarServiceTest extends TestCase
         $slots = $this->hangarService->getHangarSlots(self::COLONY_ID);
 
         $this->assertCount(3, $slots);
-        $this->assertSame(1,  $slots[0]['instance_id']);
-        $this->assertSame(5,  $slots[1]['instance_id']);
+        $this->assertSame(1, $slots[0]['instance_id']);
+        $this->assertSame(5, $slots[1]['instance_id']);
         $this->assertSame(10, $slots[2]['instance_id']);
     }
 

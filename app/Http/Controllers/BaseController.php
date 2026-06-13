@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\Auth;
  */
 abstract class BaseController extends Controller
 {
-    public function __construct(protected TickService $tick)
-    {
-    }
+    public function __construct(protected TickService $tick) {}
 
     /**
      * Returns the currently authenticated user's ID, or null if not logged in.

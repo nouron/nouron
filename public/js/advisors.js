@@ -10,20 +10,26 @@ function advisorCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
 
-        slots:        config.slots,
-        slotInfo:     config.slotInfo,
-        routes:       config.routes,
+        slots: config.slots,
+        slotInfo: config.slotInfo,
+        routes: config.routes,
         juniorUpkeep: config.junior_upkeep ?? 10,
-        dialogSlot:   null,
-        errorMsg:     null,
+        dialogSlot: null,
+        errorMsg: null,
 
         init() {
             this._carouselInit();
         },
 
-        prev()    { this._carouselPrev(); },
-        next()    { this._carouselNext(); },
-        goTo(i)   { this._carouselGoTo(i); },
+        prev() {
+            this._carouselPrev();
+        },
+        next() {
+            this._carouselNext();
+        },
+        goTo(i) {
+            this._carouselGoTo(i);
+        },
 
         openHireDialog(slot) {
             this.dialogSlot = slot;
@@ -49,7 +55,7 @@ function advisorCarousel(config) {
                 personell_id: this.dialogSlot.personell_id,
             });
             if (res.ok) {
-                this.slots    = res.slots;
+                this.slots = res.slots;
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
             } else {
@@ -61,7 +67,7 @@ function advisorCarousel(config) {
             const url = this.routes.fire.replace('__ID__', this.dialogSlot.advisor.id);
             const res = await this.delete(url);
             if (res.ok) {
-                this.slots    = res.slots;
+                this.slots = res.slots;
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
             } else {
@@ -77,10 +83,10 @@ function advisorCarousel(config) {
         apTypeLabel(type) {
             const labels = {
                 construction: 'Bau-AP',
-                research:     'Forschungs-AP',
-                navigation:   'Navigations-AP',
-                economy:      'Wirtschafts-AP',
-                strategy:     'Strategie-AP',
+                research: 'Forschungs-AP',
+                navigation: 'Navigations-AP',
+                economy: 'Wirtschafts-AP',
+                strategy: 'Strategie-AP',
             };
             return labels[type] ?? type;
         },
@@ -92,10 +98,10 @@ function advisorCarousel(config) {
          */
         portraitInitials(key) {
             const map = {
-                engineer:   'Ba',
-                scientist:  'An',
-                pilot:      'Rf',
-                trader:     'Ko',
+                engineer: 'Ba',
+                scientist: 'An',
+                pilot: 'Rf',
+                trader: 'Ko',
                 strategist: 'St',
             };
             return map[key] ?? key.substring(0, 2).toUpperCase();
@@ -109,10 +115,10 @@ function advisorCarousel(config) {
          */
         portraitImageUrl(key) {
             const map = {
-                engineer:   '/img/advisors/construction_master_male.png',
-                scientist:  '/img/advisors/analyst_female.png',
-                pilot:      '/img/advisors/pilot_male.png',
-                trader:     '/img/advisors/trader_female.png',
+                engineer: '/img/advisors/construction_master_male.png',
+                scientist: '/img/advisors/analyst_female.png',
+                pilot: '/img/advisors/pilot_male.png',
+                trader: '/img/advisors/trader_female.png',
                 strategist: '/img/advisors/strategist_male.png',
             };
             return map[key] ?? '';
@@ -126,24 +132,24 @@ function advisorCarousel(config) {
             return fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type':     'application/json',
-                    'X-CSRF-TOKEN':     this._csrf(),
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this._csrf(),
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept':           'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify(data),
-            }).then(r => r.json());
+            }).then((r) => r.json());
         },
 
         delete(url) {
             return fetch(url, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN':     this._csrf(),
+                    'X-CSRF-TOKEN': this._csrf(),
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept':           'application/json',
+                    Accept: 'application/json',
                 },
-            }).then(r => r.json());
+            }).then((r) => r.json());
         },
     };
 }

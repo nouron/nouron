@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 class ColonyResource extends Model
 {
     protected $table = 'colony_resources';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = ['resource_id', 'colony_id', 'amount'];

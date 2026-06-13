@@ -40,6 +40,7 @@ class GalaxyService
     public function getSystem(int|string $systemId): GlxSystem|false
     {
         $this->validateId($systemId);
+
         return GlxSystem::find($systemId) ?? false;
     }
 
@@ -59,6 +60,7 @@ class GalaxyService
         if ($system === false) {
             return collect();
         }
+
         return $this->getObjectsByCoords([$system->x, $system->y]);
     }
 
@@ -70,6 +72,7 @@ class GalaxyService
     public function getSystemObject(int|string $id): GlxSystemObject|false
     {
         $this->validateId($id);
+
         return GlxSystemObject::find($id) ?? false;
     }
 
@@ -82,9 +85,10 @@ class GalaxyService
     {
         $this->validateId($colonyId);
         $colony = Colony::find($colonyId);
-        if (!$colony) {
+        if (! $colony) {
             return false;
         }
+
         return $this->getSystemObject($colony->system_object_id);
     }
 
@@ -93,12 +97,13 @@ class GalaxyService
      *
      * @throws InvalidArgumentException for non-numeric coordinates
      */
-    public function getSystemObjectByCoords(array $coords): GlxSystemObject|null
+    public function getSystemObjectByCoords(array $coords): ?GlxSystemObject
     {
         [$x, $y] = $coords;
-        if (!is_numeric($x) || !is_numeric($y)) {
+        if (! is_numeric($x) || ! is_numeric($y)) {
             throw new InvalidArgumentException('Invalid Coordinates.');
         }
+
         return GlxSystemObject::where('x', $x)->where('y', $y)->first();
     }
 
@@ -149,7 +154,7 @@ class GalaxyService
             $object = $this->getSystemObject($object);
         }
 
-        if (!($object instanceof GlxSystemObject)) {
+        if (! ($object instanceof GlxSystemObject)) {
             throw new InvalidArgumentException('Not a valid system object.');
         }
 
@@ -159,8 +164,7 @@ class GalaxyService
     /**
      * Find the system whose bounding box (range/2 on each axis) contains $coords.
      *
-     * @param  array  $coords [x, y]
-     * @return GlxSystem|false
+     * @param  array  $coords  [x, y]
      */
     public function getSystemByObjectCoords(array $coords): GlxSystem|false
     {
@@ -208,10 +212,10 @@ class GalaxyService
      * Uses a speed-aware variant of Bresenham's line algorithm.
      * One entry is stored per game tick (i.e. per $speed steps).
      *
-     * @param  array   $coordsA  Source [x, y, slot?]
-     * @param  array   $coordsB  Target [x, y, slot?]
-     * @param  int     $speed    Fields per tick
-     * @param  int     $startTick  Tick number for the first path entry
+     * @param  array  $coordsA  Source [x, y, slot?]
+     * @param  array  $coordsB  Target [x, y, slot?]
+     * @param  int  $speed  Fields per tick
+     * @param  int  $startTick  Tick number for the first path entry
      * @return array<int, array{0: int, 1: int, 2: int}>
      */
     public function getPath(array $coordsA, array $coordsB, int $speed, int $startTick = 0): array
@@ -220,8 +224,8 @@ class GalaxyService
 
         $xstart = $coordsA[0];
         $ystart = $coordsA[1];
-        $xend   = $coordsB[0];
-        $yend   = $coordsB[1];
+        $xend = $coordsB[0];
+        $yend = $coordsB[1];
 
         $dx = $xend - $xstart;
         $dy = $yend - $ystart;
@@ -241,30 +245,30 @@ class GalaxyService
             $pdy = 0;
             $ddx = $incx;
             $ddy = $incy;
-            $es  = $dy;
-            $el  = $dx;
+            $es = $dy;
+            $el = $dx;
         } else {
             $pdx = 0;
             $pdy = $incy;
             $ddx = $incx;
             $ddy = $incy;
-            $es  = $dx;
-            $el  = $dy;
+            $es = $dx;
+            $el = $dy;
         }
 
-        $x   = $xstart;
-        $y   = $ystart;
+        $x = $xstart;
+        $y = $ystart;
         $err = $el / 2;
 
-        $path         = [];
-        $path[$tick]  = [$coordsA[0], $coordsA[1]];
+        $path = [];
+        $path[$tick] = [$coordsA[0], $coordsA[1]];
 
-        for ($t = 1; $t <= $el; ++$t) {
+        for ($t = 1; $t <= $el; $t++) {
             $err -= $es;
             if ($err < 0) {
                 $err += $el;
-                $x   += $ddx;
-                $y   += $ddy;
+                $x += $ddx;
+                $y += $ddy;
             } else {
                 $x += $pdx;
                 $y += $pdy;

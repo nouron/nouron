@@ -55,12 +55,15 @@ class MerchantServiceTest extends TestCase
     // ── Fixture constants ─────────────────────────────────────────────────────
 
     private const COLONY_ID = 1;   // Springfield — user_id=3 (Bart)
-    private const USER_ID   = 3;   // Bart
+
+    private const USER_ID = 3;   // Bart
 
     // Building from TestSeeder: colony_id=1, building_id=25, max_status_points=20
-    private const BUILDING_ID  = 25;
-    private const INSTANCE_ID  = 1;
-    private const MAX_SP       = 20;
+    private const BUILDING_ID = 25;
+
+    private const INSTANCE_ID = 1;
+
+    private const MAX_SP = 20;
 
     private const TRUST_RESOURCE_ID = 12;
 
@@ -73,13 +76,13 @@ class MerchantServiceTest extends TestCase
         return [
             'first_appearance_min' => 15,
             'first_appearance_max' => 20,
-            'interval_min'         => 10,
-            'interval_max'         => 15,
-            'duration_ticks'       => 2,
-            'items_count'          => 3,
-            'items'                => [
-                'repair_kit'  => ['label' => 'Reparatur-Kit',  'cost' => 100, 'sp_amount'     => 30],
-                'trust_boost' => ['label' => 'Vertrauensschub','cost' => 150, 'trust_amount'   => 15],
+            'interval_min' => 10,
+            'interval_max' => 15,
+            'duration_ticks' => 2,
+            'items_count' => 3,
+            'items' => [
+                'repair_kit' => ['label' => 'Reparatur-Kit',  'cost' => 100, 'sp_amount' => 30],
+                'trust_boost' => ['label' => 'Vertrauensschub', 'cost' => 150, 'trust_amount' => 15],
                 'information' => ['label' => 'Systemkarte',    'cost' => 200],
             ],
         ];
@@ -109,12 +112,12 @@ class MerchantServiceTest extends TestCase
     private function insertVisit(array $overrides = []): int
     {
         $defaults = [
-            'colony_id'   => self::COLONY_ID,
-            'tick_start'  => 20,
-            'tick_end'    => 21,
+            'colony_id' => self::COLONY_ID,
+            'tick_start' => 20,
+            'tick_end' => 21,
             'was_visited' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
         return DB::table('merchant_visits')->insertGetId(array_merge($defaults, $overrides));
@@ -123,14 +126,14 @@ class MerchantServiceTest extends TestCase
     private function insertItem(int $visitId, array $overrides = []): int
     {
         $defaults = [
-            'visit_id'     => $visitId,
-            'item_type'    => 'repair_kit',
-            'label'        => 'Reparatur-Kit',
+            'visit_id' => $visitId,
+            'item_type' => 'repair_kit',
+            'label' => 'Reparatur-Kit',
             'cost_credits' => 100,
-            'payload'      => json_encode(['sp_amount' => 30]),
-            'sold'         => false,
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'payload' => json_encode(['sp_amount' => 30]),
+            'sold' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
         return DB::table('merchant_items')->insertGetId(array_merge($defaults, $overrides));
@@ -298,7 +301,7 @@ class MerchantServiceTest extends TestCase
     {
         $this->mockTick(20);
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, ['sold' => true]);
+        $itemId = $this->insertItem($visitId, ['sold' => true]);
 
         $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
 
@@ -311,7 +314,7 @@ class MerchantServiceTest extends TestCase
         // Visit ended at tick=21, but current tick is 30 → expired.
         $this->mockTick(30);
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId);
+        $itemId = $this->insertItem($visitId);
         $this->setCredits(10000);
 
         $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
@@ -324,7 +327,7 @@ class MerchantServiceTest extends TestCase
     {
         $this->mockTick(20);
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, ['cost_credits' => 500]);
+        $itemId = $this->insertItem($visitId, ['cost_credits' => 500]);
         $this->setCredits(50); // less than 500
 
         $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
@@ -337,9 +340,9 @@ class MerchantServiceTest extends TestCase
     {
         $this->mockTick(20);
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, [
-            'item_type'    => 'trust_boost',
-            'payload'      => json_encode(['trust_amount' => 15]),
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'trust_boost',
+            'payload' => json_encode(['trust_amount' => 15]),
             'cost_credits' => 100,
         ]);
         $this->setCredits(300);
@@ -374,9 +377,9 @@ class MerchantServiceTest extends TestCase
             ->update(['status_points' => 5, 'level' => 1]);
 
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, [
+        $itemId = $this->insertItem($visitId, [
             'item_type' => 'repair_kit',
-            'payload'   => json_encode(['sp_amount' => 10]),
+            'payload' => json_encode(['sp_amount' => 10]),
             'cost_credits' => 100,
         ]);
         $this->setCredits(500);
@@ -410,9 +413,9 @@ class MerchantServiceTest extends TestCase
             ->update(['status_points' => 15, 'level' => 1]);
 
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, [
+        $itemId = $this->insertItem($visitId, [
             'item_type' => 'repair_kit',
-            'payload'   => json_encode(['sp_amount' => 30]),
+            'payload' => json_encode(['sp_amount' => 30]),
             'cost_credits' => 100,
         ]);
         $this->setCredits(500);
@@ -433,13 +436,13 @@ class MerchantServiceTest extends TestCase
         $this->mockTick(20);
 
         $initialTrust = 100;
-        $trustAmount  = 15;
+        $trustAmount = 15;
         $this->setColonyResource(self::TRUST_RESOURCE_ID, $initialTrust);
 
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, [
+        $itemId = $this->insertItem($visitId, [
             'item_type' => 'trust_boost',
-            'payload'   => json_encode(['trust_amount' => $trustAmount]),
+            'payload' => json_encode(['trust_amount' => $trustAmount]),
             'cost_credits' => 150,
         ]);
         $this->setCredits(500);
@@ -462,33 +465,33 @@ class MerchantServiceTest extends TestCase
         // Insert two unexplored tiles for the colony.
         DB::table('colony_tiles')->insert([
             [
-                'colony_id'    => self::COLONY_ID,
-                'q'            => 0,
-                'r'            => 0,
-                'ring'         => 0,
-                'tile_type'    => 'plain',
-                'is_explored'  => false,
+                'colony_id' => self::COLONY_ID,
+                'q' => 0,
+                'r' => 0,
+                'ring' => 0,
+                'tile_type' => 'plain',
+                'is_explored' => false,
                 'is_deep_scanned' => false,
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'colony_id'    => self::COLONY_ID,
-                'q'            => 1,
-                'r'            => 0,
-                'ring'         => 1,
-                'tile_type'    => 'plain',
-                'is_explored'  => false,
+                'colony_id' => self::COLONY_ID,
+                'q' => 1,
+                'r' => 0,
+                'ring' => 1,
+                'tile_type' => 'plain',
+                'is_explored' => false,
                 'is_deep_scanned' => false,
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
 
         $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
-        $itemId  = $this->insertItem($visitId, [
-            'item_type'    => 'information',
-            'payload'      => null,
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'information',
+            'payload' => null,
             'cost_credits' => 200,
         ]);
         $this->setCredits(500);
@@ -544,12 +547,12 @@ class MerchantServiceTest extends TestCase
     {
         // Insert a visit for colony 2 (Shelbyville) — must not be touched.
         $foreignVisitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id'   => 2,
-            'tick_start'  => 20,
-            'tick_end'    => 21,
+            'colony_id' => 2,
+            'tick_start' => 20,
+            'tick_end' => 21,
             'was_visited' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $ownVisitId = $this->insertVisit(['was_visited' => false]);
@@ -557,7 +560,7 @@ class MerchantServiceTest extends TestCase
         // Mark own visit as visited using colony 1.
         $this->service->markVisited($ownVisitId, self::COLONY_ID);
 
-        $foreignStillFalse = !(bool) DB::table('merchant_visits')
+        $foreignStillFalse = ! (bool) DB::table('merchant_visits')
             ->where('id', $foreignVisitId)
             ->value('was_visited');
 

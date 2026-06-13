@@ -47,13 +47,16 @@ class TradeOrderResourceClampTest extends TestCase
 {
     use RefreshDatabase;
 
-    private int $fleetId  = 10;   // Bart's fleet
+    private int $fleetId = 10;   // Bart's fleet
+
     private int $colonyId = 1;    // Springfield
 
     // Resource IDs
-    private int $resRegolith    = 3;
-    private int $resWerkstoffe  = 4;
-    private int $resOrganika    = 5;
+    private int $resRegolith = 3;
+
+    private int $resWerkstoffe = 4;
+
+    private int $resOrganika = 5;
 
     protected function setUp(): void
     {
@@ -235,15 +238,15 @@ class TradeOrderResourceClampTest extends TestCase
     private function insertTradeOrder(int $tick, int $fleetId, int $colonyId, int $resourceId, int $amount, int $direction): void
     {
         DB::table('fleet_orders')->insert([
-            'fleet_id'      => $fleetId,
-            'tick'          => $tick,
-            'order'         => 'trade',
-            'coordinates'   => json_encode([6828, 3016, 0]),
-            'data'          => json_encode([
-                'colony_id'   => $colonyId,
+            'fleet_id' => $fleetId,
+            'tick' => $tick,
+            'order' => 'trade',
+            'coordinates' => json_encode([6828, 3016, 0]),
+            'data' => json_encode([
+                'colony_id' => $colonyId,
                 'resource_id' => $resourceId,
-                'amount'      => $amount,
-                'direction'   => $direction,
+                'amount' => $amount,
+                'direction' => $direction,
             ]),
             'was_processed' => 0,
         ]);

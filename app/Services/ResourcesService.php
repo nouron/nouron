@@ -25,7 +25,8 @@ class ResourcesService
 
     /** Resource IDs that belong to the user (not the colony) */
     const RES_CREDITS = 1;
-    const RES_SUPPLY  = 2;
+
+    const RES_SUPPLY = 2;
 
     public function __construct(private readonly ColonyService $colonyService) {}
 
@@ -42,7 +43,7 @@ class ResourcesService
     }
 
     /**
-     * @param  array|null $where  Associative WHERE conditions, e.g. ['colony_id' => 1]
+     * @param  array|null  $where  Associative WHERE conditions, e.g. ['colony_id' => 1]
      */
     public function getColonyResources(?array $where = null): Collection
     {
@@ -50,11 +51,12 @@ class ResourcesService
         if ($where) {
             $query->where($where);
         }
+
         return $query->get();
     }
 
     /**
-     * @param  array|null $where  Associative WHERE conditions, e.g. ['user_id' => 3]
+     * @param  array|null  $where  Associative WHERE conditions, e.g. ['user_id' => 3]
      */
     public function getUserResources(?array $where = null): Collection
     {
@@ -62,6 +64,7 @@ class ResourcesService
         if ($where) {
             $query->where($where);
         }
+
         return $query->get();
     }
 
@@ -77,21 +80,21 @@ class ResourcesService
         $this->validateId($colonyId);
 
         $colony = $this->colonyService->getColony((int) $colonyId);
-        if (!$colony) {
+        if (! $colony) {
             throw new RuntimeException("Colony {$colonyId} not found.");
         }
 
         // Colony resources indexed by resource_id
         $possessions = $this->getColonyResources(['colony_id' => $colonyId])
             ->keyBy('resource_id')
-            ->map(fn($r) => ['resource_id' => $r->resource_id, 'amount' => $r->amount])
+            ->map(fn ($r) => ['resource_id' => $r->resource_id, 'amount' => $r->amount])
             ->toArray();
 
         // User resources (credits + supply) — one row per user
         $userResource = $this->getUserResources(['user_id' => $colony->user_id])->first();
         if ($userResource) {
             $possessions[self::RES_CREDITS] = ['resource_id' => self::RES_CREDITS, 'amount' => $userResource->credits];
-            $possessions[self::RES_SUPPLY]  = ['resource_id' => self::RES_SUPPLY,  'amount' => $userResource->supply];
+            $possessions[self::RES_SUPPLY] = ['resource_id' => self::RES_SUPPLY,  'amount' => $userResource->supply];
         }
 
         return $possessions;
@@ -111,7 +114,7 @@ class ResourcesService
 
         foreach ($costs as $cost) {
             $resourceId = is_array($cost) ? $cost['resource_id'] : $cost->resource_id;
-            $amount     = is_array($cost) ? $cost['amount']      : $cost->amount;
+            $amount = is_array($cost) ? $cost['amount'] : $cost->amount;
             $possession = $poss[$resourceId]['amount'] ?? 0;
             if ($amount > $possession) {
                 return false;
@@ -126,7 +129,7 @@ class ResourcesService
     /**
      * Deduct all costs from the colony in a single transaction.
      *
-     * @return bool  true on success, false if any deduction fails
+     * @return bool true on success, false if any deduction fails
      */
     public function payCosts(iterable $costs, int|string $colonyId): bool
     {
@@ -135,9 +138,10 @@ class ResourcesService
         return DB::transaction(function () use ($costs, $colonyId) {
             foreach ($costs as $cost) {
                 $resourceId = is_array($cost) ? $cost['resource_id'] : $cost->resource_id;
-                $amount     = is_array($cost) ? $cost['amount']      : $cost->amount;
+                $amount = is_array($cost) ? $cost['amount'] : $cost->amount;
                 $this->decreaseAmount((int) $colonyId, (int) $resourceId, (int) $amount);
             }
+
             return true;
         });
     }
@@ -148,7 +152,7 @@ class ResourcesService
      * Credits (1) and supply (2) are stored on the user row; all others on
      * the colony row.
      *
-     * @param bool $forceUserResToBeColRes  If true, even credits/supply go to colony_resources
+     * @param  bool  $forceUserResToBeColRes  If true, even credits/supply go to colony_resources
      */
     public function increaseAmount(
         int $colonyId,
@@ -159,13 +163,13 @@ class ResourcesService
         $this->validateId($colonyId);
         $this->validateId($resId);
 
-        if (in_array($resId, [self::RES_CREDITS, self::RES_SUPPLY]) && !$forceUserResToBeColRes) {
+        if (in_array($resId, [self::RES_CREDITS, self::RES_SUPPLY]) && ! $forceUserResToBeColRes) {
             // User-level resource
             $colony = $this->colonyService->getColony($colonyId);
             $row = UserResource::firstOrNew(['user_id' => $colony->user_id]);
-            if (!$row->exists) {
+            if (! $row->exists) {
                 $row->credits = 0;
-                $row->supply  = 0;
+                $row->supply = 0;
             }
 
             if ($resId === self::RES_CREDITS) {
@@ -187,6 +191,7 @@ class ResourcesService
             ['colony_id' => $colonyId, 'resource_id' => $resId],
             ['amount' => $current + $amount]
         );
+
         return true;
     }
 
@@ -204,7 +209,7 @@ class ResourcesService
     public function getFreeSupply(int $colonyId): int
     {
         $colony = $this->colonyService->getColony($colonyId);
-        if (!$colony) {
+        if (! $colony) {
             return 0;
         }
 
@@ -239,14 +244,14 @@ class ResourcesService
      * A negative free-supply value indicates over-cap status. These colonies receive
      * the overcap_factor decay penalty every tick until supply usage drops back within cap.
      *
-     * @return int[]  Colony IDs with getFreeSupply() < 0
+     * @return int[] Colony IDs with getFreeSupply() < 0
      */
     public function getOverCapColonyIds(): array
     {
         $colonyIds = DB::table('glx_colonies')->pluck('id');
 
         return $colonyIds
-            ->filter(fn($id) => $this->getFreeSupply((int) $id) < 0)
+            ->filter(fn ($id) => $this->getFreeSupply((int) $id) < 0)
             ->values()
             ->all();
     }

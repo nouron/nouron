@@ -57,7 +57,7 @@ class LoginTest extends TestCase
     public function test_login_with_email(): void
     {
         $user = User::factory()->create([
-            'email'    => 'test@example.com',
+            'email' => 'test@example.com',
             'password' => bcrypt('secret123'),
         ]);
 
@@ -97,9 +97,9 @@ class LoginTest extends TestCase
     public function test_registration_creates_user_and_logs_in(): void
     {
         $this->post(route('register'), [
-            'username'              => 'newplayer',
-            'email'                 => 'new@example.com',
-            'password'              => 'secret1234',
+            'username' => 'newplayer',
+            'email' => 'new@example.com',
+            'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
         ])->assertRedirect(route('lobby'));
 

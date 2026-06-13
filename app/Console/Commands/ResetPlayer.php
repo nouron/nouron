@@ -17,7 +17,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ResetPlayer extends Command
 {
-    protected $signature   = 'game:reset-player {user : Username or user_id} {--yes : Skip confirmation}';
+    protected $signature = 'game:reset-player {user : Username or user_id} {--yes : Skip confirmation}';
+
     protected $description = 'Reset a player\'s game state to Sol 1 (dev tool)';
 
     public function __construct(private readonly OnboardingService $onboardingService)
@@ -33,7 +34,7 @@ class ResetPlayer extends Command
             ? User::find((int) $input)
             : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
 
-        if (!$user) {
+        if (! $user) {
             // Dev DB wiped (migrate:fresh without --seed) — auto-seed and retry once.
             if (DB::table('user')->count() === 0) {
                 $this->warn('Dev DB appears empty — running db:seed automatically...');
@@ -42,16 +43,18 @@ class ResetPlayer extends Command
                     ? User::find((int) $input)
                     : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
             }
-            if (!$user) {
+            if (! $user) {
                 $this->error("User not found: {$input}");
+
                 return self::FAILURE;
             }
         }
 
-        if (!$this->option('yes')) {
+        if (! $this->option('yes')) {
             $this->warn("This will delete ALL game data for user '{$user->username}' (id={$user->user_id}).");
-            if (!$this->confirm('Continue?', false)) {
+            if (! $this->confirm('Continue?', false)) {
                 $this->line('Aborted.');
+
                 return self::SUCCESS;
             }
         }
@@ -97,6 +100,7 @@ class ResetPlayer extends Command
         });
 
         $this->info("Player '{$user->username}' reset to Sol 1.");
+
         return self::SUCCESS;
     }
 }

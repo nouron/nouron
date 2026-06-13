@@ -26,112 +26,112 @@ return [
     // ── Supply-Cap providers ──────────────────────────────────────────────────
 
     'commandCenter' => [
-        'id'                => 25,
-        'supply_cap'        => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
-        'supply_cost'       => 0,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.33,    // 60 days
+        'id' => 25,
+        'supply_cap' => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
+        'supply_cost' => 0,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.33,    // 60 days
         'max_status_points' => 20,
-        'max_level'         => 5,
+        'max_level' => 5,
     ],
 
     'housingComplex' => [
-        'id'                => 28,
-        'supply_cap'        => 8,       // per unit (instance), max 6 units → +48 cap
-        'supply_cost'       => 0,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.44,    // 45 days
+        'id' => 28,
+        'supply_cap' => 8,       // per unit (instance), max 6 units → +48 cap
+        'supply_cost' => 0,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.44,    // 45 days
         'max_status_points' => 20,
-        'max_level'         => 6,       // max 6 instances (instanced building)
+        'max_level' => 6,       // max 6 instances (instanced building)
     ],
 
     // ── Industry ──────────────────────────────────────────────────────────────
 
     'harvester' => [                    // ex industrieMine/oremine (ID 27) — produces Regolith (resource 3)
-        'id'                => 27,
-        'supply_cost'       => 2,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.95,    // 21 days
+        'id' => 27,
+        'supply_cost' => 2,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.95,    // 21 days
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
-        'id'                => 41,
-        'supply_cost'       => 2,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.95,
+        'id' => 41,
+        'supply_cost' => 2,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.95,
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     'depot' => [
-        'id'                => 30,
-        'supply_cost'       => 3,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days
+        'id' => 30,
+        'supply_cost' => 3,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab' => [
-        'id'                => 31,
-        'supply_cost'       => 8,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.95,    // 21 days
+        'id' => 31,
+        'supply_cost' => 8,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.95,    // 21 days
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
-        'id'                => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
-        'supply_cost'       => 12,      // limits fleet naturally: 3 hangars = 36 supply
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days
+        'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
+        'supply_cost' => 12,      // limits fleet naturally: 3 hangars = 36 supply
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
-        'max_level'         => null,    // repeatable, supply-limited
+        'max_level' => null,    // repeatable, supply-limited
     ],
 
     // ── Civil welfare ─────────────────────────────────────────────────────────
 
     'infirmary' => [
-        'id'                => 46,
-        'supply_cost'       => 10,
-        'trust_per_lv'      => 3,
-        'decay_rate'        => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
+        'id' => 46,
+        'supply_cost' => 10,
+        'trust_per_lv' => 3,
+        'decay_rate' => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     'bar' => [
-        'id'                => 52,
-        'supply_cost'       => 4,
-        'trust_per_lv'      => 2,       // social hub — leisure in an otherwise bleak colony life
-        'decay_rate'        => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
+        'id' => 52,
+        'supply_cost' => 4,
+        'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
+        'decay_rate' => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     'monument' => [
-        'id'                => 50,
-        'supply_cost'       => 2,
-        'trust_per_lv'      => 2,
-        'decay_rate'        => 0.33,    // 60 days — monuments are built to last
+        'id' => 50,
+        'supply_cost' => 2,
+        'trust_per_lv' => 2,
+        'decay_rate' => 0.33,    // 60 days — monuments are built to last
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     'temple' => [
-        'id'                => 32,
-        'supply_cost'       => 4,
-        'trust_per_lv'      => 2,
-        'decay_rate'        => 2.0,     // 10 days — needs regular upkeep
+        'id' => 32,
+        'supply_cost' => 4,
+        'trust_per_lv' => 2,
+        'decay_rate' => 2.0,     // 10 days — needs regular upkeep
         'max_status_points' => 20,
-        'max_level'         => null,
+        'max_level' => null,
     ],
 
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
@@ -142,13 +142,13 @@ return [
     //           tradeable resources (GameTick, config key: securityHub_recycle_pct).
     // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
     'securityHub' => [
-        'id'                  => 53,
-        'supply_cost'         => 8,
-        'trust_per_lv'        => 0,
-        'decay_rate'          => 0.67,    // 30 days — provisional
-        'max_status_points'   => 20,
-        'max_level'           => 3,
-        'recycle_pct'         => 0.10,    // fraction of build cost returned on level-down
+        'id' => 53,
+        'supply_cost' => 8,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.67,    // 30 days — provisional
+        'max_status_points' => 20,
+        'max_level' => 3,
+        'recycle_pct' => 0.10,    // fraction of build cost returned on level-down
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).
@@ -158,12 +158,12 @@ return [
     // Lv1 build cost: Regolith + Credits only — no Compounds (circular dep risk).
     // TODO Balance: per-level CC gates (Lv2→CC3, Lv3→CC5) not yet enforced — post-playtest.
     'uplinkStation' => [
-        'id'                => 54,
-        'supply_cost'       => 6,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0.67,    // 30 days — provisional
+        'id' => 54,
+        'supply_cost' => 6,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.67,    // 30 days — provisional
         'max_status_points' => 20,
-        'max_level'         => 3,
+        'max_level' => 3,
     ],
 
     // Trading Post — CC Lv4, max 1 instance (is_instanced=0).
@@ -171,12 +171,12 @@ return [
     //         Konsul Economy-AP reduction: TODO implement when merchant system is built.
     // TODO Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
     'tradingPost' => [
-        'id'                   => 55,
-        'supply_cost'          => 6,
-        'trust_per_lv'         => 0,
-        'decay_rate'           => 0.67,    // 30 days — provisional
-        'max_status_points'    => 20,
-        'max_level'            => 3,
+        'id' => 55,
+        'supply_cost' => 6,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0.67,    // 30 days — provisional
+        'max_status_points' => 20,
+        'max_level' => 3,
         'merchant_price_bonus' => 0.12,    // +12% trade value when Reisender Händler present
     ],
 

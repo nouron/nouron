@@ -25,8 +25,10 @@ class KnowledgeServiceTest extends TestCase
     use RefreshDatabase;
 
     protected ResearchService $service;
+
     protected int $colonyId = 1;
-    protected int $userId   = 3;
+
+    protected int $userId = 3;
 
     // knowledge_health (94) — positive moral effect, representative for all Kenntnisse
     protected int $knowledgeId = 94;
@@ -40,11 +42,11 @@ class KnowledgeServiceTest extends TestCase
         // Replace seeded advisors with a single Rank-2 Wissenschaftler (7 research AP)
         Advisor::where('colony_id', $this->colonyId)->delete();
         Advisor::create([
-            'user_id'     => $this->userId,
-            'personell_id'=> PersonellService::idFor('scientist'),
-            'colony_id'   => $this->colonyId,
-            'rank'        => 2,
-            'active_ticks'=> 0,
+            'user_id' => $this->userId,
+            'personell_id' => PersonellService::idFor('scientist'),
+            'colony_id' => $this->colonyId,
+            'rank' => 2,
+            'active_ticks' => 0,
         ]);
     }
 

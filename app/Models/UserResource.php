@@ -11,8 +11,11 @@ use Illuminate\Database\Eloquent\Model;
 class UserResource extends Model
 {
     protected $table = 'user_resources';
+
     protected $primaryKey = 'user_id';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = ['user_id', 'credits', 'supply'];
@@ -21,7 +24,7 @@ class UserResource extends Model
     {
         return [
             'credits' => 'integer',
-            'supply'  => 'integer',
+            'supply' => 'integer',
         ];
     }
 

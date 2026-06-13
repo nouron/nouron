@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# Pre-commit lint gate (Nouron).
+# Activated via: git config core.hooksPath .githooks
+#
+#   PHP   (.php, not .blade.php) -> Laravel Pint   (auto-fix + verify)
+#   JS/CSS                       -> Prettier        (auto-fix + verify)
+#   Blade (.blade.php)           -> Prettier --check (block only, no auto-write)
+#
+# Auto-fixed files are re-staged. If anything remains non-compliant (e.g. a PHP
+# syntax error Pint can't fix, or a Blade file not formatted), the commit aborts.
+#
+# Caveat: re-staging adds the *whole* file, so partially-staged hunks (git add -p)
+# get fully committed once a fixer touches the file.
+
+set -uo pipefail
+
+PINT="bin/pint"
+PRETTIER="node_modules/.bin/prettier"
+
+staged() { git diff --cached --name-only --diff-filter=ACM; }
+
+PHP_FILES=$(staged | grep -E '\.php$' | grep -v '\.blade\.php$' || true)
+BLADE_FILES=$(staged | grep -E '\.blade\.php$' || true)
+ASSET_FILES=$(staged | grep -E '\.(js|css)$' | grep -vE '\.min\.(js|css)$' | grep -vE '^public/vendor/' || true)
+
+[ -z "$PHP_FILES$BLADE_FILES$ASSET_FILES" ] && exit 0
+
+fail=0
+
+# Tooling presence
+if [ -n "$PHP_FILES" ] && [ ! -x "$PINT" ]; then
+    echo "✗ Pint fehlt ($PINT) — composer install" >&2; exit 1
+fi
+if [ -n "$BLADE_FILES$ASSET_FILES" ] && [ ! -x "$PRETTIER" ]; then
+    echo "✗ Prettier fehlt ($PRETTIER) — npm install" >&2; exit 1
+fi
+
+# ── PHP: Pint auto-fix, re-stage, then verify ────────────────────────────────
+if [ -n "$PHP_FILES" ]; then
+    echo "$PHP_FILES" | xargs "$PINT" --quiet
+    echo "$PHP_FILES" | xargs git add
+    if ! echo "$PHP_FILES" | xargs "$PINT" --test --quiet; then
+        echo "✗ Pint: nicht automatisch behebbare PHP-Fehler." >&2; fail=1
+    fi
+fi
+
+# ── JS/CSS: Prettier auto-fix, re-stage, then verify ─────────────────────────
+if [ -n "$ASSET_FILES" ]; then
+    echo "$ASSET_FILES" | xargs "$PRETTIER" --write --log-level warn
+    echo "$ASSET_FILES" | xargs git add
+    if ! echo "$ASSET_FILES" | xargs "$PRETTIER" --check --log-level warn; then
+        echo "✗ Prettier: JS/CSS nach Auto-Fix noch nicht konform." >&2; fail=1
+    fi
+fi
+
+# ── Blade: check only (block, no auto-write) ─────────────────────────────────
+if [ -n "$BLADE_FILES" ]; then
+    if ! echo "$BLADE_FILES" | xargs "$PRETTIER" --check --log-level warn; then
+        echo "✗ Blade nicht prettier-konform. Bewusst formatieren mit:" >&2
+        echo "    npx prettier --write <datei.blade.php>" >&2
+        fail=1
+    fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+    echo "" >&2
+    echo "Commit abgebrochen — Lint-Fehler vor dem Commit beheben." >&2
+    exit 1
+fi
+exit 0

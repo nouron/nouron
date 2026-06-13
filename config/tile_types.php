@@ -25,29 +25,29 @@ return [
 
     // ── Terrain ──────────────────────────────────────────────────────────────
 
-    'terrain_empty'      => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'terrain_hazard'     => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'terrain_empty' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'terrain_hazard' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
     'terrain_impassable' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
 
     // ── Regolith resource nodes ───────────────────────────────────────────────
     // resource_id 3 = res_regolith
 
-    'regolith_rich'   => ['resource_id' => 3, 'base_yield' => 15, 'event_eligible' => true],
+    'regolith_rich' => ['resource_id' => 3, 'base_yield' => 15, 'event_eligible' => true],
     'regolith_normal' => ['resource_id' => 3, 'base_yield' => 10, 'event_eligible' => true],
-    'regolith_poor'   => ['resource_id' => 3, 'base_yield' => 5,  'event_eligible' => true],
+    'regolith_poor' => ['resource_id' => 3, 'base_yield' => 5,  'event_eligible' => true],
 
     // ── Event overlays (revealed via deep scan only) ──────────────────────────
     // event_eligible = false: events cannot randomly re-occur on these tiles
 
-    'event_wreck'   => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_ruin'    => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_bunker'  => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_probe'   => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_wreck' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_ruin' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_bunker' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_probe' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
     'event_crystal' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_vent'    => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_cave'    => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_cache'   => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
-    'event_signal'  => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_vent' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_cave' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_cache' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
+    'event_signal' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
     'event_anomaly' => ['resource_id' => null, 'base_yield' => null, 'event_eligible' => false],
 
 ];

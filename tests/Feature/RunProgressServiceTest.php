@@ -67,7 +67,6 @@ namespace Tests\Feature;
  *   - sol 65 sanction does NOT fire when at least one objective is completed
  *   - nexus_debt > 12000 triggers failed run status
  *   - sol 80 countdown fires when current_tick >= tick_limit - 20
- *
  */
 
 use App\Models\Advisor;
@@ -84,7 +83,8 @@ class RunProgressServiceTest extends TestCase
     use RefreshDatabase;
 
     // Fixtures: Bart (user_id=3) owns colony 1 (Springfield)
-    protected int $userId   = 3;
+    protected int $userId = 3;
+
     protected int $colonyId = 1;
 
     protected RunProgressService $service;
@@ -108,7 +108,8 @@ class RunProgressServiceTest extends TestCase
      * IDs: engineer=35, scientist=36, pilot=89, trader=92, strategist=93.
      */
     private array $personellPool = [35, 36, 89, 92, 93];
-    private int   $personellCursor = 0;
+
+    private int $personellCursor = 0;
 
     /**
      * Return the next available personell_id from the pool.
@@ -124,11 +125,11 @@ class RunProgressServiceTest extends TestCase
     private function makeRun(array $overrides = []): Run
     {
         return Run::create(array_merge([
-            'user_id'      => $this->userId,
-            'colony_id'    => $this->colonyId,
+            'user_id' => $this->userId,
+            'colony_id' => $this->colonyId,
             'current_tick' => 5,
-            'status'       => 'active',
-            'phase'        => 1,
+            'status' => 'active',
+            'phase' => 1,
         ], $overrides));
     }
 
@@ -182,14 +183,14 @@ class RunProgressServiceTest extends TestCase
     private function insertAdvisor(array $overrides = []): Advisor
     {
         return Advisor::create(array_merge([
-            'user_id'                => $this->userId,
-            'personell_id'           => $this->nextPersonellId(),
-            'colony_id'              => $this->colonyId,
-            'rank'                   => 1,
-            'active_ticks'           => 0,
+            'user_id' => $this->userId,
+            'personell_id' => $this->nextPersonellId(),
+            'colony_id' => $this->colonyId,
+            'rank' => 1,
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
-            'fleet_id'               => null,
-            'is_commander'           => 0,
+            'fleet_id' => null,
+            'is_commander' => 0,
         ], $overrides));
     }
 
@@ -199,12 +200,12 @@ class RunProgressServiceTest extends TestCase
     private function makeObjective(Run $run, string $taskKey, int $targetValue, int $streakValue = 0): RunObjective
     {
         return RunObjective::create([
-            'run_id'        => $run->id,
-            'task_key'      => $taskKey,
-            'target_value'  => $targetValue,
+            'run_id' => $run->id,
+            'task_key' => $taskKey,
+            'target_value' => $targetValue,
             'current_value' => 0,
-            'streak_value'  => $streakValue,
-            'completed_at'  => null,
+            'streak_value' => $streakValue,
+            'completed_at' => null,
         ]);
     }
 
@@ -223,7 +224,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── Phase-1 completion ────────────────────────────────────────────────────
 
-    public function test_checkPhase1Completion_returns_false_when_cc_below_level_3(): void
+    public function test_check_phase1_completion_returns_false_when_cc_below_level_3(): void
     {
         $run = $this->makeRun();
 
@@ -235,7 +236,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertFalse($result, 'Phase-1 must not complete when CC is below level 3');
     }
 
-    public function test_checkPhase1Completion_returns_false_when_fewer_than_2_production_buildings_at_level_2(): void
+    public function test_check_phase1_completion_returns_false_when_fewer_than_2_production_buildings_at_level_2(): void
     {
         $run = $this->makeRun();
 
@@ -257,7 +258,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertFalse($result, 'Phase-1 must not complete when fewer than 2 production buildings are at level >= 2');
     }
 
-    public function test_checkPhase1Completion_returns_false_when_fewer_than_3_advisors(): void
+    public function test_check_phase1_completion_returns_false_when_fewer_than_3_advisors(): void
     {
         $run = $this->makeRun();
 
@@ -276,7 +277,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertFalse($result, 'Phase-1 must not complete when fewer than 3 advisors are active');
     }
 
-    public function test_checkPhase1Completion_returns_true_when_all_conditions_met(): void
+    public function test_check_phase1_completion_returns_true_when_all_conditions_met(): void
     {
         $run = $this->makeRun();
 
@@ -299,7 +300,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── drawObjectives ────────────────────────────────────────────────────────
 
-    public function test_drawObjectives_creates_3_objectives_for_run(): void
+    public function test_draw_objectives_creates_3_objectives_for_run(): void
     {
         $run = $this->makeRun(['phase' => 2]);
 
@@ -310,7 +311,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals(3, $count, 'drawObjectives must create exactly 3 RunObjective records');
     }
 
-    public function test_drawObjectives_sets_correct_target_values(): void
+    public function test_draw_objectives_sets_correct_target_values(): void
     {
         // Lock the task pool to all 4 tasks and force deterministic draw of the
         // first 3 by seeding the config pool in the expected order.
@@ -322,9 +323,9 @@ class RunProgressServiceTest extends TestCase
         ]]);
 
         $expectedTargets = [
-            'task_senior_advisors'        => 1,
-            'task_credit_reserve'      => 10,
-            'task_colony_prosperity'       => 10,
+            'task_senior_advisors' => 1,
+            'task_credit_reserve' => 10,
+            'task_colony_prosperity' => 10,
             'task_research_lead' => 3,
         ];
 
@@ -493,7 +494,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── checkFailStates ───────────────────────────────────────────────────────
 
-    public function test_checkFailStates_returns_trust_collapse_when_trust_below_threshold(): void
+    public function test_check_fail_states_returns_trust_collapse_when_trust_below_threshold(): void
     {
         $run = $this->makeRun(['current_tick' => 10]);
 
@@ -505,7 +506,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals('trust_collapse', $result, 'Must return trust_collapse when trust < -20');
     }
 
-    public function test_checkFailStates_returns_time_limit_when_tick_equals_tick_limit(): void
+    public function test_check_fail_states_returns_time_limit_when_tick_equals_tick_limit(): void
     {
         $tickLimit = (int) config('game.run.tick_limit', 100);
 
@@ -519,7 +520,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals('time_limit', $result, 'Must return time_limit when current_tick >= tick_limit');
     }
 
-    public function test_checkFailStates_returns_null_when_no_fail_conditions(): void
+    public function test_check_fail_states_returns_null_when_no_fail_conditions(): void
     {
         $run = $this->makeRun(['current_tick' => 10]);
 
@@ -532,7 +533,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── endRun ────────────────────────────────────────────────────────────────
 
-    public function test_endRun_sets_status_and_ended_at(): void
+    public function test_end_run_sets_status_and_ended_at(): void
     {
         $run = $this->makeRun();
 
@@ -545,7 +546,7 @@ class RunProgressServiceTest extends TestCase
         $this->assertNotNull($row->ended_at, 'ended_at must be set after endRun');
     }
 
-    public function test_endRun_sets_status_completed_without_fail_reason(): void
+    public function test_end_run_sets_status_completed_without_fail_reason(): void
     {
         $run = $this->makeRun();
 
@@ -560,7 +561,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── calculateScore ────────────────────────────────────────────────────────
 
-    public function test_calculateScore_returns_0_for_failed_run(): void
+    public function test_calculate_score_returns_0_for_failed_run(): void
     {
         $run = $this->makeRun(['status' => 'failed', 'current_tick' => 50]);
 
@@ -569,26 +570,26 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals(0, $score, 'A failed run must always score 0');
     }
 
-    public function test_calculateScore_returns_positive_score_for_completed_run_with_objectives(): void
+    public function test_calculate_score_returns_positive_score_for_completed_run_with_objectives(): void
     {
         $run = $this->makeRun(['status' => 'completed', 'current_tick' => 50]);
 
         // 2 completed objectives
         RunObjective::create([
-            'run_id'        => $run->id,
-            'task_key'      => 'task_senior_advisors',
-            'target_value'  => 1,
+            'run_id' => $run->id,
+            'task_key' => 'task_senior_advisors',
+            'target_value' => 1,
             'current_value' => 1,
-            'streak_value'  => 0,
-            'completed_at'  => 40,
+            'streak_value' => 0,
+            'completed_at' => 40,
         ]);
         RunObjective::create([
-            'run_id'        => $run->id,
-            'task_key'      => 'task_credit_reserve',
-            'target_value'  => 10,
+            'run_id' => $run->id,
+            'task_key' => 'task_credit_reserve',
+            'target_value' => 10,
             'current_value' => 10,
-            'streak_value'  => 10,
-            'completed_at'  => 45,
+            'streak_value' => 10,
+            'completed_at' => 45,
         ]);
 
         // Provide positive resources for score calculation
@@ -624,15 +625,15 @@ class RunProgressServiceTest extends TestCase
     {
         for ($i = 0; $i < $count; $i++) {
             DB::table('colony_tiles')->insert([
-                'colony_id'      => $this->colonyId,
-                'q'              => 100 + $i,
-                'r'              => 0,
-                'ring'           => 1,
-                'tile_type'      => 'regolith',
-                'is_explored'    => 1,
+                'colony_id' => $this->colonyId,
+                'q' => 100 + $i,
+                'r' => 0,
+                'ring' => 1,
+                'tile_type' => 'regolith',
+                'is_explored' => 1,
                 'is_colony_zone' => 1,
-                'created_at'     => now(),
-                'updated_at'     => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -773,32 +774,32 @@ class RunProgressServiceTest extends TestCase
         $startedAt = now()->subHour();
         $run = $this->makeRun([
             'current_tick' => 10,
-            'phase'        => 2,
-            'started_at'   => $startedAt,
+            'phase' => 2,
+            'started_at' => $startedAt,
         ]);
         $objective = $this->makeObjective($run, 'task_trade_volume', 5);
 
         // Create a merchant visit AFTER run started_at
         $visitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id'   => $this->colonyId,
-            'tick_start'  => 5,
-            'tick_end'    => 8,
+            'colony_id' => $this->colonyId,
+            'tick_start' => 5,
+            'tick_end' => 8,
             'was_visited' => true,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // Insert 5 sold items for that visit
         for ($i = 0; $i < 5; $i++) {
             DB::table('merchant_items')->insert([
-                'visit_id'      => $visitId,
-                'item_type'     => 'ap_flex',
-                'label'         => 'Test Item ' . $i,
-                'cost_credits'  => 100,
-                'payload'       => null,
-                'sold'          => 1,
-                'created_at'    => now(),
-                'updated_at'    => now(),
+                'visit_id' => $visitId,
+                'item_type' => 'ap_flex',
+                'label' => 'Test Item '.$i,
+                'cost_credits' => 100,
+                'payload' => null,
+                'sold' => 1,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
 
@@ -814,32 +815,32 @@ class RunProgressServiceTest extends TestCase
         $startedAt = now();
         $run = $this->makeRun([
             'current_tick' => 10,
-            'phase'        => 2,
-            'started_at'   => $startedAt,
+            'phase' => 2,
+            'started_at' => $startedAt,
         ]);
         $objective = $this->makeObjective($run, 'task_trade_volume', 5);
 
         // Create a merchant visit BEFORE run started_at
         $visitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id'   => $this->colonyId,
-            'tick_start'  => 2,
-            'tick_end'    => 4,
+            'colony_id' => $this->colonyId,
+            'tick_start' => 2,
+            'tick_end' => 4,
             'was_visited' => true,
-            'created_at'  => now()->subDay(),
-            'updated_at'  => now()->subDay(),
+            'created_at' => now()->subDay(),
+            'updated_at' => now()->subDay(),
         ]);
 
         // Insert 5 sold items — but the visit predates the run, so they must not count
         for ($i = 0; $i < 5; $i++) {
             DB::table('merchant_items')->insert([
-                'visit_id'      => $visitId,
-                'item_type'     => 'ap_flex',
-                'label'         => 'Old Item ' . $i,
-                'cost_credits'  => 100,
-                'payload'       => null,
-                'sold'          => 1,
-                'created_at'    => now()->subDay(),
-                'updated_at'    => now()->subDay(),
+                'visit_id' => $visitId,
+                'item_type' => 'ap_flex',
+                'label' => 'Old Item '.$i,
+                'cost_credits' => 100,
+                'payload' => null,
+                'sold' => 1,
+                'created_at' => now()->subDay(),
+                'updated_at' => now()->subDay(),
             ]);
         }
 
@@ -857,19 +858,19 @@ class RunProgressServiceTest extends TestCase
         $startedAt = now()->subHour();
         $run = $this->makeRun([
             'current_tick' => 10,
-            'phase'        => 2,
-            'started_at'   => $startedAt,
+            'phase' => 2,
+            'started_at' => $startedAt,
         ]);
         $objective = $this->makeObjective($run, 'task_combat_record', 3);
 
         for ($i = 0; $i < 3; $i++) {
             DB::table('colony_log')->insert([
-                'user'       => $this->userId,
-                'tick'       => 7 + $i,
-                'event'      => 'encounter_won',
-                'area'       => 'combat',
+                'user' => $this->userId,
+                'tick' => 7 + $i,
+                'event' => 'encounter_won',
+                'area' => 'combat',
                 'parameters' => json_encode([]),
-                'is_read'    => 1,
+                'is_read' => 1,
                 'created_at' => now(),
             ]);
         }
@@ -886,20 +887,20 @@ class RunProgressServiceTest extends TestCase
         $startedAt = now();
         $run = $this->makeRun([
             'current_tick' => 10,
-            'phase'        => 2,
-            'started_at'   => $startedAt,
+            'phase' => 2,
+            'started_at' => $startedAt,
         ]);
         $objective = $this->makeObjective($run, 'task_combat_record', 3);
 
         // Insert 3 encounter_won events with created_at BEFORE started_at
         for ($i = 0; $i < 3; $i++) {
             DB::table('colony_log')->insert([
-                'user'       => $this->userId,
-                'tick'       => 2 + $i,
-                'event'      => 'encounter_won',
-                'area'       => 'combat',
+                'user' => $this->userId,
+                'tick' => 2 + $i,
+                'event' => 'encounter_won',
+                'area' => 'combat',
                 'parameters' => json_encode([]),
-                'is_read'    => 1,
+                'is_read' => 1,
                 'created_at' => now()->subDay(),
             ]);
         }
@@ -913,7 +914,7 @@ class RunProgressServiceTest extends TestCase
 
     // ── drawObjectives — combo blacklist ──────────────────────────────────────
 
-    public function test_drawObjectives_never_draws_both_economy_tasks_in_one_set(): void
+    public function test_draw_objectives_never_draws_both_economy_tasks_in_one_set(): void
     {
         // Pool: 2 economy tasks + 5 non-economy tasks
         config(['game.run.task_pool' => [
@@ -942,7 +943,7 @@ class RunProgressServiceTest extends TestCase
             $this->assertLessThanOrEqual(
                 1,
                 $economyCount,
-                "Draw #{$draw} contained both economy tasks: " . implode(', ', $drawnKeys)
+                "Draw #{$draw} contained both economy tasks: ".implode(', ', $drawnKeys)
             );
         }
     }
@@ -957,10 +958,10 @@ class RunProgressServiceTest extends TestCase
     private function makePhase2Run(int $sol, array $overrides = []): Run
     {
         return $this->makeRun(array_merge([
-            'phase'             => 2,
+            'phase' => 2,
             'phase2_start_tick' => 0,
-            'current_tick'      => $sol,
-            'started_at'        => now()->subHour(),
+            'current_tick' => $sol,
+            'started_at' => now()->subHour(),
         ], $overrides));
     }
 
@@ -987,12 +988,12 @@ class RunProgressServiceTest extends TestCase
 
         // One objective above 50% (current=6 of 10 = 60%)
         RunObjective::create([
-            'run_id'        => $run->id,
-            'task_key'      => 'task_senior_advisors',
-            'target_value'  => 10,
+            'run_id' => $run->id,
+            'task_key' => 'task_senior_advisors',
+            'target_value' => 10,
             'current_value' => 6,
-            'streak_value'  => 0,
-            'completed_at'  => null,
+            'streak_value' => 0,
+            'completed_at' => null,
         ]);
 
         $this->service->checkNexusInterventions($run);
@@ -1055,12 +1056,12 @@ class RunProgressServiceTest extends TestCase
 
         // One completed objective
         RunObjective::create([
-            'run_id'        => $run->id,
-            'task_key'      => 'task_senior_advisors',
-            'target_value'  => 1,
+            'run_id' => $run->id,
+            'task_key' => 'task_senior_advisors',
+            'target_value' => 1,
             'current_value' => 1,
-            'streak_value'  => 0,
-            'completed_at'  => 40,
+            'streak_value' => 0,
+            'completed_at' => 40,
         ]);
 
         $this->service->checkNexusInterventions($run);

@@ -27,66 +27,66 @@ return [
     // Richtwert: Rang-1-Wissenschaftler (4 AP/Tick) braucht ~2 Ticks für Lv1, ~25 Ticks für Lv5.
 
     'construction' => [
-        'id'                => 90,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0,
+        'id' => 90,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'cartography' => [
-        'id'                => 91,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0,
+        'id' => 91,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'geology' => [
-        'id'                => 92,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0,
+        'id' => 92,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'agronomy' => [
-        'id'                => 93,
-        'trust_per_lv'      => 1,       // see GDD §13
-        'decay_rate'        => 0,
+        'id' => 93,
+        'trust_per_lv' => 1,       // see GDD §13
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'health' => [
-        'id'                => 94,
-        'trust_per_lv'      => 2,       // see GDD §13
-        'decay_rate'        => 0,
+        'id' => 94,
+        'trust_per_lv' => 2,       // see GDD §13
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'trade' => [
-        'id'                => 95,
-        'trust_per_lv'      => 0,
-        'decay_rate'        => 0,
+        'id' => 95,
+        'trust_per_lv' => 0,
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
     'defense' => [
-        'id'                => 96,
-        'trust_per_lv'      => -1,      // see GDD §13 — vigilance dampens morale slightly
-        'decay_rate'        => 0,
+        'id' => 96,
+        'trust_per_lv' => -1,      // see GDD §13 — vigilance dampens morale slightly
+        'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits'           => 100,
-        'levelup_costs'     => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'credits' => 100,
+        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
     ],
 
 ];

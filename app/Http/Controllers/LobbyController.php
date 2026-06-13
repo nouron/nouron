@@ -26,15 +26,15 @@ class LobbyController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        $pending  = $runs->filter(fn(Run $r) => $r->status === 'active' && $r->started_at === null);
-        $active   = $runs->filter(fn(Run $r) => $r->status === 'active' && $r->started_at !== null);
-        $finished = $runs->filter(fn(Run $r) => in_array($r->status, ['completed', 'failed'], true));
+        $pending = $runs->filter(fn (Run $r) => $r->status === 'active' && $r->started_at === null);
+        $active = $runs->filter(fn (Run $r) => $r->status === 'active' && $r->started_at !== null);
+        $finished = $runs->filter(fn (Run $r) => in_array($r->status, ['completed', 'failed'], true));
 
         // When the most recent active run has ended, redirect straight to result screen.
-        $latestActive = $runs->first(fn(Run $r) => $r->status === 'active' && $r->started_at !== null);
+        $latestActive = $runs->first(fn (Run $r) => $r->status === 'active' && $r->started_at !== null);
         if ($latestActive === null) {
-            $latestEnded = $runs->first(fn(Run $r) => in_array($r->status, ['completed', 'failed'], true));
-            if ($latestEnded !== null && $runs->filter(fn(Run $r) => $r->status === 'active')->isEmpty()) {
+            $latestEnded = $runs->first(fn (Run $r) => in_array($r->status, ['completed', 'failed'], true));
+            if ($latestEnded !== null && $runs->filter(fn (Run $r) => $r->status === 'active')->isEmpty()) {
                 return redirect()->route('run.result', $latestEnded->id);
             }
         }
@@ -56,16 +56,16 @@ class LobbyController extends Controller
         $creditsForScore = (int) ($userResourceRow->credits ?? 0);
 
         // Pre-fetch colony_resources trust values for all relevant colony IDs.
-        $colonyIds        = $finishedRunCollection->pluck('colony_id')->unique()->filter();
-        $trustByColony    = DB::table('colony_resources')
+        $colonyIds = $finishedRunCollection->pluck('colony_id')->unique()->filter();
+        $trustByColony = DB::table('colony_resources')
             ->whereIn('colony_id', $colonyIds)
             ->where('resource_id', 12)
             ->pluck('amount', 'colony_id');
 
         $finishedRuns = $finishedRunCollection->map(function (Run $run) use ($creditsForScore, $trustByColony) {
-            $completed  = $run->objectives->whereNotNull('completed_at')->count();
-            $tickLimit  = $run->getTickLimit();
-            $trust      = (int) ($trustByColony[$run->colony_id] ?? 0);
+            $completed = $run->objectives->whereNotNull('completed_at')->count();
+            $tickLimit = $run->getTickLimit();
+            $trust = (int) ($trustByColony[$run->colony_id] ?? 0);
 
             $score = $run->status === 'failed'
                 ? 0
@@ -75,14 +75,14 @@ class LobbyController extends Controller
                     + ($trust * 5));
 
             return [
-                'id'                   => $run->id,
-                'status'               => $run->status,
-                'current_tick'         => $run->current_tick,
-                'tick_limit'           => $tickLimit,
-                'ended_at'             => $run->ended_at,
+                'id' => $run->id,
+                'status' => $run->status,
+                'current_tick' => $run->current_tick,
+                'tick_limit' => $tickLimit,
+                'ended_at' => $run->ended_at,
                 'completed_objectives' => $completed,
-                'total_objectives'     => $run->objectives->count(),
-                'score'                => $score,
+                'total_objectives' => $run->objectives->count(),
+                'score' => $score,
             ];
         });
 
@@ -144,18 +144,18 @@ class LobbyController extends Controller
             // Seed starting buildings: CommandCenter (25) and Harvester (27) at level 1.
             DB::table('colony_buildings')->insert([
                 [
-                    'colony_id'     => $colonyId,
-                    'building_id'   => config('buildings.commandCenter.id', 25),
-                    'level'         => 1,
+                    'colony_id' => $colonyId,
+                    'building_id' => config('buildings.commandCenter.id', 25),
+                    'level' => 1,
                     'status_points' => 20,
-                    'ap_spend'      => 0,
+                    'ap_spend' => 0,
                 ],
                 [
-                    'colony_id'     => $colonyId,
-                    'building_id'   => config('buildings.harvester.id', 27),
-                    'level'         => 1,
+                    'colony_id' => $colonyId,
+                    'building_id' => config('buildings.harvester.id', 27),
+                    'level' => 1,
                     'status_points' => 20,
-                    'ap_spend'      => 0,
+                    'ap_spend' => 0,
                 ],
             ]);
 
@@ -174,18 +174,18 @@ class LobbyController extends Controller
 
             // Create the new run record.
             Run::create([
-                'user_id'      => $userId,
-                'colony_id'    => $colonyId,
+                'user_id' => $userId,
+                'colony_id' => $colonyId,
                 'current_tick' => 0,
-                'status'       => 'active',
-                'started_at'   => null, // set when player clicks "Mission starten" in lobby
-                'phase'        => 1,
-                'nexus_debt'   => 3000,
-                'settings'     => [
-                    'tick_limit'     => config('game.run.tick_limit'),
-                    'bypass'         => config('game.bypass'),
+                'status' => 'active',
+                'started_at' => null, // set when player clicks "Mission starten" in lobby
+                'phase' => 1,
+                'nexus_debt' => 3000,
+                'settings' => [
+                    'tick_limit' => config('game.run.tick_limit'),
+                    'bypass' => config('game.bypass'),
                     'supply_cap_max' => config('game.supply.cap_max'),
-                    'max_players'    => config('game.run.max_players'),
+                    'max_players' => config('game.run.max_players'),
                 ],
             ]);
         });
@@ -204,7 +204,7 @@ class LobbyController extends Controller
         }
 
         $run->update([
-            'status'   => 'failed',
+            'status' => 'failed',
             'ended_at' => now(),
         ]);
 

@@ -15,7 +15,8 @@ use Illuminate\Support\Facades\DB;
  */
 class GameTickDryRun extends Command
 {
-    protected $signature   = 'game:tick-dry-run {--colony= : Limit output to a single colony ID}';
+    protected $signature = 'game:tick-dry-run {--colony= : Limit output to a single colony ID}';
+
     protected $description = 'Simulate one game tick and show a resource/decay diff (no DB writes)';
 
     public function __construct(private readonly TrustService $trustService)
@@ -27,11 +28,12 @@ class GameTickDryRun extends Command
     {
         $filterColony = $this->option('colony') ? (int) $this->option('colony') : null;
 
-        $tick        = (int) DB::table('user_resources')->max('supply');  // rough proxy; not used in output
-        $colonies    = $this->loadColonies($filterColony);
+        $tick = (int) DB::table('user_resources')->max('supply');  // rough proxy; not used in output
+        $colonies = $this->loadColonies($filterColony);
 
         if ($colonies->isEmpty()) {
             $this->warn('No colonies found.');
+
             return self::FAILURE;
         }
 
@@ -49,6 +51,7 @@ class GameTickDryRun extends Command
     {
         $short = preg_replace('/^building_/', '', $name);
         $spaced = (string) preg_replace('/(?<=[a-z])([A-Z])/', ' $1', $short);
+
         return ucfirst($spaced);
     }
 
@@ -58,7 +61,7 @@ class GameTickDryRun extends Command
             ->leftJoin('user as u', 'u.user_id', '=', 'c.user_id')
             ->leftJoin('user_resources as ur', 'ur.user_id', '=', 'c.user_id')
             ->select('c.id as colony_id', 'c.name as colony_name', 'c.user_id',
-                     'u.username', 'ur.credits', 'ur.supply');
+                'u.username', 'ur.credits', 'ur.supply');
 
         if ($filterColony !== null) {
             $q->where('c.id', $filterColony);
@@ -87,46 +90,50 @@ class GameTickDryRun extends Command
             ->where('cb.colony_id', $cid)
             ->where('cb.level', '>', 0)
             ->select('cb.building_id', 'b.name', 'cb.level', 'cb.status_points',
-                     'b.decay_rate', 'b.max_status_points', 'b.supply_cost')
+                'b.decay_rate', 'b.max_status_points', 'b.supply_cost')
             ->get()
             ->keyBy('building_id');
 
-        $ccLevel      = (int) ($buildings->get(25)?->level ?? 0);
+        $ccLevel = (int) ($buildings->get(25)?->level ?? 0);
         $housingLevel = (int) ($buildings->get(28)?->level ?? 0);
 
         // ── Supply cap ────────────────────────────────────────────────────
-        $capCC      = (int) config('buildings.commandCenter.supply_cap', 10);
+        $capCC = (int) config('buildings.commandCenter.supply_cap', 10);
         $capHousing = (int) config('buildings.housingComplex.supply_cap', 8);
-        $capMax     = (int) config('game.supply.cap_max', 200);
-        $newCap     = $ccLevel > 0
+        $capMax = (int) config('game.supply.cap_max', 200);
+        $newCap = $ccLevel > 0
             ? min($capCC + ($housingLevel * $capHousing), $capMax)
             : 0;
         $oldCap = (int) ($colony->supply ?? 0);
-        $capChange  = $newCap - $oldCap;
-        $capStr     = $capChange === 0
+        $capChange = $newCap - $oldCap;
+        $capStr = $capChange === 0
             ? "<fg=white>{$newCap}</>"
             : sprintf('<fg=%s>%d → %d (%+d)</>', $capChange > 0 ? 'green' : 'red', $oldCap, $newCap, $capChange);
         $this->line("  Supply cap:  {$capStr}");
 
         // ── Credits ───────────────────────────────────────────────────────
-        $credits       = (int) ($colony->credits ?? 0);
-        $nexus         = $ccLevel > 0 ? (int) config('game.credits.nexus_subsidy', 30) : 0;
+        $credits = (int) ($colony->credits ?? 0);
+        $nexus = $ccLevel > 0 ? (int) config('game.credits.nexus_subsidy', 30) : 0;
         $housingIncome = $housingLevel * (int) config('game.credits.tax_per_housing', 20);
 
-        $advisors  = DB::table('advisors')
+        $advisors = DB::table('advisors')
             ->where('colony_id', $cid)
             ->whereNotNull('colony_id')
             ->select('rank')
             ->get();
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
-        $upkeep    = $advisors->sum(fn($a) => $upkeepMap[$a->rank] ?? 10);
+        $upkeep = $advisors->sum(fn ($a) => $upkeepMap[$a->rank] ?? 10);
 
         $creditsDelta = $nexus + $housingIncome - $upkeep;
-        $creditsNew   = $credits + $creditsDelta;
+        $creditsNew = $credits + $creditsDelta;
 
         $incomeStr = "+{$nexus} nexus";
-        if ($housingIncome > 0) $incomeStr .= " +{$housingIncome} housing";
-        if ($upkeep > 0)        $incomeStr .= " -{$upkeep} upkeep";
+        if ($housingIncome > 0) {
+            $incomeStr .= " +{$housingIncome} housing";
+        }
+        if ($upkeep > 0) {
+            $incomeStr .= " -{$upkeep} upkeep";
+        }
         $color = $creditsDelta >= 0 ? 'green' : 'red';
         $this->line(sprintf(
             '  Credits:     %d → <fg=%s>%d</> (%+d: %s)',
@@ -140,13 +147,13 @@ class GameTickDryRun extends Command
             ->pluck('amount', 'resource_id');
 
         $production = config('game.production', []);
-        $moral      = $this->trustService->getTrust($cid);
+        $moral = $this->trustService->getTrust($cid);
         $multiplier = $this->trustService->getProductionMultiplier($moral);
 
         $resNames = [3 => 'Regolith', 4 => 'Werkstoffe', 5 => 'Organika'];
         $this->line('  Resources:');
         foreach ($resNames as $rid => $rname) {
-            $cur   = (int) ($colRes[$rid] ?? 0);
+            $cur = (int) ($colRes[$rid] ?? 0);
             $yield = 0;
             foreach ($production as $buildingId => $outputs) {
                 if (isset($outputs[$rid])) {
@@ -158,7 +165,7 @@ class GameTickDryRun extends Command
             $yieldStr = $yield > 0
                 ? sprintf('<fg=green>+%d</>', $yield)
                 : ($yield < 0 ? sprintf('<fg=red>%d</>', $yield) : '<fg=gray>±0</>');
-            $this->line(sprintf('    %-14s %6d → %6d  (%s)', $rname . ':', $cur, $new, $yieldStr));
+            $this->line(sprintf('    %-14s %6d → %6d  (%s)', $rname.':', $cur, $new, $yieldStr));
         }
 
         $trustColor = $moral >= 0 ? 'green' : 'red';
@@ -183,29 +190,29 @@ class GameTickDryRun extends Command
 
         $this->line('  Building decay:');
         foreach ($buildings->sortBy('name') as $b) {
-            $rate    = (float) $b->decay_rate;
-            $maxSP   = (int) $b->max_status_points;
-            $curSP   = (float) $b->status_points;
-            $newSP   = $curSP - ($rate * $overcapFactor);
-            $pct     = $maxSP > 0 ? ($newSP / $maxSP) * 100 : 100;
+            $rate = (float) $b->decay_rate;
+            $maxSP = (int) $b->max_status_points;
+            $curSP = (float) $b->status_points;
+            $newSP = $curSP - ($rate * $overcapFactor);
+            $pct = $maxSP > 0 ? ($newSP / $maxSP) * 100 : 100;
 
             if ($newSP <= 0) {
                 $color = 'red';
-                $flag  = ' ⚠ LEVEL DOWN';
+                $flag = ' ⚠ LEVEL DOWN';
             } elseif ($pct < 20) {
                 $color = 'red';
-                $flag  = ' ⚠ critical';
+                $flag = ' ⚠ critical';
             } elseif ($pct < 40) {
                 $color = 'yellow';
-                $flag  = ' ! attention';
+                $flag = ' ! attention';
             } else {
                 $color = 'gray';
-                $flag  = '';
+                $flag = '';
             }
 
             $this->line(sprintf(
                 '    %-22s Lv%d  %5.1f → <fg=%s>%5.1f</> SP/%d  (%d%%)%s',
-                $this->buildingLabel($b->name) . ':', $b->level, $curSP, $color, max(0, $newSP), $maxSP, max(0, (int)$pct), $flag
+                $this->buildingLabel($b->name).':', $b->level, $curSP, $color, max(0, $newSP), $maxSP, max(0, (int) $pct), $flag
             ));
         }
 

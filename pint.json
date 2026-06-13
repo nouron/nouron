@@ -1,0 +1,12 @@
+{
+    "preset": "laravel",
+    "exclude": [
+        "bootstrap/cache",
+        "storage",
+        "resources/views",
+        "database/migrations"
+    ],
+    "notName": [
+        "*.blade.php"
+    ]
+}

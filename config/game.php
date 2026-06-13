@@ -15,9 +15,9 @@ return [
     //   Test Supply behaviour:  GAME_BYPASS_RESOURCES=true, rest false
     //   Free-click everything:  all three true  (equivalent to old dev_mode=true)
     'bypass' => [
-        'ap_checks'      => (bool) env('GAME_BYPASS_AP',        false),
+        'ap_checks' => (bool) env('GAME_BYPASS_AP', false),
         'resource_costs' => (bool) env('GAME_BYPASS_RESOURCES', false),
-        'supply_checks'  => (bool) env('GAME_BYPASS_SUPPLY',    false),
+        'supply_checks' => (bool) env('GAME_BYPASS_SUPPLY', false),
     ],
 
     // @deprecated — use individual game.bypass.* flags instead.
@@ -40,7 +40,7 @@ return [
         // The daily calculation window (server time, hour of day, UTC)
         'calculation' => [
             'start' => 3,
-            'end'   => 4,
+            'end' => 4,
         ],
         // Fixed tick number used in test cases
         'testcase' => 14479,
@@ -65,9 +65,9 @@ return [
     // Per-entity supply_cost values live in config/buildings.php and config/ships.php.
     // Advisors do NOT consume supply — their cost runs through Credits (see GDD §12).
     'supply' => [
-        'cap_max'             => 200,   // absolute hard cap across the whole colony
-        'cap_commandcenter'   => 10,    // supply cap per CC level (max Lv5 → 50)
-        'cap_housingcomplex'  => 8,     // supply cap per housing unit (max 6 units → 48)
+        'cap_max' => 200,   // absolute hard cap across the whole colony
+        'cap_commandcenter' => 10,    // supply cap per CC level (max Lv5 → 50)
+        'cap_housingcomplex' => 8,     // supply cap per housing unit (max 6 units → 48)
         'knowledge_cap_per_level' => [  // non-linear cap bonus per knowledge level (bell curve)
             1 => 3,
             2 => 5,
@@ -92,7 +92,7 @@ return [
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'combat_factor'  => 2,    // hangar decay multiplier when fleet was in combat (ships don't decay)
+        'combat_factor' => 2,    // hangar decay multiplier when fleet was in combat (ships don't decay)
         'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
     ],
 
@@ -100,25 +100,25 @@ return [
     // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
-        'rank_thresholds'  => [1 => 10, 2 => 20],
-        'ap_per_rank'      => [1 => 4, 2 => 7, 3 => 12],
+        'rank_thresholds' => [1 => 10, 2 => 20],
+        'ap_per_rank' => [1 => 4, 2 => 7, 3 => 12],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
         // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
-        'promotion_costs'  => [2 => 150, 3 => 400],
+        'promotion_costs' => [2 => 150, 3 => 400],
         // Slot system: CC level = number of advisor slots (max 5).
         // Formula: min(cc_level, max_slots)
-        'max_slots'        => 5,
+        'max_slots' => 5,
         // Credits deducted from the owning user each tick per active advisor (GDD §12).
         // Processed in GameTick after passive Credits income to prevent false-negative
         // deficits when income and upkeep fire in the same tick.
-        'upkeep'           => [1 => 10, 2 => 50, 3 => 160],
+        'upkeep' => [1 => 10, 2 => 50, 3 => 160],
     ],
 
     // Passive Credits income per tick (GDD §3).
     // Applied in GameTick step 8b (generatePassiveCredits), after resource generation.
     'credits' => [
         // Flat Cr/Tick subsidy from the Nexus for every colony that has CC > 0.
-        'nexus_subsidy'   => 30,
+        'nexus_subsidy' => 30,
         // Cr/Tick per housing level (sum of all housingComplex instances in the colony).
         'tax_per_housing' => 20,
     ],
@@ -130,24 +130,24 @@ return [
     // guest_count: [min, max] guests per tick keyed by trader rank.
     // offer_duration: ticks an offer stays valid (expires_tick = current_tick + offer_duration).
     'bar' => [
-        'base_prices'     => [3 => 30, 4 => 60, 5 => 50], // regolith, compounds, organics
-        'price_variance'  => 0.20,
+        'base_prices' => [3 => 30, 4 => 60, 5 => 50], // regolith, compounds, organics
+        'price_variance' => 0.20,
         'trader_discount' => [0 => 0.00, 1 => 0.00, 2 => 0.10, 3 => 0.25],
-        'guest_count'     => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
-        'offer_duration'  => 2,
+        'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
+        'offer_duration' => 2,
     ],
 
     // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).
     // Rule: military AP cost >= civilian AP cost — never violate this ratio.
     'fleet' => [
         'order_costs' => [
-            'move'    => 1,  // civilian — move fleet to coordinates
-            'hold'    => 1,  // civilian — hold position for one tick
-            'trade'   => 1,  // civilian — execute trade at colony
-            'join'    => 1,  // civilian — merge with target fleet
-            'convoy'  => 1,  // civilian — escort target fleet to its destination
-            'defend'  => 2,  // semi-military — move to target fleet's position to defend
-            'attack'  => 3,  // military — attack enemy fleet
+            'move' => 1,  // civilian — move fleet to coordinates
+            'hold' => 1,  // civilian — hold position for one tick
+            'trade' => 1,  // civilian — execute trade at colony
+            'join' => 1,  // civilian — merge with target fleet
+            'convoy' => 1,  // civilian — escort target fleet to its destination
+            'defend' => 2,  // semi-military — move to target fleet's position to defend
+            'attack' => 3,  // military — attack enemy fleet
         ],
     ],
 
@@ -163,19 +163,19 @@ return [
 
     // Galaxy overview map
     'galaxy_view' => [
-        'range'      => 10000,
-        'offset'     => 0,
-        'scale'      => 0.05,
+        'range' => 10000,
+        'offset' => 0,
+        'scale' => 0.05,
         'systemSize' => 3,
     ],
 
     // System detail map
     'system_view' => [
-        'range'      => 100,
-        'offset'     => 100,
-        'scale'      => 10,
+        'range' => 100,
+        'offset' => 100,
+        'scale' => 10,
         'planetSize' => 10,
-        'slotSize'   => 10,
+        'slotSize' => 10,
     ],
 
     // Trade marketplace — AP costs for Händler (economy AP).
@@ -197,33 +197,33 @@ return [
         'ships_cap' => 30,
         // Production multipliers by trust band (see GDD §13 "Effekte der Moral").
         'production_multiplier' => [
-            ['min' =>  61, 'max' => 100, 'factor' => 1.20],
-            ['min' =>  21, 'max' =>  60, 'factor' => 1.10],
-            ['min' => -20, 'max' =>  20, 'factor' => 1.00],
+            ['min' => 61, 'max' => 100, 'factor' => 1.20],
+            ['min' => 21, 'max' => 60, 'factor' => 1.10],
+            ['min' => -20, 'max' => 20, 'factor' => 1.00],
             ['min' => -60, 'max' => -21, 'factor' => 0.85],
-            ['min' => -100,'max' => -61, 'factor' => 0.70],
+            ['min' => -100, 'max' => -61, 'factor' => 0.70],
         ],
         // AP multipliers by trust band.
         'ap_multiplier' => [
-            ['min' =>  61, 'max' => 100, 'factor' => 1.10],
-            ['min' =>  21, 'max' =>  60, 'factor' => 1.05],
-            ['min' => -20, 'max' =>  20, 'factor' => 1.00],
+            ['min' => 61, 'max' => 100, 'factor' => 1.10],
+            ['min' => 21, 'max' => 60, 'factor' => 1.05],
+            ['min' => -20, 'max' => 20, 'factor' => 1.00],
             ['min' => -60, 'max' => -21, 'factor' => 0.90],
-            ['min' => -100,'max' => -61, 'factor' => 0.80],
+            ['min' => -100, 'max' => -61, 'factor' => 0.80],
         ],
         // Event trust effects (one-shot, active for exactly 1 tick).
         // Multiple events of the same key in one tick do NOT stack — strongest wins.
         'events' => [
-            'building_level_up'     =>  1,
-            'building_level_down'   => -3,
-            'research_level_up'     =>  2,
-            'trade_success'         =>  2,
-            'trade_blocked'         => -3,
-            'encounter_won'         =>  2,
-            'encounter_lost'        => -5,
-            'colony_threatened'     => -4,
-            'treaty_signed'         =>  3,
-            'nexus_credit'          => -5,  // trust penalty when ship is acquired on Nexus-Kredit
+            'building_level_up' => 1,
+            'building_level_down' => -3,
+            'research_level_up' => 2,
+            'trade_success' => 2,
+            'trade_blocked' => -3,
+            'encounter_won' => 2,
+            'encounter_lost' => -5,
+            'colony_threatened' => -4,
+            'treaty_signed' => 3,
+            'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
         ],
     ],
 
@@ -242,10 +242,10 @@ return [
 
     // Run structure — one run = one expedition with a defined start, goal and end (GDD §15).
     'run' => [
-        'allow_multiple'       => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
-        'tick_limit'           => 100,    // total ticks per run (60–100, default 100)
+        'allow_multiple' => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
+        'tick_limit' => 100,    // total ticks per run (60–100, default 100)
         'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
-        'task_pool'            => [       // all available Phase-2 task keys
+        'task_pool' => [       // all available Phase-2 task keys
             'task_senior_advisors',
             'task_credit_reserve',
             'task_colony_prosperity',
@@ -256,25 +256,25 @@ return [
             'task_trade_volume',
             'task_combat_record',
         ],
-        'tick_duration_hours'  => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
-        'max_players'          => 1,      // 1 = singleplayer; 2–4 = multiplayer
-        'playbymailmode'       => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
+        'tick_duration_hours' => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
+        'max_players' => 1,      // 1 = singleplayer; 2–4 = multiplayer
+        'playbymailmode' => false,  // true: tick fires when all players confirm, at most after tick_duration_hours
 
         // Nexus intervention milestones (tick numbers, GDD §15 "Nexus-Eingriffe").
         'nexus_milestones' => [
-            30  => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
-            50  => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning
-            85  => 'sanction',        // at tick 85: if 0 tasks done → advisor penalty + deadline shortened to 95
-            90  => 'final_warning',   // at tick 90: last warning if still 0 tasks done
+            30 => 'warn_progress',   // at tick 30: at least 1 task must be >50% done, else INNN warning
+            50 => 'warn_none_done',  // at tick 50: if 0 tasks fully done, second INNN warning
+            85 => 'sanction',        // at tick 85: if 0 tasks done → advisor penalty + deadline shortened to 95
+            90 => 'final_warning',   // at tick 90: last warning if still 0 tasks done
         ],
 
         // Score formula weights (GDD §15 "Highscore").
         // score = (tasks_done × w_task) + (tick_limit - done_at_tick) × w_tick + (credits_remaining / w_credits) + (trust_at_end × w_trust)
         'score_weights' => [
-            'task_completed'    => 1000,  // per completed objective
-            'ticks_saved'       =>   10,  // per tick below tick_limit when last objective was met
-            'credits_divisor'   =>   10,  // remaining credits divided by this value
-            'trust_multiplier'  =>    5,  // trust value at run end × this value
+            'task_completed' => 1000,  // per completed objective
+            'ticks_saved' => 10,  // per tick below tick_limit when last objective was met
+            'credits_divisor' => 10,  // remaining credits divided by this value
+            'trust_multiplier' => 5,  // trust value at run end × this value
         ],
     ],
 
@@ -284,15 +284,15 @@ return [
     'merchant' => [
         'first_appearance_min' => 15,   // earliest Sol the merchant can first appear
         'first_appearance_max' => 20,   // latest Sol for the first appearance
-        'interval_min'         => 10,   // minimum Sols between visits
-        'interval_max'         => 15,   // maximum Sols between visits
-        'duration_ticks'       => 2,    // how many Sols the merchant stays (inclusive)
-        'items_count'          => 3,    // items offered per visit (3 default, up to 4)
+        'interval_min' => 10,   // minimum Sols between visits
+        'interval_max' => 15,   // maximum Sols between visits
+        'duration_ticks' => 2,    // how many Sols the merchant stays (inclusive)
+        'items_count' => 3,    // items offered per visit (3 default, up to 4)
         'items' => [
-            'ap_flex'     => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
+            'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
             'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],
             'information' => ['label' => 'Systemkarte vollständig',   'cost' => 1200],
-            'repair_kit'  => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
+            'repair_kit' => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
             'trust_boost' => ['label' => 'Vertrauensschub (+15)',     'cost' => 600,  'trust_amount' => 15],
         ],
     ],

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Models\User;
+use App\Services\Techtree\PersonellService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -23,10 +25,13 @@ class BuildingRepairTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID    = 1;
+    private const COLONY_ID = 1;
+
     private const BART_USER_ID = 3;
-    private const CC_ID        = 25;
-    private const CC_MAX_SP    = 20;
+
+    private const CC_ID = 25;
+
+    private const CC_MAX_SP = 20;
 
     protected function setUp(): void
     {
@@ -34,9 +39,9 @@ class BuildingRepairTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
     }
 
-    private function makeUser(int $userId): \App\Models\User
+    private function makeUser(int $userId): User
     {
-        return \App\Models\User::where('user_id', $userId)->firstOrFail();
+        return User::where('user_id', $userId)->firstOrFail();
     }
 
     private function setCcState(array $attrs): void
@@ -146,7 +151,7 @@ class BuildingRepairTest extends TestCase
         $this->setCcState(['status_points' => 16]);
 
         // Drain the construction AP pool by locking more than available.
-        $personell = $this->app->make(\App\Services\Techtree\PersonellService::class);
+        $personell = $this->app->make(PersonellService::class);
         $available = $personell->getConstructionPoints(self::COLONY_ID);
         if ($available > 0) {
             $personell->lockActionPoints('construction', self::COLONY_ID, $available);
@@ -166,7 +171,7 @@ class BuildingRepairTest extends TestCase
         $this->repair()->assertJsonPath('ok', true);
 
         $this->assertDatabaseHas('colony_log', [
-            'user'  => self::BART_USER_ID,
+            'user' => self::BART_USER_ID,
             'event' => 'colony.building_repaired',
         ]);
     }

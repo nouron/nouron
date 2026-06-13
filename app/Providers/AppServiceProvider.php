@@ -2,11 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Run;
 use App\Services\ColonyService;
+use App\Services\EventService;
+use App\Services\FleetService;
 use App\Services\GalaxyService;
 use App\Services\MerchantService;
-use App\Services\EventService;
-use App\Services\TrustService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
@@ -14,7 +15,7 @@ use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
-use App\Services\FleetService;
+use App\Services\TrustService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -34,12 +35,12 @@ class AppServiceProvider extends ServiceProvider
         // Console commands (Artisan / scheduler) fall back to the time-based calculation.
         $this->app->singleton(TickService::class, function () {
             if (app()->runningInConsole()) {
-                return new TickService(); // time-based fallback for Artisan / tests
+                return new TickService; // time-based fallback for Artisan / tests
             }
 
             $userId = auth()->id();
-            $run    = $userId
-                ? \App\Models\Run::where('user_id', $userId)->where('status', 'active')->first()
+            $run = $userId
+                ? Run::where('user_id', $userId)->where('status', 'active')->first()
                 : null;
 
             return new TickService($run?->current_tick);
@@ -47,34 +48,34 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(ColonyService::class, ColonyService::class);
         $this->app->bind(EventService::class, EventService::class);
-        $this->app->bind(MerchantService::class, fn($app) => new MerchantService(
+        $this->app->bind(MerchantService::class, fn ($app) => new MerchantService(
             $app->make(PersonellService::class),
         ));
         $this->app->bind(GalaxyService::class, GalaxyService::class);
 
         $this->app->bind(ResourcesService::class, ResourcesService::class);
-        $this->app->bind(TrustService::class, fn($app) => new TrustService(
+        $this->app->bind(TrustService::class, fn ($app) => new TrustService(
             $app->make(TickService::class),
         ));
         $this->app->bind(FleetService::class, FleetService::class);
 
         // Techtree services
-        $this->app->bind(PersonellService::class, fn($app) => new PersonellService(
+        $this->app->bind(PersonellService::class, fn ($app) => new PersonellService(
             $app->make(TickService::class),
             $app->make(TrustService::class),
             $app->make(ResourcesService::class),
         ));
-        $this->app->bind(BuildingService::class, fn($app) => new BuildingService(
+        $this->app->bind(BuildingService::class, fn ($app) => new BuildingService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
             $app->make(PersonellService::class),
         ));
-        $this->app->bind(ResearchService::class, fn($app) => new ResearchService(
+        $this->app->bind(ResearchService::class, fn ($app) => new ResearchService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
             $app->make(PersonellService::class),
         ));
-        $this->app->bind(ShipService::class, fn($app) => new ShipService(
+        $this->app->bind(ShipService::class, fn ($app) => new ShipService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
             $app->make(PersonellService::class),
@@ -99,7 +100,7 @@ class AppServiceProvider extends ServiceProvider
             if (Auth::check()) {
                 $colonyId = (int) session('activeIds.colonyId', 0);
                 // Validate the session colony belongs to the current user; heal stale sessions.
-                if (!$colonyId || !DB::table('glx_colonies')->where('id', $colonyId)->where('user_id', Auth::id())->exists()) {
+                if (! $colonyId || ! DB::table('glx_colonies')->where('id', $colonyId)->where('user_id', Auth::id())->exists()) {
                     $colonyId = (int) DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->value('id');
                     if ($colonyId) {
                         session(['activeIds.colonyId' => $colonyId]);
@@ -116,12 +117,12 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('resourceBarPossessions', $possessions ?? []);
 
                 // Inject Sol run-progress for the resource bar Sol chip
-                $colony    = DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->first();
+                $colony = DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->first();
                 $sinceTick = $colony ? (int) $colony->since_tick : null;
                 $tickService = app(TickService::class);
-                $globalTick  = $tickService->getTickCount();
-                $solLimit    = (int) config('game.run.tick_limit', 100);
-                $currentSol  = $sinceTick !== null ? min($solLimit, max(1, $globalTick - $sinceTick + 1)) : null;
+                $globalTick = $tickService->getTickCount();
+                $solLimit = (int) config('game.run.tick_limit', 100);
+                $currentSol = $sinceTick !== null ? min($solLimit, max(1, $globalTick - $sinceTick + 1)) : null;
 
                 $view->with('currentSol', $currentSol);
                 $view->with('solLimit', $solLimit);
@@ -129,7 +130,7 @@ class AppServiceProvider extends ServiceProvider
                 // Feature 3: Nexus debt from the active run — shown in the navbar.
                 // nexus_debt_max = 12000 Cr (Nexus cancels the concession above this cap, GDD §15).
                 // Only runs with started_at set count as "in-run" — pending runs do not show run UI.
-                $activeRun = \App\Models\Run::where('user_id', Auth::id())
+                $activeRun = Run::where('user_id', Auth::id())
                     ->where('status', 'active')
                     ->whereNotNull('started_at')
                     ->first(['nexus_debt']);
@@ -174,16 +175,16 @@ class AppServiceProvider extends ServiceProvider
         if (config('game.dev_mode')) {
             trigger_error(
                 'config(\'game.dev_mode\') is deprecated. Use individual game.bypass.* flags instead '
-                . '(GAME_BYPASS_AP, GAME_BYPASS_RESOURCES, GAME_BYPASS_SUPPLY). '
-                . 'game.dev_mode will be removed in a future release.',
+                .'(GAME_BYPASS_AP, GAME_BYPASS_RESOURCES, GAME_BYPASS_SUPPLY). '
+                .'game.dev_mode will be removed in a future release.',
                 E_USER_DEPRECATED
             );
             Log::warning('[DEPRECATED] game.dev_mode is set — expanding to all game.bypass.* flags. '
-                . 'Switch to GAME_BYPASS_AP / GAME_BYPASS_RESOURCES / GAME_BYPASS_SUPPLY.');
+                .'Switch to GAME_BYPASS_AP / GAME_BYPASS_RESOURCES / GAME_BYPASS_SUPPLY.');
             config([
-                'game.bypass.ap_checks'      => true,
+                'game.bypass.ap_checks' => true,
                 'game.bypass.resource_costs' => true,
-                'game.bypass.supply_checks'  => true,
+                'game.bypass.supply_checks' => true,
             ]);
         }
 

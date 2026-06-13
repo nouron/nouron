@@ -30,8 +30,11 @@ abstract class AbstractTechnologyService
     use ValidatesId;
 
     abstract protected function masterTable(): string;
+
     abstract protected function colonyTable(): string;
+
     abstract protected function costsTable(): string;
+
     abstract protected function entityIdKey(): string;
 
     public function __construct(
@@ -50,6 +53,7 @@ abstract class AbstractTechnologyService
     public function getEntity(int $id): mixed
     {
         $this->validateId($id);
+
         return DB::table($this->masterTable())->find($id) ?: false;
     }
 
@@ -64,7 +68,7 @@ abstract class AbstractTechnologyService
     /**
      * Return the colony-specific row for a given entity, or null if absent.
      */
-    public function getColonyEntity(int $colonyId, int $entityId): object|null
+    public function getColonyEntity(int $colonyId, int $entityId): ?object
     {
         return DB::table($this->colonyTable())
             ->where('colony_id', $colonyId)
@@ -81,6 +85,7 @@ abstract class AbstractTechnologyService
         if ($colonyId !== null) {
             $query->where('colony_id', $colonyId);
         }
+
         return $query->get();
     }
 
@@ -93,6 +98,7 @@ abstract class AbstractTechnologyService
         if ($entityId !== null) {
             $query->where($this->entityIdKey(), $entityId);
         }
+
         return $query->get();
     }
 
@@ -105,7 +111,7 @@ abstract class AbstractTechnologyService
     public function checkRequiredBuildingsByEntityId(int $colonyId, int $entityId): bool
     {
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (!$entity || !$entity->required_building_id) {
+        if (! $entity || ! $entity->required_building_id) {
             return true;
         }
 
@@ -144,6 +150,7 @@ abstract class AbstractTechnologyService
         }
 
         $costs = $this->getEntityCosts($entityId);
+
         return $costs->isEmpty() || $this->resourcesService->check($costs, $colonyId);
     }
 
@@ -160,16 +167,17 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (!$entity) {
+        if (! $entity) {
             return false;
         }
 
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-        if (!$colonyEntity) {
+        if (! $colonyEntity) {
             return false;
         }
 
         $required = $this->resolveApForLevelup($colonyId, $entityId, $entity);
+
         return (int) $colonyEntity->ap_spend >= $required;
     }
 
@@ -187,7 +195,7 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (!$entity || empty($entity->supply_cost) || (int) $entity->supply_cost === 0) {
+        if (! $entity || empty($entity->supply_cost) || (int) $entity->supply_cost === 0) {
             return true;
         }
 
@@ -205,12 +213,12 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (!$entity || !$entity->max_level || $entity->max_level <= 0) {
+        if (! $entity || ! $entity->max_level || $entity->max_level <= 0) {
             return true;
         }
 
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-        if (!$colonyEntity) {
+        if (! $colonyEntity) {
             return true;
         }
 
@@ -223,7 +231,7 @@ abstract class AbstractTechnologyService
     public function checkLevelDownLimit(int $colonyId, int $entityId): bool
     {
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-        if (!$colonyEntity) {
+        if (! $colonyEntity) {
             return false;
         }
 
@@ -248,7 +256,7 @@ abstract class AbstractTechnologyService
      * - 'repair': increment status_points toward max_status_points (locks AP)
      * - 'remove': decrement status_points toward 0 (locks AP)
      *
-     * @param string $pointsType  'construction_points' or 'research_points'
+     * @param  string  $pointsType  'construction_points' or 'research_points'
      */
     protected function _invest(
         string $pointsType,
@@ -263,8 +271,8 @@ abstract class AbstractTechnologyService
         // Verify available AP
         $availableAP = match ($pointsType) {
             'construction_points' => $this->personellService?->getConstructionPoints($colonyId) ?? 0,
-            'research_points'     => $this->personellService?->getResearchPoints($colonyId) ?? 0,
-            default               => 0,
+            'research_points' => $this->personellService?->getResearchPoints($colonyId) ?? 0,
+            default => 0,
         };
 
         if ($availableAP < abs($points)) {
@@ -272,22 +280,22 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (!$entity) {
+        if (! $entity) {
             return false;
         }
 
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
 
-        $currentApSpend     = $colonyEntity ? (int) $colonyEntity->ap_spend      : 0;
-        $currentStatus      = $colonyEntity ? (int) $colonyEntity->status_points : 0;
-        $currentLevel       = $colonyEntity ? (int) $colonyEntity->level         : 0;
+        $currentApSpend = $colonyEntity ? (int) $colonyEntity->ap_spend : 0;
+        $currentStatus = $colonyEntity ? (int) $colonyEntity->status_points : 0;
+        $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
 
-        $apForLevelup    = $this->resolveApForLevelup($colonyId, $entityId, $entity);
+        $apForLevelup = $this->resolveApForLevelup($colonyId, $entityId, $entity);
         $maxStatusPoints = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
         $statusBefore = $currentStatus;
-        $newApSpend   = $currentApSpend;
-        $newStatus    = $currentStatus;
+        $newApSpend = $currentApSpend;
+        $newStatus = $currentStatus;
 
         switch ($changeMode) {
             case 'add':
@@ -310,9 +318,9 @@ abstract class AbstractTechnologyService
         }
 
         $updateData = [
-            'level'         => $currentLevel,
+            'level' => $currentLevel,
             'status_points' => $newStatus,
-            'ap_spend'      => $newApSpend,
+            'ap_spend' => $newApSpend,
         ];
 
         DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $pointsType) {
@@ -369,37 +377,37 @@ abstract class AbstractTechnologyService
      */
     public function levelup(int $colonyId, int $entityId): bool
     {
-        if (!$this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredActionPoints($colonyId, $entityId)) {
+        if (! $this->checkRequiredActionPoints($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredSupplyByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredSupplyByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkLevelUpLimit($colonyId, $entityId)) {
+        if (! $this->checkLevelUpLimit($colonyId, $entityId)) {
             return false;
         }
 
-        $entity       = DB::table($this->masterTable())->find($entityId);
+        $entity = DB::table($this->masterTable())->find($entityId);
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
         $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
-        $maxStatus    = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
+        $maxStatus = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
         $costs = $this->getEntityCosts($entityId);
 
-        DB::transaction(function () use ($colonyId, $entityId, $entity, $currentLevel, $maxStatus, $costs) {
+        DB::transaction(function () use ($colonyId, $entityId, $currentLevel, $maxStatus, $costs) {
             $this->resourcesService->payCosts($costs, $colonyId);
 
             $updateData = [
-                'level'         => $currentLevel + 1,
+                'level' => $currentLevel + 1,
                 'status_points' => $maxStatus,
             ];
 
@@ -431,26 +439,26 @@ abstract class AbstractTechnologyService
      */
     public function leveldown(int $colonyId, int $entityId): bool
     {
-        if (!$this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
+        if (! $this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkRequiredActionPoints($colonyId, $entityId)) {
+        if (! $this->checkRequiredActionPoints($colonyId, $entityId)) {
             return false;
         }
-        if (!$this->checkLevelDownLimit($colonyId, $entityId)) {
+        if (! $this->checkLevelDownLimit($colonyId, $entityId)) {
             return false;
         }
 
-        $entity       = DB::table($this->masterTable())->find($entityId);
+        $entity = DB::table($this->masterTable())->find($entityId);
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
         $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
-        $maxStatus    = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
+        $maxStatus = isset($entity->max_status_points) ? (int) $entity->max_status_points : 0;
 
         $costs = $this->getEntityCosts($entityId);
 
@@ -458,7 +466,7 @@ abstract class AbstractTechnologyService
             $this->resourcesService->payCosts($costs, $colonyId);
 
             $updateData = [
-                'level'         => $currentLevel - 1,
+                'level' => $currentLevel - 1,
                 'status_points' => $maxStatus,
             ];
 

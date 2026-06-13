@@ -102,6 +102,17 @@ Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
 - Entwicklungsumgebung: Ubuntu unter WSL2 (Windows 11)
 - Owner: Mario (tech.mario@outlook.de)
 
+### Pre-commit Lint-Hook
+
+`.githooks/pre-commit` lintet gestagte Dateien vor jedem Commit: PHP → Laravel Pint (Auto-Fix), JS/CSS → Prettier (Auto-Fix), Blade → Prettier `--check` (blockt nur, kein Auto-Write). Nicht behebbare Fehler brechen den Commit ab.
+
+**Aktivierung pro Clone** (nicht via Git geklont — lokale Config):
+```
+npm install
+git config core.hooksPath .githooks
+```
+Configs: `pint.json` (laravel preset, `database/migrations` exkludiert), `.prettierrc.json`, `.prettierignore`. Blade nicht auto-formatieren — bewusst per `npx prettier --write <datei>` wenn der Hook eine Blade-Datei blockt.
+
 ### Git-Workflow (verbindlich)
 
 **Nie direkt auf `master` committen oder pushen.**

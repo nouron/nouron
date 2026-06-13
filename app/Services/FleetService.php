@@ -26,10 +26,10 @@ class FleetService
     use ValidatesId;
 
     public function __construct(
-        private readonly ColonyService      $colonyService,
-        private readonly GalaxyService      $galaxyService,
-        private readonly TickService        $tickService,
-        private readonly ?PersonellService  $personellService = null,
+        private readonly ColonyService $colonyService,
+        private readonly GalaxyService $galaxyService,
+        private readonly TickService $tickService,
+        private readonly ?PersonellService $personellService = null,
     ) {}
 
     // ── Read ─────────────────────────────────────────────────────────────────
@@ -37,6 +37,7 @@ class FleetService
     public function getFleet(int $fleetId): Fleet|false
     {
         $this->validateId($fleetId);
+
         return Fleet::find($fleetId) ?? false;
     }
 
@@ -66,27 +67,24 @@ class FleetService
      * Add a fleet order (move, trade, hold, etc.).
      * Delegates path-finding to GalaxyService::getPath().
      *
-     * @param  int|Fleet         $fleet
-     * @param  string            $order
-     * @param  int|array|Colony|Fleet $destination
-     * @param  array|null        $additionalData
+     * @param  int|array|Colony|Fleet  $destination
      */
     public function addOrder(int|Fleet $fleet, string $order, mixed $destination, ?array $additionalData = null): void
     {
         $validOrders = ['move', 'trade', 'hold', 'convoy', 'defend', 'attack', 'join', 'divide'];
-        if (!in_array($order, $validOrders)) {
-            throw new \InvalidArgumentException("Unknown command: {$order}");
+        if (! in_array($order, $validOrders)) {
+            throw new InvalidArgumentException("Unknown command: {$order}");
         }
 
         if (is_numeric($fleet)) {
             $fleetId = (int) $fleet;
-            $fleet   = $this->getFleet($fleetId);
+            $fleet = $this->getFleet($fleetId);
         } else {
             $fleetId = $fleet->id;
         }
 
         // Resolve destination to [x, y, spot] array
-        if (!(is_array($destination) && array_keys($destination) === [0, 1, 2])) {
+        if (! (is_array($destination) && array_keys($destination) === [0, 1, 2])) {
             if (is_numeric($destination)) {
                 $destination = (int) $destination;
                 if (in_array(strtolower($order), ['move', 'trade', 'hold'])) {
@@ -100,27 +98,27 @@ class FleetService
             }
         }
 
-        $coords      = $fleet->getCoords();
-        $speed       = $this->calcFleetSpeed($fleetId);
+        $coords = $fleet->getCoords();
+        $speed = $this->calcFleetSpeed($fleetId);
         $currentTick = $this->tickService->getTickCount();
-        $path        = $this->galaxyService->getPath($coords, $destination, $speed, $currentTick + 1);
+        $path = $this->galaxyService->getPath($coords, $destination, $speed, $currentTick + 1);
 
         // Navigation-AP check: each tick in the path costs (order_cost) AP.
         // The final tick carries the actual $order; all preceding ticks are 'move'.
         // Total AP cost = order_cost_for_move * (pathLength - 1) + order_cost_for_$order * 1.
-        $pathLength     = count($path);
-        $moveCost       = (int) config('game.fleet.order_costs.move', 1);
-        $finalOrderCost = (int) config('game.fleet.order_costs.' . $order, $moveCost);
+        $pathLength = count($path);
+        $moveCost = (int) config('game.fleet.order_costs.move', 1);
+        $finalOrderCost = (int) config('game.fleet.order_costs.'.$order, $moveCost);
 
         // Sicherheits-Hub (building_id=53): defend costs 1 Nav-AP instead of 2.
         if ($order === 'defend' && $finalOrderCost > 1) {
             $fleetUserId = DB::table('fleets')->where('id', $fleetId)->value('user_id');
             $primeColony = $fleetUserId ? $this->colonyService->getPrimeColony($fleetUserId) : null;
             if ($primeColony && DB::table('colony_buildings')
-                    ->where('colony_id', $primeColony->id)
-                    ->where('building_id', (int) config('buildings.securityHub.id', 53))
-                    ->where('level', '>', 0)
-                    ->exists()) {
+                ->where('colony_id', $primeColony->id)
+                ->where('building_id', (int) config('buildings.securityHub.id', 53))
+                ->where('level', '>', 0)
+                ->exists()) {
                 $finalOrderCost = max(1, $finalOrderCost - 1);
             }
         }
@@ -130,12 +128,12 @@ class FleetService
         // AP check and lock must be atomic to prevent TOCTOU race conditions.
         DB::transaction(function () use ($fleetId, $path, $order, $additionalData, $apCost) {
             if (config('game.bypass.ap_checks')) {
-                Log::debug("FleetService::addOrder() AP check bypassed. "
-                    . "fleet={$fleetId} order={$order} apCost={$apCost}");
+                Log::debug('FleetService::addOrder() AP check bypassed. '
+                    ."fleet={$fleetId} order={$order} apCost={$apCost}");
             } else {
                 $availableAP = $this->personellService?->getAvailableActionPoints('navigation', $fleetId) ?? PHP_INT_MAX;
                 if ($availableAP < $apCost) {
-                    throw new \RuntimeException("Nicht genug Navigations-AP für diesen Befehl.");
+                    throw new \RuntimeException('Nicht genug Navigations-AP für diesen Befehl.');
                 }
                 $this->personellService?->lockActionPoints('navigation', $fleetId, $apCost);
             }
@@ -154,14 +152,14 @@ class FleetService
                 ->where('tick', '>=', $currentTick)
                 ->delete();
 
-            $i   = 1;
+            $i = 1;
             $cnt = count($path);
             foreach ($path as $tickNr => $tmpCoords) {
                 $tmpOrder = ($i === $cnt) ? $order : 'move';
                 $row = [
-                    'fleet_id'    => $fleetId,
-                    'tick'        => $tickNr,
-                    'order'       => strtolower($tmpOrder),
+                    'fleet_id' => $fleetId,
+                    'tick' => $tickNr,
+                    'order' => strtolower($tmpOrder),
                     'coordinates' => json_encode($tmpCoords),
                 ];
                 if ($i === $cnt && $additionalData !== null) {
@@ -203,25 +201,25 @@ class FleetService
         switch ($type) {
             case 'ship':
                 $colonyTable = 'colony_ships';
-                $fleetTable  = 'fleet_ships';
-                $typeKey     = 'ship_id';
+                $fleetTable = 'fleet_ships';
+                $typeKey = 'ship_id';
                 break;
             case 'research':
                 $colonyTable = 'colony_researches';
-                $fleetTable  = 'fleet_researches';
-                $typeKey     = 'research_id';
+                $fleetTable = 'fleet_researches';
+                $typeKey = 'research_id';
                 break;
             case 'personell':
                 $colonyTable = 'colony_personell';
-                $fleetTable  = 'fleet_personell';
-                $typeKey     = 'personell_id';
+                $fleetTable = 'fleet_personell';
+                $typeKey = 'personell_id';
                 break;
             default:
-                throw new \InvalidArgumentException("Invalid type for transferTechnology: {$type}");
+                throw new InvalidArgumentException("Invalid type for transferTechnology: {$type}");
         }
 
         $colonyCoords = $colony->getCoords();
-        $fleetCoords  = $fleet->getCoords();
+        $fleetCoords = $fleet->getCoords();
 
         if ($colonyCoords[0] !== $fleetCoords[0] || $colonyCoords[1] !== $fleetCoords[1]) {
             return 0;
@@ -255,10 +253,10 @@ class FleetService
 
         DB::transaction(function () use (
             $colonyTable, $fleetTable, $typeKey, $techId, $colony, $fleet,
-            $colonyLevel, $fleetCount, $amount, $type
+            $colonyLevel, $fleetCount, $amount
         ) {
             $newColonyLevel = $colonyLevel - $amount;
-            $newFleetCount  = $fleetCount + $amount;
+            $newFleetCount = $fleetCount + $amount;
 
             // Update colony side
             DB::table($colonyTable)->updateOrInsert(
@@ -283,7 +281,7 @@ class FleetService
         }
 
         $colonyCoords = $colony->getCoords();
-        $fleetCoords  = $fleet->getCoords();
+        $fleetCoords = $fleet->getCoords();
         if ($colonyCoords[0] !== $fleetCoords[0] || $colonyCoords[1] !== $fleetCoords[1]) {
             return 0;
         }
@@ -293,7 +291,7 @@ class FleetService
             ->where('resource_id', $resId)
             ->first();
 
-        if (!$colonyRes) {
+        if (! $colonyRes) {
             return 0;
         }
 
@@ -303,7 +301,7 @@ class FleetService
             ->first();
 
         $colonyAmount = $colonyRes->amount;
-        $fleetAmount  = $fleetResRow ? $fleetResRow->amount : 0;
+        $fleetAmount = $fleetResRow ? $fleetResRow->amount : 0;
 
         if ($amount >= 0) {
             if ($amount > $colonyAmount) {
@@ -334,18 +332,20 @@ class FleetService
     public function getFleetShip(array $key, bool $forceResultEntity = false): FleetShip|false
     {
         $result = FleetShip::where($key)->first();
-        if (!$result && $forceResultEntity) {
+        if (! $result && $forceResultEntity) {
             $result = new FleetShip(['fleet_id' => $key['fleet_id'], 'ship_id' => $key['ship_id'], 'count' => 0, 'is_cargo' => 0]);
         }
+
         return $result ?? false;
     }
 
     public function getFleetResearch(array $key, bool $forceResultEntity = false): FleetResearch|false
     {
         $result = FleetResearch::where($key)->first();
-        if (!$result && $forceResultEntity) {
+        if (! $result && $forceResultEntity) {
             $result = new FleetResearch(['fleet_id' => $key['fleet_id'], 'research_id' => $key['research_id'], 'count' => 0, 'is_cargo' => 0]);
         }
+
         return $result ?? false;
     }
 
@@ -361,6 +361,7 @@ class FleetService
         if ($isCargo !== null) {
             $query->where('is_cargo', (int) $isCargo);
         }
+
         return $query->get();
     }
 
@@ -376,6 +377,7 @@ class FleetService
         if ($isCargo !== null) {
             $query->where('is_cargo', (int) $isCargo);
         }
+
         return $query->get();
     }
 
@@ -391,6 +393,7 @@ class FleetService
         if ($isCargo !== null) {
             $query->where('is_cargo', (int) $isCargo);
         }
+
         return $query->get();
     }
 
@@ -402,15 +405,17 @@ class FleetService
     public function getFleetResourcesByFleetId(int $fleetId): Collection
     {
         $this->validateId($fleetId);
+
         return $this->getFleetResources(['fleet_id' => $fleetId]);
     }
 
     public function getFleetResource(array $key, bool $forceResultEntity = false): FleetResource|false
     {
         $result = FleetResource::where($key)->first();
-        if (!$result && $forceResultEntity) {
+        if (! $result && $forceResultEntity) {
             $result = new FleetResource(['fleet_id' => $key['fleet_id'], 'resource_id' => $key['resource_id'], 'amount' => 0]);
         }
+
         return $result ?? false;
     }
 
@@ -432,12 +437,14 @@ class FleetService
         if ($limit) {
             $query->take($limit);
         }
+
         return $query->get();
     }
 
     public function getFleetsByUserId(int $userId): Collection
     {
         $this->validateId($userId);
+
         return Fleet::where('user_id', $userId)->get();
     }
 
@@ -449,10 +456,10 @@ class FleetService
             'colony' => Colony::find($id),
             'object' => GlxSystemObject::find($id),
             'system' => GlxSystem::find($id),
-            default  => null,
+            default => null,
         };
 
-        if (!$entity) {
+        if (! $entity) {
             return collect();
         }
 
@@ -462,9 +469,10 @@ class FleetService
     public function getFleetsByCoords(array $coords): Collection
     {
         [$x, $y] = $coords;
-        if (!is_numeric($x) || !is_numeric($y)) {
+        if (! is_numeric($x) || ! is_numeric($y)) {
             throw new InvalidArgumentException('Invalid coordinates.');
         }
+
         return Fleet::where('x', $x)->where('y', $y)->get();
     }
 
@@ -475,8 +483,8 @@ class FleetService
         $this->validateId($fleetId);
 
         return [
-            'research'  => $this->_gatherFleetTechnologyInformations($fleetId, 'research'),
-            'ship'      => $this->_gatherFleetTechnologyInformations($fleetId, 'ship'),
+            'research' => $this->_gatherFleetTechnologyInformations($fleetId, 'research'),
+            'ship' => $this->_gatherFleetTechnologyInformations($fleetId, 'ship'),
             'personell' => $this->_gatherFleetTechnologyInformations($fleetId, 'personell'),
         ];
     }
@@ -504,41 +512,41 @@ class FleetService
         switch (strtolower($type)) {
             case 'research':
                 $masterTable = 'researches';
-                $fleetTable  = 'fleet_researches';
-                $typeKey     = 'research_id';
+                $fleetTable = 'fleet_researches';
+                $typeKey = 'research_id';
                 break;
             case 'ship':
                 $masterTable = 'ships';
-                $fleetTable  = 'fleet_ships';
-                $typeKey     = 'ship_id';
+                $fleetTable = 'fleet_ships';
+                $typeKey = 'ship_id';
                 break;
             case 'personell':
                 $masterTable = 'personell';
-                $fleetTable  = 'fleet_personell';
-                $typeKey     = 'personell_id';
+                $fleetTable = 'fleet_personell';
+                $typeKey = 'personell_id';
                 break;
             default:
                 return [];
         }
 
         $entities = DB::table($masterTable)->get()->keyBy('id')
-            ->map(fn($e) => (array) $e)
+            ->map(fn ($e) => (array) $e)
             ->toArray();
 
         $fleetEntities = DB::table($fleetTable)
             ->where('fleet_id', $fleetId)
             ->get()
             ->keyBy($typeKey)
-            ->map(fn($e) => (array) $e)
+            ->map(fn ($e) => (array) $e)
             ->toArray();
 
         foreach ($entities as $id => $entity) {
             if (array_key_exists($id, $fleetEntities)) {
                 $entities[$id] = array_merge($entity, $fleetEntities[$id]);
             } else {
-                $entities[$id]['count']         = 0;
+                $entities[$id]['count'] = 0;
                 $entities[$id]['status_points'] = 0;
-                $entities[$id]['ap_spend']      = 0;
+                $entities[$id]['ap_spend'] = 0;
             }
         }
 

@@ -24,6 +24,7 @@ class NexusBriefingTest extends TestCase
     use RefreshDatabase;
 
     private OnboardingService $onboardingService;
+
     private EventService $eventService;
 
     protected function setUp(): void
@@ -32,7 +33,7 @@ class NexusBriefingTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
 
         $this->onboardingService = $this->app->make(OnboardingService::class);
-        $this->eventService      = $this->app->make(EventService::class);
+        $this->eventService = $this->app->make(EventService::class);
     }
 
     // ── Happy path ────────────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ class NexusBriefingTest extends TestCase
     public function test_second_player_gets_own_briefing(): void
     {
         $userAlpha = User::factory()->create();
-        $userBeta  = User::factory()->create();
+        $userBeta = User::factory()->create();
 
         $this->onboardingService->setupNewPlayer($userAlpha->user_id, 'AlphaColony');
         $this->onboardingService->setupNewPlayer($userBeta->user_id, 'BetaColony');
@@ -124,10 +125,10 @@ class NexusBriefingTest extends TestCase
     {
         // Two users with separate colonies — each event must point to its own colony_id
         $userAlpha = User::factory()->create();
-        $userBeta  = User::factory()->create();
+        $userBeta = User::factory()->create();
 
         $colonyAlpha = $this->onboardingService->setupNewPlayer($userAlpha->user_id, 'AlphaColony');
-        $colonyBeta  = $this->onboardingService->setupNewPlayer($userBeta->user_id, 'BetaColony');
+        $colonyBeta = $this->onboardingService->setupNewPlayer($userBeta->user_id, 'BetaColony');
 
         $alphaEvent = ColonyLog::where('user', $userAlpha->user_id)
             ->where('event', 'onboarding.nexus_briefing')
@@ -138,10 +139,10 @@ class NexusBriefingTest extends TestCase
             ->first();
 
         $alphaParams = json_decode($alphaEvent->parameters, true);
-        $betaParams  = json_decode($betaEvent->parameters, true);
+        $betaParams = json_decode($betaEvent->parameters, true);
 
         $this->assertEquals($colonyAlpha->id, $alphaParams['colony_id'], 'Alpha event must reference Alpha colony');
-        $this->assertEquals($colonyBeta->id,  $betaParams['colony_id'],  'Beta event must reference Beta colony');
+        $this->assertEquals($colonyBeta->id, $betaParams['colony_id'], 'Beta event must reference Beta colony');
         $this->assertNotEquals($alphaParams['colony_id'], $betaParams['colony_id'], 'Two players must not share a colony_id in their briefings');
     }
 
@@ -152,12 +153,12 @@ class NexusBriefingTest extends TestCase
         $user = User::factory()->create();
 
         ColonyLog::create([
-            'user'       => $user->user_id,
-            'tick'       => 42,
-            'event'      => 'onboarding.nexus_briefing',
-            'area'       => 'nexus',
+            'user' => $user->user_id,
+            'tick' => 42,
+            'event' => 'onboarding.nexus_briefing',
+            'area' => 'nexus',
             'parameters' => json_encode(['colony_id' => 1]),
-            'is_read'    => false,
+            'is_read' => false,
             'created_at' => now(),
         ]);
 

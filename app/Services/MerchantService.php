@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Services\Techtree\PersonellService;
-use App\Services\TickService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -47,39 +46,39 @@ class MerchantService
 
     public function spawnVisit(int $colonyId, int $currentTick): void
     {
-        $cfg      = config('game.merchant', []);
+        $cfg = config('game.merchant', []);
         $duration = (int) ($cfg['duration_ticks'] ?? 2);
-        $count    = (int) ($cfg['items_count'] ?? 3);
-        $pool     = $cfg['items'] ?? [];
+        $count = (int) ($cfg['items_count'] ?? 3);
+        $pool = $cfg['items'] ?? [];
 
         if (empty($pool)) {
             return;
         }
 
         $visitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id'   => $colonyId,
-            'tick_start'  => $currentTick,
-            'tick_end'    => $currentTick + $duration - 1,
+            'colony_id' => $colonyId,
+            'tick_start' => $currentTick,
+            'tick_end' => $currentTick + $duration - 1,
             'was_visited' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // Pick $count unique item types pseudo-randomly, seeded by colonyId + tick.
-        $types   = array_keys($pool);
-        $picked  = $this->pickItems($types, $count, $colonyId, $currentTick);
+        $types = array_keys($pool);
+        $picked = $this->pickItems($types, $count, $colonyId, $currentTick);
 
         foreach ($picked as $type) {
             $def = $pool[$type] ?? [];
             DB::table('merchant_items')->insert([
-                'visit_id'     => $visitId,
-                'item_type'    => $type,
-                'label'        => $def['label'] ?? $type,
+                'visit_id' => $visitId,
+                'item_type' => $type,
+                'label' => $def['label'] ?? $type,
                 'cost_credits' => (int) ($def['cost'] ?? 0),
-                'payload'      => $this->buildPayload($type, $def),
-                'sold'         => false,
-                'created_at'   => now(),
-                'updated_at'   => now(),
+                'payload' => $this->buildPayload($type, $def),
+                'sold' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
     }
@@ -88,7 +87,7 @@ class MerchantService
     {
         $cfg = config('game.merchant', []);
 
-        $firstMin    = (int) ($cfg['first_appearance_min'] ?? 15);
+        $firstMin = (int) ($cfg['first_appearance_min'] ?? 15);
         $intervalMin = (int) ($cfg['interval_min'] ?? 10);
         $intervalMax = (int) ($cfg['interval_max'] ?? 15);
         $intervalAvg = ($intervalMin + $intervalMax) / 2.0;
@@ -100,7 +99,7 @@ class MerchantService
             ->where('level', '>', 0)
             ->exists();
 
-        if (!$barBuilt) {
+        if (! $barBuilt) {
             return false;
         }
 
@@ -133,9 +132,9 @@ class MerchantService
 
         // Random chance: ~1/interval_avg per tick so visits are spread out naturally.
         // Deterministic seed per colony+tick so parallel processing is idempotent.
-        $seed  = $colonyId * 1664525 + $currentTick * 1013904223;
-        $hash  = abs($seed & 0x7FFFFFFF);
-        $frac  = $hash / 0x7FFFFFFF; // 0.0 – 1.0
+        $seed = $colonyId * 1664525 + $currentTick * 1013904223;
+        $hash = abs($seed & 0x7FFFFFFF);
+        $frac = $hash / 0x7FFFFFFF; // 0.0 – 1.0
 
         return $frac < (1.0 / $intervalAvg);
     }
@@ -144,7 +143,7 @@ class MerchantService
     {
         $item = DB::table('merchant_items')->where('id', $itemId)->first();
 
-        if (!$item) {
+        if (! $item) {
             return ['ok' => false, 'error' => 'Item nicht gefunden.'];
         }
 
@@ -153,7 +152,7 @@ class MerchantService
         }
 
         // Verify the visit is still active
-        $tick  = app(TickService::class)->getTickCount();
+        $tick = app(TickService::class)->getTickCount();
         $visit = DB::table('merchant_visits')
             ->where('id', $item->visit_id)
             ->where('colony_id', $colonyId)
@@ -161,7 +160,7 @@ class MerchantService
             ->where('tick_end', '>=', $tick)
             ->first();
 
-        if (!$visit) {
+        if (! $visit) {
             return ['ok' => false, 'error' => 'Der Händler ist nicht mehr anwesend.'];
         }
 
@@ -188,10 +187,10 @@ class MerchantService
         });
 
         Log::info('merchant_purchase', [
-            'colony_id'    => $colonyId,
-            'user_id'      => $userId,
-            'item_id'      => $itemId,
-            'item_type'    => $item->item_type,
+            'colony_id' => $colonyId,
+            'user_id' => $userId,
+            'item_id' => $itemId,
+            'item_type' => $item->item_type,
             'cost_credits' => $item->cost_credits,
         ]);
 
@@ -200,7 +199,7 @@ class MerchantService
             ->value('credits') ?? 0);
 
         return [
-            'ok'      => true,
+            'ok' => true,
             'message' => 'Kauf erfolgreich.',
             'credits' => $newCredits,
         ];
@@ -227,18 +226,18 @@ class MerchantService
     /**
      * Pick $count unique item types from $pool pseudo-randomly, seeded by colony + tick.
      *
-     * @param  string[] $pool
+     * @param  string[]  $pool
      * @return string[]
      */
     private function pickItems(array $pool, int $count, int $colonyId, int $tick): array
     {
         $available = $pool;
-        $count     = min($count, count($available));
-        $picked    = [];
+        $count = min($count, count($available));
+        $picked = [];
 
         for ($i = 0; $i < $count; $i++) {
-            $seed   = abs(($colonyId * 997 + $tick * 31 + $i * 127) * 1664525 + 1013904223) & 0x7FFFFFFF;
-            $idx    = $seed % count($available);
+            $seed = abs(($colonyId * 997 + $tick * 31 + $i * 127) * 1664525 + 1013904223) & 0x7FFFFFFF;
+            $idx = $seed % count($available);
             $picked[] = array_splice($available, (int) $idx, 1)[0];
         }
 
@@ -251,12 +250,12 @@ class MerchantService
     private function buildPayload(string $type, array $def): ?string
     {
         $data = match ($type) {
-            'ap_flex'     => ['ap_type' => 'any',          'amount' => $def['ap_amount'] ?? 20],
+            'ap_flex' => ['ap_type' => 'any',          'amount' => $def['ap_amount'] ?? 20],
             'ap_targeted' => ['ap_type' => 'construction', 'amount' => $def['ap_amount'] ?? 15],
-            'repair_kit'  => ['sp_amount' => $def['sp_amount'] ?? 30],
+            'repair_kit' => ['sp_amount' => $def['sp_amount'] ?? 30],
             'trust_boost' => ['trust_amount' => $def['trust_amount'] ?? 15],
             'information' => [],
-            default       => [],
+            default => [],
         };
 
         return empty($data) ? null : json_encode($data);
@@ -305,7 +304,7 @@ class MerchantService
             case 'ap_targeted':
                 // ap_targeted: credit AP to the specific type stored in the payload.
                 $apAmount = (int) ($payload['amount'] ?? 15);
-                $apType   = (string) ($payload['ap_type'] ?? 'construction');
+                $apType = (string) ($payload['ap_type'] ?? 'construction');
                 $this->personellService->creditAp($colonyId, $apType, $apAmount);
                 Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to '{$apType}' on colony {$colonyId}.");
                 break;
@@ -336,16 +335,17 @@ class MerchantService
             ->get()
             ->sortBy(function ($row) {
                 $max = max(1, (int) $row->max_status_points);
+
                 return (float) $row->status_points / $max;
             })
             ->first();
 
-        if (!$target) {
+        if (! $target) {
             return; // No buildings to repair
         }
 
-        $maxSP    = max(1, (int) $target->max_status_points);
-        $newSP    = min($maxSP, (float) $target->status_points + $spAmount);
+        $maxSP = max(1, (int) $target->max_status_points);
+        $newSP = min($maxSP, (float) $target->status_points + $spAmount);
 
         DB::table('colony_buildings')
             ->where('colony_id', $colonyId)

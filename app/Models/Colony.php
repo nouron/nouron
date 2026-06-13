@@ -18,14 +18,16 @@ class Colony extends Model
 
     // Prevent accidental writes through this model (v_glx_colonies is a SQLite view).
     protected $guarded = ['*'];
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected function casts(): array
     {
         return [
             'is_primary' => 'boolean',
-            'spot'       => 'integer',
+            'spot' => 'integer',
             'since_tick' => 'integer',
         ];
     }

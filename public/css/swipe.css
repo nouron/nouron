@@ -45,7 +45,9 @@
     height: 6px;
     border-radius: 50%;
     background: var(--color-border, #e8e8ec);
-    transition: background 0.2s, transform 0.2s;
+    transition:
+        background 0.2s,
+        transform 0.2s;
 }
 
 .swipe-dot--active::before {
@@ -70,5 +72,7 @@
     }
 }
 @media (min-width: 768px) {
-    .msg-swipe-hint { display: none; }
+    .msg-swipe-hint {
+        display: none;
+    }
 }

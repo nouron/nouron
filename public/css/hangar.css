@@ -57,7 +57,10 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
     box-shadow: 0 2px 8px rgba(26, 26, 46, 0.06);
 }
 
@@ -118,8 +121,13 @@
     }
 
     /* Larger info panel text */
-    .hangar-name      { font-size: 1.05rem; }
-    .hangar-subtitle  { font-size: 0.88rem; color: #888; }
+    .hangar-name {
+        font-size: 1.05rem;
+    }
+    .hangar-subtitle {
+        font-size: 0.88rem;
+        color: #888;
+    }
 
     .hangar-info {
         padding: 1rem 1.25rem 1.25rem;
@@ -295,10 +303,26 @@
     white-space: nowrap;
 }
 
-.hangar-status-chip--docked     { background: #f2faf2; color: #2e7d32; border: 1px solid #c8e6c9; }
-.hangar-status-chip--dispatched { background: #fef9ec; color: #78350f; border: 1px solid #fde68a; }
-.hangar-status-chip--building   { background: #f4f6ff; color: #3b5ac6; border: 1px solid #c5cff0; }
-.hangar-status-chip--empty      { background: #f4f4f4; color: #999;    border: 1px solid #ddd; }
+.hangar-status-chip--docked {
+    background: #f2faf2;
+    color: #2e7d32;
+    border: 1px solid #c8e6c9;
+}
+.hangar-status-chip--dispatched {
+    background: #fef9ec;
+    color: #78350f;
+    border: 1px solid #fde68a;
+}
+.hangar-status-chip--building {
+    background: #f4f6ff;
+    color: #3b5ac6;
+    border: 1px solid #c5cff0;
+}
+.hangar-status-chip--empty {
+    background: #f4f4f4;
+    color: #999;
+    border: 1px solid #ddd;
+}
 
 /* ── Stats rows (shared with advisors style) ──────────────────────────────── */
 
@@ -348,21 +372,27 @@
     white-space: nowrap;
 }
 
-.btn-hangar-action:hover:not(:disabled) { background: #f2faf2; }
+.btn-hangar-action:hover:not(:disabled) {
+    background: #f2faf2;
+}
 
 .btn-hangar-action--danger {
     border-color: #ddd;
     color: #c0392b;
 }
 
-.btn-hangar-action--danger:hover:not(:disabled) { background: #fff5f5; }
+.btn-hangar-action--danger:hover:not(:disabled) {
+    background: #fff5f5;
+}
 
 .btn-hangar-action--secondary {
     border-color: #c5cff0;
     color: #3b5ac6;
 }
 
-.btn-hangar-action--secondary:hover:not(:disabled) { background: #f4f6ff; }
+.btn-hangar-action--secondary:hover:not(:disabled) {
+    background: #f4f6ff;
+}
 
 .btn-hangar-action:disabled {
     opacity: 0.4;
@@ -462,7 +492,7 @@
 }
 
 .hangar-construction-bar::after {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -40%;
@@ -473,7 +503,9 @@
 }
 
 @keyframes hangar-scan {
-    to { left: 100%; }
+    to {
+        left: 100%;
+    }
 }
 
 /* ── Nexus request button (empty slot CTA) ────────────────────────────────── */
@@ -501,7 +533,9 @@
     color: #3b5ac6;
     cursor: pointer;
     letter-spacing: 0.02em;
-    transition: background 0.15s, color 0.15s;
+    transition:
+        background 0.15s,
+        color 0.15s;
 }
 
 .btn-hangar-nexus-request:hover:not(:disabled) {
@@ -571,7 +605,9 @@
     transition: color 0.15s;
 }
 
-.hangar-dialog-close:hover { color: #555; }
+.hangar-dialog-close:hover {
+    color: #555;
+}
 
 .hangar-dialog-fieldset {
     border: none;
@@ -664,7 +700,9 @@
     border-radius: 8px;
     cursor: pointer;
     text-align: left;
-    transition: border-color 0.15s, background 0.15s;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
 }
 
 .hangar-ship-btn:hover:not(:disabled) {
@@ -743,10 +781,12 @@
     user-select: none;
 }
 
-.hangar-pending-summary::-webkit-details-marker { display: none; }
+.hangar-pending-summary::-webkit-details-marker {
+    display: none;
+}
 
 .hangar-pending-summary::before {
-    content: '▸';
+    content: "▸";
     font-size: 0.65rem;
     color: #aaa;
     transition: transform 0.15s;

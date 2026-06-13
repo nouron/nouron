@@ -45,12 +45,17 @@ class GameTickResourceGenerationTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID       = 1;
-    private const HARVESTER_ID    = 27;
+    private const COLONY_ID = 1;
+
+    private const HARVESTER_ID = 27;
+
     private const BIO_FACILITY_ID = 41;
-    private const RES_REGOLITH    = 3;
-    private const RES_ORGANICS    = 5;
-    private const MORAL_RES_ID    = 12;
+
+    private const RES_REGOLITH = 3;
+
+    private const RES_ORGANICS = 5;
+
+    private const MORAL_RES_ID = 12;
 
     protected function setUp(): void
     {

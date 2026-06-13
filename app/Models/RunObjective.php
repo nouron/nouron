@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class RunObjective extends Model
 {
-    protected $table      = 'run_objectives';
-    public    $timestamps = false;
+    protected $table = 'run_objectives';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'run_id',
@@ -28,11 +29,11 @@ class RunObjective extends Model
     protected function casts(): array
     {
         return [
-            'run_id'        => 'integer',
-            'target_value'  => 'integer',
+            'run_id' => 'integer',
+            'target_value' => 'integer',
             'current_value' => 'integer',
-            'streak_value'  => 'integer',
-            'completed_at'  => 'integer',
+            'streak_value' => 'integer',
+            'completed_at' => 'integer',
         ];
     }
 

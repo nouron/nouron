@@ -9,14 +9,28 @@ use Illuminate\Support\Facades\DB;
  *
  * Ships require construction AP (engineers) and may additionally require a
  * specific research to be at a minimum level before a levelup.
- *
  */
 class ShipService extends AbstractTechnologyService
 {
-    protected function masterTable(): string  { return 'ships'; }
-    protected function colonyTable(): string  { return 'colony_ships'; }
-    protected function costsTable(): string   { return 'ship_costs'; }
-    protected function entityIdKey(): string  { return 'ship_id'; }
+    protected function masterTable(): string
+    {
+        return 'ships';
+    }
+
+    protected function colonyTable(): string
+    {
+        return 'colony_ships';
+    }
+
+    protected function costsTable(): string
+    {
+        return 'ship_costs';
+    }
+
+    protected function entityIdKey(): string
+    {
+        return 'ship_id';
+    }
 
     /**
      * Invest construction points into a ship class (add AP, repair, or remove damage).
@@ -33,7 +47,7 @@ class ShipService extends AbstractTechnologyService
     public function checkRequiredResearchesByEntityId(int $colonyId, int $entityId): bool
     {
         $ship = DB::table('ships')->find($entityId);
-        if (!$ship || !$ship->required_research_id) {
+        if (! $ship || ! $ship->required_research_id) {
             return true;
         }
 
@@ -42,7 +56,7 @@ class ShipService extends AbstractTechnologyService
             ->where('research_id', $ship->required_research_id)
             ->first();
 
-        if (!$colonyResearch) {
+        if (! $colonyResearch) {
             return false;
         }
 

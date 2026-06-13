@@ -10,7 +10,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 /**
  * SolController — handles player-triggered Sol (tick) advancement.
@@ -19,7 +18,7 @@ class SolController extends Controller
 {
     public function __construct(
         private readonly PersonellService $personellService,
-        private readonly EventService     $eventService,
+        private readonly EventService $eventService,
     ) {}
 
     public function next(Request $request): RedirectResponse
@@ -34,10 +33,10 @@ class SolController extends Controller
         Artisan::call('game:tick', ['--run' => $run->id]);
 
         $this->eventService->createEvent([
-            'user'       => Auth::id(),
-            'tick'       => $run->current_tick,
-            'event'      => 'run.sol_advanced',
-            'area'       => 'run',
+            'user' => Auth::id(),
+            'tick' => $run->current_tick,
+            'event' => 'run.sol_advanced',
+            'area' => 'run',
             'parameters' => json_encode(['colony_id' => $run->colony_id, 'sol' => $run->current_tick]),
         ]);
 
@@ -53,14 +52,14 @@ class SolController extends Controller
         $colonyId = session('activeIds.colonyId', 1);
 
         $construction = $this->personellService->getConstructionPoints($colonyId);
-        $research     = $this->personellService->getAvailableActionPoints('research', $colonyId);
-        $navigation   = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
+        $research = $this->personellService->getAvailableActionPoints('research', $colonyId);
+        $navigation = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
 
         return response()->json([
             'construction' => $construction,
-            'research'     => $research,
-            'navigation'   => $navigation,
-            'total'        => $construction + $research + $navigation,
+            'research' => $research,
+            'navigation' => $navigation,
+            'total' => $construction + $research + $navigation,
         ]);
     }
 }

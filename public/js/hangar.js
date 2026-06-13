@@ -12,73 +12,79 @@ function hangarCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
 
-        slots:                      config.slots,
-        shipTypes:                  config.shipTypes,
-        commissionedShipIds:        config.commissionedShipIds,
-        hasPilot:                   config.hasPilot,
-        routes:                     config.routes,
-        csrfToken:                  config.csrfToken,
-        i18n:                       config.i18n,
+        slots: config.slots,
+        shipTypes: config.shipTypes,
+        commissionedShipIds: config.commissionedShipIds,
+        hasPilot: config.hasPilot,
+        routes: config.routes,
+        csrfToken: config.csrfToken,
+        i18n: config.i18n,
 
         // New acquisition model data
-        shipCosts:                  config.shipCosts ?? {},
-        canUseNexusCredit:          config.canUseNexusCredit ?? false,
-        hasAktivierterKonsul:       config.hasAktivierterKonsul ?? false,
-        verfuegbareVerhandlungsAP:  config.verfuegbareVerhandlungsAP ?? 0,
-        pendingShips:               config.pendingShips ?? [],
+        shipCosts: config.shipCosts ?? {},
+        canUseNexusCredit: config.canUseNexusCredit ?? false,
+        hasAktivierterKonsul: config.hasAktivierterKonsul ?? false,
+        verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
+        pendingShips: config.pendingShips ?? [],
 
         // Per-instance UI state: keyed by instance_id
-        modalType:    {},
-        loading:      {},
-        error:        {},
+        modalType: {},
+        loading: {},
+        error: {},
 
         // Per-instance form values
         dispatchDest: {},
-        dispatchSol:  {},
-        repairAp:     {},
+        dispatchSol: {},
+        repairAp: {},
 
         // Nexus request modal state (shared across all slots)
         requestModal: {
-            open:            false,
-            instanceId:      null,
-            useNexusCredit:  false,
-            consulApSpent:   0,
-            loading:         false,
-            error:           null,
+            open: false,
+            instanceId: null,
+            useNexusCredit: false,
+            consulApSpent: 0,
+            loading: false,
+            error: null,
         },
 
         // Pending ship assignment state: keyed by ship row id
         pendingAssignTarget: {},
-        pendingLoading:      {},
-        pendingError:        {},
+        pendingLoading: {},
+        pendingError: {},
 
         init() {
             this._carouselInit();
-            this.slots.forEach(slot => {
+            this.slots.forEach((slot) => {
                 const id = slot.instance_id;
-                this.modalType[id]    = null;
-                this.loading[id]      = false;
-                this.error[id]        = null;
+                this.modalType[id] = null;
+                this.loading[id] = false;
+                this.error[id] = null;
                 this.dispatchDest[id] = '';
-                this.dispatchSol[id]  = 1;
-                this.repairAp[id]     = 3;
+                this.dispatchSol[id] = 1;
+                this.repairAp[id] = 3;
             });
-            this.pendingShips.forEach(ship => {
+            this.pendingShips.forEach((ship) => {
                 this.pendingAssignTarget[ship.id] = '';
-                this.pendingLoading[ship.id]      = false;
-                this.pendingError[ship.id]        = null;
+                this.pendingLoading[ship.id] = false;
+                this.pendingError[ship.id] = null;
             });
         },
 
-        prev()    { this._carouselPrev(); },
-        next()    { this._carouselNext(); },
-        goTo(i)   { this._carouselGoTo(i); },
+        prev() {
+            this._carouselPrev();
+        },
+        next() {
+            this._carouselNext();
+        },
+        goTo(i) {
+            this._carouselGoTo(i);
+        },
 
         /**
          * Returns slot count info: how many slots have a ship vs total slots.
          */
         get slotInfo() {
-            const used  = this.slots.filter(s => s.ship !== null).length;
+            const used = this.slots.filter((s) => s.ship !== null).length;
             const total = this.slots.length;
             return { used, total };
         },
@@ -87,7 +93,7 @@ function hangarCarousel(config) {
          * Returns slots that have no ship assigned (free bays for pending ship assignment).
          */
         get freeSlots() {
-            return this.slots.filter(s => s.ship === null);
+            return this.slots.filter((s) => s.ship === null);
         },
 
         /**
@@ -95,7 +101,7 @@ function hangarCarousel(config) {
          */
         get consulApSavings() {
             const ap = this.requestModal.consulApSpent ?? 0;
-            return ap > 0 ? '−' + (ap * 50) + ' Cr' : '';
+            return ap > 0 ? '−' + ap * 50 + ' Cr' : '';
         },
 
         /**
@@ -118,7 +124,7 @@ function hangarCarousel(config) {
 
         closeModal(instanceId) {
             this.modalType[instanceId] = null;
-            this.error[instanceId]     = null;
+            this.error[instanceId] = null;
         },
 
         /**
@@ -128,12 +134,12 @@ function hangarCarousel(config) {
          */
         openRequestModal(instanceId) {
             this.requestModal = {
-                open:           true,
+                open: true,
                 instanceId,
                 useNexusCredit: false,
-                consulApSpent:  0,
-                loading:        false,
-                error:          null,
+                consulApSpent: 0,
+                loading: false,
+                error: null,
             };
         },
 
@@ -154,14 +160,14 @@ function hangarCarousel(config) {
          */
         async submitRequestFor(shipId) {
             this.requestModal.loading = true;
-            this.requestModal.error   = null;
+            this.requestModal.error = null;
 
             try {
                 const res = await this._post(this.routes.request, {
-                    instance_id:      this.requestModal.instanceId,
-                    ship_id:          shipId,
+                    instance_id: this.requestModal.instanceId,
+                    ship_id: shipId,
                     use_nexus_credit: this.requestModal.useNexusCredit ? 1 : 0,
-                    consul_ap_spent:  this.requestModal.consulApSpent ?? 0,
+                    consul_ap_spent: this.requestModal.consulApSpent ?? 0,
                 });
                 if (res.ok) {
                     this._updateSlot(this.requestModal.instanceId, res.slot);
@@ -183,9 +189,9 @@ function hangarCarousel(config) {
          */
         shipLabel(name) {
             const map = {
-                ship_corvette:  this.i18n.shipCorvette,
+                ship_corvette: this.i18n.shipCorvette,
                 ship_freighter: this.i18n.shipFreighter,
-                ship_drone:     this.i18n.shipDrone,
+                ship_drone: this.i18n.shipDrone,
             };
             return map[name] ?? name;
         },
@@ -206,11 +212,11 @@ function hangarCarousel(config) {
          */
         async dispatch(instanceId) {
             this.loading[instanceId] = true;
-            this.error[instanceId]   = null;
+            this.error[instanceId] = null;
             try {
                 const url = this.routes.dispatch.replace('__ID__', instanceId);
                 const res = await this._post(url, {
-                    destination:  this.dispatchDest[instanceId],
+                    destination: this.dispatchDest[instanceId],
                     sol_distance: parseInt(this.dispatchSol[instanceId], 10),
                 });
                 if (res.ok) {
@@ -232,7 +238,7 @@ function hangarCarousel(config) {
          */
         async recall(instanceId) {
             this.loading[instanceId] = true;
-            this.error[instanceId]   = null;
+            this.error[instanceId] = null;
             try {
                 const url = this.routes.recall.replace('__ID__', instanceId);
                 const res = await this._post(url, {});
@@ -254,7 +260,7 @@ function hangarCarousel(config) {
          */
         async repair(instanceId) {
             this.loading[instanceId] = true;
-            this.error[instanceId]   = null;
+            this.error[instanceId] = null;
             try {
                 const url = this.routes.repair.replace('__ID__', instanceId);
                 const res = await this._post(url, { ap_spent: parseInt(this.repairAp[instanceId], 10) });
@@ -282,7 +288,7 @@ function hangarCarousel(config) {
             if (!instanceId) return;
 
             this.pendingLoading[shipRowId] = true;
-            this.pendingError[shipRowId]   = null;
+            this.pendingError[shipRowId] = null;
 
             try {
                 const res = await this._post(this.routes.assign, {
@@ -291,7 +297,7 @@ function hangarCarousel(config) {
                 });
                 if (res.ok) {
                     // Remove from pending list
-                    this.pendingShips = this.pendingShips.filter(s => s.id !== shipRowId);
+                    this.pendingShips = this.pendingShips.filter((s) => s.id !== shipRowId);
                     // Update the newly assigned slot
                     if (res.slot) {
                         this._updateSlot(parseInt(instanceId, 10), res.slot);
@@ -313,29 +319,27 @@ function hangarCarousel(config) {
          * @param {object} updatedSlot
          */
         _updateSlot(instanceId, updatedSlot) {
-            const idx = this.slots.findIndex(s => s.instance_id === instanceId);
+            const idx = this.slots.findIndex((s) => s.instance_id === instanceId);
             if (idx !== -1) {
                 this.slots[idx] = updatedSlot;
             }
         },
 
         _csrf() {
-            return this.csrfToken
-                || document.querySelector('meta[name="csrf-token"]')?.content
-                || '';
+            return this.csrfToken || document.querySelector('meta[name="csrf-token"]')?.content || '';
         },
 
         _post(url, data) {
             return fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Content-Type':     'application/json',
-                    'X-CSRF-TOKEN':     this._csrf(),
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this._csrf(),
                     'X-Requested-With': 'XMLHttpRequest',
-                    'Accept':           'application/json',
+                    Accept: 'application/json',
                 },
                 body: JSON.stringify(data),
-            }).then(r => r.json());
+            }).then((r) => r.json());
         },
     };
 }

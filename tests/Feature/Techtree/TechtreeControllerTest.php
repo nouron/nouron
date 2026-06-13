@@ -19,9 +19,11 @@ class TechtreeControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected int $userIdBart     = 3;  // owns colony 1 (Springfield)
-    protected int $colonyIdBart   = 1;
-    protected int $colonyIdOther  = 2;  // Shelbyville — no owner in test data
+    protected int $userIdBart = 3;  // owns colony 1 (Springfield)
+
+    protected int $colonyIdBart = 1;
+
+    protected int $colonyIdOther = 2;  // Shelbyville — no owner in test data
 
     protected function setUp(): void
     {
@@ -31,11 +33,11 @@ class TechtreeControllerTest extends TestCase
         // Provide a construction advisor for colony 1 so techtree invest actions have AP.
         DB::table('advisors')->where('colony_id', $this->colonyIdBart)->delete();
         DB::table('advisors')->insert([
-            'user_id'               => $this->userIdBart,
-            'personell_id'          => 35, // engineer (construction AP)
-            'colony_id'             => $this->colonyIdBart,
-            'rank'                  => 3,
-            'active_ticks'          => 0,
+            'user_id' => $this->userIdBart,
+            'personell_id' => 35, // engineer (construction AP)
+            'colony_id' => $this->colonyIdBart,
+            'rank' => 3,
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
     }
@@ -45,7 +47,7 @@ class TechtreeControllerTest extends TestCase
      * colony_id segment. This test verifies that the action endpoint only
      * modifies the authenticated user's own colony, not any other colony.
      */
-    public function testActionOnlyAffectsOwnColony(): void
+    public function test_action_only_affects_own_colony(): void
     {
         $bart = User::find($this->userIdBart);
 
@@ -78,7 +80,7 @@ class TechtreeControllerTest extends TestCase
         $this->assertEquals(1, $afterOwn, 'Colony 1 (Bart\'s) must be updated');
     }
 
-    public function testIndexReturns200WithPageData(): void
+    public function test_index_returns200_with_page_data(): void
     {
         $bart = User::find($this->userIdBart);
 
@@ -98,17 +100,17 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
-    public function testIndexPhaseItemsHaveRequiredFields(): void
+    public function test_index_phase_items_have_required_fields(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         foreach ($pageData['phases'] as $phaseNum => $phase) {
             foreach ($phase['items'] as $tech) {
-                $this->assertArrayHasKey('id',     $tech);
-                $this->assertArrayHasKey('type',   $tech);
-                $this->assertArrayHasKey('row',    $tech);
-                $this->assertArrayHasKey('col',    $tech);
+                $this->assertArrayHasKey('id', $tech);
+                $this->assertArrayHasKey('type', $tech);
+                $this->assertArrayHasKey('row', $tech);
+                $this->assertArrayHasKey('col', $tech);
                 $this->assertArrayHasKey('status', $tech);
                 $this->assertContains($tech['status'], ['built', 'available', 'locked'],
                     "Invalid status '{$tech['status']}' for {$tech['type']}/{$tech['id']} in phase {$phaseNum}");
@@ -116,7 +118,7 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
-    public function testAllPhasesContainItems(): void
+    public function test_all_phases_contain_items(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
@@ -126,7 +128,7 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
-    public function testRequiredDescShowsDualPrerequisites(): void
+    public function test_required_desc_shows_dual_prerequisites(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
@@ -134,7 +136,7 @@ class TechtreeControllerTest extends TestCase
         // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
         $cartography = null;
         foreach ($pageData['phases'] as $phase) {
-            $found = collect($phase['items'])->first(fn($t) => $t['id'] === 91 && $t['type'] === 'research');
+            $found = collect($phase['items'])->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
             if ($found) {
                 $cartography = $found;
                 break;
@@ -147,24 +149,24 @@ class TechtreeControllerTest extends TestCase
             'Dual prerequisites must be joined by "+"');
     }
 
-    public function testKnowledgeCartographyIsInPhase3(): void
+    public function test_knowledge_cartography_is_in_phase3(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         $found = collect($pageData['phases'][3]['items'])
-            ->first(fn($t) => $t['id'] === 91 && $t['type'] === 'research');
+            ->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
 
         $this->assertNotNull($found, 'knowledge_cartography (ID 91) must be in phase 3');
     }
 
-    public function testPhase3LinesIncludeHangarArrow(): void
+    public function test_phase3_lines_include_hangar_arrow(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         $lines = $pageData['phases'][3]['lines'];
-        $hangarLines = array_filter($lines, fn($l) => $l['from'] === 'tech-building-44');
+        $hangarLines = array_filter($lines, fn ($l) => $l['from'] === 'tech-building-44');
 
         $this->assertNotEmpty($hangarLines, 'Phase 3 must have arrows originating from hangar (ID 44)');
     }
@@ -174,41 +176,41 @@ class TechtreeControllerTest extends TestCase
      * is /techtree/{type}/{id}/{order}. This confirms by design that
      * colony selection is server-side only (session-based).
      */
-    public function testTechtreeRouteHasNoColonyIdParameter(): void
+    public function test_techtree_route_has_no_colony_id_parameter(): void
     {
         $route = route('techtree.action', ['type' => 'building', 'id' => 27, 'order' => 'add']);
         $this->assertStringNotContainsString('colony', $route);
     }
 
-    public function testInfirmaryIsInPhase2(): void
+    public function test_infirmary_is_in_phase2(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         $found = collect($pageData['phases'][2]['items'])
-            ->first(fn($t) => $t['id'] === 46 && $t['type'] === 'building');
+            ->first(fn ($t) => $t['id'] === 46 && $t['type'] === 'building');
 
         $this->assertNotNull($found, 'infirmary (building ID 46) must be in phase 2');
     }
 
-    public function testBarIsInPhase2(): void
+    public function test_bar_is_in_phase2(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         $found = collect($pageData['phases'][2]['items'])
-            ->first(fn($t) => $t['id'] === 52 && $t['type'] === 'building');
+            ->first(fn ($t) => $t['id'] === 52 && $t['type'] === 'building');
 
         $this->assertNotNull($found, 'bar/cantina (building ID 52) must be in phase 2');
     }
 
-    public function testKnowledgeGeologyIsInPhase3(): void
+    public function test_knowledge_geology_is_in_phase3(): void
     {
         $bart = User::find($this->userIdBart);
         $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
 
         $found = collect($pageData['phases'][3]['items'])
-            ->first(fn($t) => $t['id'] === 92 && $t['type'] === 'research');
+            ->first(fn ($t) => $t['id'] === 92 && $t['type'] === 'research');
 
         $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3');
     }

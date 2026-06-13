@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class ColonyLog extends Model
 {
-    protected $table      = 'colony_log';
+    protected $table = 'colony_log';
+
     protected $primaryKey = 'id';
-    public    $timestamps = false;
+
+    public $timestamps = false;
 
     protected $fillable = [
         'user',
@@ -23,8 +25,8 @@ class ColonyLog extends Model
     protected function casts(): array
     {
         return [
-            'tick'    => 'integer',
-            'user'    => 'integer',
+            'tick' => 'integer',
+            'user' => 'integer',
             'is_read' => 'boolean',
         ];
     }

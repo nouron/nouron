@@ -11,7 +11,9 @@ use Illuminate\Database\Eloquent\Model;
 class Resource extends Model
 {
     protected $table = 'resources';
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = ['name', 'abbreviation', 'trigger', 'is_tradeable', 'start_amount', 'icon'];

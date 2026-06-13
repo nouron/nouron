@@ -71,3 +71,11 @@ bin/phpunit --testsuite=laravel-feature   # verify tests still pass after schema
 
 ## Output-Format
 Liefern: (1) Migrations-Datei, (2) notwendige Aktualisierung von `data/sql/testdata.sqlite.sql`.
+## Code-Style (Linter — Pflicht)
+
+PHP wird vor jedem Commit von **Laravel Pint** formatiert. Hinweis: `database/migrations/` ist von Pint **ausgenommen** (historische Dateien) — andere PHP-Dateien (Seeder, Factories, Models) aber nicht.
+
+- **NIE vertikal ausrichten** (`=>`/`=` ein Space; Altbestand-Stil veraltet).
+- Einfache Quotes; `use` alphabetisch + keine ungenutzten; Trailing Comma in Multiline-Arrays; Datei endet mit genau einem Newline.
+
+Vollständig: `docs/code-style.md`. Lokal prüfen: `bin/pint --test database`.
