@@ -434,16 +434,14 @@ class HangarService
     }
 
     /**
-     * Repair a docked ship. Each AP restores REPAIR_SP_PER_AP status_points, capped at max.
+     * Repair a docked ship — fixed cost: one call spends 1 Construction-AP
+     * (locked by the caller) and restores REPAIR_SP_PER_AP status_points,
+     * capped at max. Mirrors the building-repair interaction (1 click = 1 AP).
      * ap_spend on the ship row is incremented to track total AP invested.
      */
-    public function repairShip(int $colonyId, int $instanceId, int $apSpent): void
+    public function repairShip(int $colonyId, int $instanceId): void
     {
-        if ($apSpent < 1) {
-            throw new RuntimeException('At least 1 AP must be spent on repairs.');
-        }
-
-        DB::transaction(function () use ($colonyId, $instanceId, $apSpent): void {
+        DB::transaction(function () use ($colonyId, $instanceId): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
@@ -461,15 +459,14 @@ class HangarService
                 throw new RuntimeException("Ship in hangar {$instanceId} is already at full status.");
             }
 
-            $restored = $apSpent * self::REPAIR_SP_PER_AP;
-            $newStatus = min(self::SHIP_MAX_STATUS, $current + $restored);
+            $newStatus = min(self::SHIP_MAX_STATUS, $current + self::REPAIR_SP_PER_AP);
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
                 ->update([
                     'status_points' => $newStatus,
-                    'ap_spend' => $ship->ap_spend + $apSpent,
+                    'ap_spend' => $ship->ap_spend + 1,
                 ]);
         });
     }

@@ -250,9 +250,11 @@ Alle Buttons verwenden system-ui, font-weight 600, font-size 0.9rem, letter-spac
 
 **AP-Kosten-Chip (verbindlich):** Jeder Aktionsbutton mit **fixen AP-Kosten** zeigt die Kosten **vorab** als Chip rechts im Button — optisch identisch zu den AP-Chips der Resource Bar (`.ap-chip` + Variante). Bau-AP → `.ap-chip--build` (grün), Nav-AP → `.ap-chip--nav` (blau). Button-Layout: `display:flex; justify-content:space-between` — Label-Body links (ein- oder zweizeilig: `__main` + optional `__sub`), Chip rechts (`flex-shrink:0`). Partial: `@include('partials.ap-cost-chip', ['amount' => 1, 'type' => 'build'])` (oder `'label' => '1 AP/Feld'` für distanzabhängige Kosten).
 
-Umgesetzt im Colony-Screen (Erkunden/Sondieren/Reparieren/Ausbauen/Bauen/Verlegen).
+Umgesetzt: Colony (Erkunden/Sondieren/Reparieren/Ausbauen/Bauen/Verlegen) + Hangar-Schiffsreparatur (1 Bau-AP).
 
-**Kein Chip** bei variabler/spielergewählter AP-Menge — dort macht das jeweilige Control die Kosten bereits sichtbar: Techtree investiert über eine Segment-Leiste (`x / y AP`, ein Klick = ein Segment), Hangar-Reparatur/-Dispatch über eine AP-Eingabe (Spieler wählt 1–10 / 0–20 AP). Cantina/Berater kosten Credits/Ressourcen, kein AP → kein Chip.
+**Reparieren = überall fix** (Gebäude *und* Schiffe, 1 AP/Klick) — gleiche Interaktion, gleicher Chip, damit sich das Verb spielweit konsistent anfühlt.
+
+**Kein Chip** bei kontinuierlich skalierendem, spielergewähltem AP-Einsatz — dort macht das jeweilige Control die Kosten sichtbar: Techtree-Invest über eine Segment-Leiste (`x / y AP`, ein Klick = ein Segment), Hangar-Nexus-Anfrage über eine Consul-AP-Eingabe (0–20). Cantina/Berater kosten Credits/Ressourcen, kein AP → kein Chip.
 
 ---
 

@@ -36,10 +36,10 @@ namespace Tests\Unit;
  *    - test_recall_ship_sets_mission_recalled_and_ship_docked
  *    - test_recall_ship_throws_when_no_active_mission
  *
- *  repairShip
- *    - test_repair_ship_increments_status_points_by_ap_times_two
+ *  repairShip (fixed cost: 1 call = 1 Construction-AP -> +REPAIR_SP_PER_AP)
+ *    - test_repair_ship_restores_fixed_amount_per_call
  *    - test_repair_ship_caps_status_points_at_max
- *    - test_repair_ship_throws_when_no_docked_ship
+ *    - test_repair_ship_throws_when_no_ship_in_bay
  *    - test_repair_ship_throws_when_ship_dispatched
  *    - test_repair_ship_throws_when_already_at_full_status
  */
@@ -485,30 +485,30 @@ class HangarServiceTest extends TestCase
 
     // ── repairShip ────────────────────────────────────────────────────────────
 
-    public function test_repair_ship_increments_status_points_by_ap_times_two(): void
+    public function test_repair_ship_restores_fixed_amount_per_call(): void
     {
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 10.0);
 
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 3);
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
 
         $row = DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)
             ->where('hangar_instance_id', 1)
             ->first();
 
-        // 10.0 + (3 * 2) = 16.0
-        $this->assertSame(16.0, (float) $row->status_points);
-        $this->assertSame(3, (int) $row->ap_spend);
+        // Fixed per call: 10.0 + REPAIR_SP_PER_AP (2) = 12.0, ap_spend +1
+        $this->assertSame(12.0, (float) $row->status_points);
+        $this->assertSame(1, (int) $row->ap_spend);
     }
 
     public function test_repair_ship_caps_status_points_at_max(): void
     {
         $this->insertHangar(1);
-        // status_points = 18 — spending 5 AP would add 10, but max is 20
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 18.0);
+        // 19 + 2 would be 21 — must clamp to 20
+        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 19.0);
 
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 5);
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
 
         $row = DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)
@@ -518,21 +518,6 @@ class HangarServiceTest extends TestCase
         $this->assertSame(20.0, (float) $row->status_points, 'status_points must not exceed 20');
     }
 
-    public function test_repair_ship_large_ap_still_caps_at_max(): void
-    {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 5.0);
-
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 100);
-
-        $row = DB::table('colony_ships')
-            ->where('colony_id', self::COLONY_ID)
-            ->where('hangar_instance_id', 1)
-            ->first();
-
-        $this->assertSame(20.0, (float) $row->status_points, 'Even with huge AP input status_points must not exceed 20');
-    }
-
     public function test_repair_ship_throws_when_no_ship_in_bay(): void
     {
         $this->insertHangar(1);
@@ -540,7 +525,7 @@ class HangarServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 2);
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
     }
 
     public function test_repair_ship_throws_when_ship_dispatched(): void
@@ -550,7 +535,7 @@ class HangarServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 2);
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
     }
 
     public function test_repair_ship_throws_when_already_at_full_status(): void
@@ -560,6 +545,6 @@ class HangarServiceTest extends TestCase
 
         $this->expectException(\RuntimeException::class);
 
-        $this->hangarService->repairShip(self::COLONY_ID, 1, 1);
+        $this->hangarService->repairShip(self::COLONY_ID, 1);
     }
 }

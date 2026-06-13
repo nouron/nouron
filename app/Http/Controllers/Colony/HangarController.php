@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\HangarService;
+use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ class HangarController extends BaseController
         TickService $tick,
         private readonly ColonyService $colonyService,
         private readonly HangarService $hangarService,
+        private readonly PersonellService $personellService,
     ) {
         parent::__construct($tick);
     }
@@ -185,16 +187,27 @@ class HangarController extends BaseController
 
     public function repair(Request $request, int $instanceId): JsonResponse
     {
-        $validated = $request->validate([
-            'ap_spent' => 'required|integer|min:1|max:10',
-        ]);
-
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
+        // Fixed cost: 1 Construction-AP per repair (mirrors building repair).
+        if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'ap_limit',
+                'ap_type' => 'construction',
+                'current' => 0,
+                'message' => __('colony.onboarding_trigger_ap_limit'),
+            ], 422);
+        }
+
         try {
-            $this->hangarService->repairShip($colony->id, $instanceId, $validated['ap_spent']);
+            $this->hangarService->repairShip($colony->id, $instanceId);
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
+        }
+
+        if (! config('game.bypass.ap_checks')) {
+            $this->personellService->lockActionPoints('construction', $colony->id, 1);
         }
 
         return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);

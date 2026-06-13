@@ -35,7 +35,6 @@ function hangarCarousel(config) {
         // Per-instance form values
         dispatchDest: {},
         dispatchSol: {},
-        repairAp: {},
 
         // Nexus request modal state (shared across all slots)
         requestModal: {
@@ -61,7 +60,6 @@ function hangarCarousel(config) {
                 this.error[id] = null;
                 this.dispatchDest[id] = '';
                 this.dispatchSol[id] = 1;
-                this.repairAp[id] = 3;
             });
             this.pendingShips.forEach((ship) => {
                 this.pendingAssignTarget[ship.id] = '';
@@ -255,7 +253,7 @@ function hangarCarousel(config) {
         },
 
         /**
-         * POST: repair a docked ship by spending AP.
+         * POST: repair a docked ship — fixed cost (1 Construction-AP per click).
          * @param {number} instanceId
          */
         async repair(instanceId) {
@@ -263,10 +261,9 @@ function hangarCarousel(config) {
             this.error[instanceId] = null;
             try {
                 const url = this.routes.repair.replace('__ID__', instanceId);
-                const res = await this._post(url, { ap_spent: parseInt(this.repairAp[instanceId], 10) });
+                const res = await this._post(url, {});
                 if (res.ok) {
                     this._updateSlot(instanceId, res.slot);
-                    this.closeModal(instanceId);
                 } else {
                     this.error[instanceId] = res.error ?? 'Error.';
                 }

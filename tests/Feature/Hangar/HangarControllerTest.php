@@ -35,9 +35,8 @@ namespace Tests\Feature\Hangar;
  *    - test_recall_returns_ok_with_slot
  *    - test_recall_returns_422_when_no_active_mission
  *
- *  REPAIR
+ *  REPAIR (fixed cost: 1 Construction-AP, kein ap_spent-Payload)
  *    - test_repair_returns_ok_with_slot
- *    - test_repair_returns_422_for_zero_ap_spent
  *    - test_repair_returns_422_when_ship_at_full_status
  */
 
@@ -436,10 +435,9 @@ class HangarControllerTest extends TestCase
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 10.0);
 
+        // Fixed cost: no ap_spent payload.
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), [
-                'ap_spent' => 3,
-            ]);
+            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), []);
 
         $response->assertOk()
             ->assertJson(['ok' => true])
@@ -447,33 +445,8 @@ class HangarControllerTest extends TestCase
 
         $slot = $response->json('slot');
         $this->assertNotNull($slot['ship']);
-        // 10.0 + 3*2 = 16.0
-        $this->assertSame(16.0, (float) $slot['ship']['status_points']);
-    }
-
-    public function test_repair_returns_422_for_zero_ap_spent(): void
-    {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 10.0);
-
-        // Laravel validation rule min:1 blocks ap_spent=0
-        $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), [
-                'ap_spent' => 0,
-            ]);
-
-        $response->assertStatus(422);
-    }
-
-    public function test_repair_returns_422_when_missing_ap_spent(): void
-    {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 10.0);
-
-        $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), []);
-
-        $response->assertStatus(422);
+        // Fixed: 10.0 + REPAIR_SP_PER_AP (2) = 12.0
+        $this->assertSame(12.0, (float) $slot['ship']['status_points']);
     }
 
     public function test_repair_returns_422_when_ship_at_full_status(): void
@@ -482,9 +455,7 @@ class HangarControllerTest extends TestCase
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked', 20.0); // already full
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), [
-                'ap_spent' => 1,
-            ]);
+            ->postJson(route('colony.hangar.repair', ['instanceId' => 1]), []);
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false]);
