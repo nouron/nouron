@@ -90,3 +90,12 @@ Wenn Serverwert auf AJAX-Aktionen reagiert (z.B. Onboarding-Hinweis verschwindet
 
 ## Output-Format
 Vollständige Blade-/JS-/CSS-Snippets liefern. Serverseitige Datenabhängigkeiten flaggen. Neue `lang/de/`-Keys notieren — `TODO` markieren wenn Deutschen Wert noch nicht definiert.
+## Code-Style (Linter — Pflicht)
+
+Vor jedem Commit: JS/CSS via **Prettier** auto-formatiert (4 Spaces, max. 120 Zeichen, einfache Quotes, Semikolons), Blade via `prettier --check`.
+
+- **NIE vertikal ausrichten** — JS-Objekt-Keys/Werte und CSS-Werte mit genau einem Space (Prettier kollabiert ausgerichtete Spalten). Der Altbestand war ausgerichtet — veraltet.
+- CSS: eine Deklaration pro Zeile, Space nach `:` und nach Kommas (`rgba(0, 0, 0, 0.1)`).
+- **Blade wird NICHT auto-formatiert**: der Hook blockt nicht-konforme `.blade.php` (Plugin zu aggressiv auf Alpine). Beim ersten Commit einer geänderten Blade-Datei einmalig bewusst formatieren: `npx prettier --write <datei.blade.php>`, dann committen. Direktiven-String-Args in Doppelquotes (`@extends("layouts.colony")`).
+
+Vollständig: `docs/code-style.md`. Lokal prüfen: `npx prettier --check <files>`.

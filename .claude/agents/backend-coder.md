@@ -71,3 +71,12 @@ Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Co
 
 ## Output-Format
 Vollständige, lauffähige Code-Dateien liefern. Kommentare nur wenn WHY nicht offensichtlich (versteckte Einschränkung, Workaround, subtile Invariante) — nie erklären was Code tut.
+## Code-Style (Linter — Pflicht)
+
+Vor jedem Commit formatiert der Hook PHP via **Laravel Pint** (`laravel`-Preset). Code so schreiben, dass Pint nichts mehr ändert:
+
+- **NIE vertikal ausrichten** — `=>`/`=`/Operatoren mit genau einem Space. (Der Altbestand war ausgerichtet — dieser Stil ist veraltet, Pint kollabiert ihn.)
+- Einfache Quotes ohne Interpolation; Konkatenation mit Spaces (`'a' . $b`); `!$x` ohne Folgespace.
+- `use` alphabetisch sortiert + keine ungenutzten; Leerzeile vor `return`; leere Body einzeilig (`__construct() {}`); Trailing Comma in mehrzeiligen Arrays; `(int) $x` mit Space; Datei endet mit genau einem Newline.
+
+Vollständig: `docs/code-style.md`. Lokal prüfen: `bin/pint --test <pfad>`.

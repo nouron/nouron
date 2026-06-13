@@ -75,3 +75,12 @@ bin/phpunit --filter test_explore_tile_success    # single test method
 
 ## Output-Format
 Vollständige PHPUnit-Test-Klassen liefern, direkt ausführbar. Kurzer Kommentar oben mit abgedeckten Szenarien.
+## Code-Style (Linter — Pflicht)
+
+Tests (`tests/**/*.php`) werden vor jedem Commit von **Laravel Pint** formatiert:
+
+- **NIE vertikal ausrichten** (`=>`/`=` ein Space).
+- **Test-Methoden snake_case**: `public function test_does_something(): void`.
+- `use` alphabetisch + keine ungenutzten; einfache Quotes; Konkatenation mit Spaces; Trailing Comma in Multiline-Arrays.
+
+Vollständig: `docs/code-style.md`. Lokal prüfen: `bin/pint --test tests`.
