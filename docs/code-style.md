@@ -46,7 +46,7 @@ Prüfen/fixen: `npx prettier --check <files>` bzw. `npx prettier --write <files>
 
 Der Hook **blockt** nicht-konforme `.blade.php`-Dateien, schreibt aber nichts (das Blade-Plugin ist auf Alpine-Templates zu aggressiv → bewusst manuell).
 
-- Beim ersten Commit einer geänderten Blade-Datei blockt der Hook → einmalig bewusst formatieren: `npx prettier --write <datei.blade.php>`, dann committen.
+- Beim ersten Commit einer geänderten Blade-Datei blockt der Hook → bewusst formatieren: `npx prettier --write <datei.blade.php>`. **Achtung:** das Blade-Plugin ist nicht idempotent — **zweimal** ausführen, bis `--check` sauber ist. Dann committen.
 - Stil: 4 Spaces; Direktiven-String-Args in Doppelquotes (`@extends("layouts.colony")`).
 
 ## Aktivierung pro Clone

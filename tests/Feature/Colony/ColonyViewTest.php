@@ -53,4 +53,14 @@ class ColonyViewTest extends TestCase
         $response->assertSee(route('colony.building.repair'), false);
         $response->assertSee(route('colony.building.invest'), false);
     }
+
+    public function test_hexview_renders_ap_cost_chips_on_action_buttons(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        // AP-cost chips (game-wide convention) sit inside the action buttons.
+        $response->assertSee('ap-cost-chip', false);
+    }
 }

@@ -8,7 +8,7 @@ return [
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
     'repair' => 'Reparieren',
-    'ap_per_click' => '1 AP pro Klick',
+    'ap_per_tile' => '1 AP/Feld',
 
     // ── Repair errors ─────────────────────────────────────────────────────────
 
