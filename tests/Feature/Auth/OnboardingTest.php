@@ -22,9 +22,9 @@ class OnboardingTest extends TestCase
     public function test_registration_creates_colony_with_starting_resources(): void
     {
         $this->post(route('register'), [
-            'username'              => 'newplayer',
-            'email'                 => 'new@example.com',
-            'password'              => 'secret1234',
+            'username' => 'newplayer',
+            'email' => 'new@example.com',
+            'password' => 'secret1234',
             'password_confirmation' => 'secret1234',
         ])->assertRedirect(route('lobby'));
 
@@ -44,8 +44,8 @@ class OnboardingTest extends TestCase
             ->where('colony_id', $colony->id)
             ->pluck('amount', 'resource_id');
         $this->assertEquals(200, $res[3]);   // regolith
-        $this->assertEquals(0,   $res[4]);   // werkstoffe — produced by harvester, no starting stock
-        $this->assertEquals(0,   $res[5]);   // organika   — produced by bioFacility, no starting stock
+        $this->assertEquals(0, $res[4]);   // werkstoffe — produced by harvester, no starting stock
+        $this->assertEquals(0, $res[5]);   // organika   — produced by bioFacility, no starting stock
 
         // CommandCenter: level 1, status 16/20 (80% — slightly damaged, functional).
         $cc = DB::table('colony_buildings')
@@ -80,7 +80,7 @@ class OnboardingTest extends TestCase
     public function test_setup_new_player_creates_colony_without_planet(): void
     {
         $service = $this->app->make(OnboardingService::class);
-        $user    = User::factory()->create();
+        $user = User::factory()->create();
 
         $colony = $service->setupNewPlayer($user->user_id, 'Testkolonie');
 

@@ -14,7 +14,9 @@ use Illuminate\Database\Eloquent\Model;
 class TradeResource extends Model
 {
     protected $table = 'trade_resources';
+
     public $incrementing = false;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -29,11 +31,11 @@ class TradeResource extends Model
     protected function casts(): array
     {
         return [
-            'colony_id'   => 'integer',
-            'direction'   => 'integer',
+            'colony_id' => 'integer',
+            'direction' => 'integer',
             'resource_id' => 'integer',
-            'amount'      => 'integer',
-            'price'       => 'integer',
+            'amount' => 'integer',
+            'price' => 'integer',
             'restriction' => 'integer',
         ];
     }

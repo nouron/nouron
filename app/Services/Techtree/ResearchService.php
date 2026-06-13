@@ -12,10 +12,25 @@ use Illuminate\Support\Facades\DB;
  */
 class ResearchService extends AbstractTechnologyService
 {
-    protected function masterTable(): string  { return 'researches'; }
-    protected function colonyTable(): string  { return 'colony_researches'; }
-    protected function costsTable(): string   { return 'research_costs'; }
-    protected function entityIdKey(): string  { return 'research_id'; }
+    protected function masterTable(): string
+    {
+        return 'researches';
+    }
+
+    protected function colonyTable(): string
+    {
+        return 'colony_researches';
+    }
+
+    protected function costsTable(): string
+    {
+        return 'research_costs';
+    }
+
+    protected function entityIdKey(): string
+    {
+        return 'research_id';
+    }
 
     public static function idFor(string $key): int
     {
@@ -45,7 +60,7 @@ class ResearchService extends AbstractTechnologyService
         if ($entity && ($entity->purpose ?? '') === 'knowledge') {
             $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
             $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
-            $targetLevel  = $currentLevel + 1;
+            $targetLevel = $currentLevel + 1;
 
             $caps = config('game.knowledge_cc_level_cap', []);
             if (isset($caps[$targetLevel])) {
@@ -79,7 +94,7 @@ class ResearchService extends AbstractTechnologyService
             ->value('level') ?? 0);
 
         $targetLevel = $currentLevel + 1;
-        $costs       = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
+        $costs = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
 
         return (int) ($costs[$targetLevel] ?? $entity->ap_for_levelup);
     }

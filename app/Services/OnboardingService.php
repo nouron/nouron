@@ -15,9 +15,9 @@ use Illuminate\Support\Facades\DB;
 class OnboardingService
 {
     public function __construct(
-        private readonly ColonyService     $colonyService,
-        private readonly TickService       $tickService,
-        private readonly EventService      $eventService,
+        private readonly ColonyService $colonyService,
+        private readonly TickService $tickService,
+        private readonly EventService $eventService,
         private readonly ColonyTileService $tileService,
     ) {}
 
@@ -32,7 +32,7 @@ class OnboardingService
             $name = $colonyName ?: 'Kolonie';
 
             $globalTick = $this->tickService->getTickCount();
-            $colony     = $this->colonyService->createColony($userId, null, $name, $globalTick);
+            $colony = $this->colonyService->createColony($userId, null, $name, $globalTick);
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);
@@ -40,16 +40,16 @@ class OnboardingService
             $this->eventService->createNexusBriefing($userId, 0, $colony->id);
 
             Run::create([
-                'user_id'      => $userId,
-                'colony_id'    => $colony->id,
+                'user_id' => $userId,
+                'colony_id' => $colony->id,
                 'current_tick' => 0,
-                'status'       => 'active',
-                'started_at'   => null, // set when player clicks "Mission starten" in lobby
-                'settings'     => [
-                    'tick_limit'     => config('game.run.tick_limit'),
-                    'bypass'         => config('game.bypass'),
+                'status' => 'active',
+                'started_at' => null, // set when player clicks "Mission starten" in lobby
+                'settings' => [
+                    'tick_limit' => config('game.run.tick_limit'),
+                    'bypass' => config('game.bypass'),
                     'supply_cap_max' => config('game.supply.cap_max'),
-                    'max_players'    => config('game.run.max_players'),
+                    'max_players' => config('game.run.max_players'),
                 ],
             ]);
 
@@ -85,40 +85,40 @@ class OnboardingService
         // Regolith only on ring 3+ — no regolith inside colony zone.
         $tiles = [
             // ── Ring 0 ────────────────────────────────────────────────────────
-            ['q' =>  0, 'r' =>  0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
             // ── Ring 1 ────────────────────────────────────────────────────────
-            ['q' =>  1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' =>  0, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => -1, 'r' =>  0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' =>  0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' =>  1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 0, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => -1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 1],
             // ── Ring 2 (fog — unlocked by CC upgrade) ─────────────────────────
-            ['q' =>  2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  2, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  0, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 2, 'r' => 0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 2, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 2, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 1, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 0, 'r' => -2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             ['q' => -1, 'r' => -1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -2, 'r' =>  0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -2, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_impassable', 'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -2, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -1, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  0, 'r' =>  2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  1, 'r' =>  1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' => 0, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' => 1, 'ring' => 2, 'tile_type' => 'terrain_impassable', 'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -2, 'r' => 2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' => 2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 0, 'r' => 2, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 1, 'r' => 1, 'ring' => 2, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
             // ── Ring 3 (exploration zone, fog) ────────────────────────────────
-            ['q' =>  3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' =>  3, 'r' => -1, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  3, 'r' => -2, 'ring' => 3, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  2, 'r' =>  1, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  1, 'r' =>  2, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  0, 'r' =>  3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -1, 'r' =>  3, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' => -3, 'r' =>  0, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
-            ['q' =>  0, 'r' => -3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_normal',    'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 3, 'r' => -1, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 3, 'r' => -2, 'ring' => 3, 'tile_type' => 'terrain_hazard',     'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 2, 'r' => 1, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 1, 'r' => 2, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 0, 'r' => 3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -1, 'r' => 3, 'ring' => 3, 'tile_type' => 'regolith_poor',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
+            ['q' => 0, 'r' => -3, 'ring' => 3, 'tile_type' => 'terrain_empty',      'is_colony_zone' => 0, 'is_explored' => 0],
         ];
 
-        $rows = array_map(fn($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
+        $rows = array_map(fn ($t) => array_merge($t, ['colony_id' => $colonyId]), $tiles);
         DB::table('colony_tiles')->insert($rows);
 
         // Assign colony zone based on CC Level 1 — auto-explores ring 0+1.
@@ -132,31 +132,31 @@ class OnboardingService
         // natural decay will make repair critical within 5-10 Sols.
         DB::table('colony_buildings')->insert([
             [
-                'colony_id'     => $colonyId,
-                'building_id'   => 25, // CommandCenter
-                'level'         => 1,
+                'colony_id' => $colonyId,
+                'building_id' => 25, // CommandCenter
+                'level' => 1,
                 'status_points' => 16,
-                'ap_spend'      => 0,
-                'tile_x'        => null,
-                'tile_y'        => null,
+                'ap_spend' => 0,
+                'tile_x' => null,
+                'tile_y' => null,
             ],
             [
-                'colony_id'     => $colonyId,
-                'building_id'   => 27, // Harvester
-                'level'         => 1,
+                'colony_id' => $colonyId,
+                'building_id' => 27, // Harvester
+                'level' => 1,
                 'status_points' => 16,
-                'ap_spend'      => 0,
-                'tile_x'        => 1,
-                'tile_y'        => 0,
+                'ap_spend' => 0,
+                'tile_x' => 1,
+                'tile_y' => 0,
             ],
             [
-                'colony_id'     => $colonyId,
-                'building_id'   => 28, // HousingComplex
-                'level'         => 1,
+                'colony_id' => $colonyId,
+                'building_id' => 28, // HousingComplex
+                'level' => 1,
                 'status_points' => 16,
-                'ap_spend'      => 0,
-                'tile_x'        => 0,
-                'tile_y'        => 1,
+                'ap_spend' => 0,
+                'tile_x' => 0,
+                'tile_y' => 1,
             ],
         ]);
     }

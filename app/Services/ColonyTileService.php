@@ -21,24 +21,29 @@ class ColonyTileService
             ->orderBy('q')
             ->orderBy('r')
             ->get()
-            ->map(fn($t) => $this->transformTile($t));
+            ->map(fn ($t) => $this->transformTile($t));
     }
 
     public function exploreTile(int $colonyId, int $q, int $r): array
     {
         $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
 
-        if (!$tile)             return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
-        if ($tile->is_explored) return ['ok' => false, 'error' => __('colony.error_already_explored')];
+        if (! $tile) {
+            return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+        }
+        if ($tile->is_explored) {
+            return ['ok' => false, 'error' => __('colony.error_already_explored')];
+        }
 
-        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
         $tile->save();
-        if (!config('game.bypass.ap_checks'))
+        if (! config('game.bypass.ap_checks')) {
             $this->personellService->lockActionPoints('navigation', $colonyId, 1);
+        }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
     }
@@ -47,10 +52,18 @@ class ColonyTileService
     {
         $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
 
-        if (!$tile)                    return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
-        if (!$tile->is_explored)       return ['ok' => false, 'error' => __('colony.error_not_explored')];
-        if ($tile->event_type === null) return ['ok' => false, 'error' => __('colony.error_no_signal')];
-        if ($tile->is_deep_scanned)    return ['ok' => false, 'error' => __('colony.error_already_scanned')];
+        if (! $tile) {
+            return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+        }
+        if (! $tile->is_explored) {
+            return ['ok' => false, 'error' => __('colony.error_not_explored')];
+        }
+        if ($tile->event_type === null) {
+            return ['ok' => false, 'error' => __('colony.error_no_signal')];
+        }
+        if ($tile->is_deep_scanned) {
+            return ['ok' => false, 'error' => __('colony.error_already_scanned')];
+        }
 
         // Uplink-Station Lv2+ (building_id=54): deep-scan costs 1 Nav-AP instead of 2.
         $uplinkLv = DB::table('colony_buildings')
@@ -59,14 +72,15 @@ class ColonyTileService
             ->value('level') ?? 0;
         $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
 
-        if (!config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
+        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap_2')];
         }
 
         $tile->is_deep_scanned = true;
         $tile->save();
-        if (!config('game.bypass.ap_checks'))
+        if (! config('game.bypass.ap_checks')) {
             $this->personellService->lockActionPoints('navigation', $colonyId, $scanApCost);
+        }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
     }
@@ -79,7 +93,7 @@ class ColonyTileService
     public function assignColonyZone(int $colonyId, int $ccLevel): void
     {
         $expansion = config('game.colony_zone_expansion', [4, 2, 3, 3, 3]);
-        $target    = (int) array_sum(array_slice($expansion, 0, max(0, $ccLevel)));
+        $target = (int) array_sum(array_slice($expansion, 0, max(0, $ccLevel)));
 
         $maxRing = (int) DB::table('colony_tiles')->where('colony_id', $colonyId)->max('ring');
 
@@ -87,17 +101,19 @@ class ColonyTileService
         $tileTypes = DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
             ->get(['q', 'r', 'tile_type'])
-            ->keyBy(fn($t) => "{$t->q},{$t->r}")
-            ->map(fn($t) => $t->tile_type)
+            ->keyBy(fn ($t) => "{$t->q},{$t->r}")
+            ->map(fn ($t) => $t->tile_type)
             ->toArray();
 
         // Ring 0 (CC) always colony zone
         $colonyZone = [[0, 0]];
-        $counted    = 0;
+        $counted = 0;
 
         for ($ring = 1; $ring <= $maxRing && $counted < $target; $ring++) {
             foreach ($this->ringCoords($ring) as [$q, $r]) {
-                if ($counted >= $target) break;
+                if ($counted >= $target) {
+                    break;
+                }
                 $type = $tileTypes["{$q},{$r}"] ?? null;
                 if ($type === null
                     || $type === 'terrain_impassable'
@@ -128,7 +144,7 @@ class ColonyTileService
     public function generateDefaultTiles(Colony $colony, int $maxRing = 3): void
     {
         $colonyId = $colony->id;
-        $ccLevel  = (int) DB::table('colony_buildings')
+        $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level') ?? 0;
@@ -141,35 +157,35 @@ class ColonyTileService
             for ($r = $rMin; $r <= $rMax; $r++) {
                 $ring = max(abs($q), abs($r), abs($q + $r));
 
-                $isCC       = ($q === 0 && $r === 0);
+                $isCC = ($q === 0 && $r === 0);
                 $isExplored = $isCC || $ring <= 1;
-                $tileType   = $isCC ? 'terrain_empty' : $this->pickTileType($q, $r, $colonyId, $ring);
+                $tileType = $isCC ? 'terrain_empty' : $this->pickTileType($q, $r, $colonyId, $ring);
 
                 $resourceAmount = null;
-                $resourceMax    = null;
+                $resourceMax = null;
                 if (str_starts_with($tileType, 'regolith_')) {
                     $resourceMax = match ($tileType) {
-                        'regolith_rich'   => 800,
+                        'regolith_rich' => 800,
                         'regolith_normal' => 500,
-                        default           => 250,
+                        default => 250,
                     };
                     $resourceAmount = $resourceMax;
                 }
 
                 $rows[] = [
-                    'colony_id'      => $colonyId,
-                    'q'              => $q,
-                    'r'              => $r,
-                    'ring'           => $ring,
-                    'tile_type'      => $tileType,
-                    'event_type'     => null,
+                    'colony_id' => $colonyId,
+                    'q' => $q,
+                    'r' => $r,
+                    'ring' => $ring,
+                    'tile_type' => $tileType,
+                    'event_type' => null,
                     'is_colony_zone' => 0,
-                    'is_explored'    => $isExplored ? 1 : 0,
+                    'is_explored' => $isExplored ? 1 : 0,
                     'is_deep_scanned' => 0,
                     'resource_amount' => $resourceAmount,
-                    'resource_max'    => $resourceMax,
-                    'created_at'     => now(),
-                    'updated_at'     => now(),
+                    'resource_max' => $resourceMax,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ];
             }
         }
@@ -181,9 +197,10 @@ class ColonyTileService
     private function transformTile(ColonyTile $tile): array
     {
         $arr = $tile->toArray();
-        $arr['has_signal'] = $tile->event_type !== null && (bool) $tile->is_explored && !(bool) $tile->is_deep_scanned;
+        $arr['has_signal'] = $tile->event_type !== null && (bool) $tile->is_explored && ! (bool) $tile->is_deep_scanned;
         // Hide the actual event until the tile is deep-scanned (sondiert)
         $arr['event_type'] = $tile->is_deep_scanned ? $tile->event_type : null;
+
         return $arr;
     }
 
@@ -198,26 +215,44 @@ class ColonyTileService
 
         // Ring 2: colony expansion zone — no regolith, rare hazards and blockers
         if ($ring === 2) {
-            if ($hash < 3)  return 'terrain_impassable';
-            if ($hash < 10) return 'terrain_hazard';
+            if ($hash < 3) {
+                return 'terrain_impassable';
+            }
+            if ($hash < 10) {
+                return 'terrain_hazard';
+            }
+
             return 'terrain_empty';
         }
 
         // Ring 3+: full mix including resource tiles
-        if ($hash < 5)  return 'terrain_impassable';
-        if ($hash < 15) return 'terrain_hazard';
-        if ($hash < 35) return 'regolith_poor';
-        if ($hash < 55) return 'regolith_normal';
-        if ($hash < 65) return 'regolith_rich';
+        if ($hash < 5) {
+            return 'terrain_impassable';
+        }
+        if ($hash < 15) {
+            return 'terrain_hazard';
+        }
+        if ($hash < 35) {
+            return 'regolith_poor';
+        }
+        if ($hash < 55) {
+            return 'regolith_normal';
+        }
+        if ($hash < 65) {
+            return 'regolith_rich';
+        }
+
         return 'terrain_empty';
     }
 
     private function ringCoords(int $ring): array
     {
-        if ($ring === 0) return [[0, 0]];
+        if ($ring === 0) {
+            return [[0, 0]];
+        }
 
         $coords = [];
-        $dirs   = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
+        $dirs = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
         $q = $ring;
         $r = 0;
 

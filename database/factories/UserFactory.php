@@ -16,17 +16,17 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'username'         => fake()->unique()->userName(),
-            'display_name'     => fake()->name(),
-            'email'            => fake()->unique()->safeEmail(),
-            'password'         => bcrypt('password'),
-            'role'             => 'player',
-            'state'            => 1,
-            'activation_key'   => Str::random(32),
-            'activated'        => true,
-            'disabled'         => false,
+            'username' => fake()->unique()->userName(),
+            'display_name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => bcrypt('password'),
+            'role' => 'player',
+            'state' => 1,
+            'activation_key' => Str::random(32),
+            'activated' => true,
+            'disabled' => false,
             'first_time_login' => false,
-            'theme'            => 'darkred',
+            'theme' => 'darkred',
             'tooltips_enabled' => true,
         ];
     }

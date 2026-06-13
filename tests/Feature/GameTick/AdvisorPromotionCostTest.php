@@ -35,22 +35,25 @@ class AdvisorPromotionCostTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    private const USER_ID   = 3;    // Bart
+    private const USER_ID = 3;    // Bart
+
     private const COLONY_ID = 1;    // Springfield
 
     /**
      * Trader advisor (personell_id=92) — present in test data for colony 1.
      * We use its id (3) throughout these tests.
      */
-    private const ADVISOR_ID          = 3;
+    private const ADVISOR_ID = 3;
+
     private const ADVISOR_PERSONELL_ID = 92;
 
     /**
      * Threshold from config: advisor at rank 1 needs 10 active_ticks to become rank 2.
      * Set active_ticks to threshold - 1 so that one tick push crosses the boundary.
      */
-    private const RANK1_THRESHOLD   = 10; // config('game.advisor.rank_thresholds')[1]
-    private const RANK2_COST        = 150; // config('game.advisor.promotion_costs')[2]
+    private const RANK1_THRESHOLD = 10; // config('game.advisor.rank_thresholds')[1]
+
+    private const RANK2_COST = 150; // config('game.advisor.promotion_costs')[2]
 
     protected function setUp(): void
     {
@@ -62,12 +65,12 @@ class AdvisorPromotionCostTest extends TestCase
         DB::table('advisors')->where('colony_id', self::COLONY_ID)->delete();
 
         DB::table('advisors')->insert([
-            'id'                    => self::ADVISOR_ID,
-            'user_id'               => self::USER_ID,
-            'personell_id'          => self::ADVISOR_PERSONELL_ID,
-            'colony_id'             => self::COLONY_ID,
-            'rank'                  => 1,
-            'active_ticks'          => self::RANK1_THRESHOLD - 1,
+            'id' => self::ADVISOR_ID,
+            'user_id' => self::USER_ID,
+            'personell_id' => self::ADVISOR_PERSONELL_ID,
+            'colony_id' => self::COLONY_ID,
+            'rank' => 1,
+            'active_ticks' => self::RANK1_THRESHOLD - 1,
             'unavailable_until_tick' => null,
         ]);
     }
@@ -174,7 +177,7 @@ class AdvisorPromotionCostTest extends TestCase
         DB::table('advisors')
             ->where('id', self::ADVISOR_ID)
             ->update([
-                'rank'        => 1,
+                'rank' => 1,
                 'active_ticks' => self::RANK1_THRESHOLD - 1,
             ]);
 

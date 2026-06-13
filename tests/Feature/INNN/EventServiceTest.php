@@ -26,8 +26,10 @@ class EventServiceTest extends TestCase
 
     private EventService $service;
 
-    private int $userA   = 0;   // Homer — has no events
-    private int $userB   = 3;   // Bart  — has 2 events
+    private int $userA = 0;   // Homer — has no events
+
+    private int $userB = 3;   // Bart  — has 2 events
+
     private int $eventId = 16;
 
     protected function setUp(): void
@@ -102,10 +104,10 @@ class EventServiceTest extends TestCase
     public function test_create_event_returns_integer(): void
     {
         $id = $this->service->createEvent([
-            'user'       => $this->userB,
-            'tick'       => 16000,
-            'event'      => 'test.event',
-            'area'       => '',
+            'user' => $this->userB,
+            'tick' => 16000,
+            'event' => 'test.event',
+            'area' => '',
             'parameters' => 'a:0:{}',
         ]);
         $this->assertIsInt($id);
@@ -115,10 +117,10 @@ class EventServiceTest extends TestCase
     public function test_create_event_is_retrievable(): void
     {
         $id = $this->service->createEvent([
-            'user'       => $this->userB,
-            'tick'       => 16001,
-            'event'      => 'test.created',
-            'area'       => 'techtree',
+            'user' => $this->userB,
+            'tick' => 16001,
+            'event' => 'test.created',
+            'area' => 'techtree',
             'parameters' => 'a:1:{s:5:"hello";s:5:"world";}',
         ]);
 
@@ -133,10 +135,10 @@ class EventServiceTest extends TestCase
         $before = $this->service->getEvents($this->userB)->count();
 
         $this->service->createEvent([
-            'user'       => $this->userB,
-            'tick'       => 16002,
-            'event'      => 'another.event',
-            'area'       => '',
+            'user' => $this->userB,
+            'tick' => 16002,
+            'event' => 'another.event',
+            'area' => '',
             'parameters' => '',
         ]);
 

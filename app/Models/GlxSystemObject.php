@@ -17,7 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class GlxSystemObject extends Model
 {
     protected $table = 'v_glx_system_objects';
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -33,11 +35,11 @@ class GlxSystemObject extends Model
     protected function casts(): array
     {
         return [
-            'x'         => 'integer',
-            'y'         => 'integer',
-            'type_id'   => 'integer',
-            'sight'     => 'integer',
-            'density'   => 'integer',
+            'x' => 'integer',
+            'y' => 'integer',
+            'type_id' => 'integer',
+            'sight' => 'integer',
+            'density' => 'integer',
             'radiation' => 'integer',
         ];
     }

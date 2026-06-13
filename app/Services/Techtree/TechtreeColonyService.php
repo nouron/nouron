@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
  *
  * Merges master data (buildings/researches/ships/personell) with colony-specific
  * data (level, status_points, ap_spend) into flat arrays suitable for views.
- *
  */
 class TechtreeColonyService
 {
@@ -56,9 +55,9 @@ class TechtreeColonyService
     public function getTechtree(int $colonyId): array
     {
         return [
-            'building'  => $this->_gatherTechtreeInformations($colonyId, 'building'),
-            'research'  => $this->_gatherTechtreeInformations($colonyId, 'research'),
-            'ship'      => $this->_gatherTechtreeInformations($colonyId, 'ship'),
+            'building' => $this->_gatherTechtreeInformations($colonyId, 'building'),
+            'research' => $this->_gatherTechtreeInformations($colonyId, 'research'),
+            'ship' => $this->_gatherTechtreeInformations($colonyId, 'ship'),
             'personell' => $this->_gatherTechtreeInformations($colonyId, 'personell'),
         ];
     }
@@ -69,18 +68,18 @@ class TechtreeColonyService
     private function _gatherTechtreeInformations(int $colonyId, string $type): array
     {
         [$masterTable, $colonyTable, $idKey] = match ($type) {
-            'building'  => ['buildings',  'colony_buildings',  'building_id'],
-            'research'  => ['researches', 'colony_researches', 'research_id'],
-            'ship'      => ['ships',      'colony_ships',      'ship_id'],
+            'building' => ['buildings',  'colony_buildings',  'building_id'],
+            'research' => ['researches', 'colony_researches', 'research_id'],
+            'ship' => ['ships',      'colony_ships',      'ship_id'],
             'personell' => ['personell',  'colony_personell',  'personell_id'],
-            default     => throw new \InvalidArgumentException("Unknown type: $type"),
+            default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
         $entities = DB::table($masterTable)
             ->where('is_active', 1)
             ->get()
             ->keyBy('id')
-            ->map(fn($e) => (array) $e)
+            ->map(fn ($e) => (array) $e)
             ->toArray();
 
         $colonyEntities = DB::table($colonyTable)
@@ -88,16 +87,16 @@ class TechtreeColonyService
             ->orderBy('level')  // for instanced buildings: highest-level instance wins keyBy
             ->get()
             ->keyBy($idKey)
-            ->map(fn($e) => (array) $e)
+            ->map(fn ($e) => (array) $e)
             ->toArray();
 
         foreach ($entities as $id => $entity) {
             if (array_key_exists($id, $colonyEntities)) {
                 $entities[$id] = array_merge($entity, $colonyEntities[$id]);
             } else {
-                $entities[$id]['level']         = 0;
+                $entities[$id]['level'] = 0;
                 $entities[$id]['status_points'] = 0;
-                $entities[$id]['ap_spend']      = 0;
+                $entities[$id]['ap_spend'] = 0;
             }
         }
 

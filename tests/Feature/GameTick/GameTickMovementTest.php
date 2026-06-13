@@ -39,11 +39,11 @@ class GameTickMovementTest extends TestCase
     private function insertMoveOrder(int $tick, int $fleetId, string $coords): void
     {
         DB::table('fleet_orders')->insert([
-            'fleet_id'      => $fleetId,
-            'tick'          => $tick,
-            'order'         => 'move',
-            'coordinates'   => $coords,
-            'data'          => null,
+            'fleet_id' => $fleetId,
+            'tick' => $tick,
+            'order' => 'move',
+            'coordinates' => $coords,
+            'data' => null,
             'was_processed' => 0,
         ]);
     }
@@ -120,7 +120,7 @@ class GameTickMovementTest extends TestCase
     public function test_move_order_at_wrong_tick_is_not_processed(): void
     {
         $orderTick = 10010;
-        $runTick   = 10011; // one off
+        $runTick = 10011; // one off
         $this->insertMoveOrder($orderTick, self::FLEET_ID, '[9000, 9000]');
 
         $positionBefore = $this->getFleetPosition(self::FLEET_ID);
@@ -141,11 +141,11 @@ class GameTickMovementTest extends TestCase
         $tick = 10012;
         // Insert already-processed order
         DB::table('fleet_orders')->insert([
-            'fleet_id'      => self::FLEET_ID,
-            'tick'          => $tick,
-            'order'         => 'move',
-            'coordinates'   => '[9999, 9999]',
-            'data'          => null,
+            'fleet_id' => self::FLEET_ID,
+            'tick' => $tick,
+            'order' => 'move',
+            'coordinates' => '[9999, 9999]',
+            'data' => null,
             'was_processed' => 1, // already done
         ]);
 

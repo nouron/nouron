@@ -17,6 +17,7 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $table = 'user';
+
     protected $primaryKey = 'user_id';
 
     // The `user` table has no created_at/updated_at columns
@@ -48,13 +49,13 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'password'         => 'hashed',
-            'disabled'         => 'boolean',
-            'activated'        => 'boolean',
+            'password' => 'hashed',
+            'disabled' => 'boolean',
+            'activated' => 'boolean',
             'first_time_login' => 'boolean',
             'tooltips_enabled' => 'boolean',
-            'last_activity'    => 'datetime',
-            'registration'     => 'datetime',
+            'last_activity' => 'datetime',
+            'registration' => 'datetime',
         ];
     }
 

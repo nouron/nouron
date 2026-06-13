@@ -28,23 +28,26 @@ class ColonyService
     public function getColony(int|string $colonyId): Colony|false
     {
         $this->validateId($colonyId);
+
         return Colony::find($colonyId) ?? false;
     }
 
     public function getColoniesByUserId(int|string $userId): Collection
     {
         $this->validateId($userId);
+
         return Colony::where('user_id', $userId)->get();
     }
 
     /**
-     * @param Colony|int $colony  colony object or ID
+     * @param  Colony|int  $colony  colony object or ID
      */
     public function checkColonyOwner(Colony|int $colony, int $userId): bool
     {
         if (is_int($colony)) {
             $colony = $this->getColony($colony);
         }
+
         return $colony && $colony->user_id == $userId;
     }
 
@@ -65,7 +68,7 @@ class ColonyService
             return $colonies->first();
         }
 
-        $primary = $colonies->first(fn(Colony $c) => $c->is_primary);
+        $primary = $colonies->first(fn (Colony $c) => $c->is_primary);
         if ($primary) {
             return $primary;
         }
@@ -114,7 +117,7 @@ class ColonyService
     {
         [$x, $y] = $coords;
 
-        if (!is_numeric($x) || !is_numeric($y)) {
+        if (! is_numeric($x) || ! is_numeric($y)) {
             throw new InvalidArgumentException('Invalid Coordinates.');
         }
 
@@ -131,6 +134,7 @@ class ColonyService
     public function getColoniesBySystemObjectId(int|string $planetaryId): Collection
     {
         $this->validateId($planetaryId);
+
         return Colony::where('system_object_id', $planetaryId)->get();
     }
 
@@ -142,19 +146,19 @@ class ColonyService
      */
     public function createColony(int $userId, ?int $systemObjectId, string $name, int $sinceTick = 0): Colony
     {
-        $nextId   = (int) DB::table('glx_colonies')->max('id') + 1;
+        $nextId = (int) DB::table('glx_colonies')->max('id') + 1;
         $nextSpot = $systemObjectId
             ? (int) DB::table('glx_colonies')->where('system_object_id', $systemObjectId)->max('spot') + 1
             : 1;
 
         DB::table('glx_colonies')->insert([
-            'id'               => $nextId,
-            'name'             => $name,
+            'id' => $nextId,
+            'name' => $name,
             'system_object_id' => $systemObjectId,
-            'spot'             => $nextSpot,
-            'user_id'          => $userId,
-            'since_tick'       => $sinceTick,
-            'is_primary'       => 1,
+            'spot' => $nextSpot,
+            'user_id' => $userId,
+            'since_tick' => $sinceTick,
+            'is_primary' => 1,
         ]);
 
         return Colony::findOrFail($nextId);

@@ -17,7 +17,7 @@ class RunResultController extends Controller
             abort(403);
         }
 
-        if (!in_array($run->status, ['completed', 'failed'], true)) {
+        if (! in_array($run->status, ['completed', 'failed'], true)) {
             return redirect()->route('colony.view');
         }
 
@@ -25,8 +25,8 @@ class RunResultController extends Controller
 
         $objectives = $run->objectives->map(function ($obj) {
             return [
-                'model'  => $obj,
-                'label'  => trans('run.' . $obj->task_key),
+                'model' => $obj,
+                'label' => trans('run.'.$obj->task_key),
             ];
         });
 

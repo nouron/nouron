@@ -41,17 +41,24 @@ class AdvisorControllerTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    protected int $userIdBart  = 3;   // owns colony 1 (Springfield), CC level 3
+    protected int $userIdBart = 3;   // owns colony 1 (Springfield), CC level 3
+
     protected int $userIdHomer = 0;   // owns advisors on colony 2 (Shelbyville)
-    protected int $colonyIdBart  = 1;
+
+    protected int $colonyIdBart = 1;
+
     protected int $colonyIdHomer = 2;
 
     // personell_id values from config/advisors.php
-    protected int $personellEngineer  = 35;
+    protected int $personellEngineer = 35;
+
     protected int $personellScientist = 36;
-    protected int $personellPilot     = 89;
-    protected int $personellTrader    = 92;
-    protected int $personellStratege  = 93;
+
+    protected int $personellPilot = 89;
+
+    protected int $personellTrader = 92;
+
+    protected int $personellStratege = 93;
 
     protected function setUp(): void
     {
@@ -86,11 +93,11 @@ class AdvisorControllerTest extends TestCase
     private function insertAdvisor(int $userId, int $personellId, int $colonyId, int $rank = 1): int
     {
         return DB::table('advisors')->insertGetId([
-            'user_id'               => $userId,
-            'personell_id'          => $personellId,
-            'colony_id'             => $colonyId,
-            'rank'                  => $rank,
-            'active_ticks'          => 0,
+            'user_id' => $userId,
+            'personell_id' => $personellId,
+            'colony_id' => $colonyId,
+            'rank' => $rank,
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
     }
@@ -266,10 +273,10 @@ class AdvisorControllerTest extends TestCase
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
         $this->assertDatabaseHas('advisors', [
-            'user_id'      => $this->userIdBart,
+            'user_id' => $this->userIdBart,
             'personell_id' => $this->personellEngineer,
-            'colony_id'    => $this->colonyIdBart,
-            'rank'         => 1,
+            'colony_id' => $this->colonyIdBart,
+            'rank' => 1,
         ]);
     }
 
@@ -347,9 +354,9 @@ class AdvisorControllerTest extends TestCase
         $this->clearBartAdvisors();
         $this->ensureCredits($this->userIdBart, 10000);
 
-        $this->insertAdvisor($this->userIdBart, $this->personellEngineer,  $this->colonyIdBart);
+        $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
         $this->insertAdvisor($this->userIdBart, $this->personellScientist, $this->colonyIdBart);
-        $this->insertAdvisor($this->userIdBart, $this->personellTrader,    $this->colonyIdBart);
+        $this->insertAdvisor($this->userIdBart, $this->personellTrader, $this->colonyIdBart);
 
         $bart = User::find($this->userIdBart);
 
@@ -394,7 +401,7 @@ class AdvisorControllerTest extends TestCase
             ->delete(route('advisors.fire', ['id' => $advisorId]));
 
         $this->assertDatabaseHas('advisors', [
-            'id'        => $advisorId,
+            'id' => $advisorId,
             'colony_id' => null,
         ]);
     }

@@ -22,7 +22,7 @@ trait ValidatesId
      */
     protected function validateId(mixed $id): void
     {
-        if (!is_numeric($id) || (int) $id < 0) {
+        if (! is_numeric($id) || (int) $id < 0) {
             throw new InvalidArgumentException(
                 sprintf('Invalid ID: "%s". Must be a non-negative integer.', $id)
             );

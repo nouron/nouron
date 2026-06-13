@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * GlxSystem — Eloquent model for star systems.
@@ -14,7 +13,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class GlxSystem extends Model
 {
     protected $table = 'v_glx_systems';
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -31,13 +32,13 @@ class GlxSystem extends Model
     protected function casts(): array
     {
         return [
-            'x'         => 'integer',
-            'y'         => 'integer',
-            'type_id'   => 'integer',
-            'sight'     => 'integer',
-            'density'   => 'integer',
+            'x' => 'integer',
+            'y' => 'integer',
+            'type_id' => 'integer',
+            'sight' => 'integer',
+            'density' => 'integer',
             'radiation' => 'integer',
-            'size'      => 'integer',
+            'size' => 'integer',
         ];
     }
 

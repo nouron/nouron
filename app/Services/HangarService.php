@@ -9,9 +9,12 @@ use RuntimeException;
 class HangarService
 {
     private const HANGAR_BUILDING_ID = 44;
-    private const ALLOWED_SHIP_IDS   = [37, 47, 85];
-    private const SHIP_MAX_STATUS    = 20; // matches buildings.max_status_points convention
-    private const REPAIR_SP_PER_AP   = 2;  // status_points restored per AP spent
+
+    private const ALLOWED_SHIP_IDS = [37, 47, 85];
+
+    private const SHIP_MAX_STATUS = 20; // matches buildings.max_status_points convention
+
+    private const REPAIR_SP_PER_AP = 2;  // status_points restored per AP spent
 
     /**
      * Credits discount applied per AP the Konsul advisor spends during ship negotiation.
@@ -29,8 +32,8 @@ class HangarService
     ];
 
     public function __construct(
-        private readonly TickService   $tickService,
-        private readonly TrustService  $trustService,
+        private readonly TickService $tickService,
+        private readonly TrustService $trustService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -53,7 +56,7 @@ class HangarService
             return [];
         }
 
-        $instanceIds = array_map(fn($h) => $h->instance_id, $hangars);
+        $instanceIds = array_map(fn ($h) => $h->instance_id, $hangars);
 
         // Load all ships assigned to these hangar slots in one query (exclude pending).
         $ships = DB::table('colony_ships')
@@ -85,30 +88,30 @@ class HangarService
 
         $slots = [];
         foreach ($hangars as $hangar) {
-            $iid  = $hangar->instance_id;
+            $iid = $hangar->instance_id;
             $ship = $ships[$iid] ?? null;
 
             $shipData = null;
             if ($ship !== null) {
                 $mission = $missions[$iid] ?? null;
                 $shipData = [
-                    'id'             => (int) $ship->id,
-                    'ship_id'        => (int) $ship->ship_id,
-                    'name'           => $ship->name,
-                    'ship_state'     => $ship->ship_state,
-                    'level'          => (int) $ship->level,
-                    'status_points'  => (float) $ship->status_points,
-                    'ap_spend'       => (int) $ship->ap_spend,
+                    'id' => (int) $ship->id,
+                    'ship_id' => (int) $ship->ship_id,
+                    'name' => $ship->name,
+                    'ship_state' => $ship->ship_state,
+                    'level' => (int) $ship->level,
+                    'status_points' => (float) $ship->status_points,
+                    'ap_spend' => (int) $ship->ap_spend,
                     'deliver_at_tick' => $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null,
                     'active_mission' => $mission !== null ? (array) $mission : null,
                 ];
             }
 
             $slots[] = [
-                'instance_id'   => (int) $iid,
-                'hangar_level'  => (int) $hangar->level,
+                'instance_id' => (int) $iid,
+                'hangar_level' => (int) $hangar->level,
                 'hangar_status' => (float) $hangar->status_points,
-                'ship'          => $shipData,
+                'ship' => $shipData,
             ];
         }
 
@@ -135,12 +138,12 @@ class HangarService
                 'colony_ships.deliver_at_tick',
                 'colony_ships.pending_until_tick',
             ])
-            ->map(fn($row) => [
-                'id'                => (int) $row->id,
-                'ship_id'           => (int) $row->ship_id,
-                'name'              => $row->name,
-                'ship_state'        => $row->ship_state,
-                'deliver_at_tick'   => $row->deliver_at_tick !== null ? (int) $row->deliver_at_tick : null,
+            ->map(fn ($row) => [
+                'id' => (int) $row->id,
+                'ship_id' => (int) $row->ship_id,
+                'name' => $row->name,
+                'ship_state' => $row->ship_state,
+                'deliver_at_tick' => $row->deliver_at_tick !== null ? (int) $row->deliver_at_tick : null,
                 'pending_until_tick' => $row->pending_until_tick !== null ? (int) $row->pending_until_tick : null,
             ])
             ->all();
@@ -158,42 +161,41 @@ class HangarService
      * and hangar_instance_id = NULL. A pending ship decays (deleted) after
      * config('game.hangar.pending_decay_ticks') ticks unless assigned via assignToHangar().
      *
-     * @param int  $colonyId
-     * @param int  $shipId           Must be one of ALLOWED_SHIP_IDS.
-     * @param bool $useNexusCredit   Take the ship on debt (no upfront Credits).
-     * @param int  $consulApSpent    AP invested by the Konsul advisor — each AP reduces
-     *                               the final credit cost by CONSUL_AP_DISCOUNT Cr.
+     * @param  int  $shipId  Must be one of ALLOWED_SHIP_IDS.
+     * @param  bool  $useNexusCredit  Take the ship on debt (no upfront Credits).
+     * @param  int  $consulApSpent  AP invested by the Konsul advisor — each AP reduces
+     *                              the final credit cost by CONSUL_AP_DISCOUNT Cr.
      *
      * @throws RuntimeException on validation or insufficient credit failures.
      */
     public function requestShip(
-        int  $colonyId,
-        int  $shipId,
+        int $colonyId,
+        int $shipId,
         bool $useNexusCredit = false,
-        int  $consulApSpent  = 0,
+        int $consulApSpent = 0,
     ): void {
-        if (!in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
+        if (! in_array($shipId, self::ALLOWED_SHIP_IDS, true)) {
             throw new RuntimeException("Ship type {$shipId} is not orderable from the Nexus.");
         }
 
         if ($consulApSpent < 0) {
-            throw new RuntimeException("consulApSpent must be zero or positive.");
+            throw new RuntimeException('consulApSpent must be zero or positive.');
         }
 
         $configKey = self::SHIP_ID_TO_CONFIG_KEY[$shipId];
 
-        $baseCost      = (int) config("ships.{$configKey}.nexus_cost", 0);
+        $baseCost = (int) config("ships.{$configKey}.nexus_cost", 0);
         $deliveryTicks = (int) config("ships.{$configKey}.nexus_delivery_ticks", 1);
 
         // Apply Konsul discount — each AP reduces cost, floor at 0 (cannot go negative).
-        $discount    = $consulApSpent * self::CONSUL_AP_DISCOUNT;
-        $finalCost   = max(0, $baseCost - $discount);
+        $discount = $consulApSpent * self::CONSUL_AP_DISCOUNT;
+        $finalCost = max(0, $baseCost - $discount);
 
         $currentTick = $this->tickService->getTickCount();
         $pendingDecayTicks = (int) config('game.hangar.pending_decay_ticks', 5);
 
         DB::transaction(function () use (
-            $colonyId, $shipId, $configKey, $useNexusCredit,
+            $colonyId, $shipId, $useNexusCredit,
             $finalCost, $deliveryTicks, $currentTick, $pendingDecayTicks,
         ): void {
             // Resolve the user who owns this colony (needed for credit checks).
@@ -204,7 +206,7 @@ class HangarService
             if ($useNexusCredit) {
                 // Nexus-Kredit path: requires CC level >= minimum threshold.
                 $minCcLevel = (int) config('game.hangar.nexus_credit_min_cc_level', 2);
-                $ccLevel    = (int) DB::table('colony_buildings')
+                $ccLevel = (int) DB::table('colony_buildings')
                     ->where('colony_id', $colonyId)
                     ->where('building_id', BuildingId::CommandCenter->value)
                     ->value('level');
@@ -268,29 +270,29 @@ class HangarService
             $freeSlot = DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)
                 ->where('building_id', self::HANGAR_BUILDING_ID)
-                ->when(!empty($occupiedInstanceIds), fn($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
+                ->when(! empty($occupiedInstanceIds), fn ($q) => $q->whereNotIn('instance_id', $occupiedInstanceIds))
                 ->orderBy('instance_id')
                 ->value('instance_id');
 
-            $hangarInstanceId  = $freeSlot !== null ? (int) $freeSlot : null;
-            $shipState         = 'building';
-            $pendingUntilTick  = null;
+            $hangarInstanceId = $freeSlot !== null ? (int) $freeSlot : null;
+            $shipState = 'building';
+            $pendingUntilTick = null;
 
             if ($hangarInstanceId === null) {
                 // No free hangar slot — ship enters pending state.
-                $shipState        = 'pending';
+                $shipState = 'pending';
                 $pendingUntilTick = $currentTick + $pendingDecayTicks;
             }
 
             DB::table('colony_ships')->insert([
-                'colony_id'          => $colonyId,
-                'ship_id'            => $shipId,
+                'colony_id' => $colonyId,
+                'ship_id' => $shipId,
                 'hangar_instance_id' => $hangarInstanceId,
-                'ship_state'         => $shipState,
-                'level'              => 0,
-                'status_points'      => self::SHIP_MAX_STATUS,
-                'ap_spend'           => 0,
-                'deliver_at_tick'    => $deliverAtTick,
+                'ship_state' => $shipState,
+                'level' => 0,
+                'status_points' => self::SHIP_MAX_STATUS,
+                'ap_spend' => 0,
+                'deliver_at_tick' => $deliverAtTick,
                 'pending_until_tick' => $pendingUntilTick,
             ]);
         });
@@ -299,9 +301,8 @@ class HangarService
     /**
      * Assign a pending ship (no hangar) to a free hangar slot.
      *
-     * @param int $colonyId
-     * @param int $shipRowId   The auto-increment colony_ships.id (PK).
-     * @param int $instanceId  Hangar instance_id in colony_buildings to assign to.
+     * @param  int  $shipRowId  The auto-increment colony_ships.id (PK).
+     * @param  int  $instanceId  Hangar instance_id in colony_buildings to assign to.
      *
      * @throws RuntimeException if the ship row or hangar slot is not suitable.
      */
@@ -328,7 +329,7 @@ class HangarService
                 ->where('instance_id', $instanceId)
                 ->exists();
 
-            if (!$hangarExists) {
+            if (! $hangarExists) {
                 throw new RuntimeException("Hangar instance {$instanceId} does not exist for this colony.");
             }
 
@@ -346,7 +347,7 @@ class HangarService
                 ->update([
                     'hangar_instance_id' => $instanceId,
                     'pending_until_tick' => null,
-                    'ship_state'         => 'docked',
+                    'ship_state' => 'docked',
                 ]);
         });
     }
@@ -357,11 +358,11 @@ class HangarService
     public function dispatchShip(int $colonyId, int $instanceId, string $destination, int $solDistance): void
     {
         if (trim($destination) === '') {
-            throw new RuntimeException("Destination must not be empty.");
+            throw new RuntimeException('Destination must not be empty.');
         }
 
         if ($solDistance < 1) {
-            throw new RuntimeException("Sol distance must be at least 1.");
+            throw new RuntimeException('Sol distance must be at least 1.');
         }
 
         DB::transaction(function () use ($colonyId, $instanceId, $destination, $solDistance): void {
@@ -388,14 +389,14 @@ class HangarService
                 ->update(['ship_state' => 'dispatched']);
 
             DB::table('colony_hangar_missions')->insert([
-                'colony_id'     => $colonyId,
-                'instance_id'   => $instanceId,
-                'ship_id'       => $ship->ship_id,
-                'destination'   => $destination,
-                'sol_distance'  => $solDistance,
+                'colony_id' => $colonyId,
+                'instance_id' => $instanceId,
+                'ship_id' => $ship->ship_id,
+                'destination' => $destination,
+                'sol_distance' => $solDistance,
                 'dispatch_tick' => $currentTick,
-                'recall_tick'   => null,
-                'state'         => 'active',
+                'recall_tick' => null,
+                'state' => 'active',
             ]);
         });
     }
@@ -422,7 +423,7 @@ class HangarService
                 ->where('id', $mission->id)
                 ->update([
                     'recall_tick' => $currentTick,
-                    'state'       => 'recalled',
+                    'state' => 'recalled',
                 ]);
 
             DB::table('colony_ships')
@@ -439,7 +440,7 @@ class HangarService
     public function repairShip(int $colonyId, int $instanceId, int $apSpent): void
     {
         if ($apSpent < 1) {
-            throw new RuntimeException("At least 1 AP must be spent on repairs.");
+            throw new RuntimeException('At least 1 AP must be spent on repairs.');
         }
 
         DB::transaction(function () use ($colonyId, $instanceId, $apSpent): void {
@@ -460,7 +461,7 @@ class HangarService
                 throw new RuntimeException("Ship in hangar {$instanceId} is already at full status.");
             }
 
-            $restored  = $apSpent * self::REPAIR_SP_PER_AP;
+            $restored = $apSpent * self::REPAIR_SP_PER_AP;
             $newStatus = min(self::SHIP_MAX_STATUS, $current + $restored);
 
             DB::table('colony_ships')
@@ -468,7 +469,7 @@ class HangarService
                 ->where('hangar_instance_id', $instanceId)
                 ->update([
                     'status_points' => $newStatus,
-                    'ap_spend'      => $ship->ap_spend + $apSpent,
+                    'ap_spend' => $ship->ap_spend + $apSpent,
                 ]);
         });
     }

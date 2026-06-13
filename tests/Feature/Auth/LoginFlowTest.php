@@ -103,7 +103,7 @@ class LoginFlowTest extends TestCase
     public function test_successful_login_with_email_redirects_to_galaxy(): void
     {
         $user = User::factory()->create([
-            'email'    => 'valid@example.com',
+            'email' => 'valid@example.com',
             'password' => bcrypt('mypassword'),
         ]);
 
@@ -191,7 +191,7 @@ class LoginFlowTest extends TestCase
             ]);
             // Must not be 429 on any of the first 5 attempts
             $this->assertNotEquals(429, $response->getStatusCode(),
-                "Attempt " . ($i + 1) . " must not be throttled.");
+                'Attempt '.($i + 1).' must not be throttled.');
         }
     }
 
@@ -234,6 +234,6 @@ class LoginFlowTest extends TestCase
     {
         // The key is "sha1(ip|domain)" as used by ThrottleRequests middleware.
         // For feature tests the IP is 127.0.0.1 and domain is the app URL host.
-        return sha1('127.0.0.1|' . parse_url(config('app.url'), PHP_URL_HOST));
+        return sha1('127.0.0.1|'.parse_url(config('app.url'), PHP_URL_HOST));
     }
 }

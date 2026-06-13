@@ -34,7 +34,7 @@ class LoginController extends Controller
         // Try username first, then email (like LmcUser did)
         $field = filter_var($request->username, FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
         $credentials = [
-            $field     => $request->username,
+            $field => $request->username,
             'password' => $request->password,
         ];
 
@@ -51,7 +51,7 @@ class LoginController extends Controller
                     $colony = app(OnboardingService::class)->setupNewPlayer($userId);
                     $request->session()->put('activeIds.colonyId', $colony->id);
                 } catch (\RuntimeException $e) {
-                    Log::error('Onboarding failed on login for user ' . $userId . ': ' . $e->getMessage());
+                    Log::error('Onboarding failed on login for user '.$userId.': '.$e->getMessage());
                 }
             }
 
@@ -68,6 +68,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect()->route('login');
     }
 }

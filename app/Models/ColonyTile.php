@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ColonyTile extends Model
 {
     protected $table = 'colony_tiles';
+
     public $timestamps = true;
 
     protected $fillable = [
@@ -26,14 +27,14 @@ class ColonyTile extends Model
     protected function casts(): array
     {
         return [
-            'q'               => 'integer',
-            'r'               => 'integer',
-            'ring'            => 'integer',
+            'q' => 'integer',
+            'r' => 'integer',
+            'ring' => 'integer',
             'is_ring_unlocked' => 'boolean',
-            'is_explored'     => 'boolean',
+            'is_explored' => 'boolean',
             'is_deep_scanned' => 'boolean',
             'resource_amount' => 'integer',
-            'resource_max'    => 'integer',
+            'resource_max' => 'integer',
         ];
     }
 

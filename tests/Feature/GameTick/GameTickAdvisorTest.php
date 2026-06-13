@@ -48,14 +48,18 @@ class GameTickAdvisorTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const USER_ID   = 3;
+    private const USER_ID = 3;
+
     private const COLONY_ID = 1;
 
     // From config/game.php
     private const RANK1_THRESHOLD = 10;
+
     private const RANK2_THRESHOLD = 20;
-    private const RANK2_COST      = 150;
-    private const RANK3_COST      = 400;
+
+    private const RANK2_COST = 150;
+
+    private const RANK3_COST = 400;
 
     protected function setUp(): void
     {
@@ -78,12 +82,13 @@ class GameTickAdvisorTest extends TestCase
         ?int $colonyId = self::COLONY_ID
     ): int {
         $personellId = $this->nextPersonellId++;
+
         return DB::table('advisors')->insertGetId([
-            'user_id'                => self::USER_ID,
-            'colony_id'              => $colonyId,
-            'personell_id'           => $personellId,
-            'rank'                   => $rank,
-            'active_ticks'           => $activeTicks,
+            'user_id' => self::USER_ID,
+            'colony_id' => $colonyId,
+            'personell_id' => $personellId,
+            'rank' => $rank,
+            'active_ticks' => $activeTicks,
             'unavailable_until_tick' => $unavailableUntilTick,
         ]);
     }

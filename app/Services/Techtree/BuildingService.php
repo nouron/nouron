@@ -7,14 +7,28 @@ namespace App\Services\Techtree;
  *
  * Buildings require construction AP (engineers) to be invested before a
  * levelup can be triggered. Level is capped by building.max_level (if set).
- *
  */
 class BuildingService extends AbstractTechnologyService
 {
-    protected function masterTable(): string  { return 'buildings'; }
-    protected function colonyTable(): string  { return 'colony_buildings'; }
-    protected function costsTable(): string   { return 'building_costs'; }
-    protected function entityIdKey(): string  { return 'building_id'; }
+    protected function masterTable(): string
+    {
+        return 'buildings';
+    }
+
+    protected function colonyTable(): string
+    {
+        return 'colony_buildings';
+    }
+
+    protected function costsTable(): string
+    {
+        return 'building_costs';
+    }
+
+    protected function entityIdKey(): string
+    {
+        return 'building_id';
+    }
 
     /**
      * Invest construction points into a building (add AP, repair, or remove damage).

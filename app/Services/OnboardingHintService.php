@@ -31,7 +31,7 @@ class OnboardingHintService
             ->first();
 
         // Missing row = hints enabled (default). Bail only when explicitly disabled.
-        if ($prefs && !$prefs->onboarding_hints) {
+        if ($prefs && ! $prefs->onboarding_hints) {
             return null;
         }
 
@@ -39,14 +39,14 @@ class OnboardingHintService
 
         // Use run-local Sol counter (current_tick on the active Run) so that
         // tick-threshold hints don't fire on Sol 1 due to the global tick being large.
-        $run    = DB::table('runs')->where('colony_id', $colonyId)->where('status', 'active')->first();
+        $run = DB::table('runs')->where('colony_id', $colonyId)->where('status', 'active')->first();
         $solTick = $run ? (int) $run->current_tick : 0;
 
         // Build the ordered list of hints to evaluate (rank 1 first).
         $hints = $this->buildHintList($colonyId, $solTick);
 
         foreach ($hints as $hint) {
-            if (!$hint['active']) {
+            if (! $hint['active']) {
                 continue;
             }
 
@@ -57,9 +57,9 @@ class OnboardingHintService
 
             // Return the first active, non-dismissed hint.
             return [
-                'rank'       => $hint['rank'],
-                'key'        => $hint['key'],
-                'text_key'   => $hint['text_key'],
+                'rank' => $hint['rank'],
+                'key' => $hint['key'],
+                'text_key' => $hint['text_key'],
                 'target_url' => $hint['target_url'],
             ];
         }
@@ -79,7 +79,7 @@ class OnboardingHintService
 
         $dismissed = $this->parseDismissed($prefs->dismissed_hints ?? null);
 
-        if (!in_array($hintKey, $dismissed, true)) {
+        if (! in_array($hintKey, $dismissed, true)) {
             $dismissed[] = $hintKey;
         }
 
@@ -101,45 +101,45 @@ class OnboardingHintService
     {
         return [
             [
-                'rank'       => 1,
-                'key'        => 'hint_1',
-                'active'     => $this->checkHint1($colonyId),
-                'text_key'   => 'colony.onboarding_hint_1',
+                'rank' => 1,
+                'key' => 'hint_1',
+                'active' => $this->checkHint1($colonyId),
+                'text_key' => 'colony.onboarding_hint_1',
                 'target_url' => '/advisors',
             ],
             [
-                'rank'       => 2,
-                'key'        => 'hint_2',
-                'active'     => $this->checkHint2($colonyId),
-                'text_key'   => 'colony.onboarding_hint_2',
+                'rank' => 2,
+                'key' => 'hint_2',
+                'active' => $this->checkHint2($colonyId),
+                'text_key' => 'colony.onboarding_hint_2',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank'       => 3,
-                'key'        => 'hint_3',
-                'active'     => $this->checkHint3($colonyId, $currentTick),
-                'text_key'   => 'colony.onboarding_hint_3',
+                'rank' => 3,
+                'key' => 'hint_3',
+                'active' => $this->checkHint3($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_3',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank'       => 4,
-                'key'        => 'hint_4',
-                'active'     => $this->checkHint4($colonyId, $currentTick),
-                'text_key'   => 'colony.onboarding_hint_4',
+                'rank' => 4,
+                'key' => 'hint_4',
+                'active' => $this->checkHint4($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_4',
                 'target_url' => '/techtree',
             ],
             [
-                'rank'       => 5,
-                'key'        => 'hint_5',
-                'active'     => $this->checkHint5($colonyId, $currentTick),
-                'text_key'   => 'colony.onboarding_hint_5',
+                'rank' => 5,
+                'key' => 'hint_5',
+                'active' => $this->checkHint5($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_5',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank'       => 6,
-                'key'        => 'hint_6',
-                'active'     => $this->checkHint6($colonyId, $currentTick),
-                'text_key'   => 'colony.onboarding_hint_6',
+                'rank' => 6,
+                'key' => 'hint_6',
+                'active' => $this->checkHint6($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_6',
                 'target_url' => '/colony/view?build=52',
             ],
         ];
@@ -171,7 +171,7 @@ class OnboardingHintService
             ->whereNotNull('tile_x')
             ->first(['tile_x', 'tile_y']);
 
-        if (!$harvester) {
+        if (! $harvester) {
             return false;
         }
 
@@ -229,7 +229,7 @@ class OnboardingHintService
      */
     private function checkHint5(int $colonyId, int $currentTick): bool
     {
-        $minTicks  = (int) config('game.onboarding.hint_trust_min_ticks', 5);
+        $minTicks = (int) config('game.onboarding.hint_trust_min_ticks', 5);
         $threshold = (int) config('game.onboarding.hint_trust_threshold', -20);
 
         if ($currentTick < $minTicks) {
@@ -296,7 +296,7 @@ class OnboardingHintService
 
         $decoded = json_decode($raw, true);
 
-        if (!is_array($decoded)) {
+        if (! is_array($decoded)) {
             return [];
         }
 

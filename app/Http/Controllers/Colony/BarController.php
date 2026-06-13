@@ -21,18 +21,18 @@ class BarController extends BaseController
 
     public function __construct(
         TickService $tick,
-        private readonly ColonyService  $colonyService,
-        private readonly BarService     $barService,
+        private readonly ColonyService $colonyService,
+        private readonly BarService $barService,
         private readonly MerchantService $merchantService,
-        private readonly EventService   $eventService,
+        private readonly EventService $eventService,
     ) {
         parent::__construct($tick);
     }
 
     public function index(): View
     {
-        $colony     = $this->colonyService->getPrimeColony(Auth::id());
-        $tick       = $this->tick->getTickCount();
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $tick = $this->tick->getTickCount();
         $currentSol = max(1, $tick - (int) $colony->since_tick + 1);
 
         $barLevel = (int) DB::table('colony_buildings')
@@ -60,8 +60,10 @@ class BarController extends BaseController
 
         $characterAssignment = [];
         foreach ($hotspots as $spotKey => $spot) {
-            if (empty($spot['characters'])) continue;
-            $idx = abs(crc32($seed . $spotKey)) % count($spot['characters']);
+            if (empty($spot['characters'])) {
+                continue;
+            }
+            $idx = abs(crc32($seed.$spotKey)) % count($spot['characters']);
             $slug = $spot['characters'][$idx];
             $char = $characters[$slug] ?? null;
             if ($char) {
@@ -79,21 +81,21 @@ class BarController extends BaseController
     {
         $userId = Auth::id();
         $colony = $this->colonyService->getPrimeColony($userId);
-        $tick   = $this->tick->getTickCount();
+        $tick = $this->tick->getTickCount();
         $result = $this->barService->acceptOffer($colony->id, $offerId, $userId, $tick);
 
         if ($result['ok']) {
             $this->eventService->createEvent([
-                'user'       => $userId,
-                'tick'       => $tick,
-                'event'      => 'trade.bar_accepted',
-                'area'       => 'trade',
+                'user' => $userId,
+                'tick' => $tick,
+                'event' => 'trade.bar_accepted',
+                'area' => 'trade',
                 'parameters' => json_encode([
-                    'colony_id'       => $colony->id,
+                    'colony_id' => $colony->id,
                     'give_resource_id' => $result['give_resource_id'],
-                    'give_amount'      => $result['give_amount'],
-                    'get_resource_id'  => $result['get_resource_id'],
-                    'get_amount'       => $result['get_amount'],
+                    'give_amount' => $result['give_amount'],
+                    'get_resource_id' => $result['get_resource_id'],
+                    'get_amount' => $result['get_amount'],
                 ]),
             ]);
         }

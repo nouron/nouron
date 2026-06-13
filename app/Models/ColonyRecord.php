@@ -13,7 +13,9 @@ use Illuminate\Database\Eloquent\Model;
 class ColonyRecord extends Model
 {
     protected $table = 'glx_colonies';
+
     protected $primaryKey = 'id';
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -29,7 +31,7 @@ class ColonyRecord extends Model
     {
         return [
             'is_primary' => 'boolean',
-            'spot'       => 'integer',
+            'spot' => 'integer',
             'since_tick' => 'integer',
         ];
     }

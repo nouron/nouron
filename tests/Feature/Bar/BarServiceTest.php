@@ -35,13 +35,19 @@ class BarServiceTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    private const COLONY_ID      = 1;   // Springfield — user_id = 3 (Bart)
-    private const USER_ID        = 3;   // Bart
+    private const COLONY_ID = 1;   // Springfield — user_id = 3 (Bart)
+
+    private const USER_ID = 3;   // Bart
+
     private const BAR_BUILDING_ID = 52;
-    private const RES_CREDITS    = 1;
-    private const RES_REGOLITH   = 3;
-    private const RES_COMPOUNDS  = 4;
-    private const RES_ORGANICS   = 5;
+
+    private const RES_CREDITS = 1;
+
+    private const RES_REGOLITH = 3;
+
+    private const RES_COMPOUNDS = 4;
+
+    private const RES_ORGANICS = 5;
 
     private BarService $barService;
 
@@ -82,15 +88,15 @@ class BarServiceTest extends TestCase
     private function insertOffer(array $overrides = []): int
     {
         $defaults = [
-            'colony_id'        => self::COLONY_ID,
+            'colony_id' => self::COLONY_ID,
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 20,
-            'get_resource_id'  => self::RES_COMPOUNDS,
-            'get_amount'       => 10,
-            'expires_tick'     => 50,
-            'is_accepted'      => false,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'give_amount' => 20,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 10,
+            'expires_tick' => 50,
+            'is_accepted' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
         return DB::table('bar_offers')->insertGetId(array_merge($defaults, $overrides));
@@ -190,7 +196,7 @@ class BarServiceTest extends TestCase
         // Insert a stale offer that should be deleted (expires_tick=1 < tick=5)
         $staleId = $this->insertOffer([
             'expires_tick' => 1,
-            'is_accepted'  => false,
+            'is_accepted' => false,
         ]);
 
         $this->barService->generateOffersForColony(self::COLONY_ID, 5);
@@ -210,7 +216,7 @@ class BarServiceTest extends TestCase
 
         $acceptedId = $this->insertOffer([
             'expires_tick' => 1,
-            'is_accepted'  => true,
+            'is_accepted' => true,
         ]);
 
         $this->barService->generateOffersForColony(self::COLONY_ID, 5);
@@ -246,7 +252,7 @@ class BarServiceTest extends TestCase
 
         $this->insertOffer([
             'expires_tick' => 99,
-            'is_accepted'  => true,
+            'is_accepted' => true,
         ]);
 
         $offers = $this->barService->getActiveOffers(self::COLONY_ID, 1);
@@ -272,7 +278,7 @@ class BarServiceTest extends TestCase
         $this->mockTick(10);
 
         $giveAmount = 20;
-        $getAmount  = 30;
+        $getAmount = 30;
 
         // Give = regolith (colony resource), get = compounds (colony resource)
         $this->setColonyResource(self::RES_REGOLITH, 100);
@@ -280,17 +286,17 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => $giveAmount,
-            'get_resource_id'  => self::RES_COMPOUNDS,
-            'get_amount'       => $getAmount,
-            'expires_tick'     => 20, // valid at tick 10
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => $getAmount,
+            'expires_tick' => 20, // valid at tick 10
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertTrue($result['ok'], 'acceptOffer should return ok=true on success');
 
-        $regolithAfter  = $this->getColonyResource(self::RES_REGOLITH);
+        $regolithAfter = $this->getColonyResource(self::RES_REGOLITH);
         $compoundsAfter = $this->getColonyResource(self::RES_COMPOUNDS);
 
         $this->assertEquals(100 - $giveAmount, $regolithAfter, 'give_amount of regolith must be deducted');
@@ -303,17 +309,17 @@ class BarServiceTest extends TestCase
         $this->mockTick(10);
 
         $giveAmount = 500;  // player pays credits
-        $getAmount  = 20;   // player receives regolith
+        $getAmount = 20;   // player receives regolith
 
         $this->setCredits(1000);
         $this->setColonyResource(self::RES_REGOLITH, 0);
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_CREDITS,
-            'give_amount'      => $giveAmount,
-            'get_resource_id'  => self::RES_REGOLITH,
-            'get_amount'       => $getAmount,
-            'expires_tick'     => 20,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => $getAmount,
+            'expires_tick' => 20,
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
@@ -321,8 +327,8 @@ class BarServiceTest extends TestCase
         $this->assertTrue($result['ok']);
         // Credits are handled by ResourcesService::decreaseAmount → increaseAmount
         // which goes through user_resources for res_id=1.
-        $creditsAfter   = $this->getCredits();
-        $regolithAfter  = $this->getColonyResource(self::RES_REGOLITH);
+        $creditsAfter = $this->getCredits();
+        $regolithAfter = $this->getColonyResource(self::RES_REGOLITH);
 
         $this->assertEquals(1000 - $giveAmount, $creditsAfter, 'Credits must be deducted for the give side');
         $this->assertEquals($getAmount, $regolithAfter, 'Regolith must be added for the get side');
@@ -337,8 +343,8 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 20,
-            'expires_tick'     => 20,
+            'give_amount' => 20,
+            'expires_tick' => 20,
         ]);
 
         $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
@@ -357,7 +363,7 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'expires_tick' => 10, // expires AT tick 10 → expired (service checks <= tick)
-            'is_accepted'  => false,
+            'is_accepted' => false,
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
@@ -376,8 +382,8 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 20, // needs 20 but only has 5
-            'expires_tick'     => 20,
+            'give_amount' => 20, // needs 20 but only has 5
+            'expires_tick' => 20,
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
@@ -395,8 +401,8 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_CREDITS,
-            'give_amount'      => 100,
-            'expires_tick'     => 20,
+            'give_amount' => 100,
+            'expires_tick' => 20,
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
@@ -411,15 +417,15 @@ class BarServiceTest extends TestCase
 
         // Insert offer for colony_id=2 (Shelbyville), not Springfield (1)
         $foreignOfferId = DB::table('bar_offers')->insertGetId([
-            'colony_id'        => 2,
+            'colony_id' => 2,
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 10,
-            'get_resource_id'  => self::RES_COMPOUNDS,
-            'get_amount'       => 5,
-            'expires_tick'     => 20,
-            'is_accepted'      => false,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'give_amount' => 10,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 5,
+            'expires_tick' => 20,
+            'is_accepted' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // Bart tries to accept an offer that belongs to colony 2
@@ -449,9 +455,9 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer([
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 20,
-            'expires_tick'     => 20,
-            'is_accepted'      => true, // pre-accepted
+            'give_amount' => 20,
+            'expires_tick' => 20,
+            'is_accepted' => true, // pre-accepted
         ]);
 
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);

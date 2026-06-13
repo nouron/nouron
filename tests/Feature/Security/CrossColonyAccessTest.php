@@ -33,13 +33,14 @@ class CrossColonyAccessTest extends TestCase
     use RefreshDatabase;
 
     private User $bart;
+
     private User $homer;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        $this->bart  = User::where('user_id', 3)->firstOrFail();
+        $this->bart = User::where('user_id', 3)->firstOrFail();
         $this->homer = User::where('user_id', 0)->firstOrFail();
     }
 
@@ -51,7 +52,7 @@ class CrossColonyAccessTest extends TestCase
      */
     public function test_fleet_fillable_does_not_include_user_id(): void
     {
-        $fleet    = new Fleet();
+        $fleet = new Fleet;
         $fillable = $fleet->getFillable();
 
         $this->assertNotContains(
@@ -73,7 +74,7 @@ class CrossColonyAccessTest extends TestCase
      */
     public function test_knowledge_levelup_to_4_blocked_when_cc_is_level_3(): void
     {
-        $colonyId    = 1;
+        $colonyId = 1;
         $knowledgeId = 90; // knowledge_construction — exists in testdata
 
         // Precondition: colony 1 CC is at level 3
@@ -93,7 +94,7 @@ class CrossColonyAccessTest extends TestCase
 
         // Config: knowledge_cc_level_cap[4] = 4, but CC is 3 → must block
         $service = $this->app->make(ResearchService::class);
-        $result  = $service->levelup($colonyId, $knowledgeId);
+        $result = $service->levelup($colonyId, $knowledgeId);
 
         $this->assertFalse(
             $result,
@@ -114,7 +115,7 @@ class CrossColonyAccessTest extends TestCase
      */
     public function test_knowledge_levelup_to_4_succeeds_when_cc_is_level_5(): void
     {
-        $colonyId    = 2;
+        $colonyId = 2;
         $knowledgeId = 90; // knowledge_construction
 
         // Precondition: colony 2 CC is at level 5
@@ -127,10 +128,10 @@ class CrossColonyAccessTest extends TestCase
         // Add a Wissenschaftler to colony 2 so AP pool is available
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
-            'user_id'      => $this->homer->user_id,
+            'user_id' => $this->homer->user_id,
             'personell_id' => PersonellService::idFor('scientist'),
-            'colony_id'    => $colonyId,
-            'rank'         => 2,
+            'colony_id' => $colonyId,
+            'rank' => 2,
             'active_ticks' => 0,
         ]);
 
@@ -141,7 +142,7 @@ class CrossColonyAccessTest extends TestCase
         );
 
         $service = $this->app->make(ResearchService::class);
-        $result  = $service->levelup($colonyId, $knowledgeId);
+        $result = $service->levelup($colonyId, $knowledgeId);
 
         $this->assertTrue(
             $result,
@@ -162,7 +163,7 @@ class CrossColonyAccessTest extends TestCase
      */
     public function test_knowledge_levelup_to_5_succeeds_when_cc_is_exactly_5(): void
     {
-        $colonyId    = 2;
+        $colonyId = 2;
         $knowledgeId = 90; // knowledge_construction
 
         // Precondition: colony 2 CC is at level 5
@@ -175,10 +176,10 @@ class CrossColonyAccessTest extends TestCase
         // Add a Wissenschaftler to colony 2
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
-            'user_id'      => $this->homer->user_id,
+            'user_id' => $this->homer->user_id,
             'personell_id' => PersonellService::idFor('scientist'),
-            'colony_id'    => $colonyId,
-            'rank'         => 2,
+            'colony_id' => $colonyId,
+            'rank' => 2,
             'active_ticks' => 0,
         ]);
 
@@ -189,7 +190,7 @@ class CrossColonyAccessTest extends TestCase
         );
 
         $service = $this->app->make(ResearchService::class);
-        $result  = $service->levelup($colonyId, $knowledgeId);
+        $result = $service->levelup($colonyId, $knowledgeId);
 
         $this->assertTrue(
             $result,
@@ -209,7 +210,7 @@ class CrossColonyAccessTest extends TestCase
      */
     public function test_knowledge_levelup_to_5_blocked_when_cc_is_level_4(): void
     {
-        $colonyId    = 1;
+        $colonyId = 1;
         $knowledgeId = 90; // knowledge_construction
 
         // Bump colony 1 CC to level 4 (was 3 in seed; still below the level-5 gate)
@@ -232,7 +233,7 @@ class CrossColonyAccessTest extends TestCase
 
         // Config: knowledge_cc_level_cap[5] = 5, but CC is 4 → must block
         $service = $this->app->make(ResearchService::class);
-        $result  = $service->levelup($colonyId, $knowledgeId);
+        $result = $service->levelup($colonyId, $knowledgeId);
 
         $this->assertFalse(
             $result,

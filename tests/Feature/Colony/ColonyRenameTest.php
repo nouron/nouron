@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,8 @@ class ColonyRenameTest extends TestCase
     use RefreshDatabase;
 
     protected int $bartUserId = 3;
-    protected int $colonyId   = 1;
+
+    protected int $colonyId = 1;
 
     protected function setUp(): void
     {
@@ -188,8 +190,8 @@ class ColonyRenameTest extends TestCase
 
     // ── Helper ───────────────────────────────────────────────────────────────
 
-    private function makeUser(int $userId): \App\Models\User
+    private function makeUser(int $userId): User
     {
-        return \App\Models\User::where('user_id', $userId)->firstOrFail();
+        return User::where('user_id', $userId)->firstOrFail();
     }
 }

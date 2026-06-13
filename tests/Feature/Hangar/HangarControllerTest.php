@@ -54,13 +54,19 @@ class HangarControllerTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    private const USER_ID_BART   = 3;
+    private const USER_ID_BART = 3;
+
     private const COLONY_ID_BART = 1;
+
     private const HANGAR_BUILDING = 44;
-    private const SHIP_CORVETTE  = 37;
+
+    private const SHIP_CORVETTE = 37;
+
     private const SHIP_FREIGHTER = 47;
-    private const SHIP_DRONE     = 85;
-    private const FIXED_TICK     = 100;
+
+    private const SHIP_DRONE = 85;
+
+    private const FIXED_TICK = 100;
 
     protected function setUp(): void
     {
@@ -99,12 +105,12 @@ class HangarControllerTest extends TestCase
     private function insertHangar(int $instanceId, float $statusPoints = 20.0): void
     {
         DB::table('colony_buildings')->insert([
-            'colony_id'     => self::COLONY_ID_BART,
-            'building_id'   => self::HANGAR_BUILDING,
-            'instance_id'   => $instanceId,
-            'level'         => 1,
+            'colony_id' => self::COLONY_ID_BART,
+            'building_id' => self::HANGAR_BUILDING,
+            'instance_id' => $instanceId,
+            'level' => 1,
             'status_points' => $statusPoints,
-            'ap_spend'      => 0,
+            'ap_spend' => 0,
         ]);
     }
 
@@ -116,10 +122,10 @@ class HangarControllerTest extends TestCase
             ['colony_id' => self::COLONY_ID_BART, 'ship_id' => $shipId],
             [
                 'hangar_instance_id' => $instanceId,
-                'ship_state'         => $state,
-                'level'              => 1,
-                'status_points'      => $statusPoints,
-                'ap_spend'           => 0,
+                'ship_state' => $state,
+                'level' => 1,
+                'status_points' => $statusPoints,
+                'ap_spend' => 0,
             ]
         );
     }
@@ -127,15 +133,15 @@ class HangarControllerTest extends TestCase
     private function insertActiveMission(int $instanceId, int $shipId): int
     {
         return DB::table('colony_hangar_missions')->insertGetId([
-            'colony_id'    => self::COLONY_ID_BART,
-            'instance_id'  => $instanceId,
-            'ship_id'      => $shipId,
-            'destination'  => 'Kuiper Belt',
+            'colony_id' => self::COLONY_ID_BART,
+            'instance_id' => $instanceId,
+            'ship_id' => $shipId,
+            'destination' => 'Kuiper Belt',
             'sol_distance' => 4,
             'dispatch_tick' => self::FIXED_TICK - 5,
-            'recall_tick'  => null,
-            'state'        => 'active',
-            'created_at'   => now(),
+            'recall_tick' => null,
+            'state' => 'active',
+            'created_at' => now(),
         ]);
     }
 
@@ -231,9 +237,9 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), [
-                'ship_id'          => self::SHIP_DRONE,
+                'ship_id' => self::SHIP_DRONE,
                 'use_nexus_credit' => 0,
-                'consul_ap_spent'  => 0,
+                'consul_ap_spent' => 0,
             ]);
 
         $response->assertOk()
@@ -283,9 +289,9 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), [
-                'ship_id'          => self::SHIP_DRONE,
+                'ship_id' => self::SHIP_DRONE,
                 'use_nexus_credit' => 0,
-                'consul_ap_spent'  => 0,
+                'consul_ap_spent' => 0,
             ]);
 
         $response->assertStatus(422)
@@ -300,7 +306,7 @@ class HangarControllerTest extends TestCase
         // consul_ap_spent must be >= 0 (Laravel validation rule min:0)
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), [
-                'ship_id'         => self::SHIP_DRONE,
+                'ship_id' => self::SHIP_DRONE,
                 'consul_ap_spent' => -1,
             ]);
 
@@ -316,7 +322,7 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination'  => 'Asteroid Belt',
+                'destination' => 'Asteroid Belt',
                 'sol_distance' => 3,
             ]);
 
@@ -366,7 +372,7 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination'  => 'Deep Space',
+                'destination' => 'Deep Space',
                 'sol_distance' => 5,
             ]);
 
@@ -381,7 +387,7 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination'  => 'Somewhere',
+                'destination' => 'Somewhere',
                 'sol_distance' => 0,
             ]);
 
@@ -494,17 +500,17 @@ class HangarControllerTest extends TestCase
 
         // Record credits for both users before the request.
         // user_id=1 (Homer), user_id=3 (Bart)
-        $bartCreditsBefore  = (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits');
-        $otherUsersBefore   = DB::table('user_resources')
+        $bartCreditsBefore = (int) DB::table('user_resources')->where('user_id', self::USER_ID_BART)->value('credits');
+        $otherUsersBefore = DB::table('user_resources')
             ->where('user_id', '!=', self::USER_ID_BART)
             ->pluck('credits', 'user_id')
             ->all();
 
         $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.request'), [
-                'ship_id'          => self::SHIP_DRONE,
+                'ship_id' => self::SHIP_DRONE,
                 'use_nexus_credit' => 0,
-                'consul_ap_spent'  => 0,
+                'consul_ap_spent' => 0,
             ])
             ->assertOk();
 

@@ -8,11 +8,11 @@ namespace App\Services;
  * The game advances in ticks (one per day). The tick number is calculated
  * from the Unix timestamp, anchored to the daily calculation window
  * (configured via config/game.php → tick.calculation.end).
- *
  */
 class TickService
 {
     protected int $tick;
+
     protected array $config;
 
     public function __construct(?int $tick = null)
@@ -52,9 +52,9 @@ class TickService
      */
     public function calculationIsRunning(): bool
     {
-        $time       = time();
-        $calcBegin  = (int) $this->config['calculation']['start'];
-        $calcEnd    = (int) $this->config['calculation']['end'];
+        $time = time();
+        $calcBegin = (int) $this->config['calculation']['start'];
+        $calcEnd = (int) $this->config['calculation']['end'];
 
         return $time >= mktime($calcBegin, 0, 0) && $time < mktime($calcEnd, 0, 0);
     }

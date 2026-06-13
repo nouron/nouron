@@ -52,7 +52,8 @@ class GameTickCreditsTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const USER_ID   = 3;   // Bart
+    private const USER_ID = 3;   // Bart
+
     private const COLONY_ID = 1;   // Springfield
 
     protected function setUp(): void
@@ -86,12 +87,13 @@ class GameTickCreditsTest extends TestCase
     private function insertAdvisor(int $rank, int $colonyId = self::COLONY_ID): int
     {
         $personellId = $this->nextPersonellId++;
+
         return DB::table('advisors')->insertGetId([
-            'user_id'               => self::USER_ID,
-            'colony_id'             => $colonyId,
-            'personell_id'          => $personellId,
-            'rank'                  => $rank,
-            'active_ticks'          => 0,
+            'user_id' => self::USER_ID,
+            'colony_id' => $colonyId,
+            'personell_id' => $personellId,
+            'rank' => $rank,
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
     }
@@ -109,9 +111,9 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11400]);
 
         $after = $this->getCredits();
-        $nexus       = (int) config('game.credits.nexus_subsidy', 30);
+        $nexus = (int) config('game.credits.nexus_subsidy', 30);
         $taxPerHousing = (int) config('game.credits.tax_per_housing', 20);
-        $housingLevel  = (int) DB::table('colony_buildings')
+        $housingLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', 28)
             ->value('level');
 
@@ -133,7 +135,7 @@ class GameTickCreditsTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11401]);
 
-        $after    = $this->getCredits();
+        $after = $this->getCredits();
         $expected = $before + (int) config('game.credits.nexus_subsidy', 30);
         $this->assertEquals($expected, $after,
             'User must receive exactly nexus_subsidy (30 Cr) when there is no housing');
@@ -171,7 +173,7 @@ class GameTickCreditsTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11403]);
 
-        $after    = $this->getCredits();
+        $after = $this->getCredits();
         $expected = $before + 30 + (5 * 20); // nexus + housing
         $this->assertEquals($expected, $after, 'Housing tax must scale with housing level');
     }
@@ -305,11 +307,11 @@ class GameTickCreditsTest extends TestCase
 
         // One unassigned (colony_id=null)
         DB::table('advisors')->insert([
-            'user_id'               => self::USER_ID,
-            'colony_id'             => null,
-            'personell_id'          => 35,
-            'rank'                  => 3, // would cost 160 Cr if assigned
-            'active_ticks'          => 0,
+            'user_id' => self::USER_ID,
+            'colony_id' => null,
+            'personell_id' => 35,
+            'rank' => 3, // would cost 160 Cr if assigned
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
 

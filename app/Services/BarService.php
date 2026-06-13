@@ -9,10 +9,13 @@ use Illuminate\Support\Facades\Log;
 
 class BarService
 {
-    private const BAR_BUILDING_ID   = 52;
+    private const BAR_BUILDING_ID = 52;
+
     private const TRADER_ADVISOR_ID = 92; // personell.id for 'trader'
-    private const RES_CREDITS       = 1;
-    private const TRADEABLE         = [3, 4, 5]; // regolith, compounds, organics
+
+    private const RES_CREDITS = 1;
+
+    private const TRADEABLE = [3, 4, 5]; // regolith, compounds, organics
 
     public function __construct(
         private readonly ResourcesService $resourcesService,
@@ -53,9 +56,9 @@ class BarService
 
         $duration = (int) config('game.bar.offer_duration', 2);
         $expiresTick = $tick + $duration;
-        $discount    = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
-        $basePrices  = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
-        $variance    = (float) config('game.bar.price_variance', 0.20);
+        $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
+        $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
+        $variance = (float) config('game.bar.price_variance', 0.20);
 
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
@@ -63,13 +66,13 @@ class BarService
                 $this->buildOffer($seed, $basePrices, $variance, $discount);
 
             BarOffer::create([
-                'colony_id'       => $colonyId,
+                'colony_id' => $colonyId,
                 'give_resource_id' => $giveResId,
-                'give_amount'      => $giveAmount,
-                'get_resource_id'  => $getResId,
-                'get_amount'       => $getAmount,
-                'expires_tick'     => $expiresTick,
-                'is_accepted'      => false,
+                'give_amount' => $giveAmount,
+                'get_resource_id' => $getResId,
+                'get_amount' => $getAmount,
+                'expires_tick' => $expiresTick,
+                'is_accepted' => false,
             ]);
         }
     }
@@ -89,7 +92,7 @@ class BarService
             ->where('colony_id', $colonyId)
             ->first();
 
-        if (!$offer) {
+        if (! $offer) {
             return ['ok' => false, 'error' => __('colony.bar_offer_not_found')];
         }
         if ($offer->is_accepted) {
@@ -115,20 +118,20 @@ class BarService
         });
 
         Log::info('bar_trade', [
-            'colony_id'       => $colonyId,
-            'offer_id'        => $offerId,
+            'colony_id' => $colonyId,
+            'offer_id' => $offerId,
             'give_resource_id' => $offer->give_resource_id,
-            'give_amount'      => $offer->give_amount,
-            'get_resource_id'  => $offer->get_resource_id,
-            'get_amount'       => $offer->get_amount,
+            'give_amount' => $offer->give_amount,
+            'get_resource_id' => $offer->get_resource_id,
+            'get_amount' => $offer->get_amount,
         ]);
 
         return [
-            'ok'              => true,
+            'ok' => true,
             'give_resource_id' => $offer->give_resource_id,
-            'give_amount'      => $offer->give_amount,
-            'get_resource_id'  => $offer->get_resource_id,
-            'get_amount'       => $offer->get_amount,
+            'give_amount' => $offer->give_amount,
+            'get_resource_id' => $offer->get_resource_id,
+            'get_amount' => $offer->get_amount,
         ];
     }
 
@@ -139,6 +142,7 @@ class BarService
                 ->where('user_id', $userId)
                 ->value('credits') ?? 0);
         }
+
         return (int) (DB::table('colony_resources')
             ->where('colony_id', $colonyId)
             ->where('resource_id', $resId)
@@ -157,24 +161,26 @@ class BarService
 
         if ($type < 6) {
             // Player pays Credits, gets a tradeable resource
-            $getResId  = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
+            $getResId = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
             $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
             $basePrice = $basePrices[$getResId] ?? 40;
-            $rawPrice  = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
+            $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
             $finalPrice = (int) max(1, round($rawPrice * $getAmount * (1 - $discount)));
+
             return [self::RES_CREDITS, $finalPrice, $getResId, $getAmount];
         } else {
             // Barter: player gives one resource, gets another
-            $shuffled  = self::TRADEABLE;
+            $shuffled = self::TRADEABLE;
             $giveResId = $shuffled[$this->pseudoRand($seed + 4, 0, count($shuffled) - 1)];
-            $getResId  = $shuffled[$this->pseudoRand($seed + 5, 0, count($shuffled) - 1)];
+            $getResId = $shuffled[$this->pseudoRand($seed + 5, 0, count($shuffled) - 1)];
             if ($getResId === $giveResId) {
                 $getResId = $shuffled[($this->pseudoRand($seed + 5, 0, count($shuffled) - 1) + 1) % count($shuffled)];
             }
             $giveAmount = $this->pseudoRand($seed + 6, 2, 6) * 5; // 10–30 units
-            $givePrice  = ($basePrices[$giveResId] ?? 40) * $giveAmount;
-            $getPrice   = ($basePrices[$getResId] ?? 40);
-            $getAmount  = (int) max(1, round($givePrice * (1 + $discount) / $getPrice));
+            $givePrice = ($basePrices[$giveResId] ?? 40) * $giveAmount;
+            $getPrice = ($basePrices[$getResId] ?? 40);
+            $getAmount = (int) max(1, round($givePrice * (1 + $discount) / $getPrice));
+
             return [$giveResId, $giveAmount, $getResId, $getAmount];
         }
     }
@@ -185,6 +191,7 @@ class BarService
             return $min;
         }
         $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
+
         return $min + ($hash % ($max - $min + 1));
     }
 }

@@ -7,8 +7,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Advisor extends Model
 {
-    protected $table      = 'advisors';
-    public    $timestamps = false;
+    protected $table = 'advisors';
+
+    public $timestamps = false;
 
     protected $fillable = [
         'user_id', 'personell_id', 'colony_id',
@@ -17,9 +18,9 @@ class Advisor extends Model
     ];
 
     protected $casts = [
-        'rank'         => 'integer',
+        'rank' => 'integer',
         'active_ticks' => 'integer',
-        'fleet_id'     => 'integer',
+        'fleet_id' => 'integer',
         'is_commander' => 'boolean',
     ];
 
@@ -36,6 +37,7 @@ class Advisor extends Model
     public function getApPerTick(): int
     {
         $map = config('game.advisor.ap_per_rank', [1 => 4, 2 => 7, 3 => 12]);
+
         return $map[$this->rank] ?? 4;
     }
 
@@ -59,6 +61,7 @@ class Advisor extends Model
         if ($this->unavailable_until_tick !== null) {
             return $currentTick !== null && $currentTick > $this->unavailable_until_tick;
         }
+
         return true;
     }
 }

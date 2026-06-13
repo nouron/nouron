@@ -20,7 +20,7 @@ class TechtreeColonyServiceTest extends TestCase
         $this->service = $this->app->make(TechtreeColonyService::class);
     }
 
-    public function testGetTechtree(): void
+    public function test_get_techtree(): void
     {
         $result = $this->service->getTechtree(1);
         $this->assertIsArray($result);
@@ -32,7 +32,7 @@ class TechtreeColonyServiceTest extends TestCase
         $this->assertNotEmpty($result['building']);
     }
 
-    public function testGetBuildings(): void
+    public function test_get_buildings(): void
     {
         $result = $this->service->getBuildings(1);
         $this->assertTrue($result->isNotEmpty());

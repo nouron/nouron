@@ -21,7 +21,8 @@ use Illuminate\Support\Facades\DB;
  */
 class ColonySeedDemo extends Command
 {
-    protected $signature   = 'colony:seed-demo {colony_id=1 : Colony ID to seed}';
+    protected $signature = 'colony:seed-demo {colony_id=1 : Colony ID to seed}';
+
     protected $description = 'Seed a colony with a rich ~80% built-out demo state for testing';
 
     public function __construct(
@@ -60,8 +61,9 @@ class ColonySeedDemo extends Command
     {
         $colonyId = (int) $this->argument('colony_id');
 
-        if (!DB::table('glx_colonies')->where('id', $colonyId)->exists()) {
+        if (! DB::table('glx_colonies')->where('id', $colonyId)->exists()) {
             $this->error("Colony {$colonyId} not found.");
+
             return self::FAILURE;
         }
 
@@ -82,33 +84,34 @@ class ColonySeedDemo extends Command
         $this->info('  ✓ Pilot advisor ensured (navigation AP)');
 
         $this->line('Done.');
+
         return self::SUCCESS;
     }
 
     private function generateTiles(int $colonyId): void
     {
         $tiles = [];
-        $now   = now();
+        $now = now();
 
         // Forced events at specific ring-3 tiles (identified by q,r key)
         $ring3Events = [
-            '0,3'   => 'event_ruin',
-            '-3,2'  => 'event_crystal',
-            '0,-3'  => 'event_cache',
-            '2,-3'  => 'event_wreck',
+            '0,3' => 'event_ruin',
+            '-3,2' => 'event_crystal',
+            '0,-3' => 'event_cache',
+            '2,-3' => 'event_wreck',
         ];
 
         for ($ring = 0; $ring <= 3; $ring++) {
             foreach ($this->ringCoords($ring) as [$q, $r]) {
                 $seed = abs($q * 7 + $r * 13 + $colonyId * 3);
-                $key  = "{$q},{$r}";
+                $key = "{$q},{$r}";
 
                 // Explore/scan state per ring
                 $isExplored = $ring <= 3;  // all rings fully explored in demo
                 $isDeepScanned = match (true) {
-                    $ring <= 2  => true,
+                    $ring <= 2 => true,
                     $ring === 3 => ($seed % 3) < 2,   // ~67% deep-scanned
-                    default     => false,
+                    default => false,
                 };
 
                 $eventType = null;
@@ -120,24 +123,24 @@ class ColonySeedDemo extends Command
 
                 $resourceAmount = 0;
                 if ($resourceMax > 0) {
-                    $depleted       = 0.15 + ($seed % 46) / 100.0;
+                    $depleted = 0.15 + ($seed % 46) / 100.0;
                     $resourceAmount = (int) round($resourceMax * (1 - $depleted));
                 }
 
                 $tiles[] = [
-                    'colony_id'        => $colonyId,
-                    'q'                => $q,
-                    'r'                => $r,
-                    'ring'             => $ring,
-                    'tile_type'        => $tileType,
-                    'event_type'       => $eventType,
-                    'is_colony_zone'   => false,
-                    'is_explored'      => $isExplored,
-                    'is_deep_scanned'  => $isDeepScanned,
-                    'resource_amount'  => $resourceAmount,
-                    'resource_max'     => $resourceMax,
-                    'created_at'       => $now,
-                    'updated_at'       => $now,
+                    'colony_id' => $colonyId,
+                    'q' => $q,
+                    'r' => $r,
+                    'ring' => $ring,
+                    'tile_type' => $tileType,
+                    'event_type' => $eventType,
+                    'is_colony_zone' => false,
+                    'is_explored' => $isExplored,
+                    'is_deep_scanned' => $isDeepScanned,
+                    'resource_amount' => $resourceAmount,
+                    'resource_max' => $resourceMax,
+                    'created_at' => $now,
+                    'updated_at' => $now,
                 ];
             }
         }
@@ -166,24 +169,25 @@ class ColonySeedDemo extends Command
         // Colony zone (rings 1–2): terrain only, no resources
         if ($ring <= 2) {
             $types = ['terrain_empty', 'terrain_empty', 'terrain_empty', 'terrain_hazard', 'terrain_empty', 'terrain_empty'];
+
             return [$types[$seed % count($types)], 0];
         }
 
         // Exploration zone (ring 3)
         $types = match ($ring) {
             3 => ['regolith_normal', 'regolith_rich', 'regolith_poor', 'terrain_empty',
-                  'terrain_hazard', 'regolith_normal', 'terrain_impassable', 'regolith_poor'],
+                'terrain_hazard', 'regolith_normal', 'terrain_impassable', 'regolith_poor'],
             default => ['terrain_empty', 'regolith_poor', 'terrain_hazard', 'terrain_impassable',
-                        'regolith_normal', 'terrain_empty', 'terrain_impassable', 'regolith_poor'],
+                'regolith_normal', 'terrain_empty', 'terrain_impassable', 'regolith_poor'],
         };
 
         $type = $types[$seed % count($types)];
 
         $resourceMax = match ($type) {
-            'regolith_rich'   => 80 + ($seed % 41),
+            'regolith_rich' => 80 + ($seed % 41),
             'regolith_normal' => 40 + ($seed % 31),
-            'regolith_poor'   => 10 + ($seed % 21),
-            default           => 0,
+            'regolith_poor' => 10 + ($seed % 21),
+            default => 0,
         };
 
         return [$type, $resourceMax];
@@ -196,7 +200,7 @@ class ColonySeedDemo extends Command
         }
 
         $coords = [];
-        $dirs   = [[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]];
+        $dirs = [[1, 0], [0, 1], [-1, 1], [-1, 0], [0, -1], [1, -1]];
         $q = $ring;
         $r = 0;
 
@@ -229,11 +233,11 @@ class ColonySeedDemo extends Command
                 ->where('colony_id', $colonyId)
                 ->where('building_id', $buildingId)
                 ->update([
-                    'tile_x'        => $tileX,
-                    'tile_y'        => $tileY,
-                    'level'         => $level,
+                    'tile_x' => $tileX,
+                    'tile_y' => $tileY,
+                    'level' => $level,
                     'status_points' => 16,
-                    'ap_spend'      => 0,
+                    'ap_spend' => 0,
                 ]);
         }
     }
@@ -241,14 +245,14 @@ class ColonySeedDemo extends Command
     private function ensurePilotAdvisor(int $colonyId): void
     {
         $pilotId = (int) config('advisors.pilot.id');
-        $userId  = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
+        $userId = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('user_id');
 
         DB::table('advisors')->insertOrIgnore([
-            'user_id'                => $userId,
-            'personell_id'           => $pilotId,
-            'colony_id'              => $colonyId,
-            'rank'                   => 1,
-            'active_ticks'           => 0,
+            'user_id' => $userId,
+            'personell_id' => $pilotId,
+            'colony_id' => $colonyId,
+            'rank' => 1,
+            'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
     }

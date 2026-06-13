@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\View\View;
 
 class TechtreeController extends BaseController
 {
@@ -44,6 +45,7 @@ class TechtreeController extends BaseController
         $colony = $this->colonyService->getPrimeColony($userId);
         $id = $colony->id;
         Session::put('activeIds.colonyId', $id);
+
         return $id;
     }
 
@@ -55,10 +57,10 @@ class TechtreeController extends BaseController
      * and within-phase dependency arrows. CC arrows are omitted — the phase
      * header communicates the CC requirement.
      */
-    public function index(): \Illuminate\View\View
+    public function index(): View
     {
         $colonyId = $this->resolveColonyId();
-        $techtree  = $this->techtreeColonyService->getTechtree($colonyId);
+        $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
         // Map element DOM id → phase number for same-phase arrow filtering
         $elementPhase = [];
@@ -88,7 +90,7 @@ class TechtreeController extends BaseController
 
         // Available AP for sidebar invest
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colonyId);
-        $researchAp     = $this->personellService->getAvailableActionPoints('research', $colonyId);
+        $researchAp = $this->personellService->getAvailableActionPoints('research', $colonyId);
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             foreach ($techtree[$type] as $id => $tech) {
@@ -103,25 +105,25 @@ class TechtreeController extends BaseController
                 $advisorCfg = $advisorKey ? config("advisors.{$advisorKey}", []) : [];
 
                 $phases[$phaseNum]['items'][] = [
-                    'id'            => $id,
-                    'type'          => $type,
-                    'name'          => __('techtree.' . $tech['name']),
-                    'level'         => (int) ($tech['level'] ?? 0),
-                    'row'           => (int) ($tech['row'] ?? 0),
-                    'col'           => (int) ($tech['column'] ?? 0),
-                    'status'        => $this->computeStatus($tech, $techtree),
+                    'id' => $id,
+                    'type' => $type,
+                    'name' => __('techtree.'.$tech['name']),
+                    'level' => (int) ($tech['level'] ?? 0),
+                    'row' => (int) ($tech['row'] ?? 0),
+                    'col' => (int) ($tech['column'] ?? 0),
+                    'status' => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
-                    'max_level'     => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
-                    'key'           => $type === 'building' ? $tech['name'] : null,
-                    'image_slug'    => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
-                    'ap_type'        => $advisorCfg['ap_type'] ?? null,
-                    'hire_cost'      => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
-                    'is_instanced'   => (bool) ($tech['is_instanced'] ?? false),
+                    'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
+                    'key' => $type === 'building' ? $tech['name'] : null,
+                    'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
+                    'ap_type' => $advisorCfg['ap_type'] ?? null,
+                    'hire_cost' => isset($advisorCfg['credits']) ? (int) $advisorCfg['credits'] : null,
+                    'is_instanced' => (bool) ($tech['is_instanced'] ?? false),
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
-                    'hangar_cap'     => $type === 'ship' ? $hangarCap : null,
-                    'ap_spend'       => (int) ($tech['ap_spend'] ?? 0),
+                    'hangar_cap' => $type === 'ship' ? $hangarCap : null,
+                    'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
                     'ap_for_levelup' => (int) ($tech['ap_for_levelup'] ?? 0),
-                    'ap_available'   => $type === 'building' ? $constructionAp
+                    'ap_available' => $type === 'building' ? $constructionAp
                                         : ($type === 'research' ? $researchAp : 0),
                 ];
 
@@ -130,49 +132,49 @@ class TechtreeController extends BaseController
                 //           else fall back to primary (sciencelab acts as phase-2 gatekeeper).
                 // Other:    use primary prereq if it's in the same phase.
                 if ($type === 'research') {
-                    $fromId    = null;
+                    $fromId = null;
                     $fromLevel = 1;
 
-                    if (!empty($tech['required_building2_id'])) {
-                        $secId    = (int) $tech['required_building2_id'];
+                    if (! empty($tech['required_building2_id'])) {
+                        $secId = (int) $tech['required_building2_id'];
                         $secPhase = (int) ($techtree['building'][$secId]['phase'] ?? 0);
                         if ($secPhase === $phaseNum && isset($techtree['building'][$secId])) {
-                            $fromId    = $secId;
+                            $fromId = $secId;
                             $fromLevel = (int) ($tech['required_building2_level'] ?? 1);
                         }
                     }
 
-                    if ($fromId === null && !empty($tech['required_building_id'])) {
-                        $priId    = (int) $tech['required_building_id'];
+                    if ($fromId === null && ! empty($tech['required_building_id'])) {
+                        $priId = (int) $tech['required_building_id'];
                         $priPhase = (int) ($techtree['building'][$priId]['phase'] ?? 0);
                         if ($priPhase === $phaseNum && isset($techtree['building'][$priId])) {
-                            $fromId    = $priId;
+                            $fromId = $priId;
                             $fromLevel = (int) ($tech['required_building_level'] ?? 1);
                         }
                     }
 
                     if ($fromId !== null) {
-                        $fromBuilding                  = $techtree['building'][$fromId];
-                        $met                           = (int) ($fromBuilding['level'] ?? 0) >= $fromLevel;
+                        $fromBuilding = $techtree['building'][$fromId];
+                        $met = (int) ($fromBuilding['level'] ?? 0) >= $fromLevel;
                         $phases[$phaseNum]['lines'][] = [
-                            'from'  => "tech-building-{$fromId}",
-                            'to'    => "tech-research-{$id}",
-                            'met'   => $met,
+                            'from' => "tech-building-{$fromId}",
+                            'to' => "tech-research-{$id}",
+                            'met' => $met,
                             'label' => "Lv{$fromLevel}",
                         ];
                     }
                 } else {
-                    if (!empty($tech['required_building_id'])) {
-                        $reqId    = (int) $tech['required_building_id'];
+                    if (! empty($tech['required_building_id'])) {
+                        $reqId = (int) $tech['required_building_id'];
                         $reqPhase = (int) ($techtree['building'][$reqId]['phase'] ?? 0);
                         if ($reqPhase === $phaseNum && isset($techtree['building'][$reqId])) {
-                            $reqBuilding                   = $techtree['building'][$reqId];
-                            $reqLevel                      = (int) ($tech['required_building_level'] ?? 1);
-                            $met                           = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
+                            $reqBuilding = $techtree['building'][$reqId];
+                            $reqLevel = (int) ($tech['required_building_level'] ?? 1);
+                            $met = (int) ($reqBuilding['level'] ?? 0) >= $reqLevel;
                             $phases[$phaseNum]['lines'][] = [
-                                'from'  => "tech-building-{$reqId}",
-                                'to'    => "tech-{$type}-{$id}",
-                                'met'   => $met,
+                                'from' => "tech-building-{$reqId}",
+                                'to' => "tech-{$type}-{$id}",
+                                'met' => $met,
                                 'label' => "Lv{$reqLevel}",
                             ];
                         }
@@ -183,13 +185,13 @@ class TechtreeController extends BaseController
 
         // Sort items within each phase by (row, col)
         foreach ($phases as &$phase) {
-            usort($phase['items'], fn($a, $b) => [$a['row'], $a['col']] <=> [$b['row'], $b['col']]);
+            usort($phase['items'], fn ($a, $b) => [$a['row'], $a['col']] <=> [$b['row'], $b['col']]);
         }
         unset($phase);
 
         // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
-        $userId        = Auth::id();
-        $hint          = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
+        $userId = Auth::id();
+        $hint = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
         $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
 
         $pageData = ['phases' => $phases];
@@ -201,6 +203,7 @@ class TechtreeController extends BaseController
     {
         $key = preg_replace('/^building_/', '', $key);
         $overrides = ['bar' => 'cantina'];
+
         return $overrides[$key] ?? strtolower(preg_replace('/([A-Z])/', '-$1', $key));
     }
 
@@ -216,20 +219,20 @@ class TechtreeController extends BaseController
             return 'built';
         }
 
-        if (!empty($tech['required_building_id'])) {
-            $reqId       = (int) $tech['required_building_id'];
-            $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+        if (! empty($tech['required_building_id'])) {
+            $reqId = (int) $tech['required_building_id'];
+            $reqLevel = (int) ($tech['required_building_level'] ?? 1);
             $reqBuilding = $techtree['building'][$reqId] ?? null;
-            if (!$reqBuilding || (int) ($reqBuilding['level'] ?? 0) < $reqLevel) {
+            if (! $reqBuilding || (int) ($reqBuilding['level'] ?? 0) < $reqLevel) {
                 return 'locked';
             }
         }
 
-        if (!empty($tech['required_building2_id'])) {
-            $req2Id       = (int) $tech['required_building2_id'];
-            $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
+        if (! empty($tech['required_building2_id'])) {
+            $req2Id = (int) $tech['required_building2_id'];
+            $req2Level = (int) ($tech['required_building2_level'] ?? 1);
             $req2Building = $techtree['building'][$req2Id] ?? null;
-            if (!$req2Building || (int) ($req2Building['level'] ?? 0) < $req2Level) {
+            if (! $req2Building || (int) ($req2Building['level'] ?? 0) < $req2Level) {
                 return 'locked';
             }
         }
@@ -250,22 +253,22 @@ class TechtreeController extends BaseController
             return null;
         }
 
-        $reqId       = (int) $tech['required_building_id'];
-        $reqLevel    = (int) ($tech['required_building_level'] ?? 1);
+        $reqId = (int) $tech['required_building_id'];
+        $reqLevel = (int) ($tech['required_building_level'] ?? 1);
         $reqBuilding = $techtree['building'][$reqId] ?? null;
 
-        if (!$reqBuilding) {
+        if (! $reqBuilding) {
             return null;
         }
 
-        $desc = __('techtree.' . $reqBuilding['name']) . " Lv{$reqLevel}";
+        $desc = __('techtree.'.$reqBuilding['name'])." Lv{$reqLevel}";
 
-        if (!empty($tech['required_building2_id'])) {
-            $req2Id       = (int) $tech['required_building2_id'];
-            $req2Level    = (int) ($tech['required_building2_level'] ?? 1);
+        if (! empty($tech['required_building2_id'])) {
+            $req2Id = (int) $tech['required_building2_id'];
+            $req2Level = (int) ($tech['required_building2_level'] ?? 1);
             $req2Building = $techtree['building'][$req2Id] ?? null;
             if ($req2Building) {
-                $desc .= ' + ' . __('techtree.' . $req2Building['name']) . " Lv{$req2Level}";
+                $desc .= ' + '.__('techtree.'.$req2Building['name'])." Lv{$req2Level}";
             }
         }
 
@@ -275,36 +278,36 @@ class TechtreeController extends BaseController
     /**
      * Return a technology detail partial (AJAX popup, no layout).
      */
-    public function technology(string $type, int $id): \Illuminate\View\View
+    public function technology(string $type, int $id): View
     {
         $colonyId = $this->resolveColonyId();
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
         $service = match (strtolower($type)) {
-            'building'  => $this->buildingService,
-            'research'  => $this->researchService,
-            'ship'      => $this->shipService,
+            'building' => $this->buildingService,
+            'research' => $this->researchService,
+            'ship' => $this->shipService,
             'personell' => $this->personellService,
-            default     => throw new \InvalidArgumentException("Unknown type: $type"),
+            default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
         $apType = match (strtolower($type)) {
             'research' => 'research',
-            default    => 'construction',
+            default => 'construction',
         };
 
         return view('techtree.technology', [
-            'type'                   => $type,
-            'techId'                 => $id,
-            'tech'                   => $techtree[$type][$id] ?? null,
-            'costs'                  => $service->getEntityCosts($id),
-            'resources'              => $this->resourcesService->getResources()->keyBy('id'),
-            'apAvailable'            => $this->personellService->getAvailableActionPoints($apType, $colonyId),
+            'type' => $type,
+            'techId' => $id,
+            'tech' => $techtree[$type][$id] ?? null,
+            'costs' => $service->getEntityCosts($id),
+            'resources' => $this->resourcesService->getResources()->keyBy('id'),
+            'apAvailable' => $this->personellService->getAvailableActionPoints($apType, $colonyId),
             'requiredBuildingsCheck' => $service->checkRequiredBuildingsByEntityId($colonyId, $id),
             'requiredResourcesCheck' => $this->resourcesService->check($service->getEntityCosts($id), $colonyId),
             // Passed so the view can resolve required building/research names
-            'buildings'              => $techtree['building'],
-            'researches'             => $techtree['research'],
+            'buildings' => $techtree['building'],
+            'researches' => $techtree['research'],
         ]);
     }
 
@@ -314,23 +317,23 @@ class TechtreeController extends BaseController
      * Called by techtree.js via AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
      * e.g. /techtree/building/25/add/3   or   /techtree/building/25/levelup
      */
-    public function action(string $type, int $id, string $order, int $ap = 1): \Illuminate\View\View
+    public function action(string $type, int $id, string $order, int $ap = 1): View
     {
         $colonyId = $this->resolveColonyId();
 
         $service = match (strtolower($type)) {
-            'building'  => $this->buildingService,
-            'research'  => $this->researchService,
-            'ship'      => $this->shipService,
+            'building' => $this->buildingService,
+            'research' => $this->researchService,
+            'ship' => $this->shipService,
             'personell' => $this->personellService,
-            default     => throw new \InvalidArgumentException("Unknown type: $type"),
+            default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
         match ($order) {
             'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
-            'levelup'                 => $service->levelup($colonyId, $id),
-            'leveldown'               => $service->leveldown($colonyId, $id),
-            default                   => null,
+            'levelup' => $service->levelup($colonyId, $id),
+            'leveldown' => $service->leveldown($colonyId, $id),
+            default => null,
         };
 
         // Re-render the technology partial so the modal reflects the updated state
@@ -343,26 +346,26 @@ class TechtreeController extends BaseController
     public function order(Request $request, string $type, int $id): JsonResponse
     {
         $colonyId = $this->resolveColonyId();
-        $order    = $request->input('order');
-        $ap       = (int) $request->input('ap', 1);
+        $order = $request->input('order');
+        $ap = (int) $request->input('ap', 1);
 
         $service = match (strtolower($type)) {
-            'building'  => $this->buildingService,
-            'research'  => $this->researchService,
-            'ship'      => $this->shipService,
+            'building' => $this->buildingService,
+            'research' => $this->researchService,
+            'ship' => $this->shipService,
             'personell' => $this->personellService,
-            default     => null,
+            default => null,
         };
 
-        if (!$service) {
+        if (! $service) {
             return response()->json(['success' => false, 'message' => 'Unknown type']);
         }
 
         $result = match ($order) {
             'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
-            'levelup'                 => $service->levelup($colonyId, $id),
-            'leveldown'               => $service->leveldown($colonyId, $id),
-            default                   => false,
+            'levelup' => $service->levelup($colonyId, $id),
+            'leveldown' => $service->leveldown($colonyId, $id),
+            default => false,
         };
 
         return response()->json(['success' => (bool) $result, 'order' => $order]);

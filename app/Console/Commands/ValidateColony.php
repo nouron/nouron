@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\DB;
 
 class ValidateColony extends Command
 {
-    protected $signature   = 'game:validate-colony {colony_id? : Colony ID to check (default: all active colonies)}';
+    protected $signature = 'game:validate-colony {colony_id? : Colony ID to check (default: all active colonies)}';
+
     protected $description = 'Validate colony game state — detect supply overrun, AP inconsistencies, missing run, etc.';
 
     public function handle(): int
@@ -20,13 +21,14 @@ class ValidateColony extends Command
         $hasErrors = false;
 
         foreach ($colonies as $colony) {
-            if (!$colony) {
+            if (! $colony) {
                 $this->error("Colony {$colonyIdArg} not found.");
+
                 return 1;
             }
 
             $issues = [];
-            $id   = $colony->id;
+            $id = $colony->id;
             $name = $colony->name ?? "Colony #{$id}";
 
             // --- Check 1: Active run exists ---
@@ -34,7 +36,7 @@ class ValidateColony extends Command
                 ->where('colony_id', $id)
                 ->where('status', 'active')
                 ->first();
-            if (!$run) {
+            if (! $run) {
                 $issues[] = ['WARN', 'No active run for colony'];
             }
 
@@ -42,7 +44,7 @@ class ValidateColony extends Command
             $userResource = DB::table('user_resources')
                 ->where('user_id', $colony->user_id)
                 ->first();
-            $supplyCap   = $userResource ? (int) $userResource->supply : 0;
+            $supplyCap = $userResource ? (int) $userResource->supply : 0;
 
             $buildingUsage = DB::table('colony_buildings as cb')
                 ->join('buildings as b', 'cb.building_id', '=', 'b.id')
@@ -52,7 +54,7 @@ class ValidateColony extends Command
                 ->value('total_usage') ?? 0;
 
             if ($buildingUsage > $supplyCap) {
-                $issues[] = ['ERROR', "Supply overrun: usage={$buildingUsage} > cap={$supplyCap} (deficit=" . ($buildingUsage - $supplyCap) . ")"];
+                $issues[] = ['ERROR', "Supply overrun: usage={$buildingUsage} > cap={$supplyCap} (deficit=".($buildingUsage - $supplyCap).')'];
             } else {
                 $issues[] = ['OK', "Supply: usage={$buildingUsage} / cap={$supplyCap}"];
             }
@@ -75,7 +77,7 @@ class ValidateColony extends Command
                 ->value('amount');
             if ($trust === null) {
                 $issues[] = ['WARN', 'Trust resource row missing'];
-            } elseif ((int)$trust < -50) {
+            } elseif ((int) $trust < -50) {
                 $issues[] = ['WARN', "Trust critically low: {$trust}"];
             }
 
@@ -94,19 +96,20 @@ class ValidateColony extends Command
             $this->line("<options=bold>{$name}</> (id={$id})");
             foreach ($issues as [$level, $msg]) {
                 match ($level) {
-                    'OK'    => $this->line("  <fg=green>✓</> {$msg}"),
-                    'WARN'  => $this->warn("  ⚠ {$msg}"),
+                    'OK' => $this->line("  <fg=green>✓</> {$msg}"),
+                    'WARN' => $this->warn("  ⚠ {$msg}"),
                     'ERROR' => $this->error("  ✗ {$msg}"),
                     default => $this->line("  {$msg}"),
                 };
             }
 
-            if (collect($issues)->contains(fn($i) => $i[0] === 'ERROR')) {
+            if (collect($issues)->contains(fn ($i) => $i[0] === 'ERROR')) {
                 $hasErrors = true;
             }
         }
 
         $this->line('');
+
         return $hasErrors ? 1 : 0;
     }
 }

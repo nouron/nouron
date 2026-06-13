@@ -3,7 +3,8 @@
     "exclude": [
         "bootstrap/cache",
         "storage",
-        "resources/views"
+        "resources/views",
+        "database/migrations"
     ],
     "notName": [
         "*.blade.php"

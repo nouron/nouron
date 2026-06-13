@@ -25,12 +25,14 @@ class EventService
     public function getEvent(mixed $id): ColonyLog|false
     {
         $this->validateId($id);
+
         return ColonyLog::find((int) $id) ?? false;
     }
 
     public function getEvents(mixed $userId): Collection
     {
         $this->validateId($userId);
+
         return ColonyLog::where('user', (int) $userId)->get();
     }
 
@@ -45,28 +47,28 @@ class EventService
         }
 
         $this->createEvent([
-            'user'       => $userId,
-            'tick'       => $tick,
-            'event'      => 'onboarding.nexus_briefing',
-            'area'       => 'nexus',
+            'user' => $userId,
+            'tick' => $tick,
+            'event' => 'onboarding.nexus_briefing',
+            'area' => 'nexus',
             'parameters' => json_encode(['colony_id' => $colonyId]),
         ]);
     }
 
     public function createEvent(array $data): int
     {
-        $area  = $data['area'] ?? '';
+        $area = $data['area'] ?? '';
         $event = $data['event'];
 
         $isNexus = $area === 'nexus' || in_array($event, self::NEXUS_EVENT_KEYS, true);
 
         $entry = ColonyLog::create([
-            'user'       => (int) $data['user'],
-            'tick'       => (int) ($data['tick'] ?? 0),
-            'event'      => $event,
-            'area'       => $area,
+            'user' => (int) $data['user'],
+            'tick' => (int) ($data['tick'] ?? 0),
+            'event' => $event,
+            'area' => $area,
             'parameters' => $data['parameters'] ?? '',
-            'is_read'    => ! $isNexus,
+            'is_read' => ! $isNexus,
             'created_at' => now(),
         ]);
 

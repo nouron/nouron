@@ -17,7 +17,8 @@ class OnboardingHintServiceTest extends TestCase
 
     private OnboardingHintService $service;
 
-    private int $userId   = 999;
+    private int $userId = 999;
+
     private int $colonyId = 999;
 
     protected function setUp(): void
@@ -28,14 +29,14 @@ class OnboardingHintServiceTest extends TestCase
         $this->service = $this->app->make(OnboardingHintService::class);
 
         DB::table('user')->insertOrIgnore([
-            'user_id'        => $this->userId,
-            'username'       => 'TestUser',
-            'display_name'   => 'Test User',
-            'role'           => 'player',
-            'password'       => bcrypt('pw'),
-            'email'          => 'test@test.de',
+            'user_id' => $this->userId,
+            'username' => 'TestUser',
+            'display_name' => 'Test User',
+            'role' => 'player',
+            'password' => bcrypt('pw'),
+            'email' => 'test@test.de',
             'activation_key' => 'testkey',
-            'faction_id'     => 7,
+            'faction_id' => 7,
         ]);
         DB::table('glx_colonies')->insertOrIgnore([
             'id' => $this->colonyId, 'user_id' => $this->userId,
@@ -45,12 +46,12 @@ class OnboardingHintServiceTest extends TestCase
 
         // Run at Sol 0 — keeps tick-gated hints (3/4/5/6) below their thresholds.
         DB::table('runs')->insertOrIgnore([
-            'id'           => $this->colonyId,
-            'user_id'      => $this->userId,
-            'colony_id'    => $this->colonyId,
+            'id' => $this->colonyId,
+            'user_id' => $this->userId,
+            'colony_id' => $this->colonyId,
             'current_tick' => 0,
-            'status'       => 'active',
-            'settings'     => json_encode(['tick_limit' => 100, 'bypass' => ['ap_checks' => false, 'resource_costs' => false, 'supply_checks' => false], 'supply_cap_max' => 200]),
+            'status' => 'active',
+            'settings' => json_encode(['tick_limit' => 100, 'bypass' => ['ap_checks' => false, 'resource_costs' => false, 'supply_checks' => false], 'supply_cap_max' => 200]),
         ]);
 
         DB::table('user_preferences')->insertOrIgnore([
@@ -244,7 +245,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->service->dismissHint($this->userId, 'hint_1');
 
-        $raw      = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
+        $raw = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
         $dismissed = json_decode($raw, true);
         $this->assertContains('hint_1', $dismissed);
     }
@@ -254,9 +255,9 @@ class OnboardingHintServiceTest extends TestCase
         $this->service->dismissHint($this->userId, 'hint_1');
         $this->service->dismissHint($this->userId, 'hint_1');
 
-        $raw      = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
+        $raw = DB::table('user_preferences')->where('user_id', $this->userId)->value('dismissed_hints');
         $dismissed = json_decode($raw, true);
-        $this->assertCount(1, array_filter($dismissed, fn($k) => $k === 'hint_1'));
+        $this->assertCount(1, array_filter($dismissed, fn ($k) => $k === 'hint_1'));
     }
 
     public function test_dismissed_hint_skipped_returns_next_active(): void
@@ -341,10 +342,10 @@ class OnboardingHintServiceTest extends TestCase
     private function placeEngineer(): void
     {
         DB::table('advisors')->insertOrIgnore([
-            'user_id'      => $this->userId,
+            'user_id' => $this->userId,
             'personell_id' => 35,
-            'colony_id'    => $this->colonyId,
-            'rank'         => 1,
+            'colony_id' => $this->colonyId,
+            'rank' => 1,
             'active_ticks' => 0,
         ]);
     }

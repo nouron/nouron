@@ -4,9 +4,9 @@ namespace App\Services\Techtree;
 
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
-use App\Services\TrustService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
+use App\Services\TrustService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -44,8 +44,8 @@ class PersonellService
     }
 
     public function __construct(
-        private readonly TickService      $tickService,
-        private readonly TrustService     $trustService,
+        private readonly TickService $tickService,
+        private readonly TrustService $trustService,
         private readonly ResourcesService $resourcesService,
     ) {}
 
@@ -54,32 +54,33 @@ class PersonellService
     public function getTotalActionPoints(string $type, int $scopeId): int
     {
         [$personellId, $scope] = $this->resolveType($type);
-        if (!$personellId) {
+        if (! $personellId) {
             return 0;
         }
 
-        $baseAp    = (int) config('game.ap.base', 6);
+        $baseAp = (int) config('game.ap.base', 6);
         $advisorAp = Advisor::where('personell_id', $personellId)
             ->whereNull('unavailable_until_tick')
             ->where('colony_id', $scopeId)
             ->get()
-            ->sum(fn(Advisor $a) => $a->getApPerTick());
+            ->sum(fn (Advisor $a) => $a->getApPerTick());
 
         // Apply trust AP multiplier for colony-scoped types.
-        $trust      = $this->trustService->getTrust($scopeId);
+        $trust = $this->trustService->getTrust($scopeId);
         $multiplier = $this->trustService->getApMultiplier($trust);
+
         return (int) round(($baseAp + $advisorAp) * $multiplier);
     }
 
     public function getAvailableActionPoints(string $type, int $scopeId): int
     {
         [$personellId, $scope] = $this->resolveType($type);
-        if (!$personellId) {
+        if (! $personellId) {
             return 0;
         }
 
         $total = $this->getTotalActionPoints($type, $scopeId);
-        $tick  = $this->tickService->getTickCount();
+        $tick = $this->tickService->getTickCount();
 
         $locked = DB::table('locked_actionpoints')
             ->where('tick', $tick)
@@ -94,11 +95,11 @@ class PersonellService
     public function lockActionPoints(string $type, int $scopeId, int $ap): bool
     {
         [$personellId, $scope] = $this->resolveType($type);
-        if (!$personellId) {
+        if (! $personellId) {
             return false;
         }
 
-        $tick     = $this->tickService->getTickCount();
+        $tick = $this->tickService->getTickCount();
         $existing = DB::table('locked_actionpoints')
             ->where(['tick' => $tick, 'scope_type' => $scope, 'scope_id' => $scopeId, 'personell_id' => $personellId])
             ->value('spend_ap') ?? 0;
@@ -165,7 +166,7 @@ class PersonellService
             }
 
             // CC-Level gate — slots available = min(cc_level, max_slots).
-            $ccLevel  = (int) (DB::table('colony_buildings')
+            $ccLevel = (int) (DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)
                 ->where('building_id', config('buildings.commandCenter.id'))
                 ->value('level') ?? 0);
@@ -176,15 +177,15 @@ class PersonellService
             }
 
             // Credits check and deduction.
-            if (!config('game.bypass.resource_costs')) {
-                $advisorCfg  = collect(config('advisors'))->firstWhere('id', $personellId);
+            if (! config('game.bypass.resource_costs')) {
+                $advisorCfg = collect(config('advisors'))->firstWhere('id', $personellId);
                 $creditsCost = (int) ($advisorCfg['credits'] ?? 0);
                 if ($creditsCost > 0) {
                     $canAfford = $this->resourcesService->check(
                         [['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $creditsCost]],
                         $colonyId
                     );
-                    if (!$canAfford) {
+                    if (! $canAfford) {
                         return 'insufficient_credits';
                     }
                     $this->resourcesService->decreaseAmount($colonyId, ResourcesService::RES_CREDITS, $creditsCost);
@@ -192,10 +193,10 @@ class PersonellService
             }
 
             return Advisor::create([
-                'user_id'      => $userId,
+                'user_id' => $userId,
                 'personell_id' => $personellId,
-                'colony_id'    => $colonyId,
-                'rank'         => max(1, min(3, $rank)),
+                'colony_id' => $colonyId,
+                'rank' => max(1, min(3, $rank)),
                 'active_ticks' => 0,
             ]);
         });
@@ -208,18 +209,18 @@ class PersonellService
      */
     public function getAdvisorSlotInfo(int $colonyId): array
     {
-        $ccLevel  = (int) (DB::table('colony_buildings')
+        $ccLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', config('buildings.commandCenter.id'))
             ->value('level') ?? 0);
-        $maxSlots  = min($ccLevel, (int) config('game.advisor.max_slots', 5));
+        $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
         $usedSlots = Advisor::where('colony_id', $colonyId)->count();
 
         return [
             'cc_level' => $ccLevel,
-            'max'      => $maxSlots,
-            'used'     => $usedSlots,
-            'free'     => max(0, $maxSlots - $usedSlots),
+            'max' => $maxSlots,
+            'used' => $usedSlots,
+            'free' => max(0, $maxSlots - $usedSlots),
         ];
     }
 
@@ -230,7 +231,7 @@ class PersonellService
     public function fire(int $advisorId): bool
     {
         return (bool) Advisor::where('id', $advisorId)->update([
-            'colony_id'              => null,
+            'colony_id' => null,
             'unavailable_until_tick' => $this->tickService->getTickCount(),
         ]);
     }
@@ -252,9 +253,8 @@ class PersonellService
      * ap_targeted → type is a specific AP type key (e.g. 'research'):
      *             credit the full amount to that single pool only.
      *
-     * @param  int    $colonyId
-     * @param  string $apType   'any' for flex, or a specific type key
-     * @param  int    $amount   total AP to grant (must be > 0)
+     * @param  string  $apType  'any' for flex, or a specific type key
+     * @param  int  $amount  total AP to grant (must be > 0)
      */
     public function creditAp(int $colonyId, string $apType, int $amount): void
     {
@@ -278,12 +278,12 @@ class PersonellService
     private function creditApFlex(int $colonyId, int $amount, int $tick): void
     {
         // Collect all AP types that have at least one advisor currently on the colony.
-        $allTypes      = ['construction', 'research', 'economy', 'strategy', 'navigation'];
-        $activeTypes   = [];
+        $allTypes = ['construction', 'research', 'economy', 'strategy', 'navigation'];
+        $activeTypes = [];
 
         foreach ($allTypes as $type) {
             [$personellId] = $this->resolveType($type);
-            if (!$personellId) {
+            if (! $personellId) {
                 continue;
             }
             $hasAdvisor = Advisor::where('colony_id', $colonyId)
@@ -300,8 +300,8 @@ class PersonellService
             $activeTypes = ['construction'];
         }
 
-        $count     = count($activeTypes);
-        $base      = intdiv($amount, $count);
+        $count = count($activeTypes);
+        $base = intdiv($amount, $count);
         $remainder = $amount % $count;
 
         foreach ($activeTypes as $i => $type) {
@@ -321,15 +321,15 @@ class PersonellService
         [$personellId, $scope] = $this->resolveType($apType);
 
         // Unknown type — silently skip rather than crash so a bad payload can't break a purchase.
-        if (!$personellId) {
+        if (! $personellId) {
             return;
         }
 
         $existing = (int) (DB::table('locked_actionpoints')
             ->where([
-                'tick'         => $tick,
-                'scope_type'   => $scope,
-                'scope_id'     => $colonyId,
+                'tick' => $tick,
+                'scope_type' => $scope,
+                'scope_id' => $colonyId,
                 'personell_id' => $personellId,
             ])
             ->value('spend_ap') ?? 0);
@@ -339,9 +339,9 @@ class PersonellService
 
         DB::table('locked_actionpoints')->updateOrInsert(
             [
-                'tick'         => $tick,
-                'scope_type'   => $scope,
-                'scope_id'     => $colonyId,
+                'tick' => $tick,
+                'scope_type' => $scope,
+                'scope_id' => $colonyId,
                 'personell_id' => $personellId,
             ],
             ['spend_ap' => $newValue]
@@ -365,11 +365,11 @@ class PersonellService
     {
         return match (strtolower($type)) {
             'construction' => [self::idFor('engineer'),  'colony'],
-            'research'     => [self::idFor('scientist'), 'colony'],
-            'economy'      => [self::idFor('trader'),    'colony'],
-            'strategy'     => [self::idFor('strategist'), 'colony'],
-            'navigation'   => [self::idFor('pilot'),     'colony'],
-            default        => [null, null],
+            'research' => [self::idFor('scientist'), 'colony'],
+            'economy' => [self::idFor('trader'),    'colony'],
+            'strategy' => [self::idFor('strategist'), 'colony'],
+            'navigation' => [self::idFor('pilot'),     'colony'],
+            default => [null, null],
         };
     }
 }

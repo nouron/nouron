@@ -24,7 +24,7 @@ class TestSeeder extends Seeder
         // Execute INSERT and UPDATE statements (schema is handled by migrations)
         $statements = array_filter(
             explode("\n", $sql),
-            fn(string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
+            fn (string $line) => (bool) preg_match('/^\s*(INSERT|UPDATE)\s/i', $line)
         );
 
         foreach ($statements as $statement) {
@@ -32,7 +32,7 @@ class TestSeeder extends Seeder
             if ($statement === '') {
                 continue;
             }
-            $statement = rtrim($statement, ';') . ';';
+            $statement = rtrim($statement, ';').';';
             // OR REPLACE: avoids UNIQUE violations when migrations pre-insert master rows (e.g. add_stratege)
             $statement = preg_replace('/^INSERT INTO\b/i', 'INSERT OR REPLACE INTO', $statement);
             DB::statement($statement);

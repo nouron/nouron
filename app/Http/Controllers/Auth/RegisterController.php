@@ -27,26 +27,26 @@ class RegisterController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'username'  => ['required', 'string', 'max:255', 'unique:user,username'],
-            'email'     => ['required', 'email', 'max:255', 'unique:user,email'],
-            'password'  => ['required', 'string', 'min:8', 'confirmed'],
+            'username' => ['required', 'string', 'max:255', 'unique:user,username'],
+            'email' => ['required', 'email', 'max:255', 'unique:user,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         try {
             [$user, $colony] = DB::transaction(function () use ($validated) {
                 $user = User::create([
-                    'username'        => $validated['username'],
-                    'display_name'    => $validated['username'],
-                    'email'           => $validated['email'],
-                    'password'        => $validated['password'], // auto-hashed via cast
-                    'role'            => 'player',
-                    'activation_key'  => Str::random(32),
-                    'activated'       => true, // no email verification yet
+                    'username' => $validated['username'],
+                    'display_name' => $validated['username'],
+                    'email' => $validated['email'],
+                    'password' => $validated['password'], // auto-hashed via cast
+                    'role' => 'player',
+                    'activation_key' => Str::random(32),
+                    'activated' => true, // no email verification yet
                 ]);
 
                 $colony = $this->onboardingService->setupNewPlayer(
                     $user->user_id,
-                    $user->username . 's Kolonie'
+                    $user->username.'s Kolonie'
                 );
 
                 return [$user, $colony];
@@ -57,7 +57,8 @@ class RegisterController extends Controller
                     'username' => 'Derzeit sind leider keine freien Planeten verfügbar. Bitte versuche es später erneut.',
                 ])->onlyInput('username', 'email');
             }
-            Log::error('Registration failed: ' . $e->getMessage());
+            Log::error('Registration failed: '.$e->getMessage());
+
             return back()->withErrors([
                 'username' => 'Registrierung fehlgeschlagen. Bitte versuche es erneut.',
             ])->onlyInput('username', 'email');

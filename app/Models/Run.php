@@ -35,13 +35,13 @@ class Run extends Model
     protected function casts(): array
     {
         return [
-            'current_tick'      => 'integer',
-            'phase'             => 'integer',
-            'nexus_debt'        => 'integer',
+            'current_tick' => 'integer',
+            'phase' => 'integer',
+            'nexus_debt' => 'integer',
             'phase2_start_tick' => 'integer',
-            'started_at'        => 'datetime',
-            'ended_at'          => 'datetime',
-            'settings'          => 'array',
+            'started_at' => 'datetime',
+            'ended_at' => 'datetime',
+            'settings' => 'array',
         ];
     }
 
@@ -101,6 +101,7 @@ class Run extends Model
     public function getTickLimit(): int
     {
         $settings = $this->settings ?? [];
+
         return (int) ($settings['tick_limit'] ?? config('game.run.tick_limit', 100));
     }
 

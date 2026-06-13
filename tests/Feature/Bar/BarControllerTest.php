@@ -34,11 +34,15 @@ class BarControllerTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    private const USER_ID_BART    = 3;
-    private const COLONY_ID_BART  = 1;
+    private const USER_ID_BART = 3;
+
+    private const COLONY_ID_BART = 1;
+
     private const BAR_BUILDING_ID = 52;
-    private const RES_REGOLITH    = 3;
-    private const RES_COMPOUNDS   = 4;
+
+    private const RES_REGOLITH = 3;
+
+    private const RES_COMPOUNDS = 4;
 
     protected function setUp(): void
     {
@@ -78,15 +82,15 @@ class BarControllerTest extends TestCase
     private function insertValidOffer(int $expiresTick = 9999): int
     {
         return DB::table('bar_offers')->insertGetId([
-            'colony_id'        => self::COLONY_ID_BART,
+            'colony_id' => self::COLONY_ID_BART,
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 10,
-            'get_resource_id'  => self::RES_COMPOUNDS,
-            'get_amount'       => 5,
-            'expires_tick'     => $expiresTick,
-            'is_accepted'      => false,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'give_amount' => 10,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 5,
+            'expires_tick' => $expiresTick,
+            'is_accepted' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -140,7 +144,7 @@ class BarControllerTest extends TestCase
 
         // barLevel must be 0 and offers must be empty
         $barLevel = $response->viewData('barLevel');
-        $offers   = $response->viewData('offers');
+        $offers = $response->viewData('offers');
 
         $this->assertEquals(0, $barLevel);
         $this->assertCount(0, $offers);
@@ -218,15 +222,15 @@ class BarControllerTest extends TestCase
 
         // Insert an offer for Shelbyville (colony_id=2) — Bart's colony is 1
         $foreignOfferId = DB::table('bar_offers')->insertGetId([
-            'colony_id'        => 2,
+            'colony_id' => 2,
             'give_resource_id' => self::RES_REGOLITH,
-            'give_amount'      => 10,
-            'get_resource_id'  => self::RES_COMPOUNDS,
-            'get_amount'       => 5,
-            'expires_tick'     => 9999,
-            'is_accepted'      => false,
-            'created_at'       => now(),
-            'updated_at'       => now(),
+            'give_amount' => 10,
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 5,
+            'expires_tick' => 9999,
+            'is_accepted' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         $response = $this->actingAs($this->bart())

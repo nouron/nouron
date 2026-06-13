@@ -59,8 +59,8 @@ class MasterDataSeeder extends Seeder
         foreach ($data as $id => [$msp, $decayRate, $supplyCost]) {
             DB::table('buildings')->where('id', $id)->update([
                 'max_status_points' => $msp,
-                'decay_rate'        => $decayRate,
-                'supply_cost'       => $supplyCost,
+                'decay_rate' => $decayRate,
+                'supply_cost' => $supplyCost,
             ]);
         }
     }
@@ -80,8 +80,8 @@ class MasterDataSeeder extends Seeder
         foreach ($data as $id => [$msp, $decayRate, $supplyCost]) {
             DB::table('ships')->where('id', $id)->update([
                 'max_status_points' => $msp,
-                'decay_rate'        => $decayRate,
-                'supply_cost'       => $supplyCost,
+                'decay_rate' => $decayRate,
+                'supply_cost' => $supplyCost,
             ]);
         }
     }
@@ -95,15 +95,15 @@ class MasterDataSeeder extends Seeder
         foreach ($standard as $id) {
             DB::table('researches')->where('id', $id)->update([
                 'max_status_points' => 20,
-                'decay_rate'        => 0.13,
-                'supply_cost'       => 5,
+                'decay_rate' => 0.13,
+                'supply_cost' => 5,
             ]);
         }
 
         DB::table('researches')->where('id', 81)->update([
             'max_status_points' => 20,
-            'decay_rate'        => 0.13,
-            'supply_cost'       => 8,
+            'decay_rate' => 0.13,
+            'supply_cost' => 8,
         ]);
 
         // Kenntnisse (IDs 90–96) — GDD §10: permanent knowledge, no decay
@@ -111,8 +111,8 @@ class MasterDataSeeder extends Seeder
         foreach ($kenntnisse as $id) {
             DB::table('researches')->where('id', $id)->update([
                 'max_status_points' => 20,
-                'decay_rate'        => 0,
-                'supply_cost'       => 0,
+                'decay_rate' => 0,
+                'supply_cost' => 0,
             ]);
         }
     }

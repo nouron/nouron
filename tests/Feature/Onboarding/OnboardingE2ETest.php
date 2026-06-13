@@ -6,6 +6,7 @@ use App\Models\ColonyLog;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingService;
+use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,9 +26,11 @@ class OnboardingE2ETest extends TestCase
 {
     use RefreshDatabase;
 
-    private OnboardingService  $onboardingService;
+    private OnboardingService $onboardingService;
+
     private OnboardingHintService $hintService;
-    private TickService        $tickService;
+
+    private TickService $tickService;
 
     /** User ID that does not collide with any testdata fixture. */
     private int $userId = 7001;
@@ -38,18 +41,18 @@ class OnboardingE2ETest extends TestCase
         $this->app->make(TestSeeder::class)->run();
 
         $this->onboardingService = $this->app->make(OnboardingService::class);
-        $this->hintService       = $this->app->make(OnboardingHintService::class);
-        $this->tickService       = $this->app->make(TickService::class);
+        $this->hintService = $this->app->make(OnboardingHintService::class);
+        $this->tickService = $this->app->make(TickService::class);
 
         DB::table('user')->insertOrIgnore([
-            'user_id'        => $this->userId,
-            'username'       => 'e2e_player',
-            'display_name'   => 'E2E Player',
-            'role'           => 'player',
-            'password'       => bcrypt('pw'),
-            'email'          => 'e2e@test.local',
+            'user_id' => $this->userId,
+            'username' => 'e2e_player',
+            'display_name' => 'E2E Player',
+            'role' => 'player',
+            'password' => bcrypt('pw'),
+            'email' => 'e2e@test.local',
             'activation_key' => 'e2ekey001',
-            'faction_id'     => 7,
+            'faction_id' => 7,
         ]);
     }
 
@@ -65,7 +68,7 @@ class OnboardingE2ETest extends TestCase
 
         // ── 2. Nexus-Briefing exists in colony_log ──────────────────────────
         $this->assertDatabaseHas('colony_log', [
-            'user'  => $this->userId,
+            'user' => $this->userId,
             'event' => 'onboarding.nexus_briefing',
         ]);
 
@@ -77,12 +80,12 @@ class OnboardingE2ETest extends TestCase
         $this->assertStringContainsString('/advisors', $hint['target_url']);
 
         // ── 4. Hire engineer → rank-1 resolved; rank-2 (Harvester in colony zone) surfaces ──
-        $engineerId = \App\Services\Techtree\PersonellService::idFor('engineer');
+        $engineerId = PersonellService::idFor('engineer');
         DB::table('advisors')->insert([
-            'user_id'      => $this->userId,
-            'colony_id'    => $colony->id,
+            'user_id' => $this->userId,
+            'colony_id' => $colony->id,
             'personell_id' => $engineerId,
-            'rank'         => 1,
+            'rank' => 1,
             'active_ticks' => 0,
         ]);
 
@@ -142,7 +145,7 @@ class OnboardingE2ETest extends TestCase
         $colony = $this->onboardingService->setupNewPlayer($this->userId, 'Briefing-Test');
 
         $eventService = $this->app->make(EventService::class);
-        $tick         = $this->tickService->getTickCount();
+        $tick = $this->tickService->getTickCount();
 
         // Second call must be a no-op.
         $eventService->createNexusBriefing($this->userId, $tick, $colony->id);

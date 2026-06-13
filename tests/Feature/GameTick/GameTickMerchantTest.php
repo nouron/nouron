@@ -52,12 +52,17 @@ class GameTickMerchantTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID    = 1;
-    private const USER_ID      = 3;
-    private const BAR_ID       = 52;
-    private const FIRST_MIN    = 15;   // config game.merchant.first_appearance_min
+    private const COLONY_ID = 1;
+
+    private const USER_ID = 3;
+
+    private const BAR_ID = 52;
+
+    private const FIRST_MIN = 15;   // config game.merchant.first_appearance_min
+
     private const INTERVAL_MIN = 10;   // config game.merchant.interval_min
-    private const DURATION     = 2;    // config game.merchant.duration_ticks
+
+    private const DURATION = 2;    // config game.merchant.duration_ticks
 
     protected function setUp(): void
     {
@@ -83,11 +88,11 @@ class GameTickMerchantTest extends TestCase
     /** Find a tick >= first_appearance_min where the merchant seed passes for colony 1. */
     private function findSpawnableTick(int $startFrom = self::FIRST_MIN): ?int
     {
-        $colonyId    = self::COLONY_ID;
+        $colonyId = self::COLONY_ID;
         $intervalMin = (int) config('game.merchant.interval_min', 10);
         $intervalMax = (int) config('game.merchant.interval_max', 15);
         $intervalAvg = ($intervalMin + $intervalMax) / 2.0;
-        $threshold   = 1.0 / $intervalAvg;
+        $threshold = 1.0 / $intervalAvg;
 
         for ($tick = $startFrom; $tick < $startFrom + 200; $tick++) {
             $seed = $colonyId * 1664525 + $tick * 1013904223;
@@ -97,6 +102,7 @@ class GameTickMerchantTest extends TestCase
                 return $tick;
             }
         }
+
         return null;
     }
 
@@ -111,9 +117,10 @@ class GameTickMerchantTest extends TestCase
     private function getItemCountForLatestVisit(): int
     {
         $visit = $this->getVisit();
-        if (!$visit) {
+        if (! $visit) {
             return 0;
         }
+
         return (int) DB::table('merchant_items')->where('visit_id', $visit->id)->count();
     }
 
@@ -259,12 +266,12 @@ class GameTickMerchantTest extends TestCase
 
         // Insert a visit that is currently active at spawnTick
         DB::table('merchant_visits')->insert([
-            'colony_id'   => self::COLONY_ID,
-            'tick_start'  => $spawnTick - 1,
-            'tick_end'    => $spawnTick + 1, // active at spawnTick
+            'colony_id' => self::COLONY_ID,
+            'tick_start' => $spawnTick - 1,
+            'tick_end' => $spawnTick + 1, // active at spawnTick
             'was_visited' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         Artisan::call('game:tick', ['--tick' => $spawnTick]);
@@ -293,12 +300,12 @@ class GameTickMerchantTest extends TestCase
         // Insert a recently-ended visit (ended 1 tick before spawnTick → gap < interval_min)
         $lastEnd = $spawnTick - 1; // gap = 1 tick, but interval_min = 10
         DB::table('merchant_visits')->insert([
-            'colony_id'   => self::COLONY_ID,
-            'tick_start'  => $lastEnd - 1,
-            'tick_end'    => $lastEnd,
+            'colony_id' => self::COLONY_ID,
+            'tick_start' => $lastEnd - 1,
+            'tick_end' => $lastEnd,
             'was_visited' => true,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         Artisan::call('game:tick', ['--tick' => $spawnTick]);
@@ -328,22 +335,22 @@ class GameTickMerchantTest extends TestCase
 
         // Insert a synthetic NPC colony (user_id=NULL) into the test system
         $npcColonyId = DB::table('glx_colonies')->insertGetId([
-            'name'             => 'NPC Colony Test',
+            'name' => 'NPC Colony Test',
             'system_object_id' => 1,
-            'spot'             => 99,
-            'user_id'          => null,
-            'since_tick'       => 0,
-            'is_primary'       => 0,
+            'spot' => 99,
+            'user_id' => null,
+            'since_tick' => 0,
+            'is_primary' => 0,
         ]);
 
         // Enable bar on the NPC colony so it would be eligible if not skipped
         DB::table('colony_buildings')->insert([
-            'colony_id'     => $npcColonyId,
-            'building_id'   => self::BAR_ID,
-            'instance_id'   => 1,
-            'level'         => 1,
+            'colony_id' => $npcColonyId,
+            'building_id' => self::BAR_ID,
+            'instance_id' => 1,
+            'level' => 1,
             'status_points' => 20,
-            'ap_spend'      => 0,
+            'ap_spend' => 0,
         ]);
 
         // Enable bar on colony 1 to ensure at least one player colony can spawn

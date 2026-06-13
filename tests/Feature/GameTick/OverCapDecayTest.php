@@ -125,7 +125,7 @@ class OverCapDecayTest extends TestCase
 
         $ids = $svc->getOverCapColonyIds();
 
-        $this->assertContains(1, $ids,    'Colony 1 must be in over-cap list');
+        $this->assertContains(1, $ids, 'Colony 1 must be in over-cap list');
         $this->assertNotContains(2, $ids, 'Colony 2 must not be in over-cap list');
     }
 

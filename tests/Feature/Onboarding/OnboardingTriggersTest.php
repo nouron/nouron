@@ -4,6 +4,7 @@ namespace Tests\Feature\Onboarding;
 
 use App\Models\ColonyLog;
 use App\Services\OnboardingTriggerService;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -41,8 +42,10 @@ class OnboardingTriggersTest extends TestCase
     private OnboardingTriggerService $triggerService;
 
     /** Isolated user / colony IDs that don't collide with testdata fixtures. */
-    private int $userId   = 8001;
+    private int $userId = 8001;
+
     private int $colonyId = 8001;
+
     private int $runId;
 
     /** system_object_id 3 is free in testdata (not used by colonies 1 or 2). */
@@ -57,64 +60,64 @@ class OnboardingTriggersTest extends TestCase
 
         // Pin the tick to a known value so trust_events rows can be inserted at
         // the correct tick number before calling game:tick.
-        $this->app->make(\App\Services\TickService::class)->setTickCount(500);
+        $this->app->make(TickService::class)->setTickCount(500);
 
         // Create a minimal user and colony pair for isolated trigger testing.
         DB::table('user')->insertOrIgnore([
-            'user_id'        => $this->userId,
-            'username'       => 'TriggerTestUser',
-            'display_name'   => 'Trigger Test User',
-            'role'           => 'player',
-            'password'       => bcrypt('pw'),
-            'email'          => 'trigger@test.local',
+            'user_id' => $this->userId,
+            'username' => 'TriggerTestUser',
+            'display_name' => 'Trigger Test User',
+            'role' => 'player',
+            'password' => bcrypt('pw'),
+            'email' => 'trigger@test.local',
             'activation_key' => 'triggerkey',
-            'faction_id'     => 7,
+            'faction_id' => 7,
         ]);
 
         // Use system_object_id 3 (exists in testdata, no colony assigned to it).
         DB::table('glx_colonies')->insertOrIgnore([
-            'id'               => $this->colonyId,
-            'name'             => 'TriggerTestColony',
+            'id' => $this->colonyId,
+            'name' => 'TriggerTestColony',
             'system_object_id' => $this->systemObjectId,
-            'spot'             => 5,
-            'user_id'          => $this->userId,
-            'since_tick'       => 1,
-            'is_primary'       => 1,
+            'spot' => 5,
+            'user_id' => $this->userId,
+            'since_tick' => 1,
+            'is_primary' => 1,
         ]);
 
         DB::table('user_resources')->insertOrIgnore([
             'user_id' => $this->userId,
             'credits' => 3000,
-            'supply'  => 10,
+            'supply' => 10,
         ]);
 
         // Trust resource (resource_id = 12) starts at 0.
         DB::table('colony_resources')->insertOrIgnore([
-            'colony_id'   => $this->colonyId,
+            'colony_id' => $this->colonyId,
             'resource_id' => 12,
-            'amount'      => 0,
+            'amount' => 0,
         ]);
 
         // CommandCenter at level 1 (required for supply calculation and general sanity).
         // building_id 25 = commandCenter, max_status_points = 20, decay_rate = 0.33
         DB::table('colony_buildings')->insertOrIgnore([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 25,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 18, // 90 % — well above 80 %, will not trigger onboarding_decay
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 25,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 18, // 90 % — well above 80 %, will not trigger onboarding_decay
+            'ap_spend' => 0,
         ]);
 
         // Run for the test colony — current_tick=500 matches the pinned TickService value.
         // game:tick resolves runs by ID to avoid picking up Bart's seeded run.
         $this->runId = DB::table('runs')->insertGetId([
-            'user_id'      => $this->userId,
-            'colony_id'    => $this->colonyId,
+            'user_id' => $this->userId,
+            'colony_id' => $this->colonyId,
             'current_tick' => 500,
-            'status'       => 'active',
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
@@ -134,12 +137,12 @@ class OnboardingTriggersTest extends TestCase
     {
         // Place a housingComplex (building_id 28) at the edge of the 80 % threshold.
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 28,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 16.1, // just above 80 % of 20 → will cross below after one tick
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 28,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 16.1, // just above 80 % of 20 → will cross below after one tick
+            'ap_spend' => 0,
         ]);
 
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_decay'));
@@ -174,12 +177,12 @@ class OnboardingTriggersTest extends TestCase
         $this->triggerService->markFired($this->userId, 'onboarding_decay');
 
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 28,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 16.1,
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 28,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 16.1,
+            'ap_spend' => 0,
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -204,12 +207,12 @@ class OnboardingTriggersTest extends TestCase
         // MasterDataSeeder sets building 28 (housingComplex) decay_rate = 0.13.
         // Starting at 0.1 ensures newStatus = 0.1 - 0.13 = -0.03 ≤ 0 → level-down.
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 28,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 0.1,
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 28,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 0.1,
+            'ap_spend' => 0,
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -232,12 +235,12 @@ class OnboardingTriggersTest extends TestCase
     {
         // SP = 20 (100 %). After one tick with decay 0.13 → 19.87 — still > 16.
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 28,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 20,
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 28,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 20,
+            'ap_spend' => 0,
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -272,12 +275,12 @@ class OnboardingTriggersTest extends TestCase
 
         // Hangar: supply_cost = 12 per level (from testdata buildings table).
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 44,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 20,
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 44,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 20,
+            'ap_spend' => 0,
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -304,20 +307,20 @@ class OnboardingTriggersTest extends TestCase
 
         // Saturate supply again.
         DB::table('colony_buildings')->insert([
-            'colony_id'    => $this->colonyId,
-            'building_id'  => 44,
-            'instance_id'  => 1,
-            'level'        => 1,
-            'status_points'=> 20,
-            'ap_spend'     => 0,
+            'colony_id' => $this->colonyId,
+            'building_id' => 44,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 20,
+            'ap_spend' => 0,
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
         // Verify the fired_triggers JSON contains supply_cap_full exactly once.
-        $raw     = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
+        $raw = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
         $decoded = json_decode($raw, true);
-        $count   = array_count_values($decoded)['supply_cap_full'] ?? 0;
+        $count = array_count_values($decoded)['supply_cap_full'] ?? 0;
 
         $this->assertEquals(1, $count, 'supply_cap_full must appear exactly once in fired_triggers even after a second tick');
     }
@@ -358,8 +361,8 @@ class OnboardingTriggersTest extends TestCase
 
         // Insert a negative moral event at the pinned tick so TrustService produces -5.
         DB::table('trust_events')->insert([
-            'colony_id'  => $this->colonyId,
-            'tick'       => 500, // matches the tick pinned in setUp
+            'colony_id' => $this->colonyId,
+            'tick' => 500, // matches the tick pinned in setUp
             'event_type' => 'encounter_lost',
         ]);
 
@@ -400,8 +403,8 @@ class OnboardingTriggersTest extends TestCase
 
         // Force moral to go negative via encounter_lost event.
         DB::table('trust_events')->insert([
-            'colony_id'  => $this->colonyId,
-            'tick'       => 500,
+            'colony_id' => $this->colonyId,
+            'tick' => 500,
             'event_type' => 'encounter_lost',
         ]);
 
@@ -432,8 +435,8 @@ class OnboardingTriggersTest extends TestCase
 
         // Also insert a moral event so the result stays negative after recalculation.
         DB::table('trust_events')->insert([
-            'colony_id'  => $this->colonyId,
-            'tick'       => 500,
+            'colony_id' => $this->colonyId,
+            'tick' => 500,
             'event_type' => 'encounter_lost',
         ]);
 
@@ -461,25 +464,25 @@ class OnboardingTriggersTest extends TestCase
         // ($colony->user_id ?? null) returns 0 (truthy-ish), not null.
         // We create a truly NPC colony with user_id = null.
         DB::table('glx_colonies')->insert([
-            'id'               => 9999,
-            'name'             => 'NpcColony',
+            'id' => 9999,
+            'name' => 'NpcColony',
             'system_object_id' => 4,  // asteroid object — not used by any colony
-            'spot'             => 1,
-            'user_id'          => null,
-            'since_tick'       => 1,
-            'is_primary'       => 1,
+            'spot' => 1,
+            'user_id' => null,
+            'since_tick' => 1,
+            'is_primary' => 1,
         ]);
 
         DB::table('colony_resources')->insertOrIgnore([
-            'colony_id'   => 9999,
+            'colony_id' => 9999,
             'resource_id' => 12,
-            'amount'      => 0,
+            'amount' => 0,
         ]);
 
         // Moral event for the NPC colony so trust would go negative.
         DB::table('trust_events')->insert([
-            'colony_id'  => 9999,
-            'tick'       => 500,
+            'colony_id' => 9999,
+            'tick' => 500,
             'event_type' => 'encounter_lost',
         ]);
 

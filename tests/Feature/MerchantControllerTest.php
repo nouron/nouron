@@ -35,7 +35,8 @@ class MerchantControllerTest extends TestCase
 
     // ── Fixture constants ─────────────────────────────────────────────────────
 
-    private const USER_ID   = 3;   // Bart
+    private const USER_ID = 3;   // Bart
+
     private const COLONY_ID = 1;   // Springfield (user_id=3)
 
     // ── Setup ─────────────────────────────────────────────────────────────────
@@ -48,12 +49,12 @@ class MerchantControllerTest extends TestCase
         config(['game.merchant' => [
             'first_appearance_min' => 15,
             'first_appearance_max' => 20,
-            'interval_min'         => 10,
-            'interval_max'         => 15,
-            'duration_ticks'       => 2,
-            'items_count'          => 3,
-            'items'                => [
-                'repair_kit'  => ['label' => 'Reparatur-Kit',   'cost' => 100, 'sp_amount'    => 30],
+            'interval_min' => 10,
+            'interval_max' => 15,
+            'duration_ticks' => 2,
+            'items_count' => 3,
+            'items' => [
+                'repair_kit' => ['label' => 'Reparatur-Kit',   'cost' => 100, 'sp_amount' => 30],
                 'trust_boost' => ['label' => 'Vertrauensschub', 'cost' => 150, 'trust_amount' => 15],
                 'information' => ['label' => 'Systemkarte',     'cost' => 200],
             ],
@@ -75,26 +76,26 @@ class MerchantControllerTest extends TestCase
     private function insertActiveVisit(int $tickStart = 20, int $tickEnd = 21): int
     {
         return DB::table('merchant_visits')->insertGetId([
-            'colony_id'   => self::COLONY_ID,
-            'tick_start'  => $tickStart,
-            'tick_end'    => $tickEnd,
+            'colony_id' => self::COLONY_ID,
+            'tick_start' => $tickStart,
+            'tick_end' => $tickEnd,
             'was_visited' => false,
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
     }
 
     private function insertItem(int $visitId, array $overrides = []): int
     {
         $defaults = [
-            'visit_id'     => $visitId,
-            'item_type'    => 'trust_boost',
-            'label'        => 'Vertrauensschub',
+            'visit_id' => $visitId,
+            'item_type' => 'trust_boost',
+            'label' => 'Vertrauensschub',
             'cost_credits' => 150,
-            'payload'      => json_encode(['trust_amount' => 15]),
-            'sold'         => false,
-            'created_at'   => now(),
-            'updated_at'   => now(),
+            'payload' => json_encode(['trust_amount' => 15]),
+            'sold' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
         return DB::table('merchant_items')->insertGetId(array_merge($defaults, $overrides));
@@ -139,7 +140,7 @@ class MerchantControllerTest extends TestCase
         $this->mockTick(20);
 
         $visitId = $this->insertActiveVisit(20, 21);
-        $itemId  = $this->insertItem($visitId, ['cost_credits' => 150]);
+        $itemId = $this->insertItem($visitId, ['cost_credits' => 150]);
         $this->setCredits(500);
         $this->setColonyResource(12, 50);
 
@@ -155,7 +156,7 @@ class MerchantControllerTest extends TestCase
         $this->mockTick(20);
 
         $visitId = $this->insertActiveVisit(20, 21);
-        $itemId  = $this->insertItem($visitId, ['cost_credits' => 500]);
+        $itemId = $this->insertItem($visitId, ['cost_credits' => 500]);
         $this->setCredits(10); // insufficient
 
         $response = $this->actingAs($this->bart())
@@ -171,7 +172,7 @@ class MerchantControllerTest extends TestCase
         $this->mockTick(20);
 
         $visitId = $this->insertActiveVisit(20, 21);
-        $itemId  = $this->insertItem($visitId, ['sold' => true]);
+        $itemId = $this->insertItem($visitId, ['sold' => true]);
         $this->setCredits(500);
 
         $response = $this->actingAs($this->bart())
@@ -200,7 +201,7 @@ class MerchantControllerTest extends TestCase
         $this->mockTick(30);
 
         $visitId = $this->insertActiveVisit(20, 21);
-        $itemId  = $this->insertItem($visitId);
+        $itemId = $this->insertItem($visitId);
         $this->setCredits(500);
 
         $response = $this->actingAs($this->bart())

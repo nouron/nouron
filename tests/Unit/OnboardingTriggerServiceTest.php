@@ -36,14 +36,14 @@ class OnboardingTriggerServiceTest extends TestCase
 
         // user_preferences.user_id has a FK to user.user_id — insert a minimal row.
         DB::table('user')->insertOrIgnore([
-            'user_id'        => $this->userId,
-            'username'       => 'TriggerUnit',
-            'display_name'   => 'Trigger Unit',
-            'role'           => 'player',
-            'password'       => bcrypt('pw'),
-            'email'          => 'trigger-unit@test.local',
+            'user_id' => $this->userId,
+            'username' => 'TriggerUnit',
+            'display_name' => 'Trigger Unit',
+            'role' => 'player',
+            'password' => bcrypt('pw'),
+            'email' => 'trigger-unit@test.local',
             'activation_key' => 'triggerunitkey',
-            'faction_id'     => 7,
+            'faction_id' => 7,
         ]);
 
         $this->service = $this->app->make(OnboardingTriggerService::class);
@@ -63,7 +63,7 @@ class OnboardingTriggerServiceTest extends TestCase
     public function test_has_fired_returns_false_when_fired_triggers_is_null(): void
     {
         DB::table('user_preferences')->insert([
-            'user_id'        => $this->userId,
+            'user_id' => $this->userId,
             'fired_triggers' => null,
         ]);
 
@@ -76,7 +76,7 @@ class OnboardingTriggerServiceTest extends TestCase
     public function test_has_fired_returns_false_when_key_not_in_array(): void
     {
         DB::table('user_preferences')->insert([
-            'user_id'        => $this->userId,
+            'user_id' => $this->userId,
             'fired_triggers' => json_encode(['supply_cap_full']),
         ]);
 
@@ -89,7 +89,7 @@ class OnboardingTriggerServiceTest extends TestCase
     public function test_has_fired_returns_true_when_key_is_present(): void
     {
         DB::table('user_preferences')->insert([
-            'user_id'        => $this->userId,
+            'user_id' => $this->userId,
             'fired_triggers' => json_encode(['onboarding_decay', 'supply_cap_full']),
         ]);
 
@@ -121,7 +121,7 @@ class OnboardingTriggerServiceTest extends TestCase
         $this->service->markFired($this->userId, 'onboarding_decay');
         $this->service->markFired($this->userId, 'onboarding_decay');
 
-        $raw     = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
+        $raw = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
         $decoded = json_decode($raw, true);
 
         $occurrences = array_count_values($decoded)['onboarding_decay'] ?? 0;
@@ -132,13 +132,13 @@ class OnboardingTriggerServiceTest extends TestCase
     {
         // Pre-load one existing trigger for this user.
         DB::table('user_preferences')->insert([
-            'user_id'        => $this->userId,
+            'user_id' => $this->userId,
             'fired_triggers' => json_encode(['supply_cap_full']),
         ]);
 
         $this->service->markFired($this->userId, 'onboarding_trust');
 
-        $raw     = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
+        $raw = DB::table('user_preferences')->where('user_id', $this->userId)->value('fired_triggers');
         $decoded = json_decode($raw, true);
 
         $this->assertContains('supply_cap_full', $decoded, 'Pre-existing trigger key must be preserved');
@@ -151,7 +151,7 @@ class OnboardingTriggerServiceTest extends TestCase
     public function test_has_fired_with_malformed_json_returns_false(): void
     {
         DB::table('user_preferences')->insert([
-            'user_id'        => $this->userId,
+            'user_id' => $this->userId,
             'fired_triggers' => 'not-valid-json',
         ]);
 
@@ -169,14 +169,14 @@ class OnboardingTriggerServiceTest extends TestCase
         // user_preferences.user_id has a FK to user.user_id — insert minimal user rows.
         foreach ([$userA, $userB] as $uid) {
             DB::table('user')->insertOrIgnore([
-                'user_id'        => $uid,
-                'username'       => "testuser{$uid}",
-                'display_name'   => "Test {$uid}",
-                'role'           => 'player',
-                'password'       => bcrypt('pw'),
-                'email'          => "{$uid}@test.local",
+                'user_id' => $uid,
+                'username' => "testuser{$uid}",
+                'display_name' => "Test {$uid}",
+                'role' => 'player',
+                'password' => bcrypt('pw'),
+                'email' => "{$uid}@test.local",
                 'activation_key' => "key{$uid}",
-                'faction_id'     => 7,
+                'faction_id' => 7,
             ]);
         }
 

@@ -25,9 +25,12 @@ class ColonyServiceTest extends TestCase
 
     private ColonyService $service;
 
-    private int $colonyId  = 1;
-    private int $userId    = 3;   // Bart
-    private int $homerUid  = 0;   // Homer (user_id=0, legacy)
+    private int $colonyId = 1;
+
+    private int $userId = 3;   // Bart
+
+    private int $homerUid = 0;   // Homer (user_id=0, legacy)
+
     private int $systemObjectId = 1;
 
     protected function setUp(): void

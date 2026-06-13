@@ -26,7 +26,7 @@ class JsonController extends BaseController
     {
         $result = $this->resources->getColonyResources(['colony_id' => $id])
             ->keyBy('resource_id')
-            ->map(fn($r) => ['resource_id' => $r->resource_id, 'amount' => $r->amount]);
+            ->map(fn ($r) => ['resource_id' => $r->resource_id, 'amount' => $r->amount]);
 
         return response()->json($result);
     }
@@ -38,6 +38,7 @@ class JsonController extends BaseController
     public function getResources(): JsonResponse
     {
         $result = $this->resources->getResources()->keyBy('id');
+
         return response()->json($result);
     }
 
@@ -60,7 +61,7 @@ class JsonController extends BaseController
         }
 
         return response()->view('resources.resourcebar', [
-            'tick'        => $this->getTick(),
+            'tick' => $this->getTick(),
             'possessions' => $possessions,
         ])->withHeaders(['X-IC-Refresh' => 'false']);
     }

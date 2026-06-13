@@ -46,7 +46,8 @@ class GameTickMoralTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const COLONY_ID    = 1;
+    private const COLONY_ID = 1;
+
     private const MORAL_RES_ID = 12;
 
     protected function setUp(): void
@@ -76,10 +77,10 @@ class GameTickMoralTest extends TestCase
         // Zero all building levels for colony 1 that have trust_per_lv != 0.
         // Each test inserts exactly what it needs.
         $trustBuildingIds = collect(config('buildings', []))
-            ->filter(fn($b) => ($b['trust_per_lv'] ?? 0) != 0)
+            ->filter(fn ($b) => ($b['trust_per_lv'] ?? 0) != 0)
             ->pluck('id')
             ->toArray();
-        if (!empty($trustBuildingIds)) {
+        if (! empty($trustBuildingIds)) {
             DB::table('colony_buildings')
                 ->where('colony_id', self::COLONY_ID)
                 ->whereIn('building_id', $trustBuildingIds)
@@ -108,8 +109,8 @@ class GameTickMoralTest extends TestCase
     private function insertMoralEvent(string $eventType, int $tick): void
     {
         DB::table('trust_events')->insert([
-            'colony_id'  => self::COLONY_ID,
-            'tick'       => $tick,
+            'colony_id' => self::COLONY_ID,
+            'tick' => $tick,
             'event_type' => $eventType,
         ]);
     }
@@ -176,7 +177,7 @@ class GameTickMoralTest extends TestCase
     public function test_building_with_moral_per_lv_contributes_to_moral(): void
     {
         $infirmaryId = 46;
-        $trustPerLv  = (int) (config('buildings.infirmary.trust_per_lv', 3));
+        $trustPerLv = (int) (config('buildings.infirmary.trust_per_lv', 3));
 
         if ($trustPerLv === 0) {
             $this->markTestSkipped('Infirmary has trust_per_lv=0 in config — no contribution to test.');
@@ -234,7 +235,7 @@ class GameTickMoralTest extends TestCase
         // Strategy: use events from all negative-value event types
         // and assert the result is always >= -100.
         $negativeEvents = collect(config('game.trust.events', []))
-            ->filter(fn($v) => $v < 0)
+            ->filter(fn ($v) => $v < 0)
             ->keys();
 
         foreach ($negativeEvents as $eventType) {
@@ -281,7 +282,7 @@ class GameTickMoralTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11330]);
 
-        $trust        = $this->getTrust();
+        $trust = $this->getTrust();
         $singleEffect = (int) config('game.trust.events.encounter_lost', -5);
 
         // Must be exactly -5, not -10 (not stacked)
@@ -301,8 +302,8 @@ class GameTickMoralTest extends TestCase
         // TrustService::fireEvent() guards unknown types — it never inserts.
         // But what if someone directly inserts an unknown type?
         DB::table('trust_events')->insert([
-            'colony_id'  => self::COLONY_ID,
-            'tick'       => 11340,
+            'colony_id' => self::COLONY_ID,
+            'tick' => 11340,
             'event_type' => 'totally_unknown_event_xyz',
         ]);
 

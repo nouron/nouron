@@ -42,7 +42,8 @@ class GameTickSupplyCapTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const USER_ID   = 3;
+    private const USER_ID = 3;
+
     private const COLONY_ID = 1;
 
     protected function setUp(): void
@@ -130,7 +131,7 @@ class GameTickSupplyCapTest extends TestCase
     public function test_knowledge_cap_adds_to_supply(): void
     {
         $knowledgeIds = collect(config('knowledge', []))->pluck('id')->toArray();
-        $capPerLevel  = config('game.supply.knowledge_cap_per_level', []);
+        $capPerLevel = config('game.supply.knowledge_cap_per_level', []);
 
         if (empty($knowledgeIds) || empty($capPerLevel)) {
             $this->markTestSkipped('No knowledge or knowledge_cap_per_level config — cannot test knowledge supply bonus.');

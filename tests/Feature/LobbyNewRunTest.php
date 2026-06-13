@@ -27,7 +27,8 @@ class LobbyNewRunTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected int $userId   = 3;
+    protected int $userId = 3;
+
     protected int $colonyId = 1;
 
     protected function setUp(): void
@@ -59,11 +60,11 @@ class LobbyNewRunTest extends TestCase
     public function test_new_run_redirects_when_active_run_already_exists(): void
     {
         Run::create([
-            'user_id'      => $this->userId,
-            'colony_id'    => $this->colonyId,
+            'user_id' => $this->userId,
+            'colony_id' => $this->colonyId,
             'current_tick' => 5,
-            'status'       => 'active',
-            'phase'        => 1,
+            'status' => 'active',
+            'phase' => 1,
         ]);
 
         $response = $this->actingAs($this->user())->post(route('run.new'));
@@ -144,7 +145,7 @@ class LobbyNewRunTest extends TestCase
     {
         $this->actingAs($this->user())->post(route('run.new'));
 
-        $ccId        = config('buildings.commandCenter.id', 25);
+        $ccId = config('buildings.commandCenter.id', 25);
         $harvesterId = config('buildings.harvester.id', 27);
 
         $cc = DB::table('colony_buildings')
