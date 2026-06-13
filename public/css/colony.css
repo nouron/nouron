@@ -679,13 +679,25 @@ button.btn-sol:hover,
     color: #fff;
     cursor: pointer;
     transition: background 0.15s ease;
+    /* Row layout: label body left, AP-cost chip right */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    text-align: left;
 }
 
 .tile-action-btn:hover:not(:disabled) {
     background: #a93226;
 }
 
-/* Two-line action buttons: bold main label + smaller cost/effect hint */
+/* Label column (single- or two-line: main + cost/effect hint) */
+.tile-action-btn__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
 .tile-action-btn__main {
     display: block;
 }
@@ -697,6 +709,13 @@ button.btn-sol:hover,
     opacity: 0.85;
     margin-top: 0.1rem;
     white-space: nowrap;
+}
+
+/* AP-cost chip inside an action button — mirrors the resource-bar .ap-chip,
+   pinned to the right edge so it never shrinks. */
+.ap-cost-chip {
+    flex-shrink: 0;
+    font-size: 0.7rem;
 }
 
 .tile-action-btn:disabled {

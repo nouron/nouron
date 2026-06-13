@@ -248,6 +248,8 @@ Alle Buttons verwenden system-ui, font-weight 600, font-size 0.9rem, letter-spac
 
 **Grösse:** Standard-Buttons ohne übertriebene Padding-Inflation. Keine XL-Hero-Buttons ausser in explizit dafür vorgesehenen leeren Zuständen.
 
+**AP-Kosten-Chip (verbindlich):** Jeder Aktionsbutton, der Aktionspunkte verbraucht, zeigt die Kosten **vorab** als Chip rechts im Button — optisch identisch zu den AP-Chips der Resource Bar (`.ap-chip` + Variante). Bau-AP → `.ap-chip--build` (grün), Nav-AP → `.ap-chip--nav` (blau). Button-Layout: `display:flex; justify-content:space-between` — Label-Body links (ein- oder zweizeilig: `__main` + optional `__sub`), Chip rechts (`flex-shrink:0`). Partial: `@include('partials.ap-cost-chip', ['amount' => 1, 'type' => 'build'])` (oder `'label' => '1 AP/Feld'` für distanzabhängige Kosten). Gilt screen-übergreifend (Colony, Techtree, Hangar, Cantina, …).
+
 ---
 
 ### 5.6 Resource Pills (res-chip)

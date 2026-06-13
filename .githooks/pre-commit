@@ -57,8 +57,8 @@ fi
 # ── Blade: check only (block, no auto-write) ─────────────────────────────────
 if [ -n "$BLADE_FILES" ]; then
     if ! echo "$BLADE_FILES" | xargs "$PRETTIER" --check --log-level warn; then
-        echo "✗ Blade nicht prettier-konform. Bewusst formatieren mit:" >&2
-        echo "    npx prettier --write <datei.blade.php>" >&2
+        echo "✗ Blade nicht prettier-konform. Bewusst formatieren (Plugin braucht 2 Durchläufe):" >&2
+        echo "    npx prettier --write <datei.blade.php> && npx prettier --write <datei.blade.php>" >&2
         fail=1
     fi
 fi
