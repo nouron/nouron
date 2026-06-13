@@ -6,6 +6,7 @@ return [
     'colony_ready' => 'Kolonie bereit zum Start',
     'start_button' => 'Mission starten',
     'no_run' => 'Kein aktiver Run gefunden. Bitte neu einloggen.',
+    'run_not_started' => 'Dein Run ist noch nicht gestartet — klicke „Mission starten", um loszulegen.',
 
     // New keys for the rewritten lobby view
     'page_title' => 'Mission Control',

@@ -5,6 +5,7 @@ namespace Tests\Feature\Colony;
 use App\Models\User;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
@@ -62,5 +63,19 @@ class ColonyViewTest extends TestCase
         $response->assertOk();
         // AP-cost chips (game-wide convention) sit inside the action buttons.
         $response->assertSee('ap-cost-chip', false);
+    }
+
+    public function test_pending_run_redirects_to_lobby(): void
+    {
+        // A pending run is active but not yet started (started_at = null).
+        DB::table('runs')
+            ->where('user_id', self::BART_USER_ID)
+            ->where('status', 'active')
+            ->update(['started_at' => null]);
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertRedirect(route('lobby'));
     }
 }

@@ -60,7 +60,7 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
 
 // ── Colony ────────────────────────────────────────────────────────────────────
 
-Route::middleware('auth')->prefix('colony')->name('colony.')->group(function () {
+Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->group(function () {
     Route::get('/view', [ColonyController::class, 'hexview'])->name('view');
     Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
 
@@ -104,14 +104,14 @@ Route::middleware('auth')->prefix('resources')->name('resources.')->group(functi
 
 // ── Kolonieprotokoll ──────────────────────────────────────────────────────────
 
-Route::middleware('auth')->prefix('comm-log')->name('comm.')->group(function () {
+Route::middleware(['auth', 'run.started'])->prefix('comm-log')->name('comm.')->group(function () {
     Route::get('/', [CommLogController::class, 'log'])->name('log');
     Route::get('/nexus', [CommLogController::class, 'nexus'])->name('nexus');
 });
 
 // ── Advisors ──────────────────────────────────────────────────────────────────
 
-Route::middleware('auth')->prefix('advisors')->name('advisors.')->group(function () {
+Route::middleware(['auth', 'run.started'])->prefix('advisors')->name('advisors.')->group(function () {
     Route::get('/', [AdvisorController::class, 'index'])->name('index');
     Route::post('/hire', [AdvisorController::class, 'hire'])->name('hire');
     Route::delete('/{id}', [AdvisorController::class, 'fire'])->name('fire')->where('id', '[0-9]+');
@@ -124,11 +124,11 @@ Route::middleware('auth')->get('/sol/remaining-ap', [SolController::class, 'rema
 
 // ── Nexus Database (static reference) ────────────────────────────────────────
 
-Route::middleware('auth')->get('/nexus-db', [NexusDbController::class, 'index'])->name('nexusdb.index');
+Route::middleware(['auth', 'run.started'])->get('/nexus-db', [NexusDbController::class, 'index'])->name('nexusdb.index');
 
 // ── Techtree (Schritt 10) ─────────────────────────────────────────────────────
 
-Route::middleware('auth')->prefix('techtree')->name('techtree.')->group(function () {
+Route::middleware(['auth', 'run.started'])->prefix('techtree')->name('techtree.')->group(function () {
     Route::get('/', [TechtreeController::class, 'index'])->name('index');
     Route::get('/{type}/{id}', [TechtreeController::class, 'technology'])->name('technology');
     // Action route called by techtree.js AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
