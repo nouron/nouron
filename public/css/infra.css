@@ -53,6 +53,11 @@
     border: 1px solid #f1aeb5;
     color: #58151c;
 }
+.infra-alert--info {
+    background: #e7f1fb;
+    border: 1px solid #aacbe9;
+    color: #0c3a5e;
+}
 
 /* ── Auth forms (login / register) ──────────────────────────────────────── */
 .infra-auth-wrap {

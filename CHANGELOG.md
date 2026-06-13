@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- **In-Run-Screens gegen Pending-Runs abgesichert** — neue Middleware `run.started` (`EnsureRunStarted`) leitet auf die Lobby um, wenn kein aktiver Run mit `started_at` existiert (frisch erstellter Run ist `active` aber pending bis „Mission starten"). Behebt die Sackgasse, dass man die Kolonieansicht eines noch nicht gestarteten Runs öffnen konnte — ohne Sol-Button (Run-UI ist auf `started_at` gated). Gilt für colony/techtree/advisors/comm-log/nexus-db (Screens); `sol.next` behält seine eigene 404-Logik. AJAX-Aufrufe erhalten 409 + `redirect`. Info-Alert in der Lobby + `layouts.infra`.
+
 - **AP-Kosten-Chips an Aktionsbuttons** — jeder AP-verbrauchende Button zeigt die Kosten vorab als Chip (optisch wie die AP-Chips der Resource Bar: Bau=grün, Nav=blau). Wiederverwendbares Partial `partials/ap-cost-chip.blade.php` (`amount`+`type` oder `label`). Colony-Buttons umgesetzt: Erkunden (1 Nav), Sondieren (2 Nav), Reparieren/Ausbauen/Bauen (1 Bau), Verlegen (1 AP/Feld, distanzabhängig). Button-Layout auf Flex-Row (Label links, Chip rechts) umgestellt; redundante „1 AP"-Sub-Labels entfernt. Konvention in `docs/design-guide.md` §5.5 verankert (gilt screen-übergreifend). Render-Test ergänzt.
 
 - **Regressionstests Colony-Sidebar** — `BuildingInvestTest` (Levelup: AP-Fortschritt, Level-Schwelle setzt `ap_spend`→0 + Zustand→max, max_level-Block, Protokoll-Event) und `ColonyViewTest` (Render-Smoke: `colony.view` liefert 200 mit Tab-Markup + Repair/Invest-Wiring). Schließt die Coverage-Lücke für den Levelup-Endpoint; verifiziert die Logik hinter den manuellen Repair-/Levelup-Checks. 6 Tests, gesamt 647 grün.
