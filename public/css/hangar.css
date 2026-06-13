@@ -370,6 +370,11 @@
     font-weight: 600;
     transition: background 0.15s;
     white-space: nowrap;
+    /* hold an optional AP-cost chip next to the label */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
 }
 
 .btn-hangar-action:hover:not(:disabled) {

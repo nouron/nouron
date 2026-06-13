@@ -680,7 +680,7 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 | Entität | Mechanismus | Auslöser | Gegenmaßnahme |
 |---------|-------------|----------|---------------|
 | Gebäude | Passiver Decay (`decay_rate` SP/Sol) | Zeitablauf | Repair-AP investieren |
-| Schiffe | Verschleiß (`wear_per_order` aus config/ships.php) | Aktiver Einsatz (Orders) | Repair-Order (Construction-AP + Credits) |
+| Schiffe | Verschleiß (`wear_per_order` aus config/ships.php) | Aktiver Einsatz (Orders) | Reparatur (1 Construction-AP/Klick) |
 | Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
 | Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
 
@@ -717,7 +717,7 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 | Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
 | Gebäude-Decay | Stand von Gebäuden | täglich | Reparatur-AP investieren |
-| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Order | Repair-Order (Construction-AP + Credits) |
+| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Order | Reparatur (1 Construction-AP/Klick) |
 | Berater-Burnout | AP-Kapazität bei Überbelastung | probabilistisch | Erholungsphase abwarten |
 
 Diese drei Mechanismen sind bewusst unabhängig voneinander.
@@ -824,7 +824,7 @@ Schiffe verfallen **nicht durch Zeitablauf**, sondern durch aktiven Einsatz. Jed
 fleet_ships.status_points -= wear_per_order (je Schiffstyp aus config/ships.php)
 ```
 
-Wenn `status_points ≤ 0`, wird das Schiff **deaktiviert** (nicht zerstört). Es bleibt in der Datenbank, ist aber nicht einsatzbereit. Reaktivierung erfordert eine Reparatur-Order (verbraucht Construction-AP, kostet Credits).
+Wenn `status_points ≤ 0`, wird das Schiff **deaktiviert** (nicht zerstört). Es bleibt in der Datenbank, ist aber nicht einsatzbereit. Reaktivierung erfordert Reparatur (Fixkosten: 1 Construction-AP pro Klick, siehe unten).
 
 | Schiffstyp | wear_per_order (Richtwert) | Begründung |
 |------------|---------------------------|------------|
@@ -836,7 +836,9 @@ Konkrete Werte stehen in `config/ships.php` je Schiffstyp. Nach erstem Playtest 
 
 **Kein passiver Decay:** Ein Schiff, das im Hangar liegt und keine Orders erhält, verliert keine `status_points`. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
 
-**Reparatur:** Repair-Order auf die Flotte. Kosten: Construction-AP + Credits (aus `config/ships.php → repair_cost_per_point`). Reparatur gibt `status_points` zurück bis auf `max_status_points`.
+**Reparatur:** Fixkosten pro Klick — **1 Construction-AP → +2 `status_points`** (`REPAIR_SP_PER_AP`), gedeckelt auf `max_status_points` (20). Gleiche Interaktion wie Gebäude-Reparatur (1 Klick = 1 AP), damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Kein spielergewählter AP-Betrag mehr.
+
+> **Offen:** Zusätzliche Credit-Kosten pro Reparatur (`config/ships.php → repair_cost_per_point`) sind im Design vorgesehen, aber noch nicht implementiert — eigener Balance-Task.
 
 > **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Aggressive Flottennutzung ist teuer in Construction-AP, die sonst in Gebäude fließen könnten.
 

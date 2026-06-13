@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- **Schiffsreparatur auf Fixkosten vereinheitlicht** — Hangar-Reparatur kostet jetzt fix 1 Bau-AP pro Klick (→ +2 Statuspunkte), statt einer spielergewählten AP-Menge (Range 1–10). Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt (game-designer-Empfehlung: diskrete Wirkung → fix, kontinuierlicher Output → dosierbar). Repair-Button bekommt den AP-Kosten-Chip; AP-Eingabe-Modal entfernt. Controller zieht echtes 1 Bau-AP ab (vorher kein AP-Lock — GDD-Lücke geschlossen). GDD §8 + design-guide §5.5 aktualisiert. Tests angepasst (Service/Controller, obsolete AP-Mengen-Tests entfernt). Dispatch/Nexus-Anfrage bleiben dosierbar (kontinuierlicher Bonus).
+
 - **AP-Kosten-Chips an Aktionsbuttons** — jeder AP-verbrauchende Button zeigt die Kosten vorab als Chip (optisch wie die AP-Chips der Resource Bar: Bau=grün, Nav=blau). Wiederverwendbares Partial `partials/ap-cost-chip.blade.php` (`amount`+`type` oder `label`). Colony-Buttons umgesetzt: Erkunden (1 Nav), Sondieren (2 Nav), Reparieren/Ausbauen/Bauen (1 Bau), Verlegen (1 AP/Feld, distanzabhängig). Button-Layout auf Flex-Row (Label links, Chip rechts) umgestellt; redundante „1 AP"-Sub-Labels entfernt. Konvention in `docs/design-guide.md` §5.5 verankert (gilt screen-übergreifend). Render-Test ergänzt.
 
 - **Regressionstests Colony-Sidebar** — `BuildingInvestTest` (Levelup: AP-Fortschritt, Level-Schwelle setzt `ap_spend`→0 + Zustand→max, max_level-Block, Protokoll-Event) und `ColonyViewTest` (Render-Smoke: `colony.view` liefert 200 mit Tab-Markup + Repair/Invest-Wiring). Schließt die Coverage-Lücke für den Levelup-Endpoint; verifiziert die Logik hinter den manuellen Repair-/Levelup-Checks. 6 Tests, gesamt 647 grün.
