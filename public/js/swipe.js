@@ -23,7 +23,7 @@ function swipeNav({ prev = null, next = null } = {}) {
             if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
             if (dx < 0 && next) window.location.href = next;
             if (dx > 0 && prev) window.location.href = prev;
-        }
+        },
     };
 }
 
@@ -51,8 +51,14 @@ function swipeCarousel(count = 1, initial = 0) {
             if (dx > 0) this.prev();
         },
 
-        next() { if (this.current < this.count - 1) this.current++; },
-        prev() { if (this.current > 0) this.current--; },
-        goTo(i) { this.current = Math.max(0, Math.min(this.count - 1, i)); }
+        next() {
+            if (this.current < this.count - 1) this.current++;
+        },
+        prev() {
+            if (this.current > 0) this.current--;
+        },
+        goTo(i) {
+            this.current = Math.max(0, Math.min(this.count - 1, i));
+        },
     };
 }

@@ -3,10 +3,10 @@
 
 :root {
     --color-anthracite: #333;
-    --color-accent:     #c0392b;
-    --color-bg:         #fff;
-    --color-surface:    #f5f5f5;
-    --color-border:     #ddd;
+    --color-accent: #c0392b;
+    --color-bg: #fff;
+    --color-surface: #f5f5f5;
+    --color-border: #ddd;
 }
 
 /* ── PicoCSS resets ───────────────────────────────────────────────────────── */
@@ -154,7 +154,7 @@ body {
 
 .colony-header nav > ul > li > a:hover {
     color: var(--color-text-primary, #1a1a1e);
-    background: rgba(0,0,0,0.04);
+    background: rgba(0, 0, 0, 0.04);
     border-radius: 6px;
     text-decoration: none;
 }
@@ -187,7 +187,7 @@ nav a[aria-current] {
 }
 
 .colony-header nav a.active {
-    background: rgba(140,32,48,0.06);
+    background: rgba(140, 32, 48, 0.06);
     border-radius: 6px;
     border-bottom: none;
 }
@@ -230,7 +230,7 @@ nav a[aria-current] {
     background: #ffffff !important;
     border: 1px solid var(--color-border, #e8e8ec) !important;
     border-radius: 4px !important;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.10) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
     padding: 0.25rem 0 !important;
     margin: 0 !important;
     list-style: none !important;
@@ -271,7 +271,7 @@ nav a[aria-current] {
 .colony-resbar {
     border-bottom: 1px solid var(--color-border, #e8e8ec);
     padding: 5px 12px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 /* ── Sol-Button — override PicoCSS primary button defaults ──────────────── */
@@ -334,7 +334,7 @@ button.btn-sol:hover,
     display: grid;
     grid-template-columns: 1fr 320px;
     align-items: start;
-    min-height: calc(100vh - 84px);  /* fallback for browsers without dvh */
+    min-height: calc(100vh - 84px); /* fallback for browsers without dvh */
     min-height: calc(100dvh - 84px); /* dynamic viewport — mobile address bar safe */
 }
 
@@ -452,9 +452,13 @@ button.btn-sol:hover,
     font-weight: 600;
     color: var(--color-text-secondary, #6b6b7a);
     cursor: pointer;
-    transition: color 0.15s ease, border-color 0.15s ease;
+    transition:
+        color 0.15s ease,
+        border-color 0.15s ease;
 }
-.tile-tab:hover { color: var(--color-anthracite, #333); }
+.tile-tab:hover {
+    color: var(--color-anthracite, #333);
+}
 .tile-tab--active {
     color: var(--color-accent, #c0392b);
     border-bottom-color: var(--color-accent, #c0392b);
@@ -476,7 +480,7 @@ button.btn-sol:hover,
 }
 
 .tile-panel-empty::before {
-    content: "⬡";          /* hollow hex character as a lightweight icon */
+    content: "⬡"; /* hollow hex character as a lightweight icon */
     font-size: 2.5rem;
     line-height: 1;
     color: #d0d4db;
@@ -505,10 +509,24 @@ button.btn-sol:hover,
     letter-spacing: 0.04em;
 }
 
-.chip--locked   { background: #eee;    color: #999; }
-.chip--fog      { background: #f0f0f0; color: #888; }
-.chip--explored { background: #e8f4e8; color: #2e7d32; border: 1px solid #a5d6a7; }
-.chip--scanned  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+.chip--locked {
+    background: #eee;
+    color: #999;
+}
+.chip--fog {
+    background: #f0f0f0;
+    color: #888;
+}
+.chip--explored {
+    background: #e8f4e8;
+    color: #2e7d32;
+    border: 1px solid #a5d6a7;
+}
+.chip--scanned {
+    background: #e3f2fd;
+    color: #1565c0;
+    border: 1px solid #90caf9;
+}
 
 /* ── Sidebar tile heading + description list ─────────────────────────────── */
 
@@ -568,9 +586,15 @@ button.btn-sol:hover,
     transition: width 0.3s ease;
 }
 
-.tile-bar--status   { background: #e74c3c; }
-.tile-bar--ap       { background: #27ae60; }
-.tile-bar--resource { background: #2196f3; }
+.tile-bar--status {
+    background: #e74c3c;
+}
+.tile-bar--ap {
+    background: #27ae60;
+}
+.tile-bar--resource {
+    background: #2196f3;
+}
 
 /* ── Shared building detail partial (.building-detail-*) ─────────────────── */
 
@@ -776,7 +800,9 @@ button.btn-sol:hover,
     border: 1px solid var(--color-border);
     background: #fafafa;
     cursor: pointer;
-    transition: background 0.1s ease, border-color 0.1s ease;
+    transition:
+        background 0.1s ease,
+        border-color 0.1s ease;
 }
 
 .building-list-item:hover {
@@ -826,15 +852,25 @@ button.btn-sol:hover,
 }
 
 @keyframes chip-signal-pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.5; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* ── SVG signal pulse (class applied to SVG circle element) ──────────────── */
 
 @keyframes signal-pulse {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.25; }
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.25;
+    }
 }
 
 .signal-pulse {
@@ -849,8 +885,15 @@ button.btn-sol:hover,
  * or the misplaced Harvester tile (rank 3).
  */
 @keyframes onboarding-ring-pulse {
-    0%, 100% { opacity: 0.9; stroke-width: 2.5px; }
-    50%       { opacity: 0.35; stroke-width: 1.5px; }
+    0%,
+    100% {
+        opacity: 0.9;
+        stroke-width: 2.5px;
+    }
+    50% {
+        opacity: 0.35;
+        stroke-width: 1.5px;
+    }
 }
 
 .onboarding-pulse {
@@ -859,9 +902,18 @@ button.btn-sol:hover,
 
 /* ── Harvester move animation (SVG circle, slides old → new tile) ─────────── */
 @keyframes hv-move {
-    0%   { transform: translate(0, 0);                       opacity: 1;   }
-    70%  { transform: translate(var(--dx), var(--dy));       opacity: 0.8; }
-    100% { transform: translate(var(--dx), var(--dy));       opacity: 0;   }
+    0% {
+        transform: translate(0, 0);
+        opacity: 1;
+    }
+    70% {
+        transform: translate(var(--dx), var(--dy));
+        opacity: 0.8;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy));
+        opacity: 0;
+    }
 }
 .hv-move-dot {
     animation: hv-move 380ms ease-out forwards;
@@ -1029,7 +1081,7 @@ dialog[x-ref="discoveryDialog"] {
     pointer-events: none;
     z-index: 600;
     white-space: nowrap;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
 }
 
 .levelup-icon {
@@ -1038,12 +1090,32 @@ dialog[x-ref="discoveryDialog"] {
 }
 
 /* Alpine transition classes */
-.levelup-enter            { transition: opacity 0.35s ease, transform 0.35s ease; }
-.levelup-enter-start      { opacity: 0; transform: translateX(-50%) translateY(30px); }
-.levelup-enter-end        { opacity: 1; transform: translateX(-50%) translateY(0); }
-.levelup-leave            { transition: opacity 0.5s ease, transform 0.5s ease; }
-.levelup-leave-start      { opacity: 1; transform: translateX(-50%) translateY(0); }
-.levelup-leave-end        { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+.levelup-enter {
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+}
+.levelup-enter-start {
+    opacity: 0;
+    transform: translateX(-50%) translateY(30px);
+}
+.levelup-enter-end {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.levelup-leave {
+    transition:
+        opacity 0.5s ease,
+        transform 0.5s ease;
+}
+.levelup-leave-start {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+.levelup-leave-end {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+}
 
 /* ── Merchant notification chip (hexview canvas header) ─────────────────── */
 
@@ -1154,22 +1226,37 @@ dialog[x-ref="discoveryDialog"] {
     color: #fff;
 }
 
-.merchant-toast--info  { background: #14532d; }
-.merchant-toast--error { background: #7f1d1d; }
+.merchant-toast--info {
+    background: #14532d;
+}
+.merchant-toast--error {
+    background: #7f1d1d;
+}
 
 /* ── Desktop / Mobile nav toggle ────────────────────────────────────────── */
 
 /* Specificity must beat `.colony-header nav > ul > li { display: flex }` */
 .colony-header nav > ul > li.nav-mobile,
-.nav-mobile { display: none; }
+.nav-mobile {
+    display: none;
+}
 
 @media (max-width: 599px) {
-    .nav-desktop { display: none !important; }
-    .nav-mobile  { display: flex !important; align-items: center; }
+    .nav-desktop {
+        display: none !important;
+    }
+    .nav-mobile {
+        display: flex !important;
+        align-items: center;
+    }
 
     /* Sol-Button on mobile: hidden by default, visible only on colony.view */
-    .sol-btn-wrap { display: none; }
-    body.page-colony .sol-btn-wrap { display: flex; }
+    .sol-btn-wrap {
+        display: none;
+    }
+    body.page-colony .sol-btn-wrap {
+        display: flex;
+    }
 }
 
 /* Hamburger toggle button */
@@ -1188,7 +1275,9 @@ dialog[x-ref="discoveryDialog"] {
     align-items: center;
     line-height: 1;
 }
-.nav-burger:hover { color: var(--color-text-primary, #1a1a1e) !important; }
+.nav-burger:hover {
+    color: var(--color-text-primary, #1a1a1e) !important;
+}
 
 /* Flyout menu panel */
 .nav-flyout {
@@ -1200,7 +1289,7 @@ dialog[x-ref="discoveryDialog"] {
     background: #ffffff;
     border: 1px solid var(--color-border, #e8e8ec);
     border-radius: 6px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     z-index: 500;
     padding: 0.25rem 0;
     display: flex;
@@ -1225,8 +1314,15 @@ dialog[x-ref="discoveryDialog"] {
     white-space: nowrap;
     box-sizing: border-box;
 }
-.nav-flyout-item:hover { background: var(--color-surface, #f7f7f5); text-decoration: none; color: var(--color-text-primary, #1a1a1e); }
-.nav-flyout-item.active { color: var(--color-accent, #8c2030); font-weight: 600; }
+.nav-flyout-item:hover {
+    background: var(--color-surface, #f7f7f5);
+    text-decoration: none;
+    color: var(--color-text-primary, #1a1a1e);
+}
+.nav-flyout-item.active {
+    color: var(--color-accent, #8c2030);
+    font-weight: 600;
+}
 
 /* Locked entries in the flyout: dimmed, icon top-aligned next to the
    two-line label (name + locked reason), reason text wraps */
@@ -1236,7 +1332,9 @@ dialog[x-ref="discoveryDialog"] {
     align-items: flex-start;
     white-space: normal;
 }
-.nav-flyout-item--btn { /* no extra overrides needed — font-family set above */ }
+.nav-flyout-item--btn {
+    /* no extra overrides needed — font-family set above */
+}
 
 /* Unread notification badge on nav items (e.g. Nexus-Funk) */
 .nav-badge {
@@ -1307,11 +1405,14 @@ dialog[x-ref="discoveryDialog"] {
     }
 
     /* Hide section header — action strip + tile heading give enough context */
-    .tile-panel-header--hideable { display: none; }
+    .tile-panel-header--hideable {
+        display: none;
+    }
 
     /* Hide coordinate row in tile info on mobile */
-    .tile-dl-coords { display: none; }
-
+    .tile-dl-coords {
+        display: none;
+    }
 }
 
 /* ── Sol Button Overlay & Dialog (colony layout) ───────────────────────── */
@@ -1325,11 +1426,13 @@ dialog[x-ref="discoveryDialog"] {
     align-items: center;
     justify-content: center;
 }
-.sol-overlay--loading { background: rgba(26, 26, 30, 0.75); }
+.sol-overlay--loading {
+    background: rgba(26, 26, 30, 0.75);
+}
 .sol-dialog {
     background: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
     padding: 2rem 2.5rem;
     max-width: 420px;
     width: 90%;
@@ -1369,13 +1472,17 @@ dialog[x-ref="discoveryDialog"] {
     border-color: var(--color-border, #e8e8ec);
     color: var(--color-text-secondary, #6b6b7a);
 }
-.sol-btn--ghost:hover { opacity: 0.75; }
+.sol-btn--ghost:hover {
+    opacity: 0.75;
+}
 .sol-btn--primary {
     background: var(--color-accent, #8c2030);
     border-color: var(--color-accent, #8c2030);
     color: #ffffff;
 }
-.sol-btn--primary:hover { opacity: 0.88; }
+.sol-btn--primary:hover {
+    opacity: 0.88;
+}
 .sol-loading {
     display: flex;
     flex-direction: column;
@@ -1398,7 +1505,9 @@ dialog[x-ref="discoveryDialog"] {
     letter-spacing: 0.05em;
 }
 @keyframes sol-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .bar-page {
@@ -1432,7 +1541,7 @@ dialog[x-ref="discoveryDialog"] {
     left: 0;
     height: 100%;
     width: 100%;
-    background-image: url('../img/cantina/cantina-interior.webp');
+    background-image: url("../img/cantina/cantina-interior.webp");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -1443,7 +1552,7 @@ dialog[x-ref="discoveryDialog"] {
 /* On mobile, full-bleed viewport — breaks out of any parent padding */
 @media (max-width: 767px) {
     .cantina-viewport {
-        height: calc(100vh - 105px);  /* fallback for browsers without dvh */
+        height: calc(100vh - 105px); /* fallback for browsers without dvh */
         height: calc(100dvh - 105px);
         aspect-ratio: unset;
         border-radius: 0;
@@ -1484,7 +1593,9 @@ dialog[x-ref="discoveryDialog"] {
     align-items: center;
     justify-content: center;
     color: var(--color-accent, #8c2030);
-    transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background 0.2s;
+    transition:
+        transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+        background 0.2s;
     box-shadow: 0 0 12px rgba(140, 32, 48, 0.2);
     z-index: 10;
 }
@@ -1535,8 +1646,14 @@ dialog[x-ref="discoveryDialog"] {
 }
 
 @keyframes hotspot-pulse-anim {
-    0% { transform: scale(1); opacity: 0.95; }
-    100% { transform: scale(1.6); opacity: 0; }
+    0% {
+        transform: scale(1);
+        opacity: 0.95;
+    }
+    100% {
+        transform: scale(1.6);
+        opacity: 0;
+    }
 }
 
 /* Hotspot names / labels */
@@ -1551,7 +1668,7 @@ dialog[x-ref="discoveryDialog"] {
     border-radius: 4px;
     white-space: nowrap;
     pointer-events: none;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 /* ── Modal Drawer (Responsive) ─────────────────────────────────────────── */
@@ -1564,7 +1681,9 @@ dialog[x-ref="discoveryDialog"] {
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--pico-muted-border-color, #e8e8ec);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+    transition:
+        transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+        opacity 0.3s ease;
 }
 
 /* Mobile drawer (slides up from bottom) */
@@ -1630,7 +1749,7 @@ dialog[x-ref="discoveryDialog"] {
     border-radius: 6px;
     border: 1px solid var(--pico-muted-border-color);
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .guest-avatar {
@@ -1650,4 +1769,3 @@ dialog[x-ref="discoveryDialog"] {
     object-fit: cover;
     border-radius: 50%;
 }
-

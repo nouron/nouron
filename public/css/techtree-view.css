@@ -1,6 +1,8 @@
 /* Techtree overview — Alpine.js + PicoCSS (Phase-based sections, Phase 3h) */
 
-[x-cloak] { display: none !important; }
+[x-cloak] {
+    display: none !important;
+}
 
 /* ── Page wrapper ─────────────────────────────────────────── */
 .techtree-page {
@@ -79,13 +81,14 @@
         /* diagonal border line: clip boundary for 16px cut is at d=11.3px along gradient;
            visible range 11.3–14px gives ~2.7px line inside the card edge */
         linear-gradient(
-            to bottom left,
-            transparent 0,
-            transparent 10.5px,
-            rgba(0, 0, 0, 0.22) 10.5px,
-            rgba(0, 0, 0, 0.22) 14px,
-            transparent 14px
-        ) top right / 20px 20px no-repeat,
+                to bottom left,
+                transparent 0,
+                transparent 10.5px,
+                rgba(0, 0, 0, 0.22) 10.5px,
+                rgba(0, 0, 0, 0.22) 14px,
+                transparent 14px
+            )
+            top right / 20px 20px no-repeat,
         #fff;
     padding: 0.55rem 0.65rem 0.5rem;
     display: grid;
@@ -94,7 +97,9 @@
     row-gap: 0.25rem;
     cursor: pointer;
     clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
-    transition: filter 0.15s, transform 0.15s;
+    transition:
+        filter 0.15s,
+        transform 0.15s;
     min-width: 0;
 }
 
@@ -109,12 +114,13 @@
     border-left-color: #3b82f6;
     background:
         linear-gradient(
-            to bottom left,
-            transparent 10.5px,
-            rgba(59, 130, 246, 0.6) 10.5px,
-            rgba(59, 130, 246, 0.6) 14px,
-            transparent 14px
-        ) top right / 20px 20px no-repeat,
+                to bottom left,
+                transparent 10.5px,
+                rgba(59, 130, 246, 0.6) 10.5px,
+                rgba(59, 130, 246, 0.6) 14px,
+                transparent 14px
+            )
+            top right / 20px 20px no-repeat,
         linear-gradient(to right, #eff4fe 0%, #fff 65%);
 }
 .tech-card.tech-research {
@@ -122,12 +128,13 @@
     border-left-color: #10b981;
     background:
         linear-gradient(
-            to bottom left,
-            transparent 10.5px,
-            rgba(16, 185, 129, 0.6) 10.5px,
-            rgba(16, 185, 129, 0.6) 14px,
-            transparent 14px
-        ) top right / 20px 20px no-repeat,
+                to bottom left,
+                transparent 10.5px,
+                rgba(16, 185, 129, 0.6) 10.5px,
+                rgba(16, 185, 129, 0.6) 14px,
+                transparent 14px
+            )
+            top right / 20px 20px no-repeat,
         linear-gradient(to right, #ecf9f5 0%, #fff 65%);
 }
 .tech-card.tech-ship {
@@ -135,12 +142,13 @@
     border-left-color: #f59e0b;
     background:
         linear-gradient(
-            to bottom left,
-            transparent 10.5px,
-            rgba(245, 158, 11, 0.6) 10.5px,
-            rgba(245, 158, 11, 0.6) 14px,
-            transparent 14px
-        ) top right / 20px 20px no-repeat,
+                to bottom left,
+                transparent 10.5px,
+                rgba(245, 158, 11, 0.6) 10.5px,
+                rgba(245, 158, 11, 0.6) 14px,
+                transparent 14px
+            )
+            top right / 20px 20px no-repeat,
         linear-gradient(to right, #fef8ec 0%, #fff 65%);
 }
 .tech-card.tech-personell {
@@ -148,21 +156,32 @@
     border-left-color: #8b5cf6;
     background:
         linear-gradient(
-            to bottom left,
-            transparent 10.5px,
-            rgba(139, 92, 246, 0.6) 10.5px,
-            rgba(139, 92, 246, 0.6) 14px,
-            transparent 14px
-        ) top right / 20px 20px no-repeat,
+                to bottom left,
+                transparent 10.5px,
+                rgba(139, 92, 246, 0.6) 10.5px,
+                rgba(139, 92, 246, 0.6) 14px,
+                transparent 14px
+            )
+            top right / 20px 20px no-repeat,
         linear-gradient(to right, #f4f0fe 0%, #fff 65%);
 }
 
 /* ── Locked cards ────────────────────────────────────────────────────────── */
-.tech-card.status-locked { opacity: 0.55; }
-.tech-card.status-locked.tech-building  { background: linear-gradient(to right, #f7fafe 0%, #f8f8f8 60%); }
-.tech-card.status-locked.tech-research  { background: linear-gradient(to right, #f6fcf9 0%, #f8f8f8 60%); }
-.tech-card.status-locked.tech-ship      { background: linear-gradient(to right, #fefbf6 0%, #f8f8f8 60%); }
-.tech-card.status-locked.tech-personell { background: linear-gradient(to right, #f9f8fe 0%, #f8f8f8 60%); }
+.tech-card.status-locked {
+    opacity: 0.55;
+}
+.tech-card.status-locked.tech-building {
+    background: linear-gradient(to right, #f7fafe 0%, #f8f8f8 60%);
+}
+.tech-card.status-locked.tech-research {
+    background: linear-gradient(to right, #f6fcf9 0%, #f8f8f8 60%);
+}
+.tech-card.status-locked.tech-ship {
+    background: linear-gradient(to right, #fefbf6 0%, #f8f8f8 60%);
+}
+.tech-card.status-locked.tech-personell {
+    background: linear-gradient(to right, #f9f8fe 0%, #f8f8f8 60%);
+}
 
 /* Available: dashed sides */
 .tech-card.status-available {
@@ -174,8 +193,13 @@
 /* ── Onboarding pulse (ranks 2 / 4 / 5) ─────────────────────────────────── */
 
 @keyframes techtree-card-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.55); }
-    50%       { box-shadow: 0 0 0 6px rgba(96, 165, 250, 0); }
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.55);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(96, 165, 250, 0);
+    }
 }
 
 .techtree-page[data-hint-rank="2"] .tech-personell.status-available,
@@ -214,9 +238,18 @@
     flex-shrink: 0;
 }
 
-.chip-built     { background: #e8f4e8; color: #2e7d32; }
-.chip-available { background: #e8f0fe; color: #1a56db; }
-.chip-locked    { background: #f0f0f0; color: #999; }
+.chip-built {
+    background: #e8f4e8;
+    color: #2e7d32;
+}
+.chip-available {
+    background: #e8f0fe;
+    color: #1a56db;
+}
+.chip-locked {
+    background: #f0f0f0;
+    color: #999;
+}
 
 /* ── Card: sub-line (locked reason) ─────────────────────── */
 .tech-sub {
@@ -308,8 +341,12 @@
     padding: 0;
 }
 
-.tech-panel-hidden  { transform: translateX(100%); }
-.tech-panel-visible { transform: translateX(0); }
+.tech-panel-hidden {
+    transform: translateX(100%);
+}
+.tech-panel-visible {
+    transform: translateX(0);
+}
 
 @media (max-width: 599px) {
     .tech-panel {
@@ -325,8 +362,12 @@
         box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.12);
         border-radius: 12px 12px 0 0;
     }
-    .tech-panel-hidden  { transform: translateY(100%); }
-    .tech-panel-visible { transform: translateY(0); }
+    .tech-panel-hidden {
+        transform: translateY(100%);
+    }
+    .tech-panel-visible {
+        transform: translateY(0);
+    }
 }
 
 .detail-inner {
@@ -337,10 +378,18 @@
     min-height: 100%;
 }
 
-.detail-cat-building  { border-top-color: #3b82f6; }
-.detail-cat-research  { border-top-color: #10b981; }
-.detail-cat-ship      { border-top-color: #f59e0b; }
-.detail-cat-personell { border-top-color: #8b5cf6; }
+.detail-cat-building {
+    border-top-color: #3b82f6;
+}
+.detail-cat-research {
+    border-top-color: #10b981;
+}
+.detail-cat-ship {
+    border-top-color: #f59e0b;
+}
+.detail-cat-personell {
+    border-top-color: #8b5cf6;
+}
 
 .detail-head {
     display: flex;
@@ -380,7 +429,9 @@
     transition: color 0.1s;
 }
 
-.detail-x:hover { color: #333; }
+.detail-x:hover {
+    color: #333;
+}
 
 /* Full-bleed building image in techtree detail-inner (padding: 1.1rem) */
 .detail-inner .building-detail-img-wrap {
@@ -448,7 +499,9 @@
     transition: background 0.12s;
 }
 
-.detail-close:hover { background: #e0e0e0; }
+.detail-close:hover {
+    background: #e0e0e0;
+}
 
 /* Advisor-specific detail panel */
 .detail-advisor-hired {
@@ -498,10 +551,20 @@
     transition: opacity 0.1s;
 }
 
-.ap-seg--done   { background: #16a34a; }
-.ap-seg--todo   { background: #bfdbfe; cursor: pointer; }
-.ap-seg--todo:hover { background: #3b82f6; }
-.ap-seg--locked { background: #e5e7eb; cursor: not-allowed; }
+.ap-seg--done {
+    background: #16a34a;
+}
+.ap-seg--todo {
+    background: #bfdbfe;
+    cursor: pointer;
+}
+.ap-seg--todo:hover {
+    background: #3b82f6;
+}
+.ap-seg--locked {
+    background: #e5e7eb;
+    cursor: not-allowed;
+}
 
 .detail-ap-hint {
     font-size: 0.78rem;
@@ -534,12 +597,20 @@
 }
 
 @media (max-width: 599px) {
-    .detail-inner { padding: 1.25rem 1.25rem 1.5rem; }
+    .detail-inner {
+        padding: 1.25rem 1.25rem 1.5rem;
+    }
 }
 
 /* ── Hover focus — dim/highlight cards and SVG paths ─────── */
-.tech-card.hover-dim      { opacity: 0.25; transition: opacity 0.15s; }
-.tech-card.hover-highlight { opacity: 1;   transition: opacity 0.15s; }
+.tech-card.hover-dim {
+    opacity: 0.25;
+    transition: opacity 0.15s;
+}
+.tech-card.hover-highlight {
+    opacity: 1;
+    transition: opacity 0.15s;
+}
 
 .techtree-global-svg path.hover-dim {
     opacity: 0.15;
@@ -565,14 +636,16 @@ a.technology.btn {
     color: #333;
     padding: 4px 6px;
     text-align: left;
-    transition: background 0.15s, box-shadow 0.15s;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    transition:
+        background 0.15s,
+        box-shadow 0.15s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     white-space: normal;
     line-height: 1.3;
 }
 a.technology.btn:hover {
     background: #f5f5f5;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
     color: #111;
     text-decoration: none;
 }
@@ -582,22 +655,49 @@ a.technology.btn.notexists {
     border-color: #e0e0e0;
     box-shadow: none;
 }
-a.technology.btn.notexists:hover { background: #f0f0f0; color: #666; }
+a.technology.btn.notexists:hover {
+    background: #f0f0f0;
+    color: #666;
+}
 
-a.technology.building  { border-left-color: #7777ee; }
-a.technology.research  { border-left-color: #44bb66; }
-a.technology.ship      { border-left-color: #ccaa22; }
-a.technology.personell { border-left-color: #aaaaaa; }
+a.technology.building {
+    border-left-color: #7777ee;
+}
+a.technology.research {
+    border-left-color: #44bb66;
+}
+a.technology.ship {
+    border-left-color: #ccaa22;
+}
+a.technology.personell {
+    border-left-color: #aaaaaa;
+}
 
-a.technology.building:hover  { background: #f0f0ff; }
-a.technology.research:hover  { background: #f0fff4; }
-a.technology.ship:hover      { background: #fffdf0; }
-a.technology.personell:hover { background: #f8f8f8; }
+a.technology.building:hover {
+    background: #f0f0ff;
+}
+a.technology.research:hover {
+    background: #f0fff4;
+}
+a.technology.ship:hover {
+    background: #fffdf0;
+}
+a.technology.personell:hover {
+    background: #f8f8f8;
+}
 
-a.technology.building.notexists  { border-left-color: #bbbbed; }
-a.technology.research.notexists  { border-left-color: #88cc99; }
-a.technology.ship.notexists      { border-left-color: #ddcc77; }
-a.technology.personell.notexists { border-left-color: #cccccc; }
+a.technology.building.notexists {
+    border-left-color: #bbbbed;
+}
+a.technology.research.notexists {
+    border-left-color: #88cc99;
+}
+a.technology.ship.notexists {
+    border-left-color: #ddcc77;
+}
+a.technology.personell.notexists {
+    border-left-color: #cccccc;
+}
 
 /* ── Resource icons (resicon-* spans) ──────────────────────────────────── */
 [class^="resicon-"],
@@ -611,15 +711,33 @@ a.technology.personell.notexists { border-left-color: #cccccc; }
     border: 1px solid #333;
     border-radius: 500px;
 }
-.resicon-credits   { background-color: gold; }
-.resicon-supply    { background-color: #ddd; }
-.resicon-trust     { background-color: #fff; }
-.resicon-iron      { background-color: #ccc; }
-.resicon-water     { background-color: #66f; }
-.resicon-silicates { background-color: #CD853F; }
-.resicon-ena       { background-color: #9f9; }
-.resicon-aku       { background-color: #ff9; }
-.resicon-lho       { background-color: #99f; }
+.resicon-credits {
+    background-color: gold;
+}
+.resicon-supply {
+    background-color: #ddd;
+}
+.resicon-trust {
+    background-color: #fff;
+}
+.resicon-iron {
+    background-color: #ccc;
+}
+.resicon-water {
+    background-color: #66f;
+}
+.resicon-silicates {
+    background-color: #cd853f;
+}
+.resicon-ena {
+    background-color: #9f9;
+}
+.resicon-aku {
+    background-color: #ff9;
+}
+.resicon-lho {
+    background-color: #99f;
+}
 
 /* ── Mobile tweaks ───────────────────────────────────────── */
 @media (max-width: 599px) {

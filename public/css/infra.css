@@ -1,11 +1,11 @@
 /* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-    --infra-accent:      #8c2030;
-    --infra-bg:          #ffffff;
-    --infra-surface:     #f7f7f5;
-    --infra-text:        #1a1a1e;
-    --infra-text-muted:  #6b6b7a;
-    --infra-border:      #e8e8ec;
+    --infra-accent: #8c2030;
+    --infra-bg: #ffffff;
+    --infra-surface: #f7f7f5;
+    --infra-text: #1a1a1e;
+    --infra-text-muted: #6b6b7a;
+    --infra-border: #e8e8ec;
 }
 
 /* ── Brand ──────────────────────────────────────────────────────────────── */
@@ -18,7 +18,9 @@
     text-decoration: none !important;
     color: var(--infra-text) !important;
 }
-.infra-brand:hover { color: var(--infra-accent) !important; }
+.infra-brand:hover {
+    color: var(--infra-accent) !important;
+}
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
 .infra-header {
@@ -57,8 +59,12 @@
     max-width: 26rem;
     margin: 3rem auto 0;
 }
-.infra-auth-wrap hgroup { margin-bottom: 1.5rem; }
-.infra-auth-wrap hgroup h1 { margin: 0; }
+.infra-auth-wrap hgroup {
+    margin-bottom: 1.5rem;
+}
+.infra-auth-wrap hgroup h1 {
+    margin: 0;
+}
 .infra-auth-wrap .infra-auth-footer {
     text-align: center;
     margin-top: 1rem;
@@ -67,5 +73,7 @@
 
 /* ── Nav label hidden on mobile ─────────────────────────────────────────── */
 @media (max-width: 599px) {
-    .infra-nav-label { display: none; }
+    .infra-nav-label {
+        display: none;
+    }
 }

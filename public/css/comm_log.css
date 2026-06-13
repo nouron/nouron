@@ -26,13 +26,20 @@
     gap: 0.4rem;
     padding: 0.65rem 1rem;
     font-size: 0.875rem;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     font-weight: 400;
     color: #6b6b7a;
     text-decoration: none;
     border-bottom: 2px solid transparent;
     margin-bottom: -1px; /* overlap .comm-tabs border-bottom */
-    transition: color 0.15s, border-color 0.15s;
+    transition:
+        color 0.15s,
+        border-color 0.15s;
     white-space: nowrap;
     position: relative;
 }
@@ -63,7 +70,12 @@
     font-size: 0.65rem;
     font-weight: 700;
     line-height: 1;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     /* Offset slightly so it sits above the tab text baseline */
     vertical-align: middle;
     margin-left: 0.1rem;
@@ -76,7 +88,12 @@
     align-items: center;
     gap: 0.75rem;
     font-size: 0.72rem;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -87,7 +104,7 @@
 /* Hairline on each side of the Sol label */
 .comm-sol-divider::before,
 .comm-sol-divider::after {
-    content: '';
+    content: "";
     flex: 1;
     height: 1px;
     background: #e8e8ec;
@@ -108,7 +125,12 @@
     border-bottom: 1px solid #f0f0f4;
     font-size: 0.875rem;
     color: #1a1a1e;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
 .comm-entry:last-child {
@@ -159,7 +181,12 @@
     padding: 1rem 1.1rem 0.8rem;
     margin-bottom: 0.75rem;
     /* Use border only — no shadow; consistent with design guide rule */
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     /* Override PicoCSS <article> default margin/padding */
     display: block;
 }
@@ -241,7 +268,12 @@
     text-transform: uppercase;
     letter-spacing: 0.04em;
     white-space: nowrap;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
     line-height: 1.4;
 }
 
@@ -291,7 +323,12 @@
     text-align: center;
     color: #a0a0ac;
     font-size: 0.9rem;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 }
 
 /* ── Mobile ───────────────────────────────────────────────────────────────── */

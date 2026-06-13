@@ -1,5 +1,7 @@
 /* Alpine x-cloak */
-[x-cloak] { display: none !important; }
+[x-cloak] {
+    display: none !important;
+}
 
 /* ── Run card grid ──────────────────────────────────────────────────────── */
 .lobby-run-grid {
@@ -84,7 +86,9 @@
     flex-wrap: wrap;
     gap: 0.25rem 1rem;
 }
-.lobby-meta li::before { content: none; }
+.lobby-meta li::before {
+    content: none;
+}
 
 /* Status pills */
 .lobby-status-pill {
@@ -124,8 +128,12 @@
     padding: 0.5rem 0 0;
     margin: 0;
 }
-.lobby-details-meta li { padding: 0.15rem 0; }
-.lobby-details-meta li::before { content: none; }
+.lobby-details-meta li {
+    padding: 0.15rem 0;
+}
+.lobby-details-meta li::before {
+    content: none;
+}
 
 /* Colony rename form */
 .lobby-rename-form {
@@ -166,7 +174,9 @@
     padding-bottom: 0.35rem;
     border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
 }
-.lobby-section-heading:first-child { margin-top: 0; }
+.lobby-section-heading:first-child {
+    margin-top: 0;
+}
 
 /* Disabled coming-soon button */
 button[disabled].lobby-btn-disabled {
@@ -201,7 +211,9 @@ button[disabled].lobby-btn-disabled {
     color: var(--pico-muted-color, #6c757d);
     border-bottom: 2px solid var(--pico-muted-border-color, #ddd);
 }
-.lobby-highscore-table tbody tr:last-child td { border-bottom: none; }
+.lobby-highscore-table tbody tr:last-child td {
+    border-bottom: none;
+}
 .lobby-highscore-table tbody tr:hover td {
     background: var(--pico-card-background-color, #f9f9f9);
 }
