@@ -100,6 +100,8 @@ return [
     'harvester_move' => 'Verlegen',
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone auswählen — 1 Bau-AP pro Hex-Distanz.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',
+    'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
+    'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
     'error_harvester_in_transit' => 'Der Harvester ist noch unterwegs — Verlegen erst nach Ankunft möglich.',
     'harvester_in_transit' => 'Unterwegs — Ankunft nächsten Sol.',
     'error_tile_occupied' => 'Tile bereits belegt.',

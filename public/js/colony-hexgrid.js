@@ -159,8 +159,13 @@ function colonyHexView(config) {
 
         onTileClick(tile) {
             // Harvester move mode: clicking a valid target triggers the move.
+            // Clicking anything else gives feedback instead of failing silently.
             if (this.harvesterMoveMode) {
-                if (this.isHarvesterTarget(tile)) this.doMoveHarvester(tile);
+                if (this.isHarvesterTarget(tile)) {
+                    this.doMoveHarvester(tile);
+                } else {
+                    this.showToast(this.i18n.harvesterMoveInvalidTarget, 'info');
+                }
                 return;
             }
             if (this.buildMode && this.pendingBuilding) {
@@ -395,11 +400,17 @@ function colonyHexView(config) {
             if (!hv) return;
             const oldPos = hv.tile_x !== null ? this._tilePositions.get(`${hv.tile_x},${hv.tile_y}`) : null;
             const newPos = this._tilePositions.get(`${tile.q},${tile.r}`);
-            const res = await this.post(this.routes.placeBuilding, {
-                building_id: hv.building_id,
-                q: tile.q,
-                r: tile.r,
-            });
+            let res;
+            try {
+                res = await this.post(this.routes.placeBuilding, {
+                    building_id: hv.building_id,
+                    q: tile.q,
+                    r: tile.r,
+                });
+            } catch {
+                this.showToast(this.i18n.networkError ?? 'Network error.', 'error');
+                return;
+            }
             if (res.ok) {
                 this.updateBuilding(res.building);
                 this.harvesterMoveMode = false;
@@ -917,28 +928,23 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
     }
 
-    // Onboarding pulse ring — drawn behind the fill polygon
-    const hintRank = opts.activeHint?.rank ?? 0;
+    // Onboarding pulse ring — drawn behind the fill polygon.
+    // Keyed off the hint KEY (not rank) so re-ordering hints never desyncs the pulse.
+    const hintKey = opts.activeHint?.key ?? '';
 
-    // Rank 1: buildable colony-zone tile (guide first building placement)
-    const isPulseRank1 =
-        hintRank === 1 &&
-        tile.is_colony_zone &&
-        tile.is_explored &&
-        tile.tile_type.startsWith('terrain_') &&
-        tile.tile_type !== 'terrain_impassable' &&
-        !buildingsByTile?.has(`${tile.q},${tile.r}`);
+    // hint_repair: any building below max status points (guide repair).
+    const isPulseRepair = hintKey === 'hint_repair' && building && building.status_points < building.max_status_points;
 
-    // Rank 2: Harvester tile in colony zone (guide relocation)
-    const isPulseRank2 = hintRank === 2 && building?.building_key === 'building_harvester';
+    // hint_2: Harvester tile in colony zone (guide relocation).
+    const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
-    // Rank 3: CC tile (guide upgrade)
-    const isPulseRank3 = hintRank === 3 && tile.q === 0 && tile.r === 0;
+    // hint_3: CC tile (guide upgrade).
+    const isPulseCc = hintKey === 'hint_3' && tile.q === 0 && tile.r === 0;
 
-    // Harvester current position highlight while in move mode
+    // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';
 
-    const shouldPulse = isPulseRank1 || isPulseRank2 || isPulseRank3 || isHarvesterCurrent;
+    const shouldPulse = isPulseRepair || isPulseHarvester || isPulseCc || isHarvesterCurrent;
 
     if (shouldPulse) {
         const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

@@ -109,16 +109,16 @@ class OnboardingHintService
             ],
             [
                 'rank' => 2,
-                'key' => 'hint_repair',
-                'active' => $this->checkHintRepair($colonyId),
-                'text_key' => 'colony.onboarding_hint_repair',
+                'key' => 'hint_2',
+                'active' => $this->checkHint2($colonyId),
+                'text_key' => 'colony.onboarding_hint_2',
                 'target_url' => '/colony/view',
             ],
             [
                 'rank' => 3,
-                'key' => 'hint_2',
-                'active' => $this->checkHint2($colonyId),
-                'text_key' => 'colony.onboarding_hint_2',
+                'key' => 'hint_repair',
+                'active' => $this->checkHintRepair($colonyId),
+                'text_key' => 'colony.onboarding_hint_repair',
                 'target_url' => '/colony/view',
             ],
             [
@@ -168,9 +168,14 @@ class OnboardingHintService
 
     /**
      * Repair hint: any building on the colony is below its max status points.
-     * Active from Sol 1 — the starting buildings are seeded at 80 % status, so this
-     * surfaces immediately and teaches the (cheap) Reparieren action before pricier
-     * Bau-AP spends. Self-clears once every building is fully repaired.
+     * Active from Sol 1 (no tick gate); self-clears once every building is full.
+     *
+     * Ranked AFTER the Harvester-move hint (rank 3, not 2): repairing all three
+     * damaged starting buildings costs ~12 Bau-AP, more than a single Sol provides
+     * (~10 with engineer). Surfacing it first would leave the player stuck on a
+     * hint they cannot resolve in Sol 1. The cheap, completable Harvester move
+     * (~2 AP) goes first; the player then meets the repair goal and naturally
+     * learns to spread Bau-AP across multiple Sols.
      */
     private function checkHintRepair(int $colonyId): bool
     {

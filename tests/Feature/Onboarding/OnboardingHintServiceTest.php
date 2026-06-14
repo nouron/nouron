@@ -159,14 +159,16 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_repair_hint_fires_when_building_damaged(): void
     {
-        // Engineer hired (hint 1 resolved), buildings damaged → repair hint (rank 2) wins.
+        // Engineer hired (hint 1 resolved) and Harvester moved outside (hint 2 resolved);
+        // a damaged building then surfaces the repair hint (rank 3).
         $this->placeEngineer();
+        $this->moveHarvesterOutside();
         $this->damageBuilding(25);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(2, $hint['rank']);
+        $this->assertEquals(3, $hint['rank']);
         $this->assertEquals('hint_repair', $hint['key']);
         $this->assertEquals('colony.onboarding_hint_repair', $hint['text_key']);
         $this->assertEquals('/colony/view', $hint['target_url']);
@@ -176,6 +178,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         // No tick gate: fires even at Sol 0 (run current_tick stays 0 from setUp).
         $this->placeEngineer();
+        $this->moveHarvesterOutside();
         $this->damageBuilding(28);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -196,7 +199,7 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_repair_hint_yields_to_missing_engineer(): void
     {
-        // Building damaged but no engineer → hint_1 (rank 1) still wins over repair (rank 2).
+        // Building damaged but no engineer → hint_1 (rank 1) still wins over repair (rank 3).
         $this->damageBuilding(25);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -215,7 +218,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(3, $hint['rank']);
+        $this->assertEquals(2, $hint['rank']);
         $this->assertEquals('hint_2', $hint['key']);
     }
 
@@ -316,13 +319,13 @@ class OnboardingHintServiceTest extends TestCase
     public function test_dismissed_hint_skipped_returns_next_active(): void
     {
         // Dismiss hint_1 (engineer); repair hint silent (buildings full), so
-        // hint_2 (Harvester in colony zone, rank 3) surfaces next.
+        // hint_2 (Harvester in colony zone, rank 2) surfaces next.
         $this->service->dismissHint($this->userId, 'hint_1');
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(3, $hint['rank']);
+        $this->assertEquals(2, $hint['rank']);
         $this->assertEquals('hint_2', $hint['key']);
     }
 

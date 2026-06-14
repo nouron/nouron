@@ -45,6 +45,8 @@
                 harvesterMove: '{{ __("colony.harvester_move") }}',
                 harvesterMoveModeHint: @json(__("colony.harvester_move_mode_hint")),
                 harvesterMoveNoTargets: @json(__("colony.harvester_move_no_targets")),
+                harvesterMoveInvalidTarget: @json(__("colony.harvester_move_invalid_target")),
+                networkError: @json(__("colony.network_error")),
             },
         };
     </script>
