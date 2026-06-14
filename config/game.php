@@ -298,6 +298,11 @@ return [
     ],
 
     'onboarding' => [
+        // Status-points threshold (absolute, max is 20) at or below which the urgent
+        // repair hint fires — warns of imminent level-down. Self-clears once every
+        // building is back above it; never written to dismissed_hints.
+        'hint_repair_urgent_sp' => 3,
+
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,
 

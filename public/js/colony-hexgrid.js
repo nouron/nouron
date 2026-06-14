@@ -935,6 +935,11 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // hint_repair: any building below max status points (guide repair).
     const isPulseRepair = hintKey === 'hint_repair' && building && building.status_points < building.max_status_points;
 
+    // hint_repair_urgent: building near level-down (<=15% status, mirrors the
+    // server-side hint_repair_urgent_sp=3 of 20 threshold) — pulse the critical one.
+    const isPulseRepairUrgent =
+        hintKey === 'hint_repair_urgent' && building && building.status_points <= building.max_status_points * 0.15;
+
     // hint_2: Harvester tile in colony zone (guide relocation).
     const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
@@ -944,7 +949,7 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';
 
-    const shouldPulse = isPulseRepair || isPulseHarvester || isPulseCc || isHarvesterCurrent;
+    const shouldPulse = isPulseRepair || isPulseRepairUrgent || isPulseHarvester || isPulseCc || isHarvesterCurrent;
 
     if (shouldPulse) {
         const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

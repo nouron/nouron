@@ -61,6 +61,7 @@ return [
 
     'onboarding_hint_1' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
     'onboarding_hint_repair' => 'Deine Startgebäude sind beschädigt — tippe ein Gebäude an und nutze „Reparieren" (1 Bau-AP), um die Substanz zu sichern.',
+    'onboarding_hint_repair_urgent' => 'Ein Gebäude steht kurz vor dem Stufenverlust — jetzt mit dem Reparieren-Button (Bau-AP) sichern.',
     'onboarding_hint_2' => 'Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen.',
     'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',

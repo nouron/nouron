@@ -155,12 +155,66 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
     }
 
+    // ── Urgent repair hint: building near level-down ─────────────────────────
+
+    public function test_urgent_repair_hint_fires_when_building_critical(): void
+    {
+        // Engineer hired; a building at SP=3 (<= threshold) → urgent repair wins (rank 2),
+        // ahead of the Harvester-move hint (rank 3).
+        $this->placeEngineer();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['status_points' => 3]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertEquals(2, $hint['rank']);
+        $this->assertEquals('hint_repair_urgent', $hint['key']);
+        $this->assertEquals('colony.onboarding_hint_repair_urgent', $hint['text_key']);
+    }
+
+    public function test_urgent_repair_hint_silent_above_threshold(): void
+    {
+        // SP=4 is above the threshold (3) → urgent silent; teaching repair (rank 4) wins instead.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['status_points' => 4]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertEquals('hint_repair', $hint['key']);
+    }
+
+    public function test_urgent_repair_hint_ignores_buildings_under_construction(): void
+    {
+        // A level-0 (under-construction) building at low SP must not trigger the urgent hint.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 46,
+            'instance_id' => 1, 'level' => 0, 'status_points' => 1, 'ap_spend' => 0,
+            'tile_x' => 2, 'tile_y' => 0,
+        ]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        // Buildings are otherwise full → no repair hint of either kind.
+        $this->assertNull($hint);
+    }
+
     // ── Repair hint: any building below max status ───────────────────────────
 
     public function test_repair_hint_fires_when_building_damaged(): void
     {
         // Engineer hired (hint 1 resolved) and Harvester moved outside (hint 2 resolved);
-        // a damaged building then surfaces the repair hint (rank 3).
+        // a lightly damaged building (16/20, above the urgent threshold) surfaces the
+        // teaching repair hint (rank 4).
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->damageBuilding(25);
@@ -168,7 +222,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(3, $hint['rank']);
+        $this->assertEquals(4, $hint['rank']);
         $this->assertEquals('hint_repair', $hint['key']);
         $this->assertEquals('colony.onboarding_hint_repair', $hint['text_key']);
         $this->assertEquals('/colony/view', $hint['target_url']);
@@ -212,13 +266,13 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_hint_2_fires_when_harvester_in_colony_zone(): void
     {
-        // Engineer hired (hint 1 resolved); harvester at (1,0) = colony_zone=1 → hint 2 fires.
+        // Engineer hired (hint 1 resolved); harvester at (1,0) = colony_zone=1 → hint 2 fires (rank 3).
         $this->placeEngineer();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(2, $hint['rank']);
+        $this->assertEquals(3, $hint['rank']);
         $this->assertEquals('hint_2', $hint['key']);
     }
 
@@ -257,7 +311,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(4, $hint['rank']);
+        $this->assertEquals(5, $hint['rank']);
         $this->assertEquals('hint_3', $hint['key']);
     }
 
@@ -318,20 +372,20 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_dismissed_hint_skipped_returns_next_active(): void
     {
-        // Dismiss hint_1 (engineer); repair hint silent (buildings full), so
-        // hint_2 (Harvester in colony zone, rank 2) surfaces next.
+        // Dismiss hint_1 (engineer); urgent + teaching repair hints silent (buildings
+        // full), so hint_2 (Harvester in colony zone, rank 3) surfaces next.
         $this->service->dismissHint($this->userId, 'hint_1');
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(2, $hint['rank']);
+        $this->assertEquals(3, $hint['rank']);
         $this->assertEquals('hint_2', $hint['key']);
     }
 
     public function test_all_hints_dismissed_returns_null(): void
     {
-        foreach (['hint_1', 'hint_repair', 'hint_2', 'hint_3', 'hint_4', 'hint_5', 'hint_6'] as $key) {
+        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_4', 'hint_5', 'hint_6'] as $key) {
             $this->service->dismissHint($this->userId, $key);
         }
         $this->setRunTick(99);

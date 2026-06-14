@@ -524,6 +524,12 @@ class ColonyController extends BaseController
             $this->personellService->lockActionPoints('construction', $colony->id, 1);
         }
 
+        // Repair is a teaching hint, not a chore: dismiss it after the first repair
+        // click so it does not nag while buildings are still (intentionally) below max.
+        // The player has learned the action; topping up the rest is optional unless a
+        // building is leveldown-threatened (handled separately).
+        $this->hintService->dismissHint(Auth::id(), 'hint_repair');
+
         $this->eventService->createEvent([
             'user' => Auth::id(),
             'tick' => $this->getTick(),

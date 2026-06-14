@@ -109,41 +109,48 @@ class OnboardingHintService
             ],
             [
                 'rank' => 2,
+                'key' => 'hint_repair_urgent',
+                'active' => $this->checkHintRepairUrgent($colonyId),
+                'text_key' => 'colony.onboarding_hint_repair_urgent',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 3,
                 'key' => 'hint_2',
                 'active' => $this->checkHint2($colonyId),
                 'text_key' => 'colony.onboarding_hint_2',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 3,
+                'rank' => 4,
                 'key' => 'hint_repair',
                 'active' => $this->checkHintRepair($colonyId),
                 'text_key' => 'colony.onboarding_hint_repair',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 4,
+                'rank' => 5,
                 'key' => 'hint_3',
                 'active' => $this->checkHint3($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_3',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 5,
+                'rank' => 6,
                 'key' => 'hint_4',
                 'active' => $this->checkHint4($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_4',
                 'target_url' => '/techtree',
             ],
             [
-                'rank' => 6,
+                'rank' => 7,
                 'key' => 'hint_5',
                 'active' => $this->checkHint5($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_5',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 7,
+                'rank' => 8,
                 'key' => 'hint_6',
                 'active' => $this->checkHint6($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_6',
@@ -167,6 +174,26 @@ class OnboardingHintService
     }
 
     /**
+     * Urgent repair hint: a built (level >= 1) building has decayed to or below the
+     * critical status-points threshold and is about to lose a level. Highest repair
+     * priority (rank 2) — the only mechanic with immediate, irreversible loss.
+     *
+     * Self-clearing: never written to dismissed_hints, so it returns whenever decay
+     * pushes a building back into the danger zone — independent of the teaching
+     * hint_repair (which is dismissed permanently after the first repair click).
+     */
+    private function checkHintRepairUrgent(int $colonyId): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_repair_urgent_sp', 3);
+
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('level', '>=', 1)
+            ->where('status_points', '<=', $threshold)
+            ->exists();
+    }
+
+    /**
      * Repair hint: any building on the colony is below its max status points.
      * Active from Sol 1 (no tick gate); self-clears once every building is full.
      *
@@ -182,6 +209,7 @@ class OnboardingHintService
         return DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colonyId)
+            ->where('colony_buildings.level', '>=', 1) // level 0 = under construction, not repairable
             ->whereColumn('colony_buildings.status_points', '<', 'buildings.max_status_points')
             ->exists();
     }
