@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-14
+
+- **Sol-1-Reparatur-Onboarding-Hint** — neuer Hint `hint_repair` (Rang 2, zwischen Baumeister-Hint und Harvester-Verlegen) führt neue Spieler proaktiv zum „Reparieren"-Button. Die drei Startgebäude starten beschädigt (16/20), bekamen bisher aber keinen Hinweis zum Reparieren — das Decay-INNN-Event greift erst, wenn ein Gebäude *unter* 80% fällt. Bedingung: irgendein Gebäude unter Maximal-Statuspunkten; kein Tick-Gate (ab Sol 1), löst sich organisch auf sobald alles repariert ist (game-designer-Spec). Bestehende Hints auf Rang 3–7 verschoben. GDD-Hint-Tabelle + Tests (Service + E2E-Flow) aktualisiert.
+- **Tech-Debt: CC-Building-ID aus Config statt Magic-Number** — `buildingForTile()` in `colony-hexgrid.js` nutzte hartkodiert `building_id === 25` für das CC-Tile. ID wird jetzt via `\App\Enums\BuildingId::CommandCenter` über `__colonyViewData.ccBuildingId` durchgereicht (Config = Source of Truth).
+- **Cleanup** — verwaiste Lang-Strings `onboarding_trigger_decay_*` + `onboarding_trigger_trust_*` (0 Code-Referenzen, veraltete „investieren"-Framing) aus `lang/de/colony.php` entfernt; der gerenderte Event-Text liegt in `lang/de/events.php`. Stale-Kommentar in `OnboardingService` korrigiert (Repair-Mechanik ist implementiert, kein „future feature" mehr).
+
 ## 2026-06-13
 
 - **Schiffsreparatur auf Fixkosten vereinheitlicht** — Hangar-Reparatur kostet jetzt fix 1 Bau-AP pro Klick (→ +2 Statuspunkte), statt einer spielergewählten AP-Menge (Range 1–10). Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt (game-designer-Empfehlung: diskrete Wirkung → fix, kontinuierlicher Output → dosierbar). Repair-Button bekommt den AP-Kosten-Chip; AP-Eingabe-Modal entfernt. Controller zieht echtes 1 Bau-AP ab (vorher kein AP-Lock — GDD-Lücke geschlossen). GDD §8 + design-guide §5.5 aktualisiert. Tests angepasst (Service/Controller, obsolete AP-Mengen-Tests entfernt). Dispatch/Nexus-Anfrage bleiben dosierbar (kontinuierlicher Bonus).

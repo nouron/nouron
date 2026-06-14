@@ -109,34 +109,41 @@ class OnboardingHintService
             ],
             [
                 'rank' => 2,
+                'key' => 'hint_repair',
+                'active' => $this->checkHintRepair($colonyId),
+                'text_key' => 'colony.onboarding_hint_repair',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 3,
                 'key' => 'hint_2',
                 'active' => $this->checkHint2($colonyId),
                 'text_key' => 'colony.onboarding_hint_2',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 3,
+                'rank' => 4,
                 'key' => 'hint_3',
                 'active' => $this->checkHint3($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_3',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 4,
+                'rank' => 5,
                 'key' => 'hint_4',
                 'active' => $this->checkHint4($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_4',
                 'target_url' => '/techtree',
             ],
             [
-                'rank' => 5,
+                'rank' => 6,
                 'key' => 'hint_5',
                 'active' => $this->checkHint5($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_5',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 6,
+                'rank' => 7,
                 'key' => 'hint_6',
                 'active' => $this->checkHint6($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_6',
@@ -157,6 +164,21 @@ class OnboardingHintService
             ->where('colony_id', $colonyId)
             ->where('personell_id', $engineerId)
             ->count() === 0;
+    }
+
+    /**
+     * Repair hint: any building on the colony is below its max status points.
+     * Active from Sol 1 — the starting buildings are seeded at 80 % status, so this
+     * surfaces immediately and teaches the (cheap) Reparieren action before pricier
+     * Bau-AP spends. Self-clears once every building is fully repaired.
+     */
+    private function checkHintRepair(int $colonyId): bool
+    {
+        return DB::table('colony_buildings')
+            ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
+            ->where('colony_buildings.colony_id', $colonyId)
+            ->whereColumn('colony_buildings.status_points', '<', 'buildings.max_status_points')
+            ->exists();
     }
 
     /**

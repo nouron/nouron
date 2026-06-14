@@ -85,6 +85,7 @@ function colonyHexView(config) {
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
+        ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
@@ -574,7 +575,7 @@ function colonyHexView(config) {
         buildingForTile(tile) {
             if (!tile) return null;
             if (tile.q === 0 && tile.r === 0) {
-                return this.buildings.find((b) => b.building_id === 25) ?? null;
+                return this.buildings.find((b) => b.building_id === this.ccBuildingId) ?? null;
             }
             return this.buildings.find((b) => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },

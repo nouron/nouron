@@ -8,6 +8,7 @@
             tiles: @json($tiles),
             colony: @json(["id" => $colony->id, "name" => $colony->name]),
             ccLevel: {{ (int) $ccLevel }},
+            ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
             buildings: @json($buildings),
             apNav: {{ (int) $navAp }},
             apConstruction: {{ (int) $constructionAp }},

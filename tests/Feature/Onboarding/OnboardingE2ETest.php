@@ -79,7 +79,9 @@ class OnboardingE2ETest extends TestCase
         $this->assertSame('hint_1', $hint['key']);
         $this->assertStringContainsString('/advisors', $hint['target_url']);
 
-        // ── 4. Hire engineer → rank-1 resolved; rank-2 (Harvester in colony zone) surfaces ──
+        // ── 4. Hire engineer → rank-1 resolved; rank-2 (repair damaged buildings) surfaces ──
+        // setupNewPlayer seeds all three buildings damaged (16/20), so the repair
+        // hint is the next thing the player is guided to.
         $engineerId = PersonellService::idFor('engineer');
         DB::table('advisors')->insert([
             'user_id' => $this->userId,
@@ -90,19 +92,30 @@ class OnboardingE2ETest extends TestCase
         ]);
 
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
-        $this->assertNotNull($hint, 'Rank-2 hint should appear after engineer is hired');
+        $this->assertNotNull($hint, 'Repair hint should appear after engineer is hired (buildings start damaged)');
         $this->assertSame(2, $hint['rank']);
+        $this->assertSame('hint_repair', $hint['key']);
+        $this->assertStringContainsString('/colony', $hint['target_url']);
+
+        // ── 5. Repair all buildings to full status → repair hint resolved; rank-3 (Harvester in colony zone) surfaces ──
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->update(['status_points' => 20]);
+
+        $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
+        $this->assertNotNull($hint, 'Harvester-move hint should appear once buildings are repaired');
+        $this->assertSame(3, $hint['rank']);
         $this->assertSame('hint_2', $hint['key']);
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
-        // ── 5. Move Harvester outside colony zone → rank-2 resolved ──────────
+        // ── 6. Move Harvester outside colony zone → rank-3 resolved ──────────
         // Tile (3,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer (ring-3 pre-explored).
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
             ->update(['tile_x' => 3, 'tile_y' => 0]);
 
-        // ── 6. Disable onboarding hints → no hint returned ─────────────────
+        // ── 7. Disable onboarding hints → no hint returned ─────────────────
         DB::table('user_preferences')->updateOrInsert(
             ['user_id' => $this->userId],
             ['onboarding_hints' => 0]
