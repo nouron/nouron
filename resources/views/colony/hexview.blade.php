@@ -84,6 +84,25 @@
             {{-- Tile info / build mode sidebar --}}
             <aside class="tile-panel">
 
+                {{-- Context title: building name + level (or terrain name) at the very
+                 top, above the action strip — identity before action, and the one
+                 line that stays visible on mobile. Max level is shown inline on the
+                 badge only when the building is actually capped. --}}
+                <div class="tile-panel-title" x-show="!harvesterMoveMode && !buildMode && selectedTile" x-cloak>
+                    <template x-if="selectedBuilding">
+                        <div class="tile-panel-title__row">
+                            <span class="tile-panel-title__name" x-text="selectedBuilding.label"></span>
+                            <span class="sidebar-level-badge" x-show="selectedBuilding.level > 0"
+                                x-text="selectedBuilding.max_level
+                                    ? `Lv. ${selectedBuilding.level} / ${selectedBuilding.max_level}`
+                                    : `Lv. ${selectedBuilding.level}`"></span>
+                        </div>
+                    </template>
+                    <template x-if="!selectedBuilding">
+                        <span class="tile-panel-title__name" x-text="tileHeading(selectedTile)"></span>
+                    </template>
+                </div>
+
                 {{-- Action strip: always visible above the section header.
                  On desktop this serves as a top-of-panel quick-action bar.
                  On mobile this is the primary action surface (no scrolling needed). --}}
@@ -111,26 +130,44 @@
                                     @include("partials.ap-cost-chip", ["amount" => 2, "type" => "nav"])
                                 </button>
                             </template>
+                            {{-- Repair: the condition bar is embedded as a segmented
+                             footer strip inside the button. Local hover flag drives the
+                             desktop-only +1 SP ghost segment; CSS gates the ghost to
+                             (hover: hover) so it never sticks on touch. A fully repaired
+                             building has no Reparieren button and shows no bar (intended). --}}
                             <template x-if="canRepair(selectedBuilding)">
-                                <button class="tile-action-btn" @click="doRepair(selectedBuilding)">
+                                <button class="tile-action-btn tile-action-btn--barred" x-data="{ hover: false }"
+                                    @mouseenter="hover = true" @mouseleave="hover = false"
+                                    @click="doRepair(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
-                                            x-text="`{{ __("colony.repair") }} (${conditionPct(selectedBuilding)} %)`"></span>
-                                        <span class="tile-action-btn__sub"
-                                            x-text="`+${repairStepPct(selectedBuilding)} % {{ __("colony.condition") }}`"></span>
+                                            x-text="`{{ __("colony.repair") }} +${repairStepPct(selectedBuilding)} %`"></span>
                                     </span>
-                                    @include("partials.ap-cost-chip", ["amount" => 1, "type" => "build"])
+                                    @include("partials.ap-cost-chip", [
+                                        "amount" => 1,
+                                        "type" => "build",
+                                    ])
+                                    @include("colony.partials.condition-bar", ["hoverExpr" => "hover"])
                                 </button>
                             </template>
+
+                            {{-- Ausbauen: the AP-invested bar is embedded as a segmented
+                             footer strip inside the button, shown whenever a level-up is
+                             possible. --}}
                             <template x-if="buildingCanLevelUp(selectedBuilding)">
-                                <button class="tile-action-btn"
+                                <button class="tile-action-btn tile-action-btn--barred"
                                     :class="canRepair(selectedBuilding) ? 'tile-action-btn--secondary' : ''"
+                                    x-data="{ hover: false }" @mouseenter="hover = true" @mouseleave="hover = false"
                                     @click="doInvestAp(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
-                                            x-text="`{{ __("colony.invest_ap") }} (${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup} AP)`"></span>
+                                            x-text="`{{ __("colony.invest_ap") }} ${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup}`"></span>
                                     </span>
-                                    @include("partials.ap-cost-chip", ["amount" => 1, "type" => "build"])
+                                    @include("partials.ap-cost-chip", [
+                                        "amount" => 1,
+                                        "type" => "build",
+                                    ])
+                                    @include("colony.partials.ap-bar", ["hoverExpr" => "hover"])
                                 </button>
                             </template>
                             <template
@@ -205,7 +242,8 @@
                                         <template x-for="b in buildings.filter(b => b.level === 0 && b.tile_x !== null)"
                                             :key="b.building_id + '-' + b.instance_id">
                                             <li class="building-list-item building-list-item--inprogress">
-                                                <span class="building-list-name" x-text="b.label ?? b.building_key"></span>
+                                                <span class="building-list-name"
+                                                    x-text="b.label ?? b.building_key"></span>
                                                 <span class="building-list-ap"
                                                     x-text="`${b.ap_spend} / ${b.ap_for_levelup} AP`"></span>
                                             </li>
@@ -239,46 +277,22 @@
                         </div>
                     </template>
 
-                    {{-- Normal mode: selected tile info.
-                     x-effect resets the active tab to "Gebäude" whenever a
-                     different tile is selected (compares coords, so refreshes
-                     of the same tile keep the player's chosen tab). --}}
-                    {{-- x-effect resets the active tab to "Gebäude" on tile change
-                     (compares coords, so same-tile refreshes keep the chosen
-                     tab). Horizontal swipe flips tabs on mobile. --}}
+                    {{-- Normal mode: selected tile info. No tabs — the layout is
+                     context-driven: a built tile is building-centric (terrain demoted
+                     to a closed disclosure), an empty tile is terrain-centric (flat,
+                     since terrain is then the decision basis for building). --}}
                     <template x-if="!harvesterMoveMode && !buildMode && selectedTile">
-                        <div class="tile-tab-body" x-effect="onTilePanel()" @touchstart.passive="panelTouchStart($event)"
-                            @touchend.passive="panelTouchEnd($event)">
-
-                            {{-- Tabs — only when a building occupies the tile.
-                             Empty terrain has no building info, so no tab chrome. --}}
+                        <div>
+                            {{-- ── Built tile: building-centric ──────────────────── --}}
                             <template x-if="selectedBuilding">
-                                <div class="tile-tabs" role="tablist">
-                                    <button type="button" class="tile-tab" role="tab"
-                                        :class="{ 'tile-tab--active': tileTab === 'building' }"
-                                        :aria-selected="tileTab === 'building'" @click="tileTab = 'building'">
-                                        {{ __("colony.tab_building") }}
-                                    </button>
-                                    <button type="button" class="tile-tab" role="tab"
-                                        :class="{ 'tile-tab--active': tileTab === 'terrain' }"
-                                        :aria-selected="tileTab === 'terrain'" @click="tileTab = 'terrain'">
-                                        {{ __("colony.tab_terrain") }}
-                                    </button>
-                                </div>
-                            </template>
-
-                            {{-- ── Building tab ──────────────────────────────────── --}}
-                            <template x-if="selectedBuilding && tileTab === 'building'">
                                 <div class="tile-building">
+                                    {{-- Name + level live in the .tile-panel-title header
+                                     above; the partial renders the image only. --}}
                                     @include("partials.building-detail", [
                                         "expr" => "selectedBuilding",
                                         "name_field" => "label",
+                                        "show_header" => false,
                                     ])
-
-                                    <dl class="tile-dl">
-                                        <dt>{{ __("colony.max_level") }}</dt>
-                                        <dd x-text="selectedBuilding.max_level ?? '∞'"></dd>
-                                    </dl>
 
                                     <template x-if="selectedBuilding.level === 0">
                                         <div class="tile-under-construction">
@@ -286,88 +300,19 @@
                                         </div>
                                     </template>
 
-                                    <template x-if="selectedBuilding.level > 0">
-                                        <div class="tile-bar-group">
-                                            <div class="tile-bar-label">
-                                                <span>{{ __("colony.condition") }}</span>
-                                                <span x-text="`${conditionPct(selectedBuilding)} %`"></span>
-                                            </div>
-                                            <div class="tile-bar-wrap">
-                                                <div class="tile-bar tile-bar--status"
-                                                    :style="`width:${conditionPct(selectedBuilding)}%`"></div>
-                                            </div>
-                                        </div>
-                                    </template>
-
-                                    <template x-if="buildingCanLevelUp(selectedBuilding)">
-                                        <div class="tile-bar-group">
-                                            <div class="tile-bar-label">
-                                                <span>{{ __("colony.ap_invested") }}</span>
-                                                <span
-                                                    x-text="`${selectedBuilding.ap_spend} / ${selectedBuilding.ap_for_levelup}`"></span>
-                                            </div>
-                                            <div class="tile-bar-wrap">
-                                                <div class="tile-bar tile-bar--ap"
-                                                    :style="`width:${apProgressPct(selectedBuilding)}%`"></div>
-                                            </div>
-                                        </div>
-                                    </template>
+                                    {{-- Terrain is secondary on a built tile → closed
+                                     disclosure (PicoCSS styles <details> natively). --}}
+                                    <details class="tile-terrain-disclosure">
+                                        <summary>{{ __("colony.terrain_details") }}</summary>
+                                        @include("colony.partials.tile-terrain", ["built" => true])
+                                    </details>
                                 </div>
                             </template>
 
-                            {{-- ── Terrain tab (or sole content when no building) ── --}}
-                            <template x-if="!selectedBuilding || tileTab === 'terrain'">
-                                <div class="tile-terrain">
-                                    <h3 class="tile-heading" x-text="tileHeading(selectedTile)"></h3>
-
-                                    <div class="tile-status-chips">
-                                        <span x-show="!selectedTile.is_explored && !selectedTile.is_colony_zone"
-                                            class="chip chip--locked">{{ __("colony.chip_locked") }}</span>
-                                        <span x-show="!selectedTile.is_explored && selectedTile.is_colony_zone"
-                                            class="chip chip--fog">{{ __("colony.chip_unexplored") }}</span>
-                                        <span
-                                            x-show="selectedTile.is_explored && !selectedTile.is_deep_scanned && !selectedTile.has_signal"
-                                            class="chip chip--explored">{{ __("colony.chip_explored") }}</span>
-                                        <span x-show="selectedTile.is_explored && selectedTile.has_signal"
-                                            class="chip chip--signal">{{ __("colony.chip_signal") }}</span>
-                                        <span x-show="selectedTile.is_deep_scanned"
-                                            class="chip chip--scanned">{{ __("colony.chip_scanned") }}</span>
-                                    </div>
-
-                                    <dl class="tile-dl">
-                                        <div class="tile-dl-coords">
-                                            <dt>Koordinaten</dt>
-                                            <dd
-                                                x-text="`q=${selectedTile.q}, r=${selectedTile.r} (Ring ${selectedTile.ring})`">
-                                            </dd>
-                                        </div>
-
-                                        <template x-if="selectedTile.is_deep_scanned && selectedTile.event_type">
-                                            <div>
-                                                <dt>Event</dt>
-                                                <dd x-text="eventTypeName(selectedTile.event_type)"></dd>
-                                            </div>
-                                        </template>
-                                    </dl>
-
-                                    <template x-if="selectedTile.resource_max > 0 && selectedTile.is_explored">
-                                        <div class="tile-resource">
-                                            <div class="tile-bar-group">
-                                                <div class="tile-bar-label">
-                                                    <span>{{ __("colony.resource_regolith") }}</span>
-                                                    <span
-                                                        x-text="`${selectedTile.resource_amount} / ${selectedTile.resource_max}`"></span>
-                                                </div>
-                                                <div class="tile-bar-wrap">
-                                                    <div class="tile-bar tile-bar--resource"
-                                                        :style="`width:${resourcePct(selectedTile)}%`"></div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
+                            {{-- ── Empty tile: terrain-centric, flat ─────────────── --}}
+                            <template x-if="!selectedBuilding">
+                                @include("colony.partials.tile-terrain", ["built" => false])
                             </template>
-
                         </div>
                     </template>
 

@@ -399,7 +399,6 @@ button.btn-sol:hover,
 /* Action strip: quick-action bar above the section header */
 .tile-panel-action-strip {
     padding: 0.5rem 1.25rem;
-    border-bottom: 1px solid var(--color-border);
     background: #fff;
     flex-shrink: 0;
 }
@@ -431,37 +430,43 @@ button.btn-sol:hover,
     flex: 1;
 }
 
-/* ── Tile sidebar tabs (Gebäude / Terrain) ──────────────────────────────────
-   Negative side margins cancel the .tile-panel-body padding so the tab strip
-   spans the full sidebar width. Only the active tab carries an underline —
-   no full-width separator line. Body padding (and thus the content below)
-   is left untouched. */
-.tile-tabs {
-    display: flex;
-    margin: 0 -1.25rem 0.85rem;
+/* Context title at the top of the sidebar: building name + level badge, or the
+   terrain name on an empty tile. Stays visible on mobile (identity first). */
+.tile-panel-title {
+    padding: 0.6rem 1.25rem;
+    background: #fff;
+    flex-shrink: 0;
 }
-.tile-tab {
-    flex: 1;
-    appearance: none;
-    background: none;
-    border: none;
-    border-bottom: 2px solid transparent;
-    padding: 0.6rem 0.5rem;
-    font-family: inherit;
-    font-size: 0.82rem;
+
+.tile-panel-title__row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tile-panel-title__name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-anthracite);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* Terrain detail demoted to a closed disclosure on a built tile. PicoCSS styles
+   <details>/<summary> natively; this only tunes spacing + the summary label. */
+.tile-terrain-disclosure {
+    margin-top: 1rem;
+    padding-top: 0.6rem;
+}
+.tile-terrain-disclosure summary {
+    cursor: pointer;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--color-text-secondary, #6b6b7a);
-    cursor: pointer;
-    transition:
-        color 0.15s ease,
-        border-color 0.15s ease;
 }
-.tile-tab:hover {
-    color: var(--color-anthracite, #333);
-}
-.tile-tab--active {
-    color: var(--color-accent, #c0392b);
-    border-bottom-color: var(--color-accent, #c0392b);
+.tile-terrain-disclosure .tile-terrain {
+    margin-top: 0.6rem;
 }
 
 /* dl/dt/dd styling lives in the .tile-dl block below (single source). */
@@ -528,14 +533,7 @@ button.btn-sol:hover,
     border: 1px solid #90caf9;
 }
 
-/* ── Sidebar tile heading + description list ─────────────────────────────── */
-
-.tile-heading {
-    margin: 0 0 0.6rem;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--color-anthracite);
-}
+/* ── Sidebar description list ────────────────────────────────────────────── */
 
 .tile-dl {
     margin: 0.5rem 0 0;
@@ -574,7 +572,8 @@ button.btn-sol:hover,
 }
 
 .tile-bar-wrap {
-    height: 8px;
+    position: relative;
+    height: 0.5rem;
     background: #eee;
     border-radius: 4px;
     overflow: hidden;
@@ -586,14 +585,58 @@ button.btn-sol:hover,
     transition: width 0.3s ease;
 }
 
-.tile-bar--status {
-    background: #e74c3c;
-}
-.tile-bar--ap {
-    background: #27ae60;
-}
 .tile-bar--resource {
     background: #2196f3;
+}
+
+/* Segmented progress strip embedded in the bottom edge of an action button
+   (condition-bar + ap-bar partials). One segment per status point / per AP step;
+   the gaps reveal the button background as notches. The value lives in the
+   button label, so the strip carries no text of its own. */
+.btn-segbar {
+    position: absolute;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.32rem;
+    display: flex;
+    gap: 2px;
+    height: 0.28rem;
+    pointer-events: none;
+}
+
+.btn-seg {
+    flex: 1 1 0;
+    min-width: 0;
+    border-radius: 1px;
+    transition: background 0.15s ease;
+}
+
+/* On the red Reparieren button: white fill, faint white empty track. */
+.btn-segbar--status .btn-seg {
+    background: rgba(255, 255, 255, 0.28);
+}
+.btn-segbar--status .btn-seg--filled {
+    background: #fff;
+}
+
+/* On the Ausbauen button (secondary white, or red primary when no repair is
+   pending): green fill reads on both; neutral translucent empty track. */
+.btn-segbar--ap .btn-seg {
+    background: rgba(0, 0, 0, 0.14);
+}
+.btn-segbar--ap .btn-seg--filled {
+    background: #27ae60;
+}
+
+/* Desktop-only +1 hover preview: the next segment lights up faintly. Gated to
+   (hover: hover) so a tap on touch can never leave a ghost segment stuck on. */
+@media (hover: hover) and (pointer: fine) {
+    .btn-segbar--status .btn-seg--ghost {
+        background: rgba(255, 255, 255, 0.62);
+    }
+    .btn-segbar--ap .btn-seg--ghost {
+        background: rgba(39, 174, 96, 0.5);
+    }
 }
 
 /* ── Shared building detail partial (.building-detail-*) ─────────────────── */
@@ -689,6 +732,14 @@ button.btn-sol:hover,
 
 .tile-action-btn:hover:not(:disabled) {
     background: #a93226;
+}
+
+/* Button carrying an embedded segmented progress strip (.btn-segbar) at its
+   bottom edge: positioned context + extra bottom padding so the label clears
+   the strip. */
+.tile-action-btn--barred {
+    position: relative;
+    padding-bottom: 0.8rem;
 }
 
 /* Label column (single- or two-line: main + cost/effect hint) */

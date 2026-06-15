@@ -24,15 +24,11 @@ return [
     // ── Sidebar labels ────────────────────────────────────────────────────────
 
     'tile_info' => 'Tile-Info',
-    'tab_building' => 'Gebäude',
-    'tab_terrain' => 'Terrain',
+    'terrain_details' => 'Terrain & Standort',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',
     'under_construction' => 'Im Bau',
-    'max_level' => 'Max. Stufe',
-    'condition' => 'Zustand',
-    'ap_invested' => 'AP investiert',
     'resource_regolith' => 'Regolith',
 
     // ── Status chips ──────────────────────────────────────────────────────────

@@ -98,10 +98,6 @@ function colonyHexView(config) {
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
         selectedTile: null,
-        tileTab: 'building', // tile-info sidebar: 'building' | 'terrain'
-        _tabTileKey: null, // coords of the tile the tab state belongs to
-        _panelX0: 0, // touch start X for panel swipe
-        _panelY0: 0,
         buildMode: false,
         pendingBuilding: null,
         availableBuildings: [],
@@ -338,12 +334,6 @@ function colonyHexView(config) {
             return building.status_points < maxSp;
         },
 
-        conditionPct(building) {
-            if (!building) return 0;
-            const maxSp = building.max_status_points ?? 20;
-            return Math.round((building.status_points / maxSp) * 100);
-        },
-
         // Percent gained per repair click (1 status point as % of max).
         repairStepPct(building) {
             const maxSp = building?.max_status_points ?? 20;
@@ -525,32 +515,6 @@ function colonyHexView(config) {
             return TILE_LABELS[tile.tile_type] ?? tile.tile_type;
         },
 
-        // Reset the sidebar tab to "Gebäude" when a *different* tile is
-        // selected. Compares coords so same-tile refreshes (e.g. after a
-        // repair click re-assigns selectedTile) keep the chosen tab.
-        onTilePanel() {
-            const t = this.selectedTile;
-            if (!t) return;
-            const key = `${t.q},${t.r}`;
-            if (key === this._tabTileKey) return;
-            this._tabTileKey = key;
-            this.tileTab = this.buildingForTile(t) ? 'building' : 'terrain';
-        },
-
-        panelTouchStart(e) {
-            this._panelX0 = e.touches[0].clientX;
-            this._panelY0 = e.touches[0].clientY;
-        },
-
-        // Horizontal swipe flips the tab (only meaningful when both tabs exist).
-        panelTouchEnd(e) {
-            if (!this.selectedTile || !this.buildingForTile(this.selectedTile)) return;
-            const dx = e.changedTouches[0].clientX - this._panelX0;
-            const dy = e.changedTouches[0].clientY - this._panelY0;
-            if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-            this.tileTab = dx < 0 ? 'terrain' : 'building';
-        },
-
         tileTypeName(type) {
             return TILE_LABELS[type] ?? type;
         },
@@ -604,11 +568,6 @@ function colonyHexView(config) {
         },
 
         // AP invested towards the next level, as a percentage.
-        apProgressPct(building) {
-            if (!building || !building.ap_for_levelup) return 0;
-            return Math.round((building.ap_spend / building.ap_for_levelup) * 100);
-        },
-
         // Remaining tile resource (regolith), as a percentage of its maximum.
         resourcePct(tile) {
             if (!tile || !tile.resource_max) return 0;
