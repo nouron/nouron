@@ -85,7 +85,7 @@ class ColonyController extends BaseController
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
         $trust = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
-        $currentSol = max(1, $globalTick - (int) $colony->since_tick + 1);
+        $currentSol = $this->currentSol();
         $solLimit = (int) config('game.run.tick_limit', 100);
 
         $merchantVisit = $this->merchantService->getActiveVisit($colony->id, $globalTick);

@@ -321,7 +321,9 @@ return [
         // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing)
         'hint_no_cantina_after_tick' => 8,
 
-        // Minimum Sol before CC-upgrade hint (hint_3) fires — player needs time to gather AP
-        'hint_cc_upgrade_after_tick' => 2,
+        // Minimum current_tick before CC-upgrade hint (hint_3) fires. 1 = Sol 2
+        // (Sol = current_tick + 1) — surfaces right after the first "Sol beenden",
+        // so Sol 2 does not fall into the same hint void Sol 1 had.
+        'hint_cc_upgrade_after_tick' => 1,
     ],
 ];

@@ -5,8 +5,11 @@ namespace App\Services;
 /**
  * TickService — manages the current game tick.
  *
- * The game advances in ticks (one per day). The tick number is calculated
- * from the Unix timestamp, anchored to the daily calculation window
+ * In an active run the canonical clock is the run's current_tick (advanced only
+ * by the player via "Sol beenden"). The service is request-scoped and bound in
+ * AppServiceProvider to the authenticated user's active run. Outside a run
+ * (lobby, console fallback) it falls back to a time-based tick derived from the
+ * Unix timestamp, anchored to the daily calculation window
  * (configured via config/game.php → tick.calculation.end).
  */
 class TickService
@@ -19,7 +22,7 @@ class TickService
     {
         $this->config = config('game.tick');
 
-        if ($tick !== null && $tick > 0) {
+        if ($tick !== null && $tick >= 0) {
             $this->tick = $tick;
         } else {
             $this->tick = $this->calculateTickFromTimestamp(time());
@@ -39,7 +42,7 @@ class TickService
      */
     public function setTickCount(int $tick): void
     {
-        if ($tick > 0) {
+        if ($tick >= 0) {
             $this->tick = $tick;
         }
     }

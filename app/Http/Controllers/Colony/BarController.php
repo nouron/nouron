@@ -33,7 +33,7 @@ class BarController extends BaseController
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $tick = $this->tick->getTickCount();
-        $currentSol = max(1, $tick - (int) $colony->since_tick + 1);
+        $currentSol = $this->currentSol();
 
         $barLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)

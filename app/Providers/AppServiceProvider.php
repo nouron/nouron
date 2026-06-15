@@ -116,13 +116,16 @@ class AppServiceProvider extends ServiceProvider
                 }
                 $view->with('resourceBarPossessions', $possessions ?? []);
 
-                // Inject Sol run-progress for the resource bar Sol chip
-                $colony = DB::table('glx_colonies')->where('user_id', Auth::id())->where('is_primary', 1)->first();
-                $sinceTick = $colony ? (int) $colony->since_tick : null;
-                $tickService = app(TickService::class);
-                $globalTick = $tickService->getTickCount();
+                // Inject Sol run-progress for the resource bar Sol chip.
+                // The active run's current_tick is the canonical clock:
+                // run start (current_tick = 0) is "Sol 1".
+                $activeRunTick = Run::where('user_id', Auth::id())
+                    ->where('status', 'active')
+                    ->value('current_tick');
                 $solLimit = (int) config('game.run.tick_limit', 100);
-                $currentSol = $sinceTick !== null ? min($solLimit, max(1, $globalTick - $sinceTick + 1)) : null;
+                $currentSol = $activeRunTick !== null
+                    ? min($solLimit, max(1, (int) $activeRunTick + 1))
+                    : null;
 
                 $view->with('currentSol', $currentSol);
                 $view->with('solLimit', $solLimit);

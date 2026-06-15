@@ -149,10 +149,12 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->placeEngineer();
         $this->moveHarvesterOutside(); // silence hint 2
-        // Sol=0 → hint 3 (CC upgrade) below threshold → silent
-        $this->suppressLateHints();
+        $this->suppressLateHints();    // silence hints 4-6
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        // Hint 1 is silent; with every Sol-1 action done at tick 0 the rank-9
+        // bridge hint ("Sol beenden") is now the active floor (was: null void).
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     // ── Urgent repair hint: building near level-down ─────────────────────────
@@ -204,8 +206,9 @@ class OnboardingHintServiceTest extends TestCase
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
-        // Buildings are otherwise full → no repair hint of either kind.
-        $this->assertNull($hint);
+        // Buildings are otherwise full → no repair hint of either kind; the level-0
+        // building is ignored. The rank-9 bridge hint fills the otherwise-empty bar.
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     // ── Repair hint: any building below max status ───────────────────────────
@@ -243,12 +246,13 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_repair_hint_silent_when_all_buildings_full(): void
     {
-        // Baseline buildings are full (20/20) → repair hint silent.
+        // Baseline buildings are full (20/20) → repair hint silent; bridge hint shows.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     public function test_repair_hint_yields_to_missing_engineer(): void
@@ -279,11 +283,12 @@ class OnboardingHintServiceTest extends TestCase
     public function test_hint_2_silent_when_harvester_outside_colony_zone(): void
     {
         $this->placeEngineer();
-        $this->moveHarvesterOutside(); // tile (2,0) = colony_zone=0
-        // Sol=0 → hint 3 threshold not met → silent
+        $this->moveHarvesterOutside(); // tile (3,0) = colony_zone=0
         $this->suppressLateHints();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        // Hint 2 silent; Sol-1 done at tick 0 → rank-9 bridge hint is the floor.
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     public function test_hint_2_silent_when_no_harvester_placed(): void
@@ -294,10 +299,11 @@ class OnboardingHintServiceTest extends TestCase
             ->update(['tile_x' => null, 'tile_y' => null]);
 
         $this->placeEngineer();
-        // Sol=0 → hint 3 silent
         $this->suppressLateHints();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        // Hint 2 silent (no harvester tile); bridge hint fills the bar at tick 0.
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     // ── Hint 3: CC level < 2 (fires from Sol 2) ──────────────────────────────
@@ -319,10 +325,12 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        // Sol stays at 0 (below threshold of 2)
+        // Sol stays at 0 (current_tick < gate of 1) → hint 3 silent
         $this->suppressLateHints();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        // Hint 3 silent before Sol 2; the rank-9 bridge hint is the active floor.
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     public function test_hint_3_silent_when_cc_level_2(): void
@@ -334,6 +342,39 @@ class OnboardingHintServiceTest extends TestCase
         $this->suppressLateHints();
 
         $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+    }
+
+    // ── Bridge hint: "Sol beenden" (rank 9, Sol-1 only) ──────────────────────
+
+    public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
+    {
+        // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full,
+        // nothing tick-gated active → the bridge hint tells the player to end the Sol.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(9, $hint['rank']);
+        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('colony.onboarding_end_sol', $hint['text_key']);
+    }
+
+    public function test_end_sol_bridge_hint_self_clears_after_sol_advance(): void
+    {
+        // Same Sol-1 state but one Sol later (current_tick 1): the bridge hint is
+        // Sol-1-only and self-clears; hint_3 (CC upgrade, gate now 1) takes over.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->setRunTick(1);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_3', $hint['key']); // CC still level 1 → upgrade hint
     }
 
     // ── Rank priority ─────────────────────────────────────────────────────────
