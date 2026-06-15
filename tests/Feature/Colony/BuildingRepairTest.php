@@ -111,6 +111,20 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(self::CC_MAX_SP, (int) $this->ccRow()->status_points);
     }
 
+    public function test_repair_dismisses_teaching_hint_after_first_click(): void
+    {
+        $this->setCcState(['status_points' => 16]);
+
+        $this->repair()->assertJsonPath('ok', true);
+
+        $dismissed = json_decode(
+            DB::table('user_preferences')->where('user_id', self::BART_USER_ID)->value('dismissed_hints') ?? '[]',
+            true
+        );
+        $this->assertContains('hint_repair', $dismissed, 'First repair must dismiss the teaching repair hint');
+        $this->assertNotContains('hint_repair_urgent', $dismissed, 'Urgent repair hint must never be auto-dismissed');
+    }
+
     // ── Gates ─────────────────────────────────────────────────────────────────
 
     public function test_repair_rejected_when_fully_intact(): void

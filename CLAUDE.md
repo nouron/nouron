@@ -14,7 +14,7 @@
 
 **Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Trust-System (Vertrauen), Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
 
-**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), Cantina-Redesign (Bar-Hintergrund + NPC-Charaktere geplant).
+**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow). Cantina-Redesign abgeschlossen (Bar-Hintergrund `cantina-interior.webp` + NPC-Charaktere via `config('characters')` + Hotspot-Portraits).
 
 ## Wichtige Korrekturen
 

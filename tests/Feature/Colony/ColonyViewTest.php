@@ -43,14 +43,14 @@ class ColonyViewTest extends TestCase
         $response->assertSee('colonyHexView(window.__colonyViewData)', false);
     }
 
-    public function test_hexview_contains_sidebar_tab_and_repair_wiring(): void
+    public function test_hexview_contains_sidebar_and_repair_wiring(): void
     {
         $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
             ->get(route('colony.view'));
 
         $response->assertOk();
-        // Sidebar tab container + both action endpoints are wired into the page.
-        $response->assertSee('tile-tab-body', false);
+        // Sidebar context-title header + both action endpoints are wired into the page.
+        $response->assertSee('tile-panel-title', false);
         $response->assertSee(route('colony.building.repair'), false);
         $response->assertSee(route('colony.building.invest'), false);
     }

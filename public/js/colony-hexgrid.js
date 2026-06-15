@@ -85,6 +85,7 @@ function colonyHexView(config) {
         tiles: config.tiles,
         colony: config.colony,
         ccLevel: config.ccLevel,
+        ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
@@ -97,10 +98,6 @@ function colonyHexView(config) {
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
         selectedTile: null,
-        tileTab: 'building', // tile-info sidebar: 'building' | 'terrain'
-        _tabTileKey: null, // coords of the tile the tab state belongs to
-        _panelX0: 0, // touch start X for panel swipe
-        _panelY0: 0,
         buildMode: false,
         pendingBuilding: null,
         availableBuildings: [],
@@ -158,8 +155,13 @@ function colonyHexView(config) {
 
         onTileClick(tile) {
             // Harvester move mode: clicking a valid target triggers the move.
+            // Clicking anything else gives feedback instead of failing silently.
             if (this.harvesterMoveMode) {
-                if (this.isHarvesterTarget(tile)) this.doMoveHarvester(tile);
+                if (this.isHarvesterTarget(tile)) {
+                    this.doMoveHarvester(tile);
+                } else {
+                    this.showToast(this.i18n.harvesterMoveInvalidTarget, 'info');
+                }
                 return;
             }
             if (this.buildMode && this.pendingBuilding) {
@@ -332,12 +334,6 @@ function colonyHexView(config) {
             return building.status_points < maxSp;
         },
 
-        conditionPct(building) {
-            if (!building) return 0;
-            const maxSp = building.max_status_points ?? 20;
-            return Math.round((building.status_points / maxSp) * 100);
-        },
-
         // Percent gained per repair click (1 status point as % of max).
         repairStepPct(building) {
             const maxSp = building?.max_status_points ?? 20;
@@ -394,11 +390,17 @@ function colonyHexView(config) {
             if (!hv) return;
             const oldPos = hv.tile_x !== null ? this._tilePositions.get(`${hv.tile_x},${hv.tile_y}`) : null;
             const newPos = this._tilePositions.get(`${tile.q},${tile.r}`);
-            const res = await this.post(this.routes.placeBuilding, {
-                building_id: hv.building_id,
-                q: tile.q,
-                r: tile.r,
-            });
+            let res;
+            try {
+                res = await this.post(this.routes.placeBuilding, {
+                    building_id: hv.building_id,
+                    q: tile.q,
+                    r: tile.r,
+                });
+            } catch {
+                this.showToast(this.i18n.networkError ?? 'Network error.', 'error');
+                return;
+            }
             if (res.ok) {
                 this.updateBuilding(res.building);
                 this.harvesterMoveMode = false;
@@ -513,32 +515,6 @@ function colonyHexView(config) {
             return TILE_LABELS[tile.tile_type] ?? tile.tile_type;
         },
 
-        // Reset the sidebar tab to "Gebäude" when a *different* tile is
-        // selected. Compares coords so same-tile refreshes (e.g. after a
-        // repair click re-assigns selectedTile) keep the chosen tab.
-        onTilePanel() {
-            const t = this.selectedTile;
-            if (!t) return;
-            const key = `${t.q},${t.r}`;
-            if (key === this._tabTileKey) return;
-            this._tabTileKey = key;
-            this.tileTab = this.buildingForTile(t) ? 'building' : 'terrain';
-        },
-
-        panelTouchStart(e) {
-            this._panelX0 = e.touches[0].clientX;
-            this._panelY0 = e.touches[0].clientY;
-        },
-
-        // Horizontal swipe flips the tab (only meaningful when both tabs exist).
-        panelTouchEnd(e) {
-            if (!this.selectedTile || !this.buildingForTile(this.selectedTile)) return;
-            const dx = e.changedTouches[0].clientX - this._panelX0;
-            const dy = e.changedTouches[0].clientY - this._panelY0;
-            if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx)) return;
-            this.tileTab = dx < 0 ? 'terrain' : 'building';
-        },
-
         tileTypeName(type) {
             return TILE_LABELS[type] ?? type;
         },
@@ -574,7 +550,7 @@ function colonyHexView(config) {
         buildingForTile(tile) {
             if (!tile) return null;
             if (tile.q === 0 && tile.r === 0) {
-                return this.buildings.find((b) => b.building_id === 25) ?? null;
+                return this.buildings.find((b) => b.building_id === this.ccBuildingId) ?? null;
             }
             return this.buildings.find((b) => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
         },
@@ -592,11 +568,6 @@ function colonyHexView(config) {
         },
 
         // AP invested towards the next level, as a percentage.
-        apProgressPct(building) {
-            if (!building || !building.ap_for_levelup) return 0;
-            return Math.round((building.ap_spend / building.ap_for_levelup) * 100);
-        },
-
         // Remaining tile resource (regolith), as a percentage of its maximum.
         resourcePct(tile) {
             if (!tile || !tile.resource_max) return 0;
@@ -916,28 +887,28 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
     }
 
-    // Onboarding pulse ring — drawn behind the fill polygon
-    const hintRank = opts.activeHint?.rank ?? 0;
+    // Onboarding pulse ring — drawn behind the fill polygon.
+    // Keyed off the hint KEY (not rank) so re-ordering hints never desyncs the pulse.
+    const hintKey = opts.activeHint?.key ?? '';
 
-    // Rank 1: buildable colony-zone tile (guide first building placement)
-    const isPulseRank1 =
-        hintRank === 1 &&
-        tile.is_colony_zone &&
-        tile.is_explored &&
-        tile.tile_type.startsWith('terrain_') &&
-        tile.tile_type !== 'terrain_impassable' &&
-        !buildingsByTile?.has(`${tile.q},${tile.r}`);
+    // hint_repair: any building below max status points (guide repair).
+    const isPulseRepair = hintKey === 'hint_repair' && building && building.status_points < building.max_status_points;
 
-    // Rank 2: Harvester tile in colony zone (guide relocation)
-    const isPulseRank2 = hintRank === 2 && building?.building_key === 'building_harvester';
+    // hint_repair_urgent: building near level-down (<=15% status, mirrors the
+    // server-side hint_repair_urgent_sp=3 of 20 threshold) — pulse the critical one.
+    const isPulseRepairUrgent =
+        hintKey === 'hint_repair_urgent' && building && building.status_points <= building.max_status_points * 0.15;
 
-    // Rank 3: CC tile (guide upgrade)
-    const isPulseRank3 = hintRank === 3 && tile.q === 0 && tile.r === 0;
+    // hint_2: Harvester tile in colony zone (guide relocation).
+    const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
-    // Harvester current position highlight while in move mode
+    // hint_3: CC tile (guide upgrade).
+    const isPulseCc = hintKey === 'hint_3' && tile.q === 0 && tile.r === 0;
+
+    // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';
 
-    const shouldPulse = isPulseRank1 || isPulseRank2 || isPulseRank3 || isHarvesterCurrent;
+    const shouldPulse = isPulseRepair || isPulseRepairUrgent || isPulseHarvester || isPulseCc || isHarvesterCurrent;
 
     if (shouldPulse) {
         const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

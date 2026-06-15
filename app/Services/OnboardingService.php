@@ -128,8 +128,9 @@ class OnboardingService
     private function seedStartingBuilding(int $colonyId): void
     {
         // All three start at level 1 but with reduced status (16/20 = 80%) —
-        // functional but visibly damaged. Repair mechanic is a future feature;
-        // natural decay will make repair critical within 5-10 Sols.
+        // functional but visibly damaged. Player repairs them via the Reparieren
+        // button (1 Construction-AP per click); natural decay makes repair
+        // critical within 5-10 Sols.
         DB::table('colony_buildings')->insert([
             [
                 'colony_id' => $colonyId,

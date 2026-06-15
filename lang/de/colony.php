@@ -24,15 +24,11 @@ return [
     // ── Sidebar labels ────────────────────────────────────────────────────────
 
     'tile_info' => 'Tile-Info',
-    'tab_building' => 'Gebäude',
-    'tab_terrain' => 'Terrain',
+    'terrain_details' => 'Terrain & Standort',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',
     'under_construction' => 'Im Bau',
-    'max_level' => 'Max. Stufe',
-    'condition' => 'Zustand',
-    'ap_invested' => 'AP investiert',
     'resource_regolith' => 'Regolith',
 
     // ── Status chips ──────────────────────────────────────────────────────────
@@ -60,6 +56,8 @@ return [
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
     'onboarding_hint_1' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
+    'onboarding_hint_repair' => 'Deine Startgebäude sind beschädigt — tippe ein Gebäude an und nutze „Reparieren" (1 Bau-AP), um die Substanz zu sichern.',
+    'onboarding_hint_repair_urgent' => 'Ein Gebäude steht kurz vor dem Stufenverlust — jetzt mit dem Reparieren-Button (Bau-AP) sichern.',
     'onboarding_hint_2' => 'Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen.',
     'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
@@ -74,16 +72,8 @@ return [
 
     // ── Onboarding — Inline-Trigger-Erklärungen ───────────────────────────────
 
-    // Trigger 1 — Decay (INNN-Event, event_type = 'onboarding_decay')
-    'onboarding_trigger_decay_title' => 'Strukturverfall gemeldet',
-    'onboarding_trigger_decay_body' => 'Gebäude verlieren ohne Wartung schrittweise Stabilität. Sinken die Statuswerte auf null, fällt das Gebäude eine Stufe zurück. Bau-AP in den Erhalt investieren.',
-
     // Trigger 2 — Supply-Cap voll (UI-Banner, 1 Satz)
     'onboarding_trigger_supply_full' => 'Versorgungskapazität erschöpft — weitere Gebäude oder Schiffe können nicht zugewiesen werden. Wohnhabitat ausbauen oder Verbraucher abbauen.',
-
-    // Trigger 3 — Vertrauen negativ (INNN-Event, event_type = 'onboarding_trust')
-    'onboarding_trigger_trust_title' => 'Vertrauen im negativen Bereich',
-    'onboarding_trigger_trust_body' => 'Sinkendes Vertrauen drückt die Produktion der Kolonie. Ursache ist meist schlechte Moral — Zivilgebäude stabilisieren den Wert.',
 
     // Trigger 4 — AP-Limit (Tooltip)
     'onboarding_trigger_ap_limit' => 'Keine Bau-AP mehr in diesem Sol verfügbar.',
@@ -107,6 +97,8 @@ return [
     'harvester_move' => 'Verlegen',
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone auswählen — 1 Bau-AP pro Hex-Distanz.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',
+    'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
+    'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
     'error_harvester_in_transit' => 'Der Harvester ist noch unterwegs — Verlegen erst nach Ankunft möglich.',
     'harvester_in_transit' => 'Unterwegs — Ankunft nächsten Sol.',
     'error_tile_occupied' => 'Tile bereits belegt.',
