@@ -156,6 +156,13 @@ class OnboardingHintService
                 'text_key' => 'colony.onboarding_hint_6',
                 'target_url' => '/colony/view?build=52',
             ],
+            [
+                'rank' => 9,
+                'key' => 'hint_end_sol',
+                'active' => $this->checkHintEndSol($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_end_sol',
+                'target_url' => '/colony/view',
+            ],
         ];
     }
 
@@ -212,6 +219,36 @@ class OnboardingHintService
             ->where('colony_buildings.level', '>=', 1) // level 0 = under construction, not repairable
             ->whereColumn('colony_buildings.status_points', '<', 'buildings.max_status_points')
             ->exists();
+    }
+
+    /**
+     * Bridge hint (rank 9, lowest): in Sol 1 the player has done all completable
+     * Sol-1 actions but every forward hint (hint_3..6) is still tick-gated, so the
+     * hint bar would be empty and a new player does not know that "Sol beenden" is
+     * the next step (it refreshes AP and advances the run).
+     *
+     * Active only while current_tick === 0 (Sol 1) — self-clearing, never written to
+     * dismissed_hints: it disappears automatically after the first "Sol beenden".
+     * Requires the Sol-1 to-dos to be cleared (engineer hired, Harvester relocated,
+     * no urgent repair) so it never pre-empts a real action. Deliberately does NOT
+     * gate on hint_repair: repairing all three starting buildings exceeds one Sol's
+     * AP budget, so waiting for it would suppress the bridge hint indefinitely —
+     * hint_repair is higher-ranked and wins as long as the player can still repair.
+     */
+    private function checkHintEndSol(int $colonyId, int $currentTick): bool
+    {
+        if ($currentTick !== 0) {
+            return false;
+        }
+
+        // Defensive: if the CC-upgrade gate ever drops to 0, let hint_3 take over.
+        if ($currentTick >= (int) config('game.onboarding.hint_cc_upgrade_after_tick', 1)) {
+            return false;
+        }
+
+        return ! $this->checkHint1($colonyId)
+            && ! $this->checkHint2($colonyId)
+            && ! $this->checkHintRepairUrgent($colonyId);
     }
 
     /**
