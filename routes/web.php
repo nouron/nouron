@@ -121,6 +121,7 @@ Route::middleware(['auth', 'run.started'])->prefix('advisors')->name('advisors.'
 
 Route::middleware('auth')->post('/sol/next', [SolController::class, 'next'])->name('sol.next');
 Route::middleware('auth')->get('/sol/remaining-ap', [SolController::class, 'remainingAp'])->name('sol.remaining-ap');
+Route::middleware('auth')->post('/sol/report-skip', [SolController::class, 'updateReportSkip'])->name('sol.report-skip');
 
 // ── Nexus Database (static reference) ────────────────────────────────────────
 

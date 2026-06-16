@@ -16,7 +16,7 @@ namespace Tests\Feature;
  *    - test_returns_404_when_run_is_failed
  *
  *  HAPPY PATH
- *    - test_increments_current_tick_and_redirects_with_flash
+ *    - test_increments_current_tick_and_returns_report_json
  *    - test_run_with_zero_tick_increments_to_one
  *    - test_multiple_posts_increment_tick_sequentially
  *    - test_only_active_run_is_advanced_when_mixed_statuses_exist
@@ -191,11 +191,10 @@ class SolControllerTest extends TestCase
     /**
      * Successful Sol trigger:
      *   - current_tick is incremented by exactly 1 in the DB
-     *   - response redirects back (302)
-     *   - flash 'sol_advanced' equals the new tick value
+     *   - response is the Sol-Report JSON (200) with completed_sol = new tick
      *   - game:tick stub is satisfied without polluting other DB state
      */
-    public function test_increments_current_tick_and_redirects_with_flash(): void
+    public function test_increments_current_tick_and_returns_report_json(): void
     {
         $this->fakeGameTick();
 
@@ -207,8 +206,8 @@ class SolControllerTest extends TestCase
             ->from('/colony')
             ->post(route('sol.next'));
 
-        $response->assertRedirect('/colony');
-        $response->assertSessionHas('sol_advanced', 6);
+        $response->assertOk();
+        $response->assertJsonPath('completed_sol', 6);
 
         $this->assertDatabaseHas('runs', [
             'id' => $run->id,
@@ -232,8 +231,8 @@ class SolControllerTest extends TestCase
             ->from('/colony')
             ->post(route('sol.next'));
 
-        $response->assertRedirect('/colony');
-        $response->assertSessionHas('sol_advanced', 1);
+        $response->assertOk();
+        $response->assertJsonPath('completed_sol', 1);
 
         $this->assertDatabaseHas('runs', [
             'id' => $run->id,
@@ -279,7 +278,7 @@ class SolControllerTest extends TestCase
             ->from('/colony')
             ->post(route('sol.next'));
 
-        $response->assertSessionHas('sol_advanced', 6);
+        $response->assertOk();
 
         $this->assertDatabaseHas('runs', ['id' => $activeRun->id,    'current_tick' => 6]);
         $this->assertDatabaseHas('runs', ['id' => $completedRun->id, 'current_tick' => 50]);

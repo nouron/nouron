@@ -1579,6 +1579,281 @@ dialog[x-ref="discoveryDialog"] {
         transform: rotate(360deg);
     }
 }
+/* Spinner used by the short bridging loader before the report opens */
+.sol-spinner {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0.25rem solid rgba(255, 255, 255, 0.25);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: sol-spin 0.9s linear infinite;
+}
+
+/* ── Sol-Report overlay ────────────────────────────────────────────────── */
+.sol-overlay--report {
+    background: rgba(26, 26, 30, 0.78);
+    backdrop-filter: blur(3px);
+    padding: 1rem;
+    overflow-y: auto;
+}
+.sol-report {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
+    width: 100%;
+    max-width: 34rem;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    cursor: pointer;
+}
+.sol-report__header {
+    padding: 1.5rem 2rem 0.75rem;
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
+}
+.sol-report__title {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 1.15rem;
+    color: var(--color-text-primary, #1a1a1e);
+    margin: 0;
+}
+.sol-report__groups {
+    padding: 0.5rem 2rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+}
+.sol-report__group {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
+    animation: sol-group-in 0.25s ease both;
+}
+.sol-report__group:last-child {
+    border-bottom: none;
+}
+@keyframes sol-group-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.75rem) scale(0.99);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+.sol-report__group-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #6b6b7a);
+    margin: 0 0 0.6rem;
+}
+.sol-report__group-title .bi {
+    font-size: 1rem;
+    color: var(--color-accent, #8c2030);
+}
+.sol-report__lines {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.sol-report__line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.9rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 5px;
+    color: var(--color-text-primary, #1a1a1e);
+}
+.sol-report__label {
+    color: var(--color-text-primary, #1a1a1e);
+}
+.sol-report__value {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+.sol-report__counter {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.sol-report__detail {
+    font-weight: 600;
+}
+
+/* Tone colors — aligned with res-chip / advisor semantic palette */
+.sol-report__line--good .sol-report__detail,
+.sol-report__line--good .sol-report__counter {
+    color: #2e7d32;
+}
+.sol-report__line--warning .sol-report__detail,
+.sol-report__line--warning .sol-report__counter {
+    color: #7a5500;
+}
+.sol-report__line--danger .sol-report__detail,
+.sol-report__line--danger .sol-report__counter {
+    color: var(--color-accent, #8c2030);
+}
+.sol-report__line--neutral .sol-report__detail {
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+/* Beat highlights — emotional moments */
+.sol-report__line--beat {
+    padding-top: 0.45rem;
+    padding-bottom: 0.45rem;
+}
+.sol-report__line--good.sol-report__line--beat {
+    background: #f2faf3;
+    box-shadow:
+        inset 0 0 0 1px #cfe8d2,
+        0 0 0.75rem rgba(212, 160, 23, 0.18);
+}
+.sol-report__line--good.sol-report__line--beat .sol-report__detail,
+.sol-report__line--good.sol-report__line--beat .sol-report__counter {
+    color: #1f6b25;
+    text-shadow: 0 0 0.4rem rgba(212, 160, 23, 0.35);
+}
+.sol-report__line--warning.sol-report__line--beat {
+    background: #fef9e7;
+}
+.sol-report__line--danger.sol-report__line--beat {
+    background: #fdf0f2;
+    box-shadow: inset 0 0 0 1px #f0cdd4;
+}
+.sol-report__line--shake {
+    animation: sol-shake 0.15s ease-in-out 0s 2;
+}
+@keyframes sol-shake {
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-0.3rem);
+    }
+    75% {
+        transform: translateX(0.3rem);
+    }
+}
+
+.sol-report__footer {
+    padding: 1rem 2rem 1.5rem;
+    border-top: 1px solid var(--color-border, #e8e8ec);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.sol-report__skip-hint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    text-align: center;
+    margin: 0;
+    opacity: 0.8;
+}
+.sol-report__skip-setting {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #6b6b7a);
+    cursor: pointer;
+    margin: 0;
+}
+.sol-report__skip-setting input {
+    width: auto;
+    margin: 0;
+}
+.sol-report__continue {
+    align-self: stretch;
+    text-align: center;
+    font-size: 0.95rem;
+    padding: 0.6rem 1.1rem;
+}
+
+/* ── Sol-Report finale (run end) ───────────────────────────────────────── */
+.sol-report--finale {
+    align-items: center;
+    text-align: center;
+    padding: 2.5rem 2rem;
+    cursor: default;
+}
+.sol-finale__glyph {
+    font-size: 3rem;
+    line-height: 1;
+    margin-bottom: 1rem;
+}
+.sol-report--finale-win .sol-finale__glyph {
+    color: #d4a017;
+}
+.sol-report--finale-lose .sol-finale__glyph {
+    color: var(--color-accent, #8c2030);
+}
+.sol-finale__title {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-weight: 400;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 1.4rem;
+    color: var(--color-text-primary, #1a1a1e);
+    margin: 0 0 0.75rem;
+}
+.sol-finale__body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--color-text-secondary, #6b6b7a);
+    margin: 0 0 1.5rem;
+    max-width: 26rem;
+}
+.sol-finale__cta {
+    font-size: 0.95rem;
+    padding: 0.6rem 1.5rem;
+}
+
+@media (max-width: 30rem) {
+    .sol-report__header,
+    .sol-report__groups,
+    .sol-report__footer {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+    .sol-report__title {
+        font-size: 1rem;
+        letter-spacing: 0.12em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sol-report__group {
+        animation: none;
+    }
+    .sol-report__line--shake {
+        animation: none;
+    }
+    .sol-spinner {
+        animation-duration: 1.6s;
+    }
+}
 
 .bar-page {
     padding: 1.5rem 2rem 2rem;
