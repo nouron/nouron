@@ -188,4 +188,51 @@ return [
     'hangar_ship_freighter' => 'Frachter',
     'hangar_ship_corvette' => 'Korvette',
 
+    // ── Sol-Report (Übergangsscreen) ──────────────────────────────────────────
+
+    // Gruppentitel
+    'sol_report_group_decay' => 'Die Kolonie altert',
+    'sol_report_group_events' => 'Ereignisse',
+    'sol_report_group_production' => 'Produktion & Vorräte',
+    'sol_report_group_colony' => 'Kolonie & Personal',
+    'sol_report_group_run' => 'Der Run',
+
+    // Verfall
+    'sol_report_level_to' => 'auf Stufe :level gefallen',
+    'sol_report_level_lost' => 'Stufe verloren',
+    'sol_report_ship_destroyed' => 'durch Verfall zerstört',
+    'sol_report_wear_label' => 'Anlagen',
+    'sol_report_wear_detail' => 'halten — leichter Verschleiß',
+
+    // Ereignisse
+    'sol_report_event_merchant' => 'Reisender Händler im System',
+    'sol_report_event_encounter' => '{1} :count Konfrontation|[2,*] :count Konfrontationen',
+    'sol_report_event_fleet_arrived' => 'Flotte angekommen',
+
+    // Produktion
+    'sol_report_no_production' => 'Keine Produktion — Industriegebäude stillgelegt oder beschädigt.',
+
+    // Kolonie & Personal
+    'sol_report_advisor' => 'Berater',
+    'sol_report_advisor_promoted' => 'befördert zu Rang :rank',
+
+    // Run
+    'sol_report_phase_reached' => 'Phase :phase erreicht — neue Möglichkeiten verfügbar',
+    'sol_report_objectives' => 'Ziele erfüllt: :done / :total',
+    'sol_report_sol_counter' => 'Sol :sol von :limit',
+
+    // Finale (Run-Ende)
+    'sol_report_finale_win_title' => 'Mission erfüllt',
+    'sol_report_finale_win_body' => 'Die Kolonie hat ihr Ziel erreicht und besteht weiter — gegen die Entropie behauptet.',
+    'sol_report_finale_lose_title' => 'Mission gescheitert',
+    'sol_report_finale_lose_body' => 'Die Kolonie konnte sich nicht halten. Was bleibt, wird verzeichnet und übergeben.',
+
+    // UI-Steuertexte
+    'sol_report_title' => 'Sol :sol abgeschlossen',
+    'sol_report_continue' => 'Weiter zu Sol :sol',
+    'sol_report_skip_hint' => 'Tippen zum Überspringen',
+    'sol_report_skip_setting' => 'Sol-Report künftig automatisch überspringen',
+    'sol_report_finale_win_cta' => 'Run abschließen',
+    'sol_report_finale_lose_cta' => 'Run beenden',
+
 ];

@@ -339,8 +339,8 @@ INSERT INTO "trade_resources" VALUES(1,0,3,100,50,0);
 
 INSERT INTO "user_resources" VALUES(3,2700,18);
 
-INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL,NULL);
-INSERT OR REPLACE INTO "user_preferences" VALUES(2,1,1,NULL,NULL,NULL,NULL);
+INSERT OR REPLACE INTO "user_preferences" VALUES(1,0,1,NULL,NULL,NULL,NULL,0);
+INSERT OR REPLACE INTO "user_preferences" VALUES(2,1,1,NULL,NULL,NULL,NULL,0);
 
 -- Phase-based techtree grid positions (migration 2026_05_10_000001 — layout v2)
 -- Phase 1 (CC Lv1): housingComplex, harvester, bioFacility, engineer
@@ -375,7 +375,7 @@ UPDATE "researches" SET phase=3, "row"=4, "column"=3 WHERE id=96; -- knowledge_d
 UPDATE "buildings"  SET phase=4, "row"=1, "column"=2 WHERE id=32; -- temple
 -- Phase 5 (CC Lv5)
 UPDATE "buildings"  SET phase=5, "row"=1, "column"=2 WHERE id=50; -- monument
-INSERT OR REPLACE INTO "user_preferences" VALUES(3,3,1,NULL,NULL,NULL,NULL);
+INSERT OR REPLACE INTO "user_preferences" VALUES(3,3,1,NULL,NULL,NULL,NULL,0);
 
 -- Bar offers (migration 2026_05_14_000003)
 -- colony_id=1 (Springfield), expires_tick=9999999 (far future, always valid in tests)
