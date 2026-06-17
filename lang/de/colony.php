@@ -33,6 +33,18 @@ return [
     'legend_zone_fog' => 'Baubar, noch unerkundet — Bauen deckt auf',
     'legend_explore_fog' => 'Erkundungsziel — mit Navigations-AP aufdecken',
     'legend_regolith' => 'Regolith-Vorkommen',
+
+    // ── Sidebar: Terrain-/Zonen-Info ──────────────────────────────────────────
+    'zone_buildable' => 'Koloniezone — bebaubar',
+    'zone_soon' => 'Bald bebaubar (nächster Kommandozentralen-Ausbau)',
+    'zone_outside' => 'Außerhalb der Koloniezone',
+    'zone_unexplored' => 'Unerforscht — erkunden (Nav-AP)',
+    'terrain_label' => 'Terrain',
+    'event_label' => 'Phänomen',
+    'coords_label' => 'Koordinaten',
+    'hint_regolith_target' => 'Ziel für Harvester-Verlegung.',
+    'hint_hazard' => 'Gefahrenzone — Bauen riskant, erhöhter Verfall.',
+    'hint_impassable' => 'Unpassierbar — hier lässt sich nichts errichten.',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',

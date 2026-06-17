@@ -98,6 +98,23 @@ class ColonyZoneDecoupleTest extends TestCase
         );
     }
 
+    public function test_next_zone_keys_are_terrain_and_empty_at_max_level(): void
+    {
+        $svc = $this->app->make(ColonyTileService::class);
+
+        // The next CC charge only ever flags buildable terrain (never regolith/impassable).
+        foreach (array_keys($svc->nextZoneTileKeys(self::COLONY_ID, 1)) as $key) {
+            [$q, $r] = array_map('intval', explode(',', $key));
+            $tile = $this->tile($q, $r);
+            $this->assertNotNull($tile, "next-zone tile {$key} must exist");
+            $this->assertStringStartsWith('terrain_', $tile->tile_type);
+            $this->assertNotSame('terrain_impassable', $tile->tile_type);
+        }
+
+        // At max CC level there is no further charge → no "soon buildable" tiles.
+        $this->assertSame([], $svc->nextZoneTileKeys(self::COLONY_ID, 5));
+    }
+
     public function test_harvester_still_requires_explored_target(): void
     {
         // Unexplored regolith tile — harvester relocation must be refused.

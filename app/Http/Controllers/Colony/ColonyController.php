@@ -49,6 +49,16 @@ class ColonyController extends BaseController
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0;
 
+        // Flag the tiles the NEXT CC upgrade will actually claim ("soon buildable"),
+        // so the lock badge only marks real future colony zone — not every explored
+        // tile outside the zone (most of which the CC never reaches).
+        $nextZoneKeys = $this->tileService->nextZoneTileKeys($colony->id, $ccLevel);
+        $tiles = $tiles->map(function ($tile) use ($nextZoneKeys) {
+            $tile['next_zone'] = isset($nextZoneKeys[$tile['q'].','.$tile['r']]);
+
+            return $tile;
+        });
+
         $globalTick = $this->getTick();
 
         $buildings = DB::table('colony_buildings')
@@ -459,8 +469,17 @@ class ColonyController extends BaseController
 
         // CC level-up: recalculate colony zone and include updated tiles in response
         if ($leveledUp && $buildingId === BuildingId::CommandCenter->value) {
-            $this->tileService->assignColonyZone($colony->id, $row->level + 1);
-            $tiles = $this->tileService->getTilesForColony($colony->id)->values()->toArray();
+            $newCcLevel = $row->level + 1;
+            $this->tileService->assignColonyZone($colony->id, $newCcLevel);
+            $nextZoneKeys = $this->tileService->nextZoneTileKeys($colony->id, $newCcLevel);
+            $tiles = $this->tileService->getTilesForColony($colony->id)
+                ->map(function ($tile) use ($nextZoneKeys) {
+                    $tile['next_zone'] = isset($nextZoneKeys[$tile['q'].','.$tile['r']]);
+
+                    return $tile;
+                })
+                ->values()
+                ->toArray();
 
             return response()->json([
                 'ok' => true,

@@ -623,6 +623,70 @@ button.btn-sol:hover,
     border: 1px solid #90caf9;
 }
 
+/* ── Zone status line ────────────────────────────────────────────────────── */
+
+/* One plain-language sentence telling the player what they can do with the
+   selected tile. Coloured left border keys the four zone states to the same
+   palette the grid uses (buildable green, soon-buildable amber, fog slate). */
+.tile-zone-status {
+    margin-top: 0.75rem;
+}
+
+.tile-zone-line {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid #c0c4cc;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    background: #f5f6f8;
+    color: #4a4a55;
+}
+
+.tile-zone-line--buildable {
+    border-left-color: #2e7d32;
+    background: #edf6ed;
+    color: #2e7d32;
+}
+
+.tile-zone-line--soon {
+    border-left-color: #c08040;
+    background: #fbf3e9;
+    color: #8a5a20;
+}
+
+.tile-zone-line--outside {
+    border-left-color: #9aa4b8;
+    background: #f2f3f6;
+    color: #6b7180;
+}
+
+.tile-zone-line--fog {
+    border-left-color: #7f8aa0;
+    background: #eef0f5;
+    color: #5a6478;
+}
+
+/* ── Per-terrain hints ───────────────────────────────────────────────────── */
+
+.tile-terrain-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.tile-terrain-hint--regolith {
+    color: #1565c0;
+}
+
+.tile-terrain-hint--hazard {
+    color: #b45309;
+}
+
+.tile-terrain-hint--impassable {
+    color: #888;
+}
+
 /* ── Sidebar description list ────────────────────────────────────────────── */
 
 .tile-dl {

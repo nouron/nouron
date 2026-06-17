@@ -871,10 +871,10 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     polygon.setAttribute('stroke', stroke);
     polygon.setAttribute('stroke-width', isImpassable ? '0' : strokeW);
     // Dashed stroke signals a buildable-but-not-yet edge:
-    //  - explored terrain outside the colony zone ("soon buildable"), or
+    //  - next_zone tiles ("soon buildable" via the next CC upgrade), or
     //  - colony-zone fog (state 3: buildable but still undiscovered).
     const isZoneFog = !tile.is_explored && tile.is_colony_zone;
-    if ((tile.is_explored && !tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) || isZoneFog) {
+    if (tile.next_zone || isZoneFog) {
         polygon.setAttribute('stroke-dasharray', '4 3');
     }
     polygon._defaultStroke = stroke;
@@ -894,6 +894,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // Fog overlay + glyph (states 3 + 4). Skipped while this tile is an active
     // build/move target, so the highlight stays clean. The concrete tile_type is
     // never revealed under fog — only the fog kind (scout vs. buildable) shows.
+    // next_zone tiles get the padlock badge instead of a fog glyph (see below),
+    // so the hatch is still drawn but the "+"/"?" glyph is suppressed for them.
     const isFog = !tile.is_explored && !isImpassable;
     if (isFog && !isBuildTarget && !isHarvesterTarget) {
         // Diagonal mist hatch on top of the slate fill.
@@ -904,7 +906,9 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         hatch.setAttribute('pointer-events', 'none');
         g.appendChild(hatch);
 
-        if (tile.is_colony_zone) {
+        if (tile.next_zone) {
+            // Handled by the padlock badge below ("next CC upgrade unlocks this").
+        } else if (tile.is_colony_zone) {
             // State 3 — buildable but undiscovered: padlock-free build affordance.
             // A faint trowel/plus mark signals "you may build here (reveals on build)".
             g.appendChild(svgText(cx, cy + 0.5, '+', 13, 'rgba(255,255,255,0.82)', 700));
@@ -967,15 +971,12 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         g.appendChild(svgText(cx, cy, 'CC', 10, '#2e7d32', 700));
     }
 
-    // State 2: explored terrain outside the colony zone — "soon buildable",
-    // unlocked with the next Command-Center upgrade. A padlock glyph reads
-    // clearly as "locked for now" without the cryptic old "CC ↑" badge.
-    if (
-        tile.is_explored &&
-        !tile.is_colony_zone &&
-        tile.tile_type.startsWith('terrain_') &&
-        tile.tile_type !== 'terrain_impassable'
-    ) {
+    // "Soon buildable": the tiles the NEXT Command-Center upgrade adds to the
+    // colony zone — flagged server-side via tile.next_zone. The padlock reads as
+    // "locked for now, unlocks with the next CC upgrade". Shown on both explored
+    // and fogged next_zone tiles (overrides the fog glyph). Other explored terrain
+    // outside the zone gets no badge — the CC never reaches most of it.
+    if (tile.next_zone) {
         // Padlock body + shackle, drawn centred on the tile.
         const lockW = 11,
             lockH = 8;
