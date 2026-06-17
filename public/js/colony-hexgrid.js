@@ -48,10 +48,12 @@ const TILE_STROKES = {
 
 const CC_COLOR = '#7ec87e';
 const CC_STROKE = '#2e7d32';
-const FOG_COLOR = '#eceef1'; // unexplored colony zone — very light
-const FOG_STROKE = '#d4d8de';
-const LOCKED_COLOR = '#f2f3f5'; // unexplored exploration zone — almost white
-const LOCKED_STROKE = '#dddfe3';
+// Fog (state 3+4): clearly readable slate/blue-grey, distinct from the warm-grey
+// buildable terrain. Fog must stand out so the player sees what is still hidden.
+const FOG_COLOR = '#a9b2c4'; // unexplored colony zone (state 3) — buildable but hidden
+const FOG_STROKE = '#7f8aa0';
+const LOCKED_COLOR = '#9aa4b8'; // unexplored exploration zone (state 4) — scout target
+const LOCKED_STROKE = '#6f7a90';
 const EVENT_COLOR = '#e8d89a';
 const EVENT_STROKE = '#b09a40';
 
@@ -609,12 +611,9 @@ function colonyHexView(config) {
 // ── Tile helpers ──────────────────────────────────────────────────────────────
 
 function isBuildableTile(tile) {
-    return (
-        tile.is_colony_zone &&
-        tile.is_explored &&
-        tile.tile_type.startsWith('terrain_') &&
-        tile.tile_type !== 'terrain_impassable'
-    );
+    // Colony-zone grants build permission regardless of fog: building on a still-
+    // fogged zone tile is allowed and reveals it server-side (settle → see).
+    return tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable';
 }
 
 function isHarvesterTargetTile(tile, buildingsByTile) {
@@ -736,6 +735,8 @@ function initHexGrid(container, tiles, opts = {}) {
     svg.setAttribute('viewBox', `${panX} ${panY} ${svgW} ${svgH}`);
     svg.setAttribute('width', '100%');
     svg.style.display = 'block';
+
+    svg.appendChild(buildFogDefs());
 
     // Build pixel position map (needed for arrow + move animation)
     const tilePixelMap = new Map();
@@ -869,8 +870,11 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     const [stroke, strokeW] = getTileStroke(tile, isCC);
     polygon.setAttribute('stroke', stroke);
     polygon.setAttribute('stroke-width', isImpassable ? '0' : strokeW);
-    // Dashed stroke signals "explored but not yet colony zone"
-    if (tile.is_explored && !tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) {
+    // Dashed stroke signals a buildable-but-not-yet edge:
+    //  - next_zone tiles ("soon buildable" via the next CC upgrade), or
+    //  - colony-zone fog (state 3: buildable but still undiscovered).
+    const isZoneFog = !tile.is_explored && tile.is_colony_zone;
+    if (tile.next_zone || isZoneFog) {
         polygon.setAttribute('stroke-dasharray', '4 3');
     }
     polygon._defaultStroke = stroke;
@@ -885,6 +889,43 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
 
     if (opts.polygonMap) {
         opts.polygonMap.set(`${tile.q},${tile.r}`, polygon);
+    }
+
+    // Fog overlay + glyph (states 3 + 4). Skipped while this tile is an active
+    // build/move target, so the highlight stays clean. The concrete tile_type is
+    // never revealed under fog — only the fog kind (scout vs. buildable) shows.
+    // next_zone tiles get the padlock badge instead of a fog glyph (see below),
+    // so the hatch is still drawn but the "+"/"?" glyph is suppressed for them.
+    const isFog = !tile.is_explored && !isImpassable;
+    if (isFog && !isBuildTarget && !isHarvesterTarget) {
+        // Diagonal mist hatch on top of the slate fill.
+        const hatch = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        hatch.setAttribute('points', points.join(' '));
+        hatch.setAttribute('fill', 'url(#fog-hatch)');
+        hatch.setAttribute('stroke', 'none');
+        hatch.setAttribute('pointer-events', 'none');
+        g.appendChild(hatch);
+
+        if (tile.next_zone) {
+            // Handled by the padlock badge below ("next CC upgrade unlocks this").
+        } else if (tile.is_colony_zone) {
+            // State 3 — buildable but undiscovered: padlock-free build affordance.
+            // A faint trowel/plus mark signals "you may build here (reveals on build)".
+            g.appendChild(svgText(cx, cy + 0.5, '+', 13, 'rgba(255,255,255,0.82)', 700));
+            const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            ring.setAttribute('cx', cx);
+            ring.setAttribute('cy', cy);
+            ring.setAttribute('r', '7.5');
+            ring.setAttribute('fill', 'none');
+            ring.setAttribute('stroke', 'rgba(255,255,255,0.55)');
+            ring.setAttribute('stroke-width', '1.2');
+            ring.setAttribute('stroke-dasharray', '2 2');
+            ring.setAttribute('pointer-events', 'none');
+            g.appendChild(ring);
+        } else {
+            // State 4 — exploration target: inviting "?" glyph, the Nav-AP scout goal.
+            g.appendChild(svgText(cx, cy + 0.5, '?', 13, 'rgba(255,255,255,0.85)', 700));
+        }
     }
 
     // Onboarding pulse ring — drawn behind the fill polygon.
@@ -902,8 +943,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // hint_2: Harvester tile in colony zone (guide relocation).
     const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
-    // hint_3: CC tile (guide upgrade).
-    const isPulseCc = hintKey === 'hint_3' && tile.q === 0 && tile.r === 0;
+    // hint_3 / hint_cc_invest: CC tile (guide upgrade / pre-invest).
+    const isPulseCc = (hintKey === 'hint_3' || hintKey === 'hint_cc_invest') && tile.q === 0 && tile.r === 0;
 
     // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';
@@ -930,27 +971,34 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
         g.appendChild(svgText(cx, cy, 'CC', 10, '#2e7d32', 700));
     }
 
-    // "Not yet claimed" badge on explored terrain outside colony zone
-    if (
-        tile.is_explored &&
-        !tile.is_colony_zone &&
-        tile.tile_type.startsWith('terrain_') &&
-        tile.tile_type !== 'terrain_impassable'
-    ) {
-        const badgeW = 26,
-            badgeH = 11;
-        const bx = cx - badgeW / 2,
-            by = cy - badgeH / 2;
-        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        rect.setAttribute('x', bx);
-        rect.setAttribute('y', by);
-        rect.setAttribute('width', badgeW);
-        rect.setAttribute('height', badgeH);
-        rect.setAttribute('rx', '3');
-        rect.setAttribute('fill', 'rgba(100,100,120,0.45)');
-        rect.setAttribute('pointer-events', 'none');
-        g.appendChild(rect);
-        g.appendChild(svgText(cx, by + badgeH / 2 + 0.5, 'CC ↑', 7, '#eee', 600));
+    // "Soon buildable": the tiles the NEXT Command-Center upgrade adds to the
+    // colony zone — flagged server-side via tile.next_zone. The padlock reads as
+    // "locked for now, unlocks with the next CC upgrade". Shown on both explored
+    // and fogged next_zone tiles (overrides the fog glyph). Other explored terrain
+    // outside the zone gets no badge — the CC never reaches most of it.
+    if (tile.next_zone) {
+        // Padlock body + shackle, drawn centred on the tile.
+        const lockW = 11,
+            lockH = 8;
+        const lx = cx - lockW / 2,
+            ly = cy - lockH / 2 + 1;
+        const body = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        body.setAttribute('x', lx);
+        body.setAttribute('y', ly);
+        body.setAttribute('width', lockW);
+        body.setAttribute('height', lockH);
+        body.setAttribute('rx', '1.5');
+        body.setAttribute('fill', 'rgba(60,66,82,0.78)');
+        body.setAttribute('pointer-events', 'none');
+        const shackle = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const sr = 3.2;
+        shackle.setAttribute('d', `M ${cx - sr} ${ly} v -2 a ${sr} ${sr} 0 0 1 ${2 * sr} 0 v 2`);
+        shackle.setAttribute('fill', 'none');
+        shackle.setAttribute('stroke', 'rgba(60,66,82,0.78)');
+        shackle.setAttribute('stroke-width', '1.6');
+        shackle.setAttribute('pointer-events', 'none');
+        g.appendChild(shackle);
+        g.appendChild(body);
     }
 
     // Resource indicator dot (top-right, blue)
@@ -1027,9 +1075,36 @@ function hexCorners(cx, cy, size) {
     return pts;
 }
 
+// Shared <defs> with the fog hatch pattern. Both fog states (3 + 4) reuse it as
+// a subtle diagonal mist texture so fogged tiles read as "hidden" at a glance.
+function buildFogDefs() {
+    const ns = 'http://www.w3.org/2000/svg';
+    const defs = document.createElementNS(ns, 'defs');
+
+    const pattern = document.createElementNS(ns, 'pattern');
+    pattern.setAttribute('id', 'fog-hatch');
+    pattern.setAttribute('width', '7');
+    pattern.setAttribute('height', '7');
+    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+    pattern.setAttribute('patternTransform', 'rotate(45)');
+
+    const line = document.createElementNS(ns, 'line');
+    line.setAttribute('x1', '0');
+    line.setAttribute('y1', '0');
+    line.setAttribute('x2', '0');
+    line.setAttribute('y2', '7');
+    line.setAttribute('stroke', '#ffffff');
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-opacity', '0.28');
+    pattern.appendChild(line);
+
+    defs.appendChild(pattern);
+    return defs;
+}
+
 function getTileColor(tile) {
-    if (!tile.is_explored && !tile.is_colony_zone) return LOCKED_COLOR; // unexplored exploration zone
-    if (!tile.is_explored) return FOG_COLOR; // unexplored colony zone (shouldn't normally appear)
+    if (!tile.is_explored && !tile.is_colony_zone) return LOCKED_COLOR; // state 4: exploration-zone fog
+    if (!tile.is_explored) return FOG_COLOR; // state 3: colony-zone fog (buildable but undiscovered)
     if (tile.q === 0 && tile.r === 0) return CC_COLOR;
     if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
 
@@ -1040,8 +1115,10 @@ function getTileColor(tile) {
 
 function getTileStroke(tile, isCC) {
     if (isCC) return [CC_STROKE, '2.5'];
-    if (!tile.is_explored && !tile.is_colony_zone) return [LOCKED_STROKE, '1'];
-    if (!tile.is_explored) return [FOG_STROKE, '1'];
+    // State 4 (exploration fog): solid scout-target border, slightly heavier.
+    if (!tile.is_explored && !tile.is_colony_zone) return [LOCKED_STROKE, '1.5'];
+    // State 3 (colony-zone fog): dashed border echoes the "buildable" affordance.
+    if (!tile.is_explored) return [FOG_STROKE, '1.5'];
     if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
     if (tile.tile_type === 'terrain_impassable') return ['#555', '0'];
 

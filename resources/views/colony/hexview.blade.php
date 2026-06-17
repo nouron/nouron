@@ -79,6 +79,33 @@
                 @endif
 
                 <div x-ref="hexgrid" class="hex-canvas"></div>
+
+                {{-- Grid legend: explains tile states (fog kinds + soon-buildable). --}}
+                <details class="hex-legend">
+                    <summary>{{ __("colony.legend_title") }}</summary>
+                    <ul class="hex-legend__list">
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--buildable"></span>
+                            <span>{{ __("colony.legend_buildable") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--soon"></span>
+                            <span>{{ __("colony.legend_soon_buildable") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--zonefog">+</span>
+                            <span>{{ __("colony.legend_zone_fog") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--explorefog">?</span>
+                            <span>{{ __("colony.legend_explore_fog") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--regolith"></span>
+                            <span>{{ __("colony.legend_regolith") }}</span>
+                        </li>
+                    </ul>
+                </details>
             </div>
 
             {{-- Tile info / build mode sidebar --}}

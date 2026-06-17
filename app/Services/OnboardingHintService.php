@@ -15,7 +15,9 @@ use Illuminate\Support\Facades\DB;
  */
 class OnboardingHintService
 {
-    public function __construct() {}
+    public function __construct(
+        private readonly PersonellService $personellService,
+    ) {}
 
     /**
      * Returns the highest-priority active and non-dismissed hint for the given
@@ -137,27 +139,41 @@ class OnboardingHintService
             ],
             [
                 'rank' => 6,
+                'key' => 'hint_cc_invest',
+                'active' => $this->checkHintCcInvest($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_cc_invest',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 7,
+                'key' => 'hint_explore',
+                'active' => $this->checkHintExplore($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_explore',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 8,
                 'key' => 'hint_4',
                 'active' => $this->checkHint4($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_4',
                 'target_url' => '/techtree',
             ],
             [
-                'rank' => 7,
+                'rank' => 9,
                 'key' => 'hint_5',
                 'active' => $this->checkHint5($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_5',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 8,
+                'rank' => 10,
                 'key' => 'hint_6',
                 'active' => $this->checkHint6($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_6',
                 'target_url' => '/colony/view?build=52',
             ],
             [
-                'rank' => 9,
+                'rank' => 11,
                 'key' => 'hint_end_sol',
                 'active' => $this->checkHintEndSol($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_end_sol',
@@ -292,6 +308,75 @@ class OnboardingHintService
             ->value('level');
 
         return $level < 2;
+    }
+
+    /**
+     * CC pre-invest hint (rank 6, Sol 1 only): once the Sol-1 to-dos are done
+     * (engineer hired, Harvester relocated, no urgent repair) and the CC is still
+     * below level 2, nudge the player to sink the *remaining* Bau-AP into the CC
+     * upgrade. CC level-up needs 10 Bau-AP accumulated via `ap_spend` across Sols;
+     * a single Sol provides ~6–10, so pre-investing in Sol 1 guarantees level 2
+     * completes in Sol 2 instead of "just barely" or slipping to Sol 3.
+     *
+     * Gated on "still has available construction AP this Sol" — self-clears the
+     * moment the Bau-AP pool is spent, handing over to the explore hint (rank 7)
+     * and ultimately the "Sol beenden" bridge (rank 11). Never persisted to
+     * dismissed_hints. Sol 2+ is covered by the tick-gated hint_3.
+     */
+    private function checkHintCcInvest(int $colonyId, int $currentTick): bool
+    {
+        if ($currentTick !== 0) {
+            return false;
+        }
+
+        // Must not pre-empt the prerequisite Sol-1 actions.
+        if ($this->checkHint1($colonyId)
+            || $this->checkHint2($colonyId)
+            || $this->checkHintRepairUrgent($colonyId)) {
+            return false;
+        }
+
+        // Pointless once the CC has already reached level 2.
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        if ($ccLevel >= 2) {
+            return false;
+        }
+
+        // Only while there is still Bau-AP left to pre-invest this Sol.
+        return $this->personellService->getConstructionPoints($colonyId) > 0;
+    }
+
+    /**
+     * Explore hint (rank 7, Sol 1–3): the base Navigation AP (6/Sol) sits idle
+     * early because nothing guides the player to scout. While unexplored tiles
+     * remain and Navigation AP is available, nudge exploration — it lifts fog,
+     * reveals regolith for the Harvester relocation and surrounding hazards.
+     *
+     * Uses the existing explore mechanic (1 Nav-AP per tile); the start map is
+     * seeded with reward tiles (regolith). Ranked below the Bau-AP track, so the
+     * build guidance (engineer/harvester/repair/CC-invest) always comes first via
+     * rank ordering; explore then fills the otherwise-idle Nav-AP. Self-clearing,
+     * never persisted: disappears once the Nav-AP is spent or the fog is cleared.
+     */
+    private function checkHintExplore(int $colonyId, int $currentTick): bool
+    {
+        $untilTick = (int) config('game.onboarding.hint_explore_until_tick', 2);
+        if ($currentTick > $untilTick) {
+            return false;
+        }
+
+        $hasFog = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('is_explored', 0)
+            ->exists();
+        if (! $hasFog) {
+            return false;
+        }
+
+        return $this->personellService->getAvailableActionPoints('navigation', $colonyId) > 0;
     }
 
     /**

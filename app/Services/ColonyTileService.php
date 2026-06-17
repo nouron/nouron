@@ -87,17 +87,43 @@ class ColonyTileService
 
     /**
      * Recalculate which terrain tiles belong to the colony zone for a given CC level.
-     * Colony zone tiles are also auto-explored (they are part of the settled area).
-     * Ring 0 (CC tile) is always colony zone regardless of CC level.
+     * Colony-zone tiles are buildable but NOT auto-explored — fog is lifted only by
+     * exploring (Nav-AP) or building on the tile. Ring 0 (CC tile) is always zone.
      */
     public function assignColonyZone(int $colonyId, int $ccLevel): void
+    {
+        $colonyZone = $this->computeColonyZoneCoords($colonyId, $ccLevel);
+
+        // Reset all tiles
+        DB::table('colony_tiles')->where('colony_id', $colonyId)->update(['is_colony_zone' => 0]);
+
+        // Mark colony zone tiles as buildable. Decoupled from exploration: the zone
+        // grants build permission but does NOT auto-lift the fog — a zone tile stays
+        // fogged until the player explores it (Nav-AP) or builds on it (settle → see).
+        // This keeps "erschließen" (CC grows buildable area) and "erkunden" (Nav-AP
+        // reveals the surroundings) as two distinct, separately-communicated axes.
+        foreach ($colonyZone as [$q, $r]) {
+            DB::table('colony_tiles')
+                ->where('colony_id', $colonyId)
+                ->where('q', $q)->where('r', $r)
+                ->update(['is_colony_zone' => 1]);
+        }
+    }
+
+    /**
+     * Compute the colony-zone tile coordinates for a given CC level (deterministic,
+     * ring order, skipping impassable/regolith). Read-only — does not touch the DB.
+     * Ring 0 (CC tile) is always included.
+     *
+     * @return list<array{0:int,1:int}>
+     */
+    public function computeColonyZoneCoords(int $colonyId, int $ccLevel): array
     {
         $expansion = config('game.colony_zone_expansion', [4, 2, 3, 3, 3]);
         $target = (int) array_sum(array_slice($expansion, 0, max(0, $ccLevel)));
 
         $maxRing = (int) DB::table('colony_tiles')->where('colony_id', $colonyId)->max('ring');
 
-        // Load all tile types for lookup
         $tileTypes = DB::table('colony_tiles')
             ->where('colony_id', $colonyId)
             ->get(['q', 'r', 'tile_type'])
@@ -105,8 +131,7 @@ class ColonyTileService
             ->map(fn ($t) => $t->tile_type)
             ->toArray();
 
-        // Ring 0 (CC) always colony zone
-        $colonyZone = [[0, 0]];
+        $colonyZone = [[0, 0]]; // Ring 0 (CC) always colony zone
         $counted = 0;
 
         for ($ring = 1; $ring <= $maxRing && $counted < $target; $ring++) {
@@ -125,16 +150,35 @@ class ColonyTileService
             }
         }
 
-        // Reset all tiles
-        DB::table('colony_tiles')->where('colony_id', $colonyId)->update(['is_colony_zone' => 0]);
+        return $colonyZone;
+    }
 
-        // Mark colony zone tiles (also auto-explore them)
-        foreach ($colonyZone as [$q, $r]) {
-            DB::table('colony_tiles')
-                ->where('colony_id', $colonyId)
-                ->where('q', $q)->where('r', $r)
-                ->update(['is_colony_zone' => 1, 'is_explored' => 1]);
+    /**
+     * Tile keys ("q,r") that the NEXT CC upgrade would newly add to the colony zone
+     * (the delta between the zone at $ccLevel and at $ccLevel + 1). Used to flag the
+     * "soon buildable" tiles honestly — only those the CC will actually claim, not
+     * every explored tile outside the zone. Empty at max CC level.
+     *
+     * @return array<string,true> set keyed by "q,r"
+     */
+    public function nextZoneTileKeys(int $colonyId, int $ccLevel): array
+    {
+        $keyOf = fn (array $c) => $c[0].','.$c[1];
+
+        $current = [];
+        foreach ($this->computeColonyZoneCoords($colonyId, $ccLevel) as $c) {
+            $current[$keyOf($c)] = true;
         }
+
+        $next = [];
+        foreach ($this->computeColonyZoneCoords($colonyId, $ccLevel + 1) as $c) {
+            $key = $keyOf($c);
+            if (! isset($current[$key])) {
+                $next[$key] = true;
+            }
+        }
+
+        return $next;
     }
 
     /**

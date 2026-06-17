@@ -386,6 +386,96 @@ button.btn-sol:hover,
     filter: brightness(1.14);
 }
 
+/* ── Grid legend (tile-state key) ───────────────────────────────────────── */
+
+.hex-legend {
+    margin: 0.5rem 0 0;
+    font-size: 0.8rem;
+    color: #4a4f5a;
+}
+
+.hex-legend > summary {
+    cursor: pointer;
+    color: #5a6070;
+    user-select: none;
+}
+
+.hex-legend__list {
+    list-style: none;
+    margin: 0.5rem 0 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 0.35rem 1rem;
+}
+
+.hex-legend__item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.hex-legend__swatch {
+    flex: 0 0 auto;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+}
+
+.hex-legend__swatch--buildable {
+    background: #c8cdd6;
+    border: 1px solid #a0a8b4;
+}
+
+.hex-legend__swatch--soon {
+    background: #c8cdd6;
+    border: 1px dashed #7f8aa0;
+    position: relative;
+}
+
+/* Padlock hint on the "soon buildable" swatch. */
+.hex-legend__swatch--soon::after {
+    content: "\1F512";
+    font-size: 0.6rem;
+    color: #3c4252;
+}
+
+.hex-legend__swatch--zonefog {
+    background: #a9b2c4;
+    border: 1px dashed #7f8aa0;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.28) 0,
+        rgba(255, 255, 255, 0.28) 2px,
+        transparent 2px,
+        transparent 5px
+    );
+}
+
+.hex-legend__swatch--explorefog {
+    background: #9aa4b8;
+    border: 1px solid #6f7a90;
+    background-image: repeating-linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.28) 0,
+        rgba(255, 255, 255, 0.28) 2px,
+        transparent 2px,
+        transparent 5px
+    );
+}
+
+.hex-legend__swatch--regolith {
+    background: #7fb5dc;
+    border: 1px solid #5090c0;
+}
+
 /* ── Tile info sidebar (right column) ───────────────────────────────────── */
 
 .tile-panel {
@@ -531,6 +621,70 @@ button.btn-sol:hover,
     background: #e3f2fd;
     color: #1565c0;
     border: 1px solid #90caf9;
+}
+
+/* ── Zone status line ────────────────────────────────────────────────────── */
+
+/* One plain-language sentence telling the player what they can do with the
+   selected tile. Coloured left border keys the four zone states to the same
+   palette the grid uses (buildable green, soon-buildable amber, fog slate). */
+.tile-zone-status {
+    margin-top: 0.75rem;
+}
+
+.tile-zone-line {
+    margin: 0;
+    padding: 0.4rem 0.6rem;
+    border-left: 3px solid #c0c4cc;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    line-height: 1.3;
+    background: #f5f6f8;
+    color: #4a4a55;
+}
+
+.tile-zone-line--buildable {
+    border-left-color: #2e7d32;
+    background: #edf6ed;
+    color: #2e7d32;
+}
+
+.tile-zone-line--soon {
+    border-left-color: #c08040;
+    background: #fbf3e9;
+    color: #8a5a20;
+}
+
+.tile-zone-line--outside {
+    border-left-color: #9aa4b8;
+    background: #f2f3f6;
+    color: #6b7180;
+}
+
+.tile-zone-line--fog {
+    border-left-color: #7f8aa0;
+    background: #eef0f5;
+    color: #5a6478;
+}
+
+/* ── Per-terrain hints ───────────────────────────────────────────────────── */
+
+.tile-terrain-hint {
+    margin: 0.6rem 0 0;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.tile-terrain-hint--regolith {
+    color: #1565c0;
+}
+
+.tile-terrain-hint--hazard {
+    color: #b45309;
+}
+
+.tile-terrain-hint--impassable {
+    color: #888;
 }
 
 /* ── Sidebar description list ────────────────────────────────────────────── */
