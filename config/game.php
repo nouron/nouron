@@ -325,5 +325,10 @@ return [
         // (Sol = current_tick + 1) — surfaces right after the first "Sol beenden",
         // so Sol 2 does not fall into the same hint void Sol 1 had.
         'hint_cc_upgrade_after_tick' => 1,
+
+        // Latest current_tick at which the explore hint (hint_explore) still fires.
+        // 2 = Sol 1–3 — guides the otherwise-idle Navigation AP into exploring the
+        // surroundings (find regolith for the Harvester, scout hazards) early on.
+        'hint_explore_until_tick' => 2,
     ],
 ];

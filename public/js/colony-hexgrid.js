@@ -902,8 +902,8 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // hint_2: Harvester tile in colony zone (guide relocation).
     const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
-    // hint_3: CC tile (guide upgrade).
-    const isPulseCc = hintKey === 'hint_3' && tile.q === 0 && tile.r === 0;
+    // hint_3 / hint_cc_invest: CC tile (guide upgrade / pre-invest).
+    const isPulseCc = (hintKey === 'hint_3' || hintKey === 'hint_cc_invest') && tile.q === 0 && tile.r === 0;
 
     // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';

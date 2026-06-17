@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-17
+
+- **Onboarding Sol-1 AP-Pacing: zwei neue Hints gegen den frühen AP-Leerlauf** (game-designer-Spec). Bisher endete Sol 1 mit ungenutzten Bau-AP und brachliegenden Navigations-AP, während CC-Level-2 in Sol 2 nur „gerade so" fertig wurde.
+  - **`hint_cc_invest`** (Rang 6, nur Sol 1): sobald Engineer angeheuert + Harvester verlegt + kein dringender Repair und die Kommandozentrale noch unter Level 2 ist, lenkt der Hint die *restlichen* Bau-AP in den CC-Ausbau — Vorinvestieren via `ap_spend`, damit Level 2 in Sol 2 sicher fertig wird statt zu rutschen. Gegated auf „noch verfügbare Bau-AP", self-clearing, nie dismissed.
+  - **`hint_explore`** (Rang 7, Sol 1–3, `hint_explore_until_tick=2`): die brachliegenden Navigations-Basis-AP (6/Sol) werden jetzt geführt — solange Nav-AP da sind und unerkundete Tiles existieren, leitet der Hint zum Erkunden (Regolith fürs Harvester-Verlegen finden, Gefahren scouten). Nutzt die bestehende Erkunden-Mechanik, keine neue Logik.
+  - Sequenzierung rein über Rang-Ordering: Bau-AP → CC (rank 6), dann Nav-AP → Erkunden (rank 7), dann „Sol beenden" (`hint_end_sol`, jetzt rank 11). `hint_3` (CC-Ausbau Sol 2+) unverändert; Reparatur behält Vorrang als Lehr-Hint. CC-Tile pulst auch bei `hint_cc_invest`.
+  - Verworfen/zurückgestellt: „Tiles per Bau-AP freiräumen" (falscher AP-Typ, würde den Bau-Engpass verschärfen), Deep-Scan-Funde (neue Mechanik) und eine hangar-unabhängige Start-Sonde (entwertet den Hangar) — alle später separat.
+
 ## 2026-06-16
 
 - **Sol-Report: animierter End-of-Sol-Übergangsscreen** — „Sol beenden" zeigte bisher nur 5 s einen inhaltslosen Spinner. Jetzt liefert `sol.next` die Tick-Ergebnisse als JSON, und ein neuer Übergangsscreen spielt sie Schritt für Schritt animiert ab (fade/roll-in pro Gruppe, Counter-Hochzählen für Zahlen, ~3–5 s). Dramaturgie nach game-designer-Spec: **Die Kolonie altert** (Verfall/Level-Downs) → **Ereignisse** (Händler, Begegnungen) → **Produktion & Vorräte** (Ertrag + Supply-Cap) → **Kolonie & Personal** (Vertrauen, Credits, Berater-Beförderungen) → **Der Run** (Sol-Zähler, Phase, Ziele). Bedrohung vor Belohnung; Level-Down = roter Shake-Beat, Beförderung/Phasenwechsel = goldener Beat. Bei Run-Ende mündet der Report in ein Vollbild-Finale (Sieg/Scheitern, würdevoll) mit Weiterleitung zum Run-Result-Screen.

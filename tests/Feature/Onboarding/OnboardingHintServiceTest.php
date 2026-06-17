@@ -3,6 +3,8 @@
 namespace Tests\Feature\Onboarding;
 
 use App\Services\OnboardingHintService;
+use App\Services\Techtree\PersonellService;
+use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -151,10 +153,11 @@ class OnboardingHintServiceTest extends TestCase
         $this->moveHarvesterOutside(); // silence hint 2
         $this->suppressLateHints();    // silence hints 4-6
 
-        // Hint 1 is silent; with every Sol-1 action done at tick 0 the rank-9
-        // bridge hint ("Sol beenden") is now the active floor (was: null void).
+        // Hint 1 is silent; with every Sol-1 to-do done at tick 0 and the CC still
+        // at level 1 with Bau-AP available, the CC pre-invest hint (rank 6) is the
+        // active Sol-1 floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     // ── Urgent repair hint: building near level-down ─────────────────────────
@@ -207,8 +210,8 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         // Buildings are otherwise full → no repair hint of either kind; the level-0
-        // building is ignored. The rank-9 bridge hint fills the otherwise-empty bar.
-        $this->assertSame('hint_end_sol', $hint['key']);
+        // building is ignored. The CC pre-invest hint (rank 6) is the Sol-1 floor.
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     // ── Repair hint: any building below max status ───────────────────────────
@@ -246,13 +249,14 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_repair_hint_silent_when_all_buildings_full(): void
     {
-        // Baseline buildings are full (20/20) → repair hint silent; bridge hint shows.
+        // Baseline buildings are full (20/20) → repair hint silent; with CC at level 1
+        // and Bau-AP available at Sol 1, the CC pre-invest hint (rank 6) shows.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     public function test_repair_hint_yields_to_missing_engineer(): void
@@ -286,9 +290,10 @@ class OnboardingHintServiceTest extends TestCase
         $this->moveHarvesterOutside(); // tile (3,0) = colony_zone=0
         $this->suppressLateHints();
 
-        // Hint 2 silent; Sol-1 done at tick 0 → rank-9 bridge hint is the floor.
+        // Hint 2 silent; Sol-1 to-dos done at tick 0 with CC level 1 + Bau-AP →
+        // the CC pre-invest hint (rank 6) is the floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     public function test_hint_2_silent_when_no_harvester_placed(): void
@@ -301,9 +306,10 @@ class OnboardingHintServiceTest extends TestCase
         $this->placeEngineer();
         $this->suppressLateHints();
 
-        // Hint 2 silent (no harvester tile); bridge hint fills the bar at tick 0.
+        // Hint 2 silent (no harvester tile); CC pre-invest hint (rank 6) fills the
+        // bar at tick 0 (CC level 1, Bau-AP available).
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     // ── Hint 3: CC level < 2 (fires from Sol 2) ──────────────────────────────
@@ -328,9 +334,10 @@ class OnboardingHintServiceTest extends TestCase
         // Sol stays at 0 (current_tick < gate of 1) → hint 3 silent
         $this->suppressLateHints();
 
-        // Hint 3 silent before Sol 2; the rank-9 bridge hint is the active floor.
+        // Hint 3 silent before Sol 2; with CC level 1 + Bau-AP at tick 0 the CC
+        // pre-invest hint (rank 6) is the active floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
     }
 
     public function test_hint_3_silent_when_cc_level_2(): void
@@ -341,15 +348,19 @@ class OnboardingHintServiceTest extends TestCase
         $this->upgradeCc();
         $this->suppressLateHints();
 
-        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+        // CC is level 2 → both hint_3 and the CC pre-invest hint are silent. With
+        // fog still present and Nav-AP available at Sol 2 (<= explore until_tick),
+        // the explore hint (rank 7) surfaces instead of nothing.
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
-    // ── Bridge hint: "Sol beenden" (rank 9, Sol-1 only) ──────────────────────
+    // ── Hint cc_invest: pre-invest Bau-AP into CC (rank 6, Sol 1 only) ───────
 
-    public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
+    public function test_cc_invest_hint_fires_on_sol1_when_todos_done(): void
     {
-        // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full,
-        // nothing tick-gated active → the bridge hint tells the player to end the Sol.
+        // Sol 1 (tick 0): engineer hired, Harvester relocated, buildings full,
+        // CC still level 1, Bau-AP available → CC pre-invest hint (rank 6) fires.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -357,7 +368,119 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(9, $hint['rank']);
+        $this->assertSame(6, $hint['rank']);
+        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_cc_invest', $hint['text_key']);
+        $this->assertSame('/colony/view', $hint['target_url']);
+    }
+
+    public function test_cc_invest_hint_silent_when_cc_already_level_2(): void
+    {
+        // CC at level 2 → cc_invest pointless; with fog + Nav-AP at Sol 1 the
+        // explore hint (rank 7) surfaces instead.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_explore', $hint['key']);
+    }
+
+    public function test_cc_invest_hint_silent_when_no_construction_ap(): void
+    {
+        // Fix the tick to 0 so lock + read share the same tick, then lock the full
+        // construction AP pool → cc_invest self-clears (Bau-AP exhausted).
+        $this->app->instance(TickService::class, new TickService(0));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+
+        $available = $personell->getConstructionPoints($this->colonyId);
+        $this->assertGreaterThan(0, $available, 'precondition: construction AP available before lock');
+        $personell->lockActionPoints('construction', $this->colonyId, $available);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        // cc_invest must no longer win; explore (rank 7) takes over while Nav-AP + fog remain.
+        $this->assertNotNull($hint);
+        $this->assertNotSame('hint_cc_invest', $hint['key']);
+    }
+
+    // ── Hint explore: scout unexplored tiles (rank 7, Sol 1–3) ───────────────
+
+    public function test_explore_hint_fires_on_sol1_when_cc_done_and_fog_remains(): void
+    {
+        // Engineer + Harvester done, CC already level 2 (cc_invest silent), fog
+        // present and Nav-AP available at Sol 1 → explore hint (rank 7) fires.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(7, $hint['rank']);
+        $this->assertSame('hint_explore', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_explore', $hint['text_key']);
+        $this->assertSame('/colony/view', $hint['target_url']);
+    }
+
+    public function test_explore_hint_silent_after_until_tick(): void
+    {
+        // Beyond hint_explore_until_tick (2) → explore silent. CC still level 1 and
+        // tick 3 >= CC gate (1) → hint_3 (rank 5) takes over.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->setRunTick(3);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_3', $hint['key']);
+    }
+
+    public function test_explore_hint_silent_when_no_fog_left(): void
+    {
+        // No unexplored tiles → explore silent; CC level 2 → cc_invest silent. At
+        // Sol 1 the bridge hint (rank 11) is the only remaining floor.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->clearFog();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_end_sol', $hint['key']);
+    }
+
+    // ── Bridge hint: "Sol beenden" (rank 11, Sol-1 only) ─────────────────────
+
+    public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
+    {
+        // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full.
+        // The bridge hint is now the lowest-priority Sol-1 floor (rank 11): it only
+        // surfaces once the CC pre-invest hint (CC >= level 2) and the explore hint
+        // (no fog left) are both exhausted.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();   // CC level 2 → cc_invest silent
+        $this->clearFog();    // every tile explored → explore silent
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(11, $hint['rank']);
         $this->assertSame('hint_end_sol', $hint['key']);
         $this->assertSame('colony.onboarding_end_sol', $hint['text_key']);
     }
@@ -426,7 +549,7 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_all_hints_dismissed_returns_null(): void
     {
-        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_4', 'hint_5', 'hint_6'] as $key) {
+        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_6'] as $key) {
             $this->service->dismissHint($this->userId, $key);
         }
         $this->setRunTick(99);
@@ -478,6 +601,14 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('runs')
             ->where('colony_id', $this->colonyId)
             ->update(['current_tick' => $tick]);
+    }
+
+    /** Mark every colony tile as explored so the explore hint self-clears (no fog left). */
+    private function clearFog(): void
+    {
+        DB::table('colony_tiles')
+            ->where('colony_id', $this->colonyId)
+            ->update(['is_explored' => 1]);
     }
 
     /** Suppress hints 4, 5, and 6 so they don't interfere with lower-rank tests. */
