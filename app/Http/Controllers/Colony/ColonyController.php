@@ -217,19 +217,20 @@ class ColonyController extends BaseController
         if (! $tile) {
             return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_found')]);
         }
-        if (! $tile->is_explored) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_not_explored')]);
-        }
-
         $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;
 
         if ($isHarvester) {
-            // Harvester goes to regolith tiles in the exploration zone (ring 3+, is_colony_zone=0).
+            // Harvester relocates to an explored regolith tile in the exploration zone (ring 3+).
+            if (! $tile->is_explored) {
+                return response()->json(['ok' => false, 'error' => __('colony.error_not_explored')]);
+            }
             if (! str_starts_with($tile->tile_type, 'regolith_')) {
                 return response()->json(['ok' => false, 'error' => __('colony.error_harvester_needs_regolith')]);
             }
         } else {
-            // Regular buildings: colony zone only, buildable terrain.
+            // Regular buildings need only colony-zone permission. The zone is no longer
+            // auto-explored (see ColonyTileService::assignColonyZone) — building on a
+            // still-fogged zone tile is allowed and reveals it ("settle → see").
             if (! $tile->is_colony_zone) {
                 return response()->json(['ok' => false, 'error' => __('colony.error_tile_outside_colony')]);
             }
@@ -283,6 +284,15 @@ class ColonyController extends BaseController
                 'current' => $this->personellService->getConstructionPoints($colony->id),
                 'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
+        }
+
+        // Building on a still-fogged colony-zone tile reveals it (settle → see).
+        if (! $tile->is_explored) {
+            DB::table('colony_tiles')
+                ->where('colony_id', $colony->id)
+                ->where('q', $data['q'])
+                ->where('r', $data['r'])
+                ->update(['is_explored' => 1]);
         }
 
         if ($building->is_instanced && ! $isHarvester) {

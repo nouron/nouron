@@ -25,6 +25,14 @@ return [
 
     'tile_info' => 'Tile-Info',
     'terrain_details' => 'Terrain & Standort',
+
+    // ── Hex-Grid Legende ──────────────────────────────────────────────────────
+    'legend_title' => 'Legende',
+    'legend_buildable' => 'Baubares Feld',
+    'legend_soon_buildable' => 'Bald bebaubar (mit CC-Ausbau)',
+    'legend_zone_fog' => 'Baubar, noch unerkundet — Bauen deckt auf',
+    'legend_explore_fog' => 'Erkundungsziel — mit Navigations-AP aufdecken',
+    'legend_regolith' => 'Regolith-Vorkommen',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',
@@ -64,7 +72,7 @@ return [
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
     'onboarding_hint_6' => 'Cantina noch nicht gebaut — hier erscheinen Händler und NPC-Gäste mit Tauschangeboten und Einmal-Items.',
     'onboarding_hint_cc_invest' => 'Restliche Bau-AP nicht verfallen lassen — tippe die Kommandozentrale an und investiere in den Ausbau. Was du jetzt einzahlst, bleibt erhalten; so steht Level 2 schon im nächsten Sol.',
-    'onboarding_hint_explore' => 'Navigations-AP nutzen — erkunde die Umgebung (1 Nav-AP pro Feld). So findest du Regolith-Vorkommen für den Harvester und erkennst Gefahren außerhalb der Kolonie.',
+    'onboarding_hint_explore' => 'Navigations-AP einsetzen und nach draußen erkunden (1 Nav-AP pro Feld) — jenseits der Kolonie liegen Regolith-Vorkommen für den Harvester und unbekannte Signale. Das nahe Gelände erschließt die Kommandozentrale ohnehin selbst.',
     'onboarding_end_sol' => 'Sol beenden — für diesen Sol ist alles Wichtige erledigt. Beende den Sol, um Aktionspunkte aufzufrischen und die Kolonie voranzubringen.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 + Kommandozentrale lv2 erforderlich.',
 

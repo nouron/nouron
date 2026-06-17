@@ -128,12 +128,16 @@ class ColonyTileService
         // Reset all tiles
         DB::table('colony_tiles')->where('colony_id', $colonyId)->update(['is_colony_zone' => 0]);
 
-        // Mark colony zone tiles (also auto-explore them)
+        // Mark colony zone tiles as buildable. Decoupled from exploration: the zone
+        // grants build permission but does NOT auto-lift the fog — a zone tile stays
+        // fogged until the player explores it (Nav-AP) or builds on it (settle → see).
+        // This keeps "erschließen" (CC grows buildable area) and "erkunden" (Nav-AP
+        // reveals the surroundings) as two distinct, separately-communicated axes.
         foreach ($colonyZone as [$q, $r]) {
             DB::table('colony_tiles')
                 ->where('colony_id', $colonyId)
                 ->where('q', $q)->where('r', $r)
-                ->update(['is_colony_zone' => 1, 'is_explored' => 1]);
+                ->update(['is_colony_zone' => 1]);
         }
     }
 
