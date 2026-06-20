@@ -34,8 +34,9 @@ class SyncConfig extends Command
 
         $shipChanges = $this->syncShips($dry);
         $buildingChanges = $this->syncBuildings($dry);
+        $costChanges = $this->syncBuildingCosts($dry);
 
-        $total = $shipChanges + $buildingChanges;
+        $total = $shipChanges + $buildingChanges + $costChanges;
 
         if ($total === 0) {
             $this->info('Everything is already in sync — no changes needed.');
@@ -144,6 +145,69 @@ class SyncConfig extends Command
 
             if (! $dry) {
                 DB::table('buildings')->where('id', $id)->update($updates);
+            }
+
+            $changed++;
+        }
+
+        return $changed;
+    }
+
+    // ── Building costs ──────────────────────────────────────────────────────────
+
+    /**
+     * Reseed building_costs (Regolith=3 + Werkstoffe=4 rows) from config build_cost.
+     *
+     * config/buildings.php `build_cost` is the canonical source for the hex build flow;
+     * the building_costs table is kept in sync for the GameTick level-down recycling
+     * consumer. Only resource_id 3 + 4 are touched — legacy Credits(1)/Supply(2) rows
+     * are left untouched.
+     */
+    private function syncBuildingCosts(bool $dry): int
+    {
+        $configs = config('buildings', []);
+        $changed = 0;
+
+        foreach ($configs as $key => $cfg) {
+            $id = (int) ($cfg['id'] ?? 0);
+            if (! $id) {
+                continue;
+            }
+
+            $desired = [];
+            foreach (($cfg['build_cost'] ?? []) as $resourceId => $amount) {
+                $resourceId = (int) $resourceId;
+                if (in_array($resourceId, [3, 4], true)) {
+                    $desired[$resourceId] = (int) $amount;
+                }
+            }
+
+            $current = DB::table('building_costs')
+                ->where('building_id', $id)
+                ->whereIn('resource_id', [3, 4])
+                ->pluck('amount', 'resource_id')
+                ->map(fn ($a) => (int) $a)
+                ->toArray();
+
+            if ($desired == $current) {
+                continue;
+            }
+
+            $this->line("  [build_cost] {$key} (id={$id}): ".json_encode($current).' → '.json_encode($desired));
+
+            if (! $dry) {
+                DB::table('building_costs')
+                    ->where('building_id', $id)
+                    ->whereIn('resource_id', [3, 4])
+                    ->delete();
+
+                $rows = [];
+                foreach ($desired as $resourceId => $amount) {
+                    $rows[] = ['building_id' => $id, 'resource_id' => $resourceId, 'amount' => $amount];
+                }
+                if ($rows !== []) {
+                    DB::table('building_costs')->insert($rows);
+                }
             }
 
             $changed++;

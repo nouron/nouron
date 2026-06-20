@@ -7,6 +7,13 @@
  *   id               — DB primary key in `buildings` table
  *   supply_cap       — flat supply cap granted (commandCenter) or per-unit cap (housingComplex)
  *   supply_cost      — supply consumed while the building exists at level > 0
+ *   build_cost       — one-time resource cost to erect (level 0→1), as [resource_id => amount]
+ *                      (3 = Regolith, 4 = Werkstoffe/compounds). Absent = no resource cost
+ *                      (CommandCenter + Harvester only — bootstrap exemption). Werkstoffe
+ *                      appear only on late/high-tech buildings (accent, 10–25). Level-up
+ *                      Regolith is derived as 25 % of build_cost[3] (min 10); CC scales
+ *                      separately via cc_upgrade_regolith_per_level. Reparatur: 2 Rg/click.
+ *                      Canonical source — synced into building_costs by game:sync-config.
  *   trust_per_lv     — trust change per building level (used by TrustService)
  *   decay_rate       — status_points lost per tick (also stored in DB, used by GameTick decay)
  *   max_status_points — status_points reset value after level-down (also stored in DB)
@@ -27,6 +34,9 @@ return [
 
     'commandCenter' => [
         'id' => 25,
+        // No build_cost: CC exists from the start (bootstrap). Upgrades cost Regolith,
+        // scaling with the target level (target_level × cc_upgrade_regolith_per_level).
+        'cc_upgrade_regolith_per_level' => 30,
         'supply_cap' => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
@@ -37,6 +47,7 @@ return [
 
     'housingComplex' => [
         'id' => 28,
+        'build_cost' => [3 => 40],   // Regolith only (early)
         'supply_cap' => 8,       // per unit (instance), max 6 units → +48 cap
         'supply_cost' => 0,
         'trust_per_lv' => 0,
@@ -49,6 +60,7 @@ return [
 
     'harvester' => [                    // ex industrieMine/oremine (ID 27) — produces Regolith (resource 3)
         'id' => 27,
+        // No build_cost: Harvester is the only Regolith source (bootstrap exemption).
         'supply_cost' => 2,
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,    // 21 days
@@ -58,6 +70,7 @@ return [
 
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id' => 41,
+        'build_cost' => [3 => 40],   // Regolith only (early)
         'supply_cost' => 2,
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,
@@ -67,6 +80,7 @@ return [
 
     'depot' => [
         'id' => 30,
+        'build_cost' => [3 => 40],   // Regolith only (early)
         'supply_cost' => 3,
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
@@ -78,6 +92,7 @@ return [
 
     'sciencelab' => [
         'id' => 31,
+        'build_cost' => [3 => 60, 4 => 20],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 8,
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,    // 21 days
@@ -89,6 +104,7 @@ return [
 
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
+        'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 12,      // limits fleet naturally: 3 hangars = 36 supply
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
@@ -100,6 +116,7 @@ return [
 
     'infirmary' => [
         'id' => 46,
+        'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 10,
         'trust_per_lv' => 3,
         'decay_rate' => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
@@ -109,6 +126,7 @@ return [
 
     'bar' => [
         'id' => 52,
+        'build_cost' => [3 => 50],   // Regolith only (early)
         'supply_cost' => 4,
         'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
         'decay_rate' => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
@@ -118,6 +136,7 @@ return [
 
     'monument' => [
         'id' => 50,
+        'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 2,
         'trust_per_lv' => 2,
         'decay_rate' => 0.33,    // 60 days — monuments are built to last
@@ -127,6 +146,7 @@ return [
 
     'temple' => [
         'id' => 32,
+        'build_cost' => [3 => 50, 4 => 15],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 4,
         'trust_per_lv' => 2,
         'decay_rate' => 2.0,     // 10 days — needs regular upkeep
@@ -143,6 +163,7 @@ return [
     // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
     'securityHub' => [
         'id' => 53,
+        'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 8,
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days — provisional
@@ -159,6 +180,9 @@ return [
     // TODO Balance: per-level CC gates (Lv2→CC3, Lv3→CC5) not yet enforced — post-playtest.
     'uplinkStation' => [
         'id' => 54,
+        // Late building, but NO Werkstoffe: the Uplink is the Werkstoff-import gate
+        // (Nexus direct import) — requiring Werkstoffe to build it would be circular.
+        'build_cost' => [3 => 80],
         'supply_cost' => 6,
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days — provisional
@@ -172,6 +196,7 @@ return [
     // TODO Balance: merchant_price_bonus vs. Konsul-Rang-System (kein Stack-Effekt) — post-playtest.
     'tradingPost' => [
         'id' => 55,
+        'build_cost' => [3 => 100, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 6,
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days — provisional

@@ -226,25 +226,34 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 
 ### Ressourcen-Verwendungsdomänen
 
-| Ressource | Gebäude (Rohbau) | Schiffe | High-Tech-Gebäude | Reparatur |
-|-----------|-----------------|---------|-------------------|-----------|
-| Regolith | Ja (außer CC + Harvester) | Nein | Nein | Nein |
-| Werkstoffe | Nein | Ja | Ja | Ja |
-| Organika | Nein | Ja | Ja | Nein |
-| Credits | Ja (immer — Grundkosten) | Ja | Ja | Ja |
+| Ressource | Gebäude früh (Rohbau) | Gebäude spät (High-Tech) | Schiffe | Reparatur |
+|-----------|----------------------|--------------------------|---------|-----------|
+| Regolith | Ja (außer CC + Harvester) | Ja (außer CC + Harvester) | Nein | Ja (2/Klick, außer CC + Harvester) |
+| Werkstoffe | Nein | Ja (Akzent 10–25/Stufe) | Nein | Nein |
+| Organika | Nein | Nein | Nein | Nein |
+| Credits | Ja (immer — Grundkosten) | Ja (immer) | **Ja — nur Credits** | Nur Notreparatur (CC/Wohnhabitat) |
+| Supply (Cap) | Gate (freie Cap ≥ supply_cost) | Gate | — | — |
 
-**Ausnahme CC + Harvester:** CommandCenter und Harvester kosten beim Bau nur Credits — sie sind der Einstiegspunkt der Kolonie und dürfen keinen Ressourcen-Catch-22 erzeugen (Regolith braucht Harvester, Harvester braucht Regolith).
+**Ausnahme CC + Harvester:** CommandCenter und Harvester kosten beim Bau kein Regolith — sie sind der Einstiegspunkt der Kolonie und dürfen keinen Ressourcen-Catch-22 erzeugen (Regolith braucht Harvester, Harvester braucht Regolith). Beide sind auch von der Reparatur-Regolith-Kostenpflicht ausgenommen (AP-only) — das hält die Regolith-Quelle selbst immer reparierbar und verhindert eine Decay-Deadlock-Spirale.
 
-> **Designprinzip:** Regolith = Rohbau, Werkstoffe = High-Tech/Schiffe, Organika = biologische Schicht (Schiffe + High-Tech). Credits sind immer beteiligt — als Grundkosten und einziger universeller Tauschstoff.
+**Supply ist kein Stockpile, sondern ein Cap:** „Supply-Kosten" eines Gebäudes = sein laufender `supply_cost`-Unterhalt (§6). Beim Bau wird nichts abgezogen — geprüft wird nur, ob die freie Cap den Bedarf deckt.
+
+> **Designprinzip:** Regolith = lokaler Rohbau (alle Gebäude außer CC/Harvester + laufende Reparatur — der Dauer-Sink, der bis Run-Ende relevant bleibt). Werkstoffe = knapper, importierter High-Tech-Akzent (nicht produzierbar, nur Credits-Import). Organika = biologische Schicht (Versorgung/Verpflegung + Handel — **nicht** Bau/Schiffe; Sinks siehe §3 Organika). Supply = physisches Kapazitäts-Gate. Credits = universeller Tauschstoff + alleinige Schiffskosten.
 
 ### Werkstoffe: Singleplayer-Sicherheitsnetz
 
-Im Singleplayer gibt es keinen Spieler-zu-Spieler-Handel. Werkstoffe sind daher über **KI-Händler** (stationäre NPC-Fraktionen) immer kaufbar — teurer als Spielerhandel, aber garantiert verfügbar. Events liefern Werkstoffe als Bonus, nie als einzige Quelle.
+Im Singleplayer gibt es keinen Spieler-zu-Spieler-Handel. Werkstoffe können **nicht lokal produziert** werden — die Kolonie ist zu klein zum Veredeln. Es gibt drei Bezugswege, die bewusst eine Hierarchie bilden:
+
+1. **Nexus-Direktimport (Sicherheitsnetz, garantiert):** Über die **Uplink-Station Lv1** (eine der aktiven Nexus-Anfragen, siehe §4) kann jederzeit eine beliebige Menge Werkstoffe gegen Credits gekauft werden — deterministisch, immer verfügbar, aber zu einem **festen, spürbar höheren Preis** als der Cantina-Spotpreis (Richtwert: Nexus ~90 Cr/Einheit vs. Cantina-Basis ~60 Cr). Dies ist das Anti-Lock-Netz: ohne diesen garantierten Weg wäre jede Werkstoff-Baukostenanforderung potenziell hart blockierbar.
+2. **Cantina / Reisender Händler (opportunistisch, günstiger):** Zufällige, zeitgebundene Kaufangebote zum niedrigeren Marktpreis. Belohnung fürs aufmerksame Spielen, aber **nie garantiert** — daher nie die einzige Quelle.
+3. **Events (Bonus):** Liefern Werkstoffe als Bonus, immer mit Wahlmöglichkeit, nie kostenlos und nie als einzige Quelle.
 
 Typische Werkstoffe-Events (immer mit Wahlmöglichkeit, nie kostenlos):
 - **Strandetes Frachtschiff** — Bergung kostet Navigation-AP, gibt Werkstoffe
-- **Händlerkonvoi in der Nähe** — befristetes Kaufangebot (2 Sole), günstiger als KI-Marktpreis
+- **Händlerkonvoi in der Nähe** — befristetes Kaufangebot (2 Sole), günstiger als Nexus-Importpreis
 - **Trümmerfeld im System** — Flotte entsenden, Werkstoffe heimholen
+
+> **Designprinzip Knappheit:** Werkstoffe sind das „Salz", Regolith das „Mehl". Späte/High-Tech-Gebäude verlangen Werkstoffe nur als **Akzent** (Richtwert 10–25 Einheiten pro Stufe), nie als Hauptkosten — denn jeder Werkstoff ist eine harte Credits-Ausgabe über den Import. Die Knappheit erzwingt eine Credits-Allokations-Entscheidung (Werkstoff-Import vs. Schiffbau vs. Reparaturen), bleibt aber durch den garantierten Nexus-Import planbar statt zum Glücksspiel zu werden.
 
 ### Credits-Einnahmen
 
@@ -313,6 +322,27 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 **Begründung:** Regolith-Tiles sind Abbaugebiete — ihre Fläche ist durch den Harvester belegt oder für zukünftigen Abbau reserviert. Würde man dort reguläre Gebäude bauen, würde das Vorkommen dauerhaft verschlossen. Umgekehrt wäre ein Harvester auf Terrain-Tiles sinnlos (keine Rohstoffe).
 
+### Baukosten & Level-Up-Kosten
+
+Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php → build_cost` / `regolith_per_levelup`, in die `building_costs`-Tabelle gesynct via `game:sync-config`). Drei getrennte Kosten-Achsen:
+
+**1. Errichten (Tile leer → Level 1, Einmal-Abzug):**
+- **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom/Lagerhalle/Cantina), spät 60–100 (Analytik-Labor/Hangar/Handelsposten…).
+- **Werkstoffe** nur für späte/High-Tech-Gebäude, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung).
+- **Supply-Gate:** Bau nur möglich, wenn freie Supply-Cap ≥ `supply_cost` des Gebäudes (§6). Kein Abzug — reine Belegungsprüfung.
+
+**2. Level-Up (jedes Level, flach — keine Eskalation):**
+- **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Analytik-Labor 15/Lvl, Hangar 20/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
+- **CC-Upgrade (Sonderfall):** skaliert mit `Ziel-Level × 30` Regolith (Lv2 = 60 … Lv5 = 150) — das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben.
+- Harvester: Level-Up regolithfrei (Bootstrap-Schutz).
+
+**3. Reparatur (laufender Dauer-Sink):**
+- **2 Regolith pro Klick** (+1 SP), zusätzlich zu 1 Construction-AP. Decay läuft bis Run-Ende → Reparatur hält Regolith über den gesamten Run relevant (Errichtungs-/Level-Up-Kosten allein versiegen nach Vollausbau).
+- **Hartes Gate:** kein Regolith → Reparatur-Button gesperrt, Tooltip verweist auf Harvester-Reparatur. Kein Negativ-Saldo, kein Schuldensystem.
+- **CC + Harvester ausgenommen** (AP-only) → die Regolith-Quelle bleibt immer reparierbar, die Decay-Spirale ist ein erholbarer Rückschlag, kein Hard-Deadlock.
+
+> **Designziel:** Regolith ist das „Mehl" (reichlich, lokal, Dauer-Sink über Bau + Reparatur), Werkstoffe das „Salz" (knapp, importiert, nur als Akzent). Schiffe kosten ausschließlich Credits.
+
 ### Lagerhalle (depot) — Mechanik
 
 Die Lagerhalle erhöht die maximale Lagerkapazität aller drei Kolonieressourcen (Regolith, Werkstoffe, Organika). Ohne Lagerhalle gilt ein Basis-Cap; jedes Level der Lagerhalle erhöht diesen Cap.
@@ -348,11 +378,11 @@ Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch e
 
 ### Uplink-Station (uplinkStation) — Mechanik
 
-Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Handelsschiff anfordern, Verwaltungsanfragen). Eingehende INNN-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
+Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Instanz, Lv1–3. **Ohne Uplink-Station Lv1 sind aktive Nexus-Anfragen gesperrt** (Werkstoff-Direktimport, Handelsschiff anfordern, Verwaltungsanfragen). Eingehende INNN-Nachrichten des Nexus (Milestones, Warnungen) kommen immer an — diese sind nicht abhängig vom Gebäude.
 
 | Level | CC-Voraussetzung | Freischaltet / Effekt |
 |-------|-----------------|----------------------|
-| 1 | CC Lv2 | Aktive Nexus-Anfragen (Handelsschiff, Verwaltung) |
+| 1 | CC Lv2 | Aktive Nexus-Anfragen: **Werkstoff-Direktimport** (gegen Credits, immer verfügbar, fester Preis — siehe §3), Handelsschiff anfordern, Verwaltung |
 | 2 | CC Lv3 | Tiefenscan dauert 1 Sol weniger; Reisender Händler erscheint häufiger |
 | 3 | CC Lv5 | Run-Abschluss-Aktion: Kolonialbericht senden → Meta-Bonus für nächsten Run |
 
@@ -455,6 +485,14 @@ Tile-Typen (z.B. "Reicher Erzknoten", "Armes Vorkommen", "Organik-freies Terrain
 ### Organika
 
 Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten nicht natürlich vor). Stattdessen produziert der **Agrardom** (Gebäude innerhalb der Kolonie-Zone) Organika passiv pro Sol.
+
+Organika wird **nicht** in Bau- oder Schiffskosten verwendet (§3 Verwendungsmatrix). Ihre Sinks (Phase: Folge-PR nach dem Bau-Sink):
+
+1. **Verpflegung (laufend, eskalierend):** Die Kolonie verbraucht pro Sol Organika proportional zur belegten Supply (Richtwert `floor(used_supply / 4)`). Leerer Vorrat löst **keinen** weichen Einmal-Malus aus, sondern eine eskalierende Spirale: fortlaufender Trust-Verfall → Produktionseinbruch → noch weniger Organika. Das macht den Agrardom zum Pflichtgebäude und trifft die Survival-Kern-Fantasie („Kolonie am Leben halten"). Ausreichender Vorrat kann optional einen kleinen Trust-Bonus (`well_fed`) geben.
+2. **Missions-Proviant (einmalig):** Eine Flotten-/Hangar-Mission, die ein Schiff für mehrere Sole wegschickt, kostet beim Start Organika (Crew-Verpflegung für die Reise).
+3. **Handel (bereits implementiert):** Organika ist in der Cantina gegen Credits verkaufbar (`bar.base_prices`).
+
+Drei handelbare Kolonieressourcen (Regolith, Werkstoffe, Organika) erhalten bewusst das Catan-Tauschdreieck — mit nur zwei kollabiert die Handelstiefe.
 
 ### Gefahren und Ereignisse
 
@@ -665,6 +703,8 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 
 > Supply-Kosten sind **sol-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
+> **Supply als Bau-Gate:** Ein Gebäude kann nur errichtet werden, wenn die freie Supply-Cap (`Cap − belegt`) den `supply_cost` des Neubaus deckt. Es wird **nichts abgezogen** — Supply ist ein Cap, kein Lager. Das ist die „Supply-Kosten"-Achse aus der Verwendungsmatrix (§3): Gebäude kosten Regolith (Abzug) **und** Supply (Cap-Belegung + Gate).
+
 ### Kenntnisse als Supply-Cap-Quelle
 
 Kenntnisse **kosten kein Supply** — sie **erhöhen den Cap**. Jede der 7 Kenntnisse hat 5 Level; die Bonus-Progression ist nicht-linear (Glockenform: mittlere Level sind effizienter als Extremwerte). Kenntnisse haben **keinen Decay** — einmal erforschtes Wissen bleibt permanent.
@@ -762,6 +802,8 @@ Beispiel: max_status_points=5, decay_rate=0.3
 *(Kenntnis — kein Decay; Kenntnisse haben kein SP-System, siehe §10)*
 
 > **Instanced vs. Leveled:** Leveled Buildings verlieren ein Level und regenerieren SP — sie geben mehrere Chancen. Instanced Buildings (Wohnhabitat, Hangar) haben kein Level: Decay auf 0 zerstört die Instanz sofort. Das macht sie gefährlicher zu vernachlässigen, erlaubt aber bewusst riskantes Spiel (Repair-AP sparen auf eigene Gefahr).
+
+> **Manuelle Reparatur:** kostet 1 Construction-AP **+ 2 Regolith pro Klick** (+1 SP). Hartes Gate — ohne Regolith ist der Reparatur-Button gesperrt. CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Schutz). Vollständige Kosten-Regeln siehe §4 „Baukosten & Level-Up-Kosten".
 
 > **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
@@ -2124,7 +2166,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Sol uber Z Sole aufrecht halten | Wirtschaft |
 | 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
 | 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Sole | Diplomatie/Zivilaufbau |
-| 4 | **Selbstversorgung** | Beide Grundressourcen (Werkstoffe, Organika) positiv produzieren ohne Import + Supply > 0, fur 15 Sole | Wirtschaft/Aufbau |
+| 4 | **Selbstversorgung** | Organika positiv produzieren (Netto > 0) **und** einen Werkstoff-Vorrat ≥ X Einheiten bei durchgehend positivem Credits-Saldo halten — für 15 aufeinanderfolgende Sole. (Werkstoffe sind nicht produzierbar, §3 — getestet wird stabiles Import-Management, nicht Eigenproduktion.) | Wirtschaft/Aufbau |
 | 5 | **Expeditionsstatus** | Alle Tiles der Exploration Zone vollständig aufgedeckt (gesamter äußerer Bereich, nicht nur Ring 1–2) | Exploration/Navigation |
 | 6 | **Bewährungsprobe** | Mindestens 3 Encounters erfolgreich abgewehrt (`encounter_won`) mit eigener Flotte | Navigation/Konflikt |
 | 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |

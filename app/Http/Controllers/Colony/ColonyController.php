@@ -10,6 +10,7 @@ use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
+use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -30,8 +31,52 @@ class ColonyController extends BaseController
         private readonly OnboardingTriggerService $onboardingTriggerService,
         private readonly MerchantService $merchantService,
         private readonly EventService $eventService,
+        private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct($tick);
+    }
+
+    // ── Build-cost helpers ──────────────────────────────────────────────────────
+
+    /** Regolith resource id (colony_resources). */
+    private const RES_REGOLITH = 3;
+
+    /**
+     * One-time erect cost for a building, as [resource_id => amount].
+     * Canonical source: config/buildings.php `build_cost`. CC + Harvester have none.
+     *
+     * @return array<int, int>
+     */
+    private function buildCostFor(int $buildingId): array
+    {
+        $cfg = collect(config('buildings'))->firstWhere('id', $buildingId);
+
+        return array_map('intval', $cfg['build_cost'] ?? []);
+    }
+
+    /**
+     * Regolith consumed when a building completes a level-up (flat, no escalation).
+     * Rules: CommandCenter scales as target_level × cc_upgrade_regolith_per_level;
+     * Harvester is free (bootstrap); all others = 25 % of build_cost Regolith (min 10).
+     */
+    private function levelupRegolithFor(int $buildingId, int $targetLevel): int
+    {
+        if ($buildingId === BuildingId::Harvester->value) {
+            return 0;
+        }
+
+        if ($buildingId === BuildingId::CommandCenter->value) {
+            $perLevel = (int) (collect(config('buildings'))->firstWhere('id', $buildingId)['cc_upgrade_regolith_per_level'] ?? 30);
+
+            return $targetLevel * $perLevel;
+        }
+
+        $erectRegolith = $this->buildCostFor($buildingId)[self::RES_REGOLITH] ?? 0;
+        if ($erectRegolith <= 0) {
+            return 0;
+        }
+
+        return max(10, (int) round($erectRegolith * 0.25));
     }
 
     public function hexview(): View
@@ -202,6 +247,7 @@ class ColonyController extends BaseController
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
                 'supply_cost' => (int) $b->supply_cost,
+                'build_cost' => $this->buildCostFor($b->id),   // [resource_id => amount]
             ])
             ->values();
 
@@ -296,6 +342,40 @@ class ColonyController extends BaseController
             ]);
         }
 
+        // Resource + supply gate for regular buildings (the harvester relocates for free,
+        // and CC/Harvester carry no build_cost — bootstrap exemption). Checked before any
+        // DB write so a failed gate leaves the colony untouched.
+        $buildCost = $isHarvester ? [] : $this->buildCostFor((int) $data['building_id']);
+
+        if (! $isHarvester) {
+            if (! config('game.bypass.resource_costs') && $buildCost !== []) {
+                $costs = [];
+                foreach ($buildCost as $resourceId => $amount) {
+                    $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+                }
+                if (! $this->resourcesService->check($costs, $colony->id)) {
+                    return response()->json([
+                        'ok' => false,
+                        'error' => 'resource_limit',
+                        'message' => __('colony.error_insufficient_resources'),
+                        'cost' => $buildCost,
+                    ]);
+                }
+            }
+
+            // Supply is a cap, not a stockpile: a building may only be erected when the
+            // free cap covers its ongoing supply_cost (§6). Nothing is deducted here.
+            if (! config('game.bypass.supply_checks')
+                && (int) ($building->supply_cost ?? 0) > 0
+                && $this->resourcesService->getFreeSupply($colony->id) < (int) $building->supply_cost) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'supply_limit',
+                    'message' => __('colony.onboarding_trigger_supply_full'),
+                ]);
+            }
+        }
+
         // Building on a still-fogged colony-zone tile reveals it (settle → see).
         if (! $tile->is_explored) {
             DB::table('colony_tiles')
@@ -363,6 +443,15 @@ class ColonyController extends BaseController
             $this->personellService->lockActionPoints('construction', $colony->id, $apCost);
         }
 
+        // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation is free.
+        if (! $isHarvester && ! config('game.bypass.resource_costs') && $buildCost !== []) {
+            $costs = [];
+            foreach ($buildCost as $resourceId => $amount) {
+                $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+            }
+            $this->resourcesService->payCosts($costs, $colony->id);
+        }
+
         $this->eventService->createEvent([
             'user' => Auth::id(),
             'tick' => $this->getTick(),
@@ -426,6 +515,24 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_max_level_reached')]);
         }
 
+        // Level-up Regolith is charged only on the click that completes the level (flat,
+        // no escalation; CC scales by target level). Check it BEFORE spending the AP so a
+        // shortfall never burns the final Construction-AP — the player tops up first.
+        $willLevelUp = ($row->ap_spend + 1) >= (int) $building->ap_for_levelup;
+        $levelupRegolith = $willLevelUp
+            ? $this->levelupRegolithFor($buildingId, (int) $row->level + 1)
+            : 0;
+
+        if ($willLevelUp && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
+            && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]], $colony->id)) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'resource_limit',
+                'message' => __('colony.error_insufficient_resources'),
+                'cost' => [self::RES_REGOLITH => $levelupRegolith],
+            ]);
+        }
+
         $newApSpend = min($row->ap_spend + 1, $building->ap_for_levelup);
 
         DB::table('colony_buildings')
@@ -440,6 +547,12 @@ class ColonyController extends BaseController
 
         $leveledUp = false;
         if ($newApSpend >= $building->ap_for_levelup) {
+            if ($levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
+                $this->resourcesService->payCosts(
+                    [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
+                    $colony->id
+                );
+            }
             DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $buildingId)
@@ -541,6 +654,24 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_repair_full')]);
         }
 
+        // Repair costs 2 Regolith per click (hard gate, no negative balance). CC and
+        // Harvester are exempt (AP-only) so the Regolith source itself stays repairable —
+        // this keeps the decay spiral a recoverable setback, never a hard deadlock.
+        $repairRegolith = config('game.repair.regolith_per_click', 2);
+        $repairCostsRegolith = $buildingId !== BuildingId::CommandCenter->value
+            && $buildingId !== BuildingId::Harvester->value
+            && $repairRegolith > 0
+            && ! config('game.bypass.resource_costs');
+
+        if ($repairCostsRegolith
+            && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]], $colony->id)) {
+            return response()->json([
+                'ok' => false,
+                'error' => 'repair_no_regolith',
+                'message' => __('colony.error_repair_no_regolith'),
+            ]);
+        }
+
         $newSp = min((int) $row->status_points + 1, $maxSp);
 
         DB::table('colony_buildings')
@@ -548,6 +679,13 @@ class ColonyController extends BaseController
             ->where('building_id', $buildingId)
             ->where('instance_id', $instanceId)
             ->update(['status_points' => $newSp]);
+
+        if ($repairCostsRegolith) {
+            $this->resourcesService->payCosts(
+                [['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]],
+                $colony->id
+            );
+        }
 
         if (! config('game.bypass.ap_checks')) {
             $this->personellService->lockActionPoints('construction', $colony->id, 1);
@@ -577,6 +715,61 @@ class ColonyController extends BaseController
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'activeHint' => $this->resolveHint($colony->id),
             ...$this->currentAp($colony->id),
+        ]);
+    }
+
+    /**
+     * Nexus direct import of Werkstoffe (compounds) against Credits.
+     *
+     * Guaranteed safety-net source (GDD §3): always available, fixed Credits price,
+     * gated behind Uplink-Station Lv1 (an "active Nexus request"). Pricier than the
+     * opportunistic Cantina/merchant — those stay the cheaper, random source.
+     */
+    public function nexusImportCompounds(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'amount' => 'required|integer|min:1|max:9999',
+        ]);
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $amount = (int) $data['amount'];
+
+        $uplinkId = (int) config('buildings.uplinkStation.id', 54);
+        $uplinkLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $uplinkId)
+            ->value('level') ?? 0);
+
+        if ($uplinkLevel < 1) {
+            return response()->json(['ok' => false, 'error' => 'uplink_required', 'message' => __('colony.nexus_import_uplink_required')]);
+        }
+
+        $price = (int) config('game.economy.compound_import_price', 90);
+        $totalCost = $amount * $price;
+
+        if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id)) {
+            return response()->json(['ok' => false, 'error' => 'credit_limit', 'message' => __('colony.nexus_import_no_credits')]);
+        }
+
+        $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id);
+        $this->resourcesService->increaseAmount($colony->id, 4, $amount);   // 4 = Werkstoffe
+
+        $this->eventService->createEvent([
+            'user' => Auth::id(),
+            'tick' => $this->getTick(),
+            'event' => 'colony.compounds_imported',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => $colony->id, 'amount' => $amount, 'cost' => $totalCost]),
+        ]);
+
+        $credits = (int) (DB::table('user_resources')->where('user_id', $colony->user_id)->value('credits') ?? 0);
+        $compounds = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 4)->value('amount') ?? 0);
+
+        return response()->json([
+            'ok' => true,
+            'amount' => $amount,
+            'cost' => $totalCost,
+            'credits' => $credits,
+            'compounds' => $compounds,
         ]);
     }
 

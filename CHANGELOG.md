@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-06-20
+
+- **Ressourcen-Bau-Sink: Bauen, Ausbauen und Reparieren verbrauchen jetzt Ressourcen** (PR 1, game-designer-Spec). Der Hex-Bau-Flow war bisher gratis (nur AP) — die Kolonie-Ökonomie hatte keinen Sink, produzierte Ressourcen versickerten ungenutzt.
+  - **Errichten:** Regolith für alle Gebäude außer Kommandozentrale + Harvester (Bootstrap-Ausnahme); späte/High-Tech-Gebäude zusätzlich ein kleiner Werkstoff-Akzent (10–25). Supply wirkt als **Gate** (Bau nur, wenn freie Cap ≥ `supply_cost`), kein Abzug — modelltreu zum Cap-System.
+  - **Level-Up:** flacher Regolith-Anteil (25 % der Errichtungskosten, keine Eskalation), erst beim Level-Up-Abschluss abgezogen; ein Mangel verfällt keine AP. Kommandozentrale skaliert separat (`Ziel-Level × 30` Rg).
+  - **Reparatur:** 2 Regolith pro Klick mit hartem Gate (kein Rg → gesperrt, Hinweis „Harvester reparieren"). Kommandozentrale + Harvester sind ausgenommen (nur AP) — die Regolith-Quelle bleibt immer reparierbar, die Decay-Spirale ist ein erholbarer Rückschlag statt eines Deadlocks.
+  - **Werkstoffe (knapp, nicht produzierbar):** neuer **Nexus-Direktimport** gegen Credits, gegated über Uplink-Station Lv1, fester Preis (90 Cr/Einheit, teurer als die Cantina) — die garantierte Anti-Lock-Quelle aus GDD §3. Import-Panel in der Kolonie-Sidebar.
+  - **Schiffe kosten nur noch Credits** (Legacy-Werkstoff-/Organika-Schiffskosten entfernt). Organika ist nie Baukosten.
+  - Kosten sind canonical in `config/buildings.php` (`build_cost`) gepflegt und werden über `game:sync-config` in `building_costs` gesynct; neue Migration + testdata-Bereinigung. Bauliste zeigt Regolith-/Werkstoff-Kosten als Chips. GDD §3/§4/§6/§7 aktualisiert.
+  - Organika-Sinks (eskalierende Verpflegung + Missions-Proviant) folgen als eigene PR.
+
 ## 2026-06-17
 
 - **Onboarding Sol-1 AP-Pacing: zwei neue Hints gegen den frühen AP-Leerlauf** (game-designer-Spec). Bisher endete Sol 1 mit ungenutzten Bau-AP und brachliegenden Navigations-AP, während CC-Level-2 in Sol 2 nur „gerade so" fertig wurde.

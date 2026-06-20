@@ -60,5 +60,26 @@ return [
     'error_tile_occupied' => 'Tile already occupied.',
     'error_no_construction_ap' => 'Not enough construction AP.',
     'error_building_not_found' => 'Building not found.',
+    'error_insufficient_resources' => 'Not enough resources to build.',
+    'error_repair_no_regolith' => 'No Regolith for repair — repair the Harvester or mine Regolith.',
+
+    // ── Build cost chips ──────────────────────────────────────────────────────
+
+    'cost_regolith' => ':amount Rg',
+    'cost_compounds' => ':amount Wk',
+    'cost_label' => 'Cost',
+
+    // ── Nexus import (compounds for credits, Uplink Station Lv1) ──────────────
+
+    'nexus_import_title' => 'Nexus Import',
+    'nexus_import_hint' => 'Buy compounds directly from the Nexus — always available, fixed price.',
+    'nexus_import_amount' => 'Amount (compounds)',
+    'nexus_import_price_each' => ':price Cr/unit',
+    'nexus_import_total' => 'Total: :total Cr',
+    'nexus_import_confirm' => 'Import',
+    'nexus_import_success' => 'Imported :amount compounds (:cost Cr).',
+    'nexus_import_uplink_required' => 'Uplink Station Lv1 required — it unlocks active Nexus requests.',
+    'nexus_import_no_credits' => 'Not enough credits for this import.',
+    'nexus_import_error' => 'Import failed.',
 
 ];

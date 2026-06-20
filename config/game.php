@@ -53,6 +53,22 @@ return [
         41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
     ],
 
+    // Economy — resource pricing for player-facing buy/sell mechanics.
+    'economy' => [
+        // Werkstoffe (compounds, resource 4) are not locally producible (GDD §3).
+        // The Nexus direct import (gated behind Uplink-Station Lv1) is the guaranteed
+        // safety-net source: a fixed Credits price per unit, always available. Set
+        // deliberately above the Cantina spot price (~60) so the Cantina/merchant stay
+        // the cheaper, opportunistic source and the Nexus stays the expensive fallback.
+        'compound_import_price' => 90,
+    ],
+
+    // Manual building repair — Regolith cost per click (1 SP), on top of 1 Construction-AP.
+    // CommandCenter + Harvester are exempt (AP-only, bootstrap anchor against decay spiral).
+    'repair' => [
+        'regolith_per_click' => 2,
+    ],
+
     // Action Points — base value per AP type per Sol, regardless of advisors.
     // Advisors add their rank bonus on top. See GDD §13.
     // Formula: availableAP = base + AP_bonus(advisor_rank) - lockedAP(tick)

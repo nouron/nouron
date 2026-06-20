@@ -128,6 +128,27 @@ return [
     'error_no_construction_ap' => 'Nicht genug Bau-AP.',
     'error_building_not_found' => 'Gebäude nicht gefunden.',
     'error_max_level_reached' => 'Maximales Level bereits erreicht.',
+    'error_insufficient_resources' => 'Nicht genug Ressourcen für den Bau.',
+    'error_repair_no_regolith' => 'Kein Regolith für die Reparatur — Harvester reparieren oder Regolith abbauen.',
+
+    // ── Build cost chips ──────────────────────────────────────────────────────
+
+    'cost_regolith' => ':amount Rg',
+    'cost_compounds' => ':amount Wk',
+    'cost_label' => 'Kosten',
+
+    // ── Nexus-Import (Werkstoffe gegen Credits, Uplink-Station Lv1) ────────────
+
+    'nexus_import_title' => 'Nexus-Import',
+    'nexus_import_hint' => 'Werkstoffe direkt vom Nexus kaufen — immer verfügbar, fester Preis.',
+    'nexus_import_amount' => 'Menge (Werkstoffe)',
+    'nexus_import_price_each' => ':price Cr/Einheit',
+    'nexus_import_total' => 'Gesamt: :total Cr',
+    'nexus_import_confirm' => 'Importieren',
+    'nexus_import_success' => ':amount Werkstoffe importiert (:cost Cr).',
+    'nexus_import_uplink_required' => 'Uplink-Station Lv1 erforderlich — sie schaltet aktive Nexus-Anfragen frei.',
+    'nexus_import_no_credits' => 'Nicht genug Credits für diesen Import.',
+    'nexus_import_error' => 'Import fehlgeschlagen.',
 
     // ── Generic UI actions ───────────────────────────────────────────────────
 
