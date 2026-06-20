@@ -24,6 +24,9 @@ class OnboardingService
     /**
      * Full setup for a newly registered player.
      *
+     * Creates a brand-new colony (no existing colony for this user) and seeds
+     * it to the canonical Sol-1 starting state.
+     *
      * @throws \RuntimeException when no free planet is available
      */
     public function setupNewPlayer(int $userId, string $colonyName = ''): Colony
@@ -34,27 +37,79 @@ class OnboardingService
             $globalTick = $this->tickService->getTickCount();
             $colony = $this->colonyService->createColony($userId, $name, $globalTick);
 
-            $this->seedResources($userId, $colony->id);
-            $this->seedStartingBuilding($colony->id);
-            $this->seedStartingTiles($colony->id);
-            $this->eventService->createNexusBriefing($userId, 0, $colony->id);
-
-            Run::create([
-                'user_id' => $userId,
-                'colony_id' => $colony->id,
-                'current_tick' => 0,
-                'status' => 'active',
-                'started_at' => null, // set when player clicks "Mission starten" in lobby
-                'settings' => [
-                    'tick_limit' => config('game.run.tick_limit'),
-                    'bypass' => config('game.bypass'),
-                    'supply_cap_max' => config('game.supply.cap_max'),
-                    'max_players' => config('game.run.max_players'),
-                ],
-            ]);
+            $this->seedSol1State($userId, $colony->id);
 
             return $colony;
         });
+    }
+
+    /**
+     * Resets an existing colony to the canonical Sol-1 starting state.
+     *
+     * Used when a player abandons their current run and starts a new one
+     * from the lobby (the colony record itself is kept — only its game state
+     * is wiped and re-seeded). This is the same Sol-1 state produced by
+     * setupNewPlayer() for a brand-new colony, so both paths stay in sync.
+     *
+     * Advisors are detached from the colony (colony_id = null) rather than
+     * deleted — the player keeps earned advisors across runs. Use
+     * ResetPlayer (dev tool) instead if advisors must be wiped entirely.
+     */
+    public function resetColonyToSol1(int $userId, int $colonyId): void
+    {
+        DB::transaction(function () use ($userId, $colonyId) {
+            DB::table('colony_resources')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_buildings')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_ships')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_researches')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_personell')->where('colony_id', $colonyId)->delete();
+            DB::table('trade_resources')->where('colony_id', $colonyId)->delete();
+            DB::table('trust_events')->where('colony_id', $colonyId)->delete();
+            DB::table('merchant_visits')->where('colony_id', $colonyId)->delete();
+            DB::table('colony_hangar_missions')->where('colony_id', $colonyId)->delete();
+            DB::table('locked_actionpoints')
+                ->where('scope_type', 'colony')
+                ->where('scope_id', $colonyId)
+                ->delete();
+            DB::table('colony_log')->where('user', $userId)->delete();
+            DB::table('user_preferences')->where('user_id', $userId)->delete();
+
+            // Advisors stay with the player across runs — detach, don't delete.
+            DB::table('advisors')->where('colony_id', $colonyId)->update(['colony_id' => null]);
+
+            $this->seedSol1State($userId, $colonyId);
+        });
+    }
+
+    /**
+     * Shared Sol-1 seed routine: resources, starting buildings, starting
+     * tiles (incl. zone assignment), Nexus briefing, and the active Run
+     * record. Assumes all prior colony state has already been cleared by
+     * the caller.
+     */
+    private function seedSol1State(int $userId, int $colonyId): void
+    {
+        $this->seedResources($userId, $colonyId);
+        $this->seedStartingBuilding($colonyId);
+        $this->seedStartingTiles($colonyId);
+        $this->eventService->createNexusBriefing($userId, 0, $colonyId);
+
+        Run::create([
+            'user_id' => $userId,
+            'colony_id' => $colonyId,
+            'current_tick' => 0,
+            'status' => 'active',
+            'started_at' => null, // set when player clicks "Mission starten" in lobby
+            'phase' => 1,
+            'nexus_debt' => 3000, // matches runs.nexus_debt column default (GDD §15 startup loan)
+            'settings' => [
+                'tick_limit' => config('game.run.tick_limit'),
+                'bypass' => config('game.bypass'),
+                'supply_cap_max' => config('game.supply.cap_max'),
+                'max_players' => config('game.run.max_players'),
+            ],
+        ]);
     }
 
     private function seedResources(int $userId, int $colonyId): void

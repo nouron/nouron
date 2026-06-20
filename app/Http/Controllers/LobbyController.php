@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Colony;
 use App\Models\Run;
+use App\Services\OnboardingService;
 use App\Services\RunProgressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class LobbyController extends Controller
 {
     public function __construct(
         private readonly RunProgressService $runProgressService,
+        private readonly OnboardingService $onboardingService,
     ) {}
 
     public function index(): View|RedirectResponse
@@ -99,8 +101,9 @@ class LobbyController extends Controller
     /**
      * Feature 2: Create a new run for the authenticated user.
      *
-     * Resets the existing colony to starting state, then creates a fresh Run record.
-     * Guards against starting a new run when an active run already exists.
+     * Resets the existing colony to the canonical Sol-1 starting state, then
+     * creates a fresh Run record. Guards against starting a new run when an
+     * active run already exists.
      */
     public function newRun(Request $request): RedirectResponse
     {
@@ -120,75 +123,7 @@ class LobbyController extends Controller
             return redirect()->route('lobby')->with('error', __('run.new_run_no_colony'));
         }
 
-        DB::transaction(function () use ($userId, $colony) {
-            $colonyId = $colony->id;
-
-            // Reset colony-level resources to starting values.
-            DB::table('colony_resources')->where('colony_id', $colonyId)->delete();
-            DB::table('colony_resources')->insert([
-                ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 200], // regolith
-                ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],   // werkstoffe
-                ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],   // organika
-                ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],   // trust
-            ]);
-
-            // Reset user-level resources (credits + supply).
-            DB::table('user_resources')->updateOrInsert(
-                ['user_id' => $userId],
-                ['credits' => 3000, 'supply' => 15],
-            );
-
-            // Remove all existing buildings on the colony.
-            DB::table('colony_buildings')->where('colony_id', $colonyId)->delete();
-
-            // Seed starting buildings: CommandCenter (25) and Harvester (27) at level 1.
-            DB::table('colony_buildings')->insert([
-                [
-                    'colony_id' => $colonyId,
-                    'building_id' => config('buildings.commandCenter.id', 25),
-                    'level' => 1,
-                    'status_points' => 20,
-                    'ap_spend' => 0,
-                ],
-                [
-                    'colony_id' => $colonyId,
-                    'building_id' => config('buildings.harvester.id', 27),
-                    'level' => 1,
-                    'status_points' => 20,
-                    'ap_spend' => 0,
-                ],
-            ]);
-
-            // Release all advisors assigned to this colony.
-            DB::table('advisors')->where('colony_id', $colonyId)->update(['colony_id' => null]);
-
-            // Reset all colony tiles to unexplored state.
-            DB::table('colony_tiles')
-                ->where('colony_id', $colonyId)
-                ->update(['is_explored' => false]);
-
-            // Reset all research progress so the run starts with a clean slate.
-            DB::table('colony_researches')
-                ->where('colony_id', $colonyId)
-                ->update(['level' => 0]);
-
-            // Create the new run record.
-            Run::create([
-                'user_id' => $userId,
-                'colony_id' => $colonyId,
-                'current_tick' => 0,
-                'status' => 'active',
-                'started_at' => null, // set when player clicks "Mission starten" in lobby
-                'phase' => 1,
-                'nexus_debt' => 3000,
-                'settings' => [
-                    'tick_limit' => config('game.run.tick_limit'),
-                    'bypass' => config('game.bypass'),
-                    'supply_cap_max' => config('game.supply.cap_max'),
-                    'max_players' => config('game.run.max_players'),
-                ],
-            ]);
-        });
+        $this->onboardingService->resetColonyToSol1($userId, $colony->id);
 
         return redirect()->route('lobby')->with('success', __('run.new_run_started'));
     }
