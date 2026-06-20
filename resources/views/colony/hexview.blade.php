@@ -220,7 +220,6 @@
                                 <button class="tile-action-btn tile-action-btn--secondary"
                                     @click="startBuildForTile(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.build") }}</span>
-                                    @include("partials.ap-cost-chip", ["amount" => 1, "type" => "build"])
                                 </button>
                             </template>
                         </div>
@@ -297,9 +296,11 @@
                                                 .building_id
                                         }"
                                         @click="selectPendingBuilding(b)">
-                                        <span class="building-list-name" x-text="b.label"></span>
-                                        <span class="building-list-meta">
+                                        <div class="building-list-row">
+                                            <span class="building-list-name" x-text="b.label"></span>
                                             <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
+                                        </div>
+                                        <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"
                                                 x-text="`${b.supply_cost} SUP`"></span>
                                             <span class="building-list-cost" x-show="b.build_cost && b.build_cost[3]"
@@ -307,7 +308,7 @@
                                             <span class="building-list-cost building-list-cost--compounds"
                                                 x-show="b.build_cost && b.build_cost[4]"
                                                 x-text="`${b.build_cost?.[4]} Wk`"></span>
-                                        </span>
+                                        </div>
                                     </li>
                                 </template>
                             </ul>

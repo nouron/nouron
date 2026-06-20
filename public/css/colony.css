@@ -1017,8 +1017,8 @@ button.btn-sol:hover,
 
 .building-list-item {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 0.25rem;
     padding: 0.45rem 0.7rem;
     border-radius: 5px;
     border: 1px solid var(--color-border);
@@ -1027,6 +1027,18 @@ button.btn-sol:hover,
     transition:
         background 0.1s ease,
         border-color 0.1s ease;
+}
+
+.building-list-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.building-list-row--costs {
+    justify-content: flex-start;
+    flex-wrap: wrap;
 }
 
 .building-list-item:hover {
@@ -1043,18 +1055,16 @@ button.btn-sol:hover,
     font-size: 0.85rem;
     font-weight: 600;
     color: var(--color-anthracite);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .building-list-ap {
     font-size: 0.72rem;
     color: #888;
     font-weight: 500;
-}
-
-.building-list-meta {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
+    flex-shrink: 0;
 }
 
 .building-list-supply {
