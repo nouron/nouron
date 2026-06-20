@@ -94,6 +94,20 @@
             </span>
         @endif
 
+        {{-- Trust — thematically next to Supply (colony view only; value from hexview). --}}
+        @if (isset($trust) && request()->routeIs("colony.view"))
+            <span id="resbar-ap-trust"
+                class="ap-chip {{ $trust >= 20 ? "ap-chip--trust-pos" : ($trust < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}"
+                x-data="{ open: false }" @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
+                @click.outside="open=false" style="position:relative;cursor:default">
+                <span>{{ __("resources.res_trust") }} <span class="res-amount">{{ (int) $trust }}</span></span>
+                @include("partials.res-popup", [
+                    "popup_title" => __("resources.popup_trust_title"),
+                    "popup_desc" => __("resources.popup_trust_desc"),
+                ])
+            </span>
+        @endif
+
         {{-- Secondary (colony) resources — always shown, even at 0, so the player sees
          the full economy (Regolith, Werkstoffe, Organika). --}}
         @if (count($secondary) > 0)
@@ -163,16 +177,6 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_strategy_ap_title"),
                     "popup_desc" => __("resources.popup_strategy_ap_desc"),
-                ])
-            </span>
-            <span id="resbar-ap-trust"
-                class="ap-chip {{ $trust >= 20 ? "ap-chip--trust-pos" : ($trust < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}"
-                x-data="{ open: false }" @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
-                @click.outside="open=false" style="position:relative;cursor:default">
-                <span>{{ __("resources.res_trust") }} <span class="res-amount">{{ (int) $trust }}</span></span>
-                @include("partials.res-popup", [
-                    "popup_title" => __("resources.popup_trust_title"),
-                    "popup_desc" => __("resources.popup_trust_desc"),
                 ])
             </span>
         @endif
