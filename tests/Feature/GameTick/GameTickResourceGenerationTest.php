@@ -69,6 +69,11 @@ class GameTickResourceGenerationTest extends TestCase
         );
         // Ensure moral events table is clean (no pending events that would shift moral)
         DB::table('trust_events')->where('colony_id', self::COLONY_ID)->delete();
+
+        // Isolate production from the Organika provisioning sink (GameTick step 8a):
+        // a huge supply_per_eater forces food_need = floor(used_supply / huge) = 0, so
+        // no Organika is eaten and the production assertions stay exact.
+        config(['game.food.supply_per_eater' => PHP_INT_MAX]);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

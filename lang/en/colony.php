@@ -82,4 +82,9 @@ return [
     'nexus_import_no_credits' => 'Not enough credits for this import.',
     'nexus_import_error' => 'Import failed.',
 
+    // ── Hangar mission dispatch (provisions) ──────────────────────────────────
+
+    'hangar_dispatch_no_nav_ap' => 'Not enough navigation AP for this mission.',
+    'hangar_dispatch_no_organika' => 'Not enough Organika for this mission\'s crew provisions.',
+
 ];

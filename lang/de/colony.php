@@ -195,6 +195,8 @@ return [
     'hangar_empty' => 'Leer',
     'hangar_build_ship' => 'Schiff bauen',
     'hangar_dispatch' => 'Entsenden',
+    'hangar_dispatch_no_nav_ap' => 'Nicht genug Navigations-AP für diese Mission.',
+    'hangar_dispatch_no_organika' => 'Nicht genug Organika für die Crew-Verpflegung dieser Mission.',
     'hangar_recall' => 'Zurückrufen',
     'hangar_repair' => 'Reparieren',
     'hangar_destination' => 'Ziel',
@@ -254,6 +256,9 @@ return [
 
     // Produktion
     'sol_report_no_production' => 'Keine Produktion — Industriegebäude stillgelegt oder beschädigt.',
+    'sol_report_food' => 'Verpflegung',
+    'sol_report_food_ok' => ':amount Organika verbraucht — Kolonie versorgt',
+    'sol_report_food_shortage' => 'Vorräte erschöpft — Vertrauen sinkt (Agrardom bauen/reparieren)',
 
     // Kolonie & Personal
     'sol_report_advisor' => 'Berater',

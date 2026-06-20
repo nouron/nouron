@@ -2,6 +2,10 @@
 
 ## 2026-06-20
 
+- **Organika-Sinks: Verpflegung + Missions-Proviant** (PR 2, game-designer-Spec). Organika hatte bisher außer Handel keinen Verbraucher — tote Ressource.
+  - **Verpflegung (laufend, eskalierend):** Jede Kolonie verbraucht pro Sol `floor(belegte_Supply / 4)` Organika (neuer GameTick-Schritt 3a, zwischen Produktion und Vertrauen). Vorrat reicht → `well_fed` (+1 Vertrauen); Vorrat leer → `glx_colonies.hunger_streak` wächst und ein **eskalierender** Vertrauens-Malus `−min(2+(streak−1), 8)` greift (`TrustService::hungerPenalty`). Sättigen setzt Streak + Malus sofort zurück. Macht den Agrardom zum Pflichtgebäude; Survival-Spirale statt weichem Einmal-Malus.
+  - **Missions-Proviant:** Hangar-Dispatch kostet jetzt `sol_distance × 3` Organika (Crew-Verpflegung) **und** `sol_distance × 1` Navigations-AP; bei Mangel an beidem wird die Entsendung blockiert.
+  - Sol-Report zeigt eine Verpflegungs-Zeile (versorgt / Vorräte erschöpft), damit der Hunger-Vertrauensverlust eine sichtbare Ursache hat. Neue Spalte `glx_colonies.hunger_streak` (Migration), Config-Block `game.food`, `game.trust.events.well_fed`. GDD §3/§14 + Tick-Phasen-Tabelle aktualisiert.
 - **Ressourcen-Bau-Sink: Bauen, Ausbauen und Reparieren verbrauchen jetzt Ressourcen** (PR 1, game-designer-Spec). Der Hex-Bau-Flow war bisher gratis (nur AP) — die Kolonie-Ökonomie hatte keinen Sink, produzierte Ressourcen versickerten ungenutzt.
   - **Errichten:** Regolith für alle Gebäude außer Kommandozentrale + Harvester (Bootstrap-Ausnahme); späte/High-Tech-Gebäude zusätzlich ein kleiner Werkstoff-Akzent (10–25). Supply wirkt als **Gate** (Bau nur, wenn freie Cap ≥ `supply_cost`), kein Abzug — modelltreu zum Cap-System.
   - **Level-Up:** flacher Regolith-Anteil (25 % der Errichtungskosten, keine Eskalation), erst beim Level-Up-Abschluss abgezogen; ein Mangel verfällt keine AP. Kommandozentrale skaliert separat (`Ziel-Level × 30` Rg).

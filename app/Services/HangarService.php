@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -34,6 +35,7 @@ class HangarService
     public function __construct(
         private readonly TickService $tickService,
         private readonly TrustService $trustService,
+        private readonly PersonellService $personellService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -381,12 +383,39 @@ class HangarService
                 );
             }
 
+            // Mission cost scales with travel time: Navigation-AP for the crew effort and
+            // Organika as crew provisions for the voyage. Both gate the dispatch.
+            $navApCost = $solDistance * (int) config('game.food.mission_nav_ap_per_sol', 1);
+            $organikaCost = $solDistance * (int) config('game.food.mission_organika_per_sol', 3);
+
+            if (! config('game.bypass.ap_checks')
+                && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $navApCost) {
+                throw new RuntimeException(__('colony.hangar_dispatch_no_nav_ap'));
+            }
+
+            if (! config('game.bypass.resource_costs')) {
+                $organika = (int) DB::table('colony_resources')
+                    ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount');
+                if ($organika < $organikaCost) {
+                    throw new RuntimeException(__('colony.hangar_dispatch_no_organika'));
+                }
+            }
+
             $currentTick = $this->tickService->getTickCount();
 
             DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
                 ->update(['ship_state' => 'dispatched']);
+
+            if (! config('game.bypass.ap_checks') && $navApCost > 0) {
+                $this->personellService->lockActionPoints('navigation', $colonyId, $navApCost);
+            }
+            if (! config('game.bypass.resource_costs') && $organikaCost > 0) {
+                DB::table('colony_resources')
+                    ->where('colony_id', $colonyId)->where('resource_id', 5)
+                    ->update(['amount' => DB::raw("MAX(0, amount - {$organikaCost})")]);
+            }
 
             DB::table('colony_hangar_missions')->insert([
                 'colony_id' => $colonyId,

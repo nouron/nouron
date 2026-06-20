@@ -240,7 +240,23 @@ return [
             'colony_threatened' => -4,
             'treaty_signed' => 3,
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
+            'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
         ],
+    ],
+
+    // Organika provisioning — the colony eats Organika (resource 5) each Sol.
+    // Consumption = floor(used_supply / supply_per_eater). Stock covers it → well_fed
+    // (+trust); stock short → hunger_streak grows and an escalating trust penalty bites
+    // (see TrustService::hungerPenalty), making bioFacility a must-have. Missions also
+    // burn Organika as crew provisions at dispatch.
+    'food' => [
+        'supply_per_eater' => 4,     // 1 "eater" per 4 used supply → food_need = floor(used/4)
+        'well_fed_trust' => 1,       // (documented; actual bonus via trust.events.well_fed)
+        'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
+        'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
+        'hunger_cap' => 8,           // max penalty
+        'mission_nav_ap_per_sol' => 1,   // dispatch Nav-AP cost = sol_distance × this
+        'mission_organika_per_sol' => 3, // dispatch provisions = sol_distance × this
     ],
 
     // CC-Level gate for knowledge research levels 4 and 5.

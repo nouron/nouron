@@ -65,8 +65,30 @@ class TrustService
         $trust += $this->researchContribution($colonyId);
         $trust += $this->shipContribution($colonyId);
         $trust += $this->eventContribution($colonyId, $tick);
+        $trust += $this->hungerPenalty($colonyId);
 
         return max(-100, min(100, $trust));
+    }
+
+    /**
+     * Escalating trust penalty from sustained hunger (Organika provisioning, PR 2).
+     *
+     * Derived deterministically from glx_colonies.hunger_streak so it escalates while
+     * the colony starves and vanishes the moment it is fed again (streak reset to 0 by
+     * GameTick::processFoodConsumption). Returns a non-positive value.
+     */
+    private function hungerPenalty(int $colonyId): int
+    {
+        $streak = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('hunger_streak');
+        if ($streak < 1) {
+            return 0;
+        }
+
+        $base = (int) config('game.food.hunger_base_malus', 2);
+        $step = (int) config('game.food.hunger_step', 1);
+        $cap = (int) config('game.food.hunger_cap', 8);
+
+        return -min($base + ($streak - 1) * $step, $cap);
     }
 
     /**

@@ -286,6 +286,22 @@ class SolReportService
             'to' => $afterSupply,
         ];
 
+        // Provisioning (Organika): make hunger visible — otherwise the escalating trust
+        // hit from food_shortage has no on-screen cause.
+        $usedSupply = (int) DB::table('colony_buildings as cb')
+            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $colonyId)->where('cb.level', '>', 0)
+            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+        $foodNeed = intdiv($usedSupply, max(1, (int) config('game.food.supply_per_eater', 4)));
+        if ($foodNeed >= 1) {
+            $hungry = (int) DB::table('glx_colonies')->where('id', $colonyId)->value('hunger_streak') > 0;
+            $lines[] = [
+                'label' => __('colony.sol_report_food'),
+                'detail' => $hungry ? __('colony.sol_report_food_shortage') : __('colony.sol_report_food_ok', ['amount' => $foodNeed]),
+                'tone' => $hungry ? 'warning' : 'neutral',
+            ];
+        }
+
         return [
             'key' => 'production',
             'title' => __('colony.sol_report_group_production'),
