@@ -64,6 +64,11 @@ class ResetPlayer extends Command
                 ->where('user_id', $user->user_id)
                 ->pluck('id');
 
+            // Dev-tool-specific: advisors are fully deleted (not just detached) and
+            // every colony/run owned by this user is wiped, not just the active one.
+            // This is a superset of OnboardingService::resetColonyToSol1() — that
+            // method detaches advisors and only touches the run being replaced,
+            // which is correct for the lobby "new run" flow but not for this command.
             foreach ($colonyIds as $cid) {
                 DB::table('colony_resources')->where('colony_id', $cid)->delete();
                 DB::table('colony_buildings')->where('colony_id', $cid)->delete();
