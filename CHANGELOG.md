@@ -2,6 +2,7 @@
 
 ## 2026-06-20
 
+- **Hex-Bau-UI: zwei Layout-Fixes** (Owner-Report, Playtest). Der reine „Bauen"-Öffnen-Button (öffnet nur die Gebäudeauswahl, löst selbst keine AP-Aktion aus) zeigte fälschlich einen AP-Kosten-Chip — entfernt. In der Bauliste standen Gebäudename, AP-Kosten und Ressourcenkosten alle in einer Zeile und brachen hässlich um (z. B. „Lagerhalle-10 AP"); jetzt zwei Zeilen pro Eintrag: Name + AP-Kosten oben, Ressourcen-Chips (Regolith/Werkstoffe/Supply) darunter mit Flex-Wrap (`building-list-row`/`building-list-row--costs` in `colony.css`).
 - **Galaxie/Systemkarte + Fleet-Layer entfernt** (Owner-Entscheidung: „bis auf weiteres gestrichen"). Die navigierbare Galaxie-/Systemkarte und Flottenbewegung/-kampf waren UI-seitig längst weg; jetzt ist auch das tote Backend raus.
   - Gelöscht: `FleetService`, `GalaxyService`, alle `Fleet*`/`GlxSystem*`-Models, GameTick-Schritte Fleet-Move/Trade/Combat + Fleet-Ship-Decay. Migration droppt `fleets`/`fleet_*` + `glx_systems`/`glx_system*`-Tabellen + Views.
   - **Kolonie entkoppelt:** `glx_colonies` ohne `system_object_id`/`spot` neu gebaut (Koordinaten + System-Objekt-FK entfallen); `v_glx_colonies` ist jetzt ein Passthrough. Kolonie = ein Heimat-Standort ohne Systemraum.
