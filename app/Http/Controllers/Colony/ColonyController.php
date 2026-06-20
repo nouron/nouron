@@ -134,6 +134,9 @@ class ColonyController extends BaseController
 
         $navAp = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
         $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
+        $researchAp = $this->personellService->getAvailableActionPoints('research', $colony->id);
+        $economyAp = $this->personellService->getAvailableActionPoints('economy', $colony->id);
+        $strategyAp = $this->personellService->getAvailableActionPoints('strategy', $colony->id);
         $activeHint = $this->resolveHint($colony->id);
 
         $fireds = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
@@ -148,7 +151,7 @@ class ColonyController extends BaseController
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────

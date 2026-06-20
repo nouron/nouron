@@ -31,11 +31,27 @@ return [
     'popup_o_title' => 'Organika',
     'popup_o_desc' => 'Biologische Grundstoffe. Benötigt für Forschung, Schiffe und bestimmte Gebäude.',
 
+    // Abkürzungs-basierte Keys (Chip nutzt die resources.abbreviation: Co = Werkstoffe, Or = Organika).
+    'popup_co_title' => 'Werkstoffe',
+    'popup_co_desc' => 'Veredelte Industriegüter — nicht lokal herstellbar, nur über Handel/Nexus-Import beschaffbar. Nötig für späte/High-Tech-Gebäude.',
+
+    'popup_or_title' => 'Organika',
+    'popup_or_desc' => 'Biologische Grundstoffe vom Agrardom. Versorgt die Kolonie (Verpflegung) und liefert Crew-Proviant für Missionen.',
+
     'popup_nav_ap_title' => 'Navigations-AP',
-    'popup_nav_ap_desc' => 'Aktionspunkte für Flottenorders. Generiert durch den Raumfahrer-Berater.',
+    'popup_nav_ap_desc' => 'Aktionspunkte für Erkundung und Navigation. Basiswert pro Sol, erhöht durch den Raumfahrer-Berater.',
 
     'popup_bau_ap_title' => 'Bau-AP',
-    'popup_bau_ap_desc' => 'Aktionspunkte für Gebäude und Infrastruktur. Generiert durch den Baumeister-Berater.',
+    'popup_bau_ap_desc' => 'Aktionspunkte für Gebäude und Infrastruktur. Basiswert pro Sol, erhöht durch den Baumeister-Berater.',
+
+    'popup_research_ap_title' => 'Forschungs-AP',
+    'popup_research_ap_desc' => 'Aktionspunkte für Kenntnisse im Techtree. Basiswert pro Sol, erhöht durch den Wissenschaftler-Berater.',
+
+    'popup_economy_ap_title' => 'Wirtschafts-AP',
+    'popup_economy_ap_desc' => 'Aktionspunkte für Handel und Markt. Basiswert pro Sol, erhöht durch den Händler-Berater.',
+
+    'popup_strategy_ap_title' => 'Strategie-AP',
+    'popup_strategy_ap_desc' => 'Aktionspunkte für strategische Aktionen. Basiswert pro Sol, erhöht durch den Strategen-Berater.',
 
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Vertrauenslevel der Koloniebevölkerung. Sinkt bei Bedrohungen, steigt durch stabile Versorgung.',
