@@ -132,7 +132,7 @@
             <span id="resbar-ap-build" class="ap-chip ap-chip--build" x-data="{ open: false }" @mouseenter="open=true"
                 @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                 style="position:relative;cursor:default">
-                <span>Bau <span class="res-amount">{{ (int) $constructionAp }}</span> AP</span>
+                <span>Con <span class="res-amount">{{ (int) $constructionAp }}</span> AP</span>
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_bau_ap_title"),
                     "popup_desc" => __("resources.popup_bau_ap_desc"),
@@ -141,7 +141,7 @@
             <span id="resbar-ap-research" class="ap-chip ap-chip--research" x-data="{ open: false }" @mouseenter="open=true"
                 @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                 style="position:relative;cursor:default">
-                <span>For <span class="res-amount">{{ (int) ($researchAp ?? 0) }}</span> AP</span>
+                <span>Res <span class="res-amount">{{ (int) ($researchAp ?? 0) }}</span> AP</span>
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_research_ap_title"),
                     "popup_desc" => __("resources.popup_research_ap_desc"),
@@ -150,7 +150,7 @@
             <span id="resbar-ap-economy" class="ap-chip ap-chip--economy" x-data="{ open: false }" @mouseenter="open=true"
                 @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"
                 style="position:relative;cursor:default">
-                <span>Wir <span class="res-amount">{{ (int) ($economyAp ?? 0) }}</span> AP</span>
+                <span>Eco <span class="res-amount">{{ (int) ($economyAp ?? 0) }}</span> AP</span>
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_economy_ap_title"),
                     "popup_desc" => __("resources.popup_economy_ap_desc"),
