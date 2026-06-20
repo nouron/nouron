@@ -31,6 +31,15 @@ return [
     // Ring 2 expands step by step at Lv2–Lv5. Max = 15 terrain tiles + CC = 16 total.
     'colony_zone_expansion' => [6, 3, 3, 2, 1],
 
+    // Navigation-AP cost to explore a fogged tile, keyed by ring distance from the
+    // CC (ring 0). Staggers the fog-of-war reveal pace: ring 2 costs more than ring 1,
+    // ring 3 more than ring 2 — keeps the full map from being uncovered in a handful
+    // of Sols. Ring 1 stays cheap (already auto-explored at seed time anyway).
+    'colony' => [
+        'explore_cost_per_ring' => [1 => 1, 2 => 2, 3 => 3],
+        'explore_cost_default' => 1,
+    ],
+
     // IMPORTANT: The tick system assumes the server (and PHP runtime) runs in UTC.
     // AppServiceProvider::boot() enforces date_default_timezone_set('UTC') at startup.
     // Never deploy Nouron with a non-UTC system timezone — tick boundaries will drift.
@@ -312,8 +321,17 @@ return [
         'hint_cc_upgrade_after_tick' => 1,
 
         // Latest current_tick at which the explore hint (hint_explore) still fires.
-        // 2 = Sol 1–3 — guides the otherwise-idle Navigation AP into exploring the
-        // surroundings (find regolith for the Harvester, scout hazards) early on.
-        'hint_explore_until_tick' => 2,
+        // 0 = Sol 1 only — a single nudge into exploring the surroundings (find
+        // regolith for the Harvester, scout hazards). Kept low on purpose: with
+        // ring-staggered explore costs (game.colony.explore_cost_per_ring) repeated
+        // nudging would push the player to dump all Nav-AP into fog-clearing every
+        // Sol, defeating the slower reveal pace. See also the explore-tile-count
+        // throttle in OnboardingHintService::checkHintExplore().
+        'hint_explore_until_tick' => 0,
+
+        // Once the player has explored at least this many tiles in the run, the
+        // explore hint stops firing regardless of current_tick — they have clearly
+        // engaged with the mechanic already and do not need further nudging.
+        'hint_explore_max_explored_tiles' => 6,
     ],
 ];

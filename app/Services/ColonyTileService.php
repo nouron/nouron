@@ -35,14 +35,16 @@ class ColonyTileService
             return ['ok' => false, 'error' => __('colony.error_already_explored')];
         }
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < 1) {
+        $apCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+
+        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $apCost) {
             return ['ok' => false, 'error' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
         $tile->save();
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('navigation', $colonyId, 1);
+            $this->personellService->lockActionPoints('navigation', $colonyId, $apCost);
         }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];

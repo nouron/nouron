@@ -350,16 +350,18 @@ class OnboardingHintService
     }
 
     /**
-     * Explore hint (rank 7, Sol 1–3): the base Navigation AP (6/Sol) sits idle
+     * Explore hint (rank 7, Sol 1 only): the base Navigation AP (6/Sol) sits idle
      * early because nothing guides the player to scout. While unexplored tiles
      * remain and Navigation AP is available, nudge exploration — it lifts fog,
      * reveals regolith for the Harvester relocation and surrounding hazards.
      *
-     * Uses the existing explore mechanic (1 Nav-AP per tile); the start map is
-     * seeded with reward tiles (regolith). Ranked below the Bau-AP track, so the
-     * build guidance (engineer/harvester/repair/CC-invest) always comes first via
-     * rank ordering; explore then fills the otherwise-idle Nav-AP. Self-clearing,
-     * never persisted: disappears once the Nav-AP is spent or the fog is cleared.
+     * Uses the existing explore mechanic (ring-staggered Nav-AP cost — see
+     * game.colony.explore_cost_per_ring); the start map is seeded with reward
+     * tiles (regolith). Ranked below the Bau-AP track, so the build guidance
+     * (engineer/harvester/repair/CC-invest) always comes first via rank ordering;
+     * explore then fills the otherwise-idle Nav-AP. Self-clearing, never
+     * persisted: disappears once the Nav-AP is spent, the fog is cleared, the
+     * tile-count throttle kicks in, or the Sol window has passed.
      */
     private function checkHintExplore(int $colonyId, int $currentTick): bool
     {
@@ -373,6 +375,18 @@ class OnboardingHintService
             ->where('is_explored', 0)
             ->exists();
         if (! $hasFog) {
+            return false;
+        }
+
+        // Ring 0 (CC) and ring 1 are auto-explored at seed time — only count tiles
+        // the player actually spent Nav-AP to reveal (ring >= 2).
+        $maxExploredTiles = (int) config('game.onboarding.hint_explore_max_explored_tiles', 6);
+        $exploredTiles = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('is_explored', 1)
+            ->where('ring', '>', 1)
+            ->count();
+        if ($exploredTiles >= $maxExploredTiles) {
             return false;
         }
 

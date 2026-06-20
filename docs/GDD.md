@@ -469,11 +469,15 @@ Die CC-Startposition ist pro Run zufällig. Das erzeugt unterschiedliche Ausgang
 - **Erschließen** (CC-Level): Die Kommandozentrale macht angrenzendes Gelände *bebaubar* (erweitert die Kolonie-Zone). Sie deckt das Tile **nicht** automatisch auf — ein neu erschlossenes Zone-Tile bleibt im Fog, bis es erkundet oder bebaut wird.
 - **Erkunden** (Navigation-AP): Sonde/Raumfahrer lüften den Nebel und finden Ressourcen/Signale. Erkunden ist die einzige Quelle von Tile-Wissen.
 
+Die Nav-AP-Kosten pro erkundetem Tile steigen mit dem Ring (`config/game.php → colony.explore_cost_per_ring`): Ring 1 kostet 1 Nav-AP, Ring 2 kostet 2, Ring 3 kostet 3 (Ring 1 ist ohnehin beim Run-Start bereits automatisch erkundet, der Kostensatz greift praktisch nur für nachträglich erschlossene Tiles). Die Staffelung verlangsamt das vollständige Aufdecken der Karte bewusst — bei pauschal 1 AP/Tile war die Karte bei 6 Nav-AP/Sol nach rund 5 Sols komplett enthüllt, was den Spannungswert des Fog of War zunichtemachte.
+
 Daraus folgt:
 - **Kolonie-Zone-Tiles** sind baubar, aber ggf. noch im Fog (`is_colony_zone=1, is_explored=0`). **Bauen auf einem solchen Tile deckt es auf** ("siedeln → sehen"). Der Spieler kann optional vorher per Navigation-AP erkunden, um vor dem Bauen zu sehen, was dort liegt (z.B. Gefahrenzone).
-- **Exploration-Zone-Tiles** bleiben Fog of War — einzeln per Navigation-AP aufgedeckt. Hier liegt der Erkundungs-Lohn (Regolith fürs Harvester-Verlegen, Signale/Funde ab Ring 3).
+- **Exploration-Zone-Tiles** bleiben Fog of War — einzeln per Navigation-AP aufgedeckt (Ring-gestaffelte Kosten s.o.). Hier liegt der Erkundungs-Lohn (Regolith fürs Harvester-Verlegen, Signale/Funde ab Ring 3).
 
 > Kernregel: **Die CC erschließt nur Gelände — sie siedelt nicht ins Unbekannte.** Erschließen ≠ Erkunden. Frühere Kopplung (CC-Ausbau erkundete Zone-Tiles automatisch) wurde 2026-06 entfernt, weil sie die beiden Achsen für den Spieler ununterscheidbar machte.
+
+> **Offener Designpunkt (2026-06, nicht umgesetzt):** Idee, den Erkundungsradius über die aktuelle Ring-3-Grenze hinaus zu erweitern, um zusätzliche Nav-AP-Sinks für spätere Sols zu schaffen (die Ring-Staffelung allein bremst, erschöpft sich aber irgendwann). Offene Sorge: ein größeres/dichteres Hex-Grid wird auf Mobile schwer navigierbar (Pan/Zoom-Aufwand steigt mit der Tile-Zahl). Vorzugsweise die Tile-Zahl von der Nav-AP-Sink-Zahl entkoppeln statt das Grid zu vergrößern — z.B. Signale/Points-of-Interest in größerer Entfernung ohne zusätzliches Hex-Rendering, oder eine Scan/Survey-Order auf Distanz statt physischer neuer Hexes. Nicht implementiert — nur als Richtung für ein späteres Balance-/Pacing-Update vermerkt.
 
 ### Visuelle Zone-Abgrenzung
 
