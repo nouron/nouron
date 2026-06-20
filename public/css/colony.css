@@ -1066,6 +1066,75 @@ button.btn-sol:hover,
     padding: 0 0.4rem;
 }
 
+.building-list-cost {
+    font-size: 0.72rem;
+    color: #6b5a2a;
+    background: #fbf6e8;
+    border: 1px solid #e6d8a8;
+    border-radius: 10px;
+    padding: 0 0.4rem;
+}
+
+.building-list-cost--compounds {
+    color: #2a5a6b;
+    background: #e8f3fb;
+    border-color: #a8cfe6;
+}
+
+/* ── Nexus compound import (build panel, Uplink Lv1+) ───────────────────────── */
+
+.nexus-import {
+    margin-top: 0.9rem;
+    padding: 0.7rem;
+    border: 1px solid var(--color-border, #e8e8ec);
+    border-radius: 8px;
+    background: var(--color-surface, #f7f7f5);
+}
+
+.nexus-import-title {
+    margin: 0 0 0.2rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-anthracite, #2b2b33);
+}
+
+.nexus-import-hint {
+    margin: 0 0 0.5rem;
+    font-size: 0.72rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+
+.nexus-import-controls {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.nexus-import-amount {
+    width: 5rem;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.8rem;
+}
+
+.nexus-import-total {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-anthracite, #2b2b33);
+}
+
+.nexus-import-btn {
+    margin-left: auto;
+    padding: 0.25rem 0.7rem;
+    font-size: 0.78rem;
+    cursor: pointer;
+}
+
+.nexus-import-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* ── Signal chip ─────────────────────────────────────────────────────────── */
 
 .chip--signal {

@@ -99,6 +99,9 @@ function colonyHexView(config) {
         activeHint: config.activeHint ?? null,
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
+        uplinkBuildingId: config.uplinkBuildingId ?? 54,
+        compoundImportPrice: config.compoundImportPrice ?? 90,
+        nexusImportAmount: 10,
         selectedTile: null,
         buildMode: false,
         pendingBuilding: null,
@@ -250,7 +253,7 @@ function colonyHexView(config) {
                 this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
         },
@@ -268,7 +271,7 @@ function colonyHexView(config) {
                 }
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
         },
@@ -291,7 +294,7 @@ function colonyHexView(config) {
                 this.updateHint(res);
                 this.$nextTick(() => this.redrawGrid());
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
         },
@@ -325,7 +328,7 @@ function colonyHexView(config) {
                     this.selectedTile = { ...this.selectedTile };
                 }
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
         },
@@ -353,8 +356,30 @@ function colonyHexView(config) {
                 this.updateHint(res);
                 if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
+            }
+        },
+
+        // ── Nexus compound import ─────────────────────────────────────────────
+
+        // Current Uplink-Station level (0 if not built). Gates the Nexus import panel.
+        uplinkLevel() {
+            const uplink = this.buildings.find((b) => b.building_id === this.uplinkBuildingId);
+            return uplink ? uplink.level : 0;
+        },
+
+        async doNexusImport() {
+            const amount = parseInt(this.nexusImportAmount, 10);
+            if (!amount || amount < 1) return;
+            const res = await this.post(this.routes.nexusImport, { amount });
+            if (res.ok) {
+                this.showToast(
+                    (this.i18n.nexusImportSuccess ?? '').replace(':amount', res.amount).replace(':cost', res.cost),
+                    'info',
+                );
+            } else {
+                this.showToast(res.message ?? res.error ?? this.i18n.nexusImportError, 'error');
             }
         },
 
@@ -416,7 +441,7 @@ function colonyHexView(config) {
                     this.$nextTick(() => this.redrawGrid());
                 }
             } else {
-                const msg = res.error === 'ap_limit' ? res.message : res.error;
+                const msg = res.message ?? res.error;
                 this.showToast(msg, 'error');
             }
         },

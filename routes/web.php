@@ -74,6 +74,9 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/building/invest', [ColonyController::class, 'investBuilding'])->name('building.invest');
     Route::post('/building/repair', [ColonyController::class, 'repairBuilding'])->name('building.repair');
 
+    // Nexus direct import — Werkstoffe (compounds) against Credits, gated by Uplink Lv1
+    Route::post('/nexus/import-compounds', [ColonyController::class, 'nexusImportCompounds'])->name('nexus.import');
+
     // Onboarding hint actions (AJAX)
     Route::post('/hint/dismiss', [ColonyController::class, 'dismissHint'])->name('hint.dismiss');
 
