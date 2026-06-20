@@ -52,10 +52,6 @@ namespace Tests\Feature;
  *   - completes when 5+ sold items from visits after run.started_at
  *   - items from visits before run.started_at are not counted
  *
- * TASK_BEWAEHRUNGSPROBE (counter)
- *   - completes when 3+ encounter_won events after run.started_at
- *   - events from before run.started_at are not counted
- *
  * DRAW OBJECTIVES — COMBO BLACKLIST
  *   - at most 1 economy task in any drawn set of 3
  *
@@ -851,67 +847,6 @@ class RunProgressServiceTest extends TestCase
         $this->assertNull($objective->completed_at);
     }
 
-    // ── task_combat_record (counter) ───────────────────────────────────────
-
-    public function test_task_combat_record_completes_when_3_encounter_won_events_after_run_start(): void
-    {
-        $startedAt = now()->subHour();
-        $run = $this->makeRun([
-            'current_tick' => 10,
-            'phase' => 2,
-            'started_at' => $startedAt,
-        ]);
-        $objective = $this->makeObjective($run, 'task_combat_record', 3);
-
-        for ($i = 0; $i < 3; $i++) {
-            DB::table('colony_log')->insert([
-                'user' => $this->userId,
-                'tick' => 7 + $i,
-                'event' => 'encounter_won',
-                'area' => 'combat',
-                'parameters' => json_encode([]),
-                'is_read' => 1,
-                'created_at' => now(),
-            ]);
-        }
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(3, $objective->current_value);
-        $this->assertNotNull($objective->completed_at, 'task_combat_record must complete when 3+ encounter_won events after run.started_at');
-    }
-
-    public function test_task_combat_record_does_not_count_events_before_run_start(): void
-    {
-        $startedAt = now();
-        $run = $this->makeRun([
-            'current_tick' => 10,
-            'phase' => 2,
-            'started_at' => $startedAt,
-        ]);
-        $objective = $this->makeObjective($run, 'task_combat_record', 3);
-
-        // Insert 3 encounter_won events with created_at BEFORE started_at
-        for ($i = 0; $i < 3; $i++) {
-            DB::table('colony_log')->insert([
-                'user' => $this->userId,
-                'tick' => 2 + $i,
-                'event' => 'encounter_won',
-                'area' => 'combat',
-                'parameters' => json_encode([]),
-                'is_read' => 1,
-                'created_at' => now()->subDay(),
-            ]);
-        }
-
-        $this->service->updateObjectiveProgress($run);
-
-        $objective->refresh();
-        $this->assertEquals(0, $objective->current_value, 'Events before run.started_at must not be counted');
-        $this->assertNull($objective->completed_at);
-    }
-
     // ── drawObjectives — combo blacklist ──────────────────────────────────────
 
     public function test_draw_objectives_never_draws_both_economy_tasks_in_one_set(): void
@@ -924,7 +859,7 @@ class RunProgressServiceTest extends TestCase
             'task_research_lead',
             'task_self_sufficiency',
             'task_expedition_coverage',
-            'task_combat_record',
+            'task_engineering_output',
         ]]);
 
         $economyTasks = ['task_credit_reserve', 'task_trade_volume'];

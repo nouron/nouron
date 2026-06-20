@@ -123,8 +123,6 @@ class AdvisorController extends BaseController
                     'is_unavailable' => $isUnavailable,
                     'unavailable_until_tick' => $advisor->unavailable_until_tick,
                     'upkeep' => $upkeepMap[$advisor->rank] ?? 10,
-                    'fleet_id' => $advisor->fleet_id,
-                    'is_commander' => (bool) $advisor->is_commander,
                 ];
             }
 

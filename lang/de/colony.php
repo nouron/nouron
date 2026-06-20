@@ -251,8 +251,6 @@ return [
 
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
-    'sol_report_event_encounter' => '{1} :count Konfrontation|[2,*] :count Konfrontationen',
-    'sol_report_event_fleet_arrived' => 'Flotte angekommen',
 
     // Produktion
     'sol_report_no_production' => 'Keine Produktion — Industriegebäude stillgelegt oder beschädigt.',

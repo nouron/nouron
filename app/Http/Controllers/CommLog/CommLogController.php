@@ -147,9 +147,6 @@ class CommLogController extends BaseController
             'trade.bar_accepted' => $this->descBarAccepted($params),
             'trade.merchant_purchase' => [$this->seg(__('comm_log.desc.merchant_purchase'))],
             'merchant.visit' => [$this->seg(__('comm_log.desc.merchant_visit'))],
-            'galaxy.fleet_arrived' => [$this->seg(__('comm_log.desc.fleet_arrived'))],
-            'galaxy.trade' => $this->descGalaxyTrade($params),
-            'galaxy.encounter' => [$this->seg(__('comm_log.desc.encounter'))],
             default => [],
         };
     }
@@ -339,18 +336,6 @@ class CommLogController extends BaseController
         }
 
         return [$this->seg(__('comm_log.desc.bar_accepted'))];
-    }
-
-    /** @return array<int, array<string, mixed>> */
-    private function descGalaxyTrade(array $params): array
-    {
-        $credits = (int) ($params['credits_earned'] ?? 0);
-
-        if ($credits > 0) {
-            return [$this->seg(__('comm_log.desc.galaxy_trade_credits', ['credits' => $credits]))];
-        }
-
-        return [$this->seg(__('comm_log.desc.galaxy_trade'))];
     }
 
     /** @return array<int, array<string, mixed>> */

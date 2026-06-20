@@ -5,8 +5,6 @@ namespace App\Providers;
 use App\Models\Run;
 use App\Services\ColonyService;
 use App\Services\EventService;
-use App\Services\FleetService;
-use App\Services\GalaxyService;
 use App\Services\MerchantService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
@@ -51,13 +49,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(MerchantService::class, fn ($app) => new MerchantService(
             $app->make(PersonellService::class),
         ));
-        $this->app->bind(GalaxyService::class, GalaxyService::class);
-
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn ($app) => new TrustService(
             $app->make(TickService::class),
         ));
-        $this->app->bind(FleetService::class, FleetService::class);
 
         // Techtree services
         $this->app->bind(PersonellService::class, fn ($app) => new PersonellService(

@@ -191,8 +191,8 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 
 | Phase | Beschreibung |
 |-------|-------------|
-| 1. Fleet | Flottenbewegung, Ressourcentransfer, Zwischenfälle |
-| 2. Decay | Gebäude-, Schiffs- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
+| 1. Hangar | Hangar-Lieferungen abwickeln (Schiff-Bau → docked; abgelaufene Anforderungen) |
+| 2. Decay | Gebäude- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
 | 3. Supply & Ressourcen | Supply-Cap neu berechnen (§6), dann Rohstoffproduktion (Vertrauens-Multiplikator angewendet) |
 | 3a. Verpflegung | Kolonie verbraucht Organika (`floor(belegte Supply / 4)`); Vorrat reicht → `well_fed`, sonst Hunger-Streak + eskalierender Vertrauens-Malus (§3, §14) |
 | 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger-Malus), `colony_resources` aktualisieren (§14) |
@@ -942,6 +942,8 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 ## 8. Flotten & Flottenorders
 
+> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Galaxie- und Systemkarte samt Flottenbewegung/-kampf wurden entfernt (Backend, Tabellen `fleets`/`fleet_*`/`glx_system*`, Services). Schiffe existieren weiterhin ausschließlich über den **Hangar** (§8b) inkl. Außenmissionen (Dispatch). Der folgende Abschnitt bleibt als Referenz für eine mögliche spätere Wiedereinführung (Phase 4+) erhalten, beschreibt aber **keinen aktuellen Spielstand**.
+
 ### Flottenorders
 
 Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle gespeichert. Jede Order ist einem Tick zugewiesen und wird beim zugehörigen Tick genau einmal verarbeitet (`was_processed = 1` nach Ausführung).
@@ -1011,6 +1013,8 @@ Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
 ---
 
 ## 8a. Systemansicht
+
+> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Die Systemkarte (12×12-Grid, Sprungtor, Flottenplatzierung) wurde entfernt. Die Kolonie hat keinen navigierbaren Systemraum mehr und keine Koordinaten. Abschnitt bleibt als Phase-4+-Referenz.
 
 ### Darstellung: 2D Top-Down Grid
 
@@ -2022,14 +2026,6 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Sol (werden na
 | `trade_success` | Handelsmission erfolgreich abgeschlossen | +2 |
 | `trade_blocked` | Handelsmission durch feindliche Flotte blockiert | -3 |
 
-**Begegnungen / Zwischenfälle:**
-
-| Event-Key | Beschreibung | Vertrauenseffekt |
-|-----------|-------------|------------------|
-| `encounter_won` | Zwischenfall erfolgreich abgewehrt | +2 |
-| `encounter_lost` | Eigene Schiffe bei Zwischenfall beschädigt | -5 |
-| `colony_threatened` | Kolonie direkt bedroht (unabhängig vom Ausgang) | -4 |
-
 **Diplomatie:**
 
 | Event-Key | Beschreibung | Vertrauenseffekt |
@@ -2037,10 +2033,7 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Sol (werden na
 | `treaty_signed` | Diplomatischer Vertrag abgeschlossen | +3 |
 
 **Rationale für neue Events:**
-- `colony_threatened` (-4) ist von `encounter_lost` (-5) getrennt, weil eine Bedrohung die Kolonisten auch dann verunsichert, wenn sie abgewehrt wurde. Beide Effekte können in einem Sol summieren (Bedrohung + Verlust = -9).
 - `trade_blocked` (-3) macht Handelsblockaden spürbar — nicht nur wirtschaftlich, sondern auch in der Stimmung der Siedlung.
-
-> ⚠️ BALANCE CONCERN: Ein gleichzeitiger `colony_threatened` + `encounter_lost` in einem Sol summiert sich zu -9. Das kann eine neutrale Kolonie (0) spürbar in Richtung "Unruhig" (-21) drücken. Das ist designtechnisch akzeptabel — Bedrohungen hinterlassen Spuren — aber der Spieler braucht klares UI-Feedback welche Events ausgelöst wurden.
 
 > ⚠️ BALANCE CONCERN: Event-Vertrauenseffekte für Bauwesen sind einmalig (+1 pro Level-Up). Ein Spieler der täglich Gebäude baut, erhält täglich +1 — das ist ein kleiner, aber stetiger Bonus der aktives Spielen belohnt. Ob das ausreicht als Motivation oder ob der Effekt auf +2 erhöht werden sollte, ist nach erstem Playtest zu evaluieren.
 
@@ -2176,7 +2169,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 
 ### Aufgabenpool
 
-11 Aufgabentypen (Pool). Pro Run werden 3 gezogen — mehr Varianz reduziert Wiederholungsgefühl. Alle Aufgaben können ohne Militär erfüllt werden (Kampf bleibt optional). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+10 Aufgabentypen (Pool). Pro Run werden 3 gezogen — mehr Varianz reduziert Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf mehr — Flotte/Systemkarte gestrichen, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
 
 | # | Aufgabe | Kernmechanik | Spielstil |
 |---|---------|-------------|-----------|
@@ -2185,7 +2178,6 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Sole | Diplomatie/Zivilaufbau |
 | 4 | **Selbstversorgung** | Organika positiv produzieren (Netto > 0) **und** einen Werkstoff-Vorrat ≥ X Einheiten bei durchgehend positivem Credits-Saldo halten — für 15 aufeinanderfolgende Sole. (Werkstoffe sind nicht produzierbar, §3 — getestet wird stabiles Import-Management, nicht Eigenproduktion.) | Wirtschaft/Aufbau |
 | 5 | **Expeditionsstatus** | Alle Tiles der Exploration Zone vollständig aufgedeckt (gesamter äußerer Bereich, nicht nur Ring 1–2) | Exploration/Navigation |
-| 6 | **Bewährungsprobe** | Mindestens 3 Encounters erfolgreich abgewehrt (`encounter_won`) mit eigener Flotte | Navigation/Konflikt |
 | 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |
 | 8 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
 | 9 | **Kreditimperium** | Credits-Bestand X Sole uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
@@ -2193,8 +2185,6 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Sole (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
 
 > ⚠️ BALANCE CONCERN: Aufgaben 1, 7, 9 (alle Wirtschaft) dürfen nicht alle drei gleichzeitig gezogen werden. Aufgaben-Sets müssen mindestens 2 verschiedene Spielstilkategorien abdecken — eine Kombo-Blacklist ist vor der Implementierung zu definieren.
-
-> ⚠️ BALANCE CONCERN: Aufgabe 6 (Bewährungsprobe) ist teilweise RNG-abhängig — Encounters müssen auftreten. Sicherstellen dass Encounter-Frequenz im Solo-Run hoch genug ist, oder einen alternativen Erfüllungsweg (aktiv `attack`-Order) ermöglichen.
 
 > ⚠️ BALANCE CONCERN: Aufgabe 11 (Effizienz) kollidiert strukturell mit massivem Bauen (Aufgaben 2, 8) — "AP-effizient" und "viel bauen" sind Gegensätze. Aufgabe 11 sollte nie zusammen mit Aufgabe 2 oder 8 gezogen werden.
 

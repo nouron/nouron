@@ -8,10 +8,6 @@ use App\Models\Colony;
 use App\Models\ColonyBuilding;
 use App\Models\ColonyResearch;
 use App\Models\ColonyResource;
-use App\Models\Fleet;
-use App\Models\FleetOrder;
-use App\Models\FleetResource;
-use App\Models\FleetShip;
 use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
@@ -34,11 +30,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Steps per tick:
  *  0. Hangar deliveries   — transition building→docked ships; expire pending ships
- *  1. Fleet move orders   — update fleet position to ordered coordinates
- *  2. Fleet trade orders  — transfer resources between fleet and colony
- *  3. Fleet combat orders — resolve combat between attacking and defending fleets
  *  4. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
- *  5. Ship decay          — decrement fleet_ships.status_points; combat fleets × 2; remove at ≤ 0
  *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
  *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
  *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
@@ -55,10 +47,7 @@ class GameTick extends Command
                                 {--run=  : Run ID to process (omit to use the first active run)}
                                 {--tick= : Override the tick number (default: from run or time-based)}';
 
-    protected $description = 'Process one game tick (fleet orders, decay, supply, resources)';
-
-    /** Fleet IDs that were involved in an encounter this tick — used for 2× ship decay. */
-    private array $encounterFleetIds = [];
+    protected $description = 'Process one game tick (decay, supply, resources, trust)';
 
     public function __construct(
         private readonly TickService $tickService,
@@ -110,20 +99,8 @@ class GameTick extends Command
             $this->line("  Hangar ships delivered:   {$delivered}");
             $this->line("  Hangar ships expired:     {$expired}");
 
-            $n = $this->processMoveOrders($tick);
-            $this->line("  Fleet move orders:        {$n}");
-
-            $n = $this->processTradeOrders($tick);
-            $this->line("  Fleet trade orders:       {$n}");
-
-            $n = $this->processEncounterOrders($tick);
-            $this->line("  Fleet encounter orders:   {$n}");
-
             $n = $this->processBuildingDecay($tick);
             $this->line("  Buildings levelled down:  {$n}");
-
-            $n = $this->processShipDecay($tick);
-            $this->line("  Ship entries destroyed:   {$n}");
 
             $n = $this->processResearchDecay($tick);
             $this->line("  Researches levelled down: {$n}");
@@ -240,298 +217,6 @@ class GameTick extends Command
         return [$delivered, $expired];
     }
 
-    // ── 1. Fleet: move orders ────────────────────────────────────────────────
-
-    private function processMoveOrders(int $tick): int
-    {
-        $orders = FleetOrder::where('tick', $tick)
-            ->where('order', 'move')
-            ->where('was_processed', 0)
-            ->get();
-
-        foreach ($orders as $order) {
-            $coords = json_decode($order->coordinates, true);
-            if (! is_array($coords) || count($coords) < 2) {
-                $this->warn("  Fleet {$order->fleet_id}: invalid move coordinates, skipping.");
-
-                continue;
-            }
-
-            Fleet::where('id', $order->fleet_id)->update([
-                'x' => $coords[0],
-                'y' => $coords[1],
-            ]);
-
-            $order->update(['was_processed' => 1]);
-
-            $fleet = Fleet::find($order->fleet_id);
-            if ($fleet) {
-                $this->eventService->createEvent([
-                    'user' => $fleet->user_id,
-                    'tick' => $tick,
-                    'event' => 'galaxy.fleet_arrived',
-                    'area' => 'galaxy',
-                    'parameters' => json_encode(['fleet_id' => $order->fleet_id, 'coords' => $coords]),
-                ]);
-            }
-        }
-
-        return $orders->count();
-    }
-
-    // ── 2. Fleet: trade orders ───────────────────────────────────────────────
-
-    private function processTradeOrders(int $tick): int
-    {
-        $orders = FleetOrder::where('tick', $tick)
-            ->where('order', 'trade')
-            ->where('was_processed', 0)
-            ->get();
-
-        $processed = 0;
-
-        foreach ($orders as $order) {
-            $data = json_decode($order->data, true);
-            if (! is_array($data)) {
-                $this->warn("  Fleet {$order->fleet_id}: invalid trade data, skipping.");
-
-                continue;
-            }
-
-            $colonyId = (int) ($data['colony_id'] ?? 0);
-            $resourceId = (int) ($data['resource_id'] ?? 0);
-            $amount = (int) ($data['amount'] ?? 0);
-            $direction = (int) ($data['direction'] ?? 0); // 0=buy(colony→fleet), 1=sell(fleet→colony)
-
-            if (! $colonyId || ! $resourceId || ! $amount) {
-                $this->warn("  Fleet {$order->fleet_id}: incomplete trade data (colony_id={$colonyId}), skipping.");
-
-                continue;
-            }
-
-            $this->transferResource($colonyId, $order->fleet_id, $resourceId,
-                $direction === 0 ? $amount : -$amount);
-
-            $order->update(['was_processed' => 1]);
-
-            $fleet = Fleet::find($order->fleet_id);
-            if ($fleet) {
-                $this->eventService->createEvent([
-                    'user' => $fleet->user_id,
-                    'tick' => $tick,
-                    'event' => 'galaxy.trade',
-                    'area' => 'galaxy',
-                    'parameters' => json_encode(['colony_id' => $colonyId]),
-                ]);
-            }
-
-            $processed++;
-        }
-
-        return $processed;
-    }
-
-    /**
-     * Transfer $amount of $resourceId from colony to fleet (negative = fleet to colony).
-     */
-    private function transferResource(int $colonyId, int $fleetId, int $resourceId, int $amount): void
-    {
-        // Clamp amount to what the source actually has to prevent creating resources from nothing.
-        if ($amount > 0) {
-            // Colony → Fleet: clamp to colony stock
-            $colonyStock = (int) ColonyResource::where('colony_id', $colonyId)
-                ->where('resource_id', $resourceId)
-                ->value('amount');
-            $amount = min($amount, $colonyStock);
-        } elseif ($amount < 0) {
-            // Fleet → Colony: clamp to fleet stock
-            $fleetStock = (int) FleetResource::where('fleet_id', $fleetId)
-                ->where('resource_id', $resourceId)
-                ->value('amount');
-            $amount = max($amount, -$fleetStock);
-        }
-
-        if ($amount === 0) {
-            return;
-        }
-
-        ColonyResource::where('colony_id', $colonyId)
-            ->where('resource_id', $resourceId)
-            ->update(['amount' => DB::raw("MAX(0, amount - {$amount})")]);
-
-        // FleetResource has a composite PK (fleet_id, resource_id) — Eloquent::increment()
-        // would generate WHERE id = null and silently do nothing. Use a raw UPDATE + INSERT
-        // pair instead.
-        $updated = DB::table('fleet_resources')
-            ->where('fleet_id', $fleetId)
-            ->where('resource_id', $resourceId)
-            ->update(['amount' => DB::raw("amount + {$amount}")]);
-
-        if ($updated === 0) {
-            // Row did not exist yet (new resource on this fleet)
-            DB::table('fleet_resources')->insert([
-                'fleet_id' => $fleetId,
-                'resource_id' => $resourceId,
-                'amount' => $amount,
-            ]);
-        }
-    }
-
-    // ── 3. Fleet: encounter orders ───────────────────────────────────────────
-
-    private function processEncounterOrders(int $tick): int
-    {
-        $orders = FleetOrder::where('tick', $tick)
-            ->where('order', 'attack')
-            ->where('was_processed', 0)
-            ->get();
-
-        $shipPower = config('game.combat.ship_power', []);
-        $processed = 0;
-
-        foreach ($orders as $order) {
-            $coords = json_decode($order->coordinates, true);
-            if (! is_array($coords) || count($coords) < 3) {
-                $this->warn("  Fleet {$order->fleet_id}: invalid encounter coordinates, skipping.");
-
-                continue;
-            }
-
-            $initiator = Fleet::find($order->fleet_id);
-            if (! $initiator) {
-                continue;
-            }
-
-            Fleet::where('id', $initiator->id)->update([
-                'x' => $coords[0], 'y' => $coords[1],
-            ]);
-
-            $encountered = Fleet::where('x', $coords[0])
-                ->where('y', $coords[1])
-                ->where('user_id', '!=', $initiator->user_id)
-                ->where('id', '!=', $initiator->id)
-                ->get();
-
-            if ($encountered->isEmpty()) {
-                $order->update(['was_processed' => 1]);
-                $this->eventService->createEvent([
-                    'user' => $initiator->user_id,
-                    'tick' => $tick,
-                    'event' => 'galaxy.fleet_arrived',
-                    'area' => 'galaxy',
-                    'parameters' => json_encode(['fleet_id' => $initiator->id, 'coords' => $coords]),
-                ]);
-                $processed++;
-
-                continue;
-            }
-
-            $initiatorPower = $this->calcFleetPower($initiator->id, $shipPower);
-            $encounteredFleetIds = $encountered->pluck('id')->all();
-            $encounteredPower = array_sum(array_map(
-                fn ($id) => $this->calcFleetPower($id, $shipPower),
-                $encounteredFleetIds
-            ));
-
-            $totalPower = $initiatorPower + $encounteredPower;
-            if ($totalPower > 0) {
-                $this->applyShipLosses($initiator->id, $encounteredPower / $totalPower, $shipPower);
-                foreach ($encounteredFleetIds as $encId) {
-                    $this->applyShipLosses($encId, $initiatorPower / $totalPower, $shipPower);
-                }
-
-                // Record all encounter participants for the 2× ship decay step
-                $this->encounterFleetIds[] = $initiator->id;
-                foreach ($encounteredFleetIds as $encId) {
-                    $this->encounterFleetIds[] = $encId;
-                }
-            }
-
-            $order->update(['was_processed' => 1]);
-
-            // Notify initiating fleet
-            $this->eventService->createEvent([
-                'user' => $initiator->user_id,
-                'tick' => $tick,
-                'event' => 'galaxy.encounter',
-                'area' => 'galaxy',
-                'parameters' => json_encode([
-                    'initiator_id' => $initiator->user_id,
-                    'encountered_id' => $encountered->first()->user_id,
-                    'colony_id' => 0,
-                ]),
-            ]);
-
-            $initiatorColonyId = $this->getColonyIdByUserId($initiator->user_id);
-            if ($initiatorColonyId) {
-                $this->trustService->fireEvent(
-                    $initiatorColonyId,
-                    $initiatorPower >= $encounteredPower ? 'encounter_won' : 'encounter_lost',
-                    $tick
-                );
-            }
-
-            // Notify each unique encountered fleet
-            foreach ($encountered->unique('user_id') as $encFleet) {
-                $this->eventService->createEvent([
-                    'user' => $encFleet->user_id,
-                    'tick' => $tick,
-                    'event' => 'galaxy.encounter',
-                    'area' => 'galaxy',
-                    'parameters' => json_encode([
-                        'initiator_id' => $initiator->user_id,
-                        'encountered_id' => $encFleet->user_id,
-                        'colony_id' => 0,
-                    ]),
-                ]);
-
-                $encounteredColonyId = $this->getColonyIdByUserId($encFleet->user_id);
-                if ($encounteredColonyId) {
-                    $this->trustService->fireEvent($encounteredColonyId, 'colony_threatened', $tick);
-                    $this->trustService->fireEvent(
-                        $encounteredColonyId,
-                        $encounteredPower >= $initiatorPower ? 'encounter_won' : 'encounter_lost',
-                        $tick
-                    );
-                }
-            }
-
-            $processed++;
-        }
-
-        return $processed;
-    }
-
-    private function getColonyIdByUserId(int $userId): ?int
-    {
-        return DB::table('glx_colonies')
-            ->where('user_id', $userId)
-            ->value('id');
-    }
-
-    private function calcFleetPower(int $fleetId, array $shipPower): int
-    {
-        return FleetShip::where('fleet_id', $fleetId)
-            ->get()
-            ->sum(fn ($s) => $s->count * ($shipPower[$s->ship_id] ?? 0));
-    }
-
-    private function applyShipLosses(int $fleetId, float $lossRatio, array $shipPower): void
-    {
-        $ships = FleetShip::where('fleet_id', $fleetId)->get();
-        foreach ($ships as $ship) {
-            if (($shipPower[$ship->ship_id] ?? 0) === 0) {
-                continue; // non-combat ships not destroyed in battle
-            }
-            $remaining = max(0, $ship->count - (int) ceil($ship->count * $lossRatio));
-            if ($remaining <= 0) {
-                $ship->delete();
-            } else {
-                $ship->update(['count' => $remaining]);
-            }
-        }
-    }
-
     // ── 4. Building decay ────────────────────────────────────────────────────
 
     private function processBuildingDecay(int $tick): int
@@ -636,53 +321,6 @@ class GameTick extends Command
         }
 
         return $levelled;
-    }
-
-    // ── 5. Ship decay ────────────────────────────────────────────────────────
-
-    private function processShipDecay(int $tick): int
-    {
-        $fallbackRate = (float) config('game.decay.rate', 1);
-        $combatFactor = (float) config('game.decay.combat_factor', 2);
-        $decayRates = DB::table('ships')->pluck('decay_rate', 'id');
-        $maxSPMap = DB::table('ships')->pluck('max_status_points', 'id');
-        $shipNames = DB::table('ships')->pluck('name', 'id');
-        $destroyed = 0;
-
-        FleetShip::orderBy('fleet_id')->orderBy('ship_id')->chunk(200, function ($fleetShips) use ($fallbackRate, $combatFactor, $decayRates, &$destroyed, $tick) {
-            foreach ($fleetShips as $fs) {
-                $rate = (float) ($decayRates[$fs->ship_id] ?? $fallbackRate);
-
-                if (in_array($fs->fleet_id, $this->encounterFleetIds)) {
-                    $rate *= $combatFactor;
-                }
-
-                $newStatus = (float) $fs->status_points - $rate;
-                $where = ['fleet_id' => $fs->fleet_id, 'ship_id' => $fs->ship_id, 'is_cargo' => $fs->is_cargo];
-
-                if ($newStatus <= 0) {
-                    // Ship fully decayed — remove from fleet
-                    $fleet = Fleet::find($fs->fleet_id);
-                    $this->eventService->createEvent([
-                        'user' => $fleet?->user_id ?? 0,
-                        'tick' => $tick,
-                        'event' => 'techtree.level_down',
-                        'area' => 'techtree',
-                        'parameters' => json_encode([
-                            'entity_type' => 'ship',
-                            'entity_name' => $shipNames[$fs->ship_id] ?? '',
-                            'tech_id' => $fs->ship_id,
-                        ]),
-                    ]);
-                    DB::table('fleet_ships')->where($where)->delete();
-                    $destroyed++;
-                } else {
-                    DB::table('fleet_ships')->where($where)->update(['status_points' => $newStatus]);
-                }
-            }
-        }); // end chunkById
-
-        return $destroyed;
     }
 
     // ── 6. Research decay ────────────────────────────────────────────────────

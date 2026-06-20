@@ -28,7 +28,6 @@ class RunProgressService
         'exploration' => ['task_expedition_coverage'],
         'diplomacy' => ['task_colony_prosperity'],
         'survival' => ['task_self_sufficiency'],
-        'combat' => ['task_combat_record'],
         'personal' => ['task_senior_advisors'],
     ];
 
@@ -41,7 +40,6 @@ class RunProgressService
         'task_expedition_coverage' => 19,
         'task_engineering_output' => 200,
         'task_trade_volume' => 5,
-        'task_combat_record' => 3,
     ];
 
     // ── Phase-1 completion check ─────────────────────────────────────────────
@@ -204,7 +202,6 @@ class RunProgressService
                 'task_expedition_coverage' => $this->updateExpeditionCoverage($objective, $run),
                 'task_engineering_output' => $this->updateEngineeringOutput($objective, $run),
                 'task_trade_volume' => $this->updateTradeVolume($objective, $run),
-                'task_combat_record' => $this->updateCombatRecord($objective, $run),
                 default => null,
             };
         }
@@ -376,26 +373,6 @@ class RunProgressService
             ->where('merchant_visits.colony_id', $run->colony_id)
             ->where('merchant_items.sold', 1)
             ->where('merchant_visits.created_at', '>=', $run->started_at)
-            ->count();
-
-        $objective->current_value = $count;
-
-        if ($count >= $objective->target_value && $objective->completed_at === null) {
-            $objective->completed_at = $run->current_tick;
-        }
-
-        $objective->save();
-    }
-
-    /**
-     * Counter task: number of encounter_won INNN events for this user since run start >= 3.
-     */
-    private function updateCombatRecord(RunObjective $objective, Run $run): void
-    {
-        $count = (int) DB::table('colony_log')
-            ->where('user', $run->user_id)
-            ->where('event', 'encounter_won')
-            ->where('created_at', '>=', $run->started_at)
             ->count();
 
         $objective->current_value = $count;

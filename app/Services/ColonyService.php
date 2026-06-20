@@ -7,14 +7,13 @@ use App\Services\Concerns\ValidatesId;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
-use InvalidArgumentException;
 use RuntimeException;
 
 /**
  * ColonyService — Laravel port of Colony\Service\ColonyService.
  *
- * Reads colonies from v_glx_colonies (which joins glx_colonies and
- * glx_system_objects, so x/y coordinates are available directly).
+ * Reads colonies from v_glx_colonies (a passthrough view over glx_colonies;
+ * the galaxy/system map was removed, so colonies have no coordinates).
  */
 class ColonyService
 {
@@ -94,68 +93,19 @@ class ColonyService
     }
 
     /**
-     * Return all colonies within a 50-unit square around the given coordinates.
-     * Since v_glx_colonies includes x/y from glx_system_objects, no extra join needed.
-     */
-    public function getColoniesByCoords(array $coords): Collection
-    {
-        $radius = (int) round(50 / 2);
-        [$cx, $cy] = $coords;
-
-        return Colony::whereBetween('x', [$cx - $radius, $cx + $radius])
-            ->whereBetween('y', [$cy - $radius, $cy + $radius])
-            ->get();
-    }
-
-    /**
-     * Find the colony at exact coordinates [x, y, spot].
-     * Returns false when no colony exists at those coords.
-     *
-     * @throws InvalidArgumentException for non-numeric coordinates
-     */
-    public function getColonyByCoords(array $coords): Colony|false
-    {
-        [$x, $y] = $coords;
-
-        if (! is_numeric($x) || ! is_numeric($y)) {
-            throw new InvalidArgumentException('Invalid Coordinates.');
-        }
-
-        $spot = $coords[2] ?? null;
-
-        $query = Colony::where('x', $x)->where('y', $y);
-        if ($spot !== null) {
-            $query->where('spot', $spot);
-        }
-
-        return $query->first() ?? false;
-    }
-
-    public function getColoniesBySystemObjectId(int|string $planetaryId): Collection
-    {
-        $this->validateId($planetaryId);
-
-        return Colony::where('system_object_id', $planetaryId)->get();
-    }
-
-    /**
      * Create a new colony row in glx_colonies.
      *
-     * glx_colonies uses a manual integer PK (not auto-increment).
-     * Writes go to the base table, not the v_glx_colonies view.
+     * glx_colonies uses a manual integer PK (not auto-increment). Writes go to the
+     * base table, not the v_glx_colonies view. There is no galaxy/system map any
+     * more — a colony has no coordinates (single home site per player).
      */
-    public function createColony(int $userId, ?int $systemObjectId, string $name, int $sinceTick = 0): Colony
+    public function createColony(int $userId, string $name, int $sinceTick = 0): Colony
     {
         $nextId = (int) DB::table('glx_colonies')->max('id') + 1;
-        $nextSpot = $systemObjectId
-            ? (int) DB::table('glx_colonies')->where('system_object_id', $systemObjectId)->max('spot') + 1
-            : 1;
 
         DB::table('glx_colonies')->insert([
             'id' => $nextId,
             'name' => $name,
-            'system_object_id' => $systemObjectId,
-            'spot' => $nextSpot,
             'user_id' => $userId,
             'since_tick' => $sinceTick,
             'is_primary' => 1,

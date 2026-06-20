@@ -11,8 +11,8 @@ use Tests\TestCase;
 /**
  * Tests for the game:tick Artisan command.
  *
- * Each test sets up a specific DB state, runs the tick for a unique high tick number
- * (to avoid touching fleet_orders), and asserts the result.
+ * Each test sets up a specific DB state, runs the tick for a unique high tick number,
+ * and asserts the result.
  *
  * Test data (from TestSeeder / testdata.sqlite.sql):
  *   Colony 1 (Springfield), user_id=3 (Bart)
@@ -20,7 +20,6 @@ use Tests\TestCase;
  *     oremine (building 27): level=5,  status_points=11
  *     housing (building 28): level=2,  status_points=10
  *   Colony 2 (Shelbyville), user_id=0 (no player)
- *   Fleet 8 (user 3): has frigate1 (ship_id=29, count=20)
  *   user_resources: user 3 → supply=1938 (will be overwritten by cap model)
  */
 class GameTickTest extends TestCase
@@ -165,45 +164,6 @@ class GameTickTest extends TestCase
 
         $this->assertEquals(0, $row->level);
         $this->assertEqualsWithDelta(5.0, (float) $row->status_points, 0.001); // unchanged
-    }
-
-    // ── Ship decay ───────────────────────────────────────────────────────────
-
-    /**
-     * Fleet ship status_points decreases by ship decay_rate each tick.
-     * frigate1 (id 29): decay_rate=0.16; starting SP=20 → 19.84
-     */
-    public function test_ship_status_points_decrease_by_decay_rate(): void
-    {
-        DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->update(['status_points' => 20.0]);
-
-        Artisan::call('game:tick', ['--tick' => 9020]);
-
-        $sp = (float) DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->value('status_points');
-
-        $this->assertEqualsWithDelta(20.0 - 0.16, $sp, 0.001);
-    }
-
-    /**
-     * When fleet ship status_points hits ≤ 0, the fleet_ships entry is removed.
-     */
-    public function test_ship_destroyed_when_status_points_depleted(): void
-    {
-        DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->update(['status_points' => 0.1]);
-
-        Artisan::call('game:tick', ['--tick' => 9021]);
-
-        $exists = DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->exists();
-
-        $this->assertFalse($exists);
     }
 
     // ── Research decay ───────────────────────────────────────────────────────

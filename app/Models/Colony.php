@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Eloquent Colony model — reads from v_glx_colonies (a view joining glx_colonies
- * and glx_system_objects). Includes coordinates (x, y) and planetary properties
- * (type_id, sight, density, radiation) from the joined system object.
+ * Eloquent Colony model — reads from v_glx_colonies.
+ *
+ * Each player has exactly one colony on an implicit home site; there is no
+ * navigable galaxy/system map (removed 2026-06). The view exposes the columns of
+ * glx_colonies directly.
  *
  * READ-ONLY: v_glx_colonies is a SQLite view. All writes must target the
  * underlying glx_colonies table via DB::table('glx_colonies') or ColonyRecord.
@@ -27,7 +29,6 @@ class Colony extends Model
     {
         return [
             'is_primary' => 'boolean',
-            'spot' => 'integer',
             'since_tick' => 'integer',
         ];
     }
@@ -42,10 +43,5 @@ class Colony extends Model
     public function resources()
     {
         return $this->hasMany(ColonyResource::class, 'colony_id', 'id');
-    }
-
-    public function getCoords(): array
-    {
-        return [(int) $this->x, (int) $this->y, (int) $this->spot];
     }
 }

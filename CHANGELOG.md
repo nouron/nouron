@@ -2,6 +2,13 @@
 
 ## 2026-06-20
 
+- **Galaxie/Systemkarte + Fleet-Layer entfernt** (Owner-Entscheidung: „bis auf weiteres gestrichen"). Die navigierbare Galaxie-/Systemkarte und Flottenbewegung/-kampf waren UI-seitig längst weg; jetzt ist auch das tote Backend raus.
+  - Gelöscht: `FleetService`, `GalaxyService`, alle `Fleet*`/`GlxSystem*`-Models, GameTick-Schritte Fleet-Move/Trade/Combat + Fleet-Ship-Decay. Migration droppt `fleets`/`fleet_*` + `glx_systems`/`glx_system*`-Tabellen + Views.
+  - **Kolonie entkoppelt:** `glx_colonies` ohne `system_object_id`/`spot` neu gebaut (Koordinaten + System-Objekt-FK entfallen); `v_glx_colonies` ist jetzt ein Passthrough. Kolonie = ein Heimat-Standort ohne Systemraum.
+  - **Kampf komplett raus:** Objective „Bewährungsprobe" (`task_combat_record`) aus dem Pool, Trust-Events `encounter_won`/`encounter_lost`/`colony_threatened` entfernt, `game.fleet`/`game.combat`/`galaxy_view`/`system_view`/`decay.combat_factor` aus der Config.
+  - **Advisors** ohne `fleet_id`/`is_commander` (Fleet-Commander-Reste) neu gebaut. Hangar/Schiffe/Dispatch-Missionen + Kolonie-Hex-Exploration (`task_expedition_coverage`) bleiben unberührt.
+  - GDD §8/§8a als „gestrichen (Phase 4+)" markiert; §14/§15 + Tick-Phasen-Tabelle bereinigt.
+
 - **Organika-Sinks: Verpflegung + Missions-Proviant** (PR 2, game-designer-Spec). Organika hatte bisher außer Handel keinen Verbraucher — tote Ressource.
   - **Verpflegung (laufend, eskalierend):** Jede Kolonie verbraucht pro Sol `floor(belegte_Supply / 4)` Organika (neuer GameTick-Schritt 3a, zwischen Produktion und Vertrauen). Vorrat reicht → `well_fed` (+1 Vertrauen); Vorrat leer → `glx_colonies.hunger_streak` wächst und ein **eskalierender** Vertrauens-Malus `−min(2+(streak−1), 8)` greift (`TrustService::hungerPenalty`). Sättigen setzt Streak + Malus sofort zurück. Macht den Agrardom zum Pflichtgebäude; Survival-Spirale statt weichem Einmal-Malus.
   - **Missions-Proviant:** Hangar-Dispatch kostet jetzt `sol_distance × 3` Organika (Crew-Verpflegung) **und** `sol_distance × 1` Navigations-AP; bei Mangel an beidem wird die Entsendung blockiert.

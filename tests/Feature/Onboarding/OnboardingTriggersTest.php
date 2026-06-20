@@ -48,9 +48,6 @@ class OnboardingTriggersTest extends TestCase
 
     private int $runId;
 
-    /** system_object_id 3 is free in testdata (not used by colonies 1 or 2). */
-    private int $systemObjectId = 3;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -74,12 +71,9 @@ class OnboardingTriggersTest extends TestCase
             'faction_id' => 7,
         ]);
 
-        // Use system_object_id 3 (exists in testdata, no colony assigned to it).
         DB::table('glx_colonies')->insertOrIgnore([
             'id' => $this->colonyId,
             'name' => 'TriggerTestColony',
-            'system_object_id' => $this->systemObjectId,
-            'spot' => 5,
             'user_id' => $this->userId,
             'since_tick' => 1,
             'is_primary' => 1,
@@ -349,7 +343,7 @@ class OnboardingTriggersTest extends TestCase
      * When trust (resource_id=12) transitions from >= 0 (before tick) to < 0 (after
      * TrustService recalculates), the trigger must emit an onboarding_trust INNN event.
      *
-     * We drive trust negative by inserting an 'encounter_lost' moral event (value = -5)
+     * We drive trust negative by inserting a 'trade_blocked' moral event (value = -3)
      * into the trust_events table at the pinned tick (500) for this colony.
      * After the tick, TrustService will store trust = -5 in colony_resources, which
      * satisfies the onboarding_trust trigger condition (trustBefore=0 >= 0, trustAfter=-5 < 0).
@@ -359,11 +353,11 @@ class OnboardingTriggersTest extends TestCase
         // Trust starts at 0 (set in setUp); trigger not yet fired.
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_trust'));
 
-        // Insert a negative moral event at the pinned tick so TrustService produces -5.
+        // Insert a negative moral event at the pinned tick so TrustService produces -3.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500, // matches the tick pinned in setUp
-            'event_type' => 'encounter_lost',
+            'event_type' => 'trade_blocked',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -373,7 +367,7 @@ class OnboardingTriggersTest extends TestCase
             ->where('resource_id', 12)
             ->value('amount');
 
-        $this->assertLessThan(0, $moralAfter, 'Trust must be negative after encounter_lost moral event');
+        $this->assertLessThan(0, $moralAfter, 'Trust must be negative after trade_blocked moral event');
 
         $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
@@ -401,11 +395,11 @@ class OnboardingTriggersTest extends TestCase
     {
         $this->triggerService->markFired($this->userId, 'onboarding_trust');
 
-        // Force moral to go negative via encounter_lost event.
+        // Force moral to go negative via trade_blocked event.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
-            'event_type' => 'encounter_lost',
+            'event_type' => 'trade_blocked',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -437,7 +431,7 @@ class OnboardingTriggersTest extends TestCase
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
-            'event_type' => 'encounter_lost',
+            'event_type' => 'trade_blocked',
         ]);
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
@@ -466,8 +460,6 @@ class OnboardingTriggersTest extends TestCase
         DB::table('glx_colonies')->insert([
             'id' => 9999,
             'name' => 'NpcColony',
-            'system_object_id' => 4,  // asteroid object — not used by any colony
-            'spot' => 1,
             'user_id' => null,
             'since_tick' => 1,
             'is_primary' => 1,
@@ -483,7 +475,7 @@ class OnboardingTriggersTest extends TestCase
         DB::table('trust_events')->insert([
             'colony_id' => 9999,
             'tick' => 500,
-            'event_type' => 'encounter_lost',
+            'event_type' => 'trade_blocked',
         ]);
 
         // Pre-fire the trigger for all real players so their trust changes don't pollute the count.

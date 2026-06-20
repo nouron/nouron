@@ -74,10 +74,10 @@ class EventServiceTest extends TestCase
         $this->assertInstanceOf(Collection::class, $events);
     }
 
-    public function test_bart_has_two_events(): void
+    public function test_bart_has_seeded_events(): void
     {
         $events = $this->service->getEvents($this->userB);
-        $this->assertEquals(19, $events->count());
+        $this->assertEquals(15, $events->count());
     }
 
     public function test_homer_has_zero_events(): void
