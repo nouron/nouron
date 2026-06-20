@@ -134,6 +134,9 @@ class GameTick extends Command
             $n = $this->generateResources($tick);
             $this->line("  Colonies with resources:  {$n}");
 
+            $n = $this->processFoodConsumption($tick);
+            $this->line("  Colonies fed:             {$n}");
+
             $n = $this->calculateTrust($tick);
             $this->line("  Colonies trust updated:   {$n}");
 
@@ -865,6 +868,62 @@ class GameTick extends Command
                         ->where('resource_id', $resourceId)
                         ->update(['amount' => DB::raw("amount + {$yield}")]);
                 }
+            }
+        }
+
+        return $colonies->count();
+    }
+
+    // ── 8a. Food consumption (Organika provisioning) ──────────────────────────
+
+    /**
+     * Each colony consumes Organika (resource 5) proportional to its used supply.
+     *
+     * food_need = floor(used_supply / supply_per_eater). Runs AFTER production (the
+     * Sol's harvest is on hand) and BEFORE trust (the trust calc reads the resulting
+     * hunger_streak via TrustService::hungerPenalty). Stock covers need → well_fed
+     * event (+trust), streak reset. Stock short → consume what's left, streak grows
+     * (escalating penalty). bioFacility is thereby a must-have.
+     */
+    private function processFoodConsumption(int $tick): int
+    {
+        $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
+        $colonies = Colony::all();
+
+        foreach ($colonies as $colony) {
+            $usedSupply = (int) DB::table('colony_buildings as cb')
+                ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+                ->where('cb.colony_id', $colony->id)
+                ->where('cb.level', '>', 0)
+                ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+
+            $foodNeed = intdiv($usedSupply, $perEater);
+
+            if ($foodNeed < 1) {
+                // Tiny early colony — nobody to feed. Clear any streak, no bonus.
+                DB::table('glx_colonies')->where('id', $colony->id)->update(['hunger_streak' => 0]);
+
+                continue;
+            }
+
+            $stock = (int) DB::table('colony_resources')
+                ->where('colony_id', $colony->id)->where('resource_id', 5)->value('amount');
+
+            $consumed = min($stock, $foodNeed);
+            if ($consumed > 0) {
+                DB::table('colony_resources')
+                    ->where('colony_id', $colony->id)->where('resource_id', 5)
+                    ->update(['amount' => DB::raw("amount - {$consumed}")]);
+            }
+
+            if ($stock >= $foodNeed) {
+                // Fed: reset streak, reward with a one-shot well_fed trust event.
+                DB::table('glx_colonies')->where('id', $colony->id)->update(['hunger_streak' => 0]);
+                $this->trustService->fireEvent($colony->id, 'well_fed', $tick);
+            } else {
+                // Short: escalate the hunger streak (drives TrustService::hungerPenalty).
+                DB::table('glx_colonies')->where('id', $colony->id)
+                    ->update(['hunger_streak' => DB::raw('hunger_streak + 1')]);
             }
         }
 

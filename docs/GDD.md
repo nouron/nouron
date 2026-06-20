@@ -194,7 +194,8 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 | 1. Fleet | Flottenbewegung, Ressourcentransfer, Zwischenfälle |
 | 2. Decay | Gebäude-, Schiffs- und Kenntnisverfall (SP-Abzug; Level-Down bei SP ≤ 0) |
 | 3. Supply & Ressourcen | Supply-Cap neu berechnen (§6), dann Rohstoffproduktion (Vertrauens-Multiplikator angewendet) |
-| 4. Vertrauen | Vertrauenswert neu berechnen, `colony_resources` aktualisieren (§14) |
+| 3a. Verpflegung | Kolonie verbraucht Organika (`floor(belegte Supply / 4)`); Vorrat reicht → `well_fed`, sonst Hunger-Streak + eskalierender Vertrauens-Malus (§3, §14) |
+| 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger-Malus), `colony_resources` aktualisieren (§14) |
 | 5. Beratung & Events | Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
 
 > Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten.
@@ -486,11 +487,11 @@ Tile-Typen (z.B. "Reicher Erzknoten", "Armes Vorkommen", "Organik-freies Terrain
 
 Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten nicht natürlich vor). Stattdessen produziert der **Agrardom** (Gebäude innerhalb der Kolonie-Zone) Organika passiv pro Sol.
 
-Organika wird **nicht** in Bau- oder Schiffskosten verwendet (§3 Verwendungsmatrix). Ihre Sinks (Phase: Folge-PR nach dem Bau-Sink):
+Organika wird **nicht** in Bau- oder Schiffskosten verwendet (§3 Verwendungsmatrix). Ihre Sinks (implementiert):
 
-1. **Verpflegung (laufend, eskalierend):** Die Kolonie verbraucht pro Sol Organika proportional zur belegten Supply (Richtwert `floor(used_supply / 4)`). Leerer Vorrat löst **keinen** weichen Einmal-Malus aus, sondern eine eskalierende Spirale: fortlaufender Trust-Verfall → Produktionseinbruch → noch weniger Organika. Das macht den Agrardom zum Pflichtgebäude und trifft die Survival-Kern-Fantasie („Kolonie am Leben halten"). Ausreichender Vorrat kann optional einen kleinen Trust-Bonus (`well_fed`) geben.
-2. **Missions-Proviant (einmalig):** Eine Flotten-/Hangar-Mission, die ein Schiff für mehrere Sole wegschickt, kostet beim Start Organika (Crew-Verpflegung für die Reise).
-3. **Handel (bereits implementiert):** Organika ist in der Cantina gegen Credits verkaufbar (`bar.base_prices`).
+1. **Verpflegung (laufend, eskalierend):** Die Kolonie verbraucht pro Sol Organika proportional zur belegten Supply (`floor(belegte_Supply / 4)`, Config `game.food.supply_per_eater`). Tick-Reihenfolge: Produktion → Verpflegung → Vertrauen (Schritt 3a). Deckt der Vorrat den Bedarf → `well_fed` (+1 Trust, `game.trust.events.well_fed`), Hunger-Streak zurückgesetzt. Reicht der Vorrat nicht → verfügbarer Rest wird verbraucht, `glx_colonies.hunger_streak` wächst, und der **eskalierende** Trust-Malus `−min(2 + (streak−1), 8)` greift (`TrustService::hungerPenalty`) — kein weicher Einmal-Tick, sondern eine Spirale: weniger Vertrauen → Produktionseinbruch → noch weniger Organika. Sättigung setzt den Streak (und damit den Malus) sofort zurück. Macht den Agrardom zum Pflichtgebäude. `floor(used/4)=0` bei sehr kleiner Frühkolonie → kein Verbrauch, kein Bonus.
+2. **Missions-Proviant (einmalig):** Hangar-Dispatch (`HangarService::dispatchShip`) kostet beim Start `sol_distance × 3` Organika (Crew-Verpflegung) **und** `sol_distance × 1` Navigations-AP; bei Mangel an beidem wird die Entsendung blockiert. (Config `game.food.mission_organika_per_sol` / `mission_nav_ap_per_sol`.)
+3. **Handel:** Organika ist in der Cantina gegen Credits verkaufbar (`bar.base_prices`).
 
 Drei handelbare Kolonieressourcen (Regolith, Werkstoffe, Organika) erhalten bewusst das Catan-Tauschdreieck — mit nur zwei kollabiert die Handelstiefe.
 
@@ -1979,6 +1980,22 @@ Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen
 > **TODO Design (Evaluation):** Der Begriff "Steuern" passt nicht zur kleinen, persönlichen Kolonie — kein Imperium, kein Gouverneur. Treffendere Begriffe wären z.B. "Koloniebeiträge", "Abgaben" oder "Nexus-Quote". Das zugrundeliegende System (prozentualer Abzug → Vertrauensmalus) muss ebenfalls neu durchdacht werden, bevor es implementiert wird.
 
 Das System ist noch nicht implementiert. Der Platzhalter in der Formel ist `steuerfaktor = 0`.
+
+### Einflussfaktoren: Verpflegung (Organika)
+
+Die Kolonie verbraucht jeden Sol Organika zur Versorgung (§3, Tick-Schritt 3a). Zwei Vertrauenswirkungen:
+
+- **Gesättigt** → `well_fed`-Event (+1, Standard-Event-Logik, 1 Sol).
+- **Hunger** (Vorrat deckt den Bedarf nicht) → **eskalierender** Malus, abhängig von `glx_colonies.hunger_streak` (aufeinanderfolgende Hunger-Sole): `−min(2 + (streak−1), 8)`. Anders als gewöhnliche Events eskaliert dieser Faktor, solange der Hunger anhält, und verfällt erst beim Sättigen (Streak → 0). Er wird in `TrustService::calculateTrust` als eigener Summand addiert, nicht über die Event-Tabelle (die nicht stackt).
+
+| Hunger-Streak | Vertrauens-Malus |
+|---|---|
+| 1 | −2 |
+| 2 | −3 |
+| 3 | −4 |
+| 7+ | −8 (Cap) |
+
+Wirkung: leerer Agrardom → Vertrauensverfall → Produktions-/AP-Malus → noch weniger Organika. Der Agrardom wird damit zum Pflichtgebäude.
 
 ### Einflussfaktoren: Ereignisse (Events)
 
