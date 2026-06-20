@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
  * Write model for the glx_colonies table.
  *
  * Use this model (or DB::table('glx_colonies')) for any INSERT/UPDATE/DELETE
- * on colony data. For reads with joined coordinates use Colony (v_glx_colonies).
+ * on colony data. For reads use Colony (v_glx_colonies passthrough).
  */
 class ColonyRecord extends Model
 {
@@ -20,8 +20,6 @@ class ColonyRecord extends Model
 
     protected $fillable = [
         'name',
-        'system_object_id',
-        'spot',
         'user_id',
         'since_tick',
         'is_primary',
@@ -31,7 +29,6 @@ class ColonyRecord extends Model
     {
         return [
             'is_primary' => 'boolean',
-            'spot' => 'integer',
             'since_tick' => 'integer',
         ];
     }

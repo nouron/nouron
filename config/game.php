@@ -108,11 +108,9 @@ return [
     // Building/ship/research decay: global multipliers applied on top of per-entity decay_rate.
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
-        'combat_factor' => 2,    // hangar decay multiplier when fleet was in combat (ships don't decay)
         'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
     ],
 
-    // Navigation-AP cost per fleet order type.
     // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
@@ -151,47 +149,6 @@ return [
         'trader_discount' => [0 => 0.00, 1 => 0.00, 2 => 0.10, 3 => 0.25],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
         'offer_duration' => 2,
-    ],
-
-    // Military orders are deliberately more expensive than civilian ones (see GDD §1.1).
-    // Rule: military AP cost >= civilian AP cost — never violate this ratio.
-    'fleet' => [
-        'order_costs' => [
-            'move' => 1,  // civilian — move fleet to coordinates
-            'hold' => 1,  // civilian — hold position for one tick
-            'trade' => 1,  // civilian — execute trade at colony
-            'join' => 1,  // civilian — merge with target fleet
-            'convoy' => 1,  // civilian — escort target fleet to its destination
-            'defend' => 2,  // semi-military — move to target fleet's position to defend
-            'attack' => 3,  // military — attack enemy fleet
-        ],
-    ],
-
-    // Combat power per ship type (ship_id => power value).
-    // Transports have 0 combat power (non-combat).
-    'combat' => [
-        'ship_power' => [
-            85 => 0,   // probe     — unmanned, no weapons
-            37 => 3,   // corvette  — combat ship
-            47 => 0,   // freighter — transport, no weapons
-        ],
-    ],
-
-    // Galaxy overview map
-    'galaxy_view' => [
-        'range' => 10000,
-        'offset' => 0,
-        'scale' => 0.05,
-        'systemSize' => 3,
-    ],
-
-    // System detail map
-    'system_view' => [
-        'range' => 100,
-        'offset' => 100,
-        'scale' => 10,
-        'planetSize' => 10,
-        'slotSize' => 10,
     ],
 
     // Trade marketplace — AP costs for Händler (economy AP).
@@ -235,9 +192,6 @@ return [
             'research_level_up' => 2,
             'trade_success' => 2,
             'trade_blocked' => -3,
-            'encounter_won' => 2,
-            'encounter_lost' => -5,
-            'colony_threatened' => -4,
             'treaty_signed' => 3,
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
             'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
@@ -286,7 +240,6 @@ return [
             'task_expedition_coverage',
             'task_engineering_output',
             'task_trade_volume',
-            'task_combat_record',
         ],
         'tick_duration_hours' => 24,     // max real time per tick in hours (solo: irrelevant; multiplayer: timeout)
         'max_players' => 1,      // 1 = singleplayer; 2–4 = multiplayer

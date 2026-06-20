@@ -15,9 +15,8 @@ use Tests\TestCase;
  * Laravel port of ColonyTest\Service\ColonyServiceTest.
  *
  * Uses the canonical Simpsons test data (via TestSeeder):
- *   - Colony 1 "Springfield"  — user_id=3 (Bart), system_object_id=1, is_primary=1
- *   - Colony 2 "Shelbyville"  — user_id=0 (Homer), system_object_id=1, is_primary=1
- *   - system_object_id=1 is at (6828, 3016)
+ *   - Colony 1 "Springfield"  — user_id=3 (Bart), is_primary=1
+ *   - Colony 2 "Shelbyville"  — user_id=0 (Homer), is_primary=1
  */
 class ColonyServiceTest extends TestCase
 {
@@ -30,8 +29,6 @@ class ColonyServiceTest extends TestCase
     private int $userId = 3;   // Bart
 
     private int $homerUid = 0;   // Homer (user_id=0, legacy)
-
-    private int $systemObjectId = 1;
 
     protected function setUp(): void
     {
@@ -154,61 +151,5 @@ class ColonyServiceTest extends TestCase
 
         $this->service->setSelectedColony(2);
         $this->assertEquals(2, session('selectedIds.colonyId'));
-    }
-
-    public function test_get_colonies_by_coords(): void
-    {
-        // system_object_id=1 is at (6828, 3016); Springfield+Shelbyville are on it.
-        $results = $this->service->getColoniesByCoords([6828, 3016]);
-        $this->assertInstanceOf(Collection::class, $results);
-        $this->assertEquals(2, $results->count());
-        $this->assertInstanceOf(Colony::class, $results->first());
-    }
-
-    public function test_get_colonies_by_coords_empty_for_distant_point(): void
-    {
-        $results = $this->service->getColoniesByCoords([0, 0]);
-        $this->assertInstanceOf(Collection::class, $results);
-        $this->assertEquals(0, $results->count());
-    }
-
-    public function test_get_colony_by_coords_positive(): void
-    {
-        $colony = $this->service->getColonyByCoords([6828, 3016, 1]);
-        $this->assertInstanceOf(Colony::class, $colony);
-        $this->assertEquals(1, $colony->id);
-    }
-
-    public function test_get_colony_by_coords_negative(): void
-    {
-        // system object 12 at (9190, 7790) has no colony
-        $result = $this->service->getColonyByCoords([9190, 7790, 99]);
-        $this->assertFalse($result);
-    }
-
-    public function test_get_colony_by_coords_throws_for_invalid_coords(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->getColonyByCoords(['a', 'b']);
-    }
-
-    public function test_get_colonies_by_system_object_id(): void
-    {
-        $colonies = $this->service->getColoniesBySystemObjectId($this->systemObjectId);
-        $this->assertInstanceOf(Collection::class, $colonies);
-        $this->assertGreaterThanOrEqual(1, $colonies->count());
-        $this->assertInstanceOf(Colony::class, $colonies->first());
-    }
-
-    public function test_get_colonies_by_system_object_id_empty_for_unknown(): void
-    {
-        $colonies = $this->service->getColoniesBySystemObjectId(99);
-        $this->assertEquals(0, $colonies->count());
-    }
-
-    public function test_get_colonies_by_system_object_id_throws_for_invalid(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->getColoniesBySystemObjectId('a');
     }
 }

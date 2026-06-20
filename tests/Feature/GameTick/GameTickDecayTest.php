@@ -9,30 +9,27 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * GameTick step 4/5/6 — Building, ship, and research decay.
+ * GameTick — Building and research decay.
  *
  * Covered scenarios:
- *  Building decay (step 4):
+ *  Building decay:
  *  - Happy path: status_points decrease by decay_rate each tick
  *  - Level-down when SP hits 0: level decremented, SP reset to max_status_points
  *  - Building at level 0 is skipped (nothing to decay)
  *  - SecurityHub colony receives recycle materials when a building levels down
  *
- *  Ship decay (step 5):
- *  - Happy path: fleet_ships.status_points decrease by ship decay_rate
- *  - Destroyed when SP hits 0: row removed from fleet_ships
- *
- *  Research decay (step 6):
+ *  Research decay:
  *  - Happy path: status_points decrease by decay_rate
  *  - Level-down when SP hits 0: level decremented, SP reset to max
  *  - Knowledge researches never decay (GDD §10)
+ *
+ * (Ship/fleet decay removed together with the fleet layer, 2026-06.)
  *
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *     CC  (building_id=25): level=3, decay_rate=0.33
  *     harvester (building_id=27): level=1, decay_rate=0.95
  *     housing (building_id=28): level=2, decay_rate=0.44
- *   Fleet 8 (user_id=18): frigate1 (ship_id=29, count=20, sp=20.0)
  *   Colony research test decay placeholder (research_id=9901): level=1, status_points=20
  *
  * Uses tick numbers 11000–11099 (no seed orders in this range).
@@ -227,71 +224,6 @@ class GameTickDecayTest extends TestCase
         $row = $this->getBuildingRow(1, 27);
         $this->assertEquals(1, $row->level, 'Building must have leveled down');
         // No assert on exact resource amount here — production runs in same tick.
-    }
-
-    // ── Step 5: Ship decay ─────────────────────────────────────────────────────
-
-    /**
-     * Fleet ship status_points must decrease by the ship's decay_rate each tick.
-     * frigate1 (ship_id=29): check decay rate from DB.
-     */
-    public function test_ship_status_points_decrease_each_tick(): void
-    {
-        $decayRate = (float) DB::table('ships')->where('id', 29)->value('decay_rate');
-        $this->assertGreaterThan(0.0, $decayRate, 'Ship 29 must have a positive decay_rate');
-
-        DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->update(['status_points' => 15.0]);
-
-        Artisan::call('game:tick', ['--tick' => 11010]);
-
-        $sp = (float) DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->value('status_points');
-
-        $this->assertEqualsWithDelta(15.0 - $decayRate, $sp, 0.001,
-            'Ship SP must decrease by its decay_rate each tick');
-    }
-
-    /**
-     * When fleet ship status_points hit ≤ 0 the fleet_ships row must be deleted.
-     */
-    public function test_ship_is_destroyed_when_status_points_reach_zero(): void
-    {
-        DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->update(['status_points' => 0.05]);
-
-        Artisan::call('game:tick', ['--tick' => 11011]);
-
-        $exists = DB::table('fleet_ships')
-            ->where('fleet_id', 8)->where('ship_id', 29)
-            ->exists();
-
-        $this->assertFalse($exists, 'Fleet ship entry must be removed when SP reaches 0');
-    }
-
-    /**
-     * Multiple ship types in the same fleet must all decay independently.
-     * Fleet 8 has both ship_id=29 (frigate1) and ship_id=37 (corvette).
-     */
-    public function test_all_ships_in_fleet_decay_independently(): void
-    {
-        DB::table('fleet_ships')
-            ->where('fleet_id', 8)->whereIn('ship_id', [29, 37])
-            ->update(['status_points' => 18.0]);
-
-        $rate29 = (float) DB::table('ships')->where('id', 29)->value('decay_rate');
-        $rate37 = (float) DB::table('ships')->where('id', 37)->value('decay_rate');
-
-        Artisan::call('game:tick', ['--tick' => 11012]);
-
-        $sp29 = (float) DB::table('fleet_ships')->where('fleet_id', 8)->where('ship_id', 29)->value('status_points');
-        $sp37 = (float) DB::table('fleet_ships')->where('fleet_id', 8)->where('ship_id', 37)->value('status_points');
-
-        $this->assertEqualsWithDelta(18.0 - $rate29, $sp29, 0.001, 'Ship 29 SP must decay by its own rate');
-        $this->assertEqualsWithDelta(18.0 - $rate37, $sp37, 0.001, 'Ship 37 SP must decay by its own rate');
     }
 
     // ── Step 6: Research decay ─────────────────────────────────────────────────

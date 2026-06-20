@@ -32,7 +32,7 @@ class OnboardingService
             $name = $colonyName ?: 'Kolonie';
 
             $globalTick = $this->tickService->getTickCount();
-            $colony = $this->colonyService->createColony($userId, null, $name, $globalTick);
+            $colony = $this->colonyService->createColony($userId, $name, $globalTick);
 
             $this->seedResources($userId, $colony->id);
             $this->seedStartingBuilding($colony->id);

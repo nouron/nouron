@@ -7,6 +7,7 @@ use App\Services\OnboardingService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class OnboardingTest extends TestCase
@@ -86,7 +87,8 @@ class OnboardingTest extends TestCase
 
         $this->assertNotNull($colony);
         $this->assertEquals($user->user_id, $colony->user_id);
-        $this->assertNull($colony->system_object_id, 'Colonies no longer require a planet assignment');
+        // Colonies no longer carry a galaxy/planet assignment — the column was dropped.
+        $this->assertFalse(Schema::hasColumn('glx_colonies', 'system_object_id'));
     }
 
     public function test_login_triggers_onboarding_for_user_without_colony(): void

@@ -217,20 +217,6 @@ class SolReportService
             $lines[] = $this->staticLine(__('colony.sol_report_event_merchant'), 'good');
         }
 
-        $encounters = $events['galaxy.encounter'] ?? [];
-        if (! empty($encounters)) {
-            $lines[] = $this->staticLine(
-                trans_choice('colony.sol_report_event_encounter', count($encounters), ['count' => count($encounters)]),
-                'danger',
-            );
-        }
-
-        // Fleet arrivals without combat (move/encounter-miss orders resolved).
-        $arrivals = $events['galaxy.fleet_arrived'] ?? [];
-        if (! empty($arrivals)) {
-            $lines[] = $this->staticLine(__('colony.sol_report_event_fleet_arrived'), 'neutral');
-        }
-
         if (empty($lines)) {
             return null;
         }

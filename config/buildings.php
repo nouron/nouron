@@ -157,9 +157,9 @@ return [
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
     // Security Hub — CC Lv2, max 1 instance (is_instanced=0).
-    // Effect 1: defend-order costs 1 Nav-AP instead of 2 (FleetService).
-    // Effect 2: on building level-down by decay, return 10% of step costs in
-    //           tradeable resources (GameTick, config key: securityHub_recycle_pct).
+    // (Former defend-order discount removed with the fleet/galaxy layer 2026-06.)
+    // Effect: on building level-down by decay, return 10% of step costs in
+    //         tradeable resources (GameTick, config key: securityHub_recycle_pct).
     // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
     'securityHub' => [
         'id' => 53,

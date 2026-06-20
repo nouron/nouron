@@ -13,7 +13,6 @@ return [
     'task_expedition_coverage' => 'Expeditionsstatus: Alle Colony-Zone-Tiles erkundet',
     'task_engineering_output' => 'Ingenieursleistung: Gesamt-Zustand aller Gebäude ≥ 200 SP',
     'task_trade_volume' => 'Handelspartner: 5 Käufe beim Reisenden Händler',
-    'task_combat_record' => 'Bewährungsprobe: 3 Encounters erfolgreich abgewehrt',
     'nexus_warning_sol30' => 'Nexus Command: Die Expedition zeigt ungenügenden Fortschritt. Erhöhen Sie das Tempo.',
     'nexus_warning_sol50' => 'Nexus Command: Kein Abschluss einer Aufgabe registriert. Letzte Gelegenheit zur Korrektur.',
     'nexus_sanction_sol65' => 'Nexus Command: Aufgrund ungenügender Leistung werden temporäre administrative Maßnahmen eingeleitet.',

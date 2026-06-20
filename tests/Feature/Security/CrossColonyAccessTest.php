@@ -3,7 +3,6 @@
 namespace Tests\Feature\Security;
 
 use App\Models\Advisor;
-use App\Models\Fleet;
 use App\Models\User;
 use App\Services\Techtree\PersonellService;
 use App\Services\Techtree\ResearchService;
@@ -16,13 +15,13 @@ use Tests\TestCase;
  * Security tests covering cross-colony access vectors.
  *
  * Scenarios covered:
- *   1. Fleet: user_id not mass-assignable (structural guard — Fleet::$fillable)
- *   2. Knowledge CC-level gate: levelup to level 4 blocked when CC is at level 3
- *   3. Knowledge CC-level gate: levelup to level 4 succeeds when CC is at level 4 (positive baseline)
+ *   1. Knowledge CC-level gate: levelup to level 4 blocked when CC is at level 3
+ *   2. Knowledge CC-level gate: levelup to level 4 succeeds when CC is at level 4 (positive baseline)
+ *   3. Knowledge CC-level gate: levelup to level 5 succeeds when CC equals the required level
  *   4. Knowledge CC-level gate: levelup to level 5 blocked when CC is at level 4
  *
- * Trade- and fleet-route scenarios were removed together with the legacy
- * trade/fleet screens (controllers + routes deleted 2026-06).
+ * Trade-, fleet- and galaxy-route scenarios were removed together with the legacy
+ * trade/fleet/galaxy screens (controllers + routes + models deleted 2026-06).
  *
  * Fixture (TestSeeder / testdata.sqlite.sql):
  *   User 3 (Bart)  → colony 1 "Springfield"  (CC level=3)
@@ -42,24 +41,6 @@ class CrossColonyAccessTest extends TestCase
         $this->app->make(TestSeeder::class)->run();
         $this->bart = User::where('user_id', 3)->firstOrFail();
         $this->homer = User::where('user_id', 0)->firstOrFail();
-    }
-
-    // ── Fleet: user_id mass-assignment guard ─────────────────────────────────
-
-    /**
-     * Complement: verify user_id is not in Fleet::$fillable, which is the
-     * structural guard that prevents mass-assignment of the user_id column.
-     */
-    public function test_fleet_fillable_does_not_include_user_id(): void
-    {
-        $fleet = new Fleet;
-        $fillable = $fleet->getFillable();
-
-        $this->assertNotContains(
-            'user_id',
-            $fillable,
-            'user_id must not be in Fleet::$fillable — mass assignment guard'
-        );
     }
 
     // ── Knowledge CC-level gate ───────────────────────────────────────────────

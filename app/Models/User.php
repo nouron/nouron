@@ -66,11 +66,6 @@ class User extends Authenticatable
         return $this->hasMany(Colony::class, 'user_id', 'user_id');
     }
 
-    public function fleets()
-    {
-        return $this->hasMany(Fleet::class, 'user_id', 'user_id');
-    }
-
     public function resources()
     {
         return $this->hasOne(UserResource::class, 'user_id', 'user_id');

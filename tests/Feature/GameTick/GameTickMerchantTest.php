@@ -336,8 +336,6 @@ class GameTickMerchantTest extends TestCase
         // Insert a synthetic NPC colony (user_id=NULL) into the test system
         $npcColonyId = DB::table('glx_colonies')->insertGetId([
             'name' => 'NPC Colony Test',
-            'system_object_id' => 1,
-            'spot' => 99,
             'user_id' => null,
             'since_tick' => 0,
             'is_primary' => 0,

@@ -309,14 +309,14 @@ class TrustServiceTest extends TestCase
     public function test_fire_event_default_tick_is_current_tick_plus_one(): void
     {
         // No tick argument — should default to tickService->getTickCount() + 1
-        $this->service->fireEvent($this->colonyId, 'encounter_won');
+        $this->service->fireEvent($this->colonyId, 'trade_success');
 
         $expectedTick = $this->tickService->getTickCount() + 1;
 
         $this->assertDatabaseHas('trust_events', [
             'colony_id' => $this->colonyId,
             'tick' => $expectedTick,
-            'event_type' => 'encounter_won',
+            'event_type' => 'trade_success',
         ]);
     }
 
@@ -547,10 +547,10 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_multiple_distinct_events_are_summed(): void
     {
-        // trade_success (+2) + encounter_won (+2) + treaty_signed (+3) = +7
+        // trade_success (+2) + research_level_up (+2) + treaty_signed (+3) = +7
         DB::table('trust_events')->insert([
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'trade_success'],
-            ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'encounter_won'],
+            ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'research_level_up'],
             ['colony_id' => $this->colonyId, 'tick' => $this->tick, 'event_type' => 'treaty_signed'],
         ]);
 
@@ -561,12 +561,12 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_negative_event_contribution(): void
     {
-        // encounter_lost: -5
-        $this->service->fireEvent($this->colonyId, 'encounter_lost', $this->tick);
+        // building_level_down: -3
+        $this->service->fireEvent($this->colonyId, 'building_level_down', $this->tick);
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-5, $trust);
+        $this->assertSame(-3, $trust);
     }
 
     // ── calculateTrust() — global clamp ──────────────────────────────────────
