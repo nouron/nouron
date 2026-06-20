@@ -348,11 +348,12 @@ class OnboardingHintServiceTest extends TestCase
         $this->upgradeCc();
         $this->suppressLateHints();
 
-        // CC is level 2 → both hint_3 and the CC pre-invest hint are silent. With
-        // fog still present and Nav-AP available at Sol 2 (<= explore until_tick),
-        // the explore hint (rank 7) surfaces instead of nothing.
+        // CC is level 2 → both hint_3 (gate tick 1, requires level < 2) and the CC
+        // pre-invest hint are silent. The explore hint is Sol-1-only now
+        // (until_tick 0), so at Sol 2 it no longer fills the gap either — no hint
+        // floor remains active.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_explore', $hint['key']);
+        $this->assertNull($hint);
     }
 
     // ── Hint cc_invest: pre-invest Bau-AP into CC (rank 6, Sol 1 only) ───────
@@ -432,10 +433,34 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('/colony/view', $hint['target_url']);
     }
 
+    public function test_explore_hint_silent_when_explored_tile_count_reaches_throttle(): void
+    {
+        // Still Sol 1 (within until_tick) and fog remains, but the player already
+        // explored >= hint_explore_max_explored_tiles (6) ring>=2 tiles this run →
+        // explore hint throttles off even though fog + Nav-AP are both present.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+
+        for ($i = 0; $i < 6; $i++) {
+            DB::table('colony_tiles')->insertOrIgnore([
+                'colony_id' => $this->colonyId, 'q' => 10 + $i, 'r' => 0, 'ring' => 2,
+                'tile_type' => 'terrain_empty', 'is_explored' => 1,
+                'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+            ]);
+        }
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertNotSame('hint_explore', $hint['key']);
+    }
+
     public function test_explore_hint_silent_after_until_tick(): void
     {
-        // Beyond hint_explore_until_tick (2) → explore silent. CC still level 1 and
-        // tick 3 >= CC gate (1) → hint_3 (rank 5) takes over.
+        // Beyond hint_explore_until_tick (0, Sol 1 only) → explore silent. CC still
+        // level 1 and tick 3 >= CC gate (1) → hint_3 (rank 5) takes over.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
