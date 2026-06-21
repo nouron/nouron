@@ -10,14 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class ColonyTileService
 {
-    /**
-     * Ring-3 "frontier" coordinates seeded at Sol 1 — a deliberate half-subset
-     * of the full hex ring (9 of 18), kept fixed across resets; only the
-     * tile_type/explored state on these coordinates is randomized.
-     */
-    private const RING3_FRONTIER_COORDS = [
-        [3, 0], [3, -1], [3, -2], [2, 1], [1, 2], [0, 3], [-1, 3], [-3, 0], [0, -3],
-    ];
+    /** Ring-3 "frontier" tile count seeded at Sol 1 — a deliberate half-subset of the full 18-tile ring. */
+    private const RING3_FRONTIER_COUNT = 9;
 
     public function __construct(
         private readonly PersonellService $personellService,
@@ -331,6 +325,10 @@ class ColonyTileService
      * randomly chosen coordinate — onboarding's hint_2 and the Harvester
      * move-mode UI depend on this tile existing, not on its location.
      *
+     * Which 9 of the 18 Ring-3 coordinates exist is also randomized per call
+     * (not just their content) — otherwise the "frontier" shape would look
+     * identical across every run/reset even though tile_type varies.
+     *
      * @return list<array{q:int,r:int,ring:int,tile_type:string,is_colony_zone:int,is_explored:int}>
      */
     public function randomizeOuterRingRows(): array
@@ -345,8 +343,12 @@ class ColonyTileService
             ];
         }
 
+        $ring3Coords = $this->ringCoords(3);
+        shuffle($ring3Coords);
+        $ring3Coords = array_slice($ring3Coords, 0, self::RING3_FRONTIER_COUNT);
+
         $ring3Rows = [];
-        foreach (self::RING3_FRONTIER_COORDS as [$q, $r]) {
+        foreach ($ring3Coords as [$q, $r]) {
             $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->randomTileType(3)];
         }
 
