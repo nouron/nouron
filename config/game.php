@@ -313,27 +313,27 @@ return [
         'hint_trust_min_ticks' => 5,
 
         // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing).
-        // 0 — the prerequisite itself already prevents Day-1 firing (CC>=2 means Sol 2+),
-        // and the rank system (rank 11) means it only ever surfaces once every higher-rank
-        // hint (1-10) is already resolved — an extra tick-delay just widens the post-CC2 gap
-        // for no benefit (playtest: even the previous "tick>=3/4" gates left a multi-Sol gap).
+        // 0 — the prerequisite itself already prevents Day-1 firing (CC>=2 means Sol 2+).
+        // Real Sol-1/2 affordability (Bau-AP, Regolith) is covered by the hint's own
+        // canAffordBuildingPlacement() check, not this tick-gate — see hint_no_analytik
+        // below for why a small tick-gate is still kept as pacing polish.
         'hint_no_cantina_after_tick' => 0,
 
         // Minimum ticks elapsed before Agrardom hint fires (Harvester>=1 + bioFacility missing).
-        // Unlike Cantina/Analytik, this one has NO CC-level prerequisite — Harvester>=1
-        // is true from the very first second of Sol 1 — so it needs an explicit tick floor
-        // to stay out of Sol 1 (playtest: with 0 it fired in Sol 1 once Bau-AP ran out,
-        // crowding out the "Sol beenden" bridge hint with an action the player can't
-        // actually take anymore this Sol). 1 = Sol 2 onward, matching hint_3's CC-upgrade gate.
+        // 1 (Sol 2+) — kept even though canAffordBuildingPlacement() now also guards this
+        // hint (it has no CC-level prerequisite, unlike Cantina/Analytik, so without
+        // *some* floor it would still flash briefly on Sol 1 before AP runs out).
         'hint_no_agrardome_after_tick' => 1,
 
         // Minimum ticks elapsed before Analytik-Labor hint fires (CC>=2 + sciencelab missing).
-        // 0 — the CC>=2 prerequisite already prevents Day-1 firing (CC reaches level 2 no
-        // earlier than Sol 2), and rank 13 means it only shows once ranks 1-12 are resolved.
-        // Any positive tick-gate just re-creates the post-CC2 hint gap (see hint_advisor_slot2,
-        // rank 6, the immediate hint for the same moment) — playtest showed even tick>=3 left
-        // a 2-Sol gap after hiring the second advisor.
-        'hint_no_analytik_after_tick' => 0,
+        // 2 (Sol 3+) — purely cosmetic pacing on top of the real fix: the hint's own
+        // build-affordability check (canAffordBuildingPlacement) now withholds it
+        // whenever Bau-AP/Regolith are actually spent on Cantina/Agrardom first, so
+        // this tick-gate only spreads out the *recommendation* on Sols where the
+        // player has resources to spare for all three — it's not load-bearing
+        // for correctness anymore (playtest: without it, Cantina/Agrardom/Analytik
+        // all became "ready" the same Sol whenever AP/Regolith were abundant).
+        'hint_no_analytik_after_tick' => 2,
 
         // Minimum current_tick before CC-upgrade hint (hint_3) fires. 1 = Sol 2
         // (Sol = current_tick + 1) — surfaces right after the first "Sol beenden",

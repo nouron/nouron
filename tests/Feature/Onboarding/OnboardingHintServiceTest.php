@@ -63,6 +63,19 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('colony_resources')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'resource_id' => 12, 'amount' => 0,
         ]);
+        // Generous Regolith/Werkstoffe/Supply by default so the build-affordability
+        // check on hint_6/hint_agrardome/hint_analytik doesn't interfere with tests
+        // that aren't specifically about resource scarcity — see canAffordBuilding*
+        // tests below for the cases that exercise the scarcity path directly.
+        DB::table('colony_resources')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'resource_id' => 3, 'amount' => 500,
+        ]);
+        DB::table('colony_resources')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'resource_id' => 4, 'amount' => 100,
+        ]);
+        DB::table('user_resources')->insertOrIgnore([
+            'user_id' => $this->userId, 'credits' => 3000, 'supply' => 200,
+        ]);
 
         // Baseline buildings: CC, Harvester, Housing at level 1, full status (20/20).
         // Real game start seeds these damaged (16/20); kept full here so the repair
@@ -351,10 +364,10 @@ class OnboardingHintServiceTest extends TestCase
 
         // CC is level 2 → both hint_3 (gate tick 1, requires level < 2) and the CC
         // pre-invest hint are silent. The explore hint is Sol-1-only now
-        // (until_tick 0), so at Sol 2 it no longer fills the gap either — no hint
-        // floor remains active.
+        // (until_tick 0), so at Sol 2 it no longer fills the gap either. hint_end_sol
+        // (rank 15) is the universal floor — it always wins once nothing else qualifies.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertNull($hint);
+        $this->assertSame('hint_end_sol', $hint['key']);
     }
 
     // ── Hint advisor_slot2: CC2 unlocks a second advisor slot (rank 6) ──────
@@ -488,6 +501,30 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('/colony/view', $hint['target_url']);
     }
 
+    public function test_explore_hint_silent_when_remaining_nav_ap_cant_afford_cheapest_fog_tile(): void
+    {
+        // Regression: only checking "Nav-AP > 0" let the hint nag the player to
+        // explore even when the cheapest remaining fog tile costs more than what's
+        // left (ring 2 = 2 AP/tile here). Lock down to 1 Nav-AP — unaffordable.
+        $this->app->instance(TickService::class, new TickService(0));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+
+        $available = $personell->getAvailableActionPoints('navigation', $this->colonyId);
+        $this->assertGreaterThan(1, $available, 'precondition: base Nav-AP must exceed 1 to test the lock-down');
+        $personell->lockActionPoints('navigation', $this->colonyId, $available - 1);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_explore', $hint['key'] ?? null);
+    }
+
     public function test_explore_hint_silent_when_explored_tile_count_reaches_throttle(): void
     {
         // Still Sol 1 (within until_tick) and fog remains, but the player already
@@ -530,7 +567,7 @@ class OnboardingHintServiceTest extends TestCase
     public function test_explore_hint_silent_when_no_fog_left(): void
     {
         // No unexplored tiles → explore silent; CC level 2 → cc_invest silent. At
-        // Sol 1 the bridge hint (rank 14) is the only remaining floor.
+        // Sol 1 the bridge hint (rank 15) is the only remaining floor.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -549,7 +586,7 @@ class OnboardingHintServiceTest extends TestCase
     public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
     {
         // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full.
-        // The bridge hint is now the lowest-priority Sol-1 floor (rank 14): it only
+        // The bridge hint is now the lowest-priority Sol-1 floor (rank 15): it only
         // surfaces once the CC pre-invest hint (CC >= level 2), the advisor-slot-2
         // hint (slot filled), and the explore hint (no fog left) are all exhausted.
         $this->placeEngineer();
@@ -562,7 +599,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(14, $hint['rank']);
+        $this->assertSame(15, $hint['rank']);
         $this->assertSame('hint_end_sol', $hint['key']);
         $this->assertSame('colony.onboarding_end_sol', $hint['text_key']);
     }
@@ -599,6 +636,26 @@ class OnboardingHintServiceTest extends TestCase
 
         $this->assertNotNull($hint);
         $this->assertSame('hint_agrardome', $hint['key']);
+    }
+
+    public function test_agrardome_hint_silent_once_placed_even_if_still_under_construction(): void
+    {
+        // Regression: a building "in progress" (placed, level 0) still counts as
+        // "handled" — the hint must not nag the player to build something they
+        // already started just because it isn't finished yet this Sol.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)
+            ->update(['level' => 0, 'tile_x' => 8, 'tile_y' => 8]);
+        $this->setRunTick(6);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_agrardome', $hint['key'] ?? null);
     }
 
     public function test_agrardome_hint_silent_on_sol1_even_with_harvester_built(): void
@@ -702,6 +759,147 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_analytik', $hint['key'] ?? null);
     }
 
+    // ── Hint build_priority: 2+ of Cantina/Agrardom/Analytik eligible at once ─
+
+    public function test_build_priority_hint_fires_when_two_buildings_eligible(): void
+    {
+        // Default fixture: harvester>=1 (agrardome) + CC2 (analytik) both met,
+        // neither placed — suppressLateHints() is deliberately NOT called here
+        // (it would place all three, leaving 0 eligible).
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_researches')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
+            'status_points' => 20, 'ap_spend' => 0,
+        ]); // silence hint_4
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(11, $hint['rank']);
+        $this->assertSame('hint_build_priority', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_build_priority', $hint['text_key']);
+    }
+
+    public function test_build_priority_hint_silent_when_only_one_eligible(): void
+    {
+        // CC stays level 1 → analytik prereq unmet, cantina prereq unmet (needs CC>=2
+        // too) — only agrardome is eligible. Below the 2-candidate threshold.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints(); // places bar+bioFacility+sciencelab...
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete(); // ...un-place just agrardome
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_build_priority', $hint['key'] ?? null);
+    }
+
+    public function test_build_priority_hint_dismiss_falls_through_to_individual_hint(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_researches')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
+            'status_points' => 20, 'ap_spend' => 0,
+        ]);
+        $this->setRunTick(2);
+        $this->service->dismissHint($this->userId, 'hint_build_priority');
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertNotSame('hint_build_priority', $hint['key']);
+        $this->assertContains($hint['key'], ['hint_6', 'hint_agrardome', 'hint_analytik']);
+    }
+
+    // ── Build-affordability gate (Cantina/Agrardom/Analytik) ────────────────
+    // Regression: these hints must not nag the player to build something they
+    // can no longer afford this Sol (Bau-AP or Regolith already spent on an
+    // earlier hint's building) — same bug class as the fixed Sol-1 Agrardom leak.
+
+    public function test_analytik_hint_silent_when_not_enough_regolith(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 31)->delete();
+        DB::table('colony_resources')
+            ->where('colony_id', $this->colonyId)->where('resource_id', 3)->update(['amount' => 10]); // sciencelab needs 80
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_analytik', $hint['key'] ?? null);
+    }
+
+    public function test_analytik_hint_silent_when_no_construction_ap_left(): void
+    {
+        $this->app->instance(TickService::class, new TickService(0));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 31)->delete();
+
+        $available = $personell->getConstructionPoints($this->colonyId);
+        $personell->lockActionPoints('construction', $this->colonyId, $available);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_analytik', $hint['key'] ?? null);
+    }
+
+    public function test_cantina_hint_silent_when_not_enough_regolith(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 52)->delete();
+        DB::table('colony_resources')
+            ->where('colony_id', $this->colonyId)->where('resource_id', 3)->update(['amount' => 10]); // bar needs 50
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_6', $hint['key'] ?? null);
+    }
+
+    public function test_agrardome_hint_silent_when_not_enough_regolith(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete();
+        DB::table('colony_resources')
+            ->where('colony_id', $this->colonyId)->where('resource_id', 3)->update(['amount' => 10]); // bioFacility needs 40
+        $this->setRunTick(1);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_agrardome', $hint['key'] ?? null);
+    }
+
     // ── Rank priority ─────────────────────────────────────────────────────────
 
     public function test_higher_rank_wins_over_lower_rank(): void
@@ -751,7 +949,7 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_all_hints_dismissed_returns_null(): void
     {
-        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_6', 'hint_agrardome'] as $key) {
+        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_6', 'hint_agrardome', 'hint_end_sol'] as $key) {
             $this->service->dismissHint($this->userId, $key);
         }
         $this->setRunTick(99);
@@ -826,23 +1024,23 @@ class OnboardingHintServiceTest extends TestCase
             ->where('colony_id', $this->colonyId)
             ->where('resource_id', 12)
             ->update(['amount' => 0]);
-        // hint 6: cantina exists
+        // hint 6: cantina placed (tile_x set — matches the "placed" check, not just level)
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 52,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => null, 'tile_y' => null,
+            'tile_x' => 5, 'tile_y' => 5,
         ]);
-        // hint_agrardome: bioFacility exists
+        // hint_agrardome: bioFacility placed
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 41,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => null, 'tile_y' => null,
+            'tile_x' => 6, 'tile_y' => 5,
         ]);
-        // hint_analytik: sciencelab exists
+        // hint_analytik: sciencelab placed
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 31,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => null, 'tile_y' => null,
+            'tile_x' => 7, 'tile_y' => 5,
         ]);
     }
 

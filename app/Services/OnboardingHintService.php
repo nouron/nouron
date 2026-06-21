@@ -17,6 +17,7 @@ class OnboardingHintService
 {
     public function __construct(
         private readonly PersonellService $personellService,
+        private readonly ResourcesService $resourcesService,
     ) {}
 
     /**
@@ -174,29 +175,36 @@ class OnboardingHintService
             ],
             [
                 'rank' => 11,
+                'key' => 'hint_build_priority',
+                'active' => $this->checkHintBuildPriority($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_build_priority',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 12,
                 'key' => 'hint_6',
                 'active' => $this->checkHint6($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_6',
                 'target_url' => '/colony/view?build=52',
             ],
             [
-                'rank' => 12,
+                'rank' => 13,
                 'key' => 'hint_agrardome',
                 'active' => $this->checkHintAgrardome($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_agrardome',
                 'target_url' => '/colony/view?build=41',
             ],
             [
-                'rank' => 13,
+                'rank' => 14,
                 'key' => 'hint_analytik',
                 'active' => $this->checkHintAnalytik($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_analytik',
                 'target_url' => '/colony/view?build=31',
             ],
             [
-                'rank' => 14,
+                'rank' => 15,
                 'key' => 'hint_end_sol',
-                'active' => $this->checkHintEndSol($colonyId, $currentTick),
+                'active' => $this->checkHintEndSol(),
                 'text_key' => 'colony.onboarding_end_sol',
                 'target_url' => '/colony/view',
             ],
@@ -272,20 +280,17 @@ class OnboardingHintService
      * AP budget, so waiting for it would suppress the bridge hint indefinitely —
      * hint_repair is higher-ranked and wins as long as the player can still repair.
      */
-    private function checkHintEndSol(int $colonyId, int $currentTick): bool
+    private function checkHintEndSol(): bool
     {
-        if ($currentTick !== 0) {
-            return false;
-        }
-
-        // Defensive: if the CC-upgrade gate ever drops to 0, let hint_3 take over.
-        if ($currentTick >= (int) config('game.onboarding.hint_cc_upgrade_after_tick', 1)) {
-            return false;
-        }
-
-        return ! $this->checkHint1($colonyId)
-            && ! $this->checkHint2($colonyId)
-            && ! $this->checkHintRepairUrgent($colonyId);
+        // Universal floor, lowest rank: this only ever surfaces once every
+        // higher-ranked hint above it has already been checked and found
+        // inactive — by construction there's nothing left to recommend, and
+        // "Sol beenden" is always a valid next action regardless of Sol number.
+        // Generalized from a Sol-1-only bridge: with the build-affordability
+        // check on the Cantina/Agrardom/Analytik hints, "nothing else to do
+        // this Sol" is just as real in Sol 2+ as it was in Sol 1 — the hint
+        // bar must never go empty while Bau-AP/resources are simply spent.
+        return true;
     }
 
     /**
@@ -430,7 +435,18 @@ class OnboardingHintService
             return false;
         }
 
-        return $this->personellService->getAvailableActionPoints('navigation', $colonyId) > 0;
+        // Not just "any Nav-AP left" — the cheapest unexplored tile (ring-staggered
+        // cost) must actually be affordable. Otherwise the hint nags the player to
+        // explore with AP that can't pay for anything (e.g. 1 Nav-AP left but the
+        // only remaining fog is ring 2+ at 2+ AP/tile).
+        $cheapestRing = (int) DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('is_explored', 0)
+            ->min('ring');
+        $cheapestCost = (int) (config('game.colony.explore_cost_per_ring')[$cheapestRing]
+            ?? config('game.colony.explore_cost_default', 1));
+
+        return $this->personellService->getAvailableActionPoints('navigation', $colonyId) >= $cheapestCost;
     }
 
     /**
@@ -482,8 +498,14 @@ class OnboardingHintService
      */
     private function checkHint6(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 5);
+        return $this->cantinaPrereqsMet($colonyId, $currentTick)
+            && ! $this->isBuildingPlaced($colonyId, 52)
+            && $this->canAffordBuildingPlacement($colonyId, 52);
+    }
 
+    private function cantinaPrereqsMet(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 5);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -492,7 +514,6 @@ class OnboardingHintService
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level');
-
         if ($ccLevel < 2) {
             return false;
         }
@@ -502,16 +523,7 @@ class OnboardingHintService
             ->where('building_id', 28)
             ->value('level');
 
-        if ($housingLevel < 1) {
-            return false;
-        }
-
-        $barLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 52)
-            ->value('level');
-
-        return $barLevel === 0;
+        return $housingLevel >= 1;
     }
 
     /**
@@ -520,8 +532,14 @@ class OnboardingHintService
      */
     private function checkHintAgrardome(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 6);
+        return $this->agrardomePrereqsMet($colonyId, $currentTick)
+            && ! $this->isBuildingPlaced($colonyId, 41)
+            && $this->canAffordBuildingPlacement($colonyId, 41);
+    }
 
+    private function agrardomePrereqsMet(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 6);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -531,16 +549,7 @@ class OnboardingHintService
             ->where('building_id', 27)
             ->value('level');
 
-        if ($harvesterLevel < 1) {
-            return false;
-        }
-
-        $bioFacilityLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 41)
-            ->value('level');
-
-        return $bioFacilityLevel === 0;
+        return $harvesterLevel >= 1;
     }
 
     /**
@@ -549,8 +558,14 @@ class OnboardingHintService
      */
     private function checkHintAnalytik(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 8);
+        return $this->analytikPrereqsMet($colonyId, $currentTick)
+            && ! $this->isBuildingPlaced($colonyId, 31)
+            && $this->canAffordBuildingPlacement($colonyId, 31);
+    }
 
+    private function analytikPrereqsMet(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 8);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -560,16 +575,80 @@ class OnboardingHintService
             ->where('building_id', 25)
             ->value('level');
 
-        if ($ccLevel < 2) {
+        return $ccLevel >= 2;
+    }
+
+    /**
+     * Hint: 2+ of (Cantina/Agrardom/Analytik) are simultaneously eligible
+     * (prereqs met, not yet placed) but Bau-AP/Regolith won't stretch to all
+     * of them this Sol — nudges the player to pick one rather than wondering
+     * why only one of several "ready" buildings is being suggested. Purely
+     * informational/strategic (rank 11, above the individual build hints) —
+     * dismissible, doesn't block the individual hints from resuming after.
+     */
+    private function checkHintBuildPriority(int $colonyId, int $currentTick): bool
+    {
+        $eligible = 0;
+        $eligible += ($this->cantinaPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 52)) ? 1 : 0;
+        $eligible += ($this->agrardomePrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 41)) ? 1 : 0;
+        $eligible += ($this->analytikPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 31)) ? 1 : 0;
+
+        return $eligible >= 2;
+    }
+
+    /** True once a building instance has been placed on a tile (level 0 "in progress" counts). */
+    private function isBuildingPlaced(int $colonyId, int $buildingId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', $buildingId)
+            ->whereNotNull('tile_x')
+            ->exists();
+    }
+
+    /**
+     * "Build X" hints (Cantina/Agrardom/Analytik) must not nag the player to
+     * place a building they can't currently afford — same bug class as the
+     * Sol-1 Agrardom leak, generalized: checks remaining Bau-AP this Sol AND
+     * Regolith/Werkstoffe/Supply against the building's actual cost
+     * (config/buildings.php, canonical — mirrors ColonyController::placeBuilding).
+     * Placing always costs exactly 1 Bau-AP regardless of building type.
+     */
+    private function canAffordBuildingPlacement(int $colonyId, int $buildingId): bool
+    {
+        if ($this->personellService->getConstructionPoints($colonyId) < 1) {
             return false;
         }
 
-        $sciencelabLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 31)
-            ->value('level');
+        $buildingKey = collect(config('buildings'))->search(fn ($cfg) => $cfg['id'] === $buildingId);
+        $cfg = $buildingKey !== false ? config("buildings.{$buildingKey}") : null;
+        if (! $cfg) {
+            return true; // unknown building — don't block on a config lookup miss
+        }
 
-        return $sciencelabLevel === 0;
+        $regolithNeeded = (int) ($cfg['build_cost'][3] ?? 0);
+        $compoundsNeeded = (int) ($cfg['build_cost'][4] ?? 0);
+        $supplyNeeded = (int) ($cfg['supply_cost'] ?? 0);
+
+        if ($regolithNeeded > 0) {
+            $regolith = (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)->value('amount') ?? 0);
+            if ($regolith < $regolithNeeded) {
+                return false;
+            }
+        }
+
+        if ($compoundsNeeded > 0) {
+            $compounds = (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 4)->value('amount') ?? 0);
+            if ($compounds < $compoundsNeeded) {
+                return false;
+            }
+        }
+
+        if ($supplyNeeded > 0 && $this->resourcesService->getFreeSupply($colonyId) < $supplyNeeded) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
