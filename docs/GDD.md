@@ -2661,17 +2661,28 @@ Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und 
 | Inline-Erklärungen (5 Trigger-Punkte) | Klein pro Trigger — INNN-Event + Flag | Run-State (Trigger darf nur einmal feuern) |
 | User-Preference `onboarding_hints` | Klein — User-Settings-Tabelle oder Cookie | User-Settings-Screen |
 
-**Konfiguration:** `config/game.php → onboarding`:
+**Konfiguration:** `config/game.php → onboarding` (Stand 2026-06-21, vollständig — die vorherige Fassung dieser Liste war veraltet und nannte teils nicht mehr existierende Keys):
 
 ```php
 'onboarding' => [
-    'hint_supply_cap_threshold'    => 10,   // Hint Rang 1: Supply-Cap <= dieser Wert
-    'hint_no_engineer_ticks'       => 0,    // Hint Rang 2: Sole ohne Ingenieur (0 = sofort)
-    'hint_no_knowledge_after_tick' => 10,   // Hint Rang 4: Warnung nach diesem Sol
-    'hint_trust_threshold'         => -20,  // Hint Rang 5: Vertrauen unter diesem Wert
-    'hint_trust_min_ticks'         => 3,    // Hint Rang 5: mindestens N Sole ununterbrochen
+    'hint_repair_urgent_sp'           => 3,   // Rang 2: SP-Schwelle (von max. 20) für Leveldown-Warnung
+    'hint_supply_cap_threshold'       => 10,  // (aktuell ungenutzt im Hint-Ranking selbst — Supply-Cap-Banner läuft über §16.6, nicht §16.2)
+    'hint_no_engineer_ticks'          => 3,   // Rang 1 referenziert dies nicht direkt mehr (checkHint1 prüft nur Advisor-Existenz) — TODO: toter Config-Wert?
+    'hint_no_knowledge_after_tick'    => 8,   // Rang 9 (hint_4): Sol 9
+    'hint_trust_threshold'            => -20, // Rang 10 (hint_5)
+    'hint_trust_min_ticks'            => 5,   // Rang 10 (hint_5): Sol 6
+    'hint_no_cantina_after_tick'      => 0,   // Rang 12 (hint_6) — Default im Code ist 5, Config überschreibt auf 0
+    'hint_no_agrardome_after_tick'    => 1,   // Rang 13 (hint_agrardome) — Default im Code ist 6, Config überschreibt auf 1
+    'hint_no_analytik_after_tick'     => 2,   // Rang 14 (hint_analytik) — Default im Code ist 8, Config überschreibt auf 2
+    'hint_cc_upgrade_after_tick'      => 1,   // Rang 5 (hint_3): Sol 2
+    'hint_explore_until_tick'         => 0,   // Rang 8 (hint_explore): nur Sol 1
+    'hint_explore_max_explored_tiles' => 6,   // Rang 8 (hint_explore): Throttle
 ],
 ```
+
+> ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21): Die tatsächlichen Werte in `config/game.php` weichen von den Code-Defaults in `OnboardingHintService.php` ab (z.B. `hint_no_cantina_after_tick`: Config=0, Code-Default=5; `hint_no_agrardome_after_tick`: Config=1, Code-Default=6; `hint_no_analytik_after_tick`: Config=2, Code-Default=8). Das ist vermutlich beabsichtigt (Config gewinnt immer), aber die große Diskrepanz zwischen Config-Wert und Code-Kommentar-Default deutet darauf hin, dass eines der beiden beim letzten Playtest-Tuning vergessen wurde, synchron zu bleiben. Da `canAffordBuildingPlacement()` inzwischen ohnehin die reale Bezahlbarkeit prüft, sind die niedrigen Config-Werte (0/1/2) wahrscheinlich die aktuell gültige, bewusste Entscheidung — die Code-Kommentare mit den höheren Default-Werten sollten zur Vermeidung von Verwirrung beim nächsten Code-Review aktualisiert werden (Aufgabe für `game-developer`, nicht `game-designer`).
+>
+> `hint_no_engineer_ticks` scheint im aktuellen `OnboardingHintService::checkHint1()` gar nicht mehr gelesen zu werden (die Methode prüft nur, ob ein Advisor-Datensatz existiert, ohne Tick-Schwelle). Falls korrekt: toter Config-Eintrag, sollte entfernt oder die Doku-Kommentare im Config korrigiert werden — zu klären mit `game-developer`/`backend-coder`.
 
 > **TODO (Implementierung):** User-Preferences-Tabelle benötigt Spalte `onboarding_hints BOOLEAN DEFAULT 1`. Alternativ: Session-Storage für den ersten Run, persistente DB-Einstellung ab zweitem Run.
 
