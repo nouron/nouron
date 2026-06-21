@@ -103,16 +103,20 @@ class BuildResourceSinkTest extends TestCase
 
     public function test_place_late_building_deducts_compounds(): void
     {
+        // sciencelab (31) deliberately dropped Werkstoffe from its cost (Regolith
+        // only now) — it's a CC-Lv2 early/mid building, Werkstoffe aren't reachable
+        // that early (no local production; Uplink-Station Lv1 + Cantina, both
+        // later). Hangar (44, CC Lv3) is genuinely late and still Rg+Wk-priced.
         config(['game.bypass.supply_checks' => true]);   // isolate the resource deduction
-        $this->setCc(['level' => 2]);                    // sciencelab needs CC Lv2
+        $this->setCc(['level' => 3]);                    // hangar needs CC Lv3
         $this->ensureBuildableTile(1, 0);
         $rg = $this->colonyRes(self::RES_REGOLITH);
         $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(31, 1, 0)->assertOk()->assertJsonPath('ok', true);   // sciencelab = 60 Rg + 20 Wk
+        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 80 Rg + 25 Wk
 
-        $this->assertSame($rg - 60, $this->colonyRes(self::RES_REGOLITH));
-        $this->assertSame($wk - 20, $this->colonyRes(self::RES_COMPOUNDS));
+        $this->assertSame($rg - 80, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($wk - 25, $this->colonyRes(self::RES_COMPOUNDS));
     }
 
     public function test_place_rejected_without_enough_regolith(): void
