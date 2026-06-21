@@ -2428,16 +2428,32 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 **Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
 
-| Rang | Key | Bedingung | Hinweistext | Ziel-Link | Sol-Schwelle |
-|------|-----|-----------|-------------|-----------|--------------|
+> ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21): Die folgende Tabelle war seit längerem veraltet — die Implementierung (`app/Services/OnboardingHintService.php`) hat inzwischen **15 Ränge statt 8**. Tabelle unten korrigiert auf den tatsächlichen Stand. Zusätzlich wurden in `config/game.php → onboarding` mehrere Schwellen verschoben, ohne dass die Designentscheidungs-Texte darunter nachgezogen wurden (siehe Korrekturen je Eintrag).
+
+| Rang | Key | Bedingung | Hinweistext (Kurzfassung) | Ziel-Link | Sol-Schwelle |
+|------|-----|-----------|---------------------------|-----------|--------------|
 | 1 | `hint_1` | Kein Baumeister-Berater aktiv | "Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert von 6." | `/advisors` | — |
-| 2 | `hint_repair_urgent` | Gebäude (Level ≥ 1) auf/unter `hint_repair_urgent_sp` (Default 3 von 20) — Leveldown-Gefahr | "Ein Gebäude steht kurz vor dem Stufenverlust — jetzt mit dem Reparieren-Button (Bau-AP) sichern." | Colony-Screen | — |
-| 3 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1 — Kolonie-Zone) | "Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen." | Colony-Screen | — |
-| 4 | `hint_repair` | Gebäude (Level ≥ 1) unter Maximal-Statuspunkten (`status_points < max_status_points`) | "Deine Startgebäude sind beschädigt — tippe ein Gebäude an und nutze „Reparieren" (1 Bau-AP), um die Substanz zu sichern." | Colony-Screen | — |
-| 5 | `hint_3` | CC Level < 2 | "Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei." | Colony-Screen | Sol 2 |
-| 6 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht — Analytik-Labor bauen und erste Kenntnis auf Level 1 bringen." | `/techtree` | Sol 8 |
-| 7 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt — Zivilgebäude bauen oder Wohnhabitate pflegen." | Colony-Screen | Sol 5 |
-| 8 | `hint_6` | CC ≥ Lv2, keine Cantina gebaut | "Cantina noch nicht gebaut — hier erscheinen Händler und Gäste mit Tauschangeboten." | `/colony/view?build=52` | Sol 8 |
+| 2 | `hint_repair_urgent` | Gebäude (Level ≥ 1) auf/unter `hint_repair_urgent_sp` (3 von 20) — Leveldown-Gefahr | "Ein Gebäude steht kurz vor dem Stufenverlust — jetzt reparieren." | Colony-Screen | — |
+| 3 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1) | "Harvester steht noch in der Kolonie-Zone — verlegen." | Colony-Screen | — |
+| 4 | `hint_repair` | Gebäude (Level ≥ 1) unter Maximal-Statuspunkten | "Deine Startgebäude sind beschädigt — Reparieren (1 Bau-AP)." | Colony-Screen | — |
+| 5 | `hint_3` | CC Level < 2 | "Kommandozentrale auf Level 2 ausbauen." | Colony-Screen | Sol 2 (`hint_cc_upgrade_after_tick=1`) |
+| 6 | `hint_advisor_slot2` | CC ≥ Lv2 und mindestens 1 freier Berater-Slot | "Zweiter Berater-Slot frei — jetzt besetzen." | `/advisors` | — (sofort nach CC2) |
+| 7 | `hint_cc_invest` | Sol 1, Sol-1-To-Dos erledigt, CC < Lv2, noch Bau-AP übrig | "Verbleibende Bau-AP in den CC-Ausbau stecken." | Colony-Screen | nur Sol 1 |
+| 8 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — Navigations-AP nutzen." | Colony-Screen | nur Sol 1 |
+| 9 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`, nicht Sol 8 wie zuvor dokumentiert — Tick 8 = Sol 9) |
+| 10 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5` → Tick 5 = Sol 6, nicht Sol 5) |
+| 11 | `hint_build_priority` | ≥ 2 von (Cantina/Agrardom/Analytik) gleichzeitig baubar (Voraussetzung erfüllt, nicht gebaut) | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
+| 12 | `hint_6` | CC ≥ Lv2, Housing ≥ Lv1, keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 6** (`hint_no_cantina_after_tick=5`) |
+| 13 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom, bezahlbar | "Agrardom noch nicht gebaut — Organika-Produktion." | `/colony/view?build=41` | **Sol 7** (`hint_no_agrardome_after_tick=6`) |
+| 14 | `hint_analytik` | CC ≥ Lv2, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 9** (`hint_no_analytik_after_tick=8`) |
+| 15 | `hint_end_sol` | Fallback — greift nur wenn kein höherrangiger Hint aktiv ist | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
+
+**Neu seit letzter GDD-Fassung, bisher nicht dokumentiert:**
+- `hint_advisor_slot2` (Rang 6): Direktes Feedback auf CC-Lv2-Ausbau — ohne diesen Hint bliebe die Hint-Leiste nach dem CC-Ausbau mehrere Sole leer, bevor `hint_4`/`hint_5`/`hint_6` ticken.
+- `hint_cc_invest` (Rang 7) und `hint_explore` (Rang 8): Sol-1-spezifische Hints, die verbleibende Bau-AP bzw. Navigations-AP gezielt in CC-Vorinvestition bzw. Erkundung lenken, statt sie ungenutzt verfallen zu lassen (siehe Punkt "Kein Leerlauf" unten).
+- `hint_build_priority` (Rang 11): Reine Strategie-Hinweisebene, kein Aktionslink zu einem einzelnen Gebäude — signalisiert nur, dass eine Wahl zwischen mehreren gleichwertig bereiten Gebäuden besteht.
+- `hint_end_sol` (Rang 15): Universeller Fallback, der verhindert, dass die Hint-Leiste je leer bleibt, solange noch ungenutzte AP/Ressourcen vorhanden wären, die der Spieler stattdessen einfach für „Sol beenden" nutzen sollte.
+- `canAffordBuildingPlacement()`-Gate auf Rang 12–14: Alle drei Bau-Hints (Cantina/Agrardom/Analytik) prüfen jetzt zusätzlich tatsächliche Bezahlbarkeit (Bau-AP, Regolith, Werkstoffe, Supply) bevor sie feuern — verhindert, dass der Hint auf ein Gebäude zeigt, das der Spieler in diesem Sol gar nicht bauen kann.
 
 > **Designentscheidung zu Rang 2 (Reparieren dringend):** Eigener Hint getrennt vom Lehr-Hint `hint_repair` (Rang 4). `hint_repair` wird beim ersten Reparieren-Klick dauerhaft dismissed (Lehrmoment „du kannst reparieren"). `hint_repair_urgent` warnt dagegen **wiederkehrend** vor dem einzigen irreversiblen Verlust (Leveldown bei SP 0): er ist nicht dismissbar (kein Eintrag in `dismissed_hints`), selbst-clearend sobald alle Gebäude wieder über `hint_repair_urgent_sp` liegen, und feuert bei jedem erneuten Verfall. Höchste Repair-Priorität, nur hinter `hint_1` (Baumeister liefert die Bau-AP). Schwelle 3/20 (≈15%) gibt selbst beim schnellsten Verfall (Cantina, 2 SP/Tick) noch >1 Sol Reaktionszeit.
 
@@ -2446,6 +2462,8 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 > **Designentscheidung zu Rang 4 (Reparieren — Lehr-Hint):** Alle drei Startgebäude starten auf `status_points=16/20` (80% — beschädigt aber funktionsfähig). Kein Tick-Gate; der Hint erscheint ab Sol 1. **Verschwindet beim ersten Reparieren-Klick** (dauerhaft dismissed): Reparieren ist ein Lehr-Hint — der Spieler soll lernen DASS er reparieren kann, nicht dass er alles sofort voll reparieren MUSS. Bewusst hinter dem Harvester-Hint (Rang 3): alle drei Gebäude voll zu reparieren kostet ~12 Bau-AP — mehr als ein Sol liefert (~10 mit Baumeister). Käme der Repair-Hint zuerst und bliebe kleben, säße der Spieler auf einem in Sol 1 nicht abschließbaren Hinweis fest. Das billige Harvester-Verlegen (~2 AP) geht voran. Der kritische Fall (Leveldown-Gefahr) wird vom separaten `hint_repair_urgent` (Rang 2) abgedeckt.
 
 > **Designentscheidung zu Rang 5 (Sol-Schwelle):** CC-Ausbau kostet `ap_for_levelup = 10` Construction-AP. Mit 6 Basis-AP + 4 Baumeister-Junior = 10 AP/Sol ist CC Lv2 frühestens nach Sol 1 erreichbar. Die Schwelle Sol 2 verhindert, dass der Hint sofort nach dem Baumeister-Hire erscheint bevor der Spieler auch nur einen AP ausgegeben hat.
+>
+> **Verifikation (2026-06-21) — Werte bestätigt, Werte verschoben:** `config('game.advisor.ap_per_rank')[1] = 4` bestätigt den Junior-Bonus von +4 AP. `ap_for_levelup=10` für CC bestätigt (per DB-Migration `2026_04_17_000003_calibrate_building_ap_costs.php`, nicht in `config/buildings.php` selbst — dort gibt es kein `ap_for_levelup`-Feld, das Feld lebt in der `buildings`-Tabelle). Die Sol-Schwelle selbst hat sich jedoch verschoben: `config('game.onboarding.hint_cc_upgrade_after_tick') = 1`, das entspricht weiterhin Sol 2 (Tick 1 = Sol 2) — hier kein Drift. **Drift gefunden bei anderen Schwellen:** `hint_no_knowledge_after_tick=8` → Sol 9, nicht Sol 8 wie in der alten Tabelle (§16.2) stand; `hint_trust_min_ticks=5` → Sol 6, nicht Sol 5; die alte Cantina-Schwelle "Sol 8" existiert in der neuen Implementierung gar nicht mehr — `hint_no_cantina_after_tick=5` → Sol 6. Alle drei Korrekturen sind in der Tabelle in § 16.2 oben eingearbeitet.
 
 **Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
 
@@ -2453,7 +2471,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
 
-> ⚠️ BALANCE CONCERN: Rang 4 (Kenntnis nach Sol 8) setzt voraus, dass CC Lv2 + Analytik-Labor bis dahin erreichbar sind. Nach Playtest evaluieren ob Sol 8 realistisch ist oder auf Sol 10–12 verschoben werden muss.
+> ⚠️ BALANCE CONCERN: `hint_4` (Kenntnis-Hint, jetzt Rang 9) feuert ab Sol 9 (`hint_no_knowledge_after_tick=8`). Setzt voraus, dass CC Lv2 + Analytik-Labor (80 Rg, 8 Supply) bis dahin erreichbar sind — mit dem `hint_analytik`-Pfad (ab Sol 9 ebenfalls) ist das knapp zeitgleich, nicht davor. Das bedeutet: Sol 9 ist der frühestmögliche Zeitpunkt, an dem der Spieler überhaupt erst zum Bau des Analytik-Labors angestoßen wird — `hint_4` (Kenntnis fehlt) und `hint_analytik` (Gebäude fehlt) können am selben Sol gleichzeitig aktiv werden, wobei `hint_4` (Rang 9) vor `hint_analytik` (Rang 14) gewinnt und der Spieler über `/techtree` zur fehlenden Kenntnis geleitet wird, ohne dass dort klar wird, dass zuerst das Gebäude fehlt. **Empfehlung:** `hint_no_knowledge_after_tick` auf einen Wert > `hint_no_analytik_after_tick` setzen (z.B. 10–11), damit das Analytik-Labor-Gebäude immer mindestens 1–2 Sol vor der Kenntnis-Warnung vorgeschlagen wird — sonst wird der Spieler zu einem Screen geschickt, auf dem er die empfohlene Aktion (Kenntnis erforschen) gar nicht ausführen kann, weil das Gebäude fehlt.
 
 ---
 
@@ -2468,13 +2486,15 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | Hint-Rang | Pulsierendes Element |
 |-----------|----------------------|
 | 1 (kein Baumeister) | Baumeister-Slot im Berater-Screen |
-| 2 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
-| 3 (CC Level < 2) | CC-Tile auf Koloniekarte |
-| 4 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
-| 5 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
-| 6 (keine Cantina) | Cantina-Kachel im Techtree |
+| 3 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
+| 5 (CC Level < 2) | CC-Tile auf Koloniekarte |
+| 9 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
+| 10 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
+| 12 (keine Cantina) | Cantina-Kachel im Techtree |
 
 **Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
+
+> ⚠️ BALANCE CONCERN / DOKU-DRIFT: Diese Tabelle deckt nur 6 der 15 implementierten Hint-Ränge ab (siehe § 16.2). Für die seit Phase 3g neuen Hints (`hint_repair`, `hint_repair_urgent`, `hint_advisor_slot2`, `hint_cc_invest`, `hint_explore`, `hint_build_priority`, `hint_agrardome`, `hint_analytik`, `hint_end_sol`) ist nicht spezifiziert, welches Element pulsieren soll bzw. ob sie überhaupt einen Pulse erhalten. Muss vor dem nächsten UI-Pass mit `ui-specialist` geklärt werden — insbesondere `hint_end_sol` (Rang 15) sollte vermutlich KEINEN Pulse auf eine Kachel legen, sondern (falls überhaupt visuell hervorgehoben) auf den „Sol beenden"-Button.
 
 **Abgrenzung zu bestehenden Indikatoren:** Der Tiefenscan-Pulse auf der Koloniekarte (bestehend, § 4a) ist ein anderer Indikator-Typ (orangefarbene Blitz-Animation). Onboarding-Pulse ist blau-weißlich — visuell eindeutig unterscheidbar.
 
@@ -2531,16 +2551,65 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 - Ergebnis: Neue Ring-2-Tiles leuchten auf Koloniekarte auf. Zweiter Berater-Slot erscheint.
 - Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion §4a)
 
-**Aktion 4 — Weitere Tiles erkunden / zweiten Berater einstellen**
+**Aktion 4 — Sol 1 Rest-AP: Erkunden + CC-Vorinvestition (`hint_explore`, `hint_cc_invest`)**
 
-- Warum: Ab hier verzweigen sich Strategien — Exploration, Forschung, Handel
-- An diesem Punkt hat der Spieler die Kernsysteme berührt: Berater, Tile-Management, CC-Ausbau
+- Warum: Nach Aktion 1–2 sind von 10 Construction-AP (6 Basis + 4 Baumeister-Junior) nur ~2 verbraucht (Harvester-Verlegung). `hint_cc_invest` (Rang 7) lenkt die verbleibenden ~8 Bau-AP in den CC-Ausbau (Ziel: 10 AP kumuliert für Lv2). Parallel liegen 6 Navigation-AP komplett ungenutzt — `hint_explore` (Rang 8) lenkt sie in die Tile-Erkundung (1 AP für Ring-2-Tiles, 2 AP für Ring-3).
+- Kosten: ~8 Bau-AP (CC-Vorinvestition) + bis zu 6 Nav-AP (Erkundung, ring-gestaffelt)
+- Ergebnis: CC-Levelup-Fortschritt 8/10 AP am Ende Sol 1 (Restbedarf 2 AP fließt in Sol 2 automatisch zuerst); mehrere neue Tiles aufgedeckt
+- **Wichtig:** Ohne diese beiden Hints lägen in Sol 1 ~8 Bau-AP und alle 6 Nav-AP brach — siehe Befund 1 unten.
+
+**Aktion 5 — CC auf Level 2 ausbauen (Colony-Screen, ab Sol 2, `hint_3`)**
+
+- Warum: CC Lv2 schaltet zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles
+- Kosten: 10 Construction-AP kumuliert (mit Vorinvestition aus Sol 1 bereits 8/10 — Sol 2 schließt mit 2 weiteren AP sofort ab)
+- Ergebnis: Neue Ring-2-Tiles leuchten auf Koloniekarte auf. Zweiter Berater-Slot erscheint, `hint_advisor_slot2` (Rang 6) feuert sofort.
+- Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion §4a)
+
+**Aktion 6 — Zweiten Berater einstellen (`hint_advisor_slot2`)**
+
+- Warum: Der zweite Slot ist nicht an einen festen Berater-Typ gebunden — Spieler kann frei wählen zwischen Analytiker (Forschung), Raumfahrer (Navigation), Konsul (Wirtschaft) oder Stratege.
+- An diesem Punkt hat der Spieler die Kernsysteme berührt: Berater, Tile-Management, CC-Ausbau, Erkundung.
+
+**Aktion 7 — Sol 6–9: Cantina / Agrardom / Analytik-Labor** (`hint_6`, `hint_agrardome`, `hint_analytik`, ggf. `hint_build_priority`)
+
+- Warum: Ab Sol 6 (Cantina), Sol 7 (Agrardom) und Sol 9 (Analytik) werden gestaffelt drei Zivilgebäude vorgeschlagen, je nach Voraussetzung und Bezahlbarkeit. Wenn zwei oder drei gleichzeitig bereit sind, weist `hint_build_priority` (Rang 11) auf die Wahl hin, ohne ein bestimmtes Gebäude vorzuschreiben.
+- Das ist der erste Punkt im natürlichen Pfad, an dem echte Build-Order-Varianz vom Hint-System unterstützt wird (siehe Befund 2 unten) — vorher (Aktion 1–6) ist die Reihenfolge praktisch linear vorgegeben.
 
 **Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
 
 > ⚠️ BALANCE CONCERN: Baumeister-Kosten (300 Cr, Junior) müssen nach Playtest geprüft werden — 300 Cr von 3.000 Startguthaben ist 10%, sollte kein Problem sein. Einstellungskosten in `config/advisors.php` konfigurierbar.
 
 > ⚠️ BALANCE CONCERN: Repair-Mechanik fehlt noch. Gebäude bei 80% sind 5–10 Sole lang funktionsfähig; sobald Verfall sie unter ~30% bringt, wirken sich Statusmalus-Effekte aus. Die Schwelle für "kritisch beschädigt" (aktuell: `80%`-Trigger in OnboardingTriggersService) soll nach erstem Playtest kalibriert werden.
+>
+> **Korrektur (2026-06-21):** Repair-Mechanik ist inzwischen implementiert (`hint_repair`, `hint_repair_urgent`, Reparieren-Button kostet 1 Bau-AP/Klick, `hint_repair_urgent_sp=3` von 20). Dieser Concern ist erledigt — verbleibt nur als Hinweis, dass die Schwelle `3/20` nach Playtest noch validiert werden sollte (siehe Designentscheidung zu Rang 2 in § 16.2).
+
+---
+
+#### Befund 1 — Leerlauf in den frühen Sols (AP- und Ressourcen-Sümpfe)
+
+> ⚠️ BALANCE CONCERN (Analyse 2026-06-21): Auch mit `hint_cc_invest` und `hint_explore` bleiben mehrere AP-Pools in frühen Sols strukturell ungenutzt, weil dafür **kein Hint existiert**:
+>
+> - **Economy-AP (Konsul) und Strategy-AP (Stratege):** Es gibt bis heute keinen einzigen Hint, der auf eine Verwendung dieser beiden AP-Pools hinweist. Die Basis-6-AP/Sol verfallen ungenutzt, solange kein Konsul/Stratege eingestellt ist UND solange keiner der beiden eingestellt wird, weil kein Hint dazu motiviert (`hint_1` deckt nur den Baumeister ab; `hint_advisor_slot2` ist berater-typ-agnostisch und damit zwar eine Wahlmöglichkeit, aber keine Aufforderung speziell für Economy/Strategy). Solange Cantina (Handelsangebote) nicht gebaut ist, ist Economy-AP ohnehin praktisch wirkungslos — das ist ein struktureller Sumpf von Sol 1 bis frühestens Sol 6.
+> - **Strategy-AP** hat im aktuellen Frühspiel **gar keine Verwendung** (keine Begegnungen/Eskorte-Befehle vor Hangar/Korvette, Phase 3). Der Pool läuft potenziell viele Sole leer, ohne dass das im GDD irgendwo benannt wird. Das ist kein Hint-Problem, sondern ein strukturelles Pacing-Problem: Strategy-AP sollte entweder früher nutzbar sein (z.B. für Erkundungs-Risikobewertung) oder es sollte explizit dokumentiert sein, dass dieser Pool bewusst erst ab Phase 3 (Hangar/Korvette) relevant wird, damit niemand fälschlich einen fehlenden Hint als Bug einstuft.
+> - **Regolith-Überschuss:** Harvester Lv1 produziert kontinuierlich Regolith; mit Depot (Lager-Cap) noch nicht gebaut und Bauprojekten, die Bau-AP-limitiert sind (nicht Regolith-limitiert), kann sich Regolith schon vor Sol 5 anhäufen, ohne dass ein Hint auf den Depot-Bau hinweist (Depot ist building_id=30, kein eigener Onboarding-Hint vorhanden). Wenn der Lager-Cap erreicht wird, verfällt überschüssiger Regolith stillschweigend (Decay/Cap-Mechanik) — ein Sub-Sink, der dem Spieler nie erklärt wird.
+> - **Credits:** Nach Aktion 1 (Baumeister, 300 Cr) bleiben ~2.700 Cr liegen. Vor `hint_advisor_slot2` (frühestens Sol 2/3) gibt es keine weitere Credits-Senke außer ggf. weiteren Berater-Anwerbungen — das ist beabsichtigt (Credits sind die "freie" Ressource, kein Hint nötig), aber sollte explizit als Designentscheidung benannt werden statt implizit zu bleiben.
+>
+> **Empfehlung an `game-developer`/`backend-coder`:** Einen Depot-Hint (analog zu `hint_agrardome`/`hint_analytik`) ergänzen, der feuert wenn Regolith-Bestand nahe am ungebauten/niedrigen Lager-Cap liegt. Für Economy-/Strategy-AP-Leerlauf mindestens eine GDD-Notiz ergänzen, die das Pacing bewusst macht (siehe oben) — kein Hint-Zwang, aber Transparenz, dass dieser Leerlauf gewollt ist und nicht ein vergessener Hint.
+
+#### Befund 2 — Erzwungene Berater-Reihenfolge widerspricht Roguelike-Varianz-Anspruch
+
+> ⚠️ BALANCE CONCERN (Analyse 2026-06-21): Rang 1 (`hint_1`, kein Baumeister) hat **keine Tick-Schwelle und keine Alternative** — er ist der einzige Hint, der einen bestimmten Berater-Typ (Engineer) namentlich verlangt, und er steht permanent an der höchsten Priorität, bis ein Baumeister eingestellt wird. In Kombination mit `hint_cc_invest`/`hint_explore` (die beide implizit voraussetzen, dass bereits ein Baumeister aktiv ist, weil sonst kaum Bau-AP für CC-Vorinvestition übrig bleibt) wird **"Baumeister zuerst" faktisch zur einzigen vom Hint-System unterstützten Eröffnung**. Ein Spieler, der z.B. zuerst einen Konsul (Handel) oder Analytiker (Forschung) einstellen möchte, bekommt:
+> - Weiterhin `hint_1` als höchstrangigen, nicht wegklickbaren-bis-erledigt Hinweis (dismissable nur pro Hint-Typ, aber er kommt zurück solange kein Baumeister da ist und wird sofort wieder zum dringendsten Hint, wenn andere abgearbeitet sind)
+> - Kein gleichwertiges Pendant `hint_no_scientist`/`hint_no_trader` o.ä. auf Rang 1 — die anderen vier Berater-Typen haben überhaupt keinen "fehlt noch"-Hint
+> - Das Gefühl, "falsch" zu spielen, weil die Hint-Leiste beharrlich auf den Baumeister verweist, auch wenn der gewählte Build (z.B. früher Handel über Cantina) strukturell ebenso valide ist
+>
+> Das widerspricht dem in § 16.7 festgehaltenen Prinzip "Kein Pflicht-Reihenfolge" — de facto entsteht durch die Hint-Priorisierung trotzdem eine nahegelegte Standardreihenfolge (Baumeister → Harvester verlegen → CC-Vorinvestition/Erkunden → CC Lv2 → 2. Berater → Cantina/Agrardom/Analytik), die zwar nicht erzwungen, aber stark begünstigt ist, weil sie als einzige durchgängig durch Hints unterstützt wird.
+>
+> **Empfehlung an `game-developer`/`backend-coder`:**
+> 1. `hint_1` so erweitern (oder durch einen generischeren Rang-1-Hint ersetzen), dass er nicht zwingend "Baumeister" verlangt, sondern allgemein "kein Berater aktiv" prüft — mit dynamischem Text je nachdem, was die aktuelle Ressourcenlage am dringendsten macht (z.B. wenn Regolith bereits am Cap klebt, könnte auch ein Hinweis auf den Konsul sinnvoll sein, weil Handel den Überschuss abbaut).
+> 2. Alternativ: `hint_1` bleibt Baumeister-spezifisch (weil Bau-AP strukturell die meisten Früh-Aktionen freischaltet — Gebäude bauen, CC ausbauen), aber das sollte explizit als bewusste Designentscheidung im GDD stehen ("Baumeister ist die einzige strukturell notwendige erste Anstellung, weil ohne Bau-AP nichts anderes vorankommt") statt als unkommentierte Tatsache, die wie ein impliziter Zwang wirkt.
+> 3. `hint_cc_invest`/`hint_explore` sollten nicht voraussetzen, dass der Engineer-Pfad gegangen wurde — sie greifen schon jetzt unabhängig vom Beratertyp (sie prüfen nur verbleibende Bau-AP bzw. Nav-AP), das ist bereits gut. Die eigentliche Varianzlücke ist Rang 1, nicht Rang 7/8.
+> 4. Sobald Cantina/Agrardom/Analytik (Rang 12–14, ab Sol 6–9) erreicht sind, unterstützt das System bereits echte Wahlfreiheit (`hint_build_priority`). Diese Phase könnte als Vorbild dienen: Ränge 1–8 (Sol 1–2) könnten ähnlich zu einer Wahl zwischen 2–3 gleichwertigen Eröffnungs-Hints umgebaut werden, statt einer strikt linearen Kette.
 
 ---
 
