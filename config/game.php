@@ -300,9 +300,6 @@ return [
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,
 
-        // Ticks elapsed without any engineer assigned before Rank-2 hint fires
-        'hint_no_engineer_ticks' => 3,
-
         // Ticks elapsed without any knowledge researched before Rank-4 hint fires
         'hint_no_knowledge_after_tick' => 8,
 
