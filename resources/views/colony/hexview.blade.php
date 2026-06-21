@@ -109,6 +109,22 @@
                             <span class="hex-legend__swatch hex-legend__swatch--regolith"></span>
                             <span>{{ __("colony.legend_regolith") }}</span>
                         </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--cc"></span>
+                            <span>{{ __("colony.legend_cc") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--hazard"></span>
+                            <span>{{ __("colony.legend_hazard") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--impassable"></span>
+                            <span>{{ __("colony.legend_impassable") }}</span>
+                        </li>
+                        <li class="hex-legend__item">
+                            <span class="hex-legend__swatch hex-legend__swatch--event"></span>
+                            <span>{{ __("colony.legend_event") }}</span>
+                        </li>
                     </ul>
                 </details>
             </div>
@@ -236,7 +252,8 @@
 
                 {{-- Only labels build/harvester modes. In normal tile mode the tabs
                  (building) or the terrain <h3> name the content themselves. --}}
-                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode" x-cloak>
+                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode"
+                    x-cloak>
                     <h3
                         x-text="harvesterMoveMode ? '{{ __("colony.harvester_move") }}' : '{{ __("colony.build_mode_title") }}'">
                     </h3>
@@ -298,7 +315,19 @@
                                         @click="selectPendingBuilding(b)">
                                         <div class="building-list-row">
                                             <span class="building-list-name" x-text="b.label"></span>
-                                            <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
+                                            <span class="building-list-row-right">
+                                                <span class="building-list-info" x-data="{ open: false }"
+                                                    @mouseenter="open=true" @mouseleave="open=false"
+                                                    @click.stop="open=!open" @click.outside="open=false"
+                                                    aria-label="{{ __("colony.building_info_label") }}">
+                                                    i
+                                                    <div class="res-popup res-popup--wide" x-show="open" x-cloak>
+                                                        <div class="res-popup-header" x-text="b.label"></div>
+                                                        <div class="res-popup-body" x-text="b.description"></div>
+                                                    </div>
+                                                </span>
+                                                <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
+                                            </span>
                                         </div>
                                         <div class="building-list-row building-list-row--costs">
                                             <span class="building-list-supply" x-show="b.supply_cost > 0"

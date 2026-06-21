@@ -245,6 +245,7 @@ class ColonyController extends BaseController
                 'building_id' => $b->id,
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
+                'description' => __('buildings.'.preg_replace('/^building_/', '', $b->name).'_desc'),
                 'ap_for_levelup' => $b->ap_for_levelup,
                 'max_level' => $b->max_level,
                 'max_status_points' => $b->max_status_points,
