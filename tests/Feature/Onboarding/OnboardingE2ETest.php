@@ -98,12 +98,19 @@ class OnboardingE2ETest extends TestCase
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
         // ── 5. Move Harvester outside colony zone → rank-3 resolved; rank-4 (repair damaged buildings) surfaces ──
-        // Tile (3,0) is seeded as regolith_normal, is_colony_zone=0 by setupNewPlayer (ring-3 pre-explored).
+        // setupNewPlayer guarantees exactly one pre-explored ring-3 regolith tile
+        // (Nexus Scout target) at a randomized coordinate — look it up instead of
+        // assuming a fixed (3,0).
         // setupNewPlayer seeds all three buildings damaged (16/20), so the teaching repair hint is next.
+        $harvesterTarget = DB::table('colony_tiles')
+            ->where('colony_id', $colony->id)
+            ->where('is_explored', 1)
+            ->where('tile_type', 'like', 'regolith_%')
+            ->first();
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', 27)
-            ->update(['tile_x' => 3, 'tile_y' => 0]);
+            ->update(['tile_x' => $harvesterTarget->q, 'tile_y' => $harvesterTarget->r]);
 
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
         $this->assertNotNull($hint, 'Repair hint should appear once the Harvester is relocated (buildings start damaged)');

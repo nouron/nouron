@@ -10,6 +10,15 @@ use Illuminate\Support\Facades\DB;
 
 class ColonyTileService
 {
+    /**
+     * Ring-3 "frontier" coordinates seeded at Sol 1 — a deliberate half-subset
+     * of the full hex ring (9 of 18), kept fixed across resets; only the
+     * tile_type/explored state on these coordinates is randomized.
+     */
+    private const RING3_FRONTIER_COORDS = [
+        [3, 0], [3, -1], [3, -2], [2, 1], [1, 2], [0, 3], [-1, 3], [-3, 0], [0, -3],
+    ];
+
     public function __construct(
         private readonly PersonellService $personellService,
     ) {}
@@ -254,6 +263,27 @@ class ColonyTileService
     {
         $hash = abs($q * 7 + $r * 13 + $colonyId * 3) % 100;
 
+        return $this->resolveTileType($ring, $hash);
+    }
+
+    /**
+     * Picks a tile_type from the ring-weighted distribution using an actual
+     * random roll (not the deterministic colonyId hash) — used to randomize
+     * the Sol-1 starting environment so every run/reset gets a different
+     * layout (roguelike). See OnboardingService::seedStartingTiles().
+     */
+    public function randomTileType(int $ring): string
+    {
+        return $this->resolveTileType($ring, random_int(0, 99));
+    }
+
+    /**
+     * Shared weight table for ring-based tile_type selection. $roll must be
+     * in [0, 99] — callers decide whether it's a deterministic hash
+     * (pickTileType) or a true random roll (randomTileType).
+     */
+    private function resolveTileType(int $ring, int $roll): string
+    {
         // Ring 1: settled core — all buildable, no hazards (hazard mechanic not yet implemented)
         if ($ring <= 1) {
             return 'terrain_empty';
@@ -261,10 +291,10 @@ class ColonyTileService
 
         // Ring 2: colony expansion zone — no regolith, rare hazards and blockers
         if ($ring === 2) {
-            if ($hash < 3) {
+            if ($roll < 3) {
                 return 'terrain_impassable';
             }
-            if ($hash < 10) {
+            if ($roll < 10) {
                 return 'terrain_hazard';
             }
 
@@ -272,23 +302,66 @@ class ColonyTileService
         }
 
         // Ring 3+: full mix including resource tiles
-        if ($hash < 5) {
+        if ($roll < 5) {
             return 'terrain_impassable';
         }
-        if ($hash < 15) {
+        if ($roll < 15) {
             return 'terrain_hazard';
         }
-        if ($hash < 35) {
+        if ($roll < 35) {
             return 'regolith_poor';
         }
-        if ($hash < 55) {
+        if ($roll < 55) {
             return 'regolith_normal';
         }
-        if ($hash < 65) {
+        if ($roll < 65) {
             return 'regolith_rich';
         }
 
         return 'terrain_empty';
+    }
+
+    /**
+     * Builds randomized Ring-2 (12 tiles) + Ring-3 (9 "frontier" tiles) rows
+     * for Sol-1 seeding (no DB write, no colony_id). Ring 0+1 stay fixed in
+     * the caller — building placement safety + "no hazards in the core" rule.
+     *
+     * Guarantees exactly one is_explored regolith_* tile among the Ring-3
+     * rows (the Nexus-Scout pre-explored Harvester relocation target) at a
+     * randomly chosen coordinate — onboarding's hint_2 and the Harvester
+     * move-mode UI depend on this tile existing, not on its location.
+     *
+     * @return list<array{q:int,r:int,ring:int,tile_type:string,is_colony_zone:int,is_explored:int}>
+     */
+    public function randomizeOuterRingRows(): array
+    {
+        $rows = [];
+
+        foreach ($this->ringCoords(2) as [$q, $r]) {
+            $rows[] = [
+                'q' => $q, 'r' => $r, 'ring' => 2,
+                'tile_type' => $this->randomTileType(2),
+                'is_colony_zone' => 0, 'is_explored' => 0,
+            ];
+        }
+
+        $ring3Rows = [];
+        foreach (self::RING3_FRONTIER_COORDS as [$q, $r]) {
+            $ring3Rows[] = ['q' => $q, 'r' => $r, 'ring' => 3, 'tile_type' => $this->randomTileType(3)];
+        }
+
+        $targetIndex = array_rand($ring3Rows);
+        if (! str_starts_with($ring3Rows[$targetIndex]['tile_type'], 'regolith_')) {
+            $ring3Rows[$targetIndex]['tile_type'] = 'regolith_normal';
+        }
+
+        foreach ($ring3Rows as $i => $row) {
+            $row['is_colony_zone'] = 0;
+            $row['is_explored'] = ($i === $targetIndex) ? 1 : 0;
+            $rows[] = $row;
+        }
+
+        return $rows;
     }
 
     private function ringCoords(int $ring): array
