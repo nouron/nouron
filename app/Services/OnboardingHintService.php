@@ -139,41 +139,62 @@ class OnboardingHintService
             ],
             [
                 'rank' => 6,
+                'key' => 'hint_advisor_slot2',
+                'active' => $this->checkHintAdvisorSlot2($colonyId),
+                'text_key' => 'colony.onboarding_hint_advisor_slot2',
+                'target_url' => '/advisors',
+            ],
+            [
+                'rank' => 7,
                 'key' => 'hint_cc_invest',
                 'active' => $this->checkHintCcInvest($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_cc_invest',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 7,
+                'rank' => 8,
                 'key' => 'hint_explore',
                 'active' => $this->checkHintExplore($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_explore',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 8,
+                'rank' => 9,
                 'key' => 'hint_4',
                 'active' => $this->checkHint4($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_4',
                 'target_url' => '/techtree',
             ],
             [
-                'rank' => 9,
+                'rank' => 10,
                 'key' => 'hint_5',
                 'active' => $this->checkHint5($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_5',
                 'target_url' => '/colony/view',
             ],
             [
-                'rank' => 10,
+                'rank' => 11,
                 'key' => 'hint_6',
                 'active' => $this->checkHint6($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_6',
                 'target_url' => '/colony/view?build=52',
             ],
             [
-                'rank' => 11,
+                'rank' => 12,
+                'key' => 'hint_agrardome',
+                'active' => $this->checkHintAgrardome($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_agrardome',
+                'target_url' => '/colony/view?build=41',
+            ],
+            [
+                'rank' => 13,
+                'key' => 'hint_analytik',
+                'active' => $this->checkHintAnalytik($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_analytik',
+                'target_url' => '/colony/view?build=31',
+            ],
+            [
+                'rank' => 14,
                 'key' => 'hint_end_sol',
                 'active' => $this->checkHintEndSol($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_end_sol',
@@ -238,7 +259,7 @@ class OnboardingHintService
     }
 
     /**
-     * Bridge hint (rank 9, lowest): in Sol 1 the player has done all completable
+     * Bridge hint (rank 14, lowest): in Sol 1 the player has done all completable
      * Sol-1 actions but every forward hint (hint_3..6) is still tick-gated, so the
      * hint bar would be empty and a new player does not know that "Sol beenden" is
      * the next step (it refreshes AP and advances the run).
@@ -311,7 +332,26 @@ class OnboardingHintService
     }
 
     /**
-     * CC pre-invest hint (rank 6, Sol 1 only): once the Sol-1 to-dos are done
+     * Advisor-slot-2 discovery hint: CC upgrade to level 2 unlocks a second
+     * advisor slot, but nothing else tells the player that — without this
+     * hint, the hint bar goes silent for several Sols right after CC2 (the
+     * next gated hints don't fire until Sol 3-5). No tick-gate: it's a direct
+     * consequence of an action the player just took, so it should surface
+     * immediately. Self-clearing via the underlying slot math — no dismiss
+     * persistence needed (re-fires if the player fires the 2nd advisor again).
+     */
+    private function checkHintAdvisorSlot2(int $colonyId): bool
+    {
+        $slots = $this->personellService->getAdvisorSlotInfo($colonyId);
+
+        // CC>=2 explicitly, not just "free>0": a fresh colony at CC1 with zero
+        // advisors hired also has a free slot (slot 1) — that case is hint_1's
+        // job, not this one. This hint is only about the *second* slot CC2 grants.
+        return $slots['cc_level'] >= 2 && $slots['free'] > 0;
+    }
+
+    /**
+     * CC pre-invest hint (rank 7, Sol 1 only): once the Sol-1 to-dos are done
      * (engineer hired, Harvester relocated, no urgent repair) and the CC is still
      * below level 2, nudge the player to sink the *remaining* Bau-AP into the CC
      * upgrade. CC level-up needs 10 Bau-AP accumulated via `ap_spend` across Sols;
@@ -319,8 +359,8 @@ class OnboardingHintService
      * completes in Sol 2 instead of "just barely" or slipping to Sol 3.
      *
      * Gated on "still has available construction AP this Sol" — self-clears the
-     * moment the Bau-AP pool is spent, handing over to the explore hint (rank 7)
-     * and ultimately the "Sol beenden" bridge (rank 11). Never persisted to
+     * moment the Bau-AP pool is spent, handing over to the explore hint (rank 8)
+     * and ultimately the "Sol beenden" bridge (rank 14). Never persisted to
      * dismissed_hints. Sol 2+ is covered by the tick-gated hint_3.
      */
     private function checkHintCcInvest(int $colonyId, int $currentTick): bool
@@ -350,7 +390,7 @@ class OnboardingHintService
     }
 
     /**
-     * Explore hint (rank 7, Sol 1 only): the base Navigation AP (6/Sol) sits idle
+     * Explore hint (rank 8, Sol 1 only): the base Navigation AP (6/Sol) sits idle
      * early because nothing guides the player to scout. While unexplored tiles
      * remain and Navigation AP is available, nudge exploration — it lifts fog,
      * reveals regolith for the Harvester relocation and surrounding hazards.
@@ -472,6 +512,64 @@ class OnboardingHintService
             ->value('level');
 
         return $barLevel === 0;
+    }
+
+    /**
+     * Hint Agrardom: bioFacility (building_id=41) not yet built, but prerequisite
+     * is met: Harvester (building_id=27) >= level 1. Fires after Sol threshold.
+     */
+    private function checkHintAgrardome(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 6);
+
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $harvesterLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 27)
+            ->value('level');
+
+        if ($harvesterLevel < 1) {
+            return false;
+        }
+
+        $bioFacilityLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 41)
+            ->value('level');
+
+        return $bioFacilityLevel === 0;
+    }
+
+    /**
+     * Hint Analytik-Labor: sciencelab (building_id=31) not yet built, but
+     * prerequisite is met: CC (building_id=25) >= level 2. Fires after Sol threshold.
+     */
+    private function checkHintAnalytik(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 8);
+
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+
+        if ($ccLevel < 2) {
+            return false;
+        }
+
+        $sciencelabLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 31)
+            ->value('level');
+
+        return $sciencelabLevel === 0;
     }
 
     /**
