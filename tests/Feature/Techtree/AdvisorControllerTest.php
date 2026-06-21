@@ -309,7 +309,29 @@ class AdvisorControllerTest extends TestCase
 
         $response->assertOk()
             ->assertJson(['ok' => true])
-            ->assertJsonStructure(['ok', 'slots', 'slotInfo']);
+            ->assertJsonStructure(['ok', 'slots', 'slotInfo', 'credits']);
+    }
+
+    public function test_hire_json_returns_deducted_credits_for_resourcebar_sync(): void
+    {
+        // Regression: the resourcebar Credits chip only updates reactively via
+        // this field (advisors.js patches the DOM with it) — without it the
+        // player sees a stale balance until a full page reload.
+        // phpunit.xml sets GAME_BYPASS_RESOURCES=true for the suite — override
+        // it here so the credits deduction this test exercises actually runs.
+        config(['game.bypass.resource_costs' => false]);
+        $this->clearBartAdvisors();
+        $this->ensureCredits($this->userIdBart, 10000);
+        $hireCost = (int) (collect(config('advisors'))->firstWhere('id', $this->personellEngineer)['credits'] ?? 0);
+
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)
+            ->withSession($this->bartSession())
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
+
+        $response->assertOk()->assertJson(['ok' => true, 'credits' => 10000 - $hireCost]);
     }
 
     public function test_hire_json_returns_422_on_duplicate(): void

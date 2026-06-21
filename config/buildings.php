@@ -92,7 +92,13 @@ return [
 
     'sciencelab' => [
         'id' => 31,
-        'build_cost' => [3 => 60, 4 => 20],   // late: Regolith + Werkstoffe (accent)
+        // Regolith only — no Compounds (circular dep risk, same reasoning as
+        // uplinkStation below): CC Lv2 unlocks both this building AND the 2nd
+        // advisor slot (always the Analytiker, see AdvisorController::SLOT_ORDER),
+        // but Werkstoffe aren't reachable that early (Uplink-Station Lv1 +
+        // Cantina/merchant, both later). The previous [Rg+Wk] cost made the
+        // Analytiker structurally useless for several Sols right after hiring.
+        'build_cost' => [3 => 80],
         'supply_cost' => 8,
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,    // 21 days

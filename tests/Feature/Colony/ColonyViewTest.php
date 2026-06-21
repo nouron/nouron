@@ -65,6 +65,28 @@ class ColonyViewTest extends TestCase
         $response->assertSee('ap-cost-chip', false);
     }
 
+    public function test_hexview_passes_resource_amounts_for_build_chip_affordability(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        $response->assertSee('regolith:', false);
+        $response->assertSee('werkstoffe:', false);
+        $response->assertSee('freeSupply:', false);
+    }
+
+    public function test_hexview_renders_hint_completion_animation_markup(): void
+    {
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+        $response->assertSee('hint-bar-stack', false);
+        $response->assertSee('x-show="completedHint"', false);
+        $response->assertSee('x-ref="hintBar"', false);
+    }
+
     public function test_pending_run_redirects_to_lobby(): void
     {
         // A pending run is active but not yet started (started_at = null).

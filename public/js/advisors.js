@@ -58,9 +58,19 @@ function advisorCarousel(config) {
                 this.slots = res.slots;
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
+                this.syncCreditsChip(res.credits);
             } else {
                 this.errorMsg = res.error ?? 'Fehler beim Einstellen.';
             }
+        },
+
+        // ponytail: resourcebar is server-rendered, not reactive — direct DOM
+        // patch mirrors colony-hexgrid.js's syncResbarAp() pattern. Upgrade to
+        // a shared Alpine store if more screens need cross-component resource sync.
+        syncCreditsChip(credits) {
+            if (credits === undefined) return;
+            const el = document.querySelector('.res-Cr .res-amount');
+            if (el) el.textContent = credits.toLocaleString('de-DE');
         },
 
         async doFire() {

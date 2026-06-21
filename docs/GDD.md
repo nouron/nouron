@@ -329,11 +329,11 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 
 **1. Errichten (Tile leer → Level 1, Einmal-Abzug):**
 - **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom/Lagerhalle/Cantina), spät 60–100 (Analytik-Labor/Hangar/Handelsposten…).
-- **Werkstoffe** nur für späte/High-Tech-Gebäude, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung).
+- **Werkstoffe** nur für späte/High-Tech-Gebäude, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung). Analytik-Labor (CC Lv2, deutlich vor Uplink-Station/Cantina erreichbar) ist aus demselben Grund werkstofffrei — sonst wäre der direkt mit CC Lv2 freigeschaltete Analytiker-Slot für mehrere Sole unbenutzbar.
 - **Supply-Gate:** Bau nur möglich, wenn freie Supply-Cap ≥ `supply_cost` des Gebäudes (§6). Kein Abzug — reine Belegungsprüfung.
 
 **2. Level-Up (jedes Level, flach — keine Eskalation):**
-- **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Analytik-Labor 15/Lvl, Hangar 20/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
+- **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Analytik-Labor 20/Lvl, Hangar 20/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
 - **CC-Upgrade (Sonderfall):** skaliert mit `Ziel-Level × 30` Regolith (Lv2 = 60 … Lv5 = 150) — das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben.
 - Harvester: Level-Up regolithfrei (Bootstrap-Schutz).
 

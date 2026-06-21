@@ -93,14 +93,20 @@ function colonyHexView(config) {
         i18n: config.i18n ?? {},
         apNav: config.apNav ?? 0,
         apConstruction: config.apConstruction ?? 0,
+        regolith: config.regolith ?? 0,
+        werkstoffe: config.werkstoffe ?? 0,
+        freeSupply: config.freeSupply ?? 0,
         trust: config.trust ?? 0,
         currentSol: config.currentSol ?? 0,
         solLimit: config.solLimit ?? 100,
         activeHint: config.activeHint ?? null,
+        completedHint: null,
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
         uplinkBuildingId: config.uplinkBuildingId ?? 54,
         compoundImportPrice: config.compoundImportPrice ?? 90,
+        exploreCostPerRing: config.exploreCostPerRing ?? { 1: 1, 2: 2, 3: 3 },
+        exploreCostDefault: config.exploreCostDefault ?? 1,
         nexusImportAmount: 10,
         selectedTile: null,
         buildMode: false,
@@ -144,6 +150,7 @@ function colonyHexView(config) {
             this._tilePositions.clear();
             initHexGrid(this._gridEl ?? this.$refs.hexgrid, this.tiles, {
                 onSelect: (tile) => this.onTileClick(tile),
+                onHarvesterMoveConfirm: (tile) => this.doMoveHarvester(tile),
                 polygonMap: this._svgPolygons,
                 positionMap: this._tilePositions,
                 buildings: this.buildings,
@@ -159,12 +166,13 @@ function colonyHexView(config) {
         // ── Tile selection ────────────────────────────────────────────────────
 
         onTileClick(tile) {
-            // Harvester move mode: clicking a valid target triggers the move.
-            // Clicking anything else gives feedback instead of failing silently.
+            // Harvester move mode: a click/tap only selects (the preview arrow is
+            // already shown by the tile's pointerdown/mouseenter listeners in
+            // initHexGrid) — the actual move requires pressing and holding the
+            // target (same gesture on desktop and mobile). Invalid targets still
+            // get feedback so clicking around isn't a silent dead end.
             if (this.harvesterMoveMode) {
-                if (this.isHarvesterTarget(tile)) {
-                    this.doMoveHarvester(tile);
-                } else {
+                if (!this.isHarvesterTarget(tile)) {
                     this.showToast(this.i18n.harvesterMoveInvalidTarget, 'info');
                 }
                 return;
@@ -464,6 +472,11 @@ function colonyHexView(config) {
             setTimeout(() => dot.remove(), 450);
         },
 
+        // Ring-staggered explore cost (matches ColonyTileService::exploreTile()).
+        exploreCostFor(tile) {
+            return this.exploreCostPerRing[tile?.ring] ?? this.exploreCostDefault;
+        },
+
         hexDistance(q1, r1, q2, r2) {
             const dq = q1 - q2,
                 dr = r1 - r2;
@@ -483,6 +496,31 @@ function colonyHexView(config) {
                 this.apConstruction = res.apConstruction;
                 this.syncResbarAp('resbar-ap-build', res.apConstruction);
             }
+            if (res.regolith !== undefined) {
+                this.regolith = res.regolith;
+                this.syncResbarAmount('.res-Rg', res.regolith);
+            }
+            if (res.werkstoffe !== undefined) {
+                this.werkstoffe = res.werkstoffe;
+                this.syncResbarAmount('.res-Co', res.werkstoffe);
+            }
+            if (res.freeSupply !== undefined) this.freeSupply = res.freeSupply;
+        },
+
+        syncResbarAmount(selector, value) {
+            const el = document.querySelector(`${selector} .res-amount`);
+            if (el) el.textContent = value.toLocaleString('de-DE');
+        },
+
+        // Build chip affordability: placing always costs exactly 1 Bau-AP
+        // (see ColonyController::placeBuilding) — full resource/supply cost is
+        // paid on placement too, so all three gates must clear up front.
+        canAffordBuilding(b) {
+            if (this.apConstruction < 1) return false;
+            if ((b.build_cost?.[3] ?? 0) > this.regolith) return false;
+            if ((b.build_cost?.[4] ?? 0) > this.werkstoffe) return false;
+            if ((b.supply_cost ?? 0) > this.freeSupply) return false;
+            return true;
         },
 
         // The AP chips live in the resource bar (layout header), outside this
@@ -505,7 +543,33 @@ function colonyHexView(config) {
         },
 
         updateHint(res) {
-            if ('activeHint' in res) this.activeHint = res.activeHint;
+            if ('activeHint' in res) this.setActiveHint(res.activeHint);
+        },
+
+        // Swaps in a new hint with a brief "done" confirmation for the old one —
+        // skipped when the key is unchanged (e.g. just a text refresh).
+        setActiveHint(newHint) {
+            const newKey = newHint?.key ?? null;
+            const oldHint = this.activeHint;
+            if (newKey === (oldHint?.key ?? null)) {
+                this.activeHint = newHint;
+                return;
+            }
+            if (oldHint) {
+                this.completedHint = oldHint;
+                clearTimeout(this._hintCompleteTimer);
+                this._hintCompleteTimer = setTimeout(() => {
+                    this.completedHint = null;
+                }, 1000);
+            }
+            this.activeHint = newHint;
+            this.$nextTick(() => {
+                const bar = this.$refs.hintBar;
+                if (!bar) return;
+                bar.classList.remove('hint-bar--enter');
+                void bar.offsetWidth;
+                bar.classList.add('hint-bar--enter');
+            });
         },
 
         // ── Merchant ──────────────────────────────────────────────────────────
@@ -518,7 +582,7 @@ function colonyHexView(config) {
             if (!this.activeHint) return;
             const res = await this.post(this.routes.dismissHint, { hint_key: this.activeHint.key });
             if (res.ok) {
-                this.activeHint = res.hint ?? null;
+                this.setActiveHint(res.hint ?? null);
                 this.$nextTick(() => this.redrawGrid());
             }
         },
@@ -645,41 +709,142 @@ function isHarvesterTargetTile(tile, buildingsByTile) {
     return tile.is_explored && tile.tile_type.startsWith('regolith_') && !buildingsByTile?.has(`${tile.q},${tile.r}`);
 }
 
-function drawHarvesterArrow(group, x1, y1, x2, y2) {
+// Rounds fractional cube coordinates to the nearest valid hex (Red Blob Games
+// "cube_round") — needed because linear interpolation between two hex centers
+// rarely lands exactly on a third hex's center.
+function cubeRound(x, y, z) {
+    let rx = Math.round(x),
+        ry = Math.round(y),
+        rz = Math.round(z);
+    const dx = Math.abs(rx - x),
+        dy = Math.abs(ry - y),
+        dz = Math.abs(rz - z);
+    if (dx > dy && dx > dz) rx = -ry - rz;
+    else if (dy > dz) ry = -rx - rz;
+    else rz = -rx - ry;
+    return [rx, rz]; // axial [q, r] (cube x=q, z=r)
+}
+
+// Hex-grid line draw (Red Blob Games): the sequence of hex tiles a straight
+// line from (q1,r1) to (q2,r2) actually passes through — used so the
+// Harvester-move preview arrow visually follows hex centers instead of
+// floating over them in a straight pixel line.
+function hexLinePath(q1, r1, q2, r2) {
+    const dq = q2 - q1,
+        dr = r2 - r1;
+    const n = Math.max(Math.abs(dq), Math.abs(dr), Math.abs(dq + dr));
+    if (n === 0) return [[q1, r1]];
+
+    const x1 = q1,
+        z1 = r1,
+        y1 = -x1 - z1;
+    const x2 = q2,
+        z2 = r2,
+        y2 = -x2 - z2;
+    const pts = [];
+    for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        pts.push(cubeRound(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t, z1 + (z2 - z1) * t));
+    }
+    return pts;
+}
+
+function drawHarvesterArrow(group, pixelPath, apCost) {
     group.innerHTML = '';
     group.style.display = '';
-    const dx = x2 - x1,
-        dy = y2 - y1;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const nx = dx / len,
-        ny = dy / len;
-    // Shorten: start 12px from HV center, end 16px from target center
-    const sx = x1 + nx * 12,
-        sy = y1 + ny * 12;
-    const ex = x2 - nx * 16,
-        ey = y2 - ny * 16;
+    if (pixelPath.length < 2) return;
 
-    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    line.setAttribute('x1', sx);
-    line.setAttribute('y1', sy);
-    line.setAttribute('x2', ex);
-    line.setAttribute('y2', ey);
-    line.setAttribute('stroke', '#f59e0b');
-    line.setAttribute('stroke-width', '2.5');
-    line.setAttribute('stroke-dasharray', '7 3');
-    group.appendChild(line);
+    // Shorten the first/last segment so the line doesn't overlap the HV icon
+    // or the target tile's center, while intermediate hex-center points stay
+    // exact (that's the point — the path bends through real hex centers).
+    const path = pixelPath.slice();
+    const trim = (a, b, px) => {
+        const dx = b.cx - a.cx,
+            dy = b.cy - a.cy;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        return { cx: a.cx + (dx / len) * px, cy: a.cy + (dy / len) * px };
+    };
+    path[0] = trim(path[0], path[1], 12);
+    path[path.length - 1] = trim(path[path.length - 1], path[path.length - 2], 16);
 
-    const angle = Math.atan2(ey - sy, ex - sx);
+    const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    poly.setAttribute('points', path.map((p) => `${p.cx},${p.cy}`).join(' '));
+    poly.setAttribute('fill', 'none');
+    poly.setAttribute('stroke', '#f59e0b');
+    poly.setAttribute('stroke-width', '2.5');
+    poly.setAttribute('stroke-dasharray', '7 3');
+    poly.setAttribute('stroke-linejoin', 'round');
+    group.appendChild(poly);
+
+    const last = path[path.length - 1];
+    const prev = path[path.length - 2];
+    const angle = Math.atan2(last.cy - prev.cy, last.cx - prev.cx);
     const hl = 11;
-    const pts = [
-        `${ex},${ey}`,
-        `${ex + hl * Math.cos(angle - 2.6)},${ey + hl * Math.sin(angle - 2.6)}`,
-        `${ex + hl * Math.cos(angle + 2.6)},${ey + hl * Math.sin(angle + 2.6)}`,
+    const headPts = [
+        `${last.cx},${last.cy}`,
+        `${last.cx + hl * Math.cos(angle - 2.6)},${last.cy + hl * Math.sin(angle - 2.6)}`,
+        `${last.cx + hl * Math.cos(angle + 2.6)},${last.cy + hl * Math.sin(angle + 2.6)}`,
     ].join(' ');
     const head = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
-    head.setAttribute('points', pts);
+    head.setAttribute('points', headPts);
     head.setAttribute('fill', '#f59e0b');
     group.appendChild(head);
+
+    // AP-cost badge at the path's midpoint hex — same visual language as the
+    // building-level badges (dark rounded rect, white bold text).
+    const mid = pixelPath[Math.floor(pixelPath.length / 2)];
+    const label = `${apCost} AP`;
+    const badgeW = 11 + label.length * 6;
+    const badgeH = 14;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', mid.cx - badgeW / 2);
+    rect.setAttribute('y', mid.cy - badgeH / 2);
+    rect.setAttribute('width', badgeW);
+    rect.setAttribute('height', badgeH);
+    rect.setAttribute('rx', '3');
+    rect.setAttribute('fill', '#b45309');
+    rect.setAttribute('pointer-events', 'none');
+    group.appendChild(rect);
+    group.appendChild(svgText(mid.cx, mid.cy, label, 9, '#fff', 700));
+}
+
+// Radial "hold to confirm" progress ring at the target tile — animates from
+// empty to full over durationMs via a plain CSS transition on stroke-dashoffset.
+function drawPressProgress(group, cx, cy, durationMs) {
+    group.innerHTML = '';
+    group.style.display = '';
+    const r = 16;
+    const circumference = 2 * Math.PI * r;
+
+    const track = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    track.setAttribute('cx', cx);
+    track.setAttribute('cy', cy);
+    track.setAttribute('r', r);
+    track.setAttribute('fill', 'none');
+    track.setAttribute('stroke', 'rgba(245,158,11,0.25)');
+    track.setAttribute('stroke-width', '4');
+    group.appendChild(track);
+
+    const fill = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    fill.setAttribute('cx', cx);
+    fill.setAttribute('cy', cy);
+    fill.setAttribute('r', r);
+    fill.setAttribute('fill', 'none');
+    fill.setAttribute('stroke', '#f59e0b');
+    fill.setAttribute('stroke-width', '4');
+    fill.setAttribute('stroke-linecap', 'round');
+    fill.setAttribute('stroke-dasharray', `${circumference}`);
+    fill.setAttribute('stroke-dashoffset', `${circumference}`);
+    fill.setAttribute('transform', `rotate(-90 ${cx} ${cy})`);
+    fill.style.transition = `stroke-dashoffset ${durationMs}ms linear`;
+    group.appendChild(fill);
+
+    requestAnimationFrame(() => fill.setAttribute('stroke-dashoffset', '0'));
+}
+
+function hidePressProgress(group) {
+    group.style.display = 'none';
+    group.innerHTML = '';
 }
 
 // ── SVG hex grid renderer ─────────────────────────────────────────────────────
@@ -780,29 +945,67 @@ function initHexGrid(container, tiles, opts = {}) {
         svg.appendChild(g);
     }
 
-    // Arrow overlay: drawn on top of all tiles, visible on target hover
+    // Arrow overlay: drawn on top of all tiles. Unified desktop+mobile gesture
+    // (Pointer Events cover mouse/touch/pen alike): click/tap selects and
+    // shows the preview arrow + AP cost; pressing and holding ~0.9s on an
+    // already-valid target confirms the move, with a radial progress ring at
+    // the target tile so the player sees the hold registering. onTileClick()
+    // never triggers the move directly anymore — see its harvesterMoveMode
+    // branch, which is now a no-op for valid targets.
     if (opts.harvesterMoveMode && opts.harvesterBuilding?.tile_x !== null) {
-        const hvKey = `${opts.harvesterBuilding.tile_x},${opts.harvesterBuilding.tile_y}`;
-        const hvPos = tilePixelMap.get(hvKey);
-        if (hvPos) {
-            const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            arrowGroup.setAttribute('pointer-events', 'none');
-            arrowGroup.style.display = 'none';
-            svg.appendChild(arrowGroup);
+        const hv = opts.harvesterBuilding;
+        const axialToPixel = (q, r) => ({
+            cx: SIZE * Math.sqrt(3) * (q + r / 2) + offX,
+            cy: SIZE * 1.5 * r + offY,
+        });
+        const LONG_PRESS_MS = 900;
 
-            for (const { tile } of positions) {
-                if (!isHarvesterTargetTile(tile, buildingsByTile)) continue;
-                const targetPos = tilePixelMap.get(`${tile.q},${tile.r}`);
-                if (!targetPos) continue;
-                const tileGroup = opts.polygonMap?.get(`${tile.q},${tile.r}`)?.parentElement;
-                if (!tileGroup) continue;
-                tileGroup.addEventListener('mouseenter', () =>
-                    drawHarvesterArrow(arrowGroup, hvPos.cx, hvPos.cy, targetPos.cx, targetPos.cy),
-                );
-                tileGroup.addEventListener('mouseleave', () => {
-                    arrowGroup.style.display = 'none';
-                });
-            }
+        const arrowGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        arrowGroup.setAttribute('pointer-events', 'none');
+        arrowGroup.style.display = 'none';
+        svg.appendChild(arrowGroup);
+
+        const progressGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        progressGroup.setAttribute('pointer-events', 'none');
+        progressGroup.style.display = 'none';
+        svg.appendChild(progressGroup);
+
+        for (const { tile } of positions) {
+            if (!isHarvesterTargetTile(tile, buildingsByTile)) continue;
+            const tileGroup = opts.polygonMap?.get(`${tile.q},${tile.r}`)?.parentElement;
+            if (!tileGroup) continue;
+
+            const hexPath = hexLinePath(hv.tile_x, hv.tile_y, tile.q, tile.r);
+            const pixelPath = hexPath.map(([q, r]) => axialToPixel(q, r));
+            const apCost = Math.max(1, hexPath.length - 1);
+            const targetPos = pixelPath[pixelPath.length - 1];
+            const showArrow = () => drawHarvesterArrow(arrowGroup, pixelPath, apCost);
+            const hideArrow = () => {
+                arrowGroup.style.display = 'none';
+            };
+
+            tileGroup.addEventListener('mouseenter', showArrow);
+            tileGroup.addEventListener('mouseleave', hideArrow);
+
+            let pressTimer = null;
+            const cancelPress = () => {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+                hidePressProgress(progressGroup);
+            };
+            tileGroup.addEventListener('pointerdown', () => {
+                showArrow();
+                cancelPress();
+                drawPressProgress(progressGroup, targetPos.cx, targetPos.cy, LONG_PRESS_MS);
+                pressTimer = setTimeout(() => {
+                    pressTimer = null;
+                    hidePressProgress(progressGroup);
+                    opts.onHarvesterMoveConfirm && opts.onHarvesterMoveConfirm(tile);
+                }, LONG_PRESS_MS);
+            });
+            tileGroup.addEventListener('pointerup', cancelPress);
+            tileGroup.addEventListener('pointerleave', cancelPress);
+            tileGroup.addEventListener('pointercancel', cancelPress);
         }
     }
 

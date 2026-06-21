@@ -143,6 +143,10 @@ class ColonyController extends BaseController
         $supplyCapFull = in_array('supply_cap_full', $fireds);
 
         $trust = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 12)->value('amount') ?? 0);
+        // Build-chip affordability check (greys out unaffordable buildings).
+        $regolith = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 3)->value('amount') ?? 0);
+        $werkstoffe = (int) (DB::table('colony_resources')->where('colony_id', $colony->id)->where('resource_id', 4)->value('amount') ?? 0);
+        $freeSupply = $this->resourcesService->getFreeSupply($colony->id);
         $currentSol = $this->currentSol();
         $solLimit = (int) config('game.run.tick_limit', 100);
 
@@ -151,7 +155,7 @@ class ColonyController extends BaseController
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -245,6 +249,7 @@ class ColonyController extends BaseController
                 'building_id' => $b->id,
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
+                'description' => __('buildings.'.preg_replace('/^building_/', '', $b->name).'_desc'),
                 'ap_for_levelup' => $b->ap_for_levelup,
                 'max_level' => $b->max_level,
                 'max_status_points' => $b->max_status_points,
@@ -781,9 +786,8 @@ class ColonyController extends BaseController
         $data = $request->validate(['hint_key' => 'required|string|max:20']);
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $this->hintService->dismissHint(Auth::id(), $data['hint_key']);
-        $activeHint = $this->hintService->getActiveHint($colony->id, Auth::id());
 
-        return response()->json(['ok' => true, 'hint' => $activeHint]);
+        return response()->json(['ok' => true, 'hint' => $this->resolveHint($colony->id)]);
     }
 
     public function rename(Request $request): RedirectResponse
@@ -819,6 +823,12 @@ class ColonyController extends BaseController
         return [
             'apNav' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
             'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+            // Build-chip affordability check (greys out unaffordable buildings) needs
+            // these alongside AP — kept on the same payload so every action that
+            // refreshes AP also refreshes resources.
+            'regolith' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)->value('amount') ?? 0),
+            'werkstoffe' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 4)->value('amount') ?? 0),
+            'freeSupply' => $this->resourcesService->getFreeSupply($colonyId),
         ];
     }
 

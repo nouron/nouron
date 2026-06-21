@@ -33,6 +33,10 @@ return [
     'legend_zone_fog' => 'Baubar, noch unerkundet — Bauen deckt auf',
     'legend_explore_fog' => 'Erkundungsziel — mit Navigations-AP aufdecken',
     'legend_regolith' => 'Regolith-Vorkommen',
+    'legend_cc' => 'Kommandozentrale',
+    'legend_hazard' => 'Gefahrenzone',
+    'legend_impassable' => 'Unpassierbar',
+    'legend_event' => 'Entdecktes Ereignis',
 
     // ── Sidebar: Terrain-/Zonen-Info ──────────────────────────────────────────
     'zone_buildable' => 'Koloniezone — bebaubar',
@@ -63,6 +67,7 @@ return [
 
     'build_mode_title' => 'Gebäude bauen',
     'build_mode_hint' => 'Gebäude wählen, dann Terrain-Tile anklicken.',
+    'building_info_label' => 'Gebäude-Info anzeigen',
     'no_buildings' => 'Keine Gebäude verfügbar.',
     'inprogress_label' => 'Im Bau',
     'inprogress_hint' => 'Tile auf der Karte anklicken um AP zu investieren.',
@@ -75,14 +80,20 @@ return [
 
     // ── Onboarding hints (Phase 3e) ───────────────────────────────────────────
 
+    'hint_suggestion_label' => 'Vorschlag',
+    'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
     'onboarding_hint_1' => 'Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert.',
     'onboarding_hint_repair' => 'Deine Startgebäude sind beschädigt — tippe ein Gebäude an und nutze „Reparieren" (1 Bau-AP), um die Substanz zu sichern.',
     'onboarding_hint_repair_urgent' => 'Ein Gebäude steht kurz vor dem Stufenverlust — jetzt mit dem Reparieren-Button (Bau-AP) sichern.',
     'onboarding_hint_2' => 'Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen.',
     'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei.',
+    'onboarding_hint_advisor_slot2' => 'Kommandozentrale Level 2 hat den Analytiker-Slot freigeschaltet — einstellen, um Forschungs-AP zu erhalten.',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
+    'onboarding_hint_build_priority' => 'Agrardom, Cantina und Analytik-Labor sind grundsätzlich baubar — die Ressourcen reichen aber in diesem Sol nicht für alle gleichzeitig. Mit einem davon anfangen, der Rest folgt in späteren Sols.',
     'onboarding_hint_6' => 'Cantina noch nicht gebaut — hier erscheinen Händler und NPC-Gäste mit Tauschangeboten und Einmal-Items.',
+    'onboarding_hint_agrardome' => 'Agrardom noch nicht gebaut — er liefert Organika für Verpflegung, Krankenstation und Missionsproviant.',
+    'onboarding_hint_analytik' => 'Analytik-Labor noch nicht gebaut — ohne dieses Labor bleibt die Kolonie blind für Materialanalyse und Tiefenscans.',
     'onboarding_hint_cc_invest' => 'Restliche Bau-AP nicht verfallen lassen — tippe die Kommandozentrale an und investiere in den Ausbau. Was du jetzt einzahlst, bleibt erhalten; so steht Level 2 schon im nächsten Sol.',
     'onboarding_hint_explore' => 'Navigations-AP einsetzen und nach draußen erkunden (1 Nav-AP pro Feld) — jenseits der Kolonie liegen Regolith-Vorkommen für den Harvester und unbekannte Signale. Das nahe Gelände erschließt die Kommandozentrale ohnehin selbst.',
     'onboarding_end_sol' => 'Sol beenden — für diesen Sol ist alles Wichtige erledigt. Beende den Sol, um Aktionspunkte aufzufrischen und die Kolonie voranzubringen.',
@@ -118,7 +129,7 @@ return [
     'error_tile_outside_colony' => 'Dieses Tile liegt außerhalb der Koloniezone.',
     'error_harvester_needs_regolith' => 'Harvester kann nur auf Regolith-Tiles platziert werden.',
     'harvester_move' => 'Verlegen',
-    'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone auswählen — 1 Bau-AP pro Hex-Distanz.',
+    'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone anklicken — zeigt Vorschaupfeil mit AP-Kosten. Gedrückt halten zum Verlegen.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',
     'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
     'network_error' => 'Netzwerkfehler — bitte erneut versuchen.',
