@@ -102,6 +102,18 @@ class BuildingRepairTest extends TestCase
         $this->assertIsInt($response->json('apConstruction'));
     }
 
+    public function test_repair_returns_resource_amounts_for_build_chip_affordability(): void
+    {
+        $this->setCcState(['status_points' => 16]);
+
+        $response = $this->repair();
+
+        $response->assertJsonPath('ok', true);
+        $this->assertIsInt($response->json('regolith'));
+        $this->assertIsInt($response->json('werkstoffe'));
+        $this->assertIsInt($response->json('freeSupply'));
+    }
+
     public function test_repair_caps_at_max_status_points(): void
     {
         $this->setCcState(['status_points' => self::CC_MAX_SP - 1]);

@@ -12,6 +12,9 @@
             buildings: @json($buildings),
             apNav: {{ (int) $navAp }},
             apConstruction: {{ (int) $constructionAp }},
+            regolith: {{ (int) $regolith }},
+            werkstoffe: {{ (int) $werkstoffe }},
+            freeSupply: {{ (int) $freeSupply }},
             trust: {{ $trust }},
             currentSol: {{ $currentSol }},
             solLimit: {{ $solLimit }},
@@ -20,6 +23,8 @@
             merchantItems: @json($merchantItems ?? []),
             uplinkBuildingId: {{ (int) config("buildings.uplinkStation.id", 54) }},
             compoundImportPrice: {{ (int) config("game.economy.compound_import_price", 90) }},
+            exploreCostPerRing: @json(config("game.colony.explore_cost_per_ring")),
+            exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',
                 deepScan: '{{ route("colony.tile.deep-scan") }}',
@@ -68,12 +73,24 @@
                 </a>
 
                 {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
-                 Updates automatically after any AJAX action that changes hint state. --}}
-                <div class="hint-bar" x-show="activeHint" x-cloak>
-                    <span class="hint-bar__icon" aria-hidden="true">!</span>
-                    <span class="hint-bar__text" x-text="activeHint?.text"></span>
-                    <a class="hint-bar__link" :href="activeHint?.target_url">→</a>
-                    <button class="hint-bar__dismiss" aria-label="Dismiss hint" @click="dismissHint()">×</button>
+                 Updates automatically after any AJAX action that changes hint state.
+                 completedHint briefly shows the just-resolved hint with a checkmark,
+                 fading out underneath while the new activeHint slides in from above
+                 (see setActiveHint() in colony-hexgrid.js). --}}
+                <div class="hint-bar-stack">
+                    <div class="hint-bar hint-bar--done" x-show="completedHint" x-cloak>
+                        <span class="hint-bar__icon hint-bar__icon--done" aria-hidden="true">✓</span>
+                        <span class="hint-bar__text" x-text="completedHint?.text"></span>
+                    </div>
+                    <div class="hint-bar" x-show="activeHint" x-cloak x-ref="hintBar">
+                        <span class="hint-bar__icon" aria-hidden="true"
+                            title="{{ __("colony.hint_not_mandatory") }}">!</span>
+                        <span class="hint-bar__text" x-text="activeHint?.text"></span>
+                        <span class="hint-bar__badge"
+                            title="{{ __("colony.hint_not_mandatory") }}">{{ __("colony.hint_suggestion_label") }}</span>
+                        <a class="hint-bar__link" :href="activeHint?.target_url">→</a>
+                        <button class="hint-bar__dismiss" aria-label="Dismiss hint" @click="dismissHint()">×</button>
+                    </div>
                 </div>
 
                 {{-- Supply-cap warning banner (Trigger 2) — server-side flag set by game tick --}}
@@ -169,7 +186,8 @@
                             <template x-if="!selectedTile.is_explored">
                                 <button class="tile-action-btn" @click="doExploreTile(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.explore") }}</span>
-                                    @include("partials.ap-cost-chip", ["amount" => 1, "type" => "nav"])
+                                    <span class="ap-chip ap-cost-chip ap-chip--nav" aria-hidden="true"
+                                        x-text="`${exploreCostFor(selectedTile)} AP`"></span>
                                 </button>
                             </template>
                             <template x-if="selectedTile.has_signal && !selectedTile.is_deep_scanned">
@@ -310,9 +328,11 @@
                                     <li class="building-list-item"
                                         :class="{
                                             'building-list-item--selected': pendingBuilding?.building_id === b
-                                                .building_id
+                                                .building_id,
+                                            'building-list-item--disabled': !canAffordBuilding(b)
                                         }"
-                                        @click="selectPendingBuilding(b)">
+                                        :aria-disabled="!canAffordBuilding(b)"
+                                        @click="canAffordBuilding(b) && selectPendingBuilding(b)">
                                         <div class="building-list-row">
                                             <span class="building-list-name" x-text="b.label"></span>
                                             <span class="building-list-row-right">

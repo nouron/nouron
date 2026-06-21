@@ -222,6 +222,7 @@ class AdvisorController extends BaseController
                 'ok' => true,
                 'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick),
                 'slotInfo' => $slotInfo,
+                'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
             ]);
         }
 

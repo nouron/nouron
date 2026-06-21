@@ -1117,6 +1117,16 @@ button.btn-sol:hover,
     border-color: var(--color-accent);
 }
 
+.building-list-item--disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.building-list-item--disabled:hover {
+    background: none;
+    border-color: var(--color-border, #e8e8ec);
+}
+
 .building-list-name {
     font-size: 0.85rem;
     font-weight: 600;
@@ -1341,6 +1351,14 @@ dialog[x-ref="discoveryDialog"] {
  * Flex row: icon | text (grows) | action link | dismiss button.
  * Uses Alpine x-transition for a smooth fade-in/out on dismiss.
  */
+/* Stacking context for the brief overlap between the fading "done" banner
+ * and the new hint sliding in above it (see setActiveHint() in
+ * colony-hexgrid.js). */
+.hint-bar-stack {
+    position: relative;
+    flex-shrink: 0;
+}
+
 .hint-bar {
     display: flex;
     align-items: center;
@@ -1350,6 +1368,51 @@ dialog[x-ref="discoveryDialog"] {
     border-bottom: 1px solid #fde68a;
     font-size: 0.8rem;
     flex-shrink: 0;
+}
+
+.hint-bar--enter {
+    animation: hint-bar-slide-in 0.35s ease-out;
+}
+
+@keyframes hint-bar-slide-in {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* "Done" confirmation: sits behind the live hint-bar, fades out on its own
+ * (cleared from completedHint after 1s — see setActiveHint()). */
+.hint-bar--done {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: #dcfce7;
+    border-bottom-color: #bbf7d0;
+    animation: hint-bar-fade-out 1s ease-in forwards;
+}
+
+.hint-bar-stack > .hint-bar:not(.hint-bar--done) {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes hint-bar-fade-out {
+    0%,
+    60% {
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+.hint-bar__icon--done {
+    background: #16a34a;
 }
 
 .hint-bar__icon {
@@ -1371,6 +1434,20 @@ dialog[x-ref="discoveryDialog"] {
     flex: 1;
     color: #78350f;
     line-height: 1.3;
+}
+
+.hint-bar__badge {
+    flex-shrink: 0;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #92400e;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid #fde68a;
+    border-radius: 999px;
+    padding: 0.05rem 0.45rem;
+    cursor: help;
 }
 
 .hint-bar__link {
@@ -2180,6 +2257,10 @@ dialog[x-ref="discoveryDialog"] {
     }
     .sol-spinner {
         animation-duration: 1.6s;
+    }
+    .hint-bar--enter,
+    .hint-bar--done {
+        animation: none;
     }
 }
 
