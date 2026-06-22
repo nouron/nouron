@@ -18,9 +18,6 @@ return [
     'bioFacility' => 'Agrarian Dome',
     'bioFacility_desc' => 'Controlled biosphere for food production, medicine, and organic compounds. Supplies the colony with Organics.',
 
-    'depot' => 'Warehouse',
-    'depot_desc' => 'Robust storage infrastructure for Compounds and Organics. Increases the colony\'s maximum storage capacity.',
-
     // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab' => 'Analytics Lab',

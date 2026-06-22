@@ -300,9 +300,6 @@ return [
         // Supply threshold below which Rank-1 hint fires (no housing built yet)
         'hint_supply_cap_threshold' => 10,
 
-        // Ticks elapsed without any engineer assigned before Rank-2 hint fires
-        'hint_no_engineer_ticks' => 3,
-
         // Ticks elapsed without any knowledge researched before Rank-4 hint fires
         'hint_no_knowledge_after_tick' => 8,
 
@@ -313,11 +310,13 @@ return [
         'hint_trust_min_ticks' => 5,
 
         // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing).
-        // 0 — the prerequisite itself already prevents Day-1 firing (CC>=2 means Sol 2+).
-        // Real Sol-1/2 affordability (Bau-AP, Regolith) is covered by the hint's own
-        // canAffordBuildingPlacement() check, not this tick-gate — see hint_no_analytik
-        // below for why a small tick-gate is still kept as pacing polish.
-        'hint_no_cantina_after_tick' => 0,
+        // 2 (Sol 3+) — deliberately equal to hint_no_analytik_after_tick: from Sol 3 the
+        // player is meant to face a genuine, equally-weighted choice between Cantina
+        // (trade path) and Analytik-Labor (research path) — see GDD §16.2/§16.5
+        // "Sol-3-Wahlfreiheit". Neither hint may have a structural head start over the
+        // other; same threshold ensures both can surface the same Sol once their
+        // respective prerequisites (CC>=2, plus Housing>=1 for Cantina) are met.
+        'hint_no_cantina_after_tick' => 2,
 
         // Minimum ticks elapsed before Agrardom hint fires (Harvester>=1 + bioFacility missing).
         // 1 (Sol 2+) — kept even though canAffordBuildingPlacement() now also guards this
@@ -326,13 +325,13 @@ return [
         'hint_no_agrardome_after_tick' => 1,
 
         // Minimum ticks elapsed before Analytik-Labor hint fires (CC>=2 + sciencelab missing).
-        // 2 (Sol 3+) — purely cosmetic pacing on top of the real fix: the hint's own
-        // build-affordability check (canAffordBuildingPlacement) now withholds it
-        // whenever Bau-AP/Regolith are actually spent on Cantina/Agrardom first, so
-        // this tick-gate only spreads out the *recommendation* on Sols where the
-        // player has resources to spare for all three — it's not load-bearing
-        // for correctness anymore (playtest: without it, Cantina/Agrardom/Analytik
-        // all became "ready" the same Sol whenever AP/Regolith were abundant).
+        // 2 (Sol 3+) — deliberately equal to hint_no_cantina_after_tick (see comment
+        // there): from Sol 3 the player is meant to face a genuine, equally-weighted
+        // choice between Analytik-Labor (research path) and Cantina (trade path),
+        // not a system that nudges one before the other. The hint's own
+        // build-affordability check (canAffordBuildingPlacement) still withholds it
+        // whenever Bau-AP/Regolith are actually spent on Cantina/Agrardom first —
+        // this tick-gate only ensures neither hint has a Sol-level head start.
         'hint_no_analytik_after_tick' => 2,
 
         // Minimum current_tick before CC-upgrade hint (hint_3) fires. 1 = Sol 2

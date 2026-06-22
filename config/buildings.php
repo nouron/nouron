@@ -78,16 +78,6 @@ return [
         'max_level' => null,
     ],
 
-    'depot' => [
-        'id' => 30,
-        'build_cost' => [3 => 40],   // Regolith only (early)
-        'supply_cost' => 3,
-        'trust_per_lv' => 0,
-        'decay_rate' => 0.67,    // 30 days
-        'max_status_points' => 20,
-        'max_level' => null,
-    ],
-
     // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab' => [
@@ -125,7 +115,7 @@ return [
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 10,
         'trust_per_lv' => 3,
-        'decay_rate' => 0.67,    // 30 days — core infrastructure, same tier as depot/hangar
+        'decay_rate' => 0.67,    // 30 days — core infrastructure, same tier as hangar
         'max_status_points' => 20,
         'max_level' => null,
     ],

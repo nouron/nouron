@@ -31,7 +31,7 @@ class ColonyZoneDecoupleTest extends TestCase
 
     private const HARVESTER_ID = 27;
 
-    private const DEPOT_ID = 30;
+    private const INFIRMARY_ID = 46;
 
     protected function setUp(): void
     {
@@ -80,7 +80,7 @@ class ColonyZoneDecoupleTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.building.place'), [
-                'building_id' => self::DEPOT_ID,
+                'building_id' => self::INFIRMARY_ID,
                 'q' => 1,
                 'r' => -1,
             ]);

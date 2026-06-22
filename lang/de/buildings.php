@@ -18,9 +18,6 @@ return [
     'bioFacility' => 'Agrardom',
     'bioFacility_desc' => 'Geschlossene Biosphäre unter Druckhülle: Aquaponik, Pilzkulturen, medizinische Anzuchten. Auf einem Planeten ohne natürliche Biologie ist der Agrardom kein Komfort — er ist Lebenserhaltung.',
 
-    'depot' => 'Lagerhalle',
-    'depot_desc' => 'Druckdichte Lagerstätten für Regolith, Werkstoffe und Organika. Ohne ausreichende Lagerkapazität geht Produktion verloren — was die Anlage über Nacht fördert, landet am nächsten Morgen auf dem Boden.',
-
     // ── Science ───────────────────────────────────────────────────────────────
 
     'sciencelab' => 'Analytik-Labor',

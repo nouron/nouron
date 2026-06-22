@@ -32,7 +32,6 @@ class MasterDataSeeder extends Seeder
             25 => [20, 0.07, 0],   // commandCenter     — Supply-Quelle, ticks_until_lost ~285
             27 => [20, 0.17, 2],   // oremine           — ticks_until_lost 120
             28 => [20, 0.13, 0],   // housingComplex    — Supply-Quelle, ticks_until_lost 150
-            30 => [20, 0.13, 3],   // depot             — ticks_until_lost 150
             31 => [20, 0.17, 8],   // sciencelab        — ticks_until_lost 120
             32 => [20, 0.13, 5],   // temple            — ticks_until_lost 150
             41 => [20, 0.17, 2],   // silicatemine      — ticks_until_lost 120

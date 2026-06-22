@@ -323,7 +323,7 @@ class OnboardingHintService
      */
     private function checkHint3(int $colonyId, int $currentTick): bool
     {
-        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 2);
+        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 1);
         if ($currentTick < $afterTick) {
             return false;
         }
@@ -410,7 +410,7 @@ class OnboardingHintService
      */
     private function checkHintExplore(int $colonyId, int $currentTick): bool
     {
-        $untilTick = (int) config('game.onboarding.hint_explore_until_tick', 2);
+        $untilTick = (int) config('game.onboarding.hint_explore_until_tick', 0);
         if ($currentTick > $untilTick) {
             return false;
         }
@@ -455,7 +455,7 @@ class OnboardingHintService
      */
     private function checkHint4(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_knowledge_after_tick', 10);
+        $threshold = (int) config('game.onboarding.hint_no_knowledge_after_tick', 8);
 
         if ($currentTick < $threshold) {
             return false;
@@ -505,7 +505,7 @@ class OnboardingHintService
 
     private function cantinaPrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 5);
+        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 2);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -539,7 +539,7 @@ class OnboardingHintService
 
     private function agrardomePrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 6);
+        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 1);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -565,7 +565,7 @@ class OnboardingHintService
 
     private function analytikPrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 8);
+        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 2);
         if ($currentTick < $threshold) {
             return false;
         }

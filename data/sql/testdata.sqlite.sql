@@ -18,7 +18,6 @@ INSERT INTO "glx_colonies" (id,name,user_id,since_tick,is_primary,hunger_streak)
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(25,'civil','building_commandCenter',NULL,NULL,0,0,2,5,10,20,0.33,0,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(27,'industry','building_harvester',25,1,0,1,2,1,10,20,0.95,2,1,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(28,'civil','building_housingComplex',25,1,1,1,1,6,10,20,0.44,0,1,1);
-INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(30,'industry','building_depot',25,2,0,3,1,NULL,10,20,0.67,3,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(31,'civil','building_sciencelab',25,2,0,2,2,NULL,10,20,0.95,8,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(32,'civil','building_temple',25,4,0,4,2,NULL,10,20,2.0,4,0,1);
 INSERT INTO "buildings" (id,purpose,name,required_building_id,required_building_level,prime_colony_only,"row","column",max_level,ap_for_levelup,max_status_points,decay_rate,supply_cost,is_instanced,is_active) VALUES(41,'industry','building_bioFacility',27,1,0,2,1,NULL,10,20,0.95,2,0,1);
@@ -34,7 +33,6 @@ INSERT INTO "building_costs" VALUES(25,1,100);
 INSERT INTO "building_costs" VALUES(25,2,15);
 INSERT INTO "building_costs" VALUES(27,2,10);
 INSERT INTO "building_costs" VALUES(28,1,100);
-INSERT INTO "building_costs" VALUES(30,2,5);
 INSERT INTO "building_costs" VALUES(31,1,50);
 INSERT INTO "building_costs" VALUES(31,2,5);
 INSERT INTO "building_costs" VALUES(32,1,100);
@@ -56,7 +54,6 @@ INSERT INTO "building_costs" VALUES(55,1,400);
 -- CC (25) + Harvester (27) carry none (bootstrap). Organika is never a build cost.
 INSERT INTO "building_costs" VALUES(28,3,40);
 INSERT INTO "building_costs" VALUES(41,3,40);
-INSERT INTO "building_costs" VALUES(30,3,40);
 INSERT INTO "building_costs" VALUES(52,3,50);
 INSERT INTO "building_costs" VALUES(31,3,60);
 INSERT INTO "building_costs" VALUES(31,4,20);
@@ -110,13 +107,14 @@ INSERT INTO "personell_costs" VALUES(93,2,2);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,25,3,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,27,1,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,2,20,2);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,30,3,10,10);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,31,1,10,0);
+-- Infirmary (46) for colony 1: used as a generic "uncapped, upgradable building" stand-in
+-- by BuildingServiceTest/ColonyZoneDecoupleTest/BuildResourceSinkTest (ex-depot, removed 2026-06-22).
+INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,46,3,10,10);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,52,0,0,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,25,5,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,27,1,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,28,4,10,1);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,30,2,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,31,3,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,32,1,10,1);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(2,41,1,10,1);
