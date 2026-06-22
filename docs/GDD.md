@@ -294,7 +294,6 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
 | 27 | harvester | Harvester | Harvester | — | CC Lv1 |
 | 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 + Harvester Lv1 |
-| 30 | depot | Lagerhalle | Warehouse | — | CC Lv2 |
 | 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
 | 46 | infirmary | Krankenstation | Medical Station | — | CC Lv2 |
 | 52 | bar | Cantina | Cantina | — | CC Lv2 |
@@ -328,7 +327,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php → build_cost` / `regolith_per_levelup`, in die `building_costs`-Tabelle gesynct via `game:sync-config`). Drei getrennte Kosten-Achsen:
 
 **1. Errichten (Tile leer → Level 1, Einmal-Abzug):**
-- **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom/Lagerhalle/Cantina), spät 60–100 (Analytik-Labor/Hangar/Handelsposten…).
+- **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom/Cantina), spät 60–100 (Analytik-Labor/Hangar/Handelsposten…).
 - **Werkstoffe** nur für späte/High-Tech-Gebäude, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung). Analytik-Labor (CC Lv2, deutlich vor Uplink-Station/Cantina erreichbar) ist aus demselben Grund werkstofffrei — sonst wäre der direkt mit CC Lv2 freigeschaltete Analytiker-Slot für mehrere Sole unbenutzbar.
 - **Supply-Gate:** Bau nur möglich, wenn freie Supply-Cap ≥ `supply_cost` des Gebäudes (§6). Kein Abzug — reine Belegungsprüfung.
 
@@ -344,22 +343,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 
 > **Designziel:** Regolith ist das „Mehl" (reichlich, lokal, Dauer-Sink über Bau + Reparatur), Werkstoffe das „Salz" (knapp, importiert, nur als Akzent). Schiffe kosten ausschließlich Credits.
 
-### Lagerhalle (depot) — Mechanik
-
-Die Lagerhalle erhöht die maximale Lagerkapazität aller drei Kolonieressourcen (Regolith, Werkstoffe, Organika). Ohne Lagerhalle gilt ein Basis-Cap; jedes Level der Lagerhalle erhöht diesen Cap.
-
-```
-resource_cap = base_cap + (depot_level × cap_per_level)
-```
-
-Überschreitet die Produktion den Cap in einem Sol, gehen die überschüssigen Einheiten verloren. Das erzeugt eine echte Entscheidung: Wer stark produziert (Harvester + Agrardom auf hohem Level) muss früher in Lagerkapazität investieren, sonst verpufft die Produktion.
-
-| Parameter | Richtwert | Quelle |
-|-----------|-----------|--------|
-| `base_cap` | 500 je Ressource | nach Playtest kalibrieren |
-| `cap_per_level` | +200 je Depot-Level | nach Playtest kalibrieren |
-
-> **TODO Balance:** Konkrete Zahlen (`base_cap`, `cap_per_level`) nach erstem Playtest festlegen und in `config/buildings.php → depot` ergänzen. Das Ressourcen-Cap-System muss bei Implementierung im ProductionService berücksichtigt werden.
+> **Entschieden (2026-06-22):** Ein Resource-Cap-System (Lagerlimit für Regolith/Werkstoffe/Organika) wurde geprüft und **verworfen** — siehe Owner-Entscheidung unter §16 Befund 1. Das Depot-Gebäude (`building_id=30`), das diese Mechanik getragen hätte, ist ersatzlos aus dem Spiel entfernt (Migration `2026_06_22_000001_remove_depot_building.php`). Begründung: Das eigentliche Spielproblem ist Ressourcenknappheit, nicht -überschuss; ein Lagerlimit hätte aktive Produktion bestraft statt belohnt — Widerspruch zum Roguelike-Designprinzip "kein Leerlauf, aktives Spielen wird belohnt". Bei Bedarf (z. B. neue Run-Modifier, die Überschuss als Mechanik nutzen) kann Depot + Cap-System später erneut eingeführt werden.
 
 ---
 
@@ -699,7 +683,6 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 |---------|--------|
 | Harvester, Agrardom | 2 |
 | Kolonialdenkmal | 2 |
-| Lagerhalle | 3 |
 | Cantina, Religiöse Stätte | 4 (je) |
 | Uplink-Station, Handelsposten | 6 (je) |
 | Analytik-Labor, Sicherheits-Hub | 8 (je) |
@@ -832,7 +815,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 | Cantina (bar) | 20 | 1.0 |
 | Harvester, Agrardom | 21 | 0.95 |
 | Analytik-Labor (sciencelab) | 21 | 0.95 |
-| Lagerhalle (depot), Krankenstation (infirmary), Hangar | 30 | 0.67 |
+| Krankenstation (infirmary), Hangar | 30 | 0.67 |
 | Wohnhabitat (housingComplex) | 45 | 0.44 |
 | Kommandozentrale (max Lv5), Kolonialdenkmal | 60 | 0.33 |
 
@@ -1356,7 +1339,6 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `harvester` | Harvester | CC Lv 1 | supply-limitiert |
 | `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert |
 | `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert |
-| `depot` | Depot | CC Lv 2 | supply-limitiert |
 | `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
 | `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
 | `hangar` | Hangar | CC Lv 3 | supply-limitiert |
@@ -1366,7 +1348,7 @@ Grid-Koordinaten (phasen-lokal) siehe §11.3.
 | `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz |
 | `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
 
-Die 14 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Depot, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
+Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
 
 #### Kenntnisse
 
@@ -1420,7 +1402,7 @@ Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. 
 | CC-Level | Freischaltet |
 |---|---|
 | 1 | Wohnhabitat, Harvester |
-| 2 | Analytik-Labor, Depot, Krankenstation, Cantina, Sicherheits-Hub, Uplink-Station (Lv1) |
+| 2 | Analytik-Labor, Krankenstation, Cantina, Sicherheits-Hub, Uplink-Station (Lv1) |
 | 3 | Hangar; Uplink-Station Lv2 freischaltbar |
 | 4 | Religiöse Stätte, Handelsposten |
 | 5 | Denkmal; Uplink-Station Lv3 freischaltbar |
@@ -1479,7 +1461,6 @@ Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meil
 | 1 | 1 | harvester | building | 1 | 2 |
 | 1 | 1 | bioFacility | building | 2 | 2 |
 | 1 | 1 | engineer | personell | 2 | 3 |
-| 2 | 2 | depot | building | 1 | 1 |
 | 2 | 2 | sciencelab | building | 1 | 2 |
 | 2 | 2 | infirmary | building | 1 | 3 |
 | 2 | 2 | bar | building | 2 | 1 |
@@ -2604,10 +2585,12 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 >
 > - **Economy-AP (Konsul) und Strategy-AP (Stratege):** Es gibt bis heute keinen einzigen Hint, der auf eine Verwendung dieser beiden AP-Pools hinweist. Die Basis-6-AP/Sol verfallen ungenutzt, solange kein Konsul/Stratege eingestellt ist UND solange keiner der beiden eingestellt wird, weil kein Hint dazu motiviert (`hint_1` deckt nur den Baumeister ab; `hint_advisor_slot2` ist berater-typ-agnostisch und damit zwar eine Wahlmöglichkeit, aber keine Aufforderung speziell für Economy/Strategy). Solange Cantina (Handelsangebote) nicht gebaut ist, ist Economy-AP ohnehin praktisch wirkungslos — das ist ein struktureller Sumpf von Sol 1 bis frühestens Sol 6.
 > - **Strategy-AP** hat im aktuellen Frühspiel **gar keine Verwendung** (keine Begegnungen/Eskorte-Befehle vor Hangar/Korvette, Phase 3). Der Pool läuft potenziell viele Sole leer, ohne dass das im GDD irgendwo benannt wird. Das ist kein Hint-Problem, sondern ein strukturelles Pacing-Problem: Strategy-AP sollte entweder früher nutzbar sein (z.B. für Erkundungs-Risikobewertung) oder es sollte explizit dokumentiert sein, dass dieser Pool bewusst erst ab Phase 3 (Hangar/Korvette) relevant wird, damit niemand fälschlich einen fehlenden Hint als Bug einstuft.
-> - **Regolith-Überschuss:** Harvester Lv1 produziert kontinuierlich Regolith; mit Depot noch nicht gebaut und Bauprojekten, die Bau-AP-limitiert sind (nicht Regolith-limitiert), kann sich Regolith schon vor Sol 5 anhäufen.
+> - **Regolith-Überschuss:** Harvester Lv1 produziert kontinuierlich Regolith; bei Bauprojekten, die Bau-AP-limitiert sind (nicht Regolith-limitiert), kann sich Regolith schon vor Sol 5 anhäufen.
 > - **Credits:** Nach Aktion 1 (Baumeister, 300 Cr) bleiben ~2.700 Cr liegen. Vor `hint_advisor_slot2` (frühestens Sol 2/3) gibt es keine weitere Credits-Senke außer ggf. weiteren Berater-Anwerbungen — das ist beabsichtigt (Credits sind die "freie" Ressource, kein Hint nötig), aber sollte explizit als Designentscheidung benannt werden statt implizit zu bleiben.
 >
-> **Update (2026-06-21) — Depot-Hint geprüft, nicht umsetzbar: blockiert durch fehlendes Resource-Cap-System.** Die ursprüngliche Empfehlung unten ging davon aus, dass Depot einen Lager-Cap für Regolith durchsetzt und überschüssiges Regolith am Cap "stillschweigend verfällt". Codeprüfung (`app/Services/ResourcesService.php`, `app/Console/Commands/GameTick.php`) zeigt: Es gibt aktuell **kein Resource-Storage-Cap-System** — `cap` im Code bezeichnet ausschließlich den *Supply*-Cap (Entity-Limit für Gebäude/Berater/Schiffe), nicht ein Lagerlimit für Regolith/Credits/Werkstoffe. Depot (`building_id=30`) hat im aktuellen Code **keine Funktion** — es ist in `config/buildings.php` definiert, aber ohne jede Spielwirkung (siehe bereits bestehendes `TODO Balance` weiter oben in diesem Dokument: `base_cap`/`cap_per_level` sind noch nicht festgelegt, das Cap-System fehlt im `ResourcesService`/`ProductionService`). Ein Onboarding-Hint, der den Bau von Depot empfiehlt, würde den Spieler aktuell zu einem wirkungslosen Gebäude lenken — das widerspricht dem Ziel "kein Leerlauf" eher, als es zu lösen. **Reihenfolge der Umsetzung:** Erst das Resource-Cap-System (Depot-Wirkung) implementieren, danach den Depot-Hint nachziehen — nicht umgekehrt. Bis dahin bleibt der Regolith-Überschuss-Punkt oben ein reiner Pacing-Hinweis ohne zugehörigen Hint.
+> **Update (2026-06-21) — Depot-Hint geprüft, nicht umsetzbar: blockiert durch fehlendes Resource-Cap-System.** Die ursprüngliche Empfehlung unten ging davon aus, dass Depot einen Lager-Cap für Regolith durchsetzt und überschüssiges Regolith am Cap "stillschweigend verfällt". Codeprüfung (`app/Services/ResourcesService.php`, `app/Console/Commands/GameTick.php`) zeigt: Es gibt aktuell **kein Resource-Storage-Cap-System** — `cap` im Code bezeichnet ausschließlich den *Supply*-Cap (Entity-Limit für Gebäude/Berater/Schiffe), nicht ein Lagerlimit für Regolith/Credits/Werkstoffe. Depot (`building_id=30`) hatte im Code **keine Funktion** — es war in `config/buildings.php` definiert, aber ohne jede Spielwirkung.
+>
+> **Erledigt (2026-06-22) — Depot ersatzlos entfernt, statt Cap-System nachzuziehen.** Pro/Contra-Evaluation (siehe § "Errichten" oben) ergab: Das eigentliche Spielproblem ist Ressourcenknappheit, nicht -überschuss; ein Lagerlimit-System hätte aktive Produktion bestraft statt belohnt und stand quer zum Roguelike-Designprinzip. Owner-Entscheidung: Depot-Gebäude (`building_id=30`) komplett aus dem Spiel gestrichen (`config/buildings.php`, `lang/de+en/buildings.php`, `lang/de+en/techtree.php`, `MasterDataSeeder`, `ColonySeedDemo`, Migration `2026_06_22_000001_remove_depot_building.php`). Damit ist der Regolith-Überschuss-Punkt unten kein offener Hint-Blocker mehr, sondern erledigt durch Entfernung der betroffenen Mechanik-Idee. Bei Bedarf kann Depot + Cap-System später erneut eingeführt werden.
 >
 > **Erledigt (2026-06-21):** Toter Config-Key `hint_no_engineer_ticks` aus `config/game.php → onboarding` entfernt (war in `OnboardingHintService::checkHint1()` nicht mehr referenziert). Code-Kommentar-Defaults in `OnboardingHintService.php` (die `config(..., $default)`-Fallbacks) auf die tatsächlich aktiven Config-Werte synchronisiert — betraf `hint_cc_upgrade_after_tick` (2→1), `hint_explore_until_tick` (2→0), `hint_no_knowledge_after_tick` (10→8), `hint_no_cantina_after_tick` (5→2), `hint_no_agrardome_after_tick` (6→1). Bestehende Test-Suite (`tests/Feature/Onboarding/OnboardingHintServiceTest.php`, 53 Tests) bestätigt grün — reine Fallback-Korrektur ohne Verhaltensänderung, da die Config-Werte ohnehin immer gesetzt sind.
 >

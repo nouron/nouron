@@ -37,7 +37,6 @@ class ColonySeedDemo extends Command
     private const BUILDING_PLACEMENTS = [
         25 => [0,   0],  // CC (ring 0, terrain)
         28 => [0,   1],  // housingComplex (ring 1, terrain)
-        30 => [-1,  1],  // depot          (ring 1, terrain)
         31 => [-1,  0],  // sciencelab     (ring 1, terrain)
         41 => [0,  -1],  // bioFacility    (ring 1, terrain)
         44 => [2,   0],  // hangar         (ring 2, terrain)
@@ -50,7 +49,6 @@ class ColonySeedDemo extends Command
         25 => 5,  // CC level 5 for demo (all 15 colony zone tiles unlocked)
         27 => 1,
         28 => 2,
-        30 => 3,
         31 => 2,
         41 => 1,
         44 => 1,

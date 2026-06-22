@@ -6,7 +6,6 @@ return [
     'building_housingComplex' => 'Residential Habitat',
     'building_harvester' => 'Harvester',
     'building_bioFacility' => 'Agrarian Dome',
-    'building_depot' => 'Warehouse',
     'building_sciencelab' => 'Analytics Lab',
     'building_temple' => 'Sacred Site',
     'building_hangar' => 'Hangar',

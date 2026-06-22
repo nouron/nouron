@@ -240,7 +240,7 @@ class RunProgressServiceTest extends TestCase
         $this->setBuildingLevel(25, 3);
 
         // Drop all non-CC buildings in colony 1 to level 1 so none qualify.
-        // Testdata has buildings 25 (lv3), 28 (lv2), 30 (lv3), 31 (lv2) etc.
+        // Testdata has buildings 25 (lv3), 28 (lv2), 46 (lv3), 31 (lv2) etc.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', '!=', 25)
@@ -262,7 +262,7 @@ class RunProgressServiceTest extends TestCase
 
         // Ensure 2 non-CC buildings at level >= 2
         $this->setBuildingLevel(28, 2);
-        $this->setBuildingLevel(30, 2);
+        $this->setBuildingLevel(46, 2);
 
         // Only 2 advisors with distinct personell_ids — condition 3 must fail
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
@@ -282,7 +282,7 @@ class RunProgressServiceTest extends TestCase
 
         // Condition 2: 2 non-CC production buildings at level >= 2
         $this->setBuildingLevel(28, 2);
-        $this->setBuildingLevel(30, 2);
+        $this->setBuildingLevel(46, 2);
 
         // Condition 3: 3 available advisors with distinct personell_ids
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);

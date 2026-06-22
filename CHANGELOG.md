@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-22
+
+- **Depot-Gebäude ersatzlos entfernt** (Owner-Entscheidung nach Pro/Contra-Evaluation durch @game-designer). Depot hatte keine implementierte Spielwirkung (kein Resource-Cap-System existiert) und wurde als verwirrendes Pflichtgebäude ohne Effekt identifiziert. Statt das fehlende Cap-System nachzuziehen — was dem Roguelike-Designprinzip "aktive Produktion belohnen statt bestrafen" entgegengelaufen wäre und ein Nischenproblem (temporärer Regolith-Überschuss vor Sol 5) unverhältnismäßig adressiert hätte — wurde Depot komplett gestrichen: `config/buildings.php`, `lang/de+en/buildings.php`, `lang/de+en/techtree.php`, `MasterDataSeeder`, `ColonySeedDemo` bereinigt; neue Migration `2026_06_22_000001_remove_depot_building.php` löscht die DB-Zeilen (Tradecenter-Removal-Muster). `docs/GDD.md` aktualisiert (Gebäudeliste, Supply-/Decay-Tabellen, Techtree-Grid, §16 Befund 1 als erledigt markiert). Vier Testdateien, die Depot als generisches Stellvertreter-Gebäude nutzten, auf Krankenstation (`infirmary`, ID 46) umgestellt (`BuildingServiceTest`, `ColonyZoneDecoupleTest`, `BuildResourceSinkTest`, `RunProgressServiceTest`) — volle Suite grün (644 Tests, 1635 Assertions). Bei Bedarf kann Depot + Cap-System später erneut eingeführt werden.
+
 ## 2026-06-21
 
 - **Build-Menü-Info-Popup, größere Desktop-Colony-View, vollständige Hex-Legende** (Owner-Feedback). Im Bau-Menü fehlten Infos zum Effekt eines Gebäudes — neues Info-Icon je Bau-Chip zeigt Hover-Popup (Desktop) bzw. Tap-Popup (Mobile), Text aus bestehenden `buildings.*_desc`-Lore-Strings. Colony-View nutzt ab 1400px Breite mehr Platz (SVG-Hex-Grid größer dargestellt). Hex-Legende um Kommandozentrale/Gefahrenzone/Unpassierbar/entdecktes Ereignis ergänzt und ab 900px fix unten links angepinnt (immer aufgeklappt statt einklappbar).

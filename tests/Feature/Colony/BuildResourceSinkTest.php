@@ -21,7 +21,7 @@ use Tests\TestCase;
  *  - Nexus compound import: gated by Uplink Lv1, spends Credits, grants Werkstoffe.
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart). Start resources: 250 Regolith (3),
- * 50 Werkstoffe (4). CC building_id=25, depot=30, sciencelab=31, uplinkStation=54.
+ * 50 Werkstoffe (4). CC building_id=25, infirmary=46, sciencelab=31, uplinkStation=54.
  */
 class BuildResourceSinkTest extends TestCase
 {
@@ -92,13 +92,15 @@ class BuildResourceSinkTest extends TestCase
 
     public function test_place_deducts_regolith(): void
     {
-        config(['game.bypass.supply_checks' => true]);   // isolate the Regolith deduction
+        config(['game.bypass.supply_checks' => true]);   // isolate the resource deduction
         $this->ensureBuildableTile(1, 0);
-        $before = $this->colonyRes(self::RES_REGOLITH);
+        $rg = $this->colonyRes(self::RES_REGOLITH);
+        $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(30, 1, 0)->assertOk()->assertJsonPath('ok', true);   // depot = 40 Rg
+        $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', true);   // infirmary = 60 Rg + 25 Wk
 
-        $this->assertSame($before - 40, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($rg - 60, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($wk - 25, $this->colonyRes(self::RES_COMPOUNDS));
     }
 
     public function test_place_late_building_deducts_compounds(): void
@@ -122,9 +124,9 @@ class BuildResourceSinkTest extends TestCase
     public function test_place_rejected_without_enough_regolith(): void
     {
         $this->ensureBuildableTile(1, 0);
-        $this->setColonyRes(self::RES_REGOLITH, 10);   // depot needs 40
+        $this->setColonyRes(self::RES_REGOLITH, 10);   // infirmary needs 60
 
-        $this->place(30, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
+        $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
 
         $this->assertSame(10, $this->colonyRes(self::RES_REGOLITH), 'no Regolith deducted on a rejected build');
         $this->assertFalse(
@@ -137,7 +139,7 @@ class BuildResourceSinkTest extends TestCase
         $this->ensureBuildableTile(1, 0);
         DB::table('user_resources')->where('user_id', self::BART_USER_ID)->update(['supply' => 0]);   // free cap ≤ 0
 
-        $this->place(30, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'supply_limit');
+        $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'supply_limit');
     }
 
     // ── Level-up costs ───────────────────────────────────────────────────────
@@ -173,12 +175,12 @@ class BuildResourceSinkTest extends TestCase
     {
         $this->ensureBuildableTile(1, 0);
         config(['game.bypass.supply_checks' => true]);
-        $this->place(30, 1, 0)->assertJsonPath('ok', true);
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 30)
+        $this->place(46, 1, 0)->assertJsonPath('ok', true);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)
             ->update(['level' => 1, 'status_points' => 10]);
         $before = $this->colonyRes(self::RES_REGOLITH);
 
-        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 30])
+        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
             ->assertOk()->assertJsonPath('ok', true);
 
         $this->assertSame($before - 2, $this->colonyRes(self::RES_REGOLITH));
@@ -188,15 +190,15 @@ class BuildResourceSinkTest extends TestCase
     {
         $this->ensureBuildableTile(1, 0);
         config(['game.bypass.supply_checks' => true]);
-        $this->place(30, 1, 0)->assertJsonPath('ok', true);
-        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 30)
+        $this->place(46, 1, 0)->assertJsonPath('ok', true);
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)
             ->update(['level' => 1, 'status_points' => 10]);
         $this->setColonyRes(self::RES_REGOLITH, 0);
 
-        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 30])
+        $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
             ->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'repair_no_regolith');
 
-        $sp = (int) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 30)->value('status_points');
+        $sp = (int) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)->value('status_points');
         $this->assertSame(10, $sp, 'no repair applied when Regolith is missing');
     }
 
