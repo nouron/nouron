@@ -1,173 +1,222 @@
 <!DOCTYPE html>
 <html lang="de" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Nouron')</title>
+    <title>@yield("title", "Nouron")</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
-    <link rel="stylesheet" href="{{ asset('css/resources.css') }}?v={{ filemtime(public_path('css/resources.css')) }}">
-    <link rel="stylesheet" href="{{ asset('css/colony.css') }}?v={{ filemtime(public_path('css/colony.css')) }}">
-    <link rel="stylesheet" href="{{ asset('css/swipe.css') }}?v={{ filemtime(public_path('css/swipe.css')) }}">
-    <link rel="stylesheet" href="{{ asset('css/carousel.css') }}?v={{ filemtime(public_path('css/carousel.css')) }}">
-    @stack('styles')
+    <link rel="stylesheet" href="{{ asset("css/resources.css") }}?v={{ filemtime(public_path("css/resources.css")) }}">
+    <link rel="stylesheet" href="{{ asset("css/colony.css") }}?v={{ filemtime(public_path("css/colony.css")) }}">
+    <link rel="stylesheet" href="{{ asset("css/swipe.css") }}?v={{ filemtime(public_path("css/swipe.css")) }}">
+    <link rel="stylesheet" href="{{ asset("css/carousel.css") }}?v={{ filemtime(public_path("css/carousel.css")) }}">
+    @stack("styles")
 </head>
-<body class="@if(request()->routeIs('colony.view')) page-colony @endif">
 
-<header class="colony-header">
-    <nav>
-        <ul>
-            <li><a href="{{ route('colony.view') }}" class="colony-logo">@yield('page-nav-title', 'Nouron')</a></li>
-        </ul>
+<body class="@if (request()->routeIs("colony.view")) page-colony @endif">
 
-        {{-- Desktop nav (visible from 600px up) --}}
-        <ul class="nav-desktop">
-            <li><a href="{{ route('colony.view') }}" @class(['active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*') && !request()->routeIs('colony.hangar*')])><i class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
-            <li><a href="{{ route('advisors.index') }}" @class(['active' => request()->routeIs('advisors.*')])><i class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
-            <li><a href="{{ route('techtree.index') }}" @class(['active' => request()->routeIs('techtree.*')])><i class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
-            @if($barBuilt ?? false)
-            <li><a href="{{ route('colony.bar') }}" @class(['active' => request()->routeIs('colony.bar*')])><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
-            @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_cantina_locked') }}"><i class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
-            @endif
-            @if($hangarBuilt ?? false)
-            <li><a href="{{ route('colony.hangar') }}" @class(['active' => request()->routeIs('colony.hangar*')])><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></a></li>
-            @else
-            <li><span class="nav-link-locked" title="{{ __('colony.nav_hangar_locked') }}"><i class="bi bi-rocket"></i><span class="nav-label"> {{ __('colony.nav_hangar') }}</span></span></li>
-            @endif
-            <li>
-                <a href="{{ route('comm.log') }}" @class(['active' => request()->routeIs('comm.*')])>
-                    <i class="bi bi-journal-text"></i><span class="nav-label"> Protokoll</span>
-                    @if(($unreadNexusCount ?? 0) > 0)
-                        <span class="nav-badge">{{ $unreadNexusCount }}</span>
-                    @endif
-                </a>
-            </li>
-            <li><a href="{{ route('nexusdb.index') }}" @class(['active' => request()->routeIs('nexusdb.*')])><i class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
-        </ul>
+    <header class="colony-header">
+        <nav>
+            <ul>
+                <li><a href="{{ route("colony.view") }}" class="colony-logo">@yield("page-nav-title", "Nouron")</a></li>
+            </ul>
 
-        <ul>
-            {{-- Sol-Button: only on the main colony screen --}}
-            @auth
-            @if(($inActiveRun ?? false) && request()->routeIs('colony.view'))
-            <li class="sol-btn-wrap">@include('partials.sol-button')</li>
-            @endif
-            @endauth
-
-            {{-- Desktop: user dropdown --}}
-            <li class="nav-desktop">
-                <details class="dropdown colony-user-dropdown">
-                    <summary>{{ Auth::user()->username }}</summary>
-                    <ul>
-                        <li><a href="{{ route('lobby') }}">{{ __('lobby.nav_runs') }}</a></li>
-                        <li><a href="{{ route('user.show') }}">Profil</a></li>
-                        <li><a href="{{ route('user.settings') }}">Einstellungen</a></li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" style="margin:0">
-                                @csrf
-                                <button type="submit">Abmelden</button>
-                            </form>
-                        </li>
-                    </ul>
-                </details>
-            </li>
-
-            {{-- Mobile: hamburger button + flyout menu --}}
-            <li class="nav-mobile" x-data="{ open: false }">
-                <button class="nav-burger" @click="open = !open" :aria-expanded="open.toString()" type="button" aria-label="Menü">
-                    <i class="bi bi-list"></i>
-                </button>
-                <div class="nav-flyout" x-show="open" @click.outside="open = false" x-cloak>
-                    <a href="{{ route('colony.view') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.*') && !request()->routeIs('colony.bar*') && !request()->routeIs('colony.merchant*') && !request()->routeIs('colony.hangar*')])>
-                        <i class="bi bi-hexagon"></i> Kolonie
-                    </a>
-                    <a href="{{ route('advisors.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('advisors.*')])>
-                        <i class="bi bi-people"></i> Berater
-                    </a>
-                    <a href="{{ route('techtree.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('techtree.*')])>
-                        <i class="bi bi-diagram-3"></i> Techtree
-                    </a>
-                    @if($barBuilt ?? false)
-                    <a href="{{ route('colony.bar') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.bar*')])>
-                        <i class="bi bi-cup-hot"></i> Cantina
-                    </a>
-                    @else
-                    <span class="nav-flyout-item nav-link-locked">
-                        <i class="bi bi-cup-hot"></i>
-                        <span>Cantina
-                            <small class="nav-flyout-locked-hint">{{ __('colony.nav_cantina_locked') }}</small>
-                        </span>
-                    </span>
-                    @endif
-                    @if($hangarBuilt ?? false)
-                    <a href="{{ route('colony.hangar') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('colony.hangar*')])>
-                        <i class="bi bi-rocket"></i> {{ __('colony.nav_hangar') }}
-                    </a>
-                    @else
-                    <span class="nav-flyout-item nav-link-locked">
-                        <i class="bi bi-rocket"></i>
-                        <span>{{ __('colony.nav_hangar') }}
-                            <small class="nav-flyout-locked-hint">{{ __('colony.nav_hangar_locked') }}</small>
-                        </span>
-                    </span>
-                    @endif
-                    <a href="{{ route('comm.log') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('comm.*')])>
-                        <i class="bi bi-journal-text"></i> Protokoll
-                        @if(($unreadNexusCount ?? 0) > 0)
+            {{-- Desktop nav (visible from 600px up) --}}
+            <ul class="nav-desktop">
+                <li><a href="{{ route("colony.view") }}" @class([
+                    "active" =>
+                        request()->routeIs("colony.*") &&
+                        !request()->routeIs("colony.bar*") &&
+                        !request()->routeIs("colony.merchant*") &&
+                        !request()->routeIs("colony.hangar*"),
+                ])><i
+                            class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
+                <li><a href="{{ route("advisors.index") }}" @class(["active" => request()->routeIs("advisors.*")])><i
+                            class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
+                <li><a href="{{ route("techtree.index") }}" @class(["active" => request()->routeIs("techtree.*")])><i
+                            class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
+                @if ($barBuilt ?? false)
+                    <li><a href="{{ route("colony.bar") }}" @class(["active" => request()->routeIs("colony.bar*")])><i
+                                class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
+                @else
+                    <li><span class="nav-link-locked" title="{{ __("colony.nav_cantina_locked") }}"><i
+                                class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></span></li>
+                @endif
+                @if ($hangarBuilt ?? false)
+                    <li><a href="{{ route("colony.hangar") }}" @class(["active" => request()->routeIs("colony.hangar*")])><i
+                                class="bi bi-rocket"></i><span class="nav-label">
+                                {{ __("colony.nav_hangar") }}</span></a></li>
+                @else
+                    <li><span class="nav-link-locked" title="{{ __("colony.nav_hangar_locked") }}"><i
+                                class="bi bi-rocket"></i><span class="nav-label">
+                                {{ __("colony.nav_hangar") }}</span></span></li>
+                @endif
+                <li>
+                    <a href="{{ route("comm.log") }}" @class(["active" => request()->routeIs("comm.*")])>
+                        <i class="bi bi-journal-text"></i><span class="nav-label"> Protokoll</span>
+                        @if (($unreadNexusCount ?? 0) > 0)
                             <span class="nav-badge">{{ $unreadNexusCount }}</span>
                         @endif
                     </a>
-                    <a href="{{ route('nexusdb.index') }}" @class(['nav-flyout-item', 'active' => request()->routeIs('nexusdb.*')])>
-                        <i class="bi bi-database"></i> Nexus-DB
-                    </a>
-                    <div class="nav-flyout-divider"></div>
-                    <a href="{{ route('lobby') }}" class="nav-flyout-item"><i class="bi bi-list-check"></i> {{ __('lobby.nav_runs') }}</a>
-                    <a href="{{ route('user.show') }}" class="nav-flyout-item"><i class="bi bi-person"></i> Profil</a>
-                    <a href="{{ route('user.settings') }}" class="nav-flyout-item"><i class="bi bi-gear"></i> Einstellungen</a>
-                    <form method="POST" action="{{ route('logout') }}" style="margin:0">
-                        @csrf
-                        <button type="submit" class="nav-flyout-item nav-flyout-item--btn">
-                            <i class="bi bi-power"></i> Abmelden
-                        </button>
-                    </form>
-                </div>
-            </li>
-        </ul>
-    </nav>
+                </li>
+                <li><a href="{{ route("nexusdb.index") }}" @class(["active" => request()->routeIs("nexusdb.*")])><i
+                            class="bi bi-database"></i><span class="nav-label"> Nexus-DB</span></a></li>
+            </ul>
 
-    {{-- Resource bar --}}
-    @if(!empty($resourceBarPossessions))
-    <div class="colony-resbar">
-        @include('resources.resourcebar', [
-            'possessions'  => $resourceBarPossessions,
-            'currentSol'   => $currentSol ?? null,
-            'solLimit'     => $solLimit ?? 100,
-            'nexusDebt'    => ($inActiveRun ?? false) ? ($nexusDebt ?? null) : null,
-            'nexusDebtMax' => $nexusDebtMax ?? 12000,
-        ])
-    </div>
+            <ul>
+                {{-- Sol-Button: shown on every screen while a run is active (consistent header) --}}
+                @auth
+                    @if ($inActiveRun ?? false)
+                        <li class="sol-btn-wrap">@include("partials.sol-button")</li>
+                    @endif
+                @endauth
+
+                {{-- Desktop: user dropdown --}}
+                <li class="nav-desktop">
+                    <details class="dropdown colony-user-dropdown">
+                        <summary>{{ Auth::user()->username }}</summary>
+                        <ul>
+                            <li><a href="{{ route("lobby") }}">{{ __("lobby.nav_runs") }}</a></li>
+                            <li><a href="{{ route("user.show") }}">Profil</a></li>
+                            <li><a href="{{ route("user.settings") }}">Einstellungen</a></li>
+                            <li>
+                                <form method="POST" action="{{ route("logout") }}" style="margin:0">
+                                    @csrf
+                                    <button type="submit">Abmelden</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </details>
+                </li>
+
+                {{-- Mobile: hamburger button + flyout menu --}}
+                <li class="nav-mobile" x-data="{ open: false }">
+                    <button class="nav-burger" @click="open = !open" :aria-expanded="open.toString()" type="button"
+                        aria-label="Menü">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div class="nav-flyout" x-show="open" @click.outside="open = false" x-cloak>
+                        <a href="{{ route("colony.view") }}" @class([
+                            "nav-flyout-item",
+                            "active" =>
+                                request()->routeIs("colony.*") &&
+                                !request()->routeIs("colony.bar*") &&
+                                !request()->routeIs("colony.merchant*") &&
+                                !request()->routeIs("colony.hangar*"),
+                        ])>
+                            <i class="bi bi-hexagon"></i> Kolonie
+                        </a>
+                        <a href="{{ route("advisors.index") }}" @class([
+                            "nav-flyout-item",
+                            "active" => request()->routeIs("advisors.*"),
+                        ])>
+                            <i class="bi bi-people"></i> Berater
+                        </a>
+                        <a href="{{ route("techtree.index") }}" @class([
+                            "nav-flyout-item",
+                            "active" => request()->routeIs("techtree.*"),
+                        ])>
+                            <i class="bi bi-diagram-3"></i> Techtree
+                        </a>
+                        @if ($barBuilt ?? false)
+                            <a href="{{ route("colony.bar") }}" @class([
+                                "nav-flyout-item",
+                                "active" => request()->routeIs("colony.bar*"),
+                            ])>
+                                <i class="bi bi-cup-hot"></i> Cantina
+                            </a>
+                        @else
+                            <span class="nav-flyout-item nav-link-locked">
+                                <i class="bi bi-cup-hot"></i>
+                                <span>Cantina
+                                    <small class="nav-flyout-locked-hint">{{ __("colony.nav_cantina_locked") }}</small>
+                                </span>
+                            </span>
+                        @endif
+                        @if ($hangarBuilt ?? false)
+                            <a href="{{ route("colony.hangar") }}" @class([
+                                "nav-flyout-item",
+                                "active" => request()->routeIs("colony.hangar*"),
+                            ])>
+                                <i class="bi bi-rocket"></i> {{ __("colony.nav_hangar") }}
+                            </a>
+                        @else
+                            <span class="nav-flyout-item nav-link-locked">
+                                <i class="bi bi-rocket"></i>
+                                <span>{{ __("colony.nav_hangar") }}
+                                    <small class="nav-flyout-locked-hint">{{ __("colony.nav_hangar_locked") }}</small>
+                                </span>
+                            </span>
+                        @endif
+                        <a href="{{ route("comm.log") }}" @class(["nav-flyout-item", "active" => request()->routeIs("comm.*")])>
+                            <i class="bi bi-journal-text"></i> Protokoll
+                            @if (($unreadNexusCount ?? 0) > 0)
+                                <span class="nav-badge">{{ $unreadNexusCount }}</span>
+                            @endif
+                        </a>
+                        <a href="{{ route("nexusdb.index") }}" @class([
+                            "nav-flyout-item",
+                            "active" => request()->routeIs("nexusdb.*"),
+                        ])>
+                            <i class="bi bi-database"></i> Nexus-DB
+                        </a>
+                        <div class="nav-flyout-divider"></div>
+                        <a href="{{ route("lobby") }}" class="nav-flyout-item"><i class="bi bi-list-check"></i>
+                            {{ __("lobby.nav_runs") }}</a>
+                        <a href="{{ route("user.show") }}" class="nav-flyout-item"><i class="bi bi-person"></i>
+                            Profil</a>
+                        <a href="{{ route("user.settings") }}" class="nav-flyout-item"><i class="bi bi-gear"></i>
+                            Einstellungen</a>
+                        <form method="POST" action="{{ route("logout") }}" style="margin:0">
+                            @csrf
+                            <button type="submit" class="nav-flyout-item nav-flyout-item--btn">
+                                <i class="bi bi-power"></i> Abmelden
+                            </button>
+                        </form>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+
+        {{-- Resource bar --}}
+        @if (!empty($resourceBarPossessions))
+            <div class="colony-resbar">
+                @include("resources.resourcebar", [
+                    "possessions" => $resourceBarPossessions,
+                    "currentSol" => $currentSol ?? null,
+                    "solLimit" => $solLimit ?? 100,
+                    "nexusDebt" => $inActiveRun ?? false ? $nexusDebt ?? null : null,
+                    "nexusDebtMax" => $nexusDebtMax ?? 12000,
+                ])
+            </div>
+        @endif
+
+        @auth
+            @include("partials.hint-bar")
+        @endauth
+    </header>
+
+    <main class="colony-main">
+        @yield("content")
+    </main>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+    <script src="{{ asset("js/swipe.js") }}"></script>
+    <script src="{{ asset("js/carousel.js") }}"></script>
+    @if (request()->routeIs("colony.view"))
+        <script src="{{ asset("js/colony-hexgrid.js") }}?v={{ filemtime(public_path("js/colony-hexgrid.js")) }}"></script>
     @endif
-</header>
+    @stack("scripts")
 
-<main class="colony-main">
-    @yield('content')
-</main>
-
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
-<script src="{{ asset('js/swipe.js') }}"></script>
-<script src="{{ asset('js/carousel.js') }}"></script>
-@if(request()->routeIs('colony.view'))
-<script src="{{ asset('js/colony-hexgrid.js') }}?v={{ filemtime(public_path('js/colony-hexgrid.js')) }}"></script>
-@endif
-@stack('scripts')
-
-@auth
-    @if(Auth::user()->role === 'admin')
-        @include('partials.debug-bar')
-    @endif
-@endauth
+    @auth
+        @if (Auth::user()->role === "admin")
+            @include("partials.debug-bar")
+        @endif
+    @endauth
 </body>
+
 </html>

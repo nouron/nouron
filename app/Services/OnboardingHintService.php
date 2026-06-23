@@ -71,6 +71,32 @@ class OnboardingHintService
     }
 
     /**
+     * True the first time the given user visits a screen that should explain
+     * itself via a first-visit popup (Techtree, Nexus-DB, Cantina, Hangar — see
+     * resolveScreenKey() callers). Independent of the hint-bar rank list: this is
+     * event-based ("screen opened"), not game-state-based, so it lives outside
+     * buildHintList(). Reuses the existing dismissed_hints store with a `visit_`
+     * key prefix and the existing dismissHint()/dismiss endpoint — no new schema,
+     * no new route. Callers must call dismissHint($userId, "visit_{$screenKey}")
+     * once the player acknowledges the popup (not on render — see dismissFirstVisit
+     * for the convenience wrapper), so a reload before reading it doesn't burn it.
+     */
+    public function checkFirstVisit(string $screenKey, int $userId): bool
+    {
+        $dismissed = $this->parseDismissed(
+            DB::table('user_preferences')->where('user_id', $userId)->value('dismissed_hints')
+        );
+
+        return ! in_array("visit_{$screenKey}", $dismissed, true);
+    }
+
+    /** Convenience wrapper for acknowledging a first-visit popup (see checkFirstVisit()). */
+    public function dismissFirstVisit(string $screenKey, int $userId): void
+    {
+        $this->dismissHint($userId, "visit_{$screenKey}");
+    }
+
+    /**
      * Marks a hint as dismissed for the given user.
      * Uses updateOrInsert so it works even when no user_preferences row exists yet.
      */
@@ -203,8 +229,15 @@ class OnboardingHintService
             ],
             [
                 'rank' => 15,
+                'key' => 'hint_spend_remaining_ap',
+                'active' => $this->checkHintSpendRemainingAp($colonyId, $currentTick),
+                'text_key' => $this->spendRemainingApTextKey($colonyId),
+                'target_url' => $this->spendRemainingApTargetUrl($colonyId),
+            ],
+            [
+                'rank' => 16,
                 'key' => 'hint_end_sol',
-                'active' => $this->checkHintEndSol(),
+                'active' => $this->checkHintEndSol($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_end_sol',
                 'target_url' => '/colony/view',
             ],
@@ -267,30 +300,89 @@ class OnboardingHintService
     }
 
     /**
-     * Bridge hint (rank 14, lowest): in Sol 1 the player has done all completable
-     * Sol-1 actions but every forward hint (hint_3..6) is still tick-gated, so the
-     * hint bar would be empty and a new player does not know that "Sol beenden" is
-     * the next step (it refreshes AP and advances the run).
-     *
-     * Active only while current_tick === 0 (Sol 1) — self-clearing, never written to
-     * dismissed_hints: it disappears automatically after the first "Sol beenden".
-     * Requires the Sol-1 to-dos to be cleared (engineer hired, Harvester relocated,
-     * no urgent repair) so it never pre-empts a real action. Deliberately does NOT
-     * gate on hint_repair: repairing all three starting buildings exceeds one Sol's
-     * AP budget, so waiting for it would suppress the bridge hint indefinitely —
-     * hint_repair is higher-ranked and wins as long as the player can still repair.
+     * Bridge hint (lowest rank): true fallback now that hint_spend_remaining_ap
+     * (rank 15) catches "AP left but no missing must-have building" — this only
+     * fires once NEITHER a build-hint NOR any AP pool has anything left to spend,
+     * so "alles Wichtige erledigt" is actually true when shown. Without this gate
+     * it used to fire with e.g. 10 unused Bau-AP whenever Cantina/Agrardom/Analytik
+     * were all three already built (Sol-5 playtest finding, 2026-06-23).
      */
-    private function checkHintEndSol(): bool
+    private function checkHintEndSol(int $colonyId, int $currentTick): bool
     {
-        // Universal floor, lowest rank: this only ever surfaces once every
-        // higher-ranked hint above it has already been checked and found
-        // inactive — by construction there's nothing left to recommend, and
-        // "Sol beenden" is always a valid next action regardless of Sol number.
-        // Generalized from a Sol-1-only bridge: with the build-affordability
-        // check on the Cantina/Agrardom/Analytik hints, "nothing else to do
-        // this Sol" is just as real in Sol 2+ as it was in Sol 1 — the hint
-        // bar must never go empty while Bau-AP/resources are simply spent.
-        return true;
+        return ! $this->checkHintSpendRemainingAp($colonyId, $currentTick);
+    }
+
+    /**
+     * Catch hint (rank 15): the three Sol-3-Wahlfreiheit buildings (Cantina/
+     * Agrardom/Analytik) are all already placed — so the build-hints above no
+     * longer have anything to suggest — but at least one AP pool still has
+     * unspent points this Sol. Surfaces the pool with the most AP left so the
+     * hint bar never falsely claims "nothing to do" while AP sits idle.
+     *
+     * Deliberately does NOT replace the build-hints: it only ever fires once
+     * isBuildingPlaced() is true for all three, so a genuinely missing
+     * must-have building always wins first.
+     */
+    private function checkHintSpendRemainingAp(int $colonyId, int $currentTick): bool
+    {
+        if (! $this->allChoiceBuildingsPlaced($colonyId)) {
+            return false;
+        }
+
+        return $this->bestRemainingApPool($colonyId) !== null;
+    }
+
+    private function allChoiceBuildingsPlaced(int $colonyId): bool
+    {
+        return $this->isBuildingPlaced($colonyId, 52)  // Cantina
+            && $this->isBuildingPlaced($colonyId, 41)  // Agrardom (bioFacility)
+            && $this->isBuildingPlaced($colonyId, 31); // Analytik-Labor (sciencelab)
+    }
+
+    /**
+     * Picks the AP pool with the most unspent points this Sol. Ties broken by
+     * fixed pool priority (construction > research > navigation > economy) —
+     * matches the order in which those mechanics were introduced to the player.
+     * Returns null once every pool is empty (the real "nothing left" state).
+     *
+     * @return 'construction'|'research'|'navigation'|'economy'|null
+     */
+    private function bestRemainingApPool(int $colonyId): ?string
+    {
+        $pools = [
+            'construction' => $this->personellService->getConstructionPoints($colonyId),
+            'research' => $this->personellService->getResearchPoints($colonyId),
+            'navigation' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
+            'economy' => $this->personellService->getEconomyPoints($colonyId),
+        ];
+
+        $best = null;
+        foreach ($pools as $pool => $amount) {
+            if ($amount > 0 && ($best === null || $amount > $pools[$best])) {
+                $best = $pool;
+            }
+        }
+
+        return $best;
+    }
+
+    private function spendRemainingApTextKey(int $colonyId): string
+    {
+        return match ($this->bestRemainingApPool($colonyId)) {
+            'research' => 'colony.onboarding_hint_spend_ap_research',
+            'navigation' => 'colony.onboarding_hint_spend_ap_navigation',
+            'economy' => 'colony.onboarding_hint_spend_ap_economy',
+            default => 'colony.onboarding_hint_spend_ap_construction',
+        };
+    }
+
+    private function spendRemainingApTargetUrl(int $colonyId): string
+    {
+        return match ($this->bestRemainingApPool($colonyId)) {
+            'research' => '/techtree',
+            'economy' => '/colony/bar',
+            default => '/colony/view',
+        };
     }
 
     /**

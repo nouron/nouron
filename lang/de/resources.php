@@ -20,7 +20,17 @@ return [
     'popup_nx_desc' => 'Offener Kredit beim Nexus. Überschreitest du das Limit, zieht der Nexus die Konzession ein.',
 
     'popup_sup_title' => 'Supply',
-    'popup_sup_desc' => 'Versorgungskapazität der Kolonie. Begrenzt Flottengröße und aktive Einheiten.',
+    'popup_sup_desc' => 'Versorgungskapazität der Kolonie. Begrenzt Flottengröße und aktive Einheiten. Angezeigt wird der freie Rest — Gebäude/Forschung/Berater verbrauchen davon.',
+    'popup_sup_source_cc' => 'Kommandozentrale',
+    'popup_sup_source_housing' => 'Wohnhabitat',
+    'popup_sup_source_knowledge' => 'Kenntnisse',
+    'popup_sup_used_buildings' => 'Gebäude',
+    'popup_sup_used_researches' => 'Forschung',
+    'popup_sup_used_advisors' => 'Berater',
+
+    'popup_ap_base' => 'Basis-AP',
+    'popup_ap_advisor' => 'durch Berater',
+    'popup_ap_trust_multiplier' => 'Vertrauen-Multiplikator',
 
     'popup_rg_title' => 'Regolith',
     'popup_rg_desc' => 'Primärer Baustoff — gewonnen durch den Harvester. Basis für alle Gebäude.',

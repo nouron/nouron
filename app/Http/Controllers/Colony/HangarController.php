@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Colony;
 use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\HangarService;
+use App\Services\OnboardingHintService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,7 @@ class HangarController extends BaseController
         private readonly ColonyService $colonyService,
         private readonly HangarService $hangarService,
         private readonly PersonellService $personellService,
+        private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
     }
@@ -74,6 +76,8 @@ class HangarController extends BaseController
             ->values()
             ->all();
 
+        $firstVisit = $this->onboardingHintService->checkFirstVisit('hangar', Auth::id());
+
         return view('colony.hangar', compact(
             'slots',
             'pendingShips',
@@ -84,6 +88,7 @@ class HangarController extends BaseController
             'hasAktivierterKonsul',
             'verfuegbareVerhandlungsAP',
             'commissionedShipIds',
+            'firstVisit',
         ));
     }
 

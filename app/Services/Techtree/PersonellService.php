@@ -53,9 +53,21 @@ class PersonellService
 
     public function getTotalActionPoints(string $type, int $scopeId): int
     {
+        return $this->getApBreakdown($type, $scopeId)['total'];
+    }
+
+    /**
+     * Breakdown of a colony's total AP for one pool — base/advisor/multiplier
+     * components, for display in the resource-bar AP chip popups (so the player
+     * can see e.g. "6 Basis-AP + 4 AP durch Berater × 0.8 Vertrauen = 8").
+     *
+     * @return array{base: int, advisor: int, multiplier: float, total: int}
+     */
+    public function getApBreakdown(string $type, int $scopeId): array
+    {
         [$personellId, $scope] = $this->resolveType($type);
         if (! $personellId) {
-            return 0;
+            return ['base' => 0, 'advisor' => 0, 'multiplier' => 1.0, 'total' => 0];
         }
 
         $baseAp = (int) config('game.ap.base', 6);
@@ -69,7 +81,12 @@ class PersonellService
         $trust = $this->trustService->getTrust($scopeId);
         $multiplier = $this->trustService->getApMultiplier($trust);
 
-        return (int) round(($baseAp + $advisorAp) * $multiplier);
+        return [
+            'base' => $baseAp,
+            'advisor' => (int) $advisorAp,
+            'multiplier' => $multiplier,
+            'total' => (int) round(($baseAp + $advisorAp) * $multiplier),
+        ];
     }
 
     public function getAvailableActionPoints(string $type, int $scopeId): int
