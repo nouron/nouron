@@ -364,10 +364,11 @@ class OnboardingHintServiceTest extends TestCase
 
         // CC is level 2 → both hint_3 (gate tick 1, requires level < 2) and the CC
         // pre-invest hint are silent. The explore hint is Sol-1-only now
-        // (until_tick 0), so at Sol 2 it no longer fills the gap either. hint_end_sol
-        // (rank 15) is the universal floor — it always wins once nothing else qualifies.
+        // (until_tick 0), so at Sol 2 it no longer fills the gap either.
+        // suppressLateHints() places Cantina/Agrardom/Analytik, so unused Bau-AP
+        // surfaces hint_spend_remaining_ap (rank 15) instead of the end-sol floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
     }
 
     // ── Hint advisor_slot2: CC2 unlocks a second advisor slot (rank 6) ──────
@@ -566,8 +567,9 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_explore_hint_silent_when_no_fog_left(): void
     {
-        // No unexplored tiles → explore silent; CC level 2 → cc_invest silent. At
-        // Sol 1 the bridge hint (rank 15) is the only remaining floor.
+        // No unexplored tiles → explore silent; CC level 2 → cc_invest silent.
+        // suppressLateHints() places Cantina/Agrardom/Analytik, so unused Bau-AP
+        // surfaces hint_spend_remaining_ap (rank 15) rather than the end-sol floor.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -578,7 +580,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame('hint_end_sol', $hint['key']);
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
     }
 
     // ── Bridge hint: "Sol beenden" (rank 11, Sol-1 only) ─────────────────────
@@ -586,9 +588,10 @@ class OnboardingHintServiceTest extends TestCase
     public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
     {
         // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full.
-        // The bridge hint is now the lowest-priority Sol-1 floor (rank 15): it only
-        // surfaces once the CC pre-invest hint (CC >= level 2), the advisor-slot-2
-        // hint (slot filled), and the explore hint (no fog left) are all exhausted.
+        // suppressLateHints() places Cantina/Agrardom/Analytik, so once the CC
+        // pre-invest hint (CC >= level 2), the advisor-slot-2 hint (slot filled), and
+        // the explore hint (no fog left) are all exhausted, unused Bau-AP surfaces
+        // hint_spend_remaining_ap (rank 15) rather than the true end-sol floor.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -600,8 +603,70 @@ class OnboardingHintServiceTest extends TestCase
 
         $this->assertNotNull($hint);
         $this->assertSame(15, $hint['rank']);
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_spend_ap_construction', $hint['text_key']);
+    }
+
+    public function test_end_sol_hint_fires_when_choice_buildings_placed_and_no_ap_left(): void
+    {
+        // Genuine "nothing left" state: Cantina/Agrardom/Analytik all placed AND
+        // every AP pool exhausted — this is the only case hint_end_sol should win.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $this->clearFog();
+        $this->exhaustAllActionPoints();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(16, $hint['rank']);
         $this->assertSame('hint_end_sol', $hint['key']);
         $this->assertSame('colony.onboarding_end_sol', $hint['text_key']);
+    }
+
+    public function test_spend_remaining_ap_hint_silent_while_a_choice_building_is_missing(): void
+    {
+        // Only Cantina + Agrardom placed, Analytik still missing — even with idle
+        // Bau-AP this must NOT fire; the missing must-have building hint wins instead.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 52,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 5, 'tile_y' => 5,
+        ]);
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 41,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 6, 'tile_y' => 5,
+        ]);
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_spend_remaining_ap', $hint['key']);
+    }
+
+    public function test_spend_remaining_ap_hint_points_to_research_when_construction_exhausted(): void
+    {
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $this->clearFog();
+
+        $this->app->make(PersonellService::class)->lockActionPoints('construction', $this->colonyId, 9999);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_spend_ap_research', $hint['text_key']);
+        $this->assertSame('/techtree', $hint['target_url']);
     }
 
     public function test_end_sol_bridge_hint_self_clears_after_sol_advance(): void
@@ -1009,6 +1074,15 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('colony_tiles')
             ->where('colony_id', $this->colonyId)
             ->update(['is_explored' => 1]);
+    }
+
+    /** Locks every AP pool (construction/research/navigation/economy) so none remain unspent. */
+    private function exhaustAllActionPoints(): void
+    {
+        $personellService = $this->app->make(PersonellService::class);
+        foreach (['construction', 'research', 'navigation', 'economy'] as $type) {
+            $personellService->lockActionPoints($type, $this->colonyId, 9999);
+        }
     }
 
     /** Suppress hints 4, 5, and 6 so they don't interfere with lower-rank tests. */

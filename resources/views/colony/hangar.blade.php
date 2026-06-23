@@ -475,4 +475,10 @@
         </dialog>
 
     </div>{{-- /.hangar-page --}}
+
+    @include("partials.first-visit-popup", [
+        "firstVisitKey" => "hangar",
+        "firstVisitTitle" => "colony.first_visit_hangar_title",
+        "firstVisitText" => "colony.first_visit_hangar_text",
+    ])
 @endsection

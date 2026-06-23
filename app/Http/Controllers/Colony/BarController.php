@@ -8,6 +8,7 @@ use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
+use App\Services\OnboardingHintService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +26,7 @@ class BarController extends BaseController
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
         private readonly EventService $eventService,
+        private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
     }
@@ -71,9 +73,12 @@ class BarController extends BaseController
             }
         }
 
+        $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
+
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
+            'firstVisit',
         ));
     }
 

@@ -97,7 +97,23 @@ return [
     'onboarding_hint_cc_invest' => 'Restliche Bau-AP nicht verfallen lassen — tippe die Kommandozentrale an und investiere in den Ausbau. Was du jetzt einzahlst, bleibt erhalten; so steht Level 2 schon im nächsten Sol.',
     'onboarding_hint_explore' => 'Navigations-AP einsetzen und nach draußen erkunden (1 Nav-AP pro Feld) — jenseits der Kolonie liegen Regolith-Vorkommen für den Harvester und unbekannte Signale. Das nahe Gelände erschließt die Kommandozentrale ohnehin selbst.',
     'onboarding_end_sol' => 'Sol beenden — für diesen Sol ist alles Wichtige erledigt. Beende den Sol, um Aktionspunkte aufzufrischen und die Kolonie voranzubringen.',
+    'onboarding_hint_spend_ap_construction' => 'Noch Bau-AP übrig — ein bestehendes Gebäude weiter ausbauen, statt den Rest verfallen zu lassen.',
+    'onboarding_hint_spend_ap_research' => 'Noch Forschungs-AP übrig — im Techtree eine Kenntnis weiter erforschen.',
+    'onboarding_hint_spend_ap_navigation' => 'Noch Navigations-AP übrig — weiter erkunden, jenseits der Kolonie liegt noch unentdecktes Gelände.',
+    'onboarding_hint_spend_ap_economy' => 'Noch Wirtschafts-AP übrig — in der Cantina nach Angeboten schauen.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 + Kommandozentrale lv2 erforderlich.',
+
+    // ── First-visit popups (Techtree/Nexus-DB/Cantina/Hangar) ──────────────────
+
+    'first_visit_dismiss' => 'Verstanden',
+    'first_visit_techtree_title' => 'Techtree',
+    'first_visit_techtree_text' => 'Hier weist du Forschungs-AP einer Kenntnis zu. Jede Kenntnis braucht mehrere Sols, um ein Level zu erreichen — bereits eingezahlte AP bleiben erhalten, auch wenn ein Sol nicht reicht.',
+    'first_visit_cantina_title' => 'Cantina',
+    'first_visit_cantina_text' => 'Hier tauschen NPC-Gäste Ressourcen gegen Credits oder Einmal-Items, und der Reisende Händler macht gelegentlich Station. Angebote laufen nach einigen Sols ab — regelmäßig vorbeischauen lohnt sich.',
+    'first_visit_hangar_title' => 'Hangar',
+    'first_visit_hangar_text' => 'Hier baust und entsendest du Schiffe für Missionen. Entsendungen kosten Organika als Proviant und dauern mehrere Sols — Schiffe können zwischendurch zurückgerufen werden.',
+    'first_visit_nexusdb_title' => 'Nexus-DB',
+    'first_visit_nexusdb_text' => 'Das Almanach der Kolonie — Nachschlagewerk zu Gebäuden, Kenntnissen, Schiffen und Lore. Rein informativ, keine Aktion erforderlich.',
 
     // ── Onboarding — Nexus-Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
 

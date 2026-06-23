@@ -196,7 +196,9 @@ class TechtreeController extends BaseController
 
         $pageData = ['phases' => $phases];
 
-        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank'));
+        $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
+
+        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank', 'firstVisit'));
     }
 
     private static function buildingImageSlug(string $key): string
