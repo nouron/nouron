@@ -34,6 +34,65 @@
             default => "",
         };
 
+        // Builds a stack of ".res-popup-row" lines from [label => value] pairs —
+        // reused for the Supply and AP chip breakdown popups below.
+        $breakdownRows = function (array $rows) {
+            $html = "";
+            foreach ($rows as $label => $value) {
+                $html .=
+                    '<div class="res-popup-row"><span class="res-popup-label">' .
+                    $label .
+                    "</span><span>" .
+                    $value .
+                    "</span></div>";
+            }
+
+            return $html;
+        };
+
+        // Supply chip popup extra: cap composition (CC/Housing/Knowledge) + usage
+        // breakdown (Buildings/Researches/Advisors) — see ResourcesService::getSupplyBreakdown().
+        $supplyPopupExtra = isset($supplyBreakdown)
+            ? $breakdownRows(
+                    array_filter([
+                        __("resources.popup_sup_source_cc") => $supplyBreakdown["sources"]["cc"],
+                        __("resources.popup_sup_source_housing") => $supplyBreakdown["sources"]["housing"],
+                        __("resources.popup_sup_source_knowledge") => $supplyBreakdown["sources"]["knowledge"],
+                    ]),
+                ) .
+                '<div class="res-popup-extra"></div>' .
+                $breakdownRows(
+                    array_filter([
+                        __("resources.popup_sup_used_buildings") => -$supplyBreakdown["used"]["buildings"],
+                        __("resources.popup_sup_used_researches") => -$supplyBreakdown["used"]["researches"],
+                        __("resources.popup_sup_used_advisors") => -$supplyBreakdown["used"]["advisors"],
+                    ]),
+                )
+            : null;
+
+        // AP chip popup extras: base + advisor + trust-multiplier composition —
+        // see PersonellService::getApBreakdown().
+        $apPopupExtra = function (?array $breakdown) use ($breakdownRows) {
+            if (!$breakdown) {
+                return null;
+            }
+
+            return $breakdownRows(
+                array_filter(
+                    [
+                        __("resources.popup_ap_base") => $breakdown["base"],
+                        __("resources.popup_ap_advisor") => $breakdown["advisor"],
+                    ],
+                    fn($v) => $v !== 0,
+                ),
+            ) .
+                ($breakdown["multiplier"] != 1.0
+                    ? $breakdownRows([
+                        __("resources.popup_ap_trust_multiplier") => "× " . number_format($breakdown["multiplier"], 2),
+                    ])
+                    : "");
+        };
+
         // Popup extra for CR chip (NX info row)
         $crPopupExtra = $hasNexus
             ? '<div class="res-popup-nx-row ' .
@@ -81,15 +140,22 @@
             </span>
         @endif
 
-        {{-- Supply chip --}}
+        {{-- Supply chip — shows free/cap (not just cap) so the player sees how much
+         headroom is left before new buildings/advisors/research are blocked. --}}
         @if (isset($primary[2]))
             <span class="res-chip res-Sup" x-data="{ open: false }" @mouseenter="open=true" @mouseleave="open=false"
                 @click.stop="open=!open" @click.outside="open=false" style="position:relative;cursor:default">
                 <span class="res-abbr">SUP</span>
-                <span class="res-amount">{{ number_format($primary[2]["amount"] ?? 0, 0, ",", ".") }}</span>
+                <span class="res-amount">
+                    {{ number_format($supplyBreakdown["free"] ?? ($primary[2]["amount"] ?? 0), 0, ",", ".") }}
+                    @if (isset($supplyBreakdown))
+                        / {{ number_format($supplyBreakdown["cap"], 0, ",", ".") }}
+                    @endif
+                </span>
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_sup_title"),
                     "popup_desc" => __("resources.popup_sup_desc"),
+                    "popup_extra" => $supplyPopupExtra,
                 ])
             </span>
         @endif
@@ -142,6 +208,7 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_nav_ap_title"),
                     "popup_desc" => __("resources.popup_nav_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown["navigation"] ?? null),
                 ])
             </span>
             <span id="resbar-ap-build" class="ap-chip ap-chip--build" x-data="{ open: false }" @mouseenter="open=true"
@@ -151,6 +218,7 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_bau_ap_title"),
                     "popup_desc" => __("resources.popup_bau_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown["construction"] ?? null),
                 ])
             </span>
             <span id="resbar-ap-research" class="ap-chip ap-chip--research" x-data="{ open: false }" @mouseenter="open=true"
@@ -160,6 +228,7 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_research_ap_title"),
                     "popup_desc" => __("resources.popup_research_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown["research"] ?? null),
                 ])
             </span>
             <span id="resbar-ap-economy" class="ap-chip ap-chip--economy" x-data="{ open: false }" @mouseenter="open=true"
@@ -169,6 +238,7 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_economy_ap_title"),
                     "popup_desc" => __("resources.popup_economy_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown["economy"] ?? null),
                 ])
             </span>
             <span id="resbar-ap-strategy" class="ap-chip ap-chip--strategy" x-data="{ open: false }" @mouseenter="open=true"
@@ -178,6 +248,7 @@
                 @include("partials.res-popup", [
                     "popup_title" => __("resources.popup_strategy_ap_title"),
                     "popup_desc" => __("resources.popup_strategy_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown["strategy"] ?? null),
                 ])
             </span>
         @endif

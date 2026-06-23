@@ -173,6 +173,15 @@ class AppServiceProvider extends ServiceProvider
                     $view->with('economyAp', $personellService->getAvailableActionPoints('economy', $colonyId));
                     $view->with('strategyAp', $personellService->getAvailableActionPoints('strategy', $colonyId));
 
+                    $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
+                    $view->with('apBreakdown', [
+                        'navigation' => $personellService->getApBreakdown('navigation', $colonyId),
+                        'construction' => $personellService->getApBreakdown('construction', $colonyId),
+                        'research' => $personellService->getApBreakdown('research', $colonyId),
+                        'economy' => $personellService->getApBreakdown('economy', $colonyId),
+                        'strategy' => $personellService->getApBreakdown('strategy', $colonyId),
+                    ]);
+
                     $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
                     if ($hint) {
                         $hint['text'] = __($hint['text_key']);

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyResource;
 use App\Models\Resource;
@@ -208,13 +209,45 @@ class ResourcesService
      */
     public function getFreeSupply(int $colonyId): int
     {
+        return $this->getSupplyBreakdown($colonyId)['free'];
+    }
+
+    /**
+     * Breakdown of a colony's supply cap and usage, for display in the resource-bar
+     * SUP chip popup (so the player can see e.g. "CC → 10, 3× Wohnhabitat → 24" and
+     * where the used supply actually goes, instead of just a single opaque number).
+     *
+     * @return array{cap: int, free: int, sources: array{cc: int, housing: int, knowledge: int}, used: array{buildings: int, researches: int, advisors: int}}
+     */
+    public function getSupplyBreakdown(int $colonyId): array
+    {
         $colony = $this->colonyService->getColony($colonyId);
         if (! $colony) {
-            return 0;
+            return [
+                'cap' => 0, 'free' => 0,
+                'sources' => ['cc' => 0, 'housing' => 0, 'knowledge' => 0],
+                'used' => ['buildings' => 0, 'researches' => 0, 'advisors' => 0],
+            ];
         }
 
         $userResource = $this->getUserResources(['user_id' => $colony->user_id])->first();
         $cap = $userResource ? (int) $userResource->supply : 0;
+
+        // Cap sources — mirrors GameTick::calculateSupply() exactly (display-only,
+        // does not recompute the cap; just explains the number GameTick already set).
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::CommandCenter->value)
+            ->value('level');
+        $ccContribution = $ccLevel > 0 ? (int) config('buildings.commandCenter.supply_cap', 10) : 0;
+
+        $housingLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Housing->value)
+            ->sum('level');
+        $housingContribution = $housingLevel * (int) config('buildings.housingComplex.supply_cap', 8);
+
+        $knowledgeContribution = max(0, $cap - $ccContribution - $housingContribution);
 
         $usedBuildings = (int) DB::table('colony_buildings as cb')
             ->join('buildings as b', 'b.id', '=', 'cb.building_id')
@@ -233,9 +266,12 @@ class ResourcesService
             ->count();
         $usedAdvisors = $advisorCount * (int) config('game.supply.cost_advisor', 2);
 
-        $used = $usedBuildings + $usedResearches + $usedAdvisors;
-
-        return $cap - $used;
+        return [
+            'cap' => $cap,
+            'free' => $cap - ($usedBuildings + $usedResearches + $usedAdvisors),
+            'sources' => ['cc' => $ccContribution, 'housing' => $housingContribution, 'knowledge' => $knowledgeContribution],
+            'used' => ['buildings' => $usedBuildings, 'researches' => $usedResearches, 'advisors' => $usedAdvisors],
+        ];
     }
 
     /**
