@@ -94,8 +94,8 @@
             </span>
         @endif
 
-        {{-- Trust — thematically next to Supply (colony view only; value from hexview). --}}
-        @if (isset($trust) && request()->routeIs("colony.view"))
+        {{-- Trust — thematically next to Supply, shared globally (see AppServiceProvider). --}}
+        @if (isset($trust))
             <span id="resbar-ap-trust"
                 class="ap-chip {{ $trust >= 20 ? "ap-chip--trust-pos" : ($trust < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}"
                 x-data="{ open: false }" @mouseenter="open=true" @mouseleave="open=false" @click.stop="open=!open"
@@ -130,9 +130,10 @@
             @endforeach
         @endif
 
-        {{-- AP + trust chips (colony view only — values come from ColonyController::hexview).
-         IDs are used by colony-hexgrid.js to sync values + flash after AJAX actions. --}}
-        @if (isset($navAp, $constructionAp, $trust) && request()->routeIs("colony.view"))
+        {{-- AP + trust chips — shared globally (see AppServiceProvider). On colony.view
+         these IDs are also used by colony-hexgrid.js to sync values + flash after AJAX
+         actions; on other screens they just reflect the server-rendered values. --}}
+        @if (isset($navAp, $constructionAp, $trust))
             <span class="res-divider" aria-hidden="true"></span>
             <span id="resbar-ap-nav" class="ap-chip ap-chip--nav" x-data="{ open: false }" @mouseenter="open=true"
                 @mouseleave="open=false" @click.stop="open=!open" @click.outside="open=false"

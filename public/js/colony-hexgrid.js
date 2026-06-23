@@ -100,7 +100,6 @@ function colonyHexView(config) {
         currentSol: config.currentSol ?? 0,
         solLimit: config.solLimit ?? 100,
         activeHint: config.activeHint ?? null,
-        completedHint: null,
         merchantVisit: config.merchantVisit ?? null,
         merchantItems: config.merchantItems ?? [],
         uplinkBuildingId: config.uplinkBuildingId ?? 54,
@@ -141,6 +140,14 @@ function colonyHexView(config) {
                     const match = this.availableBuildings.find((b) => b.building_id === buildId);
                     if (match) this.selectPendingBuilding(match);
                 }
+            });
+
+            // The hint bar now lives in layouts/colony.blade.php (partials/hint-bar.blade.php)
+            // and owns its own dismiss flow — mirror its result here so grid highlighting
+            // (which still depends on this.activeHint) stays in sync.
+            window.addEventListener('hint:dismissed', (e) => {
+                this.activeHint = e.detail;
+                this.redrawGrid();
             });
         },
 
@@ -546,45 +553,18 @@ function colonyHexView(config) {
             if ('activeHint' in res) this.setActiveHint(res.activeHint);
         },
 
-        // Swaps in a new hint with a brief "done" confirmation for the old one —
-        // skipped when the key is unchanged (e.g. just a text refresh).
+        // Updates grid-highlight state and broadcasts the change to the global hint
+        // bar (partials/hint-bar.blade.php) via a window event — that component owns
+        // the "done" confirmation flash and the dismiss button now.
         setActiveHint(newHint) {
-            const newKey = newHint?.key ?? null;
-            const oldHint = this.activeHint;
-            if (newKey === (oldHint?.key ?? null)) {
-                this.activeHint = newHint;
-                return;
-            }
-            if (oldHint) {
-                this.completedHint = oldHint;
-                clearTimeout(this._hintCompleteTimer);
-                this._hintCompleteTimer = setTimeout(() => {
-                    this.completedHint = null;
-                }, 1000);
-            }
             this.activeHint = newHint;
-            this.$nextTick(() => {
-                const bar = this.$refs.hintBar;
-                if (!bar) return;
-                bar.classList.remove('hint-bar--enter');
-                void bar.offsetWidth;
-                bar.classList.add('hint-bar--enter');
-            });
+            window.dispatchEvent(new CustomEvent('hint:sync', { detail: newHint }));
         },
 
         // ── Merchant ──────────────────────────────────────────────────────────
 
         hasMerchant() {
             return this.merchantVisit !== null;
-        },
-
-        async dismissHint() {
-            if (!this.activeHint) return;
-            const res = await this.post(this.routes.dismissHint, { hint_key: this.activeHint.key });
-            if (res.ok) {
-                this.setActiveHint(res.hint ?? null);
-                this.$nextTick(() => this.redrawGrid());
-            }
         },
 
         updateTile(tile) {

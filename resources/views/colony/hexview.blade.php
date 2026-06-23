@@ -32,7 +32,6 @@
                 placeBuilding: '{{ route("colony.building.place") }}',
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
-                dismissHint: '{{ route("colony.hint.dismiss") }}',
                 nexusImport: '{{ route("colony.nexus.import") }}',
             },
             i18n: {
@@ -72,26 +71,10 @@
                     🛸 {{ __("colony.merchant_in_system") }}
                 </a>
 
-                {{-- Onboarding hint bar — reactive, driven by colonyHexView.activeHint.
-                 Updates automatically after any AJAX action that changes hint state.
-                 completedHint briefly shows the just-resolved hint with a checkmark,
-                 fading out underneath while the new activeHint slides in from above
-                 (see setActiveHint() in colony-hexgrid.js). --}}
-                <div class="hint-bar-stack">
-                    <div class="hint-bar hint-bar--done" x-show="completedHint" x-cloak>
-                        <span class="hint-bar__icon hint-bar__icon--done" aria-hidden="true">✓</span>
-                        <span class="hint-bar__text" x-text="completedHint?.text"></span>
-                    </div>
-                    <div class="hint-bar" x-show="activeHint" x-cloak x-ref="hintBar">
-                        <span class="hint-bar__icon" aria-hidden="true"
-                            title="{{ __("colony.hint_not_mandatory") }}">!</span>
-                        <span class="hint-bar__text" x-text="activeHint?.text"></span>
-                        <span class="hint-bar__badge"
-                            title="{{ __("colony.hint_not_mandatory") }}">{{ __("colony.hint_suggestion_label") }}</span>
-                        <a class="hint-bar__link" :href="activeHint?.target_url">→</a>
-                        <button class="hint-bar__dismiss" aria-label="Dismiss hint" @click="dismissHint()">×</button>
-                    </div>
-                </div>
+                {{-- Onboarding hint bar now lives in layouts/colony.blade.php (shown on every
+                 screen) — colonyHexView still tracks activeHint internally for hex-grid
+                 highlighting and broadcasts changes via the `hint:sync` window event;
+                 see setActiveHint() in colony-hexgrid.js and partials/hint-bar.blade.php. --}}
 
                 {{-- Supply-cap warning banner (Trigger 2) — server-side flag set by game tick --}}
                 @if ($supplyCapFull)
@@ -270,8 +253,7 @@
 
                 {{-- Only labels build/harvester modes. In normal tile mode the tabs
                  (building) or the terrain <h3> name the content themselves. --}}
-                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode"
-                    x-cloak>
+                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode" x-cloak>
                     <h3
                         x-text="harvesterMoveMode ? '{{ __("colony.harvester_move") }}' : '{{ __("colony.build_mode_title") }}'">
                     </h3>

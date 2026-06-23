@@ -6,6 +6,7 @@ use App\Models\Run;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
+use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
@@ -157,6 +158,27 @@ class AppServiceProvider extends ServiceProvider
                 // Nexus-Funk unread badge count for colony nav
                 $unreadNexusCount = app(EventService::class)->countUnreadNexus(Auth::id());
                 $view->with('unreadNexusCount', $unreadNexusCount);
+
+                // Trust + AP pools + active onboarding hint for the header bars — shared
+                // across every screen (not just colony.view) so nav/resource/hint bars look
+                // identical everywhere. ColonyController::hexview computes these the same
+                // way and passes its own copy through @extends' shared scope, which simply
+                // overwrites these with identical numbers there — no conflict.
+                if ($colonyId) {
+                    $personellService = app(PersonellService::class);
+                    $view->with('trust', (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 12)->value('amount') ?? 0));
+                    $view->with('navAp', $personellService->getAvailableActionPoints('navigation', $colonyId));
+                    $view->with('constructionAp', $personellService->getAvailableActionPoints('construction', $colonyId));
+                    $view->with('researchAp', $personellService->getAvailableActionPoints('research', $colonyId));
+                    $view->with('economyAp', $personellService->getAvailableActionPoints('economy', $colonyId));
+                    $view->with('strategyAp', $personellService->getAvailableActionPoints('strategy', $colonyId));
+
+                    $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
+                    if ($hint) {
+                        $hint['text'] = __($hint['text_key']);
+                    }
+                    $view->with('activeHint', $hint);
+                }
             }
         });
     }
