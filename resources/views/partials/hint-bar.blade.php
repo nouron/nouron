@@ -6,10 +6,14 @@
     the `hint:sync` window event (dispatched from colony-hexgrid.js::setActiveHint). Other
     screens never change the hint mid-page, so the initial server value is all they need.
 --}}
-<div class="hint-bar-stack" x-data="hintBar({
-    initialHint: @json($activeHint ?? null),
-    dismissRoute: @js(route("colony.hint.dismiss")),
-})">
+<script>
+    window.__hintBarData = {
+        initialHint: @json($activeHint ?? null),
+        dismissRoute: @js(route("colony.hint.dismiss")),
+    };
+</script>
+
+<div class="hint-bar-stack" x-data="hintBar(window.__hintBarData)">
     <div class="hint-bar hint-bar--done" x-show="completedHint" x-cloak>
         <span class="hint-bar__icon hint-bar__icon--done" aria-hidden="true">✓</span>
         <span class="hint-bar__text" x-text="completedHint?.text"></span>
