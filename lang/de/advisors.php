@@ -37,8 +37,8 @@ return [
     'error_insufficient_credits' => 'Nicht genug Credits, um diesen Berater einzustellen.',
     'error_dismissed_this_tick' => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic' => 'Berater konnte nicht eingestellt werden.',
-    'error_path_building_missing' => 'Pfad-Gebäude fehlt.',
-    'desc_path_open' => 'Noch kein Pfad gewählt.',
+    'error_path_building_missing' => 'Das zugehörige Pfadgebäude muss zuerst gebaut und platziert werden.',
+    'desc_path_open' => 'Noch kein Pfadgebäude gebaut — Sciencelab, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
 
     // Hire/fire confirmation dialogs
     'dialog_hire_title' => 'Berater einstellen',
