@@ -37,7 +37,7 @@ class MasterDataSeeder extends Seeder
             41 => [20, 0.17, 2],   // silicatemine      — ticks_until_lost 120
             42 => [20, 0.17, 2],   // waterextractor    — ticks_until_lost 120
 
-            44 => [20, 0.12, 20],  // civilianSpaceyard — ticks_until_lost 166
+            44 => [20, 0.12, 6],   // hangar — ships carry their own supply cost; building slot is cheap
             45 => [20, 0.13, 4],   // parc              — ticks_until_lost 150
             46 => [20, 0.20, 10],  // hospital          — ticks_until_lost 100
             48 => [20, 0.17, 8],   // public_security   — ticks_until_lost 120

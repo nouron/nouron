@@ -110,18 +110,17 @@ return [
 
     // Hangar — CC gate lowered from Lv3 to Lv2 (2026-06-24): one of three
     // parallel "path" buildings (sciencelab/hangar/bar), see GDD §13
-    // "Pfadwahl ab Sol 3" + §4 "Pfadwahl ab Sol 3". Only 1 of the 3 path
-    // buildings can be placed at CC Lv2 — the build-gate (CC-level − 1 ≥
-    // count of path buildings already placed) is enforced in
-    // ColonyService::placeBuilding, NOT in this config. supply_cost (12) is
-    // deliberately left higher than sciencelab (8) / bar (4) — Path-B's
-    // opportunity cost is expressed via Supply-Cap pressure rather than AP,
-    // see GDD §13 balance concern. Building it grants the matching generic
-    // advisor slot (Raumfahrer) — see AdvisorController::PATH_BUILDINGS.
+    // "Pfadwahl ab Sol 3". Only 1 of the 3 path buildings can be placed at
+    // CC Lv2 — the build-gate (CC-level − 1 ≥ count of path buildings already
+    // placed) is enforced in ColonyService::placeBuilding, NOT in this config.
+    // supply_cost (6) is intentionally low: the hangar itself is cheap to run
+    // because each ship commissioned carries its own supply cost — fleet size
+    // is capped by ships, not by the building. Building it grants the matching
+    // generic advisor slot (Raumfahrer) — see AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
         'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
-        'supply_cost' => 12,      // limits fleet naturally: 3 hangars = 36 supply
+        'supply_cost' => 6,       // low: ships carry supply cost; hangar is just a slot
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
