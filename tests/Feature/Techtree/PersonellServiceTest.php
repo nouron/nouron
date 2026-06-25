@@ -30,6 +30,13 @@ class PersonellServiceTest extends TestCase
         // Clear existing seeded advisors for our test colony so counts are predictable
         Advisor::where('colony_id', $this->colonyId)->delete();
 
+        // Ensure bar is placed so trader can be hired (path-building gate)
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'building_id' => 52],
+            ['instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+                'tile_x' => 5, 'tile_y' => 5]
+        );
+
         // 1 engineer: rank 2 (7 AP) = 7 construction AP
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => PersonellService::idFor('engineer'),

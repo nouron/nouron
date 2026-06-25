@@ -365,8 +365,8 @@ class OnboardingHintServiceTest extends TestCase
         // CC is level 2 → both hint_3 (gate tick 1, requires level < 2) and the CC
         // pre-invest hint are silent. The explore hint is Sol-1-only now
         // (until_tick 0), so at Sol 2 it no longer fills the gap either.
-        // suppressLateHints() places Cantina/Agrardom/Analytik, so unused Bau-AP
-        // surfaces hint_spend_remaining_ap (rank 15) instead of the end-sol floor.
+        // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar, so unused
+        // Bau-AP surfaces hint_spend_remaining_ap (rank 16) instead of the end-sol floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
         $this->assertSame('hint_spend_remaining_ap', $hint['key']);
     }
@@ -568,8 +568,8 @@ class OnboardingHintServiceTest extends TestCase
     public function test_explore_hint_silent_when_no_fog_left(): void
     {
         // No unexplored tiles → explore silent; CC level 2 → cc_invest silent.
-        // suppressLateHints() places Cantina/Agrardom/Analytik, so unused Bau-AP
-        // surfaces hint_spend_remaining_ap (rank 15) rather than the end-sol floor.
+        // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar, so unused
+        // Bau-AP surfaces hint_spend_remaining_ap (rank 16) rather than the end-sol floor.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -588,10 +588,10 @@ class OnboardingHintServiceTest extends TestCase
     public function test_end_sol_bridge_hint_fires_when_sol1_actions_done(): void
     {
         // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full.
-        // suppressLateHints() places Cantina/Agrardom/Analytik, so once the CC
-        // pre-invest hint (CC >= level 2), the advisor-slot-2 hint (slot filled), and
-        // the explore hint (no fog left) are all exhausted, unused Bau-AP surfaces
-        // hint_spend_remaining_ap (rank 15) rather than the true end-sol floor.
+        // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar, so once the
+        // CC pre-invest hint (CC >= level 2), the advisor-slot-2 hint (slot filled),
+        // and the explore hint (no fog left) are all exhausted, unused Bau-AP surfaces
+        // hint_spend_remaining_ap (rank 16) rather than the true end-sol floor.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -602,7 +602,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(15, $hint['rank']);
+        $this->assertSame(16, $hint['rank']);
         $this->assertSame('hint_spend_remaining_ap', $hint['key']);
         $this->assertSame('colony.onboarding_hint_spend_ap_construction', $hint['text_key']);
     }
@@ -622,7 +622,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(16, $hint['rank']);
+        $this->assertSame(17, $hint['rank']);
         $this->assertSame('hint_end_sol', $hint['key']);
         $this->assertSame('colony.onboarding_end_sol', $hint['text_key']);
     }
@@ -729,16 +729,16 @@ class OnboardingHintServiceTest extends TestCase
         // so without an explicit tick floor it would fire on Sol 1 the moment Bau-AP
         // runs out — crowding out the "Sol beenden" bridge hint with an action the
         // player can no longer act on this Sol.
-        $personell = $this->app->make(PersonellService::class);
-
+        // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar so
+        // allChoiceBuildingsPlaced() = true; exhausting ALL AP pools is required for
+        // hint_end_sol to fire (otherwise hint_spend_remaining_ap wins on idle research AP).
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete();
         $this->clearFog();
-        $available = $personell->getConstructionPoints($this->colonyId);
-        $personell->lockActionPoints('construction', $this->colonyId, $available);
+        $this->exhaustAllActionPoints();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -782,13 +782,36 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_analytik_hint_fires_when_cc_level2_and_no_sciencelab(): void
     {
+        // Tested at CC3 due to path-gate: CC2 allows only 1 path building; with
+        // Cantina already placed by suppressLateHints(), pathGateFree(31) at CC2
+        // returns false (placed=1 >= cc-1=1). At CC3 with only Cantina placed
+        // (Hangar deleted below), placed=1 < cc-1=2 → gate is free.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
-        $this->upgradeCc();
-        $this->placeSecondAdvisor(); // silence hint_advisor_slot2
+        // Upgrade CC to 3 (not 2) so pathGateFree(31) is true with 1 placed path building.
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['level' => 3, 'ap_spend' => 0]);
+        $this->placeSecondAdvisor();
+        // Fill the 3rd slot CC3 unlocks — otherwise hint_advisor_slot2 (rank 6) wins first.
+        DB::table('advisors')->insertOrIgnore([
+            'user_id' => $this->userId,
+            'personell_id' => PersonellService::idFor('trader'),
+            'colony_id' => $this->colonyId,
+            'rank' => 1,
+            'active_ticks' => 0,
+        ]);
+        // Delete sciencelab (the hint's subject) and hangar (suppress would leave 2
+        // path buildings; with 2 placed at CC3 pathGateFree(31) is false).
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)->where('building_id', 31)->delete();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 44)->delete();
+        // Dismiss hint_build_priority: hangar + analytik are both eligible at CC3 (2 ≥ 2),
+        // which would outrank hint_analytik (rank 11 < rank 14) without this dismiss.
+        $this->service->dismissHint($this->userId, 'hint_build_priority');
         $this->setRunTick(8);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -1085,7 +1108,12 @@ class OnboardingHintServiceTest extends TestCase
         }
     }
 
-    /** Suppress hints 4, 5, and 6 so they don't interfere with lower-rank tests. */
+    /**
+     * Suppress hints 4, 5, 6, agrardome, analytik and hangar_path so they don't
+     * interfere with lower-rank tests. Places Cantina/Agrardom/Sciencelab/Hangar —
+     * the three path buildings plus Agrardom — so allChoiceBuildingsPlaced() returns
+     * true and hint_spend_remaining_ap can surface as the Sol-1 floor hint.
+     */
     private function suppressLateHints(): void
     {
         // hint 4: knowledge present
@@ -1098,23 +1126,29 @@ class OnboardingHintServiceTest extends TestCase
             ->where('colony_id', $this->colonyId)
             ->where('resource_id', 12)
             ->update(['amount' => 0]);
-        // hint 6: cantina placed (tile_x set — matches the "placed" check, not just level)
+        // hint 6: cantina (path building) placed — placed_at_tick required for slot logic
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 52,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 5, 'tile_y' => 5,
+            'tile_x' => 5, 'tile_y' => 5, 'placed_at_tick' => 1,
         ]);
-        // hint_agrardome: bioFacility placed
+        // hint_agrardome: bioFacility placed (not a path building, no placed_at_tick)
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 41,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
             'tile_x' => 6, 'tile_y' => 5,
         ]);
-        // hint_analytik: sciencelab placed
+        // hint_analytik: sciencelab (path building) placed
         DB::table('colony_buildings')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'building_id' => 31,
             'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
-            'tile_x' => 7, 'tile_y' => 5,
+            'tile_x' => 7, 'tile_y' => 5, 'placed_at_tick' => 2,
+        ]);
+        // hint_hangar_path: hangar (path building) placed — required for allChoiceBuildingsPlaced()
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 44,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 8, 'tile_y' => 5, 'placed_at_tick' => 3,
         ]);
     }
 
