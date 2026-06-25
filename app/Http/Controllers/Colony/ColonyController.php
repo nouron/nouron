@@ -42,6 +42,12 @@ class ColonyController extends BaseController
     private const RES_REGOLITH = 3;
 
     /**
+     * Buildings that count as path choices (sciencelab, hangar, bar).
+     * At CC Lv2 the player may place one; each additional CC level unlocks one more.
+     */
+    private const PATH_BUILDING_IDS = [31, 44, 52];
+
+    /**
      * One-time erect cost for a building, as [resource_id => amount].
      * Canonical source: config/buildings.php `build_cost`. CC + Harvester have none.
      *
@@ -218,11 +224,18 @@ class ColonyController extends BaseController
             ->pluck('cnt', 'building_id')
             ->toArray();
 
+        $pathGateCount = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->whereIn('building_id', self::PATH_BUILDING_IDS)
+            ->whereNotNull('tile_x')
+            ->where('level', '>', 0)
+            ->count();
+
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
-            ->filter(function ($b) use ($ccLevel, $placedCounts) {
+            ->filter(function ($b) use ($ccLevel, $placedCounts, $pathGateCount) {
                 if ($b->id === BuildingId::CommandCenter->value) {
                     return false;
                 }  // CC — already exists
@@ -241,6 +254,11 @@ class ColonyController extends BaseController
                 }
                 if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
                     return false;
+                }
+                if (in_array($b->id, self::PATH_BUILDING_IDS, true)) {
+                    if ($ccLevel < 2 || $pathGateCount >= $ccLevel - 1) {
+                        return false;
+                    }
                 }
 
                 return true;
@@ -315,6 +333,29 @@ class ColonyController extends BaseController
         $building = DB::table('buildings')->where('id', $data['building_id'])->first();
         if (! $building) {
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+        }
+
+        // Path-gate: sciencelab/hangar/bar may only be placed when CC level allows.
+        // CC Lv2 unlocks the first path slot; each additional CC level adds one more.
+        if (! $isHarvester && in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true)) {
+            $ccLevelForGate = (int) (DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', BuildingId::CommandCenter->value)
+                ->value('level') ?? 0);
+            $placedPathCount = DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->whereIn('building_id', self::PATH_BUILDING_IDS)
+                ->where('building_id', '!=', $data['building_id'])
+                ->whereNotNull('tile_x')
+                ->where('level', '>', 0)
+                ->count();
+            if ($ccLevelForGate < 2 || $placedPathCount >= $ccLevelForGate - 1) {
+                return response()->json([
+                    'ok' => false,
+                    'error' => 'path_gate_locked',
+                    'message' => __('colony.error_path_gate_locked'),
+                ]);
+            }
         }
 
         // Harvester is marked is_instanced=1 in schema but has exactly one instance per colony
@@ -407,6 +448,7 @@ class ColonyController extends BaseController
                 'ap_spend' => 1,
                 'tile_x' => $data['q'],
                 'tile_y' => $data['r'],
+                'placed_at_tick' => $this->getTick(),
             ]);
         } else {
             $nextInstanceId = 1;
@@ -420,6 +462,7 @@ class ColonyController extends BaseController
                 // Preserve pre-invested ap_spend (seeded buildings); reset only on fresh placements.
                 if ($existingBuilding->tile_x === null) {
                     $update['ap_spend'] = max((int) $existingBuilding->ap_spend, 1);
+                    $update['placed_at_tick'] = $this->getTick();
                 } elseif (! $isHarvesterMove) {
                     $update['ap_spend'] = 1;
                 }
@@ -443,6 +486,7 @@ class ColonyController extends BaseController
                     'ap_spend' => 1,
                     'tile_x' => $data['q'],
                     'tile_y' => $data['r'],
+                    'placed_at_tick' => $this->getTick(),
                 ]);
             }
         }

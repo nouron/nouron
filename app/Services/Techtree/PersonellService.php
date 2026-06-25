@@ -193,6 +193,25 @@ class PersonellService
                 return 'slot_full';
             }
 
+            // Path-building gate — scientist/pilot/trader require the matching building placed.
+            $pathBuildingMap = [
+                self::idFor('scientist') => 31,  // sciencelab
+                self::idFor('pilot') => 44,       // hangar
+                self::idFor('trader') => 52,      // bar
+            ];
+            if (isset($pathBuildingMap[$personellId])) {
+                $requiredBuildingId = $pathBuildingMap[$personellId];
+                $isPlaced = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', $requiredBuildingId)
+                    ->where('level', '>', 0)
+                    ->whereNotNull('tile_x')
+                    ->exists();
+                if (! $isPlaced) {
+                    return 'path_building_missing';
+                }
+            }
+
             // Credits check and deduction.
             if (! config('game.bypass.resource_costs')) {
                 $advisorCfg = collect(config('advisors'))->firstWhere('id', $personellId);

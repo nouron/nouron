@@ -22,10 +22,15 @@ use Illuminate\View\View;
 class AdvisorController extends BaseController
 {
     /**
-     * Canonical advisor slot order. Position index (0-based) + 1 = position number (1–5)
-     * and equals the CC level required to unlock that slot.
+     * Positions 1 and 5 are always the same advisor type regardless of path choice.
      */
-    private const SLOT_ORDER = ['engineer', 'scientist', 'pilot', 'trader', 'strategist'];
+    private const FIXED_SLOTS = [1 => 'engineer', 5 => 'strategist'];
+
+    /**
+     * Maps building_id → advisor key for the three path buildings.
+     * Placing one of these buildings in the colony unlocks the matching advisor slot.
+     */
+    private const PATH_BUILDINGS = [31 => 'scientist', 44 => 'pilot', 52 => 'trader'];
 
     /**
      * Advisor types whose AP pool has no consuming building yet at hire time
@@ -66,13 +71,15 @@ class AdvisorController extends BaseController
     /**
      * Build the canonical 5-slot array for the advisor carousel UI.
      *
-     * Each slot corresponds to one advisor type in SLOT_ORDER. Position (1–5)
-     * doubles as the CC level required to unlock that slot.
+     * Positions 1 and 5 are fixed (FIXED_SLOTS). Positions 2–4 are determined
+     * by which path buildings (sciencelab/hangar/bar) have been placed in the
+     * colony, ordered by placed_at_tick ASC. Unresolved positions show as
+     * path_open until the player places the matching building.
      *
      * @param  Collection  $advisors  Active advisors on the colony (Advisor models).
      * @param  array  $slotInfo  Output of PersonellService::getAdvisorSlotInfo().
      * @param  int  $currentTick  Current game tick for unavailability checks.
-     * @param  int  $colonyId  Used to check whether the AP-consuming building exists yet.
+     * @param  int  $colonyId  Used for path-building lookup and building-warning checks.
      * @return array<int, array<string, mixed>>
      */
     private function buildSlots(Collection $advisors, array $slotInfo, int $currentTick, int $colonyId): array
@@ -85,10 +92,50 @@ class AdvisorController extends BaseController
         // Index active advisors by personell_id for O(1) lookup.
         $advisorsByPersonellId = $advisors->keyBy('personell_id');
 
+        // Resolve path advisor keys for positions 2–4, in placement order.
+        $pathBuildingIds = DB::table('colony_buildings')
+            ->whereIn('building_id', array_keys(self::PATH_BUILDINGS))
+            ->where('colony_id', $colonyId)
+            ->whereNotNull('placed_at_tick')
+            ->where('level', '>', 0)
+            ->orderBy('placed_at_tick')
+            ->orderBy('building_id')
+            ->pluck('building_id')
+            ->toArray();
+
+        $pathKeys = array_map(fn ($id) => self::PATH_BUILDINGS[$id], $pathBuildingIds);
+
         $slots = [];
 
-        foreach (self::SLOT_ORDER as $index => $key) {
-            $position = $index + 1; // 1–5
+        for ($position = 1; $position <= 5; $position++) {
+            // Resolve advisor key for this position.
+            if (isset(self::FIXED_SLOTS[$position])) {
+                $key = self::FIXED_SLOTS[$position];
+            } else {
+                $key = $pathKeys[$position - 2] ?? null;
+            }
+
+            // path_open: no path building placed for this slot yet.
+            if ($key === null) {
+                $slots[] = [
+                    'position' => $position,
+                    'key' => 'path_open_'.$position,
+                    'name' => 'Pfad-Slot '.$position,
+                    'desc' => __('advisors.desc_path_open'),
+                    'personell_id' => null,
+                    'ap_type' => null,
+                    'hire_cost' => 0,
+                    'junior_ap' => 0,
+                    'junior_upkeep' => 0,
+                    'cc_required' => $position,
+                    'state' => $ccLevel < $position ? 'locked' : 'empty',
+                    'advisor' => null,
+                    'building_warning' => null,
+                ];
+
+                continue;
+            }
+
             $advisorCfg = config("advisors.{$key}");
             $personellId = $advisorCfg['id'];
             $hireCost = $advisorCfg['credits'];
@@ -216,6 +263,7 @@ class AdvisorController extends BaseController
                 'slot_full' => __('advisors.error_slot_full'),
                 'insufficient_credits' => __('advisors.error_insufficient_credits'),
                 'dismissed_this_tick' => __('advisors.error_dismissed_this_tick'),
+                'path_building_missing' => __('advisors.error_path_building_missing'),
             ];
             $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
 

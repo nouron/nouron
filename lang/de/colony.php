@@ -133,6 +133,7 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
+    'error_path_gate_locked' => 'Pfad-Gate gesperrt.',
     'error_tile_not_found' => 'Tile nicht gefunden.',
     'error_ring_locked' => 'Ring nicht freigeschaltet.',
     'error_already_explored' => 'Tile bereits erkundet.',

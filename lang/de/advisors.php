@@ -37,6 +37,8 @@ return [
     'error_insufficient_credits' => 'Nicht genug Credits, um diesen Berater einzustellen.',
     'error_dismissed_this_tick' => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic' => 'Berater konnte nicht eingestellt werden.',
+    'error_path_building_missing' => 'Pfad-Gebäude fehlt.',
+    'desc_path_open' => 'Noch kein Pfad gewählt.',
 
     // Hire/fire confirmation dialogs
     'dialog_hire_title' => 'Berater einstellen',
