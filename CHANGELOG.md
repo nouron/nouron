@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-06-25
+
+- **Pfadwahl ab Sol 3: Sciencelab/Hangar/Cantina + generische Berater-Slots 2–4** (Owner-Design). Sol-1/2 bleiben strikt linear; ab CC Lv2 wählt der Spieler einen von drei Pfaden — Sciencelab+Analytiker (Forschungs-AP), Hangar+Pilot (Navigations-AP für Missionen) oder Cantina+Konsul (Wirtschafts-AP). Bau-Gate: maximal `CC-Level − 1` Pfadgebäude gleichzeitig platzierbar. Berater-Slots 2–4 generisch: Slot-Typ ergibt sich aus der Reihenfolge, in der Pfadgebäude gebaut werden (`colony_buildings.placed_at_tick`); `SLOT_ORDER`-Konstante entfernt. Hire-Gate: Analytiker/Pilot/Konsul können erst eingestellt werden, wenn das zugehörige Pfadgebäude platziert ist. Agrardom ist Pflichtvoraussetzung für CC-Ausbau auf Lv2 (`required_building_id=41`). Hangar-Gate von CC3 auf CC2 gesenkt; `supply_cost` auf 6 korrigiert (Config/DB-Drift behoben, `MasterDataSeeder` synchronisiert). `OnboardingHintService`: `allChoiceBuildingsPlaced()` auf neues Trio (31+44+52) umgestellt, neuer `pathGateFree()`-Helper in allen drei `*PrereqMet()`-Methoden, neuer Rang-15-Hint `hint_hangar_path`, `checkHint3()` leitet auf Agrardom um solange nicht gebaut. Neue Lang-Keys für Gate-Fehler, Pfad-Slot-Beschreibung und Hint-Texte.
+- **Hire-Warnung für Analytiker/Pilot ohne Pfad-Gebäude** (Owner-Feedback). Bestätigt-Dialog im Berater-Screen zeigt Amber-Warning, wenn der AP-Pool des angeheuerten Beraters mangels Pfad-Gebäude sofort brachliegen würde (Analytiker ohne Sciencelab, Pilot ohne Hangar).
+
 ## 2026-06-23
 
 - **Hint-System: `hint_end_sol`-Bug gefixt + First-Visit-Popups** (Owner-Playtest-Report ab Sol 5). `hint_end_sol` behauptete „alles Wichtige erledigt", obwohl noch Bau-/Forschungs-/Nav-/Wirtschafts-AP übrig war, sobald Cantina/Agrardom/Analytik bereits alle drei gebaut waren. Neuer Catch-Hint `hint_spend_remaining_ap` zeigt jetzt den AP-Pool mit dem größten Rest; `hint_end_sol` feuert nur noch, wenn wirklich kein Pool mehr etwas leisten kann. Zusätzlich First-Visit-Popups für Techtree, Nexus-DB, Cantina und Hangar — erklären die Screens beim ersten Besuch (Key-Präfix `visit_*`, gleicher Dismiss-Speicher/-Endpoint wie die Hint-Bar).
