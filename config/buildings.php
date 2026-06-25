@@ -68,6 +68,13 @@ return [
         'max_level' => null,
     ],
 
+    // bioFacility (Agrardom) — mandatory prerequisite for the CC Lv1→Lv2
+    // upgrade (2026-06-24, GDD §4 "Agrardom wird Pflichtgebäude vor CC Lv2").
+    // No longer part of the Sol-3 path-choice group (sciencelab/hangar/bar) —
+    // it has no CC-level gate of its own (only Harvester ≥ Lv1), so it stays
+    // reachable from Sol 1 and must be built before CC2 to guarantee Organika
+    // flow through the strictly linear Sol-1/2 ramp. Enforced in the CC
+    // levelup endpoint (ColonyService — NOT in this config), not here.
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id' => 41,
         'build_cost' => [3 => 40],   // Regolith only (early)
@@ -83,9 +90,12 @@ return [
     'sciencelab' => [
         'id' => 31,
         // Regolith only — no Compounds (circular dep risk, same reasoning as
-        // uplinkStation below): CC Lv2 unlocks both this building AND the 2nd
-        // advisor slot (always the Analytiker, see AdvisorController::SLOT_ORDER),
-        // but Werkstoffe aren't reachable that early (Uplink-Station Lv1 +
+        // uplinkStation below): CC Lv2 unlocks this building (one of three
+        // parallel "path" buildings — sciencelab/hangar/bar — see GDD §13
+        // "Pfadwahl ab Sol 3"). Building it is what grants the matching
+        // generic advisor slot (Analytiker) — slot binding is no longer a
+        // fixed CC-level→type mapping, see AdvisorController::PATH_BUILDINGS.
+        // Werkstoffe aren't reachable this early (Uplink-Station Lv1 +
         // Cantina/merchant, both later). The previous [Rg+Wk] cost made the
         // Analytiker structurally useless for several Sols right after hiring.
         'build_cost' => [3 => 80],
@@ -98,6 +108,16 @@ return [
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
+    // Hangar — CC gate lowered from Lv3 to Lv2 (2026-06-24): one of three
+    // parallel "path" buildings (sciencelab/hangar/bar), see GDD §13
+    // "Pfadwahl ab Sol 3" + §4 "Pfadwahl ab Sol 3". Only 1 of the 3 path
+    // buildings can be placed at CC Lv2 — the build-gate (CC-level − 1 ≥
+    // count of path buildings already placed) is enforced in
+    // ColonyService::placeBuilding, NOT in this config. supply_cost (12) is
+    // deliberately left higher than sciencelab (8) / bar (4) — Path-B's
+    // opportunity cost is expressed via Supply-Cap pressure rather than AP,
+    // see GDD §13 balance concern. Building it grants the matching generic
+    // advisor slot (Raumfahrer) — see AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
         'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
@@ -120,6 +140,10 @@ return [
         'max_level' => null,
     ],
 
+    // Cantina (bar) — CC Lv2, one of three parallel "path" buildings
+    // (sciencelab/hangar/bar), see GDD §13 "Pfadwahl ab Sol 3". Building it
+    // grants the matching generic advisor slot (Konsul) — see
+    // AdvisorController::PATH_BUILDINGS.
     'bar' => [
         'id' => 52,
         'build_cost' => [3 => 50],   // Regolith only (early)

@@ -293,16 +293,20 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 25 | commandCenter | Kommandozentrale | Command Center | 5 | — |
 | 28 | housingComplex | Wohnhabitat | Residential Habitat | 6 | CC Lv1 |
 | 27 | harvester | Harvester | Harvester | — | CC Lv1 |
-| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 + Harvester Lv1 |
-| 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2 |
+| 41 | bioFacility | Agrardom | Agrarian Dome | — | CC Lv1 + Harvester Lv1 (**Pflichtgebäude vor CC Lv2**, siehe unten) |
+| 31 | sciencelab | Analytik-Labor | Analytics Lab | — | CC Lv2, Teil der **Pfadwahl** (siehe unten) |
 | 46 | infirmary | Krankenstation | Medical Station | — | CC Lv2 |
-| 52 | bar | Cantina | Cantina | — | CC Lv2 |
-| 44 | hangar | Hangar | Hangar | — | CC Lv3 |
+| 52 | bar | Cantina | Cantina | — | CC Lv2, Teil der **Pfadwahl** (siehe unten) |
+| 44 | hangar | Hangar | Hangar | — | **CC Lv2** (vormals CC Lv3), Teil der **Pfadwahl** (siehe unten) |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | CC Lv4 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | — | CC Lv5 |
 | 53 | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv2 |
 | 54 | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 |
 | 55 | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 |
+
+> **Designentscheidung (2026-06-24) — Agrardom wird Pflichtgebäude vor CC Lv2.** Agrardom war bisher Teil der "Sol-3-Wahlfreiheit" (Cantina/Agrardom/Analytik, alle CC Lv2). Das widersprach der strikten Sol-1/2-Linearität (§16.5): Sol 1/2 garantieren bislang nur Bau- und Erkundungs-AP-Verwendung, keine Ressourcenfluss-Garantie. Ohne Agrardom bliebe Organika auf 0, bis der Spieler — möglicherweise erst Sole nach CC Lv2 — den Agrardom-Pfad wählt; in der Zwischenzeit frisst die Verpflegungsmechanik (§4a "Organika") den nicht vorhandenen Vorrat und der eskalierende Trust-Malus (`TrustService::hungerPenalty`) greift potenziell schon vor der ersten bewussten Wirtschaftsentscheidung. Agrardom wird daher aus der Wahlgruppe herausgelöst und zum **Pflicht-Gate für den CC-Lv2-Ausbau**: Der CC-Levelup-Endpoint prüft zusätzlich zu den AP-Kosten, ob Agrardom ≥ Lv1 gebaut ist. Das ändert nichts an der bisherigen Hint-Logik (`hint_agrardome` lief ohnehin unabhängig von der Wahlgruppe, siehe §16.2 "Agrardom ist unabhängig") — es macht aus einer starken Empfehlung ein hartes Gate.
+>
+> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar (Hangar-Gate von CC Lv3 auf CC Lv2 gesenkt), aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Siehe §13 "Pfadwahl & generische Berater-Slots" für das vollständige Modell.
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
@@ -1585,19 +1589,31 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 
 ---
 
-### Slot-System: CC-Level als Gate
+### Slot-System: CC-Level als Gate, Pfadwahl ab Slot 2
 
-Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren kann. Die Slots werden in der Reihenfolge ihrer Nützlichkeit freigeschaltet:
+Die Kommandozentrale bestimmt, wie viele Berater-Slots die Kolonie koordinieren kann. Slot 1 und Slot 5 sind **fest** an einen Beratertyp gebunden (Baumeister zuerst — siehe §16.2 "Designentscheidung zu Rang 1"; Stratege zuletzt — Schutz/Eskorte ist die am spätesten relevante Mechanik). Slots 2–4 sind seit der Pfadwahl-Überarbeitung (2026-06-24) **generisch**: Welcher Beratertyp einen dieser drei Slots belegt, hängt davon ab, welches der drei Pfad-Gebäude der Spieler zuerst/zweit/dritt baut — nicht von einer fest verdrahteten CC-Level→Typ-Zuordnung.
 
-| CC-Level | Freigeschalteter Slot | Beratertyp |
-|----------|-----------------------|-----------|
-| 1 | Slot 1 | Baumeister |
-| 2 | Slot 2 | Analytiker |
-| 3 | Slot 3 | Raumfahrer |
-| 4 | Slot 4 | Konsul |
-| 5+ | Slot 5 | Stratege |
+| CC-Level | Slot | Bindung |
+|----------|------|---------|
+| 1 | Slot 1 | **fix:** Baumeister |
+| 2 | Slot 2 | **generisch:** Typ entspricht dem 1. gebauten Pfad-Gebäude |
+| 3 | Slot 3 | **generisch:** Typ entspricht dem 2. gebauten Pfad-Gebäude |
+| 4 | Slot 4 | **generisch:** Typ entspricht dem 3. gebauten Pfad-Gebäude |
+| 5+ | Slot 5 | **fix:** Stratege |
 
-Wer alle 5 Berater will, braucht mindestens CC Lv5. Das verknüpft Berater-Ausbau organisch mit dem Koloniefortschritt. Pro Typ und pro Kolonie kann immer nur genau **ein** Berater den Slot belegen — ein zweiter Ingenieur auf derselben Kolonie ist nicht möglich.
+**Die drei Pfade** (siehe §4 "Pfadwahl ab Sol 3" und §13 unten):
+
+| Pfad | Gebäude | Beratertyp | AP-Pool |
+|------|---------|-----------|---------|
+| A | Analytik-Labor (sciencelab) | Analytiker | research |
+| B | Hangar | Raumfahrer | navigation |
+| C | Cantina (bar) | Konsul | economy |
+
+**Gate-Logik (Bau, nicht nur Berater):** Alle drei Pfad-Gebäude sind ab CC Lv2 grundsätzlich baubar — aber gleichzeitig gilt ein zusätzliches Bau-Gate: `Anzahl bereits gebauter Pfad-Gebäude < CC-Level − 1`. Bei CC Lv2 darf also nur **eines** der drei gebaut werden; das zweite schaltet erst bei CC Lv3 frei, das dritte erst bei CC Lv4. Es gibt **keine permanente Ausschließung** — wer bei CC2 die Cantina wählt, bekommt Sciencelab und Hangar bei CC3 bzw. CC4 trotzdem, nur später. Die "Wahl" bei Sol 3 bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das hält die Entscheidung gewichtig (wer zuerst baut, bekommt den zugehörigen Berater-Slot 1–2 CC-Level früher als bei den anderen beiden Pfaden), vermeidet aber einen harten Lockout, der bei einer frühen Sol-3-Entscheidung zu hart wäre (Nouron-Prinzip: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen, siehe §1.1).
+
+**Reihenfolge-Auflösung:** Der Slot, den ein Pfad-Gebäude belegt, ergibt sich aus der **Baureihenfolge** dieses Gebäudes relativ zu den anderen beiden — nicht aus dem Gebäudetyp selbst. Werden (im seltenen Fall ausreichender Ressourcen-Reserven) zwei Pfad-Gebäude im selben Sol fertiggestellt, entscheidet ein fixer, nicht spielerseitig beeinflussbarer Tie-Break in der Reihenfolge **Sciencelab → Hangar → Cantina** (aufsteigend nach `building_id`: 31 < 44 < 52). Dieser Tie-Break ist ein reines Implementierungsdetail ohne Spielerrelevanz außerhalb des Edge-Case.
+
+> ⚠️ BALANCE CONCERN: Hangars `supply_cost` (12) ist deutlich höher als das von Sciencelab (8) und Cantina (4). Bei CC Lv2 (Supply-Cap typischerweise 10 CC + 8 erstes Wohnhabitat = 18) bindet ein früh gebauter Hangar fast zwei Drittel der freien Supply-Cap — das bremst weiteren Ausbau (insbesondere ein zweites Wohnhabitat) für mehrere Sole stärker als bei den anderen beiden Pfaden. Das ist **als Pfad-B-Opportunitätskosten-Eigenschaft akzeptiert, nicht als Bug**: Wer früh auf Schiffe/Exploration setzt (Pfad B), zahlt das in Supply-Cap statt in AP — passt zum spielweiten Opportunitätskosten-Prinzip (§1.1), sollte aber im ersten Playtest nach CC2 explizit beobachtet werden, ob der Bremseffekt zu hart ausfällt (z. B. Wohnhabitat-Bau faktisch für 3+ Sole blockiert). Falls ja: `hangar.supply_cost` auf 10 senken ist die einfachste Korrektur, keine Strukturänderung nötig.
 
 ---
 
@@ -2410,6 +2426,8 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 **Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
 
 > ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21): Die folgende Tabelle war seit längerem veraltet — die Implementierung (`app/Services/OnboardingHintService.php`) hat inzwischen **15 Ränge statt 8**. Tabelle unten korrigiert auf den tatsächlichen Stand. Zusätzlich wurden in `config/game.php → onboarding` mehrere Schwellen verschoben, ohne dass die Designentscheidungs-Texte darunter nachgezogen wurden (siehe Korrekturen je Eintrag).
+>
+> ⚠️ BALANCE CONCERN / IMPLEMENTIERUNGSAUFTRAG (2026-06-24): Mit der Pfadwahl-Überarbeitung (§4, §13) muss diese Tabelle nochmals angepasst werden — noch nicht in `OnboardingHintService.php` umgesetzt, siehe Implementierungs-Checkliste am Ende dieses Abschnitts. Konkret: (a) Rang 13 `hint_agrardome` ändert Charakter von "Empfehlung" zu "Pflicht-Gate-Hinweis" (Agrardom ist jetzt CC2-Voraussetzung, nicht mehr Wahlgruppen-Mitglied); (b) Rang 12/14 (`hint_6`/`hint_analytik`) brauchen ein drittes Pendant `hint_hangar_path`, alle drei jetzt als echte 3-Wege-Wahl statt 2-Wege; (c) `allChoiceBuildingsPlaced()` (aktuell Cantina+Agrardom+Analytik) muss auf die drei Pfad-Gebäude (Sciencelab/Hangar/Cantina) umgestellt werden, Agrardom raus.
 
 | Rang | Key | Bedingung | Hinweistext (Kurzfassung) | Ziel-Link | Sol-Schwelle |
 |------|-----|-----------|---------------------------|-----------|--------------|
@@ -2417,17 +2435,20 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 2 | `hint_repair_urgent` | Gebäude (Level ≥ 1) auf/unter `hint_repair_urgent_sp` (3 von 20) — Leveldown-Gefahr | "Ein Gebäude steht kurz vor dem Stufenverlust — jetzt reparieren." | Colony-Screen | — |
 | 3 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1) | "Harvester steht noch in der Kolonie-Zone — verlegen." | Colony-Screen | — |
 | 4 | `hint_repair` | Gebäude (Level ≥ 1) unter Maximal-Statuspunkten | "Deine Startgebäude sind beschädigt — Reparieren (1 Bau-AP)." | Colony-Screen | — |
-| 5 | `hint_3` | CC Level < 2 | "Kommandozentrale auf Level 2 ausbauen." | Colony-Screen | Sol 2 (`hint_cc_upgrade_after_tick=1`) |
-| 6 | `hint_advisor_slot2` | CC ≥ Lv2 und mindestens 1 freier Berater-Slot | "Zweiter Berater-Slot frei — jetzt besetzen." | `/advisors` | — (sofort nach CC2) |
+| 5 | `hint_3` | CC Level < 2 — **Hinweis muss ab der Pfadwahl-Überarbeitung zusätzlich kommunizieren, dass Agrardom Pflicht-Voraussetzung für den CC2-Ausbau ist** (Gate, nicht nur Empfehlung) | "Kommandozentrale auf Level 2 ausbauen — Agrardom muss zuerst stehen." | Colony-Screen | Sol 2 (`hint_cc_upgrade_after_tick=1`) |
+| 6 | `hint_advisor_slot2` | CC ≥ Lv2 und mindestens 1 freier Berater-Slot — **Slot-Inhalt ist jetzt generisch**, Hinweistext darf keinen festen Beratertyp mehr nennen | "Zweiter Berater-Slot frei — jetzt besetzen." | `/advisors` | — (sofort nach CC2) |
 | 7 | `hint_cc_invest` | Sol 1, Sol-1-To-Dos erledigt, CC < Lv2, noch Bau-AP übrig | "Verbleibende Bau-AP in den CC-Ausbau stecken." | Colony-Screen | nur Sol 1 |
 | 8 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — Navigations-AP nutzen." | Colony-Screen | nur Sol 1 |
 | 9 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`, nicht Sol 8 wie zuvor dokumentiert — Tick 8 = Sol 9) |
 | 10 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5` → Tick 5 = Sol 6, nicht Sol 5) |
-| 11 | `hint_build_priority` | ≥ 2 von (Cantina/Agrardom/Analytik) gleichzeitig baubar (Voraussetzung erfüllt, nicht gebaut) | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
-| 12 | `hint_6` | CC ≥ Lv2, Housing ≥ Lv1, keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 3** (`hint_no_cantina_after_tick=2`) — bewusst gleich mit `hint_analytik`, siehe Designentscheidung "Sol-3-Wahlfreiheit" |
-| 13 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom, bezahlbar | "Agrardom noch nicht gebaut — Organika-Produktion." | `/colony/view?build=41` | **Sol 2** (`hint_no_agrardome_after_tick=1`) — unabhängig von der Cantina/Analytik-Wahlgruppe, siehe unten |
-| 14 | `hint_analytik` | CC ≥ Lv2, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 3** (`hint_no_analytik_after_tick=2`) — bewusst gleich mit `hint_6`, siehe Designentscheidung "Sol-3-Wahlfreiheit" |
+| 11 | `hint_build_priority` | ≥ 2 von (Sciencelab/Hangar/Cantina) gleichzeitig baubar (Voraussetzung erfüllt, Bau-Gate nicht verbraucht, nicht gebaut) — **Agrardom raus aus der Eligibility-Zählung (jetzt Pflichtgebäude, nicht Wahlgruppe), Hangar rein** | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
+| 12 | `hint_6` | CC ≥ Lv2, Housing ≥ Lv1, Bau-Gate frei (< CC-Level−1 Pfad-Gebäude gebaut), keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 3** (`hint_no_cantina_after_tick=2`) — gleichrangig mit `hint_analytik` und `hint_hangar_path`, siehe §13 "Pfadwahl" |
+| 13 | `hint_agrardome` | **Charakter geändert (2026-06-24): Pflicht-Gate-Hinweis statt Wahlempfehlung.** Harvester ≥ Lv1, kein Agrardom, bezahlbar, CC noch < Lv2 (Agrardom ist jetzt CC2-Voraussetzung) | "Agrardom bauen — Voraussetzung für CC-Ausbau auf Level 2." | `/colony/view?build=41` | **Sol 2** (`hint_no_agrardome_after_tick=1`) — unabhängig von der Pfadwahl Sciencelab/Hangar/Cantina, siehe unten |
+| 14 | `hint_analytik` | CC ≥ Lv2, Bau-Gate frei, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 3** (`hint_no_analytik_after_tick=2`) — gleichrangig mit `hint_6` und `hint_hangar_path` |
+| 14b | `hint_hangar_path` **(neu, 2026-06-24)** | CC ≥ Lv2, Bau-Gate frei, kein Hangar, bezahlbar | "Hangar noch nicht gebaut." | `/colony/view?build=44` | **Sol 3**, identische Schwelle (`hint_no_hangar_after_tick=2`) — drittes gleichrangiges Mitglied der Pfadwahl |
 | 15 | `hint_end_sol` | Fallback — greift nur wenn kein höherrangiger Hint aktiv ist | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
+
+> **Bau-Gate-Hinweis (wichtig für Implementierung):** Sobald der Spieler eines der drei Pfad-Gebäude gebaut hat, dürfen `hint_6`/`hint_analytik`/`hint_hangar_path` für die jeweils noch nicht erreichte CC-Stufe nicht feuern — sie greifen erst wieder, wenn `Anzahl gebauter Pfad-Gebäude < CC-Level − 1` zutrifft (siehe §13). Beispiel: Bei CC Lv2 und bereits 1 gebautem Pfad-Gebäude zeigen die beiden übrigen Hints (für die anderen zwei Pfad-Gebäude) **nicht mehr** "jetzt bauen", weil das Bau-Gate sie blockiert — stattdessen sollte ein neuer, noch zu definierender Hint-Text "Bei CC Lv3 verfügbar" angezeigt werden (kein Aktions-Link, reine Information), damit der Spieler nicht auf ein Gebäude klickt, das der Server ablehnt.
 
 **Neu seit letzter GDD-Fassung, bisher nicht dokumentiert:**
 - `hint_advisor_slot2` (Rang 6): Direktes Feedback auf CC-Lv2-Ausbau — ohne diesen Hint bliebe die Hint-Leiste nach dem CC-Ausbau mehrere Sole leer, bevor `hint_4`/`hint_5`/`hint_6` ticken.
@@ -2448,16 +2469,16 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung (2026-06-21) zu Rang 1 — "Baumeister zuerst" ist gewollt, kein offener Punkt:** Der vorherige Befund 2 (siehe unten) kritisierte, dass `hint_1` ohne Tick-Schwelle und ohne Alternative ausschließlich auf den Baumeister verweist und damit faktisch die einzige vom Hint-System unterstützte Eröffnung erzwingt. Der Owner hat dazu entschieden: **Das ist beabsichtigt, nicht zu ändern.** Baumeister/Bau-AP ist die strukturell einzige Ressource, die in Sol 1 *alles* andere freischaltet — Wohnraum, Harvester-Verlegung, CC-Ausbau, später jedes Gebäude. Ohne Bau-AP-Hebel bleibt der Spieler in Sol 1 handlungsarm, unabhängig davon, welchen strategischen Pfad er danach einschlägt. Ein Spieler, der bewusst zuerst Konsul oder Analytiker einstellen will, kann das weiterhin jederzeit tun — `hint_1` ist dismissable (pro Hint-Typ) und blockiert keine Aktion, er ist lediglich der dauerhaft höchstrangige *Hinweis*, kein Gate. Die in Befund 2 vorgeschlagenen Alternativen (`hint_no_scientist`/`hint_no_trader` auf Rang 1, dynamischer Rang-1-Text) werden **nicht** umgesetzt. Befund 2 bleibt unten als Analyse-Dokumentation stehen, ist aber mit dieser Designentscheidung als abgeschlossen zu lesen — kein offener Implementierungsauftrag mehr an `game-developer`/`backend-coder`.
 
-> **Designentscheidung (2026-06-21) — Sol-1/Sol-2-Fokus: ausschließlich Bau und Erkundung.** Die ersten beiden Sole sind bewusst auf zwei AP-Pools verengt: Construction (Bau-AP) und Navigation (Erkundungs-AP). Kein Hint darf vor Sol 3 (current_tick=2) in Richtung Cantina, Analytik-Labor oder Agrardom drängen — diese Phase ist reine Aufbau- und Sichtbarkeits-Phase (Baumeister, Harvester-Verlegung, CC-Ausbau, Erkundung), nicht bereits eine Wirtschafts- oder Forschungsentscheidung. Geprüfter Stand der Tick-Schwellen (`config/game.php → onboarding`, Stand nach Korrektur 2026-06-21):
-> - `hint_no_agrardome_after_tick = 1` → frühestmöglich Sol 2. Das ist ein Grenzfall: Agrardom hat kein CC-Level-Prerequisite (nur Harvester ≥ Lv1, der von Anfang an steht) und kann damit theoretisch bereits in Sol 2 vorgeschlagen werden — noch innerhalb des deklarierten "nur Bau/Erkundung"-Fensters für Sol 1–2. Das gilt nicht als Verstoß gegen den Sol-1/2-Fokus, weil Agrardom-Bau selbst eine Bau-AP-Aktion ist (kein Abzweig in Richtung Handel/Forschung) — er konkurriert lediglich um denselben Construction-AP-Pool wie CC-Ausbau/Harvester-Verlegung, eröffnet aber keine neue strategische Wahlachse. Siehe Einordnung unten ("Agrardom ist unabhängig").
-> - `hint_no_cantina_after_tick = 2` und `hint_no_analytik_after_tick = 2` (beide korrigiert von vormals 0 bzw. 2, jetzt **identisch auf Sol 3**) → vor Sol 3 feuert keiner der beiden Hints. Damit ist der Sol-1/2-Fokus für die eigentliche Cantina-vs.-Analytik-Wahlachse korrekt abgebildet: Vor Sol 3 bekommt der Spieler keinen Schubs in Richtung Handel oder Forschung.
+> **Designentscheidung (2026-06-21, Agrardom-Teil überholt 2026-06-24 — siehe unten) — Sol-1/Sol-2-Fokus: ausschließlich Bau und Erkundung.** Die ersten beiden Sole sind bewusst auf zwei AP-Pools verengt: Construction (Bau-AP) und Navigation (Erkundungs-AP). Kein Hint darf vor Sol 3 (current_tick=2) in Richtung Cantina, Analytik-Labor oder Hangar drängen — diese Phase ist reine Aufbau- und Sichtbarkeits-Phase (Baumeister, Harvester-Verlegung, Agrardom als CC2-Pflichtgebäude, CC-Ausbau, Erkundung), nicht bereits eine Wirtschafts-, Forschungs- oder Flotten-Entscheidung. Geprüfter Stand der Tick-Schwellen (`config/game.php → onboarding`):
+> - `hint_no_agrardome_after_tick = 1` → frühestmöglich Sol 2. Agrardom ist seit der Pfadwahl-Überarbeitung (2026-06-24) **kein Wahlgruppen-Mitglied mehr, sondern Pflicht-Voraussetzung für CC Lv2** (siehe §4, §13) — der Hint bleibt deshalb im Sol-1/2-Fenster, jetzt aber mit verschärftem Charakter: Er weist nicht mehr nur auf eine sinnvolle Option hin, sondern auf ein hartes Gate, das den CC-Ausbau blockiert solange es nicht erfüllt ist.
+> - `hint_no_cantina_after_tick`, `hint_no_analytik_after_tick` und das neue `hint_no_hangar_after_tick` (alle = 2, Sol 3) → vor Sol 3 feuert keiner der drei Pfad-Hints. Der Sol-1/2-Fokus gilt jetzt für eine **dreigleisige** Wahlachse statt der vormaligen zweigleisigen.
 > - `hint_4` (Kenntnis fehlt, Sol 9) und `hint_5` (Vertrauen kritisch, Sol 6) liegen ohnehin weit nach Sol 1/2 und tangieren den Fokus nicht.
 
-> **Designentscheidung (2026-06-21) — Sol 3: echte, gleichwertige Wahl zwischen Cantina und Analytik-Labor.** Ab Sol 3 (current_tick=2) stehen `hint_6` (Cantina) und `hint_analytik` (Analytik-Labor) auf derselben Tick-Schwelle (`hint_no_cantina_after_tick = hint_no_analytik_after_tick = 2`) — bewusst angepasst (vormals `0`/`2`, also Cantina mit zwei Sol Vorsprung vor Analytik; dieser Vorsprung war ein unbeabsichtigtes Rest-Artefakt aus früherem Tuning und stand der hier festgelegten Gleichwertigkeit entgegen). Keiner der beiden Hints hat dadurch einen strukturellen Vorlauf vor dem anderen — beide werden, sobald ihre jeweiligen Prerequisites (Cantina: CC≥Lv2 + Housing≥Lv1; Analytik: CC≥Lv2) erfüllt und bezahlbar sind, gleichzeitig "bereit". Trifft das zu, übernimmt `hint_build_priority` (Rang 11) die Anzeige der Wahl selbst, ohne ein Gebäude vorzuschreiben (siehe Tabelle oben).
+> **Designentscheidung (2026-06-24, ersetzt die Fassung vom 2026-06-21) — Sol 3: echte, gleichwertige Wahl zwischen drei Pfaden (Sciencelab, Hangar, Cantina).** Ab Sol 3 (current_tick=2) stehen `hint_6` (Cantina), `hint_analytik` (Sciencelab) und `hint_hangar_path` (Hangar) auf derselben Tick-Schwelle (`hint_no_cantina_after_tick = hint_no_analytik_after_tick = hint_no_hangar_after_tick = 2`). Keiner der drei Hints hat einen strukturellen Vorlauf vor den anderen — alle drei werden, sobald ihre jeweiligen Prerequisites (CC≥Lv2 für alle drei; Cantina zusätzlich Housing≥Lv1) erfüllt **und** das Bau-Gate (§13: `Anzahl gebauter Pfad-Gebäude < CC-Level − 1`) noch nicht erschöpft ist, gleichzeitig "bereit". Sobald der Spieler eines der drei gebaut hat, verschwindet dessen Hint dauerhaft (Gebäude existiert) und die übrigen zwei bleiben aktiv, bis entweder gebaut oder das Bau-Gate sie für die aktuelle CC-Stufe sperrt (dann zeigt ein neuer, informativer Hinweistext "Bei CC Lv3/4 verfügbar" ohne Aktions-Link — siehe Implementierungs-Hinweis bei der Hint-Tabelle).
 >
-> **Standard-Empfehlung, keine Zwangsregel:** Wer Cantina zuerst priorisiert, sollte als nächsten Berater eher den **Konsul** (Economy-AP, aktiviert den Handelsmechanismus über die Cantina) anwerben. Wer Analytik-Labor zuerst priorisiert, sollte eher den **Analytiker** (Research-AP, treibt Kenntnis-Forschung) anwerben. Diese Zuordnung ist die naheliegende, im GDD dokumentierte Standardlinie — sie wird **nicht** durch einen zusätzlichen Hint erzwungen oder vom Hint-System geprüft. Es bleibt **explizit Raum für ausgefuchste Taktiken**, die z.B. beide Gebäude über die Grund-AP (6 Construction-AP/Sol ohne Baumeister-Bonus, falls der Baumeister bereits anderswo eingesetzt ist) abdecken und den zweiten/dritten Berater-Slot stattdessen für andere Ziele (Stratege für frühe Eskorte-Vorbereitung, zusätzlicher Baumeister für schnelleren Gebäude-Durchsatz) reservieren. Das deckt sich mit dem in §16.7 festgehaltenen Prinzip "Kein Pflicht-Reihenfolge" — die Wahlfreiheit besteht nicht nur zwischen den beiden Gebäuden, sondern auch in der Frage, ob überhaupt ein spezialisierter Berater dafür angeworben wird.
+> **Standard-Empfehlung, keine Zwangsregel:** Wer Cantina zuerst priorisiert, sollte als nächsten Berater eher den **Konsul** anwerben. Wer Sciencelab zuerst priorisiert, eher den **Analytiker**. Wer Hangar zuerst priorisiert, eher den **Raumfahrer**. Diese Zuordnung ist die naheliegende Standardlinie und ergibt sich jetzt sogar **mechanisch** aus dem generischen Slot-System (§13): Der Slot, der durch das zuerst gebaute Pfad-Gebäude freigeschaltet wird, *ist* genau dieser passende Beratertyp — es gibt keine Möglichkeit mehr, "das falsche" Pendant in Slot 2 zu bekommen. Es bleibt weiterhin **explizit Raum für ausgefuchste Taktiken** (z. B. Pfad-Gebäude über Grund-AP abdecken, ohne den zugehörigen Slot sofort zu besetzen — der Slot bleibt einfach offen, bis der Spieler ihn füllen will). Das deckt sich mit §16.7 "Kein Pflicht-Reihenfolge".
 
-> **Designentscheidung (2026-06-21) — Agrardom ist unabhängig von der Sol-3-Wahlgruppe.** `hint_agrardome` gehört bewusst **nicht** zur Cantina-vs.-Analytik-Wahlgruppe, sondern wird unabhängig davon bewertet. Begründung: Agrardom hat anders als Cantina/Analytik kein CC-Level-Prerequisite (nur Harvester ≥ Lv1, der von Sol 1 an gegeben ist) und ist daher bereits ab Sol 2 (`hint_no_agrardome_after_tick=1`) erreichbar — strukturell früher als die beiden anderen. Außerdem eröffnet Agrardom (Organika-Produktion) keine vergleichbare strategische Verzweigung (Handel vs. Forschung) wie Cantina/Analytik, sondern ist eine reine Versorgungs-Erweiterung ohne Trade-off-Charakter — es gibt keinen plausiblen Grund, ihn *gegen* Cantina oder Analytik abzuwägen, er konkurriert nur um dieselben Bau-AP/Ressourcen. `hint_build_priority` (Rang 11) bezieht Agrardom dennoch mit in die Eligibility-Zählung ein (≥2 von 3 gleichzeitig bereit triggert den Hinweis) — das ist rein eine UI-Aussage über AP-Konkurrenz, keine Aussage über eine dreigleisige strategische Wahl.
+> **Designentscheidung (2026-06-24, ersetzt "Agrardom ist unabhängig von der Sol-3-Wahlgruppe" vom 2026-06-21) — Agrardom ist Pflichtgebäude, kein Wahlgruppen-Mitglied mehr.** Frühere Fassung: Agrardom war von der Cantina-vs.-Analytik-Wahlgruppe entkoppelt, aber weiterhin optional. Neue Fassung: Agrardom ist jetzt **CC2-Bau-Voraussetzung** (siehe §4). Der `hint_agrardome`-Hint bleibt auf derselben Sol-2-Schwelle, ändert aber seine Funktion von "Empfehlung, weil keine vergleichbare strategische Verzweigung" zu "Pflicht-Warnung, weil CC-Ausbau sonst blockiert ist". `hint_build_priority` (Rang 11) bezieht Agrardom **nicht mehr** in die Eligibility-Zählung der Pfadwahl ein — die Wahlgruppe besteht jetzt ausschließlich aus den drei echten Pfaden Sciencelab/Hangar/Cantina.
 
 **Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
 
@@ -2465,7 +2486,7 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 
 > **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
 
-> ⚠️ BALANCE CONCERN: `hint_4` (Kenntnis-Hint, jetzt Rang 9) feuert ab Sol 9 (`hint_no_knowledge_after_tick=8`), während `hint_analytik` (Gebäude fehlt) bereits ab Sol 3 (`hint_no_analytik_after_tick=2`) feuert. Das Analytik-Labor hat damit in der Praxis schon 6 Sole Vorlauf, bevor `hint_4` überhaupt aktiv werden kann — der ursprüngliche Concern ("Kenntnis-Hint feuert vor dem Gebäude-Hint") ist mit der Sol-3-Anpassung von `hint_no_analytik_after_tick` hinfällig. Es bleibt aber sinnvoll, `hint_no_knowledge_after_tick` so zu belassen oder eher zu erhöhen als zu senken — er markiert keinen Eröffnungszwang, sondern eine späte Sicherheitswarnung für Spieler, die nach 9 Solen noch gar keine Kenntnis erforscht haben (unabhängig davon, ob sie den Cantina- oder den Analytik-Pfad gewählt haben).
+> ⚠️ BALANCE CONCERN: `hint_4` (Kenntnis-Hint, jetzt Rang 9) feuert ab Sol 9 (`hint_no_knowledge_after_tick=8`), während `hint_analytik` (Gebäude fehlt) bereits ab Sol 3 (`hint_no_analytik_after_tick=2`) feuert. Das Analytik-Labor hat damit in der Praxis schon 6 Sole Vorlauf, bevor `hint_4` überhaupt aktiv werden kann — der ursprüngliche Concern ("Kenntnis-Hint feuert vor dem Gebäude-Hint") ist mit der Sol-3-Anpassung von `hint_no_analytik_after_tick` hinfällig. Es bleibt aber sinnvoll, `hint_no_knowledge_after_tick` so zu belassen oder eher zu erhöhen als zu senken — er markiert keinen Eröffnungszwang, sondern eine späte Sicherheitswarnung für Spieler, die nach 9 Solen noch gar keine Kenntnis erforscht haben (unabhängig davon, ob sie den Cantina-, Analytik- oder Hangar-Pfad gewählt haben).
 
 ---
 
@@ -2485,10 +2506,11 @@ Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kac
 | 9 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
 | 10 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
 | 12 (keine Cantina) | Cantina-Kachel im Techtree |
+| 14b (kein Hangar) **(neu, 2026-06-24)** | Hangar-Kachel im Techtree |
 
 **Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
 
-> ⚠️ BALANCE CONCERN / DOKU-DRIFT: Diese Tabelle deckt nur 6 der 15 implementierten Hint-Ränge ab (siehe § 16.2). Für die seit Phase 3g neuen Hints (`hint_repair`, `hint_repair_urgent`, `hint_advisor_slot2`, `hint_cc_invest`, `hint_explore`, `hint_build_priority`, `hint_agrardome`, `hint_analytik`, `hint_end_sol`) ist nicht spezifiziert, welches Element pulsieren soll bzw. ob sie überhaupt einen Pulse erhalten. Muss vor dem nächsten UI-Pass mit `ui-specialist` geklärt werden — insbesondere `hint_end_sol` (Rang 15) sollte vermutlich KEINEN Pulse auf eine Kachel legen, sondern (falls überhaupt visuell hervorgehoben) auf den „Sol beenden"-Button.
+> ⚠️ BALANCE CONCERN / DOKU-DRIFT: Diese Tabelle deckt nur 7 der jetzt 16 vorgesehenen Hint-Ränge ab (siehe § 16.2). Für die seit Phase 3g neuen Hints (`hint_repair`, `hint_repair_urgent`, `hint_advisor_slot2`, `hint_cc_invest`, `hint_explore`, `hint_build_priority`, `hint_agrardome`, `hint_analytik`, `hint_hangar_path`, `hint_end_sol`) ist nicht spezifiziert, welches Element pulsieren soll bzw. ob sie überhaupt einen Pulse erhalten. Muss vor dem nächsten UI-Pass mit `ui-specialist` geklärt werden — insbesondere `hint_end_sol` (Rang 15) sollte vermutlich KEINEN Pulse auf eine Kachel legen, sondern (falls überhaupt visuell hervorgehoben) auf den „Sol beenden"-Button.
 
 **Abgrenzung zu bestehenden Indikatoren:** Der Tiefenscan-Pulse auf der Koloniekarte (bestehend, § 4a) ist ein anderer Indikator-Typ (orangefarbene Blitz-Animation). Onboarding-Pulse ist blau-weißlich — visuell eindeutig unterscheidbar.
 
@@ -2554,20 +2576,22 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 
 **Aktion 5 — CC auf Level 2 ausbauen (Colony-Screen, ab Sol 2, `hint_3`)**
 
-- Warum: CC Lv2 schaltet zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles
-- Kosten: 10 Construction-AP kumuliert (mit Vorinvestition aus Sol 1 bereits 8/10 — Sol 2 schließt mit 2 weiteren AP sofort ab)
-- Ergebnis: Neue Ring-2-Tiles leuchten auf Koloniekarte auf. Zweiter Berater-Slot erscheint, `hint_advisor_slot2` (Rang 6) feuert sofort.
+- Warum: CC Lv2 schaltet zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles. **Voraussetzung seit 2026-06-24: Agrardom muss bereits Lv1 stehen** (siehe §4, §13) — ohne Agrardom bleibt der CC-Levelup-Button gesperrt, unabhängig von vorhandenen Bau-AP.
+- Kosten: 10 Construction-AP kumuliert (mit Vorinvestition aus Sol 1 bereits 8/10 — Sol 2 schließt mit 2 weiteren AP sofort ab) + Agrardom muss vorab gebaut sein (eigene Bau-AP-Kosten, separat von den 10 AP für den CC-Levelup)
+- Ergebnis: Neue Ring-2-Tiles leuchten auf Koloniekarte auf. Zweiter Berater-Slot erscheint **leer und generisch** (kein fest zugeordneter Beratertyp mehr) — `hint_advisor_slot2` (Rang 6) feuert sofort, weist aber nicht mehr auf einen bestimmten Beratertyp hin.
 - Feedback-Loop klar: Koloniekarte aktualisiert sich live (Ring-Expansion §4a)
 
-**Aktion 6 — Zweiten Berater einstellen (`hint_advisor_slot2`)**
+**Aktion 6 — Agrardom bauen, dann zweiten Berater einstellen (`hint_agrardome`, `hint_advisor_slot2`)**
 
-- Warum: Der zweite Slot ist nicht an einen festen Berater-Typ gebunden — Spieler kann frei wählen zwischen Analytiker (Forschung), Raumfahrer (Navigation), Konsul (Wirtschaft) oder Stratege.
+- Warum: Agrardom ist seit 2026-06-24 **Pflichtgebäude vor CC Lv2** (siehe §4, §13) — ohne Agrardom bleibt der CC2-Ausbau gesperrt. `hint_agrardome` feuert ab Sol 2 (`hint_no_agrardome_after_tick=1`), unabhängig von der späteren Pfadwahl.
+- Nach CC Lv2 (Aktion 5) erscheint der zweite Berater-Slot **leer und generisch** — er ist nicht mehr an einen festen Beratertyp gebunden, sondern wird durch das zuerst gebaute Pfad-Gebäude bestimmt (Aktion 7). Der Spieler kann den Slot bereits jetzt mit irgendeinem Beratertyp besetzen, falls er das möchte — die Bindung entsteht erst beim Bau des jeweiligen Pfad-Gebäudes (siehe §13 "Reihenfolge-Auflösung").
 - An diesem Punkt hat der Spieler die Kernsysteme berührt: Berater, Tile-Management, CC-Ausbau, Erkundung.
 
-**Aktion 7 — Ab Sol 2/3: Agrardom, dann die Sol-3-Wahl Cantina vs. Analytik-Labor** (`hint_agrardome`, `hint_6`, `hint_analytik`, ggf. `hint_build_priority`)
+**Aktion 7 — Ab Sol 3: die Pfadwahl zwischen Sciencelab, Hangar und Cantina** (`hint_6`, `hint_analytik`, `hint_hangar_path`, ggf. `hint_build_priority`)
 
-- Warum: Ab Sol 2 wird Agrardom vorgeschlagen (`hint_agrardome`, unabhängig von CC-Level — siehe Designentscheidung "Agrardom ist unabhängig" in § 16.2). Ab Sol 3 (current_tick=2) stehen Cantina (`hint_6`) und Analytik-Labor (`hint_analytik`) auf **derselben Tick-Schwelle** — das ist die erste bewusst gleichwertige strategische Wahl im natürlichen Pfad: Handel zuerst (→ Konsul als Folge-Berater empfohlen) oder Forschung zuerst (→ Analytiker als Folge-Berater empfohlen). Das ist nur eine Standard-Empfehlung, keine Pflicht — die Grund-AP reichen auch ohne spezialisierten Berater. Wenn zwei oder drei der drei Gebäude (Cantina/Agrardom/Analytik) gleichzeitig bereit sind, weist `hint_build_priority` (Rang 11) auf die Wahl hin, ohne ein bestimmtes Gebäude vorzuschreiben.
-- Sol 1/2 bleiben bewusst auf Bau (Construction-AP) und Erkundung (Navigation-AP) fokussiert — kein Hint drängt vor Sol 3 in Richtung Cantina oder Analytik. Sol 3 ist damit der erste Punkt im natürlichen Pfad, an dem echte, vom Hint-System aktiv unterstützte Build-Order-Varianz beginnt (siehe Befund 2 unten, jetzt als entschieden markiert) — vorher (Aktion 1–6) ist die Reihenfolge praktisch linear vorgegeben, und das ist explizite Designentscheidung, nicht Versehen.
+- Warum: Ab Sol 3 (current_tick=2) stehen Cantina (`hint_6`), Sciencelab (`hint_analytik`) und Hangar (`hint_hangar_path`) auf **derselben Tick-Schwelle** — das ist die erste bewusst gleichwertige strategische Wahl im natürlichen Pfad: Handel zuerst, Forschung zuerst oder Flotte/Exploration zuerst. Alle drei Gebäude sind ab CC Lv2 grundsätzlich baubar, aber das Bau-Gate (§13) erlaubt bei CC Lv2 nur eines der drei — die anderen beiden folgen bei CC Lv3 bzw. CC Lv4. Wer zuerst baut, bekommt **automatisch den passenden generischen Berater-Slot** (Sciencelab → Analytiker, Hangar → Raumfahrer, Cantina → Konsul) — keine separate Wahl mehr nötig, die Bau-Entscheidung *ist* die Berater-Entscheidung. Wenn zwei oder drei der drei Gebäude gleichzeitig bereit sind, weist `hint_build_priority` (Rang 11) auf die Wahl hin, ohne ein bestimmtes Gebäude vorzuschreiben.
+- Sol 1/2 bleiben bewusst auf Bau (Construction-AP) und Erkundung (Navigation-AP) fokussiert — kein Hint drängt vor Sol 3 in Richtung Cantina, Sciencelab oder Hangar. Sol 3 ist damit der erste Punkt im natürlichen Pfad, an dem echte, vom Hint-System aktiv unterstützte Build-Order-Varianz beginnt — vorher (Aktion 1–6) ist die Reihenfolge praktisch linear vorgegeben, und das ist explizite Designentscheidung, nicht Versehen.
+- **Kein permanenter Lockout:** Wer z. B. Cantina bei CC2 wählt, bekommt Sciencelab und Hangar bei CC3/CC4 trotzdem — nur später (siehe §13 "Gate-Logik"). Die Wahl bestimmt Reihenfolge und Zeitvorsprung, nicht endgültigen Zugang.
 
 **Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
 
@@ -2614,6 +2638,56 @@ Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 besc
 > 2. ~~Alternativ: explizit als Designentscheidung dokumentieren~~ — umgesetzt, siehe § 16.2.
 > 3. `hint_cc_invest`/`hint_explore` setzen den Engineer-Pfad nicht voraus, prüfen nur verbleibende Bau-AP bzw. Nav-AP — weiterhin korrekt, kein Änderungsbedarf.
 > 4. ~~Ränge 1–8 (Sol 1–2) zu einer Wahlgruppe umbauen~~ — verworfen. Sol 1/2 bleiben linear (Bau + Erkundung); die Wahlgruppe wird stattdessen ab Sol 3 (Cantina vs. Analytik) eingeführt, siehe § 16.2.
+
+---
+
+#### Pfadwahl-Überarbeitung (2026-06-24) — Implementierungs-Checkliste
+
+> Diese Checkliste fasst zusammen, was konkret geändert werden muss, damit Code und Config der hier dokumentierten Pfadwahl (§4 "Pfadwahl ab Sol 3", §13 "Slot-System: CC-Level als Gate, Pfadwahl ab Slot 2") entsprechen. Kein offener Designpunkt mehr — die Entscheidung ist getroffen; das Folgende ist Implementierungsauftrag an `game-developer`/`backend-coder`/`db-migration-agent`.
+
+**1. Config-Änderungen:**
+
+| Datei | Änderung |
+|-------|----------|
+| `config/buildings.php` | `hangar.cc_level_required` (oder äquivalentes Gate-Feld, falls ein solches Feld eingeführt wird — aktuell ist das CC-Gate nicht in `buildings.php` selbst kodiert, siehe Punkt 2) — Hangar von "CC Lv3" auf "CC Lv2" senken. `bioFacility` braucht ein neues Flag, das es als CC2-Pflichtvoraussetzung markiert (z. B. `'cc2_prerequisite' => true`), falls der CC-Levelup-Check generisch über Config laufen soll statt hartcodiert. |
+| `config/advisors.php` | Keine Strukturänderung nötig — `ap_type`/`credits` bleiben pro Typ unverändert. Ggf. Kommentar ergänzen, dass `scientist`/`pilot`/`trader` jetzt über die generischen Pfad-Slots 2–4 gebunden werden, nicht mehr über feste CC-Level. |
+| `config/game.php → onboarding` | Neuer Key `hint_no_hangar_after_tick => 2` ergänzen (siehe §16.7-Codeblock oben). |
+
+**2. PHP-Dateien:**
+
+| Datei | Änderung |
+|-------|----------|
+| `app/Http/Controllers/Techtree/AdvisorController.php` | `SLOT_ORDER`-Konstante ersetzen durch `FIXED_SLOTS` (Position 1 → engineer, Position 5 → strategist) + `PATH_BUILDINGS`-Mapping (building_id → advisor key, siehe §13-Pseudocode). `buildSlots()` umbauen: Slots 2–4 nicht mehr statisch aus einem Array, sondern dynamisch aus der Bau-Reihenfolge der drei Pfad-Gebäude auf der Kolonie ermittelt (siehe Punkt 3, Migration). Neuer UI-Zustand für "Slot wartet auf Pfad-Gebäude-Bau" nötig (unterscheidet sich vom bisherigen `locked`-Zustand, der nur CC-Level prüft). |
+| `app/Services/Techtree/PersonellService.php` | `hire()` braucht **keine** Strukturänderung — die Methode ist bereits typ-agnostisch (CC-Level bestimmt nur die Slot-*Anzahl*, nicht den Typ). Zu prüfen: ob `hire()` zusätzlich validieren muss, dass der angefragte `personell_id` tatsächlich zu einem der drei bereits gebauten Pfad-Gebäude (oder den fixen Slots 1/5) gehört — aktuell gibt es keine Typ-Bindung in der Hire-Logik selbst, das wäre eine neue Geschäftsregel: Slot 2 darf nicht mit einem Typ besetzt werden, dessen Pfad-Gebäude noch nicht gebaut ist. |
+| `app/Services/ColonyService.php` (oder wo `placeBuilding()` lebt) | Neues Bau-Gate für die drei Pfad-Gebäude (Sciencelab/Hangar/Cantina, building_id 31/44/52): `Anzahl bereits platzierter Pfad-Gebäude < CC-Level − 1` muss vor der Platzierung geprüft werden. Fehlerfall (analog zu bestehenden Gate-Fehlern wie `slot_full`) z. B. `'path_gate_locked'`. |
+| CC-Levelup-Endpoint (vermutlich in `ColonyService` oder `ColonyController`) | Neue Voraussetzung für CC Lv1→Lv2: Agrardom (`building_id=41`) muss ≥ Lv1 sein. Fehlerfall z. B. `'agrardome_required'`. |
+| `app/Services/OnboardingHintService.php` | Siehe Punkt 4 unten — eigener Abschnitt, da umfangreich. |
+
+**3. Migration (DB-Schema):**
+
+`colony_buildings` hat aktuell **keine** Zeitstempel-/Reihenfolge-Spalte (siehe `0001_01_01_000014_create_colony_buildings_table.php`) — die Bau-Reihenfolge der drei Pfad-Gebäude kann nicht rekonstruiert werden, ohne eine neue Spalte einzuführen. Empfehlung: neue nullable Spalte `placed_at_tick` (Analogie zu `pending_until_tick`, siehe `2026_06_11_200000_add_pending_until_tick_to_colony_buildings.php`), gesetzt beim ersten `placeBuilding()`-Aufruf für dieses `colony_id + building_id`-Paar. Slot-Zuordnung in `buildSlots()` sortiert dann die drei Pfad-Gebäude nach `placed_at_tick ASC`, Tie-Break bei Gleichstand nach `building_id ASC` (siehe §13 "Reihenfolge-Auflösung").
+
+> ⚠️ Diese Migration ist die einzige tatsächliche Schema-Änderung dieser gesamten Design-Überarbeitung — alles andere ist Config + Service-Logik.
+
+**4. `OnboardingHintService.php` — detaillierter Rework-Bedarf:**
+
+- `allChoiceBuildingsPlaced()` (aktuell: Cantina + Agrardom + Analytik) → umstellen auf Sciencelab + Hangar + Cantina (Agrardom raus, weil jetzt Pflichtgebäude, kein Wahlgruppen-Mitglied mehr).
+- `checkHintBuildPriority()` → dieselbe Korrektur (Agrardom raus aus der `$eligible`-Zählung, Hangar rein).
+- Neue Methode `checkHintHangarPath()` + `hangarPrereqsMet()` — Analogie zu `checkHintAnalytik()`/`analytikPrereqsMet()`, prüft CC ≥ Lv2 + Bau-Gate frei + nicht gebaut + bezahlbar.
+- `cantinaPrereqsMet()`, `analytikPrereqsMet()`, neue `hangarPrereqsMet()` müssen alle zusätzlich das Bau-Gate prüfen (`Anzahl gebauter Pfad-Gebäude < CC-Level − 1`), nicht nur CC-Level — aktuell prüfen sie nur CC-Level, was nach der Überarbeitung falsch-positive Hints erzeugen würde (Hint zeigt auf ein Gebäude, das der Server wegen Bau-Gate ablehnt).
+- `checkHintAgrardome()`/`agrardomePrereqsMet()` bleiben strukturell gleich (Harvester ≥ Lv1, Sol-Schwelle), aber der Hinweistext (lang/de) muss von Empfehlung zu Pflicht-Warnung geändert werden — Aufgabe für `content-writer`, nicht `game-developer`.
+- Neuer Hint-Zustand für "Bau-Gate aktuell gesperrt, bei höherem CC-Level verfügbar" — kein Aktions-Link, reine Information (siehe Hinweis in der Hint-Tabelle oben). Muss definiert werden, ob dieser Zustand überhaupt einen eigenen Hint-Rang bekommt oder nur eine Tooltip-Information auf der gedimmten Techtree-Kachel ist (letzteres vermutlich konsistenter mit §16.4 "Zustandsbasierte Kachel-Sortierung" — kein neuer Hint-Rang nötig, nur ein Tooltip-Text "Verfügbar ab CC Lv3").
+- `checkHint3()` (CC-Levelup-Hinweis, Rang 5) muss den Agrardom-Pflicht-Check einbauen: Wenn CC < Lv2 UND Agrardom < Lv1, darf der Hinweistext nicht "CC ausbauen" lauten (der Button ist ja gesperrt), sondern muss auf Agrardom verweisen — sonst zeigt das Hint-System auf eine Aktion, die der Server ablehnt.
+
+**5. Lang-Dateien (`content-writer`):**
+
+- `lang/de/colony.php` (oder wo `onboarding_hint_*`-Keys liegen): Neuer Key für `hint_hangar_path`, Anpassung `hint_agrardome`-Text (Pflicht statt Empfehlung), Anpassung `hint_advisor_slot2`-Text (kein fester Beratertyp mehr nennbar).
+- `lang/de/advisors.php`: Ggf. Anpassung der Slot-Beschreibungstexte im Berater-Screen, falls dort bisher "Slot 2 — Analytiker" o. ä. fest beschriftet war (zu prüfen mit `ui-specialist`).
+
+**6. Tests (`qa-tester`):**
+
+- Bestehende `tests/Feature/Onboarding/OnboardingHintServiceTest.php` (53 Tests, Stand 2026-06-21) muss für alle Tests angepasst werden, die `bioFacility`/Cantina/Analytik als gleichrangige Wahlgruppe annehmen.
+- Neue Tests: Bau-Gate-Durchsetzung (2. Pfad-Gebäude bei CC2 ablehnen, bei CC3 erlauben), Agrardom-als-CC2-Voraussetzung, generische Slot-Zuordnung (Slot 2 = Typ des zuerst gebauten Pfad-Gebäudes), Tie-Break bei Gleichstand.
 
 ---
 
@@ -2675,16 +2749,19 @@ Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und 
     'hint_no_knowledge_after_tick'    => 8,   // Rang 9 (hint_4): Sol 9
     'hint_trust_threshold'            => -20, // Rang 10 (hint_5)
     'hint_trust_min_ticks'            => 5,   // Rang 10 (hint_5): Sol 6
-    'hint_no_cantina_after_tick'      => 2,   // Rang 12 (hint_6) — Sol 3, bewusst = hint_no_analytik_after_tick (Wahlfreiheit, siehe §16.2)
-    'hint_no_agrardome_after_tick'    => 1,   // Rang 13 (hint_agrardome) — Sol 2, unabhängig von der Cantina/Analytik-Wahlgruppe
-    'hint_no_analytik_after_tick'     => 2,   // Rang 14 (hint_analytik) — Sol 3, bewusst = hint_no_cantina_after_tick (Wahlfreiheit, siehe §16.2)
+    'hint_no_cantina_after_tick'      => 2,   // Rang 12 (hint_6) — Sol 3, gleichrangig mit hint_no_analytik_after_tick + hint_no_hangar_after_tick (Pfadwahl, siehe §13)
+    'hint_no_agrardome_after_tick'    => 1,   // Rang 13 (hint_agrardome) — Sol 2; jetzt Pflicht-Gate-Hinweis, nicht mehr Wahlgruppen-Mitglied (siehe §4, §13)
+    'hint_no_analytik_after_tick'     => 2,   // Rang 14 (hint_analytik) — Sol 3, gleichrangig mit hint_no_cantina_after_tick + hint_no_hangar_after_tick
+    'hint_no_hangar_after_tick'       => 2,   // Rang 14b (hint_hangar_path) — NEU (2026-06-24), Sol 3, gleichrangig mit den beiden obigen — drittes Pfadwahl-Mitglied
     'hint_cc_upgrade_after_tick'      => 1,   // Rang 5 (hint_3): Sol 2
     'hint_explore_until_tick'         => 0,   // Rang 8 (hint_explore): nur Sol 1
     'hint_explore_max_explored_tiles' => 6,   // Rang 8 (hint_explore): Throttle
 ],
 ```
 
-> ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21, teilweise behoben): Die tatsächlichen Werte in `config/game.php` weichen weiterhin von den Code-Defaults in `OnboardingHintService.php` ab (z.B. `hint_no_agrardome_after_tick`: Config=1, Code-Default=6; `hint_no_analytik_after_tick`: Config=2, Code-Default=8). Das ist beabsichtigt (Config gewinnt immer; siehe `canAffordBuildingPlacement()`, die ohnehin die reale Bezahlbarkeit prüft) — die Code-Kommentare mit den höheren Default-Werten sollten dennoch zur Vermeidung von Verwirrung beim nächsten Code-Review aktualisiert werden (Aufgabe für `game-developer`, nicht `game-designer`). **Update (2026-06-21):** `hint_no_cantina_after_tick` wurde von `0` auf `2` korrigiert (war zuvor Sol 1, also zwei Sole vor `hint_no_analytik_after_tick`) — beide stehen jetzt auf identisch `2` (Sol 3), wie es die Designentscheidung "Sol-3-Wahlfreiheit Cantina vs. Analytik" (§ 16.2) verlangt. Diese eine Diskrepanz war kein reines Doku-Drift-Problem, sondern eine tatsächliche Balance-Lücke (Cantina hatte einen unbeabsichtigten Sol-Vorsprung) und wurde behoben.
+> ⚠️ BALANCE CONCERN / IMPLEMENTIERUNGSAUFTRAG (2026-06-24): `hint_no_hangar_after_tick` ist ein neuer Config-Key, noch nicht in `config/game.php` angelegt — Teil der Implementierungs-Checkliste am Ende dieses Abschnitts.
+>
+> ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21, teilweise behoben): Die tatsächlichen Werte in `config/game.php` weichen weiterhin von den Code-Defaults in `OnboardingHintService.php` ab (z.B. `hint_no_agrardome_after_tick`: Config=1, Code-Default=6; `hint_no_analytik_after_tick`: Config=2, Code-Default=8). Das ist beabsichtigt (Config gewinnt immer; siehe `canAffordBuildingPlacement()`, die ohnehin die reale Bezahlbarkeit prüft) — die Code-Kommentare mit den höheren Default-Werten sollten dennoch zur Vermeidung von Verwirrung beim nächsten Code-Review aktualisiert werden (Aufgabe für `game-developer`, nicht `game-designer`). **Update (2026-06-21):** `hint_no_cantina_after_tick` wurde von `0` auf `2` korrigiert (war zuvor Sol 1, also zwei Sole vor `hint_no_analytik_after_tick`) — beide stehen jetzt auf identisch `2` (Sol 3), wie es die Designentscheidung "Pfadwahl" (§ 16.2, §13) verlangt. Diese eine Diskrepanz war kein reines Doku-Drift-Problem, sondern eine tatsächliche Balance-Lücke (Cantina hatte einen unbeabsichtigten Sol-Vorsprung) und wurde behoben.
 >
 > `hint_no_engineer_ticks` scheint im aktuellen `OnboardingHintService::checkHint1()` gar nicht mehr gelesen zu werden (die Methode prüft nur, ob ein Advisor-Datensatz existiert, ohne Tick-Schwelle). Falls korrekt: toter Config-Eintrag, sollte entfernt oder die Doku-Kommentare im Config korrigiert werden — zu klären mit `game-developer`/`backend-coder`.
 

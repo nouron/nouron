@@ -242,6 +242,10 @@
                         </div>
                     </dl>
 
+                    <template x-if="dialogSlot.building_warning">
+                        <div class="dialog-warning" x-text="dialogSlot.building_warning"></div>
+                    </template>
+
                     <div class="dialog-error" x-text="errorMsg"></div>
                     <div class="dialog-actions">
                         <button class="btn-cancel" @click="closeDialogs()">{{ __("advisors.dialog_cancel") }}</button>

@@ -51,4 +51,8 @@ return [
     'dialog_fire' => 'Entlassen',
     'dialog_cancel' => 'Abbrechen',
 
+    // Hire-time warnings: AP-type has no consuming building yet
+    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — Forschungs-AP bleibt vorerst ungenutzt.',
+    'warning_no_hangar' => 'Du hast noch keinen Hangar — Navigations-AP wird vorerst nur für Erkundung genutzt.',
+
 ];

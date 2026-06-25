@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
@@ -25,6 +26,19 @@ class AdvisorController extends BaseController
      * and equals the CC level required to unlock that slot.
      */
     private const SLOT_ORDER = ['engineer', 'scientist', 'pilot', 'trader', 'strategist'];
+
+    /**
+     * Advisor types whose AP pool has no consuming building yet at hire time
+     * are a known trap (scientist/sciencelab, pilot/hangar — see
+     * project_hint_system_review_needed memory, 2026-06-24 re-review). Maps
+     * slot key → [building_id, warning lang key]. Only includes pairs where
+     * the trap is real (Konsul/Cantina excluded — Cantina unlocks before the
+     * Konsul slot, not after).
+     */
+    private const BUILDING_WARNING_MAP = [
+        'scientist' => [31, 'advisors.warning_no_sciencelab'], // sciencelab
+        'pilot' => [44, 'advisors.warning_no_hangar'], // hangar
+    ];
 
     public function __construct(
         TickService $tick,
@@ -58,9 +72,10 @@ class AdvisorController extends BaseController
      * @param  Collection  $advisors  Active advisors on the colony (Advisor models).
      * @param  array  $slotInfo  Output of PersonellService::getAdvisorSlotInfo().
      * @param  int  $currentTick  Current game tick for unavailability checks.
+     * @param  int  $colonyId  Used to check whether the AP-consuming building exists yet.
      * @return array<int, array<string, mixed>>
      */
-    private function buildSlots(Collection $advisors, array $slotInfo, int $currentTick): array
+    private function buildSlots(Collection $advisors, array $slotInfo, int $currentTick, int $colonyId): array
     {
         $rankThresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
@@ -126,6 +141,19 @@ class AdvisorController extends BaseController
                 ];
             }
 
+            $buildingWarning = null;
+            if ($state === 'empty' && isset(self::BUILDING_WARNING_MAP[$key])) {
+                [$buildingId, $warningKey] = self::BUILDING_WARNING_MAP[$key];
+                $isBuilt = (int) DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', $buildingId)
+                    ->where('level', '>', 0)
+                    ->count() > 0;
+                if (! $isBuilt) {
+                    $buildingWarning = trans($warningKey);
+                }
+            }
+
             $slots[] = [
                 'position' => $position,
                 'key' => $key,
@@ -139,6 +167,7 @@ class AdvisorController extends BaseController
                 'cc_required' => $position,
                 'state' => $state,
                 'advisor' => $advisorData,
+                'building_warning' => $buildingWarning,
             ];
         }
 
@@ -152,7 +181,7 @@ class AdvisorController extends BaseController
 
         $advisors = $this->personellService->getColonyAdvisors($colonyId);
         $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
-        $slots = $this->buildSlots($advisors, $slotInfo, $currentTick);
+        $slots = $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId);
 
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
         $pageData = [
@@ -220,7 +249,7 @@ class AdvisorController extends BaseController
 
             return response()->json([
                 'ok' => true,
-                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick),
+                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
                 'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
             ]);
@@ -253,7 +282,7 @@ class AdvisorController extends BaseController
 
             return response()->json([
                 'ok' => true,
-                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick),
+                'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
             ]);
         }

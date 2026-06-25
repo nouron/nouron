@@ -583,3 +583,13 @@ dialog.advisor-dialog h3 {
     margin-top: 0.5rem;
     min-height: 1em;
 }
+
+.dialog-warning {
+    color: #8a6d00;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+}
