@@ -161,8 +161,8 @@ class OnboardingHintService
                 'rank' => 5,
                 'key' => 'hint_3',
                 'active' => $this->checkHint3($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_3',
-                'target_url' => '/colony/view',
+                'text_key' => $this->hint3TextKey($colonyId),
+                'target_url' => $this->hint3TargetUrl($colonyId),
             ],
             [
                 'rank' => 6,
@@ -229,13 +229,20 @@ class OnboardingHintService
             ],
             [
                 'rank' => 15,
+                'key' => 'hint_hangar_path',
+                'active' => $this->checkHintHangarPath($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_hangar_path',
+                'target_url' => '/colony/view?build=44',
+            ],
+            [
+                'rank' => 16,
                 'key' => 'hint_spend_remaining_ap',
                 'active' => $this->checkHintSpendRemainingAp($colonyId, $currentTick),
                 'text_key' => $this->spendRemainingApTextKey($colonyId),
                 'target_url' => $this->spendRemainingApTargetUrl($colonyId),
             ],
             [
-                'rank' => 16,
+                'rank' => 17,
                 'key' => 'hint_end_sol',
                 'active' => $this->checkHintEndSol($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_end_sol',
@@ -334,9 +341,9 @@ class OnboardingHintService
 
     private function allChoiceBuildingsPlaced(int $colonyId): bool
     {
-        return $this->isBuildingPlaced($colonyId, 52)  // Cantina
-            && $this->isBuildingPlaced($colonyId, 41)  // Agrardom (bioFacility)
-            && $this->isBuildingPlaced($colonyId, 31); // Analytik-Labor (sciencelab)
+        return $this->isBuildingPlaced($colonyId, 31)  // sciencelab
+            && $this->isBuildingPlaced($colonyId, 44)  // hangar
+            && $this->isBuildingPlaced($colonyId, 52); // cantina
     }
 
     /**
@@ -426,6 +433,24 @@ class OnboardingHintService
             ->value('level');
 
         return $level < 2;
+    }
+
+    private function hint3TextKey(int $colonyId): string
+    {
+        if (! $this->isBuildingPlaced($colonyId, 41)) {
+            return 'colony.onboarding_hint_3_agrardome_first';
+        }
+
+        return 'colony.onboarding_hint_3';
+    }
+
+    private function hint3TargetUrl(int $colonyId): string
+    {
+        if (! $this->isBuildingPlaced($colonyId, 41)) {
+            return '/colony/view?build=41';
+        }
+
+        return '/colony/view';
     }
 
     /**
@@ -614,8 +639,15 @@ class OnboardingHintService
             ->where('colony_id', $colonyId)
             ->where('building_id', 28)
             ->value('level');
+        if ($housingLevel < 1) {
+            return false;
+        }
 
-        return $housingLevel >= 1;
+        if (! $this->pathGateFree($colonyId, 52)) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -666,8 +698,59 @@ class OnboardingHintService
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
             ->value('level');
+        if ($ccLevel < 2) {
+            return false;
+        }
 
-        return $ccLevel >= 2;
+        if (! $this->pathGateFree($colonyId, 31)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function checkHintHangarPath(int $colonyId, int $currentTick): bool
+    {
+        return $this->hangarPrereqsMet($colonyId, $currentTick)
+            && ! $this->isBuildingPlaced($colonyId, 44)
+            && $this->canAffordBuildingPlacement($colonyId, 44);
+    }
+
+    private function hangarPrereqsMet(int $colonyId, int $currentTick): bool
+    {
+        $threshold = (int) config('game.onboarding.hint_no_hangar_after_tick', 2);
+        if ($currentTick < $threshold) {
+            return false;
+        }
+
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        if ($ccLevel < 2) {
+            return false;
+        }
+
+        // Path-gate: at CC Lv2, only 1 path building may be placed simultaneously.
+        return $this->pathGateFree($colonyId, 44);
+    }
+
+    private function pathGateFree(int $colonyId, int $forBuildingId): bool
+    {
+        $pathBuildingIds = [31, 44, 52];
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+        $placed = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereIn('building_id', $pathBuildingIds)
+            ->where('building_id', '!=', $forBuildingId)
+            ->whereNotNull('tile_x')
+            ->where('level', '>', 0)
+            ->count();
+
+        return $ccLevel >= 2 && $placed < $ccLevel - 1;
     }
 
     /**
@@ -682,7 +765,7 @@ class OnboardingHintService
     {
         $eligible = 0;
         $eligible += ($this->cantinaPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 52)) ? 1 : 0;
-        $eligible += ($this->agrardomePrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 41)) ? 1 : 0;
+        $eligible += ($this->hangarPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 44)) ? 1 : 0;
         $eligible += ($this->analytikPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 31)) ? 1 : 0;
 
         return $eligible >= 2;
