@@ -116,21 +116,30 @@ class AdvisorController extends BaseController
             }
 
             // path_open: no path building placed for this slot yet.
+            // All path slots require CC Lv2 minimum; the build-gate in placeBuilding()
+            // controls how many path buildings can coexist (CC-Level − 1).
             if ($key === null) {
+                $previewKeys = [2 => 'scientist', 3 => 'pilot', 4 => 'trader'];
+                $previewKey = $previewKeys[$position] ?? null;
+                $previewCfg = $previewKey ? config("advisors.{$previewKey}") : null;
+
                 $slots[] = [
                     'position' => $position,
                     'key' => 'path_open_'.$position,
-                    'name' => 'Pfad-Slot '.$position,
+                    'name' => $previewKey ? trans("advisors.{$previewKey}") : 'Pfad-Berater',
                     'desc' => __('advisors.desc_path_open'),
                     'personell_id' => null,
-                    'ap_type' => null,
+                    'ap_type' => $previewCfg['ap_type'] ?? null,
                     'hire_cost' => 0,
                     'junior_ap' => 0,
                     'junior_upkeep' => 0,
-                    'cc_required' => $position,
-                    'state' => $ccLevel < $position ? 'locked' : 'empty',
+                    'cc_required' => 2,
+                    'state' => $ccLevel < 2 ? 'locked' : 'empty',
                     'advisor' => null,
                     'building_warning' => null,
+                    'is_path_open' => true,
+                    'preview_advisor_key' => $previewKey,
+                    'path_choices' => $this->buildPathChoices($pathBuildingIds),
                 ];
 
                 continue;
@@ -143,7 +152,9 @@ class AdvisorController extends BaseController
 
             /** @var Advisor|null $advisor */
             $advisor = $advisorsByPersonellId->get($personellId);
-            $isLocked = $ccLevel < $position;
+            // Strategist needs CC Lv3 + SecurityHub (gate wired up later); other fixed slots = cc < position.
+            $ccGate = $key === 'strategist' ? 3 : $position;
+            $isLocked = $ccLevel < $ccGate;
 
             if ($isLocked) {
                 $state = 'locked';
@@ -211,14 +222,55 @@ class AdvisorController extends BaseController
                 'hire_cost' => $hireCost,
                 'junior_ap' => (int) ($apPerRank[1] ?? 4),
                 'junior_upkeep' => (int) ($upkeepMap[1] ?? 10),
-                'cc_required' => $position,
+                'cc_required' => $ccGate,
                 'state' => $state,
                 'advisor' => $advisorData,
                 'building_warning' => $buildingWarning,
+                'is_path_open' => false,
+                'preview_advisor_key' => null,
+                'path_choices' => [],
             ];
         }
 
         return $slots;
+    }
+
+    private function buildPathChoices(array $placedBuildingIds): array
+    {
+        $all = [
+            31 => [
+                'key' => 'scientist',
+                'label' => __('advisors.path_label_scientist'),
+                'building' => __('techtree.building_sciencelab'),
+                'image_slug' => 'sciencelab',
+                'advisor' => __('advisors.scientist'),
+                'unlock' => __('advisors.path_unlock_scientist'),
+                'url' => '/colony/view?build=31',
+                'desc' => __('advisors.path_choice_scientist'),
+            ],
+            44 => [
+                'key' => 'pilot',
+                'label' => __('advisors.path_label_pilot'),
+                'building' => __('techtree.building_hangar'),
+                'image_slug' => 'hangar',
+                'advisor' => __('advisors.pilot'),
+                'unlock' => __('advisors.path_unlock_pilot'),
+                'url' => '/colony/view?build=44',
+                'desc' => __('advisors.path_choice_pilot'),
+            ],
+            52 => [
+                'key' => 'trader',
+                'label' => __('advisors.path_label_trader'),
+                'building' => __('techtree.building_bar'),
+                'image_slug' => 'cantina',
+                'advisor' => __('advisors.trader'),
+                'unlock' => __('advisors.path_unlock_trader'),
+                'url' => '/colony/view?build=52',
+                'desc' => __('advisors.path_choice_trader'),
+            ],
+        ];
+
+        return array_values(array_filter($all, fn ($k) => ! in_array($k, $placedBuildingIds), ARRAY_FILTER_USE_KEY));
     }
 
     public function index(): View

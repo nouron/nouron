@@ -908,6 +908,12 @@ button.btn-sol:hover,
     border: 1px solid #a5d6a7;
 }
 
+.tile-building-levelup-cost {
+    margin: 0.3rem 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}
+
 .tile-under-construction {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;

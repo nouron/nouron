@@ -210,7 +210,9 @@
                                     @click="doInvestAp(selectedBuilding)">
                                     <span class="tile-action-btn__body">
                                         <span class="tile-action-btn__main"
-                                            x-text="`{{ __("colony.invest_ap") }} ${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup}`"></span>
+                                            x-text="selectedBuilding.ap_spend === 0
+                                                ? `Stufe ${selectedBuilding.level + 1} starten (0/${selectedBuilding.ap_for_levelup})`
+                                                : `{{ __("colony.invest_ap") }} ${selectedBuilding.ap_spend}/${selectedBuilding.ap_for_levelup}`"></span>
                                     </span>
                                     @include("partials.ap-cost-chip", [
                                         "amount" => 1,
@@ -379,6 +381,13 @@
                                         "name_field" => "label",
                                         "show_header" => false,
                                     ])
+
+                                    <template
+                                        x-if="buildingCanLevelUp(selectedBuilding) && (selectedBuilding.levelup_cost ?? 0) > 0">
+                                        <p class="tile-building-levelup-cost"
+                                            x-text="`{{ __("colony.levelup_cost_label") }} ${selectedBuilding.levelup_cost} RG {{ __("colony.levelup_cost_suffix") }}`">
+                                        </p>
+                                    </template>
 
                                     <template x-if="selectedBuilding.level === 0">
                                         <div class="tile-under-construction">

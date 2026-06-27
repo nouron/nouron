@@ -343,7 +343,12 @@ function colonyHexView(config) {
                     this.selectedTile = { ...this.selectedTile };
                 }
             } else {
-                const msg = res.message ?? res.error;
+                let msg = res.message ?? res.error;
+                if (res.error === 'resource_limit' && res.cost?.[3]) {
+                    const needed = res.cost[3];
+                    const have = this.regolith ?? 0;
+                    msg += ` (${needed} RG benötigt, ${have} RG vorhanden)`;
+                }
                 this.showToast(msg, 'error');
             }
         },

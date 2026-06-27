@@ -159,12 +159,13 @@
     border-radius: 6px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     padding: 0.5rem 0.75rem;
-    min-width: 180px;
+    min-width: 160px;
+    max-width: 240px;
     z-index: 300;
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    white-space: nowrap;
+    white-space: normal;
     pointer-events: none;
 }
 

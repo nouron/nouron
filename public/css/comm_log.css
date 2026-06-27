@@ -162,6 +162,19 @@
     text-overflow: ellipsis;
 }
 
+/* ── Collapsed count badge ────────────────────────────────────────────────── */
+
+.comm-entry-collapsed {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: #999;
+    background: #f0f0f4;
+    padding: 0.1rem 0.45rem;
+    border-radius: 20px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
 /* ── Sol timestamp (right-aligned, muted) ─────────────────────────────────── */
 
 .comm-entry-sol {

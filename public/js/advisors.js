@@ -85,6 +85,38 @@ function advisorCarousel(config) {
             }
         },
 
+        buildingPlaceholderSrc() {
+            return "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Crect width='44' height='44' rx='6' fill='%23e0e0e8'/%3E%3C/svg%3E";
+        },
+
+        advisorPrereqBuilding(key) {
+            const map = {
+                engineer: { slug: 'command-center', name: 'Command Center', ccLevel: 1 },
+                scientist: { slug: 'sciencelab', name: 'Analytiklabor' },
+                pilot: { slug: 'hangar', name: 'Hangar' },
+                trader: { slug: 'cantina', name: 'Cantina' },
+                // ponytail: security-hub.webp missing until graphic delivery; gate wired later
+                strategist: { slug: 'security-hub', name: 'Sicherheits-Hub', ccLevel: 3 },
+            };
+            return map[key] ?? null;
+        },
+
+        advisorEffects(key, isPathOpen) {
+            const map = {
+                engineer: 'Bau-AP · Gebäudeausbau · Reparatur',
+                scientist: 'Forschungs-AP · Techtree · Kenntnisforschung',
+                pilot: 'Navigations-AP · Missionen · Hangar-Events',
+                trader: 'Wirtschafts-AP · Handel · Cantina-Events',
+                strategist: 'Strategie-AP · Verteidigung · Kampfoperationen',
+            };
+            if (isPathOpen) {
+                // Use preview advisor key (path_open_2 → scientist, etc.)
+                const preview = { path_open_2: 'scientist', path_open_3: 'pilot', path_open_4: 'trader' };
+                return map[preview[key]] ?? 'Pfad noch ausstehend';
+            }
+            return map[key] ?? '';
+        },
+
         /**
          * Returns the human-readable AP type label for a given ap_type key.
          * @param {string} type

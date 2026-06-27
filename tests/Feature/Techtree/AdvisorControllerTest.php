@@ -163,12 +163,14 @@ class AdvisorControllerTest extends TestCase
 
         $slots = $response->viewData('pageData')['slots'];
 
-        // cc_required for each slot must equal its position (1–5)
+        // Engineer (pos 1): cc_required=1. Path slots (2-4): cc_required=2.
+        // Strategist (pos 5): cc_required=3 (CC Lv3 + SecurityHub gate).
+        $expected = [1 => 1, 2 => 2, 3 => 2, 4 => 2, 5 => 3];
         foreach ($slots as $slot) {
             $this->assertEquals(
-                $slot['position'],
+                $expected[$slot['position']],
                 $slot['cc_required'],
-                "Slot position {$slot['position']} must require CC level {$slot['position']}"
+                "Slot position {$slot['position']} must require CC level {$expected[$slot['position']]}"
             );
         }
     }
@@ -193,17 +195,12 @@ class AdvisorControllerTest extends TestCase
 
         $slots = $response->viewData('pageData')['slots'];
 
-        // Slots 1–3 must NOT be locked (CC=3 grants them)
-        foreach (array_slice($slots, 0, 3) as $slot) {
+        // CC=3: all slots unlock. Engineer@1, path@2, strategist@3 all pass their cc_required.
+        foreach ($slots as $slot) {
             $this->assertNotEquals('locked', $slot['state'],
                 "Slot {$slot['position']} should not be locked with CC level 3");
         }
 
-        // Slots 4–5 must be locked
-        foreach (array_slice($slots, 3, 2) as $slot) {
-            $this->assertEquals('locked', $slot['state'],
-                "Slot {$slot['position']} must be locked with CC level 3");
-        }
     }
 
     public function test_index_slot_state_is_empty_when_no_advisor_hired(): void

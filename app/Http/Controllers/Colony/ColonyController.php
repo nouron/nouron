@@ -134,6 +134,7 @@ class ColonyController extends BaseController
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
+                $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
 
                 return $b;
             });
@@ -910,6 +911,7 @@ class ColonyController extends BaseController
         $row->label = __('techtree.'.$row->building_key);
         $row->image_slug = self::buildingImageSlug($row->building_key);
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
+        $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
 
         return $row;
     }
