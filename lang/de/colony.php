@@ -212,6 +212,7 @@ return [
     'bar_offer_already_accepted' => 'Angebot bereits angenommen.',
     'bar_offer_expired' => 'Angebot ist abgelaufen.',
     'bar_offer_insufficient_resources' => 'Nicht genügend Ressourcen.',
+    'bar_offer_insufficient_ap' => 'Nicht genügend Wirtschafts-AP.',
 
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 

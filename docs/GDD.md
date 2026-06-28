@@ -1531,20 +1531,34 @@ Der einzige Handelsort ist die **Bar/Cantina**. Alle Handelsaktivitäten — Kau
 
 ### Kanal 1: Bar/Cantina (primär, früh, informell)
 
-Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **1–2 Sole gültig** ist. Danach ist der Gast weg.
+Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, Schmuggler, Gelegenheitsverkäufer. Jeder Gast hat ein konkretes Angebot das **2–4 Sole gültig** ist (abhängig vom Bar-Level). Danach ist der Gast weg.
 
 **Angebotstypen:**
-- Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr)
-- Ressource gegen Ressource (z.B. 30 Organika gegen 20 Regolith)
+- Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr) — 60 % aller Angebote
+- Ressource gegen Ressource (z.B. 30 Organika gegen 20 Regolith) — 40 % aller Angebote
 
-Der Spieler sieht 0–2 Angebote und entscheidet: annehmen oder ablehnen. Keine unbegrenzte Auswahl — echte Entscheidung unter Zeitdruck.
+Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet 1 Economy-AP** — dieser Sink macht den Konsul-AP-Pool spielerisch relevant.
 
-**Spieler-zu-Spieler-Handel:** Wenn ein Spieler ein Angebot in der Bar einstellt, erscheint es für andere Spieler ebenfalls als "Gast". Ob ein Gast ein NPC oder ein echter Spieler ist, bleibt unsichtbar — atmosphärisch stimmig, technisch einfach.
+**Bar-Level-Progression:**
 
-**Händler-Berater (advisor_trader):**
-- Rang 1: Basis-Angebote (0–1 Gäste/Sol, Marktpreise)
-- Rang 2: mehr Angebote (0–2 Gäste/Sol), leicht bessere Preise
-- Rang 3: regelmäßige Angebote (1–2 Gäste/Sol), deutlich bessere Preise
+| Level | Angebots-Gültigkeit | Max. gleichzeitig aktive Angebote |
+|-------|---------------------|-----------------------------------|
+| Lv1 | 2 Sole | 2 |
+| Lv2 | 3 Sole | 3 |
+| Lv3 | 3 Sole | 4 |
+| Lv4 | 3 Sole | 5 |
+| Lv5 | 4 Sole | 6 |
+
+**Konsul (advisor_trader) — Rang-Effekte:**
+
+| | Kein Konsul | Rang 1 (Junior) | Rang 2 (Senior) | Rang 3 (Experte) |
+|---|---|---|---|---|
+| Economy-AP/Sol | 6 (Basis) | 10 | 13 | 18 |
+| Gäste/Sol | 0–1 | 0–1 | 0–2 | 1–2 |
+| Preisrabatt | 0 % | 10 % | 20 % | 30 % |
+| Werkstoffe-Bias | ~33 % | ~33 % | ~33 % | 50 % |
+
+**Werkstoffe-Bias bei Rang 3:** Der Experten-Konsul hat Marktbeziehungen — bei Credits→Ressource-Angeboten erscheinen Werkstoffe mit 50 % Wahrscheinlichkeit (statt gleichverteilt ~33 %). Das gibt dem Experten-Konsul einen konkreten wirtschaftlichen Vorteil in der knappsten Ressource des Spiels (§3 Werkstoffe nicht lokal produzierbar).
 
 ---
 
