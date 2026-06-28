@@ -715,10 +715,17 @@ class OnboardingHintService
      */
     private function checkHintBuildPriority(int $colonyId, int $currentTick): bool
     {
+        // Once any path building is placed the player has made a choice — hint is moot.
+        if ($this->isBuildingPlaced($colonyId, 31)
+            || $this->isBuildingPlaced($colonyId, 44)
+            || $this->isBuildingPlaced($colonyId, 52)) {
+            return false;
+        }
+
         $eligible = 0;
-        $eligible += ($this->cantinaPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 52)) ? 1 : 0;
-        $eligible += ($this->hangarPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 44)) ? 1 : 0;
-        $eligible += ($this->analytikPrereqsMet($colonyId, $currentTick) && ! $this->isBuildingPlaced($colonyId, 31)) ? 1 : 0;
+        $eligible += $this->cantinaPrereqsMet($colonyId, $currentTick) ? 1 : 0;
+        $eligible += $this->hangarPrereqsMet($colonyId, $currentTick) ? 1 : 0;
+        $eligible += $this->analytikPrereqsMet($colonyId, $currentTick) ? 1 : 0;
 
         return $eligible >= 2;
     }

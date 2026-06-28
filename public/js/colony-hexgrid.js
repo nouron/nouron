@@ -48,6 +48,10 @@ const TILE_STROKES = {
 
 const CC_COLOR = '#7ec87e';
 const CC_STROKE = '#2e7d32';
+// Colony-zone terrain: noticeably lighter than exploration-zone so "buildable" is
+// immediately visible without clicking. Exploration zone keeps the darker neutral grey.
+const BUILDABLE_COLOR = '#eaedf5'; // explored colony-zone terrain_empty
+const BUILDABLE_STROKE = '#b8c0d0';
 // Fog (state 3+4): clearly readable slate/blue-grey, distinct from the warm-grey
 // buildable terrain. Fog must stand out so the player sees what is still hidden.
 const FOG_COLOR = '#a9b2c4'; // unexplored colony zone (state 3) — buildable but hidden
@@ -1336,7 +1340,10 @@ function getTileColor(tile) {
     if (tile.q === 0 && tile.r === 0) return CC_COLOR;
     if (tile.is_deep_scanned && tile.event_type) return EVENT_COLOR;
 
-    // Exploration-zone terrain shows same fill as colony zone — distinction is dashed stroke + level badge
+    // Colony-zone terrain_empty is clearly lighter than exploration zone.
+    if (tile.is_colony_zone && tile.tile_type.startsWith('terrain_') && tile.tile_type !== 'terrain_impassable') {
+        return BUILDABLE_COLOR;
+    }
 
     return TILE_COLORS[tile.tile_type] ?? '#c8cdd6';
 }
@@ -1349,6 +1356,11 @@ function getTileStroke(tile, isCC) {
     if (!tile.is_explored) return [FOG_STROKE, '1.5'];
     if (tile.is_deep_scanned && tile.event_type) return [EVENT_STROKE, '1.5'];
     if (tile.tile_type === 'terrain_impassable') return ['#555', '0'];
+
+    // Colony-zone terrain: lighter stroke matching the buildable fill.
+    if (tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) {
+        return [BUILDABLE_STROKE, '1.5'];
+    }
 
     // Exploration-zone terrain: dashed stroke signals "not yet claimed"
     if (!tile.is_colony_zone && tile.tile_type.startsWith('terrain_')) {
