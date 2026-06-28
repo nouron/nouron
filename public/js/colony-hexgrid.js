@@ -326,6 +326,9 @@ function colonyHexView(config) {
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+                    if (res.nav_unlocked) {
+                        setTimeout(() => window.location.reload(), 600);
+                    }
                 }
                 if (res.showHarvesterMoveTip) {
                     this.showToast(this.i18n.harvesterMoveTip, 'info');

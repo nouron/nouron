@@ -646,10 +646,18 @@ class ColonyController extends BaseController
             ]);
         }
 
+        // Nav-gated buildings (sciencelab=31, hangar=44, bar=52): reaching level 1 unlocks
+        // a nav link that was rendered server-side as locked. Signal the client to reload
+        // so the nav reflects the new state without manual page refresh.
+        $navUnlocked = $leveledUp
+            && $row->level === 0
+            && in_array($buildingId, [31, 44, 52], true);
+
         return response()->json([
             'ok' => true,
             'building' => $this->fetchBuildingRow($colony->id, $buildingId, $instanceId),
             'leveled_up' => $leveledUp,
+            'nav_unlocked' => $navUnlocked,
             'activeHint' => $this->resolveHint($colony->id),
             ...$this->currentAp($colony->id),
         ]);
