@@ -146,26 +146,25 @@ return [
         'tax_per_housing' => 20,
     ],
 
-    // Bar/Cantina NPC offer generation (GDD §14 Kanal 1).
+    // Bar/Cantina NPC offer generation (GDD §12 Kanal 1).
     // base_prices: Cr per 1 unit of tradeable resource (before variance/discount).
     // price_variance: ±fraction applied to base price (pseudo-random per offer).
-    // trader_discount: fraction by which prices drop for the player (keyed by trader rank, 0 = no trader).
-    // guest_count: [min, max] guests per tick keyed by trader rank.
-    // offer_duration: ticks an offer stays valid (expires_tick = current_tick + offer_duration).
+    // trader_discount: Rank 0 = no trader. Rank 1 gives 10% — Junior must have visible value.
+    // guest_count: [min, max] NPC guests per tick keyed by trader rank.
+    // ap_cost_accept: Economy-AP consumed when the player accepts any bar offer (shown as chip on button).
+    // level_offer_duration: how many ticks an offer stays valid, keyed by bar building level.
+    // level_max_concurrent: max simultaneous active offers per colony, keyed by bar level.
+    // compounds_bias_at_rank3: probability that a credits→resource offer targets compounds at trader rank 3.
     'bar' => [
         'base_prices' => [3 => 30, 4 => 60, 5 => 50], // regolith, compounds, organics
         'price_variance' => 0.20,
-        'trader_discount' => [0 => 0.00, 1 => 0.00, 2 => 0.10, 3 => 0.25],
+        'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
-        'offer_duration' => 2,
-    ],
-
-    // Trade marketplace — AP costs for Händler (economy AP).
-    // Creating an offer costs max(1, floor(amount × price / threshold)) AP.
-    // Accepting an offer costs 1 AP (paid by the acceptor/buyer).
-    // Removing an offer costs 0 AP.
-    'trade' => [
-        'ap_cost_threshold' => 1000,  // divisor: amount × price / threshold = AP cost
+        'offer_duration' => 2,  // fallback when bar level unknown
+        'ap_cost_accept' => 1,
+        'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
+        'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
+        'compounds_bias_at_rank3' => 0.50,
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).

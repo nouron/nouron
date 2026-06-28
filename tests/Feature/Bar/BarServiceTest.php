@@ -23,6 +23,7 @@ namespace Tests\Feature\Bar;
  */
 
 use App\Services\BarService;
+use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -48,6 +49,8 @@ class BarServiceTest extends TestCase
     private const RES_COMPOUNDS = 4;
 
     private const RES_ORGANICS = 5;
+
+    private const TRADER_ADVISOR_ID = 92;
 
     private BarService $barService;
 
@@ -463,5 +466,84 @@ class BarServiceTest extends TestCase
         $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
 
         $this->assertFalse($result['ok'], 'acceptOffer must fail when offer is already accepted');
+    }
+
+    public function test_accept_returns_error_when_insufficient_economy_ap(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class); // refresh after mockTick
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        // Lock all economy AP so none is available
+        $apCost = (int) config('game.bar.ap_cost_accept', 1);
+        $totalAp = (int) config('game.ap.base', 6);
+        DB::table('locked_actionpoints')->insert([
+            'tick' => 10,
+            'scope_type' => 'colony',
+            'scope_id' => self::COLONY_ID,
+            'personell_id' => PersonellService::idFor('trader'),
+            'spend_ap' => $totalAp + $apCost, // exhaust entire pool
+        ]);
+
+        $offerId = $this->insertOffer(['expires_tick' => 20]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok']);
+        $this->assertStringContainsStringIgnoringCase('ap', $result['error']);
+    }
+
+    public function test_accept_locks_economy_ap(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class); // refresh after mockTick
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertOffer(['expires_tick' => 20]);
+
+        $personellId = PersonellService::idFor('trader');
+        $lockedBefore = (int) DB::table('locked_actionpoints')
+            ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+            ->value('spend_ap');
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok']);
+
+        $lockedAfter = (int) DB::table('locked_actionpoints')
+            ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+            ->value('spend_ap');
+
+        $this->assertEquals($lockedBefore + (int) config('game.bar.ap_cost_accept', 1), $lockedAfter);
+    }
+
+    public function test_generate_respects_max_concurrent(): void
+    {
+        $this->clearBarOffers();
+        $this->setBarLevel(1); // max_concurrent = 2
+
+        // Pre-fill with 2 active offers (at max_concurrent for Lv1)
+        $this->insertOffer(['expires_tick' => 20]);
+        $this->insertOffer(['expires_tick' => 20]);
+
+        // Set trader rank 3 (1–2 guests guaranteed)
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
+            ['rank' => 3, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+
+        $this->barService->generateOffersForColony(self::COLONY_ID, 5);
+
+        $count = DB::table('bar_offers')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('expires_tick', '>', 5)
+            ->where('is_accepted', false)
+            ->count();
+
+        $this->assertLessThanOrEqual(2, $count, 'max_concurrent=2 at bar Lv1 must not be exceeded');
     }
 }

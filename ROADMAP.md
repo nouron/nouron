@@ -584,19 +584,11 @@ Spieler soll in der Lage sein, die Kolonie von Beginn an auf etwa 80% auszubauen
 - [ ] **Onboarding-Hints vollständig?** — Rang-1/2/3-Hinweise abdecken: CC aufleveln, Berater einstellen, ersten Harvester-Level, erste Versorgungsknappheit, Trust-Warnung. Fehlende Hints identifizieren und ergänzen.
 - [ ] **Neuer Run spielbar?** — Frischer Run: CommandCenter Lv1, Harvester Lv1, 3000 CR, 15 Supply. Kann der Spieler ohne externe Anleitung weiterkommen?
 - [ ] **Kritische Blocker?** — Gibt es Screens/Flows ohne Rückmeldung (leere States, fehlende Fehlermeldungen, unverständliche Labels)?
-- [ ] **INNN/Nachrichten vereinfachen** (siehe unten) — vor Playtest erledigen
+- [x] **INNN/Nachrichten vereinfachen** — abgeschlossen, siehe Phase 3j
 
-### Phase 3j: INNN-System Redesign *(nächste Session)*
+### Phase 3j: Kolonieprotokoll (INNN-Redesign) — Abgeschlossen
 
-Das aktuelle Nachrichten-System (INNN) ist zu komplex und für den Singleplayer-Kontext überdimensioniert. Kernproblem: Es fehlt ein klarer **Aktions- und Ereignis-Log**, der dem Spieler zeigt, was pro Sol passiert ist.
-
-**Ziele:**
-- Vereinfachung auf das Wesentliche: **Ereignis-Log** (was passierte diesen Sol?) + **Nexus-Meldungen** (story-getriebene Nachrichten)
-- Komplexe Nachrichten-Typen (Outbox, Archive, Compose, Trade-Meldungen) entfernen oder zusammenführen
-- Aktions-Log: pro Sol eine Liste von Events (Gebäude aufgestuft, Schiff angekommen, Trust-Änderung, Supply-Warnung, …)
-- Technisch: `innn_events`-Tabelle als Basis des Logs; UI als einfache chronologische Liste im Colony-Layout
-
-**Noch offen:** Genaues Scope-Design vor Implementierung mit game-designer abstimmen.
+INNN-Nachrichtensystem vollständig ersetzt. Neuer Screen `/comm-log` mit zwei Tabs — "Protokoll" (chronologisches Aktions- + Ereignis-Log, mit `×N`-Kollaps bei Wiederholungen) und "Nexus-Funk" (story-generierte Nachrichten mit Ungelesen-Badge). Player-Messaging, Inbox/Outbox, Compose, Galaxy-News entfallen. Entity-Chips (Gebäude, Kenntnis, Schiff, Ressource, Berater) als farbige Pills mit Hover-Tooltip. `colony_log`-Tabelle ersetzt `innn_events`. 725 Tests grün.
 
 ---
 
