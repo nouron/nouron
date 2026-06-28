@@ -13,6 +13,13 @@
         finaleWinCta: @js(__("colony.sol_report_finale_win_cta")),
         finaleLoseCta: @js(__("colony.sol_report_finale_lose_cta")),
         computing: @js(__("colony.next_sol_button")),
+        screen2Title: @js(__("colony.sol_report_screen2_title")),
+        phase1Title: @js(__("colony.sol_report_phase1_title")),
+        phase2Title: @js(__("colony.sol_report_phase2_title")),
+        objectiveHidden: @js(__("colony.sol_report_phase2_objective_hidden")),
+        nextScreen: @js(__("colony.sol_report_next_screen")),
+        solStarts: @js(__("colony.sol_report_screen3_starts")),
+        solBegin: @js(__("colony.sol_report_screen3_begin")),
     },
     routes: {
         remainingAp: @js(route("sol.remaining-ap")),
@@ -76,8 +83,8 @@
             </div>
         </template>
 
-        {{-- Standard group report --}}
-        <template x-if="report && !report.finale">
+        {{-- Screen 1: Standard group report --}}
+        <template x-if="report && !report.finale && currentScreen === 1">
             <div class="sol-report" @click.stop="skipToEnd()">
                 <header class="sol-report__header">
                     <h2 class="sol-report__title" x-text="headerTitle"></h2>
@@ -120,8 +127,85 @@
                         <span x-text="i18n.skipSetting"></span>
                     </label>
                     <button type="button" class="sol-btn sol-btn--primary sol-report__continue" x-show="finished"
-                        x-cloak @click.stop="goContinue()" x-text="continueLabel"></button>
+                        x-cloak @click.stop="goScreen2()" x-text="i18n.nextScreen"></button>
                 </footer>
+            </div>
+        </template>
+
+        {{-- Screen 2: Phase progress --}}
+        <template x-if="report && !report.finale && currentScreen === 2">
+            <div class="sol-report sol-report--phase" @click.stop>
+                <header class="sol-report__header">
+                    <h2 class="sol-report__title" x-text="i18n.screen2Title"></h2>
+                    <p class="sol-phase__subtitle"
+                        x-text="report.phase_progress.phase === 1 ? i18n.phase1Title : i18n.phase2Title"></p>
+                </header>
+
+                <div class="sol-report__groups sol-phase__body">
+
+                    {{-- Phase 1: criteria checklist --}}
+                    <template x-if="report.phase_progress.phase === 1">
+                        <ul class="sol-phase__list">
+                            <template x-for="c in report.phase_progress.criteria" :key="c.key">
+                                <li class="sol-phase__item" :class="c.done ? 'sol-phase__item--done' : ''">
+                                    <i class="bi sol-phase__icon"
+                                        :class="c.done ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                                    <span class="sol-phase__label" x-text="c.label"></span>
+                                    <span class="sol-phase__progress" x-text="c.current + ' / ' + c.target"></span>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+
+                    {{-- Phase 2: objectives (with revelation mechanic) --}}
+                    <template x-if="report.phase_progress.phase === 2">
+                        <ul class="sol-phase__list">
+                            <template x-for="(obj, i) in report.phase_progress.objectives" :key="i">
+                                <li class="sol-phase__item"
+                                    :class="obj.done ? 'sol-phase__item--done' : (!obj.revealed ? 'sol-phase__item--hidden' :
+                                        '')">
+                                    <i class="bi sol-phase__icon"
+                                        :class="obj.done ? 'bi-check-circle-fill' : (obj.revealed ? 'bi-circle' :
+                                            'bi-question-circle')"></i>
+                                    <span class="sol-phase__label"
+                                        x-text="obj.revealed ? obj.label : i18n.objectiveHidden"></span>
+                                    <template x-if="obj.revealed">
+                                        <span class="sol-phase__progress"
+                                            x-text="obj.current + ' / ' + obj.target"></span>
+                                    </template>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
+                </div>
+
+                <footer class="sol-report__footer sol-phase__footer">
+                    <button type="button" class="sol-btn sol-btn--primary sol-report__continue"
+                        @click.stop="goScreen3()" x-text="i18n.nextScreen"></button>
+                </footer>
+            </div>
+        </template>
+
+        {{-- Screen 3: SOL N startet --}}
+        <template x-if="report && !report.finale && currentScreen === 3">
+            <div class="sol-launch" @click.stop>
+                <div class="sol-launch__text">
+                    <div class="sol-launch__sol"
+                        :style="{
+                            opacity: screen3Phase >= 1 ? 1 : 0,
+                            transform: screen3Phase >= 1 ? 'translateY(0)' : 'translateY(1.5rem)'
+                        }"
+                        x-text="'SOL ' + report.next_sol"></div>
+                    <div class="sol-launch__starts"
+                        :style="{
+                            opacity: screen3Phase >= 2 ? 1 : 0,
+                            transform: screen3Phase >= 2 ? 'translateY(0)' : 'translateY(1rem)'
+                        }"
+                        x-text="i18n.solStarts"></div>
+                </div>
+                <button type="button" class="sol-btn sol-btn--ghost sol-launch__begin"
+                    :style="{ opacity: screen3Phase >= 3 ? 1 : 0, pointerEvents: screen3Phase >= 3 ? 'auto' : 'none' }"
+                    @click.stop="goContinue()" x-text="i18n.solBegin"></button>
             </div>
         </template>
     </div>
@@ -147,6 +231,8 @@
             shakeKey: null,
             _timers: [],
             _reduceMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+            currentScreen: 1,
+            screen3Phase: 0, // 0=nothing visible, 1=sol-number, 2=starts text, 3=button
 
             get hasAp() {
                 return this.apData && this.apData.total > 0;
@@ -215,6 +301,8 @@
 
                     this.loading = false;
                     this.reportOpen = true;
+                    this.currentScreen = 1;
+                    this.screen3Phase = 0;
 
                     if (report.finale) {
                         // Finale renders immediately; no group animation.
@@ -313,11 +401,13 @@
             },
 
             skipToEnd() {
+                if (this.currentScreen !== 1) return;
                 if (this.finished) return;
                 this.finishNow();
             },
 
             finishNow() {
+                if (this.currentScreen !== 1) return;
                 this.clearTimers();
                 this.shakeKey = null;
                 this.visibleGroup = (this.report.groups || []).length - 1;
@@ -359,6 +449,28 @@
                 } catch (e) {
                     // Non-critical; preference simply won't persist this time.
                 }
+            },
+
+            goScreen2() {
+                this.clearTimers();
+                this.currentScreen = 2;
+            },
+
+            goScreen3() {
+                this.currentScreen = 3;
+                if (this._reduceMotion) {
+                    this.screen3Phase = 3;
+                    return;
+                }
+                this.schedule(() => {
+                    this.screen3Phase = 1;
+                }, 150);
+                this.schedule(() => {
+                    this.screen3Phase = 2;
+                }, 900);
+                this.schedule(() => {
+                    this.screen3Phase = 3;
+                }, 2000);
             },
 
             goContinue() {

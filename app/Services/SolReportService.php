@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Advisor;
 use App\Models\Run;
 use Illuminate\Support\Facades\DB;
 
@@ -143,6 +144,7 @@ class SolReportService
             'force_show' => $forceShow,
             'finale' => $finale,
             'groups' => $groups,
+            'phase_progress' => $this->phaseProgress($run),
         ];
     }
 
@@ -429,6 +431,91 @@ class SolReportService
         }
 
         return null;
+    }
+
+    // ── Phase progress (Screen 2) ───────────────────────────────────────────────
+
+    private function phaseProgress(Run $run): array
+    {
+        if ($run->phase === 1 || $run->phase === null) {
+            return $this->phase1Progress($run);
+        }
+
+        return $this->phase2Progress($run);
+    }
+
+    private function phase1Progress(Run $run): array
+    {
+        $ccId = config('buildings.commandCenter.id', 25);
+        $colonyId = (int) $run->colony_id;
+
+        $ccLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', $ccId)
+            ->value('level') ?? 0);
+
+        $buildingsLv2 = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', '!=', $ccId)
+            ->where('level', '>=', 2)
+            ->count();
+
+        $advisorCount = Advisor::where('colony_id', $colonyId)
+            ->where(function ($q) use ($run): void {
+                $q->whereNull('unavailable_until_tick')
+                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+            })
+            ->count();
+
+        return [
+            'phase' => 1,
+            'criteria' => [
+                [
+                    'key' => 'cc_level',
+                    'label' => __('colony.sol_report_phase1_cc'),
+                    'current' => min($ccLevel, 3),
+                    'target' => 3,
+                    'done' => $ccLevel >= 3,
+                ],
+                [
+                    'key' => 'buildings_lv2',
+                    'label' => __('colony.sol_report_phase1_buildings'),
+                    'current' => min($buildingsLv2, 2),
+                    'target' => 2,
+                    'done' => $buildingsLv2 >= 2,
+                ],
+                [
+                    'key' => 'advisors',
+                    'label' => __('colony.sol_report_phase1_advisors'),
+                    'current' => min($advisorCount, 3),
+                    'target' => 3,
+                    'done' => $advisorCount >= 3,
+                ],
+            ],
+        ];
+    }
+
+    private function phase2Progress(Run $run): array
+    {
+        $objectives = $run->objectives()
+            ->get(['task_key', 'current_value', 'target_value', 'completed_at']);
+
+        $items = $objectives->map(function ($obj): array {
+            $revealed = (int) $obj->current_value > 0 || $obj->completed_at !== null;
+
+            return [
+                'revealed' => $revealed,
+                'label' => $revealed ? __('run.'.$obj->task_key) : null,
+                'current' => (int) $obj->current_value,
+                'target' => (int) $obj->target_value,
+                'done' => $obj->completed_at !== null,
+            ];
+        })->values()->all();
+
+        return [
+            'phase' => 2,
+            'objectives' => $items,
+        ];
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-29
+
+- **Sol-Report V2: 3-Screen-Flow.** Sol-Report erweitert auf drei aufeinanderfolgende Screens. Screen 1 (Gruppen-Report) unverändert; „Weiter"-Button führt jetzt zu Screen 2. Screen 2 zeigt Phase-Fortschritt: in Phase 1 die drei Abschluss-Kriterien (CC Lv3, 2 Gebäude Lv2, 3 Berater) mit aktuellem Stand; in Phase 2 die drei Nexus-Direktiven mit Revelations-Mechanik (Direktive erst sichtbar wenn Fortschritt > 0). Screen 3 zeigt „SOL N / startet" als elegante Fade-in-Animation auf dunklem Hintergrund, danach „Mission fortsetzen"-Button. `SolReportService::buildReport()` gibt jetzt `phase_progress`-Block aus (`SolReportService::phaseProgress()`). Alpine.js: `currentScreen` (1/2/3) + `screen3Phase` (0–3) State, `goScreen2()` / `goScreen3()` Methoden. CSS: `.sol-phase__*` (Screen 2) + `.sol-launch` / `.sol-launch__*` (Screen 3). Reduced-motion: Screen 3 überspringt Animation.
+
 ## 2026-06-28
 
 - **Voraussetzungsketten finalisiert** (Owner-Design). Analytiklabor + Hangar jetzt ab CC Lv1 baubar (Migration: `required_building_level` 2→1). Path-Gate (CC-Level−1-Formel) entfernt — natürliche Ressourcenknappheit steuert Spielerwahl statt künstlichem Gate. Techtree-Nav + Route gesperrt bis Analytiklabor gebaut (`sciencelabBuilt`-Flag in AppServiceProvider, Redirect in TechtreeController).
