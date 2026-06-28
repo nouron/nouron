@@ -627,27 +627,12 @@ class OnboardingHintService
             return false;
         }
 
-        $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
-            ->value('level');
-        if ($ccLevel < 2) {
-            return false;
-        }
-
         $housingLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 28)
             ->value('level');
-        if ($housingLevel < 1) {
-            return false;
-        }
 
-        if (! $this->pathGateFree($colonyId, 52)) {
-            return false;
-        }
-
-        return true;
+        return $housingLevel >= 1;
     }
 
     /**
@@ -690,23 +675,8 @@ class OnboardingHintService
     private function analytikPrereqsMet(int $colonyId, int $currentTick): bool
     {
         $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 2);
-        if ($currentTick < $threshold) {
-            return false;
-        }
 
-        $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
-            ->value('level');
-        if ($ccLevel < 2) {
-            return false;
-        }
-
-        if (! $this->pathGateFree($colonyId, 31)) {
-            return false;
-        }
-
-        return true;
+        return $currentTick >= $threshold;
     }
 
     private function checkHintHangarPath(int $colonyId, int $currentTick): bool
@@ -719,38 +689,8 @@ class OnboardingHintService
     private function hangarPrereqsMet(int $colonyId, int $currentTick): bool
     {
         $threshold = (int) config('game.onboarding.hint_no_hangar_after_tick', 2);
-        if ($currentTick < $threshold) {
-            return false;
-        }
 
-        $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
-            ->value('level');
-        if ($ccLevel < 2) {
-            return false;
-        }
-
-        // Path-gate: at CC Lv2, only 1 path building may be placed simultaneously.
-        return $this->pathGateFree($colonyId, 44);
-    }
-
-    private function pathGateFree(int $colonyId, int $forBuildingId): bool
-    {
-        $pathBuildingIds = [31, 44, 52];
-        $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
-            ->value('level');
-        $placed = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->whereIn('building_id', $pathBuildingIds)
-            ->where('building_id', '!=', $forBuildingId)
-            ->whereNotNull('tile_x')
-            ->where('level', '>', 0)
-            ->count();
-
-        return $ccLevel >= 2 && $placed < $ccLevel - 1;
+        return $currentTick >= $threshold;
     }
 
     /**

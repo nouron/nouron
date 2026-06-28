@@ -152,9 +152,17 @@ class AdvisorController extends BaseController
 
             /** @var Advisor|null $advisor */
             $advisor = $advisorsByPersonellId->get($personellId);
-            // Strategist needs CC Lv3 + SecurityHub (gate wired up later); other fixed slots = cc < position.
+            // Strategist: CC Lv3 + SecurityHub (building_id=53) Lv1. Other fixed slots: cc < position.
             $ccGate = $key === 'strategist' ? 3 : $position;
             $isLocked = $ccLevel < $ccGate;
+            if (! $isLocked && $key === 'strategist') {
+                $hubBuilt = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', 53)
+                    ->where('level', '>', 0)
+                    ->exists();
+                $isLocked = ! $hubBuilt;
+            }
 
             if ($isLocked) {
                 $state = 'locked';

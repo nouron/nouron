@@ -1037,7 +1037,7 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_all_hints_dismissed_returns_null(): void
     {
-        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_6', 'hint_agrardome', 'hint_end_sol'] as $key) {
+        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_build_priority', 'hint_6', 'hint_agrardome', 'hint_analytik', 'hint_hangar_path', 'hint_spend_remaining_ap', 'hint_end_sol'] as $key) {
             $this->service->dismissHint($this->userId, $key);
         }
         $this->setRunTick(99);

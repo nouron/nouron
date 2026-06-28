@@ -13,6 +13,7 @@ use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -57,9 +58,20 @@ class TechtreeController extends BaseController
      * and within-phase dependency arrows. CC arrows are omitted — the phase
      * header communicates the CC requirement.
      */
-    public function index(): View
+    public function index(): View|RedirectResponse
     {
         $colonyId = $this->resolveColonyId();
+
+        $sciencelabBuilt = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 31)
+            ->where('level', '>', 0)
+            ->exists();
+        if (! $sciencelabBuilt) {
+            return redirect()->route('colony.view')
+                ->with('info', __('colony.nav_techtree_locked'));
+        }
+
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
         // Map element DOM id → phase number for same-phase arrow filtering

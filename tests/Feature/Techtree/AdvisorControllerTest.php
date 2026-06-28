@@ -195,10 +195,16 @@ class AdvisorControllerTest extends TestCase
 
         $slots = $response->viewData('pageData')['slots'];
 
-        // CC=3: all slots unlock. Engineer@1, path@2, strategist@3 all pass their cc_required.
+        // CC=3: slots 1-4 unlock. Slot 5 (strategist) requires CC Lv3 + SecurityHub Lv1.
+        // SecurityHub is not built in test data → slot 5 remains locked.
         foreach ($slots as $slot) {
-            $this->assertNotEquals('locked', $slot['state'],
-                "Slot {$slot['position']} should not be locked with CC level 3");
+            if ($slot['position'] === 5) {
+                $this->assertEquals('locked', $slot['state'],
+                    'Slot 5 (strategist) should be locked without SecurityHub');
+            } else {
+                $this->assertNotEquals('locked', $slot['state'],
+                    "Slot {$slot['position']} should not be locked with CC level 3");
+            }
         }
 
     }

@@ -138,7 +138,7 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('nexusDebtMax', 12000);
                 $view->with('inActiveRun', $activeRun !== null);
 
-                // Cantina nav-link gating: grey out when bar not yet built
+                // Nav-link gating: grey out when prerequisite building not yet built
                 $colonyIdForBar = session('activeIds.colonyId', 1);
                 $barBuilt = DB::table('colony_buildings')
                     ->where('colony_id', $colonyIdForBar)
@@ -154,6 +154,14 @@ class AppServiceProvider extends ServiceProvider
                     ->where('level', '>', 0)
                     ->exists();
                 $view->with('hangarBuilt', $hangarBuilt);
+
+                // Techtree nav-link gating: locked until Analytiklabor (sciencelab, id=31) built
+                $sciencelabBuilt = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyIdForBar)
+                    ->where('building_id', 31)
+                    ->where('level', '>', 0)
+                    ->exists();
+                $view->with('sciencelabBuilt', $sciencelabBuilt);
 
                 // Nexus-Funk unread badge count for colony nav
                 $unreadNexusCount = app(EventService::class)->countUnreadNexus(Auth::id());

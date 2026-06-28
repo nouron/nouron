@@ -175,20 +175,32 @@ return [
 
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
-    // Security Hub — CC Lv2, max 1 instance (is_instanced=0).
-    // (Former defend-order discount removed with the fleet/galaxy layer 2026-06.)
-    // Effect: on building level-down by decay, return 10% of step costs in
-    //         tradeable resources (GameTick, config key: securityHub_recycle_pct).
-    // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
+    // Security Hub — CC Lv3, max 1 instance (is_instanced=0).
+    // Gate raised from CC Lv2 → Lv3 (2026-06-28): Hub is the prerequisite for the
+    // Stratege advisor slot (Slot 5), analogous to the three path buildings (Pfad
+    // A/B/C) that open Slots 2–4. Not part of the Pfadwahl build-gate group.
+    //
+    // Effects:
+    //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
+    //   2. Event mitigation: negative trust events (building_level_down,
+    //      encounter_lost, colony_threatened) reduced by 25% when Hub active
+    //      (TrustService — TODO: implement, key: securityHub_event_mitigation_pct).
+    //   3. recycle_pct: on building level-down by decay, return 10% of build
+    //      cost in tradeable resources (GameTick — partially implemented).
+    //
+    // Former defend-order discount removed with the fleet/galaxy layer 2026-06.
+    // TODO Balance: trust_per_lv, event_mitigation_pct, recycle_pct, supply_cost
+    //               all to be calibrated after first playtest.
     'securityHub' => [
         'id' => 53,
-        'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
+        'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
-        'trust_per_lv' => 0,
+        'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3)
         'decay_rate' => 0.67,    // 30 days — provisional
         'max_status_points' => 20,
         'max_level' => 3,
-        'recycle_pct' => 0.10,    // fraction of build cost returned on level-down
+        'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
+        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TODO: implement)
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).

@@ -509,10 +509,12 @@ function colonyHexView(config) {
                 this.syncResbarAp('resbar-ap-build', res.apConstruction);
             }
             if (res.regolith !== undefined) {
+                if (res.regolith < this.regolith) this.flashResChip('.res-Rg');
                 this.regolith = res.regolith;
                 this.syncResbarAmount('.res-Rg', res.regolith);
             }
             if (res.werkstoffe !== undefined) {
+                if (res.werkstoffe < this.werkstoffe) this.flashResChip('.res-Co');
                 this.werkstoffe = res.werkstoffe;
                 this.syncResbarAmount('.res-Co', res.werkstoffe);
             }
@@ -540,6 +542,16 @@ function colonyHexView(config) {
         syncResbarAp(chipId, value) {
             const el = document.querySelector(`#${chipId} .res-amount`);
             if (el) el.textContent = value;
+        },
+
+        // Briefly pulse a resource chip (by CSS selector) when its amount drops.
+        flashResChip(selector) {
+            const chip = document.querySelector(selector);
+            if (!chip) return;
+            chip.classList.remove('res-chip--flash');
+            void chip.offsetWidth;
+            chip.classList.add('res-chip--flash');
+            setTimeout(() => chip.classList.remove('res-chip--flash'), 600);
         },
 
         // Briefly pulse an AP chip so the player notices the pool shrinking.

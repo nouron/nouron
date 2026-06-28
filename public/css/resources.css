@@ -282,7 +282,7 @@
     color: #991b1b;
 }
 
-/* Pulse when the AP pool shrinks — value change alone is easy to miss */
+/* Pulse when AP pool or resource amount shrinks — value change alone is easy to miss */
 @keyframes ap-chip-flash {
     0% {
         transform: scale(1.18);
@@ -295,4 +295,18 @@
 }
 .ap-chip--flash {
     animation: ap-chip-flash 0.6s ease-out;
+}
+
+@keyframes res-chip-flash {
+    0% {
+        transform: scale(1.12);
+        filter: brightness(0.8);
+    }
+    100% {
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+.res-chip--flash {
+    animation: res-chip-flash 0.5s ease-out;
 }

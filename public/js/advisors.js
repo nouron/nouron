@@ -69,8 +69,14 @@ function advisorCarousel(config) {
         // a shared Alpine store if more screens need cross-component resource sync.
         syncCreditsChip(credits) {
             if (credits === undefined) return;
-            const el = document.querySelector('.res-Cr .res-amount');
+            const chip = document.querySelector('.res-Cr');
+            if (!chip) return;
+            const el = chip.querySelector('.res-amount');
             if (el) el.textContent = credits.toLocaleString('de-DE');
+            chip.classList.remove('res-chip--flash');
+            void chip.offsetWidth;
+            chip.classList.add('res-chip--flash');
+            setTimeout(() => chip.classList.remove('res-chip--flash'), 600);
         },
 
         async doFire() {

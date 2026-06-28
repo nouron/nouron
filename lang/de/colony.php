@@ -105,7 +105,8 @@ return [
     'onboarding_hint_spend_ap_research' => 'Noch Forschungs-AP übrig — im Techtree eine Kenntnis weiter erforschen.',
     'onboarding_hint_spend_ap_navigation' => 'Noch Navigations-AP übrig — weiter erkunden, jenseits der Kolonie liegt noch unentdecktes Gelände.',
     'onboarding_hint_spend_ap_economy' => 'Noch Wirtschafts-AP übrig — in der Cantina nach Angeboten schauen.',
-    'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 + Kommandozentrale lv2 erforderlich.',
+    'nav_techtree_locked' => 'Analytiklabor erforderlich.',
+    'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
     // ── First-visit popups (Techtree/Nexus-DB/Cantina/Hangar) ──────────────────
 

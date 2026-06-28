@@ -212,6 +212,18 @@ class PersonellService
                 }
             }
 
+            // Strategist gate — requires SecurityHub (building_id=53) Lv1.
+            if ($personellId === self::idFor('strategist')) {
+                $hubBuilt = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', 53)
+                    ->where('level', '>', 0)
+                    ->exists();
+                if (! $hubBuilt) {
+                    return 'path_building_missing';
+                }
+            }
+
             // Credits check and deduction.
             if (! config('game.bypass.resource_costs')) {
                 $advisorCfg = collect(config('advisors'))->firstWhere('id', $personellId);

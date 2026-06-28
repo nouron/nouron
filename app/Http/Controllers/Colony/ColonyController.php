@@ -225,18 +225,11 @@ class ColonyController extends BaseController
             ->pluck('cnt', 'building_id')
             ->toArray();
 
-        $pathGateCount = DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->whereIn('building_id', self::PATH_BUILDING_IDS)
-            ->whereNotNull('tile_x')
-            ->where('level', '>', 0)
-            ->count();
-
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
-            ->filter(function ($b) use ($ccLevel, $placedCounts, $pathGateCount) {
+            ->filter(function ($b) use ($ccLevel, $placedCounts) {
                 if ($b->id === BuildingId::CommandCenter->value) {
                     return false;
                 }  // CC — already exists
@@ -255,11 +248,6 @@ class ColonyController extends BaseController
                 }
                 if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
                     return false;
-                }
-                if (in_array($b->id, self::PATH_BUILDING_IDS, true)) {
-                    if ($ccLevel < 2 || $pathGateCount >= $ccLevel - 1) {
-                        return false;
-                    }
                 }
 
                 return true;
@@ -337,28 +325,6 @@ class ColonyController extends BaseController
         }
 
         // Path-gate: sciencelab/hangar/bar may only be placed when CC level allows.
-        // CC Lv2 unlocks the first path slot; each additional CC level adds one more.
-        if (! $isHarvester && in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true)) {
-            $ccLevelForGate = (int) (DB::table('colony_buildings')
-                ->where('colony_id', $colony->id)
-                ->where('building_id', BuildingId::CommandCenter->value)
-                ->value('level') ?? 0);
-            $placedPathCount = DB::table('colony_buildings')
-                ->where('colony_id', $colony->id)
-                ->whereIn('building_id', self::PATH_BUILDING_IDS)
-                ->where('building_id', '!=', $data['building_id'])
-                ->whereNotNull('tile_x')
-                ->where('level', '>', 0)
-                ->count();
-            if ($ccLevelForGate < 2 || $placedPathCount >= $ccLevelForGate - 1) {
-                return response()->json([
-                    'ok' => false,
-                    'error' => 'path_gate_locked',
-                    'message' => __('colony.error_path_gate_locked'),
-                ]);
-            }
-        }
-
         // Harvester is marked is_instanced=1 in schema but has exactly one instance per colony
         // and must always be moved (UPDATE), never duplicated (INSERT).
         $existingBuilding = ($isHarvester || ! $building->is_instanced)
