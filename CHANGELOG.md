@@ -7,6 +7,11 @@
 - **Fix: `hint_build_priority` erscheint nicht mehr nach Pfadentscheidung.** Hint stumm sobald irgendein Pfadgebäude (31/44/52) platziert ist.
 - **Fix: Bebaubare Tiles visuell klar von unbebaubaren unterscheidbar.** Koloniezone-Tiles (`is_colony_zone=true, terrain_empty`) neu `#eaedf5` (deutlich heller), Explorations-Zone bleibt `#c8cdd6`. Neue Konstanten `BUILDABLE_COLOR`/`BUILDABLE_STROKE` in `colony-hexgrid.js`.
 
+## 2026-06-28 (2)
+
+- **Phase-Fortschritt im Kolonie-View.** `ColonyController::computePhaseProgress()` berechnet Phase-1-Kriterien (CC Lv3 / 2 Gebäude Lv2 / 3 Berater) oder Phase-2-Direktiven (Objectives mit Revelations-Mechanik). Ergebnis in `window.__colonyViewData` eingebettet und nach jedem Level-Up reaktiv aktualisiert. Anzeige als Pill-Button (`P1 — 2/3` / `P2 — 0/3`) in der neuen `canvas-info-bar` unterhalb des Hex-Grids. Klick öffnet `<dialog>` mit vollständiger Liste. Legende ebenfalls in die info-bar integriert (einheitliches Pill-Styling, kein `position:fixed` mehr auf Desktop).
+- **`game:reset-player` Szenario-Fixes.** `pre-phase2`: Regolith 30 → 150, damit Spieler sofort Hangar bauen und Pilot anstellen kann (kein Sol-Warten). game-designer-Agent: Szenario-Pflege-Hinweis bei Wertänderungen ergänzt.
+
 ## 2026-06-28
 
 - **Voraussetzungsketten finalisiert** (Owner-Design). Analytiklabor + Hangar jetzt ab CC Lv1 baubar (Migration: `required_building_level` 2→1). Path-Gate (CC-Level−1-Formel) entfernt — natürliche Ressourcenknappheit steuert Spielerwahl statt künstlichem Gate. Techtree-Nav + Route gesperrt bis Analytiklabor gebaut (`sciencelabBuilt`-Flag in AppServiceProvider, Redirect in TechtreeController).
