@@ -507,6 +507,12 @@ class OnboardingHintService
             return false;
         }
 
+        // Agrardom is a hard CC-Lv2 prerequisite — suppress the CC-invest hint until
+        // Agrardom is placed, so the player isn't sent to invest in an upgrade they can't reach.
+        if (! $this->isBuildingPlaced($colonyId, 41)) {
+            return false;
+        }
+
         // Only while there is still Bau-AP left to pre-invest this Sol.
         return $this->personellService->getConstructionPoints($colonyId) > 0;
     }

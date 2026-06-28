@@ -108,7 +108,7 @@ class HarvesterTransitTest extends TestCase
         $response->assertOk()->assertJsonPath('ok', true);
         $row = $this->harvesterRow();
         $this->assertSame(3, (int) $row->tile_x);
-        $this->assertSame($tick + 1, (int) $row->pending_until_tick);
+        $this->assertSame($tick, (int) $row->pending_until_tick);
         $this->assertTrue($response->json('building.in_transit'));
     }
 

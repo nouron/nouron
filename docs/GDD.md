@@ -310,7 +310,9 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 >
 > **Sicherheits-Hub (CC Lv3) — Strategen-Pfad:** Der Sicherheits-Hub ist analog zu den drei Pfad-Gebäuden das Gate für den Strategen-Slot (Slot 5). Er ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates viertes Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. Beim Bau öffnet der Strategen-Slot — unabhängig davon, welche der drei Pfad-Gebäude der Spieler bereits gewählt hat. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
 
-> **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Aktion: 1 Construction-AP, keine Downtime). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
+> **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Kosten: 1 Construction-AP **pro Hex Distanz**, keine Ressourcenabzüge; Transit-Zeit: **1 Sol flat**, unabhängig von der Distanz — der Harvester produziert im Transit-Sol nicht). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
+
+> **Designentscheidung Harvester-Transit (2026-06-28):** Eine distanzabhängige Transit-Zeit (z. B. 1 Sol pro 2 Hex) wurde geprüft und **verworfen**. Die AP-Kosten skalieren bereits mit der Distanz (1 AP/Hex) und erzeugen damit das gewünschte Planungs-Druckgefühl. Eine zusätzliche Sol-Staffel wäre eine doppelte Strafe für lange Verlegungen und würde im Transit Reparaturen blockieren (Reparatur kostet Regolith — kein Regolith-Zufluss ohne Harvester), was eine unkontrollierte Decay-Spirale riskiert. Der 1-Sol-Stopp ist ausreichend: 1 Sol ohne Regolith-Produktion (= 10 Rg Opportunitätsverlust bei Lv1) bei gleichzeitig bis zu 5 AP-Kosten bei einer Fünf-Hex-Verlegung. Falls der Playtest zeigt, dass Harvester-Verlegungen zu oft ohne Nachdenken passieren, ist der bessere Hebel die AP-Rate (1 AP/Hex erhöhen), nicht die Sol-Downtime.
 
 ### Bauregeln: Zone-Trennung
 
@@ -333,12 +335,12 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php → build_cost` / `regolith_per_levelup`, in die `building_costs`-Tabelle gesynct via `game:sync-config`). Drei getrennte Kosten-Achsen:
 
 **1. Errichten (Tile leer → Level 1, Einmal-Abzug):**
-- **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom/Cantina), spät 60–100 (Analytik-Labor/Hangar/Handelsposten…).
-- **Werkstoffe** nur für späte/High-Tech-Gebäude, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung). Analytik-Labor (CC Lv2, deutlich vor Uplink-Station/Cantina erreichbar) ist aus demselben Grund werkstofffrei — sonst wäre der direkt mit CC Lv2 freigeschaltete Analytiker-Slot für mehrere Sole unbenutzbar.
+- **Regolith** für alle Gebäude außer CC + Harvester. Richtwerte: früh 40–50 (Wohnhabitat/Agrardom), mittel 60–75 (Cantina/Uplink-Station), spät 80–100 (Analytik-Labor/Hangar/Handelsposten…).
+- **Werkstoffe** nur für späte/High-Tech-Gebäude **ab CC Lv3+**, als knapper Akzent **10–25 Einheiten** (nicht als Hauptkosten — jeder Werkstoff ist eine harte Credits-Ausgabe über den Import, §3). Uplink-Station Lv1 ist **werkstofffrei** (sie ist das Import-Gate → Zirkelschluss-Vermeidung). Analytik-Labor und Hangar (beide CC Lv2-Pfadgebäude) sind aus demselben Grund **werkstofffrei**: Die Uplink-Station (Wk-Import-Gate) ist ebenfalls erst ab CC Lv2 baubar — wer ein Pfad-Gebäude mit Wk-Anforderung bauen will, müsste erst Uplink-Station bauen (80 Rg + 6 Supply extra), was Pfad B gegenüber Pfad A/C strukturell benachteiligt. Entscheidung 2026-06-28: alle drei Pfad-Gebäude (CC Lv2) sind Wk-frei.
 - **Supply-Gate:** Bau nur möglich, wenn freie Supply-Cap ≥ `supply_cost` des Gebäudes (§6). Kein Abzug — reine Belegungsprüfung.
 
 **2. Level-Up (jedes Level, flach — keine Eskalation):**
-- **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Analytik-Labor 20/Lvl, Hangar 20/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
+- **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Cantina ~17/Lvl, Analytik-Labor 20/Lvl, Hangar ~22/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
 - **CC-Upgrade (Sonderfall):** skaliert mit `Ziel-Level × 30` Regolith (Lv2 = 60 … Lv5 = 150) — das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben.
 - Harvester: Level-Up regolithfrei (Bootstrap-Schutz).
 
@@ -694,11 +696,22 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 |---------|--------|
 | Harvester, Agrardom | 2 |
 | Kolonialdenkmal | 2 |
-| Cantina, Religiöse Stätte | 4 (je) |
+| Hangar | 4 (je Instanz) |
+| Religiöse Stätte | 4 |
+| Cantina | 6 |
 | Uplink-Station, Handelsposten | 6 (je) |
 | Analytik-Labor, Sicherheits-Hub | 8 (je) |
 | Krankenstation | 10 |
-| Hangar | 12 (je Instanz) |
+
+> **Pfadwahl-Kostenbalancing (2026-06-28):** Die drei Pfad-Gebäude (Analytik-Labor / Hangar / Cantina) hatten zuvor sehr unterschiedliche Kosten ohne echte Abwägung zwischen den Achsen. Nach erstem Playtest-Feedback (Sol 4/5, "Kosten sehr unterschiedlich") wurde neu ausbalanciert:
+>
+> | Pfad | Gebäude | Supply (vorher → neu) | Regolith (vorher → neu) | Werkstoffe (vorher → neu) | Charakter |
+> |------|---------|----------------------|------------------------|--------------------------|-----------|
+> | A | Analytik-Labor | 8 (unverändert) | 80 (unverändert) | 0 (unverändert) | Supply-schwer, Rg-mittel — zahlt in langfristiger Cap-Belegung |
+> | B | Hangar | 6 → **4** | 80 → **90** | 25 Wk → **0** | Supply-günstig, Rg-schwer — braucht Regolith-Reserve |
+> | C | Cantina | 4 → **6** | 50 → **70** | 0 (unverändert) | Ausgeglichen + Trust-Bonus — war ohne Gegengewicht zu günstig |
+>
+> Das Ziel: jedes Pfad-Gebäude hat eine Schwachachse (Supply oder Regolith) und eine Stärkeachse. Wer knapp an Supply ist, wählt Hangar; wer wenig Regolith hat, wählt Analytik-Labor; wer Stabilität und Trust braucht, wählt Cantina. Kein Pfad ist dominant.
 
 > Supply-Kosten sind **sol-rate-unabhängig** — sie beschreiben eine permanente Kapazitäts-Belegung, keine Fluss-Größe.
 
@@ -1640,7 +1653,7 @@ Berater-Slots öffnen nicht mehr ausschließlich über CC-Level, sondern analog 
 
 **Reihenfolge-Auflösung:** Der Slot, den ein Pfad-Gebäude belegt, ergibt sich aus der **Baureihenfolge** dieses Gebäudes relativ zu den anderen beiden — nicht aus dem Gebäudetyp selbst. Werden (im seltenen Fall ausreichender Ressourcen-Reserven) zwei Pfad-Gebäude im selben Sol fertiggestellt, entscheidet ein fixer, nicht spielerseitig beeinflussbarer Tie-Break in der Reihenfolge **Sciencelab → Hangar → Cantina** (aufsteigend nach `building_id`: 31 < 44 < 52). Dieser Tie-Break ist ein reines Implementierungsdetail ohne Spielerrelevanz außerhalb des Edge-Case.
 
-> ⚠️ BALANCE CONCERN: Hangars `supply_cost` (6 laut `config/buildings.php`) ist niedriger als Sciencelab (8), aber Schiffe tragen eigene Supply-Kosten. In der Praxis kann Pfad B (Hangar + Schiff) mehr Supply binden als Pfad A oder C wenn der Spieler früh ein Schiff in Auftrag gibt. Bei CC Lv2 (Supply-Cap typischerweise 10 CC + 8 erstes Wohnhabitat = 18) bremst das erste Schiff den weiteren Ausbau. Das ist **als Pfad-B-Opportunitätskosten-Eigenschaft akzeptiert**: Wer früh auf Schiffe/Exploration setzt, zahlt das in Supply-Cap — sollte aber im ersten Playtest nach CC2 explizit beobachtet werden, ob der Bremseffekt zu hart ausfällt. Falls ja: `hangar.supply_cost` senken oder Schiffskosten erhöhen, keine Strukturänderung nötig.
+> **Kostenbalancing der Pfad-Gebäude (2026-06-28, gelöst):** Die Supply- und Regolith-Kosten der drei Pfad-Gebäude wurden nach erstem Playtest-Feedback neu ausbalanciert — vollständige Tabelle und Begründung in §6 "Pfadwahl-Kostenbalancing". Neue Werte: Analytik-Labor 80 Rg / 8 Supply (unverändert), Hangar 90 Rg / 4 Supply (vorher 80 Rg + 25 Wk / 6 Supply), Cantina 70 Rg / 6 Supply (vorher 50 Rg / 4 Supply). Schiffe kosten kein Supply (Design-Entscheidung 2026-06-08) — der frühere Einwand "Pfad B bindet mehr Supply durch Schiffe" entfällt damit vollständig.
 
 ---
 
@@ -2740,7 +2753,7 @@ Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anz
 | Supply-Cap erreicht | `freies_supply` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar." |
 | Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | INNN-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
 | Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
-| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet 1 Construction-AP und ist sofort wirksam — ohne Downtime." |
+| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet 1 Bau-AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
 
 **Format:** INNN-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Supply-Cap), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
 

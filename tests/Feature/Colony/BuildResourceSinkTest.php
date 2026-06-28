@@ -103,22 +103,26 @@ class BuildResourceSinkTest extends TestCase
         $this->assertSame($wk - 25, $this->colonyRes(self::RES_COMPOUNDS));
     }
 
-    public function test_place_late_building_deducts_compounds(): void
+    public function test_place_hangar_deducts_regolith(): void
     {
-        // sciencelab (31) deliberately dropped Werkstoffe from its cost (Regolith
-        // only now) — it's a CC-Lv2 early/mid building, Werkstoffe aren't reachable
-        // that early (no local production; Uplink-Station Lv1 + Cantina, both
-        // later). Hangar (44, CC Lv3) is genuinely late and still Rg+Wk-priced.
-        config(['game.bypass.supply_checks' => true]);   // isolate the resource deduction
-        $this->setCc(['level' => 3]);                    // hangar needs CC Lv3
+        // Hangar (44) is Regolith-only (no Werkstoffe) after balancing 2026-06-28.
+        // Requires Agrardom placed first (path-building gate).
+        config(['game.bypass.supply_checks' => true]);
+        $this->setCc(['level' => 2]);
         $this->ensureBuildableTile(1, 0);
+        $this->ensureBuildableTile(2, 0);
+        // Place Agrardom first to satisfy the path-gate.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 41],
+            ['instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 0]
+        );
         $rg = $this->colonyRes(self::RES_REGOLITH);
         $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 80 Rg + 25 Wk
+        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 90 Rg
 
-        $this->assertSame($rg - 80, $this->colonyRes(self::RES_REGOLITH));
-        $this->assertSame($wk - 25, $this->colonyRes(self::RES_COMPOUNDS));
+        $this->assertSame($rg - 90, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($wk, $this->colonyRes(self::RES_COMPOUNDS));   // Wk unchanged
     }
 
     public function test_place_rejected_without_enough_regolith(): void
