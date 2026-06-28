@@ -34,6 +34,7 @@
 15. [Run-Struktur (Roguelike-Modus)](#15-run-struktur-roguelike-modus)
 16. [Onboarding](#16-onboarding)
 17. [Progressive Discovery System](#17-progressive-discovery-system)
+18. [Run-Ende & Fail-State](#18-run-ende--fail-state)
 
 ---
 
@@ -3117,3 +3118,222 @@ Die drei Teilmechaniken können unabhängig voneinander implementiert werden. Em
 3. **Advisor Dialogs** — aufwendiger, aber der narrativ reichhaltigste Teil. Setzt Almanach und Objective Discovery als Empfänger voraus.
 
 Die vollständige Integration aller drei Teilmechaniken ist der Zielzustand. Jede Teilmechanik alleine bringt aber bereits Wert — es gibt keinen "alles oder nichts"-Implementierungspunkt.
+
+---
+
+## 18. Run-Ende & Fail-State
+
+### Designprinzip
+
+Jeder Run von Nouron hat ein klares, kommunizierbares Ende. Das Ende ist keine Überraschung — weder Sieg noch Niederlage trifft den Spieler unvorbereitet. Alle Konsequenzen haben Vorwarnstufen. Das Spielprinzip "Konsequenzen für Fehlentscheidungen" (§1) bedeutet nicht "unangekündigte Strafe", sondern "rechtzeitig spürbarer Druck".
+
+**Kanonische Quelle:** `app/Services/RunProgressService.php` und `config/game.php → run`. Dieser GDD-Abschnitt dokumentiert die Design-Intention; Zahlen folgen der Config, nicht umgekehrt.
+
+---
+
+### 18.1 Siegbedingung
+
+**Entscheidung: 2 von 3 Phase-2-Objectives abgeschlossen (Kombinations-Modell)**
+
+Das Runziel ist von Anfang an Phase 2 kommunizierbar: "Schließen Sie 2 der folgenden 3 Aufgaben ab." Die Objectives erscheinen beim Phase-2-Übergang (mit gestaffelter Enthüllung via §17.1 ab Phase 4). Die Wahlfreiheit über welche zwei Objectives erfüllt werden, ist das zentrale Roguelike-Entscheidungsmoment eines Runs.
+
+Warum kein Bau- oder Ressourcenmilestone (Optionen b/c) als Siegbedingung:
+- Objectives variieren je Run → variabler Spielverlauf → Roguelike-Charakter
+- "2 von 3" gibt echte Wahlfreiheit ohne Optimalpfad
+- Die Bedingung ist von Beginn der Phase 2 an sichtbar — kein verstecktes Ziel
+
+**Win-Trigger (implementierbar in `RunProgressService`):**
+
+Nach jedem `updateObjectiveProgress()`-Aufruf im Tick-Zyklus (Phase 5, §2) wird geprüft:
+```
+completed = run.objectives().whereNotNull('completed_at').count()
+if run.phase == 2 and completed >= 2:
+    endRun(run, 'completed')
+```
+
+Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird. Alle drei Objectives vollständig zu erfüllen ist möglich und ergibt einen höheren Score (Faktor `task_completed × 1000` pro Objective, §15).
+
+**Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 60 ergibt mehr Punkte als derselbe Sieg bei Sol 90. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
+
+**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte).
+
+---
+
+### 18.2 Fail States
+
+Drei Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Objective-Update (damit ein Sieg auf demselben Tick immer Vorrang vor einem gleichzeitigen Fail State hat). Kanonische Implementierung: `RunProgressService::checkFailStates()`.
+
+#### Fail State 1 — Vertrauenskollaps
+
+**Bedingung:** `trust < config('game.run.trust_fail_threshold')` → Standardwert **−20**
+
+**Auslösung:** Instant in demselben Tick, in dem der Vertrauenswert unter −20 fällt. Kein Streak erforderlich.
+
+Begründung gegen eine Streak-Mechanikverzögerung (wie in §15 ursprünglich skizziert): Trust unter −20 bedeutet aktive Feindseligkeit der Kolonisten, keinen vorübergehenden Stimmungseinbruch mehr. Eine Streak-Wartezeit würde die Aussagekraft des Trust-Werts verwässern und den Spieler in einem faktisch verlorenen Zustand weiterspielen lassen.
+
+**Warnstufen (INNN + UI):**
+
+| Schwellwert | Maßnahme |
+|-------------|---------|
+| Trust < 0 | INNN-Ereignis (Kolonist, Absender): "Die Stimmung in der Kolonie ist angespannt." — einmalig pro Run |
+| Trust < −10 | Roter Farbwechsel am Trust-Ressource-Chip in der Ressourcenleiste |
+| Trust < −18 | INNN-Warnung von Nexus: "Direktor, die Lage ist kritisch. Sofortige Maßnahmen erforderlich." |
+| Trust < −20 | Fail State — Run endet sofort |
+
+> ⚠️ BALANCE CONCERN: Die −20-Schwelle ist bewusst tief gesetzt. Ein Hunger-Streak von vier Solen (kumulierter Malus nach `TrustService::hungerPenalty`: −2 − 3 − 4 − 5 = −14 kumuliert nach Streak 4) plus ein Level-Down-Event (−3) würde die Schwelle knapp nicht erreichen — das ist gewollt: Vernachlässigung soll spürbar bestrafen, aber erholbar bleiben. Nach erstem Playtest kalibrieren ob −20 zu tief (Spieler scheitern selten) oder zu flach (Spieler scheitern überraschend schnell) ist.
+
+**Narrativer Ausgang:** "Die Kolonisten haben das Vertrauen verloren. Der Direktor wurde abgesetzt."
+
+---
+
+#### Fail State 2 — Nexus-Schuldengrenze
+
+**Bedingung:** `nexus_debt > 12.000` Cr
+
+**Auslösung:** Instant bei Überschreitung. Geprüft sowohl in `checkFailStates()` als auch direkt in `checkNexusInterventions()` (Phase-2-Sol 55).
+
+**Warnstufen (UI-Schuldenbalken):**
+
+| Schuldenstand | Maßnahme |
+|---------------|---------|
+| > 9.600 Cr (80 %) | Schuldenbalken wechselt auf Gelb |
+| > 11.400 Cr (95 %) | Schuldenbalken wechselt auf Rot; INNN-Meldung von Nexus: "Kreditlimit fast erreicht." |
+| > 12.000 Cr | Fail State — Run endet sofort |
+
+> ⚠️ BALANCE CONCERN (Implementierungshinweis, Stand 2026-06-28): `nexus_debt` als Mechanik ist in der Code-Logik referenziert (`$run->nexus_debt`), aber die Schulden-Akkumulation (Startkapital als Schuld, Nexus-Deals als Schuldenerhöhung, manuelle Rückzahlung) ist noch nicht vollständig implementiert. Das `nexus_debt`-Feld auf der `runs`-Tabelle muss per Migration angelegt werden bevor dieser Fail State produktiv greift. Die Schulden-Mechanik ist in §15 "Nexus-Schulden-Mechanik" skizziert.
+
+**Narrativer Ausgang:** "Nexus hat die Konzession entzogen. Der Direktor wurde zurückgerufen."
+
+---
+
+#### Fail State 3 — Fristablauf ohne Sieg
+
+**Bedingung:** `current_tick >= config('game.run.tick_limit')` (100) UND weniger als 2 Objectives abgeschlossen
+
+**Auslösung:** In `checkFailStates()` nach jedem Tick. Das Sieg-Gate (§18.1) wird vor den Fail States geprüft — wer die zweite Objective genau auf Sol 100 abschließt, gewinnt noch.
+
+**Countdown-Warnstufen:**
+
+| Sol | Maßnahme |
+|-----|---------|
+| tick_limit − 20 (Sol 80) | Countdown-Anzeige erscheint im UI ("Noch 20 Sole bis Missionsende"); INNN-Nachricht von Nexus |
+| tick_limit − 10 (Sol 90) | INNN-Letzte-Warnung wenn 0 Objectives abgeschlossen |
+| tick_limit (Sol 100) | Fail State — Run endet |
+
+**Narrativer Ausgang:** "Fristablauf. Die Konzession wurde nicht verlängert."
+
+---
+
+### 18.3 Run-Ende-Screen
+
+Der Run-Ende-Screen ersetzt die Kolonie-Ansicht unmittelbar nach `endRun()`. Er ist kein Overlay, sondern ein eigener Screen. Der Sol-Report-Screen (§15, `SolReportService`) läuft vor dem End-Screen wenn das Ende durch einen Tick ausgelöst wird.
+
+#### Aufbau
+
+**Ergebnis-Header (oben, volle Breite):**
+
+| Ergebnis | Überschrift | Ton |
+|----------|-------------|-----|
+| Sieg | MISSION ERFÜLLT | Warm, hell |
+| Niederlage: Trust | KONZESSION WIDERRUFEN | Kühl, gedämpft |
+| Niederlage: Schulden | KONZESSION EINGEZOGEN | Kühl, gedämpft |
+| Niederlage: Zeit | MISSION ABGEBROCHEN | Neutral, dunkel |
+
+**Nexus-Kommentar (direkt unter dem Header, 2–3 Sätze):**
+
+| Ergebnis | Nexus-Kommentar (Entwurf — finale Formulierung via `content-writer`) |
+|----------|----------------------------------------------------------------------|
+| Sieg 3/3 | "Alle Direktiven erfüllt. Konzession verlängert. Ihre Akte wird dem Zentralbüro übermittelt." |
+| Sieg 2/3, schnell (< 70 % des Zeitlimits verbraucht) | "Zwei Direktiven erfüllt. Konzession bestätigt. Effizienzrating: überdurchschnittlich." |
+| Sieg 2/3, langsam (≥ 70 % des Zeitlimits verbraucht) | "Zwei Direktiven erfüllt. Konzession bestätigt. Leistungsrating: ausreichend. Weitere Bewertung folgt." |
+| Niederlage: Trust | "Kolonie destabilisiert. Direktorsabsetzung registriert. Nachfolge wird organisiert." |
+| Niederlage: Schulden | "Kreditlimit überschritten. Konzession eingezogen. Schulden sind ausstehend." |
+| Niederlage: Zeit | "Frist abgelaufen. Kolonie übernommen. Keine weiteren Informationen verfügbar." |
+
+> **Ton-Regel:** Nexus-Kommentare sind kurz, passiv, ohne Emotion. Nexus bewertet — es trauert nicht, gratuliert nicht. Kein "Schade, aber..." oder "Herzlichen Glückwunsch!". Die Kälte ist Teil des Lore.
+
+**Zusammenfassung (darunter, scrollbar):**
+
+- **Objectives-Status:** 3 Felder mit Symbol (✓ Abgeschlossen Sol X / ✗ Nicht erfüllt / ? Phase 2 nicht erreicht)
+- **Score:** Große Zahl; darunter Aufschlüsselung: Tasks × 1.000 + Sol-Bonus + Credits-Bonus + Trust-Bonus (entspricht `calculateScore()`)
+- **Kolonie-Statistiken:** Gespielte Sole · Trust am Ende · Credits am Ende · Gebaute Gebäude · Erforschte Kenntnisse
+- **Buttons:** "Neuer Run starten" (primär) und "Kolonie ansehen" (sekundär, read-only — die letzte Kolonie bleibt bis zum nächsten Run-Start erhalten)
+
+> ⚠️ BALANCE CONCERN: "Kolonie ansehen" nach Run-Ende setzt voraus, dass Koloniedaten beim Run-Ende nicht gelöscht werden. Technisch: `runs.status = 'completed'|'failed'` + `ended_at` setzen, Colony-Daten unberührt lassen. Erst beim Start eines neuen Runs (`POST /lobby/start`) wird die Colony zurückgesetzt. Falls historische Run-Daten archiviert werden sollen (Phase 4+), muss die db-migration-agent eine Archiv-Tabelle anlegen.
+
+**Technische Verortung:** Route `GET /run/result` oder `/lobby` mit End-State-Branching in `LobbyController`. `endRun()` in `RunProgressService` setzt `status`, `fail_reason`, `ended_at` — der Controller liest diese Felder und wählt das korrekte Template.
+
+---
+
+### 18.4 Tick-Limit & Pacing
+
+**Entscheidung: 100 Sols bleibt der Standard (Stand 2026-06-28)**
+
+100 Sols ist für den aktuellen Spielstand richtig. Playtest erreicht Sol 4/5 problemlos — das ist Early Phase 1, kein Maßstab für das Gesamtpacing.
+
+**Typischer Run-Korridor (Richtwert):**
+
+| Phase | Sols | Anmerkung |
+|-------|------|-----------|
+| Phase 1 — Stabilisierung | 15–25 | CC Lv3 + 2 Produktionsgebäude Lv2 + 3 Berater |
+| Phase 2 früh — Einrichten | 10–20 | Pfad-Gebäude ausbauen, Berater optimieren |
+| Phase 2 mitte — Objectives | 20–35 | Kernarbeit an den zwei Ziel-Objectives |
+| Phase 2 spät — Optimierung | 5–15 | Dritte Objective optional; Score verbessern |
+| **Guter Gesamtrun** | **50–80 Sols** | |
+
+Das Tick-Limit von 100 gibt 20–50 Sols Puffer für schlechtere Starts und langsamere Spieler.
+
+**Pacing-Kontrollpunkte (Nexus-Interventionen in Phase-2-Sol):**
+
+`checkNexusInterventions()` arbeitet in **Phase-2-Sol** (nicht Gesamt-Sol, nicht absolute Tick-Nummer). Bei einem Phase-1-Abschluss um Gesamt-Sol 20 ergibt sich:
+
+| Phase-2-Sol | Gesamt-Sol (bei Phase-1-Ende Sol 20) | Bedeutung |
+|-------------|--------------------------------------|-----------|
+| 30 | ~50 | Mindestens 1 Objective > 50 % — sonst Nexus-Warnung |
+| 50 | ~70 | Mindestens 1 Objective vollständig — sonst zweite Warnung |
+| 65 | ~85 | Berater-Sanktion wenn 0 Objectives abgeschlossen |
+| 80 | ~100 | Countdown-Meldung (= Gesamtticklimit bei normalem Phase-1-Tempo) |
+
+Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das ist kein Zufall, sondern die gewünschte Kalibrierung: der Countdown erscheint genau wenn das Limit erreicht wird.
+
+**Anpassungsrichtlinien nach Playtest:**
+
+| Beobachtung | Maßnahme |
+|-------------|---------|
+| Phase-1 endet typisch < Sol 15 | tick_limit auf 85–90 senken (mehr Druck in Phase 2) |
+| Phase-1 dauert typisch > Sol 25 | Phase-1-Abschlussbedingungen lockern, nicht tick_limit erhöhen |
+| Typischer Sieg > Sol 90 | `TASK_TARGETS`-Werte in `RunProgressService` senken (Objectives zu schwer) |
+| Typischer Sieg < Sol 55 | `TASK_TARGETS`-Werte erhöhen oder tick_limit auf 80 senken |
+
+> ⚠️ BALANCE CONCERN: `task_expedition_coverage: 19` (alle Colony-Zone-Tiles erkundet) ist der schwierigste Task-Target-Wert und braucht als erstes Playtest-Validierung. 19 Tiles bei ring-gestaffelten Kosten (1/2/3 Nav-AP/Ring) und einem Junior-Raumfahrer mit ~7 Nav-AP/Sol ergibt rechnerisch ~3–5 Sole reiner Erkundungsarbeit, was realistisch ist — aber stark von der Tile-Verteilung der Karte abhängt (impassable Tiles zählen nicht; auf vulkanischen Planeten könnten sehr viele Tiles aus der Zone fallen). Vor dem Finalisieren dieses Task-Targets den Colony-Zone-Expansion-Mechanismus (§4a) gegen typische Karten durchrechnen.
+
+> ⚠️ BALANCE CONCERN: `task_credit_reserve: 10` bedeutet 10 aufeinanderfolgende Sole mit Credits > 5.000. Mit Nexus-Subvention 30 Cr/Sol + Housing-Steuer (20 Cr/Sol je Housing-Level, §3) und einem Wohnhabitat Lv2 = 70 Cr/Sol Einnahmen — Upkeep für 3 Berater Rang 1 kostet 3 × 10 = 30 Cr/Sol → Nettoeinnahmen ~40 Cr/Sol. Ab Startkapital 3.000 Cr dauert es ~50 Sole ohne Ausgaben um 5.000 Cr zu erreichen. Realistische Ausgaben (Gebäude, Reparaturen) machen den Task signifikant schwieriger. Nach Playtest kalibrieren.
+
+---
+
+### 18.5 GDD-Drifts (Stand 2026-06-28)
+
+Bekannte Abweichungen zwischen GDD §15-Prosa und dem tatsächlichen Code/Config:
+
+| Thema | GDD §15 (alt) | Code/Config (kanonisch) | Korrekt |
+|-------|--------------|------------------------|---------|
+| Trust Fail State — Bedingung | "N Sole unter Schwellenwert 10 (Streak)" | Instant bei trust < −20 (`trust_fail_threshold`) | Code/Config |
+| Trust Fail State — Vorwarnung | "INNN bei < 20, roter Indikator bei < 10" | Schwellenwerte nicht implementiert — Design-Intent hier in §18.2 | §18.2 |
+| Nexus-Milestone-Sol-Basis | "Sol 30/50/85/90" impliziert Gesamt-Sol | Phase-2-Sol in `checkNexusInterventions()` | Code |
+| Sol-85-Sanktion (GDD §15) | "Sol 85 Gnadenfrist" | Phase-2-Sol 65 im Code | Code |
+
+> **TODO:** §15 "Fail States" und "Gnadenfrist" in einer kommenden GDD-Revision auf Phase-2-Sol-Basis korrigieren und Trust-Fail-State von "Streak unter 10" auf "Instant unter −20" aktualisieren. Nicht jetzt — §18 ist die autoritative Definition, §15-Abweichungen sind dokumentiert.
+
+---
+
+### 18.6 Offene Implementierungsaufgaben (game-developer / db-migration-agent)
+
+| Aufgabe | Verantwortung | Priorität |
+|---------|--------------|-----------|
+| `checkWinCondition()` in RunProgressService: nach `updateObjectiveProgress()`, wenn `completed >= 2 && phase == 2` → `endRun('completed')` | game-developer | Hoch |
+| `nexus_debt`-Feld auf `runs`-Tabelle anlegen (Migration) | db-migration-agent | Mittel |
+| Schulden-Akkumulation implementieren (Startkapital als initiale Schuld, Rückzahlung via Nexus-UI) | game-developer | Mittel |
+| Trust-Warn-INNN-Events implementieren (< 0, < −10, < −18) | game-developer | Mittel |
+| Run-Ende-Screen Blade-Template | ui-specialist | Mittel |
+| Nexus-Kommentar-Texte | content-writer | Niedrig |
+| `config('game.run.nexus_debt_limit')` als Config-Key anlegen (aktuell hardcodiert 12000 in RunProgressService) | game-developer | Niedrig |
