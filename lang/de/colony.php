@@ -52,6 +52,8 @@ return [
     'hint_hazard' => 'Gefahrenzone — Bauen riskant, erhöhter Verfall.',
     'hint_impassable' => 'Unpassierbar — hier lässt sich nichts errichten.',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
+    'phase1_progress_title' => 'Phase-1-Ziele',
+    'phase2_progress_title' => 'Nexus-Direktiven',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',
     'under_construction' => 'Im Bau',

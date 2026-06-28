@@ -25,6 +25,7 @@
             compoundImportPrice: {{ (int) config("game.economy.compound_import_price", 90) }},
             exploreCostPerRing: @json(config("game.colony.explore_cost_per_ring")),
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
+            phaseProgress: @json($phaseProgress),
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',
                 deepScan: '{{ route("colony.tile.deep-scan") }}',
@@ -85,48 +86,64 @@
 
                 <div x-ref="hexgrid" class="hex-canvas"></div>
 
-                {{-- Grid legend: explains tile states (fog kinds + soon-buildable). --}}
-                <details class="hex-legend">
-                    <summary>{{ __("colony.legend_title") }}</summary>
-                    <ul class="hex-legend__list">
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--buildable"></span>
-                            <span>{{ __("colony.legend_buildable") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--soon"></span>
-                            <span>{{ __("colony.legend_soon_buildable") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--zonefog">+</span>
-                            <span>{{ __("colony.legend_zone_fog") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--explorefog">?</span>
-                            <span>{{ __("colony.legend_explore_fog") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--regolith"></span>
-                            <span>{{ __("colony.legend_regolith") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--cc"></span>
-                            <span>{{ __("colony.legend_cc") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--hazard"></span>
-                            <span>{{ __("colony.legend_hazard") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--impassable"></span>
-                            <span>{{ __("colony.legend_impassable") }}</span>
-                        </li>
-                        <li class="hex-legend__item">
-                            <span class="hex-legend__swatch hex-legend__swatch--event"></span>
-                            <span>{{ __("colony.legend_event") }}</span>
-                        </li>
-                    </ul>
-                </details>
+                {{-- Info bar: phase progress + legend — always visible below canvas --}}
+                <div class="canvas-info-bar">
+                    <template x-if="phaseProgress">
+                        <button class="info-bar-btn" @click="$refs.phaseDialog.showModal()"
+                            :title="phaseProgress.phase === 1 ? '{{ __("colony.phase1_progress_title") }}' :
+                                '{{ __("colony.phase2_progress_title") }}'">
+                            <template x-if="phaseProgress.phase === 1">
+                                <span x-text="`P1 — ${phaseProgress.criteria.filter(c => c.done).length}/3`"></span>
+                            </template>
+                            <template x-if="phaseProgress.phase === 2">
+                                <span
+                                    x-text="`P2 — ${phaseProgress.objectives.filter(o => o.done).length}/${phaseProgress.objectives.length}`"></span>
+                            </template>
+                        </button>
+                    </template>
+
+                    <details class="hex-legend">
+                        <summary class="info-bar-btn">{{ __("colony.legend_title") }}</summary>
+                        <ul class="hex-legend__list">
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--buildable"></span>
+                                <span>{{ __("colony.legend_buildable") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--soon"></span>
+                                <span>{{ __("colony.legend_soon_buildable") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--zonefog">+</span>
+                                <span>{{ __("colony.legend_zone_fog") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--explorefog">?</span>
+                                <span>{{ __("colony.legend_explore_fog") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--regolith"></span>
+                                <span>{{ __("colony.legend_regolith") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--cc"></span>
+                                <span>{{ __("colony.legend_cc") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--hazard"></span>
+                                <span>{{ __("colony.legend_hazard") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--impassable"></span>
+                                <span>{{ __("colony.legend_impassable") }}</span>
+                            </li>
+                            <li class="hex-legend__item">
+                                <span class="hex-legend__swatch hex-legend__swatch--event"></span>
+                                <span>{{ __("colony.legend_event") }}</span>
+                            </li>
+                        </ul>
+                    </details>
+                </div>
             </div>
 
             {{-- Tile info / build mode sidebar --}}
@@ -255,7 +272,8 @@
 
                 {{-- Only labels build/harvester modes. In normal tile mode the tabs
                  (building) or the terrain <h3> name the content themselves. --}}
-                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode" x-cloak>
+                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode"
+                    x-cloak>
                     <h3
                         x-text="harvesterMoveMode ? '{{ __("colony.harvester_move") }}' : '{{ __("colony.build_mode_title") }}'">
                     </h3>
@@ -422,6 +440,49 @@
             </aside>
 
         </div>
+
+        {{-- Phase progress dialog -----------------------------------------------
+         Opened by the .phase-btn floating button on the canvas.
+    --}}
+        <dialog x-ref="phaseDialog" @click.self="$refs.phaseDialog.close()">
+            <article>
+                <header>
+                    <button aria-label="{{ __("colony.cancel") }}" rel="prev"
+                        @click="$refs.phaseDialog.close()"></button>
+                    <template x-if="phaseProgress && phaseProgress.phase === 1">
+                        <h3>{{ __("colony.phase1_progress_title") }}</h3>
+                    </template>
+                    <template x-if="phaseProgress && phaseProgress.phase === 2">
+                        <h3>{{ __("colony.phase2_progress_title") }}</h3>
+                    </template>
+                </header>
+                <template x-if="phaseProgress && phaseProgress.phase === 1">
+                    <ul class="phase-dialog-criteria">
+                        <template x-for="c in phaseProgress.criteria" :key="c.key">
+                            <li class="phase-criteria__item" :class="{ 'phase-criteria__item--done': c.done }">
+                                <span class="phase-criteria__check" x-text="c.done ? '✓' : '○'"></span>
+                                <span class="phase-criteria__label" x-text="c.label"></span>
+                                <span class="phase-criteria__count" x-show="!c.done"
+                                    x-text="`${c.current}/${c.target}`"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+                <template x-if="phaseProgress && phaseProgress.phase === 2">
+                    <ul class="phase-dialog-criteria">
+                        <template x-for="(obj, idx) in phaseProgress.objectives" :key="idx">
+                            <li class="phase-criteria__item" :class="{ 'phase-criteria__item--done': obj.done }">
+                                <span class="phase-criteria__check" x-text="obj.done ? '✓' : '○'"></span>
+                                <span class="phase-criteria__label"
+                                    x-text="obj.revealed ? obj.label : '{{ __("colony.sol_report_phase2_objective_hidden") }}'"></span>
+                                <span class="phase-criteria__count" x-show="!obj.done && obj.revealed"
+                                    x-text="`${obj.current}/${obj.target}`"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+            </article>
+        </dialog>
 
         {{-- Event discovery popup ------------------------------------------------
          Uses the native <dialog> element (PicoCSS styles it out of the box).

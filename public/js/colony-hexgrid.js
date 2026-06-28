@@ -110,6 +110,7 @@ function colonyHexView(config) {
         compoundImportPrice: config.compoundImportPrice ?? 90,
         exploreCostPerRing: config.exploreCostPerRing ?? { 1: 1, 2: 2, 3: 3 },
         exploreCostDefault: config.exploreCostDefault ?? 1,
+        phaseProgress: config.phaseProgress ?? null,
         nexusImportAmount: 10,
         selectedTile: null,
         buildMode: false,
@@ -327,6 +328,7 @@ function colonyHexView(config) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
+                if ('phase_progress' in res) this.phaseProgress = res.phase_progress;
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };

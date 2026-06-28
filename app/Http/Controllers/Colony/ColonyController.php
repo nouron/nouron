@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Colony;
 
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
+use App\Models\Advisor;
+use App\Models\Colony;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
@@ -162,7 +164,9 @@ class ColonyController extends BaseController
             ? $this->merchantService->getItemsForVisit($merchantVisit->id)->values()->toArray()
             : [];
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems'));
+        $phaseProgress = $this->computePhaseProgress($colony);
+
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -642,6 +646,7 @@ class ColonyController extends BaseController
                 'leveled_up' => true,
                 'tiles' => $tiles,
                 'activeHint' => $this->resolveHint($colony->id),
+                'phase_progress' => $this->computePhaseProgress($colony),
                 ...$this->currentAp($colony->id),
             ]);
         }
@@ -659,6 +664,7 @@ class ColonyController extends BaseController
             'leveled_up' => $leveledUp,
             'nav_unlocked' => $navUnlocked,
             'activeHint' => $this->resolveHint($colony->id),
+            ...($leveledUp ? ['phase_progress' => $this->computePhaseProgress($colony)] : []),
             ...$this->currentAp($colony->id),
         ]);
     }
@@ -919,5 +925,88 @@ class ColonyController extends BaseController
         $overrides = ['bar' => 'cantina'];
 
         return $overrides[$key] ?? strtolower(preg_replace('/([A-Z])/', '-$1', $key));
+    }
+
+    private function computePhaseProgress(Colony $colony): array
+    {
+        $run = DB::table('runs')
+            ->where('colony_id', $colony->id)
+            ->where('status', 'active')
+            ->select('id', 'phase', 'current_tick')
+            ->first();
+
+        if (! $run) {
+            return ['phase' => 1, 'criteria' => []];
+        }
+
+        $colonyId = $colony->id;
+        $ccId = config('buildings.commandCenter.id', 25);
+
+        if ((int) $run->phase === 1) {
+            $ccLevel = (int) (DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', $ccId)
+                ->value('level') ?? 0);
+
+            $buildingsLv2 = DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', '!=', $ccId)
+                ->where('level', '>=', 2)
+                ->count();
+
+            $advisorCount = Advisor::where('colony_id', $colonyId)
+                ->where(function ($q) use ($run): void {
+                    $q->whereNull('unavailable_until_tick')
+                        ->orWhere('unavailable_until_tick', '<', $run->current_tick);
+                })
+                ->count();
+
+            return [
+                'phase' => 1,
+                'criteria' => [
+                    [
+                        'key' => 'cc_level',
+                        'label' => __('colony.sol_report_phase1_cc'),
+                        'current' => min($ccLevel, 3),
+                        'target' => 3,
+                        'done' => $ccLevel >= 3,
+                    ],
+                    [
+                        'key' => 'buildings_lv2',
+                        'label' => __('colony.sol_report_phase1_buildings'),
+                        'current' => min($buildingsLv2, 2),
+                        'target' => 2,
+                        'done' => $buildingsLv2 >= 2,
+                    ],
+                    [
+                        'key' => 'advisors',
+                        'label' => __('colony.sol_report_phase1_advisors'),
+                        'current' => min($advisorCount, 3),
+                        'target' => 3,
+                        'done' => $advisorCount >= 3,
+                    ],
+                ],
+            ];
+        }
+
+        $objectives = DB::table('run_objectives')
+            ->where('run_id', $run->id)
+            ->orderBy('id')
+            ->get(['task_key', 'current_value', 'target_value', 'completed_at'])
+            ->map(function ($obj): array {
+                $revealed = (int) $obj->current_value > 0 || $obj->completed_at !== null;
+
+                return [
+                    'revealed' => $revealed,
+                    'label' => $revealed ? __('run.'.$obj->task_key) : null,
+                    'current' => (int) $obj->current_value,
+                    'target' => (int) $obj->target_value,
+                    'done' => $obj->completed_at !== null,
+                ];
+            })
+            ->values()
+            ->all();
+
+        return ['phase' => 2, 'objectives' => $objectives];
     }
 }

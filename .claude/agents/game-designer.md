@@ -76,6 +76,20 @@ Beim Aufruf zuerst prüfen:
 - `CLAUDE.md` — Projektkontext, Ressourcen-/Gebäude-Tabellen
 - `config/buildings.php`, `config/advisors.php`, `config/game.php` — Canonical source of truth für Zahlen
 
+## Szenario-Pflege (game:reset-player)
+
+`app/Console/Commands/ResetPlayer.php` enthält Testszenarien (`pre-phase2`, `phase2`, `near-fail-trust`, `near-deadline`, `objectives-done`) mit hartcodierten Ressourcen- und Gebäudewerten.
+
+**Immer prüfen und ggf. aktualisieren, wenn:**
+- Gebäude-`build_cost` oder `supply_cost` geändert wird
+- `ap_for_levelup` für ein Gebäude geändert wird
+- Berater-`credits`-Kosten geändert werden
+- Ressourcenproduktionsrate (Harvester/Agrardom) geändert wird
+- Supply-Cap-Formel geändert wird (CC-Flat-Anteil, Housing-Multiplier)
+- Neue Kenntnisse hinzukommen oder Kenntnisvoraussetzungen sich ändern
+
+Die Szenario-Kommentare erklären die Rechenherleitung — diese Kommentare ebenfalls aktualisieren, damit sie mit den neuen Werten übereinstimmen.
+
 ## GDD-Struktur (Pflichtabschnitte)
 
 1. Spielkonzept — Kern-Fantasie, Zielgruppe, Session-Länge

@@ -37,7 +37,7 @@ use function Laravel\Prompts\table;
  *   Werkstoffe: no production building — 0 until Uplink-Station (not seeded here).
  *   Supply cap: CC flat 10 + Housing_Lv × 8 + knowledge-level bonuses.
  *   Building costs Rg: CC 1→3 = 150, Agrardom place+Lv2 = 60, Sciencelab place+Lv1 = 100 → ~310 total.
- *   Starting 200 + 12 Sols × 10 = 320 produced → ~30 Rg left at tick 12.
+ *   pre-phase2 seeds Rg=150 so player can immediately place Hangar (90 Rg path gate) and hire pilot.
  */
 class ResetPlayer extends Command
 {
@@ -360,7 +360,11 @@ class ResetPlayer extends Command
     /**
      * Tick 12 — Phase 1 one hire short of completion.
      *
-     * Resources: Regolith nearly depleted after heavy building investment (30 left).
+     * The player has engineer + scientist. To hire the 3rd advisor (pilot) they must
+     * first place Hangar (90 Rg build cost) — the path gate requires the building to
+     * be placed before the advisor slot opens. Rg=150 lets them place Hangar immediately
+     * (150 − 90 = 60 Rg remaining), then hire pilot for 500 credits.
+     * Cantina is also an option but requires 25 Wk (Wk=0 here) → Hangar is the path.
      * 8 Sols of Agrardom Lv2 production (net +17/Sol) → 136 Organika; rounded to 120
      * accounting for early food shortfalls before Agrardom reached Lv2.
      * Credits: 3000 start − 200 (engineer) − 400 (scientist) = 2400.
@@ -374,7 +378,7 @@ class ResetPlayer extends Command
 
         $this->setResources($colony, $run,
             tick: 12,
-            regolith: 30,
+            regolith: 150,
             organika: 120,
             werkstoffe: 0,
             trust: 25,
