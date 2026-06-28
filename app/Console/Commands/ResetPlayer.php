@@ -312,6 +312,7 @@ class ResetPlayer extends Command
         int $supply,
     ): void {
         $run->current_tick = $tick;
+        $run->started_at = now(); // non-null = run started; null keeps it in lobby pending state
         $run->save();
 
         DB::table('colony_resources')
