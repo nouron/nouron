@@ -311,6 +311,22 @@ return [
     // UI-Steuertexte
     'sol_report_title' => 'Sol :sol abgeschlossen',
     'sol_report_continue' => 'Weiter zu Sol :sol',
+
+    // Screen 2 — Phase progress
+    'sol_report_screen2_title' => 'Fortschritt der Phase',
+    'sol_report_phase1_title' => 'Phase 1 — Stabilisierung',
+    'sol_report_phase2_title' => 'Phase 2 — Nexus-Direktiven',
+    'sol_report_phase1_cc' => 'Kontrollzentrum auf Stufe 3',
+    'sol_report_phase1_buildings' => '2 Gebäude auf Stufe 2',
+    'sol_report_phase1_advisors' => '3 aktive Berater',
+    'sol_report_phase2_objective_hidden' => 'Direktive noch unbekannt — im Spielverlauf erspielt',
+    'sol_report_phase2_objective_done' => 'Erfüllt',
+    'sol_report_next_screen' => 'Weiter',
+
+    // Screen 3 — SOL N startet
+    'sol_report_screen3_starts' => 'startet',
+    'sol_report_screen3_begin' => 'Mission fortsetzen',
+
     'sol_report_skip_hint' => 'Tippen zum Überspringen',
     'sol_report_skip_setting' => 'Sol-Report künftig automatisch überspringen',
     'sol_report_finale_win_cta' => 'Run abschließen',

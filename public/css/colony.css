@@ -2312,6 +2312,124 @@ dialog[x-ref="discoveryDialog"] {
     padding: 0.6rem 1.5rem;
 }
 
+/* ── Sol-Report Screen 2: Phase Progress ───────────────────────────────── */
+.sol-report--phase {
+    cursor: default;
+}
+.sol-phase__subtitle {
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary, #6b6b7a);
+    margin: 0.25rem 0 0;
+}
+.sol-phase__body {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+.sol-phase__footer {
+    padding-top: 0.75rem;
+}
+.sol-phase__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.sol-phase__item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-size: 0.9rem;
+    color: var(--color-text-primary, #1a1a1e);
+    padding: 0.4rem 0.5rem;
+    border-radius: 5px;
+}
+.sol-phase__item--done {
+    color: #2e7d32;
+    background: #f2faf3;
+}
+.sol-phase__item--hidden {
+    color: var(--color-text-secondary, #6b6b7a);
+    font-style: italic;
+}
+.sol-phase__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+.sol-phase__item--done .sol-phase__icon {
+    color: #2e7d32;
+}
+.sol-phase__item--hidden .sol-phase__icon {
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.sol-phase__label {
+    flex: 1 1 auto;
+}
+.sol-phase__progress {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-size: 0.85rem;
+    color: var(--color-text-secondary, #6b6b7a);
+}
+.sol-phase__item--done .sol-phase__progress {
+    color: #2e7d32;
+}
+
+/* ── Sol-Report Screen 3: Launch ───────────────────────────────────────── */
+.sol-launch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    min-height: 60vh;
+    text-align: center;
+}
+.sol-launch__text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.sol-launch__sol {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    font-weight: 400;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: #ffffff;
+    line-height: 1;
+    transition:
+        opacity 0.7s ease,
+        transform 0.7s ease;
+}
+.sol-launch__starts {
+    font-family: "Libre Baskerville", Baskerville, Georgia, serif;
+    font-size: clamp(1.1rem, 3vw, 1.6rem);
+    font-weight: 400;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.65);
+    transition:
+        opacity 0.7s ease,
+        transform 0.7s ease;
+}
+.sol-launch__begin {
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.08em;
+    transition: opacity 0.5s ease;
+}
+.sol-launch__begin:hover {
+    border-color: rgba(255, 255, 255, 0.7);
+    color: #ffffff;
+    opacity: 1 !important;
+}
+
 @media (max-width: 30rem) {
     .sol-report__header,
     .sol-report__groups,
