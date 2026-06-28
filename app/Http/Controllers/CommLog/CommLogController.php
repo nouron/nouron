@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Models\ColonyLog;
 use App\Services\EventService;
 use App\Services\TickService;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -59,6 +60,8 @@ class CommLogController extends BaseController
             ->get()
             ->map(fn ($e) => $this->decorate($e));
 
+        $entries = $this->collapseEntries($entries);
+
         $unreadCount = $this->eventService->countUnreadNexus($userId);
 
         return view('comm_log.index', [
@@ -90,6 +93,54 @@ class CommLogController extends BaseController
             'entries' => $entries,
             'unreadCount' => 0,
         ]);
+    }
+
+    /**
+     * Collapse consecutive same-type log entries within the same Sol.
+     * Sets `_collapsed` count on the representative (first/newest) entry.
+     */
+    private function collapseEntries(Collection $entries): Collection
+    {
+        $result = collect();
+        $all = $entries->values()->all();
+        $count = count($all);
+        $i = 0;
+
+        while ($i < $count) {
+            $entry = $all[$i];
+            $key = $this->collapseKey($entry);
+
+            if ($key === null) {
+                $result->push($entry);
+                $i++;
+
+                continue;
+            }
+
+            $j = $i + 1;
+            while ($j < $count && $this->collapseKey($all[$j]) === $key) {
+                $j++;
+            }
+
+            if ($j - $i > 1) {
+                $entry['_collapsed'] = $j - $i;
+            }
+
+            $result->push($entry);
+            $i = $j;
+        }
+
+        return $result;
+    }
+
+    /** Returns a grouping key for collapsible events, null = never collapse. */
+    private function collapseKey(array $entry): ?string
+    {
+        return match ($entry['event']) {
+            'colony.building_invested' => $entry['sol'].':building_invested:'.($entry['params']['building_id'] ?? ''),
+            'colony.tile_explored' => $entry['sol'].':tile_explored',
+            default => null,
+        };
     }
 
     private function decorate(ColonyLog $entry): array

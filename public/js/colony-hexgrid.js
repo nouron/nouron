@@ -343,7 +343,12 @@ function colonyHexView(config) {
                     this.selectedTile = { ...this.selectedTile };
                 }
             } else {
-                const msg = res.message ?? res.error;
+                let msg = res.message ?? res.error;
+                if (res.error === 'resource_limit' && res.cost?.[3]) {
+                    const needed = res.cost[3];
+                    const have = this.regolith ?? 0;
+                    msg += ` (${needed} RG benötigt, ${have} RG vorhanden)`;
+                }
                 this.showToast(msg, 'error');
             }
         },
@@ -504,10 +509,12 @@ function colonyHexView(config) {
                 this.syncResbarAp('resbar-ap-build', res.apConstruction);
             }
             if (res.regolith !== undefined) {
+                if (res.regolith < this.regolith) this.flashResChip('.res-Rg');
                 this.regolith = res.regolith;
                 this.syncResbarAmount('.res-Rg', res.regolith);
             }
             if (res.werkstoffe !== undefined) {
+                if (res.werkstoffe < this.werkstoffe) this.flashResChip('.res-Co');
                 this.werkstoffe = res.werkstoffe;
                 this.syncResbarAmount('.res-Co', res.werkstoffe);
             }
@@ -535,6 +542,16 @@ function colonyHexView(config) {
         syncResbarAp(chipId, value) {
             const el = document.querySelector(`#${chipId} .res-amount`);
             if (el) el.textContent = value;
+        },
+
+        // Briefly pulse a resource chip (by CSS selector) when its amount drops.
+        flashResChip(selector) {
+            const chip = document.querySelector(selector);
+            if (!chip) return;
+            chip.classList.remove('res-chip--flash');
+            void chip.offsetWidth;
+            chip.classList.add('res-chip--flash');
+            setTimeout(() => chip.classList.remove('res-chip--flash'), 600);
         },
 
         // Briefly pulse an AP chip so the player notices the pool shrinking.

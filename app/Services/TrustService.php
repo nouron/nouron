@@ -269,6 +269,23 @@ class TrustService
             }
         }
 
+        // SecurityHub (building_id=53) mitigates negative trust events by 25%.
+        $mitigationPct = (float) config('buildings.securityHub.event_mitigation_pct', 0);
+        if ($mitigationPct > 0) {
+            $hubActive = DB::table('colony_buildings')
+                ->where('colony_id', $colonyId)
+                ->where('building_id', 53)
+                ->where('level', '>', 0)
+                ->exists();
+            if ($hubActive) {
+                foreach ($byType as $type => $delta) {
+                    if ($delta < 0) {
+                        $byType[$type] = (int) round($delta * (1 - $mitigationPct));
+                    }
+                }
+            }
+        }
+
         return array_sum($byType);
     }
 

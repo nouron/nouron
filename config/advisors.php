@@ -13,6 +13,15 @@
  * Advisors do NOT consume Supply — their cost runs through Credits only (see GDD §12).
  * Advisors do not decay. Rank promotion is governed by config('game.advisor').
  *
+ * Slot binding (2026-06-28, GDD §13 "Slot-System"):
+ *   Slot 1 (fix): engineer — gate: CC Lv1.
+ *   Slots 2–4 (generic): scientist/pilot/trader — gate: build order of the
+ *     matching path building (sciencelab→scientist, hangar→pilot, bar→trader).
+ *     See AdvisorController::PATH_BUILDINGS.
+ *   Slot 5 (fix): strategist — gate: CC Lv3 + SecurityHub Lv1 (Pfad D).
+ *     CC Lv3 check is already in AdvisorController ($ccGate=3 for 'strategist').
+ *     SecurityHub check is a TODO (see AdvisorController comment "gate wired up later").
+ *
  * Localization: lang/de/advisors.php
  */
 return [

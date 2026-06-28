@@ -7,6 +7,8 @@ return [
     'explore' => 'Erkunden',
     'deep_scan' => 'Sondieren',
     'invest_ap' => 'Ausbauen',
+    'levelup_cost_label' => 'Kosten:',
+    'levelup_cost_suffix' => 'bei Baubeginn',
     'repair' => 'Reparieren',
     'ap_per_tile' => '1 AP/Feld',
 
@@ -86,22 +88,25 @@ return [
     'onboarding_hint_repair' => 'Deine Startgebäude sind beschädigt — tippe ein Gebäude an und nutze „Reparieren" (1 Bau-AP), um die Substanz zu sichern.',
     'onboarding_hint_repair_urgent' => 'Ein Gebäude steht kurz vor dem Stufenverlust — jetzt mit dem Reparieren-Button (Bau-AP) sichern.',
     'onboarding_hint_2' => 'Harvester steht noch in der Kolonie-Zone — auf das erkundete Regolith-Tile außerhalb verlegen.',
-    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet zweiten Berater-Slot und neue Kolonie-Tiles frei.',
-    'onboarding_hint_advisor_slot2' => 'Kommandozentrale Level 2 hat den Analytiker-Slot freigeschaltet — einstellen, um Forschungs-AP zu erhalten.',
+    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — schaltet Berater-Pfadwahl und neue Kolonie-Tiles frei.',
+    'onboarding_hint_3_agrardome_first' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für den CC-Ausbau auf Level 2. Danach Pfad wählen: Analytiklabor, Hangar oder Cantina.',
+    'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 freigeschaltet — im Berater-Screen einen Pfad wählen und das passende Gebäude bauen (Analytiklabor, Hangar oder Cantina).',
     'onboarding_hint_4' => 'Noch keine Kenntnis erforscht — im Techtree eine Kenntnis auf Level 1 bringen.',
     'onboarding_hint_5' => 'Vertrauen sinkt — Zivilgebäude bauen oder reparieren.',
     'onboarding_hint_build_priority' => 'Agrardom, Cantina und Analytik-Labor sind grundsätzlich baubar — die Ressourcen reichen aber in diesem Sol nicht für alle gleichzeitig. Mit einem davon anfangen, der Rest folgt in späteren Sols.',
     'onboarding_hint_6' => 'Cantina noch nicht gebaut — hier erscheinen Händler und NPC-Gäste mit Tauschangeboten und Einmal-Items.',
-    'onboarding_hint_agrardome' => 'Agrardom noch nicht gebaut — er liefert Organika für Verpflegung, Krankenstation und Missionsproviant.',
+    'onboarding_hint_agrardome' => 'Agrardom bauen — er ist Voraussetzung für den CC-Ausbau auf Level 2 und liefert Organika für Versorgung und Missionen.',
     'onboarding_hint_analytik' => 'Analytik-Labor noch nicht gebaut — ohne dieses Labor bleibt die Kolonie blind für Materialanalyse und Tiefenscans.',
+    'onboarding_hint_hangar_path' => 'Hangar-Pfad: Hangar bauen und Raumfahrer einstellen — ermöglicht Missionen, Navigations-AP und Schiffsoperationen.',
     'onboarding_hint_cc_invest' => 'Restliche Bau-AP nicht verfallen lassen — tippe die Kommandozentrale an und investiere in den Ausbau. Was du jetzt einzahlst, bleibt erhalten; so steht Level 2 schon im nächsten Sol.',
     'onboarding_hint_explore' => 'Navigations-AP einsetzen und nach draußen erkunden (1 Nav-AP pro Feld) — jenseits der Kolonie liegen Regolith-Vorkommen für den Harvester und unbekannte Signale. Das nahe Gelände erschließt die Kommandozentrale ohnehin selbst.',
-    'onboarding_end_sol' => 'Sol beenden — für diesen Sol ist alles Wichtige erledigt. Beende den Sol, um Aktionspunkte aufzufrischen und die Kolonie voranzubringen.',
+    'onboarding_end_sol' => 'Sol beenden — AP für diesen Sol aufgebraucht oder nicht mehr sinnvoll einsetzbar. Nächster Sol bringt frische Aktionspunkte.',
     'onboarding_hint_spend_ap_construction' => 'Noch Bau-AP übrig — ein bestehendes Gebäude weiter ausbauen, statt den Rest verfallen zu lassen.',
     'onboarding_hint_spend_ap_research' => 'Noch Forschungs-AP übrig — im Techtree eine Kenntnis weiter erforschen.',
     'onboarding_hint_spend_ap_navigation' => 'Noch Navigations-AP übrig — weiter erkunden, jenseits der Kolonie liegt noch unentdecktes Gelände.',
     'onboarding_hint_spend_ap_economy' => 'Noch Wirtschafts-AP übrig — in der Cantina nach Angeboten schauen.',
-    'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 + Kommandozentrale lv2 erforderlich.',
+    'nav_techtree_locked' => 'Analytiklabor erforderlich.',
+    'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
     // ── First-visit popups (Techtree/Nexus-DB/Cantina/Hangar) ──────────────────
 
@@ -133,6 +138,7 @@ return [
 
     // ── Error messages ────────────────────────────────────────────────────────
 
+    'error_path_gate_locked' => 'Pfad gesperrt — Kommandozentrale zuerst auf das nächste Level ausbauen.',
     'error_tile_not_found' => 'Tile nicht gefunden.',
     'error_ring_locked' => 'Ring nicht freigeschaltet.',
     'error_already_explored' => 'Tile bereits erkundet.',

@@ -334,6 +334,12 @@ return [
         // this tick-gate only ensures neither hint has a Sol-level head start.
         'hint_no_analytik_after_tick' => 2,
 
+        // Minimum ticks elapsed before Hangar hint fires (CC>=2 + hangar missing).
+        // 2 (Sol 3+) — equal to hint_no_analytik_after_tick and hint_no_cantina_after_tick:
+        // all three path buildings (Sciencelab, Hangar, Cantina) are presented as
+        // equally-weighted choices from Sol 3 onward (see GDD §16 "Pfadwahl-ab-Sol-3").
+        'hint_no_hangar_after_tick' => 2,
+
         // Minimum current_tick before CC-upgrade hint (hint_3) fires. 1 = Sol 2
         // (Sol = current_tick + 1) — surfaces right after the first "Sol beenden",
         // so Sol 2 does not fall into the same hint void Sol 1 had.

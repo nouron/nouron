@@ -37,8 +37,13 @@
                             class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
                 <li><a href="{{ route("advisors.index") }}" @class(["active" => request()->routeIs("advisors.*")])><i
                             class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
-                <li><a href="{{ route("techtree.index") }}" @class(["active" => request()->routeIs("techtree.*")])><i
-                            class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
+                @if ($sciencelabBuilt ?? false)
+                    <li><a href="{{ route("techtree.index") }}" @class(["active" => request()->routeIs("techtree.*")])><i
+                                class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></a></li>
+                @else
+                    <li><span class="nav-link-locked" title="{{ __("colony.nav_techtree_locked") }}"><i
+                                class="bi bi-diagram-3"></i><span class="nav-label"> Techtree</span></span></li>
+                @endif
                 @if ($barBuilt ?? false)
                     <li><a href="{{ route("colony.bar") }}" @class(["active" => request()->routeIs("colony.bar*")])><i
                                 class="bi bi-cup-hot"></i><span class="nav-label"> Cantina</span></a></li>
@@ -116,12 +121,22 @@
                         ])>
                             <i class="bi bi-people"></i> Berater
                         </a>
-                        <a href="{{ route("techtree.index") }}" @class([
-                            "nav-flyout-item",
-                            "active" => request()->routeIs("techtree.*"),
-                        ])>
-                            <i class="bi bi-diagram-3"></i> Techtree
-                        </a>
+                        @if ($sciencelabBuilt ?? false)
+                            <a href="{{ route("techtree.index") }}" @class([
+                                "nav-flyout-item",
+                                "active" => request()->routeIs("techtree.*"),
+                            ])>
+                                <i class="bi bi-diagram-3"></i> Techtree
+                            </a>
+                        @else
+                            <span class="nav-flyout-item nav-link-locked">
+                                <i class="bi bi-diagram-3"></i>
+                                <span>Techtree
+                                    <small
+                                        class="nav-flyout-locked-hint">{{ __("colony.nav_techtree_locked") }}</small>
+                                </span>
+                            </span>
+                        @endif
                         @if ($barBuilt ?? false)
                             <a href="{{ route("colony.bar") }}" @class([
                                 "nav-flyout-item",

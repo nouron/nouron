@@ -261,18 +261,18 @@ class OnboardingTriggersTest extends TestCase
      *
      * Strategy: set CC to level 1 (supply_cost=0, cap contribution=10).
      *           No housing → cap = 10.
-     *           Add hangar (building_id=44, supply_cost=12) at level=1 → used=12 >= cap=10.
+     *           Add hangar (building_id=44, supply_cost=6) at level=2 → used=12 >= cap=10.
      */
     public function test_supply_trigger_marks_fired_when_used_supply_reaches_cap(): void
     {
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'supply_cap_full'));
 
-        // Hangar: supply_cost = 12 per level (from testdata buildings table).
+        // Hangar: supply_cost = 6 per level; level=2 → used=12 >= cap=10.
         DB::table('colony_buildings')->insert([
             'colony_id' => $this->colonyId,
             'building_id' => 44,
             'instance_id' => 1,
-            'level' => 1,
+            'level' => 2,
             'status_points' => 20,
             'ap_spend' => 0,
         ]);

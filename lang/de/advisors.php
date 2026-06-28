@@ -37,6 +37,19 @@ return [
     'error_insufficient_credits' => 'Nicht genug Credits, um diesen Berater einzustellen.',
     'error_dismissed_this_tick' => 'Dieser Berater wurde gerade erst entlassen und kann erst im nächsten Sol wieder eingestellt werden.',
     'error_generic' => 'Berater konnte nicht eingestellt werden.',
+    'error_path_building_missing' => 'Das zugehörige Pfadgebäude muss zuerst gebaut und platziert werden.',
+    'desc_path_open' => 'Noch kein Pfadgebäude gebaut — Sciencelab, Hangar oder Cantina errichten, um diesen Slot freizuschalten.',
+
+    // Path choice descriptions shown in the advisor carousel for path_open slots
+    'path_label_scientist' => 'Analytiker-Pfad',
+    'path_label_pilot' => 'Raumfahrer-Pfad',
+    'path_label_trader' => 'Konsul-Pfad',
+    'path_choice_scientist' => 'Analytiklabor bauen → Analytiker einstellen. Schaltet Techtree und Kenntnisforschung frei; gibt Kenntnis-AP.',
+    'path_choice_pilot' => 'Hangar bauen → Raumfahrer einstellen. Schaltet Missionen und Hangar-Events frei; gibt Navigations-AP.',
+    'path_choice_trader' => 'Cantina bauen → Konsul einstellen. Schaltet Handel und Cantina-Events frei; gibt Handels-AP.',
+    'path_unlock_scientist' => 'Techtree + Kenntnisforschung + Kenntnis-AP',
+    'path_unlock_pilot' => 'Missionen + Hangar-Events + Navigations-AP',
+    'path_unlock_trader' => 'Handel + Cantina-Events + Handels-AP',
 
     // Hire/fire confirmation dialogs
     'dialog_hire_title' => 'Berater einstellen',
@@ -50,5 +63,9 @@ return [
     'dialog_hire' => 'Einstellen',
     'dialog_fire' => 'Entlassen',
     'dialog_cancel' => 'Abbrechen',
+
+    // Hire-time warnings: AP-type has no consuming building yet
+    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — Forschungs-AP bleibt vorerst ungenutzt.',
+    'warning_no_hangar' => 'Du hast noch keinen Hangar — Navigations-AP wird vorerst nur für Erkundung genutzt.',
 
 ];

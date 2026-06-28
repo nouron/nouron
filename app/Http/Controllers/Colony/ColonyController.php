@@ -42,6 +42,12 @@ class ColonyController extends BaseController
     private const RES_REGOLITH = 3;
 
     /**
+     * Buildings that count as path choices (sciencelab, hangar, bar).
+     * At CC Lv2 the player may place one; each additional CC level unlocks one more.
+     */
+    private const PATH_BUILDING_IDS = [31, 44, 52];
+
+    /**
      * One-time erect cost for a building, as [resource_id => amount].
      * Canonical source: config/buildings.php `build_cost`. CC + Harvester have none.
      *
@@ -128,6 +134,7 @@ class ColonyController extends BaseController
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
+                $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
 
                 return $b;
             });
@@ -317,6 +324,7 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
         }
 
+        // Path-gate: sciencelab/hangar/bar may only be placed when CC level allows.
         // Harvester is marked is_instanced=1 in schema but has exactly one instance per colony
         // and must always be moved (UPDATE), never duplicated (INSERT).
         $existingBuilding = ($isHarvester || ! $building->is_instanced)
@@ -407,6 +415,7 @@ class ColonyController extends BaseController
                 'ap_spend' => 1,
                 'tile_x' => $data['q'],
                 'tile_y' => $data['r'],
+                'placed_at_tick' => $this->getTick(),
             ]);
         } else {
             $nextInstanceId = 1;
@@ -420,6 +429,7 @@ class ColonyController extends BaseController
                 // Preserve pre-invested ap_spend (seeded buildings); reset only on fresh placements.
                 if ($existingBuilding->tile_x === null) {
                     $update['ap_spend'] = max((int) $existingBuilding->ap_spend, 1);
+                    $update['placed_at_tick'] = $this->getTick();
                 } elseif (! $isHarvesterMove) {
                     $update['ap_spend'] = 1;
                 }
@@ -443,6 +453,7 @@ class ColonyController extends BaseController
                     'ap_spend' => 1,
                     'tile_x' => $data['q'],
                     'tile_y' => $data['r'],
+                    'placed_at_tick' => $this->getTick(),
                 ]);
             }
         }
@@ -866,6 +877,7 @@ class ColonyController extends BaseController
         $row->label = __('techtree.'.$row->building_key);
         $row->image_slug = self::buildingImageSlug($row->building_key);
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
+        $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
 
         return $row;
     }

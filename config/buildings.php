@@ -68,6 +68,13 @@ return [
         'max_level' => null,
     ],
 
+    // bioFacility (Agrardom) — mandatory prerequisite for the CC Lv1→Lv2
+    // upgrade (2026-06-24, GDD §4 "Agrardom wird Pflichtgebäude vor CC Lv2").
+    // No longer part of the Sol-3 path-choice group (sciencelab/hangar/bar) —
+    // it has no CC-level gate of its own (only Harvester ≥ Lv1), so it stays
+    // reachable from Sol 1 and must be built before CC2 to guarantee Organika
+    // flow through the strictly linear Sol-1/2 ramp. Enforced in the CC
+    // levelup endpoint (ColonyService — NOT in this config), not here.
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id' => 41,
         'build_cost' => [3 => 40],   // Regolith only (early)
@@ -83,9 +90,12 @@ return [
     'sciencelab' => [
         'id' => 31,
         // Regolith only — no Compounds (circular dep risk, same reasoning as
-        // uplinkStation below): CC Lv2 unlocks both this building AND the 2nd
-        // advisor slot (always the Analytiker, see AdvisorController::SLOT_ORDER),
-        // but Werkstoffe aren't reachable that early (Uplink-Station Lv1 +
+        // uplinkStation below): CC Lv2 unlocks this building (one of three
+        // parallel "path" buildings — sciencelab/hangar/bar — see GDD §13
+        // "Pfadwahl ab Sol 3"). Building it is what grants the matching
+        // generic advisor slot (Analytiker) — slot binding is no longer a
+        // fixed CC-level→type mapping, see AdvisorController::PATH_BUILDINGS.
+        // Werkstoffe aren't reachable this early (Uplink-Station Lv1 +
         // Cantina/merchant, both later). The previous [Rg+Wk] cost made the
         // Analytiker structurally useless for several Sols right after hiring.
         'build_cost' => [3 => 80],
@@ -98,10 +108,19 @@ return [
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
 
+    // Hangar — CC gate lowered from Lv3 to Lv2 (2026-06-24): one of three
+    // parallel "path" buildings (sciencelab/hangar/bar), see GDD §13
+    // "Pfadwahl ab Sol 3". Only 1 of the 3 path buildings can be placed at
+    // CC Lv2 — the build-gate (CC-level − 1 ≥ count of path buildings already
+    // placed) is enforced in ColonyService::placeBuilding, NOT in this config.
+    // supply_cost (6) is intentionally low: the hangar itself is cheap to run
+    // because each ship commissioned carries its own supply cost — fleet size
+    // is capped by ships, not by the building. Building it grants the matching
+    // generic advisor slot (Raumfahrer) — see AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
         'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
-        'supply_cost' => 12,      // limits fleet naturally: 3 hangars = 36 supply
+        'supply_cost' => 6,       // low: ships carry supply cost; hangar is just a slot
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
@@ -120,6 +139,10 @@ return [
         'max_level' => null,
     ],
 
+    // Cantina (bar) — CC Lv2, one of three parallel "path" buildings
+    // (sciencelab/hangar/bar), see GDD §13 "Pfadwahl ab Sol 3". Building it
+    // grants the matching generic advisor slot (Konsul) — see
+    // AdvisorController::PATH_BUILDINGS.
     'bar' => [
         'id' => 52,
         'build_cost' => [3 => 50],   // Regolith only (early)
@@ -152,20 +175,32 @@ return [
 
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
 
-    // Security Hub — CC Lv2, max 1 instance (is_instanced=0).
-    // (Former defend-order discount removed with the fleet/galaxy layer 2026-06.)
-    // Effect: on building level-down by decay, return 10% of step costs in
-    //         tradeable resources (GameTick, config key: securityHub_recycle_pct).
-    // TODO Balance: baukosten/supply_cost/decay kalibrieren nach erstem Playtest.
+    // Security Hub — CC Lv3, max 1 instance (is_instanced=0).
+    // Gate raised from CC Lv2 → Lv3 (2026-06-28): Hub is the prerequisite for the
+    // Stratege advisor slot (Slot 5), analogous to the three path buildings (Pfad
+    // A/B/C) that open Slots 2–4. Not part of the Pfadwahl build-gate group.
+    //
+    // Effects:
+    //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
+    //   2. Event mitigation: negative trust events (building_level_down,
+    //      encounter_lost, colony_threatened) reduced by 25% when Hub active
+    //      (TrustService — TODO: implement, key: securityHub_event_mitigation_pct).
+    //   3. recycle_pct: on building level-down by decay, return 10% of build
+    //      cost in tradeable resources (GameTick — partially implemented).
+    //
+    // Former defend-order discount removed with the fleet/galaxy layer 2026-06.
+    // TODO Balance: trust_per_lv, event_mitigation_pct, recycle_pct, supply_cost
+    //               all to be calibrated after first playtest.
     'securityHub' => [
         'id' => 53,
-        'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
+        'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
-        'trust_per_lv' => 0,
+        'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3)
         'decay_rate' => 0.67,    // 30 days — provisional
         'max_status_points' => 20,
         'max_level' => 3,
-        'recycle_pct' => 0.10,    // fraction of build cost returned on level-down
+        'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
+        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TODO: implement)
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).

@@ -54,13 +54,56 @@
                                 'advisor-card--current': i === activeIndex
                             }">
 
-                            {{-- Portrait --}}
+                            {{-- ── Section 1: Gebäudevoraussetzung ──────────────────────── --}}
+                            <div class="advisor-card__prereq">
+                                <span class="prereq-section-label">Voraussetzung</span>
+
+                                {{-- Engineer: CC chip solo (centered, matches dual visual style) --}}
+                                <template x-if="slot.key === 'engineer'">
+                                    <div class="prereq-dual prereq-dual--solo">
+                                        <div class="prereq-cc-chip">
+                                            <img class="prereq-cc-img" src="/img/buildings/command-center.webp"
+                                                alt="Command Center"
+                                                x-on:error="$el.onerror=null; $el.src=buildingPlaceholderSrc()">
+                                            <span class="prereq-cc-label">CC Lv1</span>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                {{-- All others: CC chip (left) + main building (right) --}}
+                                <template x-if="slot.key !== 'engineer'">
+                                    <div class="prereq-dual">
+                                        <div class="prereq-cc-chip">
+                                            <img class="prereq-cc-img" src="/img/buildings/command-center.webp"
+                                                alt="CC"
+                                                x-on:error="$el.onerror=null; $el.src=buildingPlaceholderSrc()">
+                                            <span class="prereq-cc-label" x-text="'CC Lv' + slot.cc_required"></span>
+                                        </div>
+                                        <span class="prereq-plus">+</span>
+                                        <div class="prereq-main">
+                                            <img class="prereq-main-img"
+                                                :src="'/img/buildings/' + (slot.is_path_open ? advisorPrereqBuilding(slot
+                                                        .preview_advisor_key)?.slug : advisorPrereqBuilding(slot.key)
+                                                    ?.slug) + '.webp'"
+                                                :alt="slot.is_path_open ? advisorPrereqBuilding(slot.preview_advisor_key)
+                                                    ?.name : advisorPrereqBuilding(slot.key)?.name"
+                                                x-on:error="$el.onerror=null; $el.src=buildingPlaceholderSrc()">
+                                            <span class="prereq-main-name"
+                                                x-text="slot.is_path_open ? advisorPrereqBuilding(slot.preview_advisor_key)?.name : advisorPrereqBuilding(slot.key)?.name">
+                                            </span>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            {{-- ── Section 2: Portrait ───────────────────────────────────── --}}
                             <div class="advisor-portrait"
-                                :style="portraitImageUrl(slot.key) ?
-                                    'background-image: url(' + portraitImageUrl(slot.key) + ')' :
+                                :style="portraitImageUrl(slot.preview_advisor_key ?? slot.key) ?
+                                    'background-image: url(' + portraitImageUrl(slot.preview_advisor_key ?? slot.key) +
+                                    ')' :
                                     ''">
                                 {{-- Placeholder SVG shown only when no portrait image is available --}}
-                                <template x-if="!portraitImageUrl(slot.key)">
+                                <template x-if="!portraitImageUrl(slot.preview_advisor_key ?? slot.key)">
                                     <svg class="advisor-portrait-placeholder" viewBox="0 0 24 24" fill="none"
                                         stroke="currentColor" stroke-width="1" stroke-linecap="round"
                                         stroke-linejoin="round" aria-hidden="true">
@@ -86,8 +129,12 @@
                                         x-text="apTypeLabel(slot.ap_type) + ' · ' + slot.advisor.ap_per_tick + ' AP/Tick'">
                                     </span>
                                 </template>
-                                <template x-if="slot.advisor === null && slot.state === 'empty'">
+                                <template x-if="slot.advisor === null && slot.state === 'empty' && !slot.is_path_open">
                                     <span class="advisor-subtitle" x-text="apTypeLabel(slot.ap_type) + ' · Vakant'"></span>
+                                </template>
+                                <template x-if="slot.is_path_open && slot.state !== 'locked'">
+                                    <span class="advisor-subtitle"
+                                        x-text="slot.ap_type ? apTypeLabel(slot.ap_type) + ' · Vakant' : 'Pfad ausstehend'"></span>
                                 </template>
                                 <template x-if="slot.state === 'locked'">
                                     <span class="advisor-subtitle">Gesperrt</span>
@@ -139,8 +186,14 @@
                                         </div>
                                     </template>
 
+                                    {{-- PATH OPEN unlocked: guide user to Section 1 --}}
+                                    <template x-if="slot.is_path_open && slot.state !== 'locked'">
+                                        <p class="path-open-guidance">Oben Gebäude wählen → bauen → Berater-Slot wird
+                                            freigeschaltet.</p>
+                                    </template>
+
                                     {{-- EMPTY --}}
-                                    <template x-if="slot.advisor === null && slot.state === 'empty'">
+                                    <template x-if="slot.advisor === null && slot.state === 'empty' && !slot.is_path_open">
                                         <div style="display:contents">
 
                                             <div class="stat-row">
@@ -187,6 +240,13 @@
                                 </div>{{-- /.advisor-stats --}}
 
                             </div>{{-- /.advisor-info --}}
+
+                            {{-- ── Section 3: Freigeschaltete Effekte ───────────────────── --}}
+                            <div class="advisor-card__effects">
+                                <span class="effects-section-label">Effekte</span>
+                                <span class="effects-text" x-text="advisorEffects(slot.key, slot.is_path_open)"></span>
+                            </div>
+
                         </div>{{-- /.advisor-card --}}
                     </template>
 
@@ -241,6 +301,10 @@
                             <dd x-text="dialogSlot.junior_upkeep + ' {{ __("advisors.dialog_per_sol") }}'"></dd>
                         </div>
                     </dl>
+
+                    <template x-if="dialogSlot.building_warning">
+                        <div class="dialog-warning" x-text="dialogSlot.building_warning"></div>
+                    </template>
 
                     <div class="dialog-error" x-text="errorMsg"></div>
                     <div class="dialog-actions">
