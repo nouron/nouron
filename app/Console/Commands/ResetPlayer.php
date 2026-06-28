@@ -11,14 +11,18 @@ use App\Services\RunProgressService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\table;
+
 /**
  * ResetPlayer — wipes all game state for a user and re-runs onboarding.
  *
- * Usage:
- *   php artisan game:reset-player bart
- *   php artisan game:reset-player 3                            (by user_id)
- *   php artisan game:reset-player bart --yes                   (skip confirmation)
- *   php artisan game:reset-player bart --yes --scenario=phase2 (jump to Phase 2)
+ * Usage (interactive — no args needed):
+ *   php artisan game:reset-player            → user + scenario select menus
+ *   php artisan game:reset-player bart       → scenario select menu
+ *   php artisan game:reset-player bart --yes → scenario select, no confirm prompt
+ *   php artisan game:reset-player bart --yes --scenario=phase2  → fully non-interactive
  *
  * Scenarios:
  *   fresh           Sol 1 clean start (default)
@@ -38,14 +42,23 @@ use Illuminate\Support\Facades\DB;
 class ResetPlayer extends Command
 {
     protected $signature = 'game:reset-player
-        {user : Username or user_id}
-        {--yes : Skip confirmation}
-        {--scenario=fresh : fresh|pre-phase2|phase2|near-fail-trust|near-deadline|objectives-done}';
+        {user? : Username or user_id (omit for interactive select)}
+        {--yes : Skip confirmation prompt}
+        {--scenario= : fresh|pre-phase2|phase2|near-fail-trust|near-deadline|objectives-done (omit for interactive select)}';
 
-    protected $description = 'Reset a player\'s game state (dev tool). Use --scenario to jump to a mid-game state.';
+    protected $description = 'Reset a player\'s game state (dev tool). Interactive when run without arguments.';
 
     private const VALID_SCENARIOS = [
         'fresh', 'pre-phase2', 'phase2', 'near-fail-trust', 'near-deadline', 'objectives-done',
+    ];
+
+    private const SCENARIO_LABELS = [
+        'fresh' => 'Sol 1          — Neustart (Standard)',
+        'pre-phase2' => 'Pre-Phase 2    — CC Lv3 + 2 Berater, 1 Hire fehlt für Phase-2-Trigger',
+        'phase2' => 'Phase 2        — Tick 15, 3 Objectives offen, frühe Phase 2',
+        'near-fail-trust' => 'Vertrauenskrise — Trust −15 (Grenze −20), Tick 30, Org-Reserven leer',
+        'near-deadline' => 'Deadline       — Tick 95 (5 Sols verbleibend), 1 Objective erledigt',
+        'objectives-done' => 'Fertig         — Tick 60, alle 3 Objectives abgeschlossen',
     ];
 
     public function __construct(
@@ -58,41 +71,75 @@ class ResetPlayer extends Command
 
     public function handle(): int
     {
-        $scenario = $this->option('scenario');
-
-        if (! in_array($scenario, self::VALID_SCENARIOS, true)) {
-            $this->error("Unknown scenario: {$scenario}");
-            $this->line('Valid scenarios: '.implode(', ', self::VALID_SCENARIOS));
-
-            return self::FAILURE;
-        }
+        // ── Resolve user ──────────────────────────────────────────────────────
 
         $input = $this->argument('user');
+        $user = null;
 
-        $user = is_numeric($input)
-            ? User::find((int) $input)
-            : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
+        if ($input !== null) {
+            $user = is_numeric($input)
+                ? User::find((int) $input)
+                : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
+        }
 
         if (! $user) {
-            // Dev DB wiped (migrate:fresh without --seed) — auto-seed and retry once.
+            // Auto-seed empty dev DB, then show select.
             if (DB::table('user')->count() === 0) {
                 $this->warn('Dev DB appears empty — running db:seed automatically...');
                 $this->call('db:seed');
-                $user = is_numeric($input)
-                    ? User::find((int) $input)
-                    : User::whereRaw('LOWER(username) = LOWER(?)', [$input])->first();
             }
-            if (! $user) {
+
+            if ($input !== null) {
                 $this->error("User not found: {$input}");
 
                 return self::FAILURE;
             }
+
+            $rows = DB::table('user')->select('user_id', 'username')->orderBy('username')->get();
+
+            if ($rows->isEmpty()) {
+                $this->error('No users in database.');
+
+                return self::FAILURE;
+            }
+
+            $chosen = select(
+                label: 'Spieler',
+                options: $rows->pluck('username', 'user_id')->toArray(),
+            );
+
+            $user = User::find((int) $chosen);
         }
 
+        // ── Resolve scenario ──────────────────────────────────────────────────
+
+        $scenario = $this->option('scenario');
+
+        if ($scenario === null) {
+            $scenario = select(
+                label: 'Szenario',
+                options: self::SCENARIO_LABELS,
+                default: 'fresh',
+            );
+        }
+
+        if (! in_array($scenario, self::VALID_SCENARIOS, true)) {
+            $this->error("Unknown scenario: {$scenario}");
+            $this->line('Valid: '.implode(', ', self::VALID_SCENARIOS));
+
+            return self::FAILURE;
+        }
+
+        // ── Summary + confirmation ────────────────────────────────────────────
+
+        $this->newLine();
+        table(
+            headers: ['Spieler', 'ID', 'Szenario'],
+            rows: [[$user->username, $user->user_id, self::SCENARIO_LABELS[$scenario]]],
+        );
+
         if (! $this->option('yes')) {
-            $suffix = $scenario !== 'fresh' ? " then apply scenario '{$scenario}'" : '';
-            $this->warn("This will delete ALL game data for user '{$user->username}' (id={$user->user_id}){$suffix}.");
-            if (! $this->confirm('Continue?', false)) {
+            if (! confirm('Alle Spielerdaten löschen und Szenario anwenden?', default: false)) {
                 $this->line('Aborted.');
 
                 return self::SUCCESS;
