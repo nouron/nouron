@@ -22,11 +22,18 @@ use Illuminate\Support\Facades\DB;
  *
  * Scenarios:
  *   fresh           Sol 1 clean start (default)
- *   pre-phase2      CC Lv3 + 2 buildings Lv2 + 2 advisors — one hire away from Phase 2
- *   phase2          Phase 2 active (tick 15), 3 objectives drawn
- *   near-fail-trust Phase 2, trust = −15 (threshold −20)
- *   near-deadline   Phase 2, tick = 95 (5 sols left), 1 objective done
- *   objectives-done Phase 2, all 3 objectives completed
+ *   pre-phase2      CC Lv3 + Agrardom Lv2 + Sciencelab Lv1 + 2 advisors — one hire away from Phase 2
+ *   phase2          Phase 2 active (tick 15), 3 objectives drawn, realistic early-Phase-2 state
+ *   near-fail-trust Phase 2, trust = −15 (threshold −20), depleted Organika reserves
+ *   near-deadline   Phase 2, tick = 95 (5 sols left), upgraded buildings, 1 objective done
+ *   objectives-done Phase 2, tick = 60, all 3 objectives completed, strong economy
+ *
+ * Resource logic per scenario:
+ *   Harvester Lv1 = 10 Rg/Sol. BioFacility Lv2 = 20 Organika/Sol, food need ~3 → net +17.
+ *   Werkstoffe: no production building — 0 until Uplink-Station (not seeded here).
+ *   Supply cap: CC flat 10 + Housing_Lv × 8 + knowledge-level bonuses.
+ *   Building costs Rg: CC 1→3 = 150, Agrardom place+Lv2 = 60, Sciencelab place+Lv1 = 100 → ~310 total.
+ *   Starting 200 + 12 Sols × 10 = 320 produced → ~30 Rg left at tick 12.
  */
 class ResetPlayer extends Command
 {
@@ -165,49 +172,49 @@ class ResetPlayer extends Command
         };
     }
 
-    // ── Shared state builders ─────────────────────────────────────────────────
+    // ── Shared building/advisor setup ─────────────────────────────────────────
 
     /**
-     * Phase 1 near-complete: CC Lv3, Housing Lv2, Agrardom Lv2, Sciencelab Lv1.
-     * 2 advisors active (engineer + scientist). Missing 1 advisor for Phase 2 trigger.
+     * Place Phase-1-complete buildings + 2 advisors (engineer + scientist).
+     * Does NOT touch resources or kenntnisse — each scenario sets those itself.
+     *
+     * Buildings:
+     *   CC (25)        Lv3  at (0,0)  — colony zone expanded accordingly
+     *   Harvester (27) Lv1  at (1,0)  — already seeded
+     *   Housing (28)   Lv2  at (0,1)  — already seeded, upgraded
+     *   Agrardom (41)  Lv2  at (0,-1) — inserted, mandatory Organika source
+     *   Sciencelab (31)Lv1  at (-1,0) — inserted, path building A
      */
-    private function buildPhase1State(Colony $colony, Run $run): void
+    private function placePhase1Buildings(Colony $colony): void
     {
         $cid = $colony->id;
 
-        // CC → Lv3, placed at center
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 25)
             ->update(['level' => 3, 'status_points' => 20, 'tile_x' => 0, 'tile_y' => 0, 'placed_at_tick' => 1]);
 
-        // Harvester already at (1,0) from seed — stays Lv1
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 27)
             ->update(['status_points' => 20]);
 
-        // Housing → Lv2 (already seeded at (0,1))
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 28)
             ->update(['level' => 2, 'status_points' => 20]);
 
-        // Agrardom (41) — place at (0,-1) ring 1, Lv2
         DB::table('colony_buildings')->insert([
             'colony_id' => $cid, 'building_id' => 41, 'instance_id' => 1,
             'level' => 2, 'status_points' => 20, 'ap_spend' => 0,
             'tile_x' => 0, 'tile_y' => -1, 'placed_at_tick' => 2,
         ]);
 
-        // Sciencelab (31) — place at (-1,0) ring 1, Lv1
         DB::table('colony_buildings')->insert([
             'colony_id' => $cid, 'building_id' => 31, 'instance_id' => 1,
             'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
             'tile_x' => -1, 'tile_y' => 0, 'placed_at_tick' => 3,
         ]);
 
-        // Expand colony zone to CC Lv3
         $this->tileService->assignColonyZone($cid, 3);
 
-        // 2 advisors: engineer + scientist
         foreach ([
             (int) config('advisors.engineer.id', 35),
             (int) config('advisors.scientist.id', 36),
@@ -218,32 +225,11 @@ class ResetPlayer extends Command
                 'active_ticks' => 5, 'unavailable_until_tick' => null,
             ]);
         }
-
-        // Resources: generous but realistic
-        DB::table('user_resources')
-            ->where('user_id', $colony->user_id)
-            ->update(['credits' => 5000, 'supply' => 30]);
-
-        DB::table('colony_resources')
-            ->where('colony_id', $cid)->where('resource_id', 3)
-            ->update(['amount' => 500]);  // regolith
-
-        DB::table('colony_resources')
-            ->where('colony_id', $cid)->where('resource_id', 12)
-            ->update(['amount' => 25]);  // trust
-
-        $run->current_tick = 12;
-        $run->save();
     }
 
-    /**
-     * Phase 2 base: Phase 1 complete + 3rd advisor + phase transition + objectives drawn.
-     */
-    private function buildPhase2State(Colony $colony, Run $run): void
+    /** Add 3rd advisor (pilot) and transition to Phase 2 with drawn objectives. */
+    private function transitionToPhase2(Colony $colony, Run $run): void
     {
-        $this->buildPhase1State($colony, $run);
-
-        // 3rd advisor: pilot
         DB::table('advisors')->insert([
             'user_id' => $colony->user_id,
             'personell_id' => (int) config('advisors.pilot.id', 89),
@@ -255,46 +241,220 @@ class ResetPlayer extends Command
 
         $run->phase = 2;
         $run->phase2_start_tick = 12;
-        $run->current_tick = 15;
         $run->save();
 
         $this->runProgressService->drawObjectives($run);
     }
 
-    // ── Scenarios ─────────────────────────────────────────────────────────────
+    /**
+     * Set colony resources, user credits/supply, and run tick in one call.
+     *
+     * Supply cap formula (GameTick): CC flat 10 + housing_lv × 8 + knowledge bonuses.
+     * With Housing Lv2 and no knowledge: 10 + 16 = 26.
+     * With Housing Lv3 and knowledge worth ~24 pts: 10 + 24 + 24 = 58.
+     */
+    private function setResources(
+        Colony $colony,
+        Run $run,
+        int $tick,
+        int $regolith,
+        int $organika,
+        int $werkstoffe,
+        int $trust,
+        int $credits,
+        int $supply,
+    ): void {
+        $run->current_tick = $tick;
+        $run->save();
 
-    private function scenarioPrePhase2(Colony $colony, Run $run): void
-    {
-        $this->buildPhase1State($colony, $run);
-    }
+        DB::table('colony_resources')
+            ->where('colony_id', $colony->id)->where('resource_id', 3)
+            ->update(['amount' => $regolith]);
 
-    private function scenarioPhase2(Colony $colony, Run $run): void
-    {
-        $this->buildPhase2State($colony, $run);
-    }
+        DB::table('colony_resources')
+            ->where('colony_id', $colony->id)->where('resource_id', 4)
+            ->update(['amount' => $werkstoffe]);
 
-    private function scenarioNearFailTrust(Colony $colony, Run $run): void
-    {
-        $this->buildPhase2State($colony, $run);
+        DB::table('colony_resources')
+            ->where('colony_id', $colony->id)->where('resource_id', 5)
+            ->update(['amount' => $organika]);
 
-        // trust = -15 (threshold is -20 → 5 ticks to recover or fail)
         DB::table('colony_resources')
             ->where('colony_id', $colony->id)->where('resource_id', 12)
-            ->update(['amount' => -15]);
+            ->update(['amount' => $trust]);
 
-        $run->current_tick = 30;
-        $run->save();
+        DB::table('user_resources')
+            ->where('user_id', $colony->user_id)
+            ->update(['credits' => $credits, 'supply' => $supply]);
     }
 
+    /**
+     * Seed colony_researches rows for knowledge items the player has unlocked.
+     *
+     * $entries = [[research_id, level, ap_spend], ...]
+     * All knowledge researches use ap_for_levelup = 3 (DB value).
+     */
+    private function seedKenntnisse(int $colonyId, array $entries): void
+    {
+        foreach ($entries as [$researchId, $level, $apSpend]) {
+            DB::table('colony_researches')->insert([
+                'colony_id' => $colonyId,
+                'research_id' => $researchId,
+                'level' => $level,
+                'status_points' => 20,
+                'ap_spend' => $apSpend,
+            ]);
+        }
+    }
+
+    // ── Scenarios ─────────────────────────────────────────────────────────────
+
+    /**
+     * Tick 12 — Phase 1 one hire short of completion.
+     *
+     * Resources: Regolith nearly depleted after heavy building investment (30 left).
+     * 8 Sols of Agrardom Lv2 production (net +17/Sol) → 136 Organika; rounded to 120
+     * accounting for early food shortfalls before Agrardom reached Lv2.
+     * Credits: 3000 start − 200 (engineer) − 400 (scientist) = 2400.
+     * Supply cap: CC flat 10 + Housing Lv2 × 8 = 26.
+     * Kenntnisse: Scientist hired at tick ~5; ~70 research AP earned → construction Lv2
+     * (ap_spend=1 toward Lv3), agronomy started (ap_spend=2).
+     */
+    private function scenarioPrePhase2(Colony $colony, Run $run): void
+    {
+        $this->placePhase1Buildings($colony);
+
+        $this->setResources($colony, $run,
+            tick: 12,
+            regolith: 30,
+            organika: 120,
+            werkstoffe: 0,
+            trust: 25,
+            credits: 2400,
+            supply: 26,
+        );
+
+        // construction(90) Lv2/ap_spend=1, agronomy(93) started (ap_spend=2)
+        $this->seedKenntnisse($colony->id, [
+            [90, 2, 1],
+            [93, 0, 2],
+        ]);
+    }
+
+    /**
+     * Tick 15 — 3 Sols into Phase 2.
+     *
+     * Phase 2 entered at tick 12. 3 additional Sols: +30 Rg, +51 net Organika.
+     * Credits reduced by pilot hire fee (500). Supply unchanged (no new buildings).
+     * Kenntnisse: 3 more ticks → construction reaches Lv3 (9 AP spent), agronomy still started.
+     * Objectives drawn but all at 0 (too early for any progress).
+     */
+    private function scenarioPhase2(Colony $colony, Run $run): void
+    {
+        $this->placePhase1Buildings($colony);
+        $this->transitionToPhase2($colony, $run);
+
+        $this->setResources($colony, $run,
+            tick: 15,
+            regolith: 60,
+            organika: 170,
+            werkstoffe: 0,
+            trust: 25,
+            credits: 1900,
+            supply: 26,
+        );
+
+        // construction(90) Lv3, agronomy(93) still started
+        $this->seedKenntnisse($colony->id, [
+            [90, 3, 0],
+            [93, 0, 2],
+        ]);
+    }
+
+    /**
+     * Tick 30 — Trust crisis, 5 points above fail threshold.
+     *
+     * 15 more Sols than phase2. Trust dropped to -15 through recurring food shortfalls
+     * (hunger_streak penalties). Organika depleted to 50 (the shortage that caused it).
+     * Regolith accumulated (no new buildings to spend on): +150.
+     * Credits: emergency merchant purchases + low AP efficiency → 800.
+     * Supply: unchanged (no new buildings).
+     * Kenntnisse: research slowed by trust crisis (AP multiplier 1.0 in this band,
+     * but player distracted recovering food): construction Lv3, cartography Lv1.
+     */
+    private function scenarioNearFailTrust(Colony $colony, Run $run): void
+    {
+        $this->placePhase1Buildings($colony);
+        $this->transitionToPhase2($colony, $run);
+
+        $this->setResources($colony, $run,
+            tick: 30,
+            regolith: 210,
+            organika: 50,
+            werkstoffe: 0,
+            trust: -15,
+            credits: 800,
+            supply: 26,
+        );
+
+        // construction(90) Lv3, cartography(91) Lv1 — research slowed by crisis
+        $this->seedKenntnisse($colony->id, [
+            [90, 3, 0],
+            [91, 1, 0],
+        ]);
+    }
+
+    /**
+     * Tick 95 — 5 Sols before tick_limit, 1 objective done.
+     *
+     * Late-game state: buildings upgraded over 80+ Sols, strong economy.
+     * Building upgrades vs. tick 15 state:
+     *   Agrardom Lv4 (40 Organika/Sol), Sciencelab Lv3, Housing Lv3.
+     * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~24 pts ≈ 58.
+     * Werkstoffe: bought from merchant (30 units accumulated).
+     * Credits: advisor productivity + merchant sales over 80+ Sols → 7000.
+     * Kenntnisse: 4 researches unlocked, including cartography at Lv4 and geology
+     * (req. Sciencelab Lv2 — met). 1 of 3 objectives completed at tick 20.
+     */
     private function scenarioNearDeadline(Colony $colony, Run $run): void
     {
-        $this->buildPhase2State($colony, $run);
+        $this->placePhase1Buildings($colony);
 
-        $tickLimit = (int) config('game.run.tick_limit', 100);
-        $run->current_tick = $tickLimit - 5;
-        $run->save();
+        // Upgrade buildings beyond Phase-1 baseline
+        $cid = $colony->id;
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 28)
+            ->update(['level' => 3, 'status_points' => 20]);     // Housing Lv3
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 41)
+            ->update(['level' => 4, 'status_points' => 20]);     // Agrardom Lv4
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 31)
+            ->update(['level' => 3, 'status_points' => 20]);     // Sciencelab Lv3
 
-        // Mark 1 objective done, leave 2 open with partial progress
+        $this->transitionToPhase2($colony, $run);
+
+        $this->setResources($colony, $run,
+            tick: (int) config('game.run.tick_limit', 100) - 5,
+            regolith: 500,
+            organika: 600,
+            werkstoffe: 30,
+            trust: 60,
+            credits: 7000,
+            supply: 58,
+        );
+
+        // construction(90) Lv5, cartography(91) Lv4, geology(92) Lv1 (req Sciencelab Lv2 — met),
+        // agronomy(93) Lv3, health(94) Lv2
+        $this->seedKenntnisse($colony->id, [
+            [90, 5, 0],
+            [91, 4, 1],
+            [92, 1, 0],
+            [93, 3, 2],
+            [94, 2, 0],
+        ]);
+
+        // 1 objective done (tick 20), 2nd with partial progress
         $objectives = $run->objectives()->get();
 
         if ($objectives->count() >= 1) {
@@ -313,14 +473,51 @@ class ResetPlayer extends Command
         }
     }
 
+    /**
+     * Tick 60 — All 3 objectives completed, strong mid-late game economy.
+     *
+     * Agrardom Lv3, Sciencelab Lv2. 45 Sols past Phase-2 entry.
+     * Supply cap: CC 10 + Housing Lv2 × 8 + knowledge ~16 pts ≈ 42.
+     * Werkstoffe: some merchant purchases (20 units).
+     * Credits: 10000 (economy objectives completed → Nexus credit bonus).
+     * Objectives: all completed_at tick 40 (player finished with 60 Sols to spare).
+     */
     private function scenarioObjectivesDone(Colony $colony, Run $run): void
     {
-        $this->buildPhase2State($colony, $run);
+        $this->placePhase1Buildings($colony);
 
-        $run->current_tick = 60;
-        $run->save();
+        // Upgrade Agrardom and Sciencelab beyond Phase-1 baseline
+        $cid = $colony->id;
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 41)
+            ->update(['level' => 3, 'status_points' => 20]);     // Agrardom Lv3
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 31)
+            ->update(['level' => 2, 'status_points' => 20]);     // Sciencelab Lv2
 
-        // All 3 objectives completed
+        $this->transitionToPhase2($colony, $run);
+
+        $this->setResources($colony, $run,
+            tick: 60,
+            regolith: 300,
+            organika: 350,
+            werkstoffe: 20,
+            trust: 60,
+            credits: 10000,
+            supply: 42,
+        );
+
+        // construction(90) Lv4, cartography(91) Lv3, geology(92) Lv1 (req Sciencelab Lv2 — met),
+        // agronomy(93) Lv2, health(94) Lv1
+        $this->seedKenntnisse($colony->id, [
+            [90, 4, 2],
+            [91, 3, 0],
+            [92, 1, 0],
+            [93, 2, 1],
+            [94, 1, 0],
+        ]);
+
+        // All 3 objectives completed at tick 40
         $run->objectives()->update([
             'current_value' => DB::raw('target_value'),
             'streak_value' => DB::raw('target_value'),
