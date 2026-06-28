@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-28
+
+- **Voraussetzungsketten finalisiert** (Owner-Design). Analytiklabor + Hangar jetzt ab CC Lv1 baubar (Migration: `required_building_level` 2→1). Path-Gate (CC-Level−1-Formel) entfernt — natürliche Ressourcenknappheit steuert Spielerwahl statt künstlichem Gate. Techtree-Nav + Route gesperrt bis Analytiklabor gebaut (`sciencelabBuilt`-Flag in AppServiceProvider, Redirect in TechtreeController).
+- **SecurityHub-Gate** (game-designer-Entscheidung). Hub von CC Lv2 auf Lv3 angehoben (Migration). Stratege-Slot 5 jetzt erst mit SecurityHub Lv1 entsperrbar (AdvisorController + PersonellService). `TrustService`: negative Trust-Events um 25% gedämpft wenn Hub aktiv (`event_mitigation_pct = 0.25` aus `config/buildings.php`). Hub-Effekte: `trust_per_lv=1`, Event-Dämpfung, `recycle_pct=0.10`. GDD §4/§11/§13 vollständig aktualisiert.
+- **Flash-Animation für alle Ressourcen-Chips.** Credits, Regolith, Werkstoffe flashen bei Abnahme (`.res-chip--flash`-Klasse). `colony-hexgrid.js` flasht Rg/Co; `advisors.js` flasht Credits nach Berater-Hire.
+
 ## 2026-06-27
 
 - **Berater-Screen: Voraussetzungs-Bereich visuell vereinheitlicht** (Owner-Feedback Screenshot #7). Baumeister-Slot zeigte CC-Chip in abweichendem Layout — alle Slots nutzen jetzt dasselbe dual-Layout (CC-Chip + „+" + Gebäude-Bild). Fehlende Gebäude-Bilder (`command-center.webp`, `security-hub.webp`) zeigen graues SVG-Platzhalter-Bild statt kaputtem `<img>`-Tag. Portrait verschob sich bei variierender Voraussetzungs-Höhe — behoben durch feste Höhe (`flex: 0 0 96px`) am Prereq-Bereich.
