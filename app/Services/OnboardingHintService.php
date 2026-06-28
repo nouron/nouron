@@ -508,8 +508,14 @@ class OnboardingHintService
         }
 
         // Agrardom is a hard CC-Lv2 prerequisite — suppress the CC-invest hint until
-        // Agrardom is placed, so the player isn't sent to invest in an upgrade they can't reach.
-        if (! $this->isBuildingPlaced($colonyId, 41)) {
+        // Agrardom is fully built (level >= 1), not just placed as a construction site.
+        // A placed-but-unfinished Agrardom means the player should invest AP there, not in CC.
+        $agrardomLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 41)
+            ->whereNotNull('tile_x')
+            ->value('level') ?? 0);
+        if ($agrardomLevel < 1) {
             return false;
         }
 
