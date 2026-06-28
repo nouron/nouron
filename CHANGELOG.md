@@ -1,12 +1,11 @@
 # Changelog
 
-## 2026-06-29 (2)
-
-- **Fix: Nav-Links (Techtree/Cantina/Hangar) nach Level-Up sofort aktiv.** Analytiklabor/Bar/Hangar schalten ihren Nav-Link erst nach Seitenreload frei (Blade rendert `sciencelabBuilt` server-seitig). Fix: `investBuilding()` gibt `nav_unlocked: true` zurück wenn Building 31/44/52 von Level 0 auf 1 springt. `colony-hexgrid.js` lädt nach 600ms (Level-Up-Toast noch sichtbar) die Seite neu.
-
 ## 2026-06-29
 
-- **Sol-Report V2: 3-Screen-Flow.** Sol-Report erweitert auf drei aufeinanderfolgende Screens. Screen 1 (Gruppen-Report) unverändert; „Weiter"-Button führt jetzt zu Screen 2. Screen 2 zeigt Phase-Fortschritt: in Phase 1 die drei Abschluss-Kriterien (CC Lv3, 2 Gebäude Lv2, 3 Berater) mit aktuellem Stand; in Phase 2 die drei Nexus-Direktiven mit Revelations-Mechanik (Direktive erst sichtbar wenn Fortschritt > 0). Screen 3 zeigt „SOL N / startet" als elegante Fade-in-Animation auf dunklem Hintergrund, danach „Mission fortsetzen"-Button. `SolReportService::buildReport()` gibt jetzt `phase_progress`-Block aus (`SolReportService::phaseProgress()`). Alpine.js: `currentScreen` (1/2/3) + `screen3Phase` (0–3) State, `goScreen2()` / `goScreen3()` Methoden. CSS: `.sol-phase__*` (Screen 2) + `.sol-launch` / `.sol-launch__*` (Screen 3). Reduced-motion: Screen 3 überspringt Animation.
+- **Fix: Nav-Links (Techtree/Cantina/Hangar) nach Level-Up sofort aktiv.** Analytiklabor/Bar/Hangar schalten ihren Nav-Link erst nach Seitenreload frei (Blade rendert `sciencelabBuilt` server-seitig). Fix: `investBuilding()` gibt `nav_unlocked: true` zurück wenn Building 31/44/52 von Level 0 auf 1 springt. `colony-hexgrid.js` lädt nach 600ms (Level-Up-Toast noch sichtbar) die Seite neu.
+- **Sol-Report V2: 3-Screen-Flow.** Sol-Report erweitert auf drei aufeinanderfolgende Screens. Screen 1 (Gruppen-Report) unverändert; „Weiter"-Button führt jetzt zu Screen 2. Screen 2 zeigt Phase-Fortschritt: in Phase 1 die drei Abschluss-Kriterien (CC Lv3, 2 Gebäude Lv2, 3 Berater) mit aktuellem Stand; in Phase 2 die drei Nexus-Direktiven mit Revelations-Mechanik (Direktive erst sichtbar wenn Fortschritt > 0). Screen 3 zeigt „SOL N / startet" als elegante Fade-in-Animation auf dunklem Hintergrund, danach „Mission fortsetzen"-Button.
+- **Fix: `hint_build_priority` erscheint nicht mehr nach Pfadentscheidung.** Hint stumm sobald irgendein Pfadgebäude (31/44/52) platziert ist.
+- **Fix: Bebaubare Tiles visuell klar von unbebaubaren unterscheidbar.** Koloniezone-Tiles (`is_colony_zone=true, terrain_empty`) neu `#eaedf5` (deutlich heller), Explorations-Zone bleibt `#c8cdd6`. Neue Konstanten `BUILDABLE_COLOR`/`BUILDABLE_STROKE` in `colony-hexgrid.js`.
 
 ## 2026-06-28
 
