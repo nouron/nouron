@@ -482,6 +482,26 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_cc_invest', $hint['key']);
     }
 
+    public function test_cc_invest_hint_silent_when_agrardom_under_construction(): void
+    {
+        // Agrardom placed (tile_x set) but still being built (level=0, ap_spend>0).
+        // Player should invest AP into the Agrardom first, not pre-invest in CC.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+
+        // Override suppressLateHints()'s completed Agrardom with an in-construction version.
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update(['level' => 0, 'ap_spend' => 2, 'status_points' => 4]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertNotSame('hint_cc_invest', $hint['key'], 'cc_invest must be suppressed while Agrardom is under construction');
+    }
+
     // ── Hint explore: scout unexplored tiles (rank 8, Sol 1–3) ───────────────
 
     public function test_explore_hint_fires_on_sol1_when_cc_done_and_fog_remains(): void
