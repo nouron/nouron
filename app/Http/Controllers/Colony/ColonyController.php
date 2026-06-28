@@ -225,11 +225,17 @@ class ColonyController extends BaseController
             ->pluck('cnt', 'building_id')
             ->toArray();
 
+        $agrardomPlaced = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', 41)
+            ->whereNotNull('tile_x')
+            ->exists();
+
         $buildings = DB::table('buildings')
             ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
-            ->filter(function ($b) use ($ccLevel, $placedCounts) {
+            ->filter(function ($b) use ($ccLevel, $placedCounts, $agrardomPlaced) {
                 if ($b->id === BuildingId::CommandCenter->value) {
                     return false;
                 }  // CC — already exists
@@ -247,6 +253,9 @@ class ColonyController extends BaseController
                     }
                 }
                 if ($b->required_building_id === BuildingId::CommandCenter->value && $ccLevel < (int) ($b->required_building_level ?? 1)) {
+                    return false;
+                }
+                if (in_array($b->id, self::PATH_BUILDING_IDS, true) && ! $agrardomPlaced) {
                     return false;
                 }
 
@@ -344,6 +353,20 @@ class ColonyController extends BaseController
             return response()->json(['ok' => false, 'error' => __('colony.error_harvester_in_transit')]);
         }
 
+        // Agrardom gate: path buildings require Agrardom (41) to be placed first.
+        // Agrardom is a hard prerequisite for CC Lv2 — building a path building before
+        // Agrardom would leave the player unable to advance.
+        if (in_array((int) $data['building_id'], self::PATH_BUILDING_IDS, true)) {
+            $agrardomPlaced = DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', 41)
+                ->whereNotNull('tile_x')
+                ->exists();
+            if (! $agrardomPlaced) {
+                return response()->json(['ok' => false, 'error' => __('colony.error_agrardom_required')]);
+            }
+        }
+
         $apCost = $isHarvesterMove
             ? max(1, $this->hexDistance((int) $existingBuilding->tile_x, (int) $existingBuilding->tile_y, (int) $data['q'], (int) $data['r']))
             : 1;
@@ -436,7 +459,7 @@ class ColonyController extends BaseController
                 // Harvester move: tile updates, ap_spend unchanged.
                 // Relocation takes 1 Sol — no production until arrival.
                 if ($isHarvesterMove) {
-                    $update['pending_until_tick'] = $this->getTick() + 1;
+                    $update['pending_until_tick'] = $this->getTick();
                 }
                 DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)

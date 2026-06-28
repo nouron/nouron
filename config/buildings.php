@@ -113,14 +113,25 @@ return [
     // "Pfadwahl ab Sol 3". Only 1 of the 3 path buildings can be placed at
     // CC Lv2 — the build-gate (CC-level − 1 ≥ count of path buildings already
     // placed) is enforced in ColonyService::placeBuilding, NOT in this config.
-    // supply_cost (6) is intentionally low: the hangar itself is cheap to run
-    // because each ship commissioned carries its own supply cost — fleet size
-    // is capped by ships, not by the building. Building it grants the matching
-    // generic advisor slot (Raumfahrer) — see AdvisorController::PATH_BUILDINGS.
+    //
+    // Rebalanced 2026-06-28 (GDD §4 Pfadwahl-Kostenbalancing):
+    //   - Werkstoffe requirement REMOVED: same circular-dep argument as sciencelab —
+    //     Uplink-Station (Wk import gate) is also CC Lv2; requiring Wk here forced
+    //     an extra 80-Rg + 6-supply detour before the Hangar path was accessible,
+    //     making Pfad B structurally harder than Pfad A/C without any counterbalance.
+    //   - Regolith raised from 80 → 90: Hangar is a massive physical structure;
+    //     higher Rg build cost offsets the lower supply cost.
+    //   - supply_cost lowered from 6 → 4: ships carry no supply cost (2026-06-08
+    //     design decision); the hangar shell itself is the cheapest-to-run path
+    //     building, making it the "supply-friendly, Rg-heavy" option.
+    //   Trade-off character: supply-light long-term, expensive to build (Rg 90).
+    //   Level-up Rg cost derives as 25% of build_cost[3] → ~22 Rg/level.
+    // Building it grants the matching generic advisor slot (Raumfahrer) — see
+    // AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
-        'build_cost' => [3 => 80, 4 => 25],   // late: Regolith + Werkstoffe (accent)
-        'supply_cost' => 6,       // low: ships carry supply cost; hangar is just a slot
+        'build_cost' => [3 => 90],    // Rg only (raised from 80; Wk removed — CC Lv2 path, see note above)
+        'supply_cost' => 4,       // low: hangar is a shell; ships add no supply cost (2026-06-08)
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
@@ -143,10 +154,22 @@ return [
     // (sciencelab/hangar/bar), see GDD §13 "Pfadwahl ab Sol 3". Building it
     // grants the matching generic advisor slot (Konsul) — see
     // AdvisorController::PATH_BUILDINGS.
+    //
+    // Rebalanced 2026-06-28 (GDD §4 Pfadwahl-Kostenbalancing):
+    //   - Regolith raised from 50 → 70: was far cheaper than the other two paths,
+    //     making Cantina the dominant early choice without any real trade-off.
+    //     The trust_per_lv bonus (+2/level, unique among path buildings) justifies
+    //     a mid-tier build cost.
+    //   - supply_cost raised from 4 → 6: balances the trust advantage; Cantina is
+    //     now the "balanced" path (mid Rg, mid supply, Trust bonus) rather than
+    //     the unambiguous cheapest option.
+    //   Trade-off character: balanced cost with Trust bonus — the "always-valid"
+    //   option for players who need Trust stability.
+    //   Level-up Rg cost derives as 25% of build_cost[3] → ~17 Rg/level.
     'bar' => [
         'id' => 52,
-        'build_cost' => [3 => 50],   // Regolith only (early)
-        'supply_cost' => 4,
+        'build_cost' => [3 => 70],   // Regolith only (raised from 50 — see rebalancing note above)
+        'supply_cost' => 6,          // raised from 4 — balanced by trust_per_lv bonus
         'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
         'decay_rate' => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
         'max_status_points' => 20,

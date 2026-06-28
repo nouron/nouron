@@ -223,8 +223,9 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         // Buildings are otherwise full → no repair hint of either kind; the level-0
-        // building is ignored. The CC pre-invest hint (rank 6) is the Sol-1 floor.
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        // building is ignored. Without Agrardom placed, hint_cc_invest is suppressed
+        // and the explore hint (rank 8) becomes the Sol-1 floor.
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
     // ── Repair hint: any building below max status ───────────────────────────

@@ -139,6 +139,7 @@ return [
     // ── Error messages ────────────────────────────────────────────────────────
 
     'error_path_gate_locked' => 'Pfad gesperrt — Kommandozentrale zuerst auf das nächste Level ausbauen.',
+    'error_agrardom_required' => 'Agrardom zuerst bauen — Pflichtvoraussetzung für alle Pfad-Gebäude.',
     'error_tile_not_found' => 'Tile nicht gefunden.',
     'error_ring_locked' => 'Ring nicht freigeschaltet.',
     'error_already_explored' => 'Tile bereits erkundet.',
