@@ -9,6 +9,7 @@ use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
+use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,6 +28,7 @@ class BarController extends BaseController
         private readonly MerchantService $merchantService,
         private readonly EventService $eventService,
         private readonly OnboardingHintService $onboardingHintService,
+        private readonly PersonellService $personellService,
     ) {
         parent::__construct($tick);
     }
@@ -74,11 +76,14 @@ class BarController extends BaseController
         }
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
+        $economyAp = $barLevel > 0
+            ? $this->personellService->getAvailableActionPoints('economy', $colony->id)
+            : 0;
 
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
-            'firstVisit',
+            'firstVisit', 'economyAp',
         ));
     }
 

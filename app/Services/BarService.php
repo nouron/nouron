@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\BarOffer;
+use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -19,6 +20,7 @@ class BarService
 
     public function __construct(
         private readonly ResourcesService $resourcesService,
+        private readonly PersonellService $personellService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -54,7 +56,22 @@ class BarService
             return;
         }
 
-        $duration = (int) config('game.bar.offer_duration', 2);
+        // Cap to level_max_concurrent — don't exceed simultaneous active slots
+        $levelMaxConcurrent = config('game.bar.level_max_concurrent', []);
+        $maxConcurrent = $levelMaxConcurrent[$barLevel] ?? 2;
+        $activeCount = DB::table('bar_offers')
+            ->where('colony_id', $colonyId)
+            ->where('expires_tick', '>', $tick)
+            ->where('is_accepted', false)
+            ->count();
+        $guestCount = min($guestCount, max(0, $maxConcurrent - $activeCount));
+
+        if ($guestCount < 1) {
+            return;
+        }
+
+        $levelDurations = config('game.bar.level_offer_duration', []);
+        $duration = $levelDurations[$barLevel] ?? (int) config('game.bar.offer_duration', 2);
         $expiresTick = $tick + $duration;
         $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
@@ -63,7 +80,7 @@ class BarService
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
             [$giveResId, $giveAmount, $getResId, $getAmount] =
-                $this->buildOffer($seed, $basePrices, $variance, $discount);
+                $this->buildOffer($seed, $basePrices, $variance, $discount, $traderRank);
 
             BarOffer::create([
                 'colony_id' => $colonyId,
@@ -103,6 +120,15 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
         }
 
+        // Economy-AP check
+        $apCost = (int) config('game.bar.ap_cost_accept', 1);
+        if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
+            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            if ($availableAp < $apCost) {
+                return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
+            }
+        }
+
         // Check player can afford the give side
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
         if ($giveBalance < $offer->give_amount) {
@@ -110,11 +136,14 @@ class BarService
         }
 
         // Execute trade atomically — partial transfer must not persist
-        DB::transaction(function () use ($offer, $colonyId): void {
+        DB::transaction(function () use ($offer, $colonyId, $apCost): void {
             $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
             $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
             $offer->is_accepted = true;
             $offer->save();
+            if ($apCost > 0) {
+                $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+            }
         });
 
         Log::info('bar_trade', [
@@ -154,14 +183,20 @@ class BarService
      * Returns [give_resource_id, give_amount, get_resource_id, get_amount].
      * Offer types: resource→credits (buy) or barter (resource↔resource).
      */
-    private function buildOffer(int $seed, array $basePrices, float $variance, float $discount): array
+    private function buildOffer(int $seed, array $basePrices, float $variance, float $discount, int $traderRank = 0): array
     {
         // 60% resource-for-credits, 40% barter
         $type = $this->pseudoRand($seed, 0, 9);
 
         if ($type < 6) {
-            // Player pays Credits, gets a tradeable resource
-            $getResId = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
+            // Player pays Credits, gets a tradeable resource.
+            // At rank 3 the trader has compound connections — bias towards compounds.
+            $compoundsBias = (float) config('game.bar.compounds_bias_at_rank3', 0.50);
+            if ($traderRank >= 3 && $this->pseudoRand($seed + 10, 0, 99) < (int) ($compoundsBias * 100)) {
+                $getResId = 4; // compounds
+            } else {
+                $getResId = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
+            }
             $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
             $basePrice = $basePrices[$getResId] ?? 40;
             $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));

@@ -201,7 +201,9 @@
                             <small style="color:var(--pico-muted-color)">
                                 {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
                             </small>
-                            <div style="display:flex;gap:0.5rem">
+                            <div style="display:flex;gap:0.5rem;align-items:center">
+                                <span class="ap-chip ap-cost-chip ap-chip--economy" aria-label="1 Wirtschafts-AP">1
+                                    ÖAP</span>
                                 <button @click="accept({{ $offerId }}, $el)"
                                     :disabled="accepted[{{ $offerId }}] || loading"
                                     style="margin:0;padding: 0.35rem 1rem;font-size:0.85rem;">
