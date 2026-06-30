@@ -236,6 +236,9 @@ class ResetPlayer extends Command
     {
         $cid = $colony->id;
 
+        // Ensure tiles exist so building tile_x/tile_y references are valid.
+        $this->tileService->generateDefaultTiles($colony);
+
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 25)
             ->update(['level' => 3, 'status_points' => 20, 'tile_x' => 0, 'tile_y' => 0, 'placed_at_tick' => 1]);
@@ -271,6 +274,74 @@ class ResetPlayer extends Command
                 'colony_id' => $cid, 'rank' => 1,
                 'active_ticks' => 5, 'unavailable_until_tick' => null,
             ]);
+        }
+    }
+
+    /**
+     * Insert Hangar (44) at tile (-1,1) Ring 1 — the path building for the pilot slot.
+     * All phase-2+ scenarios need this so the pilot hire gate is satisfied.
+     */
+    private function placeHangar(Colony $colony, int $level, int $placedAtTick = 12): void
+    {
+        DB::table('colony_buildings')->insert([
+            'colony_id' => $colony->id, 'building_id' => 44, 'instance_id' => 1,
+            'level' => $level, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => -1, 'tile_y' => 1, 'placed_at_tick' => $placedAtTick,
+        ]);
+    }
+
+    /** Insert Cantina/bar (52) at tile (1,-1) Ring 1. */
+    private function placeCantina(Colony $colony, int $level, int $placedAtTick = 20): void
+    {
+        DB::table('colony_buildings')->insert([
+            'colony_id' => $colony->id, 'building_id' => 52, 'instance_id' => 1,
+            'level' => $level, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 1, 'tile_y' => -1, 'placed_at_tick' => $placedAtTick,
+        ]);
+    }
+
+    /** Insert SecurityHub (53) at tile (0,2) Ring 2 — unlocks strategist slot 5. */
+    private function placeSecurityHub(Colony $colony, int $level, int $placedAtTick = 25): void
+    {
+        DB::table('colony_buildings')->insert([
+            'colony_id' => $colony->id, 'building_id' => 53, 'instance_id' => 1,
+            'level' => $level, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 0, 'tile_y' => 2, 'placed_at_tick' => $placedAtTick,
+        ]);
+    }
+
+    /**
+     * Explore colony-zone tiles + rings 2 and 3 (optional), then relocate the
+     * Harvester to the first explored non-colony-zone Regolith tile.
+     * Ring-2 tiles in this game are often terrain_empty/impassable, so Ring-3 is
+     * needed to reliably find a regolith tile.
+     */
+    private function exploreTilesAndMoveHarvester(Colony $colony, bool $includeRing3 = false): void
+    {
+        $cid = $colony->id;
+        $maxRing = $includeRing3 ? 3 : 2;
+
+        DB::table('colony_tiles')
+            ->where('colony_id', $cid)
+            ->where(function ($q) use ($maxRing): void {
+                $q->where('is_colony_zone', 1)
+                    ->orWhere('ring', '<=', $maxRing);
+            })
+            ->update(['is_explored' => 1]);
+
+        $rg = DB::table('colony_tiles')
+            ->where('colony_id', $cid)
+            ->where('is_colony_zone', 0)
+            ->where('ring', '<=', $maxRing)
+            ->where('tile_type', 'like', 'regolith_%')
+            ->where('is_explored', 1)
+            ->orderBy('ring')
+            ->first();
+
+        if ($rg) {
+            DB::table('colony_buildings')
+                ->where('colony_id', $cid)->where('building_id', 27)
+                ->update(['tile_x' => $rg->q, 'tile_y' => $rg->r]);
         }
     }
 
@@ -376,6 +447,7 @@ class ResetPlayer extends Command
     {
         $this->placePhase1Buildings($colony);
 
+        // Cap: CC_flat(10) + Housing_Lv2(16) + construction_Lv2(8) = 34
         $this->setResources($colony, $run,
             tick: 12,
             regolith: 150,
@@ -383,7 +455,7 @@ class ResetPlayer extends Command
             werkstoffe: 0,
             trust: 25,
             credits: 2400,
-            supply: 26,
+            supply: 34,
         );
 
         // construction(90) Lv2/ap_spend=1, agronomy(93) started (ap_spend=2)
@@ -400,12 +472,15 @@ class ResetPlayer extends Command
      * Credits reduced by pilot hire fee (500). Supply unchanged (no new buildings).
      * Kenntnisse: 3 more ticks → construction reaches Lv3 (9 AP spent), agronomy still started.
      * Objectives drawn but all at 0 (too early for any progress).
+     * Hangar placed at tick 12 (path gate for pilot slot).
      */
     private function scenarioPhase2(Colony $colony, Run $run): void
     {
         $this->placePhase1Buildings($colony);
+        $this->placeHangar($colony, level: 1, placedAtTick: 12);
         $this->transitionToPhase2($colony, $run);
 
+        // Cap: CC_flat(10) + Housing_Lv2(16) + construction_Lv3(13) = 39
         $this->setResources($colony, $run,
             tick: 15,
             regolith: 60,
@@ -413,7 +488,7 @@ class ResetPlayer extends Command
             werkstoffe: 0,
             trust: 25,
             credits: 1900,
-            supply: 26,
+            supply: 39,
         );
 
         // construction(90) Lv3, agronomy(93) still started
@@ -433,12 +508,15 @@ class ResetPlayer extends Command
      * Supply: unchanged (no new buildings).
      * Kenntnisse: research slowed by trust crisis (AP multiplier 1.0 in this band,
      * but player distracted recovering food): construction Lv3, cartography Lv1.
+     * Hangar placed at tick 12 (path gate for pilot slot).
      */
     private function scenarioNearFailTrust(Colony $colony, Run $run): void
     {
         $this->placePhase1Buildings($colony);
+        $this->placeHangar($colony, level: 1, placedAtTick: 12);
         $this->transitionToPhase2($colony, $run);
 
+        // Cap: CC_flat(10) + Housing_Lv2(16) + construction_Lv3(13) + cartography_Lv1(3) = 42
         $this->setResources($colony, $run,
             tick: 30,
             regolith: 210,
@@ -446,7 +524,7 @@ class ResetPlayer extends Command
             werkstoffe: 0,
             trust: -15,
             credits: 800,
-            supply: 26,
+            supply: 42,
         );
 
         // construction(90) Lv3, cartography(91) Lv1 — research slowed by crisis
@@ -461,7 +539,10 @@ class ResetPlayer extends Command
      *
      * Late-game state: buildings upgraded over 80+ Sols, strong economy.
      * Building upgrades vs. tick 15 state:
-     *   Agrardom Lv4 (40 Organika/Sol), Sciencelab Lv3, Housing Lv3.
+     *   Agrardom Lv4 (40 Organika/Sol), Sciencelab Lv3, Housing Lv3,
+     *   Hangar Lv2, Cantina Lv1, SecurityHub Lv1.
+     * 4 advisors: engineer, scientist, pilot, trader (rank 1).
+     * Ring 1+2 tiles explored; Harvester relocated to Ring-2 regolith.
      * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~24 pts ≈ 58.
      * Werkstoffe: bought from merchant (30 units accumulated).
      * Credits: advisor productivity + merchant sales over 80+ Sols → 7000.
@@ -484,8 +565,20 @@ class ResetPlayer extends Command
             ->where('colony_id', $cid)->where('building_id', 31)
             ->update(['level' => 3, 'status_points' => 20]);     // Sciencelab Lv3
 
+        $this->placeHangar($colony, level: 2, placedAtTick: 20);
+        $this->placeCantina($colony, level: 1, placedAtTick: 35);
+        $this->placeSecurityHub($colony, level: 1, placedAtTick: 45);
+
         $this->transitionToPhase2($colony, $run);
 
+        // 4th advisor: trader (Konsul) — hired after Cantina built
+        DB::table('advisors')->insert([
+            'user_id' => $colony->user_id, 'personell_id' => 92,
+            'colony_id' => $cid, 'rank' => 1,
+            'active_ticks' => 50, 'unavailable_until_tick' => null,
+        ]);
+
+        // Cap: CC_flat(10) + Housing_Lv3(24) + knowledge(constr5=20+carto4=17+geo1=3+agro3=13+hlth2=8) = 95
         $this->setResources($colony, $run,
             tick: (int) config('game.run.tick_limit', 100) - 5,
             regolith: 500,
@@ -493,8 +586,10 @@ class ResetPlayer extends Command
             werkstoffe: 30,
             trust: 60,
             credits: 7000,
-            supply: 58,
+            supply: 95,
         );
+
+        $this->exploreTilesAndMoveHarvester($colony, includeRing3: true);
 
         // construction(90) Lv5, cartography(91) Lv4, geology(92) Lv1 (req Sciencelab Lv2 — met),
         // agronomy(93) Lv3, health(94) Lv2
@@ -528,8 +623,12 @@ class ResetPlayer extends Command
     /**
      * Tick 60 — All 3 objectives completed, strong mid-late game economy.
      *
-     * Agrardom Lv3, Sciencelab Lv2. 45 Sols past Phase-2 entry.
-     * Supply cap: CC 10 + Housing Lv2 × 8 + knowledge ~16 pts ≈ 42.
+     * Buildings: Agrardom Lv3, Sciencelab Lv2, Housing Lv3,
+     *   Hangar Lv2, Cantina Lv2, SecurityHub Lv1. 45 Sols past Phase-2 entry.
+     * All 5 advisors present; engineer + scientist upgraded to Senior (rank 2)
+     *   satisfying the "Expertenstab" objective (2 Seniors required).
+     * All colony-zone + Ring-2 tiles explored; Harvester on Ring-2 regolith.
+     * Supply cap: CC 10 + Housing Lv3 × 8 + knowledge ~16 pts ≈ 50.
      * Werkstoffe: some merchant purchases (20 units).
      * Credits: 10000 (economy objectives completed → Nexus credit bonus).
      * Objectives: all completed_at tick 40 (player finished with 60 Sols to spare).
@@ -538,8 +637,11 @@ class ResetPlayer extends Command
     {
         $this->placePhase1Buildings($colony);
 
-        // Upgrade Agrardom and Sciencelab beyond Phase-1 baseline
+        // Upgrade buildings beyond Phase-1 baseline
         $cid = $colony->id;
+        DB::table('colony_buildings')
+            ->where('colony_id', $cid)->where('building_id', 28)
+            ->update(['level' => 3, 'status_points' => 20]);     // Housing Lv3
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 41)
             ->update(['level' => 3, 'status_points' => 20]);     // Agrardom Lv3
@@ -547,8 +649,34 @@ class ResetPlayer extends Command
             ->where('colony_id', $cid)->where('building_id', 31)
             ->update(['level' => 2, 'status_points' => 20]);     // Sciencelab Lv2
 
+        $this->placeHangar($colony, level: 2, placedAtTick: 18);
+        $this->placeCantina($colony, level: 2, placedAtTick: 22);
+        $this->placeSecurityHub($colony, level: 1, placedAtTick: 30);
+
         $this->transitionToPhase2($colony, $run);
 
+        // Upgrade engineer + scientist to Senior (rank 2) — needed for "Expertenstab" objective
+        DB::table('advisors')
+            ->where('colony_id', $cid)
+            ->whereIn('personell_id', [
+                (int) config('advisors.engineer.id', 35),
+                (int) config('advisors.scientist.id', 36),
+            ])
+            ->update(['rank' => 2]);
+
+        // Slot 4: trader (Konsul, rank 2), Slot 5: strategist (rank 1)
+        DB::table('advisors')->insert([
+            'user_id' => $colony->user_id, 'personell_id' => 92,
+            'colony_id' => $cid, 'rank' => 2,
+            'active_ticks' => 40, 'unavailable_until_tick' => null,
+        ]);
+        DB::table('advisors')->insert([
+            'user_id' => $colony->user_id, 'personell_id' => 93,
+            'colony_id' => $cid, 'rank' => 1,
+            'active_ticks' => 25, 'unavailable_until_tick' => null,
+        ]);
+
+        // Cap: CC_flat(10) + Housing_Lv3(24) + knowledge(constr4=17+carto3=13+geo1=3+agro2=8+hlth1=3) = 78
         $this->setResources($colony, $run,
             tick: 60,
             regolith: 300,
@@ -556,8 +684,10 @@ class ResetPlayer extends Command
             werkstoffe: 20,
             trust: 60,
             credits: 10000,
-            supply: 42,
+            supply: 78,
         );
+
+        $this->exploreTilesAndMoveHarvester($colony, includeRing3: true);
 
         // construction(90) Lv4, cartography(91) Lv3, geology(92) Lv1 (req Sciencelab Lv2 — met),
         // agronomy(93) Lv2, health(94) Lv1

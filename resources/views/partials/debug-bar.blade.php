@@ -57,7 +57,7 @@
 
     {{-- Expandable config panel --}}
     <div x-show="open" x-transition
-        style="background:#0a0a0a;border-top:1px solid #1e1e1e;padding:8px 12px;display:flex;flex-wrap:wrap;gap:24px;">
+        style="background:#0a0a0a;border-top:1px solid #1e1e1e;padding:8px 12px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;">
 
         {{-- Run --}}
         <div>
@@ -112,6 +112,62 @@
             @endforeach
         </div>
 
+        {{-- Quick Actions --}}
+        <div>
+            <div style="color:#ff0;margin-bottom:4px;">Aktionen</div>
+            @if ($dbgRun)
+                {{-- Result-page preview (bypasses status check for admin) --}}
+                <div style="margin-bottom:3px;">
+                    <a href="{{ route("run.result", $dbgRun->id) . "?preview=1" }}"
+                        style="color:#8af;text-decoration:none;font-size:11px;">→ Result (Win-Preview)</a>
+                </div>
+                <div style="margin-bottom:6px;">
+                    <a href="{{ route("run.result", $dbgRun->id) . "?preview=1&outcome=failed" }}"
+                        style="color:#f88;text-decoration:none;font-size:11px;">→ Result (Lose-Preview)</a>
+                </div>
+                {{-- Finale overlay injection (colony page only) --}}
+                <div style="margin-bottom:3px;">
+                    <button onclick="debugShowFinale('win')"
+                        style="background:none;border:1px solid #333;color:#8af;cursor:pointer;font-size:11px;padding:0 6px;line-height:16px;">
+                        Finale Win
+                    </button>
+                    <button onclick="debugShowFinale('lose')"
+                        style="background:none;border:1px solid #333;color:#f88;cursor:pointer;font-size:11px;padding:0 6px;line-height:16px;">
+                        Finale Lose
+                    </button>
+                </div>
+            @else
+                <div style="color:#555;">kein aktiver Run</div>
+            @endif
+        </div>
+
     </div>
 
 </div>
+
+<script>
+    function debugShowFinale(outcome) {
+        const el = document.querySelector('[x-data*="solButton"]');
+        if (!el) {
+            alert('Nur auf der Kolonie-Seite verfügbar.');
+            return;
+        }
+        const data = Alpine.$data(el);
+        data.report = {
+            finale: {
+                outcome,
+                title: outcome === 'win' ? 'MISSION ERFÜLLT' : 'EXPEDITION GESCHEITERT',
+                body: outcome === 'win' ?
+                    'Die Kolonie hat ihr Ziel erreicht und besteht weiter — gegen die Entropie behauptet.' :
+                    'Die Kolonie hat das Vertrauen der Bevölkerung verloren. Die Expedition gilt als gescheitert.',
+            },
+            result_url: null,
+            groups: [],
+            next_sol: data.report?.next_sol ?? '—',
+            skip_pref: false,
+            force_show: true,
+        };
+        data.loading = false;
+        data.reportOpen = true;
+    }
+</script>

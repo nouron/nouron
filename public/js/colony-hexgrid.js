@@ -74,6 +74,7 @@ const BUILDING_ABBR = {
     building_infirmary: 'KS',
     building_monument: 'KD',
     building_bar: 'CA',
+    building_securityHub: 'HUB',
 };
 
 // ── Event-type display names (discovery popup) ────────────────────────────────
