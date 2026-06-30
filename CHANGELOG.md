@@ -2,6 +2,8 @@
 
 ## 2026-06-30
 
+- **Einheitliches Sci-Fi-Dialog-System (`dialogs.css`).** Neue globale CSS-Datei für alle `<dialog>`-Elemente im Spiel. Klasse `sol-modal` auf `<dialog>` gesetzt — erzeugt abgeschrägten Top-Right-Corner (clip-path Polygon), roten 3px Left-Accent-Stripe, dunklen Backdrop mit Blur und Drop-Shadow der dem Polygon folgt. PicoCSS-Konflikte (`overflow:auto`, `float:right` auf Close-Button, `border-radius`, `margin`) mit `!important` überschrieben. Beide Layouts (colony + infra) binden `dialogs.css` ein. Angewendet auf: Nexus-Direktiven-Dialog (hexview), Event-Discovery-Dialog (hexview), Schiff-Anfordern-Dialog (hangar).
+
 - **In-Game-Texte: atmosphärische Prosa.** Alle spielerseitigen Beschreibungstexte in `lang/de/` neu geschrieben — weg vom sachlich-funktionalen Stil, hin zu warmem, kolonie-nahem Tonfall (Gebäude aus Sicht der Menschen die darin arbeiten, Ressourcen als Teil des Alltags). `lang/de/resources.php`: Popup-Beschreibungen. `lang/de/techtree.php`: 27 neue `desc_techs_*`-Keys. `lang/de/advisors.php`: Berater als echte Charaktere. `lang/de/colony.php`: Onboarding-Hints und First-Visit-Texte. `lang/de/run.php`: Result-Screen + Nexus-Direktiven im bürokratischen Tonfall. `lang/de/nexusdb.php`: akademisch-präzise Nexus-Behördensprache. Agent-Definition `content-writer.md` um drei klar getrennte Stimmen erweitert: Kolonie (warm), Nexus-Direktiven (kalt-bürokratisch), NexusDB-Almanach (akademisch-präzise).
 - **`lang/en/` vollständig synchronisiert.** 6 bestehende EN-Dateien auf Stand der DE-Version gebracht (fehlende Keys ergänzt, Beschreibungstexte angepasst). 12 neue EN-Dateien angelegt: `advisors`, `nexusdb`, `run`, `lobby`, `events`, `trade`, `trust`, `comm_log`, `entity_chip`, `fleet`, `galaxy`, `validation`.
 

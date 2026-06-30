@@ -667,7 +667,7 @@ button.btn-sol:hover,
 .phase-dialog-criteria {
     list-style: none;
     margin: 0;
-    padding: 0;
+    padding: 0 1rem 0.5rem 1.25rem;
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
@@ -2101,6 +2101,9 @@ dialog[x-ref="discoveryDialog"] {
 .sol-btn--primary:hover {
     opacity: 0.88;
 }
+
+/* Sol-modal system → dialogs.css (shared across all layouts) */
+
 .sol-loading {
     display: flex;
     flex-direction: column;

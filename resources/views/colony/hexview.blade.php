@@ -444,7 +444,7 @@
         {{-- Phase progress dialog -----------------------------------------------
          Opened by the .phase-btn floating button on the canvas.
     --}}
-        <dialog x-ref="phaseDialog" @click.self="$refs.phaseDialog.close()">
+        <dialog x-ref="phaseDialog" class="sol-modal" @click.self="$refs.phaseDialog.close()">
             <article>
                 <header>
                     <button aria-label="{{ __("colony.cancel") }}" rel="prev"
@@ -489,7 +489,7 @@
          x-effect watches eventDiscovery and calls the DOM API to open/close,
          keeping Alpine state as the single source of truth.
     --}}
-        <dialog x-ref="discoveryDialog"
+        <dialog x-ref="discoveryDialog" class="sol-modal"
             x-effect="eventDiscovery ? $refs.discoveryDialog.showModal() : $refs.discoveryDialog.close()"
             @close="eventDiscovery = null">
             <article>

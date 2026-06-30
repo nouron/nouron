@@ -408,7 +408,7 @@
         Uses showModal() via x-effect to get browser backdrop + focus-trap + Escape-key.
         Instance data is stored in requestModal.* on the Alpine component.
     --}}
-        <dialog x-ref="requestDialog" class="hangar-request-dialog"
+        <dialog x-ref="requestDialog" class="hangar-request-dialog sol-modal"
             x-effect="requestModal.open ? $refs.requestDialog.showModal() : $refs.requestDialog.close()"
             @close="closeRequestModal()">
 
