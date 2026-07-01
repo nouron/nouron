@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\RunStarted;
 use App\Models\Colony;
 use App\Models\Run;
 use Illuminate\Support\Facades\DB;
@@ -95,7 +96,7 @@ class OnboardingService
         $this->seedStartingTiles($colonyId);
         $this->eventService->createNexusBriefing($userId, 0, $colonyId);
 
-        Run::create([
+        $run = Run::create([
             'user_id' => $userId,
             'colony_id' => $colonyId,
             'current_tick' => 0,
@@ -109,7 +110,10 @@ class OnboardingService
                 'supply_cap_max' => config('game.supply.cap_max'),
                 'max_players' => config('game.run.max_players'),
             ],
+            'rng_seed' => random_int(1, PHP_INT_MAX),
         ]);
+
+        event(new RunStarted($run));
     }
 
     private function seedResources(int $userId, int $colonyId): void

@@ -145,7 +145,7 @@ Das Sol-System funktioniert in beiden Modi identisch — was sich unterscheidet,
 
 **Solo-Modus (primär):** Der Spieler steuert den Sol selbst. Nach dem Setzen aller Befehle löst er den nächsten Sol manuell aus ("Nächsten Sol starten"-Button) — der Sol feuert sofort. Es gibt kein Warten und keine Echtzeit-Begrenzung. "1 Sol" entspricht einem Spielzug, nicht einer Kalenderdauer.
 
-**Multiplayer-Modus (spätere Phase):** Alle Spieler einer Instanz teilen denselben Sol-Rhythmus. Der Sol feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann.
+**Multiplayer-Modus (spätere Phase):** Alle Spieler einer Instanz teilen denselben Sol-Rhythmus. Der Sol feuert, sobald alle Spieler ihren Turn bestätigt haben — oder nach Ablauf des konfigurierten Timeouts, damit kein Mitspieler die Instanz dauerhaft blockieren kann. Technische Architektur (Turn-Resolution-Engine, Konfliktauflösung bei exklusiven Zielen, Event-System): siehe `docs/adr/0003-simultan-turn-resolution-multiplayer.md`.
 
 | Timeout-Konfiguration | Einsatz |
 |-----------------------|---------|
@@ -1097,7 +1097,7 @@ Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anza
 
 ### Multiplayer
 
-Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. Interaktion findet über Flottenbewegung auf der Systemkarte statt (Handel, Diplomatie). Die Systemkarte ist der gemeinsame Interaktionsraum.
+> ⛔ **Veraltet (2026-07-01).** Der bisherige Ansatz (Interaktion über Flottenbewegung auf der Systemkarte) ist mit der Streichung der Systemkarte (siehe Banner oben) hinfällig. Derzeit ist **keine Multiplayer-Interaktionsmechanik geplant** — der Turn-Resolution-Layer aus ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`) ist davon unabhängig und unterstützt Multiplayer auch ohne gemeinsamen Interaktionsraum (z.B. mehrere Spieler, jeweils eigene isolierte Kolonie, gemeinsamer Sol-Rhythmus). Bei Bedarf neu evaluieren, sobald Multiplayer aktiv angegangen wird.
 
 ---
 

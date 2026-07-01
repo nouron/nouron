@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\RunEnded;
 use App\Models\Advisor;
 use App\Models\Run;
 use App\Models\RunObjective;
@@ -604,6 +605,8 @@ class RunProgressService
                 'run',
                 ['run_id' => $run->id, 'colony_id' => $run->colony_id, 'fail_reason' => $failReason]
             );
+
+            event(new RunEnded($run, $status, $failReason));
         });
     }
 

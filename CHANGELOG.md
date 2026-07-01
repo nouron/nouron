@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-01
+
+- **ADR 0003: Simultanes Turn-Resolution-System (Multiplayer-Architektur).** Architekturentscheidungen für den späteren optionalen Multiplayer-Modus (1–4 Spieler) dokumentiert: Hybrid-Trigger (sofort bei "alle ready" oder Deadline), generisches Option-B-Konfliktprinzip bei exklusiven Zielen, kein Elimination-Mechanismus, `games` ersetzt `runs` langfristig. Zwei Punkte davon sofort umgesetzt (siehe unten), Rest zurückgestellt bis Multiplayer aktiv angegangen wird.
+- **RNG-Seed-Vorbereitung.** `runs.rng_seed` (nullable) ergänzt, wird bei Run-Erstellung (`OnboardingService::setupNewPlayer()`) gesetzt — Grundlage für künftige deterministische Zufallsanwendung in der Multiplayer-Resolution-Engine. Bestehende Zufalls-Services unverändert.
+- **Domain-Events für Run-Lebenszyklus.** Drei neue Events (`app/Events/`): `RunStarted`, `SolAdvanced`, `RunEnded` — gefeuert bei Run-Erstellung, regulärem Tick-Abschluss (`game:tick`) und Run-Ende (`RunProgressService::endRun()`). Noch keine Listener registriert; dient als Andockpunkt für spätere Multiplayer-Trigger, ohne bestehende Logik (`colony_log`-Einträge) zu ersetzen.
+
 ## 2026-06-30
 
 - **Einheitliches Sci-Fi-Dialog-System (`dialogs.css`).** Neue globale CSS-Datei für alle `<dialog>`-Elemente im Spiel. Klasse `sol-modal` auf `<dialog>` gesetzt — erzeugt abgeschrägten Top-Right-Corner (clip-path Polygon), roten 3px Left-Accent-Stripe, dunklen Backdrop mit Blur und Drop-Shadow der dem Polygon folgt. PicoCSS-Konflikte (`overflow:auto`, `float:right` auf Close-Button, `border-radius`, `margin`) mit `!important` überschrieben. Beide Layouts (colony + infra) binden `dialogs.css` ein. Angewendet auf: Nexus-Direktiven-Dialog (hexview), Event-Discovery-Dialog (hexview), Schiff-Anfordern-Dialog (hangar).

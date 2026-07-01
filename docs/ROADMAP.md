@@ -85,7 +85,7 @@ Ziel: Entity-Namen (Ressourcen, Gebäude, Kenntnisse, Schiffe, Berater) überall
 - Berater Außendienst-Mechanik für weitere Typen (nach Playtest evaluieren)
 - Begegnungen & Gefahren (GDD §9) — konkrete Events + Encounter-Screens
 - Forschung / Techtree-Screen: Kenntnisse-Freischalt-Flow
-- Play-by-Mail-Multiplayer (3–4 Spieler, variable Tick-Zeiten) — optionale spätere Iteration
+- Play-by-Mail-Multiplayer (3–4 Spieler, variable Tick-Zeiten) — optionale spätere Iteration. Architektur festgelegt in ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`); zwei Sofort-Maßnahmen daraus bereits gemergt (2026-07-01): `runs.rng_seed`-Vorbereitung + Domain-Events (`RunStarted`/`SolAdvanced`/`RunEnded`). Rest (Games/TurnOrders/Resolution-Engine/KI) zurückgestellt bis aktiv angegangen.
 
 ---
 
