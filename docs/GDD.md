@@ -1097,7 +1097,7 @@ Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anza
 
 ### Multiplayer
 
-Im Mehrspielermodus hat jeder Spieler einen eigenen Planeten im selben System. Interaktion findet über Flottenbewegung auf der Systemkarte statt (Handel, Diplomatie). Die Systemkarte ist der gemeinsame Interaktionsraum.
+> ⛔ **Veraltet (2026-07-01).** Der bisherige Ansatz (Interaktion über Flottenbewegung auf der Systemkarte) ist mit der Streichung der Systemkarte (siehe Banner oben) hinfällig. Derzeit ist **keine Multiplayer-Interaktionsmechanik geplant** — der Turn-Resolution-Layer aus ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`) ist davon unabhängig und unterstützt Multiplayer auch ohne gemeinsamen Interaktionsraum (z.B. mehrere Spieler, jeweils eigene isolierte Kolonie, gemeinsamer Sol-Rhythmus). Bei Bedarf neu evaluieren, sobald Multiplayer aktiv angegangen wird.
 
 ---
 
