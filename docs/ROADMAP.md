@@ -1,6 +1,6 @@
 # Nouron — Roadmap
 
-Stand: 2026-06-07
+Stand: 2026-07-01
 
 Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Keine Rassen, keine Kolonisierung, ein Run hat ein konkretes Ziel + klares Ende.
 
@@ -47,45 +47,44 @@ Abgeschlossen (Mai/Juni 2026).
 ### Phase 3j — Kolonieprotokoll (INNN-Redesign)
 Abgeschlossen: INNN-System vollständig ersetzt durch `/comm-log` (Protokoll-Tab + Nexus-Funk-Tab). Rich Log Descriptions + `building_invested`-Event. DB: `colony_log`. 725 Tests grün.
 
+### Phase 3k — Entity-Chip-System (ADR 0002)
+Abgeschlossen: `<x-entity-chip>`-Komponente, `CommLogController::buildDescription()` liefert Segment-Array (kein Legacy-String, kein Migrationsbedarf), Comm-Log auf Chip-Rendering umgestellt, Chip-Stile je Typ (`resource`/`building`/`knowledge`/`ship`/`advisor`), Tooltip-Daten inline. Ausstehend: Integration in weitere Views (Berater-Screen, Kolonie-Screen) — spätere Iteration, siehe unten.
+
+### Phase 3l — Cantina-Redesign
+Abgeschlossen: Bar-Hintergrund (`cantina-interior.webp`) + NPC-Charaktere via `config('characters')` + Hotspot-Portraits.
+
+### Phase 3m — content-writer-Tonalität + lang/en-Sync
+Abgeschlossen (2026-07-01): Drei-Stimmen-System (Kolonie/Nexus-Direktiven/NexusDB-Almanach), alle `lang/de/`-Beschreibungstexte neu geschrieben, `lang/en/` vollständig synchronisiert (12 neue Dateien). Globales Sci-Fi-Dialog-System (`dialogs.css`, `sol-modal`).
+
+### ADR 0003 — Multiplayer-Turn-Resolution (Architektur)
+Abgeschlossen (2026-07-01): Architekturentscheidungen dokumentiert (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`). Zwei Sofort-Maßnahmen gemergt: `runs.rng_seed`-Vorbereitung + Domain-Events (`RunStarted`/`SolAdvanced`/`RunEnded`). Rest (Games/TurnOrders/Resolution-Engine/KI) zurückgestellt bis Multiplayer aktiv angegangen wird — siehe Phase 4.
+
 ---
 
 ## Laufend — Phase 3 (UI-Migration + Feature-Finish)
 
-### Entity-Chip-System (UI-Verbesserung)
+### Entity-Chip-Rollout — weitere Views
 
-Ziel: Entity-Namen (Ressourcen, Gebäude, Kenntnisse, Schiffe, Berater) überall in der UI als wiederverwendbare Chips mit Hover-/Tap-Tooltip darstellen. Architektur-Entscheidung: ADR 0002 (Structured Segments, SSR).
-
-- [ ] `<x-entity-chip>` Blade-Komponente erstellen (Alpine.js Popover-Interaktion, PicoCSS Stile)
-- [ ] `CommLogController::buildDescription()` auf Segment-Array umbauen (statt fertiger String)
-- [ ] Comm-Log-View auf Segment-basiertes Chip-Rendering umstellen
-- [ ] Chip-Stile je Entity-Typ definieren: `resource`, `building`, `knowledge`, `ship`, `advisor`
-- [ ] Tooltip-Datenversorgung pro Typ klären (statisch via Config/Lang vs. inline `data-*`-Attribute)
-- [ ] Rückwärtskompatibilität bestehender `colony_log`-Einträge klären (Migration oder doppelter Render-Pfad)
-- [ ] Integration in weitere Views (Berater-Screen, Kolonie-Screen, etc.) — spätere Iteration
+- [ ] Integration in Berater-Screen, Kolonie-Screen und weitere Views (Segment-Array + Komponente existieren bereits, siehe Phase 3k)
 
 ### Offene GDD / Design-TODOs
 
-- [ ] GDD §2 vs §6: Supply-Cap Tick-Schritt — welcher Schritt (5 oder 7) ist korrekt? `TickService` prüfen
-- [ ] GDD §13: Burnout-Config-Block — `config/game.php → advisors.burnout` ergänzen oder GDD-Referenz entfernen
-- [ ] GDD: Erklärung `moral` (technisch) vs. `Vertrauen` (UI) in CLAUDE.md + GDD §14 ergänzen
-
----
-
-## Geplant — Phase 3k (nächste Iteration)
-
-- Cantina-Redesign: Bar-Hintergrund + NPC-Charaktere (Hotspot-System bereits implementiert, visuelles Redesign ausstehend)
-- GDD-Cleanup: Balance-TODOs nach erstem Playtest einarbeiten
+- [ ] GDD §2 vs §6: Supply-Cap Tick-Schritt — Widerspruch, §2-Tabelle nennt Schritt 3, §6 + Code (`GameTick.php`) nennen Schritt 7. Eine Stelle korrigieren.
+- [ ] GDD §13: Burnout-Config-Block — `config/game.php → advisors.burnout` existiert nicht. Ergänzen oder GDD-Referenz entfernen.
+- [ ] GDD §14/Koloniebeiträge: Platzhalter-Begriff "Steuern" passt nicht zum Kleinkolonie-Konzept (kein Imperium). Begriff + prozentuales Malus-System neu denken, bevor implementiert wird. Alternativen: "Koloniebeiträge", "Abgaben", "Nexus-Quote".
+- [ ] GDD §9 "Begegnungen & Gefahren" + Merchant-Item-Kategorie `encounter_prep`: referenzieren noch Fleet-basierte Encounters (Flotte/Systemkarte seit 2026-06-20 gestrichen). Eigener GDD-Pass zum Bereinigen, nicht blockierend.
 
 ---
 
 ## Geplant — Phase 4 (Post-Playtest)
 
+- GDD-Cleanup: Balance-TODOs nach erstem Playtest einarbeiten
 - Tile-abhängige Harvester-Produktionsrate (aktuell feste Rate ×10/Level)
 - Berater-Traits (Draft — siehe Memory)
 - Berater Außendienst-Mechanik für weitere Typen (nach Playtest evaluieren)
-- Begegnungen & Gefahren (GDD §9) — konkrete Events + Encounter-Screens
+- Begegnungen & Gefahren (GDD §9) — konkrete Events + Encounter-Screens (siehe auch GDD-Bereinigung oben)
 - Forschung / Techtree-Screen: Kenntnisse-Freischalt-Flow
-- Play-by-Mail-Multiplayer (3–4 Spieler, variable Tick-Zeiten) — optionale spätere Iteration. Architektur festgelegt in ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`); zwei Sofort-Maßnahmen daraus bereits gemergt (2026-07-01): `runs.rng_seed`-Vorbereitung + Domain-Events (`RunStarted`/`SolAdvanced`/`RunEnded`). Rest (Games/TurnOrders/Resolution-Engine/KI) zurückgestellt bis aktiv angegangen.
+- Play-by-Mail-Multiplayer (3–4 Spieler, variable Tick-Zeiten) — optionale spätere Iteration. Architektur in ADR 0003 festgelegt (siehe oben); Rest (Games/TurnOrders/Resolution-Engine/KI) zurückgestellt bis aktiv angegangen.
 
 ---
 
