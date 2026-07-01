@@ -30,6 +30,7 @@ class Run extends Model
         'fail_reason',
         'nexus_debt',
         'phase2_start_tick',
+        'rng_seed',
     ];
 
     protected function casts(): array
@@ -39,6 +40,7 @@ class Run extends Model
             'phase' => 'integer',
             'nexus_debt' => 'integer',
             'phase2_start_tick' => 'integer',
+            'rng_seed' => 'integer',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'settings' => 'array',

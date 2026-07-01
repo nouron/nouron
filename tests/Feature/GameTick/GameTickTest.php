@@ -2,10 +2,12 @@
 
 namespace Tests\Feature\GameTick;
 
+use App\Events\SolAdvanced;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -126,6 +128,22 @@ class GameTickTest extends TestCase
             ->value('status_points');
 
         $this->assertEqualsWithDelta(11.0 - 0.17, $sp, 0.001);
+    }
+
+    // ── Domain events (ADR 0003) ─────────────────────────────────────────────
+
+    /**
+     * A regularly completed tick fires SolAdvanced with the processed run and tick.
+     */
+    public function test_sol_advanced_event_fires_on_regular_tick(): void
+    {
+        Event::fake([SolAdvanced::class]);
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 9020]);
+
+        Event::assertDispatched(SolAdvanced::class, function (SolAdvanced $event) {
+            return $event->run->id === 1 && $event->tick === 9020;
+        });
     }
 
     /**

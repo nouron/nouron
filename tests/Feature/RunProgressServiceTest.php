@@ -65,6 +65,7 @@ namespace Tests\Feature;
  *   - sol 80 countdown fires when current_tick >= tick_limit - 20
  */
 
+use App\Events\RunEnded;
 use App\Models\Advisor;
 use App\Models\Run;
 use App\Models\RunObjective;
@@ -72,6 +73,7 @@ use App\Services\RunProgressService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 class RunProgressServiceTest extends TestCase
@@ -553,6 +555,24 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals('completed', $row->status);
         $this->assertNull($row->fail_reason, 'fail_reason must be null for a successful run');
         $this->assertNotNull($row->ended_at);
+    }
+
+    /**
+     * endRun fires RunEnded with the final status and fail reason (ADR 0003).
+     */
+    public function test_end_run_fires_run_ended_event(): void
+    {
+        Event::fake([RunEnded::class]);
+
+        $run = $this->makeRun();
+
+        $this->service->endRun($run, 'failed', 'trust_collapse');
+
+        Event::assertDispatched(RunEnded::class, function (RunEnded $event) use ($run) {
+            return $event->run->id === $run->id
+                && $event->status === 'failed'
+                && $event->failReason === 'trust_collapse';
+        });
     }
 
     // ── calculateScore ────────────────────────────────────────────────────────

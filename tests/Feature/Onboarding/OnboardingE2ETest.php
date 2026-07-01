@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Events\RunStarted;
 use App\Models\ColonyLog;
+use App\Models\Run;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingService;
@@ -11,6 +13,7 @@ use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
 
 /**
@@ -191,5 +194,23 @@ class OnboardingE2ETest extends TestCase
 
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
         $this->assertNotNull($hint, 'Hints should be active by default when no prefs row exists');
+    }
+
+    /**
+     * setupNewPlayer creates the run with a persisted rng_seed and fires
+     * RunStarted (ADR 0003 — groundwork for the Multiplayer Resolution Engine).
+     */
+    public function test_setup_new_player_seeds_rng_and_fires_run_started(): void
+    {
+        Event::fake([RunStarted::class]);
+
+        $colony = $this->onboardingService->setupNewPlayer($this->userId, 'RngSeed-Test');
+
+        $run = Run::where('colony_id', $colony->id)->firstOrFail();
+        $this->assertNotNull($run->rng_seed, 'rng_seed must be set on run creation');
+
+        Event::assertDispatched(RunStarted::class, function (RunStarted $event) use ($run) {
+            return $event->run->id === $run->id;
+        });
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\BuildingId;
+use App\Events\SolAdvanced;
 use App\Models\Advisor;
 use App\Models\Colony;
 use App\Models\ColonyBuilding;
@@ -182,6 +183,8 @@ class GameTick extends Command
 
             return self::SUCCESS;
         }
+
+        event(new SolAdvanced($run, $tick));
 
         $this->info("Tick {$tick} done.");
 
