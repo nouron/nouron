@@ -5,6 +5,7 @@
 - **ADR 0003: Simultanes Turn-Resolution-System (Multiplayer-Architektur).** Architekturentscheidungen für den späteren optionalen Multiplayer-Modus (1–4 Spieler) dokumentiert: Hybrid-Trigger (sofort bei "alle ready" oder Deadline), generisches Option-B-Konfliktprinzip bei exklusiven Zielen, kein Elimination-Mechanismus, `games` ersetzt `runs` langfristig. Zwei Punkte davon sofort umgesetzt (siehe unten), Rest zurückgestellt bis Multiplayer aktiv angegangen wird.
 - **RNG-Seed-Vorbereitung.** `runs.rng_seed` (nullable) ergänzt, wird bei Run-Erstellung (`OnboardingService::setupNewPlayer()`) gesetzt — Grundlage für künftige deterministische Zufallsanwendung in der Multiplayer-Resolution-Engine. Bestehende Zufalls-Services unverändert.
 - **Domain-Events für Run-Lebenszyklus.** Drei neue Events (`app/Events/`): `RunStarted`, `SolAdvanced`, `RunEnded` — gefeuert bei Run-Erstellung, regulärem Tick-Abschluss (`game:tick`) und Run-Ende (`RunProgressService::endRun()`). Noch keine Listener registriert; dient als Andockpunkt für spätere Multiplayer-Trigger, ohne bestehende Logik (`colony_log`-Einträge) zu ersetzen.
+- **`docs/ROADMAP.md` bereinigt.** Erledigte Punkte nachgezogen (Entity-Chip-System, Cantina-Redesign, content-writer-Tonalität/lang-en-Sync, ADR-0003-Sofort-Maßnahmen waren im Code fertig, aber noch als offen gelistet). Neu aufgenommen: Koloniebeiträge/"Steuern"-Begriff, GDD-§9-Fleet-Encounter-Reste nach Galaxie-Streichung.
 
 ## 2026-06-30
 
