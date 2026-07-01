@@ -1,11 +1,37 @@
 # Changelog
 
+## 2026-06-30
+
+- **Einheitliches Sci-Fi-Dialog-System (`dialogs.css`).** Neue globale CSS-Datei für alle `<dialog>`-Elemente im Spiel. Klasse `sol-modal` auf `<dialog>` gesetzt — erzeugt abgeschrägten Top-Right-Corner (clip-path Polygon), roten 3px Left-Accent-Stripe, dunklen Backdrop mit Blur und Drop-Shadow der dem Polygon folgt. PicoCSS-Konflikte (`overflow:auto`, `float:right` auf Close-Button, `border-radius`, `margin`) mit `!important` überschrieben. Beide Layouts (colony + infra) binden `dialogs.css` ein. Angewendet auf: Nexus-Direktiven-Dialog (hexview), Event-Discovery-Dialog (hexview), Schiff-Anfordern-Dialog (hangar).
+
+- **In-Game-Texte: atmosphärische Prosa.** Alle spielerseitigen Beschreibungstexte in `lang/de/` neu geschrieben — weg vom sachlich-funktionalen Stil, hin zu warmem, kolonie-nahem Tonfall (Gebäude aus Sicht der Menschen die darin arbeiten, Ressourcen als Teil des Alltags). `lang/de/resources.php`: Popup-Beschreibungen. `lang/de/techtree.php`: 27 neue `desc_techs_*`-Keys. `lang/de/advisors.php`: Berater als echte Charaktere. `lang/de/colony.php`: Onboarding-Hints und First-Visit-Texte. `lang/de/run.php`: Result-Screen + Nexus-Direktiven im bürokratischen Tonfall. `lang/de/nexusdb.php`: akademisch-präzise Nexus-Behördensprache. Agent-Definition `content-writer.md` um drei klar getrennte Stimmen erweitert: Kolonie (warm), Nexus-Direktiven (kalt-bürokratisch), NexusDB-Almanach (akademisch-präzise).
+- **`lang/en/` vollständig synchronisiert.** 6 bestehende EN-Dateien auf Stand der DE-Version gebracht (fehlende Keys ergänzt, Beschreibungstexte angepasst). 12 neue EN-Dateien angelegt: `advisors`, `nexusdb`, `run`, `lobby`, `events`, `trade`, `trust`, `comm_log`, `entity_chip`, `fleet`, `galaxy`, `validation`.
+
+## 2026-06-29 (4)
+
+- **`game:reset-player` Szenario-Fixes (Runde 2).** Supply-Cap-Werte aller 5 Szenarien korrigiert — Formel: `CC_flat(10) + Housing_Lv×8 + knowledge_bonus_per_level`. Alte Werte waren Schätzungen und schlugen negativ aus (z. B. `SUP -14/58`). Korrekte Caps: pre-phase2=34, phase2=39, near-fail-trust=42, near-deadline=95, objectives-done=78. `exploreTilesAndMoveHarvester()` jetzt mit `includeRing3`-Flag: Ring-3-Tiles werden erkundet und der Harvester auf das erste `regolith_*`-Tile außerhalb der Koloniezone verschoben (Ring-2 enthält oft nur terrain_empty/impassable). SecurityHub-Kürzel `HUB` in `BUILDING_ABBR` ergänzt (Tile zeigte „? 1"). Platzhalterbild `public/img/buildings/security-hub.webp` (Kopie depot.webp) bis echtes Asset geliefert wird.
+
+## 2026-06-29 (3)
+
+- **Finale-Overlay-Redesign.** `sol-report--finale` erhält jetzt einen dunklen Card-Hintergrund (`#111116`) mit farbigem Top-Stripe (Gold bei Win, Rot bei Lose). Glyph vergrößert (4rem) mit Glüheffekt per `text-shadow`. Titel- und Body-Farbe invertiert für den dunklen Hintergrund. Position-Stripe via `::before`-Pseudo-Element — keine Markup-Änderung nötig.
+- **Run-Result-Screen redesigned.** `resources/views/run/result.blade.php` vollständig auf Design-System-Klassen (`.run-result__*`) umgestellt — kein Bootstrap-Inline-Styling mehr. `public/css/infra.css` um `run-result__*`-Klassen erweitert: Status-Banner mit Gold/Rot-Akzent, Score-Block, Objectives-Liste mit nativen `<progress>`-Elementen in Accent-Farbe, Erfüllt-Badge in warmem Gold-Ton.
+- **Debug-Bar: Aktionen-Panel.** Neues Sektion „Aktionen" in der Debug-Bar. Admin kann von der Kolonie-Seite per JS das Finale-Overlay für Win- und Lose-Zustand vorschauen (`debugShowFinale('win'|'lose')`) — injiziert Mock-Daten direkt in den Alpine-State des `solButton`-Components. Außerdem Links „Result (Win-Preview)" / „Result (Lose-Preview)" → `RunResultController` mit `?preview=1`-Bypass (nur Admin + non-Production): zeigt Result-Screen für jeden aktiven Run, ohne diesen tatsächlich abzuschließen.
+
+## 2026-06-29 (2)
+
+- **`game:reset-player` Szenarien vollständig überarbeitet.** Alle Szenarien entsprechen jetzt ihrem deklarierten Spielstand. `phase2` + `near-fail-trust`: Hangar (Lv1) wird gesetzt (Path-Gate für Pilot-Slot). `near-deadline` (Tick 95): Hangar Lv2, Cantina Lv1, SecurityHub Lv1 ergänzt; Trader-Berater (rank 1) hinzugefügt; Ring-1+2-Tiles erkundet; Harvester auf Ring-2-Regolith-Tile verschoben (falls vorhanden). `objectives-done` (Tick 60): Housing Lv3, Hangar Lv2, Cantina Lv2, SecurityHub Lv1; alle 5 Berater (engineer + scientist auf Senior Rang 2, trader Rang 2, strategist Rang 1); Colony-Zone + Ring-2-Tiles komplett erkundet; 3 neue private Hilfsmethoden (`placeHangar`, `placeCantina`, `placeSecurityHub`, `exploreTilesAndMoveHarvester`). `generateDefaultTiles()` wird vor allen Tile-Operationen garantiert aufgerufen.
+
 ## 2026-06-29
 
 - **Fix: Nav-Links (Techtree/Cantina/Hangar) nach Level-Up sofort aktiv.** Analytiklabor/Bar/Hangar schalten ihren Nav-Link erst nach Seitenreload frei (Blade rendert `sciencelabBuilt` server-seitig). Fix: `investBuilding()` gibt `nav_unlocked: true` zurück wenn Building 31/44/52 von Level 0 auf 1 springt. `colony-hexgrid.js` lädt nach 600ms (Level-Up-Toast noch sichtbar) die Seite neu.
 - **Sol-Report V2: 3-Screen-Flow.** Sol-Report erweitert auf drei aufeinanderfolgende Screens. Screen 1 (Gruppen-Report) unverändert; „Weiter"-Button führt jetzt zu Screen 2. Screen 2 zeigt Phase-Fortschritt: in Phase 1 die drei Abschluss-Kriterien (CC Lv3, 2 Gebäude Lv2, 3 Berater) mit aktuellem Stand; in Phase 2 die drei Nexus-Direktiven mit Revelations-Mechanik (Direktive erst sichtbar wenn Fortschritt > 0). Screen 3 zeigt „SOL N / startet" als elegante Fade-in-Animation auf dunklem Hintergrund, danach „Mission fortsetzen"-Button.
 - **Fix: `hint_build_priority` erscheint nicht mehr nach Pfadentscheidung.** Hint stumm sobald irgendein Pfadgebäude (31/44/52) platziert ist.
 - **Fix: Bebaubare Tiles visuell klar von unbebaubaren unterscheidbar.** Koloniezone-Tiles (`is_colony_zone=true, terrain_empty`) neu `#eaedf5` (deutlich heller), Explorations-Zone bleibt `#c8cdd6`. Neue Konstanten `BUILDABLE_COLOR`/`BUILDABLE_STROKE` in `colony-hexgrid.js`.
+
+## 2026-06-28 (2)
+
+- **Phase-Fortschritt im Kolonie-View.** `ColonyController::computePhaseProgress()` berechnet Phase-1-Kriterien (CC Lv3 / 2 Gebäude Lv2 / 3 Berater) oder Phase-2-Direktiven (Objectives mit Revelations-Mechanik). Ergebnis in `window.__colonyViewData` eingebettet und nach jedem Level-Up reaktiv aktualisiert. Anzeige als Pill-Button (`P1 — 2/3` / `P2 — 0/3`) in der neuen `canvas-info-bar` unterhalb des Hex-Grids. Klick öffnet `<dialog>` mit vollständiger Liste. Legende ebenfalls in die info-bar integriert (einheitliches Pill-Styling, kein `position:fixed` mehr auf Desktop).
+- **`game:reset-player` Szenario-Fixes.** `pre-phase2`: Regolith 30 → 150, damit Spieler sofort Hangar bauen und Pilot anstellen kann (kein Sol-Warten). game-designer-Agent: Szenario-Pflege-Hinweis bei Wertänderungen ergänzt.
 
 ## 2026-06-28
 

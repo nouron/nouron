@@ -565,47 +565,38 @@
 }
 
 /* ── Native <dialog> — Nexus request modal ────────────────────────────────── */
+/* Shape, backdrop, shadow handled by .sol-modal in colony.css */
 
 .hangar-request-dialog {
-    border: 1px solid #d0d4e8;
-    border-radius: 12px;
-    padding: 0;
-    width: min(90vw, 380px);
-    box-shadow: 0 8px 32px rgba(26, 26, 46, 0.18);
-    background: #fff;
+    width: min(90vw, 400px);
+    max-width: min(90vw, 400px);
 }
 
-.hangar-request-dialog::backdrop {
-    background: rgba(26, 26, 46, 0.45);
-}
-
-/* PicoCSS <article> inside dialog — override default margins */
-.hangar-request-dialog article {
-    margin: 0;
-    padding: 0;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-}
-
+/* Header uses sol-modal base; override padding for hangar-specific content */
 .hangar-dialog-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 0.85rem 1rem 0.6rem;
-    border-bottom: 1px solid #eeeef4;
+    position: relative;
+    padding: 0.85rem 2.5rem 0.7rem 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
     font-size: 0.9rem;
     font-weight: 700;
     color: #1a1a2e;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .hangar-dialog-close {
+    position: absolute;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
     font-size: 1rem;
     color: #aaa;
-    padding: 0 0.2rem;
+    padding: 0.1rem 0.25rem;
     line-height: 1;
     transition: color 0.15s;
 }
@@ -658,7 +649,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
-    padding: 0.6rem 1rem 0;
+    padding: 0.6rem 1rem 0 1.25rem;
 }
 
 /* Nexus credit toggle row */
@@ -691,7 +682,7 @@
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
-    padding: 0.75rem 1rem 0;
+    padding: 0.75rem 1rem 0 1.25rem;
 }
 
 .hangar-ship-btn {
@@ -738,13 +729,13 @@
 /* ── Dialog error + cancel footer ─────────────────────────────────────────── */
 
 .hangar-dialog-error {
-    padding: 0 1rem;
+    padding: 0 1rem 0 1.25rem;
     margin-top: 0.5rem;
 }
 
 .hangar-dialog-cancel {
     text-align: center;
-    padding: 0.65rem 1rem 0.9rem;
+    padding: 0.65rem 1rem 0.9rem 1.25rem;
 }
 
 .hangar-dialog-cancel a {

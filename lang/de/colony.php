@@ -52,6 +52,8 @@ return [
     'hint_hazard' => 'Gefahrenzone — Bauen riskant, erhöhter Verfall.',
     'hint_impassable' => 'Unpassierbar — hier lässt sich nichts errichten.',
     'click_tile_hint' => 'Hex-Tile anklicken um Details anzuzeigen.',
+    'phase1_progress_title' => 'Phase-1-Ziele',
+    'phase2_progress_title' => 'Nexus-Direktiven',
     'building_section' => 'Gebäude',
     'construction_site' => 'Baustelle',
     'under_construction' => 'Im Bau',
@@ -84,27 +86,27 @@ return [
 
     'hint_suggestion_label' => 'Vorschlag',
     'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
-    'onboarding_hint_1' => 'Kein Baumeister eingestellt — Bau-AP läuft auf Mindestniveau. Im Berater-Screen ändern.',
-    'onboarding_hint_repair' => 'Die Anlage weist schon Schäden auf — Gebäude antippen, „Reparieren" wählen (1 Bau-AP). Substanz sichern, bevor der Verfall zunimmt.',
-    'onboarding_hint_repair_urgent' => 'Warnung: ein Gebäude steht kurz vor dem Stufenverlust — jetzt reparieren (Bau-AP), bevor die Substanz kippt.',
-    'onboarding_hint_2' => 'Harvester läuft leer — noch in der Koloniezone. Auf ein erkundetes Regolith-Tile außerhalb verlegen, damit er fördert.',
-    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — erweitert die Koloniezone und schaltet die Berater-Pfadwahl frei.',
+    'onboarding_hint_1' => 'Kein Baumeister an Bord — Bau-AP läuft auf Minimum. Im Berater-Screen nachbessern, bevor der nächste Sol verpufft.',
+    'onboarding_hint_repair' => 'Die Anlage zeigt schon ersten Verschleiß — besser jetzt reparieren als später in der Krise. Gebäude antippen, dann „Reparieren" wählen (1 Bau-AP).',
+    'onboarding_hint_repair_urgent' => 'Warnung: ein Gebäude steht kurz vor dem Stufenverlust. Jetzt reparieren — bevor der nächste Sol die Entscheidung abnimmt.',
+    'onboarding_hint_2' => 'Der Harvester dreht Leerrunden — er steht noch in der Koloniezone. Auf ein erkundetes Regolith-Tile außerhalb verlegen, damit er wirklich fördert.',
+    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — das erweitert die Koloniezone und eröffnet die Pfadwahl. Agrardom muss vorher stehen.',
     'onboarding_hint_3_agrardome_first' => 'Erst Agrardom bauen — Pflichtvoraussetzung für CC Level 2. Danach Pfad wählen: Analytiklabor, Hangar oder Cantina.',
-    'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 frei — im Berater-Screen Pfad wählen, dann passendes Gebäude bauen: Analytiklabor, Hangar oder Cantina.',
-    'onboarding_hint_4' => 'Keine Kenntnis auf Level 1 — im Techtree Forschungs-AP einer Kenntnis zuweisen. Erste Ergebnisse kommen über mehrere Sols.',
-    'onboarding_hint_5' => 'Die Kolonisten werden unruhig — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren.',
-    'onboarding_hint_build_priority' => 'Ressourcen reichen nicht für alle Pfadgebäude auf einmal — mit einem anfangen, der Rest folgt in späteren Sols.',
-    'onboarding_hint_6' => 'Keine Cantina — Händler und Gäste legen nicht an. Tauschangebote und Einmal-Items gehen an der Kolonie vorbei.',
-    'onboarding_hint_agrardome' => 'Agrardom bauen — Pflichtvoraussetzung für CC Level 2 und Quelle für Organika. Ohne ihn kommt die Kolonie nicht weiter.',
-    'onboarding_hint_analytik' => 'Analytik-Labor fehlt — Forschungs-AP können nicht eingesetzt werden. Die Kolonie bleibt wissenschaftlich blind.',
-    'onboarding_hint_hangar_path' => 'Hangar-Pfad: Hangar bauen und Raumfahrer einstellen. Erst dann stehen Missionen und Navigations-AP zur Verfügung.',
-    'onboarding_hint_cc_invest' => 'Bau-AP nicht verfallen lassen — in die Kommandozentrale investieren. Einzahlungen bleiben erhalten; Level 2 rückt damit näher.',
-    'onboarding_hint_explore' => 'Navigations-AP für Erkundung nutzen (1 AP pro Feld) — jenseits der Zone liegen Regolith-Vorkommen und unbekannte Signale.',
-    'onboarding_end_sol' => 'Sol beenden — AP für diesen Sol aufgebraucht oder nicht mehr sinnvoll einsetzbar. Nächster Sol bringt frische Aktionspunkte.',
+    'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen — im Berater-Screen ein Pfadgebäude wählen und bauen: Analytiklabor, Hangar oder Cantina.',
+    'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree Forschungs-AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
+    'onboarding_hint_5' => 'Die Stimmung in der Kolonie kippt — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren, bevor es weiter fällt.',
+    'onboarding_hint_build_priority' => 'Ressourcen reichen nicht für alles auf einmal — mit einem Pfad anfangen. Der Rest kommt, wenn die Kolonie stabiler steht.',
+    'onboarding_hint_6' => 'Keine Cantina gebaut — Händler und Gäste legen nicht an. Tauschangebote und Einmal-Items passieren die Kolonie einfach.',
+    'onboarding_hint_agrardome' => 'Agrardom bauen — ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null. Kein Agrardom, keine Verpflegung, kein Fortschritt.',
+    'onboarding_hint_analytik' => 'Kein Analytik-Labor — Forschungs-AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
+    'onboarding_hint_hangar_path' => 'Hangar-Pfad: erst Hangar bauen, dann Raumfahrer einstellen. Erst dann stehen Missionen und Navigations-AP richtig zur Verfügung.',
+    'onboarding_hint_cc_invest' => 'Bau-AP nicht verfallen lassen — in die Kommandozentrale investieren. Was eingezahlt ist, bleibt; Level 2 rückt damit näher.',
+    'onboarding_hint_explore' => 'Navigations-AP für Erkundung einsetzen (1 AP pro Feld) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
+    'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',
     'onboarding_hint_spend_ap_construction' => 'Noch Bau-AP übrig — in ein Gebäude investieren oder CC-Ausbau vorfinanzieren. AP verfallen am Sol-Ende.',
     'onboarding_hint_spend_ap_research' => 'Forschungs-AP übrig — im Techtree einer Kenntnis zuweisen, bevor der Sol endet.',
     'onboarding_hint_spend_ap_navigation' => 'Navigations-AP übrig — da draußen liegt noch unentdecktes Gelände. Ein Feld kostet 1 AP.',
-    'onboarding_hint_spend_ap_economy' => 'Wirtschafts-AP übrig — in der Cantina nachsehen, ob Gäste Angebote bereithalten.',
+    'onboarding_hint_spend_ap_economy' => 'Wirtschafts-AP übrig — in der Cantina nachsehen, ob ein Gast ein Angebot bereit hat.',
     'nav_techtree_locked' => 'Analytiklabor erforderlich.',
     'nav_cantina_locked' => 'Cantina nicht gebaut — Wohnhabitat lv1 erforderlich.',
 
@@ -112,13 +114,13 @@ return [
 
     'first_visit_dismiss' => 'Verstanden',
     'first_visit_techtree_title' => 'Techtree',
-    'first_visit_techtree_text' => 'Hier weist du Forschungs-AP einer Kenntnis zu. Kenntnisse reifen über mehrere Sols — was einmal eingezahlt ist, bleibt erhalten, auch wenn ein Sol nicht reicht.',
+    'first_visit_techtree_text' => 'Hier weist du Forschungs-AP einer Kenntnis zu. Kenntnisse wachsen Sol für Sol — was einmal eingezahlt ist, bleibt erhalten, auch wenn ein Sol nicht reicht.',
     'first_visit_cantina_title' => 'Cantina',
-    'first_visit_cantina_text' => 'Gäste aus dem Transit machen hier kurz Halt — tauschen Ressourcen, Credits und Einmal-Items. Der Reisende Händler erscheint gelegentlich. Angebote laufen ab; wer selten vorbeischaut, verpasst sie.',
+    'first_visit_cantina_text' => 'Die Cantina ist der einzige Ort, wo Kolonisten für einen Moment vergessen dürfen, wie dünn die Luft draußen ist. Fremde aus dem Transit bringen Nachrichten, Waren — und manchmal Angebote, die man besser nicht verpasst. Wer selten vorbeischaut, merkt es erst, wenn das Angebot schon weg ist.',
     'first_visit_hangar_title' => 'Hangar',
-    'first_visit_hangar_text' => 'Schiffe werden hier stationiert und auf Missionen geschickt. Jede Entsendung kostet Organika als Verpflegung und dauert mehrere Sols. Rückruf jederzeit möglich.',
+    'first_visit_hangar_text' => 'Schiffe werden hier stationiert und auf Missionen geschickt. Jede Entsendung kostet Organika als Crew-Verpflegung und dauert mehrere Sols — Rückruf jederzeit möglich.',
     'first_visit_nexusdb_title' => 'Nexus-DB',
-    'first_visit_nexusdb_text' => 'Nexus-Datenbank, Konzessions-Ausgabe — Einträge zu Gebäuden, Kenntnissen, Schiffen und Kolonie-Lore. Keine Aktion erforderlich.',
+    'first_visit_nexusdb_text' => 'Technische Referenzdatenbank, herausgegeben vom Nexus — Einträge zu Gebäuden, Kenntnissen, Schiffen und Spielmechaniken. Keine Aktion erforderlich.',
 
     // ── Onboarding — Nexus-Briefing (INNN, event_type = 'onboarding.nexus_briefing') ──
 
@@ -288,10 +290,10 @@ return [
     'sol_report_event_merchant' => 'Reisender Händler im System',
 
     // Produktion
-    'sol_report_no_production' => 'Keine Produktion — Industriegebäude stillgelegt oder beschädigt.',
+    'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
     'sol_report_food' => 'Verpflegung',
-    'sol_report_food_ok' => ':amount Organika verbraucht — Kolonie versorgt',
-    'sol_report_food_shortage' => 'Vorräte erschöpft — Vertrauen sinkt (Agrardom bauen/reparieren)',
+    'sol_report_food_ok' => ':amount Organika in die Küchen geflossen — die Kolonie ist versorgt',
+    'sol_report_food_shortage' => 'Vorräte erschöpft — die Kolonisten hungern. Vertrauen sinkt. Agrardom bauen oder reparieren.',
 
     // Kolonie & Personal
     'sol_report_advisor' => 'Berater',
@@ -304,9 +306,9 @@ return [
 
     // Finale (Run-Ende)
     'sol_report_finale_win_title' => 'Mission erfüllt',
-    'sol_report_finale_win_body' => 'Die Kolonie hat ihr Ziel erreicht und besteht weiter — gegen die Entropie behauptet.',
+    'sol_report_finale_win_body' => 'Die Kolonie steht. Gegen Verfall, Knappheit und alles was der Planet ihr entgegengeworfen hat — sie steht.',
     'sol_report_finale_lose_title' => 'Mission gescheitert',
-    'sol_report_finale_lose_body' => 'Die Kolonie konnte sich nicht halten. Was bleibt, wird verzeichnet und übergeben.',
+    'sol_report_finale_lose_body' => 'Diese Kolonie hat nicht überlebt. Was bleibt, wird vermerkt und übergeben — und irgendwann beginnt von vorne, wer genug gelernt hat.',
 
     // UI-Steuertexte
     'sol_report_title' => 'Sol :sol abgeschlossen',

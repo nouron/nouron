@@ -402,8 +402,41 @@ button.btn-sol:hover,
 
 /* ── Grid legend (tile-state key) ───────────────────────────────────────── */
 
+/* ── Canvas info bar (phase progress + legend) ───────────────────────────── */
+
+.canvas-info-bar {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding: 0.4rem 0.75rem;
+    border-top: 1px solid var(--color-border, #e8e8ec);
+    background: #fafafa;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.info-bar-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    background: #fff;
+    border: 1px solid #d0d4db;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #444;
+    cursor: pointer;
+    white-space: nowrap;
+    line-height: 1.4;
+    list-style: none; /* summary reset */
+}
+
+.info-bar-btn:hover {
+    border-color: #aaa;
+    background: #f5f5f7;
+}
+
 .hex-legend {
-    margin: 0.5rem 0 0;
     font-size: 0.8rem;
     color: #4a4f5a;
 }
@@ -512,33 +545,10 @@ button.btn-sol:hover,
     border: 1px solid #b09a40;
 }
 
-/* Full HD+ desktops: pin the legend bottom-left of the viewport, always
- * expanded — explains tile colors/symbols without needing a click, and
- * without competing for space in the (now larger) canvas/sidebar columns. */
+/* Desktop: legend expands below the info bar pills — wider grid layout */
 @media (min-width: 900px) {
-    .hex-legend {
-        position: fixed;
-        bottom: 1rem;
-        left: 1rem;
-        z-index: 40;
-        background: #ffffff;
-        border: 1px solid var(--color-border, #e8e8ec);
-        border-radius: 8px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
-        padding: 0.65rem 0.9rem;
-        max-width: 230px;
-        margin: 0;
-    }
-
-    .hex-legend > summary {
-        cursor: default;
-    }
-
-    /* Force the list visible regardless of the <details> open/closed state —
-     * the legend is meant to always be readable on desktop. */
     .hex-legend__list {
-        display: grid !important;
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
@@ -650,6 +660,62 @@ button.btn-sol:hover,
 .tile-panel-empty p {
     margin: 0;
     font-size: 0.85rem;
+}
+
+/* ── Phase progress dialog criteria list ─────────────────────────────────── */
+
+.phase-dialog-criteria {
+    list-style: none;
+    margin: 0;
+    padding: 0 1rem 0.5rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.phase-criteria {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.phase-criteria__item {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    color: #555;
+    min-width: 0; /* allow flex children to shrink below content size */
+}
+
+.phase-criteria__item--done {
+    color: #2a7d4f;
+}
+
+.phase-criteria__check {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    width: 1em;
+    text-align: center;
+    color: #bbb;
+}
+
+.phase-criteria__item--done .phase-criteria__check {
+    color: #2a7d4f;
+}
+
+.phase-criteria__label {
+    flex: 1;
+}
+
+.phase-criteria__count {
+    flex-shrink: 0;
+    font-size: 0.7rem;
+    color: #aaa;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ── Status chips ────────────────────────────────────────────────────────── */
@@ -2035,6 +2101,9 @@ dialog[x-ref="discoveryDialog"] {
 .sol-btn--primary:hover {
     opacity: 0.88;
 }
+
+/* Sol-modal system → dialogs.css (shared across all layouts) */
+
 .sol-loading {
     display: flex;
     flex-direction: column;
@@ -2275,41 +2344,64 @@ dialog[x-ref="discoveryDialog"] {
 
 /* ── Sol-Report finale (run end) ───────────────────────────────────────── */
 .sol-report--finale {
+    background: #111116;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     align-items: center;
     text-align: center;
-    padding: 2.5rem 2rem;
+    padding: 3rem 2.5rem;
     cursor: default;
+    position: relative;
+    overflow: hidden;
+}
+/* Top accent stripe */
+.sol-report--finale::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+}
+.sol-report--finale-win::before {
+    background: linear-gradient(90deg, transparent, #d4a017 40%, #d4a017 60%, transparent);
+}
+.sol-report--finale-lose::before {
+    background: linear-gradient(90deg, transparent, #8c2030 40%, #8c2030 60%, transparent);
 }
 .sol-finale__glyph {
-    font-size: 3rem;
+    font-size: 4rem;
     line-height: 1;
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
+    display: block;
 }
 .sol-report--finale-win .sol-finale__glyph {
     color: #d4a017;
+    text-shadow: 0 0 40px rgba(212, 160, 23, 0.45);
 }
 .sol-report--finale-lose .sol-finale__glyph {
     color: var(--color-accent, #8c2030);
+    text-shadow: 0 0 40px rgba(140, 32, 48, 0.4);
 }
 .sol-finale__title {
     font-family: "Libre Baskerville", Baskerville, Georgia, serif;
     font-weight: 400;
-    letter-spacing: 0.18em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    font-size: 1.4rem;
-    color: var(--color-text-primary, #1a1a1e);
-    margin: 0 0 0.75rem;
+    font-size: 1.5rem;
+    color: #f0ede8;
+    margin: 0 0 0.9rem;
 }
 .sol-finale__body {
     font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--color-text-secondary, #6b6b7a);
-    margin: 0 0 1.5rem;
+    line-height: 1.65;
+    color: rgba(240, 237, 232, 0.6);
+    margin: 0 0 1.75rem;
     max-width: 26rem;
 }
 .sol-finale__cta {
     font-size: 0.95rem;
-    padding: 0.6rem 1.5rem;
+    padding: 0.65rem 1.75rem;
+    letter-spacing: 0.03em;
 }
 
 /* ── Sol-Report Screen 2: Phase Progress ───────────────────────────────── */

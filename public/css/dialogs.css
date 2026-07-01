@@ -1,0 +1,147 @@
+/* ── dialogs.css ────────────────────────────────────────────────────────────
+ * Shared sci-fi dialog / modal system — applies to ALL layouts.
+ * Usage: add class="sol-modal" to any <dialog> element.
+ * Shape: beveled top-right corner, red accent stripe, blurred backdrop.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+dialog.sol-modal {
+    padding: 0;
+    border: none;
+    background: transparent;
+    width: min(90vw, 500px);
+    max-width: min(90vw, 500px);
+}
+
+dialog.sol-modal::backdrop {
+    background: rgba(14, 14, 26, 0.65);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────────
+ * !important needed to override PicoCSS dialog>article defaults:
+ * overflow:auto, margin:var(--pico-spacing), border-radius, box-shadow
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+dialog.sol-modal > article {
+    /* Reset PicoCSS */
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    max-height: 85vh;
+    width: 100%;
+
+    /* Bevel: top-right corner cut */
+    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+
+    /* White background + 3px red left accent stripe */
+    background:
+        linear-gradient(to right, var(--color-accent, #8c2030) 0, var(--color-accent, #8c2030) 3px, transparent 3px),
+        #ffffff !important;
+
+    /* Shadow traces the clip-path polygon */
+    filter: drop-shadow(0 12px 36px rgba(14, 14, 46, 0.2)) drop-shadow(0 2px 6px rgba(14, 14, 46, 0.1));
+
+    position: relative;
+}
+
+/* Hairline top rule — stops at bevel */
+dialog.sol-modal > article::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 3px;
+    right: 20px;
+    height: 1px;
+    background: rgba(0, 0, 0, 0.06);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────
+ * PicoCSS floats [rel=prev] right — override with absolute positioning.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+dialog.sol-modal > article > header {
+    display: flex !important;
+    align-items: center !important;
+    /* right padding reserves space for absolute-positioned close button + bevel */
+    padding: 0.9rem 3rem 0.75rem 1.25rem !important;
+    margin: 0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
+    background: transparent !important;
+    position: relative;
+    box-shadow: none !important;
+}
+
+dialog.sol-modal > article > header > h3,
+dialog.sol-modal > article > header > strong,
+dialog.sol-modal > article > header > p {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-anthracite, #2a2a3a);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+/* Close button — PicoCSS uses float:right on [rel=prev], override completely */
+dialog.sol-modal > article > header [rel="prev"],
+dialog.sol-modal > article > header .sol-modal-close {
+    position: absolute !important;
+    top: 50% !important;
+    right: 1.5rem !important;
+    transform: translateY(-50%) !important;
+    float: none !important;
+    margin: 0 !important;
+    padding: 0.1rem 0.25rem !important;
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    color: #bbb;
+    font-size: 1rem;
+    line-height: 1;
+    width: auto !important;
+    height: auto !important;
+    opacity: 1 !important;
+    transition: color 0.15s;
+}
+
+dialog.sol-modal > article > header [rel="prev"]:hover,
+dialog.sol-modal > article > header .sol-modal-close:hover {
+    color: var(--color-anthracite, #2a2a3a);
+    background: none !important;
+    opacity: 1 !important;
+}
+
+/* ── Body ─────────────────────────────────────────────────────────────────── */
+
+/* All non-header/footer direct children get consistent left indent */
+dialog.sol-modal > article > ul,
+dialog.sol-modal > article > div,
+dialog.sol-modal > article > p,
+dialog.sol-modal > article > section {
+    padding-left: 1.25rem;
+    padding-right: 1rem;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────────────
+ * PicoCSS adds background/padding to footer — reset.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+dialog.sol-modal > article > footer {
+    border-top: 1px solid rgba(0, 0, 0, 0.07) !important;
+    background: transparent !important;
+    padding: 0.75rem 1rem 0.9rem 1.25rem !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+}

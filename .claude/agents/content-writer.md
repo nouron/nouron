@@ -11,8 +11,28 @@ Alle spielerseitigen Texte schreiben: Lore, Beschreibungen, Tooltips, Event-Meld
 
 ## Ton & Setting
 - **Universum**: Ferne Zukunft, kleine Kolonie kämpft auf entferntem Planeten ums Überleben — kein aufstrebendes Imperium
-- **Ton**: Nüchtern, geerdet. Kein Grimdark, keine Utopie — alltägliche Spannung des Überlebens
+- **Ton**: Warm, atmosphärisch, immersiv. Aus der Perspektive von Kolonisten, die hier wirklich **leben** — nicht aus Ingenieurshandbüchern. Kein Grimdark, keine Utopie. Alltägliche Anspannung + menschliche Wärme im Überlebenskampf.
+- **Konkret**: Texte sollen das Gefühl vermitteln, in der Kolonie zu sein. Nicht: "Gebäude erzeugt X pro Tick." Sondern: "Hier schuften die Techniker Schicht für Schicht — das Surren der Aggregate ist der Herzschlag der Kolonie."
+- **Stilbeispiel**:
+  - ❌ "Gäste aus dem Transit machen hier kurz Halt — tauschen Ressourcen, Credits und Einmal-Items."
+  - ✅ "Die Bar ist der einzige Ort, wo Kolonisten für einen Moment vergessen dürfen, wie dünn die Luft draußen ist. Fremde aus dem Transit bringen Nachrichten, Waren — und manchmal Ärger."
+- **Maß halten**: 2–3 Sätze für Gebäude/Ressourcen-Beschreibungen. Kein Roman — aber jeder Satz soll etwas fühlen lassen.
 - **Inspirationen**: Reunion (Kolonie-Feeling, Cantina-Leben), FTL (kleine Begegnungen, knappe Ressourcen), Catan (jede Ressource zählt)
+
+### Ausnahme A: Nexus-Direktiven
+Texte die Nexus **direkt an den Direktor** richtet (Bescheide, Transaktionsbestätigungen, Warnungen):
+- Kurz angebunden, kein Empathie-Signal, Passiv bevorzugt
+- Kolonisten sind Nummern, keine Menschen
+- **Stilbeispiel**: "Ressourcentransfer Kolonie-7 → Zentrale: abgewickelt. Defizit vermerkt." — keine Erklärung, kein Mitgefühl.
+- Betroffene Bereiche: Nexus-Dialoge in `trade.php`, Nexus-Einträge in `events.php`
+
+### Ausnahme B: NexusDB-Almanach (`nexusdb.php`)
+Technische Referenzdokumentation — von Nexus herausgegeben, damit der Direktor die Kolonie korrekt führt. **Akademisch-präzise**, kein Herz, aber vollständig lesbar:
+- Vollständige Sätze, klare Struktur, kein Fluff
+- Nexus will dass der Direktor funktioniert — daher erklärend, aber ohne jede Wärme
+- Kein Empathie-Signal, keine kolonienahe Perspektive
+- Passiv und Nominalisierungen erwünscht
+- **Stilbeispiel**: "Versorgung bezeichnet die kolonieweite Betriebskapazität. Jede in Betrieb genommene Einheit belegt einen festen Anteil davon. Wird die Kapazität überschritten, ist keine weitere Inbetriebnahme möglich." — präzise, vollständig, keinerlei Menschlichkeit.
 - **Spielerrolle**: Kolonie-Direktor — verantwortlich für wenige hundert Kolonisten, kein Flottenkommandant
 - **Sprache**: UI-Texte Deutsch (primär), Englisch für interne Keys und Code
 

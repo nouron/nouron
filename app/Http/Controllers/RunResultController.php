@@ -17,8 +17,17 @@ class RunResultController extends Controller
             abort(403);
         }
 
-        if (! in_array($run->status, ['completed', 'failed'], true)) {
+        // Dev preview: admin can force-show result screen for any run status.
+        $devPreview = ! app()->isProduction()
+            && auth()->user()?->role === 'admin'
+            && request()->boolean('preview');
+
+        if (! $devPreview && ! in_array($run->status, ['completed', 'failed'], true)) {
             return redirect()->route('colony.view');
+        }
+
+        if ($devPreview && ! in_array($run->status, ['completed', 'failed'], true)) {
+            $run->status = request()->input('outcome', 'completed') === 'failed' ? 'failed' : 'completed';
         }
 
         $score = app(RunProgressService::class)->calculateScore($run);

@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400&display=swap">
+    <link rel="stylesheet" href="{{ asset("css/dialogs.css") }}?v={{ filemtime(public_path("css/dialogs.css")) }}">
     <link rel="stylesheet" href="{{ asset("css/infra.css") }}">
     @stack("styles")
 </head>

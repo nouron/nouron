@@ -76,6 +76,169 @@
     font-size: 0.9rem;
 }
 
+/* ── Run Result Screen ──────────────────────────────────────────────────── */
+.run-result {
+    max-width: 42rem;
+    margin: 0 auto;
+}
+.run-result__status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+}
+.run-result__status--win {
+    background: #f5f0e8;
+    border: 1px solid #d4a017;
+    border-left: 4px solid #d4a017;
+}
+.run-result__status--lose {
+    background: #fdf0f2;
+    border: 1px solid var(--infra-accent, #8c2030);
+    border-left: 4px solid var(--infra-accent, #8c2030);
+}
+.run-result__status-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+.run-result__status--win .run-result__status-icon {
+    color: #b8870e;
+}
+.run-result__status--lose .run-result__status-icon {
+    color: var(--infra-accent, #8c2030);
+}
+.run-result__status-title {
+    margin: 0 0 0.2rem;
+    font-size: 1.2rem;
+    color: var(--infra-text, #1a1a1e);
+}
+.run-result__status-body {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--infra-text-muted, #6b6b7a);
+}
+.run-result__score-wrap {
+    text-align: center;
+    padding: 2rem 1rem 1.75rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--infra-border, #e8e8ec);
+}
+.run-result__score-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--infra-text-muted, #6b6b7a);
+    margin: 0 0 0.4rem;
+}
+.run-result__score-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    margin: 0;
+    color: var(--infra-text, #1a1a1e);
+}
+.run-result__score-sub {
+    font-size: 0.85rem;
+    color: var(--infra-text-muted, #6b6b7a);
+    margin: 0.5rem 0 0;
+}
+.run-result__objectives {
+    margin-bottom: 1.5rem;
+}
+.run-result__obj-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--infra-text-muted, #6b6b7a);
+    margin: 0 0 0.75rem;
+}
+.run-result__obj-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.run-result__obj-item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--infra-border, #e8e8ec);
+    border-radius: 6px;
+    background: #fafaf8;
+}
+.run-result__obj-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--infra-text, #1a1a1e);
+    grid-column: 1;
+}
+.run-result__obj-bar {
+    grid-column: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.run-result__obj-progress {
+    flex: 1;
+    height: 4px;
+    appearance: none;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--infra-border, #e8e8ec);
+    border: none;
+}
+.run-result__obj-progress::-webkit-progress-bar {
+    background: var(--infra-border, #e8e8ec);
+}
+.run-result__obj-progress::-webkit-progress-value {
+    background: var(--infra-accent, #8c2030);
+    border-radius: 2px;
+}
+.run-result__obj-progress::-moz-progress-bar {
+    background: var(--infra-accent, #8c2030);
+}
+.run-result__obj-count {
+    font-size: 0.75rem;
+    color: var(--infra-text-muted, #6b6b7a);
+    white-space: nowrap;
+}
+.run-result__obj-badge {
+    grid-row: span 2;
+    grid-column: 2;
+    align-self: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.2em 0.6em;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+.run-result__obj-badge--done {
+    background: #f5f0e8;
+    color: #6d4c0a;
+    border: 1px solid #d4a017;
+}
+.run-result__obj-badge--open {
+    background: var(--infra-surface, #f7f7f5);
+    color: var(--infra-text-muted, #6b6b7a);
+    border: 1px solid var(--infra-border, #e8e8ec);
+}
+.run-result__actions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 0.5rem;
+}
+
 /* ── Nav label hidden on mobile ─────────────────────────────────────────── */
 @media (max-width: 599px) {
     .infra-nav-label {
