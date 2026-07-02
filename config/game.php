@@ -217,7 +217,7 @@ return [
         'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
         'hunger_cap' => 8,           // max penalty
-        'mission_nav_ap_per_sol' => 1,   // dispatch Nav-AP cost = sol_distance × this
+        'mission_nav_ap_per_sol' => 2,   // dispatch Nav-AP cost = sol_distance × this
         'mission_organika_per_sol' => 3, // dispatch provisions = sol_distance × this
     ],
 

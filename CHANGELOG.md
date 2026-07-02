@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-02 (3)
+
+- **Hangar-Missionskatalog designt (Design fertig, Implementierung ausstehend).** GDD §8b: 13 Missionstypen (Botenflug bis Fernexpedition), Distanz 1–5 Sole einfache Strecke, Kosten 2 Nav-AP + 3 Organika pro Distanz-Sol, Belohnungen über Ressourcen/Credits/Trust-Events/Tile-Aufdeckung/Research-AP/Almanach-Unlock/Gefahren-Milderung. Schiffsrollen: Drohne=Information, Frachter=Güter, Korvette=Schutz. Kenntnis-Gates erzeugen Run-Varianz. Resolution deterministisch (`return_tick = dispatch_tick + 2×sol_distance`, kein Ausgangs-Roll — Risiko läuft über Schiffs-Verschleiß §7); Recall ohne anteilige Belohnung. `destination`-Freitext wird zum `mission_key`. Config-Skizze `config/missions.php` im GDD.
+- **`mission_nav_ap_per_sol` 1 → 2** (`config/game.php`): Dispatch kostet jetzt 2 Navigation-AP pro Distanz-Sol — Staffelung gegen den Nav-Pool (Dist 1–2 ohne Raumfahrer, Dist 3 = kompletter Grundpool, Dist 4–5 nur mit Raumfahrer). GDD-Referenzen (§1.1/§3/§6/§13) angeglichen.
+
 ## 2026-07-02 (2)
 
 - **GDD: letzte Flottenorder-Reste aus aktuell-gültigen Abschnitten entfernt.** §2 (Tick-Mechaniken, `fleet_orders`-Bullet), §6 (Limiter-Tabelle), §8b (Entsenden-Button), §13 (Raumfahrer-Rolle: Navigation-AP = Tile-Erkundung + Außenmissions-Dispatch statt "Flottenorders"; Flottenanzahl→Schiffsanzahl; toter Flottenkommandanten-Kasten raus), §17 (Cantina-Dialoge, Almanach-`encounter_prep` auf §9-Kolonistengefahren umgestellt), Fog-of-Information-Tabelle. Die gebannerten §8/§8a bleiben als historische Referenz unverändert.
