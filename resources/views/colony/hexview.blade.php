@@ -2,6 +2,26 @@
 @section("title", $colony->name . " — Kolonie")
 @section("page-nav-title", "Kolonie")
 
+@push("styles")
+    <link rel="stylesheet" href="{{ asset("css/entity-chips.css") }}">
+@endpush
+
+@php
+    // Static per-type chip data for the building catalog (config('buildings')) — names and
+    // descriptions are fixed per building type, not per-instance, so this can be pre-computed
+    // once server-side and matched client-side against building_key / .key.
+    $buildingChipData = collect(config("buildings"))->mapWithKeys(function ($cfg, $camelKey) {
+        $key = "building_{$camelKey}";
+
+        return [
+            $key => [
+                "label" => __("techtree.{$key}"),
+                "tooltip" => ["description" => __("buildings.{$camelKey}_desc")],
+            ],
+        ];
+    });
+@endphp
+
 @section("content")
     <script>
         window.__colonyViewData = {
@@ -156,7 +176,18 @@
                 <div class="tile-panel-title" x-show="!harvesterMoveMode && !buildMode && selectedTile" x-cloak>
                     <template x-if="selectedBuilding">
                         <div class="tile-panel-title__row">
-                            <span class="tile-panel-title__name" x-text="selectedBuilding.label"></span>
+                            <span class="tile-panel-title__name">
+                                @foreach ($buildingChipData as $key => $chip)
+                                    @php
+                                        $chipLabel = $chip["label"];
+                                        $chipTooltip = $chip["tooltip"];
+                                    @endphp
+                                    <template x-if="selectedBuilding.building_key === '{{ $key }}'">
+                                        <x-entity-chip type="building" entity-key="{{ $key }}"
+                                            label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                    </template>
+                                @endforeach
+                            </span>
                             <span class="sidebar-level-badge" x-show="selectedBuilding.level > 0"
                                 x-text="selectedBuilding.max_level
                                     ? `Lv. ${selectedBuilding.level} / ${selectedBuilding.max_level}`
@@ -297,7 +328,18 @@
 
                             <template x-if="pendingBuilding">
                                 <p class="build-mode-selected">
-                                    <strong x-text="pendingBuilding.label"></strong>
+                                    <strong>
+                                        @foreach ($buildingChipData as $key => $chip)
+                                            @php
+                                                $chipLabel = $chip["label"];
+                                                $chipTooltip = $chip["tooltip"];
+                                            @endphp
+                                            <template x-if="pendingBuilding.key === '{{ $key }}'">
+                                                <x-entity-chip type="building" entity-key="{{ $key }}"
+                                                    label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                            </template>
+                                        @endforeach
+                                    </strong>
                                     &nbsp;&mdash; {{ __("colony.select_tile_hint") }}
                                 </p>
                             </template>
@@ -310,8 +352,19 @@
                                         <template x-for="b in buildings.filter(b => b.level === 0 && b.tile_x !== null)"
                                             :key="b.building_id + '-' + b.instance_id">
                                             <li class="building-list-item building-list-item--inprogress">
-                                                <span class="building-list-name"
-                                                    x-text="b.label ?? b.building_key"></span>
+                                                <span class="building-list-name">
+                                                    @foreach ($buildingChipData as $key => $chip)
+                                                        @php
+                                                            $chipLabel = $chip["label"];
+                                                            $chipTooltip = $chip["tooltip"];
+                                                        @endphp
+                                                        <template x-if="b.building_key === '{{ $key }}'">
+                                                            <x-entity-chip type="building"
+                                                                entity-key="{{ $key }}"
+                                                                label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                                        </template>
+                                                    @endforeach
+                                                </span>
                                                 <span class="building-list-ap"
                                                     x-text="`${b.ap_spend} / ${b.ap_for_levelup} AP`"></span>
                                             </li>
@@ -336,18 +389,19 @@
                                         :aria-disabled="!canAffordBuilding(b)"
                                         @click="canAffordBuilding(b) && selectPendingBuilding(b)">
                                         <div class="building-list-row">
-                                            <span class="building-list-name" x-text="b.label"></span>
+                                            <span class="building-list-name">
+                                                @foreach ($buildingChipData as $key => $chip)
+                                                    @php
+                                                        $chipLabel = $chip["label"];
+                                                        $chipTooltip = $chip["tooltip"];
+                                                    @endphp
+                                                    <template x-if="b.key === '{{ $key }}'">
+                                                        <x-entity-chip type="building" entity-key="{{ $key }}"
+                                                            label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                                    </template>
+                                                @endforeach
+                                            </span>
                                             <span class="building-list-row-right">
-                                                <span class="building-list-info" x-data="{ open: false }"
-                                                    @mouseenter="open=true" @mouseleave="open=false"
-                                                    @click.stop="open=!open" @click.outside="open=false"
-                                                    aria-label="{{ __("colony.building_info_label") }}">
-                                                    i
-                                                    <div class="res-popup res-popup--wide" x-show="open" x-cloak>
-                                                        <div class="res-popup-header" x-text="b.label"></div>
-                                                        <div class="res-popup-body" x-text="b.description"></div>
-                                                    </div>
-                                                </span>
                                                 <span class="building-list-ap" x-text="`${b.ap_for_levelup} AP`"></span>
                                             </span>
                                         </div>

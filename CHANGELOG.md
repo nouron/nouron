@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-07-02
+
+- **GDD-Cleanup: tote Flotten-Referenzen ersetzt.** §1.1 "Designprinzipien" neu geschrieben — Prinzip von "Verteidigung kostet mehr AP" (illustriert an gestrichenen Flottenorders) abgeschwächt zu "Vorsorge kostet AP, das sonst in Wachstum fließt", illustriert an lebenden Mechaniken (Ring-Erkundung vs. Außenmission, Ausbau vs. Reparatur). §9 "Begegnungen & Gefahren" komplett neu: schiffslose Kolonistengefahren (Sturm, Geologische Instabilität, Seuchenausbruch) wirken auf Gebäude-SP + bestehende Trust-Events — Design fertig, Implementierung ausstehend. §2/§6-Tick-Schritt-Referenzen cross-referenziert, tote Burnout-Config-Referenz entfernt.
+- **"Steuern"/"Koloniebeiträge" → "Relaisvergütung".** Narratives Reframing der Housing-Credits-Einnahme (§3/§14/§15): Nexus vergütet die Kolonie für Relais-/Sensor-Infrastruktur der Wohnhabitate — keine Abgabe der Kolonisten. Formel unverändert (`housing_level × 20 Cr/Sol`); nie implementierter `steuerfaktor`-Platzhalter aus der Vertrauensformel entfernt.
+- **Entity-Chips auf Berater- und Kolonie-Screen.** 7 Chip-Stellen ergänzt (Berater-Karten + Hire/Fire-Dialoge, Tile-Panel, Build-Mode-Listen); `entity-chips.css` auf beiden Screens geladen. Dabei Bug gefunden + gefixt: verschachtelte doppelte Anführungszeichen in `<x-entity-chip>`-Attributen (`:label="$seg["label"]"`) brechen Blades Component-Tag-Compiler — Tags landeten als rohes HTML im Output, auch im bereits gemergten Kolonieprotokoll (still kaputt seit Merge). Fix: Skalare vorab in `@php`-Block (Prettier-stabil), alle drei Views live verifiziert.
+
 ## 2026-07-01
 
 - **ADR 0003: Simultanes Turn-Resolution-System (Multiplayer-Architektur).** Architekturentscheidungen für den späteren optionalen Multiplayer-Modus (1–4 Spieler) dokumentiert: Hybrid-Trigger (sofort bei "alle ready" oder Deadline), generisches Option-B-Konfliktprinzip bei exklusiven Zielen, kein Elimination-Mechanismus, `games` ersetzt `runs` langfristig. Zwei Punkte davon sofort umgesetzt (siehe unten), Rest zurückgestellt bis Multiplayer aktiv angegangen wird.
