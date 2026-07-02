@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-07-02 (2)
+
+- **GDD: letzte Flottenorder-Reste aus aktuell-gültigen Abschnitten entfernt.** §2 (Tick-Mechaniken, `fleet_orders`-Bullet), §6 (Limiter-Tabelle), §8b (Entsenden-Button), §13 (Raumfahrer-Rolle: Navigation-AP = Tile-Erkundung + Außenmissions-Dispatch statt "Flottenorders"; Flottenanzahl→Schiffsanzahl; toter Flottenkommandanten-Kasten raus), §17 (Cantina-Dialoge, Almanach-`encounter_prep` auf §9-Kolonistengefahren umgestellt), Fog-of-Information-Tabelle. Die gebannerten §8/§8a bleiben als historische Referenz unverändert.
+- **Schiffs-Verschleiß neu designt (Design fertig, Implementierung ausstehend).** §7 hing an toten Flottenorders; jetzt an Außenmissionen: `wear_per_sol` pro Sol im Zustand `dispatched` (Drohne 1,5 / Frachter 1,0 / Korvette 0,75), Dispatch-Sperre unter 25% SP, Missionsabbruch bei 0 SP (Schiff kehrt flugunfähig zurück, kein Ertrag, nie zerstört), Recall als Schonungs-Entscheidung. Reparatur (1 Construction-AP → +2 SP) bereits implementiert.
+
 ## 2026-07-02
 
 - **GDD-Cleanup: tote Flotten-Referenzen ersetzt.** §1.1 "Designprinzipien" neu geschrieben — Prinzip von "Verteidigung kostet mehr AP" (illustriert an gestrichenen Flottenorders) abgeschwächt zu "Vorsorge kostet AP, das sonst in Wachstum fließt", illustriert an lebenden Mechaniken (Ring-Erkundung vs. Außenmission, Ausbau vs. Reparatur). §9 "Begegnungen & Gefahren" komplett neu: schiffslose Kolonistengefahren (Sturm, Geologische Instabilität, Seuchenausbruch) wirken auf Gebäude-SP + bestehende Trust-Events — Design fertig, Implementierung ausstehend. §2/§6-Tick-Schritt-Referenzen cross-referenziert, tote Burnout-Config-Referenz entfernt.
