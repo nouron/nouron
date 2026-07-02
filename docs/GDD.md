@@ -123,7 +123,7 @@ Diese Merkmale folgen demselben Grundgedanken: Nouron belohnt Spieler, die ihren
 
 **Technisch:** Intern heißt diese Einheit **Tick**. `TickService`, `game:tick`, DB-Spalten und Config-Keys verwenden durchgehend den Begriff "tick". Sol = Tick — dieselbe Einheit, zwei Perspektiven.
 
-Ein **Sol** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Flottenorders) werden einmal pro Sol ausgeführt.
+Ein **Sol** ist die atomare Zeiteinheit des Spiels. Alle periodischen Spielmechaniken (Ressourcenproduktion, Verfall, Hangar-Lieferungen) werden einmal pro Sol ausgeführt.
 
 **Alle Spielwerte sind in Solen ausgedrückt** — nicht in Echtzeit-Stunden oder -Tagen. Damit skalieren alle Spielmechaniken automatisch, unabhängig davon wie lang ein Sol in Echtzeit dauert.
 
@@ -152,7 +152,7 @@ runs.current_tick += 1   -- atomar in DB-Transaktion
 Dies hat drei Konsequenzen:
 
 - **Kein Doppellauf möglich:** Der Increment ist der Guard. Ein zweiter Player-Trigger erhöht `current_tick` auf den nächsten Wert und würde eine neue Berechnung auslösen — CSRF-Schutz und UI-Deaktivierung des Buttons nach Auslösung verhindern das auf Anwendungsebene.
-- **fleet_orders-Kompatibilität:** `fleet_orders.tick` bleibt eine einfache Integer-Referenz. Der Filter wechselt von `where('tick', $tickService->getTickCount())` auf `where('tick', $run->current_tick)`.
+- **Tick-Referenzen:** Tick-gebundene Datensätze (z.B. `colony_hangar_missions.dispatch_tick`, `colony_buildings.pending_until_tick`) referenzieren den Counter als einfachen Integer.
 - **Multiplayer-Erweiterung:** Im Multiplayer löst der Server den Increment aus (alle bestätigt oder Timeout), nicht der Spieler. Keine Architektur-Änderung nötig.
 
 Die bisherige Timestamp-Formel (`floor((timestamp - offset) / 86400)`) und `TickService::calculateTickFromTimestamp()` bleiben im Code, werden im Solo-Modus aber nicht verwendet. Sie dienen als Basis für spätere Multiplayer-Timeout-Berechnung.
@@ -665,11 +665,11 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 | Hangar-Slots | Jede Hangar-Instanz belegt ein Tile; max. Schiffe = Hangar-Instanzen |
 | Credits | Nexus-Kosten pro Schiff (Drohne 300, Frachter 500, Korvette 800 Cr) |
 | Lieferzeit | Korvette 5 Sole Lieferzeit — kein Sofort-Aufbau möglich |
-| Navigator-AP | Flottenorders kosten Raumfahrer-AP — mehr Schiffe = mehr AP-Verbrauch |
+| Navigation-AP | Außenmissions-Dispatch kostet Raumfahrer-AP (`sol_distance × 1`) — mehr parallele Missionen = mehr AP-Verbrauch |
 
 > **TODO Balance (Playtest):** Prüfen ob Korvetten-Stacking ohne Supply-Limiter auftritt. Falls ja: Credits/Lieferzeit-Werte verschärfen, nicht Supply-Kosten wieder einführen.
 
-**Schiffe haben keinen passiven Decay.** Wartungsdruck entsteht durch aktiven Einsatz (Schiffs-Verschleiß — siehe §7). `fleet_ships.status_points` sinkt durch Flottenorders, nicht durch Zeitablauf.
+**Schiffe haben keinen passiven Decay.** Wartungsdruck entsteht durch aktiven Einsatz (Schiffs-Verschleiß — siehe §7). `colony_ships.status_points` sinkt durch Außenmissionen, nicht durch Zeitablauf.
 
 > **TODO (Design, Phase 4+):** Sonderfall "Schiffe ohne Hangar" — durch Events, Handelsdeals oder andere Mechaniken könnte der Spieler Schiffe erwerben, die normalerweise nicht im Hangar baubar sind (z.B. erbeutete Fraktionsschiffe, Belohnungsschiffe aus Events). Diese wären per Run einzigartig und ein Roguelike-Element das jeden Durchlauf anders macht. Mechanik (Hangar-Pflicht? Supply-Kosten?) und Balance noch offen — für spätere Phase detailliert ausarbeiten.
 
@@ -729,7 +729,7 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 | Entität | Mechanismus | Auslöser | Gegenmaßnahme |
 |---------|-------------|----------|---------------|
 | Gebäude | Passiver Decay (`decay_rate` SP/Sol) | Zeitablauf | Repair-AP investieren |
-| Schiffe | Verschleiß (`wear_per_order` aus config/ships.php) | Aktiver Einsatz (Orders) | Reparatur (1 Construction-AP/Klick) |
+| Schiffe | Verschleiß (`wear_per_sol` aus config/ships.php) | Aktiver Einsatz (Außenmissionen) | Reparatur (1 Construction-AP/Klick) |
 | Berater | Burnout-Wahrscheinlichkeit (steigt mit `active_ticks`) | Kumulierte Aktivität | Erholungsphase, Rang-Aufstieg dämpft Risiko |
 | Kenntnisse | **kein Decay** — permanentes Wissen | — | — |
 
@@ -766,7 +766,7 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 | Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
 | AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
 | Gebäude-Decay | Stand von Gebäuden | täglich | Reparatur-AP investieren |
-| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Order | Reparatur (1 Construction-AP/Klick) |
+| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Sol auf Außenmission | Reparatur (1 Construction-AP/Klick) |
 | Berater-Burnout | AP-Kapazität bei Überbelastung | probabilistisch | Erholungsphase abwarten |
 
 Diese drei Mechanismen sind bewusst unabhängig voneinander.
@@ -810,7 +810,7 @@ Beispiel: max_status_points=5, decay_rate=0.3
 
 > **Hangar-Decay-Detail:** Ein Schiff im zerstörten Hangar bleibt in der Datenbank erhalten — es ist nur deaktiviert. Sobald ein neuer Hangar gebaut oder der alte repariert wird, ist das Schiff wieder einsatzbereit.
 
-> **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Flottenorders), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
+> **Schiffe haben keinen passiven Decay.** Schiffs-Verschleiß entsteht durch aktiven Einsatz (Außenmissionen), nicht durch Zeitablauf — siehe §7 "Schiffs-Verschleiß".
 
 ### Richtwerte (abgeleitet aus Technologie-Tabelle)
 
@@ -835,7 +835,7 @@ Mit `max_status_points = 20` als Standard ergeben sich z.B.:
 
 > **Sol-Skalierung:** Bei 24 Solen/Tag entspricht "133 Sole" ~5,5 Echtzeit-Tagen. Bei 1 Sol/Tag sind es 133 Tage. Die Sol-Anzahl bleibt gleich — nur die Echtzeit-Dauer ändert sich. Das ist die gewünschte Eigenschaft des Sol-basierten Systems (intern: tick-basiert).
 
-> Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). **Kenntnisse haben kein Decay-System** — `researches.decay_rate` ist für alle `knowledge_*`-Einträge 0 und wird im Tick-Loop übersprungen (GDD §10). **Schiffe haben Decay** — `ships.decay_rate` ist aktiv; Fleet-Schiffe im Kampf nehmen 2× Decay.
+> Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). **Kenntnisse haben kein Decay-System** — `researches.decay_rate` ist für alle `knowledge_*`-Einträge 0 und wird im Tick-Loop übersprungen (GDD §10). **Schiffe haben keinen Zeit-Decay** — ihr Verschleiß läuft über Außenmissionen (siehe "Schiffs-Verschleiß" unten).
 
 **Minimum:** Jede Entität hat mindestens **5 max_status_points**.
 
@@ -847,7 +847,7 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 
 - `buildings`: Spalten `max_status_points INTEGER` und `decay_rate REAL` — Werte aus `config/buildings.php`; Sync via `php artisan game:sync-techs`
 - `colony_buildings.status_points REAL` — aktueller Zustandswert des Gebäudes
-- `fleet_ships.status_points REAL` — Verschleißzustand des Schiffes (wird durch Orders verbraucht, nicht durch Zeit)
+- `colony_ships.status_points REAL` — Verschleißzustand des Schiffes (sinkt pro Sol auf Außenmission, nicht durch Zeit)
 
 ### Konfiguration
 
@@ -855,7 +855,7 @@ Die folgenden Spalten sind im Schema vorhanden und werden vom Decay-System genut
 
 ```php
 'decay' => [
-    // Schiffs-Verschleiß: wear_per_order steht in config/ships.php je Schiffstyp
+    // Schiffs-Verschleiß: wear_per_sol steht in config/ships.php je Schiffstyp
 ],
 ```
 
@@ -867,31 +867,38 @@ Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verli
 
 ### Schiffs-Verschleiß
 
-Schiffe verfallen **nicht durch Zeitablauf**, sondern durch aktiven Einsatz. Jede ausgeführte Flottenorder verbraucht Verschleißpunkte des beteiligten Schiffes.
+> **Status: Design fertig, Implementierung ausstehend** (analog §9 Kolonistengefahren). Aktuell reduziert nichts die Schiffs-SP — die frühere Fassung ("Verschleiß pro Flottenorder") ist mit der Streichung des Flottensystems (2026-06-20) hinfällig.
 
-**Mechanik:**
+Schiffe verfallen **nicht durch Zeitablauf**, sondern durch aktiven Einsatz. Der einzige aktive Einsatz ist die **Außenmission** (Hangar-Dispatch, §8b): Für jeden Sol, den ein Schiff im Zustand `dispatched` verbringt, verliert es Verschleißpunkte.
 
 ```
-fleet_ships.status_points -= wear_per_order (je Schiffstyp aus config/ships.php)
+Pro Tick, je Schiff mit ship_state = 'dispatched':
+colony_ships.status_points -= wear_per_sol (je Schiffstyp, config/ships.php)
 ```
 
-Wenn `status_points ≤ 0`, wird das Schiff **deaktiviert** (nicht zerstört). Es bleibt in der Datenbank, ist aber nicht einsatzbereit. Reaktivierung erfordert Reparatur (Fixkosten: 1 Construction-AP pro Klick, siehe unten).
+| Schiffstyp | wear_per_sol | Begründung |
+|---|---|---|
+| Drohne | 1,5 | Leichtbau, unbemannt — fragil im Dauereinsatz |
+| Frachter | 1,0 | Robuster Routinebetrieb |
+| Korvette | 0,75 | Gepanzert, auf lange Patrouillen ausgelegt |
 
-| Schiffstyp | wear_per_order (Richtwert) | Begründung |
-|------------|---------------------------|------------|
-| drone | 0.05 | Unbemannte Drohne — minimalster Verschleiß |
-| korvette | 0.20 | Militärisches Manövrieren — höherer Verschleiß |
-| frachter | 0.10 | Routinebetrieb — moderater Verschleiß |
+**Recall als Schonungs-Entscheidung:** Da Verschleiß pro Sol unterwegs anfällt, spart ein vorzeitiger Rückruf reale SP — Missionsertrag gegen Schiffszustand abwägen. Beim Dispatch selbst fällt kein Verschleiß an (dort wirken bereits Navigation-AP und Organika als Kosten).
 
-Konkrete Werte stehen in `config/ships.php` je Schiffstyp. Nach erstem Playtest kalibrierbar.
+**Dispatch-Sperre:** Schiffe unter **25 % SP (5 von 20)** können nicht entsandt werden — erst reparieren. Der Dispatch-Dialog zeigt die Verschleiß-Prognose (`wear_per_sol × sol_distance × 2`, Hin- und Rückweg) als Chip und warnt, wenn die Mission das Schiff unter die Sperr-Schwelle brächte.
 
-**Kein passiver Decay:** Ein Schiff, das im Hangar liegt und keine Orders erhält, verliert keine `status_points`. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
+**SP ≤ 0 unterwegs:** Die Mission wird automatisch abgebrochen (`state = aborted`), das Schiff kehrt flugunfähig zurück (`docked`, 0 SP), ein etwaiger Missionsertrag entfällt. Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report. Schiffe werden **nie zerstört** — ein Totalverlust, der nur über Nexus-Ersatzkauf heilbar wäre, wäre ein Fail-Spiral-Risiko.
+
+**Kein passiver Decay:** Ein gedocktes Schiff verliert keine SP. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
+
+**Reparatur:** Wie Gebäude — **1 Construction-AP → +2 SP** (`REPAIR_SP_PER_AP`), gedeckelt auf 20 (`SHIP_MAX_STATUS`), AP-Chip am Button. Bereits implementiert (`HangarService::repairShip`).
+
+> ⚠️ BALANCE CONCERN: `wear_per_sol`-Richtwerte sind ungetestet. Zielgröße: eine 3-Sol-Mission kostet 2–3 Construction-AP Reparatur (Drohne). Fühlt sich Verschleiß im Playtest wie Rauschen an → Werte ×1,5; frisst er den Construction-Pool → Drohne auf 1,0 senken.
 
 **Reparatur:** Fixkosten pro Klick — **1 Construction-AP → +2 `status_points`** (`REPAIR_SP_PER_AP`), gedeckelt auf `max_status_points` (20). Gleiche Interaktion wie Gebäude-Reparatur (1 Klick = 1 AP), damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Kein spielergewählter AP-Betrag mehr.
 
 > **Offen:** Zusätzliche Credit-Kosten pro Reparatur (`config/ships.php → repair_cost_per_point`) sind im Design vorgesehen, aber noch nicht implementiert — eigener Balance-Task.
 
-> **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Aggressive Flottennutzung ist teuer in Construction-AP, die sonst in Gebäude fließen könnten.
+> **Designabsicht:** Schiffe, die viel fliegen, brauchen Wartung. Das erzeugt eine natürliche Kosten-Nutzen-Entscheidung: Intensive Missionsnutzung ist teuer in Construction-AP, die sonst in Gebäude fließen könnten.
 
 ---
 
@@ -1147,7 +1154,7 @@ Jede abgeschlossene Mission wird in `colony_hangar_missions` gespeichert (Zielko
 | Button | Zustand | Funktion |
 |--------|---------|---------|
 | Nexus anfragen | Leer | Schiffstyp wählen, Akquise-Pfad wählen |
-| Entsenden | `docked` | Flottenorder erteilen |
+| Entsenden | `docked` | Außenmission starten (Dispatch: Ziel + Sol-Distanz, kostet Navigation-AP + Organika) |
 | Zurückrufen | `dispatched` | Schiff zurückrufen |
 | Reparieren | `docked`, SP < max | Repair-Order (Construction-AP) |
 | Hangar zuweisen | `pending` | Schiff einem freien Hangar-Slot zuordnen |
@@ -1568,7 +1575,7 @@ Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
 ### Grundkonzept
 
-Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Sol in Gebäude, Forschung, Flotten und Handel investieren kann.
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Sol in Gebäude, Forschung, Erkundung/Missionen und Handel investieren kann.
 
 Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater hat einen eigenen Datensatz mit Rang, Aktivitätszähler und Verfügbarkeitsstatus. Der Spieler rekrutiert, benennt und entwickelt konkrete Individuen, keine abstrakten "Personal"-Stapel.
 
@@ -1578,7 +1585,7 @@ Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater h
 |-----------------|-------------------|-----------|
 | `construction` | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
 | `research` | Analytiker | Kenntnisse vorantreiben, Wissensarbeit |
-| `navigation` | Raumfahrer | Flottenbewegung, Fleet-Trade-Orders |
+| `navigation` | Raumfahrer | Tile-Erkundung, Außenmissions-Dispatch |
 | `economy` | Konsul | Handelsangebote, Marktgeschäfte |
 | `strategy` | Stratege | Schutzorders, Verteidigung, taktische Planung |
 
@@ -1653,11 +1660,11 @@ advisors
 |------------|-----------------|------------------|
 | Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
 | Analytiker | `research` | Kenntnisse, Wissensarbeit |
-| Raumfahrer | `navigation` | Flottenorders erteilen, Bewegung, Fleet-Trade; colony-scoped AP-Produzent |
+| Raumfahrer | `navigation` | Tile-Erkundung, Außenmissions-Dispatch; colony-scoped AP-Produzent |
 | Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
 | Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
-Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP sind die Voraussetzung für das Erteilen von Flottenorders. Er ist kein Flottenkommandant und verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
+Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 1` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
 
 ### Außenmissionen (Berater-Außendienst)
 
@@ -1684,12 +1691,12 @@ Vier Beratertypen (Baumeister, Analytiker, Konsul, Stratege) können für eine b
 | Baumeister | Nexus-Notfall-Wartung | 3–5 | Ein beliebiges Koloniegebäude erhält sofort volle `status_points` |
 | Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne Research-AP-Kosten, CC-Gates bleiben aktiv) |
 | Konsul | Handelsreise | 3–4 | Exklusives Bar-Angebot bei Rückkehr (2 Sole gültig, erscheint als zusätzlicher Slot neben normalen Bar-Angeboten) |
-| Stratege | Sicherheitsanalyse | 3–4 | Nächster zufälliger NPC-Encounter ist vorab bekannt (Stärkewert + Typ sichtbar vor dem Auslösen). **Voraussetzung:** Sicherheits-Hub Lv 1 aktiv (thematisch: Hub stellt die Infrastruktur für den Einsatz). |
-| Raumfahrer | — | — | Kein Außenmissions-Pfad — sein Außendienst ist der Flottenkommandanten-Pfad (§14) |
+| Stratege | Sicherheitsanalyse | 3–4 | Die nächste Kolonistengefahr (§9) wird mit Typ, betroffenem Gebäude und prognostiziertem Ausgang angekündigt — statt der normalen 1-Sol-Vorwarnung ohne Details. **Voraussetzung:** Sicherheits-Hub Lv 1 aktiv (thematisch: Hub stellt die Infrastruktur für den Einsatz). |
+| Raumfahrer | — | — | Kein Berater-Außenmissions-Pfad — sein "Außendienst" läuft indirekt über den Schiffs-Dispatch (§8b); eine eigene Mechanik wird nach Playtest evaluiert |
 
 > **⚠️ Balance:** Der Analytiker-Bonus (Kenntnis +1 Level kostenlos) ist der stärkste Effekt. CC-Gates bleiben aktiv — ein Kenntnislevel das CC Lv5 voraussetzt, kann durch eine Außenmission nicht übersprungen werden. Dennoch muss nach Playtest geprüft werden, ob ein Free-Level-Upgrade bei Lv4→Lv5 zu mächtig ist. Ggf. Einschränkung: Bonus gilt nur für Lv1→Lv2 oder Lv2→Lv3.
 
-> **⚠️ Balance:** Der Stratege-Bonus (vorab bekannter Encounter) verändert die Risikostruktur von Begegnungen fundamental. Er sollte nur für den unmittelbar nächsten Encounter gelten, nicht pauschal für mehrere Sole voraus. Verfällt nach dem nächsten Encounter oder nach 5 Solen (je nachdem was früher eintritt).
+> **⚠️ Balance:** Der Stratege-Bonus (detaillierte Gefahren-Prognose) verändert die Risikostruktur von Begegnungen spürbar. Er sollte nur für die unmittelbar nächste Kolonistengefahr gelten, nicht pauschal für mehrere Sole voraus. Verfällt nach der nächsten Gefahr oder nach 5 Solen (je nachdem was früher eintritt).
 
 ---
 
@@ -1774,7 +1781,7 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol
 |------------|-------------|-----------|
 | Baumeister | 300 | Kernanforderung Tag 1 — günstigster Einstieg |
 | Analytiker | 400 | Mittlere Priorität — erst bei CC Lv2 verfügbar |
-| Raumfahrer | 500 | Flotten-fokussiert — erst relevant wenn Hangar gebaut |
+| Raumfahrer | 500 | Erkundungs-/Missions-fokussiert — voller Nutzen erst mit Hangar |
 | Konsul | 350 | Handelssupport — mittlere Priorität |
 | Stratege | 600 | Teuerster — typischerweise Late-Game |
 
@@ -1797,7 +1804,7 @@ Supply bleibt der physische Kapazitätsdeckel für Gebäude und Schiffe. Persona
 
 Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berater verbrauchen kein Supply.
 
-**Flottenanzahl:** Die maximale Flottenanzahl pro Spieler wird durch eine Konfigurationsobergrenze begrenzt. Konkrete Obergrenze noch offen — konfigurierbar, Phase 4+. Kein Flottenkommandanten-Pflichtmodell: Flotten benötigen keinen zugewiesenen Raumfahrer.
+**Schiffsanzahl:** Die maximale Schiffsanzahl pro Spieler ist durch Hangar-Slots begrenzt (jede Hangar-Instanz belegt ein Tile, siehe §6). Kein Kommandanten-Pflichtmodell: Schiffe benötigen keinen zugewiesenen Raumfahrer.
 
 ---
 
@@ -1805,11 +1812,9 @@ Supply wird durch Kommandozentrale und Wohnkomplex generiert (Cap-Modell). Berat
 
 Der Raumfahrer ist ein colony-scoped AP-Produzent für den `navigation`-Pool. Er bleibt der Kolonie zugewiesen und verlässt sie nicht.
 
-- **Colony-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für neue Flottenorders).
-- **Flottenorders:** Navigation-AP, die der Raumfahrer generiert, werden verbraucht wenn der Spieler Flottenorders erteilt — der Raumfahrer selbst "geht" dabei nicht mit.
+- **Colony-zugewiesen:** Generiert Navigation-AP auf der Kolonie (Grundlage für Tile-Erkundung und Außenmissions-Dispatch).
+- **AP-Verbrauch:** Navigation-AP, die der Raumfahrer generiert, werden verbraucht wenn der Spieler Tiles erkundet oder Schiffe entsendet — der Raumfahrer selbst "geht" dabei nicht mit.
 - **Burnout:** Bei Burnout ist der Raumfahrer für N Sole nicht verfügbar (`unavailable_until_tick` gesetzt), der Navigation-AP-Pool fällt auf den Grundwert.
-
-> **Phase 4+ — Flottenkommandanten-Mechanik:** Eine Mechanik, bei der der Raumfahrer physisch einer Flotte zugewiesen wird (als Kommandant), ist für Phase 4+ zurückgestellt. Datenmodell (eventuelles `fleet_id`-Feld, `is_commander`-Flag) ist noch nicht definiert. Keine Implementierung vor Playtest-Auswertung.
 
 ---
 
@@ -1825,7 +1830,7 @@ Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses T
 
 1. **Bauen/Forschen/Handel:** AP werden beim Investieren gesperrt (`invest('add')`).
 2. **Reparatur/Abbau:** AP werden in Höhe der veränderten `status_points` gesperrt.
-3. **Flottenorder:** AP-Kosten abhängig von Order-Typ (siehe §1.1 und §8).
+3. **Erkundung/Dispatch:** Navigation-AP — Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 1` AP (§8b).
 
 ### Implementierung
 
@@ -1874,8 +1879,8 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 | Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
 | Analytiker | Techtree | "Sole bis Level X bei aktuellem Forschungs-AP-Fluss" | Priorisierungshinweis für offene Run-Aufgaben |
 | Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt |
-| Raumfahrer | Systemkarte | Aufgebrochene Reisezeit ("X Sole Reise + Y Sole Order + Rückkehr Sol Z") | Verschleiß-Prognose pro geplante Order |
-| Stratege | Run-Ziel-Panel | Ziel-Erreichbarkeits-Prognose ("Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") | Stärkenabschätzung vor `attack`-Order |
+| Raumfahrer | Hangar | Aufgebrochene Missionszeit ("X Sole Hinweg + Rückkehr Sol Z") | Verschleiß-Prognose pro geplantem Dispatch (§7) |
+| Stratege | Run-Ziel-Panel | Ziel-Erreichbarkeits-Prognose ("Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") | Ausgangs-Prognose bei Gefahren-Vorwarnung (§9) |
 
 > **⚠️ Balance — Konsul:** Händler-Einschätzung darf nicht binär sein ("kaufen / nicht kaufen"), sonst entwertet sie die Handelsentscheidung. Kontextuell: "günstig für Werkstoffe — du hast davon aber bereits 200" ist besser als "guter Deal".
 
@@ -2897,11 +2902,11 @@ Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer opt
 |------------|---------|---------|--------|---------|
 | `engineer_phase2_objective_reveal` | Baumeister | `phase2_start` + 1 Sol | 4 construction-AP | Objective 1 enthüllt |
 | `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 research-AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
-| `pilot_patrol_report` | Raumfahrer | Korvette hat 3+ Orders ausgeführt | 0 AP | Nächster NPC-Encounter-Stärkewert vorab bekannt |
+| `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | 0 AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
 | `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 economy-AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
-| `strategist_threat_assessment` | Stratege | Piratensonde auf der Karte | 0 AP | Genaue Position der Sonde auf Systemkarte enthüllt |
+| `strategist_threat_assessment` | Stratege | Kolonistengefahr-Vorwarnung aktiv (§9) | 0 AP | Prognostizierter Ausgang der angekündigten Gefahr enthüllt |
 
-> ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Genaue Position der Piratensonde" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
+> ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
 
 #### Ablehnung und Verfall
 
@@ -2927,7 +2932,7 @@ Almanach-Artikel sind in drei Kategorien aufgeteilt:
 |-----------|---------------------|-----------------|
 | **Immer verfügbar** | Kein Gate | Grundlegende Spielmechaniken (Supply, AP, Sol-Zyklus) |
 | **Fortschrittsabhängig** | Sol-Zahl, Gebäude-Level oder Objective-Fortschritt | "Verfall & Entropie" freigeschaltet wenn erstes Gebäude < 80% SP |
-| **Entdeckungsabhängig** | Explizites Ereignis (Berater-Dialog, Event-Tile) | "Piratensonden — Verhalten und Bekämpfung" freigeschaltet nach erstem Piratensonden-Encounter |
+| **Entdeckungsabhängig** | Explizites Ereignis (Berater-Dialog, Event-Tile) | "Stürme — Entstehung und Schutzmaßnahmen" freigeschaltet nach der ersten Kolonistengefahr (§9) |
 
 **Freischalt-Trigger-Typen:**
 
@@ -2955,7 +2960,7 @@ Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig l
 | `ap_bonus` | Sofortiger einmaliger AP-Schub eines Typs | +6 construction-AP nach Lesen von "Bautechnik — fortgeschrittene Methoden" |
 | `resource_bonus` | Sofortiger einmaliger Ressourcen-Zuschuss | +30 Regolith nach Lesen von "Geologie — Abbauoptimierung" |
 | `knowledge_hint` | Erhöht AP-Effizienz für eine bestimmte Kenntnis für N Sole | -1 AP pro research-Level für "Agronomie" für 5 Sole |
-| `encounter_prep` | Reduktion des Stärke-Anforderungswerts für den nächsten passenden Encounter | -1 Stärke-Cap für nächste Piratensonden-Begegnung |
+| `encounter_prep` | Mildert den Ausgang der nächsten Kolonistengefahr (§9) um eine Stufe | Nächster Sturm wird eine Ausgangsstufe milder bewertet (z.B. Kritisch → Beschädigt) |
 | `none` | Kein Spielbonus — reines Lore oder Nachschlagewerk | Hintergrundgeschichte des Planeten |
 
 **Einmalig pro Run:** Der Bonus wird nur beim ersten Lesen gutgeschrieben. Erneutes Öffnen des Artikels liefert keinen weiteren Bonus. Das Datum und der Erhalt des Bonus werden in `run_state` (oder einem neuen Feld `almanac_read_bonuses`) vermerkt.
@@ -2964,7 +2969,7 @@ Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig l
 
 > ⚠️ BALANCE CONCERN: AP-Boni über den Almanach dürfen die bestehende AP-Balance (§13) nicht aushebeln. Der Richtwert ist: ein Almanach-AP-Bonus entspricht dem Grundwert eines Tages (6 AP) oder dem Beitrag eines Junior-Beraters für 1 Sol (4 AP-Bonus). Höhere Boni sind nur für sehr späte oder sehr seltene Artikel akzeptabel. Die Boni summieren sich über einen Run: wenn alle freigeschalteten Artikel gelesen werden, sollte der Gesamteffekt spürbar, aber nicht spielverändernd sein.
 
-> ⚠️ BALANCE CONCERN: Artikel mit `encounter_prep`-Bonus (Stärke-Reduktion) müssen sicherstellen, dass der Encounter dadurch nicht trivial wird. Richtwert: maximale Reduktion -1 Stärkepunkt, nicht mehr.
+> ⚠️ BALANCE CONCERN: Artikel mit `encounter_prep`-Bonus (Ausgangs-Milderung) müssen sicherstellen, dass Kolonistengefahren dadurch nicht trivial werden. Richtwert: maximal eine Ausgangsstufe Milderung, nur für die unmittelbar nächste Gefahr.
 
 #### Almanach und Onboarding
 
