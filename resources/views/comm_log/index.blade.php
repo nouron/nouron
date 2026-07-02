@@ -105,8 +105,14 @@
                                     @if ($seg["type"] === "text")
                                         {{ $seg["value"] }}
                                     @else
-                                        <x-entity-chip :type="$seg["type"]" :entity-key="$seg["key"]"
-                                            :label="$seg["label"]" :tooltip="$seg["tooltip"] ?? []" />
+                                        @php
+                                            $segType = $seg["type"];
+                                            $segKey = $seg["key"];
+                                            $segLabel = $seg["label"];
+                                            $segTooltip = $seg["tooltip"] ?? [];
+                                        @endphp
+                                        <x-entity-chip :type="$segType" :entity-key="$segKey" :label="$segLabel"
+                                            :tooltip="$segTooltip" />
                                     @endif
                                 @endforeach
                             @elseif($hasEvent)

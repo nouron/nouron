@@ -56,33 +56,21 @@ Das Spiel läuft auf Basis eines Sol-Zyklus: alle Spielzustandsänderungen werde
 
 ### Aufbau vor Konflikt
 
-Nouron erzählt die Geschichte einer kleinen Kolonie, die ums Überleben kämpft — nicht die Geschichte eines aufstrebenden Militärstaats. Die Kolonie hat keine Armee, keine Flottenstützpunkte, keine Kriegsziele. Sie hat eine Korvette, die ab und zu auf etwas Unbekanntes trifft, und einen Trupp Kolonisten, der manchmal in gefährliches Terrain gerät.
+Nouron erzählt die Geschichte einer kleinen Kolonie, die ums Überleben kämpft — nicht die Geschichte eines aufstrebenden Militärstaats. Es gibt keine Armee, keine Flottenschlachten, keine Eskalationsziele. Schiffe dienen Erkundung (Drohne) und Logistik (Frachter); die Korvette schützt die Kolonieumgebung, sucht aber keine Konfrontation.
 
-Gefahren sind klein und lokal: ein verwaistes Schiffswrack, das gelegentlich Piraten anzieht; eine Minenstation, in der etwas schief gelaufen ist; ein fremdes Schiff, das im System auftaucht und Signale sendet. Diese Begegnungen sind Ereignisse — keine Schlachten.
+Gefahren sind klein, lokal und richten sich gegen die Kolonie selbst statt gegen Flotten: Stürme, geologische Instabilität, Seuchenausbrüche (§9). Sie wirken direkt auf den Gebäudezustand — es gibt keinen Gegner-Stärkewert, keinen Kampf, nur einen Zustand vorher und einen danach.
 
-### Opportunitätskosten statt Verbot
+### Vorsorge statt Verbot
 
-Verteidigung und Schutz sind sinnvolle Optionen im Spiel. Sie kosten jedoch strukturell mehr AP als zivile Aktionen — nicht als Strafe, sondern als Konsequenz: eine Korvette, die patrouilliert, schleppt keine Güter. Ein Raumfahrer, der auf Bewachungsmission ist, erkundet kein neues Terrain.
+> Umformulierung (Juli 2026): Dieses Prinzip lautete ursprünglich "Verteidigung kostet strukturell mehr AP als zivile Aktionen", illustriert an Flottenorders (`attack`/`defend` teurer als `move`/`trade`). Mit der Streichung von Galaxie und Flottensystem (2026-06-20) gibt es keine eigene "defensive" AP-Kategorie mehr im Code. Das Prinzip gilt daher abgeschwächt: **Vorsorge kostet AP, das sonst in Wachstum fließen würde** — nicht als Strafe, sondern als Konkurrenz um denselben Pool.
 
-Navigation-AP werden durch **Raumfahrer** generiert und decken alle Flottenorders ab. Die Differenzierung erfolgt über die AP-Kosten je Order-Typ:
+**Navigation-AP** (Raumfahrer): fließt entweder in ring-gestaffelte Tile-Erkundung (1/2/3 AP je Ring, `colony.explore_cost_per_ring`) oder in den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 1` AP zzgl. `sol_distance × 3` Organika). Wer eine Mission entsendet, deckt in diesem Sol weniger neues Terrain auf — eine echte, rein zivile Opportunitätskostenentscheidung.
 
-| Order-Typ | Navigation-AP-Kosten |
-|-----------|----------------------|
-| move (Bewegung) | 1 |
-| hold (Halten) | 1 |
-| trade (Handel) | 1 |
-| join (Anschließen) | 1 |
-| convoy (Eskorte) | 1 |
-| defend (Verteidigen) | 2 |
-| attack (Angriff) | 3 |
-
-Ein Raumfahrer, der 15 AP pro Sol generiert, kann also entweder 15 Handelsmissionen durchführen oder 5 Konfrontations-Orders — die zivile Variante erzeugt dreimal so viele Aktionen.
+**Construction-AP** (Baumeister): fließt entweder in Gebäudeausbau (Wachstum) oder in Reparatur beschädigter Gebäude (Vorsorge gegen die Kolonistengefahren aus §9). Ein gut gewartetes Gebäude übersteht ein Ereignis fast unbeschadet, ein vernachlässigtes nimmt Schaden — Reparatur kostet nicht mehr AP pro Punkt als Ausbau, sie konkurriert nur mit ihm um denselben Pool.
 
 ### Geltungsbereich: spielweites Prinzip
 
-Diese Kostenstruktur gilt für alle Mechaniken mit AP-Kosten. Jede neue Mechanik muss beim Design geprüft werden: Ist die konfrontative Variante teurer als die zivile? Wenn nicht, ist sie nicht balanciert im Sinne der Nouron-Vision.
-
-> Konkret: Neue Schiffstypen mit Kampfwert > 0 sind teurer in Bau-AP als zivile Schiffe vergleichbarer Größe. Defensiv-orientierte Orders kosten mehr als reine Bewegungs-Orders.
+Jede neue AP-Mechanik wird geprüft: Konkurriert Vorsorge (Reparatur, Wartung, Absicherung) sichtbar mit Wachstum um denselben AP-Pool? Bleibt eine echte Entscheidung ohne Optimalpfad? Eine strukturelle "Verteidigung kostet mehr als Zivil"-Regel existiert im aktuellen Code nicht mehr und sollte nicht ohne eine neue, eigenständige Mechanik wiederbelebt werden — etwa eine künftige Korvetten-Neutralisierung von `terrain_hazard`-Tiles (§4a, Konzept vorhanden, nicht implementiert).
 
 ---
 
@@ -263,7 +251,7 @@ Credits werden durch vier Quellen erworben:
 
 | Quelle | Beschreibung |
 |--------|-------------|
-| Koloniebeiträge (Arbeitstitel) | Automatische Abgaben pro Sol — abhängig von der Koloniegröße (Wohnhabitat-Anzahl). Begriff und Mechanik offen — Design-TODO in §14 |
+| Relaisvergütung | Nexus zahlt pro Sol eine Vergütung für die Relais-/Sensor-Infrastruktur, die jedes Wohnhabitat für das Nexus-Netzwerk bereithält — abhängig vom Wohnhabitat-Level |
 | Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Sol (Arbeitstitel: Name noch offen) |
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
@@ -765,9 +753,9 @@ Die drei Entropie-Vektoren wirken unterschiedlich (Details in §7):
 ],
 ```
 
-### Supply im Sol (Schritt 7)
+### Supply im Sol (GameTick Schritt 7 / §2 Phase 3)
 
-`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in Schritt 7 jedes Sols neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
+`user_resources.supply` speichert den **aktuellen Supply-Cap**. Er wird in `GameTick.php`-Schritt 7 (entspricht der groben Phase 3 „Supply & Ressourcen" in §2) jedes Sols neu berechnet und gesetzt — so spiegelt der Wert immer den aktuellen Gebäudestand wider (z. B. nach einem Level-Down des Wohnkomplexes durch Decay).
 
 Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_level × supply_cost)`.
 
@@ -1172,71 +1160,44 @@ Alpine.js + PicoCSS. Carousel-Logik in `public/js/carousel.js`, Styles in `publi
 
 ## 9. Begegnungen & Gefahren
 
-Die Kolonie existiert nicht im Vakuum. Im System gibt es vereinzelte Präsenzen — Piraten, fremde Sonden, verlassene Stationen — die gelegentlich zu Zwischenfällen führen. Diese Begegnungen sind keine Schlachten; sie sind Ereignisse mit Konsequenzen.
+> **Design fertig, Implementierung ausstehend.** Dieser Abschnitt ersetzt die frühere flottenbasierte Fassung (Konfrontations-Ablauf, Stärkewerte-Vergleich, `config('game.combat')`) vollständig — diese Mechanik existiert seit der Streichung von Galaxie/Systemkarte (2026-06-20) nicht mehr im Code. Begegnungen finden ausschließlich auf der Kolonieoberfläche statt (Hex-Grid, §4a). Es gibt kein Kampfsystem, keine Stärkewerte, keine Schiffe in dieser Mechanik.
 
-### Arten von Begegnungen
+Die Kolonie ist keine Festung, sondern eine verwundbare Ansiedlung auf einer kaum erschlossenen Welt. Gefahren haben keinen Marschbefehl und keine Absicht — sie sind lokale Zwischenfälle: Wetter, Geologie, Erschöpfung der Kolonisten. Es gibt keine Konfrontation im militärischen Sinn, nur einen Zustand vorher und einen Zustand danach.
 
-**Erkundungsbegegnungen (Drohne/Korvette):** Eine Drohne stößt auf etwas Unbekanntes — ein Schiffswrack, ein Signal, eine verlassene Station. Ergebnis: INNN-Ereignis, mögliche Ressource oder Gefahr.
+### Grundprinzip: Zustand statt Konfrontation
 
-**Zwischenfälle im System:** Ein fremdes Schiff kreuzt den Orbit. Eine Korvette kann es mit einer `defend`- oder `attack`-Order konfrontieren — oder ignorieren. Die Entscheidung hat Konsequenzen für Vertrauen und Supply.
+Statt gegen eine gegnerische Stärke gewürfelt wird, wirkt jede Kolonistengefahr direkt auf den bestehenden Zustand der Kolonie — auf `status_points` betroffener Gebäude (§7) und auf Vertrauen (§14). Es gibt keinen Gegner-Stärkewert; es gibt nur die Frage, wie gut die Kolonie vorbereitet war. Ein Gebäude mit vollen SP übersteht ein Ereignis fast unbeschadet, ein vernachlässigtes Gebäude nimmt deutlichen Schaden. Wartungs-AP wird damit indirekt zur Gefahrenabwehr, ohne dass der Spieler im Moment des Ereignisses aktiv reagieren muss — das belohnt sowohl vorausschauendes aktives Spiel als auch entspanntes passives Spiel mit solider Grundwartung.
 
-**Kolonistengefahren:** Lokale Gefahren auf der Kolonieoberfläche (Sturm, Einsturz, Seuchenausbruch) — keine Schiffe beteiligt, kein AP-Verbrauch, sondern Event-getrieben.
+**Ausgangsstufen** (SP-Anteil des betroffenen Gebäudes zum Ereigniszeitpunkt):
 
-### Konfrontations-Ablauf
+| SP-Zustand | Ausgang | Trust-Event | Effekt |
+|---|---|---|---|
+| ≥ 66% | Abgewehrt | `encounter_won` (+2) | kein/minimaler SP-Verlust |
+| 33–65% | Beschädigt | `encounter_lost` (-4) | SP-Verlust (Richtwert: 20% von `max_status_points`) |
+| < 33% | Kritisch | `colony_threatened` (-5) | SP-Verlust + ggf. sofortiger Level-Down bzw. Instanzverlust (§7-Regeln) |
 
-Wenn eine `attack`-Order ausgelöst wird (z.B. gegen eine Piratensonde):
+Damit werden zugleich die in §14 als TODO markierten `game.trust.events.*`-Werte final mit Anwendungsfällen unterlegt statt Platzhaltern. Der Sicherheits-Hub dämpft alle drei Ausgänge weiterhin um 25 % (bestehende Regel, §14).
 
-1. Die Korvette bewegt sich zu den Zielkoordinaten
-2. Alle fremden Schiffe an diesen Koordinaten werden als Gegner identifiziert
-3. Stärken werden verglichen
-4. Verluste werden anteilig verteilt
-5. INNN-Ereignis `galaxy.combat` wird erzeugt
+### Gefahrentypen
 
-### Stärkewerte der Schiffstypen
+| Gefahr | Trigger | Konsequenz | Häufigkeit (Richtwert) | Abschwächung |
+|---|---|---|---|---|
+| **Sturm** | Zufällig; Basis-Chance/Sol steigt mit Run-Schwierigkeit; trifft 1 (selten 2) zufällige Gebäude der Colony Zone | SP-Verlust nach Ausgangsstufe (Tabelle oben) | ~1× alle 15–20 Sole früh, ~1× alle 10–12 Sole ab Phase 3 (mehr Gebäude = mehr Angriffsfläche) | Hohe SP durch regelmäßige Reparatur |
+| **Geologische Instabilität** | Gekoppelt an das Harvester-Tile; Chance steigt mit Solen seit letzter Relocation, sinkt mit Kenntnis Geologie | Produktionsausfall des Harvesters für N Sole (statt zusätzlichem Trust-Malus — kein doppelter Bestrafungseffekt) | seltener, ~alle 20–30 Sole | Kenntnis Geologie senkt Chance; Relocation setzt Zähler zurück |
+| **Seuchenausbruch** | Emergent statt rein zufällig: nur möglich bei `hunger_streak ≥ 3` oder Vertrauen < -20, dann Zufallschance/Sol | Supply-Cap oder AP-Generierung temporär reduziert + `colony_threatened` | nur im Vernachlässigungsfall — bei gesunder Kolonie 0% Grundrisiko | Krankenstation (infirmary) senkt Chance/Schwere je Level |
 
-```
-Stärke einer Flotte = Σ(Schiffanzahl × Stärkewert des Typs)
-```
+### Vorwarnung & Protokollierung
 
-| Schiff | ship_id | Stärkewert |
-|--------|---------|------------|
-| Drohne | 85 | 0 |
-| Korvette | 37 | 3 |
-| Frachter | 47 | 0 |
+Ein Ereignis kündigt sich 1 Sol vorher als `colony_log`-Eintrag an (Kategorie „Gefahr", entity-chip auf das betroffene Gebäude/den Harvester verweisend) — analog zum bestehenden Tiefenscan-Vorwarn-Muster, aber ohne AP-Kosten. Das gibt aufmerksamen Spielern ein Zeitfenster für eine Reparatur, bestraft aber niemanden, der die Warnung übersieht. Der Ausgang wird beim Sol-Wechsel als zweiter `colony_log`-Eintrag protokolliert (Abgewehrt/Beschädigt/Kritisch).
 
-Schiffe mit Stärkewert 0 sind **nicht-kampffähig** und werden im Zwischenfall nicht zerstört. Drohnen können jedoch durch nahe Konfrontationen verloren gehen.
+**Onboarding:** Beim ersten Kolonistengefahr-Ereignis eines Runs erscheint ein einmaliger Hint ("Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus"), analog zu bestehenden One-Shot-Hints. Kein neuer Hint-Mechanismus nötig, nur ein neuer Trigger-Key im bestehenden System.
 
-> Der absolute Stärkewert der Korvette ist erst relevant wenn NPC-Schiffe eigene Stärkewerte erhalten (z.B. Piraten-Sonde = 1, schwerer Wächter = 5). Bis dahin bestimmt der Wert nur die Verlustquote gegen NPC-Begegnungen.
+### Offene Punkte
 
-### Verlustberechnung
+- Exakte Basis-Chancen/Sol und SP-Verlust-Prozentsätze sind Richtwerte — Kalibrierung nach erstem Playtest.
+- Ob Seuchenausbruch als eigenständiges Ereignis oder als Eskalationsstufe des bestehenden Hunger-Malus (§4a Organika) implementiert wird, ist eine Umsetzungsentscheidung für game-developer — design-seitig gleichwertig.
 
-```
-Verlustquote A = Stärke B / Gesamtstärke
-Verlustquote B = Stärke A / Gesamtstärke
-Gesamtstärke   = Stärke A + Stärke B
-```
-
-```
-Verluste = ceil(Anzahl × Verlustquote)
-```
-
-Sinkt eine Schiffsklasse auf 0 oder darunter, wird der Eintrag aus `fleet_ships` gelöscht. Haben beide Seiten keine kampffähigen Schiffe (Gesamtstärke = 0), findet keine Konfrontation statt.
-
-### Konfiguration
-
-`config/game.php → combat.ship_power`:
-
-```php
-'combat' => [
-    'ship_power' => [
-        85 => 0,   // drone
-        37 => 3,   // corvette
-        47 => 0,   // freighter
-    ],
-],
-```
-
-Neue Schiffstypen und deren Stärkewerte werden ausschließlich in dieser Config konfiguriert.
+> ⚠️ BALANCE CONCERN: Sturm und Seuchenausbruch können beide `colony_threatened` (-5) auslösen. In einer bereits schlechten Phase (niedriges Trust, viele beschädigte Gebäude) könnte ein Spieler mehrere -5-Treffer kurz hintereinander kassieren — Spiral-Risiko analog zum Hunger-Malus. Nach Playtest prüfen, ob ein kurzer Cooldown zwischen Kolonistengefahren-Ereignissen nötig ist.
 
 ---
 
@@ -1879,7 +1840,7 @@ Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details
 
 **Beispiel:** Ein Senior-Analytiker (rank=2) liefert normalerweise 20 AP/Sol für `research`. Bei Burnout: nur noch 6 AP/Sol für `research`.
 
-**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Sole — Richtwerte aus `config/game.php → advisors.burnout`).
+**Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Sole — Richtwerte, noch nicht in Config abgebildet; siehe „Implementierungsstand" in §7).
 
 **Sichtbarkeit:** Die Berater-Übersicht zeigt einen "Pause"-Zustand mit Countdown bis zur Rückkehr. INNN-Ereignis informiert beim Einsetzen.
 
@@ -1959,7 +1920,7 @@ Der Wert -100 ist ein harter Boden (keine weitere Verschlechterung). Ebenso +100
 Vertrauen wird einmal pro Sol **neu berechnet** — nicht akkumuliert. Das Vertrauen eines Sols ergibt sich aus der Summe aller aktiven Faktoren:
 
 ```
-vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + steuerfaktor + ereigniseffekte, -100, +100)
+vertrauen = clamp(Σ(Gebäudeeffekte) + Σ(Forschungseffekte) + clamp(Σ(Schiffseffekte), -30, +30) + ereigniseffekte, -100, +100)
 ```
 
 `colony_resources.amount` (resource_id=12) wird nach der Berechnung auf den neuen Wert gesetzt.
@@ -2021,11 +1982,9 @@ Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen
 
 **Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis verbreitet ein Klima der Wachsamkeit, das die Stimmung leicht dämpft — analoges Signal zu den Korvetten.
 
-### Einflussfaktoren: Koloniebeiträge (Platzhalter)
+### Einflussfaktoren: Relaisvergütung
 
-> **TODO Design (Evaluation):** Der Begriff "Steuern" passt nicht zur kleinen, persönlichen Kolonie — kein Imperium, kein Gouverneur. Treffendere Begriffe wären z.B. "Koloniebeiträge", "Abgaben" oder "Nexus-Quote". Das zugrundeliegende System (prozentualer Abzug → Vertrauensmalus) muss ebenfalls neu durchdacht werden, bevor es implementiert wird.
-
-Das System ist noch nicht implementiert. Der Platzhalter in der Formel ist `steuerfaktor = 0`.
+Die Relaisvergütung (§3) ist eine reine Nexus-Einnahme ohne Vertrauenseffekt — sie fließt von Nexus an die Kolonie, nicht umgekehrt, und stellt daher keine Belastung der Kolonisten dar. Ein gesonderter Abzugs-/Steuermechanismus mit Vertrauensmalus wurde ursprünglich erwogen (das frühere "Steuern"-Konzept), ist aber hinfällig und wird nicht weiterverfolgt.
 
 ### Einflussfaktoren: Verpflegung (Organika)
 
@@ -3307,7 +3266,7 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 
 > ⚠️ BALANCE CONCERN: `task_expedition_coverage: 19` (alle Colony-Zone-Tiles erkundet) ist der schwierigste Task-Target-Wert und braucht als erstes Playtest-Validierung. 19 Tiles bei ring-gestaffelten Kosten (1/2/3 Nav-AP/Ring) und einem Junior-Raumfahrer mit ~7 Nav-AP/Sol ergibt rechnerisch ~3–5 Sole reiner Erkundungsarbeit, was realistisch ist — aber stark von der Tile-Verteilung der Karte abhängt (impassable Tiles zählen nicht; auf vulkanischen Planeten könnten sehr viele Tiles aus der Zone fallen). Vor dem Finalisieren dieses Task-Targets den Colony-Zone-Expansion-Mechanismus (§4a) gegen typische Karten durchrechnen.
 
-> ⚠️ BALANCE CONCERN: `task_credit_reserve: 10` bedeutet 10 aufeinanderfolgende Sole mit Credits > 5.000. Mit Nexus-Subvention 30 Cr/Sol + Housing-Steuer (20 Cr/Sol je Housing-Level, §3) und einem Wohnhabitat Lv2 = 70 Cr/Sol Einnahmen — Upkeep für 3 Berater Rang 1 kostet 3 × 10 = 30 Cr/Sol → Nettoeinnahmen ~40 Cr/Sol. Ab Startkapital 3.000 Cr dauert es ~50 Sole ohne Ausgaben um 5.000 Cr zu erreichen. Realistische Ausgaben (Gebäude, Reparaturen) machen den Task signifikant schwieriger. Nach Playtest kalibrieren.
+> ⚠️ BALANCE CONCERN: `task_credit_reserve: 10` bedeutet 10 aufeinanderfolgende Sole mit Credits > 5.000. Mit Nexus-Subvention 30 Cr/Sol + Relaisvergütung (20 Cr/Sol je Housing-Level, §3) und einem Wohnhabitat Lv2 = 70 Cr/Sol Einnahmen — Upkeep für 3 Berater Rang 1 kostet 3 × 10 = 30 Cr/Sol → Nettoeinnahmen ~40 Cr/Sol. Ab Startkapital 3.000 Cr dauert es ~50 Sole ohne Ausgaben um 5.000 Cr zu erreichen. Realistische Ausgaben (Gebäude, Reparaturen) machen den Task signifikant schwieriger. Nach Playtest kalibrieren.
 
 ---
 

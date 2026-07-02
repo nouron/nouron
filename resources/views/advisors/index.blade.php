@@ -3,11 +3,29 @@
 
 @push("styles")
     <link rel="stylesheet" href="{{ asset("css/advisors.css") }}?v={{ filemtime(public_path("css/advisors.css")) }}">
+    <link rel="stylesheet" href="{{ asset("css/entity-chips.css") }}">
 @endpush
 
 @push("scripts")
     <script src="{{ asset("js/advisors.js") }}?v={{ filemtime(public_path("js/advisors.js")) }}"></script>
 @endpush
+
+@php
+    // Static per-key chip data for the 5 canonical advisor roles. Role names/descriptions
+    // are fixed per config('advisors') + lang/de/advisors.php, not per-request, so this can
+    // be pre-computed once server-side and matched client-side against slot.key / .preview_advisor_key.
+    $advisorChipData = collect(["engineer", "scientist", "pilot", "trader", "strategist"])->mapWithKeys(
+        fn($key) => [
+            $key => [
+                "label" => __("advisors.{$key}"),
+                "tooltip" => [
+                    "description" => __("advisors.{$key}_desc"),
+                    "meta" => __("advisors.ap_" . config("advisors.{$key}.ap_type")),
+                ],
+            ],
+        ],
+    );
+@endphp
 
 @section("content")
     <script>
@@ -117,7 +135,19 @@
                             <div class="advisor-info">
 
                                 <div class="advisor-name-row">
-                                    <span class="advisor-name" x-text="slot.name"></span>
+                                    <span class="advisor-name">
+                                        @foreach ($advisorChipData as $key => $chip)
+                                            @php
+                                                $chipLabel = $chip["label"];
+                                                $chipTooltip = $chip["tooltip"];
+                                            @endphp
+                                            <template
+                                                x-if="(slot.preview_advisor_key ?? slot.key) === '{{ $key }}'">
+                                                <x-entity-chip type="advisor" entity-key="advisor_{{ $key }}"
+                                                    label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                            </template>
+                                        @endforeach
+                                    </span>
                                     <template x-if="slot.advisor !== null">
                                         <span class="rank-badge" :class="'rank-badge--' + slot.advisor.rank"
                                             x-text="slot.advisor.rank_name"></span>
@@ -279,7 +309,18 @@
                         </div>
                         <div class="dialog-advisor-info">
                             <div class="dialog-advisor-name">
-                                <strong x-text="dialogSlot.name"></strong>
+                                <strong>
+                                    @foreach ($advisorChipData as $key => $chip)
+                                        @php
+                                            $chipLabel = $chip["label"];
+                                            $chipTooltip = $chip["tooltip"];
+                                        @endphp
+                                        <template x-if="dialogSlot.key === '{{ $key }}'">
+                                            <x-entity-chip type="advisor" entity-key="advisor_{{ $key }}"
+                                                label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                        </template>
+                                    @endforeach
+                                </strong>
                                 <span class="dialog-rank-badge">{{ __("advisors.dialog_rank_junior") }}</span>
                             </div>
                             <p class="dialog-advisor-desc" x-text="dialogSlot.desc"></p>
@@ -321,7 +362,19 @@
             <template x-if="dialogSlot">
                 <div>
                     <p class="dialog-cost">
-                        <strong x-text="dialogSlot.name"></strong> {{ __("advisors.dialog_fire_confirm") }}
+                        <strong>
+                            @foreach ($advisorChipData as $key => $chip)
+                                @php
+                                    $chipLabel = $chip["label"];
+                                    $chipTooltip = $chip["tooltip"];
+                                @endphp
+                                <template x-if="dialogSlot.key === '{{ $key }}'">
+                                    <x-entity-chip type="advisor" entity-key="advisor_{{ $key }}"
+                                        label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
+                                </template>
+                            @endforeach
+                        </strong>
+                        {{ __("advisors.dialog_fire_confirm") }}
                     </p>
                     <div class="dialog-error" x-text="errorMsg"></div>
                     <div class="dialog-actions">
