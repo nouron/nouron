@@ -1167,21 +1167,29 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 |---|---|---|---|---|---|---|
 | `mission_courier_run` | Botenflug | Drohne | 1 | 2 / 3 | 60 Cr | sofort |
 | `mission_recon_flight` | Erkundungsflug | Drohne | 1 | 2 / 3 | 2 unerkundete Tiles der Exploration Zone aufgedeckt | sofort |
-| `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | Kartografie Lv1 + bekanntes Signal-Tile |
+| `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | bekanntes Signal-Tile |
 | `mission_prospecting_flight` | Prospektionsflug | Drohne | 2 | 4 / 6 | 20–30 Regolith (variabel) | Geologie Lv1 |
-| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 Research-AP-Fortschritt auf eine gewählte Kenntnis (§10) | Analytik-Labor Lv1 |
+| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 Research-AP-Fortschritt auf eine gewählte Kenntnis (§10) | Kartografie Lv1 |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | 2 | 4 / 6 | 25 Regolith + 10 Organika | Frachter vorhanden |
-| `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Cantina Lv1 |
-| `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | CC Lv3 |
-| `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | 4 | 8 / 12 | 6–10 Werkstoffe (variabel) | CC Lv3 |
+| `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
+| `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | Gesundheit Lv1 |
+| `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | 4 | 8 / 12 | 6–10 Werkstoffe (variabel) | Bautechnik Lv1 |
 | `mission_escort_convoy` | Konvoi-Begleitung | Korvette | 3 | 6 / 9 | 200 Cr (Nexus-Schutzprämie) | Korvette vorhanden |
 | `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | 3 | 6 / 9 | Nächste Kolonistengefahr (§9) wird eine Ausgangsstufe milder bewertet; verfällt nach 10 Solen | Verteidigung Lv1 |
 | `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | 4 | 8 / 12 | Almanach-Artikel freigeschaltet (§17, inkl. Lesebonus) + 150 Cr | tiefengescanntes Ruinen-Event-Tile; einmalig pro Tile |
-| `mission_long_range_expedition` | Fernexpedition | Drohne | 5 | 10 / 15 | Zufallsfund: 250–400 Cr oder 8–12 Werkstoffe oder 30–45 Regolith | Kartografie Lv3 + CC Lv4 |
+| `mission_long_range_expedition` | Fernexpedition | Drohne | 5 | 10 / 15 | Zufallsfund: 250–400 Cr oder 8–12 Werkstoffe oder 30–45 Regolith | Kartografie Lv3 |
 
 **Schiffsrollen:** Drohne = Information (Tiles, Scans, Daten), Frachter = Güter, Korvette = Schutzdienste und Bergung. Nicht jede Mission steht jedem Schiff offen — das gibt der Akquise-Entscheidung (§8b Akquise-Pfade) strategisches Gewicht.
 
-**Roguelike-Varianz gratis:** Da pro Run nur eine Teilmenge der Kenntnisse verfügbar ist (§10), fehlen in manchen Runs die kenntnis-gebundenen Missionen (Prospektion, Signalvermessung, Patrouille, Fernexpedition) — jede Missionsökonomie spielt sich pro Run anders, ohne Zusatzsystem.
+**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Signal-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt das Analytik-Labor ohnehin voraus), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. 4 ungegatete Missionen + 2 Ziel-Missionen sind **immer** verfügbar — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
+
+**Pfadwahl-Interaktion (Hangar-first):** Wer den Hangar-Pfad vor dem Analytik-Labor wählt, hat noch keine Kenntnisforschung — die kenntnis-gebundenen Missionen erscheinen ausgegraut mit Bedingung. Das ist Absicht (geprüft 2026-07-04): Hangar-first heißt realistisch Drohne zuerst, und die Drohne ist mit 3 sofort verfügbaren Missionen am besten versorgt; der Frachter hat mit der Versorgungsfahrt eine wiederholbare, Organika-positive Kernmission. Die ausgegrauten Missionen sind die sichtbare Zugkraft, das Labor als zweites Pfadgebäude nachzuziehen — Pfade sind Sequenzierung, kein Ausschluss. ⚠️ Playtest-Beobachtungspunkt: Fühlt sich eine früh gekaufte Korvette vor dem Labor-Bau unterbeschäftigt an, ist der Hebel eine zweite ungegatete Korvetten-Mission (z.B. Umkreis-Patrouille auf „sofort" senken), nicht die Streichung der Gates.
+
+> **Idee (festgehalten 2026-07-04, später konzipieren):** Bar-Begegnungen (Cantina-NPCs) können Missions-Varianten mit verbesserten Boni oder veränderten Parametern anbieten — als Alternative für den Pfad Hangar-first → Cantina-second (vor dem Labor). Ziel: verschiedene Spielweisen gleichwertig halten (Roguelike-Varianz). Noch nicht designt.
+
+**Roguelike-Varianz gratis:** Da pro Run nur eine Teilmenge der Kenntnisse verfügbar ist (§10), fehlen in manchen Runs 2–3 der kenntnis-gebundenen Missionen (Prospektion, Datensammelflug, Handelsfahrt, Hilfsgütertransport, Trümmerbergung, Patrouille, Fernexpedition) — jede Missionsökonomie spielt sich pro Run anders, ohne Zusatzsystem. 6 der 7 Kenntnisse gaten je 1–2 Missionen; Agronomie bleibt frei als Reserve für spätere Missionstypen.
+
+**Kenntnis-Skalierung — Erfahrung senkt den Proviantbedarf:** Eine einzige, spielweite Regel: **Jedes Level der Gate-Kenntnis über dem Mindest-Gate senkt die Organika-Kosten der Mission um 1 pro Distanz-Sol — Minimum 1/Sol.** Beispiel Trümmerbergung (Bautechnik Lv1, Distanz 4): Lv1 = 12 Or, Lv2 = 8 Or, Lv3+ = 4 Or. Navigation-AP skalieren nie (die AP-Staffel ist das Raumfahrer-Progressionsgate, §13). Missionen ohne Kenntnis-Gate skalieren nicht. Begründung: Kostensenkung statt Belohnungserhöhung funktioniert für alle Belohnungstypen einheitlich (auch Tiles, Scans, Almanach — nicht bezifferbar), lässt alle ⚠️-Deckel unberührt (die Credit-Missionen Botenflug/Konvoi sind ungegatet und skalieren gar nicht; der Werkstoff-Durchsatz bleibt zeitgedeckelt, da Distanz/Dauer unverändert), und das Minimum 1/Sol erhält den Organika-Sink. (Config: `organika_scaling_per_level => 1`, `organika_floor_per_sol => 1` in `config/missions.php`.)
 
 **Wiederholbarkeit:** Missionen sind wiederholbar; Ausnahmen: Signalvermessung verbraucht das Signal-Tile, Ruinen-Expedition ist einmalig pro enthülltem Ruinen-Tile. Die natürliche Drossel für alles andere ist die Kostentrias Nav-AP + Organika + Verschleiß (Reparatur: Construction-AP + Regolith, §7).
 
@@ -1190,6 +1198,8 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 - **Rückkehr:** `return_tick = dispatch_tick + 2 × sol_distance`. Die Auflösung läuft im Tick im selben Schritt wie der Schiffs-Verschleiß (§7), **nach** dessen Anwendung — der SP-0-Abbruch (`state = aborted`, kein Ertrag) hat Vorrang. Bei Rückkehr: `state = completed`, Schiff `docked`, Belohnung wird gutgeschrieben, Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report.
 - **Recall:** Keine anteilige Belohnung, keine Rückerstattung (AP wären ohnehin verfallen, Proviant ist verbraucht). Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
 - **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fund-Missionen (Prospektion, Bergung, Fernexpedition), deterministisch aus dem Run-`rng_seed` (ADR 0003).
+
+> **Geprüft und verworfen (2026-07-04):** Ein zustandsbasierter Missionsausgang (Rückkehr-SP bestimmt Ertragsstufe, analog §9). Da Verschleiß deterministisch ist, wäre der Ausgang beim Dispatch bereits bekannt — kein Risiko, sondern eine Doppelbestrafung langer Missionen (die Fernexpedition kehrt selbst mit vollen Start-SP bei 25% zurück und würde immer „fehlschlagen") plus Vollreparatur-Zwang vor jedem Start. Ein reiner Würfel-Fail wiederum verletzt „Opportunitätskosten statt Strafe" (§1.1): Schiffs-Missionen kosten harte Ressourcen im Voraus — ein Fehlschlag vernichtet Bezahltes. Fehlt im Playtest Spannung, ist der Hebel die Spanne der Fund-Missionen (Loot-Tabellen verbreitern), nicht ein Fehlschlag-Layer.
 
 #### Missionslog
 

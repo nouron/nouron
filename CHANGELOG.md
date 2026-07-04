@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-04
+
+- **Missionskatalog nach Owner-Review überarbeitet (PR #210).** Gate-Schema vereinheitlicht auf zwei Typen: Kenntnis mit Mindestlevel ODER Ziel-Tile — CC-Level- und Gebäude-Gates gestrichen (Datensammelflug→Kartografie Lv1, Handelsfahrt→Handel Lv1, Hilfsgütertransport→Gesundheit Lv1, Trümmerbergung→Bautechnik Lv1, Fernexpedition→nur Kartografie Lv3, Signalvermessung→nur Signal-Tile). Neue Kenntnis-Skalierungsregel: jedes Level über dem Gate = −1 Organika pro Distanz-Sol (Min. 1/Sol), Nav-AP skalieren nie. Risiko-/Fehlschlag-Layer geprüft und verworfen (Verschleiß ist deterministisch — SP-basierter Ausgang wäre Doppelbestrafung, Würfel-Fail verletzt "Opportunitätskosten statt Strafe"). Pfadwahl-Interaktion Hangar-first dokumentiert (ausgegraute Missionen als Zugkraft Richtung Labor). Owner-Idee festgehalten: Bar-Begegnungen als Missions-Varianten-Trigger (Cantina-second-Alternative, später konzipieren).
+
 ## 2026-07-02 (3)
 
 - **Hangar-Missionskatalog designt (Design fertig, Implementierung ausstehend).** GDD §8b: 13 Missionstypen (Botenflug bis Fernexpedition), Distanz 1–5 Sole einfache Strecke, Kosten 2 Nav-AP + 3 Organika pro Distanz-Sol, Belohnungen über Ressourcen/Credits/Trust-Events/Tile-Aufdeckung/Research-AP/Almanach-Unlock/Gefahren-Milderung. Schiffsrollen: Drohne=Information, Frachter=Güter, Korvette=Schutz. Kenntnis-Gates erzeugen Run-Varianz. Resolution deterministisch (`return_tick = dispatch_tick + 2×sol_distance`, kein Ausgangs-Roll — Risiko läuft über Schiffs-Verschleiß §7); Recall ohne anteilige Belohnung. `destination`-Freitext wird zum `mission_key`. Config-Skizze `config/missions.php` im GDD.
