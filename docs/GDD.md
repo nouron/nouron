@@ -64,7 +64,7 @@ Gefahren sind klein, lokal und richten sich gegen die Kolonie selbst statt gegen
 
 > Umformulierung (Juli 2026): Dieses Prinzip lautete ursprünglich "Verteidigung kostet strukturell mehr AP als zivile Aktionen", illustriert an Flottenorders (`attack`/`defend` teurer als `move`/`trade`). Mit der Streichung von Galaxie und Flottensystem (2026-06-20) gibt es keine eigene "defensive" AP-Kategorie mehr im Code. Das Prinzip gilt daher abgeschwächt: **Vorsorge kostet AP, das sonst in Wachstum fließen würde** — nicht als Strafe, sondern als Konkurrenz um denselben Pool.
 
-**Navigation-AP** (Raumfahrer): fließt entweder in ring-gestaffelte Tile-Erkundung (1/2/3 AP je Ring, `colony.explore_cost_per_ring`) oder in den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 1` AP zzgl. `sol_distance × 3` Organika). Wer eine Mission entsendet, deckt in diesem Sol weniger neues Terrain auf — eine echte, rein zivile Opportunitätskostenentscheidung.
+**Navigation-AP** (Raumfahrer): fließt entweder in ring-gestaffelte Tile-Erkundung (1/2/3 AP je Ring, `colony.explore_cost_per_ring`) oder in den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP zzgl. `sol_distance × 3` Organika). Wer eine Mission entsendet, deckt in diesem Sol weniger neues Terrain auf — eine echte, rein zivile Opportunitätskostenentscheidung.
 
 **Construction-AP** (Baumeister): fließt entweder in Gebäudeausbau (Wachstum) oder in Reparatur beschädigter Gebäude (Vorsorge gegen die Kolonistengefahren aus §9). Ein gut gewartetes Gebäude übersteht ein Ereignis fast unbeschadet, ein vernachlässigtes nimmt Schaden — Reparatur kostet nicht mehr AP pro Punkt als Ausbau, sie konkurriert nur mit ihm um denselben Pool.
 
@@ -480,7 +480,7 @@ Organika entsteht nicht auf Tiles (biologische Materialien kommen auf Planeten n
 Organika wird **nicht** in Bau- oder Schiffskosten verwendet (§3 Verwendungsmatrix). Ihre Sinks (implementiert):
 
 1. **Verpflegung (laufend, eskalierend):** Die Kolonie verbraucht pro Sol Organika proportional zur belegten Supply (`floor(belegte_Supply / 4)`, Config `game.food.supply_per_eater`). Tick-Reihenfolge: Produktion → Verpflegung → Vertrauen (Schritt 3a). Deckt der Vorrat den Bedarf → `well_fed` (+1 Trust, `game.trust.events.well_fed`), Hunger-Streak zurückgesetzt. Reicht der Vorrat nicht → verfügbarer Rest wird verbraucht, `glx_colonies.hunger_streak` wächst, und der **eskalierende** Trust-Malus `−min(2 + (streak−1), 8)` greift (`TrustService::hungerPenalty`) — kein weicher Einmal-Tick, sondern eine Spirale: weniger Vertrauen → Produktionseinbruch → noch weniger Organika. Sättigung setzt den Streak (und damit den Malus) sofort zurück. Macht den Agrardom zum Pflichtgebäude. `floor(used/4)=0` bei sehr kleiner Frühkolonie → kein Verbrauch, kein Bonus.
-2. **Missions-Proviant (einmalig):** Hangar-Dispatch (`HangarService::dispatchShip`) kostet beim Start `sol_distance × 3` Organika (Crew-Verpflegung) **und** `sol_distance × 1` Navigations-AP; bei Mangel an beidem wird die Entsendung blockiert. (Config `game.food.mission_organika_per_sol` / `mission_nav_ap_per_sol`.)
+2. **Missions-Proviant (einmalig):** Hangar-Dispatch (`HangarService::dispatchShip`) kostet beim Start `sol_distance × 3` Organika (Crew-Verpflegung) **und** `sol_distance × 2` Navigations-AP; bei Mangel an beidem wird die Entsendung blockiert. (Config `game.food.mission_organika_per_sol` / `mission_nav_ap_per_sol`.)
 3. **Handel:** Organika ist in der Cantina gegen Credits verkaufbar (`bar.base_prices`).
 
 Drei handelbare Kolonieressourcen (Regolith, Werkstoffe, Organika) erhalten bewusst das Catan-Tauschdreieck — mit nur zwei kollabiert die Handelstiefe.
@@ -665,7 +665,7 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 | Hangar-Slots | Jede Hangar-Instanz belegt ein Tile; max. Schiffe = Hangar-Instanzen |
 | Credits | Nexus-Kosten pro Schiff (Drohne 300, Frachter 500, Korvette 800 Cr) |
 | Lieferzeit | Korvette 5 Sole Lieferzeit — kein Sofort-Aufbau möglich |
-| Navigation-AP | Außenmissions-Dispatch kostet Raumfahrer-AP (`sol_distance × 1`) — mehr parallele Missionen = mehr AP-Verbrauch |
+| Navigation-AP | Außenmissions-Dispatch kostet Raumfahrer-AP (`sol_distance × 2`) — mehr parallele Missionen = mehr AP-Verbrauch |
 
 > **TODO Balance (Playtest):** Prüfen ob Korvetten-Stacking ohne Supply-Limiter auftritt. Falls ja: Credits/Lieferzeit-Werte verschärfen, nicht Supply-Kosten wieder einführen.
 
@@ -1123,6 +1123,8 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 
 **Nexus-Kredit** erst ab CC Lv2 verfügbar. Nutzung erzeugt kleinen Trust-Abzug ("Die Kolonisten machen sich Sorgen über wachsende Schulden").
 
+> **Idee (festgehalten 2026-07-04, später konzipieren):** Preis/Qualitäts-Tradeoff beim Nexus-Kauf — Nexus verkauft nicht unbedingt das beste Material. Wahl zwischen "teurer kaufen → guter Status (volle SP)" und "günstiger kaufen → reparaturbedürftig (niedrige Start-SP)". Verzahnt den Credits-Sink mit dem Reparatur-Sink (§7) und der Dispatch-Sperre (<25% SP: billiges Schiff kann nicht sofort auf lange Mission). Noch nicht designt.
+
 ### Schiffs-Besitz-Modell
 
 Hangare sind **operationale Slots** — nur ein Schiff pro Hangar-Instanz kann entsendet werden. Darüber hinaus können Schiffe **ohne Hangar-Zuweisung** existieren (`hangar_instance_id = NULL`, `ship_state = 'pending'`):
@@ -1145,16 +1147,80 @@ Mehrere Schiffe desselben Typs sind erlaubt. Die natürliche Begrenzung ergibt s
 
 Nicht zugewiesene Schiffe (`pending`) erscheinen als separate Karten am Ende des Carousels mit sichtbarem Decay-Timer.
 
-### Missionslog
+### Außenmissionen — Missionskatalog
 
-Jede abgeschlossene Mission wird in `colony_hangar_missions` gespeichert (Zielkoordinaten, Sol-Distanz, Ergebnis). Im Screen einsehbar.
+> **Status: Design fertig, Implementierung ausstehend.** Aktuell ist `destination` ein Freitextfeld und Missionen resolven nie (kein Abschluss, keine Belohnung). Dieser Abschnitt ersetzt beides: Das Ziel wird aus einem festen Missionskatalog gewählt (`mission_key` statt Freitext, Sol-Distanz aus dem Katalog statt Spieler-Eingabe), und Missionen kehren nach fester Dauer mit Belohnung zurück.
+
+Außenmissionen sind der einzige aktive Einsatz von Schiffen (§7 Schiffs-Verschleiß). Jede Mission ist ein ziviler Auftrag — Erkundung, Logistik, Bergung, Schutzdienst. Es gibt keine Gegner und keinen Kampf (§9-Designlinie): Das Risiko einer Mission ist ausschließlich physisch — Verschleiß pro Sol unterwegs und der automatische Abbruch bei 0 SP.
+
+#### Kostenmodell
+
+Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konvention: alle Kosten vorab als Chips am Button):
+
+- **Navigation-AP:** `sol_distance × 2` (`config/missions.php → nav_ap_per_sol`; bereits in `config/game.php → food.mission_nav_ap_per_sol` auf 2 gesetzt, zieht bei Implementierung um)
+- **Organika:** `sol_distance × 3` als Proviant & Betriebsstoffe (`organika_per_sol`; gilt einheitlich auch für die unbemannte Drohne — eine Ausnahme würde Drohnen-Missionen zum kostenlosen Optimalpfad machen)
+- Einzelne Missionen haben Zusatzkosten (z.B. Hilfsgüter-Fracht), im Katalog vermerkt.
+
+`sol_distance` ist die **einfache Strecke**; die Gesamtdauer beträgt `2 × sol_distance` Sole (Hin- und Rückweg — deckungsgleich mit der Verschleiß-Prognose aus §7). Die Kostenstaffel ist bewusst gegen den Navigation-AP-Pool (§13) kalibriert: Distanz 1–2 (2–4 AP) ist ohne Raumfahrer machbar, Distanz 3 (6 AP) kostet den kompletten Grundpool, Distanz 4–5 (8–10 AP) setzt einen Raumfahrer voraus. Lange Expeditionen sind damit über Opportunitätskosten an die Berater-Progression gekoppelt — kein hartes Gate, keine Strafe.
+
+#### Katalog
+
+| Key | Name | Schiff | Dist | Kosten (AP / Or) | Belohnung bei Rückkehr | Verfügbar ab |
+|---|---|---|---|---|---|---|
+| `mission_courier_run` | Botenflug | Drohne | 1 | 2 / 3 | 60 Cr | sofort |
+| `mission_recon_flight` | Erkundungsflug | Drohne | 1 | 2 / 3 | 2 unerkundete Tiles der Exploration Zone aufgedeckt | sofort |
+| `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | bekanntes Signal-Tile |
+| `mission_prospecting_flight` | Prospektionsflug | Drohne | 2 | 4 / 6 | 20–30 Regolith (variabel) | Geologie Lv1 |
+| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 Research-AP-Fortschritt auf eine gewählte Kenntnis (§10) | Kartografie Lv1 |
+| `mission_supply_run` | Versorgungsfahrt | Frachter | 2 | 4 / 6 | 25 Regolith + 10 Organika | Frachter vorhanden |
+| `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
+| `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | Gesundheit Lv1 |
+| `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | 4 | 8 / 12 | 6–10 Werkstoffe (variabel) | Bautechnik Lv1 |
+| `mission_escort_convoy` | Konvoi-Begleitung | Korvette | 3 | 6 / 9 | 200 Cr (Nexus-Schutzprämie) | Korvette vorhanden |
+| `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | 3 | 6 / 9 | Nächste Kolonistengefahr (§9) wird eine Ausgangsstufe milder bewertet; verfällt nach 10 Solen | Verteidigung Lv1 |
+| `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | 4 | 8 / 12 | Almanach-Artikel freigeschaltet (§17, inkl. Lesebonus) + 150 Cr | tiefengescanntes Ruinen-Event-Tile; einmalig pro Tile |
+| `mission_long_range_expedition` | Fernexpedition | Drohne | 5 | 10 / 15 | Zufallsfund: 250–400 Cr oder 8–12 Werkstoffe oder 30–45 Regolith | Kartografie Lv3 |
+
+**Schiffsrollen:** Drohne = Information (Tiles, Scans, Daten), Frachter = Güter, Korvette = Schutzdienste und Bergung. Nicht jede Mission steht jedem Schiff offen — das gibt der Akquise-Entscheidung (§8b Akquise-Pfade) strategisches Gewicht.
+
+**Gate-Schema — nur zwei Typen:** Eine Mission ist entweder an **eine Kenntnis mit Mindestlevel** gebunden oder an ein **Ziel-Tile** (Signal-/Ruinen-Tile — die Mission braucht physisch ein Ziel). Keine CC-Level- und keine Gebäude-Gates: Gebäude-Gates wären redundant (jede Kenntnis setzt das Analytik-Labor ohnehin voraus), CC-Gates wären eine dritte, schwer kommunizierbare Bedingungsart. 4 ungegatete Missionen + 2 Ziel-Missionen sind **immer** verfügbar — jedes Schiff hat ab dem ersten Sol sinnvolle Einsätze.
+
+**Pfadwahl-Interaktion (Hangar-first):** Wer den Hangar-Pfad vor dem Analytik-Labor wählt, hat noch keine Kenntnisforschung — die kenntnis-gebundenen Missionen erscheinen ausgegraut mit Bedingung. Das ist Absicht (geprüft 2026-07-04): Hangar-first heißt realistisch Drohne zuerst, und die Drohne ist mit 3 sofort verfügbaren Missionen am besten versorgt; der Frachter hat mit der Versorgungsfahrt eine wiederholbare, Organika-positive Kernmission. Die ausgegrauten Missionen sind die sichtbare Zugkraft, das Labor als zweites Pfadgebäude nachzuziehen — Pfade sind Sequenzierung, kein Ausschluss. ⚠️ Playtest-Beobachtungspunkt: Fühlt sich eine früh gekaufte Korvette vor dem Labor-Bau unterbeschäftigt an, ist der Hebel eine zweite ungegatete Korvetten-Mission (z.B. Umkreis-Patrouille auf „sofort" senken), nicht die Streichung der Gates.
+
+> **Idee (festgehalten 2026-07-04, später konzipieren):** Bar-Begegnungen (Cantina-NPCs) können Missions-Varianten mit verbesserten Boni oder veränderten Parametern anbieten — als Alternative für den Pfad Hangar-first → Cantina-second (vor dem Labor). Ziel: verschiedene Spielweisen gleichwertig halten (Roguelike-Varianz). Noch nicht designt.
+
+**Roguelike-Varianz gratis:** Da pro Run nur eine Teilmenge der Kenntnisse verfügbar ist (§10), fehlen in manchen Runs 2–3 der kenntnis-gebundenen Missionen (Prospektion, Datensammelflug, Handelsfahrt, Hilfsgütertransport, Trümmerbergung, Patrouille, Fernexpedition) — jede Missionsökonomie spielt sich pro Run anders, ohne Zusatzsystem. 6 der 7 Kenntnisse gaten je 1–2 Missionen; Agronomie bleibt frei als Reserve für spätere Missionstypen.
+
+**Kenntnis-Skalierung — Erfahrung senkt den Proviantbedarf:** Eine einzige, spielweite Regel: **Jedes Level der Gate-Kenntnis über dem Mindest-Gate senkt die Organika-Kosten der Mission um 1 pro Distanz-Sol — Minimum 1/Sol.** Beispiel Trümmerbergung (Bautechnik Lv1, Distanz 4): Lv1 = 12 Or, Lv2 = 8 Or, Lv3+ = 4 Or. Navigation-AP skalieren nie (die AP-Staffel ist das Raumfahrer-Progressionsgate, §13). Missionen ohne Kenntnis-Gate skalieren nicht. Begründung: Kostensenkung statt Belohnungserhöhung funktioniert für alle Belohnungstypen einheitlich (auch Tiles, Scans, Almanach — nicht bezifferbar), lässt alle ⚠️-Deckel unberührt (die Credit-Missionen Botenflug/Konvoi sind ungegatet und skalieren gar nicht; der Werkstoff-Durchsatz bleibt zeitgedeckelt, da Distanz/Dauer unverändert), und das Minimum 1/Sol erhält den Organika-Sink. (Config: `organika_scaling_per_level => 1`, `organika_floor_per_sol => 1` in `config/missions.php`.)
+
+**Wiederholbarkeit:** Missionen sind wiederholbar; Ausnahmen: Signalvermessung verbraucht das Signal-Tile, Ruinen-Expedition ist einmalig pro enthülltem Ruinen-Tile. Die natürliche Drossel für alles andere ist die Kostentrias Nav-AP + Organika + Verschleiß (Reparatur: Construction-AP + Regolith, §7).
+
+#### Resolution
+
+- **Rückkehr:** `return_tick = dispatch_tick + 2 × sol_distance`. Die Auflösung läuft im Tick im selben Schritt wie der Schiffs-Verschleiß (§7), **nach** dessen Anwendung — der SP-0-Abbruch (`state = aborted`, kein Ertrag) hat Vorrang. Bei Rückkehr: `state = completed`, Schiff `docked`, Belohnung wird gutgeschrieben, Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report.
+- **Recall:** Keine anteilige Belohnung, keine Rückerstattung (AP wären ohnehin verfallen, Proviant ist verbraucht). Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
+- **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fund-Missionen (Prospektion, Bergung, Fernexpedition), deterministisch aus dem Run-`rng_seed` (ADR 0003).
+
+> **Geprüft und verworfen (2026-07-04):** Ein zustandsbasierter Missionsausgang (Rückkehr-SP bestimmt Ertragsstufe, analog §9). Da Verschleiß deterministisch ist, wäre der Ausgang beim Dispatch bereits bekannt — kein Risiko, sondern eine Doppelbestrafung langer Missionen (die Fernexpedition kehrt selbst mit vollen Start-SP bei 25% zurück und würde immer „fehlschlagen") plus Vollreparatur-Zwang vor jedem Start. Ein reiner Würfel-Fail wiederum verletzt „Opportunitätskosten statt Strafe" (§1.1): Schiffs-Missionen kosten harte Ressourcen im Voraus — ein Fehlschlag vernichtet Bezahltes. Fehlt im Playtest Spannung, ist der Hebel die Spanne der Fund-Missionen (Loot-Tabellen verbreitern), nicht ein Fehlschlag-Layer.
+
+#### Missionslog
+
+Jede Mission wird in `colony_hangar_missions` gespeichert (`destination` trägt den `mission_key`, Sol-Distanz aus dem Katalog, Zustand `active/completed/recalled/aborted`). Im Hangar-Screen einsehbar; abgeschlossene Missionen zeigen die erhaltene Belohnung.
+
+> ⚠️ BALANCE CONCERN: Trümmerbergung und Fernexpedition sind neben Import und Cantina eine dritte Werkstoff-Quelle. Richtwert-Deckel: max. ~1 Werkstoff pro Missions-Sol Durchsatz je Schiff — der Nexus-Import (§3) muss die schnellere, die Mission die günstigere Option bleiben. Nach Playtest kalibrieren.
+
+> ⚠️ BALANCE CONCERN: Botenflug/Konvoi-Begleitung sind wiederholbare Credit-Quellen. Mit mehreren Drohnen skaliert das (~30 Cr/Sol je Drohne vor Reparaturkosten) — gegen Relaisvergütung und Berater-Upkeep (§13) prüfen; notfalls Prämien senken statt Cooldowns einführen.
+
+> ⚠️ BALANCE CONCERN: Der Milderungs-Effekt der Umkreis-Patrouille überschneidet sich mit dem Almanach-Bonus `encounter_prep` (§17) und der Strategen-Sicherheitsanalyse (§13). Regel: Milderungseffekte stapeln nicht — es gilt maximal eine Ausgangsstufe Milderung pro Gefahr, der stärkste Effekt wird verbraucht.
+
+> ⚠️ BALANCE CONCERN: Erkundungsflug (2 Tiles für 2 AP + 3 Or + 2 Sole + Verschleiß) darf die Ring-Erkundung (1/2/3 AP, sofort) nicht obsolet machen. Er ist als AP-effiziente, aber langsame Alternative für äußere Ringe gedacht. Wirkt er im Playtest dominant → auf 1 Tile senken oder Distanz auf 2 erhöhen.
 
 ### UI-Buttons
 
 | Button | Zustand | Funktion |
 |--------|---------|---------|
 | Nexus anfragen | Leer | Schiffstyp wählen, Akquise-Pfad wählen |
-| Entsenden | `docked` | Außenmission starten (Dispatch: Ziel + Sol-Distanz, kostet Navigation-AP + Organika) |
+| Entsenden | `docked` | Mission aus Katalog wählen (gefiltert nach Schiffstyp; Chips: Nav-AP, Organika, Dauer, Verschleiß-Prognose, Belohnung; nicht erfüllte Gates ausgegraut mit Bedingungshinweis) |
 | Zurückrufen | `dispatched` | Schiff zurückrufen |
 | Reparieren | `docked`, SP < max | Repair-Order (Construction-AP) |
 | Hangar zuweisen | `pending` | Schiff einem freien Hangar-Slot zuordnen |
@@ -1664,7 +1730,7 @@ advisors
 | Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
 | Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
-Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 1` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
+Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
 
 ### Außenmissionen (Berater-Außendienst)
 
@@ -1830,7 +1896,7 @@ Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses T
 
 1. **Bauen/Forschen/Handel:** AP werden beim Investieren gesperrt (`invest('add')`).
 2. **Reparatur/Abbau:** AP werden in Höhe der veränderten `status_points` gesperrt.
-3. **Erkundung/Dispatch:** Navigation-AP — Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 1` AP (§8b).
+3. **Erkundung/Dispatch:** Navigation-AP — Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 2` AP (§8b).
 
 ### Implementierung
 
