@@ -57,6 +57,8 @@ return [
     'dialog_no_missions' => 'Für diesen Schiffstyp liegt gerade kein Auftrag vor.',
     'gate_knowledge_hint' => 'Erfordert :name Stufe :level',
     'gate_target_hint' => 'Kein gültiges Ziel verfügbar',
+    'gate_nav_ap_hint' => 'Nicht genug Navigations-AP (:available/:required verfügbar)',
+    'gate_organika_hint' => 'Nicht genug Organika (:available/:required verfügbar)',
     'select_target' => 'Ziel wählen',
     'chip_duration' => 'Dauer: :sols Sole',
     'chip_wear' => 'Verschleiß',

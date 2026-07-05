@@ -573,9 +573,18 @@ class HangarService
         $navPerSol = (int) config('missions.nav_ap_per_sol', 2);
         $shipsConfig = config('ships');
 
+        // Same for every mission this call — compute once, not per catalog entry.
+        $availableNavAp = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
+        $availableOrganika = (int) (DB::table('colony_resources')
+            ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0);
+        $bypassAp = (bool) config('game.bypass.ap_checks');
+        $bypassResources = (bool) config('game.bypass.resource_costs');
+
         $entries = [];
         foreach (config('missions.catalog', []) as $key => $mission) {
             $dist = (int) $mission['sol_distance'];
+            $navApCost = $dist * $navPerSol;
+            $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             $availability = 'ok';
             $gateInfo = null;
@@ -603,6 +612,13 @@ class HangarService
                 }
             }
 
+            if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableNavAp) {
+                $availability = 'missing_ap';
+            }
+            if ($availability === 'ok' && ! $bypassResources && $organikaCost > $availableOrganika) {
+                $availability = 'missing_organika';
+            }
+
             $wear = [];
             foreach ($mission['ships'] as $shipKey) {
                 $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
@@ -616,8 +632,10 @@ class HangarService
                 'ships' => $mission['ships'],
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,
-                'nav_ap' => $dist * $navPerSol,
-                'organika' => $this->organikaCostFor($colonyId, $mission),
+                'nav_ap' => $navApCost,
+                'nav_ap_available' => $availableNavAp,
+                'organika' => $organikaCost,
+                'organika_available' => $availableOrganika,
                 'wear' => $wear,
                 'availability' => $availability,
                 'gate' => $gateInfo,

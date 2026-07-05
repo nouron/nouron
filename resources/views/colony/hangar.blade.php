@@ -67,6 +67,8 @@
                 missionDialogEmpty: @json(__("missions.dialog_no_missions")),
                 missionGateKnowledge: @json(__("missions.gate_knowledge_hint")),
                 missionGateTarget: @json(__("missions.gate_target_hint")),
+                missionGateNavAp: @json(__("missions.gate_nav_ap_hint")),
+                missionGateOrganika: @json(__("missions.gate_organika_hint")),
                 missionSelectTarget: @json(__("missions.select_target")),
                 missionChipDuration: @json(__("missions.chip_duration")),
                 missionChipWear: @json(__("missions.chip_wear")),
@@ -514,6 +516,14 @@
                                 </template>
                                 <template x-if="mission.availability === 'missing_target'">
                                     <span class="hangar-mission-gate-hint" x-text="i18n.missionGateTarget"></span>
+                                </template>
+                                <template x-if="mission.availability === 'missing_ap'">
+                                    <span class="hangar-mission-gate-hint"
+                                        x-text="i18n.missionGateNavAp.replace(':available', mission.nav_ap_available).replace(':required', mission.nav_ap)"></span>
+                                </template>
+                                <template x-if="mission.availability === 'missing_organika'">
+                                    <span class="hangar-mission-gate-hint"
+                                        x-text="i18n.missionGateOrganika.replace(':available', mission.organika_available).replace(':required', mission.organika)"></span>
                                 </template>
                                 <button class="btn-hangar-action hangar-mission-start" @click.stop="startMission(mission)"
                                     :disabled="mission.availability !== 'ok' || missionModal.loading || (

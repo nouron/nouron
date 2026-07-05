@@ -57,6 +57,8 @@ return [
     'dialog_no_missions' => 'No assignment available for this ship type right now.',
     'gate_knowledge_hint' => 'Requires :name level :level',
     'gate_target_hint' => 'No valid target available',
+    'gate_nav_ap_hint' => 'Not enough Navigation-AP (:available/:required available)',
+    'gate_organika_hint' => 'Not enough Organics (:available/:required available)',
     'select_target' => 'Select target',
     'chip_duration' => 'Duration: :sols Sols',
     'chip_wear' => 'Wear',
