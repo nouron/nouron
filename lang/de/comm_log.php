@@ -35,6 +35,10 @@ return [
             'trade' => 'Handelsroute abgeschlossen',
             'encounter' => 'Begegnung im All',
         ],
+        'hangar' => [
+            'mission_completed' => 'Mission abgeschlossen',
+            'mission_aborted' => 'Mission abgebrochen',
+        ],
         'encounter_won' => 'Begegnung gewonnen',
         'encounter_lost' => 'Begegnung verloren',
     ],

@@ -849,6 +849,147 @@ details[open] .hangar-pending-summary::before {
     color: #1a1a2e;
 }
 
+/* ── Mission dispatch dialog (catalog cards, GDD §8b) ─────────────────────── */
+/* Shape, backdrop, shadow handled by .sol-modal in colony.css */
+
+.hangar-mission-dialog {
+    width: min(92vw, 460px);
+    max-width: min(92vw, 460px);
+}
+
+.hangar-mission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem 1rem 0 1.25rem;
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.hangar-mission-empty {
+    font-size: 0.85rem;
+    color: var(--pico-muted-color, #888);
+    padding: 0.5rem 0;
+    margin: 0;
+}
+
+.hangar-mission-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 0.75rem 0.9rem;
+    background: #fff;
+    border: 1.5px solid #dde0ee;
+    border-radius: 8px;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        background 0.15s;
+}
+
+.hangar-mission-card:hover {
+    border-color: #3b5ac6;
+    background: #f4f6ff;
+}
+
+.hangar-mission-card--selected {
+    border-color: #3b5ac6;
+    background: #f4f6ff;
+}
+
+.hangar-mission-card--locked {
+    opacity: 0.55;
+    cursor: default;
+    background: #fafafa;
+}
+
+.hangar-mission-card--locked:hover {
+    border-color: #dde0ee;
+    background: #fafafa;
+}
+
+.hangar-mission-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+.hangar-mission-name {
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: #1a1a2e;
+}
+
+.hangar-mission-reward {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #2e7d32;
+    white-space: nowrap;
+}
+
+.hangar-mission-desc {
+    font-size: 0.78rem;
+    color: #666;
+    margin: 0;
+    line-height: 1.35;
+}
+
+.hangar-mission-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.hangar-mission-chip {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #f4f4f4;
+    color: #666;
+    border: 1px solid #e4e4ef;
+}
+
+.hangar-mission-target {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #555;
+    margin-top: 0.15rem;
+}
+
+.hangar-mission-target select {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid #d0d0dc;
+    border-radius: 6px;
+    background: #fafafa;
+    color: #1a1a2e;
+}
+
+.hangar-mission-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+}
+
+.hangar-mission-gate-hint {
+    font-size: 0.7rem;
+    color: #b45309;
+    flex: 1;
+}
+
+.hangar-mission-start {
+    flex-shrink: 0;
+}
+
 /* ── Mobile: dots inside flex column, always visible ─────────────────────── */
 
 @media (max-width: 767px) {

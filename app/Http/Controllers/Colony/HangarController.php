@@ -78,6 +78,8 @@ class HangarController extends BaseController
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('hangar', Auth::id());
 
+        $missionCatalog = $this->hangarService->getMissionCatalogFor($colony->id);
+
         return view('colony.hangar', compact(
             'slots',
             'pendingShips',
@@ -89,6 +91,7 @@ class HangarController extends BaseController
             'verfuegbareVerhandlungsAP',
             'commissionedShipIds',
             'firstVisit',
+            'missionCatalog',
         ));
     }
 
@@ -157,8 +160,11 @@ class HangarController extends BaseController
     public function dispatch(Request $request, int $instanceId): JsonResponse
     {
         $validated = $request->validate([
-            'destination' => 'required|string|max:80',
-            'sol_distance' => 'required|integer|min:1|max:999',
+            'mission_key' => 'required|string|max:80',
+            'target' => 'nullable|array',
+            'target.q' => 'sometimes|integer',
+            'target.r' => 'sometimes|integer',
+            'target.research_id' => 'sometimes|integer',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -167,8 +173,8 @@ class HangarController extends BaseController
             $this->hangarService->dispatchShip(
                 $colony->id,
                 $instanceId,
-                $validated['destination'],
-                $validated['sol_distance'],
+                $validated['mission_key'],
+                $validated['target'] ?? null,
             );
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);

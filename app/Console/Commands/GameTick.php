@@ -95,10 +95,13 @@ class GameTick extends Command
         $tick = $this->tickService->getTickCount();
         $this->info("Processing tick {$tick} (Run #{$run->id})…");
 
-        DB::transaction(function () use ($tick) {
+        DB::transaction(function () use ($tick, $run) {
             [$delivered, $expired] = $this->processHangarDeliveries($tick);
             $this->line("  Hangar ships delivered:   {$delivered}");
             $this->line("  Hangar ships expired:     {$expired}");
+
+            [$completed, $aborted] = $this->processHangarMissions($tick, (int) ($run->rng_seed ?? 0));
+            $this->line("  Hangar missions resolved: {$completed} completed, {$aborted} aborted");
 
             $n = $this->processBuildingDecay($tick);
             $this->line("  Buildings levelled down:  {$n}");
@@ -218,6 +221,256 @@ class GameTick extends Command
             ->delete();
 
         return [$delivered, $expired];
+    }
+
+    // ── 0b. Hangar missions: wear + resolution (GDD §7/§8b) ─────────────────
+
+    /**
+     * Applies ship wear and resolves catalog missions for every dispatched ship.
+     *
+     * Per tick and dispatched ship: subtract wear_per_sol (config/ships.php).
+     * SP ≤ 0 → mission aborted (no reward, ship limps home at 0 SP) — abort has
+     * precedence over completion. Otherwise, once tick reaches
+     * dispatch_tick + 2 × sol_distance the mission completes and rewards are paid.
+     *
+     * @return array{int, int} [$completedCount, $abortedCount]
+     */
+    private function processHangarMissions(int $tick, int $rngSeed): array
+    {
+        $shipsConfig = config('ships');
+        $shipKeyById = [];
+        foreach ($shipsConfig as $key => $cfg) {
+            $shipKeyById[(int) $cfg['id']] = $key;
+        }
+
+        $missions = DB::table('colony_hangar_missions as m')
+            ->join('colony_ships as cs', function ($join) {
+                $join->on('cs.colony_id', '=', 'm.colony_id')
+                    ->on('cs.hangar_instance_id', '=', 'm.instance_id');
+            })
+            ->where('m.state', 'active')
+            ->where('cs.ship_state', 'dispatched')
+            ->get([
+                'm.id as mission_id', 'm.colony_id', 'm.instance_id', 'm.destination',
+                'm.sol_distance', 'm.target', 'm.dispatch_tick',
+                'cs.id as colony_ship_id', 'cs.ship_id', 'cs.status_points',
+            ]);
+
+        $completed = 0;
+        $aborted = 0;
+
+        foreach ($missions as $mission) {
+            $shipKey = $shipKeyById[(int) $mission->ship_id] ?? null;
+            $wear = (float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0);
+            $newSp = (float) $mission->status_points - $wear;
+
+            $colony = Colony::find($mission->colony_id);
+            $userId = $colony?->user_id;
+
+            if ($newSp <= 0) {
+                // Ship worn out mid-mission: abort, no reward, limp home at 0 SP.
+                DB::table('colony_ships')->where('id', $mission->colony_ship_id)
+                    ->update(['ship_state' => 'docked', 'status_points' => 0]);
+                DB::table('colony_hangar_missions')->where('id', $mission->mission_id)
+                    ->update(['state' => 'aborted', 'recall_tick' => $tick]);
+
+                if ($userId !== null) {
+                    $this->eventService->createEvent([
+                        'user' => $userId,
+                        'tick' => $tick,
+                        'event' => 'hangar.mission_aborted',
+                        'area' => 'colony',
+                        'parameters' => json_encode([
+                            'mission_key' => $mission->destination,
+                            'ship_id' => (int) $mission->ship_id,
+                            'colony_id' => (int) $mission->colony_id,
+                        ]),
+                    ]);
+                }
+
+                $aborted++;
+
+                continue;
+            }
+
+            DB::table('colony_ships')->where('id', $mission->colony_ship_id)
+                ->update(['status_points' => $newSp]);
+
+            $returnTick = (int) $mission->dispatch_tick + 2 * (int) $mission->sol_distance;
+            if ($tick < $returnTick) {
+                continue; // still under way
+            }
+
+            // Mission complete: pay rewards, dock the ship.
+            $catalogEntry = config("missions.catalog.{$mission->destination}");
+            $rewardDetails = [];
+            if ($catalogEntry !== null) {
+                $rewardDetails = $this->payMissionRewards(
+                    (int) $mission->colony_id,
+                    $userId,
+                    $catalogEntry['reward'],
+                    $mission->target !== null ? json_decode($mission->target, true) : null,
+                    $rngSeed + (int) $mission->mission_id,
+                    $tick
+                );
+            }
+
+            DB::table('colony_ships')->where('id', $mission->colony_ship_id)
+                ->update(['ship_state' => 'docked']);
+            DB::table('colony_hangar_missions')->where('id', $mission->mission_id)
+                ->update(['state' => 'completed']);
+
+            if ($userId !== null) {
+                $this->eventService->createEvent([
+                    'user' => $userId,
+                    'tick' => $tick,
+                    'event' => 'hangar.mission_completed',
+                    'area' => 'colony',
+                    'parameters' => json_encode([
+                        'mission_key' => $mission->destination,
+                        'ship_id' => (int) $mission->ship_id,
+                        'colony_id' => (int) $mission->colony_id,
+                        'rewards' => $rewardDetails,
+                    ]),
+                ]);
+            }
+
+            $completed++;
+        }
+
+        return [$completed, $aborted];
+    }
+
+    /**
+     * Pays out a catalog mission reward and returns the concrete amounts for logging.
+     *
+     * Range values [min,max] and loot_table picks roll deterministically from the
+     * run rng_seed + mission id (ADR 0003) — same run, same mission, same outcome.
+     */
+    private function payMissionRewards(
+        int $colonyId,
+        ?int $userId,
+        array $reward,
+        ?array $target,
+        int $seed,
+        int $tick
+    ): array {
+        // loot_table: seeded pick of one entry, then resolve that entry's rewards.
+        if (isset($reward['loot_table'])) {
+            $table = $reward['loot_table'];
+            $reward = $table[$this->seededRoll($seed, 0, count($table) - 1)];
+        }
+
+        $resourceIds = ['regolith' => 3, 'compounds' => 4, 'organics' => 5];
+        $details = [];
+
+        foreach ($reward as $type => $value) {
+            if (is_array($value) && count($value) === 2 && isset($value[0], $value[1])) {
+                $value = $this->seededRoll($seed + crc32($type), (int) $value[0], (int) $value[1]);
+            }
+
+            if ($type === 'credits') {
+                if ($userId !== null) {
+                    DB::table('user_resources')->where('user_id', $userId)->increment('credits', (int) $value);
+                }
+            } elseif (isset($resourceIds[$type])) {
+                DB::table('colony_resources')
+                    ->where('colony_id', $colonyId)
+                    ->where('resource_id', $resourceIds[$type])
+                    ->update(['amount' => DB::raw('amount + '.(int) $value)]);
+            } elseif ($type === 'trust_event') {
+                $this->trustService->fireEvent($colonyId, (string) $value, $tick);
+            } elseif ($type === 'reveal_tiles') {
+                $value = $this->revealTiles($colonyId, (int) $value);
+            } elseif ($type === 'deep_scan') {
+                $this->deepScanTarget($colonyId, $target);
+            } elseif ($type === 'research_ap') {
+                $this->grantResearchAp($colonyId, $target, (int) $value);
+            }
+
+            $details[$type] = $value;
+        }
+
+        return $details;
+    }
+
+    /**
+     * Reveals up to $count unexplored exploration-zone tiles (deterministic order).
+     * Returns the number actually revealed. Bypasses the AP-gated exploreTile().
+     */
+    private function revealTiles(int $colonyId, int $count): int
+    {
+        $tiles = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('is_explored', 0)
+            ->where('is_colony_zone', 0)
+            ->orderBy('ring')->orderBy('q')->orderBy('r')
+            ->limit($count)
+            ->get(['q', 'r']);
+
+        foreach ($tiles as $tile) {
+            DB::table('colony_tiles')
+                ->where('colony_id', $colonyId)
+                ->where('q', $tile->q)->where('r', $tile->r)
+                ->update(['is_explored' => 1]);
+        }
+
+        return $tiles->count();
+    }
+
+    /**
+     * Deep-scans the mission's target tile (player-picked at dispatch).
+     */
+    private function deepScanTarget(int $colonyId, ?array $target): void
+    {
+        if (! isset($target['q'], $target['r'])) {
+            return;
+        }
+
+        DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('q', (int) $target['q'])->where('r', (int) $target['r'])
+            ->update(['is_deep_scanned' => 1]);
+    }
+
+    /**
+     * Grants research-AP progress on the player-chosen knowledge, capped at the
+     * next levelup threshold (no auto-levelup) — bypasses the AP-gated invest().
+     */
+    private function grantResearchAp(int $colonyId, ?array $target, int $points): void
+    {
+        $researchId = (int) ($target['research_id'] ?? 0);
+        if ($researchId === 0) {
+            return;
+        }
+
+        $row = DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $researchId)
+            ->first(['level', 'ap_spend']);
+
+        $currentLevel = (int) ($row->level ?? 0);
+        $costs = collect(config('knowledge'))->firstWhere('id', $researchId)['levelup_costs'] ?? [];
+        $threshold = (int) ($costs[$currentLevel + 1] ?? PHP_INT_MAX);
+        $newSpend = min(((int) ($row->ap_spend ?? 0)) + $points, $threshold);
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => $researchId],
+            ['ap_spend' => $newSpend, 'level' => $currentLevel]
+        );
+    }
+
+    /**
+     * Deterministic integer roll in [min, max] — LCG hash, same pattern as BarService.
+     */
+    private function seededRoll(int $seed, int $min, int $max): int
+    {
+        if ($max <= $min) {
+            return $min;
+        }
+        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
+
+        return $min + ($hash % ($max - $min + 1));
     }
 
     // ── 4. Building decay ────────────────────────────────────────────────────

@@ -35,6 +35,10 @@ return [
             'trade' => 'Trade route concluded',
             'encounter' => 'Encounter in space',
         ],
+        'hangar' => [
+            'mission_completed' => 'Mission completed',
+            'mission_aborted' => 'Mission aborted',
+        ],
         'encounter_won' => 'Encounter resolved',
         'encounter_lost' => 'Encounter lost',
     ],

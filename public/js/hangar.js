@@ -8,6 +8,10 @@
  *
  * @param {object} config - Matches the window.__hangarData structure from HangarController.
  */
+
+/** Maps ship_id from the slot payload to the config ship key used in the mission catalog. */
+const HANGAR_SHIP_ID_TO_KEY = { 85: 'drone', 47: 'freighter', 37: 'corvette' };
+
 function hangarCarousel(config) {
     return {
         ...carouselMixin(config.slots.length),
@@ -26,15 +30,22 @@ function hangarCarousel(config) {
         hasAktivierterKonsul: config.hasAktivierterKonsul ?? false,
         verfuegbareVerhandlungsAP: config.verfuegbareVerhandlungsAP ?? 0,
         pendingShips: config.pendingShips ?? [],
+        missionCatalog: config.missionCatalog ?? [],
 
         // Per-instance UI state: keyed by instance_id
-        modalType: {},
         loading: {},
         error: {},
 
-        // Per-instance form values
-        dispatchDest: {},
-        dispatchSol: {},
+        // Mission dispatch modal state (shared across all slots)
+        missionModal: {
+            open: false,
+            instanceId: null,
+            shipKey: null,
+            selectedKey: null,
+            targetIndex: '',
+            loading: false,
+            error: null,
+        },
 
         // Nexus request modal state (shared across all slots)
         requestModal: {
@@ -55,11 +66,8 @@ function hangarCarousel(config) {
             this._carouselInit();
             this.slots.forEach((slot) => {
                 const id = slot.instance_id;
-                this.modalType[id] = null;
                 this.loading[id] = false;
                 this.error[id] = null;
-                this.dispatchDest[id] = '';
-                this.dispatchSol[id] = 1;
             });
             this.pendingShips.forEach((ship) => {
                 this.pendingAssignTarget[ship.id] = '';
@@ -115,14 +123,141 @@ function hangarCarousel(config) {
             return Math.max(0, entry.cost - discount);
         },
 
-        openModal(instanceId, type) {
-            this.error[instanceId] = null;
-            this.modalType[instanceId] = type;
+        /**
+         * Catalog entries available for the ship type docked in the slot the
+         * mission dialog was opened for.
+         */
+        get missionsForModal() {
+            if (!this.missionModal.shipKey) return [];
+            return this.missionCatalog.filter((m) => m.ships.includes(this.missionModal.shipKey));
         },
 
-        closeModal(instanceId) {
-            this.modalType[instanceId] = null;
-            this.error[instanceId] = null;
+        /**
+         * Opens the mission dispatch dialog for a docked ship's slot.
+         * @param {number} instanceId
+         */
+        openMissionDialog(instanceId) {
+            const slot = this.slots.find((s) => s.instance_id === instanceId);
+            const shipKey = slot?.ship ? (HANGAR_SHIP_ID_TO_KEY[slot.ship.ship_id] ?? null) : null;
+            this.missionModal = {
+                open: true,
+                instanceId,
+                shipKey,
+                selectedKey: null,
+                targetIndex: '',
+                loading: false,
+                error: null,
+            };
+        },
+
+        /**
+         * Closes the mission dispatch dialog and resets its error state.
+         */
+        closeMissionDialog() {
+            this.missionModal.open = false;
+            this.missionModal.error = null;
+        },
+
+        /**
+         * Marks a mission card as selected (reveals the target picker if needed).
+         * Locked missions (gated / no valid target) cannot be selected.
+         * @param {object} mission - catalog entry
+         */
+        selectMission(mission) {
+            if (mission.availability !== 'ok') return;
+            if (this.missionModal.selectedKey === mission.key) return;
+            this.missionModal.selectedKey = mission.key;
+            this.missionModal.targetIndex = '';
+            this.missionModal.error = null;
+        },
+
+        /**
+         * Whether a catalog entry requires a player-picked target before dispatch.
+         * @param {object} mission - catalog entry
+         * @returns {boolean}
+         */
+        missionRequiresTarget(mission) {
+            return mission.target_type != null;
+        },
+
+        /**
+         * Wear forecast for the ship type the dialog was opened for.
+         * @param {object} mission - catalog entry
+         * @returns {number}
+         */
+        missionWear(mission) {
+            return mission.wear?.[this.missionModal.shipKey] ?? 0;
+        },
+
+        /**
+         * Display label for a pickable mission target.
+         * @param {object} mission - catalog entry
+         * @param {object} target - tile {q,r,ring} or knowledge {research_id,label,level}
+         * @returns {string}
+         */
+        targetLabel(mission, target) {
+            if (mission.target_type === 'knowledge') {
+                return target.label + ' (Lv ' + target.level + ')';
+            }
+            return '(' + target.q + '|' + target.r + ') — Ring ' + target.ring;
+        },
+
+        /**
+         * Start button handler: first click selects the mission (revealing the
+         * target picker when one is required), second click submits.
+         * @param {object} mission - catalog entry
+         */
+        startMission(mission) {
+            if (mission.availability !== 'ok' || this.missionModal.loading) return;
+            if (this.missionModal.selectedKey !== mission.key) {
+                this.selectMission(mission);
+                if (this.missionRequiresTarget(mission)) return; // let the player pick a target first
+            }
+            if (this.missionRequiresTarget(mission) && this.missionModal.targetIndex === '') return;
+            this.submitMission(mission);
+        },
+
+        /**
+         * Builds the dispatch target payload from the picked target index.
+         * @param {object} mission - catalog entry
+         * @returns {object|null} {q,r} | {research_id} | null
+         */
+        _missionTargetPayload(mission) {
+            const idx = parseInt(this.missionModal.targetIndex, 10);
+            const target = mission.targets?.[idx];
+            if (!target) return null;
+            if (mission.target_type === 'knowledge') {
+                return { research_id: target.research_id };
+            }
+            return { q: target.q, r: target.r };
+        },
+
+        /**
+         * POST: dispatch the docked ship on the given catalog mission.
+         * Endpoint: POST /colony/hangar/{instanceId}/dispatch
+         * Payload: { mission_key, target? }
+         * @param {object} mission - catalog entry
+         */
+        async submitMission(mission) {
+            this.missionModal.loading = true;
+            this.missionModal.error = null;
+            try {
+                const url = this.routes.dispatch.replace('__ID__', this.missionModal.instanceId);
+                const res = await this._post(url, {
+                    mission_key: mission.key,
+                    target: this.missionRequiresTarget(mission) ? this._missionTargetPayload(mission) : null,
+                });
+                if (res.ok) {
+                    this._updateSlot(this.missionModal.instanceId, res.slot);
+                    this.closeMissionDialog();
+                } else {
+                    this.missionModal.error = res.error ?? 'Error.';
+                }
+            } catch {
+                this.missionModal.error = 'Network error.';
+            } finally {
+                this.missionModal.loading = false;
+            }
         },
 
         /**
@@ -202,32 +337,6 @@ function hangarCarousel(config) {
          */
         statusBarWidth(points) {
             return Math.max(0, Math.min(100, (points / 20) * 100)) + '%';
-        },
-
-        /**
-         * POST: dispatch a docked ship on a mission.
-         * @param {number} instanceId
-         */
-        async dispatch(instanceId) {
-            this.loading[instanceId] = true;
-            this.error[instanceId] = null;
-            try {
-                const url = this.routes.dispatch.replace('__ID__', instanceId);
-                const res = await this._post(url, {
-                    destination: this.dispatchDest[instanceId],
-                    sol_distance: parseInt(this.dispatchSol[instanceId], 10),
-                });
-                if (res.ok) {
-                    this._updateSlot(instanceId, res.slot);
-                    this.closeModal(instanceId);
-                } else {
-                    this.error[instanceId] = res.error ?? 'Error.';
-                }
-            } catch {
-                this.error[instanceId] = 'Network error.';
-            } finally {
-                this.loading[instanceId] = false;
-            }
         },
 
         /**

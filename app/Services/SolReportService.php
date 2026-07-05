@@ -219,6 +219,25 @@ class SolReportService
             $lines[] = $this->staticLine(__('colony.sol_report_event_merchant'), 'good');
         }
 
+        foreach ($events['hangar.mission_completed'] ?? [] as $params) {
+            $missionKey = $params['mission_key'] ?? '';
+            $lines[] = [
+                'label' => __('missions.sol_report_completed'),
+                'detail' => __("missions.{$missionKey}_name"),
+                'tone' => 'good',
+            ];
+        }
+
+        foreach ($events['hangar.mission_aborted'] ?? [] as $params) {
+            $missionKey = $params['mission_key'] ?? '';
+            $lines[] = [
+                'label' => __('missions.sol_report_aborted'),
+                'detail' => __("missions.{$missionKey}_name"),
+                'tone' => 'warning',
+                'beat' => true,
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }
