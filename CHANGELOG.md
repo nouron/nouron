@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-05 (2)
+
+- **`game:snapshot` — Playtest-Fortsetzung ohne Sol-1-Neustart.** Owner-Pain-Point: jeder Blocker während des täglichen Playtests zwang zum Reset auf Sol 1 (`game:reset-player` bietet nur 5 feste Szenarien, keine Fortsetzung des echten Runs). Neuer Dev-Command dumpt/restored den kompletten Live-Zustand eines Spielers (Colony/Run/Resources/Buildings/Tiles/Advisors/Ships/Missions/Researches/Log) als JSON unter `storage/app/private/snapshots/{user_id}/{label}.json` — `save`/`restore`/`list`. Workflow: vor riskanter Aktion snapshotten, bei Blocker fixen + zurückspulen statt neu hochzuspielen. Live gegen Bart (echter Sol-97-Run) verifiziert: save → Mutation → restore → Zustand + alle Kernscreens (Colony/Hangar/Comm-Log/Advisors) korrekt.
+
 ## 2026-07-05
 
 - **Hangar-Missionskatalog implementiert** (GDD §8b, 12 Missionstypen — `mission_perimeter_patrol` zurückgestellt bis §9 existiert). `config/missions.php` neu (Katalog, Kosten-/Skalierungsparameter). `HangarService::dispatchShip()` auf `(colonyId, instanceId, missionKey, ?target)` umgestellt — validiert Schiffstyp, Kenntnis-Gate, Ziel (Signal-/Ruinen-Tile oder Kenntnis), SP-Dispatch-Sperre (<25%); neue `getMissionCatalogFor()` liefert lokalisierten, kostenberechneten Katalog für die UI. `organikaCostFor()` implementiert die Kenntnis-Skalierung (−1 Organika/Distanz-Sol je Level über Gate, Floor 1).
