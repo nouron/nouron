@@ -180,7 +180,11 @@ class HangarController extends BaseController
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
 
-        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
+        return response()->json([
+            'ok' => true,
+            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            ...$this->currentHangarResources($colony->id),
+        ]);
     }
 
     public function recall(Request $request, int $instanceId): JsonResponse
@@ -221,7 +225,25 @@ class HangarController extends BaseController
             $this->personellService->lockActionPoints('construction', $colony->id, 1);
         }
 
-        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
+        return response()->json([
+            'ok' => true,
+            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            ...$this->currentHangarResources($colony->id),
+        ]);
+    }
+
+    /**
+     * Resourcebar-sync payload (design-guide.md §5.6a) — mirrors
+     * ColonyController::currentAp()'s field names so both screens share the
+     * same JS sync convention (colony-hexgrid.js's updateAp() pattern).
+     */
+    private function currentHangarResources(int $colonyId): array
+    {
+        return [
+            'apNav' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
+            'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+            'organika' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0),
+        ];
     }
 
     private function fetchSlot(int $colonyId, int $instanceId): ?array

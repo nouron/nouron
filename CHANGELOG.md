@@ -8,6 +8,7 @@
 - **UI:** Freitext-Dispatch-Formular durch sol-modal-Missionsdialog ersetzt (`hangar.blade.php`/`hangar.js`) — Missionsliste gefiltert nach Schiffstyp, Chips (Nav-AP/Organika/Dauer/Verschleiß/Belohnung), ausgegraute Karten bei fehlendem Gate/Ziel mit Hinweistext, Ziel-Auswahl für Signal-/Ruinen-Tiles und Kenntnisse. Dispatched-Card zeigt Missionsname + Rückkehr-Sol statt Freitext.
 - Lang: `lang/de+en/missions.php` neu (12 Missionen × Name/Beschreibung/Belohnung + UI-/Fehlertexte), `comm_log.php` um `hangar.mission_completed`/`mission_aborted` ergänzt.
 - Live gegen Dev-Server verifiziert: Dispatch → Verschleiß → Completion → Reward → Kolonieprotokoll, End-to-End über echten HTTP-Endpoint.
+- **Fix (Owner-Review):** Ressourcenleiste aktualisierte sich nach Hangar-Dispatch/-Reparatur erst bei Reload. `HangarController::dispatch()`/`repair()` liefern jetzt `apNav`/`apConstruction`/`organika` in der JSON-Antwort (Feldnamen wie `ColonyController::currentAp()`), `hangar.js` synct die Resourcebar-Chips live (Muster `colony-hexgrid.js::updateAp()`). Chip-Wortlaut vereinheitlicht: Organika-Chip zeigt jetzt die Abkürzung "Or" statt "Organika" (wie in der Resourcebar), Dauer-Chip "Dauer: X Sole" statt bloßem "X Sole" (Verwechslungsgefahr mit dem Sol-Tageszähler-Chip). Neue verbindliche Konvention dokumentiert: `docs/design-guide.md` §5.6a (Live-Sync nach AJAX-Aktionen) + Verweis in `.claude/agents/ui-specialist.md`.
 
 ## 2026-07-04
 

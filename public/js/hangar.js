@@ -249,6 +249,7 @@ function hangarCarousel(config) {
                 });
                 if (res.ok) {
                     this._updateSlot(this.missionModal.instanceId, res.slot);
+                    this.syncHangarResources(res);
                     this.closeMissionDialog();
                 } else {
                     this.missionModal.error = res.error ?? 'Error.';
@@ -373,6 +374,7 @@ function hangarCarousel(config) {
                 const res = await this._post(url, {});
                 if (res.ok) {
                     this._updateSlot(instanceId, res.slot);
+                    this.syncHangarResources(res);
                 } else {
                     this.error[instanceId] = res.error ?? 'Error.';
                 }
@@ -429,6 +431,47 @@ function hangarCarousel(config) {
             if (idx !== -1) {
                 this.slots[idx] = updatedSlot;
             }
+        },
+
+        /**
+         * Syncs the resourcebar (layout header, outside this Alpine component)
+         * after dispatch/repair — design-guide.md §5.6a. Mirrors
+         * colony-hexgrid.js's updateAp() pattern; the previous value is read
+         * from the DOM rather than tracked locally since hangar.js doesn't
+         * otherwise need AP/resource state for affordability checks.
+         * @param {object} res - JSON response, may carry apNav/apConstruction/organika
+         */
+        syncHangarResources(res) {
+            if (res.apNav !== undefined) this.syncResbarChip('#resbar-ap-nav', res.apNav);
+            if (res.apConstruction !== undefined) this.syncResbarChip('#resbar-ap-build', res.apConstruction);
+            if (res.organika !== undefined) this.syncResbarChip('.res-Or', res.organika);
+        },
+
+        /**
+         * Writes a new value into a resourcebar chip's .res-amount span and
+         * briefly flashes the chip if the value dropped.
+         * @param {string} selector - CSS selector for the chip (id or class)
+         * @param {number} value
+         */
+        syncResbarChip(selector, value) {
+            const el = document.querySelector(`${selector} .res-amount`);
+            if (!el) return;
+            const old = parseInt(el.textContent.replace(/[^0-9-]/g, ''), 10);
+            el.textContent = typeof value === 'number' ? value.toLocaleString('de-DE') : value;
+            if (!Number.isNaN(old) && value < old) this.flashResbarChip(selector);
+        },
+
+        /**
+         * @param {string} selector - CSS selector for the chip (id or class)
+         */
+        flashResbarChip(selector) {
+            const chip = document.querySelector(selector);
+            if (!chip) return;
+            const flashClass = chip.classList.contains('ap-chip') ? 'ap-chip--flash' : 'res-chip--flash';
+            chip.classList.remove(flashClass);
+            void chip.offsetWidth; // force reflow so the animation restarts even mid-flash
+            chip.classList.add(flashClass);
+            setTimeout(() => chip.classList.remove(flashClass), 700);
         },
 
         _csrf() {

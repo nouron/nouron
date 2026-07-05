@@ -70,7 +70,6 @@
                 missionSelectTarget: @json(__("missions.select_target")),
                 missionChipDuration: @json(__("missions.chip_duration")),
                 missionChipWear: @json(__("missions.chip_wear")),
-                missionChipOrganika: @json(__("missions.chip_organika")),
                 missionReturnLabel: @json(__("missions.return_label")),
                 missionStart: @json(__("missions.start_button")),
             },
@@ -488,7 +487,7 @@
                             <div class="hangar-mission-chips">
                                 <span class="ap-chip ap-cost-chip ap-chip--nav" x-text="mission.nav_ap + ' AP'"></span>
                                 <span class="hangar-mission-chip" x-show="mission.organika > 0"
-                                    x-text="i18n.missionChipOrganika + ' ' + mission.organika"></span>
+                                    x-text="'Or ' + mission.organika"></span>
                                 <span class="hangar-mission-chip"
                                     x-text="i18n.missionChipDuration.replace(':sols', mission.duration)"></span>
                                 <span class="hangar-mission-chip"

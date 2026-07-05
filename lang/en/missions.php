@@ -58,9 +58,8 @@ return [
     'gate_knowledge_hint' => 'Requires :name level :level',
     'gate_target_hint' => 'No valid target available',
     'select_target' => 'Select target',
-    'chip_duration' => ':sols Sols',
+    'chip_duration' => 'Duration: :sols Sols',
     'chip_wear' => 'Wear',
-    'chip_organika' => 'Organics',
     'return_label' => 'Return: Sol :sol',
     'start_button' => 'Start mission',
 

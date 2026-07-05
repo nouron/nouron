@@ -270,6 +270,21 @@ Die Resource Pills sind ein bestehendes, gut funktionierendes Muster — sie wer
 
 ---
 
+### 5.6a Live-Sync nach AJAX-Aktionen (verbindlich)
+
+Die Resource Bar ist reines server-gerendertes Blade ohne eigenen reaktiven State — sie aktualisiert sich nicht von selbst. **Jeder Screen mit AJAX-Aktionen, die AP oder Ressourcen verändern, muss beides selbst erledigen:**
+
+1. **Backend:** Die JSON-Antwort liefert die aktualisierten Werte mit — exakt diese Feldnamen (Referenz: `ColonyController::currentAp()`): `apNav`, `apConstruction`, `apResearch`, `apEconomy`, `apStrategy`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`. Gleiche Feldnamen spielweit, damit ein künftiger gemeinsamer Store (siehe unten) beide Seiten ohne Umbenennung zusammenführen kann.
+2. **Frontend:** Die zurückgegebenen Werte werden per DOM-Patch in die Resource-Bar-Chips geschrieben und bei Abnahme kurz aufgeblitzt. Kanonisches Referenzmuster: `public/js/colony-hexgrid.js` (`updateAp()`, `syncResbarAp()`/`syncResbarAmount()`, `flashApChip()`/`flashResChip()`) — Chips werden über ihre `#resbar-ap-*`-ID bzw. `.res-{{Abbr}}`-Klasse angesprochen (z.B. `.res-Or` für Organika).
+
+Es gibt aktuell **keinen** globalen Store — das ist ein bewusstes Copy-Paste-Muster pro Screen (Zukunftsschritt „gemeinsamer Alpine-Store" ist im Code vermerkt, aber nicht Teil dieser Konvention). Ein neuer Screen mit AJAX-Aktionen **ohne** diesen Sync gilt als unvollständig — Symptom: Ressourcenleiste hinkt hinterher, korrigiert sich erst beim nächsten Reload.
+
+**Abkürzungen sind fix und werden nie übersetzt:** `Cr`, `Rg`, `Co`, `Or`, `Sup`, `Nav`/`Con`/`Res`/`Eco`/`Str` + `AP` — jeder Kosten-/Ertrags-Chip verwendet dieselbe Abkürzung wie die Resource Bar, nie den ausgeschriebenen Ressourcennamen (auch nicht via `__()`/Lang-Key).
+
+**„Sol" ohne Kontext ist reserviert** für den absoluten Tageszähler-Chip der Resource Bar. Relative Zeitspannen (Missionsdauer, Cooldowns, Lieferzeiten o.ä.) brauchen ein Präfix (z.B. „Dauer: X Sole"), nie bloß „X Sole" — sonst wirkt es wie derselbe Zähler.
+
+---
+
 ### 5.7 Tabellen
 
 - Volle Breite, `border-collapse: collapse`

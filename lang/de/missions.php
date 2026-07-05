@@ -58,9 +58,8 @@ return [
     'gate_knowledge_hint' => 'Erfordert :name Stufe :level',
     'gate_target_hint' => 'Kein gültiges Ziel verfügbar',
     'select_target' => 'Ziel wählen',
-    'chip_duration' => ':sols Sole',
+    'chip_duration' => 'Dauer: :sols Sole',
     'chip_wear' => 'Verschleiß',
-    'chip_organika' => 'Organika',
     'return_label' => 'Rückkehr: Sol :sol',
     'start_button' => 'Mission starten',
 
