@@ -867,7 +867,7 @@ Decay erzwingt regelmäßige AP-Investitionen in Wartung. Inaktive Spieler verli
 
 ### Schiffs-Verschleiß
 
-> **Status: Design fertig, Implementierung ausstehend** (analog §9 Kolonistengefahren). Aktuell reduziert nichts die Schiffs-SP — die frühere Fassung ("Verschleiß pro Flottenorder") ist mit der Streichung des Flottensystems (2026-06-20) hinfällig.
+> **Status: Implementiert (2026-07-05).** `GameTick::processHangarMissions()` zieht `wear_per_sol` pro Tick von jedem dispatchten Schiff ab.
 
 Schiffe verfallen **nicht durch Zeitablauf**, sondern durch aktiven Einsatz. Der einzige aktive Einsatz ist die **Außenmission** (Hangar-Dispatch, §8b): Für jeden Sol, den ein Schiff im Zustand `dispatched` verbringt, verliert es Verschleißpunkte.
 
@@ -1149,7 +1149,7 @@ Nicht zugewiesene Schiffe (`pending`) erscheinen als separate Karten am Ende des
 
 ### Außenmissionen — Missionskatalog
 
-> **Status: Design fertig, Implementierung ausstehend.** Aktuell ist `destination` ein Freitextfeld und Missionen resolven nie (kein Abschluss, keine Belohnung). Dieser Abschnitt ersetzt beides: Das Ziel wird aus einem festen Missionskatalog gewählt (`mission_key` statt Freitext, Sol-Distanz aus dem Katalog statt Spieler-Eingabe), und Missionen kehren nach fester Dauer mit Belohnung zurück.
+> **Status: Implementiert (2026-07-05)** — `config/missions.php`, `HangarService::dispatchShip()`/`getMissionCatalogFor()`, `GameTick::processHangarMissions()`. `mission_perimeter_patrol` bleibt zurückgestellt bis §9 (Kolonistengefahren) implementiert ist; `mission_ruin_expedition` zahlt vorerst nur die 150-Cr-Belohnung, der Almanach-Unlock folgt mit §17.
 
 Außenmissionen sind der einzige aktive Einsatz von Schiffen (§7 Schiffs-Verschleiß). Jede Mission ist ein ziviler Auftrag — Erkundung, Logistik, Bergung, Schutzdienst. Es gibt keine Gegner und keinen Kampf (§9-Designlinie): Das Risiko einer Mission ist ausschließlich physisch — Verschleiß pro Sol unterwegs und der automatische Abbruch bei 0 SP.
 
@@ -1198,7 +1198,7 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 #### Resolution
 
 - **Rückkehr:** `return_tick = dispatch_tick + 2 × sol_distance`. Die Auflösung läuft im Tick im selben Schritt wie der Schiffs-Verschleiß (§7), **nach** dessen Anwendung — der SP-0-Abbruch (`state = aborted`, kein Ertrag) hat Vorrang. Bei Rückkehr: `state = completed`, Schiff `docked`, Belohnung wird gutgeschrieben, Eintrag im Kolonieprotokoll (`colony_log`) und im Sol-Report.
-- **Recall:** Keine anteilige Belohnung, keine Rückerstattung (AP wären ohnehin verfallen, Proviant ist verbraucht). Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
+- **Recall:** Keine anteilige Belohnung, keine Rückerstattung — auch nicht bei sofortigem Abbruch im selben Sol wie der Dispatch (Nav-AP und Organika werden beim Dispatch instant fällig, unabhängig von der tatsächlich zurückgelegten Zeit). Keine Mindestwartezeit vor dem Recall — der Spieler kann jederzeit zurückrufen, verliert dabei aber immer die vollen Dispatch-Kosten. Der Wert des Rückrufs ist gesparter Verschleiß (§7 „Schonungs-Entscheidung") — anteilige Erträge würden systematisches Halbstrecken-Abbrechen zum Optimalpfad machen.
 - **Kein Ausgangs-Roll:** Anders als Berater-Außenmissionen (§13) gibt es kein Erfolg/Teilerfolg/Misserfolg-Würfeln — Schiffe haben kein Rang-Analogon, und die Risiko-Achse existiert bereits über Verschleiß + Abbruch. Zufall beschränkt sich auf die Belohnungshöhe der Fund-Missionen (Prospektion, Bergung, Fernexpedition), deterministisch aus dem Run-`rng_seed` (ADR 0003).
 
 > **Geprüft und verworfen (2026-07-04):** Ein zustandsbasierter Missionsausgang (Rückkehr-SP bestimmt Ertragsstufe, analog §9). Da Verschleiß deterministisch ist, wäre der Ausgang beim Dispatch bereits bekannt — kein Risiko, sondern eine Doppelbestrafung langer Missionen (die Fernexpedition kehrt selbst mit vollen Start-SP bei 25% zurück und würde immer „fehlschlagen") plus Vollreparatur-Zwang vor jedem Start. Ein reiner Würfel-Fail wiederum verletzt „Opportunitätskosten statt Strafe" (§1.1): Schiffs-Missionen kosten harte Ressourcen im Voraus — ein Fehlschlag vernichtet Bezahltes. Fehlt im Playtest Spannung, ist der Hebel die Spanne der Fund-Missionen (Loot-Tabellen verbreitern), nicht ein Fehlschlag-Layer.

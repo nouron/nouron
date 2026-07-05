@@ -96,6 +96,13 @@ class HangarService
             $shipData = null;
             if ($ship !== null) {
                 $mission = $missions[$iid] ?? null;
+                if ($mission !== null) {
+                    $mission = (array) $mission;
+                    // destination carries the mission_key (catalog); enrich for the UI.
+                    $mission['mission_key'] = $mission['destination'];
+                    $mission['mission_name'] = __("missions.{$mission['destination']}_name");
+                    $mission['return_tick'] = (int) $mission['dispatch_tick'] + 2 * (int) $mission['sol_distance'];
+                }
                 $shipData = [
                     'id' => (int) $ship->id,
                     'ship_id' => (int) $ship->ship_id,
@@ -105,7 +112,7 @@ class HangarService
                     'status_points' => (float) $ship->status_points,
                     'ap_spend' => (int) $ship->ap_spend,
                     'deliver_at_tick' => $ship->deliver_at_tick !== null ? (int) $ship->deliver_at_tick : null,
-                    'active_mission' => $mission !== null ? (array) $mission : null,
+                    'active_mission' => $mission,
                 ];
             }
 
@@ -355,19 +362,24 @@ class HangarService
     }
 
     /**
-     * Dispatch a docked ship on a mission. Creates an active mission log row.
+     * Dispatch a docked ship on a catalog mission (GDD §8b).
+     *
+     * Validates the mission key against config/missions.php: allowed ship type,
+     * knowledge gate, target requirement (player-picked tile/knowledge) and the
+     * §7 SP dispatch block. Costs: nav AP = distance × nav_ap_per_sol; organika =
+     * distance × per-sol rate reduced by knowledge levels above the gate (floor 1)
+     * plus any mission extra_cost.
+     *
+     * @param  array{q?: int, r?: int, research_id?: int}|null  $target
      */
-    public function dispatchShip(int $colonyId, int $instanceId, string $destination, int $solDistance): void
+    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null): void
     {
-        if (trim($destination) === '') {
-            throw new RuntimeException('Destination must not be empty.');
+        $mission = config("missions.catalog.{$missionKey}");
+        if ($mission === null) {
+            throw new RuntimeException("Unknown mission key: {$missionKey}.");
         }
 
-        if ($solDistance < 1) {
-            throw new RuntimeException('Sol distance must be at least 1.');
-        }
-
-        DB::transaction(function () use ($colonyId, $instanceId, $destination, $solDistance): void {
+        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
@@ -383,10 +395,35 @@ class HangarService
                 );
             }
 
-            // Mission cost scales with travel time: Navigation-AP for the crew effort and
-            // Organika as crew provisions for the voyage. Both gate the dispatch.
-            $navApCost = $solDistance * (int) config('game.food.mission_nav_ap_per_sol', 1);
-            $organikaCost = $solDistance * (int) config('game.food.mission_organika_per_sol', 3);
+            $shipKey = self::SHIP_ID_TO_CONFIG_KEY[(int) $ship->ship_id] ?? null;
+            if (! in_array($shipKey, $mission['ships'], true)) {
+                throw new RuntimeException(__('missions.error_wrong_ship_type'));
+            }
+
+            // §7 dispatch block: worn-down ships must be repaired first.
+            $minSp = self::SHIP_MAX_STATUS * (float) config('missions.dispatch_min_sp_pct', 0.25);
+            if ((float) $ship->status_points < $minSp) {
+                throw new RuntimeException(__('missions.error_sp_too_low'));
+            }
+
+            // Knowledge gate.
+            $gate = $mission['requires']['knowledge'] ?? null;
+            if ($gate !== null) {
+                [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
+                if ($this->knowledgeLevel($colonyId, $knowledgeKey) < $requiredLevel) {
+                    throw new RuntimeException(__('missions.error_knowledge_gate'));
+                }
+            }
+
+            // Target requirement (player-picked tile or knowledge).
+            $targetJson = null;
+            if (($mission['target_type'] ?? null) !== null) {
+                $targetJson = $this->validateTarget($colonyId, $missionKey, $mission['target_type'], $target);
+            }
+
+            $solDistance = (int) $mission['sol_distance'];
+            $navApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
+            $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             if (! config('game.bypass.ap_checks')
                 && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $navApCost) {
@@ -421,13 +458,243 @@ class HangarService
                 'colony_id' => $colonyId,
                 'instance_id' => $instanceId,
                 'ship_id' => $ship->ship_id,
-                'destination' => $destination,
+                'destination' => $missionKey,
                 'sol_distance' => $solDistance,
+                'target' => $targetJson,
                 'dispatch_tick' => $currentTick,
                 'recall_tick' => null,
                 'state' => 'active',
             ]);
         });
+    }
+
+    /**
+     * Organika dispatch cost for a catalog mission: per-sol rate reduced by
+     * knowledge levels above the gate (never below the floor), plus extra_cost.
+     */
+    public function organikaCostFor(int $colonyId, array $mission): int
+    {
+        $perSol = (int) config('missions.organika_per_sol', 3);
+        $gate = $mission['requires']['knowledge'] ?? null;
+
+        if ($gate !== null) {
+            [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
+            $levelsAbove = max(0, $this->knowledgeLevel($colonyId, $knowledgeKey) - $requiredLevel);
+            $scaling = (int) config('missions.organika_scaling_per_level', 1);
+            $floor = (int) config('missions.organika_floor_per_sol', 1);
+            $perSol = max($floor, $perSol - $scaling * $levelsAbove);
+        }
+
+        $cost = (int) $mission['sol_distance'] * $perSol;
+        $cost += (int) ($mission['extra_cost']['organics'] ?? 0);
+
+        return $cost;
+    }
+
+    /**
+     * Current level of a knowledge (config/knowledge.php key) for a colony; 0 when unresearched.
+     */
+    private function knowledgeLevel(int $colonyId, string $knowledgeKey): int
+    {
+        $researchId = (int) config("knowledge.{$knowledgeKey}.id", 0);
+        if ($researchId === 0) {
+            return 0;
+        }
+
+        return (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $researchId)
+            ->value('level');
+    }
+
+    /**
+     * Validate the player-picked mission target and return its canonical JSON.
+     *
+     * signal_tile — explored tile with a hidden event, not yet deep-scanned.
+     * ruin_tile   — deep-scanned event_ruin tile not yet consumed by a ruin expedition.
+     * knowledge   — any knowledge id from config/knowledge.php.
+     */
+    private function validateTarget(int $colonyId, string $missionKey, string $targetType, ?array $target): string
+    {
+        if ($targetType === 'knowledge') {
+            $researchId = (int) ($target['research_id'] ?? 0);
+            $knownIds = collect(config('knowledge'))->pluck('id')->map(fn ($id) => (int) $id)->all();
+            if (! in_array($researchId, $knownIds, true)) {
+                throw new RuntimeException(__('missions.error_invalid_target'));
+            }
+
+            return json_encode(['research_id' => $researchId]);
+        }
+
+        $q = $target['q'] ?? null;
+        $r = $target['r'] ?? null;
+        if ($q === null || $r === null) {
+            throw new RuntimeException(__('missions.error_invalid_target'));
+        }
+
+        $tile = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('q', (int) $q)->where('r', (int) $r)
+            ->first();
+
+        $valid = match ($targetType) {
+            'signal_tile' => $tile !== null && $tile->is_explored && $tile->event_type !== null && ! $tile->is_deep_scanned,
+            'ruin_tile' => $tile !== null && $tile->is_deep_scanned && $tile->event_type === 'event_ruin',
+            default => false,
+        };
+
+        if (! $valid) {
+            throw new RuntimeException(__('missions.error_invalid_target'));
+        }
+
+        $targetJson = json_encode(['q' => (int) $q, 'r' => (int) $r]);
+
+        // Non-repeatable tile missions: each tile can only be claimed once per run.
+        if (($targetType === 'ruin_tile')
+            && DB::table('colony_hangar_missions')
+                ->where('colony_id', $colonyId)
+                ->where('destination', $missionKey)
+                ->whereIn('state', ['active', 'completed'])
+                ->where('target', $targetJson)
+                ->exists()) {
+            throw new RuntimeException(__('missions.error_target_consumed'));
+        }
+
+        return $targetJson;
+    }
+
+    /**
+     * Mission catalog enriched for the dispatch UI: localized texts, computed
+     * costs (incl. knowledge scaling), wear forecast per allowed ship type,
+     * availability state and pickable targets.
+     */
+    public function getMissionCatalogFor(int $colonyId): array
+    {
+        $navPerSol = (int) config('missions.nav_ap_per_sol', 2);
+        $shipsConfig = config('ships');
+
+        // Same for every mission this call — compute once, not per catalog entry.
+        $availableNavAp = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
+        $availableOrganika = (int) (DB::table('colony_resources')
+            ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0);
+        $bypassAp = (bool) config('game.bypass.ap_checks');
+        $bypassResources = (bool) config('game.bypass.resource_costs');
+
+        $entries = [];
+        foreach (config('missions.catalog', []) as $key => $mission) {
+            $dist = (int) $mission['sol_distance'];
+            $navApCost = $dist * $navPerSol;
+            $organikaCost = $this->organikaCostFor($colonyId, $mission);
+
+            $availability = 'ok';
+            $gateInfo = null;
+
+            $gate = $mission['requires']['knowledge'] ?? null;
+            if ($gate !== null) {
+                [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
+                $gateInfo = [
+                    'knowledge' => $knowledgeKey,
+                    'knowledge_label' => __("techtree.knowledge_{$knowledgeKey}"),
+                    'required_level' => (int) $requiredLevel,
+                    'current_level' => $this->knowledgeLevel($colonyId, $knowledgeKey),
+                ];
+                if ($gateInfo['current_level'] < $requiredLevel) {
+                    $availability = 'missing_knowledge';
+                }
+            }
+
+            $targets = null;
+            $targetType = $mission['target_type'] ?? null;
+            if ($targetType !== null) {
+                $targets = $this->pickableTargets($colonyId, $key, $targetType);
+                if ($availability === 'ok' && $targets === []) {
+                    $availability = 'missing_target';
+                }
+            }
+
+            if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableNavAp) {
+                $availability = 'missing_ap';
+            }
+            if ($availability === 'ok' && ! $bypassResources && $organikaCost > $availableOrganika) {
+                $availability = 'missing_organika';
+            }
+
+            $wear = [];
+            foreach ($mission['ships'] as $shipKey) {
+                $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
+            }
+
+            $entries[] = [
+                'key' => $key,
+                'name' => __("missions.{$key}_name"),
+                'desc' => __("missions.{$key}_desc"),
+                'reward_label' => __("missions.{$key}_reward"),
+                'ships' => $mission['ships'],
+                'sol_distance' => $dist,
+                'duration' => 2 * $dist,
+                'nav_ap' => $navApCost,
+                'nav_ap_available' => $availableNavAp,
+                'organika' => $organikaCost,
+                'organika_available' => $availableOrganika,
+                'wear' => $wear,
+                'availability' => $availability,
+                'gate' => $gateInfo,
+                'target_type' => $targetType,
+                'targets' => $targets,
+            ];
+        }
+
+        return $entries;
+    }
+
+    /**
+     * Pickable targets for a mission's target_type.
+     */
+    private function pickableTargets(int $colonyId, string $missionKey, string $targetType): array
+    {
+        if ($targetType === 'knowledge') {
+            $levels = DB::table('colony_researches')
+                ->where('colony_id', $colonyId)
+                ->pluck('level', 'research_id');
+
+            $targets = [];
+            foreach (config('knowledge', []) as $knowledgeKey => $cfg) {
+                $targets[] = [
+                    'research_id' => (int) $cfg['id'],
+                    'label' => __("techtree.knowledge_{$knowledgeKey}"),
+                    'level' => (int) ($levels[(int) $cfg['id']] ?? 0),
+                ];
+            }
+
+            return $targets;
+        }
+
+        $query = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->orderBy('ring')->orderBy('q')->orderBy('r');
+
+        if ($targetType === 'signal_tile') {
+            $query->where('is_explored', 1)->whereNotNull('event_type')->where('is_deep_scanned', 0);
+        } else { // ruin_tile
+            $query->where('is_deep_scanned', 1)->where('event_type', 'event_ruin');
+        }
+
+        $tiles = [];
+        foreach ($query->get(['q', 'r', 'ring']) as $tile) {
+            $targetJson = json_encode(['q' => (int) $tile->q, 'r' => (int) $tile->r]);
+            if ($targetType === 'ruin_tile'
+                && DB::table('colony_hangar_missions')
+                    ->where('colony_id', $colonyId)
+                    ->where('destination', $missionKey)
+                    ->whereIn('state', ['active', 'completed'])
+                    ->where('target', $targetJson)
+                    ->exists()) {
+                continue; // ruin already claimed this run
+            }
+            $tiles[] = ['q' => (int) $tile->q, 'r' => (int) $tile->r, 'ring' => (int) $tile->ring];
+        }
+
+        return $tiles;
     }
 
     /**

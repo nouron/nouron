@@ -78,6 +78,8 @@ class HangarController extends BaseController
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('hangar', Auth::id());
 
+        $missionCatalog = $this->hangarService->getMissionCatalogFor($colony->id);
+
         return view('colony.hangar', compact(
             'slots',
             'pendingShips',
@@ -89,6 +91,7 @@ class HangarController extends BaseController
             'verfuegbareVerhandlungsAP',
             'commissionedShipIds',
             'firstVisit',
+            'missionCatalog',
         ));
     }
 
@@ -157,8 +160,11 @@ class HangarController extends BaseController
     public function dispatch(Request $request, int $instanceId): JsonResponse
     {
         $validated = $request->validate([
-            'destination' => 'required|string|max:80',
-            'sol_distance' => 'required|integer|min:1|max:999',
+            'mission_key' => 'required|string|max:80',
+            'target' => 'nullable|array',
+            'target.q' => 'sometimes|integer',
+            'target.r' => 'sometimes|integer',
+            'target.research_id' => 'sometimes|integer',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -167,14 +173,18 @@ class HangarController extends BaseController
             $this->hangarService->dispatchShip(
                 $colony->id,
                 $instanceId,
-                $validated['destination'],
-                $validated['sol_distance'],
+                $validated['mission_key'],
+                $validated['target'] ?? null,
             );
         } catch (\RuntimeException $e) {
             return response()->json(['ok' => false, 'error' => $e->getMessage()], 422);
         }
 
-        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
+        return response()->json([
+            'ok' => true,
+            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            ...$this->currentHangarResources($colony->id),
+        ]);
     }
 
     public function recall(Request $request, int $instanceId): JsonResponse
@@ -215,7 +225,25 @@ class HangarController extends BaseController
             $this->personellService->lockActionPoints('construction', $colony->id, 1);
         }
 
-        return response()->json(['ok' => true, 'slot' => $this->fetchSlot($colony->id, $instanceId)]);
+        return response()->json([
+            'ok' => true,
+            'slot' => $this->fetchSlot($colony->id, $instanceId),
+            ...$this->currentHangarResources($colony->id),
+        ]);
+    }
+
+    /**
+     * Resourcebar-sync payload (design-guide.md §5.6a) — mirrors
+     * ColonyController::currentAp()'s field names so both screens share the
+     * same JS sync convention (colony-hexgrid.js's updateAp() pattern).
+     */
+    private function currentHangarResources(int $colonyId): array
+    {
+        return [
+            'apNav' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
+            'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+            'organika' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0),
+        ];
     }
 
     private function fetchSlot(int $colonyId, int $instanceId): ?array

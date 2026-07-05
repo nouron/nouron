@@ -23,6 +23,7 @@
             hasAktivierterKonsul: @json($hasAktivierterKonsul ?? false),
             verfuegbareVerhandlungsAP: @json($verfuegbareVerhandlungsAP ?? 0),
             pendingShips: @json($pendingShips ?? []),
+            missionCatalog: @json($missionCatalog ?? []),
 
             routes: {
                 dispatch: @json(route("colony.hangar.dispatch", ["instanceId" => "__ID__"])),
@@ -40,8 +41,6 @@
                 dispatch: @json(__("colony.hangar_dispatch")),
                 recall: @json(__("colony.hangar_recall")),
                 repair: @json(__("colony.hangar_repair")),
-                destination: @json(__("colony.hangar_destination")),
-                solDistance: @json(__("colony.hangar_sol_distance")),
                 inTransit: @json(__("colony.hangar_in_transit")),
                 inConstruction: @json(__("colony.hangar_in_construction")),
                 pilotReady: @json(__("colony.hangar_pilot_ready")),
@@ -64,6 +63,17 @@
                 shipDrone: @json(__("colony.hangar_ship_drone")),
                 shipFreighter: @json(__("colony.hangar_ship_freighter")),
                 shipCorvette: @json(__("colony.hangar_ship_corvette")),
+                missionDialogTitle: @json(__("missions.dialog_title")),
+                missionDialogEmpty: @json(__("missions.dialog_no_missions")),
+                missionGateKnowledge: @json(__("missions.gate_knowledge_hint")),
+                missionGateTarget: @json(__("missions.gate_target_hint")),
+                missionGateNavAp: @json(__("missions.gate_nav_ap_hint")),
+                missionGateOrganika: @json(__("missions.gate_organika_hint")),
+                missionSelectTarget: @json(__("missions.select_target")),
+                missionChipDuration: @json(__("missions.chip_duration")),
+                missionChipWear: @json(__("missions.chip_wear")),
+                missionReturnLabel: @json(__("missions.return_label")),
+                missionStart: @json(__("missions.start_button")),
             },
         };
     </script>
@@ -241,62 +251,27 @@
                                                 </span>
                                             </div>
 
-                                            {{-- Dispatch form --}}
-                                            <template x-if="modalType[slot.instance_id] === 'dispatch'">
-                                                <div class="hangar-form">
-                                                    <label>
-                                                        <span x-text="i18n.destination"></span>
-                                                        <input type="text" x-model="dispatchDest[slot.instance_id]"
-                                                            :placeholder="i18n.destination">
-                                                    </label>
-                                                    <label>
-                                                        <div class="form-row-label">
-                                                            <span x-text="i18n.solDistance"></span>
-                                                            <strong x-text="dispatchSol[slot.instance_id]"></strong>
-                                                        </div>
-                                                        <input type="number" min="1" max="999"
-                                                            x-model="dispatchSol[slot.instance_id]">
-                                                    </label>
-                                                    <div class="hangar-error" x-text="error[slot.instance_id]"></div>
-                                                    <div class="hangar-form-actions">
-                                                        <button class="btn-hangar-action btn-hangar-action--secondary"
-                                                            @click="closeModal(slot.instance_id)">
-                                                            {{ __("colony.cancel") }}
-                                                        </button>
-                                                        <button class="btn-hangar-action"
-                                                            @click="dispatch(slot.instance_id)"
-                                                            :disabled="loading[slot.instance_id]">
-                                                            <span
-                                                                x-text="loading[slot.instance_id] ? '…' : i18n.dispatch"></span>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </template>
+                                            {{-- Action buttons — dispatch opens the mission catalog dialog --}}
+                                            <div class="hangar-card-footer">
+                                                <button class="btn-hangar-action"
+                                                    @click="openMissionDialog(slot.instance_id)"
+                                                    :disabled="loading[slot.instance_id]">
+                                                    {{ __("colony.hangar_dispatch") }}
+                                                </button>
+                                                <button class="btn-hangar-action btn-hangar-action--secondary"
+                                                    @click="repair(slot.instance_id)"
+                                                    :disabled="loading[slot.instance_id] || slot.ship.status_points >= 20">
+                                                    {{ __("colony.hangar_repair") }}
+                                                    @include("partials.ap-cost-chip", [
+                                                        "amount" => 1,
+                                                        "type" => "build",
+                                                    ])
+                                                </button>
+                                            </div>
 
-                                            {{-- Repair form --}}
-                                            <template x-if="modalType[slot.instance_id] === null">
-                                                <div class="hangar-card-footer">
-                                                    <button class="btn-hangar-action"
-                                                        @click="openModal(slot.instance_id, 'dispatch')">
-                                                        {{ __("colony.hangar_dispatch") }}
-                                                    </button>
-                                                    <button class="btn-hangar-action btn-hangar-action--secondary"
-                                                        @click="repair(slot.instance_id)"
-                                                        :disabled="loading[slot.instance_id] || slot.ship.status_points >= 20">
-                                                        {{ __("colony.hangar_repair") }}
-                                                        @include("partials.ap-cost-chip", [
-                                                            "amount" => 1,
-                                                            "type" => "build",
-                                                        ])
-                                                    </button>
-                                                </div>
-                                            </template>
-
-                                            {{-- Inline error shown outside form modals --}}
-                                            <template
-                                                x-if="modalType[slot.instance_id] === null && error[slot.instance_id]">
-                                                <div class="hangar-error" x-text="error[slot.instance_id]"></div>
-                                            </template>
+                                            {{-- Inline error --}}
+                                            <div class="hangar-error" x-show="error[slot.instance_id]"
+                                                x-text="error[slot.instance_id]"></div>
 
                                         </div>
                                     </template>
@@ -308,11 +283,10 @@
                                             <div class="hangar-mission-info" x-show="slot.ship.active_mission !== null">
                                                 <template x-if="slot.ship.active_mission">
                                                     <span>
-                                                        <strong x-text="i18n.destination + ':'"></strong>
-                                                        <span x-text="slot.ship.active_mission.destination"></span>
-                                                        &nbsp;·&nbsp;
-                                                        <strong x-text="i18n.solDistance + ':'"></strong>
-                                                        <span x-text="slot.ship.active_mission.sol_distance"></span>
+                                                        <strong x-text="slot.ship.active_mission.mission_name"></strong>
+                                                        <br>
+                                                        <span
+                                                            x-text="i18n.missionReturnLabel.replace(':sol', slot.ship.active_mission.return_tick)"></span>
                                                     </span>
                                                 </template>
                                             </div>
@@ -468,6 +442,110 @@
                 {{-- Cancel link --}}
                 <div class="hangar-dialog-cancel">
                     <a href="#" @click.prevent="closeRequestModal()" x-text="i18n.cancel"></a>
+                </div>
+
+            </article>
+
+        </dialog>
+
+        {{-- ── Mission dispatch modal (native <dialog>, shared for all slots) ── --}}
+        {{--
+        Uses showModal() via x-effect to get browser backdrop + focus-trap + Escape-key.
+        Instance data is stored in missionModal.* on the Alpine component.
+        Catalog entries are filtered by the ship type docked in the opening slot.
+    --}}
+        <dialog x-ref="missionDialog" class="hangar-mission-dialog sol-modal"
+            x-effect="missionModal.open ? $refs.missionDialog.showModal() : $refs.missionDialog.close()"
+            @close="closeMissionDialog()">
+
+            <article>
+                <header class="hangar-dialog-header">
+                    <strong x-text="i18n.missionDialogTitle"></strong>
+                    <button class="hangar-dialog-close" @click="closeMissionDialog()"
+                        aria-label="Close">&#x2715;</button>
+                </header>
+
+                <div class="hangar-mission-list">
+
+                    <template x-if="missionsForModal.length === 0">
+                        <p class="hangar-mission-empty" x-text="i18n.missionDialogEmpty"></p>
+                    </template>
+
+                    <template x-for="mission in missionsForModal" :key="mission.key">
+                        <article class="hangar-mission-card"
+                            :class="{
+                                'hangar-mission-card--locked': mission.availability !== 'ok',
+                                'hangar-mission-card--selected': missionModal.selectedKey === mission.key,
+                            }"
+                            @click="selectMission(mission)">
+
+                            <div class="hangar-mission-card-head">
+                                <span class="hangar-mission-name" x-text="mission.name"></span>
+                                <span class="hangar-mission-reward" x-text="mission.reward_label"></span>
+                            </div>
+
+                            <p class="hangar-mission-desc" x-text="mission.desc"></p>
+
+                            <div class="hangar-mission-chips">
+                                <span class="ap-chip ap-cost-chip ap-chip--nav" x-text="mission.nav_ap + ' AP'"></span>
+                                <span class="hangar-mission-chip" x-show="mission.organika > 0"
+                                    x-text="'Or ' + mission.organika"></span>
+                                <span class="hangar-mission-chip"
+                                    x-text="i18n.missionChipDuration.replace(':sols', mission.duration)"></span>
+                                <span class="hangar-mission-chip"
+                                    x-text="i18n.missionChipWear + ' −' + missionWear(mission)"></span>
+                            </div>
+
+                            {{-- Target picker — only for the selected mission when a target is required --}}
+                            <template x-if="missionRequiresTarget(mission) && missionModal.selectedKey === mission.key">
+                                <label class="hangar-mission-target" @click.stop>
+                                    <span x-text="i18n.missionSelectTarget"></span>
+                                    <select x-model="missionModal.targetIndex">
+                                        <option value="" x-text="i18n.missionSelectTarget"></option>
+                                        <template x-for="(target, ti) in mission.targets" :key="ti">
+                                            <option :value="ti" x-text="targetLabel(mission, target)"></option>
+                                        </template>
+                                    </select>
+                                </label>
+                            </template>
+
+                            <div class="hangar-mission-card-footer">
+                                <template x-if="mission.availability === 'missing_knowledge' && mission.gate">
+                                    <span class="hangar-mission-gate-hint"
+                                        x-text="i18n.missionGateKnowledge.replace(':name', mission.gate.knowledge_label).replace(':level', mission.gate.required_level)"></span>
+                                </template>
+                                <template x-if="mission.availability === 'missing_target'">
+                                    <span class="hangar-mission-gate-hint" x-text="i18n.missionGateTarget"></span>
+                                </template>
+                                <template x-if="mission.availability === 'missing_ap'">
+                                    <span class="hangar-mission-gate-hint"
+                                        x-text="i18n.missionGateNavAp.replace(':available', mission.nav_ap_available).replace(':required', mission.nav_ap)"></span>
+                                </template>
+                                <template x-if="mission.availability === 'missing_organika'">
+                                    <span class="hangar-mission-gate-hint"
+                                        x-text="i18n.missionGateOrganika.replace(':available', mission.organika_available).replace(':required', mission.organika)"></span>
+                                </template>
+                                <button class="btn-hangar-action hangar-mission-start" @click.stop="startMission(mission)"
+                                    :disabled="mission.availability !== 'ok' || missionModal.loading || (
+                                        missionRequiresTarget(mission) && missionModal.selectedKey === mission
+                                        .key && missionModal.targetIndex === '')">
+                                    <span
+                                        x-text="missionModal.loading && missionModal.selectedKey === mission.key ? '…' : i18n.missionStart"></span>
+                                </button>
+                            </div>
+
+                        </article>
+                    </template>
+
+                </div>{{-- /.hangar-mission-list --}}
+
+                {{-- Error display --}}
+                <div class="hangar-error hangar-dialog-error" x-show="missionModal.error" x-text="missionModal.error">
+                </div>
+
+                {{-- Cancel link --}}
+                <div class="hangar-dialog-cancel">
+                    <a href="#" @click.prevent="closeMissionDialog()" x-text="i18n.cancel"></a>
                 </div>
 
             </article>

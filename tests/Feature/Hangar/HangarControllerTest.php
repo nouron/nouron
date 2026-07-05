@@ -26,9 +26,10 @@ namespace Tests\Feature\Hangar;
  *    - test_request_ship_returns_422_for_insufficient_credits
  *    - test_request_ship_returns_422_for_negative_consul_ap
  *
- *  DISPATCH
+ *  DISPATCH (mission catalog, GDD §8b)
  *    - test_dispatch_returns_ok_with_slot
- *    - test_dispatch_returns_422_missing_destination
+ *    - test_dispatch_returns_422_missing_mission_key
+ *    - test_dispatch_returns_422_for_unknown_mission_key
  *    - test_dispatch_returns_422_when_ship_not_docked
  *
  *  RECALL
@@ -135,7 +136,7 @@ class HangarControllerTest extends TestCase
             'colony_id' => self::COLONY_ID_BART,
             'instance_id' => $instanceId,
             'ship_id' => $shipId,
-            'destination' => 'Kuiper Belt',
+            'destination' => 'mission_courier_run',
             'sol_distance' => 4,
             'dispatch_tick' => self::FIXED_TICK - 5,
             'recall_tick' => null,
@@ -316,13 +317,13 @@ class HangarControllerTest extends TestCase
 
     public function test_dispatch_returns_ok_with_slot(): void
     {
+        // mission_escort_convoy: corvette, ungated — no knowledge/target setup needed.
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination' => 'Asteroid Belt',
-                'sol_distance' => 3,
+                'mission_key' => 'mission_escort_convoy',
             ]);
 
         $response->assertOk()
@@ -335,32 +336,28 @@ class HangarControllerTest extends TestCase
         $this->assertNotNull($slot['ship']['active_mission']);
     }
 
-    public function test_dispatch_returns_422_missing_destination(): void
+    public function test_dispatch_returns_422_missing_mission_key(): void
     {
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'sol_distance' => 3,
-                // destination omitted
-            ]);
+            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), []);
 
         $response->assertStatus(422);
     }
 
-    public function test_dispatch_returns_422_missing_sol_distance(): void
+    public function test_dispatch_returns_422_for_unknown_mission_key(): void
     {
         $this->insertHangar(1);
         $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination' => 'Somewhere',
-                // sol_distance omitted
+                'mission_key' => 'mission_does_not_exist',
             ]);
 
-        $response->assertStatus(422);
+        $response->assertStatus(422)->assertJson(['ok' => false]);
     }
 
     public function test_dispatch_returns_422_when_ship_not_docked(): void
@@ -371,27 +368,11 @@ class HangarControllerTest extends TestCase
 
         $response = $this->actingAs($this->bart())
             ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination' => 'Deep Space',
-                'sol_distance' => 5,
+                'mission_key' => 'mission_courier_run',
             ]);
 
         $response->assertStatus(422)
             ->assertJson(['ok' => false]);
-    }
-
-    public function test_dispatch_returns_422_for_sol_distance_zero(): void
-    {
-        $this->insertHangar(1);
-        $this->assignShip(1, self::SHIP_CORVETTE, 'docked');
-
-        $response = $this->actingAs($this->bart())
-            ->postJson(route('colony.hangar.dispatch', ['instanceId' => 1]), [
-                'destination' => 'Somewhere',
-                'sol_distance' => 0,
-            ]);
-
-        // Laravel validation rule min:1 blocks this before service is called
-        $response->assertStatus(422);
     }
 
     // ── RECALL ────────────────────────────────────────────────────────────────

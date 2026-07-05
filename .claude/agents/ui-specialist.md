@@ -62,7 +62,7 @@ Beim Aufruf prüfen:
 - `lang/de/` — bestehende Sprachkeys (Duplikate vermeiden)
 
 ## Spiel-UI-Muster
-- **Ressourcenbars**: Aktuell/Max anzeigen, Änderungen animieren, via Alpine Reactive State oder Polling aktualisieren
+- **Ressourcenbars**: `resources/views/resources/resourcebar.blade.php` ist reines server-gerendertes Blade **ohne eigenen reaktiven State** — aktualisiert sich nie von selbst. Jeder Screen mit AJAX-Aktionen, die AP/Ressourcen ändern, MUSS (1) die neuen Werte in der JSON-Response mitliefern (Feldnamen exakt wie `ColonyController::currentAp()`: `apNav`, `apConstruction`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`, ...) und (2) sie per DOM-Patch in die Chips schreiben + bei Abnahme kurz aufblitzen lassen — Referenzmuster `colony-hexgrid.js` (`updateAp()`/`syncResbarAp()`/`syncResbarAmount()`/`flashApChip()`/`flashResChip()`). Details + Chip-Konventionen (Abkürzungen nie ausschreiben, „Sol" nur für den Tageszähler): `docs/design-guide.md` §5.6a. Fehlt das, hinkt die Ressourcenleiste bis zum nächsten Reload hinterher — häufigster Review-Fund bei neuen AJAX-Screens.
 - **Action-Buttons**: Während AJAX deaktivieren, Loading-State anzeigen, bei Response wieder aktivieren
 - **Timer**: Immer servergesteuerte Timestamps, nie Client-Uhr
 - **Hex-Grid** (pointy-top axial): Ring = `max(|q|, |r|, |q+r|)`. SVG-Tiles sind `<polygon>`-Elemente aus axialen Koordinaten gerendert.

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Colony;
 
 use App\Services\HangarService;
+use App\Services\TickService;
 use App\Services\TrustService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -16,8 +17,9 @@ use Tests\TestCase;
  *
  * Verpflegung (GameTick step 8a): each colony eats floor(used_supply / 4) Organika per
  * Sol. Fed → well_fed event + hunger_streak reset. Short → streak grows, driving an
- * escalating trust penalty (TrustService::hungerPenalty). Mission dispatch burns
- * Organika (sol_distance × 3) + Navigation-AP (sol_distance × 1) and gates on both.
+ * escalating trust penalty (TrustService::hungerPenalty). Catalog mission dispatch
+ * (GDD §8b, config/missions.php) burns Organika (sol_distance × per-sol rate) +
+ * Navigation-AP (sol_distance × 2) and gates on both.
  *
  * Fixture: Colony 1 (Springfield), user_id=3. Organika = resource 5.
  * Uses tick numbers 11400+ (no fleet orders).
@@ -34,10 +36,18 @@ class OrganikaProvisioningTest extends TestCase
 
     private const SHIP_DRONE = 85;
 
+    private const SHIP_FREIGHTER = 47;
+
+    private const SHIP_CORVETTE = 37;
+
+    private const FIXED_TICK = 200;
+
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
+        // Dispatch tests need a deterministic tick to reason about locked Nav-AP.
+        $this->app->instance(TickService::class, new TickService(self::FIXED_TICK));
     }
 
     private function organika(): int
@@ -148,16 +158,23 @@ class OrganikaProvisioningTest extends TestCase
         }
     }
 
-    // ── Mission dispatch provisions ────────────────────────────────────────────
+    // ── Mission dispatch provisions (catalog missions, GDD §8b) ────────────────
 
-    private function setupDockedDrone(): HangarService
+    private function setupDockedShip(int $shipId): HangarService
     {
         DB::table('colony_buildings')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'building_id' => 44, 'instance_id' => 1],
             ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
         );
+        // TestSeeder pre-populates hangar_instance_id=1 with several fixture ships
+        // (a real hangar bay only ever holds one) — free the bay before assigning ours.
+        DB::table('colony_ships')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('hangar_instance_id', 1)
+            ->where('ship_id', '!=', $shipId)
+            ->update(['hangar_instance_id' => null]);
         DB::table('colony_ships')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'ship_id' => self::SHIP_DRONE],
+            ['colony_id' => self::COLONY_ID, 'ship_id' => $shipId],
             ['hangar_instance_id' => 1, 'ship_state' => 'docked', 'level' => 1, 'status_points' => 20, 'ap_spend' => 0]
         );
 
@@ -166,43 +183,54 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_dispatch_consumes_organika_provisions(): void
     {
+        // mission_supply_run: freighter, ungated, sol_distance 2 → 2 × 3 = 6 Organika.
         config(['game.bypass.resource_costs' => false, 'game.bypass.ap_checks' => false]);
-        $svc = $this->setupDockedDrone();
+        $svc = $this->setupDockedShip(self::SHIP_FREIGHTER);
         $this->setOrganika(20);
 
-        $svc->dispatchShip(self::COLONY_ID, 1, 'Outer Belt', 3);   // 3 × 3 = 9 Organika
+        $svc->dispatchShip(self::COLONY_ID, 1, 'mission_supply_run');
 
-        $this->assertSame(11, $this->organika());
+        $this->assertSame(14, $this->organika());
         $this->assertSame('dispatched', DB::table('colony_ships')
-            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_DRONE)->value('ship_state'));
+            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_FREIGHTER)->value('ship_state'));
     }
 
     public function test_dispatch_blocked_without_organika(): void
     {
+        // mission_escort_convoy: corvette, ungated, sol_distance 3 → needs 3 × 3 = 9 Organika.
         config(['game.bypass.resource_costs' => false, 'game.bypass.ap_checks' => false]);
-        $svc = $this->setupDockedDrone();
-        $this->setOrganika(10);   // need 5 × 3 = 15
+        $svc = $this->setupDockedShip(self::SHIP_CORVETTE);
+        $this->setOrganika(5);
 
         try {
-            $svc->dispatchShip(self::COLONY_ID, 1, 'Far Rim', 5);
+            $svc->dispatchShip(self::COLONY_ID, 1, 'mission_escort_convoy');
             $this->fail('dispatch must throw when Organika is insufficient');
         } catch (RuntimeException $e) {
             // expected
         }
 
-        $this->assertSame(10, $this->organika(), 'no Organika spent on a blocked dispatch');
+        $this->assertSame(5, $this->organika(), 'no Organika spent on a blocked dispatch');
         $this->assertSame('docked', DB::table('colony_ships')
-            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_DRONE)->value('ship_state'));
+            ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_CORVETTE)->value('ship_state'));
     }
 
     public function test_dispatch_blocked_without_nav_ap(): void
     {
+        // Base Nav-AP pool is 6/Sol. Lock 5 for this tick so only 1 remains,
+        // then attempt mission_courier_run (drone, ungated, needs 1 × 2 = 2 Nav-AP).
         config(['game.bypass.resource_costs' => false, 'game.bypass.ap_checks' => false]);
-        $svc = $this->setupDockedDrone();
-        $this->setOrganika(999);   // plenty of provisions
+        $svc = $this->setupDockedShip(self::SHIP_DRONE);
+        $this->setOrganika(999); // plenty of provisions
 
-        // Base Nav-AP is 6/Sol; sol_distance 7 → nav cost 7 > 6 → blocked.
+        DB::table('locked_actionpoints')->insert([
+            'tick' => self::FIXED_TICK,
+            'scope_type' => 'colony',
+            'scope_id' => self::COLONY_ID,
+            'personell_id' => 89, // pilot (config/advisors.php)
+            'spend_ap' => 5,
+        ]);
+
         $this->expectException(RuntimeException::class);
-        $svc->dispatchShip(self::COLONY_ID, 1, 'Deep Black', 7);
+        $svc->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
     }
 }

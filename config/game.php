@@ -203,6 +203,7 @@ return [
             'treaty_signed' => 3,
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
             'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
+            'encounter_won' => 2,  // successful protective/aid action (e.g. mission_aid_transport)
         ],
     ],
 
@@ -217,8 +218,7 @@ return [
         'hunger_base_malus' => 2,    // trust penalty on the first hungry Sol
         'hunger_step' => 1,          // +1 penalty per consecutive hungry Sol
         'hunger_cap' => 8,           // max penalty
-        'mission_nav_ap_per_sol' => 2,   // dispatch Nav-AP cost = sol_distance × this
-        'mission_organika_per_sol' => 3, // dispatch provisions = sol_distance × this
+        // mission dispatch costs moved to config/missions.php (nav_ap_per_sol, organika_per_sol)
     ],
 
     // CC-Level gate for knowledge research levels 4 and 5.
