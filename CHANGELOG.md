@@ -1,8 +1,9 @@
 # Changelog
 
-## 2026-07-06
+## 2026-07-08
 
-- **Fix: Resourcebar-Popups überlappten sich.** Owner-Playtest-Fund (Sol 1): alle 11 Resourcebar-Chips hatten isolierten `x-data="{ open: false }"` — nichts schloss ein Nachbar-Popup beim Wechsel. Bei eng gepackten Chips mit breiten Popups (220-300px) konnten zwei gleichzeitig offen sein und sich überlagern (verwaschener Look, Titel eines Popups optisch verdeckt vom anderen). Fix: gemeinsamer `openChip`-State auf `.res-bar-wrap` (`resources/views/resources/resourcebar.blade.php`), jeder Chip vergleicht nur noch dagegen (`openChip === 'cr'` etc.) statt eigenem Boolean — immer nur ein Popup gleichzeitig offen. `partials/res-popup.blade.php` erwartet jetzt `popup_key`. Live verifiziert: alle 12 Chip-Popups (Sol/Credits/Supply/Vertrauen/Regolith/Werkstoffe/Organika/5×AP) rendern mit eindeutigem Key, keine Überlappung mehr möglich.
+- **Fix: Resourcebar-Chip-Popups grau + von Hint-Bar verdeckt.** Owner-Playtest-Fund (Sol 1): Popups von `.res-chip`-Chips (Credits, Supply, Rg/Co/Or) erschienen grau statt weiß und ihr Titel wurde von der Hint-Bar überdeckt — Vertrauen/AP-Chips (`.ap-chip`) waren korrekt. Root Cause: `.res-chip:hover { filter: brightness(0.94) }` — der Filter wirkt auf den ganzen Subtree inkl. Popup (#fff × 0.94 = #f0f0f0) und erzeugt einen Stacking Context, der das Popup trotz `z-index: 300` unter der später gerenderten Hint-Bar gefangen hielt. Fix: Hover-Verdunkelung via `inset box-shadow` statt `filter` (`public/css/resources.css`) — wirkt nur auf den Chip-Hintergrund, kein Stacking Context. Per Playwright-Screenshot verifiziert (Supply + Credits: Titel sichtbar, weiß, über Hint-Bar).
+- **Refactor nebenbei:** Resourcebar-Popups von 11 isolierten `x-data="{ open: false }"` auf gemeinsamen `openChip`-State auf `.res-bar-wrap` umgestellt (`resourcebar.blade.php`, `partials/res-popup.blade.php` erwartet jetzt `popup_key`) — garantiert dass nie zwei Popups gleichzeitig offen sind.
 
 ## 2026-07-05 (2)
 

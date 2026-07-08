@@ -35,10 +35,14 @@
     color: #333;
     white-space: nowrap;
     cursor: default;
-    transition: filter 0.15s;
+    transition: box-shadow 0.15s;
 }
+/* Darken via inset shadow, NOT filter: filter on the chip creates a stacking
+ * context and applies to descendants — the .res-popup child would render
+ * grayed out (#fff × 0.94 = #f0f0f0) and trapped below later siblings
+ * (hint-bar) despite its z-index. */
 .res-chip:hover {
-    filter: brightness(0.94);
+    box-shadow: inset 0 0 0 100px rgba(0, 0, 0, 0.06);
 }
 
 /* No size difference between primary and secondary chips */
