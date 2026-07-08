@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-06
+
+- **Fix: Resourcebar-Popups überlappten sich.** Owner-Playtest-Fund (Sol 1): alle 11 Resourcebar-Chips hatten isolierten `x-data="{ open: false }"` — nichts schloss ein Nachbar-Popup beim Wechsel. Bei eng gepackten Chips mit breiten Popups (220-300px) konnten zwei gleichzeitig offen sein und sich überlagern (verwaschener Look, Titel eines Popups optisch verdeckt vom anderen). Fix: gemeinsamer `openChip`-State auf `.res-bar-wrap` (`resources/views/resources/resourcebar.blade.php`), jeder Chip vergleicht nur noch dagegen (`openChip === 'cr'` etc.) statt eigenem Boolean — immer nur ein Popup gleichzeitig offen. `partials/res-popup.blade.php` erwartet jetzt `popup_key`. Live verifiziert: alle 12 Chip-Popups (Sol/Credits/Supply/Vertrauen/Regolith/Werkstoffe/Organika/5×AP) rendern mit eindeutigem Key, keine Überlappung mehr möglich.
+
 ## 2026-07-05 (2)
 
 - **`game:snapshot` — Playtest-Fortsetzung ohne Sol-1-Neustart.** Owner-Pain-Point: jeder Blocker während des täglichen Playtests zwang zum Reset auf Sol 1 (`game:reset-player` bietet nur 5 feste Szenarien, keine Fortsetzung des echten Runs). Neuer Dev-Command dumpt/restored den kompletten Live-Zustand eines Spielers (Colony/Run/Resources/Buildings/Tiles/Advisors/Ships/Missions/Researches/Log) als JSON unter `storage/app/private/snapshots/{user_id}/{label}.json` — `save`/`restore`/`list`. Workflow: vor riskanter Aktion snapshotten, bei Blocker fixen + zurückspulen statt neu hochzuspielen. Live gegen Bart (echter Sol-97-Run) verifiziert: save → Mutation → restore → Zustand + alle Kernscreens (Colony/Hangar/Comm-Log/Advisors) korrekt.
