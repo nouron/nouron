@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-07-08 (3)
+
+- **Fix: Entity-Chip-Tooltip clippte in Modals.** Owner-Playtest-Fund (Berater-Einstellen-Dialog): der Raumfahrer-Glossar-Chip öffnet sein Tooltip fix nach oben (`bottom: calc(100% + 0.4rem)`), ohne Boundary-Check — im `sol-modal` (`overflow: hidden` Article) wurde der obere Teil abgeschnitten und überlappte sichtbar die Modal-Kopfzeile. Fix (`components/entity-chip.blade.php`): gleiches Boundary-Clamp-Pattern wie `res-popup` (horizontales Clamping + jetzt zusätzlich vertikales Flip auf "unten öffnen", wenn der nächste `<dialog>`-Vorfahre das Tooltip oben clippen würde). Bewusst kein Merge der beiden Popup-Systeme (unterschiedliche UX-Rollen: Toolbar-Chips vs. Glossar-Begriffe im Fließtext) — nur das Positionierungs-Pattern geteilt. Per Playwright verifiziert (schmaler Viewport, Tooltip öffnet sauber nach unten, keine Überlappung mehr).
+
+## 2026-07-08 (2)
+
+- **Fix: Berater-Screen zeigte Raumfahrer doppelt.** Owner-Playtest-Fund (Sol 4, direkt nach Hangar-Fertigstellung): Slot 2 zeigte den echten (hireable) Raumfahrer, Slot 3 zeigte fälschlich ebenfalls "Raumfahrer" als Preview statt des noch offenen Pfads. Root Cause: `AdvisorController::buildSlots()` mappte offene Pfad-Slots per fixer Position (`2=>scientist, 3=>pilot, 4=>trader`), obwohl Positionen dynamisch nach Bau-Reihenfolge vergeben werden — nach Hangar-Bau rutschte Pilot auf Position 2, Position 3 zeigte aber weiter ihren alten Fix-Preview statt des tatsächlich noch offenen Pfads. Fix: Preview-Keys jetzt als "alle Pfade minus bereits aufgelöste" berechnet, in kanonischer Reihenfolge. Live gegen Barts echten Sol-4-Stand verifiziert (Position 3/4 zeigen jetzt korrekt Analytiker/Konsul).
+
+## 2026-07-08
+
+- **Fix: Resourcebar-Chip-Popups grau + von Hint-Bar verdeckt.** Owner-Playtest-Fund (Sol 1): Popups von `.res-chip`-Chips (Credits, Supply, Rg/Co/Or) erschienen grau statt weiß und ihr Titel wurde von der Hint-Bar überdeckt — Vertrauen/AP-Chips (`.ap-chip`) waren korrekt. Root Cause: `.res-chip:hover { filter: brightness(0.94) }` — der Filter wirkt auf den ganzen Subtree inkl. Popup (#fff × 0.94 = #f0f0f0) und erzeugt einen Stacking Context, der das Popup trotz `z-index: 300` unter der später gerenderten Hint-Bar gefangen hielt. Fix: Hover-Verdunkelung via `inset box-shadow` statt `filter` (`public/css/resources.css`) — wirkt nur auf den Chip-Hintergrund, kein Stacking Context. Per Playwright-Screenshot verifiziert (Supply + Credits: Titel sichtbar, weiß, über Hint-Bar).
+- **Refactor nebenbei:** Resourcebar-Popups von 11 isolierten `x-data="{ open: false }"` auf gemeinsamen `openChip`-State auf `.res-bar-wrap` umgestellt (`resourcebar.blade.php`, `partials/res-popup.blade.php` erwartet jetzt `popup_key`) — garantiert dass nie zwei Popups gleichzeitig offen sind.
+
+## 2026-07-05 (2)
+
+- **`game:snapshot` — Playtest-Fortsetzung ohne Sol-1-Neustart.** Owner-Pain-Point: jeder Blocker während des täglichen Playtests zwang zum Reset auf Sol 1 (`game:reset-player` bietet nur 5 feste Szenarien, keine Fortsetzung des echten Runs). Neuer Dev-Command dumpt/restored den kompletten Live-Zustand eines Spielers (Colony/Run/Resources/Buildings/Tiles/Advisors/Ships/Missions/Researches/Log) als JSON unter `storage/app/private/snapshots/{user_id}/{label}.json` — `save`/`restore`/`list`. Workflow: vor riskanter Aktion snapshotten, bei Blocker fixen + zurückspulen statt neu hochzuspielen. Live gegen Bart (echter Sol-97-Run) verifiziert: save → Mutation → restore → Zustand + alle Kernscreens (Colony/Hangar/Comm-Log/Advisors) korrekt.
+
 ## 2026-07-05
 
 - **Hangar-Missionskatalog implementiert** (GDD §8b, 12 Missionstypen — `mission_perimeter_patrol` zurückgestellt bis §9 existiert). `config/missions.php` neu (Katalog, Kosten-/Skalierungsparameter). `HangarService::dispatchShip()` auf `(colonyId, instanceId, missionKey, ?target)` umgestellt — validiert Schiffstyp, Kenntnis-Gate, Ziel (Signal-/Ruinen-Tile oder Kenntnis), SP-Dispatch-Sperre (<25%); neue `getMissionCatalogFor()` liefert lokalisierten, kostenberechneten Katalog für die UI. `organikaCostFor()` implementiert die Kenntnis-Skalierung (−1 Organika/Distanz-Sol je Level über Gate, Floor 1).
