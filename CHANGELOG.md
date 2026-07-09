@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-08 (3)
+
+- **Fix: Entity-Chip-Tooltip clippte in Modals.** Owner-Playtest-Fund (Berater-Einstellen-Dialog): der Raumfahrer-Glossar-Chip öffnet sein Tooltip fix nach oben (`bottom: calc(100% + 0.4rem)`), ohne Boundary-Check — im `sol-modal` (`overflow: hidden` Article) wurde der obere Teil abgeschnitten und überlappte sichtbar die Modal-Kopfzeile. Fix (`components/entity-chip.blade.php`): gleiches Boundary-Clamp-Pattern wie `res-popup` (horizontales Clamping + jetzt zusätzlich vertikales Flip auf "unten öffnen", wenn der nächste `<dialog>`-Vorfahre das Tooltip oben clippen würde). Bewusst kein Merge der beiden Popup-Systeme (unterschiedliche UX-Rollen: Toolbar-Chips vs. Glossar-Begriffe im Fließtext) — nur das Positionierungs-Pattern geteilt. Per Playwright verifiziert (schmaler Viewport, Tooltip öffnet sauber nach unten, keine Überlappung mehr).
+
 ## 2026-07-08 (2)
 
 - **Fix: Berater-Screen zeigte Raumfahrer doppelt.** Owner-Playtest-Fund (Sol 4, direkt nach Hangar-Fertigstellung): Slot 2 zeigte den echten (hireable) Raumfahrer, Slot 3 zeigte fälschlich ebenfalls "Raumfahrer" als Preview statt des noch offenen Pfads. Root Cause: `AdvisorController::buildSlots()` mappte offene Pfad-Slots per fixer Position (`2=>scientist, 3=>pilot, 4=>trader`), obwohl Positionen dynamisch nach Bau-Reihenfolge vergeben werden — nach Hangar-Bau rutschte Pilot auf Position 2, Position 3 zeigte aber weiter ihren alten Fix-Preview statt des tatsächlich noch offenen Pfads. Fix: Preview-Keys jetzt als "alle Pfade minus bereits aufgelöste" berechnet, in kanonischer Reihenfolge. Live gegen Barts echten Sol-4-Stand verifiziert (Position 3/4 zeigen jetzt korrekt Analytiker/Konsul).

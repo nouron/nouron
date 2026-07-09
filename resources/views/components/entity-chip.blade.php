@@ -13,59 +13,66 @@
 
     Note: outer element is always <span>. Links live only inside the tooltip to avoid
     nested-<a> invalid HTML when the component is placed inside a link context.
+
+    Positioning: the tooltip clamps horizontally to the viewport and flips
+    from above-chip to below-chip when clipped by the nearest <dialog>
+    ancestor (e.g. sol-modal's overflow:hidden article) — same boundary-clamp
+    pattern as partials/res-popup.blade.php, kept as a separate small x-effect
+    rather than a shared component since the two tooltip systems serve
+    different UX roles (fixed toolbar chips vs. inline glossary terms).
 --}}
 
 @php
     $iconMap = [
-        'building'  => 'bi-hexagon',
-        'knowledge' => 'bi-book',
-        'resource'  => 'bi-layers',
-        'ship'      => 'bi-rocket-takeoff',
-        'advisor'   => 'bi-person-badge',
-        'research'  => 'bi-diagram-3',
+        "building" => "bi-hexagon",
+        "knowledge" => "bi-book",
+        "resource" => "bi-layers",
+        "ship" => "bi-rocket-takeoff",
+        "advisor" => "bi-person-badge",
+        "research" => "bi-diagram-3",
     ];
 
-    $icon    = $iconMap[$type] ?? 'bi-circle';
-    $link    = $tooltip['link'] ?? null;
-    $hasLevel   = isset($tooltip['level']) && $tooltip['level'] !== null && $tooltip['level'] !== '';
-    $hasDesc    = !empty($tooltip['description'] ?? null);
-    $hasMeta    = !empty($tooltip['meta'] ?? null);
-    $hasLink    = !empty($link);
+    $icon = $iconMap[$type] ?? "bi-circle";
+    $link = $tooltip["link"] ?? null;
+    $hasLevel = isset($tooltip["level"]) && $tooltip["level"] !== null && $tooltip["level"] !== "";
+    $hasDesc = !empty($tooltip["description"] ?? null);
+    $hasMeta = !empty($tooltip["meta"] ?? null);
+    $hasLink = !empty($link);
     $hasTooltip = $hasLevel || $hasDesc || $hasMeta || $hasLink;
 @endphp
 
-<span
-    class="entity-chip entity-chip--{{ $type }}"
-    data-chip-type="{{ $type }}"
-    data-chip-key="{{ $entityKey }}"
-    x-data="{ open: false }"
-    @mouseenter="open = true"
-    @mouseleave="open = false"
-    @click.stop="open = !open"
-    @click.away="open = false"
-    role="button"
-    tabindex="0"
-    @keydown.escape="open = false"
-    @keydown.enter.prevent="open = !open"
-    aria-label="{{ $label }}"
-><i class="bi {{ $icon }}" aria-hidden="true"></i>{{ $label }}@if($hasTooltip)<span class="entity-chip-tooltip" x-show="open" x-cloak>
-        <span class="entity-chip-tooltip-name">{{ $label }}</span>
-        @if($hasLevel)
-            <span class="entity-chip-tooltip-row">
-                <span class="entity-chip-tooltip-label">{{ __('entity_chip.label_level') }}</span>
-                <span>{{ $tooltip['level'] }}</span>
-            </span>
-        @endif
-        @if($hasDesc)
-            <span class="entity-chip-tooltip-desc">{{ $tooltip['description'] }}</span>
-        @endif
-        @if($hasMeta)
-            <span class="entity-chip-tooltip-row entity-chip-tooltip-meta">{{ $tooltip['meta'] }}</span>
-        @endif
-        @if($hasLink)
-            <span class="entity-chip-tooltip-link">
-                <i class="bi bi-arrow-right" aria-hidden="true"></i>
-                <a href="{{ e($link) }}">{{ __('entity_chip.label_open_link') }}</a>
-            </span>
-        @endif
-    </span>@endif</span>
+<span class="entity-chip entity-chip--{{ $type }}" data-chip-type="{{ $type }}"
+    data-chip-key="{{ $entityKey }}" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false"
+    @click.stop="open = !open" @click.away="open = false" role="button" tabindex="0" @keydown.escape="open = false"
+    @keydown.enter.prevent="open = !open" aria-label="{{ $label }}">
+    <i class="bi {{ $icon }}" aria-hidden="true"></i>{{ $label }}@if ($hasTooltip)<span class="entity-chip-tooltip" x-show="open" x-cloak
+            x-effect="open && $nextTick(() => {
+            $el.style.marginLeft = ''; $el.style.top = ''; $el.style.bottom = '';
+            const r = $el.getBoundingClientRect();
+            if (r.left < 8) $el.style.marginLeft = (8 - r.left) + 'px';
+            else if (r.right > window.innerWidth - 8) $el.style.marginLeft = (window.innerWidth - 8 - r.right) + 'px';
+            const clip = $el.closest('dialog');
+            const clipTop = clip ? clip.getBoundingClientRect().top : 0;
+            if (r.top < clipTop + 8) { $el.style.bottom = 'auto'; $el.style.top = 'calc(100% + 0.4rem)'; }
+        })">
+            <span class="entity-chip-tooltip-name">{{ $label }}</span>
+            @if ($hasLevel)
+                <span class="entity-chip-tooltip-row">
+                    <span class="entity-chip-tooltip-label">{{ __("entity_chip.label_level") }}</span>
+                    <span>{{ $tooltip["level"] }}</span>
+                </span>
+            @endif
+            @if ($hasDesc)
+                <span class="entity-chip-tooltip-desc">{{ $tooltip["description"] }}</span>
+            @endif
+            @if ($hasMeta)
+                <span class="entity-chip-tooltip-row entity-chip-tooltip-meta">{{ $tooltip["meta"] }}</span>
+            @endif
+            @if ($hasLink)
+                <span class="entity-chip-tooltip-link">
+                    <i class="bi bi-arrow-right" aria-hidden="true"></i>
+                    <a href="{{ e($link) }}">{{ __("entity_chip.label_open_link") }}</a>
+                </span>
+            @endif
+        </span>@endif
+</span>
