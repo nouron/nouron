@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-08 (2)
+
+- **Fix: Berater-Screen zeigte Raumfahrer doppelt.** Owner-Playtest-Fund (Sol 4, direkt nach Hangar-Fertigstellung): Slot 2 zeigte den echten (hireable) Raumfahrer, Slot 3 zeigte fälschlich ebenfalls "Raumfahrer" als Preview statt des noch offenen Pfads. Root Cause: `AdvisorController::buildSlots()` mappte offene Pfad-Slots per fixer Position (`2=>scientist, 3=>pilot, 4=>trader`), obwohl Positionen dynamisch nach Bau-Reihenfolge vergeben werden — nach Hangar-Bau rutschte Pilot auf Position 2, Position 3 zeigte aber weiter ihren alten Fix-Preview statt des tatsächlich noch offenen Pfads. Fix: Preview-Keys jetzt als "alle Pfade minus bereits aufgelöste" berechnet, in kanonischer Reihenfolge. Live gegen Barts echten Sol-4-Stand verifiziert (Position 3/4 zeigen jetzt korrekt Analytiker/Konsul).
+
 ## 2026-07-08
 
 - **Fix: Resourcebar-Chip-Popups grau + von Hint-Bar verdeckt.** Owner-Playtest-Fund (Sol 1): Popups von `.res-chip`-Chips (Credits, Supply, Rg/Co/Or) erschienen grau statt weiß und ihr Titel wurde von der Hint-Bar überdeckt — Vertrauen/AP-Chips (`.ap-chip`) waren korrekt. Root Cause: `.res-chip:hover { filter: brightness(0.94) }` — der Filter wirkt auf den ganzen Subtree inkl. Popup (#fff × 0.94 = #f0f0f0) und erzeugt einen Stacking Context, der das Popup trotz `z-index: 300` unter der später gerenderten Hint-Bar gefangen hielt. Fix: Hover-Verdunkelung via `inset box-shadow` statt `filter` (`public/css/resources.css`) — wirkt nur auf den Chip-Hintergrund, kein Stacking Context. Per Playwright-Screenshot verifiziert (Supply + Credits: Titel sichtbar, weiß, über Hint-Bar).

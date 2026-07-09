@@ -105,6 +105,13 @@ class AdvisorController extends BaseController
 
         $pathKeys = array_map(fn ($id) => self::PATH_BUILDINGS[$id], $pathBuildingIds);
 
+        // Preview keys for still-open path positions: whichever of the three
+        // path types haven't been resolved yet, in canonical order — NOT a
+        // fixed per-position map, since $pathKeys shifts left as buildings
+        // are placed (bug: position 3 kept previewing 'pilot' even after
+        // pilot was already resolved at position 2).
+        $remainingPreviewKeys = array_values(array_diff(array_values(self::PATH_BUILDINGS), $pathKeys));
+
         $slots = [];
 
         for ($position = 1; $position <= 5; $position++) {
@@ -119,8 +126,8 @@ class AdvisorController extends BaseController
             // All path slots require CC Lv2 minimum; the build-gate in placeBuilding()
             // controls how many path buildings can coexist (CC-Level − 1).
             if ($key === null) {
-                $previewKeys = [2 => 'scientist', 3 => 'pilot', 4 => 'trader'];
-                $previewKey = $previewKeys[$position] ?? null;
+                $previewIndex = $position - 2 - count($pathKeys);
+                $previewKey = $remainingPreviewKeys[$previewIndex] ?? null;
                 $previewCfg = $previewKey ? config("advisors.{$previewKey}") : null;
 
                 $slots[] = [
