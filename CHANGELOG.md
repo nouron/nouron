@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-09
+
+- **Cleanup:** Magic Number `25` (Kommandozentrale-Building-ID, Sonderfall "immer an Tile 0,0 verankert" statt tile_x/y-platziert) in `colony-hexgrid.js::initHexGrid()` als benannte Konstante `CC_BUILDING_ID` extrahiert.
+
 ## 2026-07-08 (3)
 
 - **Fix: Entity-Chip-Tooltip clippte in Modals.** Owner-Playtest-Fund (Berater-Einstellen-Dialog): der Raumfahrer-Glossar-Chip öffnet sein Tooltip fix nach oben (`bottom: calc(100% + 0.4rem)`), ohne Boundary-Check — im `sol-modal` (`overflow: hidden` Article) wurde der obere Teil abgeschnitten und überlappte sichtbar die Modal-Kopfzeile. Fix (`components/entity-chip.blade.php`): gleiches Boundary-Clamp-Pattern wie `res-popup` (horizontales Clamping + jetzt zusätzlich vertikales Flip auf "unten öffnen", wenn der nächste `<dialog>`-Vorfahre das Tooltip oben clippen würde). Bewusst kein Merge der beiden Popup-Systeme (unterschiedliche UX-Rollen: Toolbar-Chips vs. Glossar-Begriffe im Fließtext) — nur das Positionierungs-Pattern geteilt. Per Playwright verifiziert (schmaler Viewport, Tooltip öffnet sauber nach unten, keine Überlappung mehr).
