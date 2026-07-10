@@ -69,10 +69,12 @@ Abgeschlossen (2026-07-01): Architekturentscheidungen dokumentiert (`docs/adr/00
 
 ### Offene GDD / Design-TODOs
 
-- [ ] GDD §2 vs §6: Supply-Cap Tick-Schritt — Widerspruch, §2-Tabelle nennt Schritt 3, §6 + Code (`GameTick.php`) nennen Schritt 7. Eine Stelle korrigieren.
-- [ ] GDD §13: Burnout-Config-Block — `config/game.php → advisors.burnout` existiert nicht. Ergänzen oder GDD-Referenz entfernen.
-- [ ] GDD §14/Koloniebeiträge: Platzhalter-Begriff "Steuern" passt nicht zum Kleinkolonie-Konzept (kein Imperium). Begriff + prozentuales Malus-System neu denken, bevor implementiert wird. Alternativen: "Koloniebeiträge", "Abgaben", "Nexus-Quote".
-- [ ] GDD §9 "Begegnungen & Gefahren" + Merchant-Item-Kategorie `encounter_prep`: referenzieren noch Fleet-basierte Encounters (Flotte/Systemkarte seit 2026-06-20 gestrichen). Eigener GDD-Pass zum Bereinigen, nicht blockierend.
+Abgeschlossen (2026-07-10, game-designer): alle 4 Punkte geprüft und im GDD bereinigt.
+
+- [x] GDD §2 vs §6: Supply-Cap Tick-Schritt. §2s "Phase 3" war eine grobe Gruppierung, kein Widerspruch zu §6/Code (Schritt 7) — beide bereits konsistent. §2 um eine Phase-≠-Schritt-Klarstellung ergänzt.
+- [x] GDD §13: Burnout-Config-Block. Kein echter fehlender Verweis — GDD markiert die Formel bereits explizit als "noch nicht implementiert (Phase 4+)" und referenziert keinen nicht-existenten Config-Pfad. Klarstellung ergänzt, keine Config geschrieben (Feature bewusst aufgeschoben).
+- [x] GDD §14/Koloniebeiträge: "Steuern"-Konzept ist im GDD bereits als **verworfen** (nicht umbenannt) dokumentiert, ersetzt durch die undramatische Relaisvergütung. Abweichung von der ursprünglichen Design-Notiz ("Begriff klären, nicht verwerfen") — Owner-Rückfrage empfohlen, siehe Bericht.
+- [x] GDD §9/Merchant Fleet-Referenzen: §9 selbst war bereits sauber. `encounter_prep` ist keine Merchant-Item-Kategorie (die sind `ap_flex/ap_targeted/information/repair_kit/trust_boost`) — es ist ein Almanach-Bonustyp (§17) und referenziert bereits das neue §9-Kolonistengefahr-System, keine Flotten-Mechanik. Die Prämisse dieses ROADMAP-Punkts war insofern doppelt ungenau. Tatsächlicher Fund: Reisender Händler (aktive Mechanik) stand fälschlich unter dem "GESTRICHEN"-Banner der alten Systemansicht (§8a) — nach §12 Handel (neuer "Kanal 3") verschoben, Wortlaut von "im System" auf Exploration Zone korrigiert. Zusätzlich zwei tote Platzhalter-Werte (Angriffs-AP, Bewegungsreichweite) in der Kenntnisse-Beispieltabelle durch zivile Äquivalente ersetzt.
 
 ---
 
@@ -82,9 +84,14 @@ Abgeschlossen (2026-07-01): Architekturentscheidungen dokumentiert (`docs/adr/00
 - Tile-abhängige Harvester-Produktionsrate (aktuell feste Rate ×10/Level)
 - Berater-Traits (Draft — siehe Memory)
 - Berater Außendienst-Mechanik für weitere Typen (nach Playtest evaluieren)
-- Begegnungen & Gefahren (GDD §9) — konkrete Events + Encounter-Screens (siehe auch GDD-Bereinigung oben)
+- Begegnungen & Gefahren (GDD §9) — konkrete Events + Encounter-Screens
 - Forschung / Techtree-Screen: Kenntnisse-Freischalt-Flow
 - Play-by-Mail-Multiplayer (3–4 Spieler, variable Tick-Zeiten) — optionale spätere Iteration. Architektur in ADR 0003 festgelegt (siehe oben); Rest (Games/TurnOrders/Resolution-Engine/KI) zurückgestellt bis aktiv angegangen.
+
+### Neu gefunden bei GDD-Aufräumpass (2026-07-10, technisch, nicht blockierend)
+
+- `config/game.php → merchant.items.information.label` heißt noch "Systemkarte vollständig" (Restverweis auf die 2026-06-20 gestrichene Systemkarte) — rein kosmetisch, geprüft: `MerchantService` setzt bereits korrekt `colony_tiles.is_explored`, die Wirkung ist nicht kaputt. Label-Text anpassen. Siehe GDD §12 Kanal 3.
+- Tick-Schritt-Nummerierung in `GameTick.php` (Docblock) ist selbst lückenhaft/inkonsistent (springt 0→4→6, Food-Consumption-Schritt fehlt ganz) und mehrere GDD-Stellen (§8b, §13, §14, §15) referenzieren daraus veraltete Schrittnummern (z.B. "Tick-Schritt 7" für Advisor Ticks, tatsächlich Schritt 9). Docblock zuerst durch game-developer korrigieren/vervollständigen, danach GDD-Referenzen in einem eigenen Pass nachziehen.
 
 ---
 

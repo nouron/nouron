@@ -187,7 +187,7 @@ php artisan game:tick --tick=N  # erzwingt Tick-Nummer N (nur für Tests)
 | 4. Vertrauen | Vertrauenswert neu berechnen (inkl. Hunger-Malus), `colony_resources` aktualisieren (§14) |
 | 5. Beratung & Events | Advisor-Ticks, Bar-Angebote, Händler-Spawn, Run-Checks (Phasen, Objectives, Fail State) |
 
-> Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten.
+> **Phase ≠ Schritt:** Die Nummerierung 1–5 (3a) in dieser Tabelle ist eine grobe, spielerorientierte Gruppierung — kein 1:1-Bezug zu den feingranularen Schritt-Nummern in `GameTick.php` (die z.B. bei Supply-Cap „Schritt 7" heißen, §6). Die genaue Schritt-Reihenfolge innerhalb jeder Phase ist in `app/Console/Commands/GameTick.php` (Docblock) kanonisch festgehalten — dort steht auch die maßgebliche Nummer, falls ein anderer GDD-Abschnitt einen konkreten Schritt referenziert.
 
 ---
 
@@ -943,7 +943,7 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 > **Designabsicht:** Burnout ist ein seltenes, aber echtes Risiko, das den Spieler dazu bringt, einen Backup-Plan für den Ausfall eines Beraters zu haben. Experten sind robuster, aber teurer — das macht Rang-Aufstieg strategisch wertvoller als nur "mehr AP pro Sol".
 
-> **Implementierungsstand:** Die Burnout-Wahrscheinlichkeits-Formel ist noch nicht implementiert. `unavailable_until_tick` existiert in der DB und wird gecheckt; die probabilistische Prüfung folgt nach dem ersten Playtest (Phase 4+).
+> **Implementierungsstand:** Die Burnout-Wahrscheinlichkeits-Formel ist noch nicht implementiert. `unavailable_until_tick` existiert in der DB und wird gecheckt; die probabilistische Prüfung folgt nach dem ersten Playtest (Phase 4+). Ein `config/game.php → advisors.burnout`-Block existiert bewusst noch nicht — die Richtwerte oben (`base_chance`, `growth_factor`, `threshold`, `rank_dampener`, `recovery_ticks`) sind das Design für die spätere Config, kein fehlender Verweis.
 
 ---
 
@@ -1067,28 +1067,7 @@ Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber 
 
 **Erscheinungsfrequenz pro Run:** 3–5 Piratensonden-Events, 1–3 Schmuggler, 0–1 schwere Wächter (prozedurale Verteilung bei Run-Generierung).
 
-### Reisender Händler
-
-Ein reisender Händler erscheint gelegentlich im System für eine begrenzte Anzahl Sole. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
-
-**Erscheinungsfrequenz:** Erstmals ab Sol 15–20 (Kolonie soll sich erst etablieren). Danach alle 10–15 Sole zufällig. Ergibt ~6–7 Besuche pro 100-Sol-Run. Ist der Händler weg, ist er weg — Roguelike-Druck.
-
-**Inventar:** 3–4 Items pro Besuch (Mobile-optimiert, kein Scrollen nötig).
-
-**Preisstruktur:** Alles in Credits. Kein Tauschhandel in Phase 3. Exotics/Tausch für Phase 4+ denkbar.
-
-**Schwierigkeitsskalierung:** Höhere Preise auf schwierigeren Runs — nicht schlechteres Sortiment (das wäre frustrierend).
-
-**Item-Kategorien:**
-
-| Kategorie | Beschreibung | Seltenheit |
-|-----------|-------------|-----------|
-| **AP-Paket (flexibel)** | Sofortiger AP-Schub eines Typs (z.B. +20 Construction-AP) — Spieler wählt beim Kauf wofür er sie ausgibt. Teurer als gezieltes Paket | gelegentlich |
-| **AP-Paket (gezielt)** | AP-Schub für ein konkretes Gebäude oder eine Kenntnis — günstiger, aber Ziel ist fixiert | gelegentlich |
-| **Schiff** | Gebrauchtes Schiff mit Eigenname — ersetzt ein bestehendes Schiff (Hangar bleibt konstant). Phase 4+: besondere Eigenschaften denkbar | selten |
-| **Information** | Alle versteckten Event-Spots im System sofort enthüllt | selten |
-| **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
-| **Exotics** | Platzhalter Phase 4+ | sehr selten |
+> **Reisender Händler umgezogen (Juli 2026):** Die Beschreibung stand hier fälschlich unter dem "GESTRICHEN"-Banner dieses Abschnitts, obwohl der Reisender Händler eine aktive, unabhängig von der Systemkarte weiterhin implementierte Mechanik ist (`MerchantService`, `GameTick.php` Schritt 11, `config/game.php → merchant`). Vollständige Beschreibung jetzt in §12 Handel, Kanal 3.
 
 ### Multiplayer
 
@@ -1308,11 +1287,13 @@ Beispiele für Sekundäreffekte (konkrete Werte folgen nach erstem Playtest):
 | geology | advisor_engineer | −10% Gebäudekosten |
 | geology | advisor_trader | +10% Rohstoff-Verkaufspreis |
 | health | advisor_scientist | +1 Analyse-AP/Sol |
-| defense | advisor_pilot | −1 AP-Kosten für Angriff |
+| defense | advisor_pilot | −1 Navigation-AP-Kosten für Schutzmissionen (z.B. Umkreis-Patrouille) |
 | trade | advisor_trader | +15% Handelsgewinn |
-| cartography | advisor_pilot | +1 Bewegungsreichweite |
+| cartography | advisor_pilot | +1 zusätzlich aufgedecktes Tile pro Erkundung |
 
 > **TODO Design:** Vollständige 7×5-Matrix (alle Kenntnisse × alle Berater) ausarbeiten — nach erstem Playtest, wenn klar ist welche Kombinationen strategisch interessant sind.
+>
+> **Korrektur (Juli 2026):** Die ursprünglichen Platzhalterwerte für `defense`/`advisor_pilot` ("AP-Kosten für Angriff") und `cartography`/`advisor_pilot` ("Bewegungsreichweite") referenzierten die 2026-06-20 gestrichene Flotten-/Systemkarten-Mechanik (Angriffsorder, Flottenbewegung). Durch zivile Äquivalente ersetzt (Schutzmissions-AP, Tile-Erkundung) — weiterhin nur Platzhalter, keine finalen Werte.
 
 ### Berater-Zuweisung
 
@@ -1613,6 +1594,35 @@ Nexus schickt auf Anfrage offizielle Handelsschiffe. Immer verfügbar — auch o
 2. Credits-Betrag wird sofort eingefroren (reserviert)
 3. Nach Lieferzeit: INNN-Ereignis "Nexus-Lieferung eingetroffen", Ressourcen gutgeschrieben, Credits abgebucht
 4. Kann nur 1 offene Anfrage gleichzeitig haben
+
+---
+
+### Kanal 3: Reisender Händler (selten, hochwertig)
+
+> **Umgezogen aus §8a (Juli 2026):** Diese Beschreibung stand zuvor unter dem "GESTRICHEN"-Banner der (entfernten) Systemansicht — obwohl der Reisender Händler unabhängig davon eine aktive, implementierte Mechanik ist. Implementiert über `MerchantService` + `config/game.php → merchant`; Spawn-Check läuft in `GameTick.php` Schritt 11.
+
+Ein reisender Händler erscheint gelegentlich bei der Kolonie für eine begrenzte Anzahl Sole. Er bietet seltene Waren an — keine Standardressourcen, sondern Shortcuts und Chancen die im normalen Spielverlauf nicht erreichbar sind.
+
+**Erscheinungsfrequenz:** Erstmals ab Sol 15–20 (Kolonie soll sich erst etablieren). Danach alle 10–15 Sole zufällig. Ergibt ~6–7 Besuche pro 100-Sol-Run. Ist der Händler weg, ist er weg — Roguelike-Druck.
+
+**Inventar:** 3–4 Items pro Besuch (Mobile-optimiert, kein Scrollen nötig).
+
+**Preisstruktur:** Alles in Credits. Kein Tauschhandel in Phase 3. Exotics/Tausch für Phase 4+ denkbar.
+
+**Schwierigkeitsskalierung:** Höhere Preise auf schwierigeren Runs — nicht schlechteres Sortiment (das wäre frustrierend).
+
+**Item-Kategorien:**
+
+| Kategorie | Beschreibung | Seltenheit |
+|-----------|-------------|-----------|
+| **AP-Paket (flexibel)** | Sofortiger AP-Schub eines Typs (z.B. +20 Construction-AP) — Spieler wählt beim Kauf wofür er sie ausgibt. Teurer als gezieltes Paket | gelegentlich |
+| **AP-Paket (gezielt)** | AP-Schub für ein konkretes Gebäude oder eine Kenntnis — günstiger, aber Ziel ist fixiert | gelegentlich |
+| **Schiff** | Gebrauchtes Schiff mit Eigenname — ersetzt ein bestehendes Schiff (Hangar bleibt konstant). Phase 4+: besondere Eigenschaften denkbar | selten |
+| **Information** | Alle noch unerkundeten Tiles der Exploration Zone sofort aufgedeckt (`colony_tiles.is_explored`) | selten |
+| **Einmal-Item** | Reparatur-Kit, Vertrauens-Schub, Credits-Notfallkredit | häufig |
+| **Exotics** | Platzhalter Phase 4+ | sehr selten |
+
+> **Config-Nacharbeit (nicht GDD — für game-developer/backend-coder):** `config/game.php → merchant.items.information.label` heißt noch **"Systemkarte vollständig"** — ein rein kosmetischer Restverweis auf die 2026-06-20 gestrichene Systemkarte. Geprüft: `MerchantService::applyItemEffect()` setzt bereits korrekt `colony_tiles.is_explored = true` für die Kolonie (Exploration Zone) — die Wirkung ist **nicht** kaputt, nur das Label ist veraltet. Label an die obige Formulierung anpassen (kein Balance-Risiko, reiner Text-Fix).
 
 ---
 
@@ -2055,7 +2065,31 @@ Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen
 
 ### Einflussfaktoren: Relaisvergütung
 
-Die Relaisvergütung (§3) ist eine reine Nexus-Einnahme ohne Vertrauenseffekt — sie fließt von Nexus an die Kolonie, nicht umgekehrt, und stellt daher keine Belastung der Kolonisten dar. Ein gesonderter Abzugs-/Steuermechanismus mit Vertrauensmalus wurde ursprünglich erwogen (das frühere "Steuern"-Konzept), ist aber hinfällig und wird nicht weiterverfolgt.
+Die Relaisvergütung (§3) ist eine reine Nexus-Einnahme **ohne automatischen Vertrauenseffekt** — sie fließt von Nexus an die Kolonie, nicht umgekehrt, und stellt für sich genommen keine Belastung der Kolonisten dar. Ein gesonderter passiver Abzugs-/Steuermechanismus mit Vertrauensmalus wurde ursprünglich erwogen (das frühere "Steuern"-Konzept), ist aber hinfällig und wird nicht weiterverfolgt — der Platzhalter-Begriff "Steuern" ist damit erledigt: nicht umbenannt, sondern die Mechanik dahinter gestrichen.
+
+Was sich ändert: Der Spieler kann eingenommene Credits — ob aus Relaisvergütung, Handel oder Reserven — jetzt **aktiv** in Vertrauen zurückverwandeln. Das ist kein passiver Nebeneffekt der Relaisvergütung selbst, sondern eine eigene, bewusst gewählte Aktion — siehe **Kolonisten-Zulage** im nächsten Abschnitt.
+
+### Einflussfaktoren: Kolonisten-Zulage (Spieleraktion)
+
+Aktive Aktion des Direktors: Ein Teil der Kolonie-Credits kann jederzeit direkt an die Kolonisten ausgeschüttet werden — eine spürbare, bewusst gewählte Ausgabe, die zeigt, dass es der Siedlung wirtschaftlich gut genug geht, um sie unmittelbar zu beteiligen. Anders als Vertrauensgebäude oder Kenntnisse (permanente Dauerboni) ist die Zulage ein **reaktiver Hebel**: kein Dauerzustand, sondern eine situative Entscheidung — z. B. um vor einem kritischen Sol (Nexus-Meilenstein §15, drohende Vertrauens-Fail-Schwelle §15) Vertrauen zu stabilisieren, auf Kosten von Credits, die sonst in Ausbau, Berater-Upkeep oder Handel geflossen wären.
+
+**Staffelung:**
+
+| Stufe | Kosten | Vertrauens-Bonus | Event-Key | Credits/Punkt |
+|-------|--------|-------------------|-----------|----------------|
+| Klein | 100 Credits | +2 Vertrauen | `stipend_small` | 50 |
+| Mittel | 300 Credits | +3 Vertrauen | `stipend_medium` | 100 |
+| Groß | 600 Credits | +4 Vertrauen | `stipend_large` | 150 |
+
+Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse" unten): genau **1 Sol**, danach verworfen.
+
+**Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten "Klein" + "Groß" im selben Sol also zu +6 Vertrauen kombiniert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
+
+**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (Credits pro Vertrauenspunkt steigen von 50 auf 150) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer jeden Sol die kleine Stufe zieht, zahlt 100 Credits/Sol für einen wiederkehrenden +2-Bonus — spürbar gegenüber der Relaisvergütung (20–120 Cr/Sol, abhängig vom Wohnhabitat-Level) und dem Berater-Upkeep (50 Cr/Sol, Rang 2), aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig +15 Vertrauen für 600 Credits (40 Cr/Punkt) — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll.
+
+**Rationale:** Die Zulage gibt dem Spieler einen direkten, jederzeit verfügbaren Hebel auf Vertrauen — aber zu einem Preis, der die Entscheidung "Vertrauen jetzt sichern" gegen "Credits in Ausbau/Handel investieren" tatsächlich schwer macht. Die degressive Staffelung verhindert, dass die große Stufe zur Standardwahl wird; die Einmal-pro-Sol-Regel verhindert Kombination innerhalb eines Sols. Zusammen ersetzt das einen Cooldown, ohne die Reaktionsfreiheit des Spielers einzuschränken.
+
+> ⚠️ BALANCE CONCERN: Ohne harten Mehr-Sol-Cooldown ist die Kolonisten-Zulage im Lategame (hohe Credits-Reserven) potenziell ein "Vertrauen auf Knopfdruck"-Ventil, das die -20-Fail-Schwelle (§15) entschärft. Nach dem ersten Playtest prüfen, ob ein Soft-Cap (z. B. max. 1 Zulagen-Event pro N Sole) nötig wird, falls Spieler die Mechanik nutzen, um Krisen risikofrei auszusitzen statt echte Ursachen (Hunger, Decay, Militarisierung) zu beheben.
 
 ### Einflussfaktoren: Verpflegung (Organika)
 
@@ -2111,6 +2145,16 @@ Events sind nach Kategorie gruppiert. Alle Effekte wirken exakt 1 Sol (werden na
 | `encounter_won` | Zwischenfall erfolgreich gelöst/abgewehrt | +2 |
 | `encounter_lost` | Zwischenfall eskaliert / Kolonie wurde beschädigt | -4 |
 | `colony_threatened` | Kolonie akut bedroht (kritischer Zwischenfall) | -5 |
+
+**Spieleraktionen:**
+
+| Event-Key | Beschreibung | Vertrauenseffekt |
+|-----------|-------------|------------------|
+| `stipend_small` | Kolonisten-Zulage, Stufe Klein (100 Cr) | +2 |
+| `stipend_medium` | Kolonisten-Zulage, Stufe Mittel (300 Cr) | +3 |
+| `stipend_large` | Kolonisten-Zulage, Stufe Groß (600 Cr) | +4 |
+
+Details, Kosten-Rationale und die Einmal-pro-Sol-Regel siehe "Einflussfaktoren: Kolonisten-Zulage (Spieleraktion)" weiter oben.
 
 > **TODO:** Exakte Vertrauenswerte für Begegnungs-Events nach §9-Ausarbeitung kalibrieren. Event-Keys sind in `TrustService` als `game.trust.events.*` angelegt (CLAUDE.md Korrekturen-Sektion); Werte nach erstem Playtest festsetzen. Der **Sicherheits-Hub** dämpft diese drei Events (+ `building_level_down`) um 25 % wenn aktiv — das macht ihre genauen Werte doppelt relevant.
 
