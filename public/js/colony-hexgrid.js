@@ -856,6 +856,10 @@ function hidePressProgress(group) {
 
 // ── SVG hex grid renderer ─────────────────────────────────────────────────────
 
+// Kommandozentrale (config/buildings.php: commandCenter) — the one building
+// anchored at the colony's fixed origin tile instead of a player-placed tile_x/y.
+const CC_BUILDING_ID = 25;
+
 function initHexGrid(container, tiles, opts = {}) {
     if (!container || tiles.length === 0) return;
 
@@ -868,7 +872,7 @@ function initHexGrid(container, tiles, opts = {}) {
     const buildingsByTile = new Map();
     if (opts.buildings) {
         for (const b of opts.buildings) {
-            if (b.building_id === 25) {
+            if (b.building_id === CC_BUILDING_ID) {
                 buildingsByTile.set('0,0', b);
             } else if (b.tile_x !== null && b.tile_y !== null) {
                 buildingsByTile.set(`${b.tile_x},${b.tile_y}`, b);
