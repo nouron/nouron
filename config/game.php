@@ -72,6 +72,17 @@ return [
         'compound_import_price' => 90,
     ],
 
+    // Kolonisten-Zulage (GDD §14) — player-triggered Credits→Trust action.
+    // Trust deltas live in trust.events.stipend_* below (single source of truth);
+    // this block only maps the UI-facing tier key to its Credits cost and event_key.
+    'stipend' => [
+        'tiers' => [
+            'small' => ['cost' => 100, 'event_key' => 'stipend_small'],
+            'medium' => ['cost' => 300, 'event_key' => 'stipend_medium'],
+            'large' => ['cost' => 600, 'event_key' => 'stipend_large'],
+        ],
+    ],
+
     // Manual building repair — Regolith cost per click (1 SP), on top of 1 Construction-AP.
     // CommandCenter + Harvester are exempt (AP-only, bootstrap anchor against decay spiral).
     'repair' => [
@@ -204,6 +215,9 @@ return [
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
             'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
             'encounter_won' => 2,  // successful protective/aid action (e.g. mission_aid_transport)
+            'stipend_small' => 2,  // Kolonisten-Zulage (GDD §14) — see stipend.tiers above
+            'stipend_medium' => 3,
+            'stipend_large' => 4,
         ],
     ],
 

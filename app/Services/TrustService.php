@@ -176,6 +176,24 @@ class TrustService
         ]);
     }
 
+    /**
+     * Whether any of the given event types already has a trust_events row for
+     * this colony at the given tick. Used to enforce "max one stipend tier per
+     * Sol" (GDD §14) — different stipend event_keys do not dedupe against each
+     * other in eventContribution()'s same-key collapse, so this guard is a
+     * separate rule the calling code must apply before firing.
+     *
+     * @param  string[]  $eventTypes
+     */
+    public function hasEventThisTick(int $colonyId, int $tick, array $eventTypes): bool
+    {
+        return DB::table('trust_events')
+            ->where('colony_id', $colonyId)
+            ->where('tick', $tick)
+            ->whereIn('event_type', $eventTypes)
+            ->exists();
+    }
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private function buildingContribution(int $colonyId): int

@@ -15,11 +15,13 @@ use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
+use App\Services\TrustService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class ColonyController extends BaseController
@@ -34,6 +36,7 @@ class ColonyController extends BaseController
         private readonly MerchantService $merchantService,
         private readonly EventService $eventService,
         private readonly ResourcesService $resourcesService,
+        private readonly TrustService $trustService,
     ) {
         parent::__construct($tick);
     }
@@ -826,6 +829,59 @@ class ColonyController extends BaseController
             'cost' => $totalCost,
             'credits' => $credits,
             'compounds' => $compounds,
+        ]);
+    }
+
+    /**
+     * Kolonisten-Zulage (GDD §14) — spend Credits to fire a one-shot Trust
+     * event. Max one tier per colony per Sol (different stipend event_keys
+     * don't dedupe against each other in TrustService's same-key collapse).
+     */
+    public function purchaseStipend(Request $request): JsonResponse
+    {
+        $tiers = config('game.stipend.tiers', []);
+
+        $data = $request->validate([
+            'tier' => ['required', 'string', Rule::in(array_keys($tiers))],
+        ]);
+
+        $colony = $this->colonyService->getPrimeColony(Auth::id());
+        $tierCfg = $tiers[$data['tier']];
+        $cost = (int) $tierCfg['cost'];
+        $eventKey = (string) $tierCfg['event_key'];
+        $allStipendKeys = array_column($tiers, 'event_key');
+
+        // fireEvent()'s default (tick+1) is what the *next* GameTick run reads
+        // (TrustService::eventContribution matches tick exactly) — computed
+        // once so the guard and the insert agree on the same target tick.
+        $targetTick = $this->getTick() + 1;
+
+        if ($this->trustService->hasEventThisTick($colony->id, $targetTick, $allStipendKeys)) {
+            return response()->json(['ok' => false, 'error' => 'stipend_already_used', 'message' => __('colony.stipend_already_used')]);
+        }
+
+        if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $cost]], $colony->id)) {
+            return response()->json(['ok' => false, 'error' => 'stipend_no_credits', 'message' => __('colony.stipend_no_credits')]);
+        }
+
+        $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $cost]], $colony->id);
+        $this->trustService->fireEvent($colony->id, $eventKey, $targetTick);
+
+        $this->eventService->createEvent([
+            'user' => Auth::id(),
+            'tick' => $this->getTick(),
+            'event' => 'colony.stipend_purchased',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => $colony->id, 'tier' => $data['tier'], 'cost' => $cost]),
+        ]);
+
+        $credits = (int) (DB::table('user_resources')->where('user_id', $colony->user_id)->value('credits') ?? 0);
+
+        return response()->json([
+            'ok' => true,
+            'tier' => $data['tier'],
+            'cost' => $cost,
+            'credits' => $credits,
         ]);
     }
 

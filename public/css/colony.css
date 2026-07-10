@@ -436,6 +436,34 @@ button.btn-sol:hover,
     background: #f5f5f7;
 }
 
+/* ── Kolonisten-Zulage dialog (GDD §14) ──────────────────────────────────── */
+
+.stipend-tiers {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 1rem 1rem;
+}
+
+.stipend-tier-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.9rem;
+    background: #fff;
+    border: 1px solid #d0d4db;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #333;
+    cursor: pointer;
+    text-align: left;
+}
+
+.stipend-tier-btn:hover {
+    border-color: #aaa;
+    background: #f5f5f7;
+}
+
 .hex-legend {
     font-size: 0.8rem;
     color: #4a4f5a;

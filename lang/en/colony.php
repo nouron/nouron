@@ -186,6 +186,19 @@ return [
     'nexus_import_no_credits' => 'Not enough Credits for this import.',
     'nexus_import_error' => 'Import failed.',
 
+    // ── Colonist Stipend (GDD §14) ───────────────────────────────────────────
+
+    'stipend_button' => 'Colonist Stipend',
+    'stipend_dialog_title' => 'Colonist Stipend',
+    'stipend_dialog_hint' => 'Pay out Credits directly to the colonists — boosts Trust starting next Sol.',
+    'stipend_tier_small' => 'Small',
+    'stipend_tier_medium' => 'Medium',
+    'stipend_tier_large' => 'Large',
+    'stipend_success' => 'Stipend paid (:cost Cr) — takes effect next Sol.',
+    'stipend_error' => 'Stipend failed.',
+    'stipend_already_used' => 'A stipend has already been paid out this Sol.',
+    'stipend_no_credits' => 'Not enough Credits for this stipend.',
+
     // ── Generic UI actions ────────────────────────────────────────────────────
 
     'close' => 'Close',

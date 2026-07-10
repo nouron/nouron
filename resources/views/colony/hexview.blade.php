@@ -54,6 +54,7 @@
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
                 nexusImport: '{{ route("colony.nexus.import") }}',
+                stipend: '{{ route("colony.stipend") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -77,6 +78,8 @@
                 networkError: @json(__("colony.network_error")),
                 nexusImportSuccess: @json(__("colony.nexus_import_success")),
                 nexusImportError: @json(__("colony.nexus_import_error")),
+                stipendSuccess: @json(__("colony.stipend_success")),
+                stipendError: @json(__("colony.stipend_error")),
             },
         };
     </script>
@@ -121,6 +124,10 @@
                             </template>
                         </button>
                     </template>
+
+                    <button class="info-bar-btn" @click="$refs.stipendDialog.showModal()">
+                        {{ __("colony.stipend_button") }}
+                    </button>
 
                     <details class="hex-legend">
                         <summary class="info-bar-btn">{{ __("colony.legend_title") }}</summary>
@@ -535,6 +542,28 @@
                         </template>
                     </ul>
                 </template>
+            </article>
+        </dialog>
+
+        {{-- Kolonisten-Zulage dialog — 3 tiers, Credits→Trust one-shot event (GDD §14) --}}
+        <dialog x-ref="stipendDialog" class="sol-modal" @click.self="$refs.stipendDialog.close()">
+            <article>
+                <header>
+                    <button aria-label="{{ __("colony.cancel") }}" rel="prev"
+                        @click="$refs.stipendDialog.close()"></button>
+                    <h3>{{ __("colony.stipend_dialog_title") }}</h3>
+                </header>
+                <p>{{ __("colony.stipend_dialog_hint") }}</p>
+                <div class="stipend-tiers">
+                    @foreach (config("game.stipend.tiers") as $tierKey => $tierCfg)
+                        <button class="stipend-tier-btn" @click="doPurchaseStipend('{{ $tierKey }}')">
+                            <strong>{{ __("colony.stipend_tier_{$tierKey}") }}</strong>
+                            <span>{{ $tierCfg["cost"] }}
+                                Cr — +{{ config("game.trust.events.{$tierCfg["event_key"]}") }}
+                                {{ __("resources.res_trust") }}</span>
+                        </button>
+                    @endforeach
+                </div>
             </article>
         </dialog>
 

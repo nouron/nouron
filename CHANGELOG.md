@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-10
+
+- **Neu: Kolonisten-Zulage.** Neue Spieleraktion (GDD §14): Credits direkt an die Kolonisten ausschütten, 3 Stufen (100/300/600 Cr → +2/+3/+4 Vertrauen, degressive Cr/Punkt-Effizienz), wirkt als Trust-Event ab dem nächsten Sol. Max. 1 Zulage pro Sol (Guard in `TrustService::hasEventThisTick()`). Ersetzt das nie implementierte "Steuern"-Konzept — Nexus zahlt der Kolonie eh Geld (Relaisvergütung), der Spieler entscheidet jetzt aktiv, wie viel davon an die Kolonisten weitergeht. Button in der Canvas-Info-Bar der Kolonieansicht, neuer Dialog + `POST /colony/stipend`. 6 neue Feature-Tests, live per Playwright verifiziert.
+
 ## 2026-07-09
 
 - **Cleanup:** Magic Number `25` (Kommandozentrale-Building-ID, Sonderfall "immer an Tile 0,0 verankert" statt tile_x/y-platziert) in `colony-hexgrid.js::initHexGrid()` als benannte Konstante `CC_BUILDING_ID` extrahiert.

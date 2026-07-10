@@ -413,6 +413,21 @@ function colonyHexView(config) {
             }
         },
 
+        // Kolonisten-Zulage (GDD §14) — trust effect only applies from the next
+        // Sol onward (TrustService writes the stored trust value only during
+        // GameTick), so only the Credits chip is synced immediately here.
+        async doPurchaseStipend(tier) {
+            const res = await this.post(this.routes.stipend, { tier });
+            if (res.ok) {
+                this.syncResbarAmount('.res-Cr', res.credits);
+                this.flashResChip('.res-Cr');
+                this.showToast((this.i18n.stipendSuccess ?? '').replace(':cost', res.cost), 'info');
+                this.$refs.stipendDialog.close();
+            } else {
+                this.showToast(res.message ?? res.error ?? this.i18n.stipendError, 'error');
+            }
+        },
+
         // ── Harvester relocation ──────────────────────────────────────────────
 
         startHarvesterMove() {
