@@ -54,7 +54,6 @@
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
                 nexusImport: '{{ route("colony.nexus.import") }}',
-                stipend: '{{ route("colony.stipend") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -78,8 +77,6 @@
                 networkError: @json(__("colony.network_error")),
                 nexusImportSuccess: @json(__("colony.nexus_import_success")),
                 nexusImportError: @json(__("colony.nexus_import_error")),
-                stipendSuccess: @json(__("colony.stipend_success")),
-                stipendError: @json(__("colony.stipend_error")),
             },
         };
     </script>
@@ -109,25 +106,10 @@
 
                 <div x-ref="hexgrid" class="hex-canvas"></div>
 
-                {{-- Info bar: phase progress + legend — always visible below canvas.
-                 The stipend button used to live here too, but this bar sits below the
-                 canvas and can scroll out of view on short viewports (see .stipend-fab
-                 below for the always-visible replacement). --}}
+                {{-- Info bar: legend — always visible below canvas. Phase progress +
+                 Kolonisten-Zulage moved to the Kommandozentrale dashboard (own screen,
+                 no popup — see routes/web.php colony.command_center). --}}
                 <div class="canvas-info-bar">
-                    <template x-if="phaseProgress">
-                        <button class="info-bar-btn" @click="$refs.phaseDialog.showModal()"
-                            :title="phaseProgress.phase === 1 ? '{{ __("colony.phase1_progress_title") }}' :
-                                '{{ __("colony.phase2_progress_title") }}'">
-                            <template x-if="phaseProgress.phase === 1">
-                                <span x-text="`P1 — ${phaseProgress.criteria.filter(c => c.done).length}/3`"></span>
-                            </template>
-                            <template x-if="phaseProgress.phase === 2">
-                                <span
-                                    x-text="`P2 — ${phaseProgress.objectives.filter(o => o.done).length}/${phaseProgress.objectives.length}`"></span>
-                            </template>
-                        </button>
-                    </template>
-
                     <details class="hex-legend">
                         <summary class="info-bar-btn">{{ __("colony.legend_title") }}</summary>
                         <ul class="hex-legend__list">
@@ -501,71 +483,6 @@
 
         </div>
 
-        {{-- Phase progress dialog -----------------------------------------------
-         Opened by the .phase-btn floating button on the canvas.
-    --}}
-        <dialog x-ref="phaseDialog" class="sol-modal" @click.self="$refs.phaseDialog.close()">
-            <article>
-                <header>
-                    <button aria-label="{{ __("colony.cancel") }}" rel="prev"
-                        @click="$refs.phaseDialog.close()"></button>
-                    <template x-if="phaseProgress && phaseProgress.phase === 1">
-                        <h3>{{ __("colony.phase1_progress_title") }}</h3>
-                    </template>
-                    <template x-if="phaseProgress && phaseProgress.phase === 2">
-                        <h3>{{ __("colony.phase2_progress_title") }}</h3>
-                    </template>
-                </header>
-                <template x-if="phaseProgress && phaseProgress.phase === 1">
-                    <ul class="phase-dialog-criteria">
-                        <template x-for="c in phaseProgress.criteria" :key="c.key">
-                            <li class="phase-criteria__item" :class="{ 'phase-criteria__item--done': c.done }">
-                                <span class="phase-criteria__check" x-text="c.done ? '✓' : '○'"></span>
-                                <span class="phase-criteria__label" x-text="c.label"></span>
-                                <span class="phase-criteria__count" x-show="!c.done"
-                                    x-text="`${c.current}/${c.target}`"></span>
-                            </li>
-                        </template>
-                    </ul>
-                </template>
-                <template x-if="phaseProgress && phaseProgress.phase === 2">
-                    <ul class="phase-dialog-criteria">
-                        <template x-for="(obj, idx) in phaseProgress.objectives" :key="idx">
-                            <li class="phase-criteria__item" :class="{ 'phase-criteria__item--done': obj.done }">
-                                <span class="phase-criteria__check" x-text="obj.done ? '✓' : '○'"></span>
-                                <span class="phase-criteria__label"
-                                    x-text="obj.revealed ? obj.label : '{{ __("colony.sol_report_phase2_objective_hidden") }}'"></span>
-                                <span class="phase-criteria__count" x-show="!obj.done && obj.revealed"
-                                    x-text="`${obj.current}/${obj.target}`"></span>
-                            </li>
-                        </template>
-                    </ul>
-                </template>
-            </article>
-        </dialog>
-
-        {{-- Kolonisten-Zulage dialog — 3 tiers, Credits→Trust one-shot event (GDD §14) --}}
-        <dialog x-ref="stipendDialog" class="sol-modal" @click.self="$refs.stipendDialog.close()">
-            <article>
-                <header>
-                    <button aria-label="{{ __("colony.cancel") }}" rel="prev"
-                        @click="$refs.stipendDialog.close()"></button>
-                    <h3>{{ __("colony.stipend_dialog_title") }}</h3>
-                </header>
-                <p>{{ __("colony.stipend_dialog_hint") }}</p>
-                <div class="stipend-tiers">
-                    @foreach (config("game.stipend.tiers") as $tierKey => $tierCfg)
-                        <button class="stipend-tier-btn" @click="doPurchaseStipend('{{ $tierKey }}')">
-                            <strong>{{ __("colony.stipend_tier_{$tierKey}") }}</strong>
-                            <span>{{ $tierCfg["cost"] }}
-                                Cr — +{{ config("game.trust.events.{$tierCfg["event_key"]}") }}
-                                {{ __("resources.res_trust") }}</span>
-                        </button>
-                    @endforeach
-                </div>
-            </article>
-        </dialog>
-
         {{-- Event discovery popup ------------------------------------------------
          Uses the native <dialog> element (PicoCSS styles it out of the box).
          x-effect watches eventDiscovery and calls the DOM API to open/close,
@@ -585,14 +502,6 @@
                 </footer>
             </article>
         </dialog>
-
-        {{-- Kolonisten-Zulage FAB — fixed to the viewport bottom-left so the action
-         stays reachable without scrolling, regardless of canvas/sidebar height
-         (Owner-Feedback: .canvas-info-bar sits below the canvas and can require
-         scrolling on short viewports). Lives at the x-data root so $refs resolves. --}}
-        <button type="button" class="stipend-fab" @click="$refs.stipendDialog.showModal()">
-            {{ __("colony.stipend_button") }}
-        </button>
 
         {{-- Action / AP-limit toast (Triggers 4 + 5) --}}
         <div class="colony-toast" :class="`colony-toast--${toastType}`" x-show="toastVisible" x-transition

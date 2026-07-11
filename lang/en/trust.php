@@ -18,4 +18,9 @@ return [
     'event_encounter_lost' => 'Own ships were damaged in an incident — colonists are concerned.',
     'event_colony_threatened' => 'The colony was directly threatened — residents are unsettled.',
     'event_treaty_signed' => 'A peace agreement was signed.',
+    'event_nexus_credit' => 'A ship was requested on Nexus credit — the debt weighs on morale.',
+    'event_well_fed' => 'The colony was well provisioned.',
+    'event_stipend_small' => 'Colonist Stipend (Small) paid out.',
+    'event_stipend_medium' => 'Colonist Stipend (Medium) paid out.',
+    'event_stipend_large' => 'Colonist Stipend (Large) paid out.',
 ];

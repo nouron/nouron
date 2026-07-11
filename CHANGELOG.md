@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-10 (3)
+
+- **Neu: Kommandozentrale-Screen (Kolonie-Dashboard).** Owner-Feedback: Phasenziele- und Kolonisten-Zulage-Popups "klebten" auf dem Hex-Grid-Screen. Neuer, immer erreichbarer Screen (Analogie zu Hangar/Cantina — Screen als Gebäude-Interface, hier CC), der beide ohne Popup direkt zeigt plus 5 neue Widgets: Run-Fortschritt/Sol-Countdown (inkl. Nexus-Schuld-Warnbalken), Wartungsstau, Netto-Sol-Bilanz (letzter Sol, neu gecacht), Berater-Kurzübersicht, Vertrauens-Ereignisse (letzte 5). `ColonyController::computePhaseProgress()` nach `ColonyService::getPhaseProgress()` gehoben (war zuvor dupliziert in `SolReportService`) — jetzt eine gemeinsame Quelle für beide Screens. 11 neue Feature-Tests, live per Playwright verifiziert (inkl. Zulage-Kauf-Flow auf dem neuen Screen).
+
 ## 2026-07-10 (2)
 
 Owner-Playtest der Kolonisten-Zulage (Sol 3–5) fand 5 Lücken, alle gefixt:

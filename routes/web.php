@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Colony\BarController;
 use App\Http\Controllers\Colony\ColonyController;
+use App\Http\Controllers\Colony\CommandCenterController;
 use App\Http\Controllers\Colony\HangarController;
 use App\Http\Controllers\Colony\MerchantController;
 use App\Http\Controllers\CommLog\CommLogController;
@@ -63,6 +64,9 @@ Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
 Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->group(function () {
     Route::get('/view', [ColonyController::class, 'hexview'])->name('view');
     Route::patch('/name', [ColonyController::class, 'rename'])->name('rename');
+
+    // Kommandozentrale dashboard — always accessible, no build-gate (CC exists from Sol 1)
+    Route::get('/command-center', [CommandCenterController::class, 'index'])->name('command_center');
 
     // Tile actions (AJAX)
     Route::post('/tile/explore', [ColonyController::class, 'exploreTile'])->name('tile.explore');

@@ -327,15 +327,6 @@ button.btn-sol:hover,
 /* ── Hex page layout ─────────────────────────────────────────────────────── */
 
 /*
- * Reserve clear space below the layout so the viewport-fixed .stipend-fab
- * never overlaps the last row of sidebar content when the page's natural
- * (document) bottom edge is close to the fixed button.
- */
-.hex-page {
-    padding-bottom: 4rem;
-}
-
-/*
  * Two-column grid: canvas area fills remaining space, sidebar is fixed-width.
  * min-height accounts for header (~44px) + resource bar (~38px) + 2px border = ~84px.
  */
@@ -441,67 +432,6 @@ button.btn-sol:hover,
 }
 
 .info-bar-btn:hover {
-    border-color: #aaa;
-    background: #f5f5f7;
-}
-
-/* ── Kolonisten-Zulage FAB (GDD §14) ─────────────────────────────────────── */
-
-/*
- * Viewport-fixed trigger for the stipend dialog. Used to live inside
- * .canvas-info-bar (below the canvas), which can scroll out of view on short
- * viewports — both mobile and desktop windows with little vertical space
- * (Owner-Feedback, real playtest). Fixed positioning guarantees it's always
- * reachable without scrolling. Bottom-left avoids the top-right .colony-toast,
- * the bottom-center .colony-levelup-notice, and the bottom-right
- * .first-visit-popup used on other screens.
- */
-.stipend-fab {
-    position: fixed;
-    bottom: 1rem;
-    left: 1rem;
-    z-index: 400;
-    padding: 0.55rem 1rem;
-    background: #fff;
-    border: 1px solid #d0d4db;
-    border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--color-anthracite, #333);
-    cursor: pointer;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-    white-space: nowrap;
-}
-
-.stipend-fab:hover {
-    border-color: #aaa;
-    background: #f5f5f7;
-}
-
-/* ── Kolonisten-Zulage dialog (GDD §14) ──────────────────────────────────── */
-
-.stipend-tiers {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0 1rem 1rem;
-}
-
-.stipend-tier-btn {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.6rem 0.9rem;
-    background: #fff;
-    border: 1px solid #d0d4db;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: #333;
-    cursor: pointer;
-    text-align: left;
-}
-
-.stipend-tier-btn:hover {
     border-color: #aaa;
     background: #f5f5f7;
 }
@@ -730,62 +660,6 @@ button.btn-sol:hover,
 .tile-panel-empty p {
     margin: 0;
     font-size: 0.85rem;
-}
-
-/* ── Phase progress dialog criteria list ─────────────────────────────────── */
-
-.phase-dialog-criteria {
-    list-style: none;
-    margin: 0;
-    padding: 0 1rem 0.5rem 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-}
-
-.phase-criteria {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.phase-criteria__item {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.76rem;
-    color: #555;
-    min-width: 0; /* allow flex children to shrink below content size */
-}
-
-.phase-criteria__item--done {
-    color: #2a7d4f;
-}
-
-.phase-criteria__check {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    width: 1em;
-    text-align: center;
-    color: #bbb;
-}
-
-.phase-criteria__item--done .phase-criteria__check {
-    color: #2a7d4f;
-}
-
-.phase-criteria__label {
-    flex: 1;
-}
-
-.phase-criteria__count {
-    flex-shrink: 0;
-    font-size: 0.7rem;
-    color: #aaa;
-    font-variant-numeric: tabular-nums;
 }
 
 /* ── Status chips ────────────────────────────────────────────────────────── */

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Advisor;
 use App\Models\Run;
 use Illuminate\Support\Facades\DB;
 
@@ -52,6 +51,10 @@ class SolReportService
         self::RES_ORGANICS => 'res_organika',
     ];
 
+    public function __construct(
+        private readonly ColonyService $colonyService,
+    ) {}
+
     /**
      * Capture the "before" state of a colony for later diffing.
      *
@@ -92,6 +95,36 @@ class SolReportService
             'buildings' => $buildings,
             'advisors' => $advisors,
             'phase' => $phase,
+        ];
+    }
+
+    /**
+     * Net Regolith/Werkstoffe/Organika/Credits/Trust change over the just-
+     * completed Sol — the same before/after diff as productionGroup()/
+     * colonyGroup(), flattened to scalars. Called by SolController::next()
+     * right after the tick to populate the Kommandozentrale dashboard's
+     * "Netto-Sol-Bilanz" widget (cached, since this diff is only computable
+     * at the moment of the Sol transition — colony state isn't snapshotted
+     * anywhere else).
+     *
+     * @param  array  $before  Snapshot taken before the tick (see snapshot()).
+     */
+    public function netDeltas(int $colonyId, int $userId, array $before): array
+    {
+        $afterResources = DB::table('colony_resources')
+            ->where('colony_id', $colonyId)
+            ->pluck('amount', 'resource_id')
+            ->map(fn ($a) => (int) $a)
+            ->all();
+
+        $creditsAfter = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
+
+        return [
+            'regolith' => ($afterResources[self::RES_REGOLITH] ?? 0) - (int) ($before['resources'][self::RES_REGOLITH] ?? 0),
+            'werkstoffe' => ($afterResources[self::RES_COMPOUNDS] ?? 0) - (int) ($before['resources'][self::RES_COMPOUNDS] ?? 0),
+            'organika' => ($afterResources[self::RES_ORGANICS] ?? 0) - (int) ($before['resources'][self::RES_ORGANICS] ?? 0),
+            'credits' => $creditsAfter - (int) ($before['credits'] ?? 0),
+            'trust' => ($afterResources[self::RES_TRUST] ?? 0) - (int) ($before['trust'] ?? 0),
         ];
     }
 
@@ -479,87 +512,14 @@ class SolReportService
 
     // ── Phase progress (Screen 2) ───────────────────────────────────────────────
 
+    /**
+     * Delegates to ColonyService::getPhaseProgress() — the shared source of
+     * truth for phase criteria/objectives (also used by the Kommandozentrale
+     * dashboard). Was a local reimplementation before both screens needed it.
+     */
     private function phaseProgress(Run $run): array
     {
-        if ($run->phase === 1 || $run->phase === null) {
-            return $this->phase1Progress($run);
-        }
-
-        return $this->phase2Progress($run);
-    }
-
-    private function phase1Progress(Run $run): array
-    {
-        $ccId = config('buildings.commandCenter.id', 25);
-        $colonyId = (int) $run->colony_id;
-
-        $ccLevel = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', $ccId)
-            ->value('level') ?? 0);
-
-        $buildingsLv2 = DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', '!=', $ccId)
-            ->where('level', '>=', 2)
-            ->count();
-
-        $advisorCount = Advisor::where('colony_id', $colonyId)
-            ->where(function ($q) use ($run): void {
-                $q->whereNull('unavailable_until_tick')
-                    ->orWhere('unavailable_until_tick', '<', $run->current_tick);
-            })
-            ->count();
-
-        return [
-            'phase' => 1,
-            'criteria' => [
-                [
-                    'key' => 'cc_level',
-                    'label' => __('colony.sol_report_phase1_cc'),
-                    'current' => min($ccLevel, 3),
-                    'target' => 3,
-                    'done' => $ccLevel >= 3,
-                ],
-                [
-                    'key' => 'buildings_lv2',
-                    'label' => __('colony.sol_report_phase1_buildings'),
-                    'current' => min($buildingsLv2, 2),
-                    'target' => 2,
-                    'done' => $buildingsLv2 >= 2,
-                ],
-                [
-                    'key' => 'advisors',
-                    'label' => __('colony.sol_report_phase1_advisors'),
-                    'current' => min($advisorCount, 3),
-                    'target' => 3,
-                    'done' => $advisorCount >= 3,
-                ],
-            ],
-        ];
-    }
-
-    private function phase2Progress(Run $run): array
-    {
-        $objectives = $run->objectives()
-            ->get(['task_key', 'current_value', 'target_value', 'completed_at']);
-
-        $items = $objectives->map(function ($obj): array {
-            $revealed = (int) $obj->current_value > 0 || $obj->completed_at !== null;
-
-            return [
-                'revealed' => $revealed,
-                'label' => $revealed ? __('run.'.$obj->task_key) : null,
-                'current' => (int) $obj->current_value,
-                'target' => (int) $obj->target_value,
-                'done' => $obj->completed_at !== null,
-            ];
-        })->values()->all();
-
-        return [
-            'phase' => 2,
-            'objectives' => $items,
-        ];
+        return $this->colonyService->getPhaseProgress($run->colony);
     }
 
     // ── Helpers ─────────────────────────────────────────────────────────────────

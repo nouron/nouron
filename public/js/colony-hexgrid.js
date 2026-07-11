@@ -329,7 +329,6 @@ function colonyHexView(config) {
                 this.updateBuilding(res.building);
                 this.updateAp(res);
                 this.updateHint(res);
-                if ('phase_progress' in res) this.phaseProgress = res.phase_progress;
                 if (res.leveled_up) {
                     this.showLevelupNotice(res.building.label);
                     if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
@@ -410,24 +409,6 @@ function colonyHexView(config) {
                 );
             } else {
                 this.showToast(res.message ?? res.error ?? this.i18n.nexusImportError, 'error');
-            }
-        },
-
-        // Kolonisten-Zulage (GDD §14) — trust effect only applies from the next
-        // Sol onward (TrustService writes the stored trust value only during
-        // GameTick), so only the Credits chip is synced immediately here.
-        async doPurchaseStipend(tier) {
-            const res = await this.post(this.routes.stipend, { tier });
-            if (res.ok) {
-                // Close the dialog FIRST — its native <dialog> backdrop dims the
-                // whole page (incl. the resourcebar), so flashing while it's
-                // still open makes the flash invisible.
-                this.$refs.stipendDialog.close();
-                this.syncResbarAmount('.res-Cr', res.credits);
-                this.flashResChip('.res-Cr');
-                this.showToast((this.i18n.stipendSuccess ?? '').replace(':cost', res.cost), 'info');
-            } else {
-                this.showToast(res.message ?? res.error ?? this.i18n.stipendError, 'error');
             }
         },
 
