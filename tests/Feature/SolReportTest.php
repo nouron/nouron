@@ -188,6 +188,32 @@ class SolReportTest extends TestCase
         $this->assertTrue($report['force_show']);
     }
 
+    public function test_stipend_purchase_shows_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'colony.stipend_purchased',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => self::COLONY_ID, 'tier' => 'medium', 'cost' => 300]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when a stipend was purchased');
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_stipend'));
+        $this->assertNotNull($line, 'Expected a stipend line in the events group');
+        $this->assertSame('good', $line['tone']);
+        $this->assertStringContainsString('300', $line['detail']);
+        $this->assertStringContainsString((string) config('game.trust.events.stipend_medium'), $line['detail']);
+    }
+
     public function test_wear_without_level_down_shows_single_neutral_line(): void
     {
         $run = $this->setRunTick(3);
@@ -247,6 +273,30 @@ class SolReportTest extends TestCase
                 && str_ends_with($l['detail'], 'Cr'));
         $this->assertNotNull($creditsLine, 'Expected a credits line in the colony group');
         $this->assertSame('neutral', $creditsLine['tone']);
+    }
+
+    public function test_passive_credits_shows_breakdown_in_colony_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'colony.passive_credits',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => self::COLONY_ID, 'subsidy' => 30, 'housing_tax' => 40, 'total' => 70]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+        $colony = $this->groupByKey($report, 'colony');
+
+        $line = collect($colony['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_passive_credits'));
+        $this->assertNotNull($line, 'Expected a passive-credits breakdown line in the colony group');
+        $this->assertSame('+70 Cr', $line['detail']);
+        $this->assertSame('good', $line['tone']);
     }
 
     public function test_finale_on_completed_run_replaces_run_group(): void

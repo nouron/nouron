@@ -186,6 +186,19 @@ return [
     'nexus_import_no_credits' => 'Nicht genug Credits für diesen Import.',
     'nexus_import_error' => 'Import fehlgeschlagen.',
 
+    // ── Kolonisten-Zulage (GDD §14) ──────────────────────────────────────────
+
+    'stipend_button' => 'Kolonisten-Zulage',
+    'stipend_dialog_title' => 'Kolonisten-Zulage',
+    'stipend_dialog_hint' => 'Credits direkt an die Kolonisten ausschütten — wirkt ab dem nächsten Sol auf das Vertrauen.',
+    'stipend_tier_small' => 'Klein',
+    'stipend_tier_medium' => 'Mittel',
+    'stipend_tier_large' => 'Groß',
+    'stipend_success' => 'Zulage gebucht (:cost Cr) — wirkt ab dem nächsten Sol.',
+    'stipend_error' => 'Zulage fehlgeschlagen.',
+    'stipend_already_used' => 'Für diesen Sol wurde bereits eine Zulage ausgeschüttet.',
+    'stipend_no_credits' => 'Nicht genug Credits für diese Zulage.',
+
     // ── Generic UI actions ───────────────────────────────────────────────────
 
     'close' => 'Schließen',
@@ -288,6 +301,9 @@ return [
 
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
+    'sol_report_passive_credits' => 'Nexus-Subvention & Relaisvergütung',
+    'sol_report_stipend' => 'Kolonisten-Zulage',
+    'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',

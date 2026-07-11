@@ -54,6 +54,7 @@
                 investBuilding: '{{ route("colony.building.invest") }}',
                 repairBuilding: '{{ route("colony.building.repair") }}',
                 nexusImport: '{{ route("colony.nexus.import") }}',
+                stipend: '{{ route("colony.stipend") }}',
             },
             i18n: {
                 explore: '{{ __("colony.explore") }}',
@@ -77,6 +78,8 @@
                 networkError: @json(__("colony.network_error")),
                 nexusImportSuccess: @json(__("colony.nexus_import_success")),
                 nexusImportError: @json(__("colony.nexus_import_error")),
+                stipendSuccess: @json(__("colony.stipend_success")),
+                stipendError: @json(__("colony.stipend_error")),
             },
         };
     </script>
@@ -106,7 +109,10 @@
 
                 <div x-ref="hexgrid" class="hex-canvas"></div>
 
-                {{-- Info bar: phase progress + legend — always visible below canvas --}}
+                {{-- Info bar: phase progress + legend — always visible below canvas.
+                 The stipend button used to live here too, but this bar sits below the
+                 canvas and can scroll out of view on short viewports (see .stipend-fab
+                 below for the always-visible replacement). --}}
                 <div class="canvas-info-bar">
                     <template x-if="phaseProgress">
                         <button class="info-bar-btn" @click="$refs.phaseDialog.showModal()"
@@ -538,6 +544,28 @@
             </article>
         </dialog>
 
+        {{-- Kolonisten-Zulage dialog — 3 tiers, Credits→Trust one-shot event (GDD §14) --}}
+        <dialog x-ref="stipendDialog" class="sol-modal" @click.self="$refs.stipendDialog.close()">
+            <article>
+                <header>
+                    <button aria-label="{{ __("colony.cancel") }}" rel="prev"
+                        @click="$refs.stipendDialog.close()"></button>
+                    <h3>{{ __("colony.stipend_dialog_title") }}</h3>
+                </header>
+                <p>{{ __("colony.stipend_dialog_hint") }}</p>
+                <div class="stipend-tiers">
+                    @foreach (config("game.stipend.tiers") as $tierKey => $tierCfg)
+                        <button class="stipend-tier-btn" @click="doPurchaseStipend('{{ $tierKey }}')">
+                            <strong>{{ __("colony.stipend_tier_{$tierKey}") }}</strong>
+                            <span>{{ $tierCfg["cost"] }}
+                                Cr — +{{ config("game.trust.events.{$tierCfg["event_key"]}") }}
+                                {{ __("resources.res_trust") }}</span>
+                        </button>
+                    @endforeach
+                </div>
+            </article>
+        </dialog>
+
         {{-- Event discovery popup ------------------------------------------------
          Uses the native <dialog> element (PicoCSS styles it out of the box).
          x-effect watches eventDiscovery and calls the DOM API to open/close,
@@ -557,6 +585,14 @@
                 </footer>
             </article>
         </dialog>
+
+        {{-- Kolonisten-Zulage FAB — fixed to the viewport bottom-left so the action
+         stays reachable without scrolling, regardless of canvas/sidebar height
+         (Owner-Feedback: .canvas-info-bar sits below the canvas and can require
+         scrolling on short viewports). Lives at the x-data root so $refs resolves. --}}
+        <button type="button" class="stipend-fab" @click="$refs.stipendDialog.showModal()">
+            {{ __("colony.stipend_button") }}
+        </button>
 
         {{-- Action / AP-limit toast (Triggers 4 + 5) --}}
         <div class="colony-toast" :class="`colony-toast--${toastType}`" x-show="toastVisible" x-transition

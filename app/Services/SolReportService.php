@@ -126,7 +126,7 @@ class SolReportService
         }
 
         $groups[] = $this->productionGroup($colonyId, $userId, $before);
-        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $forceShow);
+        $groups[] = $this->colonyGroup($colonyId, $userId, $before, $events, $forceShow);
 
         $finale = $this->finale($run);
         if ($finale === null) {
@@ -238,6 +238,20 @@ class SolReportService
             ];
         }
 
+        // Kolonisten-Zulage (GDD §14) — logged at its target tick (see
+        // ColonyController::purchaseStipend), so it lands in the Sol-Report of
+        // the Sol it actually takes effect on.
+        foreach ($events['colony.stipend_purchased'] ?? [] as $params) {
+            $tier = $params['tier'] ?? 'small';
+            $cost = (int) ($params['cost'] ?? 0);
+            $trustBonus = (int) config("game.trust.events.stipend_{$tier}", 0);
+            $lines[] = [
+                'label' => __('colony.sol_report_stipend'),
+                'detail' => __('colony.sol_report_stipend_detail', ['cost' => $cost, 'trust' => $trustBonus]),
+                'tone' => 'good',
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }
@@ -319,7 +333,7 @@ class SolReportService
 
     // ── Group 4: colony & personnel ───────────────────────────────────────────
 
-    private function colonyGroup(int $colonyId, int $userId, array $before, bool &$forceShow): array
+    private function colonyGroup(int $colonyId, int $userId, array $before, array $events, bool &$forceShow): array
     {
         $lines = [];
 
@@ -349,6 +363,17 @@ class SolReportService
             'from' => $creditsFrom,
             'to' => $creditsAfter,
         ];
+
+        // Passive Nexus income breakdown (Galaktischer Rat subsidy +
+        // Relaisvergütung per Wohnhabitat-Level, GDD §3) — otherwise the
+        // Credits delta above has no visible source.
+        foreach ($events['colony.passive_credits'] ?? [] as $params) {
+            $lines[] = [
+                'label' => __('colony.sol_report_passive_credits'),
+                'detail' => '+'.(int) ($params['total'] ?? 0).' Cr',
+                'tone' => 'good',
+            ];
+        }
 
         // Advisor promotions (rank increased over the Sol) — emotional beat.
         $afterRanks = DB::table('advisors')
