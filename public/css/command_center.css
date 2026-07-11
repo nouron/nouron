@@ -195,3 +195,9 @@
     border-color: #aaa;
     background: #f5f5f7;
 }
+
+.cc-chip-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}

@@ -65,9 +65,15 @@
                 @foreach ($stipendTiers as $tierKey => $tierCfg)
                     <button class="stipend-tier-btn" @click="doPurchaseStipend('{{ $tierKey }}')">
                         <strong>{{ __("colony.stipend_tier_{$tierKey}") }}</strong>
-                        <span>{{ $tierCfg["cost"] }}
-                            Cr — +{{ config("game.trust.events.{$tierCfg["event_key"]}") }}
-                            {{ __("resources.res_trust") }}</span>
+                        <span class="cc-chip-row">
+                            <span class="res-chip res-Cr">
+                                <span class="res-abbr">CR</span>
+                                <span class="res-amount">{{ $tierCfg["cost"] }}</span>
+                            </span>
+                            <span
+                                class="ap-chip ap-chip--trust-pos">+{{ config("game.trust.events.{$tierCfg["event_key"]}") }}
+                                {{ __("resources.res_trust") }}</span>
+                        </span>
                     </button>
                 @endforeach
             </div>
@@ -83,8 +89,11 @@
             <div class="cc-nexus-debt">
                 <div class="cc-nexus-debt-label">
                     <span>{{ __("command_center.widget_run_nexus_debt") }}</span>
-                    <span>{{ number_format($nexusDebt, 0, ",", ".") }} / {{ number_format($nexusDebtMax, 0, ",", ".") }}
-                        Cr</span>
+                    <span class="res-chip res-Cr {{ $nexusDebtTone !== "neutral" ? "res-chip--{$nexusDebtTone}" : "" }}">
+                        <span class="res-abbr">CR</span>
+                        <span class="res-amount">{{ number_format($nexusDebt, 0, ",", ".") }}
+                            / {{ number_format($nexusDebtMax, 0, ",", ".") }}</span>
+                    </span>
                 </div>
                 <div class="cc-nexus-debt-bar">
                     <div class="cc-nexus-debt-bar-fill cc-nexus-debt-bar-fill--{{ $nexusDebtTone }}"
@@ -145,12 +154,27 @@
             @else
                 <p class="cc-stat">{{ __("command_center.widget_advisors_count", ["count" => $advisors->count()]) }}</p>
                 <ul class="cc-list">
+                    @php
+                        $apChipClass = [
+                            "construction" => "ap-chip--build",
+                            "research" => "ap-chip--research",
+                            "navigation" => "ap-chip--nav",
+                            "economy" => "ap-chip--economy",
+                            "strategy" => "ap-chip--strategy",
+                        ];
+                        $apAbbr = [
+                            "construction" => "Con",
+                            "research" => "Res",
+                            "navigation" => "Nav",
+                            "economy" => "Eco",
+                            "strategy" => "Str",
+                        ];
+                    @endphp
                     @foreach ($advisors as $a)
                         <li class="cc-list-item">
                             <span>{{ $a["name"] }} ({{ $a["rank_name"] }})</span>
-                            <span>+{{ $a["ap_per_tick"] }}
-                                {{ ["construction" => "Con", "research" => "Res", "navigation" => "Nav", "economy" => "Eco", "strategy" => "Str"][$a["ap_type"]] ?? "" }}
-                                AP</span>
+                            <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
+                                {{ $apAbbr[$a["ap_type"]] ?? "" }} AP</span>
                         </li>
                     @endforeach
                 </ul>
@@ -171,7 +195,7 @@
                             <span>{{ __("command_center.widget_trust_events_sol", ["sol" => $e["tick"] + 1]) }}
                                 — {{ $e["description"] }}</span>
                             <span
-                                class="{{ $e["delta"] > 0 ? "cc-list-item-good" : ($e["delta"] < 0 ? "cc-list-item-danger" : "") }}">
+                                class="ap-chip {{ $e["delta"] > 0 ? "ap-chip--trust-pos" : ($e["delta"] < 0 ? "ap-chip--trust-neg" : "ap-chip--trust-neu") }}">
                                 {{ $e["delta"] > 0 ? "+" : "" }}{{ $e["delta"] }}
                             </span>
                         </li>
