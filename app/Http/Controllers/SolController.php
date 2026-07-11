@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -46,6 +47,15 @@ class SolController extends Controller
 
         Artisan::call('game:tick', ['--run' => $run->id]);
         $run->refresh();
+
+        // Kommandozentrale-Dashboard "Netto-Sol-Bilanz" widget — the before/after
+        // diff is only computable right now (colony state isn't snapshotted
+        // anywhere persistent), so cache it for the dashboard to read later.
+        Cache::put(
+            "colony:{$run->colony_id}:last_sol_deltas",
+            $this->solReportService->netDeltas((int) $run->colony_id, (int) $run->user_id, $before),
+            now()->addDays(2),
+        );
 
         $this->eventService->createEvent([
             'user' => Auth::id(),

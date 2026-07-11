@@ -33,9 +33,13 @@
                         request()->routeIs("colony.*") &&
                         !request()->routeIs("colony.bar*") &&
                         !request()->routeIs("colony.merchant*") &&
-                        !request()->routeIs("colony.hangar*"),
+                        !request()->routeIs("colony.hangar*") &&
+                        !request()->routeIs("colony.command_center*"),
                 ])><i
                             class="bi bi-hexagon"></i><span class="nav-label"> Kolonie</span></a></li>
+                <li><a href="{{ route("colony.command_center") }}" @class(["active" => request()->routeIs("colony.command_center*")])><i
+                            class="bi bi-diagram-2"></i><span class="nav-label">
+                            {{ __("command_center.nav_label") }}</span></a></li>
                 <li><a href="{{ route("advisors.index") }}" @class(["active" => request()->routeIs("advisors.*")])><i
                             class="bi bi-people"></i><span class="nav-label"> Berater</span></a></li>
                 @if ($sciencelabBuilt ?? false)
@@ -112,9 +116,16 @@
                                 request()->routeIs("colony.*") &&
                                 !request()->routeIs("colony.bar*") &&
                                 !request()->routeIs("colony.merchant*") &&
-                                !request()->routeIs("colony.hangar*"),
+                                !request()->routeIs("colony.hangar*") &&
+                                !request()->routeIs("colony.command_center*"),
                         ])>
                             <i class="bi bi-hexagon"></i> Kolonie
+                        </a>
+                        <a href="{{ route("colony.command_center") }}" @class([
+                            "nav-flyout-item",
+                            "active" => request()->routeIs("colony.command_center*"),
+                        ])>
+                            <i class="bi bi-diagram-2"></i> {{ __("command_center.nav_label") }}
                         </a>
                         <a href="{{ route("advisors.index") }}" @class([
                             "nav-flyout-item",
@@ -149,7 +160,8 @@
                             <span class="nav-flyout-item nav-link-locked">
                                 <i class="bi bi-cup-hot"></i>
                                 <span>Cantina
-                                    <small class="nav-flyout-locked-hint">{{ __("colony.nav_cantina_locked") }}</small>
+                                    <small
+                                        class="nav-flyout-locked-hint">{{ __("colony.nav_cantina_locked") }}</small>
                                 </span>
                             </span>
                         @endif

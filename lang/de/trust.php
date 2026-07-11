@@ -18,4 +18,9 @@ return [
     'event_encounter_lost' => 'Eigene Schiffe wurden bei einem Zwischenfall beschädigt – die Kolonisten sind besorgt.',
     'event_colony_threatened' => 'Die Kolonie wurde direkt bedroht – die Bewohner sind verunsichert.',
     'event_treaty_signed' => 'Ein Friedensvertrag wurde unterzeichnet.',
+    'event_nexus_credit' => 'Ein Schiff wurde auf Nexus-Kredit angefordert – die Verschuldung drückt auf die Stimmung.',
+    'event_well_fed' => 'Die Kolonie war gut versorgt.',
+    'event_stipend_small' => 'Kolonisten-Zulage (Klein) ausgeschüttet.',
+    'event_stipend_medium' => 'Kolonisten-Zulage (Mittel) ausgeschüttet.',
+    'event_stipend_large' => 'Kolonisten-Zulage (Groß) ausgeschüttet.',
 ];
