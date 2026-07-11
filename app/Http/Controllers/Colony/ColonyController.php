@@ -867,9 +867,13 @@ class ColonyController extends BaseController
         $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $cost]], $colony->id);
         $this->trustService->fireEvent($colony->id, $eventKey, $targetTick);
 
+        // Logged at $targetTick (not the current tick) so it surfaces in the
+        // Sol-Report of the Sol it actually takes effect on — SolReportService
+        // reads colony_log at the just-processed (post-increment) tick, which
+        // is exactly $targetTick once "Sol beenden" is clicked.
         $this->eventService->createEvent([
             'user' => Auth::id(),
-            'tick' => $this->getTick(),
+            'tick' => $targetTick,
             'event' => 'colony.stipend_purchased',
             'area' => 'colony',
             'parameters' => json_encode(['colony_id' => $colony->id, 'tier' => $data['tier'], 'cost' => $cost]),

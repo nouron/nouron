@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-07-10 (2)
+
+Owner-Playtest der Kolonisten-Zulage (Sol 3–5) fand 5 Lücken, alle gefixt:
+
+- **Credits-Chip-Flash unsichtbar:** Animation feuerte korrekt, lief aber während der Bestätigungs-Dialog noch offen war — dessen `<dialog>`-Backdrop verdunkelt die ganze Seite inkl. Resourcebar. Dialog schließt jetzt zuerst, dann flasht der Chip sichtbar.
+- **Zulage fehlte in der Sol-Übersicht:** Log-Eintrag nutzte den aktuellen statt den Ziel-Tick (Off-by-one gegen `SolReportService::eventsAtTick()`, die den bereits inkrementierten Tick liest). Sol-Report zeigt jetzt eine eigene Zeile "Kolonisten-Zulage: −X Cr — +Y Vertrauen" in der Ereignisse-Gruppe.
+- **Trust-Anstieg nicht sichtbar:** Mechanik selbst funktionierte korrekt (Trust-Beitrag kam an), reine Sichtbarkeitslücke — mit obigem Fix behoben. Wirkt weiterhin nur 1 Sol (wie andere Trust-Events), das ist Design, kein Bug.
+- **Nexus-Einkommen nicht als Zahlung erkennbar (vorbestehender Gap, mit gefixt):** passive Credits (Galaktischer-Rat-Subvention + Relaisvergütung) hatten nie einen Log-Eintrag. Sol-Report zeigt jetzt "Nexus-Subvention & Relaisvergütung: +X Cr" direkt neben der Credits-Zeile.
+- **Zulage-Button schwer erreichbar:** saß in der scrollbaren Info-Bar unter dem Hex-Grid. Jetzt als fixierter Floating-Button unten links, immer sichtbar ohne Scrollen (ui-specialist-Konsultation).
+
+Alle 5 Fixes end-to-end über den echten `/sol/next`-Endpoint verifiziert (nicht nur Unit-Tests) — Barts laufender Playtest-Stand dabei per `game:snapshot` gesichert/wiederhergestellt, unangetastet.
+
 ## 2026-07-10
 
 - **Neu: Kolonisten-Zulage.** Neue Spieleraktion (GDD §14): Credits direkt an die Kolonisten ausschütten, 3 Stufen (100/300/600 Cr → +2/+3/+4 Vertrauen, degressive Cr/Punkt-Effizienz), wirkt als Trust-Event ab dem nächsten Sol. Max. 1 Zulage pro Sol (Guard in `TrustService::hasEventThisTick()`). Ersetzt das nie implementierte "Steuern"-Konzept — Nexus zahlt der Kolonie eh Geld (Relaisvergütung), der Spieler entscheidet jetzt aktiv, wie viel davon an die Kolonisten weitergeht. Button in der Canvas-Info-Bar der Kolonieansicht, neuer Dialog + `POST /colony/stipend`. 6 neue Feature-Tests, live per Playwright verifiziert.

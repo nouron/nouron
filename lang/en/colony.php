@@ -301,6 +301,9 @@ return [
 
     // Events
     'sol_report_event_merchant' => 'Travelling Merchant in system',
+    'sol_report_passive_credits' => 'Nexus Subsidy & Relay Fee',
+    'sol_report_stipend' => 'Colonist Stipend',
+    'sol_report_stipend_detail' => '-:cost Cr — +:trust Trust',
 
     // Production
     'sol_report_no_production' => 'The extraction plants are idle — no Regolith, no progress. Check industrial buildings.',

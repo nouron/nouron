@@ -109,7 +109,10 @@
 
                 <div x-ref="hexgrid" class="hex-canvas"></div>
 
-                {{-- Info bar: phase progress + legend — always visible below canvas --}}
+                {{-- Info bar: phase progress + legend — always visible below canvas.
+                 The stipend button used to live here too, but this bar sits below the
+                 canvas and can scroll out of view on short viewports (see .stipend-fab
+                 below for the always-visible replacement). --}}
                 <div class="canvas-info-bar">
                     <template x-if="phaseProgress">
                         <button class="info-bar-btn" @click="$refs.phaseDialog.showModal()"
@@ -124,10 +127,6 @@
                             </template>
                         </button>
                     </template>
-
-                    <button class="info-bar-btn" @click="$refs.stipendDialog.showModal()">
-                        {{ __("colony.stipend_button") }}
-                    </button>
 
                     <details class="hex-legend">
                         <summary class="info-bar-btn">{{ __("colony.legend_title") }}</summary>
@@ -586,6 +585,14 @@
                 </footer>
             </article>
         </dialog>
+
+        {{-- Kolonisten-Zulage FAB — fixed to the viewport bottom-left so the action
+         stays reachable without scrolling, regardless of canvas/sidebar height
+         (Owner-Feedback: .canvas-info-bar sits below the canvas and can require
+         scrolling on short viewports). Lives at the x-data root so $refs resolves. --}}
+        <button type="button" class="stipend-fab" @click="$refs.stipendDialog.showModal()">
+            {{ __("colony.stipend_button") }}
+        </button>
 
         {{-- Action / AP-limit toast (Triggers 4 + 5) --}}
         <div class="colony-toast" :class="`colony-toast--${toastType}`" x-show="toastVisible" x-transition

@@ -904,11 +904,27 @@ class GameTick extends Command
                 ->where('building_id', BuildingId::Housing->value)
                 ->value('level');
 
-            $total = $nexusSubsidy + ($housingLevel * $taxPerHousing);
+            $housingTax = $housingLevel * $taxPerHousing;
+            $total = $nexusSubsidy + $housingTax;
 
             DB::table('user_resources')
                 ->where('user_id', $colony->user_id)
                 ->increment('credits', $total);
+
+            if ($total > 0) {
+                $this->eventService->createEvent([
+                    'user' => $colony->user_id,
+                    'tick' => $tick,
+                    'event' => 'colony.passive_credits',
+                    'area' => 'colony',
+                    'parameters' => json_encode([
+                        'colony_id' => $colony->id,
+                        'subsidy' => $nexusSubsidy,
+                        'housing_tax' => $housingTax,
+                        'total' => $total,
+                    ]),
+                ]);
+            }
 
             $processed++;
         }

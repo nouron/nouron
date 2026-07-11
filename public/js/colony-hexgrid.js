@@ -419,10 +419,13 @@ function colonyHexView(config) {
         async doPurchaseStipend(tier) {
             const res = await this.post(this.routes.stipend, { tier });
             if (res.ok) {
+                // Close the dialog FIRST — its native <dialog> backdrop dims the
+                // whole page (incl. the resourcebar), so flashing while it's
+                // still open makes the flash invisible.
+                this.$refs.stipendDialog.close();
                 this.syncResbarAmount('.res-Cr', res.credits);
                 this.flashResChip('.res-Cr');
                 this.showToast((this.i18n.stipendSuccess ?? '').replace(':cost', res.cost), 'info');
-                this.$refs.stipendDialog.close();
             } else {
                 this.showToast(res.message ?? res.error ?? this.i18n.stipendError, 'error');
             }

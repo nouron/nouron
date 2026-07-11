@@ -301,6 +301,9 @@ return [
 
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
+    'sol_report_passive_credits' => 'Nexus-Subvention & Relaisvergütung',
+    'sol_report_stipend' => 'Kolonisten-Zulage',
+    'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
