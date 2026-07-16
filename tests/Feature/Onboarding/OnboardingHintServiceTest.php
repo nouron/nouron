@@ -166,11 +166,11 @@ class OnboardingHintServiceTest extends TestCase
         $this->moveHarvesterOutside(); // silence hint 2
         $this->suppressLateHints();    // silence hints 4-6
 
-        // Hint 1 is silent; with every Sol-1 to-do done at tick 0 and the CC still
-        // at level 1 with Bau-AP available, the CC pre-invest hint (rank 6) is the
-        // active Sol-1 floor.
+        // Hint 1 is silent; suppressLateHints() places all buildings finished, so
+        // neither the Agrardom hint nor invest_site (no active site) fires — the
+        // explore hint is the Sol-1 floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
     // ── Urgent repair hint: building near level-down ─────────────────────────
@@ -195,9 +195,12 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_urgent_repair_hint_silent_above_threshold(): void
     {
-        // SP=4 is above the threshold (3) → urgent silent; teaching repair (rank 4) wins instead.
+        // SP=4 is above the urgent threshold (3) but below the 70% display threshold
+        // → urgent silent; teaching repair (rank 5) wins instead. suppressLateHints()
+        // places the Agrardom so its build hint (rank 4) doesn't outrank repair.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
+        $this->suppressLateHints();
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', 25)
@@ -223,37 +226,56 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         // Buildings are otherwise full → no repair hint of either kind; the level-0
-        // building is ignored. Without Agrardom placed, hint_cc_invest is suppressed
-        // and the explore hint (rank 8) becomes the Sol-1 floor.
-        $this->assertSame('hint_explore', $hint['key']);
+        // building is ignored. With no Agrardom placed, its build hint (rank 4,
+        // the colony's first project from Sol 1) is the floor.
+        $this->assertSame('hint_agrardome', $hint['key']);
     }
 
     // ── Repair hint: any building below max status ───────────────────────────
 
-    public function test_repair_hint_fires_when_building_damaged(): void
+    public function test_repair_hint_fires_when_building_below_display_threshold(): void
     {
-        // Engineer hired (hint 1 resolved) and Harvester moved outside (hint 2 resolved);
-        // a lightly damaged building (16/20, above the urgent threshold) surfaces the
-        // teaching repair hint (rank 4).
+        // A building at 13/20 (65%) is below the 70% display threshold → the
+        // teaching repair hint (rank 5) fires. suppressLateHints() places the
+        // Agrardom so its build hint (rank 4) doesn't outrank it.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        $this->damageBuilding(25);
+        $this->suppressLateHints();
+        $this->damageBuilding(25, 13);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(4, $hint['rank']);
+        $this->assertEquals(5, $hint['rank']);
         $this->assertEquals('hint_repair', $hint['key']);
         $this->assertEquals('colony.onboarding_hint_repair', $hint['text_key']);
         $this->assertEquals('/colony/view', $hint['target_url']);
     }
 
-    public function test_repair_hint_fires_from_sol_1_without_tick_gate(): void
+    public function test_repair_hint_silent_above_display_threshold(): void
     {
-        // No tick gate: fires even at Sol 0 (run current_tick stays 0 from setUp).
+        // Core of the invisible-pacing-timer design (playtest review 2026-07-14):
+        // the 16/20 (80%) starting damage sits ABOVE the 70% display threshold —
+        // the repair hint must stay silent until natural decay pushes a building
+        // below it (~Sol 4 for the Harvester).
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        $this->damageBuilding(28);
+        $this->suppressLateHints();
+        $this->damageBuilding(25); // 16/20 = 80%
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_repair', $hint['key'] ?? null);
+    }
+
+    public function test_repair_hint_fires_from_sol_1_without_tick_gate(): void
+    {
+        // No tick gate: fires even at Sol 0 (run current_tick stays 0 from setUp)
+        // as long as a building is below the display threshold.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->damageBuilding(28, 13);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -263,14 +285,14 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_repair_hint_silent_when_all_buildings_full(): void
     {
-        // Baseline buildings are full (20/20) → repair hint silent; with CC at level 1
-        // and Bau-AP available at Sol 1, the CC pre-invest hint (rank 6) shows.
+        // Baseline buildings are full (20/20) → repair hint silent; with everything
+        // placed by suppressLateHints() and no active site, the explore hint shows.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
     public function test_repair_hint_yields_to_missing_engineer(): void
@@ -304,10 +326,10 @@ class OnboardingHintServiceTest extends TestCase
         $this->moveHarvesterOutside(); // tile (3,0) = colony_zone=0
         $this->suppressLateHints();
 
-        // Hint 2 silent; Sol-1 to-dos done at tick 0 with CC level 1 + Bau-AP →
-        // the CC pre-invest hint (rank 6) is the floor.
+        // Hint 2 silent; everything placed by suppressLateHints(), no active site →
+        // the explore hint is the floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
     public function test_hint_2_silent_when_no_harvester_placed(): void
@@ -320,38 +342,58 @@ class OnboardingHintServiceTest extends TestCase
         $this->placeEngineer();
         $this->suppressLateHints();
 
-        // Hint 2 silent (no harvester tile); CC pre-invest hint (rank 6) fills the
-        // bar at tick 0 (CC level 1, Bau-AP available).
+        // Hint 2 silent (no harvester tile); everything placed, no active site →
+        // explore hint fills the bar.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertSame('hint_explore', $hint['key']);
     }
 
     // ── Hint 3: CC level < 2 (fires from Sol 2) ──────────────────────────────
 
-    public function test_hint_3_fires_when_cc_level_1_after_sol2(): void
+    public function test_hint_3_fires_when_ramp_done_and_cc_level_1(): void
     {
+        // State-based gate: Agrardom >= Lv1 AND a path building >= Lv1 (both via
+        // suppressLateHints()), CC still level 1, tick >= floor (2) → hint_3 fires.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        $this->setRunTick(2); // meet Sol threshold
+        $this->suppressLateHints();
+        $this->setRunTick(2);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertEquals(5, $hint['rank']);
+        $this->assertEquals(12, $hint['rank']);
         $this->assertEquals('hint_3', $hint['key']);
     }
 
-    public function test_hint_3_silent_before_sol2(): void
+    public function test_hint_3_silent_before_tick_floor(): void
     {
+        // All state conditions met (Agrardom + path building via suppressLateHints)
+        // but tick 1 < floor (2) → hint_3 stays silent.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        // Sol stays at 0 (current_tick < gate of 1) → hint 3 silent
         $this->suppressLateHints();
+        $this->setRunTick(1);
 
-        // Hint 3 silent before Sol 2; with CC level 1 + Bau-AP at tick 0 the CC
-        // pre-invest hint (rank 7) is the active floor.
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-        $this->assertSame('hint_cc_invest', $hint['key']);
+        $this->assertNotSame('hint_3', $hint['key'] ?? null);
+    }
+
+    public function test_hint_3_silent_without_finished_path_building(): void
+    {
+        // Agrardom finished but NO path building yet → CC Lv2 wouldn't pay off
+        // (advisor slot 2 couldn't be filled) — hint_3 must wait.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 44, 52])
+            ->update(['level' => 0]);
+        $this->setRunTick(3);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+        $this->assertNotSame('hint_3', $hint['key'] ?? null);
     }
 
     public function test_hint_3_silent_when_cc_level_2(): void
@@ -384,7 +426,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(6, $hint['rank']);
+        $this->assertSame(7, $hint['rank']);
         $this->assertSame('hint_advisor_slot2', $hint['key']);
         $this->assertSame('colony.onboarding_hint_advisor_slot2', $hint['text_key']);
         $this->assertSame('/advisors', $hint['target_url']);
@@ -414,6 +456,23 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_advisor_slot2', $hint['key'] ?? null);
     }
 
+    public function test_advisor_slot2_hint_silent_without_path_building(): void
+    {
+        // Playtest regression (2026-07-11): CC2 frees a slot, but hiring into slots
+        // 2-4 requires a path building (Sciencelab/Hangar/Cantina). Without one the
+        // hint sent the player to /advisors where hiring fails with
+        // path_building_missing — a dead end. Must stay silent so the path-build
+        // hints (ranks 13-15) fire instead. NO suppressLateHints() here — that
+        // helper places Cantina + Sciencelab.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->upgradeCc();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_advisor_slot2', $hint['key'] ?? null);
+    }
+
     public function test_advisor_slot2_hint_silent_for_fresh_cc1_colony_without_any_advisor(): void
     {
         // Regression: a brand-new CC1 colony with zero advisors hired also has a
@@ -424,73 +483,16 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_advisor_slot2', $hint['key'] ?? null);
     }
 
-    // ── Hint cc_invest: pre-invest Bau-AP into CC (rank 7, Sol 1 only) ───────
+    // ── Hint invest_site: invest Bau-AP into the active construction project ──
 
-    public function test_cc_invest_hint_fires_on_sol1_when_todos_done(): void
+    public function test_invest_site_hint_fires_for_placed_construction_site(): void
     {
-        // Sol 1 (tick 0): engineer hired, Harvester relocated, buildings full,
-        // CC still level 1, Bau-AP available → CC pre-invest hint (rank 6) fires.
+        // Agrardom placed but unfinished (level 0) = active construction site;
+        // Bau-AP available → invest_site (rank 6) fires. The Agrardom build hint
+        // (rank 4) is silent because the building is already placed.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
-
-        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-
-        $this->assertNotNull($hint);
-        $this->assertSame(7, $hint['rank']);
-        $this->assertSame('hint_cc_invest', $hint['key']);
-        $this->assertSame('colony.onboarding_hint_cc_invest', $hint['text_key']);
-        $this->assertSame('/colony/view', $hint['target_url']);
-    }
-
-    public function test_cc_invest_hint_silent_when_cc_already_level_2(): void
-    {
-        // CC at level 2 → cc_invest pointless; with fog + Nav-AP at Sol 1 the
-        // explore hint (rank 8) surfaces instead.
-        $this->placeEngineer();
-        $this->moveHarvesterOutside();
-        $this->suppressLateHints();
-        $this->upgradeCc();
-        $this->placeSecondAdvisor();
-
-        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
-
-        $this->assertNotNull($hint);
-        $this->assertSame('hint_explore', $hint['key']);
-    }
-
-    public function test_cc_invest_hint_silent_when_no_construction_ap(): void
-    {
-        // Fix the tick to 0 so lock + read share the same tick, then lock the full
-        // construction AP pool → cc_invest self-clears (Bau-AP exhausted).
-        $this->app->instance(TickService::class, new TickService(0));
-        $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
-
-        $this->placeEngineer();
-        $this->moveHarvesterOutside();
-        $this->suppressLateHints();
-
-        $available = $personell->getConstructionPoints($this->colonyId);
-        $this->assertGreaterThan(0, $available, 'precondition: construction AP available before lock');
-        $personell->lockActionPoints('construction', $this->colonyId, $available);
-
-        $hint = $service->getActiveHint($this->colonyId, $this->userId);
-
-        // cc_invest must no longer win; explore (rank 8) takes over while Nav-AP + fog remain.
-        $this->assertNotNull($hint);
-        $this->assertNotSame('hint_cc_invest', $hint['key']);
-    }
-
-    public function test_cc_invest_hint_silent_when_agrardom_under_construction(): void
-    {
-        // Agrardom placed (tile_x set) but still being built (level=0, ap_spend>0).
-        // Player should invest AP into the Agrardom first, not pre-invest in CC.
-        $this->placeEngineer();
-        $this->moveHarvesterOutside();
-        $this->suppressLateHints();
-
-        // Override suppressLateHints()'s completed Agrardom with an in-construction version.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', 41)
@@ -499,15 +501,112 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertNotSame('hint_cc_invest', $hint['key'], 'cc_invest must be suppressed while Agrardom is under construction');
+        $this->assertSame(6, $hint['rank']);
+        $this->assertSame('hint_invest_site', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_invest_site', $hint['text_key']);
+        $this->assertSame('/colony/view', $hint['target_url']);
+    }
+
+    public function test_invest_site_hint_fires_for_started_cc_upgrade(): void
+    {
+        // A started CC upgrade (ap_spend > 0, no tile — the CC is anchored, not
+        // placed) also counts as an active site.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['ap_spend' => 3]);
+        $this->setRunTick(1);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_invest_site', $hint['key']);
+    }
+
+    public function test_invest_site_hint_silent_without_active_site(): void
+    {
+        // Everything placed and finished, nothing mid-levelup → no site, no hint;
+        // the explore hint surfaces instead.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_explore', $hint['key']);
+    }
+
+    public function test_invest_site_hint_retires_once_cc_level_2(): void
+    {
+        // CC at level 2 → the build ramp is done; even with an open site the hint
+        // stays retired.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 31)
+            ->update(['level' => 0, 'ap_spend' => 1]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_invest_site', $hint['key'] ?? null);
+    }
+
+    public function test_invest_site_hint_silent_when_no_construction_ap(): void
+    {
+        // Fix the tick to 0 so lock + read share the same tick, then lock the full
+        // construction AP pool → invest_site self-clears (Bau-AP exhausted).
+        $this->app->instance(TickService::class, new TickService(0));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 41)
+            ->update(['level' => 0, 'ap_spend' => 2]);
+
+        $available = $personell->getConstructionPoints($this->colonyId);
+        $this->assertGreaterThan(0, $available, 'precondition: construction AP available before lock');
+        $personell->lockActionPoints('construction', $this->colonyId, $available);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertNotSame('hint_invest_site', $hint['key']);
+    }
+
+    public function test_agrardome_hint_fires_on_sol1_when_todos_done(): void
+    {
+        // New Sol-1 ramp (playtest review 2026-07-14): engineer hired, Harvester
+        // relocated, no Agrardom placed → the Agrardom build hint (rank 4) is the
+        // Sol-1 floor, ahead of everything else on the Bau-AP track.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        // Deliberately NO suppressLateHints() — that helper places a finished Agrardom.
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame(4, $hint['rank']);
+        $this->assertSame('hint_agrardome', $hint['key']);
     }
 
     // ── Hint explore: scout unexplored tiles (rank 8, Sol 1–3) ───────────────
 
     public function test_explore_hint_fires_on_sol1_when_cc_done_and_fog_remains(): void
     {
-        // Engineer + Harvester done, CC already level 2 (cc_invest silent), fog
-        // present and Nav-AP available at Sol 1 → explore hint (rank 8) fires.
+        // Engineer + Harvester done, CC already level 2 (invest_site retired), fog
+        // present and Nav-AP available at Sol 1 → explore hint (rank 13) fires.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -517,7 +616,7 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(8, $hint['rank']);
+        $this->assertSame(13, $hint['rank']);
         $this->assertSame('hint_explore', $hint['key']);
         $this->assertSame('colony.onboarding_hint_explore', $hint['text_key']);
         $this->assertSame('/colony/view', $hint['target_url']);
@@ -690,14 +789,149 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('/techtree', $hint['target_url']);
     }
 
-    public function test_end_sol_bridge_hint_self_clears_after_sol_advance(): void
+    public function test_end_sol_silent_while_usable_nav_ap_remains(): void
     {
-        // Same Sol-1 state but one Sol later (current_tick 1): the bridge hint is
-        // Sol-1-only and self-clears; hint_3 (CC upgrade, gate now 1) takes over.
+        // Playtest finding (2026-07-14, Sol 2): "alle sinnvollen Aktionen getätigt"
+        // while Nav-AP + affordable fog remained. With construction locked and fog
+        // present, spend_remaining_ap must surface the navigation pool instead of
+        // the end-sol fallback.
+        $this->app->instance(TickService::class, new TickService(1));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        // Real Sol-2 state: no finished Sciencelab/Cantina yet → research and
+        // economy pools are unusable, only navigation can act.
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 52])
+            ->update(['level' => 0]);
+        $this->setRunTick(1); // Sol 2 — explore hint (Sol-1-only) is gone
+        $personell->lockActionPoints('construction', $this->colonyId, 9999);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_spend_ap_navigation', $hint['text_key']);
+    }
+
+    public function test_spend_remaining_ap_skips_research_pool_without_sciencelab(): void
+    {
+        // Research AP is unusable without a built Sciencelab (techtree locked) —
+        // the pool must not be suggested.
+        $this->app->instance(TickService::class, new TickService(1));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->whereIn('building_id', [31, 52])
+            ->update(['level' => 0]); // sciencelab + cantina unusable
         $this->setRunTick(1);
+        $personell->lockActionPoints('construction', $this->colonyId, 9999);
+        $personell->lockActionPoints('navigation', $this->colonyId, 9999);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        // research + economy pools idle but unusable, construction + navigation
+        // locked → the genuine "nothing left" fallback wins.
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_end_sol', $hint['key']);
+    }
+
+    public function test_spend_remaining_ap_points_to_cantina_when_built_and_economy_ap_idle(): void
+    {
+        // Playtest finding (2026-07-14, Sol 4): after CC Lv2 + Konsul hire the bar
+        // said "Sol beenden" although the freshly built Cantina + idle economy AP
+        // were waiting. Economy pool counts as usable once the Cantina is built.
+        $this->app->instance(TickService::class, new TickService(3));
+        $service = $this->app->make(OnboardingHintService::class);
+        $personell = $this->app->make(PersonellService::class);
+
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints(); // places a finished Cantina (52) among others
+        $this->upgradeCc();
+        $this->placeSecondAdvisor();
+        $this->clearFog(); // navigation unusable
+        $this->setRunTick(3);
+        $personell->lockActionPoints('construction', $this->colonyId, 9999);
+        $personell->lockActionPoints('research', $this->colonyId, 9999);
+
+        $hint = $service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_spend_remaining_ap', $hint['key']);
+        $this->assertSame('colony.onboarding_hint_spend_ap_economy', $hint['text_key']);
+        $this->assertSame('/colony/bar', $hint['target_url']);
+    }
+
+    public function test_path_hints_silent_while_first_path_building_placed_and_cc_below_2(): void
+    {
+        // Playtest finding (2026-07-14, Sol 3): Cantina finished, but the bar
+        // nagged "Kein Analytik-Labor". While the first path building exists and
+        // the CC is still below level 2, the other path hints must stay silent —
+        // hint_3 (CC Lv2 → advisor slot) takes over.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->placeAgrardome();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 52,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 5, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertNotContains($hint['key'], ['hint_analytik', 'hint_hangar_path', 'hint_6', 'hint_build_priority']);
+        $this->assertSame('hint_3', $hint['key']);
+    }
+
+    public function test_hint_3_silent_once_cc_upgrade_started(): void
+    {
+        // Playtest finding (2026-07-14): starting the CC upgrade manually made the
+        // "jetzt CC auf Level 2" hint appear AFTER the fact. Once ap_spend > 0 the
+        // invest_site hint owns the guidance; hint_3 must stay silent.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->placeAgrardome();
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 52,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 5, 'tile_y' => 5, 'placed_at_tick' => 1,
+        ]);
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)
+            ->where('building_id', 25)
+            ->update(['ap_spend' => 3]);
+        $this->setRunTick(2);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotSame('hint_3', $hint['key'] ?? null);
+    }
+
+    public function test_end_sol_bridge_hint_self_clears_after_sol_advance(): void
+    {
+        // Same state two Sols later (current_tick 2, past hint_3's floor): the
+        // bridge hint self-clears; hint_3 (CC upgrade — Agrardom + path building
+        // stand via suppressLateHints) takes over.
+        $this->placeEngineer();
+        $this->moveHarvesterOutside();
+        $this->suppressLateHints();
+        $this->setRunTick(2);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -744,13 +978,13 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotSame('hint_agrardome', $hint['key'] ?? null);
     }
 
-    public function test_agrardome_hint_silent_on_sol1_even_with_harvester_built(): void
+    public function test_agrardome_hint_silent_when_ap_exhausted(): void
     {
-        // Regression: Agrardom has no CC-level prerequisite (unlike Cantina/Analytik),
-        // so without an explicit tick floor it would fire on Sol 1 the moment Bau-AP
-        // runs out — crowding out the "Sol beenden" bridge hint with an action the
-        // player can no longer act on this Sol.
-        // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar so
+        // The Agrardom hint fires from Sol 1 now, but never with an empty Bau-AP
+        // pool (canAffordBuildingPlacement) — once every AP pool is spent it must
+        // yield to the "Sol beenden" bridge instead of nagging about an action the
+        // player can no longer take this Sol.
+        // suppressLateHints() places Cantina/Sciencelab/Hangar so
         // allChoiceBuildingsPlaced() = true; exhausting ALL AP pools is required for
         // hint_end_sol to fire (otherwise hint_spend_remaining_ap wins on idle research AP).
         $this->placeEngineer();
@@ -841,13 +1075,17 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertSame('hint_analytik', $hint['key']);
     }
 
-    public function test_analytik_hint_silent_when_cc_below_level2(): void
+    public function test_analytik_hint_silent_without_agrardome_placed(): void
     {
+        // Path buildings require a placed Agrardom server-side — the hint must not
+        // suggest a placement that would be rejected.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)->where('building_id', 31)->delete();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 41)->delete();
         $this->setRunTick(8);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
@@ -872,13 +1110,13 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_build_priority_hint_fires_when_two_buildings_eligible(): void
     {
-        // Default fixture: harvester>=1 (agrardome) + CC2 (analytik) both met,
-        // neither placed — suppressLateHints() is deliberately NOT called here
-        // (it would place all three, leaving 0 eligible).
+        // Agrardom placed (path-building prereq) but no path building yet — all
+        // three (Cantina/Analytik/Hangar) become eligible at tick >= 1, so the
+        // "pick one" hint (rank 7) fires. suppressLateHints() is deliberately NOT
+        // called (it would place all three, leaving 0 eligible).
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        $this->upgradeCc();
-        $this->placeSecondAdvisor();
+        $this->placeAgrardome();
         DB::table('colony_researches')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
             'status_points' => 20, 'ap_spend' => 0,
@@ -888,15 +1126,15 @@ class OnboardingHintServiceTest extends TestCase
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
         $this->assertNotNull($hint);
-        $this->assertSame(11, $hint['rank']);
+        $this->assertSame(8, $hint['rank']);
         $this->assertSame('hint_build_priority', $hint['key']);
         $this->assertSame('colony.onboarding_hint_build_priority', $hint['text_key']);
     }
 
     public function test_build_priority_hint_silent_when_only_one_eligible(): void
     {
-        // CC stays level 1 → analytik prereq unmet, cantina prereq unmet (needs CC>=2
-        // too) — only agrardome is eligible. Below the 2-candidate threshold.
+        // Agrardom NOT placed → all three path-building prereqs unmet (server-side
+        // Agrardom gate) — zero eligible, hint silent.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints(); // places bar+bioFacility+sciencelab...
@@ -913,8 +1151,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->placeEngineer();
         $this->moveHarvesterOutside();
-        $this->upgradeCc();
-        $this->placeSecondAdvisor();
+        $this->placeAgrardome();
         DB::table('colony_researches')->insertOrIgnore([
             'colony_id' => $this->colonyId, 'research_id' => 90, 'level' => 1,
             'status_points' => 20, 'ap_spend' => 0,
@@ -926,7 +1163,7 @@ class OnboardingHintServiceTest extends TestCase
 
         $this->assertNotNull($hint);
         $this->assertNotSame('hint_build_priority', $hint['key']);
-        $this->assertContains($hint['key'], ['hint_6', 'hint_agrardome', 'hint_analytik']);
+        $this->assertContains($hint['key'], ['hint_6', 'hint_analytik', 'hint_hangar_path']);
     }
 
     // ── Build-affordability gate (Cantina/Agrardom/Analytik) ────────────────
@@ -1088,13 +1325,27 @@ class OnboardingHintServiceTest extends TestCase
             ->update(['tile_x' => 3, 'tile_y' => 0]);
     }
 
-    /** Drop a building below its max status points so the repair hint activates. */
-    private function damageBuilding(int $buildingId): void
+    /**
+     * Drop a building's status points. Default 16/20 (80%) mirrors the real game
+     * start — deliberately ABOVE the 70% display threshold, so the repair hint
+     * stays silent. Pass e.g. 13 (65%) to push below the threshold.
+     */
+    private function damageBuilding(int $buildingId, int $sp = 16): void
     {
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->where('building_id', $buildingId)
-            ->update(['status_points' => 16]);
+            ->update(['status_points' => $sp]);
+    }
+
+    /** Places a finished Agrardom (level 1) — path-building prereq without the full suppressLateHints(). */
+    private function placeAgrardome(): void
+    {
+        DB::table('colony_buildings')->insertOrIgnore([
+            'colony_id' => $this->colonyId, 'building_id' => 41,
+            'instance_id' => 1, 'level' => 1, 'status_points' => 20, 'ap_spend' => 0,
+            'tile_x' => 6, 'tile_y' => 5,
+        ]);
     }
 
     private function upgradeCc(): void

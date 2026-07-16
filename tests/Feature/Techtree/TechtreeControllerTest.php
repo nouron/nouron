@@ -118,6 +118,59 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
+    public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void
+    {
+        // Playtest regression (2026-07-14): researches.ap_for_levelup is a static
+        // Lv0->1 seed value (3 in test/dev data) that was never kept in sync with
+        // config/knowledge.php's per-level levelup_costs — the techtree UI capped
+        // every knowledge's progress bar at that stale 3 AP. The controller must
+        // now resolve the cost dynamically for the knowledge's NEXT level.
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $research = null;
+        foreach ($pageData['phases'] as $phase) {
+            $found = collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['level'] === 0);
+            if ($found) {
+                $research = $found;
+                break;
+            }
+        }
+
+        $this->assertNotNull($research, 'Expected at least one not-yet-started research item');
+        $expected = (int) (collect(config('knowledge'))->firstWhere('id', $research['id'])['levelup_costs'][1] ?? 0);
+        $this->assertGreaterThan(0, $expected, 'precondition: config must define a Lv1 cost');
+        $this->assertSame($expected, $research['ap_for_levelup'],
+            'ap_for_levelup must come from config/knowledge.php levelup_costs, not the stale DB column');
+    }
+
+    public function test_knowledge_ap_for_levelup_escalates_with_level(): void
+    {
+        // A knowledge already at level 1 must show the Lv1->2 cost, not the Lv0->1 one.
+        $bart = User::find($this->userIdBart);
+        $colonyId = $this->colonyIdBart;
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $colonyId, 'research_id' => 90],
+            ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $research = null;
+        foreach ($pageData['phases'] as $phase) {
+            $found = collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 90);
+            if ($found) {
+                $research = $found;
+                break;
+            }
+        }
+
+        $this->assertNotNull($research);
+        $expected = (int) config('knowledge.construction.levelup_costs.2');
+        $this->assertSame($expected, $research['ap_for_levelup']);
+    }
+
     public function test_all_phases_contain_items(): void
     {
         $bart = User::find($this->userIdBart);

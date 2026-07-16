@@ -36,8 +36,8 @@ use function Laravel\Prompts\table;
  *   Harvester Lv1 = 10 Rg/Sol. BioFacility Lv2 = 20 Organika/Sol, food need ~3 → net +17.
  *   Werkstoffe: no production building — 0 until Uplink-Station (not seeded here).
  *   Supply cap: CC flat 10 + Housing_Lv × 8 + knowledge-level bonuses.
- *   Building costs Rg: CC 1→3 = 150, Agrardom place+Lv2 = 60, Sciencelab place+Lv1 = 100 → ~310 total.
- *   pre-phase2 seeds Rg=150 so player can immediately place Hangar (90 Rg path gate) and hire pilot.
+ *   Building costs Rg: CC 1→3 = 100 (20 Rg × target level), Agrardom place+Lv2 = 60, Sciencelab place+Lv1 = 100 → ~260 total.
+ *   pre-phase2 seeds Rg=150 so player can immediately place Hangar (80 Rg path gate) and hire pilot.
  */
 class ResetPlayer extends Command
 {
@@ -432,9 +432,9 @@ class ResetPlayer extends Command
      * Tick 12 — Phase 1 one hire short of completion.
      *
      * The player has engineer + scientist. To hire the 3rd advisor (pilot) they must
-     * first place Hangar (90 Rg build cost) — the path gate requires the building to
+     * first place Hangar (80 Rg build cost) — the path gate requires the building to
      * be placed before the advisor slot opens. Rg=150 lets them place Hangar immediately
-     * (150 − 90 = 60 Rg remaining), then hire pilot for 500 credits.
+     * (150 − 80 = 70 Rg remaining), then hire pilot for 500 credits.
      * Cantina is also an option but requires 25 Wk (Wk=0 here) → Hangar is the path.
      * 8 Sols of Agrardom Lv2 production (net +17/Sol) → 136 Organika; rounded to 120
      * accounting for early food shortfalls before Agrardom reached Lv2.

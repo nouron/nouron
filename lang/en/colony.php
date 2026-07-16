@@ -87,20 +87,19 @@ return [
     'hint_suggestion_label' => 'Suggestion',
     'hint_not_mandatory' => 'Suggestion, not mandatory — other build orders are possible.',
     'onboarding_hint_1' => 'No Engineer on board — Construction AP is running at minimum. Fix this in the Advisor screen before another Sol slips by.',
-    'onboarding_hint_repair' => 'The installation is already showing early wear — better to repair now than face a crisis later. Tap a building, then choose "Repair" (1 Construction AP).',
+    'onboarding_hint_repair' => 'A building is showing serious wear — repair it before decay gets more expensive. Tap the building, then choose "Repair" (1 Construction AP + 2 Regolith per point).',
     'onboarding_hint_repair_urgent' => 'Warning: a building is close to losing a level. Repair now — before the next Sol makes the decision for you.',
     'onboarding_hint_2' => 'The Harvester is running empty laps — it is still inside the colony zone. Relocate it to an explored Regolith tile outside the zone so it actually produces.',
-    'onboarding_hint_3' => 'Upgrade the Command Center to Level 2 — that expands the colony zone and opens the path choice. The Agrarian Dome must be built first.',
-    'onboarding_hint_3_agrardome_first' => 'Build the Agrarian Dome first — mandatory prerequisite for CC Level 2. Then choose your path: Analytics Lab, Hangar, or Cantina.',
-    'onboarding_hint_advisor_slot2' => 'Advisor slot 2 is open — go to the Advisor screen, pick a path building and build it: Analytics Lab, Hangar, or Cantina.',
+    'onboarding_hint_3' => 'Agrarian Dome and the second building are up — now upgrade the Command Center to Level 2. That expands the colony zone and unlocks the second advisor slot.',
+    'onboarding_hint_advisor_slot2' => 'Advisor slot 2 is open and the building it requires is up — hire the matching advisor in the Advisor screen.',
     'onboarding_hint_4' => 'No knowledge at Level 1 yet — assign Research AP to a field in the tech tree. Results build up Sol by Sol.',
     'onboarding_hint_5' => 'Colony mood is turning — stabilise Trust: build or repair a civil structure before it drops further.',
-    'onboarding_hint_build_priority' => 'Resources won\'t stretch to everything at once — start with one path. The rest follows when the colony is on steadier footing.',
+    'onboarding_hint_build_priority' => 'Several buildings are available to build right now, but resources won\'t stretch to all of them at once — pick one to finish first. The rest follows when the colony is on steadier footing.',
     'onboarding_hint_6' => 'No Cantina built — merchants and visitors won\'t stop. Trade offers and one-time items simply pass the colony by.',
-    'onboarding_hint_agrardome' => 'Build the Agrarian Dome — without it CC Level 2 stays locked and Organics stay at zero. No Agrarian Dome, no provisions, no progress.',
+    'onboarding_hint_agrardome' => 'The colony\'s first build project: the Agrarian Dome. Without it CC Level 2 stays locked and Organics stay at zero — place it today and sink the remaining Construction AP into it. Invested Construction AP carries over across Sols, even if one Sol isn\'t enough.',
     'onboarding_hint_analytik' => 'No Analytics Lab — Research AP has nowhere to go. The colony stays scientifically stuck.',
-    'onboarding_hint_hangar_path' => 'Hangar path: build the Hangar first, then hire a Pilot. Only then do missions and Navigation AP become properly available.',
-    'onboarding_hint_cc_invest' => 'Don\'t let Construction AP go to waste — invest it in the Command Center. Whatever is invested stays; Level 2 gets closer.',
+    'onboarding_hint_hangar_path' => 'Build the Hangar first, then hire a Pilot — only then do missions and Navigation AP become properly available.',
+    'onboarding_hint_invest_site' => 'Don\'t let Construction AP go to waste — invest it in the active construction project. Whatever is invested stays; completion gets closer.',
     'onboarding_hint_explore' => 'Use Navigation AP for exploration (1 AP per tile) — Regolith deposits and unknown signals wait beyond the zone.',
     'onboarding_end_sol' => 'End the Sol — all sensible actions taken. The next Sol brings fresh action points and new developments.',
     'onboarding_hint_spend_ap_construction' => 'Construction AP remaining — invest it in a building or pre-fund CC upgrade. AP expires at Sol end.',
@@ -136,7 +135,7 @@ return [
     'onboarding_trigger_ap_limit' => 'No more Construction AP available this Sol.',
 
     // Trigger 5 — Harvester relocation (tooltip)
-    'onboarding_trigger_harvester_move' => 'Relocation costs 1 Construction AP per tile distance — the Harvester will produce on the new tile afterwards.',
+    'onboarding_trigger_harvester_move' => 'Relocation costs 1 Construction AP per tile distance — only worth it if the target yields noticeably more. Construction AP is scarce.',
 
     // ── Error messages ────────────────────────────────────────────────────────
 
@@ -302,6 +301,8 @@ return [
     // Events
     'sol_report_event_merchant' => 'Travelling Merchant in system',
     'sol_report_passive_credits' => 'Nexus Subsidy & Relay Fee',
+    'sol_report_advisor_hired' => 'Advisor hired',
+    'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Colonist Stipend',
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Trust',
 

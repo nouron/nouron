@@ -87,20 +87,19 @@ return [
     'hint_suggestion_label' => 'Vorschlag',
     'hint_not_mandatory' => 'Vorschlag, kein Zwang — andere Baureihenfolgen sind möglich.',
     'onboarding_hint_1' => 'Kein Baumeister an Bord — Bau-AP läuft auf Minimum. Im Berater-Screen nachbessern, bevor der nächste Sol verpufft.',
-    'onboarding_hint_repair' => 'Die Anlage zeigt schon ersten Verschleiß — besser jetzt reparieren als später in der Krise. Gebäude antippen, dann „Reparieren" wählen (1 Bau-AP).',
+    'onboarding_hint_repair' => 'Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird. Gebäude antippen, dann „Reparieren" wählen (1 Bau-AP + 2 Regolith pro Punkt).',
     'onboarding_hint_repair_urgent' => 'Warnung: ein Gebäude steht kurz vor dem Stufenverlust. Jetzt reparieren — bevor der nächste Sol die Entscheidung abnimmt.',
     'onboarding_hint_2' => 'Der Harvester dreht Leerrunden — er steht noch in der Koloniezone. Auf ein erkundetes Regolith-Tile außerhalb verlegen, damit er wirklich fördert.',
-    'onboarding_hint_3' => 'Kommandozentrale auf Level 2 ausbauen — das erweitert die Koloniezone und eröffnet die Pfadwahl. Agrardom muss vorher stehen.',
-    'onboarding_hint_3_agrardome_first' => 'Erst Agrardom bauen — Pflichtvoraussetzung für CC Level 2. Danach Pfad wählen: Analytiklabor, Hangar oder Cantina.',
-    'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen — im Berater-Screen ein Pfadgebäude wählen und bauen: Analytiklabor, Hangar oder Cantina.',
+    'onboarding_hint_3' => 'Agrardom und zweites Gebäude stehen — jetzt die Kommandozentrale auf Level 2 ausbauen. Das erweitert die Koloniezone und schaltet den zweiten Beraterslot frei.',
+    'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen und das dafür nötige Gebäude steht — im Berater-Screen den passenden Berater einstellen.',
     'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree Forschungs-AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
     'onboarding_hint_5' => 'Die Stimmung in der Kolonie kippt — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren, bevor es weiter fällt.',
-    'onboarding_hint_build_priority' => 'Ressourcen reichen nicht für alles auf einmal — mit einem Pfad anfangen. Der Rest kommt, wenn die Kolonie stabiler steht.',
+    'onboarding_hint_build_priority' => 'Mehrere Gebäude sind gerade baubar, aber die Ressourcen reichen nicht für alle auf einmal — erst eines wählen und fertigstellen. Der Rest kommt, wenn die Kolonie stabiler steht.',
     'onboarding_hint_6' => 'Keine Cantina gebaut — Händler und Gäste legen nicht an. Tauschangebote und Einmal-Items passieren die Kolonie einfach.',
-    'onboarding_hint_agrardome' => 'Agrardom bauen — ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null. Kein Agrardom, keine Verpflegung, kein Fortschritt.',
+    'onboarding_hint_agrardome' => 'Erstes Bauprojekt der Kolonie: der Agrardom. Ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null — heute platzieren, restliche Bau-AP hineinstecken. Investierte Bau-AP bleiben über Sol-Grenzen erhalten, auch wenn ein Sol nicht reicht.',
     'onboarding_hint_analytik' => 'Kein Analytik-Labor — Forschungs-AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
-    'onboarding_hint_hangar_path' => 'Hangar-Pfad: erst Hangar bauen, dann Raumfahrer einstellen. Erst dann stehen Missionen und Navigations-AP richtig zur Verfügung.',
-    'onboarding_hint_cc_invest' => 'Bau-AP nicht verfallen lassen — in die Kommandozentrale investieren. Was eingezahlt ist, bleibt; Level 2 rückt damit näher.',
+    'onboarding_hint_hangar_path' => 'Erst den Hangar bauen, dann einen Raumfahrer einstellen — erst dann stehen Missionen und Navigations-AP richtig zur Verfügung.',
+    'onboarding_hint_invest_site' => 'Bau-AP nicht verfallen lassen — in die laufende Baustelle investieren. Was eingezahlt ist, bleibt; der Abschluss rückt damit näher.',
     'onboarding_hint_explore' => 'Navigations-AP für Erkundung einsetzen (1 AP pro Feld) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
     'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',
     'onboarding_hint_spend_ap_construction' => 'Noch Bau-AP übrig — in ein Gebäude investieren oder CC-Ausbau vorfinanzieren. AP verfallen am Sol-Ende.',
@@ -136,7 +135,7 @@ return [
     'onboarding_trigger_ap_limit' => 'Keine Bau-AP mehr in diesem Sol verfügbar.',
 
     // Trigger 5 — Harvester-Verlagerung (Tooltip)
-    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP pro Tile-Distanz — der Harvester produziert danach auf dem neuen Tile.',
+    'onboarding_trigger_harvester_move' => 'Verlegen kostet 1 Bau-AP pro Tile-Distanz — lohnt nur, wenn das Ziel spürbar ergiebiger ist. Bau-AP sind knapp.',
 
     // ── Error messages ────────────────────────────────────────────────────────
 
@@ -302,6 +301,8 @@ return [
     // Ereignisse
     'sol_report_event_merchant' => 'Reisender Händler im System',
     'sol_report_passive_credits' => 'Nexus-Subvention & Relaisvergütung',
+    'sol_report_advisor_hired' => 'Berater eingestellt',
+    'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Kolonisten-Zulage',
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
 

@@ -100,11 +100,12 @@ class OnboardingE2ETest extends TestCase
         $this->assertSame('hint_2', $hint['key']);
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
-        // ── 5. Move Harvester outside colony zone → rank-3 resolved; rank-4 (repair damaged buildings) surfaces ──
+        // ── 5. Move Harvester outside colony zone → rank-3 resolved; rank-4 (build Agrardom) surfaces ──
         // setupNewPlayer guarantees exactly one pre-explored ring-3 regolith tile
         // (Nexus Scout target) at a randomized coordinate — look it up instead of
         // assuming a fixed (3,0).
-        // setupNewPlayer seeds all three buildings damaged (16/20), so the teaching repair hint is next.
+        // The 16/20 starting damage stays silent (above the 70% display threshold);
+        // the Agrardom — the colony's first build project — is next instead.
         $harvesterTarget = DB::table('colony_tiles')
             ->where('colony_id', $colony->id)
             ->where('is_explored', 1)
@@ -116,9 +117,9 @@ class OnboardingE2ETest extends TestCase
             ->update(['tile_x' => $harvesterTarget->q, 'tile_y' => $harvesterTarget->r]);
 
         $hint = $this->hintService->getActiveHint($colony->id, $this->userId);
-        $this->assertNotNull($hint, 'Repair hint should appear once the Harvester is relocated (buildings start damaged)');
+        $this->assertNotNull($hint, 'Agrardom hint should appear once the Harvester is relocated');
         $this->assertSame(4, $hint['rank']);
-        $this->assertSame('hint_repair', $hint['key']);
+        $this->assertSame('hint_agrardome', $hint['key']);
         $this->assertStringContainsString('/colony', $hint['target_url']);
 
         // ── 6. Repair all buildings to full status → repair hint resolved ────

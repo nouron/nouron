@@ -77,7 +77,7 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_invest_accumulates_ap_spend(): void
     {
-        // Lv0→1 costs 5 AP; invest 3 → ap_spend=3
+        // Lv0→1 costs 12 AP; invest 3 → ap_spend=3
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 1);
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 1);
         $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 1);
@@ -92,8 +92,8 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_levelup_requires_full_ap_investment(): void
     {
-        // Lv0→1 costs 5 AP; only 4 invested — levelup must fail
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 4);
+        // Lv0→1 costs 12 AP; only 11 invested — levelup must fail
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 11);
 
         $result = $this->service->levelup($this->colonyId, $this->knowledgeId);
         $this->assertFalse($result);
@@ -107,8 +107,8 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_levelup_succeeds_after_full_ap_investment(): void
     {
-        // Lv0→1 costs 5 AP (config/knowledge.php → levelup_costs[1])
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 5);
+        // Lv0→1 costs 12 AP (config/knowledge.php → levelup_costs[1])
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 12);
 
         $result = $this->service->levelup($this->colonyId, $this->knowledgeId);
         $this->assertTrue($result);
@@ -122,17 +122,19 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_levelup_costs_increase_per_level(): void
     {
-        // Lv0→1 = 5 AP. Tick 9201 to invest, tick 9202 to clear AP locks for next round.
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 5);
+        // Lv0→1 = 12 AP. Tick 9201 to invest, tick 9202 to clear AP locks for next round.
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 12);
         $this->service->levelup($this->colonyId, $this->knowledgeId);
         Artisan::call('game:tick', ['--tick' => 9201]); // clears AP locks, knowledge stays at Lv1
 
-        // Lv1→2 = 10 AP. With 9 invested levelup must still fail.
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 7);
+        // Lv1→2 = 20 AP. Rank-2 scientist provides 13 AP/tick — invest in two
+        // chunks across tick boundaries (a single invest() call is capped at the
+        // AP available that tick, it does not partially invest beyond it).
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 13);
         $this->assertFalse($this->service->levelup($this->colonyId, $this->knowledgeId));
         Artisan::call('game:tick', ['--tick' => 9202]); // clear locks again
 
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 3); // cumulative = 10
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 7); // cumulative = 20
         $this->assertTrue($this->service->levelup($this->colonyId, $this->knowledgeId));
 
         $level = (int) DB::table('colony_researches')
@@ -146,8 +148,8 @@ class KnowledgeServiceTest extends TestCase
 
     public function test_knowledge_does_not_decay_after_tick(): void
     {
-        // Unlock the knowledge (Lv0→1 = 5 AP)
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 5);
+        // Unlock the knowledge (Lv0→1 = 12 AP)
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 12);
         $this->service->levelup($this->colonyId, $this->knowledgeId);
 
         // Run a tick — decay_rate=0, so level must remain 1
@@ -171,7 +173,7 @@ class KnowledgeServiceTest extends TestCase
         $this->assertEquals(26, $before);
 
         // Unlock knowledge_health (level 1 → +3 cap per config knowledge_cap_per_level[1])
-        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 5);
+        $this->service->invest($this->colonyId, $this->knowledgeId, 'add', 12);
         $this->service->levelup($this->colonyId, $this->knowledgeId);
 
         Artisan::call('game:tick', ['--tick' => 9102]);

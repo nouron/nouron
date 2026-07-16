@@ -36,7 +36,10 @@ return [
         'id' => 25,
         // No build_cost: CC exists from the start (bootstrap). Upgrades cost Regolith,
         // scaling with the target level (target_level × cc_upgrade_regolith_per_level).
-        'cc_upgrade_regolith_per_level' => 30,
+        // 30 → 20 (playtest review 2026-07-14): with the new Sol-1-4 onboarding ramp
+        // (Agrardom → path building → CC Lv2) the CC-Lv2 levelup was the single
+        // biggest regolith drain, leaving ~7 Rg buffer on the hangar path by Sol 4.
+        'cc_upgrade_regolith_per_level' => 20,
         'supply_cap' => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
@@ -130,7 +133,7 @@ return [
     // AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
-        'build_cost' => [3 => 90],    // Rg only (raised from 80; Wk removed — CC Lv2 path, see note above)
+        'build_cost' => [3 => 80],    // Rg only (90 → 80, playtest review 2026-07-14: path parity — Cantina 70/Lab 80/Hangar 80)
         'supply_cost' => 4,       // low: hangar is a shell; ships add no supply cost (2026-06-08)
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days

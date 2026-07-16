@@ -88,6 +88,20 @@ class ResearchService extends AbstractTechnologyService
             return (int) $entity->ap_for_levelup;
         }
 
+        return $this->knowledgeLevelupCost($colonyId, $entityId, (int) $entity->ap_for_levelup);
+    }
+
+    /**
+     * Public entry point for UI data-gathering (TechtreeColonyService/Controller):
+     * the AP cost for a knowledge's NEXT level, read from config/knowledge.php's
+     * per-level `levelup_costs` — never from the static `researches.ap_for_levelup`
+     * DB column, which only ever holds the Lv0→1 seed value and is never kept in
+     * sync as levels progress (playtest finding 2026-07-14: the techtree UI capped
+     * every knowledge's progress bar at that stale value, so investment silently
+     * stalled once the real, higher per-level cost was reached).
+     */
+    public function knowledgeLevelupCost(int $colonyId, int $entityId, int $fallback = 0): int
+    {
         $currentLevel = (int) (DB::table($this->colonyTable())
             ->where('colony_id', $colonyId)
             ->where($this->entityIdKey(), $entityId)
@@ -96,6 +110,6 @@ class ResearchService extends AbstractTechnologyService
         $targetLevel = $currentLevel + 1;
         $costs = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
 
-        return (int) ($costs[$targetLevel] ?? $entity->ap_for_levelup);
+        return (int) ($costs[$targetLevel] ?? $fallback);
     }
 }

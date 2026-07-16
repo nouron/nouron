@@ -152,87 +152,87 @@ class OnboardingHintService
             ],
             [
                 'rank' => 4,
-                'key' => 'hint_repair',
-                'active' => $this->checkHintRepair($colonyId),
-                'text_key' => 'colony.onboarding_hint_repair',
-                'target_url' => '/colony/view',
-            ],
-            [
-                'rank' => 5,
-                'key' => 'hint_3',
-                'active' => $this->checkHint3($colonyId, $currentTick),
-                'text_key' => $this->hint3TextKey($colonyId),
-                'target_url' => $this->hint3TargetUrl($colonyId),
-            ],
-            [
-                'rank' => 6,
-                'key' => 'hint_advisor_slot2',
-                'active' => $this->checkHintAdvisorSlot2($colonyId),
-                'text_key' => 'colony.onboarding_hint_advisor_slot2',
-                'target_url' => '/advisors',
-            ],
-            [
-                'rank' => 7,
-                'key' => 'hint_cc_invest',
-                'active' => $this->checkHintCcInvest($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_cc_invest',
-                'target_url' => '/colony/view',
-            ],
-            [
-                'rank' => 8,
-                'key' => 'hint_explore',
-                'active' => $this->checkHintExplore($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_explore',
-                'target_url' => '/colony/view',
-            ],
-            [
-                'rank' => 9,
-                'key' => 'hint_4',
-                'active' => $this->checkHint4($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_4',
-                'target_url' => '/techtree',
-            ],
-            [
-                'rank' => 10,
-                'key' => 'hint_5',
-                'active' => $this->checkHint5($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_5',
-                'target_url' => '/colony/view',
-            ],
-            [
-                'rank' => 11,
-                'key' => 'hint_build_priority',
-                'active' => $this->checkHintBuildPriority($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_build_priority',
-                'target_url' => '/colony/view',
-            ],
-            [
-                'rank' => 12,
-                'key' => 'hint_6',
-                'active' => $this->checkHint6($colonyId, $currentTick),
-                'text_key' => 'colony.onboarding_hint_6',
-                'target_url' => '/colony/view?build=52',
-            ],
-            [
-                'rank' => 13,
                 'key' => 'hint_agrardome',
                 'active' => $this->checkHintAgrardome($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_agrardome',
                 'target_url' => '/colony/view?build=41',
             ],
             [
-                'rank' => 14,
+                'rank' => 5,
+                'key' => 'hint_repair',
+                'active' => $this->checkHintRepair($colonyId),
+                'text_key' => 'colony.onboarding_hint_repair',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 6,
+                'key' => 'hint_invest_site',
+                'active' => $this->checkHintInvestSite($colonyId),
+                'text_key' => 'colony.onboarding_hint_invest_site',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 7,
+                'key' => 'hint_advisor_slot2',
+                'active' => $this->checkHintAdvisorSlot2($colonyId),
+                'text_key' => 'colony.onboarding_hint_advisor_slot2',
+                'target_url' => '/advisors',
+            ],
+            [
+                'rank' => 8,
+                'key' => 'hint_build_priority',
+                'active' => $this->checkHintBuildPriority($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_build_priority',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 9,
+                'key' => 'hint_6',
+                'active' => $this->checkHint6($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_6',
+                'target_url' => '/colony/view?build=52',
+            ],
+            [
+                'rank' => 10,
                 'key' => 'hint_analytik',
                 'active' => $this->checkHintAnalytik($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_analytik',
                 'target_url' => '/colony/view?build=31',
             ],
             [
-                'rank' => 15,
+                'rank' => 11,
                 'key' => 'hint_hangar_path',
                 'active' => $this->checkHintHangarPath($colonyId, $currentTick),
                 'text_key' => 'colony.onboarding_hint_hangar_path',
                 'target_url' => '/colony/view?build=44',
+            ],
+            [
+                'rank' => 12,
+                'key' => 'hint_3',
+                'active' => $this->checkHint3($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_3',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 13,
+                'key' => 'hint_explore',
+                'active' => $this->checkHintExplore($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_explore',
+                'target_url' => '/colony/view',
+            ],
+            [
+                'rank' => 14,
+                'key' => 'hint_4',
+                'active' => $this->checkHint4($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_4',
+                'target_url' => '/techtree',
+            ],
+            [
+                'rank' => 15,
+                'key' => 'hint_5',
+                'active' => $this->checkHint5($colonyId, $currentTick),
+                'text_key' => 'colony.onboarding_hint_5',
+                'target_url' => '/colony/view',
             ],
             [
                 'rank' => 16,
@@ -286,23 +286,25 @@ class OnboardingHintService
     }
 
     /**
-     * Repair hint: any building on the colony is below its max status points.
-     * Active from Sol 1 (no tick gate); self-clears once every building is full.
+     * Repair hint (teaching): a built building has decayed below the damage display
+     * threshold (game.repair.display_threshold, default 70% of max SP) — the same
+     * threshold below which the hex grid shows the damage badge at all.
      *
-     * Ranked AFTER the Harvester-move hint (rank 3, not 2): repairing all three
-     * damaged starting buildings costs ~12 Bau-AP, more than a single Sol provides
-     * (~10 with engineer). Surfacing it first would leave the player stuck on a
-     * hint they cannot resolve in Sol 1. The cheap, completable Harvester move
-     * (~2 AP) goes first; the player then meets the repair goal and naturally
-     * learns to spread Bau-AP across multiple Sols.
+     * Deliberately NOT "any building below max": the 16/20 starting damage is an
+     * invisible pacing timer (playtest review 2026-07-14) — decay pushes the
+     * Harvester below 70% ~Sol 4, Housing ~Sol 6, CC ~Sol 8, so repair teaching
+     * moments trickle in staggered, right after the Sol-1-4 build ramp
+     * (Agrardom → path building → CC Lv2) is done and AP slack exists.
      */
     private function checkHintRepair(int $colonyId): bool
     {
+        $threshold = (float) config('game.repair.display_threshold', 0.70);
+
         return DB::table('colony_buildings')
             ->join('buildings', 'colony_buildings.building_id', '=', 'buildings.id')
             ->where('colony_buildings.colony_id', $colonyId)
             ->where('colony_buildings.level', '>=', 1) // level 0 = under construction, not repairable
-            ->whereColumn('colony_buildings.status_points', '<', 'buildings.max_status_points')
+            ->whereRaw('colony_buildings.status_points < buildings.max_status_points * ?', [$threshold])
             ->exists();
     }
 
@@ -320,8 +322,8 @@ class OnboardingHintService
     }
 
     /**
-     * Catch hint (rank 15): the three Sol-3-Wahlfreiheit buildings (Cantina/
-     * Agrardom/Analytik) are all already placed — so the build-hints above no
+     * Catch hint (rank 16): the choice buildings (Sciencelab/Hangar/Cantina)
+     * are all already placed — so the build-hints above no
      * longer have anything to suggest — but at least one AP pool still has
      * unspent points this Sol. Surfaces the pool with the most AP left so the
      * hint bar never falsely claims "nothing to do" while AP sits idle.
@@ -332,25 +334,19 @@ class OnboardingHintService
      */
     private function checkHintSpendRemainingAp(int $colonyId, int $currentTick): bool
     {
-        if (! $this->allChoiceBuildingsPlaced($colonyId)) {
-            return false;
-        }
-
         return $this->bestRemainingApPool($colonyId) !== null;
     }
 
-    private function allChoiceBuildingsPlaced(int $colonyId): bool
-    {
-        return $this->isBuildingPlaced($colonyId, 31)  // sciencelab
-            && $this->isBuildingPlaced($colonyId, 44)  // hangar
-            && $this->isBuildingPlaced($colonyId, 52); // cantina
-    }
-
     /**
-     * Picks the AP pool with the most unspent points this Sol. Ties broken by
-     * fixed pool priority (construction > research > navigation > economy) —
-     * matches the order in which those mechanics were introduced to the player.
-     * Returns null once every pool is empty (the real "nothing left" state).
+     * Picks the *usable* AP pool with the most unspent points this Sol. A pool
+     * only counts when the player can actually act on it (playtest review
+     * 2026-07-14 — a "spend your research AP" nag without a Sciencelab, or
+     * "end the Sol, nothing left" with idle-but-usable Nav-AP, are both wrong):
+     * research needs a built Sciencelab, economy a built Cantina, navigation an
+     * affordable fog tile. Ties broken by fixed pool priority (construction >
+     * research > navigation > economy) — matches the order in which those
+     * mechanics were introduced. Returns null once no usable pool remains (the
+     * real "nothing left" state that lets hint_end_sol fire).
      *
      * @return 'construction'|'research'|'navigation'|'economy'|null
      */
@@ -363,6 +359,16 @@ class OnboardingHintService
             'economy' => $this->personellService->getEconomyPoints($colonyId),
         ];
 
+        if (! $this->hasBuiltBuilding($colonyId, 31)) { // sciencelab gates the techtree
+            $pools['research'] = 0;
+        }
+        if (! $this->hasBuiltBuilding($colonyId, 52)) { // cantina gates trade offers
+            $pools['economy'] = 0;
+        }
+        if ($pools['navigation'] > 0 && ! $this->canAffordCheapestFogTile($colonyId, $pools['navigation'])) {
+            $pools['navigation'] = 0;
+        }
+
         $best = null;
         foreach ($pools as $pool => $amount) {
             if ($amount > 0 && ($best === null || $amount > $pools[$best])) {
@@ -371,6 +377,33 @@ class OnboardingHintService
         }
 
         return $best;
+    }
+
+    /** True when the colony has the given building finished (level >= 1). */
+    private function hasBuiltBuilding(int $colonyId, int $buildingId): bool
+    {
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', $buildingId)
+            ->where('level', '>=', 1)
+            ->exists();
+    }
+
+    /** True when fog remains and the cheapest unexplored tile is payable with $navAp. */
+    private function canAffordCheapestFogTile(int $colonyId, int $navAp): bool
+    {
+        $cheapestRing = DB::table('colony_tiles')
+            ->where('colony_id', $colonyId)
+            ->where('is_explored', 0)
+            ->min('ring');
+        if ($cheapestRing === null) {
+            return false; // no fog left
+        }
+
+        $cheapestCost = (int) (config('game.colony.explore_cost_per_ring')[(int) $cheapestRing]
+            ?? config('game.colony.explore_cost_default', 1));
+
+        return $navAp >= $cheapestCost;
     }
 
     private function spendRemainingApTextKey(int $colonyId): string
@@ -417,40 +450,48 @@ class OnboardingHintService
     }
 
     /**
-     * Hint 3: CC (building_id=25) still at level 1. Fires from Sol 2 onward
-     * so player has time to gather AP before the suggestion appears.
+     * Hint 3: upgrade the CC to level 2. State-based (playtest review 2026-07-14):
+     * fires only once the Agrardom (hard CC-Lv2 prerequisite) AND at least one
+     * path building are finished — only then does CC Lv2 immediately pay off,
+     * because the freed advisor slot 2 can actually be filled (slots 2-4 require
+     * a built path building). The tick threshold is just a floor (Sol 3+); the
+     * build-ramp hints (Agrardom rank 4, path buildings ranks 8-10) lead up to it.
      */
     private function checkHint3(int $colonyId, int $currentTick): bool
     {
-        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 1);
+        $afterTick = (int) config('game.onboarding.hint_cc_upgrade_after_tick', 2);
         if ($currentTick < $afterTick) {
             return false;
         }
 
-        $level = (int) DB::table('colony_buildings')
+        $cc = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
+            ->first(['level', 'ap_spend']);
+        if ((int) ($cc->level ?? 0) >= 2) {
+            return false;
+        }
+
+        // Upgrade already started (ap_spend > 0) → hint_invest_site owns the
+        // "finish it" guidance; a "start the CC upgrade" hint after the fact
+        // would be stale (playtest finding 2026-07-14).
+        if ((int) ($cc->ap_spend ?? 0) > 0) {
+            return false;
+        }
+
+        $agrardomLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 41)
             ->value('level');
-
-        return $level < 2;
-    }
-
-    private function hint3TextKey(int $colonyId): string
-    {
-        if (! $this->isBuildingPlaced($colonyId, 41)) {
-            return 'colony.onboarding_hint_3_agrardome_first';
+        if ($agrardomLevel < 1) {
+            return false;
         }
 
-        return 'colony.onboarding_hint_3';
-    }
-
-    private function hint3TargetUrl(int $colonyId): string
-    {
-        if (! $this->isBuildingPlaced($colonyId, 41)) {
-            return '/colony/view?build=41';
-        }
-
-        return '/colony/view';
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereIn('building_id', [31, 44, 52]) // path buildings
+            ->where('level', '>=', 1)
+            ->exists();
     }
 
     /**
@@ -469,36 +510,44 @@ class OnboardingHintService
         // CC>=2 explicitly, not just "free>0": a fresh colony at CC1 with zero
         // advisors hired also has a free slot (slot 1) — that case is hint_1's
         // job, not this one. This hint is only about the *second* slot CC2 grants.
-        return $slots['cc_level'] >= 2 && $slots['free'] > 0;
-    }
-
-    /**
-     * CC pre-invest hint (rank 7, Sol 1 only): once the Sol-1 to-dos are done
-     * (engineer hired, Harvester relocated, no urgent repair) and the CC is still
-     * below level 2, nudge the player to sink the *remaining* Bau-AP into the CC
-     * upgrade. CC level-up needs 10 Bau-AP accumulated via `ap_spend` across Sols;
-     * a single Sol provides ~6–10, so pre-investing in Sol 1 guarantees level 2
-     * completes in Sol 2 instead of "just barely" or slipping to Sol 3.
-     *
-     * Gated on "still has available construction AP this Sol" — self-clears the
-     * moment the Bau-AP pool is spent, handing over to the explore hint (rank 8)
-     * and ultimately the "Sol beenden" bridge (rank 14). Never persisted to
-     * dismissed_hints. Sol 2+ is covered by the tick-gated hint_3.
-     */
-    private function checkHintCcInvest(int $colonyId, int $currentTick): bool
-    {
-        if ($currentTick !== 0) {
+        if ($slots['cc_level'] < 2 || $slots['free'] < 1) {
             return false;
         }
 
-        // Must not pre-empt the prerequisite Sol-1 actions.
+        // Slots 2-4 each require their path building (Sciencelab/Hangar/Cantina —
+        // see AdvisorController::PATH_BUILDINGS). Without one built, hiring fails
+        // with path_building_missing, so sending the player to /advisors is a dead
+        // end — stay silent and let the path-build hints (ranks 13-15) fire instead.
+        return DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereIn('building_id', [31, 44, 52])
+            ->where('level', '>=', 1)
+            ->exists();
+    }
+
+    /**
+     * Invest-site hint (rank 6): an active construction project exists — a placed
+     * level-0 building (construction site) or a started CC upgrade (ap_spend > 0) —
+     * and Bau-AP is still available this Sol. Nudges the player to finish what was
+     * started before placing the next thing; combined with the placement hints
+     * (Agrardom rank 4, path buildings ranks 8-10) this produces the natural
+     * "place → invest to done → place next" rhythm of the Sol-1-4 ramp without
+     * hard-coding a sequence (replaces the former CC-fixated hint_cc_invest,
+     * playtest review 2026-07-14).
+     *
+     * Retires once the CC reaches level 2 — from there the ramp is done and the
+     * player has learned the invest mechanic. Self-clears within a Sol as soon as
+     * the Bau-AP pool is spent; never persisted to dismissed_hints.
+     */
+    private function checkHintInvestSite(int $colonyId): bool
+    {
+        // Must not pre-empt the basic Sol-1 actions.
         if ($this->checkHint1($colonyId)
             || $this->checkHint2($colonyId)
             || $this->checkHintRepairUrgent($colonyId)) {
             return false;
         }
 
-        // Pointless once the CC has already reached level 2.
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', 25)
@@ -507,19 +556,22 @@ class OnboardingHintService
             return false;
         }
 
-        // Agrardom is a hard CC-Lv2 prerequisite — suppress the CC-invest hint until
-        // Agrardom is fully built (level >= 1), not just placed as a construction site.
-        // A placed-but-unfinished Agrardom means the player should invest AP there, not in CC.
-        $agrardomLevel = (int) (DB::table('colony_buildings')
+        // A "site" is a placed level-0 building (construction site) or any started
+        // level-up (ap_spend > 0) — the latter without a tile condition, because the
+        // CC is anchored (tile_x NULL) rather than placed.
+        $hasSite = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 41)
-            ->whereNotNull('tile_x')
-            ->value('level') ?? 0);
-        if ($agrardomLevel < 1) {
+            ->where(function ($q) {
+                $q->where(function ($site) {
+                    $site->whereNotNull('tile_x')->where('level', 0);
+                })->orWhere('ap_spend', '>', 0);
+            })
+            ->exists();
+        if (! $hasSite) {
             return false;
         }
 
-        // Only while there is still Bau-AP left to pre-invest this Sol.
+        // Only while there is still Bau-AP left to invest this Sol.
         return $this->personellService->getConstructionPoints($colonyId) > 0;
     }
 
@@ -622,8 +674,8 @@ class OnboardingHintService
 
     /**
      * Hint 6: Cantina (building_id=52) not yet built, but prerequisites are met:
-     *         CC >= level 2 AND Housing >= level 1.
-     * Fires after Sol threshold to avoid showing it immediately on day 1.
+     * Agrardom placed (server-side placement gate for path buildings) AND
+     * Housing >= level 1. Fires from Sol 2 (path choice — see config comment).
      */
     private function checkHint6(int $colonyId, int $currentTick): bool
     {
@@ -634,8 +686,12 @@ class OnboardingHintService
 
     private function cantinaPrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 2);
+        $threshold = (int) config('game.onboarding.hint_no_cantina_after_tick', 1);
         if ($currentTick < $threshold) {
+            return false;
+        }
+
+        if (! $this->pathChoiceOpen($colonyId)) {
             return false;
         }
 
@@ -648,8 +704,42 @@ class OnboardingHintService
     }
 
     /**
-     * Hint Agrardom: bioFacility (building_id=41) not yet built, but prerequisite
-     * is met: Harvester (building_id=27) >= level 1. Fires after Sol threshold.
+     * Shared prereq for all three path-building hints (Cantina/Analytik/Hangar):
+     * the Agrardom must be placed (server-side placement gate,
+     * error_agrardom_required), and — while the CC is still below level 2 —
+     * no other path building may be placed yet. The Sol-1-4 ramp wants exactly
+     * ONE path building before CC Lv2; nagging for the second one while the
+     * first is being built or the CC upgrade is pending was a playtest finding
+     * (2026-07-14). From CC Lv2 onward the remaining path hints may resume.
+     */
+    private function pathChoiceOpen(int $colonyId): bool
+    {
+        if (! $this->isBuildingPlaced($colonyId, 41)) {
+            return false;
+        }
+
+        $anyPathPlaced = DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->whereIn('building_id', [31, 44, 52])
+            ->whereNotNull('tile_x')
+            ->exists();
+        if (! $anyPathPlaced) {
+            return true;
+        }
+
+        $ccLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', 25)
+            ->value('level');
+
+        return $ccLevel >= 2;
+    }
+
+    /**
+     * Hint Agrardom (rank 4, from Sol 1): bioFacility (building_id=41) not yet
+     * built, Harvester >= level 1. The Agrardom is the colony's first build
+     * project (playtest review 2026-07-14) — hard prerequisite for CC Lv2, so
+     * it leads the Bau-AP track: placed + part-invested Sol 1, finished Sol 2.
      */
     private function checkHintAgrardome(int $colonyId, int $currentTick): bool
     {
@@ -660,7 +750,7 @@ class OnboardingHintService
 
     private function agrardomePrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 1);
+        $threshold = (int) config('game.onboarding.hint_no_agrardome_after_tick', 0);
         if ($currentTick < $threshold) {
             return false;
         }
@@ -675,7 +765,8 @@ class OnboardingHintService
 
     /**
      * Hint Analytik-Labor: sciencelab (building_id=31) not yet built, but
-     * prerequisite is met: CC (building_id=25) >= level 2. Fires after Sol threshold.
+     * prerequisites are met: Agrardom placed (server-side placement gate).
+     * Fires from Sol 2 (path choice).
      */
     private function checkHintAnalytik(int $colonyId, int $currentTick): bool
     {
@@ -686,9 +777,10 @@ class OnboardingHintService
 
     private function analytikPrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 2);
+        $threshold = (int) config('game.onboarding.hint_no_analytik_after_tick', 1);
 
-        return $currentTick >= $threshold;
+        return $currentTick >= $threshold
+            && $this->pathChoiceOpen($colonyId);
     }
 
     private function checkHintHangarPath(int $colonyId, int $currentTick): bool
@@ -700,9 +792,10 @@ class OnboardingHintService
 
     private function hangarPrereqsMet(int $colonyId, int $currentTick): bool
     {
-        $threshold = (int) config('game.onboarding.hint_no_hangar_after_tick', 2);
+        $threshold = (int) config('game.onboarding.hint_no_hangar_after_tick', 1);
 
-        return $currentTick >= $threshold;
+        return $currentTick >= $threshold
+            && $this->pathChoiceOpen($colonyId);
     }
 
     /**

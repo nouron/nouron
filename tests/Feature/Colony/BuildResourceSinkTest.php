@@ -119,9 +119,9 @@ class BuildResourceSinkTest extends TestCase
         $rg = $this->colonyRes(self::RES_REGOLITH);
         $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 90 Rg
+        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 80 Rg
 
-        $this->assertSame($rg - 90, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($rg - 80, $this->colonyRes(self::RES_REGOLITH));
         $this->assertSame($wk, $this->colonyRes(self::RES_COMPOUNDS));   // Wk unchanged
     }
 
@@ -150,19 +150,19 @@ class BuildResourceSinkTest extends TestCase
 
     public function test_cc_levelup_deducts_scaled_regolith(): void
     {
-        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2 → 2×30 = 60 Rg
+        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2 → 2×20 = 40 Rg
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertOk()->assertJsonPath('leveled_up', true);
 
-        $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($before - 40, $this->colonyRes(self::RES_REGOLITH));
     }
 
     public function test_levelup_blocked_without_regolith_keeps_ap(): void
     {
         $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);
-        $this->setColonyRes(self::RES_REGOLITH, 10);   // < 60 needed for CC Lv2
+        $this->setColonyRes(self::RES_REGOLITH, 10);   // < 40 needed for CC Lv2
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');

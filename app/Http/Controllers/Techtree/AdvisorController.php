@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Models\Advisor;
 use App\Services\ColonyService;
 use App\Services\EventService;
+use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
@@ -51,8 +52,25 @@ class AdvisorController extends BaseController
         private readonly ResourcesService $resourcesService,
         private readonly ColonyService $colonyService,
         private readonly EventService $eventService,
+        private readonly OnboardingHintService $hintService,
     ) {
         parent::__construct($tick);
+    }
+
+    /**
+     * Hiring/firing an advisor changes hint state (e.g. hint_1 "Kein Baumeister
+     * an Bord" clears on hire) — the hint bar only updates via the `hint:sync`
+     * window event, so AJAX responses must carry the fresh hint. Mirrors
+     * ColonyController::resolveHint().
+     */
+    private function resolveHint(int $colonyId): ?array
+    {
+        $hint = $this->hintService->getActiveHint($colonyId, Auth::id());
+        if ($hint) {
+            $hint['text'] = __($hint['text_key']);
+        }
+
+        return $hint;
     }
 
     private function resolveColonyId(): int
@@ -345,9 +363,14 @@ class AdvisorController extends BaseController
         $advisorType = (string) ($advisorCfg ? collect(config('advisors'))->search(fn (array $cfg) => $cfg['id'] === $personellId) : $personellId);
         $creditsCost = (int) ($advisorCfg['credits'] ?? 0);
 
+        // Log at getTick()+1 (the target/next tick), not the current one — the
+        // Sol-Report reads colony_log at the run's current_tick AFTER "Sol
+        // beenden" increments it, so logging at the pre-increment tick would
+        // make this event surface in a Sol-Report that already happened (same
+        // off-by-one class as the stipend-purchase fix, see ColonyController).
         $this->eventService->createEvent([
             'user' => Auth::id(),
-            'tick' => $this->getTick(),
+            'tick' => $this->getTick() + 1,
             'event' => 'techtree.advisor_hired',
             'area' => 'techtree',
             'parameters' => json_encode([
@@ -367,6 +390,7 @@ class AdvisorController extends BaseController
                 'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
                 'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
+                'activeHint' => $this->resolveHint($colonyId),
             ]);
         }
 
@@ -399,6 +423,7 @@ class AdvisorController extends BaseController
                 'ok' => true,
                 'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
+                'activeHint' => $this->resolveHint($colonyId),
             ]);
         }
 

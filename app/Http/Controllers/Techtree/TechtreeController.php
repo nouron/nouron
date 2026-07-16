@@ -134,7 +134,12 @@ class TechtreeController extends BaseController
                     'instance_count' => $type === 'building' ? (int) ($instanceCounts[$id] ?? 0) : 0,
                     'hangar_cap' => $type === 'ship' ? $hangarCap : null,
                     'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
-                    'ap_for_levelup' => (int) ($tech['ap_for_levelup'] ?? 0),
+                    // Research/knowledge costs escalate per level (config/knowledge.php
+                    // levelup_costs) — the static researches.ap_for_levelup DB column is
+                    // only the Lv0→1 seed value and never reflects later levels.
+                    'ap_for_levelup' => $type === 'research'
+                        ? $this->researchService->knowledgeLevelupCost($colonyId, (int) $id, (int) ($tech['ap_for_levelup'] ?? 0))
+                        : (int) ($tech['ap_for_levelup'] ?? 0),
                     'ap_available' => $type === 'building' ? $constructionAp
                                         : ($type === 'research' ? $researchAp : 0),
                 ];
@@ -310,10 +315,17 @@ class TechtreeController extends BaseController
             default => 'construction',
         };
 
+        $tech = $techtree[$type][$id] ?? null;
+        if ($tech !== null && strtolower($type) === 'research') {
+            $tech['ap_for_levelup'] = $this->researchService->knowledgeLevelupCost(
+                $colonyId, $id, (int) ($tech['ap_for_levelup'] ?? 0)
+            );
+        }
+
         return view('techtree.technology', [
             'type' => $type,
             'techId' => $id,
-            'tech' => $techtree[$type][$id] ?? null,
+            'tech' => $tech,
             'costs' => $service->getEntityCosts($id),
             'resources' => $this->resourcesService->getResources()->keyBy('id'),
             'apAvailable' => $this->personellService->getAvailableActionPoints($apType, $colonyId),
