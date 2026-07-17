@@ -130,7 +130,7 @@ class BuildResourceSinkTest extends TestCase
         $this->ensureBuildableTile(1, 0);
         $this->setColonyRes(self::RES_REGOLITH, 10);   // infirmary needs 60
 
-        $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
+        $this->place(46, 1, 0)->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
 
         $this->assertSame(10, $this->colonyRes(self::RES_REGOLITH), 'no Regolith deducted on a rejected build');
         $this->assertFalse(
@@ -143,7 +143,7 @@ class BuildResourceSinkTest extends TestCase
         $this->ensureBuildableTile(1, 0);
         DB::table('user_resources')->where('user_id', self::BART_USER_ID)->update(['supply' => 0]);   // free cap ≤ 0
 
-        $this->place(46, 1, 0)->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'supply_limit');
+        $this->place(46, 1, 0)->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'supply_limit');
     }
 
     // ── Level-up costs ───────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ class BuildResourceSinkTest extends TestCase
         $this->setColonyRes(self::RES_REGOLITH, 10);   // < 40 needed for CC Lv2
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
-            ->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
+            ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
 
         $row = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 25)->first();
         $this->assertSame(9, (int) $row->ap_spend, 'AP must not be burned on a blocked level-up');
@@ -200,7 +200,7 @@ class BuildResourceSinkTest extends TestCase
         $this->setColonyRes(self::RES_REGOLITH, 0);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
-            ->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'repair_no_regolith');
+            ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'repair_no_regolith');
 
         $sp = (int) DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)->value('status_points');
         $this->assertSame(10, $sp, 'no repair applied when Regolith is missing');
@@ -226,7 +226,7 @@ class BuildResourceSinkTest extends TestCase
         DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 54)->delete();
 
         $this->actingAs($this->bart())->postJson(route('colony.nexus.import'), ['amount' => 5])
-            ->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'uplink_required');
+            ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'uplink_required');
     }
 
     public function test_nexus_import_spends_credits_and_grants_compounds(): void

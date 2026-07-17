@@ -101,7 +101,7 @@ class StipendTest extends TestCase
         $this->purchase('small')->assertOk()->assertJsonPath('ok', true);
         $credits = $this->credits();
 
-        $this->purchase('large')->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'stipend_already_used');
+        $this->purchase('large')->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'stipend_already_used');
 
         $this->assertSame($credits, $this->credits(), 'no Credits deducted on a rejected second purchase');
         $this->assertSame(1, $this->stipendEventCount($this->tick + 1), 'only the first stipend event was recorded');
@@ -111,7 +111,7 @@ class StipendTest extends TestCase
     {
         DB::table('user_resources')->where('user_id', self::BART_USER_ID)->update(['credits' => 50]);
 
-        $this->purchase('small')->assertOk()->assertJsonPath('ok', false)->assertJsonPath('error', 'stipend_no_credits');
+        $this->purchase('small')->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'stipend_no_credits');
 
         $this->assertSame(50, $this->credits());
         $this->assertSame(0, $this->stipendEventCount($this->tick + 1));

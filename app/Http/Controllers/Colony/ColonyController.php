@@ -190,7 +190,7 @@ class ColonyController extends BaseController
 
         $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
 
-        return response()->json([...$result, ...$extra]);
+        return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
     }
 
     public function deepScanTile(Request $request): JsonResponse
@@ -211,7 +211,7 @@ class ColonyController extends BaseController
 
         $extra = $result['ok'] ? [...$this->currentAp($colony->id), 'activeHint' => $this->resolveHint($colony->id)] : [];
 
-        return response()->json([...$result, ...$extra]);
+        return response()->json([...$result, ...$extra], $result['ok'] ? 200 : 422);
     }
 
     // ── Building actions ──────────────────────────────────────────────────────
@@ -300,27 +300,27 @@ class ColonyController extends BaseController
             ->first();
 
         if (! $tile) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_found')]);
+            return $this->fail('tile_not_found');
         }
         $isHarvester = (int) $data['building_id'] === BuildingId::Harvester->value;
 
         if ($isHarvester) {
             // Harvester relocates to an explored regolith tile in the exploration zone (ring 3+).
             if (! $tile->is_explored) {
-                return response()->json(['ok' => false, 'error' => __('colony.error_not_explored')]);
+                return $this->fail('not_explored');
             }
             if (! str_starts_with($tile->tile_type, 'regolith_')) {
-                return response()->json(['ok' => false, 'error' => __('colony.error_harvester_needs_regolith')]);
+                return $this->fail('harvester_needs_regolith');
             }
         } else {
             // Regular buildings need only colony-zone permission. The zone is no longer
             // auto-explored (see ColonyTileService::assignColonyZone) — building on a
             // still-fogged zone tile is allowed and reveals it ("settle → see").
             if (! $tile->is_colony_zone) {
-                return response()->json(['ok' => false, 'error' => __('colony.error_tile_outside_colony')]);
+                return $this->fail('tile_outside_colony');
             }
             if (! str_starts_with($tile->tile_type, 'terrain_') || $tile->tile_type === 'terrain_impassable') {
-                return response()->json(['ok' => false, 'error' => __('colony.error_tile_not_buildable')]);
+                return $this->fail('tile_not_buildable');
             }
         }
 
@@ -330,12 +330,12 @@ class ColonyController extends BaseController
             ->where('tile_y', $data['r'])
             ->exists();
         if ($occupied) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_tile_occupied')]);
+            return $this->fail('tile_occupied');
         }
 
         $building = DB::table('buildings')->where('id', $data['building_id'])->first();
         if (! $building) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+            return $this->fail('building_not_found');
         }
 
         // Path-gate: sciencelab/hangar/bar may only be placed when CC level allows.
@@ -355,7 +355,7 @@ class ColonyController extends BaseController
         if ($isHarvesterMove
                 && $existingBuilding->pending_until_tick !== null
                 && (int) $existingBuilding->pending_until_tick >= $this->getTick()) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_harvester_in_transit')]);
+            return $this->fail('harvester_in_transit');
         }
 
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
@@ -368,7 +368,7 @@ class ColonyController extends BaseController
                 ->whereNotNull('tile_x')
                 ->exists();
             if (! $agrardomPlaced) {
-                return response()->json(['ok' => false, 'error' => __('colony.error_agrardom_required')]);
+                return $this->fail('agrardom_required');
             }
         }
 
@@ -377,12 +377,9 @@ class ColonyController extends BaseController
             : 1;
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < $apCost) {
-            return response()->json([
-                'ok' => false,
-                'error' => 'ap_limit',
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => $this->personellService->getConstructionPoints($colony->id),
-                'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
         }
 
@@ -398,12 +395,7 @@ class ColonyController extends BaseController
                     $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
                 }
                 if (! $this->resourcesService->check($costs, $colony->id)) {
-                    return response()->json([
-                        'ok' => false,
-                        'error' => 'resource_limit',
-                        'message' => __('colony.error_insufficient_resources'),
-                        'cost' => $buildCost,
-                    ]);
+                    return $this->fail('resource_limit', __('colony.error_insufficient_resources'), ['cost' => $buildCost]);
                 }
             }
 
@@ -412,11 +404,7 @@ class ColonyController extends BaseController
             if (! config('game.bypass.supply_checks')
                 && (int) ($building->supply_cost ?? 0) > 0
                 && $this->resourcesService->getFreeSupply($colony->id) < (int) $building->supply_cost) {
-                return response()->json([
-                    'ok' => false,
-                    'error' => 'supply_limit',
-                    'message' => __('colony.onboarding_trigger_supply_full'),
-                ]);
+                return $this->fail('supply_limit', __('colony.onboarding_trigger_supply_full'));
             }
         }
 
@@ -537,12 +525,9 @@ class ColonyController extends BaseController
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
-            return response()->json([
-                'ok' => false,
-                'error' => 'ap_limit',
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
-                'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
         }
 
@@ -553,13 +538,13 @@ class ColonyController extends BaseController
             ->first();
 
         if (! $row) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+            return $this->fail('building_not_found');
         }
 
         $building = DB::table('buildings')->where('id', $buildingId)->first();
 
         if ($building->max_level !== null && $row->level >= (int) $building->max_level) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_max_level_reached')]);
+            return $this->fail('max_level_reached');
         }
 
         // Level-up Regolith is charged only on the click that completes the level (flat,
@@ -572,10 +557,7 @@ class ColonyController extends BaseController
 
         if ($willLevelUp && $levelupRegolith > 0 && ! config('game.bypass.resource_costs')
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]], $colony->id)) {
-            return response()->json([
-                'ok' => false,
-                'error' => 'resource_limit',
-                'message' => __('colony.error_insufficient_resources'),
+            return $this->fail('resource_limit', __('colony.error_insufficient_resources'), [
                 'cost' => [self::RES_REGOLITH => $levelupRegolith],
             ]);
         }
@@ -681,12 +663,9 @@ class ColonyController extends BaseController
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
-            return response()->json([
-                'ok' => false,
-                'error' => 'ap_limit',
+            return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
-                'message' => __('colony.onboarding_trigger_ap_limit'),
             ]);
         }
 
@@ -697,18 +676,18 @@ class ColonyController extends BaseController
             ->first();
 
         if (! $row) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_building_not_found')]);
+            return $this->fail('building_not_found');
         }
 
         if ((int) $row->level < 1) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_repair_under_construction')]);
+            return $this->fail('repair_under_construction');
         }
 
         $building = DB::table('buildings')->where('id', $buildingId)->first();
         $maxSp = (int) ($building->max_status_points ?? 20);
 
         if ((int) $row->status_points >= $maxSp) {
-            return response()->json(['ok' => false, 'error' => __('colony.error_repair_full')]);
+            return $this->fail('repair_full');
         }
 
         // Repair costs 2 Regolith per click (hard gate, no negative balance). CC and
@@ -722,11 +701,7 @@ class ColonyController extends BaseController
 
         if ($repairCostsRegolith
             && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $repairRegolith]], $colony->id)) {
-            return response()->json([
-                'ok' => false,
-                'error' => 'repair_no_regolith',
-                'message' => __('colony.error_repair_no_regolith'),
-            ]);
+            return $this->fail('repair_no_regolith');
         }
 
         $newSp = min((int) $row->status_points + 1, $maxSp);
@@ -797,14 +772,14 @@ class ColonyController extends BaseController
             ->value('level') ?? 0);
 
         if ($uplinkLevel < 1) {
-            return response()->json(['ok' => false, 'error' => 'uplink_required', 'message' => __('colony.nexus_import_uplink_required')]);
+            return $this->fail('uplink_required', __('colony.nexus_import_uplink_required'));
         }
 
         $price = (int) config('game.economy.compound_import_price', 90);
         $totalCost = $amount * $price;
 
         if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id)) {
-            return response()->json(['ok' => false, 'error' => 'credit_limit', 'message' => __('colony.nexus_import_no_credits')]);
+            return $this->fail('credit_limit', __('colony.nexus_import_no_credits'));
         }
 
         $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $totalCost]], $colony->id);
@@ -855,11 +830,11 @@ class ColonyController extends BaseController
         $targetTick = $this->getTick() + 1;
 
         if ($this->trustService->hasEventThisTick($colony->id, $targetTick, $allStipendKeys)) {
-            return response()->json(['ok' => false, 'error' => 'stipend_already_used', 'message' => __('colony.stipend_already_used')]);
+            return $this->fail('stipend_already_used', __('colony.stipend_already_used'));
         }
 
         if (! $this->resourcesService->check([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $cost]], $colony->id)) {
-            return response()->json(['ok' => false, 'error' => 'stipend_no_credits', 'message' => __('colony.stipend_no_credits')]);
+            return $this->fail('stipend_no_credits', __('colony.stipend_no_credits'));
         }
 
         $this->resourcesService->payCosts([['resource_id' => ResourcesService::RES_CREDITS, 'amount' => $cost]], $colony->id);
@@ -913,6 +888,31 @@ class ColonyController extends BaseController
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    /**
+     * Reject an action the game rules do not allow, as 422.
+     *
+     * `error` is always a stable machine code and `message` always the text for the
+     * player — never the other way round. Callers used to put the translated string
+     * straight into `error`, which made the field unusable as a key: anything counting
+     * or branching on it broke the moment a translation changed.
+     *
+     * 422 matches HangarController/BarController/AdvisorController. The colony endpoints
+     * used to answer 200 for rule violations, so a client had to read the body to notice
+     * a failure at all.
+     *
+     * @param  string|null  $message  defaults to the `colony.error_<code>` line
+     * @param  array<string, mixed>  $extra  extra context for the client (ap_type, cost, …)
+     */
+    private function fail(string $code, ?string $message = null, array $extra = []): JsonResponse
+    {
+        return response()->json([
+            'ok' => false,
+            'error' => $code,
+            'message' => $message ?? __("colony.error_{$code}"),
+            ...$extra,
+        ], 422);
+    }
 
     private function resolveHint(int $colonyId): ?array
     {
