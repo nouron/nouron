@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Resources;
 
 use App\Http\Controllers\BaseController;
+use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\ColonyService;
 use App\Services\ResourcesService;
 use Illuminate\Http\JsonResponse;
@@ -10,6 +11,8 @@ use Illuminate\Http\Response;
 
 class JsonController extends BaseController
 {
+    use ResolvesActiveColony;
+
     public function __construct(
         private readonly ResourcesService $resources,
         private readonly ColonyService $colonies,
@@ -48,7 +51,7 @@ class JsonController extends BaseController
      */
     public function reloadResourceBar(): Response
     {
-        $colonyId = session('activeIds.colonyId', 1);
+        $colonyId = $this->resolveColonyId();
 
         $possessions = $this->resources->getPossessionsByColonyId($colonyId);
         $resourceTypes = $this->resources->getResources()->keyBy('id');

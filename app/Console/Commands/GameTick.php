@@ -45,7 +45,7 @@ use Illuminate\Support\Facades\DB;
 class GameTick extends Command
 {
     protected $signature = 'game:tick
-                                {--run=  : Run ID to process (omit to use the first active run)}
+                                {--run=  : Run ID to process (omit only when exactly one run is active)}
                                 {--tick= : Override the tick number (default: from run or time-based)}';
 
     protected $description = 'Process one game tick (decay, supply, resources, trust)';
@@ -64,11 +64,27 @@ class GameTick extends Command
 
     public function handle(): int
     {
-        // Resolve the Run record: explicit --run= ID, or first active run as fallback.
+        // Resolve the Run record: explicit --run= ID, or the sole active run.
+        //
+        // The fallback deliberately refuses to guess: it is not user-scoped, so with
+        // several active runs (game.run.allow_multiple) it would silently tick an
+        // arbitrary player's run. Convenience only holds while the choice is unambiguous.
         $runId = $this->option('run');
-        $run = $runId
-            ? Run::find((int) $runId)
-            : Run::where('status', 'active')->first();
+
+        if (! $runId) {
+            $activeRuns = Run::where('status', 'active')->get();
+
+            if ($activeRuns->count() > 1) {
+                $ids = $activeRuns->pluck('id')->implode(', ');
+                $this->error("Several active runs exist ({$ids}). Pass --run=ID to pick one.");
+
+                return self::FAILURE;
+            }
+
+            $run = $activeRuns->first();
+        } else {
+            $run = Run::find((int) $runId);
+        }
 
         if (! $run) {
             $this->error($runId

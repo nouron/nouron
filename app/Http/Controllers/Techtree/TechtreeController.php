@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
+use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\ColonyService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
@@ -17,11 +18,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
 
 class TechtreeController extends BaseController
 {
+    use ResolvesActiveColony;
+
     public function __construct(
         TickService $tick,
         private readonly BuildingService $buildingService,
@@ -34,20 +36,6 @@ class TechtreeController extends BaseController
         private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
-    }
-
-    private function resolveColonyId(): int
-    {
-        $colonyId = Session::get('activeIds.colonyId');
-        if ($colonyId) {
-            return (int) $colonyId;
-        }
-        $userId = $this->getCurrentUserId();
-        $colony = $this->colonyService->getPrimeColony($userId);
-        $id = $colony->id;
-        Session::put('activeIds.colonyId', $id);
-
-        return $id;
     }
 
     /**

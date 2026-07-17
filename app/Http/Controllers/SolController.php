@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Run;
 use App\Services\EventService;
 use App\Services\SolReportService;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\DB;
  */
 class SolController extends Controller
 {
+    use ResolvesActiveColony;
+
     public function __construct(
         private readonly PersonellService $personellService,
         private readonly EventService $eventService,
@@ -95,7 +98,7 @@ class SolController extends Controller
      */
     public function remainingAp(): JsonResponse
     {
-        $colonyId = session('activeIds.colonyId', 1);
+        $colonyId = $this->resolveColonyId();
 
         $construction = $this->personellService->getConstructionPoints($colonyId);
         $research = $this->personellService->getAvailableActionPoints('research', $colonyId);

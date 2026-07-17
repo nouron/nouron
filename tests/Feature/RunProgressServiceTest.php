@@ -309,6 +309,45 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals(3, $count, 'drawObjectives must create exactly 3 RunObjective records');
     }
 
+    public function test_draw_objectives_is_deterministic_for_the_same_rng_seed(): void
+    {
+        $drawFor = function (int $seed): array {
+            $run = $this->makeRun(['phase' => 2, 'rng_seed' => $seed]);
+            $this->service->drawObjectives($run);
+
+            return RunObjective::where('run_id', $run->id)
+                ->orderBy('id')->pluck('task_key')->all();
+        };
+
+        $this->assertSame(
+            $drawFor(4242),
+            $drawFor(4242),
+            'The same rng_seed must draw the same objectives — balance runs are only '
+            .'comparable when the draw is reproducible.'
+        );
+    }
+
+    public function test_draw_objectives_differs_across_rng_seeds(): void
+    {
+        // Guards the other direction: a seeded shuffle that ignored its argument
+        // would satisfy the determinism test above while making every run identical.
+        $drawFor = function (int $seed): array {
+            $run = $this->makeRun(['phase' => 2, 'rng_seed' => $seed]);
+            $this->service->drawObjectives($run);
+
+            return RunObjective::where('run_id', $run->id)
+                ->orderBy('id')->pluck('task_key')->all();
+        };
+
+        $draws = collect(range(1, 12))->map(fn (int $seed): string => implode(',', $drawFor($seed)));
+
+        $this->assertGreaterThan(
+            1,
+            $draws->unique()->count(),
+            'Different rng_seeds must be able to draw different objective sets.'
+        );
+    }
+
     public function test_draw_objectives_sets_correct_target_values(): void
     {
         // Lock the task pool to all 4 tasks and force deterministic draw of the

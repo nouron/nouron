@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
 use App\Services\Techtree\PersonellService;
@@ -195,7 +196,7 @@ class ColonyTileService
         $colonyId = $colony->id;
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0;
 
         $rows = [];

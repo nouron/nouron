@@ -218,7 +218,7 @@
                     "currentSol" => $currentSol ?? null,
                     "solLimit" => $solLimit ?? 100,
                     "nexusDebt" => $inActiveRun ?? false ? $nexusDebt ?? null : null,
-                    "nexusDebtMax" => $nexusDebtMax ?? 12000,
+                    "nexusDebtMax" => $nexusDebtMax ?? config("game.run.nexus_debt_fail_threshold", 12000),
                 ])
             </div>
         @endif

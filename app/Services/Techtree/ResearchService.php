@@ -2,6 +2,7 @@
 
 namespace App\Services\Techtree;
 
+use App\Enums\BuildingId;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -66,7 +67,7 @@ class ResearchService extends AbstractTechnologyService
             if (isset($caps[$targetLevel])) {
                 $ccLevel = (int) (DB::table('colony_buildings')
                     ->where('colony_id', $colonyId)
-                    ->where('building_id', 25)
+                    ->where('building_id', BuildingId::CommandCenter->value)
                     ->value('level') ?? 0);
 
                 if ($ccLevel < $caps[$targetLevel]) {

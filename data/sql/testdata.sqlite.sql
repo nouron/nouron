@@ -235,6 +235,9 @@ INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id
 INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,3,20,5,30,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
 
 -- Active run for Bart (user_id=3) on Springfield (colony_id=1).
+-- Exactly ONE active run exists in the fixture, deliberately: the game is singleplayer,
+-- and `game:tick` without --run refuses to guess between several active runs.
+-- Homer's active run on Shelbyville was removed here (2026-07-17) — a leftover from the
+-- multiplayer era, which is out of scope. Homer and Shelbyville themselves stay: the
+-- cross-colony tests need a foreign colony to prove Bart cannot reach it.
 INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
--- Active run for Homer (user_id=0) on Shelbyville (colony_id=2).
-INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(2,0,2,20,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');

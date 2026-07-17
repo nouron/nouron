@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
+use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Advisor;
 use App\Services\ColonyService;
 use App\Services\EventService;
@@ -16,12 +17,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AdvisorController extends BaseController
 {
+    use ResolvesActiveColony;
+
     /**
      * Positions 1 and 5 are always the same advisor type regardless of path choice.
      */
@@ -71,19 +73,6 @@ class AdvisorController extends BaseController
         }
 
         return $hint;
-    }
-
-    private function resolveColonyId(): int
-    {
-        $colonyId = Session::get('activeIds.colonyId');
-        if ($colonyId) {
-            return (int) $colonyId;
-        }
-        $colony = $this->colonyService->getPrimeColony($this->getCurrentUserId());
-        $id = $colony->id;
-        Session::put('activeIds.colonyId', $id);
-
-        return $id;
     }
 
     /**

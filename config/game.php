@@ -262,6 +262,7 @@ return [
         'allow_multiple' => (bool) env('GAME_ALLOW_MULTIPLE_RUNS', false),
         'tick_limit' => 100,    // total ticks per run (60–100, default 100)
         'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
+        'nexus_debt_fail_threshold' => 12000,  // instant fail when nexus_debt exceeds this value
         'task_pool' => [       // all available Phase-2 task keys
             'task_senior_advisors',
             'task_credit_reserve',
