@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-07-17
+
+Vorarbeiten für den automatisierten Playtest-Bot (PR folgt separat). Der Bot spielt ausschließlich über die HTTP-Routen und soll damit Balance messen *und* die Routen mittesten — diese Fixes beheben, was ihn daran hindert oder unabhängig davon falsch ist:
+
+- **Aktive Kolonie kam an fünf Stellen mit Hard-Default `1` aus der Session.** `session('activeIds.colonyId', 1)` in SolController, Resources\JsonController und dem Navbar-View-Composer (plus zwei private Kopien der korrekten Logik in Techtree-/AdvisorController): wer den Session-Key nicht gesetzt hatte, bekam AP-Anzeige, Resourcebar und Nav-Gating von **Kolonie 1** — fremden Daten. Neu: Trait `ResolvesActiveColony` (Session → `getPrimeColony` → Session heilen); der Navbar-Composer nimmt die Kolonie aus dem eigenen aktiven Run.
+- **Ziel-Ziehung ignorierte `runs.rng_seed`.** `drawObjectives` nutzte ein ungeseedetes `shuffle()` — zwei Runs mit identischem Seed zogen verschiedene Ziele, womit ein Balance-Vergleich zwischen zwei Configs wertlos ist. Reihenfolge jetzt aus `crc32(seed|task_key)`, bewusst ohne globales `mt_srand` (die Missions-Loot-Rolle leitet ihren Seed aus `rng_seed + mission_id` ab, ADR 0003). Nebenbefund: `Collection::shuffle()` nimmt seit Laravel 10 **keinen Seed** mehr an — ein übergebenes Argument wird still ignoriert.
+- **Score wurde nie persistiert → Highscores drifteten.** `calculateScore()` wurde beim Run-Ende berechnet und weggeworfen; die Lobby rechnete die Formel inline nach, dabei mit dem *aktuellen* Credit-Stand. Der Score eines längst beendeten Runs änderte sich also, sobald der Spieler danach Geld ausgab. Neu: Spalte `runs.score`, gesetzt in `endRun()` (Status zuerst, dann Score — sonst bekämen gescheiterte Runs einen positiven Wert), Migration backfillt bestehende Runs.
+- **Colony-Fehler antworteten HTTP 200.** Regelverstöße kamen als `200 {ok:false}`, während Hangar/Bar/Advisor bereits 422 nutzen. Jetzt einheitlich **422**. Zudem war `error` mal ein übersetzter Satz, mal ein Maschinencode — als Schlüssel ist Prosa unbrauchbar (jede Übersetzungsänderung bricht still, was darauf verzweigt). Jetzt durchgängig `{ok:false, error:'<code>', message:'<Text>'}`, festgehalten als design-guide §5.6b. Kein Frontend-Change nötig: die JS-Helper ignorieren den Status und lesen `res.message ?? res.error` — dieses load-bearing Verhalten ist jetzt kommentiert.
+- **`nexus_debt > 12000` war fünffach hartcodiert** (beide Fail-Pfade, Navbar-Gauge, Kommandozentrale, zwei Blade-Fallbacks), einer davon mit `// no config key yet`. Neu: `game.run.nexus_debt_fail_threshold` — die Anzeige kann nicht mehr vom echten Fail-Punkt abweichen, und der Wert ist im Playtest tunebar.
+- **CommandCenter-ID vereinheitlicht:** Literal `25` (7×) und `config('buildings.commandCenter.id')` (4×) → durchgängig `BuildingId::CommandCenter->value`.
+- **`game:tick` ohne `--run` riet.** Es nahm `Run::where('status','active')->first()` — nicht user-bezogen — und tickte bei mehreren aktiven Runs einen willkürlichen. Bricht jetzt mit Meldung ab. Dabei aufgefallen: die Testfixture hatte zwei aktive Runs (Bart + Homer/Shelbyville) — ein Rest aus der Mehrspieler-Ära, die out-of-scope ist. Homers **Run** entfernt; Homer und Shelbyville selbst bleiben, weil die Cross-Colony-Tests eine fremde Kolonie brauchen. **Hinweis:** die Dev-DB (`data/db/nouron.db`) hat denselben Altbestand — dort schlägt ein blankes `php artisan game:tick` fehl, bis Run 2 entfernt ist.
+- **Fixture-Missionen nutzten Freitext-Ziele** ('Asteroid Belt Proxima') statt Katalog-Keys; `GameTick` fand keinen Katalogeintrag, übersprang die Belohnung, dockte das Schiff aber ab und markierte die Mission als completed. Jetzt `mission_recon_flight` / `mission_supply_run`.
+
+Tests: 707 (4 neu), unverändert 1 vorbestehender Fehler (`TrustServiceTest::test_get_band_unknown_locale`). Offen aus der Planung: Techtree-`order` liefert weiterhin keinen Fehlergrund, und `AbstractTechnologyService` ignoriert `game.bypass.*` — beides eigener Durchgang.
+
 ## 2026-07-14 (2)
 
 Vierter Playtest-Durchgang (5 Befunde, davon 1 echter Bug + 1 Balance-Korrektur mit game-designer):
