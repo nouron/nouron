@@ -3,6 +3,7 @@
 namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
+use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
@@ -154,7 +155,12 @@ class BotStrategy
             ],
             [
                 'name' => 'request_ship',
+                // Capped at one ship: request_ship has no mission-driven demand signal,
+                // and unbounded drone-buying (300cr each, repeatable every time a new
+                // hangar instance opens a slot) starves hire_advisor's Trader hire
+                // (350cr, needed for Phase 1's third advisor) of credits permanently.
                 'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1
+                    && ! self::hasAnyShip($b)
                     && self::hasFreeHangarSlot($b)
                     && self::credits($b) >= (int) config('ships.drone.nexus_cost', 0),
                 'do' => fn (BotSession $b) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
@@ -294,15 +300,21 @@ class BotStrategy
 
         usort($buildings, fn ($a, $c) => ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0));
 
-        $supplyUsed = (int) (DB::table('colony_buildings')->where('colony_id', $b->colonyId)->sum('supply_cost'));
-        $supplyCap = (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('supply') ?? 0);
+        // Real cap/possession logic lives in ResourcesService — supply is CC level +
+        // Housing count + knowledge bonus, not the flat user_resources.supply seed
+        // value, and build_cost can list more than just Regolith (e.g. Werkstoffe).
+        $resourcesService = app(ResourcesService::class);
+        $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
 
         foreach ($buildings as $building) {
-            $regolithCost = (int) ($building['build_cost'][self::RES_REGOLITH] ?? 0);
-            if (self::regolith($b) < $regolithCost) {
+            $costs = [];
+            foreach ($building['build_cost'] as $resourceId => $amount) {
+                $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+            }
+            if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
                 continue;
             }
-            if ($supplyUsed + (int) $building['supply_cost'] > $supplyCap) {
+            if ((int) $building['supply_cost'] > $freeSupply) {
                 continue;
             }
 
@@ -420,6 +432,11 @@ class BotStrategy
             ->where('colony_id', $b->colonyId)
             ->where('building_id', 44)
             ->value('level') ?? 0);
+    }
+
+    private static function hasAnyShip(BotSession $b): bool
+    {
+        return DB::table('colony_ships')->where('colony_id', $b->colonyId)->exists();
     }
 
     private static function hasFreeHangarSlot(BotSession $b): bool

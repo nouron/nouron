@@ -58,6 +58,11 @@ class PlaytestBotTest extends TestCase
      * (RunProgressService::drawObjectives seeding) actually holds. Objectives
      * are only drawn on the Phase 1 -> 2 transition, so both runs have to be
      * played into Phase 2 before there is anything to compare.
+     *
+     * KNOWN FAILING (2026-07-17): same root cause as PlaytestBotPhase1Test —
+     * with real resource costs enforced, the bot never reaches Phase 2 (no
+     * credit income path other than accept_bar_offer, which itself fails).
+     * Left red pending that balance ticket.
      */
     public function test_same_seed_draws_identical_objectives(): void
     {

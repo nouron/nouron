@@ -43,7 +43,7 @@ class BotSession
         // snapshots config('game.bypass') into run.settings at creation time.
         config([
             'game.bypass.ap_checks' => false,
-            'game.bypass.resource_checks' => false,
+            'game.bypass.resource_costs' => false,
             'game.bypass.supply_checks' => false,
         ]);
 

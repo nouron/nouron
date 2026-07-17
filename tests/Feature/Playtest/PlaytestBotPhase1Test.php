@@ -11,6 +11,17 @@ use Tests\TestCase;
  * a bare /sol/next loop. Goal: the run reaches Phase 2 (checkPhase1Completion:
  * CC Lv3 + 2 production buildings Lv2 + 3 advisors). If it doesn't, that's a
  * balance finding to report, not something to patch around with a bypass.
+ *
+ * KNOWN FAILING (2026-07-17): now that game.bypass.resource_costs is actually
+ * off (see BotSession::boot()), the bot never reaches Phase 2 — it hires only
+ * 2 of 3 advisors. Root cause: the colony has no credit income source other
+ * than accept_bar_offer, which itself fails ('Not enough resources.') because
+ * the colony never accumulates a give-side surplus to trade. This matches the
+ * owner's own Sol-14 playtest finding (see project memory
+ * project_hangar_konsul_balance_sol14): the Hangar/Konsul economy path is
+ * unattractive/broken. Left red intentionally pending that balance ticket —
+ * not something this test should paper over with a looser assertion or the
+ * bot with more heuristics.
  */
 class PlaytestBotPhase1Test extends TestCase
 {

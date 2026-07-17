@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-07-17 (2)
+
+Playtest-Bot (`feat/playtest-bot`, aufbauend auf den Vorarbeiten unten): PHPUnit-basierter Bot unter `tests/Feature/Playtest/`, spielt einen kompletten Run ausschließlich über die echten HTTP-Routen (nie `game:tick` direkt — nur `POST /sol/next`, das den Command wrappt und `current_tick` erhöht).
+
+- **`BotSession`** — HTTP-Treiber: Bootstrap (TestSeeder → Bypass-Flags aus → `resetColonyToSol1` → fester `rng_seed` → `/lobby/start`), `act()`/`normalize()` für einheitliche Response-Auswertung (5xx wirft, 409/302 während Bootstrap wirft), `peek()` für ungeloggte Read-only-GETs.
+- **`BotStrategy`** — geordnete Regelliste (Phase 1: repair/hire/invest_cc/explore/place/invest_production; Phase 2: research/dispatch/bar/request_ship), liest per Read-only-DB-Query was ein Spieler sähe, mutiert nur über echte Routen. Zwei Endlosschleifen-Bugs in der Heuristik gefunden und gefixt: `invest_production` pickte ungeprüft den Harvester (`max_level=1`) und blockte sich jeden Sol selbst; `place_building` duplizierte instanzierbare Gebäude (Housing/Hangar) endlos statt neue Pfadgebäude (Bar) zu setzen, wodurch Advisor-Slot 3 (Trader) nie erreichbar war.
+- **`RunReport`** — JSON-Artefakt (`storage/logs/playtest/{seed}-{timestamp}.json`) mit Sol-Zeitreihe (Trust/Credits/Regolith/AP je Pool/CC-Level/Advisor-Zahl), Rejections nach Maschinencode, Objectives, Burnout-Rohdaten (Formel folgt erst nach diesem Playtest, GDD).
+- **Suite `playtest`** in `phpunit.xml`, aus `laravel-feature` ausgeschlossen — bewusst schwache Assertions (kein 5xx, Run endet, mind. 1 erfolgreiche Aktion, JSON parsebar); Sieg/Sols-bis-Phase-2/Ablehnungsquoten werden nicht assertiert, sondern nur reportet.
+
+Nebenbefund (eigenes Ticket, nicht in diesem PR gefixt): `AbstractTechnologyService::_invest()`s `order:'add'` gibt `success:true` zurück, auch wenn `ap_spend` bereits am Cap ist (No-Op) — und die aktuelle Techtree-UI (`techtree-view.js`) sendet nie `order:'levelup'`. Ein Spieler könnte dadurch eine Kenntnis nie fertig erforschen können, sobald der AP-Balken voll ist (Klick wirkt scheinbar erfolgreich, ändert aber nichts).
+
+Playtest-Suite: 5 Tests grün. `laravel-feature`: 669 Tests, unverändert 1 vorbestehender Fehler (`TrustServiceTest`) — keine Regression.
+
 ## 2026-07-17
 
 Vorarbeiten für den automatisierten Playtest-Bot (PR folgt separat). Der Bot spielt ausschließlich über die HTTP-Routen und soll damit Balance messen *und* die Routen mittesten — diese Fixes beheben, was ihn daran hindert oder unabhängig davon falsch ist:
