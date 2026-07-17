@@ -87,6 +87,15 @@ return [
     // CommandCenter + Harvester are exempt (AP-only, bootstrap anchor against decay spiral).
     'repair' => [
         'regolith_per_click' => 2,
+
+        // Damage display threshold (fraction of max_status_points): tiles show the
+        // damage badge/status tint only below this. The 16/20 (80%) starting damage
+        // is deliberately invisible — it acts as a staggered pacing timer (decay
+        // pushes Harvester below 70% ~Sol 4, Housing ~Sol 6, CC ~Sol 8), so repair
+        // is taught when it first matters, not on Sol 1 (playtest review 2026-07-14).
+        // Exact SP stay visible in the tile sidebar — nothing is hidden, just not
+        // pushed. The teaching repair hint uses the same threshold.
+        'display_threshold' => 0.70,
     ],
 
     // Action Points — base value per AP type per Sol, regardless of advisors.
@@ -322,41 +331,34 @@ return [
         // Minimum ticks elapsed before trust hint can fire (avoids day-1 trigger)
         'hint_trust_min_ticks' => 5,
 
-        // Minimum ticks elapsed before Cantina hint fires (CC>=2 + Housing>=1 + Bar missing).
-        // 2 (Sol 3+) — deliberately equal to hint_no_analytik_after_tick: from Sol 3 the
-        // player is meant to face a genuine, equally-weighted choice between Cantina
-        // (trade path) and Analytik-Labor (research path) — see GDD §16.2/§16.5
-        // "Sol-3-Wahlfreiheit". Neither hint may have a structural head start over the
-        // other; same threshold ensures both can surface the same Sol once their
-        // respective prerequisites (CC>=2, plus Housing>=1 for Cantina) are met.
-        'hint_no_cantina_after_tick' => 2,
+        // Minimum ticks elapsed before Cantina hint fires (Agrardom placed + Housing>=1 + Bar missing).
+        // 1 (Sol 2+) — deliberately equal to hint_no_analytik/hangar_after_tick: from
+        // Sol 2 the player faces a genuine, equally-weighted path choice (Cantina /
+        // Analytik-Labor / Hangar) — see GDD §16.2/§16.5 "Sol-2-Pfadwahl". The new
+        // Sol-1-4 ramp (playtest review 2026-07-14) builds the path building BEFORE
+        // CC Lv2, so advisor slot 2 can be filled the moment CC Lv2 completes.
+        'hint_no_cantina_after_tick' => 1,
 
         // Minimum ticks elapsed before Agrardom hint fires (Harvester>=1 + bioFacility missing).
-        // 1 (Sol 2+) — kept even though canAffordBuildingPlacement() now also guards this
-        // hint (it has no CC-level prerequisite, unlike Cantina/Analytik, so without
-        // *some* floor it would still flash briefly on Sol 1 before AP runs out).
-        'hint_no_agrardome_after_tick' => 1,
+        // 0 (Sol 1) — the Agrardom is the colony's first build project (playtest review
+        // 2026-07-14): placed and part-invested on Sol 1, finished Sol 2. It is the hard
+        // prerequisite for CC Lv2, so it must come before everything else on the Bau-AP track.
+        'hint_no_agrardome_after_tick' => 0,
 
-        // Minimum ticks elapsed before Analytik-Labor hint fires (CC>=2 + sciencelab missing).
-        // 2 (Sol 3+) — deliberately equal to hint_no_cantina_after_tick (see comment
-        // there): from Sol 3 the player is meant to face a genuine, equally-weighted
-        // choice between Analytik-Labor (research path) and Cantina (trade path),
-        // not a system that nudges one before the other. The hint's own
-        // build-affordability check (canAffordBuildingPlacement) still withholds it
-        // whenever Bau-AP/Regolith are actually spent on Cantina/Agrardom first —
-        // this tick-gate only ensures neither hint has a Sol-level head start.
-        'hint_no_analytik_after_tick' => 2,
+        // Minimum ticks elapsed before Analytik-Labor hint fires (Agrardom placed + sciencelab missing).
+        // 1 (Sol 2+) — equal to hint_no_cantina_after_tick (see comment there).
+        'hint_no_analytik_after_tick' => 1,
 
-        // Minimum ticks elapsed before Hangar hint fires (CC>=2 + hangar missing).
-        // 2 (Sol 3+) — equal to hint_no_analytik_after_tick and hint_no_cantina_after_tick:
-        // all three path buildings (Sciencelab, Hangar, Cantina) are presented as
-        // equally-weighted choices from Sol 3 onward (see GDD §16 "Pfadwahl-ab-Sol-3").
-        'hint_no_hangar_after_tick' => 2,
+        // Minimum ticks elapsed before Hangar hint fires (Agrardom placed + hangar missing).
+        // 1 (Sol 2+) — equal to the other two path hints: all three path buildings
+        // (Sciencelab, Hangar, Cantina) are equally-weighted choices from Sol 2 onward.
+        'hint_no_hangar_after_tick' => 1,
 
-        // Minimum current_tick before CC-upgrade hint (hint_3) fires. 1 = Sol 2
-        // (Sol = current_tick + 1) — surfaces right after the first "Sol beenden",
-        // so Sol 2 does not fall into the same hint void Sol 1 had.
-        'hint_cc_upgrade_after_tick' => 1,
+        // Minimum current_tick floor for the CC-upgrade hint (hint_3). The primary
+        // gate is state-based now (Agrardom >= Lv1 AND one path building >= Lv1 —
+        // only then does CC Lv2 immediately pay off with a hireable advisor slot);
+        // this tick value is just a floor so the hint can't fire before Sol 3.
+        'hint_cc_upgrade_after_tick' => 2,
 
         // Latest current_tick at which the explore hint (hint_explore) still fires.
         // 0 = Sol 1 only — a single nudge into exploring the surroundings (find

@@ -42,8 +42,11 @@ class GameSnapshot extends Command
      * Tables scoped by colony_id, in FK-safe delete order (children before
      * glx_colonies) — mirrors ResetPlayer's wipe list.
      */
+    // NOTE: advisors is deliberately NOT in this list — fired advisors keep their
+    // row with colony_id=NULL (user-scoped), so both save and the restore wipe
+    // must go by user_id or fired advisors leak / collide on re-insert.
     private const COLONY_SCOPED_TABLES = [
-        'colony_resources', 'colony_buildings', 'colony_tiles', 'advisors',
+        'colony_resources', 'colony_buildings', 'colony_tiles',
         'colony_ships', 'colony_researches', 'colony_personell',
         'trade_resources', 'trust_events', 'merchant_visits', 'colony_hangar_missions',
     ];
@@ -126,6 +129,7 @@ class GameSnapshot extends Command
         foreach (self::COLONY_SCOPED_TABLES as $table) {
             $data['tables'][$table] = DB::table($table)->whereIn('colony_id', $colonyIds)->get()->toArray();
         }
+        $data['tables']['advisors'] = DB::table('advisors')->where('user_id', $user->user_id)->get()->toArray();
         $data['tables']['run_objectives'] = DB::table('run_objectives')->whereIn('run_id', $runIds)->get()->toArray();
         $data['tables']['runs'] = DB::table('runs')->where('user_id', $user->user_id)->get()->toArray();
         $data['tables']['glx_colonies'] = DB::table('glx_colonies')->where('user_id', $user->user_id)->get()->toArray();
@@ -188,6 +192,7 @@ class GameSnapshot extends Command
                 }
                 DB::table('locked_actionpoints')->where('scope_type', 'colony')->where('scope_id', $cid)->delete();
             }
+            DB::table('advisors')->where('user_id', $user->user_id)->delete();
             DB::table('run_objectives')->whereIn('run_id', $runIds)->delete();
             DB::table('runs')->where('user_id', $user->user_id)->delete();
             DB::table('glx_colonies')->where('user_id', $user->user_id)->delete();

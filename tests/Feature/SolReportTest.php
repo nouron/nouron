@@ -214,6 +214,33 @@ class SolReportTest extends TestCase
         $this->assertStringContainsString((string) config('game.trust.events.stipend_medium'), $line['detail']);
     }
 
+    public function test_advisor_hire_shows_cost_in_events_group(): void
+    {
+        // Playtest finding (2026-07-14): hiring the Baumeister on Sol 1 left no
+        // trace of the -300 Cr cost anywhere in the Sol-Report.
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'techtree.advisor_hired',
+            'area' => 'techtree',
+            'parameters' => json_encode(['colony_id' => self::COLONY_ID, 'advisor_type' => 'engineer', 'credits_cost' => 300]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when an advisor was hired');
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_advisor_hired'));
+        $this->assertNotNull($line, 'Expected an advisor-hired line in the events group');
+        $this->assertStringContainsString('300', $line['detail']);
+        $this->assertStringContainsString(__('advisors.engineer'), $line['detail']);
+    }
+
     public function test_wear_without_level_down_shows_single_neutral_line(): void
     {
         $run = $this->setRunTick(3);

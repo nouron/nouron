@@ -111,6 +111,8 @@ function colonyHexView(config) {
         compoundImportPrice: config.compoundImportPrice ?? 90,
         exploreCostPerRing: config.exploreCostPerRing ?? { 1: 1, 2: 2, 3: 3 },
         exploreCostDefault: config.exploreCostDefault ?? 1,
+        tileYields: config.tileYields ?? {},
+        repairDisplayThreshold: config.repairDisplayThreshold ?? 0.7,
         phaseProgress: config.phaseProgress ?? null,
         nexusImportAmount: 10,
         selectedTile: null,
@@ -172,6 +174,8 @@ function colonyHexView(config) {
                 activeHint: this.activeHint ?? null,
                 harvesterMoveMode: this.harvesterMoveMode,
                 harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
+                tileYields: this.tileYields,
+                repairDisplayThreshold: this.repairDisplayThreshold,
                 panState: this._panState,
             });
         },
@@ -348,8 +352,12 @@ function colonyHexView(config) {
                         if (updated) this.selectedTile = updated;
                     }
                     this.$nextTick(() => this.redrawGrid());
-                } else if (this.selectedTile) {
-                    this.selectedTile = { ...this.selectedTile };
+                } else {
+                    if (this.selectedTile) this.selectedTile = { ...this.selectedTile };
+                    // No tiles payload (non-CC building), but the tile badge is
+                    // level-dependent (construction site vs. built) — redraw so a
+                    // finished building shows without a page refresh.
+                    if (res.leveled_up) this.$nextTick(() => this.redrawGrid());
                 }
             } else {
                 let msg = res.message ?? res.error;
@@ -755,7 +763,7 @@ function hexLinePath(q1, r1, q2, r2) {
     return pts;
 }
 
-function drawHarvesterArrow(group, pixelPath, apCost) {
+function drawHarvesterArrow(group, pixelPath, label) {
     group.innerHTML = '';
     group.style.display = '';
     if (pixelPath.length < 2) return;
@@ -796,10 +804,9 @@ function drawHarvesterArrow(group, pixelPath, apCost) {
     head.setAttribute('fill', '#f59e0b');
     group.appendChild(head);
 
-    // AP-cost badge at the path's midpoint hex — same visual language as the
+    // Cost/yield badge at the path's midpoint hex — same visual language as the
     // building-level badges (dark rounded rect, white bold text).
     const mid = pixelPath[Math.floor(pixelPath.length / 2)];
-    const label = `${apCost} AP`;
     const badgeW = 11 + label.length * 6;
     const badgeH = 14;
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
@@ -964,6 +971,11 @@ function initHexGrid(container, tiles, opts = {}) {
     // branch, which is now a no-op for valid targets.
     if (opts.harvesterMoveMode && opts.harvesterBuilding?.tile_x !== null) {
         const hv = opts.harvesterBuilding;
+        // Yield comparison for the preview badge: the player should see whether
+        // the move pays off, not just what it costs (game-designer, 2026-07-11).
+        const yields = opts.tileYields ?? {};
+        const hvTile = positions.find((p) => p.tile.q === hv.tile_x && p.tile.r === hv.tile_y)?.tile;
+        const currentYield = hvTile ? (yields[hvTile.tile_type] ?? 0) : 0;
         const axialToPixel = (q, r) => ({
             cx: SIZE * Math.sqrt(3) * (q + r / 2) + offX,
             cy: SIZE * 1.5 * r + offY,
@@ -988,8 +1000,10 @@ function initHexGrid(container, tiles, opts = {}) {
             const hexPath = hexLinePath(hv.tile_x, hv.tile_y, tile.q, tile.r);
             const pixelPath = hexPath.map(([q, r]) => axialToPixel(q, r));
             const apCost = Math.max(1, hexPath.length - 1);
+            const targetYield = yields[tile.tile_type] ?? 0;
+            const label = `${apCost} AP · ${currentYield}→${targetYield} Rg`;
             const targetPos = pixelPath[pixelPath.length - 1];
-            const showArrow = () => drawHarvesterArrow(arrowGroup, pixelPath, apCost);
+            const showArrow = () => drawHarvesterArrow(arrowGroup, pixelPath, label);
             const hideArrow = () => {
                 arrowGroup.style.display = 'none';
             };
@@ -1170,8 +1184,13 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // Keyed off the hint KEY (not rank) so re-ordering hints never desyncs the pulse.
     const hintKey = opts.activeHint?.key ?? '';
 
-    // hint_repair: any building below max status points (guide repair).
-    const isPulseRepair = hintKey === 'hint_repair' && building && building.status_points < building.max_status_points;
+    // hint_repair: building below the damage display threshold (mirrors the
+    // server-side gate — game.repair.display_threshold). Damage above the
+    // threshold is deliberately not surfaced on the grid (invisible pacing timer).
+    const isPulseRepair =
+        hintKey === 'hint_repair' &&
+        building &&
+        building.status_points < building.max_status_points * (opts.repairDisplayThreshold ?? 0.7);
 
     // hint_repair_urgent: building near level-down (<=15% status, mirrors the
     // server-side hint_repair_urgent_sp=3 of 20 threshold) — pulse the critical one.
@@ -1181,13 +1200,22 @@ function createHexTile(cx, cy, size, tile, building, opts, buildingsByTile) {
     // hint_2: Harvester tile in colony zone (guide relocation).
     const isPulseHarvester = hintKey === 'hint_2' && building?.building_key === 'building_harvester';
 
-    // hint_3 / hint_cc_invest: CC tile (guide upgrade / pre-invest).
-    const isPulseCc = (hintKey === 'hint_3' || hintKey === 'hint_cc_invest') && tile.q === 0 && tile.r === 0;
+    // hint_3: CC tile (guide upgrade). hint_invest_site: pulse the active
+    // construction site (level-0 building) or the CC when its upgrade is underway.
+    const isPulseCc = hintKey === 'hint_3' && tile.q === 0 && tile.r === 0;
+    const isPulseInvestSite =
+        hintKey === 'hint_invest_site' && building && (building.level === 0 || (building.ap_spend ?? 0) > 0);
 
     // Harvester current position highlight while in move mode.
     const isHarvesterCurrent = opts.harvesterMoveMode && building?.building_key === 'building_harvester';
 
-    const shouldPulse = isPulseRepair || isPulseRepairUrgent || isPulseHarvester || isPulseCc || isHarvesterCurrent;
+    const shouldPulse =
+        isPulseRepair ||
+        isPulseRepairUrgent ||
+        isPulseHarvester ||
+        isPulseCc ||
+        isPulseInvestSite ||
+        isHarvesterCurrent;
 
     if (shouldPulse) {
         const pulseHex = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');

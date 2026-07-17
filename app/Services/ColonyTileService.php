@@ -283,11 +283,13 @@ class ColonyTileService
             return 'terrain_empty';
         }
 
-        // Ring 2: colony expansion zone — no regolith, rare hazards and blockers
+        // Ring 2: colony expansion zone — no regolith, rare hazards, NO blockers.
+        // Ring 2 has no regolith, so a gap in the "bald bebaubar" locks would
+        // deterministically reveal a blocker — a UI-assisted trap without any
+        // decision. Ring 3+ keeps blockers: there a gap is ambiguous (usually
+        // regolith, sometimes rock), which makes revealing it a real gamble
+        // (game-designer review 2026-07-11, GDD §16).
         if ($ring === 2) {
-            if ($roll < 3) {
-                return 'terrain_impassable';
-            }
             if ($roll < 10) {
                 return 'terrain_hazard';
             }

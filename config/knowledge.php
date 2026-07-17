@@ -23,8 +23,14 @@
 return [
 
     // levelup_costs: AP needed to reach that level (index = target level, 1–5).
-    // Cumulative: Lv0→1 = 5 AP, Lv0→5 = 101 AP total.
-    // Richtwert: Rang-1-Wissenschaftler (4 AP/Tick) braucht ~2 Ticks für Lv1, ~25 Ticks für Lv5.
+    // Cumulative: Lv0→1 = 12 AP, Lv0→5 = 152 AP total (raised from 101, playtest
+    // review 2026-07-14 — Lv1 at 5 AP completed inside a single Sol, which read
+    // as "too cheap"/instant; the whole point of Kenntnisse is a multi-Sol
+    // investment even at Lv1). Richtwert: Junior-Analytiker (10 AP/Sol, base 6 +
+    // Rang-1-Bonus 4) braucht ~2 Sole für Lv1, ~11-13 Sole für Lv5 inklusive der
+    // eigenen Rangaufstiege (Rang 2 bei 10 aktiven Ticks, Rang 3 bei 20).
+    // ⚠️ Diese Kurve ist an game.ap.base / advisor.ap_per_rank gekoppelt — bei
+    // Änderung dort gegen die AP/Sol-Rate neu prüfen, nicht isoliert betrachten.
 
     'construction' => [
         'id' => 90,
@@ -32,7 +38,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'cartography' => [
@@ -41,7 +47,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'geology' => [
@@ -50,7 +56,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'agronomy' => [
@@ -59,7 +65,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'health' => [
@@ -68,7 +74,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'trade' => [
@@ -77,7 +83,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
     'defense' => [
@@ -86,7 +92,7 @@ return [
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
-        'levelup_costs' => [1 => 5, 2 => 10, 3 => 18, 4 => 28, 5 => 40],
+        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
     ],
 
 ];

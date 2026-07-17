@@ -285,6 +285,22 @@ class SolReportService
             ];
         }
 
+        // Advisor hires (Playtest-Fund 2026-07-14): the credits cost was invisible
+        // in the Sol-Report — a player hiring the Baumeister on Sol 1 saw no trace
+        // of the -300 Cr anywhere in the summary.
+        foreach ($events['techtree.advisor_hired'] ?? [] as $params) {
+            $type = $params['advisor_type'] ?? '';
+            $cost = (int) ($params['credits_cost'] ?? 0);
+            $lines[] = [
+                'label' => __('colony.sol_report_advisor_hired'),
+                'detail' => __('colony.sol_report_advisor_hired_detail', [
+                    'name' => $type !== '' ? __('advisors.'.$type) : '?',
+                    'cost' => $cost,
+                ]),
+                'tone' => 'neutral',
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }

@@ -45,6 +45,8 @@
             compoundImportPrice: {{ (int) config("game.economy.compound_import_price", 90) }},
             exploreCostPerRing: @json(config("game.colony.explore_cost_per_ring")),
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
+            tileYields: @json(collect(config("tile_types"))->map(fn($t) => $t["base_yield"])->filter()),
+            repairDisplayThreshold: {{ (float) config("game.repair.display_threshold", 0.7) }},
             phaseProgress: @json($phaseProgress),
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',

@@ -1,5 +1,43 @@
 # Changelog
 
+## 2026-07-14 (2)
+
+Vierter Playtest-Durchgang (5 Befunde, davon 1 echter Bug + 1 Balance-Korrektur mit game-designer):
+
+- **Sol-Report: Berater-Kosten fehlten.** `techtree.advisor_hired`-Event wurde geloggt, aber `SolReportService` rendert es nirgends (und mit falschem Off-by-one-Tick, wie beim Zulage-Fix vom Vortag) — Baumeister-Hire in Sol 1 blieb im Report unsichtbar. Beides gefixt: Log-Tick korrigiert, neue Zeile "Berater eingestellt: Name — -X Cr" in der Ereignisse-Gruppe.
+- **Onboarding-Wortwahl "Pfad" für neue Spieler unverständlich.** `hint_build_priority`, `hint_advisor_slot2` und `hint_hangar_path` nannten intern das Konzept "Pfad(gebäude)" gegenüber dem Spieler — jetzt umschrieben ("mehrere Gebäude sind gerade baubar…", "das dafür nötige Gebäude…"). Der Begriff bleibt intern (Code/GDD/Config) bestehen, nur die player-facing Texte wurden geändert.
+- **Hinweis zu "AP bleiben über Sol-Grenzen erhalten" saß am falschen Hint.** Stand erst im CC-Lv2-Hint (Sol 3), obwohl der Spieler das schon beim allerersten Bauprojekt (Agrardom, Sol 1) wissen muss — Satz dorthin verschoben.
+- **Echter Bug: Techtree zeigte für jede Kenntnis konstant 3 Analytik-AP.** `researches.ap_for_levelup` ist ein statischer DB-Wert aus dem initialen Migrations-Seed, der nie mit den tatsächlichen, gestaffelten Kosten aus `config/knowledge.php` synchronisiert wurde. Die Fortschrittsleiste deckelte jede Investition bei 3 AP, während der Server (der schon immer korrekt aus der Config las) einen höheren Wert verlangte — Klicks über 3 AP hinaus taten optisch nichts, ohne Fehlermeldung. `TechtreeController` liest die Kenntnis-Kosten jetzt dynamisch aus derselben Quelle wie das Backend.
+- **Balance: Kenntnis-Kosten angehoben (game-designer-Review).** `levelup_costs` von `[5,10,18,28,40]` auf `[12,20,30,40,50]` — Owner-Befund, dass die erste Kenntnisstufe (vermeintlich 3, tatsächlich 5 AP) innerhalb eines Sols erledigt war. Neue Kurve macht auch Lv1 zu einer Mehr-Sol-Investition (Junior-Analytiker ~2 Sole für Lv1, ~11-13 Sole für Lv5).
+
+Tests: 4 neue/angepasste Suiten (TechtreeControllerTest, KnowledgeServiceTest, CrossColonyAccessTest, HangarMissionResolutionTest, SolReportTest) — 701 passed, unverändert 1 vorbestehender Fehler.
+
+## 2026-07-14
+
+Onboarding-Rampe Sol 1–4 neu geordnet (Owner-Playtest + game-designer-Spezifikation mit Budget-Rechnung):
+
+- **Neue Ziellinie: Sol 1 Agrardom → Sol 2/3 Pfadgebäude → Sol 3/4 CC Lv2 → sofort Berater 2.** `hint_agrardome` feuert jetzt ab Sol 1 (Rang 4, "erstes Bauprojekt"), Pfadgebäude-Hints ab Sol 2 statt Sol 3 (Gate: Agrardom platziert, wie serverseitig), `hint_3` (CC Lv2) ist zustandsbasiert (Agrardom ≥ Lv1 UND ein Pfadgebäude ≥ Lv1) — so ist der frisch freigeschaltete Beraterslot 2 immer sofort besetzbar.
+- **`hint_cc_invest` → `hint_invest_site` (generisch):** "Bau-AP in die laufende Baustelle" statt fix in den CC — erzeugt den Rhythmus platzieren → fertigstellen → nächstes, ohne Sequenz-Skript. Rente ab CC Lv2.
+- **Repair-Teaching entschärft (Owner-Idee):** Schadensanzeige + Repair-Hint greifen erst unter 70 % SP (neuer Key `game.repair.display_threshold`). Die 16/20-Startbeschädigung wird zum unsichtbaren Pacing-Timer: Harvester fällt ~Sol 4 unter die Schwelle, Housing ~Sol 6, CC ~Sol 8 — Repair-Lehrmomente tröpfeln gestaffelt nach der Bau-Rampe ein, statt auf Sol 1 zum AP-Verbrennen einzuladen. Exakte SP bleiben in der Sidebar sichtbar; `hint_repair_urgent` (SP ≤ 3) bleibt unverändert als Netz. Ein Repair-Gate am Baumeister wurde verworfen (Hints sind Hinweise, keine Gates).
+- **Regolith-Balance der Rampe:** CC-Upgrade 30 → 20 Rg pro Ziel-Level (Lv2 = 40 statt 60), Hangar 90 → 80 Rg (Pfad-Gleichwertigkeit 70/80/80). Vorher endete der Hangar-Pfad bei Sol 4 mit ~7 Rg Rest; jetzt 37–52 Rg Puffer. Harvester-Yield-Erhöhung verworfen (globaler Hebel); Nexus-Kredit hilft nicht (liefert Credits, Engpass ist Regolith) — als Discovery-Moment nach Cantina-Bau vorgemerkt.
+- **Nachschliff nach zweitem Playtest (4 Befunde):** (1) `hint_end_sol` feuerte trotz nutzbarer Nav-AP — `hint_spend_remaining_ap` prüft jetzt Pool-*Nutzbarkeit* (Forschung nur mit Sciencelab, Wirtschaft nur mit Cantina, Navigation nur mit bezahlbarem Fog-Tile) und ist nicht mehr auf "alle 3 Pfadgebäude platziert" gegated; end_sol nur noch bei echt leerem Zustand. (2) Pfad-Hints nagten nach dem ersten Pfadgebäude sofort fürs zweite — neues Gate "Pfadwahl offen" (erst wieder ab CC Lv2). (3) `hint_3` erschien nach manuell gestartetem CC-Ausbau — schweigt jetzt bei `ap_spend>0` (invest_site führt). (4) Nach CC Lv2 + Konsul-Hire zeigte die Bar "Sol beenden" statt auf die fertige Cantina — `hint_advisor_slot2` vor die Pfad-Hints gerückt (Rang 7), Wirtschafts-Pool verweist auf die Cantina.
+- GDD §16.2/16.3/16.5 komplett nachgezogen (neue Hint-Tabelle, Aktionsfolge, Budget-Tabelle, Designentscheidungen). Tests: 67 Onboarding-Hint-Tests (12 neue), E2E-Flow + Kosten- + Dismiss-Tests angepasst, 698 passed.
+
+## 2026-07-11 (3)
+
+Owner-Playtest fand 7 Punkte (5 Bugs/Hint-Lücken + 2 Design-Fragen), alle behoben:
+
+- **Berater anstellen/entlassen aktualisiert Hint-Bar live:** Hire-/Fire-AJAX-Responses liefern jetzt `activeHint` mit, `advisors.js` broadcastet per `hint:sync`-Event (gleiche Konvention wie colony-hexgrid.js) — kein Seitenreload mehr nötig.
+- **Sol-1-Regression: "Bau-AP investieren"-Hint feuerte nie.** PR #202 hatte `hint_cc_invest` an einen *fertigen* Agrardom gekoppelt — auf Sol 1 unerreichbar, ~6 Bau-AP verpufften kommentarlos. Gate greift jetzt nur noch bei platziertem-aber-unfertigem Agrardom (dann sollen die AP dorthin).
+- **Gebäude fertig → Tile aktualisiert sich sofort:** `doInvestAp()` zeichnet das Hex-Grid nach einem Level-up jetzt auch für Nicht-CC-Gebäude neu (Badge wechselt Baustelle → gebaut ohne Refresh). Keine State Machine nötig — Daten waren da, nur der Redraw fehlte.
+- **Sol-2-Hint "CC auf Level 2" erweitert:** Text weist jetzt darauf hin, Navigations-AP zum Erkunden zu nutzen und den Sol zu beenden, wenn die Bau-AP nicht reichen (investierte AP bleiben erhalten).
+- **Beraterslot-Hint feuert nicht mehr in die Sackgasse:** `hint_advisor_slot2` prüft jetzt, ob ein Pfadgebäude (Analytiklabor/Hangar/Cantina) steht — vorher schickte er den Spieler zum Anstellen, das mit `path_building_missing` scheiterte. Ohne Pfadgebäude kommen die Bau-Hints dran.
+- **Harvester-Verlegen: Ertragsvergleich statt Blindflug (game-designer-Review):** Vorschaupfeil zeigt jetzt "X AP · aktuell→Ziel Rg" (Tile-Erträge aus `config/tile_types.php`), First-Click-Tooltip nennt die Opportunitätskosten. Aus "AP verbrennen" wird eine informierte Abwägung.
+- **Keine Blocker mehr in Ring 2 (game-designer-Review):** Ring 2 hat kein Regolith — eine Lücke in der "bald bebaubar"-Anzeige verriet dort deterministisch einen Blocker (UI-gestützte Falle ohne Entscheidung). Ring 3+ behält Blocker: dort ist die Lücke mehrdeutig (meist Regolith-Jackpot) und damit ein echter Roguelike-Gamble — als Feature ins GDD dokumentiert.
+- **Bugfix `game:snapshot`:** entlassene Berater (`colony_id=NULL`) wurden weder gesichert noch beim Restore-Wipe gelöscht → UNIQUE-Constraint-Crash beim Wiederherstellen. `advisors` wird jetzt user-scoped behandelt.
+
+Live per Playwright verifiziert (Hint-Sync nach Entlassen ohne Reload, Ertragsdelta-Badge am Vorschaupfeil); Barts Playtest-Stand per Snapshot gesichert/wiederhergestellt. 3 neue/angepasste Feature-Tests, 690 passed.
+
 ## 2026-07-11 (2)
 
 - **Kommandozentrale: Ressourcen-Chips statt Plaintext.** Owner-Feedback nach erstem Blick aufs Dashboard: Credits-/AP-/Vertrauens-Beträge sollten wie in der Resourcebar als Chips aussehen. Kolonisten-Zulage-Kosten (`.res-chip.res-Cr`), Vertrauens-Bonus (`.ap-chip--trust-pos`), Nexus-Schuld, Berater-AP-Beitrag (`.ap-chip--build/nav/research/economy/strategy`) und Vertrauens-Ereignis-Delta nutzen jetzt dieselben global geladenen Chip-Klassen wie die Resourcebar — keine neue CSS nötig, nur Wiederverwendung.

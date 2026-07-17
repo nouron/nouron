@@ -59,8 +59,18 @@ function advisorCarousel(config) {
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
                 this.syncCreditsChip(res.credits);
+                this.syncHint(res);
             } else {
                 this.errorMsg = res.error ?? 'Fehler beim Einstellen.';
+            }
+        },
+
+        // Hiring/firing changes onboarding hint state — broadcast the fresh hint
+        // to the hint bar (partials/hint-bar.blade.php listens on `hint:sync`),
+        // same pattern as colony-hexgrid.js::setActiveHint().
+        syncHint(res) {
+            if ('activeHint' in res) {
+                window.dispatchEvent(new CustomEvent('hint:sync', { detail: res.activeHint }));
             }
         },
 
@@ -86,6 +96,7 @@ function advisorCarousel(config) {
                 this.slots = res.slots;
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
+                this.syncHint(res);
             } else {
                 this.errorMsg = res.error ?? 'Fehler beim Entlassen.';
             }
