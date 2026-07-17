@@ -625,6 +625,43 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals(0, $score, 'A failed run must always score 0');
     }
 
+    public function test_end_run_persists_a_score_that_survives_later_credit_changes(): void
+    {
+        $run = $this->makeRun(['current_tick' => 50]);
+        DB::table('user_resources')->where('user_id', $this->userId)->update(['credits' => 5000]);
+
+        $this->service->endRun($run, 'completed');
+        $frozen = (int) DB::table('runs')->where('id', $run->id)->value('score');
+
+        $this->assertGreaterThan(0, $frozen, 'A completed run must persist its score.');
+
+        // Spending money after the run ended must not rewrite history.
+        DB::table('user_resources')->where('user_id', $this->userId)->update(['credits' => 0]);
+
+        $this->assertSame(
+            $frozen,
+            (int) DB::table('runs')->where('id', $run->id)->value('score'),
+            'A finished run\'s score must not move when the player\'s credits change.'
+        );
+    }
+
+    public function test_end_run_persists_score_zero_for_a_failed_run(): void
+    {
+        // Guards the ordering inside endRun(): calculateScore() only returns 0 once
+        // $run->status is already 'failed'. Scoring before the status write would give
+        // this run a positive score — and the test above would still pass.
+        $run = $this->makeRun(['current_tick' => 50]);
+        DB::table('user_resources')->where('user_id', $this->userId)->update(['credits' => 5000]);
+
+        $this->service->endRun($run, 'failed', 'trust_collapse');
+
+        $this->assertSame(
+            0,
+            (int) DB::table('runs')->where('id', $run->id)->value('score'),
+            'A failed run must persist score 0, not the score it would have had.'
+        );
+    }
+
     public function test_calculate_score_returns_positive_score_for_completed_run_with_objectives(): void
     {
         $run = $this->makeRun(['status' => 'completed', 'current_tick' => 50]);

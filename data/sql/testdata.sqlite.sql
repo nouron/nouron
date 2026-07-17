@@ -153,8 +153,8 @@ UPDATE "colony_ships" SET hangar_instance_id=2, ship_state='docked'     WHERE co
 -- Hangar missions for colony 1:
 -- Mission 1: drone dispatched from hangar 1, currently active
 -- Mission 2: freighter recalled from hangar 2, completed
-INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'Asteroid Belt Proxima',4,1,NULL,'active','2026-06-03 00:00:00');
-INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'Raani Trading Post',8,1,3,'recalled','2026-06-03 00:00:00');
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
 INSERT INTO "colony_personell" VALUES(1,35,9,10);
 INSERT INTO "colony_personell" VALUES(1,36,2,10);
 INSERT INTO "colony_personell" VALUES(1,89,0,10);

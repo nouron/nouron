@@ -618,7 +618,12 @@ class RunProgressService
     /**
      * Finalise the run with the given status and optional fail reason.
      *
-     * Persists status, fail_reason and ended_at atomically, then fires an INNN event.
+     * Persists status, fail_reason, ended_at and the final score atomically, then fires
+     * an INNN event.
+     *
+     * Order matters: calculateScore() only returns 0 once $run->status is already
+     * 'failed'. Scoring before the status assignment would give failed runs a positive
+     * score, so the status is set first and the score derived from it.
      *
      * @param  string  $status  'completed' or 'failed'
      * @param  string|null  $failReason  e.g. 'trust_collapse', 'time_limit', 'nexus_debt'
@@ -629,6 +634,7 @@ class RunProgressService
             $run->status = $status;
             $run->fail_reason = $failReason;
             $run->ended_at = now();
+            $run->score = $this->calculateScore($run);
             $run->save();
 
             $eventKey = match (true) {

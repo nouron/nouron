@@ -31,6 +31,7 @@ class Run extends Model
         'nexus_debt',
         'phase2_start_tick',
         'rng_seed',
+        'score',
     ];
 
     protected function casts(): array
@@ -41,6 +42,7 @@ class Run extends Model
             'nexus_debt' => 'integer',
             'phase2_start_tick' => 'integer',
             'rng_seed' => 'integer',
+            'score' => 'integer',
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'settings' => 'array',

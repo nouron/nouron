@@ -9,7 +9,6 @@ use App\Services\RunProgressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
 class LobbyController extends Controller
@@ -43,48 +42,29 @@ class LobbyController extends Controller
 
         $allowMultiple = config('game.run.allow_multiple', false);
 
-        // Feature 1: finished runs with pre-calculated scores for the highscore table.
-        // Eager-load objectives and colony so calculateScore() does not fire per-run queries.
-        // user_resources and colony_resources are pre-fetched once per user/colony outside the map.
+        // Feature 1: finished runs for the highscore table.
+        //
+        // The score is read from runs.score, frozen by endRun(). It used to be recomputed
+        // here against the player's *current* credits, so a finished run's score changed
+        // every time the player earned or spent money afterwards. A highscore is history,
+        // not a live query.
         $finishedRunCollection = Run::where('user_id', $userId)
             ->whereIn('status', ['completed', 'failed'])
-            ->with(['objectives', 'colony'])
+            ->with(['objectives'])
             ->orderByDesc('ended_at')
             ->take(10)
             ->get();
 
-        // Pre-fetch user_resources once (single user, single row).
-        $userResourceRow = DB::table('user_resources')->where('user_id', $userId)->first();
-        $creditsForScore = (int) ($userResourceRow->credits ?? 0);
-
-        // Pre-fetch colony_resources trust values for all relevant colony IDs.
-        $colonyIds = $finishedRunCollection->pluck('colony_id')->unique()->filter();
-        $trustByColony = DB::table('colony_resources')
-            ->whereIn('colony_id', $colonyIds)
-            ->where('resource_id', 12)
-            ->pluck('amount', 'colony_id');
-
-        $finishedRuns = $finishedRunCollection->map(function (Run $run) use ($creditsForScore, $trustByColony) {
-            $completed = $run->objectives->whereNotNull('completed_at')->count();
-            $tickLimit = $run->getTickLimit();
-            $trust = (int) ($trustByColony[$run->colony_id] ?? 0);
-
-            $score = $run->status === 'failed'
-                ? 0
-                : max(0, ($completed * 1000)
-                    + (($tickLimit - $run->current_tick) * 10)
-                    + (int) ($creditsForScore / 10)
-                    + ($trust * 5));
-
+        $finishedRuns = $finishedRunCollection->map(function (Run $run) {
             return [
                 'id' => $run->id,
                 'status' => $run->status,
                 'current_tick' => $run->current_tick,
-                'tick_limit' => $tickLimit,
+                'tick_limit' => $run->getTickLimit(),
                 'ended_at' => $run->ended_at,
-                'completed_objectives' => $completed,
+                'completed_objectives' => $run->objectives->whereNotNull('completed_at')->count(),
                 'total_objectives' => $run->objectives->count(),
-                'score' => $score,
+                'score' => (int) ($run->score ?? 0),
             ];
         });
 

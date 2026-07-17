@@ -185,9 +185,8 @@ class GameTick extends Command
             // Win condition: at least 2 of 3 objectives completed.
             $completedCount = $run->objectives()->whereNotNull('completed_at')->count();
             if ($completedCount >= 2) {
-                $score = $runProgressService->calculateScore($run);
                 $runProgressService->endRun($run, 'completed');
-                $this->info("  Run #{$run->id} completed! Score: {$score}");
+                $this->info("  Run #{$run->id} completed! Score: {$run->score}");
                 $this->info("Tick {$tick} done.");
 
                 return self::SUCCESS;
