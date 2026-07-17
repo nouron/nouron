@@ -7,6 +7,7 @@ use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\ColonyService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
+use App\Services\Techtree\AbstractTechnologyService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\PersonellService;
 use App\Services\Techtree\ResearchService;
@@ -335,13 +336,10 @@ class TechtreeController extends BaseController
     {
         $colonyId = $this->resolveColonyId();
 
-        $service = match (strtolower($type)) {
-            'building' => $this->buildingService,
-            'research' => $this->researchService,
-            'ship' => $this->shipService,
-            'personell' => $this->personellService,
-            default => throw new \InvalidArgumentException("Unknown type: $type"),
-        };
+        // An unknown or unsupported {type} is a bad request, not a server error: the
+        // route accepts any string, so this is reachable from outside. It used to throw
+        // InvalidArgumentException → 500.
+        $service = $this->serviceForType($type) ?? abort(404);
 
         match ($order) {
             'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
@@ -355,33 +353,79 @@ class TechtreeController extends BaseController
     }
 
     /**
+     * Resolve the techtree service for a {type} route segment.
+     *
+     * Only the types that actually implement the invest/levelup contract are listed.
+     * `personell` is deliberately absent: PersonellService does not extend
+     * AbstractTechnologyService and has no invest()/levelup() at all — mapping it here
+     * turned `POST /techtree/personell/35/order` into a fatal "call to undefined method"
+     * (HTTP 500). Advisors are hired through AdvisorController, not the techtree.
+     */
+    private function serviceForType(string $type): ?AbstractTechnologyService
+    {
+        return match (strtolower($type)) {
+            'building' => $this->buildingService,
+            'research' => $this->researchService,
+            'ship' => $this->shipService,
+            default => null,
+        };
+    }
+
+    /**
      * Perform a techtree order (invest AP, levelup, or leveldown) via POST.
+     *
+     * Rejections answer 422 with a machine code in `error` and the player text in
+     * `message`, like the colony and hangar endpoints. It used to answer a bare
+     * `{success:false}` with no reason at all — neither the player nor a client could
+     * tell "not enough AP" from "wrong Command Center level".
+     *
+     * `success` stays in the payload for compatibility. Note that public/js/techtree-view.js
+     * does `if (!res.ok) return` — unlike the colony helpers it *does* look at the status —
+     * so it now bails on 422 instead of reading `success:false`. Both paths were silent
+     * (there is no else branch and no error surface in that view), so the player sees the
+     * same nothing as before. Showing `message` there is a separate UI job.
      */
     public function order(Request $request, string $type, int $id): JsonResponse
     {
         $colonyId = $this->resolveColonyId();
-        $order = $request->input('order');
+        $order = (string) $request->input('order');
         $ap = (int) $request->input('ap', 1);
 
-        $service = match (strtolower($type)) {
-            'building' => $this->buildingService,
-            'research' => $this->researchService,
-            'ship' => $this->shipService,
-            'personell' => $this->personellService,
-            default => null,
-        };
+        $service = $this->serviceForType($type);
 
         if (! $service) {
-            return response()->json(['success' => false, 'message' => 'Unknown type']);
+            return $this->orderFailed('unknown_type', $order);
+        }
+
+        if (! in_array($order, ['add', 'repair', 'remove', 'levelup', 'leveldown'], true)) {
+            return $this->orderFailed('unknown_order', $order);
         }
 
         $result = match ($order) {
             'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
             'levelup' => $service->levelup($colonyId, $id),
             'leveldown' => $service->leveldown($colonyId, $id),
-            default => false,
         };
 
-        return response()->json(['success' => (bool) $result, 'order' => $order]);
+        if (! $result) {
+            $code = match ($order) {
+                'add', 'repair', 'remove' => $service->investBlocker($colonyId, $id, $order, $ap),
+                default => $service->levelupBlocker($colonyId, $id),
+            };
+
+            return $this->orderFailed($code ?? 'order_failed', $order);
+        }
+
+        return response()->json(['success' => true, 'order' => $order]);
+    }
+
+    private function orderFailed(string $code, string $order): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'order' => $order,
+            'error' => $code,
+            'message' => __("techtree.error_{$code}"),
+        ], 422);
     }
 }

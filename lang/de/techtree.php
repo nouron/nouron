@@ -130,4 +130,23 @@ return [
     'detail_count' => 'Anzahl',
     'detail_ap_invest' => 'AP investieren',
     'detail_colony_link' => 'Auf Kolonie bauen',
+
+    // ── Fehlermeldungen (techtree.error_<code>, siehe TechtreeController::orderFailed)
+    // Gelten für Gebäude, Kenntnisse und Schiffe gleichermaßen — bewusst ohne
+    // Entitätstyp formuliert.
+    'error_requires_building' => 'Ein benötigtes Gebäude fehlt oder hat eine zu niedrige Stufe.',
+    'error_requires_research' => 'Der Kolonie fehlt die nötige Kenntnis.',
+    'error_insufficient_resources' => 'Nicht genug Ressourcen für den Ausbau.',
+    'error_insufficient_ap_invested' => 'Noch nicht genug AP investiert, um die Stufe abzuschließen.',
+    'error_insufficient_supply' => 'Nicht genug freie Versorgungskapazität — erst Wohnhabitat ausbauen.',
+    'error_max_level' => 'Maximalstufe bereits erreicht.',
+    'error_knowledge_cc_gate' => 'Kommandozentrale zu niedrig für diese Kenntnisstufe — erst ausbauen.',
+    'error_insufficient_ap' => 'Nicht genug AP verfügbar für diese Investition.',
+
+    // Technische Abweisungen — erreichen den Spieler im Normalfall nicht.
+    'error_entity_not_found' => 'Unbekannte Entität.',
+    'error_invalid_mode' => 'Ungültige Aktion.',
+    'error_unknown_type' => 'Unbekannter Techtree-Typ.',
+    'error_unknown_order' => 'Unbekannte Order.',
+    'error_order_failed' => 'Die Order konnte nicht ausgeführt werden.',
 ];

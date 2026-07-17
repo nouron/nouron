@@ -35,6 +35,6 @@ class BuildingService extends AbstractTechnologyService
      */
     public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1): bool
     {
-        return $this->_invest('construction_points', $colonyId, $entityId, $action, $points);
+        return $this->_invest($colonyId, $entityId, $action, $points);
     }
 }

@@ -101,6 +101,50 @@ class BuildingServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
+    /**
+     * The techtree honours game.bypass.ap_checks like every other AP gate.
+     *
+     * It used to ignore the flag entirely, so with dev mode on the whole game was
+     * free-clickable except the techtree — invest() still refused without AP.
+     */
+    public function test_invest_is_rejected_without_ap_when_the_gate_is_live(): void
+    {
+        // Empty the pool for real: advisors gone AND game.ap.base zeroed — the colony
+        // gets a base AP allowance regardless of staffing.
+        config(['game.bypass.ap_checks' => false, 'game.ap.base' => 0]);
+        DB::table('advisors')->where('colony_id', $this->colonyId)->delete();
+
+        $this->assertFalse(
+            $this->service->invest($this->colonyId, $this->entityId, 'add', 1),
+            'Without AP and with the gate live, invest() must refuse.'
+        );
+    }
+
+    public function test_invest_succeeds_without_ap_when_ap_checks_are_bypassed(): void
+    {
+        config(['game.bypass.ap_checks' => true, 'game.ap.base' => 0]);
+        DB::table('advisors')->where('colony_id', $this->colonyId)->delete();
+
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
+            ->update(['ap_spend' => 0]);
+
+        $this->assertTrue(
+            $this->service->invest($this->colonyId, $this->entityId, 'add', 1),
+            'With ap_checks bypassed, invest() must not be blocked by an empty AP pool.'
+        );
+
+        $this->assertSame(1, (int) DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => $this->entityId])
+            ->value('ap_spend'));
+
+        $this->assertSame(
+            0,
+            DB::table('locked_actionpoints')->where('colony_id', $this->colonyId)->count(),
+            'A bypassed invest must not lock AP either — otherwise dev mode still runs the pool dry.'
+        );
+    }
+
     public function test_invest(): void
     {
         // With real PersonellService: engineer level=9 -> totalAP=50, no locked AP -> availableAP=50

@@ -280,6 +280,10 @@ class PersonellServiceTest extends TestCase
      */
     public function test_invest_adds_locks_delta_ap(): void
     {
+        // This test is about the AP lock itself, so the gate must be live: phpunit.xml
+        // sets GAME_BYPASS_AP=true globally, and a bypassed invest() locks nothing.
+        config(['game.bypass.ap_checks' => false]);
+
         $buildingService = $this->app->make(BuildingService::class);
 
         // Testdata: oremine (27) on colony 1 has ap_spend=10 = ap_for_levelup → already maxed.
