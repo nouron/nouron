@@ -112,6 +112,16 @@ class BotSession
         return $norm;
     }
 
+    /**
+     * Read-only GET, not counted as a bot action — used by BotStrategy to look
+     * at what a player would see on screen (e.g. available-buildings) while
+     * deciding, without inflating the action log the report aggregates.
+     */
+    public function peek(string $url): array
+    {
+        return $this->normalize($this->test->json('GET', $url));
+    }
+
     private function normalize($res): array
     {
         $status = $res->getStatusCode();
