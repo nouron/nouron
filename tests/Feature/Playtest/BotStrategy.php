@@ -4,6 +4,7 @@ namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
 use App\Services\Techtree\PersonellService;
+use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -97,6 +98,68 @@ class BotStrategy
                         'instance_id' => $row->instance_id,
                     ]);
                 },
+            ],
+            [
+                'name' => 'research_knowledge',
+                'when' => fn (BotSession $b) => self::researchAp($b) >= 1
+                    && self::researchCandidate($b) !== null,
+                'do' => function (BotSession $b) {
+                    $researchId = self::researchCandidate($b);
+
+                    // Try to close out a level first (accumulated ap_spend may already
+                    // meet the threshold); investBlocker() doesn't cap 'add' on ap_spend,
+                    // so levelup is the only way to find out a level is actually done.
+                    $res = $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
+                        'order' => 'levelup',
+                    ]);
+                    if ($res['ok']) {
+                        return $res;
+                    }
+
+                    // _invest() caps 'add' at ap_spend == ap_for_levelup and still
+                    // returns ok:true once capped — falling back to 'add' for any
+                    // OTHER reason (a hard gate like knowledge_cc_gate, a missing
+                    // building, max_level) would loop forever with no progress.
+                    // Only "not enough ap_spend yet" justifies another 'add'.
+                    if ($res['error'] !== 'insufficient_ap_invested') {
+                        return $res;
+                    }
+
+                    return $b->act('research_knowledge', 'POST', "/techtree/research/{$researchId}/order", [
+                        'order' => 'add',
+                        'ap' => 1,
+                    ]);
+                },
+            ],
+            [
+                'name' => 'dispatch_mission',
+                'when' => fn (BotSession $b) => self::dispatchCandidate($b) !== null,
+                'do' => function (BotSession $b) {
+                    $ship = self::dispatchCandidate($b);
+
+                    return $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
+                        'mission_key' => 'mission_recon_flight',
+                    ]);
+                },
+            ],
+            [
+                'name' => 'accept_bar_offer',
+                'when' => fn (BotSession $b) => self::barOfferCandidate($b) !== null
+                    && self::personellService()->getAvailableActionPoints('economy', $b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1),
+                'do' => function (BotSession $b) {
+                    $offer = self::barOfferCandidate($b);
+
+                    return $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}");
+                },
+            ],
+            [
+                'name' => 'request_ship',
+                'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1
+                    && self::hasFreeHangarSlot($b)
+                    && self::credits($b) >= (int) config('ships.drone.nexus_cost', 0),
+                'do' => fn (BotSession $b) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
+                    'ship_id' => 85, // drone — cheapest, matches mission_recon_flight
+                ]),
             ],
         ];
     }
@@ -279,5 +342,103 @@ class BotStrategy
             ->orderBy('cb.building_id')
             ->select('cb.building_id', 'cb.instance_id')
             ->first();
+    }
+
+    private static function researchAp(BotSession $b): int
+    {
+        return self::personellService()->getResearchPoints($b->colonyId);
+    }
+
+    /**
+     * Lowest-id Kenntnis (90-96) not yet at max level whose required Sciencelab
+     * (building_id=31) level is already met — cheap stand-in for the full
+     * requirement graph the real ResearchService checks; a rejection here just
+     * blocks the rule for the Sol, same as any other 422.
+     */
+    private static function researchCandidate(BotSession $b): ?int
+    {
+        $sciencelabLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', 31)
+            ->value('level') ?? 0);
+
+        $row = DB::table('researches as r')
+            ->leftJoin('colony_researches as cr', function ($join) use ($b) {
+                $join->on('cr.research_id', '=', 'r.id')->where('cr.colony_id', $b->colonyId);
+            })
+            ->where('r.purpose', 'knowledge')
+            ->whereBetween('r.id', [90, 96])
+            ->where(fn ($q) => $q->whereNull('r.required_building_level')->orWhereRaw('? >= r.required_building_level', [$sciencelabLevel]))
+            ->where(fn ($q) => $q->whereNull('cr.level')->orWhere('cr.level', '<', 5))
+            ->orderBy('r.id')
+            ->value('r.id');
+
+        return $row !== null ? (int) $row : null;
+    }
+
+    private static function dispatchCandidate(BotSession $b): ?object
+    {
+        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
+        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
+        $navApCost = 1 * (int) config('missions.nav_ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
+
+        if (self::navigationAp($b) < $navApCost) {
+            return null;
+        }
+
+        return DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->where('ship_state', 'docked')
+            ->where('status_points', '>=', $minSp)
+            ->first();
+    }
+
+    private static function barOfferCandidate(BotSession $b): ?object
+    {
+        $barLevel = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', 52)
+            ->value('level') ?? 0);
+
+        if ($barLevel < 1) {
+            return null;
+        }
+
+        $tick = app(TickService::class)->getTickCount();
+
+        return DB::table('bar_offers')
+            ->where('colony_id', $b->colonyId)
+            ->where('expires_tick', '>', $tick)
+            ->where('is_accepted', false)
+            ->orderBy('id')
+            ->first();
+    }
+
+    private static function hangarLevel(BotSession $b): int
+    {
+        return (int) (DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', 44)
+            ->value('level') ?? 0);
+    }
+
+    private static function hasFreeHangarSlot(BotSession $b): bool
+    {
+        $hangarInstances = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', 44)
+            ->pluck('instance_id');
+
+        $occupied = DB::table('colony_ships')
+            ->where('colony_id', $b->colonyId)
+            ->whereNotNull('hangar_instance_id')
+            ->pluck('hangar_instance_id');
+
+        return $hangarInstances->diff($occupied)->isNotEmpty();
+    }
+
+    private static function credits(BotSession $b): int
+    {
+        return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
     }
 }
