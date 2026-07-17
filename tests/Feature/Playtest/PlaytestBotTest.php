@@ -18,9 +18,8 @@ use Tests\TestCase;
  */
 class PlaytestBotTest extends TestCase
 {
+    use PlaysSolLoop;
     use RefreshDatabase;
-
-    private const MAX_ACTIONS_PER_SOL = 50;
 
     public function test_bot_plays_a_full_run_and_produces_a_report(): void
     {
@@ -29,13 +28,7 @@ class PlaytestBotTest extends TestCase
         $rules = BotStrategy::default();
         $report = new RunReport($seed);
 
-        $maxSols = config('game.run.tick_limit') + 5;
-
-        while ($bot->isActive() && $bot->sol < $maxSols) {
-            $this->playOneSol($bot, $rules);
-            $report->snapshot($bot);
-            $bot->nextSol();
-        }
+        $this->playSolsUntil($bot, $rules, afterAction: fn (BotSession $b) => $report->snapshot($b));
 
         $this->assertNotEquals(
             'active',
@@ -53,7 +46,7 @@ class PlaytestBotTest extends TestCase
     }
 
     /**
-     * Determinism check (plan §"Determinismus-Gegenprobe"): two runs with the
+     * Determinism check (plan's "same seed, same run" cross-check): two runs with the
      * identical seed must draw identical objectives — proof that A4
      * (RunProgressService::drawObjectives seeding) actually holds. Objectives
      * are only drawn on the Phase 1 -> 2 transition, so both runs have to be
@@ -69,7 +62,7 @@ class PlaytestBotTest extends TestCase
         $rules = BotStrategy::default();
 
         $bot1 = BotSession::boot($this, seed: 777);
-        $this->playUntilPhase2($bot1, $rules);
+        $this->playSolsUntil($bot1, $rules, fn (BotSession $b) => $this->phaseOf($b) >= 2);
         $taskKeys1 = Run::findOrFail($bot1->runId)->objectives->pluck('task_key')->sort()->values()->all();
         $this->assertNotEmpty($taskKeys1, 'Precondition: run 1 must reach Phase 2 and draw objectives');
 
@@ -78,65 +71,14 @@ class PlaytestBotTest extends TestCase
         DB::table('runs')->where('id', $bot1->runId)->update(['status' => 'completed']);
 
         $bot2 = BotSession::boot($this, seed: 777);
-        $this->playUntilPhase2($bot2, $rules);
+        $this->playSolsUntil($bot2, $rules, fn (BotSession $b) => $this->phaseOf($b) >= 2);
         $taskKeys2 = Run::findOrFail($bot2->runId)->objectives->pluck('task_key')->sort()->values()->all();
 
         $this->assertSame($taskKeys1, $taskKeys2);
     }
 
-    /**
-     * @param  array<int, array{name:string, when:callable, do:callable}>  $rules
-     */
-    private function playUntilPhase2(BotSession $bot, array $rules): void
+    private function phaseOf(BotSession $bot): int
     {
-        $maxSols = config('game.run.tick_limit') + 5;
-
-        while ($bot->isActive() && $bot->sol < $maxSols) {
-            $phase = (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
-            if ($phase >= 2) {
-                return;
-            }
-
-            $this->playOneSol($bot, $rules);
-            $bot->nextSol();
-        }
-    }
-
-    /**
-     * @param  array<int, array{name:string, when:callable, do:callable}>  $rules
-     */
-    private function playOneSol(BotSession $bot, array $rules): void
-    {
-        $blockedThisSol = [];
-
-        for ($i = 0; $i < self::MAX_ACTIONS_PER_SOL; $i++) {
-            $fired = false;
-
-            foreach ($rules as $rule) {
-                if (in_array($rule['name'], $blockedThisSol, true)) {
-                    continue;
-                }
-                if (! $rule['when']($bot)) {
-                    continue;
-                }
-
-                $res = $rule['do']($bot);
-                if (! $res['ok']) {
-                    $blockedThisSol[] = $rule['name'];
-
-                    continue;
-                }
-
-                $fired = true;
-                break;
-            }
-
-            if (! $fired) {
-                return;
-            }
-        }
-
-        $this->fail('MAX_ACTIONS_PER_SOL exceeded on Sol '.$bot->sol.' — likely state desync. Log tail: '
-            .json_encode(array_slice($bot->log, -20)));
+        return (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
     }
 }

@@ -7,8 +7,11 @@ use Tests\TestCase;
 
 /**
  * Throwaway proof that act()/normalize() handle the response shapes the real
- * heuristic will meet, before BotStrategy is built on top of it. Deleted once
- * Schritt 3 (Phase-1-Regeln) exercises the same endpoints for real.
+ * heuristic will meet, before BotStrategy is built on top of it. Kept as
+ * regression coverage even after BotStrategy's Phase-1 rules started
+ * exercising the same endpoints for real (PlaytestBotPhase1Test) — it still
+ * covers a response shape (raw exception message, no machine code) that the
+ * real rule set doesn't hit on the current happy path.
  */
 class BotSessionNormalizeTest extends TestCase
 {

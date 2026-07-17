@@ -25,60 +25,48 @@ class BotStrategy
     private const HIRE_ORDER = [35, 36, 92];
 
     /**
-     * @return array<int, array{name:string, when:callable(BotSession):bool, do:callable(BotSession):array}>
+     * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
     public static function default(): array
     {
         return [
             [
                 'name' => 'repair_critical',
-                'when' => fn (BotSession $b) => self::repairCandidate($b) !== null
-                    && self::regolith($b) >= config('game.repair.regolith_per_click', 2),
-                'do' => function (BotSession $b) {
-                    $row = self::repairCandidate($b);
-
-                    return $b->act('repair_critical', 'POST', '/colony/building/repair', [
-                        'building_id' => $row->building_id,
-                        'instance_id' => $row->instance_id,
-                    ]);
-                },
+                'when' => fn (BotSession $b) => self::regolith($b) >= config('game.repair.regolith_per_click', 2)
+                    ? self::repairCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, object $row) => $b->act('repair_critical', 'POST', '/colony/building/repair', [
+                    'building_id' => $row->building_id,
+                    'instance_id' => $row->instance_id,
+                ]),
             ],
             [
                 'name' => 'hire_advisor',
-                'when' => fn (BotSession $b) => self::nextHireCandidate($b) !== null,
-                'do' => function (BotSession $b) {
-                    $personellId = self::nextHireCandidate($b);
-
-                    return $b->act('hire_advisor', 'POST', '/advisors/hire', [
-                        'personell_id' => $personellId,
-                    ]);
-                },
+                'when' => fn (BotSession $b) => self::nextHireCandidate($b),
+                'do' => fn (BotSession $b, int $personellId) => $b->act('hire_advisor', 'POST', '/advisors/hire', [
+                    'personell_id' => $personellId,
+                ]),
             ],
             [
                 'name' => 'invest_cc',
-                'when' => fn (BotSession $b) => self::ccLevel($b) < 3
-                    && self::constructionAp($b) >= 1,
+                'when' => fn (BotSession $b) => self::ccLevel($b) < 3 && self::constructionAp($b) >= 1,
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
                 ]),
             ],
             [
                 'name' => 'explore_tile',
-                'when' => fn (BotSession $b) => self::exploreCandidate($b) !== null,
-                'do' => function (BotSession $b) {
-                    $tile = self::exploreCandidate($b);
-
-                    return $b->act('explore_tile', 'POST', '/colony/tile/explore', [
-                        'q' => $tile->q,
-                        'r' => $tile->r,
-                    ]);
-                },
+                'when' => fn (BotSession $b) => self::exploreCandidate($b),
+                'do' => fn (BotSession $b, object $tile) => $b->act('explore_tile', 'POST', '/colony/tile/explore', [
+                    'q' => $tile->q,
+                    'r' => $tile->r,
+                ]),
             ],
             [
                 'name' => 'place_building',
-                'when' => fn (BotSession $b) => self::placeCandidate($b) !== null,
-                'do' => function (BotSession $b) {
-                    [$building, $tile] = self::placeCandidate($b);
+                'when' => fn (BotSession $b) => self::placeCandidate($b),
+                'do' => function (BotSession $b, array $candidate) {
+                    [$building, $tile] = $candidate;
 
                     return $b->act('place_building', 'POST', '/colony/building/place', [
                         'building_id' => $building['building_id'],
@@ -89,24 +77,16 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_production',
-                'when' => fn (BotSession $b) => self::productionInvestCandidate($b) !== null
-                    && self::constructionAp($b) >= 1,
-                'do' => function (BotSession $b) {
-                    $row = self::productionInvestCandidate($b);
-
-                    return $b->act('invest_production', 'POST', '/colony/building/invest', [
-                        'building_id' => $row->building_id,
-                        'instance_id' => $row->instance_id,
-                    ]);
-                },
+                'when' => fn (BotSession $b) => self::constructionAp($b) >= 1 ? self::productionInvestCandidate($b) : null,
+                'do' => fn (BotSession $b, object $row) => $b->act('invest_production', 'POST', '/colony/building/invest', [
+                    'building_id' => $row->building_id,
+                    'instance_id' => $row->instance_id,
+                ]),
             ],
             [
                 'name' => 'research_knowledge',
-                'when' => fn (BotSession $b) => self::researchAp($b) >= 1
-                    && self::researchCandidate($b) !== null,
-                'do' => function (BotSession $b) {
-                    $researchId = self::researchCandidate($b);
-
+                'when' => fn (BotSession $b) => self::researchAp($b) >= 1 ? self::researchCandidate($b) : null,
+                'do' => function (BotSession $b, int $researchId) {
                     // Try to close out a level first (accumulated ap_spend may already
                     // meet the threshold); investBlocker() doesn't cap 'add' on ap_spend,
                     // so levelup is the only way to find out a level is actually done.
@@ -134,24 +114,17 @@ class BotStrategy
             ],
             [
                 'name' => 'dispatch_mission',
-                'when' => fn (BotSession $b) => self::dispatchCandidate($b) !== null,
-                'do' => function (BotSession $b) {
-                    $ship = self::dispatchCandidate($b);
-
-                    return $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
-                        'mission_key' => 'mission_recon_flight',
-                    ]);
-                },
+                'when' => fn (BotSession $b) => self::dispatchCandidate($b),
+                'do' => fn (BotSession $b, object $ship) => $b->act('dispatch_mission', 'POST', "/colony/hangar/{$ship->hangar_instance_id}/dispatch", [
+                    'mission_key' => 'mission_recon_flight',
+                ]),
             ],
             [
                 'name' => 'accept_bar_offer',
-                'when' => fn (BotSession $b) => self::barOfferCandidate($b) !== null
-                    && self::personellService()->getAvailableActionPoints('economy', $b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1),
-                'do' => function (BotSession $b) {
-                    $offer = self::barOfferCandidate($b);
-
-                    return $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}");
-                },
+                'when' => fn (BotSession $b) => self::personellService()->getAvailableActionPoints('economy', $b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1)
+                    ? self::barOfferCandidate($b)
+                    : null,
+                'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
             ],
             [
                 'name' => 'request_ship',
@@ -362,7 +335,7 @@ class BotStrategy
     }
 
     /**
-     * Lowest-id Kenntnis (90-96) not yet at max level whose required Sciencelab
+     * Lowest-id Knowledge entity (90-96) not yet at max level whose required Sciencelab
      * (building_id=31) level is already met — cheap stand-in for the full
      * requirement graph the real ResearchService checks; a rejection here just
      * blocks the rule for the Sol, same as any other 422.

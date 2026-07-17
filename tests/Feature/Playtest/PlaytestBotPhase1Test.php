@@ -25,26 +25,15 @@ use Tests\TestCase;
  */
 class PlaytestBotPhase1Test extends TestCase
 {
+    use PlaysSolLoop;
     use RefreshDatabase;
-
-    private const MAX_ACTIONS_PER_SOL = 50;
 
     public function test_bot_reaches_phase_2_using_phase_1_rules(): void
     {
         $bot = BotSession::boot($this, seed: 4242);
         $rules = BotStrategy::default();
 
-        $maxSols = config('game.run.tick_limit') + 5;
-
-        while ($bot->isActive() && $bot->sol < $maxSols) {
-            $this->playOneSol($bot, $rules);
-            $bot->nextSol();
-
-            $phaseNow = (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
-            if ($phaseNow >= 2) {
-                break;
-            }
-        }
+        $this->playSolsUntil($bot, $rules, fn (BotSession $b) => (int) DB::table('runs')->where('id', $b->runId)->value('phase') >= 2);
 
         $phase = (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
 
@@ -54,43 +43,5 @@ class PlaytestBotPhase1Test extends TestCase
             "Bot never reached Phase 2 (sol={$bot->sol}, status={$bot->status()}, fail_reason={$bot->failReason()}). ".
             'Action log tail: '.json_encode(array_slice($bot->log, -20))
         );
-    }
-
-    /**
-     * @param  array<int, array{name:string, when:callable, do:callable}>  $rules
-     */
-    private function playOneSol(BotSession $bot, array $rules): void
-    {
-        $blockedThisSol = [];
-
-        for ($i = 0; $i < self::MAX_ACTIONS_PER_SOL; $i++) {
-            $fired = false;
-
-            foreach ($rules as $rule) {
-                if (in_array($rule['name'], $blockedThisSol, true)) {
-                    continue;
-                }
-                if (! $rule['when']($bot)) {
-                    continue;
-                }
-
-                $res = $rule['do']($bot);
-                if (! $res['ok']) {
-                    $blockedThisSol[] = $rule['name'];
-
-                    continue;
-                }
-
-                $fired = true;
-                break;
-            }
-
-            if (! $fired) {
-                return;
-            }
-        }
-
-        $this->fail('MAX_ACTIONS_PER_SOL exceeded on Sol '.$bot->sol.' — likely state desync. Log tail: '
-            .json_encode(array_slice($bot->log, -20)));
     }
 }
