@@ -173,9 +173,9 @@ class BuildingRepairTest extends TestCase
 
     public function test_repair_rejected_without_construction_ap(): void
     {
-        if (config('game.bypass.ap_checks')) {
-            $this->markTestSkipped('AP checks bypassed in this environment');
-        }
+        // phpunit.xml bypasses AP checks by default (GAME_BYPASS_AP=true) — this
+        // test exercises the real gate, so it must turn that back on for itself.
+        config(['game.bypass.ap_checks' => false]);
 
         $this->setCcState(['status_points' => 16]);
 
