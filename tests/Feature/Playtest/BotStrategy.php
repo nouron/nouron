@@ -32,7 +32,8 @@ class BotStrategy
         return [
             [
                 'name' => 'repair_critical',
-                'when' => fn (BotSession $b) => self::regolith($b) >= config('game.repair.regolith_per_click', 2)
+                'when' => fn (BotSession $b) => self::constructionAp($b) >= 1
+                    && self::regolith($b) >= config('game.repair.regolith_per_click', 2)
                     ? self::repairCandidate($b)
                     : null,
                 'do' => fn (BotSession $b, object $row) => $b->act('repair_critical', 'POST', '/colony/building/repair', [

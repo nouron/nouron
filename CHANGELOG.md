@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-18
+
+PR #217 (Vorarbeiten Playtest-Bot) gemerged. Zweiter Ultrareview-Durchgang auf PR #218 (Playtest-Bot, jetzt gegen master statt #217) — 8 Funde, u.a. fehlendes `defaultTestSuite` in `phpunit.xml` (ein blankes `bin/phpunit` lief bislang alle Suiten inkl. der bewusst roten `playtest`-Tests mit) und `repair_critical`, das kein Construction-AP vor dem Feuern prüfte. Details siehe PR-Diskussion.
+
 ## 2026-07-17 (2)
 
 Playtest-Bot (`feat/playtest-bot`, aufbauend auf den Vorarbeiten unten): PHPUnit-basierter Bot unter `tests/Feature/Playtest/`, spielt einen kompletten Run ausschließlich über die echten HTTP-Routen (nie `game:tick` direkt — nur `POST /sol/next`, das den Command wrappt und `current_tick` erhöht).
