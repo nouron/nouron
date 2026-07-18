@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Playtest;
 
-use App\Enums\BuildingId;
 use App\Models\Run;
 use App\Services\Techtree\PersonellService;
 use App\Services\TrustService;
@@ -31,11 +30,7 @@ class RunReport
     public function snapshot(BotSession $bot): void
     {
         $colonyId = $bot->colonyId;
-
-        $ccLevel = (int) (DB::table('colony_buildings')
-            ->where('colony_id', $colonyId)
-            ->where('building_id', BuildingId::CommandCenter->value)
-            ->value('level') ?? 0);
+        $ccLevel = BotStrategy::ccLevel($bot);
 
         $ap = [];
         $apUnspent = 0;
@@ -53,8 +48,8 @@ class RunReport
         $this->sols[] = [
             'sol' => $bot->sol,
             'trust' => app(TrustService::class)->getTrust($colonyId),
-            'credits' => (int) (DB::table('user_resources')->where('user_id', $bot->userId)->value('credits') ?? 0),
-            'regolith' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 3)->value('amount') ?? 0),
+            'credits' => BotStrategy::credits($bot),
+            'regolith' => BotStrategy::regolith($bot),
             'ap' => $ap,
             'ap_unspent' => $apUnspent,
             'cc_level' => $ccLevel,

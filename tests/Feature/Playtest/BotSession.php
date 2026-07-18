@@ -25,6 +25,9 @@ class BotSession
     /** @var array<int, array{sol:int, rule:string, url:string, status:int, ok:bool, error:?string}> */
     public array $log = [];
 
+    /** @var array<string, array{logCount:int, value:mixed}> */
+    private array $memo = [];
+
     private function __construct(
         private readonly TestCase $test,
         public readonly int $userId,
@@ -120,6 +123,26 @@ class BotSession
     public function peek(string $url): array
     {
         return $this->normalize($this->test->json('GET', $url));
+    }
+
+    /**
+     * Cache an expensive read (DB queries, peek() round-trips) for as long as
+     * nothing has actually happened since — $log only grows via act(), never
+     * via peek(), so a stable log count is a correct "state unchanged" signal.
+     * Used by rules like place_building whose candidate search is otherwise
+     * re-run on every inner-loop iteration even when no rule has fired yet.
+     */
+    public function remember(string $key, \Closure $compute): mixed
+    {
+        $logCount = count($this->log);
+        if (($this->memo[$key]['logCount'] ?? null) === $logCount) {
+            return $this->memo[$key]['value'];
+        }
+
+        $value = $compute();
+        $this->memo[$key] = ['logCount' => $logCount, 'value' => $value];
+
+        return $value;
     }
 
     private function normalize($res): array

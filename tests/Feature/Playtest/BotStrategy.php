@@ -149,7 +149,8 @@ class BotStrategy
         return app(PersonellService::class);
     }
 
-    private static function regolith(BotSession $b): int
+    /** Shared with RunReport — the single source for this lookup. */
+    public static function regolith(BotSession $b): int
     {
         return (int) (DB::table('colony_resources')
             ->where('colony_id', $b->colonyId)
@@ -157,7 +158,8 @@ class BotStrategy
             ->value('amount') ?? 0);
     }
 
-    private static function ccLevel(BotSession $b): int
+    /** Shared with RunReport — the single source for this lookup. */
+    public static function ccLevel(BotSession $b): int
     {
         return (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -196,7 +198,7 @@ class BotStrategy
         }
 
         $hired = DB::table('advisors')->where('colony_id', $b->colonyId)->pluck('personell_id')->all();
-        $credits = (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
+        $credits = self::credits($b);
 
         foreach (self::HIRE_ORDER as $personellId) {
             if (in_array($personellId, $hired, true)) {
@@ -205,8 +207,8 @@ class BotStrategy
 
             $cfg = collect(config('advisors'))->firstWhere('id', $personellId);
             $pathBuildingId = match ($personellId) {
-                36 => 31, // scientist -> sciencelab
-                92 => 52, // trader -> bar
+                36 => BuildingId::Sciencelab->value, // scientist -> sciencelab
+                92 => BuildingId::Bar->value, // trader -> bar
                 default => null,
             };
 
@@ -258,60 +260,65 @@ class BotStrategy
      */
     private static function placeCandidate(BotSession $b): ?array
     {
-        $available = $b->peek('/colony/buildings/available');
-        $buildings = $available['body']['buildings'] ?? [];
+        // Heaviest rule in the set (one HTTP round-trip + one ResourcesService::check()
+        // per candidate building) — memoized per BotSession until the next real action,
+        // since nothing here can change while earlier rules keep failing their `when`.
+        return $b->remember('place_candidate', function () use ($b) {
+            $available = $b->peek('/colony/buildings/available');
+            $buildings = $available['body']['buildings'] ?? [];
 
-        // Prefer a new building type over duplicating an already-placed instanced
-        // one (Housing/Hangar) — otherwise the bot happily re-instances the first
-        // building in id order forever and never reaches the path buildings
-        // (sciencelab/hangar/bar) the third advisor slot depends on.
-        $placedCounts = DB::table('colony_buildings')
-            ->where('colony_id', $b->colonyId)
-            ->whereNotNull('tile_x')
-            ->selectRaw('building_id, COUNT(*) as cnt')
-            ->groupBy('building_id')
-            ->pluck('cnt', 'building_id');
+            // Prefer a new building type over duplicating an already-placed instanced
+            // one (Housing/Hangar) — otherwise the bot happily re-instances the first
+            // building in id order forever and never reaches the path buildings
+            // (sciencelab/hangar/bar) the third advisor slot depends on.
+            $placedCounts = DB::table('colony_buildings')
+                ->where('colony_id', $b->colonyId)
+                ->whereNotNull('tile_x')
+                ->selectRaw('building_id, COUNT(*) as cnt')
+                ->groupBy('building_id')
+                ->pluck('cnt', 'building_id');
 
-        usort($buildings, fn ($a, $c) => ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0));
+            usort($buildings, fn ($a, $c) => ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0));
 
-        // Real cap/possession logic lives in ResourcesService — supply is CC level +
-        // Housing count + knowledge bonus, not the flat user_resources.supply seed
-        // value, and build_cost can list more than just Regolith (e.g. Werkstoffe).
-        $resourcesService = app(ResourcesService::class);
-        $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
+            // Real cap/possession logic lives in ResourcesService — supply is CC level +
+            // Housing count + knowledge bonus, not the flat user_resources.supply seed
+            // value, and build_cost can list more than just Regolith (e.g. compounds).
+            $resourcesService = app(ResourcesService::class);
+            $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
 
-        foreach ($buildings as $building) {
-            $costs = [];
-            foreach ($building['build_cost'] as $resourceId => $amount) {
-                $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+            foreach ($buildings as $building) {
+                $costs = [];
+                foreach ($building['build_cost'] as $resourceId => $amount) {
+                    $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
+                }
+                if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
+                    continue;
+                }
+                if ((int) $building['supply_cost'] > $freeSupply) {
+                    continue;
+                }
+
+                $tile = DB::table('colony_tiles as ct')
+                    ->where('ct.colony_id', $b->colonyId)
+                    ->where('ct.is_colony_zone', 1)
+                    ->whereNotExists(function ($query) use ($b) {
+                        $query->select(DB::raw(1))
+                            ->from('colony_buildings as cb')
+                            ->where('cb.colony_id', $b->colonyId)
+                            ->whereColumn('cb.tile_x', 'ct.q')
+                            ->whereColumn('cb.tile_y', 'ct.r');
+                    })
+                    ->first();
+
+                if ($tile === null) {
+                    return null;
+                }
+
+                return [$building, $tile];
             }
-            if ($costs !== [] && ! $resourcesService->check($costs, $b->colonyId)) {
-                continue;
-            }
-            if ((int) $building['supply_cost'] > $freeSupply) {
-                continue;
-            }
 
-            $tile = DB::table('colony_tiles as ct')
-                ->where('ct.colony_id', $b->colonyId)
-                ->where('ct.is_colony_zone', 1)
-                ->whereNotExists(function ($query) use ($b) {
-                    $query->select(DB::raw(1))
-                        ->from('colony_buildings as cb')
-                        ->where('cb.colony_id', $b->colonyId)
-                        ->whereColumn('cb.tile_x', 'ct.q')
-                        ->whereColumn('cb.tile_y', 'ct.r');
-                })
-                ->first();
-
-            if ($tile === null) {
-                return null;
-            }
-
-            return [$building, $tile];
-        }
-
-        return null;
+            return null;
+        });
     }
 
     private static function productionInvestCandidate(BotSession $b): ?object
@@ -345,7 +352,7 @@ class BotStrategy
     {
         $sciencelabLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
-            ->where('building_id', 31)
+            ->where('building_id', BuildingId::Sciencelab->value)
             ->value('level') ?? 0);
 
         $row = DB::table('researches as r')
@@ -383,7 +390,7 @@ class BotStrategy
     {
         $barLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
-            ->where('building_id', 52)
+            ->where('building_id', BuildingId::Bar->value)
             ->value('level') ?? 0);
 
         if ($barLevel < 1) {
@@ -404,7 +411,7 @@ class BotStrategy
     {
         return (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
-            ->where('building_id', 44)
+            ->where('building_id', BuildingId::Hangar->value)
             ->value('level') ?? 0);
     }
 
@@ -417,7 +424,7 @@ class BotStrategy
     {
         $hangarInstances = DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
-            ->where('building_id', 44)
+            ->where('building_id', BuildingId::Hangar->value)
             ->pluck('instance_id');
 
         $occupied = DB::table('colony_ships')
@@ -428,7 +435,8 @@ class BotStrategy
         return $hangarInstances->diff($occupied)->isNotEmpty();
     }
 
-    private static function credits(BotSession $b): int
+    /** Shared with RunReport — the single source for this lookup. */
+    public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
     }
