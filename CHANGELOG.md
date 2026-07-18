@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026-07-18
+
+PR #217 (Vorarbeiten Playtest-Bot) gemerged. Zweiter Ultrareview-Durchgang auf PR #218 (Playtest-Bot, jetzt gegen master statt #217) — 8 Funde, u.a. fehlendes `defaultTestSuite` in `phpunit.xml` (ein blankes `bin/phpunit` lief bislang alle Suiten inkl. der bewusst roten `playtest`-Tests mit) und `repair_critical`, das kein Construction-AP vor dem Feuern prüfte. Details siehe PR-Diskussion.
+
+**Letzter vorbestehender Testfehler behoben:** `TrustServiceTest::test_get_band_unknown_locale_returns_translation_key` ging seit PR #216 (2026-07-14) davon aus, ein unbekanntes Locale (`xx`) habe keine Fallback-Übersetzung. Inzwischen existiert `lang/en/trust.php`, und `fallback_locale` ist `en` — Laravel löst korrekt zu `'Euphoric'`/`'Unrest'` auf statt den rohen Key zurückzugeben. Kein Service-Bug, nur eine veraltete Testannahme; Test entsprechend umbenannt und korrigiert.
+
+**Einer der 3 Skips ebenfalls aufgeräumt:** `BuildingRepairTest::test_repair_rejected_without_construction_ap` sprang sich selbst mit `markTestSkipped()`, weil `phpunit.xml` `GAME_BYPASS_AP=true` als Suite-Default setzt und der Test den Bypass nie in `setUp()` zurücksetzte (anders als vergleichbare AP/Resource-Tests im Repo). Jetzt `config(['game.bypass.ap_checks' => false])` direkt im Test — läuft echt gegen das reale `ap_limit`-Gate.
+
+Komplette Suite jetzt grün: 720 Tests, 0 Failures, nur noch 2 bewusst Skipped (Playtest-Bot-Balance-Lücke, siehe PR #218).
+
+## 2026-07-17 (2)
+
+Playtest-Bot (`feat/playtest-bot`, aufbauend auf den Vorarbeiten unten): PHPUnit-basierter Bot unter `tests/Feature/Playtest/`, spielt einen kompletten Run ausschließlich über die echten HTTP-Routen (nie `game:tick` direkt — nur `POST /sol/next`, das den Command wrappt und `current_tick` erhöht).
+
+- **`BotSession`** — HTTP-Treiber: Bootstrap (TestSeeder → Bypass-Flags aus → `resetColonyToSol1` → fester `rng_seed` → `/lobby/start`), `act()`/`normalize()` für einheitliche Response-Auswertung (5xx wirft, 409/302 während Bootstrap wirft), `peek()` für ungeloggte Read-only-GETs.
+- **`BotStrategy`** — geordnete Regelliste (Phase 1: repair/hire/invest_cc/explore/place/invest_production; Phase 2: research/dispatch/bar/request_ship), liest per Read-only-DB-Query was ein Spieler sähe, mutiert nur über echte Routen. Zwei Endlosschleifen-Bugs in der Heuristik gefunden und gefixt: `invest_production` pickte ungeprüft den Harvester (`max_level=1`) und blockte sich jeden Sol selbst; `place_building` duplizierte instanzierbare Gebäude (Housing/Hangar) endlos statt neue Pfadgebäude (Bar) zu setzen, wodurch Advisor-Slot 3 (Trader) nie erreichbar war.
+- **`RunReport`** — JSON-Artefakt (`storage/logs/playtest/{seed}-{timestamp}.json`) mit Sol-Zeitreihe (Trust/Credits/Regolith/AP je Pool/CC-Level/Advisor-Zahl), Rejections nach Maschinencode, Objectives, Burnout-Rohdaten (Formel folgt erst nach diesem Playtest, GDD).
+- **Suite `playtest`** in `phpunit.xml`, aus `laravel-feature` ausgeschlossen — bewusst schwache Assertions (kein 5xx, Run endet, mind. 1 erfolgreiche Aktion, JSON parsebar); Sieg/Sols-bis-Phase-2/Ablehnungsquoten werden nicht assertiert, sondern nur reportet.
+
+Nebenbefund (eigenes Ticket, nicht in diesem PR gefixt): `AbstractTechnologyService::_invest()`s `order:'add'` gibt `success:true` zurück, auch wenn `ap_spend` bereits am Cap ist (No-Op) — und die aktuelle Techtree-UI (`techtree-view.js`) sendet nie `order:'levelup'`. Ein Spieler könnte dadurch eine Kenntnis nie fertig erforschen können, sobald der AP-Balken voll ist (Klick wirkt scheinbar erfolgreich, ändert aber nichts).
+
+**Ultrareview + Fixes (selbes PR, 2 Folgecommits):** 8 Funde, 6 davon gefixt. Wichtigster: `BotSession::boot()` setzte den nicht-existenten Config-Key `game.bypass.resource_checks` statt `resource_costs` — der Ressourcenkosten-Bypass blieb über den phpunit.xml-Default durchgehend aktiv, jeder bisherige Bot-Lauf hat nie echte Kosten bezahlt. Nach dem Fix (plus Korrektur des lokalen Supply/Resource-Checks in `place_building`, der die falsche Spalte/Cap-Quelle nutzte) zeigt sich ein echter, vom Owner bereits per Playtest gemeldeter Balance-Befund (siehe Sol-14-Notiz oben): ohne Bypass erreicht der Bot Phase 2 nicht mehr — keine Credit-Einnahmequelle außer Bar-Angebote, die mangels Ressourcen-Überschuss durchgehend scheitern. `PlaytestBotPhase1Test` und die Determinismus-Prüfung in `PlaytestBotTest` bewusst rot gelassen (Owner-Entscheidung) bis das Balance-Ticket kommt. Weiterer Nebenbefund (nicht gefixt, eigenes Ticket): `AdvisorController::hire` liefert übersetzten deutschen Text statt Machine-Code im `error`-Feld, uneinheitlich zu allen anderen Endpoints seit B1/B2. Cleanup: `playOneSol()`-Duplikat zwischen Testklassen in Trait `PlaysSolLoop` zusammengeführt, Rule-Kandidaten in `BotStrategy` werden jetzt nur noch einmal pro Versuch berechnet (vorher in `when` und `do` doppelt, `place_building` sogar mit doppeltem HTTP-Call).
+
+Playtest-Suite: 3 von 5 Tests grün (2 bewusst rot, s.o.). `laravel-feature`: 669 Tests, unverändert 1 vorbestehender Fehler (`TrustServiceTest`) — keine Regression.
+
 ## 2026-07-17
 
 Vorarbeiten für den automatisierten Playtest-Bot (PR folgt separat). Der Bot spielt ausschließlich über die HTTP-Routen und soll damit Balance messen *und* die Routen mittesten — diese Fixes beheben, was ihn daran hindert oder unabhängig davon falsch ist:

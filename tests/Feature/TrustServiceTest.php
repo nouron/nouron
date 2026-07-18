@@ -188,15 +188,15 @@ class TrustServiceTest extends TestCase
         $this->assertSame('Aufruhr', $this->service->getBand(-100));
     }
 
-    public function test_get_band_unknown_locale_returns_translation_key(): void
+    public function test_get_band_unknown_locale_falls_back_to_english(): void
     {
-        // When a locale has no translation file at all (not even in the fallback chain),
-        // Laravel returns the translation key verbatim. This documents that behaviour:
-        // callers must ensure the active locale has a trust.php file.
+        // A locale with no translation file of its own (config('app.fallback_locale')
+        // is 'en') resolves via lang/en/trust.php rather than returning the raw key —
+        // lang/en/trust.php didn't exist when this test was first written; it does now.
         app()->setLocale('xx');
 
-        $this->assertSame('trust.band_euphorisch', $this->service->getBand(100));
-        $this->assertSame('trust.band_aufruhr', $this->service->getBand(-100));
+        $this->assertSame('Euphoric', $this->service->getBand(100));
+        $this->assertSame('Unrest', $this->service->getBand(-100));
     }
 
     // ── getProductionMultiplier() ─────────────────────────────────────────────

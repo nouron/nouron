@@ -5,11 +5,14 @@
     <testsuites>
         <testsuite name="laravel-feature">
             <directory>./tests/Feature</directory>
+            <exclude>./tests/Feature/Playtest</exclude>
         </testsuite>
         <testsuite name="laravel-unit">
             <directory>./tests/Unit</directory>
         </testsuite>
-
+        <testsuite name="playtest">
+            <directory>./tests/Feature/Playtest</directory>
+        </testsuite>
 
     </testsuites>
 
