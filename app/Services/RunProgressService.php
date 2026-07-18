@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Events\RunEnded;
 use App\Models\Advisor;
 use App\Models\Run;
@@ -55,7 +56,7 @@ class RunProgressService
      */
     public function checkPhase1Completion(Run $run): bool
     {
-        $ccId = config('buildings.commandCenter.id', 25);
+        $ccId = BuildingId::CommandCenter->value;
 
         // Condition 1 — CC level >= 3
         $ccReady = DB::table('colony_buildings')
@@ -125,13 +126,28 @@ class RunProgressService
      * Combo-blacklist: no more than 1 economy task in a single draw set.
      * Economy tasks: task_credit_reserve, task_trade_volume.
      * If the full shuffled pool yields < 3 valid tasks, fill up with non-economy tasks.
+     *
+     * The draw order is derived from run.rng_seed, so two runs with the same seed get
+     * the same objectives — a prerequisite for comparing balance changes across runs.
+     *
+     * Ordering by a per-key hash rather than shuffle() is deliberate:
+     *  - Collection::shuffle() has taken no seed argument since Laravel 10 — passing one
+     *    is silently ignored and the draw stays random.
+     *  - A global mt_srand() would seed the draw, but also perturb every later roll in
+     *    the same request; mission loot rolls off rng_seed + mission_id (ADR 0003) and
+     *    must stay independent.
+     * seededOrderHash() is a pure function, so it touches no global RNG state at all.
      */
     public function drawObjectives(Run $run): void
     {
         $pool = config('game.run.task_pool', array_keys(self::TASK_TARGETS));
         $economy = self::TASK_CATEGORIES['economy'];
 
-        $shuffled = collect($pool)->shuffle()->values();
+        $seed = (int) ($run->rng_seed ?? random_int(1, PHP_INT_MAX));
+
+        $shuffled = collect($pool)
+            ->sortBy(fn (string $taskKey): int => $this->seededOrderHash($seed, $taskKey))
+            ->values();
 
         $selected = [];
         $economyCount = 0;
@@ -396,7 +412,7 @@ class RunProgressService
      * Checkpoints by Phase-2 sol:
      *  Sol 30  — < 1 task at > 50% progress → warning event
      *  Sol 50  — 0 tasks completed           → warning event
-     *  Sol 55  — nexus_debt > 12000          → endRun failed (nexus_debt)
+     *  Sol 55  — nexus_debt over threshold   → endRun failed (nexus_debt)
      *  Sol 65  — 0 tasks completed           → sanction event + 1 random advisor locked 1 sol
      *  Sol 80  — countdown warning           → event only when tick >= tick_limit - 20
      */
@@ -413,7 +429,7 @@ class RunProgressService
         }
 
         if ($sol >= 55) {
-            if (($run->nexus_debt ?? 0) > 12000) {
+            if (($run->nexus_debt ?? 0) > $this->nexusDebtFailThreshold()) {
                 $this->endRun($run, 'failed', 'nexus_debt');
 
                 return;
@@ -546,7 +562,7 @@ class RunProgressService
      *
      * Fail states checked:
      *  trust_collapse — trust value < trust_fail_threshold (instant fail).
-     *  nexus_debt     — nexus_debt > 12000 (checked here as secondary path).
+     *  nexus_debt     — nexus_debt > nexus_debt_fail_threshold (checked here as secondary path).
      *  time_limit     — current_tick >= tick_limit.
      */
     public function checkFailStates(Run $run): ?string
@@ -562,7 +578,7 @@ class RunProgressService
             return 'trust_collapse';
         }
 
-        if (($run->nexus_debt ?? 0) > 12000) {
+        if (($run->nexus_debt ?? 0) > $this->nexusDebtFailThreshold()) {
             return 'nexus_debt';
         }
 
@@ -573,12 +589,41 @@ class RunProgressService
         return null;
     }
 
+    /**
+     * Deterministic sort key for one task in a seeded draw. Pure — no global RNG state.
+     *
+     * Hashes seed and key *together* rather than combining them arithmetically. The LCG
+     * used by GameTick::seededRoll() is wrong for this job: `(seed + crc32(key)) * a + c`
+     * shifts every task's hash by the same `seed * a`, leaving their relative order — and
+     * therefore the draw — identical for every seed.
+     */
+    private function seededOrderHash(int $seed, string $taskKey): int
+    {
+        return crc32($seed.'|'.$taskKey);
+    }
+
+    /**
+     * Nexus debt ceiling — exceeding it fails the run.
+     *
+     * Read by both fail paths: checkFailStates() (every tick) and the Phase-2
+     * sol-55 checkpoint in checkNexusInterventions().
+     */
+    private function nexusDebtFailThreshold(): int
+    {
+        return (int) config('game.run.nexus_debt_fail_threshold', 12000);
+    }
+
     // ── Run end ──────────────────────────────────────────────────────────────
 
     /**
      * Finalise the run with the given status and optional fail reason.
      *
-     * Persists status, fail_reason and ended_at atomically, then fires an INNN event.
+     * Persists status, fail_reason, ended_at and the final score atomically, then fires
+     * an INNN event.
+     *
+     * Order matters: calculateScore() only returns 0 once $run->status is already
+     * 'failed'. Scoring before the status assignment would give failed runs a positive
+     * score, so the status is set first and the score derived from it.
      *
      * @param  string  $status  'completed' or 'failed'
      * @param  string|null  $failReason  e.g. 'trust_collapse', 'time_limit', 'nexus_debt'
@@ -589,6 +634,7 @@ class RunProgressService
             $run->status = $status;
             $run->fail_reason = $failReason;
             $run->ended_at = now();
+            $run->score = $this->calculateScore($run);
             $run->save();
 
             $eventKey = match (true) {

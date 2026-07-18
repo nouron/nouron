@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Facades\DB;
 
@@ -466,7 +467,7 @@ class OnboardingHintService
 
         $cc = DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->first(['level', 'ap_spend']);
         if ((int) ($cc->level ?? 0) >= 2) {
             return false;
@@ -550,7 +551,7 @@ class OnboardingHintService
 
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level');
         if ($ccLevel >= 2) {
             return false;
@@ -729,7 +730,7 @@ class OnboardingHintService
 
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level');
 
         return $ccLevel >= 2;

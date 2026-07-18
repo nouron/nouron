@@ -133,8 +133,9 @@ class HarvesterTransitTest extends TestCase
 
         $response = $this->moveHarvester(-3, 0);
 
-        $response->assertOk()->assertJsonPath('ok', false);
-        $this->assertSame(__('colony.error_harvester_in_transit'), $response->json('error'));
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('harvester_in_transit', $response->json('error'));
+        $this->assertSame(__('colony.error_harvester_in_transit'), $response->json('message'));
         // Position unchanged
         $this->assertSame(3, (int) $this->harvesterRow()->tile_x);
     }

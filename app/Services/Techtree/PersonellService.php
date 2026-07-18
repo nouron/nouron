@@ -2,6 +2,7 @@
 
 namespace App\Services\Techtree;
 
+use App\Enums\BuildingId;
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
 use App\Services\ResourcesService;
@@ -185,7 +186,7 @@ class PersonellService
             // CC-Level gate — slots available = min(cc_level, max_slots).
             $ccLevel = (int) (DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)
-                ->where('building_id', config('buildings.commandCenter.id'))
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level') ?? 0);
             $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
             $usedSlots = Advisor::where('colony_id', $colonyId)->count();
@@ -259,7 +260,7 @@ class PersonellService
     {
         $ccLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', config('buildings.commandCenter.id'))
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0);
         $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
         $usedSlots = Advisor::where('colony_id', $colonyId)->count();

@@ -259,31 +259,26 @@ abstract class AbstractTechnologyService
      * @param  string  $pointsType  'construction_points' or 'research_points'
      */
     protected function _invest(
-        string $pointsType,
         int $colonyId,
         int $entityId,
         string $changeMode = 'add',
         int $points = 1
     ): bool {
-        $this->validateId($colonyId);
-        $this->validateId($entityId);
+        // Single source for "may this proceed, and if not why" — investBlocker() covers
+        // id validation, the entity lookup, the change mode and AP availability.
+        //
+        // The AP gate honours game.bypass.ap_checks like every other gate in the game
+        // (ColonyController, ColonyTileService, HangarService, BarService); without it the
+        // techtree was the one screen that stayed locked while dev mode was on. Only the
+        // *availability* of AP is bypassed, never the ap_spend threshold enforced by
+        // levelupBlocker() — skipping that would level entities up with no investment.
+        $bypassAp = (bool) config('game.bypass.ap_checks');
 
-        // Verify available AP
-        $availableAP = match ($pointsType) {
-            'construction_points' => $this->personellService?->getConstructionPoints($colonyId) ?? 0,
-            'research_points' => $this->personellService?->getResearchPoints($colonyId) ?? 0,
-            default => 0,
-        };
-
-        if ($availableAP < abs($points)) {
+        if ($this->investBlocker($colonyId, $entityId, $changeMode, $points) !== null) {
             return false;
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (! $entity) {
-            return false;
-        }
-
         $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
 
         $currentApSpend = $colonyEntity ? (int) $colonyEntity->ap_spend : 0;
@@ -323,15 +318,15 @@ abstract class AbstractTechnologyService
             'ap_spend' => $newApSpend,
         ];
 
-        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $pointsType) {
+        DB::transaction(function () use ($colonyId, $entityId, $entity, $updateData, $changeMode, $statusBefore, $newStatus, $currentApSpend, $newApSpend, $bypassAp) {
             DB::table($this->colonyTable())->updateOrInsert(
                 ['colony_id' => $colonyId, $this->entityIdKey() => $entityId],
                 $updateData
             );
 
-            $apType = ($pointsType === 'research_points') ? 'research' : 'construction';
+            $apType = ($this->apPointsType() === 'research_points') ? 'research' : 'construction';
 
-            if ($changeMode === 'add') {
+            if ($changeMode === 'add' && ! $bypassAp) {
                 // Lock the AP actually spent toward levelup so they cannot be reused in the same tick
                 $apSpent = $newApSpend - $currentApSpend;
                 if ($apSpent > 0 && $this->personellService !== null) {
@@ -371,28 +366,78 @@ abstract class AbstractTechnologyService
     }
 
     /**
+     * Name the first unmet levelup requirement, or null when a levelup may proceed.
+     *
+     * levelup() itself only answers yes/no, which left callers — and the player — with
+     * "it didn't work" and no reason. This runs the same guards in the same order and
+     * returns a stable machine code, so the controller can say *why*.
+     *
+     * Subclasses that add their own gate override this and check theirs before calling
+     * parent (see ResearchService's knowledge CC gate).
+     *
+     * @return string|null one of: requires_building, requires_research,
+     *                     insufficient_resources, insufficient_ap_invested,
+     *                     insufficient_supply, max_level
+     */
+    public function levelupBlocker(int $colonyId, int $entityId): ?string
+    {
+        return match (true) {
+            ! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId) => 'requires_building',
+            ! $this->checkRequiredResearchesByEntityId($colonyId, $entityId) => 'requires_research',
+            ! $this->checkRequiredResourcesByEntityId($colonyId, $entityId) => 'insufficient_resources',
+            ! $this->checkRequiredActionPoints($colonyId, $entityId) => 'insufficient_ap_invested',
+            ! $this->checkRequiredSupplyByEntityId($colonyId, $entityId) => 'insufficient_supply',
+            ! $this->checkLevelUpLimit($colonyId, $entityId) => 'max_level',
+            default => null,
+        };
+    }
+
+    /**
+     * Name the reason an invest() call would be refused, or null when it may proceed.
+     *
+     * @return string|null one of: entity_not_found, insufficient_ap, invalid_mode
+     */
+    public function investBlocker(int $colonyId, int $entityId, string $action = 'add', int $points = 1): ?string
+    {
+        $this->validateId($colonyId);
+        $this->validateId($entityId);
+
+        if (! in_array($action, ['add', 'repair', 'remove'], true)) {
+            return 'invalid_mode';
+        }
+
+        if (! DB::table($this->masterTable())->find($entityId)) {
+            return 'entity_not_found';
+        }
+
+        if (config('game.bypass.ap_checks')) {
+            return null;
+        }
+
+        $available = match ($this->apPointsType()) {
+            'research_points' => $this->personellService?->getResearchPoints($colonyId) ?? 0,
+            default => $this->personellService?->getConstructionPoints($colonyId) ?? 0,
+        };
+
+        return $available < abs($points) ? 'insufficient_ap' : null;
+    }
+
+    /**
+     * Which AP pool this entity type draws from. Construction unless overridden.
+     */
+    protected function apPointsType(): string
+    {
+        return 'construction_points';
+    }
+
+    /**
      * Level up an entity: verify all prerequisites, pay costs, increment level.
      *
      * Resets ap_spend to 0 after levelup (except for personell).
      */
     public function levelup(int $colonyId, int $entityId): bool
     {
-        if (! $this->checkRequiredBuildingsByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredResearchesByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredResourcesByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredActionPoints($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkRequiredSupplyByEntityId($colonyId, $entityId)) {
-            return false;
-        }
-        if (! $this->checkLevelUpLimit($colonyId, $entityId)) {
+        if ($this->levelupBlocker($colonyId, $entityId) !== null) {
             return false;
         }
 

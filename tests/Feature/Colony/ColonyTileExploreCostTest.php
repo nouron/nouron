@@ -91,7 +91,8 @@ class ColonyTileExploreCostTest extends TestCase
         $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 2, 0);
 
         $this->assertFalse($result['ok']);
-        $this->assertSame(__('colony.error_no_nav_ap'), $result['error']);
+        $this->assertSame('no_nav_ap', $result['error']);
+        $this->assertSame(__('colony.error_no_nav_ap'), $result['message']);
         $this->assertSame(0, (int) DB::table('colony_tiles')
             ->where('colony_id', self::COLONY_ID)
             ->where('q', 2)->where('r', 0)

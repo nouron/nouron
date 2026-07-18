@@ -153,8 +153,8 @@ UPDATE "colony_ships" SET hangar_instance_id=2, ship_state='docked'     WHERE co
 -- Hangar missions for colony 1:
 -- Mission 1: drone dispatched from hangar 1, currently active
 -- Mission 2: freighter recalled from hangar 2, completed
-INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'Asteroid Belt Proxima',4,1,NULL,'active','2026-06-03 00:00:00');
-INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'Raani Trading Post',8,1,3,'recalled','2026-06-03 00:00:00');
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,1,85,'mission_recon_flight',1,1,NULL,'active','2026-06-03 00:00:00');
+INSERT INTO "colony_hangar_missions" (colony_id,instance_id,ship_id,destination,sol_distance,dispatch_tick,recall_tick,state,created_at) VALUES(1,2,47,'mission_supply_run',2,1,3,'recalled','2026-06-03 00:00:00');
 INSERT INTO "colony_personell" VALUES(1,35,9,10);
 INSERT INTO "colony_personell" VALUES(1,36,2,10);
 INSERT INTO "colony_personell" VALUES(1,89,0,10);
@@ -235,6 +235,9 @@ INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id
 INSERT INTO "bar_offers" (colony_id,give_resource_id,give_amount,get_resource_id,get_amount,expires_tick,is_accepted,created_at,updated_at) VALUES(1,3,20,5,30,9999999,0,'2026-05-14 00:00:00','2026-05-14 00:00:00');
 
 -- Active run for Bart (user_id=3) on Springfield (colony_id=1).
+-- Exactly ONE active run exists in the fixture, deliberately: the game is singleplayer,
+-- and `game:tick` without --run refuses to guess between several active runs.
+-- Homer's active run on Shelbyville was removed here (2026-07-17) — a leftover from the
+-- multiplayer era, which is out of scope. Homer and Shelbyville themselves stay: the
+-- cross-colony tests need a foreign colony to prove Bart cannot reach it.
 INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(1,3,1,5,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');
--- Active run for Homer (user_id=0) on Shelbyville (colony_id=2).
-INSERT OR REPLACE INTO "runs" (id,user_id,colony_id,current_tick,status,started_at,ended_at,settings,phase,fail_reason,nexus_debt,phase2_start_tick,created_at,updated_at) VALUES(2,0,2,20,'active','2026-05-23 00:00:00',NULL,'{"tick_limit":100,"bypass":{"ap_checks":false,"resource_costs":false,"supply_checks":false},"supply_cap_max":200,"max_players":1}',1,NULL,3000,NULL,'2026-05-23 00:00:00','2026-05-23 00:00:00');

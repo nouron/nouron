@@ -285,6 +285,24 @@ Es gibt aktuell **keinen** globalen Store — das ist ein bewusstes Copy-Paste-M
 
 ---
 
+### 5.6b Fehlerantworten aus AJAX-Aktionen (verbindlich)
+
+Eine Aktion, die die Spielregeln verbieten, antwortet mit **HTTP 422** und diesem Body:
+
+```json
+{ "ok": false, "error": "resource_limit", "message": "Nicht genug Regolith." }
+```
+
+- **`error` ist immer ein stabiler Maschinencode** (snake_case), nie Anzeigetext. Er ist der Schlüssel, auf den Code verzweigen und zählen darf.
+- **`message` ist immer der Spielertext** (via `__()`), nie ein Code. Nur er wird angezeigt.
+- Zusatzkontext kommt als eigene Felder daneben (`ap_type`, `current`, `cost`).
+
+Der umgekehrte Weg — den übersetzten Satz in `error` zu legen — macht das Feld als Schlüssel unbrauchbar: jede Übersetzungsänderung bricht dann still alles, was darauf verzweigt oder aggregiert. Referenz: `ColonyController::fail()`.
+
+**Die JS-Helper ignorieren den HTTP-Status bewusst** (`public/js/colony-hexgrid.js`, `command_center.js`): sie machen `.then(r => r.json())` und die Call-Sites verzweigen auf das JSON-Feld `res.ok`, nie auf `response.ok`. Das ist load-bearing — ein globaler „non-2xx = throw"-Interceptor würde allen Call-Sites gleichzeitig ihre spezifische Meldung nehmen. Anzeige immer als `res.message ?? res.error`.
+
+---
+
 ### 5.7 Tabellen
 
 - Volle Breite, `border-collapse: collapse`

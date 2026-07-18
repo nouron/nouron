@@ -2,6 +2,7 @@
 
 namespace App\Services\Techtree;
 
+use App\Enums\BuildingId;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -42,40 +43,44 @@ class ResearchService extends AbstractTechnologyService
      */
     public function invest(int $colonyId, int $entityId, string $action = 'add', int $points = 1): bool
     {
-        return $this->_invest('research_points', $colonyId, $entityId, $action, $points);
+        return $this->_invest($colonyId, $entityId, $action, $points);
     }
 
     /**
-     * Level up a research entity.
+     * Adds the knowledge CC-level gate (config/game.php → knowledge_cc_level_cap) on top
+     * of the shared requirement checks: a colony must have its CommandCenter at the
+     * required level before a Kenntnis may advance to the matching level.
      *
-     * For Kenntnisse (purpose='knowledge'), enforces the CC-level gate from
-     * config/game.php → knowledge_cc_level_cap before delegating to the base class.
-     * A colony must have its CommandCenter (building ID 25) at the required level
-     * before a Kenntnis can advance to the corresponding level.
+     * Checked first so the player is told about the CC, not about a downstream gate.
+     * levelup() needs no override — the base class refuses whenever this returns a code.
      */
-    public function levelup(int $colonyId, int $entityId): bool
+    public function levelupBlocker(int $colonyId, int $entityId): ?string
     {
         $entity = DB::table($this->masterTable())->find($entityId);
 
         if ($entity && ($entity->purpose ?? '') === 'knowledge') {
             $colonyEntity = $this->getColonyEntity($colonyId, $entityId);
-            $currentLevel = $colonyEntity ? (int) $colonyEntity->level : 0;
-            $targetLevel = $currentLevel + 1;
+            $targetLevel = ($colonyEntity ? (int) $colonyEntity->level : 0) + 1;
 
             $caps = config('game.knowledge_cc_level_cap', []);
             if (isset($caps[$targetLevel])) {
                 $ccLevel = (int) (DB::table('colony_buildings')
                     ->where('colony_id', $colonyId)
-                    ->where('building_id', 25)
+                    ->where('building_id', BuildingId::CommandCenter->value)
                     ->value('level') ?? 0);
 
                 if ($ccLevel < $caps[$targetLevel]) {
-                    return false;
+                    return 'knowledge_cc_gate';
                 }
             }
         }
 
-        return parent::levelup($colonyId, $entityId);
+        return parent::levelupBlocker($colonyId, $entityId);
+    }
+
+    protected function apPointsType(): string
+    {
+        return 'research_points';
     }
 
     /**

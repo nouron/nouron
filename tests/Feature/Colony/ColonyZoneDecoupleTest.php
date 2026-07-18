@@ -130,8 +130,9 @@ class ColonyZoneDecoupleTest extends TestCase
                 'r' => -1,
             ]);
 
-        $response->assertOk();
+        $response->assertStatus(422);
         $response->assertJsonPath('ok', false);
-        $response->assertJsonPath('error', __('colony.error_not_explored'));
+        $response->assertJsonPath('error', 'not_explored');
+        $response->assertJsonPath('message', __('colony.error_not_explored'));
     }
 }

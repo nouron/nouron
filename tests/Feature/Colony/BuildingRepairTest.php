@@ -145,8 +145,9 @@ class BuildingRepairTest extends TestCase
 
         $response = $this->repair();
 
-        $response->assertOk()->assertJsonPath('ok', false);
-        $this->assertSame(__('colony.error_repair_full'), $response->json('error'));
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('repair_full', $response->json('error'));
+        $this->assertSame(__('colony.error_repair_full'), $response->json('message'));
         $this->assertSame(self::CC_MAX_SP, (int) $this->ccRow()->status_points);
     }
 
@@ -156,16 +157,18 @@ class BuildingRepairTest extends TestCase
 
         $response = $this->repair();
 
-        $response->assertOk()->assertJsonPath('ok', false);
-        $this->assertSame(__('colony.error_repair_under_construction'), $response->json('error'));
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('repair_under_construction', $response->json('error'));
+        $this->assertSame(__('colony.error_repair_under_construction'), $response->json('message'));
     }
 
     public function test_repair_rejected_for_unknown_building(): void
     {
         $response = $this->repair(9999);
 
-        $response->assertOk()->assertJsonPath('ok', false);
-        $this->assertSame(__('colony.error_building_not_found'), $response->json('error'));
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('building_not_found', $response->json('error'));
+        $this->assertSame(__('colony.error_building_not_found'), $response->json('message'));
     }
 
     public function test_repair_rejected_without_construction_ap(): void
@@ -185,7 +188,7 @@ class BuildingRepairTest extends TestCase
 
         $response = $this->repair();
 
-        $response->assertOk()->assertJsonPath('ok', false);
+        $response->assertStatus(422)->assertJsonPath('ok', false);
         $this->assertSame('ap_limit', $response->json('error'));
         $this->assertSame(16, (int) $this->ccRow()->status_points);
     }

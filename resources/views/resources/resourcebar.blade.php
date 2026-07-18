@@ -27,7 +27,8 @@
         $solDisplay = $currentSol ?? null;
         $crResource = $primary[1] ?? null;
         $hasNexus = isset($nexusDebt) && $nexusDebt !== null;
-        $nexusPct = $hasNexus && ($nexusDebtMax ?? 12000) > 0 ? ($nexusDebt / ($nexusDebtMax ?? 12000)) * 100 : 0;
+        $nexusMax = (int) ($nexusDebtMax ?? config("game.run.nexus_debt_fail_threshold", 12000));
+        $nexusPct = $hasNexus && $nexusMax > 0 ? ($nexusDebt / $nexusMax) * 100 : 0;
         $nexusChipMod = match (true) {
             $nexusPct >= 95 => "res-chip--danger",
             $nexusPct >= 80 => "res-chip--warning",
@@ -104,7 +105,7 @@
                 "<span>" .
                 number_format($nexusDebt, 0, ",", ".") .
                 " / " .
-                number_format($nexusDebtMax ?? 12000, 0, ",", ".") .
+                number_format($nexusMax, 0, ",", ".") .
                 " Cr</span>" .
                 "</div>"
             : null;

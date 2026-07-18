@@ -130,4 +130,23 @@ return [
     'detail_count' => 'Count',
     'detail_ap_invest' => 'Invest AP',
     'detail_colony_link' => 'Build on colony',
+
+    // ── Error messages (techtree.error_<code>, see TechtreeController::orderFailed)
+    // Apply to buildings, knowledge and ships alike — deliberately worded without
+    // an entity type.
+    'error_requires_building' => 'A required building is missing or its level is too low.',
+    'error_requires_research' => 'The colony lacks the required knowledge.',
+    'error_insufficient_resources' => 'Not enough resources for this upgrade.',
+    'error_insufficient_ap_invested' => 'Not enough AP invested yet to complete the level.',
+    'error_insufficient_supply' => 'Not enough free supply capacity — expand a Residential Habitat first.',
+    'error_max_level' => 'Maximum level already reached.',
+    'error_knowledge_cc_gate' => 'Command Center level too low for this knowledge level — upgrade it first.',
+    'error_insufficient_ap' => 'Not enough AP available for this investment.',
+
+    // Technical rejections — normally never seen by the player.
+    'error_entity_not_found' => 'Unknown entity.',
+    'error_invalid_mode' => 'Invalid action.',
+    'error_unknown_type' => 'Unknown techtree type.',
+    'error_unknown_order' => 'Unknown order.',
+    'error_order_failed' => 'The order could not be carried out.',
 ];

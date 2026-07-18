@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Events\RunStarted;
 use App\Models\Colony;
 use App\Models\Run;
@@ -174,7 +175,7 @@ class OnboardingService
         DB::table('colony_buildings')->insert([
             [
                 'colony_id' => $colonyId,
-                'building_id' => 25, // CommandCenter
+                'building_id' => BuildingId::CommandCenter->value,
                 'level' => 1,
                 'status_points' => 16,
                 'ap_spend' => 0,

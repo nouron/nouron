@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Models\Advisor;
 use App\Models\Colony;
 use App\Services\Concerns\ValidatesId;
@@ -133,7 +134,7 @@ class ColonyService
         }
 
         $colonyId = $colony->id;
-        $ccId = config('buildings.commandCenter.id', 25);
+        $ccId = BuildingId::CommandCenter->value;
 
         if ((int) $run->phase === 1) {
             $ccLevel = (int) (DB::table('colony_buildings')

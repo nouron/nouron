@@ -57,6 +57,13 @@ function commandCenter(config = {}) {
         },
 
         // ── HTTP helpers ──────────────────────────────────────────────────────
+        //
+        // These deliberately ignore the HTTP status and resolve with the parsed body.
+        // The server answers rule violations with 422 + { ok: false, error, message },
+        // so callers branch on the JSON `ok` field, never on `response.ok`.
+        //
+        // Load-bearing: adding a global "non-2xx = throw" interceptor here would swallow
+        // every specific error message at once. Keep the status out of it.
 
         get(url) {
             return fetch(url, {

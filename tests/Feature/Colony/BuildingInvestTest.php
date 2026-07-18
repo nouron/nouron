@@ -107,8 +107,9 @@ class BuildingInvestTest extends TestCase
 
         $response = $this->invest();
 
-        $response->assertOk()->assertJsonPath('ok', false);
-        $this->assertSame(__('colony.error_max_level_reached'), $response->json('error'));
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('max_level_reached', $response->json('error'));
+        $this->assertSame(__('colony.error_max_level_reached'), $response->json('message'));
         $this->assertSame(5, (int) $this->ccRow()->level);
     }
 

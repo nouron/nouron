@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BuildingId;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -62,7 +63,7 @@ class ValidateColony extends Command
             // --- Check 3: CC level exists ---
             $ccLevel = DB::table('colony_buildings')
                 ->where('colony_id', $id)
-                ->where('building_id', 25)
+                ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level') ?? 0;
             if ($ccLevel === 0) {
                 $issues[] = ['ERROR', 'CommandCenter missing or level 0'];

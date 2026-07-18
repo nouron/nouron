@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\Run;
 use App\Models\User;
@@ -240,7 +241,7 @@ class ResetPlayer extends Command
         $this->tileService->generateDefaultTiles($colony);
 
         DB::table('colony_buildings')
-            ->where('colony_id', $cid)->where('building_id', 25)
+            ->where('colony_id', $cid)->where('building_id', BuildingId::CommandCenter->value)
             ->update(['level' => 3, 'status_points' => 20, 'tile_x' => 0, 'tile_y' => 0, 'placed_at_tick' => 1]);
 
         DB::table('colony_buildings')

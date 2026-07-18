@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
 use App\Services\Techtree\PersonellService;
@@ -32,16 +33,16 @@ class ColonyTileService
         $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
 
         if (! $tile) {
-            return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+            return ['ok' => false, 'error' => 'tile_not_found', 'message' => __('colony.error_tile_not_found')];
         }
         if ($tile->is_explored) {
-            return ['ok' => false, 'error' => __('colony.error_already_explored')];
+            return ['ok' => false, 'error' => 'already_explored', 'message' => __('colony.error_already_explored')];
         }
 
         $apCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $apCost) {
-            return ['ok' => false, 'error' => __('colony.error_no_nav_ap')];
+            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
@@ -58,16 +59,16 @@ class ColonyTileService
         $tile = ColonyTile::where('colony_id', $colonyId)->where('q', $q)->where('r', $r)->first();
 
         if (! $tile) {
-            return ['ok' => false, 'error' => __('colony.error_tile_not_found')];
+            return ['ok' => false, 'error' => 'tile_not_found', 'message' => __('colony.error_tile_not_found')];
         }
         if (! $tile->is_explored) {
-            return ['ok' => false, 'error' => __('colony.error_not_explored')];
+            return ['ok' => false, 'error' => 'not_explored', 'message' => __('colony.error_not_explored')];
         }
         if ($tile->event_type === null) {
-            return ['ok' => false, 'error' => __('colony.error_no_signal')];
+            return ['ok' => false, 'error' => 'no_signal', 'message' => __('colony.error_no_signal')];
         }
         if ($tile->is_deep_scanned) {
-            return ['ok' => false, 'error' => __('colony.error_already_scanned')];
+            return ['ok' => false, 'error' => 'already_scanned', 'message' => __('colony.error_already_scanned')];
         }
 
         // Uplink-Station Lv2+ (building_id=54): deep-scan costs 1 Nav-AP instead of 2.
@@ -78,7 +79,7 @@ class ColonyTileService
         $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
-            return ['ok' => false, 'error' => __('colony.error_no_nav_ap_2')];
+            return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2')];
         }
 
         $tile->is_deep_scanned = true;
@@ -195,7 +196,7 @@ class ColonyTileService
         $colonyId = $colony->id;
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
-            ->where('building_id', 25)
+            ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0;
 
         $rows = [];

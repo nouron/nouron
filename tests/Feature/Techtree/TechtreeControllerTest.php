@@ -80,6 +80,105 @@ class TechtreeControllerTest extends TestCase
         $this->assertEquals(1, $afterOwn, 'Colony 1 (Bart\'s) must be updated');
     }
 
+    // ── order(): rejections carry a reason ────────────────────────────────────
+
+    /**
+     * The techtree used to answer a bare `{success:false}` for every rejection, so
+     * neither the player nor a client could tell "not enough AP" from "wrong CC level".
+     */
+    public function test_order_rejection_names_the_blocking_requirement(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+
+        // housingComplex (28): ap_spend=0, ap_for_levelup=10 → the invested-AP gate blocks.
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 28]), ['order' => 'levelup']);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $response->assertJsonPath('error', 'insufficient_ap_invested');
+
+        // The message must be resolved text, not the lang key echoed back — a missing
+        // translation would otherwise show up as "techtree.error_..." in the UI.
+        $message = (string) $response->json('message');
+        $this->assertNotEmpty($message, 'A rejection must carry player-facing text.');
+        $this->assertStringNotContainsString('techtree.error_', $message);
+        $this->assertSame(__('techtree.error_insufficient_ap_invested'), $message);
+    }
+
+    /**
+     * Every blocker code the services can return must have a translation, in both
+     * locales. Without this a new code silently surfaces as a raw lang key.
+     */
+    public function test_every_blocker_code_has_a_translation(): void
+    {
+        $codes = [
+            'requires_building', 'requires_research', 'insufficient_resources',
+            'insufficient_ap_invested', 'insufficient_supply', 'max_level',
+            'knowledge_cc_gate', 'insufficient_ap', 'entity_not_found',
+            'invalid_mode', 'unknown_type', 'unknown_order', 'order_failed',
+        ];
+
+        foreach (['de', 'en'] as $locale) {
+            foreach ($codes as $code) {
+                $key = "techtree.error_{$code}";
+                $this->assertNotSame(
+                    $key,
+                    __($key, [], $locale),
+                    "Missing {$locale} translation for {$key}"
+                );
+            }
+        }
+    }
+
+    public function test_order_rejection_reports_the_knowledge_cc_gate(): void
+    {
+        // Knowledge Lv3→4 needs CC Lv4 (game.knowledge_cc_level_cap); Bart's CC is Lv3.
+        $knowledgeId = 90; // construction
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => $knowledgeId],
+            ['level' => 3, 'ap_spend' => 999, 'status_points' => 20]
+        );
+
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => $knowledgeId]), ['order' => 'levelup']);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'knowledge_cc_gate');
+    }
+
+    public function test_order_rejects_an_unknown_order(): void
+    {
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'sabotage']);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'unknown_order');
+    }
+
+    /**
+     * Regression: PersonellService neither extends AbstractTechnologyService nor has
+     * invest()/levelup(), yet the controller used to map 'personell' onto it — so this
+     * request died with "call to undefined method" (HTTP 500). {type} is unconstrained
+     * in the route, so it was reachable from outside. Advisors are hired via AdvisorController.
+     */
+    public function test_order_on_the_personell_type_is_rejected_not_a_server_error(): void
+    {
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'personell', 'id' => 35]), ['order' => 'add', 'ap' => 1]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'unknown_type');
+    }
+
+    public function test_action_on_an_unknown_type_is_404_not_a_server_error(): void
+    {
+        // Used to throw InvalidArgumentException → 500.
+        $this->actingAs(User::find($this->userIdBart))
+            ->get(route('techtree.action', ['type' => 'bogus', 'id' => 27, 'order' => 'add']))
+            ->assertNotFound();
+    }
+
     public function test_index_returns200_with_page_data(): void
     {
         $bart = User::find($this->userIdBart);

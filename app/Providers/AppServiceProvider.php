@@ -127,19 +127,24 @@ class AppServiceProvider extends ServiceProvider
                 $view->with('solLimit', $solLimit);
 
                 // Feature 3: Nexus debt from the active run — shown in the navbar.
-                // nexus_debt_max = 12000 Cr (Nexus cancels the concession above this cap, GDD §15).
+                // The cap comes from game.run.nexus_debt_fail_threshold — the same value the
+                // run-fail check reads, so the navbar gauge and the actual fail point cannot drift.
                 // Only runs with started_at set count as "in-run" — pending runs do not show run UI.
                 $activeRun = Run::where('user_id', Auth::id())
                     ->where('status', 'active')
                     ->whereNotNull('started_at')
-                    ->first(['nexus_debt']);
+                    ->first(['nexus_debt', 'colony_id']);
 
                 $view->with('nexusDebt', $activeRun?->nexus_debt);
-                $view->with('nexusDebtMax', 12000);
+                $view->with('nexusDebtMax', (int) config('game.run.nexus_debt_fail_threshold', 12000));
                 $view->with('inActiveRun', $activeRun !== null);
 
-                // Nav-link gating: grey out when prerequisite building not yet built
-                $colonyIdForBar = session('activeIds.colonyId', 1);
+                // Nav-link gating: grey out when prerequisite building not yet built.
+                // Take the colony from the player's own run — never from a session default,
+                // which would gate the navbar on a stranger's colony for anyone whose
+                // session lacks the key. No run in progress: everything stays gated, which
+                // matches the `run.started` middleware guarding those screens anyway.
+                $colonyIdForBar = $activeRun?->colony_id;
                 $barBuilt = DB::table('colony_buildings')
                     ->where('colony_id', $colonyIdForBar)
                     ->where('building_id', 52)
