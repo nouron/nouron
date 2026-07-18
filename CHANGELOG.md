@@ -4,7 +4,11 @@
 
 PR #217 (Vorarbeiten Playtest-Bot) gemerged. Zweiter Ultrareview-Durchgang auf PR #218 (Playtest-Bot, jetzt gegen master statt #217) — 8 Funde, u.a. fehlendes `defaultTestSuite` in `phpunit.xml` (ein blankes `bin/phpunit` lief bislang alle Suiten inkl. der bewusst roten `playtest`-Tests mit) und `repair_critical`, das kein Construction-AP vor dem Feuern prüfte. Details siehe PR-Diskussion.
 
-**Letzter vorbestehender Testfehler behoben:** `TrustServiceTest::test_get_band_unknown_locale_returns_translation_key` ging seit PR #216 (2026-07-14) davon aus, ein unbekanntes Locale (`xx`) habe keine Fallback-Übersetzung. Inzwischen existiert `lang/en/trust.php`, und `fallback_locale` ist `en` — Laravel löst korrekt zu `'Euphoric'`/`'Unrest'` auf statt den rohen Key zurückzugeben. Kein Service-Bug, nur eine veraltete Testannahme; Test entsprechend umbenannt und korrigiert. Komplette Suite jetzt grün: 720 Tests, 0 Failures, 3 bewusst Skipped (Playtest-Bot-Balance-Lücke, siehe PR #218).
+**Letzter vorbestehender Testfehler behoben:** `TrustServiceTest::test_get_band_unknown_locale_returns_translation_key` ging seit PR #216 (2026-07-14) davon aus, ein unbekanntes Locale (`xx`) habe keine Fallback-Übersetzung. Inzwischen existiert `lang/en/trust.php`, und `fallback_locale` ist `en` — Laravel löst korrekt zu `'Euphoric'`/`'Unrest'` auf statt den rohen Key zurückzugeben. Kein Service-Bug, nur eine veraltete Testannahme; Test entsprechend umbenannt und korrigiert.
+
+**Einer der 3 Skips ebenfalls aufgeräumt:** `BuildingRepairTest::test_repair_rejected_without_construction_ap` sprang sich selbst mit `markTestSkipped()`, weil `phpunit.xml` `GAME_BYPASS_AP=true` als Suite-Default setzt und der Test den Bypass nie in `setUp()` zurücksetzte (anders als vergleichbare AP/Resource-Tests im Repo). Jetzt `config(['game.bypass.ap_checks' => false])` direkt im Test — läuft echt gegen das reale `ap_limit`-Gate.
+
+Komplette Suite jetzt grün: 720 Tests, 0 Failures, nur noch 2 bewusst Skipped (Playtest-Bot-Balance-Lücke, siehe PR #218).
 
 ## 2026-07-17 (2)
 
