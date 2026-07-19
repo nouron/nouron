@@ -48,7 +48,7 @@ class AdvisorPromotionCostTest extends TestCase
     private const ADVISOR_PERSONELL_ID = 92;
 
     /**
-     * Threshold from config: advisor at rank 1 needs 10 active_ticks to become rank 2.
+     * Threshold from config: advisor at rank 1 needs 15 active_ticks to become rank 2.
      * Set active_ticks to threshold - 1 so that one tick push crosses the boundary.
      */
     private const RANK1_THRESHOLD = 15; // config('game.advisor.rank_thresholds')[1]

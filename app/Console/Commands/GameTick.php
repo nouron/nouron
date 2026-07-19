@@ -996,7 +996,7 @@ class GameTick extends Command
      */
     private function deductAdvisorUpkeep(int $tick): int
     {
-        $upkeepByRank = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $upkeepByRank = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
 
         $advisors = Advisor::whereNotNull('colony_id')->with('colony')->get();
 
@@ -1074,7 +1074,7 @@ class GameTick extends Command
             ->whereNotNull('colony_id')
             ->increment('active_ticks');
 
-        $thresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
+        $thresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
         $promotionCosts = config('game.advisor.promotion_costs', [2 => 150, 3 => 400]);
 
         foreach ($thresholds as $fromRank => $ticks) {

@@ -9,6 +9,7 @@ Balance-Ticket Hangar/Konsul-Ökonomie (Playtest-Bot-Befund, siehe 2026-07-17 (2
 - **Rang-Schwellen gestreckt:** `rank_thresholds` `[1=>10, 2=>20]` → `[1=>15, 2=>45]` active_ticks — mehr Zeit, Einkommensinfrastruktur (Uplink Station, Handelsvertrag) aufzubauen, bevor Upkeep steigt.
 - **Neues Einkommen "Handelsvertrag":** `credits.consul_contract_income_per_rank = [1=>10, 2=>25, 3=>45]` — Cr/Tick, wenn ein Konsul (Trader-Berater) der Kolonie zugewiesen ist UND die Cantina (Bar) gebaut ist. Schließt die Lücke, dass Bar/Cantina bisher keinen reinen Credits-Einkommenstyp bot (alle bestehenden Angebote setzen bereits vorhandenen Ressourcen-/Credits-Überschuss voraus, der nie entstand).
 - Events als Einkommensquelle bewusst zurückgestellt (Owner-Entscheidung).
+- **Review-Nachtrag:** Hartcodierte Config-Fallbacks für `advisor.upkeep`/`rank_thresholds` in `GameTick` und `AdvisorController` auf die neuen Werte angeglichen (waren nur bei fehlendem Config-Key wirksam); veralteter Schwellen-Kommentar in `AdvisorPromotionCostTest` korrigiert.
 
 Playtest-Bot-Ergebnis vorher/nachher: `phase2_start_sol=-` (nie erreicht) → `phase2_start_sol=49`. Bot läuft weiterhin bis `time_limit` (Sol 95) aus, aber Phase 2 ist jetzt erreichbar — echter Fortschritt gegenüber dem strukturellen Totalkollaps davor.
 
