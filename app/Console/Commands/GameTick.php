@@ -887,9 +887,22 @@ class GameTick extends Command
      * Awards passive Credits income to every player colony per tick.
      *
      * Formula (GDD §3):
-     *   nexus    = game.credits.nexus_subsidy        (flat, if CC level > 0)
-     *   housing  = housingComplex.level × game.credits.tax_per_housing
-     *   total    = nexus + housing
+     *   nexus    = game.credits.nexus_subsidy               (flat, if CC level > 0)
+     *   relay    = uplinkStation.level × game.credits.relay_bonus_per_uplink_level
+     *   contract = consul_contract_income_per_rank[konsulRank]  (Konsul assigned + Cantina built)
+     *   total    = nexus + relay + contract
+     *
+     * "Relaisvergütung" is anchored on Uplink Station, not Housing — colonists'
+     * living quarters have no thematic connection to Nexus relay/sensor capacity,
+     * and Uplink Station already gates every other Nexus-facing mechanic
+     * (deep-scan cost, direct import, merchant frequency). Uplink Station is a
+     * single instance (is_instanced=0), so a plain level lookup is correct here —
+     * no summing across instances needed, unlike Housing.
+     *
+     * "Handelsvertrag" requires a Konsul (trader advisor) assigned to the colony AND
+     * the Cantina (Bar building) at level >= 1 — the Konsul brokers trade deals
+     * through it. 0 with no Konsul assigned; an intended cost of that advisor slot
+     * choice, not a bug (GDD §12 Kanal 1).
      *
      * Colonies without a CC (level = 0) are skipped — the Nexus subsidy only flows
      * once the colony is operational.  NPC colonies (user_id = null) are skipped.
@@ -899,7 +912,8 @@ class GameTick extends Command
     private function generatePassiveCredits(int $tick): int
     {
         $nexusSubsidy = (int) config('game.credits.nexus_subsidy', 30);
-        $taxPerHousing = (int) config('game.credits.tax_per_housing', 20);
+        $relayBonusPerLevel = (int) config('game.credits.relay_bonus_per_uplink_level', 20);
+        $contractIncomePerRank = config('game.credits.consul_contract_income_per_rank', [1 => 10, 2 => 25, 3 => 45]);
 
         $colonies = Colony::whereNotNull('user_id')->get();
         $processed = 0;
@@ -914,13 +928,29 @@ class GameTick extends Command
                 continue; // no CC → colony not operational → no subsidy
             }
 
-            $housingLevel = (int) DB::table('colony_buildings')
+            $uplinkLevel = (int) DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
-                ->where('building_id', BuildingId::Housing->value)
+                ->where('building_id', BuildingId::UplinkStation->value)
                 ->value('level');
 
-            $housingTax = $housingLevel * $taxPerHousing;
-            $total = $nexusSubsidy + $housingTax;
+            $relayBonus = $uplinkLevel * $relayBonusPerLevel;
+
+            $cantinaLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', BuildingId::Bar->value)
+                ->value('level');
+
+            $contract = 0;
+            if ($cantinaLevel > 0) {
+                $konsulRank = (int) DB::table('advisors')
+                    ->where('colony_id', $colony->id)
+                    ->where('personell_id', config('advisors.trader.id', 92))
+                    ->value('rank');
+
+                $contract = (int) ($contractIncomePerRank[$konsulRank] ?? 0);
+            }
+
+            $total = $nexusSubsidy + $relayBonus + $contract;
 
             DB::table('user_resources')
                 ->where('user_id', $colony->user_id)
@@ -935,7 +965,8 @@ class GameTick extends Command
                     'parameters' => json_encode([
                         'colony_id' => $colony->id,
                         'subsidy' => $nexusSubsidy,
-                        'housing_tax' => $housingTax,
+                        'relay_bonus' => $relayBonus,
+                        'contract' => $contract,
                         'total' => $total,
                     ]),
                 ]);

@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-19
+
+Balance-Ticket Hangar/Konsul-Ökonomie (Playtest-Bot-Befund, siehe 2026-07-17 (2)) angegangen:
+
+- **Relaisvergütung umgehängt:** Housing → Uplink Station (`config/game.php: credits.relay_bonus_per_uplink_level`). Housing hat thematisch keinen Bezug zu Nexus-Relais/Sensor-Infrastruktur; Uplink Station (CC Lv2+, schon Gate für Deep-Scan/Direct-Import/Händlerfrequenz) ist die richtige Verankerung. `BuildingId::UplinkStation` (54) ergänzt.
+- **Advisor-Upkeep abgeflacht:** `[1=>10, 2=>50, 3=>160]` → `[1=>10, 2=>30, 3=>80]` Cr/Tick. Die alte Kurve machte 3 Berater auf Rang 2 (150 Cr/Tick Upkeep vs. 30 Cr/Tick Nexus-Zuschuss) strukturell unwirtschaftlich — kollabierte unabhängig vom Spielverhalten, weil laufender Upkeep (anders als die Beförderungsgebühr) nicht Credits-gated ist.
+- **Rang-Schwellen gestreckt:** `rank_thresholds` `[1=>10, 2=>20]` → `[1=>15, 2=>45]` active_ticks — mehr Zeit, Einkommensinfrastruktur (Uplink Station, Handelsvertrag) aufzubauen, bevor Upkeep steigt.
+- **Neues Einkommen "Handelsvertrag":** `credits.consul_contract_income_per_rank = [1=>10, 2=>25, 3=>45]` — Cr/Tick, wenn ein Konsul (Trader-Berater) der Kolonie zugewiesen ist UND die Cantina (Bar) gebaut ist. Schließt die Lücke, dass Bar/Cantina bisher keinen reinen Credits-Einkommenstyp bot (alle bestehenden Angebote setzen bereits vorhandenen Ressourcen-/Credits-Überschuss voraus, der nie entstand).
+- Events als Einkommensquelle bewusst zurückgestellt (Owner-Entscheidung).
+
+Playtest-Bot-Ergebnis vorher/nachher: `phase2_start_sol=-` (nie erreicht) → `phase2_start_sol=49`. Bot läuft weiterhin bis `time_limit` (Sol 95) aus, aber Phase 2 ist jetzt erreichbar — echter Fortschritt gegenüber dem strukturellen Totalkollaps davor.
+
+GDD §3/§12/§13/§18 aktualisiert (game-designer-Review). Betroffene Tests angepasst: `GameTickCreditsTest`, `GameTickAdvisorTest`, `AdvisorPromotionCostTest`, `PersonellServiceTest`, `SolReportTest`. `docs/GDD.md`-Balance-Concern bei `task_credit_reserve` von "Nach Playtest kalibrieren" auf finale Entscheidung mit Break-even-Rechnung aktualisiert.
+
+Nicht gefixt (eigenes Ticket, außerhalb Scope): `app/Console/Commands/ResetPlayer.php` setzt in mehreren Dev-Szenarien `rank`/`active_ticks`-Kombinationen hart, die mit den neuen Schwellen inkonsistent sind (z.B. rank=1 mit active_ticks=50 würde sofort promoten) — bereits unter den alten Schwellen leicht inkonsistent, kein Regressionsrisiko durch dieses Ticket.
+
+Komplette Suite grün: 723 Tests, 0 Failures.
+
 ## 2026-07-18
 
 PR #217 (Vorarbeiten Playtest-Bot) gemerged. Zweiter Ultrareview-Durchgang auf PR #218 (Playtest-Bot, jetzt gegen master statt #217) — 8 Funde, u.a. fehlendes `defaultTestSuite` in `phpunit.xml` (ein blankes `bin/phpunit` lief bislang alle Suiten inkl. der bewusst roten `playtest`-Tests mit) und `repair_critical`, das kein Construction-AP vor dem Feuern prüfte. Details siehe PR-Diskussion.

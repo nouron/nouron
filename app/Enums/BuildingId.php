@@ -21,4 +21,5 @@ enum BuildingId: int
     case Sciencelab = 31;
     case Hangar = 44;
     case Bar = 52;
+    case UplinkStation = 54;
 }

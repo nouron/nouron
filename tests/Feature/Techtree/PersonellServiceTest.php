@@ -393,35 +393,35 @@ class PersonellServiceTest extends TestCase
         $this->assertEquals(7, $unavailable->active_ticks); // unchanged
     }
 
-    public function test_rank_promotion_to_two_at_ten_ticks(): void
+    public function test_rank_promotion_to_two_at_fifteen_ticks(): void
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
             'personell_id' => PersonellService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
-            'active_ticks' => 9,
+            'active_ticks' => 14,
         ]);
 
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
-        $this->assertEquals(10, $advisor->active_ticks);
+        $this->assertEquals(15, $advisor->active_ticks);
         $this->assertEquals(2, $advisor->rank);
     }
 
-    public function test_rank_promotion_to_three_at_twenty_ticks(): void
+    public function test_rank_promotion_to_three_at_fortyfive_ticks(): void
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
             'personell_id' => PersonellService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 2,
-            'active_ticks' => 19,
+            'active_ticks' => 44,
         ]);
 
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
-        $this->assertEquals(20, $advisor->active_ticks);
+        $this->assertEquals(45, $advisor->active_ticks);
         $this->assertEquals(3, $advisor->rank);
     }
 
@@ -442,7 +442,7 @@ class PersonellServiceTest extends TestCase
 
     public function test_rank_promotion_ap_points_reflect_new_rank_after_tick(): void
     {
-        // Start with 1 engineer at rank 1, 9 ticks — after one tick it hits 10 and promotes
+        // Start with 1 engineer at rank 1, 14 ticks — after one tick it hits 15 and promotes
         Advisor::where('colony_id', $this->colonyId)
             ->where('personell_id', PersonellService::idFor('engineer'))
             ->delete();
@@ -452,7 +452,7 @@ class PersonellServiceTest extends TestCase
             'personell_id' => PersonellService::idFor('engineer'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
-            'active_ticks' => 9,
+            'active_ticks' => 14,
         ]);
 
         $this->artisan('game:tick')->assertSuccessful();

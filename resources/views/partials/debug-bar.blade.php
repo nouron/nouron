@@ -96,8 +96,8 @@
             <div style="color:#ff0;margin-bottom:4px;">Credits</div>
             <div><span style="color:#666;">nexus_subsidy:</span> <span
                     style="color:#ddd;">{{ $cfgCredit["nexus_subsidy"] }} Cr</span></div>
-            <div><span style="color:#666;">tax_per_housing:</span> <span
-                    style="color:#ddd;">{{ $cfgCredit["tax_per_housing"] }} Cr</span></div>
+            <div><span style="color:#666;">relay_bonus_per_uplink_level:</span> <span
+                    style="color:#ddd;">{{ $cfgCredit["relay_bonus_per_uplink_level"] }} Cr</span></div>
         </div>
 
         {{-- Trust Events --}}

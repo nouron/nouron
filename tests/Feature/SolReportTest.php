@@ -312,7 +312,7 @@ class SolReportTest extends TestCase
             'tick' => 7,
             'event' => 'colony.passive_credits',
             'area' => 'colony',
-            'parameters' => json_encode(['colony_id' => self::COLONY_ID, 'subsidy' => 30, 'housing_tax' => 40, 'total' => 70]),
+            'parameters' => json_encode(['colony_id' => self::COLONY_ID, 'subsidy' => 30, 'relay_bonus' => 40, 'total' => 70]),
             'created_at' => now(),
             'is_read' => 1,
         ]);
