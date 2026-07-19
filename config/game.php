@@ -143,7 +143,10 @@ return [
     // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
     // Configurable so balancing can be adjusted after first playtest (see GDD §8).
     'advisor' => [
-        'rank_thresholds' => [1 => 10, 2 => 20],
+        // Stretched 2026-07-19 (was [1=>10, 2=>20]) — gives the colony time to build
+        // income infrastructure (Uplink Station, Konsul-Handelsvertrag) before upkeep
+        // escalates. See GDD §18 task_credit_reserve.
+        'rank_thresholds' => [1 => 15, 2 => 45],
         'ap_per_rank' => [1 => 4, 2 => 7, 3 => 12],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
         // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
@@ -154,7 +157,10 @@ return [
         // Credits deducted from the owning user each tick per active advisor (GDD §12).
         // Processed in GameTick after passive Credits income to prevent false-negative
         // deficits when income and upkeep fire in the same tick.
-        'upkeep' => [1 => 10, 2 => 50, 3 => 160],
+        // Flattened 2026-07-19 (was [1=>10, 2=>50, 3=>160]) — the old Rang-2 cliff made
+        // 3 advisors at rank 2 cost 150 Cr/Tick against ~30-70 Cr/Tick income, a
+        // structural collapse no player action could prevent (GDD §18 task_credit_reserve).
+        'upkeep' => [1 => 10, 2 => 30, 3 => 80],
     ],
 
     // Passive Credits income per tick (GDD §3).
@@ -162,8 +168,20 @@ return [
     'credits' => [
         // Flat Cr/Tick subsidy from the Nexus for every colony that has CC > 0.
         'nexus_subsidy' => 30,
-        // Cr/Tick per housing level (sum of all housingComplex instances in the colony).
-        'tax_per_housing' => 20,
+        // "Relaisvergütung" — Cr/Tick per Uplink Station level, paid by the Nexus for
+        // the relay/sensor infrastructure the station hosts on its network (GDD §3).
+        // Not housing-based: colonists' living quarters have no thematic connection
+        // to Nexus relay capacity, and Uplink Station (CC Lv2+, single instance) is
+        // the building that already gates every other Nexus-facing mechanic
+        // (deep-scan cost, direct import, merchant frequency).
+        'relay_bonus_per_uplink_level' => 20,
+        // "Handelsvertrag" — Cr/Tick flat income while a Konsul (trader advisor,
+        // personell_id 92) is assigned to the colony AND the Cantina (Bar, building_id
+        // 52) is built (level >= 1). Keyed by the Konsul's current rank. Represents the
+        // Konsul actively brokering trade deals through the Cantina (GDD §12 Kanal 1).
+        // 0 with no Konsul assigned — an intended cost of skipping that advisor type,
+        // not a bug. Added 2026-07-19 as part of the Phase-1 credit-collapse fix.
+        'consul_contract_income_per_rank' => [1 => 10, 2 => 25, 3 => 45],
     ],
 
     // Bar/Cantina NPC offer generation (GDD §12 Kanal 1).

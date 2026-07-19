@@ -414,7 +414,7 @@ class SolReportService
         ];
 
         // Passive Nexus income breakdown (Galaktischer Rat subsidy +
-        // Relaisvergütung per Wohnhabitat-Level, GDD §3) — otherwise the
+        // Relaisvergütung per Uplink-Station-Level, GDD §3) — otherwise the
         // Credits delta above has no visible source.
         foreach ($events['colony.passive_credits'] ?? [] as $params) {
             $lines[] = [

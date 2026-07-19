@@ -251,8 +251,9 @@ Credits werden durch vier Quellen erworben:
 
 | Quelle | Beschreibung |
 |--------|-------------|
-| Relaisvergütung | Nexus zahlt pro Sol eine Vergütung für die Relais-/Sensor-Infrastruktur, die jedes Wohnhabitat für das Nexus-Netzwerk bereithält — abhängig vom Wohnhabitat-Level |
+| Relaisvergütung | Nexus zahlt pro Sol eine Vergütung für die Relais-/Sensor-Infrastruktur der Uplink-Station — abhängig vom Uplink-Station-Level |
 | Galaktischer Rat | Staatliche Subventionen für aktive Kolonien pro Sol (Arbeitstitel: Name noch offen) |
+| Handelsvertrag (Konsul) | Garantierte Bar-Einnahme, sobald ein Konsul zugewiesen ist und die Cantina Lv1+ steht — ≈10/25/45 Cr/Sol je Konsul-Rang (§12, §13) |
 | Handel | Einnahmen aus Handelsrouten beim Verkauf von Regolith / Organika / Werkstoffen |
 | Events | Einmalige Gutschriften durch zufällige Ereignisse |
 
@@ -1565,6 +1566,17 @@ Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, 
 
 Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet 1 Economy-AP** — dieser Sink macht den Konsul-AP-Pool spielerisch relevant.
 
+**Handelsvertrag (neue, garantierte Einnahmequelle, 2026-07-19):** Beide obigen Angebotstypen erzeugen kein Credits-Einkommen für den Spieler — sie kosten Credits (Kauf) oder sind ressourcenneutral (Tausch). Das war die Kernursache dafür, dass die Kolonie strukturell kein Credits-Einkommen aus Handel ziehen konnte (Playtest-Bot-Befund, PR #218; siehe §18 `task_credit_reserve`). Fix: kein Bar-Angebot im bisherigen Sinn (kein Karten-Slot, keine Annahme, kein AP-Kosten), sondern eine **passive Cr/Sol-Einnahme** — strukturell identisch zur Relaisvergütung (§3): sie fließt automatisch pro Tick, solange ein Konsul der Kolonie zugewiesen ist **und** die Cantina mind. Lv1 gebaut ist. Thematisch vermittelt der Konsul laufende Handelsverträge im Hintergrund; die Kolonie liefert dafür keine Ressourcen. Config-Key-Vorschlag: `game.credits.consul_contract_income_per_rank`, verarbeitet in `GameTick` im selben Schritt wie `nexus_subsidy`/`relay_bonus_per_uplink_level`. Werte nach Konsul-Rang:
+
+| Konsul-Rang | Handelsvertrag-Einkommen |
+|-------------|--------------------------|
+| Kein Konsul | 0 Cr/Sol |
+| 1 — Junior | 10 Cr/Sol |
+| 2 — Senior | 25 Cr/Sol |
+| 3 — Experte | 45 Cr/Sol |
+
+Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtigt**, keine versteckte Falle: die Konsul-Entscheidung bekommt dadurch einen echten wirtschaftlichen Gegenwert, den Analytiker und Raumfahrer nicht bieten. Ein Spieler ohne Konsul kompensiert über Uplink-Station-Ausbau oder trägt ein spürbares, aber wegen des hohen Credits-Fail-Schwellenwerts (> 12.000 Cr Schulden, §15) nicht sofort tödliches Defizit.
+
 **Bar-Level-Progression:**
 
 | Level | Angebots-Gültigkeit | Max. gleichzeitig aktive Angebote |
@@ -1856,10 +1868,12 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol
 | Rang | Bezeichnung | AP-Bonus/Sol | Gesamt-AP/Sol | Upkeep (Cr/Sol) |
 |------|-------------|--------------|---------------|-----------------|
 | 1 | Junior | +4 | 10 | 10 |
-| 2 | Senior | +7 | 13 | 50 |
-| 3 | Experte | +12 | 18 | 160 |
+| 2 | Senior | +7 | 13 | 30 |
+| 3 | Experte | +12 | 18 | 80 |
 
 *(Gesamt-AP = 6 Grundwert + AP-Bonus)*
+
+> **Balance-Entscheidung (2026-07-19):** Upkeep-Kurve gegenüber der ursprünglichen Kalibrierung (10/50/160) abgeflacht — die alte Kurve ließ die Credits-Ökonomie strukturell kollabieren, sobald mehrere Berater gleichzeitig Rang 2 erreichten (Playtest-Bot-Befund, PR #218). Begleitend wurden die Beförderungs-Schwellen (`rank_thresholds`) von `[1=>10, 2=>20]` auf **`[1=>15, 2=>45]`** aktive Ticks gestreckt — mehr Zeit, um Uplink-Station und Cantina vor dem teureren Upkeep hochzuziehen. Volle Herleitung inkl. Break-even-Rechnung: siehe §18 Balancing-Richtlinien (`task_credit_reserve`).
 
 **Einstellungskosten (Rang 1) — typ-spezifisch:**
 
@@ -2095,7 +2109,7 @@ Die Wirkung folgt der Standard-Event-Logik (siehe "Einflussfaktoren: Ereignisse"
 
 **Nur eine Zulage pro Sol.** Die drei Stufen sind unterschiedliche Event-Keys (nicht Varianten desselben Keys) — das bestehende Dedup in `TrustService::eventContribution` fasst nur *gleiche* Keys zusammen und summiert *unterschiedliche* Keys auf. Ohne zusätzliche Sperre könnten "Klein" + "Groß" im selben Sol also zu +6 Vertrauen kombiniert werden. Das ist **nicht gewollt** und muss bei der Implementierung als eigene Regel ergänzt werden: pro Kolonie und Sol ist höchstens eine Zulagen-Stufe auslösbar (Fire-Time-Guard im Service, nicht im bestehenden Event-Dedup). Dieser Punkt ist ein expliziter Implementierungs-Hinweis, kein bereits vorhandenes Verhalten.
 
-**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (Credits pro Vertrauenspunkt steigen von 50 auf 150) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer jeden Sol die kleine Stufe zieht, zahlt 100 Credits/Sol für einen wiederkehrenden +2-Bonus — spürbar gegenüber der Relaisvergütung (20–120 Cr/Sol, abhängig vom Wohnhabitat-Level) und dem Berater-Upkeep (50 Cr/Sol, Rang 2), aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig +15 Vertrauen für 600 Credits (40 Cr/Punkt) — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll.
+**Kein Cooldown über mehrere Sole hinweg.** Die Staffelung ist bewusst **degressiv** (Credits pro Vertrauenspunkt steigen von 50 auf 150) — je größer die Ausschüttung, desto ineffizienter pro Credit. Das macht tägliches Wiederholen unattraktiv, ohne eine künstliche Sperre zu benötigen: Wer jeden Sol die kleine Stufe zieht, zahlt 100 Credits/Sol für einen wiederkehrenden +2-Bonus — spürbar gegenüber der Relaisvergütung (20–60 Cr/Sol, abhängig vom Uplink-Station-Level) und dem Berater-Upkeep (50 Cr/Sol, Rang 2), aber nicht kostenlos. Zum Vergleich: der seltene Händler-Artikel "Vertrauensschub" (§12, `trust_boost`) liefert einmalig +15 Vertrauen für 600 Credits (40 Cr/Punkt) — die Kolonisten-Zulage ist bewusst *weniger* effizient pro Credit, da sie jederzeit verfügbar ist und die übrigen Vertrauensfaktoren (Gebäude, Kenntnisse, Verpflegung) nicht verdrängen soll.
 
 **Rationale:** Die Zulage gibt dem Spieler einen direkten, jederzeit verfügbaren Hebel auf Vertrauen — aber zu einem Preis, der die Entscheidung "Vertrauen jetzt sichern" gegen "Credits in Ausbau/Handel investieren" tatsächlich schwer macht. Die degressive Staffelung verhindert, dass die große Stufe zur Standardwahl wird; die Einmal-pro-Sol-Regel verhindert Kombination innerhalb eines Sols. Zusammen ersetzt das einen Cooldown, ohne die Reaktionsfreiheit des Spielers einzuschränken.
 
@@ -3397,7 +3411,18 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 
 > ⚠️ BALANCE CONCERN: `task_expedition_coverage: 19` (alle Colony-Zone-Tiles erkundet) ist der schwierigste Task-Target-Wert und braucht als erstes Playtest-Validierung. 19 Tiles bei ring-gestaffelten Kosten (1/2/3 Nav-AP/Ring) und einem Junior-Raumfahrer mit ~7 Nav-AP/Sol ergibt rechnerisch ~3–5 Sole reiner Erkundungsarbeit, was realistisch ist — aber stark von der Tile-Verteilung der Karte abhängt (impassable Tiles zählen nicht; auf vulkanischen Planeten könnten sehr viele Tiles aus der Zone fallen). Vor dem Finalisieren dieses Task-Targets den Colony-Zone-Expansion-Mechanismus (§4a) gegen typische Karten durchrechnen.
 
-> ⚠️ BALANCE CONCERN: `task_credit_reserve: 10` bedeutet 10 aufeinanderfolgende Sole mit Credits > 5.000. Mit Nexus-Subvention 30 Cr/Sol + Relaisvergütung (20 Cr/Sol je Housing-Level, §3) und einem Wohnhabitat Lv2 = 70 Cr/Sol Einnahmen — Upkeep für 3 Berater Rang 1 kostet 3 × 10 = 30 Cr/Sol → Nettoeinnahmen ~40 Cr/Sol. Ab Startkapital 3.000 Cr dauert es ~50 Sole ohne Ausgaben um 5.000 Cr zu erreichen. Realistische Ausgaben (Gebäude, Reparaturen) machen den Task signifikant schwieriger. Nach Playtest kalibrieren.
+> **Entschieden (2026-07-19):** `task_credit_reserve: 10` (10 aufeinanderfolgende Sole mit Credits > 5.000) war mit der alten Ökonomie strukturell unerreichbar — Playtest-Bot-Befund PR #218 bestätigt: Credits fielen auf 0 und blieben dort geklemmt, der dritte Berater wurde nie leistbar, Phase 1 nie abgeschlossen. Fix über drei Hebel (Details siehe §13 "Rang-System" und §12 "Kanal 1: Bar/Cantina"):
+>
+> 1. **Upkeep-Kurve abgeflacht:** `advisor.upkeep` von `[1=>10, 2=>50, 3=>160]` auf **`[1=>10, 2=>30, 3=>80]`**. Rang-2-Sprung war 5×, jetzt 3×; Rang-3-Sprung war 3,2×, jetzt 2,67×. Weiterhin eine echte Eskalation (teure Berater bleiben teuer), aber kein Klippensturz.
+> 2. **Beförderungs-Schwellen gestreckt:** `advisor.rank_thresholds` von `[1=>10, 2=>20]` auf **`[1=>15, 2=>45]`** aktive Ticks. Gibt dem Spieler bis Rang 2 mehr als doppelt so lange Zeit, Uplink-Station und Cantina hochzuziehen, bevor der teurere Upkeep greift.
+> 3. **Neue passive Einnahmequelle "Handelsvertrag":** Kein Bar-Angebot (kein Slot, keine Annahme, kein AP-Kosten), sondern eine passive Cr/Sol-Einnahme — strukturell identisch zur Relaisvergütung: sie fließt automatisch pro Tick, solange ein Konsul der Kolonie zugewiesen ist **und** die Cantina mind. Lv1 gebaut ist. Feste Werte nach Konsul-Rang: **Rang 1 = 10 Cr/Sol, Rang 2 = 25 Cr/Sol, Rang 3 = 45 Cr/Sol** (Config-Key-Vorschlag: `game.credits.consul_contract_income_per_rank`, verarbeitet in `GameTick` im selben Schritt wie `nexus_subsidy`/`relay_bonus_per_uplink_level`). Ohne Konsul: 0 — bewusst, siehe unten.
+>
+> **Break-even-Rechnung (Zielgröße, kein Autopilot-Sieg):** 3 Berater gleichzeitig auf Rang 2 kosten 3 × 30 = 90 Cr/Sol Upkeep.
+> - Mit Uplink-Station Lv2 (Relaisvergütung 40 Cr/Sol) + Nexus-Subvention (30 Cr/Sol, unverändert) + Handelsvertrag Rang 2 (25 Cr/Sol) = 95 Cr/Sol → **+5 Cr/Sol Überschuss**. Ein Spieler, der Uplink-Station ausbaut und einen Konsul hält, trägt drei Rang-2-Berater knapp, aber stabil.
+> - Ohne Uplink-Station (nur Subvention 30 + Handelsvertrag 25 = 55 Cr/Sol) → **-35 Cr/Sol Defizit.** Spürbarer Druck, Uplink-Station zu bauen — kein Soft-Lock, da der Credits-Fail-Schwellenwert erst bei > 12.000 Cr Schuldenstand liegt (§15): ein Defizit dieser Größe ist ein langsames Ausbluten über viele Sole, keine sofortige Niederlage.
+> - Ohne Konsul zugewiesen (z. B. Spieler wählt Analytiker + Raumfahrer als die zwei freien Slots) entfällt der Handelsvertrag komplett: Subvention 30 + Uplink Lv2 40 = 70 vs. 90 Upkeep → -20 Cr/Sol. Das ist **beabsichtigt**: die Konsul-Entscheidung hat einen echten wirtschaftlichen Preis, kein versteckter Kollaps — der Spieler kompensiert über Uplink-Ausbau, langsameres Rang-Aufsteigen (weniger aktive Nutzung) oder gelegentliche manuelle Bar-Trades.
+>
+> Bewusst **nicht** geändert: `nexus_subsidy` bleibt bei 30 Cr/Sol (kein zusätzlicher passiver Puffer — sonst nähert sich die Ökonomie einem Autopilot-Sieg an) und `promotion_costs` bleiben bei `[2=>150, 3=>400]` (das einmalige Beförderungs-Gate war nie das Problem, siehe ursprüngliche Diagnose).
 
 ---
 

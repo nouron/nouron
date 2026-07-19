@@ -15,8 +15,8 @@ use Tests\TestCase;
  * have their active_ticks incremented.
  *
  * When active_ticks reaches a rank threshold, the advisor is promoted:
- *   rank 1 → rank 2: requires 10 active_ticks, costs 150 Cr (one-time)
- *   rank 2 → rank 3: requires 20 active_ticks, costs 400 Cr (one-time)
+ *   rank 1 → rank 2: requires 15 active_ticks, costs 150 Cr (one-time)
+ *   rank 2 → rank 3: requires 45 active_ticks, costs 400 Cr (one-time)
  *
  * If the player cannot afford the promotion cost it is deferred until next tick.
  *
@@ -39,7 +39,7 @@ use Tests\TestCase;
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *   Seeded advisor: personell 35 (engineer), rank=1, active_ticks=0
- *   Config rank_thresholds: [1 => 10, 2 => 20]
+ *   Config rank_thresholds: [1 => 15, 2 => 45]
  *   Config promotion_costs:  [2 => 150, 3 => 400]
  *
  * Uses tick numbers 11500–11549.
@@ -53,9 +53,9 @@ class GameTickAdvisorTest extends TestCase
     private const COLONY_ID = 1;
 
     // From config/game.php
-    private const RANK1_THRESHOLD = 10;
+    private const RANK1_THRESHOLD = 15;
 
-    private const RANK2_THRESHOLD = 20;
+    private const RANK2_THRESHOLD = 45;
 
     private const RANK2_COST = 150;
 
@@ -206,13 +206,9 @@ class GameTickAdvisorTest extends TestCase
         // We need to compare two runs — simpler: just verify the exact credit delta
         // for the promotion cost after accounting for fixed income/upkeep.
 
-        // Housing=2 → income = 30 + 2×20 = 70; upkeep rank1 for two advisors = 2×10 = 20
-        // Net income (no promotion) = 70 - 20 = 50
-        // Net income (with promotion) = 70 - 20 - 150 = -100
-        // But we have TWO advisors now (rank 1). Let's simplify: remove housing to get known values.
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', 28)
-            ->update(['level' => 0]);
+        // Housing produces no passive income (Relaisvergütung is Uplink-Station-based) —
+        // no zeroing needed there. We have TWO advisors now (rank 1); remove the second
+        // to keep the math simple.
         DB::table('advisors')->where('id', $noPromotionId)->delete();
 
         $before = $this->getCredits();
@@ -235,12 +231,8 @@ class GameTickAdvisorTest extends TestCase
     {
         $id = $this->insertAdvisor(rank: 1, activeTicks: self::RANK1_THRESHOLD - 1);
         // Ensure credits will always be below 150 even after income:
-        // income = 30 + 2×20 = 70; needed: credits + 70 < 150 → credits < 80
+        // income = 30 (nexus only, no Uplink Station); needed: credits + 30 < 150
         $this->setCredits(0);
-
-        DB::table('colony_buildings')
-            ->where('colony_id', self::COLONY_ID)->where('building_id', 28)
-            ->update(['level' => 0]);
 
         Artisan::call('game:tick', ['--tick' => 11512]);
 
@@ -263,11 +255,11 @@ class GameTickAdvisorTest extends TestCase
         $this->assertEquals(2, (int) $this->getAdvisor($id)->rank, 'Must promote on first crossing');
         $afterTick1 = $this->getCredits();
 
-        // Second tick: already rank 2, rank-2 threshold (20 ticks) is far away
+        // Second tick: already rank 2, rank-2 threshold (45 ticks) is far away
         Artisan::call('game:tick', ['--tick' => 11521]);
         $afterTick2 = $this->getCredits();
 
-        // Delta from tick2: income - upkeep (rank 2 = 50 Cr). No 150 Cr promotion.
+        // Delta from tick2: income - upkeep (rank 2 = 30 Cr). No 150 Cr promotion.
         $deltaSecond = $afterTick1 - $afterTick2;
         $this->assertLessThan(self::RANK2_COST, $deltaSecond,
             'Promotion cost must not be charged a second time after promotion is complete');

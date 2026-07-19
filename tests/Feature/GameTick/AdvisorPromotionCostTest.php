@@ -9,7 +9,7 @@ namespace Tests\Feature\GameTick;
  * one-time Credits cost when an advisor crosses a rank threshold.
  *
  * Config:
- *   game.advisor.rank_thresholds  = [1 => 10, 2 => 20]  (active_ticks needed to promote)
+ *   game.advisor.rank_thresholds  = [1 => 15, 2 => 45]  (active_ticks needed to promote)
  *   game.advisor.promotion_costs  = [2 => 150, 3 => 400]  (Credits charged at target rank)
  *
  * Test fixture (from TestSeeder):
@@ -48,10 +48,10 @@ class AdvisorPromotionCostTest extends TestCase
     private const ADVISOR_PERSONELL_ID = 92;
 
     /**
-     * Threshold from config: advisor at rank 1 needs 10 active_ticks to become rank 2.
+     * Threshold from config: advisor at rank 1 needs 15 active_ticks to become rank 2.
      * Set active_ticks to threshold - 1 so that one tick push crosses the boundary.
      */
-    private const RANK1_THRESHOLD = 10; // config('game.advisor.rank_thresholds')[1]
+    private const RANK1_THRESHOLD = 15; // config('game.advisor.rank_thresholds')[1]
 
     private const RANK2_COST = 150; // config('game.advisor.promotion_costs')[2]
 
@@ -236,7 +236,7 @@ class AdvisorPromotionCostTest extends TestCase
         $afterFirstTick = $this->getCredits();
 
         // Second tick: advisor is now rank 2, already past rank-1 threshold.
-        // The rank-2 threshold (20 ticks) is far away — no second promotion should fire.
+        // The rank-2 threshold (45 ticks) is far away — no second promotion should fire.
         $this->runTick(9531);
         $afterSecondTick = $this->getCredits();
 

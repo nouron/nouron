@@ -91,8 +91,8 @@ class AdvisorController extends BaseController
      */
     private function buildSlots(Collection $advisors, array $slotInfo, int $currentTick, int $colonyId): array
     {
-        $rankThresholds = config('game.advisor.rank_thresholds', [1 => 10, 2 => 20]);
-        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $rankThresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
+        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
         $apPerRank = config('game.advisor.ap_per_rank', [1 => 4]);
         $ccLevel = $slotInfo['cc_level'];
 
@@ -304,7 +304,7 @@ class AdvisorController extends BaseController
         $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
         $slots = $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId);
 
-        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
         $pageData = [
             'slots' => $slots,
             'slotInfo' => $slotInfo,

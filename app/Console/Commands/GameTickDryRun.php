@@ -96,6 +96,7 @@ class GameTickDryRun extends Command
 
         $ccLevel = (int) ($buildings->get(25)?->level ?? 0);
         $housingLevel = (int) ($buildings->get(28)?->level ?? 0);
+        $uplinkLevel = (int) ($buildings->get(54)?->level ?? 0);
 
         // ── Supply cap ────────────────────────────────────────────────────
         $capCC = (int) config('buildings.commandCenter.supply_cap', 10);
@@ -114,22 +115,33 @@ class GameTickDryRun extends Command
         // ── Credits ───────────────────────────────────────────────────────
         $credits = (int) ($colony->credits ?? 0);
         $nexus = $ccLevel > 0 ? (int) config('game.credits.nexus_subsidy', 30) : 0;
-        $housingIncome = $housingLevel * (int) config('game.credits.tax_per_housing', 20);
+        $relayBonus = $uplinkLevel * (int) config('game.credits.relay_bonus_per_uplink_level', 20);
+        $cantinaLevel = (int) ($buildings->get(52)?->level ?? 0);
 
         $advisors = DB::table('advisors')
             ->where('colony_id', $cid)
             ->whereNotNull('colony_id')
-            ->select('rank')
+            ->select('rank', 'personell_id')
             ->get();
-        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 50, 3 => 160]);
+        $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
         $upkeep = $advisors->sum(fn ($a) => $upkeepMap[$a->rank] ?? 10);
 
-        $creditsDelta = $nexus + $housingIncome - $upkeep;
+        $contract = 0;
+        if ($cantinaLevel > 0) {
+            $konsul = $advisors->firstWhere('personell_id', config('advisors.trader.id', 92));
+            $contractMap = config('game.credits.consul_contract_income_per_rank', [1 => 10, 2 => 25, 3 => 45]);
+            $contract = $konsul ? (int) ($contractMap[$konsul->rank] ?? 0) : 0;
+        }
+
+        $creditsDelta = $nexus + $relayBonus + $contract - $upkeep;
         $creditsNew = $credits + $creditsDelta;
 
         $incomeStr = "+{$nexus} nexus";
-        if ($housingIncome > 0) {
-            $incomeStr .= " +{$housingIncome} housing";
+        if ($relayBonus > 0) {
+            $incomeStr .= " +{$relayBonus} relay";
+        }
+        if ($contract > 0) {
+            $incomeStr .= " +{$contract} contract";
         }
         if ($upkeep > 0) {
             $incomeStr .= " -{$upkeep} upkeep";
