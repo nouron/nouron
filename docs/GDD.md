@@ -598,35 +598,43 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 
 ### Mechanik
 
-Einmal pro Sol produziert jedes aktive Produktionsgebäude in jeder Kolonie Rohstoffe. Die produzierte Menge ergibt sich aus:
+Einmal pro Sol produziert jedes aktive Produktionsgebäude in jeder Kolonie Rohstoffe. Die produzierte Menge ist die **kumulierte Glockenkurve** bis zum aktuellen Level (nicht Level × Flat-Rate, siehe Balance-Anpassung 2026-07-20 unten):
 
 ```
-produzierte Menge = Gebäude-Level × Rate
+produzierte Menge = Σ curve[1..aktuelles Level]
 ```
 
 ### Produktionsgebäude (Phase 3)
 
-| Gebäude | building_id | Ressource | resource_id | Rate |
-|---------|-------------|-----------|-------------|------|
-| Harvester | 27 | Regolith | 3 | 10 pro Level |
-| Agrardom | 41 | Organika | 5 | 10 pro Level |
+| Gebäude | building_id | Ressource | resource_id | max_level |
+|---------|-------------|-----------|-------------|-----------|
+| Harvester | 27 | Regolith | 3 | 8 |
+| Agrardom | 41 | Organika | 5 | 8 |
 
-> **Designentscheidung:** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
+> **Balance-Anpassung (2026-07-20, GDD §18 Credit-Ökonomie-Ticket):** Die ursprüngliche flache Rate (`×10/level`, unbegrenzte Level) wurde durch eine **Glockenkurve mit festem Deckel (max_level=8)** ersetzt. Grund: Owner-Feedback im Playtest — Grundproduktion war zu knapp, aber ein einfacher linearer/exponentieller Anstieg widerspricht der Frontier-Logik (jedes Level soll spürbar, aber nicht grenzenlos lohnend sein) und ein unbegrenzter Ausbau mit abflachendem Ertrag wäre bei den (level-unabhängig) flachen Levelup-Kosten (10 AP + 10 Regolith, unabhängig vom Zielevel) nie eine echte Entscheidung geworden — der Grenzertrag wäre monoton gesunken, ohne dass je ein Stopp erzwungen wird. Ein harter Deckel erzeugt stattdessen echten Bedarf ("wohin als Nächstes investieren?") — Wachstum über Lv8 hinaus kommt nur noch über Kenntnisse/Missionen/Handel (Amplifikator-Prinzip, siehe §18).
+>
+> Harvester peakt breit in der Mitte (Lv3-4) — Regolith wird über den ganzen Run in Schüben gebraucht (CC-Upgrades, Pfadgebäude, Reparatur). Agrardom peakt früh (Lv2-3) — Organika/Nahrungssicherheit muss schnell stehen, bevor die Hunger→Trust-Spirale greift; die Kurve bleibt danach bewusst flacher als beim Harvester, damit die Hunger-Mechanik (einzige "weiche" Verlustspirale des Spiels) nicht entwertet wird. Kein Level liefert 0 Zusatzertrag — Ausbau bleibt bis Lv8 immer lohnend, nur graduell weniger.
 
-> **Harvester-Produktion (Phase 4+):** Geplant ist eine tile-abhängige Rate mit Tile-Boni (z.B. "Reicher Erzknoten" = +50%) und gradueller Erschöpfung. Aktuell (Phase 3): feste Rate `×10/level` identisch zum Agrardom — nach erstem Playtest evaluieren ob Tile-Varianz den Aufwand rechtfertigt.
+> **UI-Anforderung:** Der Grenzertrag des nächsten Levels muss vor dem Levelup sichtbar sein (analog AP-Cost-Chip-Convention) — Spieler soll entscheiden können, ob sich z.B. Lv6→Lv7 noch lohnt, bevor er investiert. **TODO Implementierung:** Techtree-UI (`technology.blade.php`) zeigt das aktuell noch nicht an.
+
+> **Designentscheidung (unverändert):** Der Harvester produziert Regolith (lokaler Rohstoff), nicht Werkstoffe. Werkstoffe sind veredelte Industriegüter die nicht vor Ort herstellbar sind — sie kommen ausschließlich über Handel, KI-Händler und Events (§3).
+
+> **Harvester-Produktion (Phase 4+):** Geplant ist eine zusätzliche tile-abhängige Rate mit Tile-Boni (z.B. "Reicher Erzknoten" = +50%) und gradueller Erschöpfung, obendrauf auf die Glockenkurve — nach weiterem Playtest evaluieren.
 
 ### Konfiguration
 
-`config/game.php → production`:
+`config/game.php → production_curve`:
 
 ```php
-'production' => [
-    27 => [3 => 10],   // harvester   → Regolith  × 10/level
-    41 => [5 => 10],   // bioFacility → Organika  × 10/level
+'production_curve' => [
+    27 => [3 => [1=>8, 2=>10, 3=>12, 4=>12, 5=>10, 6=>8, 7=>6, 8=>4]],   // harvester   → Regolith
+    41 => [5 => [1=>8, 2=>12, 3=>12, 4=>9,  5=>7,  6=>5, 7=>3, 8=>2]],   // bioFacility → Organika
 ],
 ```
 
-Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erweiterung dieser Config hinzugefügt werden.
+Kumulierte Gesamtwerte bei max_level=8: Harvester **70** Regolith/Sol, Agrardom **58** Organika/Sol.
+
+Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erweiterung dieser Config hinzugefügt werden — dabei jeweils `max_level` in `config/buildings.php` setzen, sonst läuft die Kurve unbegrenzt am letzten definierten Wert weiter (Deckel via `GameTick::cumulativeCurveYield()`).
 
 ---
 
@@ -3423,6 +3431,10 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 > - Ohne Konsul zugewiesen (z. B. Spieler wählt Analytiker + Raumfahrer als die zwei freien Slots) entfällt der Handelsvertrag komplett: Subvention 30 + Uplink Lv2 40 = 70 vs. 90 Upkeep → -20 Cr/Sol. Das ist **beabsichtigt**: die Konsul-Entscheidung hat einen echten wirtschaftlichen Preis, kein versteckter Kollaps — der Spieler kompensiert über Uplink-Ausbau, langsameres Rang-Aufsteigen (weniger aktive Nutzung) oder gelegentliche manuelle Bar-Trades.
 >
 > Bewusst **nicht** geändert: `nexus_subsidy` bleibt bei 30 Cr/Sol (kein zusätzlicher passiver Puffer — sonst nähert sich die Ökonomie einem Autopilot-Sieg an) und `promotion_costs` bleiben bei `[2=>150, 3=>400]` (das einmalige Beförderungs-Gate war nie das Problem, siehe ursprüngliche Diagnose).
+>
+> **Playtest-Bot-Ergebnis nach diesem Fix (2026-07-20):** Phase 2 wird jetzt erreicht (Sol 49 mit PR #219 allein, Sol 18 nach der zusätzlichen Grundproduktions-Anpassung unten) — vorher nie. Aber: die Ökonomie kollabiert danach weiterhin, sobald 2-3 Berater gleichzeitig auf Rang 2/3 stehen (Credits crashen auf 0 und bleiben dort bis Run-Ende). Grundproduktion (Harvester/Agrardom) war zu knapp, um überhaupt ausreichend Baupuffer/Handelsware für Uplink-Station + Cantina + Konsul gleichzeitig aufzubauen, bevor der Upkeep zuschlägt — daraus folgt die Glockenkurven-Anpassung oben im Produktions-Abschnitt (§3). Bar/Cantina-Nutzbarkeit (`"Not enough resources."`-Ablehnungen, 47-77× pro Lauf) und die Post-Phase-1-Erholung bei 3 gleichzeitig hohen Rängen bleiben weiterhin offen — **eigenes Ticket, Brainstorming läuft** (Kenntnisse-Boni, Hangar-Missionsnutzbarkeit, Handel-Redesign als Amplifikatoren, siehe Owner-Diskussion 2026-07-20).
+>
+> **Nebenfund (2026-07-20, eigenes Ticket, NICHT Teil dieser Balance-Änderung):** `PlaytestBotTest::test_same_seed_draws_identical_objectives` deckte einen echten Determinismus-Bug auf: `ColonyTileService::randomizeOuterRingRows()` nutzt PHP-Ambient-Zufall (`random_int`/`shuffle`/`array_rand`), nicht den Run-`rng_seed` — und läuft in `OnboardingService::resetColonyToSol1()` VOR dem expliziten Setzen von `rng_seed` in Tests. Zwei Runs mit identischem Seed erhalten dadurch unterschiedliche Tile-Layouts, was zu unterschiedlichen Spielverläufen kaskadiert (empirisch bestätigt: ein Bot-Lauf erreichte Phase 2, der andere mit demselben Seed nicht). Bricht die Reproduzierbarkeits-Garantie für "gleicher Seed → gleicher Run" — relevant über Tests hinaus, sobald Replay/Determinismus je gebraucht wird. Test bewusst als "skipped" markiert (nicht rot), bis Tile-Randomisierung über `rng_seed` läuft.
 
 ---
 

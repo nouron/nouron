@@ -55,11 +55,18 @@ return [
         'testcase' => 14479,
     ],
 
-    // Resource production per tick: building_id => [resource_id => amount_per_level]
-    // Each colony building produces (level × rate) units of the given resource per tick.
-    'production' => [
-        27 => [3 => 10],   // harvester      → Regolith                × 10/level
-        41 => [5 => 10],   // bioFacility    → Organika   (Organics)   × 10/level
+    // Resource production per tick: building_id => [resource_id => [level => yield_at_that_level]]
+    // Yield per level is NOT cumulative-per-level-multiplied — it's the marginal amount
+    // added AT that level. Total yield = sum of curve[1..currentLevel]. Bell-shaped
+    // (rises, peaks, falls) but never reaches 0 — every level is worth taking, none is
+    // a pure grind. Capped at building max_level (config/buildings.php) — growth beyond
+    // the cap comes only from Kenntnisse/Missionen/Handel (GDD §18 balance ticket,
+    // 2026-07-20). Harvester peaks broad/mid-run (Regolith needed in bursts throughout —
+    // CC upgrades, path buildings, repairs); bioFacility peaks early (Organika/food
+    // security must stand up fast, before the hunger→trust spiral bites).
+    'production_curve' => [
+        27 => [3 => [1 => 8, 2 => 10, 3 => 12, 4 => 12, 5 => 10, 6 => 8, 7 => 6, 8 => 4]],   // harvester → Regolith
+        41 => [5 => [1 => 8, 2 => 12, 3 => 12, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],     // bioFacility → Organika
     ],
 
     // Economy — resource pricing for player-facing buy/sell mechanics.

@@ -158,7 +158,7 @@ class GameTickDryRun extends Command
             ->whereIn('resource_id', [3, 4, 5])
             ->pluck('amount', 'resource_id');
 
-        $production = config('game.production', []);
+        $production = config('game.production_curve', []);
         $moral = $this->trustService->getTrust($cid);
         $multiplier = $this->trustService->getProductionMultiplier($moral);
 
@@ -170,7 +170,8 @@ class GameTickDryRun extends Command
             foreach ($production as $buildingId => $outputs) {
                 if (isset($outputs[$rid])) {
                     $bLevel = (int) ($buildings->get($buildingId)?->level ?? 0);
-                    $yield += (int) round($bLevel * $outputs[$rid] * $multiplier);
+                    $base = GameTick::cumulativeCurveYield($outputs[$rid], $bLevel);
+                    $yield += (int) round($base * $multiplier);
                 }
             }
             $new = $cur + $yield;
