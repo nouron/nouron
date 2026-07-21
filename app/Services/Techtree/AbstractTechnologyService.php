@@ -111,7 +111,7 @@ abstract class AbstractTechnologyService
     public function checkRequiredBuildingsByEntityId(int $colonyId, int $entityId): bool
     {
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (! $entity || ! $entity->required_building_id) {
+        if (! is_object($entity) || ! $entity->required_building_id) {
             return true;
         }
 
@@ -195,7 +195,7 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (! $entity || empty($entity->supply_cost) || (int) $entity->supply_cost === 0) {
+        if (! is_object($entity) || empty($entity->supply_cost) || (int) $entity->supply_cost === 0) {
             return true;
         }
 
@@ -213,7 +213,7 @@ abstract class AbstractTechnologyService
         }
 
         $entity = DB::table($this->masterTable())->find($entityId);
-        if (! $entity || ! $entity->max_level || $entity->max_level <= 0) {
+        if (! is_object($entity) || ! $entity->max_level || $entity->max_level <= 0) {
             return true;
         }
 
@@ -255,8 +255,6 @@ abstract class AbstractTechnologyService
      * - 'add':    increment ap_spend toward ap_for_levelup (no AP locking)
      * - 'repair': increment status_points toward max_status_points (locks AP)
      * - 'remove': decrement status_points toward 0 (locks AP)
-     *
-     * @param  string  $pointsType  'construction_points' or 'research_points'
      */
     protected function _invest(
         int $colonyId,

@@ -3,10 +3,16 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Eloquent model for `user_resources` — tracks Credits and Supply per user.
  * These two resources are user-level (not per-colony), unlike the 7 colony resources.
+ *
+ * @property int $user_id
+ * @property int $credits
+ * @property int $supply
+ * @property-read User $user
  */
 class UserResource extends Model
 {
@@ -30,7 +36,10 @@ class UserResource extends Model
 
     // ── Relationships ────────────────────────────────────────────────────────
 
-    public function user()
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }

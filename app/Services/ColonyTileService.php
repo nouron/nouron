@@ -197,7 +197,7 @@ class ColonyTileService
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
-            ->value('level') ?? 0;
+            ->value('level');
 
         $rows = [];
 

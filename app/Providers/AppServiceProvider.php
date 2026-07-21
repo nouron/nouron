@@ -110,7 +110,7 @@ class AppServiceProvider extends ServiceProvider
                         $possessions[$resId] = array_merge($poss, $resourceTypes[$resId]->toArray());
                     }
                 }
-                $view->with('resourceBarPossessions', $possessions ?? []);
+                $view->with('resourceBarPossessions', $possessions);
 
                 // Inject Sol run-progress for the resource bar Sol chip.
                 // The active run's current_tick is the canonical clock:

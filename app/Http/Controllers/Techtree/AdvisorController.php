@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Techtree;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Advisor;
-use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
@@ -52,7 +51,6 @@ class AdvisorController extends BaseController
         TickService $tick,
         private readonly PersonellService $personellService,
         private readonly ResourcesService $resourcesService,
-        private readonly ColonyService $colonyService,
         private readonly EventService $eventService,
         private readonly OnboardingHintService $hintService,
     ) {

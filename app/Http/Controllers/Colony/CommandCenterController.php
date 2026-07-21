@@ -40,7 +40,7 @@ class CommandCenterController extends BaseController
 
         $solLimit = $run?->getTickLimit() ?? (int) config('game.run.tick_limit', 100);
         $currentSol = $this->currentSol();
-        $nexusDebt = (int) ($run?->nexus_debt ?? 0);
+        $nexusDebt = $run === null ? 0 : (int) $run->nexus_debt;
         $nexusDebtMax = (int) config('game.run.nexus_debt_fail_threshold', 12000);
         $nexusPct = $nexusDebtMax > 0 ? ($nexusDebt / $nexusDebtMax) * 100 : 0;
         $nexusDebtTone = match (true) {

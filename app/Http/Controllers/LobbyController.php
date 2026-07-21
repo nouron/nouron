@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Colony;
 use App\Models\Run;
 use App\Services\OnboardingService;
-use App\Services\RunProgressService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +13,6 @@ use Illuminate\View\View;
 class LobbyController extends Controller
 {
     public function __construct(
-        private readonly RunProgressService $runProgressService,
         private readonly OnboardingService $onboardingService,
     ) {}
 

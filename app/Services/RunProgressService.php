@@ -364,9 +364,9 @@ class RunProgressService
      */
     private function updateEngineeringOutput(RunObjective $objective, Run $run): void
     {
-        $total = (int) (DB::table('colony_buildings')
+        $total = (int) DB::table('colony_buildings')
             ->where('colony_id', $run->colony_id)
-            ->sum('status_points') ?? 0);
+            ->sum('status_points');
 
         $objective->current_value = $total;
 

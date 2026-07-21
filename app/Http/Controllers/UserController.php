@@ -17,7 +17,6 @@ class UserController extends BaseController
     public function __construct(TickService $tick)
     {
         parent::__construct($tick);
-        $this->middleware('auth');
     }
 
     public function show()

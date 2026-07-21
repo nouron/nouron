@@ -42,7 +42,7 @@ class BarController extends BaseController
         $barLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', self::BAR_BUILDING_ID)
-            ->value('level') ?? 0;
+            ->value('level');
 
         $offers = $barLevel > 0
             ? $this->barService->getActiveOffers($colony->id, $tick)

@@ -101,7 +101,7 @@ class ColonyController extends BaseController
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('building_id', BuildingId::CommandCenter->value)
-            ->value('level') ?? 0;
+            ->value('level');
 
         // Flag the tiles the NEXT CC upgrade will actually claim ("soon buildable"),
         // so the lock badge only marks real future colony zone — not every explored
@@ -220,7 +220,7 @@ class ColonyController extends BaseController
     {
         $colony = $this->colonyService->getPrimeColony(Auth::id());
         $ccLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)->where('building_id', BuildingId::CommandCenter->value)->value('level') ?? 0;
+            ->where('colony_id', $colony->id)->where('building_id', BuildingId::CommandCenter->value)->value('level');
 
         $placedCounts = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)

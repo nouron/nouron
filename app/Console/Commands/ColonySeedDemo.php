@@ -104,13 +104,11 @@ class ColonySeedDemo extends Command
                 $seed = abs($q * 7 + $r * 13 + $colonyId * 3);
                 $key = "{$q},{$r}";
 
-                // Explore/scan state per ring
-                $isExplored = $ring <= 3;  // all rings fully explored in demo
-                $isDeepScanned = match (true) {
-                    $ring <= 2 => true,
-                    $ring === 3 => ($seed % 3) < 2,   // ~67% deep-scanned
-                    default => false,
-                };
+                // Explore/scan state per ring — all rings fully explored in demo
+                $isExplored = true;
+                $isDeepScanned = $ring <= 2
+                    ? true
+                    : ($seed % 3) < 2;   // ring 3: ~67% deep-scanned
 
                 $eventType = null;
                 if ($ring === 3 && isset($ring3Events[$key])) {
@@ -225,7 +223,7 @@ class ColonySeedDemo extends Command
             ->update(['tile_x' => null, 'tile_y' => null, 'level' => 0, 'ap_spend' => 0]);
 
         foreach (self::BUILDING_PLACEMENTS as $buildingId => [$tileX, $tileY]) {
-            $level = self::BUILDING_LEVELS[$buildingId] ?? 1;
+            $level = self::BUILDING_LEVELS[$buildingId];
 
             DB::table('colony_buildings')
                 ->where('colony_id', $colonyId)

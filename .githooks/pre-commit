@@ -16,11 +16,13 @@
 set -uo pipefail
 
 PINT="bin/pint"
+PHPSTAN="bin/phpstan"
 PRETTIER="node_modules/.bin/prettier"
 
 staged() { git diff --cached --name-only --diff-filter=ACM; }
 
 PHP_FILES=$(staged | grep -E '\.php$' | grep -v '\.blade\.php$' || true)
+PHPSTAN_FILES=$(echo "$PHP_FILES" | grep -E '^app/' || true)
 BLADE_FILES=$(staged | grep -E '\.blade\.php$' || true)
 ASSET_FILES=$(staged | grep -E '\.(js|css)$' | grep -vE '\.min\.(js|css)$' | grep -vE '^public/vendor/' || true)
 
@@ -32,6 +34,9 @@ fail=0
 if [ -n "$PHP_FILES" ] && [ ! -x "$PINT" ]; then
     echo "✗ Pint fehlt ($PINT) — composer install" >&2; exit 1
 fi
+if [ -n "$PHPSTAN_FILES" ] && [ ! -x "$PHPSTAN" ]; then
+    echo "✗ Larastan fehlt ($PHPSTAN) — composer install" >&2; exit 1
+fi
 if [ -n "$BLADE_FILES$ASSET_FILES" ] && [ ! -x "$PRETTIER" ]; then
     echo "✗ Prettier fehlt ($PRETTIER) — npm install" >&2; exit 1
 fi
@@ -42,6 +47,14 @@ if [ -n "$PHP_FILES" ]; then
     echo "$PHP_FILES" | xargs git add
     if ! echo "$PHP_FILES" | xargs "$PINT" --test --quiet; then
         echo "✗ Pint: nicht automatisch behebbare PHP-Fehler." >&2; fail=1
+    fi
+fi
+
+# ── PHP (app/): Larastan static analysis (no auto-fix) ───────────────────────
+if [ -n "$PHPSTAN_FILES" ]; then
+    if ! echo "$PHPSTAN_FILES" | xargs "$PHPSTAN" analyse --memory-limit=1G; then
+        echo "✗ Larastan: Fehler in gestagten Dateien. Kein Baseline/Ignore — Ursache beheben." >&2
+        fail=1
     fi
 fi
 

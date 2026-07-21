@@ -136,7 +136,7 @@ class ResetPlayer extends Command
         $this->newLine();
         table(
             headers: ['Spieler', 'ID', 'Szenario'],
-            rows: [[$user->username, $user->user_id, self::SCENARIO_LABELS[$scenario]]],
+            rows: [[$user->username, (string) $user->user_id, self::SCENARIO_LABELS[$scenario]]],
         );
 
         if (! $this->option('yes')) {

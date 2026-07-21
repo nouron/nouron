@@ -94,9 +94,11 @@ class GameTickDryRun extends Command
             ->get()
             ->keyBy('building_id');
 
-        $ccLevel = (int) ($buildings->get(25)?->level ?? 0);
-        $housingLevel = (int) ($buildings->get(28)?->level ?? 0);
-        $uplinkLevel = (int) ($buildings->get(54)?->level ?? 0);
+        $buildingLevel = static fn (int $buildingId): int => $buildings->has($buildingId) ? (int) $buildings->get($buildingId)->level : 0;
+
+        $ccLevel = $buildingLevel(25);
+        $housingLevel = $buildingLevel(28);
+        $uplinkLevel = $buildingLevel(54);
 
         // ── Supply cap ────────────────────────────────────────────────────
         $capCC = (int) config('buildings.commandCenter.supply_cap', 10);
@@ -116,7 +118,7 @@ class GameTickDryRun extends Command
         $credits = (int) ($colony->credits ?? 0);
         $nexus = $ccLevel > 0 ? (int) config('game.credits.nexus_subsidy', 30) : 0;
         $relayBonus = $uplinkLevel * (int) config('game.credits.relay_bonus_per_uplink_level', 20);
-        $cantinaLevel = (int) ($buildings->get(52)?->level ?? 0);
+        $cantinaLevel = $buildingLevel(52);
 
         $advisors = DB::table('advisors')
             ->where('colony_id', $cid)
@@ -169,7 +171,7 @@ class GameTickDryRun extends Command
             $yield = 0;
             foreach ($production as $buildingId => $outputs) {
                 if (isset($outputs[$rid])) {
-                    $bLevel = (int) ($buildings->get($buildingId)?->level ?? 0);
+                    $bLevel = $buildingLevel($buildingId);
                     $base = GameTick::cumulativeCurveYield($outputs[$rid], $bLevel);
                     $yield += (int) round($base * $multiplier);
                 }

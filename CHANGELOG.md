@@ -2,6 +2,14 @@
 
 ## 2026-07-21
 
+Larastan (Level 5) auf 0 Fehler gebracht (vorher 151):
+
+- **Root Cause:** `phpstan.neon` fehlte `parseModelCastsMethod: true` (Models nutzen Laravel-11-Style `casts()`-Methode). Größerer Anteil der Fehler kam von Migrations mit rohem `DB::statement('ALTER TABLE ...')` (SQLite-Workaround) — Larastans statischer Migration-Scanner sieht diese Spalten nicht. Fix: explizite `@property`/`@property-read`-Docblocks auf `Run`, `RunObjective`, `Advisor`, `Colony`, `UserResource` + typisierte Relation-Methoden (`@return BelongsTo<X, $this>` etc.).
+- **Echter Bug gefunden & gefixt:** `JsonController::__construct()` rief `parent::__construct()` ohne den von `BaseController` benötigten `TickService` auf — hätte zur Laufzeit gecrasht. `OnboardingHintService`/`OnboardingTriggerService` griffen an zwei Stellen ungeprüft auf `$prefs->...` zu, obwohl `$prefs` (kein `user_preferences`-Eintrag) `null` sein kann.
+- **Tool-Falle umschifft:** Larastan meldet bei `?->property`-Zugriff auf Eloquent-Models teils fälschlich "nullsafe ist überflüssig", obwohl das Objekt echt `null` sein kann (reproduziert & isoliert getestet). Blindes Entfernen von `?->` hätte neue Crashes eingebaut — stattdessen explizite `=== null`-Checks verwendet, die PHPStan sauber nachvollziehen kann.
+- Tote Konstruktor-Dependencies entfernt (`LobbyController`, `AdvisorController`, `TechtreeController`, `JsonController`), nicht mehr existierendes `Controller::middleware()`-API (Laravel 11) durch bereits vorhandene Route-Gruppen-Middleware ersetzt.
+- 723 Tests weiterhin grün, keine Verhaltensänderung außer den zwei oben genannten Bugfixes.
+
 `docs/ROADMAP.md` nachgezogen (war seit 2026-07-01 nicht aktualisiert): Playtest-Bot (#217/#218) und Credit-Ökonomie-Balance zweistufig (#219 gemergt, #220 in Review) ergänzt, laufendes Brainstorming Kenntnisse/Hangar/Cantina-Pfadparität als neuer "Laufend"-Abschnitt, Admin-Tool-Wunsch für Bot-Lauf-Vergleiche und Tile-RNG-Determinismus-Bug in "Geplant" aufgenommen.
 
 Drei kleine offene Todos abgearbeitet:
