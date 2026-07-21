@@ -29,7 +29,7 @@ class BarService
         $barLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->where('building_id', self::BAR_BUILDING_ID)
-            ->value('level') ?? 0;
+            ->value('level');
 
         if ($barLevel < 1) {
             return;

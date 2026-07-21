@@ -37,7 +37,7 @@ class OnboardingTriggerService
 
         DB::table('user_preferences')->updateOrInsert(
             ['user_id' => $userId],
-            ['fired_triggers' => json_encode(array_values($fired))]
+            ['fired_triggers' => json_encode($fired)]
         );
     }
 
@@ -52,7 +52,7 @@ class OnboardingTriggerService
             ->where('user_id', $userId)
             ->first();
 
-        $raw = $prefs->fired_triggers ?? null;
+        $raw = $prefs === null ? null : $prefs->fired_triggers;
 
         if (empty($raw)) {
             return [];

@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
-use App\Services\ColonyService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\AbstractTechnologyService;
@@ -33,7 +32,6 @@ class TechtreeController extends BaseController
         private readonly PersonellService $personellService,
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly ResourcesService $resourcesService,
-        private readonly ColonyService $colonyService,
         private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);

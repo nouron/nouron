@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Resources;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
-use App\Services\ColonyService;
 use App\Services\ResourcesService;
+use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 
@@ -14,11 +14,10 @@ class JsonController extends BaseController
     use ResolvesActiveColony;
 
     public function __construct(
+        TickService $tick,
         private readonly ResourcesService $resources,
-        private readonly ColonyService $colonies,
     ) {
-        parent::__construct();
-        $this->middleware('auth');
+        parent::__construct($tick);
     }
 
     /**

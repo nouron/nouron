@@ -47,7 +47,7 @@ class ShipService extends AbstractTechnologyService
     public function checkRequiredResearchesByEntityId(int $colonyId, int $entityId): bool
     {
         $ship = DB::table('ships')->find($entityId);
-        if (! $ship || ! $ship->required_research_id) {
+        if (! is_object($ship) || ! $ship->required_research_id) {
             return true;
         }
 

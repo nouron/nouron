@@ -3,8 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * Eloquent model for the runs table.
@@ -13,6 +16,29 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * the run has progressed (current_tick) and whether it is still ongoing.
  *
  * Status values: 'active' | 'completed' | 'failed'
+ *
+ * The phase/fail_reason/nexus_debt/phase2_start_tick/rng_seed/score columns are
+ * added via raw `DB::statement('ALTER TABLE ...')` migrations (SQLite doesn't
+ * support all Blueprint operations), which Larastan's static migration scanner
+ * cannot see — hence the explicit property annotations below.
+ *
+ * @property int $id
+ * @property int $user_id
+ * @property int $colony_id
+ * @property int $current_tick
+ * @property string $status
+ * @property Carbon|null $started_at
+ * @property Carbon|null $ended_at
+ * @property array<string, mixed>|null $settings
+ * @property int $phase
+ * @property string|null $fail_reason
+ * @property int $nexus_debt
+ * @property int|null $phase2_start_tick
+ * @property int|null $rng_seed
+ * @property int|null $score
+ * @property-read User $user
+ * @property-read Colony $colony
+ * @property-read Collection<int, RunObjective> $objectives
  */
 class Run extends Model
 {
@@ -54,22 +80,28 @@ class Run extends Model
     /**
      * The user who owns this run.
      * Binds via user_id → user.user_id (non-default PK name).
+     *
+     * @return BelongsTo<User, $this>
      */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
     /**
      * The colony this run is played on.
+     *
+     * @return BelongsTo<Colony, $this>
      */
-    public function colony()
+    public function colony(): BelongsTo
     {
         return $this->belongsTo(Colony::class, 'colony_id', 'id');
     }
 
     /**
      * The Phase-2 objectives assigned to this run.
+     *
+     * @return HasMany<RunObjective, $this>
      */
     public function objectives(): HasMany
     {

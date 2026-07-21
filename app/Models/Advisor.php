@@ -5,6 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property int $personell_id
+ * @property int|null $colony_id
+ * @property int $rank
+ * @property int $active_ticks
+ * @property int|null $unavailable_until_tick
+ * @property-read Personell $personell
+ * @property-read Colony|null $colony
+ */
 class Advisor extends Model
 {
     protected $table = 'advisors';
@@ -21,11 +32,17 @@ class Advisor extends Model
         'active_ticks' => 'integer',
     ];
 
+    /**
+     * @return BelongsTo<Personell, $this>
+     */
     public function personell(): BelongsTo
     {
         return $this->belongsTo(Personell::class);
     }
 
+    /**
+     * @return BelongsTo<Colony, $this>
+     */
     public function colony(): BelongsTo
     {
         return $this->belongsTo(Colony::class);

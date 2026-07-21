@@ -100,7 +100,6 @@ class ValidateColony extends Command
                     'OK' => $this->line("  <fg=green>✓</> {$msg}"),
                     'WARN' => $this->warn("  ⚠ {$msg}"),
                     'ERROR' => $this->error("  ✗ {$msg}"),
-                    default => $this->line("  {$msg}"),
                 };
             }
 

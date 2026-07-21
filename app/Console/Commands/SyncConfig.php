@@ -128,7 +128,7 @@ class SyncConfig extends Command
                 'supply_cost' => (int) ($cfg['supply_cost'] ?? $row->supply_cost),
                 'max_status_points' => (int) ($cfg['max_status_points'] ?? $row->max_status_points),
                 'max_level' => isset($cfg['max_level'])
-                                           ? ($cfg['max_level'] === null ? null : (int) $cfg['max_level'])
+                                           ? (int) $cfg['max_level']
                                            : $row->max_level,
             ] as $col => $newVal) {
                 // Loose comparison to handle null vs. empty string

@@ -542,7 +542,7 @@ class GameTick extends Command
 
                 $colony = Colony::find($cb->colony_id);
                 $this->eventService->createEvent([
-                    'user' => $colony?->user_id ?? 0,
+                    'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
                     'tick' => $tick,
                     'event' => 'techtree.level_down',
                     'area' => 'techtree',
@@ -576,7 +576,7 @@ class GameTick extends Command
                 $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
                 if ($newStatus < ($maxSP * 0.8)) {
                     $colony = Colony::find($cb->colony_id);
-                    $userId = $colony?->user_id ?? null;
+                    $userId = $colony === null ? null : $colony->user_id;
                     if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_decay')) {
                         $this->eventService->createEvent([
                             'user' => $userId,
@@ -632,7 +632,7 @@ class GameTick extends Command
 
                 $colony = Colony::find($cr->colony_id);
                 $this->eventService->createEvent([
-                    'user' => $colony?->user_id ?? 0,
+                    'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
                     'tick' => $tick,
                     'event' => 'techtree.level_down',
                     'area' => 'techtree',
@@ -976,7 +976,7 @@ class GameTick extends Command
 
             if ($total > 0) {
                 $this->eventService->createEvent([
-                    'user' => $colony->user_id,
+                    'user' => $colony->user_id ?? 0,
                     'tick' => $tick,
                     'event' => 'colony.passive_credits',
                     'area' => 'colony',
@@ -1072,7 +1072,7 @@ class GameTick extends Command
             if ($this->merchantService->shouldSpawn($colony->id, $tick)) {
                 $this->merchantService->spawnVisit($colony->id, $tick);
                 $this->eventService->createEvent([
-                    'user' => $colony->user_id,
+                    'user' => $colony->user_id ?? 0,
                     'tick' => $tick,
                     'event' => 'merchant.visit',
                     'area' => 'colony',

@@ -58,7 +58,7 @@ class SolReportService
     /**
      * Capture the "before" state of a colony for later diffing.
      *
-     * @return array{resources:array<int,int>,credits:int,supply:int,trust:int,buildings:array<int,array{level:int,status:float}>,advisors:array<int,int>,phase:int}
+     * @return array{resources:array<array-key,int>,credits:int,supply:int,trust:int,buildings:array<string,array{level:int,status:float}>,advisors:array<array-key,int>,phase:int}
      */
     public function snapshot(int $colonyId, int $userId, int $phase): array
     {

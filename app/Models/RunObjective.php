@@ -10,6 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * Each RunObjective represents one mission task drawn for a Phase-2 run.
  * Progress is tracked via current_value / streak_value, completion via completed_at.
+ *
+ * @property int $id
+ * @property int $run_id
+ * @property string $task_key
+ * @property int $target_value
+ * @property int $current_value
+ * @property int $streak_value
+ * @property int|null $completed_at
+ * @property-read Run $run
  */
 class RunObjective extends Model
 {
@@ -39,6 +48,9 @@ class RunObjective extends Model
 
     // ── Relationships ────────────────────────────────────────────────────────
 
+    /**
+     * @return BelongsTo<Run, $this>
+     */
     public function run(): BelongsTo
     {
         return $this->belongsTo(Run::class);

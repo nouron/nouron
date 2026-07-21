@@ -39,7 +39,7 @@ class OnboardingHintService
             return null;
         }
 
-        $dismissed = $this->parseDismissed($prefs?->dismissed_hints ?? null);
+        $dismissed = $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints);
 
         // Use run-local Sol counter (current_tick on the active Run) so that
         // tick-threshold hints don't fire on Sol 1 due to the global tick being large.
@@ -107,7 +107,7 @@ class OnboardingHintService
             ->where('user_id', $userId)
             ->first();
 
-        $dismissed = $this->parseDismissed($prefs->dismissed_hints ?? null);
+        $dismissed = $this->parseDismissed($prefs === null ? null : $prefs->dismissed_hints);
 
         if (! in_array($hintKey, $dismissed, true)) {
             $dismissed[] = $hintKey;
@@ -115,7 +115,7 @@ class OnboardingHintService
 
         DB::table('user_preferences')->updateOrInsert(
             ['user_id' => $userId],
-            ['dismissed_hints' => json_encode(array_values($dismissed))]
+            ['dismissed_hints' => json_encode($dismissed)]
         );
     }
 
