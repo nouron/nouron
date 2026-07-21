@@ -15,6 +15,10 @@ Zwei weitere veraltete TODO-Kommentare bereinigt (Implementierung war bereits vo
 - `config/advisors.php`: SecurityHub-Gate für den Stratege-Slot ist längst in `AdvisorController` + `PersonellService::hire()` umgesetzt.
 - `config/buildings.php`: SecurityHub `event_mitigation_pct` (25% Trust-Event-Abschwächung) ist längst in `TrustService::eventContribution()` umgesetzt.
 
+Code-Qualität: `larastan/larastan` (PHPStan) als Dev-Dependency + `phpstan.neon` (Level 5, `paths: app`) vorbereitet — Analyse-Lauf und Auswertung folgt, sobald `composer install` in einer Umgebung mit vollem GitHub-Zugriff nachgeholt ist (diese Sandbox-Session ist auf `nouron/nouron` beschränkt).
+
+Unittest-Review: Moral→Trust-Umbenennung (CLAUDE.md) war in Tests nur teilweise durchgezogen. `GameTickMoralTest.php` → `GameTickTrustTest.php` umbenannt (Klasse, Konstante, Helper, alle `test_moral_*`-Methoden), dazugehörige Reste in `GameTickResourceGenerationTest.php`, `OnboardingTriggersTest.php`, `PersonellServiceTest.php`, `KnowledgeServiceTest.php` sowie in `GameTick.php`/`GameTickDryRun.php` und zwei Config-Kommentaren bereinigt. Migrations bewusst unangetastet (historische Schema-Namen). Restliche Testsuite auf Auffälligkeiten geprüft (Skips, Debug-Leftover, Duplikate) — unauffällig, der eine bestehende Skip (`PlaytestBotTest`) ist bereits dokumentiert und bewusst. 672 Tests weiterhin grün.
+
 ## 2026-07-20
 
 Fortsetzung des Credit-Ökonomie-Balance-Tickets (siehe 2026-07-19): Playtest-Bot lief nach dem gestrigen Fix zwar bis Phase 2 (Sol 49), Ökonomie kollabierte danach aber weiterhin. Interaktives Brainstorming mit Owner + game-designer-Subagent ergab: Grundproduktion (Harvester/Agrardom) war zu knapp, um Puffer für Uplink-Station/Cantina/Konsul aufzubauen, bevor Berater-Upkeep zuschlägt — und Kenntnisse-Sekundäreffekte (Ressourcen-/AP-Boni) dürfen laut Owner-Vorgabe nicht die einzige Lösung sein, da Hangar/Cantina-Erstwähler sonst strukturell benachteiligt wären.
