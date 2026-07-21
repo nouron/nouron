@@ -343,7 +343,7 @@ class OnboardingTriggersTest extends TestCase
      * When trust (resource_id=12) transitions from >= 0 (before tick) to < 0 (after
      * TrustService recalculates), the trigger must emit an onboarding_trust INNN event.
      *
-     * We drive trust negative by inserting a 'trade_blocked' moral event (value = -3)
+     * We drive trust negative by inserting a 'trade_blocked' trust event (value = -3)
      * into the trust_events table at the pinned tick (500) for this colony.
      * After the tick, TrustService will store trust = -5 in colony_resources, which
      * satisfies the onboarding_trust trigger condition (trustBefore=0 >= 0, trustAfter=-5 < 0).
@@ -353,7 +353,7 @@ class OnboardingTriggersTest extends TestCase
         // Trust starts at 0 (set in setUp); trigger not yet fired.
         $this->assertFalse($this->triggerService->hasFired($this->userId, 'onboarding_trust'));
 
-        // Insert a negative moral event at the pinned tick so TrustService produces -3.
+        // Insert a negative trust event at the pinned tick so TrustService produces -3.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500, // matches the tick pinned in setUp
@@ -362,12 +362,12 @@ class OnboardingTriggersTest extends TestCase
 
         Artisan::call('game:tick', ['--run' => $this->runId]);
 
-        $moralAfter = (int) DB::table('colony_resources')
+        $trustAfter = (int) DB::table('colony_resources')
             ->where('colony_id', $this->colonyId)
             ->where('resource_id', 12)
             ->value('amount');
 
-        $this->assertLessThan(0, $moralAfter, 'Trust must be negative after trade_blocked moral event');
+        $this->assertLessThan(0, $trustAfter, 'Trust must be negative after trade_blocked trust event');
 
         $event = ColonyLog::where('user', $this->userId)
             ->where('event', 'onboarding_trust')
@@ -395,7 +395,7 @@ class OnboardingTriggersTest extends TestCase
     {
         $this->triggerService->markFired($this->userId, 'onboarding_trust');
 
-        // Force moral to go negative via trade_blocked event.
+        // Force trust to go negative via trade_blocked event.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
@@ -427,7 +427,7 @@ class OnboardingTriggersTest extends TestCase
             ->where('resource_id', 12)
             ->update(['amount' => -5]);
 
-        // Also insert a moral event so the result stays negative after recalculation.
+        // Also insert a trust event so the result stays negative after recalculation.
         DB::table('trust_events')->insert([
             'colony_id' => $this->colonyId,
             'tick' => 500,
@@ -471,7 +471,7 @@ class OnboardingTriggersTest extends TestCase
             'amount' => 0,
         ]);
 
-        // Moral event for the NPC colony so trust would go negative.
+        // Trust event for the NPC colony so trust would go negative.
         DB::table('trust_events')->insert([
             'colony_id' => 9999,
             'tick' => 500,

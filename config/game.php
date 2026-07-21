@@ -217,11 +217,11 @@ return [
     // Per-entity trust_per_lv / trust_per_unit values live in config/buildings.php,
     // config/techs.php and config/ships.php — TrustService reads from those files.
     'trust' => [
-        // resource_id in colony_resources where the trust value is stored (res_moral).
+        // resource_id in colony_resources where the trust value is stored (res_trust).
         'resource_id' => 12,
         // Hard cap for total ship trust contribution (before global clamp).
         'ships_cap' => 30,
-        // Production multipliers by trust band (see GDD §13 "Effekte der Moral").
+        // Production multipliers by trust band (see GDD §14 "Effekte des Vertrauens").
         'production_multiplier' => [
             ['min' => 61, 'max' => 100, 'factor' => 1.20],
             ['min' => 21, 'max' => 60, 'factor' => 1.10],

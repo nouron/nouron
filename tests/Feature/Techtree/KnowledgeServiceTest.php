@@ -30,7 +30,7 @@ class KnowledgeServiceTest extends TestCase
 
     protected int $userId = 3;
 
-    // knowledge_health (94) — positive moral effect, representative for all Kenntnisse
+    // knowledge_health (94) — positive trust effect, representative for all Kenntnisse
     protected int $knowledgeId = 94;
 
     protected function setUp(): void

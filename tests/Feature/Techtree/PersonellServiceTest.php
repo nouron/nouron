@@ -317,7 +317,7 @@ class PersonellServiceTest extends TestCase
         $this->artisan('game:tick', ['--tick' => $currentTick + 1])->assertSuccessful();
 
         // After tick, available must equal total — no locked AP from the old tick applies.
-        // (Moral may change during the tick, so we compare against the new total, not tickBefore.)
+        // (Trust may change during the tick, so we compare against the new total, not tickBefore.)
         $this->assertEquals(
             $this->service->getTotalActionPoints('construction', $this->colonyId),
             $this->service->getAvailableActionPoints('construction', $this->colonyId)
@@ -459,7 +459,7 @@ class PersonellServiceTest extends TestCase
         $advisor->refresh();
 
         // After promotion to rank 2, AP must exceed rank-1 value (4).
-        // The exact value depends on the moral multiplier, so we just assert the promotion raised AP.
+        // The exact value depends on the trust multiplier, so we just assert the promotion raised AP.
         $this->assertEquals(2, $advisor->rank);
         $this->assertGreaterThan(4, $this->service->getTotalActionPoints('construction', $this->colonyId));
     }

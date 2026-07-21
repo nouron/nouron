@@ -88,7 +88,7 @@ return [
 
     'defense' => [
         'id' => 96,
-        'trust_per_lv' => -1,      // see GDD §13 — vigilance dampens morale slightly
+        'trust_per_lv' => -1,      // see GDD §13 — vigilance dampens trust slightly
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 100,
