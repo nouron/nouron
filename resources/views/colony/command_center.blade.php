@@ -3,6 +3,7 @@
 
 @push("styles")
     <link rel="stylesheet" href="{{ asset("css/command_center.css") }}">
+    <link rel="stylesheet" href="{{ asset("css/entity-chips.css") }}">
 @endpush
 
 @push("scripts")
@@ -114,7 +115,12 @@
                 <ul class="cc-list">
                     @foreach ($damagedBuildings as $b)
                         <li class="cc-list-item">
-                            <span>{{ $b["label"] }} ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})</span>
+                            <span>
+                                <x-entity-chip type="building" entity-key="{{ $b["building_key"] }}"
+                                    label="{{ $b["label"] }}" :tooltip="["description"=> __("buildings." .
+                                    str_replace("building_", "", $b["building_key"]) . "_desc")]" />
+                                    ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
+                            </span>
                             <span class="cc-list-item-danger">
                                 {{ __("command_center.widget_maintenance_status", ["sp" => $b["status_points"], "max" => $b["max_status_points"]]) }}
                             </span>
@@ -172,7 +178,12 @@
                     @endphp
                     @foreach ($advisors as $a)
                         <li class="cc-list-item">
-                            <span>{{ $a["name"] }} ({{ $a["rank_name"] }})</span>
+                            <span>
+                                <x-entity-chip type="advisor" entity-key="advisor_{{ $a["type_key"] }}"
+                                    label="{{ $a["name"] }}" :tooltip="["description"=> $a["type_key"] ?
+                                    __("advisors." . $a["type_key"] . "_desc") : null]" />
+                                    ({{ $a["rank_name"] }})
+                            </span>
                             <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
                                 {{ $apAbbr[$a["ap_type"]] ?? "" }} AP</span>
                         </li>

@@ -191,6 +191,15 @@ class HangarService
             throw new RuntimeException('consulApSpent must be zero or positive.');
         }
 
+        if ($consulApSpent > 0 && ! config('game.bypass.ap_checks')) {
+            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            if ($consulApSpent > $availableAp) {
+                throw new RuntimeException(
+                    "Insufficient economy AP: requested {$consulApSpent}, available {$availableAp}."
+                );
+            }
+        }
+
         $configKey = self::SHIP_ID_TO_CONFIG_KEY[$shipId];
 
         $baseCost = (int) config("ships.{$configKey}.nexus_cost", 0);
@@ -204,7 +213,7 @@ class HangarService
         $pendingDecayTicks = (int) config('game.hangar.pending_decay_ticks', 5);
 
         DB::transaction(function () use (
-            $colonyId, $shipId, $useNexusCredit,
+            $colonyId, $shipId, $useNexusCredit, $consulApSpent,
             $finalCost, $deliveryTicks, $currentTick, $pendingDecayTicks,
         ): void {
             // Resolve the user who owns this colony (needed for credit checks).
@@ -304,6 +313,10 @@ class HangarService
                 'deliver_at_tick' => $deliverAtTick,
                 'pending_until_tick' => $pendingUntilTick,
             ]);
+
+            if ($consulApSpent > 0) {
+                $this->personellService->lockActionPoints('economy', $colonyId, $consulApSpent);
+            }
         });
     }
 

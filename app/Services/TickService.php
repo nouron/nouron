@@ -51,7 +51,9 @@ class TickService
      * Returns true if the daily tick calculation is currently running
      * (i.e., we are between calculation.start and calculation.end).
      *
-     * @TODO: Distinguish summer/winter time (DST) — not yet implemented.
+     * No DST handling needed: the runtime is pinned to UTC
+     * (AppServiceProvider::boot(), see config/game.php → tick), and UTC has no
+     * summer/winter time transitions.
      */
     public function calculationIsRunning(): bool
     {

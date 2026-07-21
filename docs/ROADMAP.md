@@ -84,7 +84,7 @@ Nächste Schritte, alle noch offen:
 
 ### Entity-Chip-Rollout — weitere Views
 
-- [ ] Integration in Berater-Screen, Kolonie-Screen und weitere Views (Segment-Array + Komponente existieren bereits, siehe Phase 3k)
+- [x] Integration in Berater-Screen, Kolonie-Screen (2026-07-21). Kommandozentrale-Dashboard (Wartungsstau, Berater-Kurzübersicht) ergänzt.
 
 ### Offene GDD / Design-TODOs
 
