@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-21
+
+`docs/ROADMAP.md` nachgezogen (war seit 2026-07-01 nicht aktualisiert): Playtest-Bot (#217/#218) und Credit-Ökonomie-Balance zweistufig (#219 gemergt, #220 in Review) ergänzt, laufendes Brainstorming Kenntnisse/Hangar/Cantina-Pfadparität als neuer "Laufend"-Abschnitt, Admin-Tool-Wunsch für Bot-Lauf-Vergleiche und Tile-RNG-Determinismus-Bug in "Geplant" aufgenommen.
+
 ## 2026-07-20
 
 Fortsetzung des Credit-Ökonomie-Balance-Tickets (siehe 2026-07-19): Playtest-Bot lief nach dem gestrigen Fix zwar bis Phase 2 (Sol 49), Ökonomie kollabierte danach aber weiterhin. Interaktives Brainstorming mit Owner + game-designer-Subagent ergab: Grundproduktion (Harvester/Agrardom) war zu knapp, um Puffer für Uplink-Station/Cantina/Konsul aufzubauen, bevor Berater-Upkeep zuschlägt — und Kenntnisse-Sekundäreffekte (Ressourcen-/AP-Boni) dürfen laut Owner-Vorgabe nicht die einzige Lösung sein, da Hangar/Cantina-Erstwähler sonst strukturell benachteiligt wären.
