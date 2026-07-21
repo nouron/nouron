@@ -4,6 +4,12 @@
 
 `docs/ROADMAP.md` nachgezogen (war seit 2026-07-01 nicht aktualisiert): Playtest-Bot (#217/#218) und Credit-Ökonomie-Balance zweistufig (#219 gemergt, #220 in Review) ergänzt, laufendes Brainstorming Kenntnisse/Hangar/Cantina-Pfadparität als neuer "Laufend"-Abschnitt, Admin-Tool-Wunsch für Bot-Lauf-Vergleiche und Tile-RNG-Determinismus-Bug in "Geplant" aufgenommen.
 
+Drei kleine offene Todos abgearbeitet:
+
+- **Entity-Chip-Rollout weitere Views:** Kommandozentrale-Dashboard (Widget "Wartungsstau" + "Berater-Kurzübersicht") nutzt jetzt `<x-entity-chip>` statt Klartext, konsistent mit Kolonie- und Berater-Screen.
+- **TickService DST-TODO geklärt:** Kein offener Punkt — Runtime läuft fest auf UTC (`AppServiceProvider::boot()`), UTC kennt keine Sommer-/Winterzeit. Kommentar entsprechend präzisiert, keine Implementierung nötig.
+- **Hangar Konsul-AP-Pool angebunden:** `verfuegbareVerhandlungsAP` liest jetzt echtes Economy-AP (`PersonellService::getEconomyPoints()`) statt hartcodiert `0` — Konsul-Rabatt-Regler im Nexus-Anfrage-Dialog ist damit erstmals nutzbar. `HangarService::requestShip()` validiert `consulApSpent` gegen verfügbares AP und sperrt es pro Tick (analog `BarService::acceptOffer()`), verhindert Mehrfachausgabe im selben Tick.
+
 ## 2026-07-20
 
 Fortsetzung des Credit-Ökonomie-Balance-Tickets (siehe 2026-07-19): Playtest-Bot lief nach dem gestrigen Fix zwar bis Phase 2 (Sol 49), Ökonomie kollabierte danach aber weiterhin. Interaktives Brainstorming mit Owner + game-designer-Subagent ergab: Grundproduktion (Harvester/Agrardom) war zu knapp, um Puffer für Uplink-Station/Cantina/Konsul aufzubauen, bevor Berater-Upkeep zuschlägt — und Kenntnisse-Sekundäreffekte (Ressourcen-/AP-Boni) dürfen laut Owner-Vorgabe nicht die einzige Lösung sein, da Hangar/Cantina-Erstwähler sonst strukturell benachteiligt wären.

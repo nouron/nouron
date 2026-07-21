@@ -58,13 +58,14 @@ class HangarController extends BaseController
         $canUseNexusCredit = $ccLevel >= (int) config('game.hangar.nexus_credit_min_cc_level', 2);
 
         // Konsul (trader advisor, personell_id = 92) active check.
-        // TODO: replace with AdvisorService call once economy-AP pool is exposed via service.
         $konsulPersonellId = (int) config('advisors.trader.id', 92);
         $hasAktivierterKonsul = DB::table('advisors')
             ->where('colony_id', $colony->id)
             ->where('personell_id', $konsulPersonellId)
             ->exists();
-        $verfuegbareVerhandlungsAP = 0; // TODO: read from economy AP pool once implemented
+        $verfuegbareVerhandlungsAP = $hasAktivierterKonsul
+            ? $this->personellService->getEconomyPoints($colony->id)
+            : 0;
 
         // IDs of ship types that are already commissioned (docked/building/dispatched)
         // so the UI can mark them as unavailable for re-ordering.

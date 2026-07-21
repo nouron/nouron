@@ -71,6 +71,7 @@ class CommandCenterController extends BaseController
             )
             ->get()
             ->map(fn ($b) => [
+                'building_key' => $b->building_key,
                 'label' => __('techtree.'.$b->building_key),
                 'status_points' => (int) $b->status_points,
                 'max_status_points' => (int) $b->max_status_points,
@@ -88,6 +89,7 @@ class CommandCenterController extends BaseController
                 $typeKey = $advisorTypeByPersonellId[$advisor->personell_id] ?? null;
 
                 return [
+                    'type_key' => $typeKey,
                     'name' => $typeKey ? __('advisors.'.$typeKey) : '?',
                     'rank' => (int) $advisor->rank,
                     'rank_name' => match ((int) $advisor->rank) {
