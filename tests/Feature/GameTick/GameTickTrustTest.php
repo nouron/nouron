@@ -42,13 +42,13 @@ use Tests\TestCase;
  *
  * Uses tick numbers 11300–11349.
  */
-class GameTickMoralTest extends TestCase
+class GameTickTrustTest extends TestCase
 {
     use RefreshDatabase;
 
     private const COLONY_ID = 1;
 
-    private const MORAL_RES_ID = 12;
+    private const TRUST_RES_ID = 12;
 
     protected function setUp(): void
     {
@@ -57,7 +57,7 @@ class GameTickMoralTest extends TestCase
 
         // Start with clean trust state
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::MORAL_RES_ID],
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
             ['amount' => 0]
         );
 
@@ -94,19 +94,19 @@ class GameTickMoralTest extends TestCase
     {
         return (int) DB::table('colony_resources')
             ->where('colony_id', self::COLONY_ID)
-            ->where('resource_id', self::MORAL_RES_ID)
+            ->where('resource_id', self::TRUST_RES_ID)
             ->value('amount');
     }
 
     private function setTrust(int $value): void
     {
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::MORAL_RES_ID],
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
             ['amount' => $value]
         );
     }
 
-    private function insertMoralEvent(string $eventType, int $tick): void
+    private function insertTrustEvent(string $eventType, int $tick): void
     {
         DB::table('trust_events')->insert([
             'colony_id' => self::COLONY_ID,
@@ -123,7 +123,7 @@ class GameTickMoralTest extends TestCase
      * With no trust_per_lv buildings, no colony ships with trust_per_unit, and no
      * events, expected trust = 0 (setUp has already zeroed these contributions).
      */
-    public function test_moral_is_stored_after_tick(): void
+    public function test_trust_is_stored_after_tick(): void
     {
         Artisan::call('game:tick', ['--tick' => 11300]);
 
@@ -138,11 +138,11 @@ class GameTickMoralTest extends TestCase
      * Pre-condition: trust at 0, no building/ship trust contribution (zeroed in setUp)
      * → result = event value = +1.
      */
-    public function test_positive_moral_event_increases_moral(): void
+    public function test_positive_trust_event_increases_trust(): void
     {
         $eventEffect = (int) config('game.trust.events.building_level_up', 1);
 
-        $this->insertMoralEvent('building_level_up', 11301);
+        $this->insertTrustEvent('building_level_up', 11301);
 
         Artisan::call('game:tick', ['--tick' => 11301]);
 
@@ -156,11 +156,11 @@ class GameTickMoralTest extends TestCase
      * A 'trade_blocked' trust event contributes a negative delta to trust.
      * setUp has already zeroed building and ship trust contributions.
      */
-    public function test_negative_moral_event_decreases_moral(): void
+    public function test_negative_trust_event_decreases_trust(): void
     {
         $eventEffect = (int) config('game.trust.events.trade_blocked', -3);
 
-        $this->insertMoralEvent('trade_blocked', 11302);
+        $this->insertTrustEvent('trade_blocked', 11302);
 
         Artisan::call('game:tick', ['--tick' => 11302]);
 
@@ -174,7 +174,7 @@ class GameTickMoralTest extends TestCase
      * Colony 1 infirmary level=1 → trust contribution = +3.
      * setUp has already zeroed all other trust-contributing buildings and ships.
      */
-    public function test_building_with_moral_per_lv_contributes_to_moral(): void
+    public function test_building_with_trust_per_lv_contributes_to_trust(): void
     {
         $infirmaryId = 46;
         $trustPerLv = (int) (config('buildings.infirmary.trust_per_lv', 3));
@@ -204,7 +204,7 @@ class GameTickMoralTest extends TestCase
      * Bar (building_id=52) has trust_per_lv=2. At level=60 → contribution=120 → clamped to 100.
      * setUp has already zeroed ships and other trust-contributing buildings.
      */
-    public function test_moral_clamped_at_positive_100(): void
+    public function test_trust_clamped_at_positive_100(): void
     {
         $barTrustPerLv = (int) config('buildings.bar.trust_per_lv', 2);
 
@@ -230,7 +230,7 @@ class GameTickMoralTest extends TestCase
      *
      * Use events from all negative-value event types and assert the result is always >= -100.
      */
-    public function test_moral_clamped_at_negative_100(): void
+    public function test_trust_clamped_at_negative_100(): void
     {
         // Strategy: use events from all negative-value event types
         // and assert the result is always >= -100.
@@ -239,7 +239,7 @@ class GameTickMoralTest extends TestCase
             ->keys();
 
         foreach ($negativeEvents as $eventType) {
-            $this->insertMoralEvent($eventType, 11311);
+            $this->insertTrustEvent($eventType, 11311);
         }
 
         Artisan::call('game:tick', ['--tick' => 11311]);
@@ -252,10 +252,10 @@ class GameTickMoralTest extends TestCase
      * Trust events are consumed in one tick and must not affect the next tick.
      * setUp has already zeroed building and ship trust contributions for isolation.
      */
-    public function test_moral_event_does_not_carry_to_next_tick(): void
+    public function test_trust_event_does_not_carry_to_next_tick(): void
     {
         // Insert event only for tick 11320 — not for tick 11321
-        $this->insertMoralEvent('building_level_up', 11320);
+        $this->insertTrustEvent('building_level_up', 11320);
 
         Artisan::call('game:tick', ['--tick' => 11320]);
         $trustAfterTick1 = $this->getTrust();
@@ -274,11 +274,11 @@ class GameTickMoralTest extends TestCase
      * 'trade_blocked' = -3; two of them → still -3 (not -6).
      * setUp has already zeroed building and ship trust contributions for isolation.
      */
-    public function test_duplicate_moral_events_same_type_do_not_stack(): void
+    public function test_duplicate_trust_events_same_type_do_not_stack(): void
     {
         // Insert the same event type twice for the same tick
-        $this->insertMoralEvent('trade_blocked', 11330);
-        $this->insertMoralEvent('trade_blocked', 11330);
+        $this->insertTrustEvent('trade_blocked', 11330);
+        $this->insertTrustEvent('trade_blocked', 11330);
 
         Artisan::call('game:tick', ['--tick' => 11330]);
 
@@ -297,7 +297,7 @@ class GameTickMoralTest extends TestCase
      * and must not affect trust.
      * setUp has already zeroed building and ship trust contributions for isolation.
      */
-    public function test_unknown_moral_event_type_is_ignored(): void
+    public function test_unknown_trust_event_type_is_ignored(): void
     {
         // TrustService::fireEvent() guards unknown types — it never inserts.
         // But what if someone directly inserts an unknown type?

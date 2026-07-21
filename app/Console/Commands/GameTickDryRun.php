@@ -159,8 +159,8 @@ class GameTickDryRun extends Command
             ->pluck('amount', 'resource_id');
 
         $production = config('game.production_curve', []);
-        $moral = $this->trustService->getTrust($cid);
-        $multiplier = $this->trustService->getProductionMultiplier($moral);
+        $trust = $this->trustService->getTrust($cid);
+        $multiplier = $this->trustService->getProductionMultiplier($trust);
 
         $resNames = [3 => 'Regolith', 4 => 'Werkstoffe', 5 => 'Organika'];
         $this->line('  Resources:');
@@ -181,10 +181,10 @@ class GameTickDryRun extends Command
             $this->line(sprintf('    %-14s %6d → %6d  (%s)', $rname.':', $cur, $new, $yieldStr));
         }
 
-        $trustColor = $moral >= 0 ? 'green' : 'red';
+        $trustColor = $trust >= 0 ? 'green' : 'red';
         $this->line(sprintf(
             '    Trust:        <fg=%s>%d</> (production ×%.2f)',
-            $trustColor, $moral, $multiplier
+            $trustColor, $trust, $multiplier
         ));
 
         // ── Building decay ────────────────────────────────────────────────

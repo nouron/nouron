@@ -215,7 +215,7 @@ return [
     //   1. trust_per_lv = 1: passive trust bonus per level (see GDD §4).
     //   2. Event mitigation: negative trust events (building_level_down,
     //      encounter_lost, colony_threatened) reduced by 25% when Hub active
-    //      (TrustService — TODO: implement, key: securityHub_event_mitigation_pct).
+    //      (TrustService::eventContribution()).
     //   3. recycle_pct: on building level-down by decay, return 10% of build
     //      cost in tradeable resources (GameTick — partially implemented).
     //
@@ -231,7 +231,7 @@ return [
         'max_status_points' => 20,
         'max_level' => 3,
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
-        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TODO: implement)
+        'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TrustService::eventContribution())
     ],
 
     // Uplink Station — CC Lv2 (Lv1), CC Lv3 (Lv2), CC Lv5 (Lv3). 1 instance (is_instanced=0).

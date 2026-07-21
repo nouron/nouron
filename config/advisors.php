@@ -19,8 +19,8 @@
  *     matching path building (sciencelab→scientist, hangar→pilot, bar→trader).
  *     See AdvisorController::PATH_BUILDINGS.
  *   Slot 5 (fix): strategist — gate: CC Lv3 + SecurityHub Lv1 (Pfad D).
- *     CC Lv3 check is already in AdvisorController ($ccGate=3 for 'strategist').
- *     SecurityHub check is a TODO (see AdvisorController comment "gate wired up later").
+ *     Both checks live in AdvisorController ($ccGate=3 + SecurityHub level lookup)
+ *     and are mirrored in PersonellService::hire() for the actual hire gate.
  *
  * Localization: lang/de/advisors.php
  */

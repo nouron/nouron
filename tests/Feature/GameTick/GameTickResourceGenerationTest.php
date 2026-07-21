@@ -18,14 +18,14 @@ use Tests\TestCase;
  *                                    cumulative: L1=8 L2=20 L3=32 L4=41 L5=48 L6=53 L7=56 L8=58
  *   Both capped at max_level=8 (config/buildings.php) — higher levels are not reachable.
  *
- * Production is modified by a moral multiplier. To isolate production from moral
- * drift, these tests fix the moral at 0 (multiplier = 1.0) by setting colony
- * moral resource to 0 and ensuring no moral events fire in the tick.
+ * Production is modified by a trust multiplier. To isolate production from trust
+ * drift, these tests fix trust at 0 (multiplier = 1.0) by setting colony
+ * trust resource to 0 and ensuring no trust events fire in the tick.
  *
  * Covered scenarios:
  *  Happy path:
- *  - harvester at level N generates N×10 Regolith per tick (neutral moral)
- *  - bioFacility at level N generates N×10 Organics per tick (neutral moral)
+ *  - harvester at level N generates N×10 Regolith per tick (neutral trust)
+ *  - bioFacility at level N generates N×10 Organics per tick (neutral trust)
  *  - Stacking: both buildings produce in the same tick
  *
  *  Edge cases:
@@ -58,19 +58,19 @@ class GameTickResourceGenerationTest extends TestCase
 
     private const RES_ORGANICS = 5;
 
-    private const MORAL_RES_ID = 12;
+    private const TRUST_RES_ID = 12;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
 
-        // Fix moral at 0 for colony 1 → multiplier = 1.0 (neutral band: -20..+20)
+        // Fix trust at 0 for colony 1 → multiplier = 1.0 (neutral band: -20..+20)
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::MORAL_RES_ID],
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
             ['amount' => 0]
         );
-        // Ensure moral events table is clean (no pending events that would shift moral)
+        // Ensure trust events table is clean (no pending events that would shift trust)
         DB::table('trust_events')->where('colony_id', self::COLONY_ID)->delete();
 
         // Isolate production from the Organika provisioning sink (GameTick step 8a):
@@ -223,22 +223,22 @@ class GameTickResourceGenerationTest extends TestCase
         $this->assertEquals(70, $regolith, 'Harvester level 10 (beyond cap) must produce the level-8 cap yield of 70 Regolith');
     }
 
-    // ── Moral multiplier interaction ────────────────────────────────────────────
+    // ── Trust multiplier interaction ────────────────────────────────────────────
 
     /**
-     * High moral (>60) applies a 1.20× production multiplier.
+     * High trust (>60) applies a 1.20× production multiplier.
      * harvester level 5 × 10 × 1.20 = round(60) = 60.
      */
-    public function test_high_moral_applies_production_bonus(): void
+    public function test_high_trust_applies_production_bonus(): void
     {
         $this->setBuildingLevel(self::HARVESTER_ID, 5);
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
             ->update(['level' => 0]);
 
-        // Set moral to 75 (Euphorisch band: +61..+100 → multiplier 1.20)
+        // Set trust to 75 (Euphorisch band: +61..+100 → multiplier 1.20)
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::MORAL_RES_ID],
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
             ['amount' => 75]
         );
         DB::table('colony_resources')->updateOrInsert(
@@ -251,23 +251,23 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         // cumulative curve at level 5 = 52; yield = round(52 × 1.20) = 62
         $this->assertEquals(62, $regolith,
-            'Production at moral=75 must apply 1.20× multiplier → 62 Regolith');
+            'Production at trust=75 must apply 1.20× multiplier → 62 Regolith');
     }
 
     /**
-     * Low moral (<-60) applies a 0.70× production penalty.
+     * Low trust (<-60) applies a 0.70× production penalty.
      * harvester level 5 cumulative curve (52) × 0.70 = round(36.4) = 36.
      */
-    public function test_low_moral_applies_production_penalty(): void
+    public function test_low_trust_applies_production_penalty(): void
     {
         $this->setBuildingLevel(self::HARVESTER_ID, 5);
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
             ->update(['level' => 0]);
 
-        // Set moral to -80 (Aufruhr band: -100..-61 → multiplier 0.70)
+        // Set trust to -80 (Aufruhr band: -100..-61 → multiplier 0.70)
         DB::table('colony_resources')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'resource_id' => self::MORAL_RES_ID],
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::TRUST_RES_ID],
             ['amount' => -80]
         );
         DB::table('colony_resources')->updateOrInsert(
@@ -280,6 +280,6 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         // cumulative curve at level 5 = 52; yield = round(52 × 0.70) = 36
         $this->assertEquals(36, $regolith,
-            'Production at moral=-80 must apply 0.70× penalty → 36 Regolith');
+            'Production at trust=-80 must apply 0.70× penalty → 36 Regolith');
     }
 }

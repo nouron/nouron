@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\DB;
  *  4. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
  *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
  *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
- *  8. Resource generation — produce colony resources per industry building level (moral multiplier applied)
+ *  8. Resource generation — produce colony resources per industry building level (trust multiplier applied)
  *  8b. Trust calculation  — recalculate colony trust and store in colony_resources (resource_id=12)
  *  8c. Passive Credits    — Nexus subsidy (30 Cr) + colony tax per housing level (20 Cr/level) added to user Credits
  *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
