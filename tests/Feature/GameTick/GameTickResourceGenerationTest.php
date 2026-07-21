@@ -11,9 +11,12 @@ use Tests\TestCase;
 /**
  * GameTick step 8 — Resource generation from industry buildings.
  *
- * Config (game.production):
- *   building_id 27 (harvester)    → resource 3 (Regolith) × 10/level
- *   building_id 41 (bioFacility)  → resource 5 (Organics) × 10/level
+ * Config (game.production_curve, bell-curve per level, cumulative — GDD §18, 2026-07-20):
+ *   building_id 27 (harvester)    → resource 3 (Regolith): [8,10,12,12,10,8,6,4] per level 1-8
+ *                                    cumulative: L1=8 L2=18 L3=30 L4=42 L5=52 L6=60 L7=66 L8=70
+ *   building_id 41 (bioFacility)  → resource 5 (Organics): [8,12,12,9,7,5,3,2] per level 1-8
+ *                                    cumulative: L1=8 L2=20 L3=32 L4=41 L5=48 L6=53 L7=56 L8=58
+ *   Both capped at max_level=8 (config/buildings.php) — higher levels are not reachable.
  *
  * Production is modified by a moral multiplier. To isolate production from moral
  * drift, these tests fix the moral at 0 (multiplier = 1.0) by setting colony
@@ -97,7 +100,7 @@ class GameTickResourceGenerationTest extends TestCase
     // ── Happy path ─────────────────────────────────────────────────────────────
 
     /**
-     * harvester at level 1 produces exactly 10 Regolith per tick (rate 10/level, multiplier 1.0).
+     * harvester at level 1 produces exactly 8 Regolith per tick (curve[1]=8, multiplier 1.0).
      */
     public function test_harvester_generates_regolith_per_level(): void
     {
@@ -107,13 +110,13 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11200]);
 
         $after = $this->getColonyResource(self::RES_REGOLITH);
-        // At multiplier 1.0: yield = round(1 × 10 × 1.0) = 10
-        $this->assertEquals($before + 10, $after,
-            'Harvester level 1 must produce exactly 10 Regolith per tick');
+        // At multiplier 1.0: yield = round(8 × 1.0) = 8
+        $this->assertEquals($before + 8, $after,
+            'Harvester level 1 must produce exactly 8 Regolith per tick');
     }
 
     /**
-     * harvester at level 3 produces 30 Regolith per tick (3 × 10 × 1.0).
+     * harvester at level 3 produces 30 Regolith per tick (cumulative curve 8+10+12, multiplier 1.0).
      */
     public function test_harvester_production_scales_with_level(): void
     {
@@ -167,9 +170,9 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         $organics = $this->getColonyResource(self::RES_ORGANICS);
 
-        // harvester level 2 → 20 Regolith; bioFacility level 1 → 10 Organics
-        $this->assertEquals(20, $regolith, 'Harvester level 2 must produce 20 Regolith');
-        $this->assertEquals(10, $organics, 'BioFacility level 1 must produce 10 Organics');
+        // harvester level 2 → cumulative 8+10=18 Regolith; bioFacility level 1 → 8 Organics
+        $this->assertEquals(18, $regolith, 'Harvester level 2 must produce 18 Regolith');
+        $this->assertEquals(8, $organics, 'BioFacility level 1 must produce 8 Organics');
     }
 
     // ── Edge cases ─────────────────────────────────────────────────────────────
@@ -197,8 +200,10 @@ class GameTickResourceGenerationTest extends TestCase
     }
 
     /**
-     * Production scales proportionally at high building levels.
-     * harvester level 10 → 100 Regolith per tick (at moral=0, multiplier=1.0).
+     * Production is capped at max_level=8 — a level beyond the cap (10, which is not
+     * actually reachable via levelup since max_level=8 gates it) must not produce more
+     * than the level-8 cumulative yield (70 Regolith). Guards against the curve lookup
+     * indexing past its highest defined level.
      */
     public function test_production_scales_proportionally_at_high_levels(): void
     {
@@ -215,7 +220,7 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11211]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        $this->assertEquals(100, $regolith, 'Harvester level 10 must produce 100 Regolith');
+        $this->assertEquals(70, $regolith, 'Harvester level 10 (beyond cap) must produce the level-8 cap yield of 70 Regolith');
     }
 
     // ── Moral multiplier interaction ────────────────────────────────────────────
@@ -244,14 +249,14 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11220]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // yield = round(5 × 10 × 1.20) = 60
-        $this->assertEquals(60, $regolith,
-            'Production at moral=75 must apply 1.20× multiplier → 60 Regolith');
+        // cumulative curve at level 5 = 52; yield = round(52 × 1.20) = 62
+        $this->assertEquals(62, $regolith,
+            'Production at moral=75 must apply 1.20× multiplier → 62 Regolith');
     }
 
     /**
      * Low moral (<-60) applies a 0.70× production penalty.
-     * harvester level 5 × 10 × 0.70 = round(35) = 35.
+     * harvester level 5 cumulative curve (52) × 0.70 = round(36.4) = 36.
      */
     public function test_low_moral_applies_production_penalty(): void
     {
@@ -273,8 +278,8 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11221]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // yield = round(5 × 10 × 0.70) = 35
-        $this->assertEquals(35, $regolith,
-            'Production at moral=-80 must apply 0.70× penalty → 35 Regolith');
+        // cumulative curve at level 5 = 52; yield = round(52 × 0.70) = 36
+        $this->assertEquals(36, $regolith,
+            'Production at moral=-80 must apply 0.70× penalty → 36 Regolith');
     }
 }

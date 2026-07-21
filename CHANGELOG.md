@@ -1,5 +1,29 @@
 # Changelog
 
+## 2026-07-21
+
+`docs/ROADMAP.md` nachgezogen (war seit 2026-07-01 nicht aktualisiert): Playtest-Bot (#217/#218) und Credit-Ökonomie-Balance zweistufig (#219 gemergt, #220 in Review) ergänzt, laufendes Brainstorming Kenntnisse/Hangar/Cantina-Pfadparität als neuer "Laufend"-Abschnitt, Admin-Tool-Wunsch für Bot-Lauf-Vergleiche und Tile-RNG-Determinismus-Bug in "Geplant" aufgenommen.
+
+## 2026-07-20
+
+Fortsetzung des Credit-Ökonomie-Balance-Tickets (siehe 2026-07-19): Playtest-Bot lief nach dem gestrigen Fix zwar bis Phase 2 (Sol 49), Ökonomie kollabierte danach aber weiterhin. Interaktives Brainstorming mit Owner + game-designer-Subagent ergab: Grundproduktion (Harvester/Agrardom) war zu knapp, um Puffer für Uplink-Station/Cantina/Konsul aufzubauen, bevor Berater-Upkeep zuschlägt — und Kenntnisse-Sekundäreffekte (Ressourcen-/AP-Boni) dürfen laut Owner-Vorgabe nicht die einzige Lösung sein, da Hangar/Cantina-Erstwähler sonst strukturell benachteiligt wären.
+
+**Entscheidung (Pfad-Parität):** 3 Pfade behalten unterschiedliche, aber gleichwertige Wirkweisen — Analytiker/Kenntnisse = passiver Multiplikator, Pilot/Hangar = aktive Burst-Beschaffung (Missionen), Konsul/Cantina = aktive Konversion (Handel). Kein neues Subsystem nötig, nur Tuning. Guard-Rail: Grundproduktion muss für sich allein "knapp, aber machbar" sein, BEVOR irgendein Pfad-Bonus draufkommt — sonst wird das Ursprungsproblem nur verlagert.
+
+**Umgesetzt — Harvester/Agrardom-Grundproduktion (dieser Teil):**
+
+- `config/game.php: production` (flache Rate `×10/level`, unbegrenzte Level) ersetzt durch `production_curve` — Glockenkurve, kumulativ pro Level, gedeckelt bei `max_level=8` (`config/buildings.php`, war `null`).
+- Harvester (Regolith): `[8,10,12,12,10,8,6,4]` je Level 1-8, kumuliert max. 70/Sol. Peakt breit in der Mitte (Regolith wird über den Run in Schüben gebraucht).
+- Agrardom (Organics): `[8,12,12,9,7,5,3,2]` je Level 1-8, kumuliert max. 58/Sol. Peakt früh (Nahrungssicherheit muss schnell stehen, bevor Hunger→Trust-Spirale greift) und bleibt bewusst flacher als Harvester.
+- Grund für Glockenkurve statt linear/exponentiell: Levelup-Kosten sind level-unabhängig flach (10 AP + 10 Regolith) — ohne harten Deckel würde ein abflachender Grenzertrag nie einen echten Stopp erzwingen, nur zu Autopilot-Klicks ohne Entscheidung führen (game-designer-Einschätzung). Ab Lv8 kommt Wachstum nur noch über Kenntnisse/Missionen/Handel.
+- `GameTick::cumulativeCurveYield()` (neue public-static Hilfsfunktion) summiert die Kurve bis zum aktuellen Level; von `generateResources()` und `GameTickDryRun` genutzt.
+
+Playtest-Bot-Ergebnis: `phase2_start_sol` 49 → **18**. Ökonomie-Kollaps nach Phase 1 (Bar-"Not enough resources.", Post-Rang-2/3-Erholung) bleibt weiterhin offen — eigenes Ticket, Brainstorming läuft weiter (Kenntnisse-Boni, Hangar-Missionsnutzbarkeit, Handel-Redesign).
+
+**Nebenfund (eigenes Ticket, nicht gefixt):** `PlaytestBotTest::test_same_seed_draws_identical_objectives` deckte auf, dass `ColonyTileService::randomizeOuterRingRows()` PHP-Ambient-Zufall statt `rng_seed` nutzt und vor dessen explizitem Setzen läuft (`OnboardingService::resetColonyToSol1()`) — zwei Runs mit identischem Seed bekommen unterschiedliche Tile-Layouts. Bricht die "gleicher Seed → gleicher Run"-Garantie über Tests hinaus. Test auf "skipped" mit neuer Begründung umgestellt (vorher wegen des jetzt gefixten Economy-Gaps rot/geskippt).
+
+GDD §3 (Produktionsformel + Konfig-Beispiel) und §18 (`task_credit_reserve`-Balancing-Notiz) aktualisiert. Tests: `GameTickResourceGenerationTest` (6 Erwartungswerte neu berechnet), `PlaytestBotTest` (Skip-Begründung aktualisiert). Komplette Suite grün: 723 Tests, 1 bewusster Skip.
+
 ## 2026-07-19
 
 Balance-Ticket Hangar/Konsul-Ökonomie (Playtest-Bot-Befund, siehe 2026-07-17 (2)) angegangen:

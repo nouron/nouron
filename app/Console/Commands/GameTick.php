@@ -733,9 +733,26 @@ class GameTick extends Command
 
     // ── 8. Resource generation ───────────────────────────────────────────────
 
+    /**
+     * Sums the bell-curve yield for a building at a given level: curve[1] + curve[2] + …
+     * + curve[level], capped at the highest configured level (the building's max_level).
+     *
+     * @param  array<int,int>  $curve  level => marginal yield at that level
+     */
+    public static function cumulativeCurveYield(array $curve, int $level): int
+    {
+        $cappedLevel = min($level, max(array_keys($curve) ?: [0]));
+        $total = 0;
+        for ($i = 1; $i <= $cappedLevel; $i++) {
+            $total += $curve[$i] ?? 0;
+        }
+
+        return $total;
+    }
+
     private function generateResources(int $tick): int
     {
-        $productionConfig = config('game.production', []);
+        $productionConfig = config('game.production_curve', []);
         if (empty($productionConfig)) {
             $this->warn('  No production rates configured in config/game.php → skipping.');
 
@@ -771,8 +788,9 @@ class GameTick extends Command
                     continue;
                 }
 
-                foreach ($outputs as $resourceId => $ratePerLevel) {
-                    $yield = (int) round($building->level * $ratePerLevel * $multiplier);
+                foreach ($outputs as $resourceId => $curve) {
+                    $base = self::cumulativeCurveYield($curve, (int) $building->level);
+                    $yield = (int) round($base * $multiplier);
                     ColonyResource::where('colony_id', $colony->id)
                         ->where('resource_id', $resourceId)
                         ->update(['amount' => DB::raw("amount + {$yield}")]);

@@ -68,7 +68,11 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,    // 21 days
         'max_status_points' => 20,
-        'max_level' => null,
+        // Hard cap (2026-07-20, GDD §3/§18 balance ticket): bell-curve production
+        // (game.production_curve) needs a finite end, not an infinite fade-out —
+        // otherwise flat per-level costs never stop being "technically levelable but
+        // pointless". Growth beyond Lv8 comes only from Kenntnisse/Missionen/Handel.
+        'max_level' => 8,
     ],
 
     // bioFacility (Agrardom) — mandatory prerequisite for the CC Lv1→Lv2
@@ -85,7 +89,8 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,
         'max_status_points' => 20,
-        'max_level' => null,
+        // Hard cap (2026-07-20, GDD §3/§18 balance ticket) — see harvester comment above.
+        'max_level' => 8,
     ],
 
     // ── Science ───────────────────────────────────────────────────────────────
