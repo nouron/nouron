@@ -759,3 +759,29 @@ a.technology.personell.notexists {
         margin-left: 0.25rem;
     }
 }
+
+/* ── Toast (invest/levelup feedback) ──────────────────────── */
+
+.techtree-toast {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    max-width: 320px;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    line-height: 1.4;
+    z-index: 500;
+    pointer-events: none;
+    color: #fff;
+    background: #7f1d1d;
+}
+
+.techtree-toast--error {
+    background: #7f1d1d;
+}
+
+.techtree-toast--info {
+    background: #14532d;
+}

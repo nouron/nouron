@@ -377,11 +377,15 @@ class TechtreeController extends BaseController
      * `{success:false}` with no reason at all — neither the player nor a client could
      * tell "not enough AP" from "wrong Command Center level".
      *
-     * `success` stays in the payload for compatibility. Note that public/js/techtree-view.js
-     * does `if (!res.ok) return` — unlike the colony helpers it *does* look at the status —
-     * so it now bails on 422 instead of reading `success:false`. Both paths were silent
-     * (there is no else branch and no error surface in that view), so the player sees the
-     * same nothing as before. Showing `message` there is a separate UI job.
+     * An `'add'` investment that reaches the AP threshold auto-triggers the levelup
+     * in the same request — invest() only ever advances ap_spend, it never increments
+     * the level itself, and a separate follow-up request/page-reload left the level
+     * permanently stuck whenever levelupBlocker() had a reason beyond "not enough AP
+     * yet" (e.g. a missing required building): ap_spend maxes out, invest() reports
+     * success every time thereafter, and nothing ever explains why the level never
+     * moves. Mirrors ColonyController::investBuilding()'s single-request invest+levelup
+     * flow, and returns the fresh tech/AP state so the techtree screen can update in
+     * place without reloading the page.
      */
     public function order(Request $request, string $type, int $id): JsonResponse
     {
@@ -414,7 +418,74 @@ class TechtreeController extends BaseController
             return $this->orderFailed($code ?? 'order_failed', $order);
         }
 
-        return response()->json(['success' => true, 'order' => $order]);
+        $leveledUp = false;
+        $levelupBlockedReason = null;
+
+        if ($order === 'add') {
+            $blocker = $service->levelupBlocker($colonyId, $id);
+            if ($blocker === null) {
+                $leveledUp = $service->levelup($colonyId, $id);
+            } elseif ($blocker !== 'insufficient_ap_invested') {
+                // Threshold not reached yet is the expected, silent case. Anything
+                // else means the AP just invested is stuck behind an unmet
+                // requirement — worth surfacing instead of a silent no-op.
+                $levelupBlockedReason = $blocker;
+            }
+        }
+
+        $apType = $this->apTypeFor($type);
+
+        return response()->json([
+            'success' => true,
+            'order' => $order,
+            'leveled_up' => $leveledUp,
+            'levelup_blocked_reason' => $levelupBlockedReason,
+            'levelup_blocked_message' => $levelupBlockedReason ? __("techtree.error_{$levelupBlockedReason}") : null,
+            'tech' => $this->techStateFor($type, $id, $colonyId),
+            'ap_available' => $this->personellService->getAvailableActionPoints($apType, $colonyId),
+        ]);
+    }
+
+    /**
+     * Fresh display state for a single tech after an order — level, ap_spend, the
+     * *next* level's ap_for_levelup (knowledge costs vary per level) and status, so
+     * the frontend can update in place instead of reloading the page.
+     */
+    /**
+     * Whitelisted subset of fields the frontend needs after an order — NOT the raw
+     * techtree row: that carries the untranslated DB name slug (e.g. 'knowledge_
+     * cartography') under 'name', which would clobber the already-translated label
+     * the page rendered initially if merged in wholesale.
+     */
+    private function techStateFor(string $type, int $id, int $colonyId): ?array
+    {
+        $techtree = $this->techtreeColonyService->getTechtree($colonyId);
+        $type = strtolower($type);
+        $tech = $techtree[$type][$id] ?? null;
+
+        if ($tech === null) {
+            return null;
+        }
+
+        $apForLevelup = $type === 'research'
+            ? $this->researchService->knowledgeLevelupCost($colonyId, $id, (int) ($tech['ap_for_levelup'] ?? 0))
+            : (int) ($tech['ap_for_levelup'] ?? 0);
+
+        return [
+            'id' => $id,
+            'level' => (int) ($tech['level'] ?? 0),
+            'ap_spend' => (int) ($tech['ap_spend'] ?? 0),
+            'ap_for_levelup' => $apForLevelup,
+            'status' => $this->computeStatus($tech, $techtree),
+        ];
+    }
+
+    private function apTypeFor(string $type): string
+    {
+        return match (strtolower($type)) {
+            'research' => 'research',
+            default => 'construction',
+        };
     }
 
     private function orderFailed(string $code, string $order): JsonResponse
