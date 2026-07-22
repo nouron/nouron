@@ -285,22 +285,30 @@ function techtreeView(config) {
             return labels[type] ?? type;
         },
 
-        async investAp(tech, type, amount) {
+        async sendOrder(type, techId, body) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-            const res = await fetch(`/techtree/${type}/${tech.id}/order`, {
+            const res = await fetch(`/techtree/${type}/${techId}/order`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrf,
                 },
-                body: JSON.stringify({ order: 'add', ap: amount }),
+                body: JSON.stringify(body),
             });
-            if (!res.ok) return;
-            const json = await res.json();
-            if (json.success) {
+            if (!res.ok) return null;
+
+            return res.json();
+        },
+
+        async investAp(tech, type, amount) {
+            const json = await this.sendOrder(type, tech.id, { order: 'add', ap: amount });
+            if (json?.success) {
                 tech.ap_spend = Math.min((tech.ap_spend || 0) + amount, tech.ap_for_levelup);
                 tech.ap_available = Math.max(0, (tech.ap_available || 0) - amount);
                 if (tech.ap_spend >= tech.ap_for_levelup) {
+                    // Enough AP invested — trigger the actual levelup (invest() only
+                    // ever advances ap_spend, it never increments the level itself).
+                    await this.sendOrder(type, tech.id, { order: 'levelup' });
                     window.location.reload();
                 }
             }

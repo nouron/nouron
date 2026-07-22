@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-07-22
+
+Zwei kleine offene Bugs abgearbeitet:
+
+- **Techtree-Levelup-Deadend:** `techtree-view.js::investAp()` sendete nie `order:'levelup'` — nach Erreichen von `ap_for_levelup` wurde die Seite einfach neu geladen, ohne dass der Server je den tatsächlichen Levelup auslöste (`invest()` erhöht nur `ap_spend`, nie das Level selbst). Fix: sobald der Schwellenwert erreicht ist, feuert das Frontend jetzt einen zweiten `order:'levelup'`-Request, bevor neu geladen wird. Kein JS-Testrunner im Projekt — manuell im Browser smoke-testen (Gebäude/Forschung bis `ap_for_levelup` investieren, Level-Sprung prüfen).
+- **AdvisorController::hire Error-Inkonsistenz:** lieferte `{ok:false, error:'<übersetzter Satz>'}` statt der projektweiten Konvention `{error:'<code>', message:'<Text>'}` (wie `ColonyController::fail()`/`TechtreeController::order()` seit PR #217). Betraf den Playtest-Bot, der Ablehnungen nach `error`-Wert aggregiert. Frontend (`advisors.js::doHire()`) auf `res.message` umgestellt.
+
 ## 2026-07-21
 
 Larastan (Level 5) auf 0 Fehler gebracht (vorher 151):
