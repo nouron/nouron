@@ -1,6 +1,12 @@
 # Changelog
 
-## 2026-07-21
+## 2026-07-24
+
+PHPUnit-Code-Coverage von 70,7 % auf 89,9 % gebracht (Ziel war mittelfristig 80 %), durch gezielte Tests für die größten Lücken:
+
+- **`CommLogController`** (0%→88,5%), **`SyncConfig`** (0%→100%), **`ValidateColony`** (0%→100%), **`GameTickDryRun`** (0%→98%), **`GameSnapshot`** (0%→88,8%), **`ColonySeedDemo`** (0%→96,8%), **`ResetPlayer`** (0,6%→94,7% — größte Einzellücke), plus kleinere Dateien (`JsonController`, `ShipService`, `DbReset`, `RunResultController`, `UserController`, `LobbyController`).
+- **Echter Bug gefunden (nicht gefixt, dokumentiert):** `advisors_colony_personell_unique`-Index (`(colony_id, personell_id)`) existiert auf der aktuellen Schema nicht mehr — beim Fleet/Galaxie-Rebuild verlorengegangen. `insertOrIgnore()`-Aufrufe (z. B. `ColonySeedDemo::ensurePilotAdvisor()`) sind dadurch nicht mehr idempotent und erzeugen bei wiederholtem Aufruf Advisor-Duplikate. Test dokumentiert das aktuelle (fehlerhafte) Verhalten explizit als bekannten Bug, statt es stillschweigend als korrekt zu behaupten.
+- 848 Tests insgesamt (vorher 723 + PR #224s 725), alle grün. PHPStan weiterhin 0 Fehler.
 
 Larastan (Level 5) auf 0 Fehler gebracht (vorher 151):
 
