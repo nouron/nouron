@@ -61,6 +61,9 @@ Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Co
 - Blade-Views oder Frontend-JS/CSS NICHT bauen — gehört zu ui-specialist.
 - Lang-Datei-Stringwerte (Deutsch) NICHT ohne explizite Anfrage schreiben — PHP-Key mit leerem Platzhalter anlegen und für content-writer markieren.
 
+## Test-Driven Development — verbindlich
+Vor jedem neuen Controller-Endpoint oder jeder Service-Methode mit Verhalten: erst einen Feature-/Unit-Test schreiben (`tests/Feature/...`), rot laufen lassen, dann implementieren bis grün. Kein Endpoint ohne vorher existierenden Test. Ausnahme nur bei reinem Routing/Wiring ohne eigene Logik oder explizitem Owner-Spike. Details: CLAUDE.md → „Test-Driven Development (TDD) — verbindlich".
+
 ## Coding-Standards
 - PSR-12 strikt einhalten
 - Dependency Injection — keine statischen Calls oder globaler State außer idiomatischen Facades
@@ -70,7 +73,7 @@ Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Co
 - CSRF-Schutz auf jedem zustandsändernden Endpoint (Laravel handled via `web`-Middleware)
 
 ## Output-Format
-Vollständige, lauffähige Code-Dateien liefern. Kommentare nur wenn WHY nicht offensichtlich (versteckte Einschränkung, Workaround, subtile Invariante) — nie erklären was Code tut.
+Test-Datei (zuerst geschrieben, rot dann grün) + vollständige, lauffähige Code-Dateien liefern. Kommentare nur wenn WHY nicht offensichtlich (versteckte Einschränkung, Workaround, subtile Invariante) — nie erklären was Code tut.
 ## Code-Style (Linter — Pflicht)
 
 Vor jedem Commit formatiert der Hook PHP via **Laravel Pint** (`laravel`-Preset). Code so schreiben, dass Pint nichts mehr ändert:

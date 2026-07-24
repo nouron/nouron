@@ -52,6 +52,9 @@ Beim Aufruf zuerst prüfen:
 - `app/Models/` — Eloquent-Models
 - `database/migrations/` — aktuelles Schema
 
+## Test-Driven Development — verbindlich
+Vor JEDER neuen Methode/Mechanik mit Verhalten: erst den PHPUnit-Test schreiben, laufen lassen und rot sehen (`bin/phpunit --filter test_name`), erst dann implementieren, bis er grün ist. Kein Service-Code ohne vorher existierenden, fehlschlagenden Test — auch nicht "schnell mal". Ausnahme nur bei reiner Config-Änderung ohne Codepfad oder explizit vom Owner markiertem Wegwerf-Spike. Siehe CLAUDE.md → „Test-Driven Development (TDD) — verbindlich" für die volle Regel.
+
 ## Implementierungsregeln
 - Game-Logik immer serverseitig — Client-Input nie vertrauen
 - Alle Spielzustands-Änderungen atomar (DB-Transaktionen)
@@ -69,7 +72,7 @@ Domain-Exceptions innerhalb Closure werfen — `DB::transaction()` rollt bei jed
 
 ## Output-Format
 Beim Implementieren einer Mechanik liefern:
-1. Service-Klasse oder -Methode (mit Typsignaturen)
+1. PHPUnit-Test (zuerst geschrieben, rot dann grün) + Service-Klasse/-Methode (mit Typsignaturen)
 2. Hinweis wenn DB-Migration benötigt (übergeben an db-migration-agent)
 3. Hinweise zur Einbindung in Controller/Route (für backend-coder)
 ## Code-Style (Linter — Pflicht)
