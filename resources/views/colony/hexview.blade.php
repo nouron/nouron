@@ -30,6 +30,7 @@
             ccLevel: {{ (int) $ccLevel }},
             ccBuildingId: {{ \App\Enums\BuildingId::CommandCenter->value }},
             buildings: @json($buildings),
+            buildingCatalog: @json($buildingChipData->map(fn($chip) => ["label" => $chip["label"]])),
             apNav: {{ (int) $navAp }},
             apConstruction: {{ (int) $constructionAp }},
             regolith: {{ (int) $regolith }},
@@ -166,18 +167,8 @@
                 <div class="tile-panel-title" x-show="!harvesterMoveMode && !buildMode && selectedTile" x-cloak>
                     <template x-if="selectedBuilding">
                         <div class="tile-panel-title__row">
-                            <span class="tile-panel-title__name">
-                                @foreach ($buildingChipData as $key => $chip)
-                                    @php
-                                        $chipLabel = $chip["label"];
-                                        $chipTooltip = $chip["tooltip"];
-                                    @endphp
-                                    <template x-if="selectedBuilding.building_key === '{{ $key }}'">
-                                        <x-entity-chip type="building" entity-key="{{ $key }}"
-                                            label="{{ $chipLabel }}" :tooltip="$chipTooltip" />
-                                    </template>
-                                @endforeach
-                            </span>
+                            <span class="tile-panel-title__name"
+                                x-text="buildingLabel(selectedBuilding.building_key)"></span>
                             <span class="sidebar-level-badge" x-show="selectedBuilding.level > 0"
                                 x-text="selectedBuilding.max_level
                                     ? `Lv. ${selectedBuilding.level} / ${selectedBuilding.max_level}`
@@ -293,8 +284,7 @@
 
                 {{-- Only labels build/harvester modes. In normal tile mode the tabs
                  (building) or the terrain <h3> name the content themselves. --}}
-                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode"
-                    x-cloak>
+                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode" x-cloak>
                     <h3
                         x-text="harvesterMoveMode ? '{{ __("colony.harvester_move") }}' : '{{ __("colony.build_mode_title") }}'">
                     </h3>

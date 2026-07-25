@@ -94,6 +94,7 @@ function colonyHexView(config) {
         ccLevel: config.ccLevel,
         ccBuildingId: config.ccBuildingId ?? 25,
         buildings: config.buildings ?? [],
+        buildingCatalog: config.buildingCatalog ?? {},
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
         apNav: config.apNav ?? 0,
@@ -658,6 +659,10 @@ function colonyHexView(config) {
                 return this.buildings.find((b) => b.building_id === this.ccBuildingId) ?? null;
             }
             return this.buildings.find((b) => b.tile_x === tile.q && b.tile_y === tile.r) ?? null;
+        },
+
+        buildingLabel(key) {
+            return this.buildingCatalog?.[key]?.label ?? key;
         },
 
         // The building on the currently selected tile, or null. Single source
