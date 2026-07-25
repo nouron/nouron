@@ -340,7 +340,7 @@ class AdvisorController extends BaseController
             $errorMessage = $errorMessages[$result] ?? __('advisors.error_generic');
 
             if ($request->expectsJson()) {
-                return response()->json(['ok' => false, 'error' => $errorMessage], 422);
+                return response()->json(['ok' => false, 'error' => $result, 'message' => $errorMessage], 422);
             }
 
             return back()->with('error', $errorMessage);
