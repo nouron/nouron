@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-25
+
+Tile-Panel-Titel (Kolonie-Ansicht) aufgeräumt: der 13-fache `@foreach`/`x-if`/`<x-entity-chip>`-Block zur Gebäudenamen-Anzeige (pro Gebäudetyp ein verstecktes Template) ist einem einzigen Alpine-Lookup (`buildingLabel()`) gewichen. Optisch kein Icon/Pill mehr in der Titel-Zeile — schlichter, fetter Text neben dem Level-Badge. Scope bewusst auf die Titel-Zeile begrenzt (Design-Spec: `docs/superpowers/specs/2026-07-24-tile-panel-title-cleanup-design.md`).
+
 ## 2026-07-21
 
 Larastan (Level 5) auf 0 Fehler gebracht (vorher 151):
