@@ -20,6 +20,9 @@ Responsives Spiel-UI für Nouron bauen. Neue Screens: Alpine.js + PicoCSS. Legac
 - `lang/de/*.php` Deutsche Werte NICHT ändern — content-writer zuständig. Keys mit leerem String oder `TODO`-Platzhalter anlegen und flaggen.
 - `docs/GDD.md`, `ROADMAP.md`, `CHANGELOG.md` NICHT anfassen.
 
+## TDD-Hinweis
+Kein JS-Testrunner im Projekt — TDD gilt hier nicht für Blade/Alpine/CSS direkt. Wird für eine neue UI-Interaktion ein neuer AJAX-Endpoint/Response-Contract gebraucht: Contract zuerst mit backend-coder/game-developer klären, die schreiben dort den Test zuerst (TDD-Pflicht gilt für den Backend-Teil). Neue JS-Logik so einfach halten, dass sie ohne Testrunner beim manuellen Durchklicken verifizierbar bleibt.
+
 ## Tech Stack — Neue Screens (Phase 3b+)
 - **Alpine.js 3** für Reaktivität (`x-data`, `x-show`, `x-bind`, `x-effect`, `x-ref`, `$refs`)
 - **PicoCSS 2** für Basis-Styles — semantisches HTML, `<dialog>`, `<article>`, `<details>`, `<progress>`
