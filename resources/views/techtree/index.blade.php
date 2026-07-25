@@ -17,6 +17,9 @@
     <div class="techtree-page" x-data="techtreeView(window.__techtreeData)" x-cloak data-hint-rank="{{ $activeHintRank }}"
         @touchstart.passive="onTouchStart($event)" @touchend.passive="onTouchEnd($event)">
 
+        <div class="techtree-toast" :class="`techtree-toast--${toastType}`" x-show="toastVisible" x-transition
+            x-text="toastMessage" aria-live="polite" role="status"></div>
+
         <div class="techtree-sections" x-ref="sectionsWrapper">
             <svg class="techtree-global-svg" x-ref="globalSvg" aria-hidden="true"></svg>
 

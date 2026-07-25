@@ -285,25 +285,68 @@ function techtreeView(config) {
             return labels[type] ?? type;
         },
 
-        async investAp(tech, type, amount) {
+        // The order endpoint answers 422 with a machine-readable {error, message} body
+        // (not just a bare failed status), so the JSON is parsed either way — callers
+        // read `success`/`error` off the returned object rather than the HTTP status.
+        async sendOrder(type, techId, body) {
             const csrf = document.querySelector('meta[name="csrf-token"]')?.content ?? '';
-            const res = await fetch(`/techtree/${type}/${tech.id}/order`, {
+            const res = await fetch(`/techtree/${type}/${techId}/order`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrf,
                 },
-                body: JSON.stringify({ order: 'add', ap: amount }),
+                body: JSON.stringify(body),
             });
-            if (!res.ok) return;
-            const json = await res.json();
-            if (json.success) {
-                tech.ap_spend = Math.min((tech.ap_spend || 0) + amount, tech.ap_for_levelup);
-                tech.ap_available = Math.max(0, (tech.ap_available || 0) - amount);
-                if (tech.ap_spend >= tech.ap_for_levelup) {
-                    window.location.reload();
-                }
+
+            return res.json();
+        },
+
+        // Invests AP and, once the threshold is reached, the server auto-triggers the
+        // actual levelup in the same request (TechtreeController::order()) — updates
+        // the tech in place and syncs the AP chip, no page reload (same UX as the
+        // colony hex view's building invest).
+        async investAp(tech, type, amount) {
+            const json = await this.sendOrder(type, tech.id, { order: 'add', ap: amount });
+            if (!json.success) {
+                this.showToast(json.message ?? 'Investition fehlgeschlagen.', 'error');
+                return;
             }
+
+            if (json.tech) Object.assign(tech, json.tech);
+            if (json.ap_available !== undefined) {
+                tech.ap_available = json.ap_available;
+                this.syncApChip(type, json.ap_available);
+            }
+
+            if (json.leveled_up) {
+                this.showToast(`${tech.name ?? this.typeLabel(type)}: Level ${tech.level} erreicht!`, 'info');
+            } else if (json.levelup_blocked_message) {
+                this.showToast(json.levelup_blocked_message, 'error');
+            }
+        },
+
+        // The AP chips live in the resource bar (layout header), outside this Alpine
+        // component — sync them via DOM after every AJAX action, mirroring
+        // colony-hexgrid.js::syncResbarAp().
+        syncApChip(type, value) {
+            const chipId = type === 'research' ? 'resbar-ap-research' : 'resbar-ap-build';
+            const el = document.querySelector(`#${chipId} .res-amount`);
+            if (el) el.textContent = value;
+        },
+
+        toastMessage: '',
+        toastType: 'error',
+        toastVisible: false,
+
+        showToast(message, type = 'error') {
+            if (this._toastTimer) clearTimeout(this._toastTimer);
+            this.toastMessage = message;
+            this.toastType = type;
+            this.toastVisible = true;
+            this._toastTimer = setTimeout(() => {
+                this.toastVisible = false;
+            }, 3500);
         },
     };
 }

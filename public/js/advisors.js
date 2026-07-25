@@ -61,7 +61,7 @@ function advisorCarousel(config) {
                 this.syncCreditsChip(res.credits);
                 this.syncHint(res);
             } else {
-                this.errorMsg = res.error ?? 'Fehler beim Einstellen.';
+                this.errorMsg = res.message ?? 'Fehler beim Einstellen.';
             }
         },
 
