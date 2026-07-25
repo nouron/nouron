@@ -366,4 +366,83 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($found, 'knowledge_geology (research ID 92) must be in phase 3');
     }
+
+    // ── order('add'): auto-levelup in the same request (no page reload) ───────
+
+    /**
+     * Regression: the techtree UI used to send only order:'add', never order:'levelup'
+     * — invest() alone only ever advances ap_spend, so a knowledge reaching the
+     * threshold got stuck at that level forever (fixed in TechtreeController::order()
+     * by auto-triggering levelup() in the same request once ap_spend reaches it).
+     */
+    public function test_order_add_auto_triggers_levelup_when_threshold_reached(): void
+    {
+        config(['game.bypass.ap_checks' => false, 'game.bypass.resource_costs' => true]);
+
+        // cartography (research id 91): requires Analytik-Labor Lv1 (building 31) +
+        // Hangar Lv1 (building 44) — both already built for colony 1 in test data.
+        // levelup_costs[1] = 12 (config/knowledge.php).
+        DB::table('advisors')->where('colony_id', $this->colonyIdBart)->where('personell_id', 36)->delete();
+        DB::table('advisors')->insert([
+            'user_id' => $this->userIdBart,
+            'personell_id' => 36, // scientist (research AP), rank 3 = 12 AP/tick
+            'colony_id' => $this->colonyIdBart,
+            'rank' => 3,
+            'active_ticks' => 0,
+            'unavailable_until_tick' => null,
+        ]);
+
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 12]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('leveled_up', true);
+        $response->assertJsonPath('levelup_blocked_reason', null);
+        $response->assertJsonPath('tech.level', 1);
+        $response->assertJsonPath('tech.ap_spend', 0);
+        // Next level (1->2) costs 20 per config/knowledge.php — the bar must rescale,
+        // not stay capped at the Lv0->1 threshold (12).
+        $response->assertJsonPath('tech.ap_for_levelup', 20);
+
+        $this->assertSame(1, DB::table('colony_researches')
+            ->where('colony_id', $this->colonyIdBart)->where('research_id', 91)->value('level'));
+    }
+
+    /**
+     * When ap_spend reaches the threshold but levelup() is blocked by an unmet
+     * requirement (not just "not enough AP yet"), the invest must still report
+     * success (the AP was validly spent) but surface *why* the level didn't move —
+     * previously this was a silent no-op the player had no way to explain.
+     */
+    public function test_order_add_reports_blocked_reason_when_levelup_requirement_unmet(): void
+    {
+        config(['game.bypass.ap_checks' => false, 'game.bypass.resource_costs' => true]);
+
+        // geology (research id 92): requires Analytik-Labor Lv2 (building 31) — colony 1
+        // only has it at Lv1, so levelup() will be blocked by 'requires_building'.
+        DB::table('advisors')->where('colony_id', $this->colonyIdBart)->where('personell_id', 36)->delete();
+        DB::table('advisors')->insert([
+            'user_id' => $this->userIdBart,
+            'personell_id' => 36,
+            'colony_id' => $this->colonyIdBart,
+            'rank' => 3,
+            'active_ticks' => 0,
+            'unavailable_until_tick' => null,
+        ]);
+
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 92]), ['order' => 'add', 'ap' => 12]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('leveled_up', false);
+        $response->assertJsonPath('levelup_blocked_reason', 'requires_building');
+        $response->assertJsonPath('tech.level', 0);
+
+        // The AP was spent (capped at the threshold) — not silently lost, but not
+        // reinvestable either until the missing building is built.
+        $this->assertSame(12, DB::table('colony_researches')
+            ->where('colony_id', $this->colonyIdBart)->where('research_id', 92)->value('ap_spend'));
+    }
 }

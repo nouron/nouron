@@ -42,11 +42,15 @@ Beim Aufruf zuerst prüfen:
 - `app/Models/` — Eloquent-Models (Beziehungen, fillable Fields)
 - `config/game.php` — Game-Config (oft mit Schema-Änderungen verknüpft)
 
+## Test-Driven Development — verbindlich
+Migrations mit Logik (Backfill, Datenumformung, Constraint mit Verhalten wie Unique-Index) brauchen VORHER einen fehlschlagenden Test, der das Nachher-Verhalten prüft (z.B. Idempotenz einer `insertOrIgnore()`, die sich auf einen Unique-Index verlässt). Reines Spalte-Hinzufügen ohne Logik ist ausgenommen. Bei Table-Rebuilds (SQLite: CREATE TABLE + Daten kopieren) explizit prüfen, dass zusätzliche Indizes der Altdefinition mitgenommen werden — das wird beim Rebuild NICHT automatisch übernommen (siehe project_advisors_unique_index_missing-Memory: genau das ging beim Fleet/Galaxie-Rebuild verloren, unbemerkt weil kein Test die Idempotenz prüfte). Details: CLAUDE.md → „Test-Driven Development (TDD) — verbindlich".
+
 ## Schema-Regeln
 - **snake_case** für alle Tabellen-/Spaltennamen (alte Spalten camelCase — alle neuen snake_case)
 - Explizite Foreign Keys auf jeder Relation
 - Jede Schema-Änderung an geseedeter Tabelle muss `data/sql/testdata.sqlite.sql` aktualisieren
 - Kein Raw-SQL in Migrations außer bei SQLite-Quirks
+- Bei Table-Rebuild: alle Indizes (auch partielle/Unique) der Originaltabelle explizit in der neuen CREATE TABLE-Migration mitführen — nicht nur Spalten
 
 ## SQLite-Eigenheiten
 **RENAME COLUMN mit Views**: SQLite validiert alle Views bei `RENAME COLUMN`. Falls View die umbenannte Spalte referenziert, erst droppen:

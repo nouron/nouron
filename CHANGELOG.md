@@ -4,6 +4,21 @@
 
 Tile-Panel-Titel (Kolonie-Ansicht) aufgeräumt: der 13-fache `@foreach`/`x-if`/`<x-entity-chip>`-Block zur Gebäudenamen-Anzeige (pro Gebäudetyp ein verstecktes Template) ist einem einzigen Alpine-Lookup (`buildingLabel()`) gewichen. Optisch kein Icon/Pill mehr in der Titel-Zeile — schlichter, fetter Text neben dem Level-Badge. Scope bewusst auf die Titel-Zeile begrenzt (Design-Spec: `docs/superpowers/specs/2026-07-24-tile-panel-title-cleanup-design.md`).
 
+## 2026-07-24
+
+PHPUnit-Code-Coverage von 70,7 % auf 89,9 % gebracht (Ziel war mittelfristig 80 %), durch gezielte Tests für die größten Lücken:
+
+- **`CommLogController`** (0%→88,5%), **`SyncConfig`** (0%→100%), **`ValidateColony`** (0%→100%), **`GameTickDryRun`** (0%→98%), **`GameSnapshot`** (0%→88,8%), **`ColonySeedDemo`** (0%→96,8%), **`ResetPlayer`** (0,6%→94,7% — größte Einzellücke), plus kleinere Dateien (`JsonController`, `ShipService`, `DbReset`, `RunResultController`, `UserController`, `LobbyController`).
+- **Echter Bug gefunden (nicht gefixt, dokumentiert):** `advisors_colony_personell_unique`-Index (`(colony_id, personell_id)`) existiert auf der aktuellen Schema nicht mehr — beim Fleet/Galaxie-Rebuild verlorengegangen. `insertOrIgnore()`-Aufrufe (z. B. `ColonySeedDemo::ensurePilotAdvisor()`) sind dadurch nicht mehr idempotent und erzeugen bei wiederholtem Aufruf Advisor-Duplikate. Test dokumentiert das aktuelle (fehlerhafte) Verhalten explizit als bekannten Bug, statt es stillschweigend als korrekt zu behaupten.
+- 848 Tests insgesamt (vorher 723 + PR #224s 725), alle grün. PHPStan weiterhin 0 Fehler.
+
+## 2026-07-22
+
+Zwei kleine offene Bugs abgearbeitet:
+
+- **Techtree-Levelup-Deadend:** `techtree-view.js::investAp()` sendete nie `order:'levelup'` — nach Erreichen von `ap_for_levelup` wurde die Seite einfach neu geladen, ohne dass der Server je den tatsächlichen Levelup auslöste (`invest()` erhöht nur `ap_spend`, nie das Level selbst). Beim Testen kam ein tieferer Folgebug ans Licht: war `levelup()` durch eine unerfüllte Voraussetzung (z. B. fehlendes Gebäude) blockiert, blieb die Kenntnis dauerhaft bei maxiertem `ap_spend` hängen — `invest()` meldete trotzdem stillschweigend Erfolg, ohne je den Grund zu nennen. Fix: `TechtreeController::order()` triggert den Levelup jetzt automatisch im selben Request, sobald der Schwellenwert erreicht ist (analog `ColonyController::investBuilding()`), meldet einen `levelup_blocked_reason`-Code falls blockiert, und liefert den frischen Tech-/AP-Zustand zurück — kein Seiten-Reload mehr, Frontend aktualisiert Level/AP-Chip live, Fehler/Levelup-Hinweise per Toast (gleiche UX wie die Gebäude-Investition auf der Kolonie-Ansicht). Zwei neue Feature-Tests decken beide Pfade ab (Auto-Levelup bei erfülltem Vorausgesetztem, Blocked-Reason bei unerfülltem).
+- **AdvisorController::hire Error-Inkonsistenz:** lieferte `{ok:false, error:'<übersetzter Satz>'}` statt der projektweiten Konvention `{error:'<code>', message:'<Text>'}` (wie `ColonyController::fail()`/`TechtreeController::order()` seit PR #217). Betraf den Playtest-Bot, der Ablehnungen nach `error`-Wert aggregiert. Frontend (`advisors.js::doHire()`) auf `res.message` umgestellt.
+
 ## 2026-07-21
 
 Larastan (Level 5) auf 0 Fehler gebracht (vorher 151):

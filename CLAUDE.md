@@ -93,9 +93,23 @@ Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
 - `ui-specialist` — Blade, Alpine.js + PicoCSS (neu), Bootstrap 5 (Legacy, kein jQuery mehr)
 - `db-migration-agent` — Schema, Migrations, SQLite, testdata.sqlite.sql
-- `qa-tester` — Tests schreiben (nach jeder Implementierung automatisch)
+- `qa-tester` — Tests schreiben: VOR der Implementierung (TDD-Pflicht, siehe unten) + danach für Security-/Adversarial-/Regressionstests
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
 - `project-manager` — ROADMAP, CHANGELOG, ADRs, Feature-Breakdown
+
+## Test-Driven Development (TDD) — verbindlich
+
+Für jeden neuen Code mit Verhalten (Services, Controller-Logik, Game-Mechaniken, Migrations mit Datenlogik/Backfills) gilt Red-Green-Refactor, keine Ausnahme auf Zuruf:
+
+1. **Red** — Erst einen fehlschlagenden Test schreiben, der das gewünschte Verhalten beschreibt. Test laufen lassen, Fehlschlag bestätigen (sonst weiß niemand, ob der Test überhaupt etwas prüft).
+2. **Green** — Minimale Implementierung, bis der Test grün ist. Kein Code, der nicht durch einen Test motiviert ist.
+3. **Refactor** — Aufräumen, Tests bleiben grün.
+
+**Reihenfolge ist verbindlich:** kein Produktionscode schreiben, bevor der zugehörige Test existiert und rot war. `game-developer`, `backend-coder` und `db-migration-agent` schreiben den Test selbst zuerst, wenn sie allein an einer Aufgabe sitzen — nicht auf `qa-tester` warten. `qa-tester` wird zusätzlich eingesetzt für Security-/Adversarial-Fälle und Regressionsabdeckung, die über den TDD-Test der Kernlogik hinausgehen.
+
+**Ausnahmen** (keine Umgehung, sondern echte Nicht-Anwendbarkeit): reine Config-/Doku-/Lang-Änderungen ohne Codepfad, Migrations ohne Logik (Spalte hinzufügen, kein Backfill/keine Berechnung), vom Owner explizit als Wegwerf-Spike/Prototyp markierter Code. Im Zweifel: Test schreiben.
+
+Bei reaktivierten/bestehenden Dateien mit Coverage-Lücke (siehe `bin/phpunit --coverage-html`) gilt dieselbe Reihenfolge für jede Änderung daran: nicht "code first, Test irgendwann nachziehen".
 
 ## Workflow-Hinweise
 
