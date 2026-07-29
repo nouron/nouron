@@ -162,17 +162,25 @@
 
                 {{-- Context title: building name + level (or terrain name) at the very
                  top, above the action strip — identity before action, and the one
-                 line that stays visible on mobile. Max level is shown inline on the
-                 badge only when the building is actually capped. --}}
+                 line that stays visible on mobile. Compact "Name | Level" inline;
+                 the full "Level x / max" detail lives in a hover popup (desktop
+                 only, .res-popup reused from resources.css) so the header never
+                 wraps to a second line. --}}
                 <div class="tile-panel-title" x-show="!harvesterMoveMode && !buildMode && selectedTile" x-cloak>
                     <template x-if="selectedBuilding">
-                        <div class="tile-panel-title__row">
-                            <span class="tile-panel-title__name"
-                                x-text="buildingLabel(selectedBuilding.building_key)"></span>
-                            <span class="sidebar-level-badge" x-show="selectedBuilding.level > 0"
-                                x-text="selectedBuilding.max_level
-                                    ? `Lv. ${selectedBuilding.level} / ${selectedBuilding.max_level}`
-                                    : `Lv. ${selectedBuilding.level}`"></span>
+                        <div class="tile-panel-title__row" x-data="{ hoverLevel: false }">
+                            <span class="tile-panel-title__name tile-panel-title__name--hoverable"
+                                @mouseenter="hoverLevel = true" @mouseleave="hoverLevel = false">
+                                <span x-text="buildingLabel(selectedBuilding.building_key)"></span>
+                                <template x-if="selectedBuilding.level > 0">
+                                    <span x-text="' | ' + selectedBuilding.level"></span>
+                                </template>
+                                <div class="res-popup" x-show="hoverLevel && selectedBuilding.level > 0" x-cloak
+                                    x-text="selectedBuilding.max_level
+                                        ? `Level ${selectedBuilding.level} / ${selectedBuilding.max_level}`
+                                        : `Level ${selectedBuilding.level}`">
+                                </div>
+                            </span>
                         </div>
                     </template>
                     <template x-if="!selectedBuilding">
@@ -284,7 +292,8 @@
 
                 {{-- Only labels build/harvester modes. In normal tile mode the tabs
                  (building) or the terrain <h3> name the content themselves. --}}
-                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode" x-cloak>
+                <div class="tile-panel-header tile-panel-header--hideable" x-show="harvesterMoveMode || buildMode"
+                    x-cloak>
                     <h3
                         x-text="harvesterMoveMode ? '{{ __("colony.harvester_move") }}' : '{{ __("colony.build_mode_title") }}'">
                     </h3>

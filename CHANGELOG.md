@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-29
+
+Tile-Panel-Titel (Kolonie-Ansicht) weiter verfeinert (Folge-Feedback zu PR #227): Name + Level jetzt kompakt in einer Zeile (`Kommandozentrale | 3`) statt Name-Zeile + separatem Level-Chip darunter. Die volle Level-Angabe (`Level x / max`) zieht in ein dezentes Hover-Popup (`.res-popup`, wiederverwendet aus `resources.css`) — nur bei echtem Hover sichtbar (`@media (hover: hover)`), auf Touch-Geräten ausgeblendet.
+
 ## 2026-07-25
 
 Tile-Panel-Titel (Kolonie-Ansicht) aufgeräumt: der 13-fache `@foreach`/`x-if`/`<x-entity-chip>`-Block zur Gebäudenamen-Anzeige (pro Gebäudetyp ein verstecktes Template) ist einem einzigen Alpine-Lookup (`buildingLabel()`) gewichen. Optisch kein Icon/Pill mehr in der Titel-Zeile — schlichter, fetter Text neben dem Level-Badge. Scope bewusst auf die Titel-Zeile begrenzt (Design-Spec: `docs/superpowers/specs/2026-07-24-tile-panel-title-cleanup-design.md`).
