@@ -619,6 +619,31 @@ button.btn-sol:hover,
     letter-spacing: 0.06em;
 }
 
+/* Hover popup for the level detail — desktop only (touch devices have no
+   hover to trigger it, same (hover: hover) gate as the repair-button ghost
+   segment). Position anchor for the reused .res-popup (resources.css). */
+.tile-panel-title__name--hoverable {
+    position: relative;
+}
+
+.tile-panel-title__name--hoverable .res-popup {
+    text-transform: none;
+    letter-spacing: normal;
+    font-weight: 400;
+}
+
+@media (hover: hover) {
+    .tile-panel-title__name--hoverable {
+        cursor: default;
+    }
+}
+
+@media not all and (hover: hover) {
+    .tile-panel-title__name--hoverable .res-popup {
+        display: none !important;
+    }
+}
+
 /* Terrain detail demoted to a closed disclosure on a built tile. PicoCSS styles
    <details>/<summary> natively; this only tunes spacing + the summary label. */
 .tile-terrain-disclosure {
