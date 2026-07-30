@@ -64,11 +64,12 @@
                 {{-- Background image wrapper (shifts on mobile swipe, static on desktop) --}}
                 <div class="cantina-background-wrapper" :style="{ transform: `translateX(-${current * 22.222}%)` }">
 
-                    {{-- Merchant Hotspot (Jara) — Panel 0 center: 16.7% --}}
+                    {{-- Merchant Hotspot — Panel 0 center: 16.7% --}}
                     @if ($merchantVisit !== null)
-                        <button class="cantina-hotspot hs-slot-spot_0" @click="openMerchant()">
-                            <span class="hotspot-pulse"></span>
-                            <i class="bi bi-shop"></i>
+                        <button class="cantina-hotspot has-portrait hotspot-merchant hs-slot-spot_0" @click="openMerchant()">
+                            <span class="hotspot-badge"><i class="bi bi-exclamation-lg"></i></span>
+                            <img class="hotspot-portrait" src="{{ asset("img/characters/merchant.webp") }}"
+                                alt="{{ __("colony.merchant_title") }}">
                             <span class="hotspot-label">{{ __("colony.merchant_title") }}</span>
                         </button>
                     @endif
