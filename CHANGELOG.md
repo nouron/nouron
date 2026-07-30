@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30
+
+Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
+
 ## 2026-07-29
 
 Tile-Panel-Titel (Kolonie-Ansicht) weiter verfeinert (Folge-Feedback zu PR #227): Name + Level jetzt kompakt in einer Zeile (`Kommandozentrale | 3`) statt Name-Zeile + separatem Level-Chip darunter. Die volle Level-Angabe (`Level x / max`) zieht in ein dezentes Hover-Popup (`.res-popup`, wiederverwendet aus `resources.css`) — nur bei echtem Hover sichtbar (`@media (hover: hover)`), auf Touch-Geräten ausgeblendet.
