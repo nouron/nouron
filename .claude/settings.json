@@ -1,4 +1,7 @@
 {
+  "worktree": {
+    "bgIsolation": "none"
+  },
   "permissions": {
     "allow": [
       "Bash(git *)",
@@ -15,7 +18,7 @@
           {
             "type": "command",
             "command": "bash .claude/hooks/pre-merge-check.sh",
-            "statusMessage": "Merge-Checkliste wird geprüft..."
+            "statusMessage": "Merge-Checkliste wird gepr\u00fcft..."
           }
         ]
       }
