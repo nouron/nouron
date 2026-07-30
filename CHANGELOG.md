@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung)
+
+Cantina: Reisender-Händler-Hotspot zeigte bisher nur ein generisches Shop-Icon statt eines Portraits wie die übrigen NPCs. Neues Merchant-Portrait erzeugt (gleiche Bildvarianten-Pipeline wie oben), Hotspot zeigt jetzt `has-portrait` wie die Gäste-Hotspots plus ein kleines Ausrufezeichen-Badge oben rechts, da der Händler nur zeitlich begrenzt verfügbar ist.
+
 ## 2026-07-30
 
 Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
