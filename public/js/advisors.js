@@ -174,11 +174,11 @@ function advisorCarousel(config) {
          */
         portraitImageUrl(key) {
             const map = {
-                engineer: '/img/advisors/construction_master_male.png',
-                scientist: '/img/advisors/analyst_female.png',
-                pilot: '/img/advisors/pilot_male.png',
-                trader: '/img/advisors/trader_female.png',
-                strategist: '/img/advisors/strategist_male.png',
+                engineer: '/img/advisors/construction_master_male.webp',
+                scientist: '/img/advisors/analyst_female.webp',
+                pilot: '/img/advisors/pilot_male.webp',
+                trader: '/img/advisors/trader_female.webp',
+                strategist: '/img/advisors/strategist_male.webp',
             };
             return map[key] ?? '';
         },

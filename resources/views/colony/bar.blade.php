@@ -166,7 +166,7 @@
                             <div class="guest-avatar">
                                 @if ($char && isset($char["slug"]))
                                     <img class="guest-avatar__portrait"
-                                        src="{{ asset("img/characters/" . $char["slug"] . ".webp") }}"
+                                        src="{{ asset("img/characters/" . $char["slug"] . "_sm.webp") }}"
                                         alt="{{ $name }}">
                                 @else
                                     <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
