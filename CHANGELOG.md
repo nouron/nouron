@@ -4,6 +4,8 @@
 
 Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
 
+`colony:seed-demo` um `--path=all|cantina|hangar|lab` erweitert: baut wahlweise nur eines der drei Sol-2-Pfadwahl-Gebäude (Cantina/Bar, Hangar, Analytik-Labor), die anderen beiden bleiben unplatziert und im Build Mode verfügbar — bildet die echte Pfadwahl-Situation ab (GDD §13/§16.2), statt wie bisher immer alle drei gleichzeitig zu bauen. Default `all` bleibt rückwärtskompatibel zum bisherigen Verhalten.
+
 ## 2026-07-29
 
 Tile-Panel-Titel (Kolonie-Ansicht) weiter verfeinert (Folge-Feedback zu PR #227): Name + Level jetzt kompakt in einer Zeile (`Kommandozentrale | 3`) statt Name-Zeile + separatem Level-Chip darunter. Die volle Level-Angabe (`Level x / max`) zieht in ein dezentes Hover-Popup (`.res-popup`, wiederverwendet aus `resources.css`) — nur bei echtem Hover sichtbar (`@media (hover: hover)`), auf Touch-Geräten ausgeblendet.
