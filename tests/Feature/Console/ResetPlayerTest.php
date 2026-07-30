@@ -116,6 +116,60 @@ class ResetPlayerTest extends TestCase
         $this->assertSame(3, DB::table('advisors')->where('colony_id', $run->colony_id)->count());
     }
 
+    public function test_phase2_scenario_default_path_places_hangar_and_pilot(): void
+    {
+        $this->artisan('game:reset-player', ['user' => 'bart', '--yes' => true, '--scenario' => 'phase2'])
+            ->assertExitCode(0);
+
+        $colony = $this->colony();
+        $this->assertSame(1, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 44)->count()); // hangar
+        $this->assertSame(0, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
+        $this->assertSame(1, DB::table('advisors')
+            ->where('colony_id', $colony->id)->where('personell_id', config('advisors.pilot.id'))->count());
+    }
+
+    public function test_phase2_scenario_path_cantina_places_bar_and_trader_instead_of_hangar(): void
+    {
+        $this->artisan('game:reset-player', [
+            'user' => 'bart', '--yes' => true, '--scenario' => 'phase2', '--path' => 'cantina',
+        ])->assertExitCode(0);
+
+        $colony = $this->colony();
+        $this->assertSame(1, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
+        $this->assertSame(0, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 44)->count()); // hangar
+        $this->assertSame(1, DB::table('advisors')
+            ->where('colony_id', $colony->id)->where('personell_id', config('advisors.trader.id'))->count());
+        $this->assertSame(0, DB::table('advisors')
+            ->where('colony_id', $colony->id)->where('personell_id', config('advisors.pilot.id'))->count());
+    }
+
+    public function test_phase2_scenario_path_lab_places_neither_hangar_nor_bar(): void
+    {
+        $this->artisan('game:reset-player', [
+            'user' => 'bart', '--yes' => true, '--scenario' => 'phase2', '--path' => 'lab',
+        ])->assertExitCode(0);
+
+        $colony = $this->colony();
+        $this->assertSame(0, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 44)->count()); // hangar
+        $this->assertSame(0, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
+        $this->assertSame(2, DB::table('advisors')->where('colony_id', $colony->id)->count()); // engineer+scientist only
+    }
+
+    public function test_phase2_scenario_invalid_path_fails(): void
+    {
+        $this->artisan('game:reset-player', [
+            'user' => 'bart', '--yes' => true, '--scenario' => 'phase2', '--path' => 'bogus',
+        ])
+            ->expectsOutputToContain('Invalid --path')
+            ->assertExitCode(1);
+    }
+
     // ── near-fail-trust ───────────────────────────────────────────────────────
 
     public function test_near_fail_trust_scenario_sets_low_trust(): void

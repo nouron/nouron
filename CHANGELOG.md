@@ -6,6 +6,8 @@ Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-
 
 `colony:seed-demo` um `--path=all|cantina|hangar|lab` erweitert: baut wahlweise nur eines der drei Sol-2-Pfadwahl-Gebäude (Cantina/Bar, Hangar, Analytik-Labor), die anderen beiden bleiben unplatziert und im Build Mode verfügbar — bildet die echte Pfadwahl-Situation ab (GDD §13/§16.2), statt wie bisher immer alle drei gleichzeitig zu bauen. Default `all` bleibt rückwärtskompatibel zum bisherigen Verhalten.
 
+**Korrektur:** Für Szenario-Tests wird tatsächlich `game:reset-player` verwendet, nicht `colony:seed-demo` (siehe oben) — die `--path`-Option dort war der falsche Ansatzpunkt. `game:reset-player --scenario=phase2` baute bisher hart-codiert immer Hangar+Pilot als 3. Gebäude/Berater, nie Cantina — deshalb war Cantina im Phase-2-Testzustand nie zu sehen. `game:reset-player` bekommt jetzt ebenfalls `--path=hangar|cantina|lab` (nur für `--scenario=phase2` relevant): `hangar` (Default, bisheriges Verhalten) → Hangar Lv1 + Pilot-Berater; `cantina` → Bar Lv1 + Trader-Berater statt Hangar/Pilot; `lab` → weder Hangar noch Bar, nur Sciencelab (aus der ohnehin immer gebauten Phase-1-Basis) + Engineer/Scientist.
+
 ## 2026-07-29
 
 Tile-Panel-Titel (Kolonie-Ansicht) weiter verfeinert (Folge-Feedback zu PR #227): Name + Level jetzt kompakt in einer Zeile (`Kommandozentrale | 3`) statt Name-Zeile + separatem Level-Chip darunter. Die volle Level-Angabe (`Level x / max`) zieht in ein dezentes Hover-Popup (`.res-popup`, wiederverwendet aus `resources.css`) — nur bei echtem Hover sichtbar (`@media (hover: hover)`), auf Touch-Geräten ausgeblendet.
