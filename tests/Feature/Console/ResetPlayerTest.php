@@ -105,8 +105,9 @@ class ResetPlayerTest extends TestCase
 
     public function test_phase2_scenario_transitions_to_phase2_with_objectives(): void
     {
-        $this->artisan('game:reset-player', ['user' => 'bart', '--yes' => true, '--scenario' => 'phase2'])
-            ->assertExitCode(0);
+        $this->artisan('game:reset-player', [
+            'user' => 'bart', '--yes' => true, '--scenario' => 'phase2', '--path' => 'hangar',
+        ])->assertExitCode(0);
 
         $run = $this->activeRun();
         $this->assertSame(2, $run->phase);
@@ -116,10 +117,11 @@ class ResetPlayerTest extends TestCase
         $this->assertSame(3, DB::table('advisors')->where('colony_id', $run->colony_id)->count());
     }
 
-    public function test_phase2_scenario_default_path_places_hangar_and_pilot(): void
+    public function test_phase2_scenario_path_hangar_places_hangar_and_pilot(): void
     {
-        $this->artisan('game:reset-player', ['user' => 'bart', '--yes' => true, '--scenario' => 'phase2'])
-            ->assertExitCode(0);
+        $this->artisan('game:reset-player', [
+            'user' => 'bart', '--yes' => true, '--scenario' => 'phase2', '--path' => 'hangar',
+        ])->assertExitCode(0);
 
         $colony = $this->colony();
         $this->assertSame(1, DB::table('colony_buildings')
@@ -128,6 +130,28 @@ class ResetPlayerTest extends TestCase
             ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
         $this->assertSame(1, DB::table('advisors')
             ->where('colony_id', $colony->id)->where('personell_id', config('advisors.pilot.id'))->count());
+    }
+
+    public function test_phase2_scenario_prompts_for_path_when_flag_omitted(): void
+    {
+        // Owner feedback 2026-07-31: forgetting --path silently defaulted to
+        // hangar with no indication — now it asks interactively instead.
+        $this->artisan('game:reset-player', ['user' => 'bart', '--yes' => true, '--scenario' => 'phase2'])
+            ->expectsQuestion('Pfad (Sol-2-Gebäude)', 'cantina')
+            ->assertExitCode(0);
+
+        $colony = $this->colony();
+        $this->assertSame(1, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 52)->count()); // bar
+        $this->assertSame(0, DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 44)->count()); // hangar
+    }
+
+    public function test_non_phase2_scenario_never_prompts_for_path(): void
+    {
+        // --path only makes sense for phase2 — other scenarios must not ask.
+        $this->artisan('game:reset-player', ['user' => 'bart', '--yes' => true, '--scenario' => 'fresh'])
+            ->assertExitCode(0);
     }
 
     public function test_phase2_scenario_path_cantina_places_bar_and_trader_instead_of_hangar(): void

@@ -46,7 +46,7 @@ class ResetPlayer extends Command
         {user? : Username or user_id (omit for interactive select)}
         {--yes : Skip confirmation prompt}
         {--scenario= : fresh|pre-phase2|phase2|near-fail-trust|near-deadline|objectives-done (omit for interactive select)}
-        {--path=hangar : hangar|cantina|lab — which Sol-2 path building the phase2 scenario builds (only used by --scenario=phase2)}';
+        {--path= : hangar|cantina|lab — which Sol-2 path building the phase2 scenario builds (only used by --scenario=phase2; omit for interactive select)}';
 
     protected $description = 'Reset a player\'s game state (dev tool). Interactive when run without arguments.';
 
@@ -64,6 +64,12 @@ class ResetPlayer extends Command
         'near-fail-trust' => 'Vertrauenskrise — Trust −15 (Grenze −20), Tick 30, Org-Reserven leer',
         'near-deadline' => 'Deadline       — Tick 95 (5 Sols verbleibend), 1 Objective erledigt',
         'objectives-done' => 'Fertig         — Tick 60, alle 3 Objectives abgeschlossen',
+    ];
+
+    private const PATH_LABELS = [
+        'hangar' => 'Hangar   — Pilot-Berater, Missionen/Navigations-AP',
+        'cantina' => 'Cantina  — Konsul-Berater, Handelsangebote/Wirtschafts-AP',
+        'lab' => 'Labor    — nur Sciencelab-Basis, kein 3. Gebäude/Berater',
     ];
 
     public function __construct(
@@ -136,6 +142,17 @@ class ResetPlayer extends Command
         }
 
         $path = $this->option('path');
+
+        if ($path === null && $scenario === 'phase2') {
+            $path = select(
+                label: 'Pfad (Sol-2-Gebäude)',
+                options: self::PATH_LABELS,
+                default: 'hangar',
+            );
+        }
+
+        $path ??= 'hangar'; // irrelevant for every other scenario, keep the old default
+
         if (! in_array($path, self::VALID_PATHS, true)) {
             $this->error('Invalid --path: '.$path.' (expected '.implode('|', self::VALID_PATHS).')');
 
@@ -146,8 +163,13 @@ class ResetPlayer extends Command
 
         $this->newLine();
         table(
-            headers: ['Spieler', 'ID', 'Szenario'],
-            rows: [[$user->username, (string) $user->user_id, self::SCENARIO_LABELS[$scenario]]],
+            headers: array_filter(['Spieler', 'ID', 'Szenario', $scenario === 'phase2' ? 'Pfad' : null]),
+            rows: [array_filter([
+                $user->username,
+                (string) $user->user_id,
+                self::SCENARIO_LABELS[$scenario],
+                $scenario === 'phase2' ? self::PATH_LABELS[$path] : null,
+            ], fn ($v) => $v !== null)],
         );
 
         if (! $this->option('yes')) {
