@@ -376,4 +376,44 @@ class BarControllerTest extends TestCase
             $response->assertOk()->assertJsonStructure(['ok', 'success', 'economy_ap']);
         }
     }
+
+    public function test_negotiate_then_accept_two_step_flow_executes_trade_only_on_accept(): void
+    {
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_BART, 'personell_id' => 92],
+            ['rank' => 3, 'user_id' => self::USER_ID_BART, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+
+        $found = false;
+        for ($tick = 1; $tick <= 50; $tick++) {
+            $this->mockTick($tick);
+            $this->clearBarOffers();
+            $this->setColonyResource(self::RES_REGOLITH, 1000);
+            $offerId = $this->insertValidOffer($tick + 10);
+
+            $negotiateResponse = $this->actingAs($this->bart())
+                ->postJson(route('colony.bar.negotiate', ['offer' => $offerId]));
+
+            if ($negotiateResponse->json('ok') && $negotiateResponse->json('success')) {
+                $found = true;
+
+                // Resources must be untouched right after negotiate — only the offer's
+                // terms improved, no trade executed yet.
+                $this->assertEquals(1000, DB::table('colony_resources')
+                    ->where('colony_id', self::COLONY_ID_BART)->where('resource_id', self::RES_REGOLITH)->value('amount'));
+
+                $acceptResponse = $this->actingAs($this->bart())
+                    ->postJson(route('colony.bar.accept', ['offer' => $offerId]));
+
+                $acceptResponse->assertOk()->assertJson(['ok' => true]);
+
+                $regolithAfter = (int) DB::table('colony_resources')
+                    ->where('colony_id', self::COLONY_ID_BART)->where('resource_id', self::RES_REGOLITH)->value('amount');
+                $this->assertLessThan(1000, $regolithAfter, 'Accepting the negotiated offer must finally execute the trade');
+                break;
+            }
+        }
+
+        $this->assertTrue($found, 'Expected at least one successful negotiation within 50 ticks at 85% chance');
+    }
 }

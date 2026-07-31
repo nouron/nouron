@@ -216,17 +216,16 @@
                                     @if ($hasConsul)
                                         <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
                                             @click="negotiate({{ $offerId }}, $el)"
-                                            :disabled="offerResolved({{ $offerId }}) || loading">
+                                            :disabled="negotiated[{{ $offerId }}] || offerResolved({{ $offerId }}) ||
+                                                loading">
                                             <span class="tile-action-btn__body">
                                                 <span
-                                                    x-show="!negotiateResult[{{ $offerId }}]">{{ __("colony.bar_offer_negotiate") }}</span>
-                                                <span x-show="negotiateResult[{{ $offerId }}] === 'success'">✓</span>
+                                                    x-show="!negotiated[{{ $offerId }}] && negotiateResult[{{ $offerId }}] !== 'failed'">{{ __("colony.bar_offer_negotiate") }}</span>
+                                                <span x-show="negotiated[{{ $offerId }}]">✓</span>
                                                 <span x-show="negotiateResult[{{ $offerId }}] === 'failed'">✗</span>
                                             </span>
-                                            @include("partials.ap-cost-chip", [
-                                                "type" => "economy",
-                                                "label" => "Eco " . $negotiateApCost . " AP",
-                                            ])
+                                            <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+                                                x-text="`Eco {{ $negotiateApCost }} AP`"></span>
                                         </button>
                                     @endif
                                     <button class="tile-action-btn" style="width:auto;"
@@ -237,12 +236,14 @@
                                                 x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
                                             <span x-show="accepted[{{ $offerId }}]">✓</span>
                                         </span>
-                                        @include("partials.ap-cost-chip", [
-                                            "type" => "economy",
-                                            "label" => "Eco " . $offerApCost . " AP",
-                                        ])
+                                        <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+                                            x-text="negotiated[{{ $offerId }}] ? 'Eco 0 AP' : `Eco {{ $offerApCost }} AP`"></span>
                                     </button>
                                 </div>
+                            </div>
+                            <div x-show="negotiated[{{ $offerId }}] && !accepted[{{ $offerId }}]"
+                                style="color:#166534;font-size:0.85rem">
+                                {{ __("colony.bar_offer_negotiate_success") }}
                             </div>
                             <div x-show="negotiateResult[{{ $offerId }}] === 'failed'"
                                 style="color:var(--pico-del-color);font-size:0.85rem">
@@ -276,41 +277,61 @@
 
                 // Offers state
                 accepted: {},
-                negotiateResult: {}, // offerId -> 'success' | 'failed'
+                negotiated: {}, // offerId -> true once a negotiation improved the offer's terms
+                negotiateResult: {}, // offerId -> 'failed' (negotiation lost the offer entirely)
                 loading: false,
                 error: {},
 
-                // Whether an offer's dialog is fully resolved (accepted OR a negotiation
-                // concluded, win or lose) — both buttons disable once true.
+                // Whether an offer's dialog is fully resolved — accepted, or a
+                // negotiation was lost (offer gone either way). A successful
+                // negotiation alone does NOT resolve the offer: Annehmen is still
+                // needed to actually execute the (now improved) trade.
                 offerResolved(offerId) {
-                    return !!this.accepted[offerId] || !!this.negotiateResult[offerId];
+                    return !!this.accepted[offerId] || this.negotiateResult[offerId] === 'failed';
                 },
 
                 // Live resourcebar sync — project convention: every AJAX action that
                 // changes AP/resources must update the resourcebar without a reload.
+                // Flashes the chip too (same .res-chip--flash/.ap-chip--flash animation
+                // used everywhere else in the game) so the change is easy to spot.
                 syncResbarAmount(resourceId, amount) {
                     const abbr = resourceAbbr[resourceId];
                     if (!abbr || amount === undefined || amount === null) return;
-                    const el = document.querySelector(`.res-${abbr} .res-amount`);
+                    const selector = `.res-${abbr}`;
+                    const chip = document.querySelector(selector);
+                    const el = chip?.querySelector('.res-amount');
                     if (el) el.textContent = amount.toLocaleString('de-DE');
+                    this.flashChip(chip, 'res-chip--flash');
                 },
 
                 syncEconomyAp(amount) {
                     if (amount === undefined) return;
-                    const el = document.querySelector('#resbar-ap-economy .res-amount');
+                    const chip = document.getElementById('resbar-ap-economy');
+                    const el = chip?.querySelector('.res-amount');
                     if (el) el.textContent = amount;
+                    this.flashChip(chip, 'ap-chip--flash');
+                },
+
+                flashChip(chip, flashClass) {
+                    if (!chip) return;
+                    clearTimeout(chip._flashTimer);
+                    chip.classList.remove(flashClass);
+                    void chip.offsetWidth; // force reflow so the animation restarts mid-flash
+                    chip.classList.add(flashClass);
+                    chip._flashTimer = setTimeout(() => chip.classList.remove(flashClass), 700);
                 },
 
                 // Updates the "Du gibst/bekommst" chip amounts inside a specific
-                // offer's dialog to the actually-charged values — needed after a
-                // successful negotiation, where the real price differs from the
-                // originally-displayed offer terms.
+                // offer's dialog to the negotiated values — the real terms now differ
+                // from what was originally displayed when the dialog was rendered.
                 updateOfferChipAmounts(btn, giveAmount, getAmount) {
                     const dialog = btn.closest('.cantina-dialog');
                     if (!dialog) return;
                     const amounts = dialog.querySelectorAll('.res-amount');
                     if (amounts[0]) amounts[0].textContent = giveAmount;
                     if (amounts[1]) amounts[1].textContent = getAmount;
+                    this.flashChip(amounts[0]?.closest('.res-chip'), 'res-chip--flash');
+                    this.flashChip(amounts[1]?.closest('.res-chip'), 'res-chip--flash');
                 },
 
                 // Merchant state
@@ -433,8 +454,9 @@
                     }
                 },
 
-                // Cantina-Verhandlung — alternative resolution for the same offer,
-                // costs more AP and can fail (offer lost entirely on failure).
+                // Cantina-Verhandlung — improves the offer's terms, costs more AP, and
+                // can fail (offer lost entirely). A successful negotiation does NOT
+                // execute the trade — the player still confirms with Annehmen.
                 async negotiate(offerId, btn) {
                     this.loading = true;
                     this.error[offerId] = null;
@@ -449,9 +471,8 @@
                         });
                         const data = await res.json();
                         if (data.ok && data.success) {
-                            this.negotiateResult[offerId] = 'success';
-                            this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
-                            this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
+                            this.negotiated[offerId] = true;
+                            // No resources move here (see backend docblock) — only AP.
                             this.syncEconomyAp(data.economy_ap);
                             this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
                             this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');

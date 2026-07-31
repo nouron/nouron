@@ -130,8 +130,10 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
         }
 
-        // Economy-AP check
-        $apCost = (int) config('game.bar.ap_cost_accept', 1);
+        // Economy-AP check — waived when the offer was already negotiated
+        // (ap_cost_negotiate was already paid during that step; Annehmen here is
+        // just confirming the improved terms, not a second priced action).
+        $apCost = $offer->is_negotiated ? 0 : (int) config('game.bar.ap_cost_accept', 1);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
             if ($availableAp < $apCost) {
@@ -177,9 +179,13 @@ class BarService
     /**
      * Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — alternative resolution
      * path for a bar offer. Requires an assigned, available Konsul (trader advisor).
-     * Costs more Economy-AP than acceptOffer() but on success applies a rank-scaled
-     * bonus on top of the offer's already-generated terms; on failure the offer is
-     * lost entirely (deleted) — no fallback to a plain accept. AP is spent either way.
+     * Costs more Economy-AP than acceptOffer(); two-step outcome:
+     *   - Success: the offer's terms are improved in place (rank-scaled bonus) and
+     *     flagged is_negotiated — the trade does NOT execute yet, the player still
+     *     confirms with acceptOffer() (which waives its AP cost for a negotiated
+     *     offer, since ap_cost_negotiate already covered it).
+     *   - Failure: the offer is lost entirely (deleted) — no fallback to accept.
+     * AP is spent either way.
      */
     public function negotiateOffer(int $colonyId, int $offerId, int $userId, int $currentTick): array
     {
@@ -192,6 +198,9 @@ class BarService
         }
         if ($offer->is_accepted) {
             return ['ok' => false, 'error' => __('colony.bar_offer_already_accepted')];
+        }
+        if ($offer->is_negotiated) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_already_negotiated')];
         }
         if ($offer->expires_tick <= $currentTick) {
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
@@ -249,9 +258,11 @@ class BarService
                 ? $offer->get_amount
                 : (int) max(1, round($offer->get_amount * (1 + $bonus)));
 
-            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $giveAmount);
-            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $getAmount);
-            $offer->is_accepted = true;
+            // Improve the offer's terms in place — the trade itself executes when
+            // the player subsequently confirms via acceptOffer().
+            $offer->give_amount = $giveAmount;
+            $offer->get_amount = $getAmount;
+            $offer->is_negotiated = true;
             $offer->save();
 
             Log::info('bar_trade_negotiate_success', [
