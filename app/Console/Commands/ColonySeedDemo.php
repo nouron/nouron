@@ -9,7 +9,11 @@ use Illuminate\Support\Facades\DB;
 /**
  * Populates a colony with a rich demo state (~80% built out) for visual testing.
  *
- * Run: php artisan colony:seed-demo [colony_id=1]
+ * Run: php artisan colony:seed-demo [colony_id=1] [--path=all|cantina|hangar|lab]
+ *
+ * --path selects which of the three Sol-2 path-choice buildings (sciencelab/
+ * hangar/bar) get built; the other two stay unplaced and available in Build
+ * Mode. Default "all" keeps the previous behavior (all three built).
  *
  * Layout:
  *   Ring 0:   Kommandozentrale (terrain_empty)
@@ -21,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  */
 class ColonySeedDemo extends Command
 {
-    protected $signature = 'colony:seed-demo {colony_id=1 : Colony ID to seed}';
+    protected $signature = 'colony:seed-demo {colony_id=1 : Colony ID to seed} {--path=all : Sol-2 path building to build (cantina|hangar|lab|all)}';
 
     protected $description = 'Seed a colony with a rich ~80% built-out demo state for testing';
 
@@ -33,6 +37,13 @@ class ColonySeedDemo extends Command
 
     // Harvester placed on a regolith tile in ring 3
     private const HARVESTER_TILE = [3, 0];
+
+    // Sol-2 path-choice buildings (GDD §13/§16.2 "Pfadwahl ab Sol 3") — sciencelab/hangar/bar
+    private const PATH_BUILDING_IDS = [
+        'cantina' => 52,
+        'hangar' => 44,
+        'lab' => 31,
+    ];
 
     private const BUILDING_PLACEMENTS = [
         25 => [0,   0],  // CC (ring 0, terrain)
@@ -65,6 +76,13 @@ class ColonySeedDemo extends Command
             return self::FAILURE;
         }
 
+        $path = $this->option('path');
+        if ($path !== 'all' && ! isset(self::PATH_BUILDING_IDS[$path])) {
+            $this->error('Invalid --path: '.$path.' (expected cantina|hangar|lab|all)');
+
+            return self::FAILURE;
+        }
+
         $this->info("Seeding demo state for colony {$colonyId}...");
 
         DB::table('colony_tiles')->where('colony_id', $colonyId)->delete();
@@ -75,7 +93,7 @@ class ColonySeedDemo extends Command
         $this->tileService->assignColonyZone($colonyId, 5);  // CC Lv5: all 15 colony zone tiles
         $this->info('  ✓ Colony zone assigned (CC Lv5, 15 terrain tiles)');
 
-        $this->assignBuildingTiles($colonyId);
+        $this->assignBuildingTiles($colonyId, $path);
         $this->info('  ✓ Building positions assigned (infirmary/temple/monument left unplaced)');
 
         $this->ensurePilotAdvisor($colonyId);
@@ -212,17 +230,26 @@ class ColonySeedDemo extends Command
         return $coords;
     }
 
-    private function assignBuildingTiles(int $colonyId): void
+    private function assignBuildingTiles(int $colonyId, string $path): void
     {
-        // Clear tile assignment for buildings NOT in BUILDING_PLACEMENTS
+        // Sol-2 path choice: keep only the chosen path building placed, drop the
+        // other two so they show up as "available to build" (real path-choice
+        // GDD state) instead of all three being simultaneously built.
+        $excludedPathIds = $path === 'all'
+            ? []
+            : array_values(array_diff(self::PATH_BUILDING_IDS, [self::PATH_BUILDING_IDS[$path]]));
+
+        $placements = array_diff_key(self::BUILDING_PLACEMENTS, array_flip($excludedPathIds));
+
+        // Clear tile assignment for buildings NOT in the (filtered) placement set
         // (so they appear as "available to build" in Build Mode)
-        $placedIds = array_keys(self::BUILDING_PLACEMENTS);
+        $placedIds = array_keys($placements);
         DB::table('colony_buildings')
             ->where('colony_id', $colonyId)
             ->whereNotIn('building_id', $placedIds)
             ->update(['tile_x' => null, 'tile_y' => null, 'level' => 0, 'ap_spend' => 0]);
 
-        foreach (self::BUILDING_PLACEMENTS as $buildingId => [$tileX, $tileY]) {
+        foreach ($placements as $buildingId => [$tileX, $tileY]) {
             $level = self::BUILDING_LEVELS[$buildingId];
 
             DB::table('colony_buildings')

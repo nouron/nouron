@@ -227,6 +227,11 @@ return [
     'bar_offer_expired' => 'Angebot ist abgelaufen.',
     'bar_offer_insufficient_resources' => 'Nicht genügend Ressourcen.',
     'bar_offer_insufficient_ap' => 'Nicht genügend Wirtschafts-AP.',
+    'bar_offer_negotiate' => 'Verhandeln',
+    'bar_offer_no_consul' => 'Kein verfügbarer Konsul zugewiesen.',
+    'bar_offer_already_negotiated' => 'Angebot wurde bereits verhandelt.',
+    'bar_offer_negotiate_success' => 'Verhandlung erfolgreich!',
+    'bar_offer_negotiate_failed' => 'Verhandlung gescheitert — das Angebot ist verloren.',
 
     // ── Sol trigger (navbar button) ───────────────────────────────────────────
 

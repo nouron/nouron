@@ -45,13 +45,17 @@ class ResetPlayer extends Command
     protected $signature = 'game:reset-player
         {user? : Username or user_id (omit for interactive select)}
         {--yes : Skip confirmation prompt}
-        {--scenario= : fresh|pre-phase2|phase2|near-fail-trust|near-deadline|objectives-done (omit for interactive select)}';
+        {--scenario= : fresh|pre-phase2|phase2|near-fail-trust|near-deadline|objectives-done (omit for interactive select)}
+        {--path= : hangar|cantina|lab — which Sol-2 path building the phase2 scenario builds (only used by --scenario=phase2; omit for interactive select)}';
 
     protected $description = 'Reset a player\'s game state (dev tool). Interactive when run without arguments.';
 
     private const VALID_SCENARIOS = [
         'fresh', 'pre-phase2', 'phase2', 'near-fail-trust', 'near-deadline', 'objectives-done',
     ];
+
+    // Sol-2 path-choice buildings (GDD §13/§16.2) — only --scenario=phase2 reads this.
+    private const VALID_PATHS = ['hangar', 'cantina', 'lab'];
 
     private const SCENARIO_LABELS = [
         'fresh' => 'Sol 1          — Neustart (Standard)',
@@ -60,6 +64,12 @@ class ResetPlayer extends Command
         'near-fail-trust' => 'Vertrauenskrise — Trust −15 (Grenze −20), Tick 30, Org-Reserven leer',
         'near-deadline' => 'Deadline       — Tick 95 (5 Sols verbleibend), 1 Objective erledigt',
         'objectives-done' => 'Fertig         — Tick 60, alle 3 Objectives abgeschlossen',
+    ];
+
+    private const PATH_LABELS = [
+        'hangar' => 'Hangar   — Pilot-Berater, Missionen/Navigations-AP',
+        'cantina' => 'Cantina  — Konsul-Berater, Handelsangebote/Wirtschafts-AP',
+        'lab' => 'Labor    — nur Sciencelab-Basis, kein 3. Gebäude/Berater',
     ];
 
     public function __construct(
@@ -131,12 +141,35 @@ class ResetPlayer extends Command
             return self::FAILURE;
         }
 
+        $path = $this->option('path');
+
+        if ($path === null && $scenario === 'phase2') {
+            $path = select(
+                label: 'Pfad (Sol-2-Gebäude)',
+                options: self::PATH_LABELS,
+                default: 'hangar',
+            );
+        }
+
+        $path ??= 'hangar'; // irrelevant for every other scenario, keep the old default
+
+        if (! in_array($path, self::VALID_PATHS, true)) {
+            $this->error('Invalid --path: '.$path.' (expected '.implode('|', self::VALID_PATHS).')');
+
+            return self::FAILURE;
+        }
+
         // ── Summary + confirmation ────────────────────────────────────────────
 
         $this->newLine();
         table(
-            headers: ['Spieler', 'ID', 'Szenario'],
-            rows: [[$user->username, (string) $user->user_id, self::SCENARIO_LABELS[$scenario]]],
+            headers: array_filter(['Spieler', 'ID', 'Szenario', $scenario === 'phase2' ? 'Pfad' : null]),
+            rows: [array_filter([
+                $user->username,
+                (string) $user->user_id,
+                self::SCENARIO_LABELS[$scenario],
+                $scenario === 'phase2' ? self::PATH_LABELS[$path] : null,
+            ], fn ($v) => $v !== null)],
         );
 
         if (! $this->option('yes')) {
@@ -196,7 +229,7 @@ class ResetPlayer extends Command
             $colony = Colony::where('user_id', $user->user_id)->latest('id')->firstOrFail();
             $run = Run::where('user_id', $user->user_id)->where('status', 'active')->latest('id')->firstOrFail();
 
-            DB::transaction(fn () => $this->applyScenario($scenario, $colony, $run));
+            DB::transaction(fn () => $this->applyScenario($scenario, $colony, $run, $path));
 
             $this->info("Scenario '{$scenario}' applied.");
         }
@@ -208,11 +241,11 @@ class ResetPlayer extends Command
 
     // ── Scenario dispatcher ───────────────────────────────────────────────────
 
-    private function applyScenario(string $scenario, Colony $colony, Run $run): void
+    private function applyScenario(string $scenario, Colony $colony, Run $run, string $path): void
     {
         match ($scenario) {
             'pre-phase2' => $this->scenarioPrePhase2($colony, $run),
-            'phase2' => $this->scenarioPhase2($colony, $run),
+            'phase2' => $this->scenarioPhase2($colony, $run, $path),
             'near-fail-trust' => $this->scenarioNearFailTrust($colony, $run),
             'near-deadline' => $this->scenarioNearDeadline($colony, $run),
             'objectives-done' => $this->scenarioObjectivesDone($colony, $run),
@@ -346,17 +379,29 @@ class ResetPlayer extends Command
         }
     }
 
-    /** Add 3rd advisor (pilot) and transition to Phase 2 with drawn objectives. */
-    private function transitionToPhase2(Colony $colony, Run $run): void
+    /**
+     * Add the 3rd advisor matching the chosen Sol-2 path building (hangar→pilot,
+     * cantina→trader, lab→none — Sciencelab already granted the scientist in
+     * placePhase1Buildings) and transition to Phase 2 with drawn objectives.
+     */
+    private function transitionToPhase2(Colony $colony, Run $run, string $path = 'hangar'): void
     {
-        DB::table('advisors')->insert([
-            'user_id' => $colony->user_id,
-            'personell_id' => (int) config('advisors.pilot.id', 89),
-            'colony_id' => $colony->id,
-            'rank' => 1,
-            'active_ticks' => 5,
-            'unavailable_until_tick' => null,
-        ]);
+        $advisorKey = match ($path) {
+            'hangar' => 'pilot',
+            'cantina' => 'trader',
+            default => null,
+        };
+
+        if ($advisorKey !== null) {
+            DB::table('advisors')->insert([
+                'user_id' => $colony->user_id,
+                'personell_id' => (int) config("advisors.{$advisorKey}.id"),
+                'colony_id' => $colony->id,
+                'rank' => 1,
+                'active_ticks' => 5,
+                'unavailable_until_tick' => null,
+            ]);
+        }
 
         $run->phase = 2;
         $run->phase2_start_tick = 12;
@@ -473,13 +518,20 @@ class ResetPlayer extends Command
      * Credits reduced by pilot hire fee (500). Supply unchanged (no new buildings).
      * Kenntnisse: 3 more ticks → construction reaches Lv3 (9 AP spent), agronomy still started.
      * Objectives drawn but all at 0 (too early for any progress).
-     * Hangar placed at tick 12 (path gate for pilot slot).
+     * --path selects the 3rd Sol-2 path building (hangar/cantina), or none (lab —
+     * Sciencelab from placePhase1Buildings is the only path building present).
      */
-    private function scenarioPhase2(Colony $colony, Run $run): void
+    private function scenarioPhase2(Colony $colony, Run $run, string $path = 'hangar'): void
     {
         $this->placePhase1Buildings($colony);
-        $this->placeHangar($colony, level: 1, placedAtTick: 12);
-        $this->transitionToPhase2($colony, $run);
+
+        match ($path) {
+            'hangar' => $this->placeHangar($colony, level: 1, placedAtTick: 12),
+            'cantina' => $this->placeCantina($colony, level: 1, placedAtTick: 12),
+            default => null,
+        };
+
+        $this->transitionToPhase2($colony, $run, $path);
 
         // Cap: CC_flat(10) + Housing_Lv2(16) + construction_Lv3(13) = 39
         $this->setResources($colony, $run,

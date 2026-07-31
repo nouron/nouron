@@ -116,10 +116,7 @@
 
                             {{-- ── Section 2: Portrait ───────────────────────────────────── --}}
                             <div class="advisor-portrait"
-                                :style="portraitImageUrl(slot.preview_advisor_key ?? slot.key) ?
-                                    'background-image: url(' + portraitImageUrl(slot.preview_advisor_key ?? slot.key) +
-                                    ')' :
-                                    ''">
+                                :style="portraitBackgroundStyle(slot.preview_advisor_key ?? slot.key)">
                                 {{-- Placeholder SVG shown only when no portrait image is available --}}
                                 <template x-if="!portraitImageUrl(slot.preview_advisor_key ?? slot.key)">
                                     <svg class="advisor-portrait-placeholder" viewBox="0 0 24 24" fill="none"
@@ -302,11 +299,7 @@
             <template x-if="dialogSlot">
                 <div>
                     <div class="dialog-advisor">
-                        <div class="dialog-portrait"
-                            :style="portraitImageUrl(dialogSlot.key) ?
-                                'background-image: url(' + portraitImageUrl(dialogSlot.key) + ')' :
-                                ''">
-                        </div>
+                        <div class="dialog-portrait" :style="portraitBackgroundStyle(dialogSlot.key)"></div>
                         <div class="dialog-advisor-info">
                             <div class="dialog-advisor-name">
                                 <strong>

@@ -1766,10 +1766,9 @@ dialog[x-ref="discoveryDialog"] {
 
 /* Each item row: label | cost | buy-button */
 .merchant-item-bar {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
     padding: 0.75rem 1rem;
     margin: 0;
     border: 1px solid var(--pico-muted-border-color, #ddd);
@@ -1785,6 +1784,16 @@ dialog[x-ref="discoveryDialog"] {
 .merchant-item-bar__label {
     font-weight: 500;
     font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.merchant-item-bar__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
 .merchant-item-bar__cost {
@@ -2639,6 +2648,26 @@ dialog[x-ref="discoveryDialog"] {
     pointer-events: none;
 }
 
+/* Small highlight badge — used for hotspots the player shouldn't miss (e.g. the
+   time-limited traveling merchant), layered over the top-right corner of the portrait. */
+.hotspot-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--color-accent, #8c2030);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+    z-index: 1;
+}
+
 .cantina-hotspot i {
     font-size: 1.5rem;
     pointer-events: none;
@@ -2691,9 +2720,36 @@ dialog[x-ref="discoveryDialog"] {
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--pico-muted-border-color, #e8e8ec);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    /* Portrait fills the dialog edge-to-edge (.cantina-dialog handles its own
+       padding for the body column) — clip it to the dialog's rounded corners. */
+    padding: 0;
+    overflow: hidden;
     transition:
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         opacity 0.3s ease;
+}
+
+/* Action-type accent — one edge only, colour matches the AP-chip family for that
+   type (nav/build/research/economy/strategy), neutral grey when the type is
+   unclear/not yet categorized. Top edge on the mobile bottom-sheet (the edge
+   the drawer "enters" from), left edge on the centered desktop dialog. */
+.cantina-modal--nav {
+    border-top-color: #1e40af;
+}
+.cantina-modal--build {
+    border-top-color: #166534;
+}
+.cantina-modal--research {
+    border-top-color: #5b21b6;
+}
+.cantina-modal--economy {
+    border-top-color: #b45309;
+}
+.cantina-modal--strategy {
+    border-top-color: #9f1239;
+}
+.cantina-modal--neutral {
+    border-top-color: #6b7280;
 }
 
 /* Mobile drawer (slides up from bottom) */
@@ -2702,9 +2758,10 @@ dialog[x-ref="discoveryDialog"] {
         bottom: 0;
         left: 0;
         right: 0;
+        max-height: 85vh;
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
-        padding: 1.25rem 1.25rem 1.75rem;
+        border-top-width: 4px;
         transform: translateY(100%);
     }
     .cantina-modal.open {
@@ -2719,8 +2776,9 @@ dialog[x-ref="discoveryDialog"] {
         left: 50%;
         transform: translate(-50%, -50%) scale(0.92);
         border-radius: 10px;
-        padding: 1.75rem;
-        width: 460px;
+        width: 720px;
+        max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 4rem);
         opacity: 0;
         pointer-events: none;
     }
@@ -2729,13 +2787,108 @@ dialog[x-ref="discoveryDialog"] {
         opacity: 1;
         pointer-events: auto;
     }
+    .cantina-modal[class*="cantina-modal--"] {
+        border-top-width: 1px;
+        border-left-width: 4px;
+    }
+    .cantina-modal--nav {
+        border-left-color: #1e40af;
+    }
+    .cantina-modal--build {
+        border-left-color: #166534;
+    }
+    .cantina-modal--research {
+        border-left-color: #5b21b6;
+    }
+    .cantina-modal--economy {
+        border-left-color: #b45309;
+    }
+    .cantina-modal--strategy {
+        border-left-color: #9f1239;
+    }
+    .cantina-modal--neutral {
+        border-left-color: #6b7280;
+    }
+}
+
+/* ── Dialog (portrait fills the left side, name/role/body on the right) —
+   shared by the offer dialog and the merchant dialog ── */
+
+.cantina-dialog {
+    display: flex;
+    align-items: stretch;
+    max-height: inherit;
+}
+
+.cantina-dialog__portrait {
+    flex: 0 0 34%;
+    align-self: stretch;
+    background: #f0f0f2;
+}
+
+.cantina-dialog__portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+.cantina-dialog__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.75rem;
+    overflow-y: auto;
+}
+
+.cantina-dialog__name {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.cantina-dialog__role {
+    color: var(--pico-muted-color);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.cantina-dialog__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mobile: stack — portrait on top (fixed height), body below */
+@media (max-width: 767px) {
+    .cantina-dialog {
+        flex-direction: column;
+        max-height: 85vh;
+    }
+    .cantina-dialog__portrait {
+        flex: 0 0 auto;
+        width: 100%;
+        height: 12rem;
+    }
+    .cantina-dialog__body {
+        padding: 1.25rem 1.25rem 1.75rem;
+    }
 }
 
 .cantina-modal-close {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: none;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
     border: none;
     font-size: 1.5rem;
     line-height: 1;
@@ -2743,7 +2896,7 @@ dialog[x-ref="discoveryDialog"] {
     cursor: pointer;
     padding: 0.25rem;
     margin: 0;
-    width: auto;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 .cantina-modal-close:hover {
     color: var(--color-text-primary, #1a1a1e);
@@ -2760,22 +2913,4 @@ dialog[x-ref="discoveryDialog"] {
     border: 1px solid var(--pico-muted-border-color);
     text-align: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-}
-
-.guest-avatar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(140, 32, 48, 0.08);
-    overflow: hidden;
-}
-
-.guest-avatar__portrait {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
 }

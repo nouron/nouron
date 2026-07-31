@@ -174,13 +174,27 @@ function advisorCarousel(config) {
          */
         portraitImageUrl(key) {
             const map = {
-                engineer: '/img/advisors/construction_master_male.png',
-                scientist: '/img/advisors/analyst_female.png',
-                pilot: '/img/advisors/pilot_male.png',
-                trader: '/img/advisors/trader_female.png',
-                strategist: '/img/advisors/strategist_male.png',
+                engineer: '/img/advisors/construction_master_male.webp',
+                scientist: '/img/advisors/analyst_female.webp',
+                pilot: '/img/advisors/pilot_male.webp',
+                trader: '/img/advisors/trader_female.webp',
+                strategist: '/img/advisors/strategist_male.webp',
             };
             return map[key] ?? '';
+        },
+
+        /**
+         * CSS background-image value for a given advisor slot key, using image-set()
+         * to serve the sharper _lg variant on HiDPI screens. Empty string when no
+         * portrait exists (falls back to the placeholder SVG).
+         * @param {string} key
+         * @returns {string}
+         */
+        portraitBackgroundStyle(key) {
+            const url = this.portraitImageUrl(key);
+            if (!url) return '';
+            const lgUrl = url.replace(/\.webp$/, '_lg.webp');
+            return `background-image: image-set(url('${url}') 1x, url('${lgUrl}') 2x)`;
         },
 
         _csrf() {

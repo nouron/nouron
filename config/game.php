@@ -210,6 +210,14 @@ return [
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
         'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
         'compounds_bias_at_rank3' => 0.50,
+
+        // Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — Konsul (advisor_trader)
+        // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
+        // AP ist bewusst NICHT der eigentliche Deckel (siehe GDD): der Preis ist der
+        // komplette Verlust des Angebots bei einem fehlgeschlagenen Wurf.
+        'ap_cost_negotiate' => 3,
+        'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
+        'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
     ],
 
     // Trust system — formula and multiplier bands (see GDD §13).

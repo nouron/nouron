@@ -158,4 +158,67 @@ class ColonySeedDemoTest extends TestCase
 
         $this->assertSame(37, DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->count());
     }
+
+    public function test_default_path_all_builds_all_three_sol2_path_buildings(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID])->assertExitCode(0);
+
+        foreach ([52 => 'bar', 44 => 'hangar', 31 => 'sciencelab'] as $buildingId => $name) {
+            $building = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', $buildingId)->first();
+            $this->assertNotNull($building->tile_x, "{$name} should be placed under --path=all");
+            $this->assertGreaterThan(0, $building->level, "{$name} should have a level under --path=all");
+        }
+    }
+
+    public function test_path_cantina_builds_only_bar_leaves_hangar_and_lab_available(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'cantina'])->assertExitCode(0);
+
+        $bar = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 52)->first();
+        $this->assertNotNull($bar->tile_x);
+        $this->assertGreaterThan(0, $bar->level);
+
+        foreach ([44, 31] as $buildingId) {
+            $building = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', $buildingId)->first();
+            $this->assertNull($building->tile_x);
+            $this->assertSame(0, $building->level);
+        }
+    }
+
+    public function test_path_hangar_builds_only_hangar_leaves_cantina_and_lab_available(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'hangar'])->assertExitCode(0);
+
+        $hangar = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 44)->first();
+        $this->assertNotNull($hangar->tile_x);
+        $this->assertGreaterThan(0, $hangar->level);
+
+        foreach ([52, 31] as $buildingId) {
+            $building = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', $buildingId)->first();
+            $this->assertNull($building->tile_x);
+            $this->assertSame(0, $building->level);
+        }
+    }
+
+    public function test_path_lab_builds_only_sciencelab_leaves_cantina_and_hangar_available(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'lab'])->assertExitCode(0);
+
+        $lab = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 31)->first();
+        $this->assertNotNull($lab->tile_x);
+        $this->assertGreaterThan(0, $lab->level);
+
+        foreach ([52, 44] as $buildingId) {
+            $building = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', $buildingId)->first();
+            $this->assertNull($building->tile_x);
+            $this->assertSame(0, $building->level);
+        }
+    }
+
+    public function test_invalid_path_option_fails(): void
+    {
+        $this->artisan('colony:seed-demo', ['colony_id' => self::COLONY_ID, '--path' => 'nonsense'])
+            ->expectsOutputToContain('Invalid --path')
+            ->assertExitCode(1);
+    }
 }

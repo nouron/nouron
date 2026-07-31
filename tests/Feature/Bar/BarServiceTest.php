@@ -521,6 +521,347 @@ class BarServiceTest extends TestCase
         $this->assertEquals($lockedBefore + (int) config('game.bar.ap_cost_accept', 1), $lockedAfter);
     }
 
+    public function test_accept_waives_ap_cost_for_an_already_negotiated_offer(): void
+    {
+        // The negotiate step already paid ap_cost_negotiate — accepting the improved
+        // terms afterwards is a free confirmation, not a second priced action.
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertOffer([
+            'expires_tick' => 20,
+            'is_negotiated' => true,
+        ]);
+
+        $personellId = PersonellService::idFor('trader');
+        $lockedBefore = (int) DB::table('locked_actionpoints')
+            ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+            ->value('spend_ap');
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok']);
+
+        $lockedAfter = (int) DB::table('locked_actionpoints')
+            ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+            ->value('spend_ap');
+
+        $this->assertEquals($lockedBefore, $lockedAfter, 'Accepting an already-negotiated offer must not lock any additional AP');
+    }
+
+    // ── hasAvailableConsul ───────────────────────────────────────────────────────
+
+    public function test_has_available_consul_false_without_trader(): void
+    {
+        DB::table('advisors')->where('colony_id', self::COLONY_ID)->where('personell_id', self::TRADER_ADVISOR_ID)->delete();
+
+        $this->assertFalse($this->barService->hasAvailableConsul(self::COLONY_ID));
+    }
+
+    public function test_has_available_consul_true_when_trader_assigned_and_available(): void
+    {
+        $this->assignTrader(1);
+
+        $this->assertTrue($this->barService->hasAvailableConsul(self::COLONY_ID));
+    }
+
+    public function test_has_available_consul_false_when_trader_unavailable(): void
+    {
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
+            ['rank' => 1, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => 99]
+        );
+
+        $this->assertFalse($this->barService->hasAvailableConsul(self::COLONY_ID));
+    }
+
+    // ── negotiateOffer ────────────────────────────────────────────────────────
+
+    /** Assign a trader advisor at the given rank, available (not on a mission). */
+    private function assignTrader(int $rank): void
+    {
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
+            ['rank' => $rank, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+    }
+
+    public function test_negotiate_returns_error_when_no_consul_assigned(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        DB::table('advisors')->where('colony_id', self::COLONY_ID)->where('personell_id', self::TRADER_ADVISOR_ID)->delete();
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertOffer(['expires_tick' => 20]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok'], 'negotiateOffer must fail without an assigned Konsul');
+        $this->assertArrayHasKey('error', $result);
+    }
+
+    public function test_negotiate_returns_error_when_consul_unavailable(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
+            ['rank' => 2, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => 99]
+        );
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertOffer(['expires_tick' => 20]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok'], 'negotiateOffer must fail when the Konsul is on a mission (unavailable_until_tick set)');
+    }
+
+    public function test_negotiate_returns_error_for_expired_offer(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->assignTrader(2);
+
+        $offerId = $this->insertOffer(['expires_tick' => 10]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok']);
+    }
+
+    public function test_negotiate_returns_error_when_insufficient_resources(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->assignTrader(2);
+        $this->setColonyResource(self::RES_REGOLITH, 5);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_REGOLITH,
+            'give_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok']);
+    }
+
+    public function test_negotiate_returns_error_when_insufficient_economy_ap(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+        $this->assignTrader(2);
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $totalAp = $this->app->make(PersonellService::class)->getTotalActionPoints('economy', self::COLONY_ID);
+        DB::table('locked_actionpoints')->insert([
+            'tick' => 10,
+            'scope_type' => 'colony',
+            'scope_id' => self::COLONY_ID,
+            'personell_id' => PersonellService::idFor('trader'),
+            'spend_ap' => $totalAp + (int) config('game.bar.ap_cost_negotiate', 3),
+        ]);
+
+        $offerId = $this->insertOffer(['expires_tick' => 20]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok']);
+        $this->assertStringContainsStringIgnoringCase('ap', $result['error']);
+    }
+
+    public function test_negotiate_costs_more_ap_than_accept(): void
+    {
+        $apAccept = (int) config('game.bar.ap_cost_accept', 1);
+        $apNegotiate = (int) config('game.bar.ap_cost_negotiate', 3);
+
+        $this->assertGreaterThan($apAccept, $apNegotiate, 'Negotiating must cost more AP than a plain accept');
+    }
+
+    public function test_negotiate_success_locks_negotiate_ap_but_does_not_execute_the_trade(): void
+    {
+        // Two-step flow (owner feedback 2026-07-31): a successful negotiation only
+        // improves the offer's terms — the player still confirms with "Annehmen".
+        // No resources move and the offer is NOT marked accepted at this point.
+        $this->clearBarOffers();
+        $this->assignTrader(3); // 85% success chance — find a winning tick quickly
+
+        $found = false;
+        for ($tick = 1; $tick <= 200; $tick++) {
+            $this->clearBarOffers();
+            $this->mockTick($tick);
+            $this->barService = $this->app->make(BarService::class);
+            $this->setColonyResource(self::RES_REGOLITH, 1000);
+
+            $offerId = $this->insertOffer([
+                'give_resource_id' => self::RES_REGOLITH,
+                'give_amount' => 20,
+                'expires_tick' => $tick + 10,
+            ]);
+
+            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+
+            if ($result['ok'] && $result['success']) {
+                $found = true;
+
+                $row = DB::table('bar_offers')->where('id', $offerId)->first();
+                $this->assertFalse((bool) $row->is_accepted, 'A negotiated offer must not be auto-accepted');
+                $this->assertTrue((bool) $row->is_negotiated, 'Offer must be flagged is_negotiated on a successful roll');
+                $this->assertEquals(1000, $this->getColonyResource(self::RES_REGOLITH), 'No resources may move until the player clicks Annehmen');
+
+                $personellId = PersonellService::idFor('trader');
+                $locked = (int) DB::table('locked_actionpoints')
+                    ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+                    ->value('spend_ap');
+                $this->assertEquals((int) config('game.bar.ap_cost_negotiate', 3), $locked);
+                break;
+            }
+        }
+
+        $this->assertTrue($found, 'Expected at least one successful negotiation roll within 200 ticks at 85% chance');
+    }
+
+    public function test_negotiate_success_reduces_give_amount_for_credits_offer(): void
+    {
+        $this->clearBarOffers();
+        $this->assignTrader(3);
+
+        $found = false;
+        for ($tick = 1; $tick <= 200; $tick++) {
+            $this->clearBarOffers();
+            $this->mockTick($tick);
+            $this->barService = $this->app->make(BarService::class);
+            $this->setCredits(10000);
+
+            $offerId = $this->insertOffer([
+                'give_resource_id' => self::RES_CREDITS,
+                'give_amount' => 1000,
+                'get_resource_id' => self::RES_REGOLITH,
+                'get_amount' => 20,
+                'expires_tick' => $tick + 10,
+            ]);
+
+            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+
+            if ($result['ok'] && $result['success']) {
+                $found = true;
+                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
+                $expectedGive = (int) max(1, round(1000 * (1 - $bonus)));
+                $this->assertEquals($expectedGive, $result['give_amount'], 'Negotiated price must apply the rank-3 bonus discount');
+                // Credits are untouched — the trade only executes once acceptOffer() runs.
+                $this->assertEquals(10000, $this->getCredits());
+
+                $row = DB::table('bar_offers')->where('id', $offerId)->first();
+                $this->assertEquals($expectedGive, $row->give_amount, 'The offer row itself must be updated to the negotiated give_amount');
+                $this->assertEquals(20, $row->get_amount, 'Barter get_amount is unaffected for a credits-give offer');
+                break;
+            }
+        }
+
+        $this->assertTrue($found);
+    }
+
+    public function test_negotiate_success_increases_get_amount_for_barter_offer(): void
+    {
+        $this->clearBarOffers();
+        $this->assignTrader(3);
+
+        $found = false;
+        for ($tick = 1; $tick <= 200; $tick++) {
+            $this->clearBarOffers();
+            $this->mockTick($tick);
+            $this->barService = $this->app->make(BarService::class);
+            $this->setColonyResource(self::RES_REGOLITH, 1000);
+
+            $offerId = $this->insertOffer([
+                'give_resource_id' => self::RES_REGOLITH,
+                'give_amount' => 30,
+                'get_resource_id' => self::RES_COMPOUNDS,
+                'get_amount' => 10,
+                'expires_tick' => $tick + 10,
+            ]);
+
+            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+
+            if ($result['ok'] && $result['success']) {
+                $found = true;
+                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
+                $expectedGet = (int) max(1, round(10 * (1 + $bonus)));
+                $this->assertEquals($expectedGet, $result['get_amount'], 'Barter offers get a get_amount bonus instead of a discount');
+                $this->assertEquals(30, $result['give_amount'], 'Barter give_amount is unaffected');
+                break;
+            }
+        }
+
+        $this->assertTrue($found);
+    }
+
+    public function test_negotiate_rejects_an_already_negotiated_offer(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->assignTrader(2);
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_REGOLITH,
+            'give_amount' => 20,
+            'expires_tick' => 20,
+            'is_negotiated' => true,
+        ]);
+
+        $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok'], 'Re-negotiating an already-negotiated offer must be rejected');
+        $this->assertArrayHasKey('error', $result);
+    }
+
+    public function test_negotiate_failure_deletes_offer_but_still_costs_ap(): void
+    {
+        $this->clearBarOffers();
+        $this->assignTrader(1); // 55% success — 45% fail chance, findable quickly
+
+        $found = false;
+        for ($tick = 1; $tick <= 200; $tick++) {
+            $this->clearBarOffers();
+            $this->mockTick($tick);
+            $this->barService = $this->app->make(BarService::class);
+            $this->setColonyResource(self::RES_REGOLITH, 1000);
+
+            $offerId = $this->insertOffer([
+                'give_resource_id' => self::RES_REGOLITH,
+                'give_amount' => 20,
+                'expires_tick' => $tick + 10,
+            ]);
+
+            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+
+            if ($result['ok'] && ! $result['success']) {
+                $found = true;
+
+                $exists = DB::table('bar_offers')->where('id', $offerId)->exists();
+                $this->assertFalse($exists, 'Offer must be deleted entirely on negotiation failure — no fallback to plain accept');
+
+                $personellId = PersonellService::idFor('trader');
+                $locked = (int) DB::table('locked_actionpoints')
+                    ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
+                    ->value('spend_ap');
+                $this->assertEquals((int) config('game.bar.ap_cost_negotiate', 3), $locked, 'AP must still be spent even when the negotiation fails');
+                break;
+            }
+        }
+
+        $this->assertTrue($found, 'Expected at least one failing negotiation roll within 200 ticks at 45% fail chance');
+    }
+
     public function test_generate_respects_max_concurrent(): void
     {
         $this->clearBarOffers();

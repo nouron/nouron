@@ -103,6 +103,16 @@ class BarService
             ->get();
     }
 
+    /** Whether an assigned, available (not on a mission) Konsul (trader advisor) exists for this colony. */
+    public function hasAvailableConsul(int $colonyId): bool
+    {
+        return DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->where('personell_id', self::TRADER_ADVISOR_ID)
+            ->whereNull('unavailable_until_tick')
+            ->exists();
+    }
+
     public function acceptOffer(int $colonyId, int $offerId, int $userId, int $currentTick): array
     {
         $offer = BarOffer::where('id', $offerId)
@@ -120,8 +130,10 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
         }
 
-        // Economy-AP check
-        $apCost = (int) config('game.bar.ap_cost_accept', 1);
+        // Economy-AP check — waived when the offer was already negotiated
+        // (ap_cost_negotiate was already paid during that step; Annehmen here is
+        // just confirming the improved terms, not a second priced action).
+        $apCost = $offer->is_negotiated ? 0 : (int) config('game.bar.ap_cost_accept', 1);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
             $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
             if ($availableAp < $apCost) {
@@ -162,6 +174,115 @@ class BarService
             'get_resource_id' => $offer->get_resource_id,
             'get_amount' => $offer->get_amount,
         ];
+    }
+
+    /**
+     * Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — alternative resolution
+     * path for a bar offer. Requires an assigned, available Konsul (trader advisor).
+     * Costs more Economy-AP than acceptOffer(); two-step outcome:
+     *   - Success: the offer's terms are improved in place (rank-scaled bonus) and
+     *     flagged is_negotiated — the trade does NOT execute yet, the player still
+     *     confirms with acceptOffer() (which waives its AP cost for a negotiated
+     *     offer, since ap_cost_negotiate already covered it).
+     *   - Failure: the offer is lost entirely (deleted) — no fallback to accept.
+     * AP is spent either way.
+     */
+    public function negotiateOffer(int $colonyId, int $offerId, int $userId, int $currentTick): array
+    {
+        $offer = BarOffer::where('id', $offerId)
+            ->where('colony_id', $colonyId)
+            ->first();
+
+        if (! $offer) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_not_found')];
+        }
+        if ($offer->is_accepted) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_already_accepted')];
+        }
+        if ($offer->is_negotiated) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_already_negotiated')];
+        }
+        if ($offer->expires_tick <= $currentTick) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
+        }
+
+        $traderRank = (int) (DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->where('personell_id', self::TRADER_ADVISOR_ID)
+            ->whereNull('unavailable_until_tick')
+            ->value('rank') ?? 0);
+
+        if ($traderRank < 1) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_no_consul')];
+        }
+
+        $apCost = (int) config('game.bar.ap_cost_negotiate', 3);
+        if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
+            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            if ($availableAp < $apCost) {
+                return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
+            }
+        }
+
+        $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
+        if ($giveBalance < $offer->give_amount) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
+        }
+
+        $successChance = (float) config("game.bar.negotiate_success_chance.{$traderRank}", 0.0);
+        $roll = $this->pseudoRand($offer->id * 7919 + $currentTick * 131, 0, 99);
+        $success = $roll < (int) round($successChance * 100);
+
+        return DB::transaction(function () use ($offer, $colonyId, $apCost, $traderRank, $success): array {
+            if ($apCost > 0) {
+                $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+            }
+
+            if (! $success) {
+                $offer->delete();
+
+                Log::info('bar_trade_negotiate_failed', [
+                    'colony_id' => $colonyId,
+                    'offer_id' => $offer->id,
+                ]);
+
+                return ['ok' => true, 'success' => false];
+            }
+
+            $bonus = (float) config("game.bar.negotiate_bonus.{$traderRank}", 0.0);
+            $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
+            $giveAmount = $isCreditsOffer
+                ? (int) max(1, round($offer->give_amount * (1 - $bonus)))
+                : $offer->give_amount;
+            $getAmount = $isCreditsOffer
+                ? $offer->get_amount
+                : (int) max(1, round($offer->get_amount * (1 + $bonus)));
+
+            // Improve the offer's terms in place — the trade itself executes when
+            // the player subsequently confirms via acceptOffer().
+            $offer->give_amount = $giveAmount;
+            $offer->get_amount = $getAmount;
+            $offer->is_negotiated = true;
+            $offer->save();
+
+            Log::info('bar_trade_negotiate_success', [
+                'colony_id' => $colonyId,
+                'offer_id' => $offer->id,
+                'give_resource_id' => $offer->give_resource_id,
+                'give_amount' => $giveAmount,
+                'get_resource_id' => $offer->get_resource_id,
+                'get_amount' => $getAmount,
+            ]);
+
+            return [
+                'ok' => true,
+                'success' => true,
+                'give_resource_id' => $offer->give_resource_id,
+                'give_amount' => $giveAmount,
+                'get_resource_id' => $offer->get_resource_id,
+                'get_amount' => $getAmount,
+            ];
+        });
     }
 
     private function getResourceBalance(int $colonyId, int $userId, int $resId): int

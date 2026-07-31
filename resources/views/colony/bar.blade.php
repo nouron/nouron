@@ -41,6 +41,9 @@
             4 => __("resources.res_werkstoffe"),
             5 => __("resources.res_organika"),
         ];
+        // Matches resources.abbreviation in the DB — same values the resource bar's
+        // .res-{abbr} chip classes are built for (Cr/Rg/Co/Or).
+        $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
         $spotForOffer = ["spot_1", "spot_2"]; // offer index → spot key
     @endphp
 
@@ -51,6 +54,8 @@
     @json(route("colony.merchant.buy", ["itemId" => "__ID__"])),
     @json(route("colony.merchant.open", ["visitId" => "__VISIT__"])),
     @json(route("colony.bar.accept", ["offer" => "__OFFER__"])),
+    @json(route("colony.bar.negotiate", ["offer" => "__OFFER__"])),
+    @json($resourceAbbr),
     @json($offers->count())
 )'
         x-cloak>
@@ -64,11 +69,13 @@
                 {{-- Background image wrapper (shifts on mobile swipe, static on desktop) --}}
                 <div class="cantina-background-wrapper" :style="{ transform: `translateX(-${current * 22.222}%)` }">
 
-                    {{-- Merchant Hotspot (Jara) — Panel 0 center: 16.7% --}}
+                    {{-- Merchant Hotspot — Panel 0 center: 16.7% --}}
                     @if ($merchantVisit !== null)
-                        <button class="cantina-hotspot hs-slot-spot_0" @click="openMerchant()">
-                            <span class="hotspot-pulse"></span>
-                            <i class="bi bi-shop"></i>
+                        <button class="cantina-hotspot has-portrait hotspot-merchant hs-slot-spot_0" @click="openMerchant()">
+                            <span class="hotspot-badge"><i class="bi bi-exclamation-lg"></i></span>
+                            <img class="hotspot-portrait" src="{{ asset("img/characters/merchant.webp") }}"
+                                srcset="{{ asset("img/characters/merchant.webp") }} 1x, {{ asset("img/characters/merchant_lg.webp") }} 2x"
+                                alt="{{ __("colony.merchant_title") }}">
                             <span class="hotspot-label">{{ __("colony.merchant_title") }}</span>
                         </button>
                     @endif
@@ -87,6 +94,7 @@
                             @if ($char)
                                 <img class="hotspot-portrait"
                                     src="{{ asset("img/characters/" . $char["slug"] . ".webp") }}"
+                                    srcset="{{ asset("img/characters/" . $char["slug"] . ".webp") }} 1x, {{ asset("img/characters/" . $char["slug"] . "_lg.webp") }} 2x"
                                     alt="{{ $charName }}">
                             @else
                                 <i class="bi bi-chat-right-text"></i>
@@ -120,36 +128,45 @@
                 style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;" x-cloak></div>
 
             {{-- Interactive Modal / Drawer --}}
-            <div class="cantina-modal" :class="{ 'open': activeModal !== null }" x-show="activeModal !== null" x-cloak>
+            <div class="cantina-modal" :class="{ open: activeModal !== null, ['cantina-modal--' + dialogApType]: true }"
+                x-show="activeModal !== null" x-cloak>
                 <button @click="closeModal()" class="cantina-modal-close" aria-label="Schließen">&times;</button>
 
                 {{-- Merchant items listing --}}
                 @if ($merchantVisit !== null)
+                    @php
+                        $merchantPortraitSrc = asset("img/characters/merchant.webp");
+                        $merchantPortraitLgSrc = asset("img/characters/merchant_lg.webp");
+                        $merchantName = __("colony.merchant_title");
+                        $merchantRole = __("colony.merchant_until_sol") . " " . $merchantVisit->tick_end;
+                    @endphp
                     <div x-show="activeModal === 'merchant'">
-                        <div style="margin-bottom:1rem">
-                            <h3 style="margin:0;font-size:1.25rem;">🛸 {{ __("colony.merchant_title") }}</h3>
-                            <small style="color:var(--pico-muted-color)">
-                                {{ __("colony.merchant_until_sol") }} {{ $merchantVisit->tick_end }}
-                            </small>
-                        </div>
+                        <x-cantina-dialog :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole">
+                            {{-- Toast feedback --}}
+                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                                x-text="toast.message" aria-live="polite" role="status"></div>
 
-                        {{-- Toast feedback --}}
-                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                            x-text="toast.message" aria-live="polite" role="status"></div>
-
-                        <div class="merchant-items-bar" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
-                            <template x-for="item in merchantItems" :key="item.id">
-                                <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
-                                    <div class="merchant-item-bar__label" x-text="item.label"></div>
-                                    <div class="merchant-item-bar__cost" x-text="`${item.cost_credits} Cr`"></div>
-                                    <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
-                                        @click="buyItem(item.id)">
-                                        <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
-                                        <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
-                                    </button>
-                                </article>
-                            </template>
-                        </div>
+                            <div class="merchant-items-bar"
+                                style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                <template x-for="item in merchantItems" :key="item.id">
+                                    <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
+                                        <div class="merchant-item-bar__label" x-text="item.label" :title="item.label">
+                                        </div>
+                                        <div class="merchant-item-bar__row">
+                                            <span class="res-chip res-Cr">
+                                                <span class="res-abbr">Cr</span>
+                                                <span class="res-amount" x-text="item.cost_credits"></span>
+                                            </span>
+                                            <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
+                                                @click="buyItem(item.id)">
+                                                <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
+                                                <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
+                                            </button>
+                                        </div>
+                                    </article>
+                                </template>
+                            </div>
+                        </x-cantina-dialog>
                     </div>
                 @endif
 
@@ -160,61 +177,84 @@
                         $char = $characterAssignment[$spotForOffer[$idx] ?? "spot_1"] ?? null;
                         $name = $char["name"] ?? "???";
                         $role = $char["role"] ?? "";
+                        $offerCharSlug = $char["slug"] ?? "stranger";
+                        $offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
+                        $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">
-                            <div class="guest-avatar">
-                                @if ($char && isset($char["slug"]))
-                                    <img class="guest-avatar__portrait"
-                                        src="{{ asset("img/characters/" . $char["slug"] . ".webp") }}"
-                                        alt="{{ $name }}">
-                                @else
-                                    <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
-                                @endif
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1.15rem;">{{ $name }}</h3>
-                                <small style="color:var(--pico-muted-color); font-weight: 500;">{{ $role }}</small>
-                            </div>
-                        </div>
+                        <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
+                            {{-- Toast feedback --}}
+                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                                x-text="toast.message" aria-live="polite" role="status"></div>
 
-                        <div
-                            style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1.5rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
-                            <div>
-                                <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                    {{ __("colony.bar_offer_give") }}
+                            <div
+                                style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
+                                <div>
+                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                        {{ __("colony.bar_offer_give") }}
+                                    </div>
+                                    @include("partials.res_chip", [
+                                        "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
+                                        "amount" => $offer->give_amount,
+                                    ])
                                 </div>
-                                <strong style="font-size: 1.15rem;">{{ $offer->give_amount }}×</strong>
-                                {{ $resourceLabels[$offer->give_resource_id] ?? $offer->give_resource_id }}
-                            </div>
-                            <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
-                            <div>
-                                <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                    {{ __("colony.bar_offer_get") }}
+                                <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
+                                <div>
+                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                        {{ __("colony.bar_offer_get") }}
+                                    </div>
+                                    @include("partials.res_chip", [
+                                        "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
+                                        "amount" => $offer->get_amount,
+                                    ])
                                 </div>
-                                <strong style="font-size: 1.15rem;">{{ $offer->get_amount }}×</strong>
-                                {{ $resourceLabels[$offer->get_resource_id] ?? $offer->get_resource_id }}
                             </div>
-                        </div>
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
-                            <small style="color:var(--pico-muted-color)">
-                                {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
-                            </small>
-                            <div style="display:flex;gap:0.5rem;align-items:center">
-                                <span class="ap-chip ap-cost-chip ap-chip--economy" aria-label="1 Wirtschafts-AP">1
-                                    ÖAP</span>
-                                <button @click="accept({{ $offerId }}, $el)"
-                                    :disabled="accepted[{{ $offerId }}] || loading"
-                                    style="margin:0;padding: 0.35rem 1rem;font-size:0.85rem;">
-                                    <span
-                                        x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
-                                    <span x-show="accepted[{{ $offerId }}]">✓</span>
-                                </button>
+                            <div
+                                style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+                                <small style="color:var(--pico-muted-color)">
+                                    {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
+                                </small>
+                                <div style="display:flex;gap:0.5rem">
+                                    @if ($hasConsul)
+                                        <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                            @click="negotiate({{ $offerId }}, $el)"
+                                            :disabled="negotiated[{{ $offerId }}] || offerResolved({{ $offerId }}) ||
+                                                loading">
+                                            <span class="tile-action-btn__body">
+                                                <span
+                                                    x-show="!negotiated[{{ $offerId }}] && negotiateResult[{{ $offerId }}] !== 'failed'">{{ __("colony.bar_offer_negotiate") }}</span>
+                                                <span x-show="negotiated[{{ $offerId }}]">✓</span>
+                                                <span x-show="negotiateResult[{{ $offerId }}] === 'failed'">✗</span>
+                                            </span>
+                                            <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+                                                x-text="`Eco {{ $negotiateApCost }} AP`"></span>
+                                        </button>
+                                    @endif
+                                    <button class="tile-action-btn" style="width:auto;"
+                                        @click="accept({{ $offerId }}, $el)"
+                                        :disabled="offerResolved({{ $offerId }}) || loading">
+                                        <span class="tile-action-btn__body">
+                                            <span
+                                                x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
+                                            <span x-show="accepted[{{ $offerId }}]">✓</span>
+                                        </span>
+                                        <span class="ap-chip ap-cost-chip ap-chip--economy" aria-hidden="true"
+                                            x-text="negotiated[{{ $offerId }}] ? 'Eco 0 AP' : `Eco {{ $offerApCost }} AP`"></span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
-                            style="color:var(--pico-del-color);font-size:0.85rem;margin-top:0.5rem"></div>
+                            <div x-show="negotiated[{{ $offerId }}] && !accepted[{{ $offerId }}]"
+                                style="color:#166534;font-size:0.85rem">
+                                {{ __("colony.bar_offer_negotiate_success") }}
+                            </div>
+                            <div x-show="negotiateResult[{{ $offerId }}] === 'failed'"
+                                style="color:var(--pico-del-color);font-size:0.85rem">
+                                {{ __("colony.bar_offer_negotiate_failed") }}
+                            </div>
+                            <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
                     </div>
                 @endforeach
             </div>
@@ -229,7 +269,8 @@
     ])
 
     <script>
-        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, offersCount = 0) {
+        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, resourceAbbr,
+            offersCount = 0) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -239,8 +280,62 @@
 
                 // Offers state
                 accepted: {},
+                negotiated: {}, // offerId -> true once a negotiation improved the offer's terms
+                negotiateResult: {}, // offerId -> 'failed' (negotiation lost the offer entirely)
                 loading: false,
                 error: {},
+
+                // Whether an offer's dialog is fully resolved — accepted, or a
+                // negotiation was lost (offer gone either way). A successful
+                // negotiation alone does NOT resolve the offer: Annehmen is still
+                // needed to actually execute the (now improved) trade.
+                offerResolved(offerId) {
+                    return !!this.accepted[offerId] || this.negotiateResult[offerId] === 'failed';
+                },
+
+                // Live resourcebar sync — project convention: every AJAX action that
+                // changes AP/resources must update the resourcebar without a reload.
+                // Flashes the chip too (same .res-chip--flash/.ap-chip--flash animation
+                // used everywhere else in the game) so the change is easy to spot.
+                syncResbarAmount(resourceId, amount) {
+                    const abbr = resourceAbbr[resourceId];
+                    if (!abbr || amount === undefined || amount === null) return;
+                    const selector = `.res-${abbr}`;
+                    const chip = document.querySelector(selector);
+                    const el = chip?.querySelector('.res-amount');
+                    if (el) el.textContent = amount.toLocaleString('de-DE');
+                    this.flashChip(chip, 'res-chip--flash');
+                },
+
+                syncEconomyAp(amount) {
+                    if (amount === undefined) return;
+                    const chip = document.getElementById('resbar-ap-economy');
+                    const el = chip?.querySelector('.res-amount');
+                    if (el) el.textContent = amount;
+                    this.flashChip(chip, 'ap-chip--flash');
+                },
+
+                flashChip(chip, flashClass) {
+                    if (!chip) return;
+                    clearTimeout(chip._flashTimer);
+                    chip.classList.remove(flashClass);
+                    void chip.offsetWidth; // force reflow so the animation restarts mid-flash
+                    chip.classList.add(flashClass);
+                    chip._flashTimer = setTimeout(() => chip.classList.remove(flashClass), 700);
+                },
+
+                // Updates the "Du gibst/bekommst" chip amounts inside a specific
+                // offer's dialog to the negotiated values — the real terms now differ
+                // from what was originally displayed when the dialog was rendered.
+                updateOfferChipAmounts(btn, giveAmount, getAmount) {
+                    const dialog = btn.closest('.cantina-dialog');
+                    if (!dialog) return;
+                    const amounts = dialog.querySelectorAll('.res-amount');
+                    if (amounts[0]) amounts[0].textContent = giveAmount;
+                    if (amounts[1]) amounts[1].textContent = getAmount;
+                    this.flashChip(amounts[0]?.closest('.res-chip'), 'res-chip--flash');
+                    this.flashChip(amounts[1]?.closest('.res-chip'), 'res-chip--flash');
+                },
 
                 // Merchant state
                 merchantVisit: merchantVisit,
@@ -255,6 +350,14 @@
 
                 // Modal Drawer state
                 activeModal: null,
+
+                // AP-type accent for the dialog border — both offers and the merchant
+                // currently always cost economy AP. Kept as a seam for future event
+                // types (e.g. a Nav-AP "investigate lead" encounter).
+                get dialogApType() {
+                    if (this.activeModal === null) return 'neutral';
+                    return 'economy';
+                },
 
                 openMerchant() {
                     this.activeModal = 'merchant';
@@ -341,6 +444,45 @@
                         const data = await res.json();
                         if (data.ok) {
                             this.accepted[offerId] = true;
+                            this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
+                            this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
+                            this.syncEconomyAp(data.economy_ap);
+                        } else {
+                            this.error[offerId] = data.error ?? 'Fehler';
+                        }
+                    } catch {
+                        this.error[offerId] = 'Verbindungsfehler';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // Cantina-Verhandlung — improves the offer's terms, costs more AP, and
+                // can fail (offer lost entirely). A successful negotiation does NOT
+                // execute the trade — the player still confirms with Annehmen.
+                async negotiate(offerId, btn) {
+                    this.loading = true;
+                    this.error[offerId] = null;
+                    try {
+                        const res = await fetch(negotiateRoute.replace('__OFFER__', offerId), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                        });
+                        const data = await res.json();
+                        if (data.ok && data.success) {
+                            this.negotiated[offerId] = true;
+                            // No resources move here (see backend docblock) — only AP.
+                            this.syncEconomyAp(data.economy_ap);
+                            this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
+                            this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
+                        } else if (data.ok && !data.success) {
+                            this.negotiateResult[offerId] = 'failed';
+                            this.syncEconomyAp(data.economy_ap);
+                            this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }
