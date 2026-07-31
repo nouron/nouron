@@ -41,6 +41,9 @@
             4 => __("resources.res_werkstoffe"),
             5 => __("resources.res_organika"),
         ];
+        // Matches resources.abbreviation in the DB — same values the resource bar's
+        // .res-{abbr} chip classes are built for (Cr/Rg/Co/Or).
+        $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
         $spotForOffer = ["spot_1", "spot_2"]; // offer index → spot key
     @endphp
 
@@ -123,36 +126,38 @@
                 style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;" x-cloak></div>
 
             {{-- Interactive Modal / Drawer --}}
-            <div class="cantina-modal" :class="{ 'open': activeModal !== null }" x-show="activeModal !== null" x-cloak>
+            <div class="cantina-modal" :class="[{ 'open': activeModal !== null }, 'cantina-modal--' + dialogApType]"
+                x-show="activeModal !== null" x-cloak>
                 <button @click="closeModal()" class="cantina-modal-close" aria-label="Schließen">&times;</button>
 
                 {{-- Merchant items listing --}}
                 @if ($merchantVisit !== null)
                     <div x-show="activeModal === 'merchant'">
-                        <div style="margin-bottom:1rem">
-                            <h3 style="margin:0;font-size:1.25rem;">🛸 {{ __("colony.merchant_title") }}</h3>
-                            <small style="color:var(--pico-muted-color)">
-                                {{ __("colony.merchant_until_sol") }} {{ $merchantVisit->tick_end }}
-                            </small>
-                        </div>
+                        <x-cantina-dialog-header :portrait-src="asset("img/characters/merchant.webp")"
+                            :portrait-lg-src="asset("img/characters/merchant_lg.webp")" :name="__("colony.merchant_title")"
+                            :role="__("colony.merchant_until_sol") . " " . $merchantVisit->tick_end" />
 
-                        {{-- Toast feedback --}}
-                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                            x-text="toast.message" aria-live="polite" role="status"></div>
+                            {{-- Toast feedback --}}
+                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                                x-text="toast.message" aria-live="polite" role="status"></div>
 
-                        <div class="merchant-items-bar" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
-                            <template x-for="item in merchantItems" :key="item.id">
-                                <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
-                                    <div class="merchant-item-bar__label" x-text="item.label"></div>
-                                    <div class="merchant-item-bar__cost" x-text="`${item.cost_credits} Cr`"></div>
-                                    <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
-                                        @click="buyItem(item.id)">
-                                        <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
-                                        <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
-                                    </button>
-                                </article>
-                            </template>
-                        </div>
+                            <div class="merchant-items-bar"
+                                style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                <template x-for="item in merchantItems" :key="item.id">
+                                    <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
+                                        <div class="merchant-item-bar__label" x-text="item.label"></div>
+                                        <span class="res-chip res-Cr">
+                                            <span class="res-abbr">Cr</span>
+                                            <span class="res-amount" x-text="item.cost_credits"></span>
+                                        </span>
+                                        <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
+                                            @click="buyItem(item.id)">
+                                            <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
+                                            <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
+                                        </button>
+                                    </article>
+                                </template>
+                            </div>
                     </div>
                 @endif
 
@@ -165,21 +170,10 @@
                         $role = $char["role"] ?? "";
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
-                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.25rem">
-                            <div class="guest-avatar">
-                                @if ($char && isset($char["slug"]))
-                                    <img class="guest-avatar__portrait"
-                                        src="{{ asset("img/characters/" . $char["slug"] . "_sm.webp") }}"
-                                        alt="{{ $name }}">
-                                @else
-                                    <i class="bi bi-person-fill" style="font-size: 1.35rem; color: var(--color-accent)"></i>
-                                @endif
-                            </div>
-                            <div>
-                                <h3 style="margin: 0; font-size: 1.15rem;">{{ $name }}</h3>
-                                <small style="color:var(--pico-muted-color); font-weight: 500;">{{ $role }}</small>
-                            </div>
-                        </div>
+                        <x-cantina-dialog-header :portrait-src="$char && isset($char["slug"]) ? asset("img/characters/" . $char["slug"]
+                            . ".webp" ) : asset("img/characters/stranger.webp")" :portrait-lg-src="$char && isset($char["slug"]) ?
+                            asset("img/characters/" . $char["slug"] . "_lg.webp" ) :
+                            asset("img/characters/stranger_lg.webp")" :name="$name" :role="$role" />
 
                         <div
                             style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1.5rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
@@ -187,16 +181,20 @@
                                 <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
                                     {{ __("colony.bar_offer_give") }}
                                 </div>
-                                <strong style="font-size: 1.15rem;">{{ $offer->give_amount }}×</strong>
-                                {{ $resourceLabels[$offer->give_resource_id] ?? $offer->give_resource_id }}
+                                @include("partials.res_chip", [
+                                    "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
+                                    "amount" => $offer->give_amount,
+                                ])
                             </div>
                             <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
                             <div>
                                 <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
                                     {{ __("colony.bar_offer_get") }}
                                 </div>
-                                <strong style="font-size: 1.15rem;">{{ $offer->get_amount }}×</strong>
-                                {{ $resourceLabels[$offer->get_resource_id] ?? $offer->get_resource_id }}
+                                @include("partials.res_chip", [
+                                    "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
+                                    "amount" => $offer->get_amount,
+                                ])
                             </div>
                         </div>
 
@@ -204,17 +202,18 @@
                             <small style="color:var(--pico-muted-color)">
                                 {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
                             </small>
-                            <div style="display:flex;gap:0.5rem;align-items:center">
-                                <span class="ap-chip ap-cost-chip ap-chip--economy" aria-label="1 Wirtschafts-AP">1
-                                    ÖAP</span>
-                                <button @click="accept({{ $offerId }}, $el)"
-                                    :disabled="accepted[{{ $offerId }}] || loading"
-                                    style="margin:0;padding: 0.35rem 1rem;font-size:0.85rem;">
+                            <button class="tile-action-btn" style="width:auto;" @click="accept({{ $offerId }}, $el)"
+                                :disabled="accepted[{{ $offerId }}] || loading">
+                                <span class="tile-action-btn__body">
                                     <span
                                         x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
                                     <span x-show="accepted[{{ $offerId }}]">✓</span>
-                                </button>
-                            </div>
+                                </span>
+                                @include("partials.ap-cost-chip", [
+                                    "type" => "economy",
+                                    "label" => "Eco " . $offerApCost . " AP",
+                                ])
+                            </button>
                         </div>
                         <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
                             style="color:var(--pico-del-color);font-size:0.85rem;margin-top:0.5rem"></div>
@@ -258,6 +257,14 @@
 
                 // Modal Drawer state
                 activeModal: null,
+
+                // AP-type accent for the dialog border — both offers and the merchant
+                // currently always cost economy AP. Kept as a seam for future event
+                // types (e.g. a Nav-AP "investigate lead" encounter).
+                get dialogApType() {
+                    if (this.activeModal === null) return 'neutral';
+                    return 'economy';
+                },
 
                 openMerchant() {
                     this.activeModal = 'merchant';

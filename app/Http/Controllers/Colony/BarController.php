@@ -79,11 +79,12 @@ class BarController extends BaseController
         $economyAp = $barLevel > 0
             ? $this->personellService->getAvailableActionPoints('economy', $colony->id)
             : 0;
+        $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
 
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
-            'firstVisit', 'economyAp',
+            'firstVisit', 'economyAp', 'offerApCost',
         ));
     }
 
