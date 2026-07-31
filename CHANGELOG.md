@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung 4)
+
+Fix im Bildvarianten-Tool: Crop-Anker von Bildmitte auf oben verschoben (`make_variants.py::cover_resize`). Bei der quadratischen `_sm`-Variante schnitt der bisherige zentrierte Crop bei 2:3-Portrait-Mastern den oberen Kopfbereich ab — jetzt wie CSS `object-position: top center` von oben verankert. Alle Charakter-Varianten neu generiert (Berater unverändert, deren Seitenverhältnis liegt schon nah am Master).
+
 ## 2026-07-30 (Fortsetzung 3)
 
 Bildvarianten-Tool erweitert: `_sm`-Auflösung verdoppelt (88×88 → 176×176), neue `_lg`-Stufe (Charaktere 640×880, Berater 1024×1366) für scharfe Darstellung auf HiDPI-Displays/modernen Handys — Anzeigegröße bleibt unverändert, nur Pixeldichte. Cantina-Hotspots nutzen `srcset` (1x/2x), Berater-Portraits (CSS `background-image`) nutzen `image-set()` über neuen JS-Helper. Nebenbei zwei Bugs gefixt: `make_variants.py` las eigene `_sm`/`_lg`-Ausgabedateien fälschlich als Basis-Charaktere und erzeugte Datenmüll; Original-PNG-Master der Berater waren durch einen früheren Commit gelöscht (aus Git-History wiederhergestellt) und der `information_broker`-Master lag unter dem nie referenzierten Namen "informationsagent".
