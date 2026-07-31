@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung 3)
+
+Bildvarianten-Tool erweitert: `_sm`-Auflösung verdoppelt (88×88 → 176×176), neue `_lg`-Stufe (Charaktere 640×880, Berater 1024×1366) für scharfe Darstellung auf HiDPI-Displays/modernen Handys — Anzeigegröße bleibt unverändert, nur Pixeldichte. Cantina-Hotspots nutzen `srcset` (1x/2x), Berater-Portraits (CSS `background-image`) nutzen `image-set()` über neuen JS-Helper. Nebenbei zwei Bugs gefixt: `make_variants.py` las eigene `_sm`/`_lg`-Ausgabedateien fälschlich als Basis-Charaktere und erzeugte Datenmüll; Original-PNG-Master der Berater waren durch einen früheren Commit gelöscht (aus Git-History wiederhergestellt) und der `information_broker`-Master lag unter dem nie referenzierten Namen "informationsagent".
+
 ## 2026-07-30 (Fortsetzung 2)
 
 Merchant-Portrait überarbeitet: Trader-Goggles entfernt (zu ähnlich zum Baumeister-Berater), stattdessen Bewertungs-Loupe in einer Hand + Strichlisten-Ledger unterm Arm — passt besser zu Corvans "prices everything out loud"-Quirk. Charakterblatt (`docs/characters/merchant.md`) entsprechend angepasst.
