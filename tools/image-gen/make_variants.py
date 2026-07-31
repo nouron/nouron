@@ -54,15 +54,18 @@ def find_master(category: str, name: str) -> Path | None:
 
 
 def cover_resize(img: Image.Image, target_w: int, target_h: int) -> Image.Image:
-    """Resize + center-crop to exactly target_w x target_h, like CSS
-    object-fit: cover — keeps the subject's aspect ratio, no squashing."""
+    """Resize + crop to exactly target_w x target_h, like CSS object-fit: cover
+    with object-position: top center — keeps the subject's aspect ratio, no
+    squashing. Anchored to the top (not centered) because every portrait master
+    is head-and-shoulders with the head near the top of the frame; a centered
+    crop on a much-squarer target (e.g. the _sm avatar) cuts off the top of
+    the head instead of trimming shoulders/chest."""
     src_w, src_h = img.size
     scale = max(target_w / src_w, target_h / src_h)
     new_w, new_h = round(src_w * scale), round(src_h * scale)
     img = img.resize((new_w, new_h), Image.LANCZOS)
     left = (new_w - target_w) // 2
-    top = (new_h - target_h) // 2
-    return img.crop((left, top, left + target_w, top + target_h))
+    return img.crop((left, 0, left + target_w, target_h))
 
 
 def make_variant(master: Image.Image, size: str) -> Image.Image:
