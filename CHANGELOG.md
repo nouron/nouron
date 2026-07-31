@@ -1,32 +1,14 @@
 # Changelog
 
-## 2026-07-30 (Fortsetzung 6)
-
-Fix: Cantina-Dialog öffnete sich nicht mehr (nur Backdrop sichtbar) — `<x-cantina-dialog-header>`-Attribute hatten verschachtelte Anführungszeichen (`:portrait-src="asset("...")"`), die das Blade-Component-Attribut-Parsing brachen. Werte jetzt vorab in `@php`-Variablen berechnet, Komponenten-Attribute bekommen nur noch einfache Variablenreferenzen — Prettier-stabil (einfache Anführungszeichen wurden beim nächsten Formatieren sonst wieder auf doppelt normalisiert).
-
-## 2026-07-30 (Fortsetzung 5)
-
-Cantina-Dialoge (Angebot + Reisender Händler) überarbeitet: größer, gemeinsame Kopfzeile mit Charakter-Portrait (`<x-cantina-dialog-header>`, nutzt die neue `_lg`-Variante für HiDPI), Ressourcen als Chips (`res_chip`-Partial) statt Klartext, AP-Kosten-Chip in den Accept-Button integriert (gleiche Konvention wie Bauen/Reparieren), "ÖAP" zu "Eco AP" korrigiert, Dialog-Kante farblich nach AP-Typ (aktuell immer Eco/gelb für beide Dialoge, als Nahtstelle für künftige Events mit anderem AP-Typ ausgelegt — z.B. Nav-AP-Hinweis-Encounter). Mobile: Portrait-Header stapelt sich statt gequetscht nebeneinander zu stehen.
-
-## 2026-07-30 (Fortsetzung 4)
-
-Fix im Bildvarianten-Tool: Crop-Anker von Bildmitte auf oben verschoben (`make_variants.py::cover_resize`). Bei der quadratischen `_sm`-Variante schnitt der bisherige zentrierte Crop bei 2:3-Portrait-Mastern den oberen Kopfbereich ab — jetzt wie CSS `object-position: top center` von oben verankert. Alle Charakter-Varianten neu generiert (Berater unverändert, deren Seitenverhältnis liegt schon nah am Master).
-
-## 2026-07-30 (Fortsetzung 3)
-
-Bildvarianten-Tool erweitert: `_sm`-Auflösung verdoppelt (88×88 → 176×176), neue `_lg`-Stufe (Charaktere 640×880, Berater 1024×1366) für scharfe Darstellung auf HiDPI-Displays/modernen Handys — Anzeigegröße bleibt unverändert, nur Pixeldichte. Cantina-Hotspots nutzen `srcset` (1x/2x), Berater-Portraits (CSS `background-image`) nutzen `image-set()` über neuen JS-Helper. Nebenbei zwei Bugs gefixt: `make_variants.py` las eigene `_sm`/`_lg`-Ausgabedateien fälschlich als Basis-Charaktere und erzeugte Datenmüll; Original-PNG-Master der Berater waren durch einen früheren Commit gelöscht (aus Git-History wiederhergestellt) und der `information_broker`-Master lag unter dem nie referenzierten Namen "informationsagent".
-
-## 2026-07-30 (Fortsetzung 2)
-
-Merchant-Portrait überarbeitet: Trader-Goggles entfernt (zu ähnlich zum Baumeister-Berater), stattdessen Bewertungs-Loupe in einer Hand + Strichlisten-Ledger unterm Arm — passt besser zu Corvans "prices everything out loud"-Quirk. Charakterblatt (`docs/characters/merchant.md`) entsprechend angepasst.
-
-## 2026-07-30 (Fortsetzung)
-
-Cantina: Reisender-Händler-Hotspot zeigte bisher nur ein generisches Shop-Icon statt eines Portraits wie die übrigen NPCs. Neues Merchant-Portrait erzeugt (gleiche Bildvarianten-Pipeline wie oben), Hotspot zeigt jetzt `has-portrait` wie die Gäste-Hotspots plus ein kleines Ausrufezeichen-Badge oben rechts, da der Händler nur zeitlich begrenzt verfügbar ist.
-
 ## 2026-07-30
 
-Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
+- Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
+- Cantina: Reisender-Händler-Hotspot zeigte bisher nur ein generisches Shop-Icon statt eines Portraits wie die übrigen NPCs. Neues Merchant-Portrait erzeugt (gleiche Bildvarianten-Pipeline), Hotspot zeigt jetzt `has-portrait` wie die Gäste-Hotspots plus ein kleines Ausrufezeichen-Badge oben rechts, da der Händler nur zeitlich begrenzt verfügbar ist.
+- Merchant-Portrait überarbeitet: Trader-Goggles entfernt (zu ähnlich zum Baumeister-Berater), stattdessen Bewertungs-Loupe in einer Hand + Strichlisten-Ledger unterm Arm — passt besser zu Corvans "prices everything out loud"-Quirk. Charakterblatt (`docs/characters/merchant.md`) entsprechend angepasst.
+- Bildvarianten-Tool erweitert: `_sm`-Auflösung verdoppelt (88×88 → 176×176), neue `_lg`-Stufe (Charaktere 640×880, Berater 1024×1366) für scharfe Darstellung auf HiDPI-Displays/modernen Handys — Anzeigegröße bleibt unverändert, nur Pixeldichte. Cantina-Hotspots nutzen `srcset` (1x/2x), Berater-Portraits (CSS `background-image`) nutzen `image-set()` über neuen JS-Helper. Nebenbei zwei Bugs gefixt: `make_variants.py` las eigene `_sm`/`_lg`-Ausgabedateien fälschlich als Basis-Charaktere und erzeugte Datenmüll; Original-PNG-Master der Berater waren durch einen früheren Commit gelöscht (aus Git-History wiederhergestellt) und der `information_broker`-Master lag unter dem nie referenzierten Namen "informationsagent".
+- Fix im Bildvarianten-Tool: Crop-Anker von Bildmitte auf oben verschoben (`make_variants.py::cover_resize`). Bei der quadratischen `_sm`-Variante schnitt der bisherige zentrierte Crop bei 2:3-Portrait-Mastern den oberen Kopfbereich ab — jetzt wie CSS `object-position: top center` von oben verankert. Alle Charakter-Varianten neu generiert (Berater unverändert, deren Seitenverhältnis liegt schon nah am Master).
+- Cantina-Dialoge (Angebot + Reisender Händler) überarbeitet: größer, gemeinsame Kopfzeile mit Charakter-Portrait (`<x-cantina-dialog-header>`, nutzt die `_lg`-Variante für HiDPI), Ressourcen als Chips (`res_chip`-Partial) statt Klartext, AP-Kosten-Chip in den Accept-Button integriert (gleiche Konvention wie Bauen/Reparieren), "ÖAP" zu "Eco AP" korrigiert, Dialog-Kante farblich nach AP-Typ (aktuell immer Eco/gelb für beide Dialoge, als Nahtstelle für künftige Events mit anderem AP-Typ ausgelegt — z.B. Nav-AP-Hinweis-Encounter). Mobile: Portrait-Header stapelt sich statt gequetscht nebeneinander zu stehen.
+- Fix: Cantina-Dialog öffnete sich nicht mehr (nur Backdrop sichtbar) — `<x-cantina-dialog-header>`-Attribute hatten verschachtelte Anführungszeichen (`:portrait-src="asset("...")"`), die das Blade-Component-Attribut-Parsing brachen. Werte jetzt vorab in `@php`-Variablen berechnet, Komponenten-Attribute bekommen nur noch einfache Variablenreferenzen — Prettier-stabil (einfache Anführungszeichen wurden beim nächsten Formatieren sonst wieder auf doppelt normalisiert).
 
 `colony:seed-demo` um `--path=all|cantina|hangar|lab` erweitert: baut wahlweise nur eines der drei Sol-2-Pfadwahl-Gebäude (Cantina/Bar, Hangar, Analytik-Labor), die anderen beiden bleiben unplatziert und im Build Mode verfügbar — bildet die echte Pfadwahl-Situation ab (GDD §13/§16.2), statt wie bisher immer alle drei gleichzeitig zu bauen. Default `all` bleibt rückwärtskompatibel zum bisherigen Verhalten.
 
