@@ -1766,10 +1766,9 @@ dialog[x-ref="discoveryDialog"] {
 
 /* Each item row: label | cost | buy-button */
 .merchant-item-bar {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    align-items: center;
-    gap: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
     padding: 0.75rem 1rem;
     margin: 0;
     border: 1px solid var(--pico-muted-border-color, #ddd);
@@ -1785,6 +1784,16 @@ dialog[x-ref="discoveryDialog"] {
 .merchant-item-bar__label {
     font-weight: 500;
     font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.merchant-item-bar__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
 }
 
 .merchant-item-bar__cost {

@@ -150,16 +150,19 @@
                                 style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
                                 <template x-for="item in merchantItems" :key="item.id">
                                     <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
-                                        <div class="merchant-item-bar__label" x-text="item.label"></div>
-                                        <span class="res-chip res-Cr">
-                                            <span class="res-abbr">Cr</span>
-                                            <span class="res-amount" x-text="item.cost_credits"></span>
-                                        </span>
-                                        <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
-                                            @click="buyItem(item.id)">
-                                            <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
-                                            <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
-                                        </button>
+                                        <div class="merchant-item-bar__label" x-text="item.label" :title="item.label">
+                                        </div>
+                                        <div class="merchant-item-bar__row">
+                                            <span class="res-chip res-Cr">
+                                                <span class="res-abbr">Cr</span>
+                                                <span class="res-amount" x-text="item.cost_credits"></span>
+                                            </span>
+                                            <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
+                                                @click="buyItem(item.id)">
+                                                <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
+                                                <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
+                                            </button>
+                                        </div>
                                     </article>
                                 </template>
                             </div>
