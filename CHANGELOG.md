@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung 6)
+
+Fix: Cantina-Dialog öffnete sich nicht mehr (nur Backdrop sichtbar) — `<x-cantina-dialog-header>`-Attribute hatten verschachtelte Anführungszeichen (`:portrait-src="asset("...")"`), die das Blade-Component-Attribut-Parsing brachen. Werte jetzt vorab in `@php`-Variablen berechnet, Komponenten-Attribute bekommen nur noch einfache Variablenreferenzen — Prettier-stabil (einfache Anführungszeichen wurden beim nächsten Formatieren sonst wieder auf doppelt normalisiert).
+
 ## 2026-07-30 (Fortsetzung 5)
 
 Cantina-Dialoge (Angebot + Reisender Händler) überarbeitet: größer, gemeinsame Kopfzeile mit Charakter-Portrait (`<x-cantina-dialog-header>`, nutzt die neue `_lg`-Variante für HiDPI), Ressourcen als Chips (`res_chip`-Partial) statt Klartext, AP-Kosten-Chip in den Accept-Button integriert (gleiche Konvention wie Bauen/Reparieren), "ÖAP" zu "Eco AP" korrigiert, Dialog-Kante farblich nach AP-Typ (aktuell immer Eco/gelb für beide Dialoge, als Nahtstelle für künftige Events mit anderem AP-Typ ausgelegt — z.B. Nav-AP-Hinweis-Encounter). Mobile: Portrait-Header stapelt sich statt gequetscht nebeneinander zu stehen.
