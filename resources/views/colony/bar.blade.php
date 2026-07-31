@@ -132,32 +132,35 @@
 
                 {{-- Merchant items listing --}}
                 @if ($merchantVisit !== null)
+                    @php
+                        $merchantPortraitSrc = asset("img/characters/merchant.webp");
+                        $merchantPortraitLgSrc = asset("img/characters/merchant_lg.webp");
+                        $merchantName = __("colony.merchant_title");
+                        $merchantRole = __("colony.merchant_until_sol") . " " . $merchantVisit->tick_end;
+                    @endphp
                     <div x-show="activeModal === 'merchant'">
-                        <x-cantina-dialog-header :portrait-src="asset("img/characters/merchant.webp")"
-                            :portrait-lg-src="asset("img/characters/merchant_lg.webp")" :name="__("colony.merchant_title")"
-                            :role="__("colony.merchant_until_sol") . " " . $merchantVisit->tick_end" />
+                        <x-cantina-dialog-header :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole" />
 
-                            {{-- Toast feedback --}}
-                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                                x-text="toast.message" aria-live="polite" role="status"></div>
+                        {{-- Toast feedback --}}
+                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                            x-text="toast.message" aria-live="polite" role="status"></div>
 
-                            <div class="merchant-items-bar"
-                                style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
-                                <template x-for="item in merchantItems" :key="item.id">
-                                    <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
-                                        <div class="merchant-item-bar__label" x-text="item.label"></div>
-                                        <span class="res-chip res-Cr">
-                                            <span class="res-abbr">Cr</span>
-                                            <span class="res-amount" x-text="item.cost_credits"></span>
-                                        </span>
-                                        <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
-                                            @click="buyItem(item.id)">
-                                            <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
-                                            <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
-                                        </button>
-                                    </article>
-                                </template>
-                            </div>
+                        <div class="merchant-items-bar" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                            <template x-for="item in merchantItems" :key="item.id">
+                                <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
+                                    <div class="merchant-item-bar__label" x-text="item.label"></div>
+                                    <span class="res-chip res-Cr">
+                                        <span class="res-abbr">Cr</span>
+                                        <span class="res-amount" x-text="item.cost_credits"></span>
+                                    </span>
+                                    <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
+                                        @click="buyItem(item.id)">
+                                        <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
+                                        <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
+                                    </button>
+                                </article>
+                            </template>
+                        </div>
                     </div>
                 @endif
 
@@ -168,12 +171,12 @@
                         $char = $characterAssignment[$spotForOffer[$idx] ?? "spot_1"] ?? null;
                         $name = $char["name"] ?? "???";
                         $role = $char["role"] ?? "";
+                        $offerCharSlug = $char["slug"] ?? "stranger";
+                        $offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
+                        $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
-                        <x-cantina-dialog-header :portrait-src="$char && isset($char["slug"]) ? asset("img/characters/" . $char["slug"]
-                            . ".webp" ) : asset("img/characters/stranger.webp")" :portrait-lg-src="$char && isset($char["slug"]) ?
-                            asset("img/characters/" . $char["slug"] . "_lg.webp" ) :
-                            asset("img/characters/stranger_lg.webp")" :name="$name" :role="$role" />
+                        <x-cantina-dialog-header :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role" />
 
                         <div
                             style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1.5rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
