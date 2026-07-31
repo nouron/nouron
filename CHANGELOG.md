@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31 (Fortsetzung)
+
+Neue Mechanik "Cantina-Verhandlung" (game-designer-Design, GDD §12 Kanal 1): "Verhandeln"-Button neben "Annehmen" bei Bar-Angeboten, sichtbar sobald ein verfügbarer Konsul zugewiesen ist. Kostet mehr AP (3 statt 1 Eco-AP) und hat eine Rang-abhängige Erfolgschance (55/70/85%) — bei Erfolg verbesserte Konditionen (Rang-Bonus 10/15/20%), bei Fehlschlag ist das Angebot sofort und vollständig verloren (kein Fallback auf Annehmen), AP wird trotzdem verbraucht, kein Trust-Malus. `BarService::negotiateOffer()` nutzt dasselbe deterministische `pseudoRand()`-Muster wie die Angebots-Generierung. TDD (15 neue Tests), volle Suite grün, per Playwright live verifiziert.
+
 ## 2026-07-31
 
 Cantina-Dialog (Angebot + Reisender Händler) Layout überarbeitet: Portrait füllt jetzt die komplette linke Dialogseite statt kleiner Thumbnail oben; rechts Name, Rolle, Angebot/Handelsartikel, Ablaufzeit, Annehmen-Button. Mobile stapelt (Portrait oben, Name/Rolle darunter, dann Angebot, dann Buttons). Neue Komponente `<x-cantina-dialog>` (ersetzt `<x-cantina-dialog-header>`) mit Slot für Body-Inhalt, von beiden Dialogen genutzt. Per Playwright-Screenshot-Test (Desktop+Mobile) verifiziert; dabei Layout-Bug gefunden und gefixt (Portrait-Anteil zu breit ließ Kaufen-Button in der Händler-Liste abgeschnitten wirken).
