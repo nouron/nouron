@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung 5)
+
+Cantina-Dialoge (Angebot + Reisender Händler) überarbeitet: größer, gemeinsame Kopfzeile mit Charakter-Portrait (`<x-cantina-dialog-header>`, nutzt die neue `_lg`-Variante für HiDPI), Ressourcen als Chips (`res_chip`-Partial) statt Klartext, AP-Kosten-Chip in den Accept-Button integriert (gleiche Konvention wie Bauen/Reparieren), "ÖAP" zu "Eco AP" korrigiert, Dialog-Kante farblich nach AP-Typ (aktuell immer Eco/gelb für beide Dialoge, als Nahtstelle für künftige Events mit anderem AP-Typ ausgelegt — z.B. Nav-AP-Hinweis-Encounter). Mobile: Portrait-Header stapelt sich statt gequetscht nebeneinander zu stehen.
+
 ## 2026-07-30 (Fortsetzung 4)
 
 Fix im Bildvarianten-Tool: Crop-Anker von Bildmitte auf oben verschoben (`make_variants.py::cover_resize`). Bei der quadratischen `_sm`-Variante schnitt der bisherige zentrierte Crop bei 2:3-Portrait-Mastern den oberen Kopfbereich ab — jetzt wie CSS `object-position: top center` von oben verankert. Alle Charakter-Varianten neu generiert (Berater unverändert, deren Seitenverhältnis liegt schon nah am Master).
