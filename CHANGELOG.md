@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31 (Fortsetzung 3)
+
+Cantina-Verhandlung auf zweistufigen Ablauf umgestellt (Owner-Entscheidung, revidiert die ursprüngliche GDD-Fassung): "Verhandeln" führt den Handel bei Erfolg nicht mehr sofort aus, sondern verbessert nur die Angebotskonditionen (`give_amount`/`get_amount` dauerhaft aktualisiert, `is_negotiated`-Flag, neue Migration) — der Spieler bestätigt danach bewusst mit "Annehmen" (jetzt 0 AP, da bereits bezahlt). Fehlschlag bleibt unverändert: Angebot sofort verloren. Zusätzlich: Resourcebar- und Dialog-Chip-Updates nutzen jetzt dieselbe Flash-Animation wie überall im Spiel (`.res-chip--flash`/`.ap-chip--flash`, wiederverwendet aus `colony-hexgrid.js`), damit Ressourcenänderungen sofort auffallen. Per Playwright verifiziert, volle Suite (881 Tests) grün.
+
 ## 2026-07-31 (Fortsetzung 2)
 
 Fix: Resourcebar syncte nach "Annehmen"/"Verhandeln" in der Cantina nicht live (verbindliche Konvention, bislang nur bei Bau-Aktionen umgesetzt). `BarController` reichert die JSON-Antwort um neue Ressourcen-Salden + verbleibende Economy-AP an, Frontend aktualisiert Resourcebar-Chips per DOM (gleiches Muster wie `colony-hexgrid.js`). Zusätzlich: der "Du gibst"-Chip im Dialog selbst zeigte nach erfolgreicher Verhandlung weiterhin den alten, nicht-rabattierten Preis — zeigt jetzt den tatsächlich verhandelten Betrag. Per Playwright verifiziert (Credits, Eco-AP und Dialog-Chip korrekt synchron).
