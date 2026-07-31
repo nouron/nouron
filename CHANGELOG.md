@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-30 (Fortsetzung 2)
+
+Merchant-Portrait überarbeitet: Trader-Goggles entfernt (zu ähnlich zum Baumeister-Berater), stattdessen Bewertungs-Loupe in einer Hand + Strichlisten-Ledger unterm Arm — passt besser zu Corvans "prices everything out loud"-Quirk. Charakterblatt (`docs/characters/merchant.md`) entsprechend angepasst.
+
 ## 2026-07-30 (Fortsetzung)
 
 Cantina: Reisender-Händler-Hotspot zeigte bisher nur ein generisches Shop-Icon statt eines Portraits wie die übrigen NPCs. Neues Merchant-Portrait erzeugt (gleiche Bildvarianten-Pipeline wie oben), Hotspot zeigt jetzt `has-portrait` wie die Gäste-Hotspots plus ein kleines Ausrufezeichen-Badge oben rechts, da der Händler nur zeitlich begrenzt verfügbar ist.
