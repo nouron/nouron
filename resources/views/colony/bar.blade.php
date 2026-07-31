@@ -54,6 +54,7 @@
     @json(route("colony.merchant.buy", ["itemId" => "__ID__"])),
     @json(route("colony.merchant.open", ["visitId" => "__VISIT__"])),
     @json(route("colony.bar.accept", ["offer" => "__OFFER__"])),
+    @json(route("colony.bar.negotiate", ["offer" => "__OFFER__"])),
     @json($offers->count())
 )'
         x-cloak>
@@ -178,6 +179,10 @@
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
                         <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
+                            {{-- Toast feedback --}}
+                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                                x-text="toast.message" aria-live="polite" role="status"></div>
+
                             <div
                                 style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
                                 <div>
@@ -201,23 +206,46 @@
                                 </div>
                             </div>
 
-                            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                            <div
+                                style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
                                 <small style="color:var(--pico-muted-color)">
                                     {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
                                 </small>
-                                <button class="tile-action-btn" style="width:auto;"
-                                    @click="accept({{ $offerId }}, $el)"
-                                    :disabled="accepted[{{ $offerId }}] || loading">
-                                    <span class="tile-action-btn__body">
-                                        <span
-                                            x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
-                                        <span x-show="accepted[{{ $offerId }}]">✓</span>
-                                    </span>
-                                    @include("partials.ap-cost-chip", [
-                                        "type" => "economy",
-                                        "label" => "Eco " . $offerApCost . " AP",
-                                    ])
-                                </button>
+                                <div style="display:flex;gap:0.5rem">
+                                    @if ($hasConsul)
+                                        <button class="tile-action-btn tile-action-btn--secondary" style="width:auto;"
+                                            @click="negotiate({{ $offerId }}, $el)"
+                                            :disabled="offerResolved({{ $offerId }}) || loading">
+                                            <span class="tile-action-btn__body">
+                                                <span
+                                                    x-show="!negotiateResult[{{ $offerId }}]">{{ __("colony.bar_offer_negotiate") }}</span>
+                                                <span x-show="negotiateResult[{{ $offerId }}] === 'success'">✓</span>
+                                                <span x-show="negotiateResult[{{ $offerId }}] === 'failed'">✗</span>
+                                            </span>
+                                            @include("partials.ap-cost-chip", [
+                                                "type" => "economy",
+                                                "label" => "Eco " . $negotiateApCost . " AP",
+                                            ])
+                                        </button>
+                                    @endif
+                                    <button class="tile-action-btn" style="width:auto;"
+                                        @click="accept({{ $offerId }}, $el)"
+                                        :disabled="offerResolved({{ $offerId }}) || loading">
+                                        <span class="tile-action-btn__body">
+                                            <span
+                                                x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
+                                            <span x-show="accepted[{{ $offerId }}]">✓</span>
+                                        </span>
+                                        @include("partials.ap-cost-chip", [
+                                            "type" => "economy",
+                                            "label" => "Eco " . $offerApCost . " AP",
+                                        ])
+                                    </button>
+                                </div>
+                            </div>
+                            <div x-show="negotiateResult[{{ $offerId }}] === 'failed'"
+                                style="color:var(--pico-del-color);font-size:0.85rem">
+                                {{ __("colony.bar_offer_negotiate_failed") }}
                             </div>
                             <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
                                 style="color:var(--pico-del-color);font-size:0.85rem"></div>
@@ -236,7 +264,7 @@
     ])
 
     <script>
-        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, offersCount = 0) {
+        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, offersCount = 0) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -246,8 +274,15 @@
 
                 // Offers state
                 accepted: {},
+                negotiateResult: {}, // offerId -> 'success' | 'failed'
                 loading: false,
                 error: {},
+
+                // Whether an offer's dialog is fully resolved (accepted OR a negotiation
+                // concluded, win or lose) — both buttons disable once true.
+                offerResolved(offerId) {
+                    return !!this.accepted[offerId] || !!this.negotiateResult[offerId];
+                },
 
                 // Merchant state
                 merchantVisit: merchantVisit,
@@ -356,6 +391,37 @@
                         const data = await res.json();
                         if (data.ok) {
                             this.accepted[offerId] = true;
+                        } else {
+                            this.error[offerId] = data.error ?? 'Fehler';
+                        }
+                    } catch {
+                        this.error[offerId] = 'Verbindungsfehler';
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+
+                // Cantina-Verhandlung — alternative resolution for the same offer,
+                // costs more AP and can fail (offer lost entirely on failure).
+                async negotiate(offerId, btn) {
+                    this.loading = true;
+                    this.error[offerId] = null;
+                    try {
+                        const res = await fetch(negotiateRoute.replace('__OFFER__', offerId), {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'Accept': 'application/json',
+                            },
+                        });
+                        const data = await res.json();
+                        if (data.ok && data.success) {
+                            this.negotiateResult[offerId] = 'success';
+                            this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
+                        } else if (data.ok && !data.success) {
+                            this.negotiateResult[offerId] = 'failed';
+                            this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }

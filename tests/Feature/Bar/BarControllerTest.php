@@ -116,6 +116,12 @@ class BarControllerTest extends TestCase
         $response->assertRedirect(route('login'));
     }
 
+    public function test_negotiate_requires_auth(): void
+    {
+        $response = $this->post(route('colony.bar.negotiate', ['offer' => 1]));
+        $response->assertRedirect(route('login'));
+    }
+
     // ── INDEX ─────────────────────────────────────────────────────────────────
 
     public function test_index_shows_bar_page(): void
@@ -269,5 +275,62 @@ class BarControllerTest extends TestCase
 
         // HTTP 200 on success, 422 on failure
         $response->assertStatus(200);
+    }
+
+    // ── NEGOTIATE ─────────────────────────────────────────────────────────────
+
+    public function test_negotiate_returns_error_without_consul(): void
+    {
+        $this->mockTick(10);
+        $this->clearBarOffers();
+        DB::table('advisors')->where('colony_id', self::COLONY_ID_BART)->where('personell_id', 92)->delete();
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertValidOffer(9999);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.negotiate', ['offer' => $offerId]));
+
+        $response->assertStatus(422)
+            ->assertJson(['ok' => false])
+            ->assertJsonStructure(['ok', 'error']);
+    }
+
+    public function test_negotiate_returns_error_for_nonexistent_offer(): void
+    {
+        $this->mockTick(10);
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_BART, 'personell_id' => 92],
+            ['rank' => 2, 'user_id' => self::USER_ID_BART, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.negotiate', ['offer' => 9999]));
+
+        $response->assertStatus(422)
+            ->assertJson(['ok' => false])
+            ->assertJsonStructure(['ok', 'error']);
+    }
+
+    public function test_negotiate_resolves_offer_when_consul_assigned(): void
+    {
+        $this->mockTick(10);
+        $this->clearBarOffers();
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_BART, 'personell_id' => 92],
+            ['rank' => 3, 'user_id' => self::USER_ID_BART, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+        $this->setColonyResource(self::RES_REGOLITH, 1000);
+        $offerId = $this->insertValidOffer(9999);
+
+        // Once past validation (offer found, consul available, resources/AP sufficient)
+        // negotiateOffer() always resolves with ok=true — the win/loss roll only
+        // decides `success`, both outcomes are a "resolved request", not an error.
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.negotiate', ['offer' => $offerId]));
+
+        $response->assertOk()
+            ->assertJson(['ok' => true])
+            ->assertJsonStructure(['ok', 'success']);
     }
 }

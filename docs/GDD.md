@@ -1107,6 +1107,8 @@ Schiffe werden **nicht selbst gebaut**. Die Kolonie verfügt nicht über Werftka
 | **Konsul-Verhandlung** | Credits (reduziert) + Verhandlungs-AP | Konsul investiert AP explizit → niedrigerer Preis |
 | **Event / Händler** | situativ (Wrackbergung, Sonderdeal) | Schiff direkt `docked` oder `pending` |
 
+> **Hinweis Namenskollision:** Die "Konsul-Verhandlung" hier ist **risikofrei** — mehr AP kauft einen garantiert niedrigeren Preis, kein Fehlschlag möglich. Nicht zu verwechseln mit der **"Cantina-Verhandlung (Risiko-Handel)"** in §12 Kanal 1 — dort kann die Verhandlung scheitern und das Angebot geht komplett verloren. Zwei unterschiedliche Mechaniken, bewusst unterschiedlich benannt.
+
 **Lieferzeiten Nexus-Anfrage** (Richtwerte — nach erstem Playtest kalibrieren):
 
 | Schiffstyp | Lieferzeit |
@@ -1605,6 +1607,43 @@ Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtig
 | Werkstoffe-Bias | ~33 % | ~33 % | ~33 % | 50 % |
 
 **Werkstoffe-Bias bei Rang 3:** Der Experten-Konsul hat Marktbeziehungen — bei Credits→Ressource-Angeboten erscheinen Werkstoffe mit 50 % Wahrscheinlichkeit (statt gleichverteilt ~33 %). Das gibt dem Experten-Konsul einen konkreten wirtschaftlichen Vorteil in der knappsten Ressource des Spiels (§3 Werkstoffe nicht lokal produzierbar).
+
+**Cantina-Verhandlung (Risiko-Handel):**
+
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 Economy-AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
+
+> **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
+
+**Ablauf — ein Schritt, keine Vorstufe:** Verhandeln ist kein zusätzlicher Klick vor dem Annehmen, sondern ein alternativer Auflösungspfad für dasselbe Angebot. Ein Klick auf Verhandeln löst das Angebot sofort auf:
+
+1. Verfügbarkeits- und Ressourcen-Check wie bei Annehmen (Give-Seite muss gedeckt sein — sonst Fehler `bar_offer_insufficient_resources`, kein Würfeln auf ein Geschäft, das ohnehin nicht zustande kommen könnte).
+2. Economy-AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`).
+3. Einmaliger Erfolgs-Wurf, Konsul-Rang-abhängig (`negotiate_success_chance`).
+   - **Erfolg:** Angebot wird zu verbesserten Konditionen sofort ausgeführt — Credits→Ressource-Angebote zahlen weniger, Tausch-Angebote liefern mehr (`negotiate_bonus`, gleiche Formel-Achse wie `trader_discount`, s.u.). Angebot als angenommen markiert.
+   - **Fehlschlag:** Kein Handel. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die verlorene Chance ist die eigentliche Konsequenz, nicht die AP.
+4. **Kein Trust-Malus.** `trade_blocked` (§13/§14) bleibt für einen anderen Fall reserviert (blockierter Handel, nicht gescheiterte Verhandlung) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
+
+**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und Economy-AP/Sol von 6–18 (Rang 0–3, s. o.) sowie max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP ist hier kein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+
+| | Rang 1 (Junior) | Rang 2 (Senior) | Rang 3 (Experte) |
+|---|---|---|---|
+| Erfolgschance | 55 % | 70 % | 85 % |
+| Zusatz-Bonus (`negotiate_bonus`) | 10 % | 15 % | 20 % |
+
+Der Zusatz-Bonus wirkt auf dieselbe Achse wie `trader_discount` bei der Angebots-Generierung, aber additiv obendrauf auf das **konkrete, bereits generierte** Angebot (nicht auf einen neuen Wurf): Credits→Ressource-Preis × `(1 − negotiate_bonus)`, Tausch-`get_amount` × `(1 + negotiate_bonus)`. Kein zweites Formel-System — nur eine zweite Anwendung derselben Formel auf ein bestehendes statt ein neu generiertes Angebot.
+
+**Config-Vorschlag** (noch nicht in `config/game.php`, analog zum bestehenden `bar`-Block):
+
+```php
+'bar' => [
+    // ...bestehende Keys...
+    'ap_cost_negotiate' => 3,  // vs. ap_cost_accept=1 — Verhandeln ist teurer, aber AP ist nicht der eigentliche Deckel (s. Fließtext)
+    'negotiate_success_chance' => [0 => 0.0, 1 => 0.55, 2 => 0.70, 3 => 0.85],
+    'negotiate_bonus' => [0 => 0.0, 1 => 0.10, 2 => 0.15, 3 => 0.20],
+],
+```
+
+> ⚠️ BALANCE CONCERN: Erwartungswert-Rechnung Rang 2 (70 % Erfolg, 15 % Bonus), Beispiel Credits→Werkstoffe-Angebot bei 2.000 Cr: Erfolg zahlt 1.700 Cr (−15 %), Fehlschlag verliert das Angebot komplett. EV lohnt sich klar bei Angeboten, die man ohnehin eher verwerfen würde ("nice to have, aber teuer") — bei Angeboten für knappe, dringend benötigte Werkstoffe (§3, nicht lokal produzierbar) ist der Verlust des einzigen verfügbaren Angebots teurer als die 15 % Ersparnis wert sind. Genau diese Abwägung ist die Design-Absicht. Kippt, wenn `negotiate_bonus` über ~25 % oder `negotiate_success_chance` über ~90 % gesetzt wird — dann wird Verhandeln zur dominanten Strategie ohne echtes Risiko und Annehmen zum toten Button. Nach erstem Playtest kalibrieren.
 
 ---
 

@@ -90,6 +90,7 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     // Bar/Cantina
     Route::get('/bar', [BarController::class, 'index'])->name('bar');
     Route::post('/bar/accept/{offer}', [BarController::class, 'accept'])->name('bar.accept');
+    Route::post('/bar/negotiate/{offer}', [BarController::class, 'negotiate'])->name('bar.negotiate');
 
     // Traveling Merchant
     Route::post('/merchant/buy/{itemId}', [MerchantController::class, 'buy'])->name('merchant.buy')->where('itemId', '[0-9]+');
