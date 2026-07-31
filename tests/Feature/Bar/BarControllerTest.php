@@ -173,6 +173,26 @@ class BarControllerTest extends TestCase
 
     // ── ACCEPT ────────────────────────────────────────────────────────────────
 
+    public function test_accept_response_includes_updated_balances_for_resourcebar_sync(): void
+    {
+        // Verbindliche Konvention (siehe CLAUDE.md/Owner-Feedback): jede
+        // AJAX-Aktion mit AP-/Ressourcen-Änderung muss die Resourcebar live
+        // syncen können — dafür müssen die neuen Salden in der JSON-Antwort
+        // stehen, nicht nur die Trade-Deltas.
+        $this->mockTick(10);
+        $this->setBarLevel(1);
+        $this->clearBarOffers();
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+
+        $offerId = $this->insertValidOffer(9999);
+
+        $response = $this->actingAs($this->bart())
+            ->postJson(route('colony.bar.accept', ['offer' => $offerId]));
+
+        $response->assertOk()
+            ->assertJsonStructure(['ok', 'give_resource_amount', 'get_resource_amount', 'economy_ap']);
+    }
+
     public function test_accept_returns_json_ok(): void
     {
         $this->mockTick(10);
@@ -332,5 +352,28 @@ class BarControllerTest extends TestCase
         $response->assertOk()
             ->assertJson(['ok' => true])
             ->assertJsonStructure(['ok', 'success']);
+    }
+
+    public function test_negotiate_response_always_includes_economy_ap_for_resourcebar_sync(): void
+    {
+        // economy_ap must be present even on a failed roll — AP is spent either way
+        // (see BarService::negotiateOffer docblock) and the resourcebar needs to
+        // reflect that regardless of win/loss.
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID_BART, 'personell_id' => 92],
+            ['rank' => 1, 'user_id' => self::USER_ID_BART, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+
+        for ($tick = 1; $tick <= 50; $tick++) {
+            $this->mockTick($tick);
+            $this->clearBarOffers();
+            $this->setColonyResource(self::RES_REGOLITH, 1000);
+            $offerId = $this->insertValidOffer($tick + 10);
+
+            $response = $this->actingAs($this->bart())
+                ->postJson(route('colony.bar.negotiate', ['offer' => $offerId]));
+
+            $response->assertOk()->assertJsonStructure(['ok', 'success', 'economy_ap']);
+        }
     }
 }

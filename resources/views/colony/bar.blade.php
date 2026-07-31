@@ -55,6 +55,7 @@
     @json(route("colony.merchant.open", ["visitId" => "__VISIT__"])),
     @json(route("colony.bar.accept", ["offer" => "__OFFER__"])),
     @json(route("colony.bar.negotiate", ["offer" => "__OFFER__"])),
+    @json($resourceAbbr),
     @json($offers->count())
 )'
         x-cloak>
@@ -264,7 +265,8 @@
     ])
 
     <script>
-        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, offersCount = 0) {
+        function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, resourceAbbr,
+            offersCount = 0) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -282,6 +284,33 @@
                 // concluded, win or lose) — both buttons disable once true.
                 offerResolved(offerId) {
                     return !!this.accepted[offerId] || !!this.negotiateResult[offerId];
+                },
+
+                // Live resourcebar sync — project convention: every AJAX action that
+                // changes AP/resources must update the resourcebar without a reload.
+                syncResbarAmount(resourceId, amount) {
+                    const abbr = resourceAbbr[resourceId];
+                    if (!abbr || amount === undefined || amount === null) return;
+                    const el = document.querySelector(`.res-${abbr} .res-amount`);
+                    if (el) el.textContent = amount.toLocaleString('de-DE');
+                },
+
+                syncEconomyAp(amount) {
+                    if (amount === undefined) return;
+                    const el = document.querySelector('#resbar-ap-economy .res-amount');
+                    if (el) el.textContent = amount;
+                },
+
+                // Updates the "Du gibst/bekommst" chip amounts inside a specific
+                // offer's dialog to the actually-charged values — needed after a
+                // successful negotiation, where the real price differs from the
+                // originally-displayed offer terms.
+                updateOfferChipAmounts(btn, giveAmount, getAmount) {
+                    const dialog = btn.closest('.cantina-dialog');
+                    if (!dialog) return;
+                    const amounts = dialog.querySelectorAll('.res-amount');
+                    if (amounts[0]) amounts[0].textContent = giveAmount;
+                    if (amounts[1]) amounts[1].textContent = getAmount;
                 },
 
                 // Merchant state
@@ -391,6 +420,9 @@
                         const data = await res.json();
                         if (data.ok) {
                             this.accepted[offerId] = true;
+                            this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
+                            this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
+                            this.syncEconomyAp(data.economy_ap);
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }
@@ -418,9 +450,14 @@
                         const data = await res.json();
                         if (data.ok && data.success) {
                             this.negotiateResult[offerId] = 'success';
+                            this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
+                            this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
+                            this.syncEconomyAp(data.economy_ap);
+                            this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
                             this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
                         } else if (data.ok && !data.success) {
                             this.negotiateResult[offerId] = 'failed';
+                            this.syncEconomyAp(data.economy_ap);
                             this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';

@@ -9,6 +9,7 @@ use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
+use App\Services\ResourcesService;
 use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
@@ -29,6 +30,7 @@ class BarController extends BaseController
         private readonly EventService $eventService,
         private readonly OnboardingHintService $onboardingHintService,
         private readonly PersonellService $personellService,
+        private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct($tick);
     }
@@ -113,6 +115,8 @@ class BarController extends BaseController
             ]);
         }
 
+        $result = $this->withResourcebarSync($result, $colony->id);
+
         return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
@@ -139,6 +143,33 @@ class BarController extends BaseController
             ]);
         }
 
+        $result = $this->withResourcebarSync($result, $colony->id);
+
         return response()->json($result, $result['ok'] ? 200 : 422);
+    }
+
+    /**
+     * Adds the fresh totals the resourcebar needs to sync live after an
+     * AP-/resource-changing AJAX action (project convention — every such action
+     * must be able to update the resourcebar without a full page reload).
+     * economy_ap is added whenever the request succeeded at all (accept always
+     * spends AP on success; negotiate spends it on both a win and a loss), the
+     * give/get resource balances only when a trade actually happened.
+     */
+    private function withResourcebarSync(array $result, int $colonyId): array
+    {
+        if (! $result['ok']) {
+            return $result;
+        }
+
+        $result['economy_ap'] = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+
+        if (isset($result['give_resource_id'], $result['get_resource_id'])) {
+            $possessions = $this->resourcesService->getPossessionsByColonyId($colonyId);
+            $result['give_resource_amount'] = $possessions[$result['give_resource_id']]['amount'] ?? null;
+            $result['get_resource_amount'] = $possessions[$result['get_resource_id']]['amount'] ?? null;
+        }
+
+        return $result;
     }
 }
