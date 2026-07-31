@@ -183,6 +183,20 @@ function advisorCarousel(config) {
             return map[key] ?? '';
         },
 
+        /**
+         * CSS background-image value for a given advisor slot key, using image-set()
+         * to serve the sharper _lg variant on HiDPI screens. Empty string when no
+         * portrait exists (falls back to the placeholder SVG).
+         * @param {string} key
+         * @returns {string}
+         */
+        portraitBackgroundStyle(key) {
+            const url = this.portraitImageUrl(key);
+            if (!url) return '';
+            const lgUrl = url.replace(/\.webp$/, '_lg.webp');
+            return `background-image: image-set(url('${url}') 1x, url('${lgUrl}') 2x)`;
+        },
+
         _csrf() {
             return document.querySelector('meta[name="csrf-token"]')?.content ?? '';
         },

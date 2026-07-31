@@ -89,10 +89,22 @@ def main():
         names = [args.file]
     else:
         raw_dir = IMG_DIR / f"_{args.category}"
+        # Non-empty suffixes (e.g. "_sm", "_lg") mark derived output files, not base
+        # character names — skip them here or "bartender_sm.webp" gets treated as
+        # its own character and spawns "bartender_sm_sm.webp" etc.
+        derived_suffixes = [s for s in variants if s]
+
+        def is_base_name(stem: str) -> bool:
+            return not any(stem.endswith(s) for s in derived_suffixes)
+
         seen = set()
-        for d in (raw_dir, published_dir):
-            if d.is_dir():
-                seen.update(p.stem for p in d.glob("*") if p.suffix.lower() in (".webp", ".png"))
+        if raw_dir.is_dir():
+            seen.update(p.stem for p in raw_dir.glob("*") if p.suffix.lower() in (".webp", ".png"))
+        if published_dir.is_dir():
+            seen.update(
+                p.stem for p in published_dir.glob("*")
+                if p.suffix.lower() in (".webp", ".png") and is_base_name(p.stem)
+            )
         names = sorted(seen)
 
     if not names:

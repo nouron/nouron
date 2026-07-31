@@ -69,6 +69,7 @@
                         <button class="cantina-hotspot has-portrait hotspot-merchant hs-slot-spot_0" @click="openMerchant()">
                             <span class="hotspot-badge"><i class="bi bi-exclamation-lg"></i></span>
                             <img class="hotspot-portrait" src="{{ asset("img/characters/merchant.webp") }}"
+                                srcset="{{ asset("img/characters/merchant.webp") }} 1x, {{ asset("img/characters/merchant_lg.webp") }} 2x"
                                 alt="{{ __("colony.merchant_title") }}">
                             <span class="hotspot-label">{{ __("colony.merchant_title") }}</span>
                         </button>
@@ -88,6 +89,7 @@
                             @if ($char)
                                 <img class="hotspot-portrait"
                                     src="{{ asset("img/characters/" . $char["slug"] . ".webp") }}"
+                                    srcset="{{ asset("img/characters/" . $char["slug"] . ".webp") }} 1x, {{ asset("img/characters/" . $char["slug"] . "_lg.webp") }} 2x"
                                     alt="{{ $charName }}">
                             @else
                                 <i class="bi bi-chat-right-text"></i>
