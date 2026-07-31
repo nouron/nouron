@@ -126,7 +126,7 @@
                 style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;" x-cloak></div>
 
             {{-- Interactive Modal / Drawer --}}
-            <div class="cantina-modal" :class="[{ 'open': activeModal !== null }, 'cantina-modal--' + dialogApType]"
+            <div class="cantina-modal" :class="{ open: activeModal !== null, ['cantina-modal--' + dialogApType]: true }"
                 x-show="activeModal !== null" x-cloak>
                 <button @click="closeModal()" class="cantina-modal-close" aria-label="Schließen">&times;</button>
 
