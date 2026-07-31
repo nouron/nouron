@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31 (Fortsetzung 2)
+
+Fix: Resourcebar syncte nach "Annehmen"/"Verhandeln" in der Cantina nicht live (verbindliche Konvention, bislang nur bei Bau-Aktionen umgesetzt). `BarController` reichert die JSON-Antwort um neue Ressourcen-Salden + verbleibende Economy-AP an, Frontend aktualisiert Resourcebar-Chips per DOM (gleiches Muster wie `colony-hexgrid.js`). Zusätzlich: der "Du gibst"-Chip im Dialog selbst zeigte nach erfolgreicher Verhandlung weiterhin den alten, nicht-rabattierten Preis — zeigt jetzt den tatsächlich verhandelten Betrag. Per Playwright verifiziert (Credits, Eco-AP und Dialog-Chip korrekt synchron).
+
 ## 2026-07-31 (Fortsetzung)
 
 Neue Mechanik "Cantina-Verhandlung" (game-designer-Design, GDD §12 Kanal 1): "Verhandeln"-Button neben "Annehmen" bei Bar-Angeboten, sichtbar sobald ein verfügbarer Konsul zugewiesen ist. Kostet mehr AP (3 statt 1 Eco-AP) und hat eine Rang-abhängige Erfolgschance (55/70/85%) — bei Erfolg verbesserte Konditionen (Rang-Bonus 10/15/20%), bei Fehlschlag ist das Angebot sofort und vollständig verloren (kein Fallback auf Annehmen), AP wird trotzdem verbraucht, kein Trust-Malus. `BarService::negotiateOffer()` nutzt dasselbe deterministische `pseudoRand()`-Muster wie die Angebots-Generierung. TDD (15 neue Tests), volle Suite grün, per Playwright live verifiziert.
