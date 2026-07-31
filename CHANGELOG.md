@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31 (Fortsetzung 5)
+
+Cantina-Händler-Item-Zeile umgestellt: Angebotsname bricht nicht mehr um (Ellipsis bei Überlänge + Tooltip), Preis-Chip und Kaufen-Button stehen jetzt in eigener Zeile darunter statt in derselben Zeile gequetscht zu werden.
+
 ## 2026-07-31 (Fortsetzung 4)
 
 `game:reset-player` fragt jetzt interaktiv nach `--path` (Sol-2-Pfadgebäude), wenn er weggelassen wird und `--scenario=phase2` gewählt ist — bisher fiel das still auf `hangar` zurück, ohne Hinweis (Owner-Feedback: Cantina blieb dadurch ungebaut, obwohl man sie eigentlich brauchte). Andere Szenarien fragen weiterhin nie danach. Zusammenfassungstabelle zeigt bei phase2 zusätzlich die gewählte Pfad-Spalte.
