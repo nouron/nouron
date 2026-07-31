@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31
+
+Cantina-Dialog (Angebot + Reisender Händler) Layout überarbeitet: Portrait füllt jetzt die komplette linke Dialogseite statt kleiner Thumbnail oben; rechts Name, Rolle, Angebot/Handelsartikel, Ablaufzeit, Annehmen-Button. Mobile stapelt (Portrait oben, Name/Rolle darunter, dann Angebot, dann Buttons). Neue Komponente `<x-cantina-dialog>` (ersetzt `<x-cantina-dialog-header>`) mit Slot für Body-Inhalt, von beiden Dialogen genutzt. Per Playwright-Screenshot-Test (Desktop+Mobile) verifiziert; dabei Layout-Bug gefunden und gefixt (Portrait-Anteil zu breit ließ Kaufen-Button in der Händler-Liste abgeschnitten wirken).
+
 ## 2026-07-30
 
 - Neues Tool `tools/image-gen/make_variants.py`: erzeugt aus den Bildgenerierungs-Mastern (Berater, Cantina-NPCs) vorskalierte WebP-Varianten in den tatsächlichen Anzeigegrößen (per Lanczos-Resize + leichtem Unsharp-Pass), statt die riesigen Master-Bilder live im Browser auf 22-160px runterzuskalieren — das hatte auf der feinen Stippling-Ink-Art Aliasing/Grieseligkeit verursacht. Cantina-Charaktere haben jetzt eine Hotspot-Variante (320×440) und eine Avatar/Thumbnail-Variante (88×88, `_sm`-Suffix); Berater-Portraits (512×683) laufen dabei auch von PNG auf WebP um (ADR 0001 verletzt, jetzt korrigiert). Konfiguration je Kategorie in `tools/image-gen/variants/*.json`.
