@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-07-31 (Fortsetzung 4)
+
+`game:reset-player` fragt jetzt interaktiv nach `--path` (Sol-2-Pfadgebäude), wenn er weggelassen wird und `--scenario=phase2` gewählt ist — bisher fiel das still auf `hangar` zurück, ohne Hinweis (Owner-Feedback: Cantina blieb dadurch ungebaut, obwohl man sie eigentlich brauchte). Andere Szenarien fragen weiterhin nie danach. Zusammenfassungstabelle zeigt bei phase2 zusätzlich die gewählte Pfad-Spalte.
+
 ## 2026-07-31 (Fortsetzung 3)
 
 Cantina-Verhandlung auf zweistufigen Ablauf umgestellt (Owner-Entscheidung, revidiert die ursprüngliche GDD-Fassung): "Verhandeln" führt den Handel bei Erfolg nicht mehr sofort aus, sondern verbessert nur die Angebotskonditionen (`give_amount`/`get_amount` dauerhaft aktualisiert, `is_negotiated`-Flag, neue Migration) — der Spieler bestätigt danach bewusst mit "Annehmen" (jetzt 0 AP, da bereits bezahlt). Fehlschlag bleibt unverändert: Angebot sofort verloren. Zusätzlich: Resourcebar- und Dialog-Chip-Updates nutzen jetzt dieselbe Flash-Animation wie überall im Spiel (`.res-chip--flash`/`.ap-chip--flash`, wiederverwendet aus `colony-hexgrid.js`), damit Ressourcenänderungen sofort auffallen. Per Playwright verifiziert, volle Suite (881 Tests) grün.
