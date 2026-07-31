@@ -139,28 +139,29 @@
                         $merchantRole = __("colony.merchant_until_sol") . " " . $merchantVisit->tick_end;
                     @endphp
                     <div x-show="activeModal === 'merchant'">
-                        <x-cantina-dialog-header :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole" />
+                        <x-cantina-dialog :portrait-src="$merchantPortraitSrc" :portrait-lg-src="$merchantPortraitLgSrc" :name="$merchantName" :role="$merchantRole">
+                            {{-- Toast feedback --}}
+                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                                x-text="toast.message" aria-live="polite" role="status"></div>
 
-                        {{-- Toast feedback --}}
-                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                            x-text="toast.message" aria-live="polite" role="status"></div>
-
-                        <div class="merchant-items-bar" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
-                            <template x-for="item in merchantItems" :key="item.id">
-                                <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
-                                    <div class="merchant-item-bar__label" x-text="item.label"></div>
-                                    <span class="res-chip res-Cr">
-                                        <span class="res-abbr">Cr</span>
-                                        <span class="res-amount" x-text="item.cost_credits"></span>
-                                    </span>
-                                    <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
-                                        @click="buyItem(item.id)">
-                                        <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
-                                        <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
-                                    </button>
-                                </article>
-                            </template>
-                        </div>
+                            <div class="merchant-items-bar"
+                                style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                                <template x-for="item in merchantItems" :key="item.id">
+                                    <article class="merchant-item-bar" :class="{ 'merchant-item-bar--sold': item.sold }">
+                                        <div class="merchant-item-bar__label" x-text="item.label"></div>
+                                        <span class="res-chip res-Cr">
+                                            <span class="res-abbr">Cr</span>
+                                            <span class="res-amount" x-text="item.cost_credits"></span>
+                                        </span>
+                                        <button class="merchant-item-bar__buy" :disabled="item.sold || buyLoading"
+                                            @click="buyItem(item.id)">
+                                            <span x-show="!item.sold">{{ __("colony.merchant_buy") }}</span>
+                                            <span x-show="item.sold">{{ __("colony.merchant_sold") }}</span>
+                                        </button>
+                                    </article>
+                                </template>
+                            </div>
+                        </x-cantina-dialog>
                     </div>
                 @endif
 
@@ -176,50 +177,51 @@
                         $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
                     @endphp
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
-                        <x-cantina-dialog-header :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role" />
-
-                        <div
-                            style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin-bottom:1.5rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
-                            <div>
-                                <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                    {{ __("colony.bar_offer_give") }}
+                        <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
+                            <div
+                                style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
+                                <div>
+                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                        {{ __("colony.bar_offer_give") }}
+                                    </div>
+                                    @include("partials.res_chip", [
+                                        "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
+                                        "amount" => $offer->give_amount,
+                                    ])
                                 </div>
-                                @include("partials.res_chip", [
-                                    "abbreviation" => $resourceAbbr[$offer->give_resource_id] ?? "?",
-                                    "amount" => $offer->give_amount,
-                                ])
-                            </div>
-                            <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
-                            <div>
-                                <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
-                                    {{ __("colony.bar_offer_get") }}
+                                <span style="font-size:1.5rem;color:var(--pico-muted-color)">→</span>
+                                <div>
+                                    <div style="font-size:0.75rem;color:var(--pico-muted-color);margin-bottom:0.25rem">
+                                        {{ __("colony.bar_offer_get") }}
+                                    </div>
+                                    @include("partials.res_chip", [
+                                        "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
+                                        "amount" => $offer->get_amount,
+                                    ])
                                 </div>
-                                @include("partials.res_chip", [
-                                    "abbreviation" => $resourceAbbr[$offer->get_resource_id] ?? "?",
-                                    "amount" => $offer->get_amount,
-                                ])
                             </div>
-                        </div>
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
-                            <small style="color:var(--pico-muted-color)">
-                                {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
-                            </small>
-                            <button class="tile-action-btn" style="width:auto;" @click="accept({{ $offerId }}, $el)"
-                                :disabled="accepted[{{ $offerId }}] || loading">
-                                <span class="tile-action-btn__body">
-                                    <span
-                                        x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
-                                    <span x-show="accepted[{{ $offerId }}]">✓</span>
-                                </span>
-                                @include("partials.ap-cost-chip", [
-                                    "type" => "economy",
-                                    "label" => "Eco " . $offerApCost . " AP",
-                                ])
-                            </button>
-                        </div>
-                        <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
-                            style="color:var(--pico-del-color);font-size:0.85rem;margin-top:0.5rem"></div>
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem">
+                                <small style="color:var(--pico-muted-color)">
+                                    {{ __("colony.bar_offer_expires") }} {{ $offer->expires_tick }}
+                                </small>
+                                <button class="tile-action-btn" style="width:auto;"
+                                    @click="accept({{ $offerId }}, $el)"
+                                    :disabled="accepted[{{ $offerId }}] || loading">
+                                    <span class="tile-action-btn__body">
+                                        <span
+                                            x-show="!accepted[{{ $offerId }}]">{{ __("colony.bar_offer_accept") }}</span>
+                                        <span x-show="accepted[{{ $offerId }}]">✓</span>
+                                    </span>
+                                    @include("partials.ap-cost-chip", [
+                                        "type" => "economy",
+                                        "label" => "Eco " . $offerApCost . " AP",
+                                    ])
+                                </button>
+                            </div>
+                            <div x-show="error[{{ $offerId }}]" x-text="error[{{ $offerId }}]"
+                                style="color:var(--pico-del-color);font-size:0.85rem"></div>
+                        </x-cantina-dialog>
                     </div>
                 @endforeach
             </div>

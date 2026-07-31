@@ -2711,6 +2711,10 @@ dialog[x-ref="discoveryDialog"] {
     -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--pico-muted-border-color, #e8e8ec);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    /* Portrait fills the dialog edge-to-edge (.cantina-dialog handles its own
+       padding for the body column) — clip it to the dialog's rounded corners. */
+    padding: 0;
+    overflow: hidden;
     transition:
         transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
         opacity 0.3s ease;
@@ -2745,10 +2749,10 @@ dialog[x-ref="discoveryDialog"] {
         bottom: 0;
         left: 0;
         right: 0;
+        max-height: 85vh;
         border-top-left-radius: 16px;
         border-top-right-radius: 16px;
         border-top-width: 4px;
-        padding: 1.25rem 1.25rem 1.75rem;
         transform: translateY(100%);
     }
     .cantina-modal.open {
@@ -2763,9 +2767,9 @@ dialog[x-ref="discoveryDialog"] {
         left: 50%;
         transform: translate(-50%, -50%) scale(0.92);
         border-radius: 10px;
-        padding: 1.75rem;
-        width: 560px;
+        width: 720px;
         max-width: calc(100vw - 2rem);
+        max-height: calc(100vh - 4rem);
         opacity: 0;
         pointer-events: none;
     }
@@ -2798,57 +2802,84 @@ dialog[x-ref="discoveryDialog"] {
     }
 }
 
-/* ── Dialog header (portrait + name + role) — shared by offer & merchant dialogs ── */
+/* ── Dialog (portrait fills the left side, name/role/body on the right) —
+   shared by the offer dialog and the merchant dialog ── */
 
-.cantina-dialog-header {
+.cantina-dialog {
     display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 1.25rem;
+    align-items: stretch;
+    max-height: inherit;
 }
 
-.cantina-dialog-header__portrait {
-    width: 4.5rem;
-    height: 6rem;
-    flex: 0 0 auto;
-    border-radius: 8px;
-    overflow: hidden;
+.cantina-dialog__portrait {
+    flex: 0 0 34%;
+    align-self: stretch;
     background: #f0f0f2;
 }
 
-.cantina-dialog-header__portrait img {
+.cantina-dialog__portrait img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: top center;
+    display: block;
 }
 
-.cantina-dialog-header__name {
+.cantina-dialog__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.75rem;
+    overflow-y: auto;
+}
+
+.cantina-dialog__name {
     margin: 0;
     font-size: 1.25rem;
 }
 
-.cantina-dialog-header__role {
+.cantina-dialog__role {
     color: var(--pico-muted-color);
     font-weight: 500;
+    margin-bottom: 0.5rem;
 }
 
+.cantina-dialog__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Mobile: stack — portrait on top (fixed height), body below */
 @media (max-width: 767px) {
-    .cantina-dialog-header {
+    .cantina-dialog {
         flex-direction: column;
-        text-align: center;
+        max-height: 85vh;
     }
-    .cantina-dialog-header__portrait {
-        width: 7rem;
-        height: 9.3rem;
+    .cantina-dialog__portrait {
+        flex: 0 0 auto;
+        width: 100%;
+        height: 12rem;
+    }
+    .cantina-dialog__body {
+        padding: 1.25rem 1.25rem 1.75rem;
     }
 }
 
 .cantina-modal-close {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    background: none;
+    top: 0.6rem;
+    right: 0.6rem;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.85);
     border: none;
     font-size: 1.5rem;
     line-height: 1;
@@ -2856,7 +2887,7 @@ dialog[x-ref="discoveryDialog"] {
     cursor: pointer;
     padding: 0.25rem;
     margin: 0;
-    width: auto;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
 }
 .cantina-modal-close:hover {
     color: var(--color-text-primary, #1a1a1e);
