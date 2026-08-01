@@ -234,7 +234,7 @@ class HangarController extends BaseController
     }
 
     /**
-     * Resourcebar-sync payload (design-guide.md §5.6a) — mirrors
+     * Resourcebar-sync payload (docs/frontend-conventions.md §1) — mirrors
      * ColonyController::currentAp()'s field names so both screens share the
      * same JS sync convention (colony-hexgrid.js's updateAp() pattern).
      */

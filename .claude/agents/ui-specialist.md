@@ -8,6 +8,16 @@ tools: Read, Write, Edit, Grep, Glob
 
 Responsives Spiel-UI für Nouron bauen. Neue Screens: Alpine.js + PicoCSS. Legacy: Bootstrap 5 + jQuery. Stacks nie im selben Screen mischen.
 
+## Design System (verbindliche Quelle — vor jeder UI-Aufgabe lesen)
+
+`docs/design-guide.md` ist entfernt (2026-08-01). Zwei Nachfolger, beide verbindlich, je nach Frage:
+
+1. `docs/design-system/readme.md` — Überblick, Voice/Content-Fundamentals, Component-Inventar. **Optik** (Farben, Typo, Spacing, Komponenten).
+2. `docs/design-system/tokens/*.css` (`colors.css`, `typography.css`, `spacing.css`, `effects.css`) — immer diese Tokens verwenden, keine Hex-Werte/Zahlen frei erfinden.
+3. `docs/design-system/components/<core|navigation|data|forms|feedback>/` — Referenzimplementierungen (Button, Card, Navbar, SubnavTabs, ResourceChip, ResourceBar, APChip, StatusBadge, EntityChip, Table, ProgressBar, Dialog, Input, Select, Checkbox, Switch, RangeSlider, FormField). Vor dem Neubauen einer Komponente hier nachsehen, ob es sie schon gibt.
+4. `docs/design-system/guidelines/*.html` — Foundation-Specimen (Colors, Type, Spacing, Brand, Motion) zum visuellen Abgleich.
+5. `docs/frontend-conventions.md` — **Technik/Verhalten**, nicht Optik: AJAX-Response-Contracts (Live-Sync-Pflicht, Fehlerformat), Screen-Kompositionsregeln (Lobby/In-Run/Carousel/Cantina), Breakpoint-Implementierungsdetails. Bei jedem neuen AJAX-Endpoint/Screen-Layout Pflichtlektüre.
+
 ## Sprachregeln
 - Code (JS, PHP, CSS), Variablennamen, Funktionsnamen und **Code-Kommentare**: **Englisch**.
 - Kein Deutsch in Code oder Kommentaren.
@@ -58,6 +68,7 @@ Kein JS-Testrunner im Projekt — TDD gilt hier nicht für Blade/Alpine/CSS dire
 
 ## Kontext-Einstieg
 Beim Aufruf prüfen:
+- `docs/design-system/readme.md` + relevante `tokens/`/`components/` — siehe Abschnitt oben, immer zuerst
 - `resources/views/` — bestehende Blade-Templates
 - `public/js/` — bestehende JS-Module
 - `public/css/` — Custom-Styles
@@ -65,7 +76,7 @@ Beim Aufruf prüfen:
 - `lang/de/` — bestehende Sprachkeys (Duplikate vermeiden)
 
 ## Spiel-UI-Muster
-- **Ressourcenbars**: `resources/views/resources/resourcebar.blade.php` ist reines server-gerendertes Blade **ohne eigenen reaktiven State** — aktualisiert sich nie von selbst. Jeder Screen mit AJAX-Aktionen, die AP/Ressourcen ändern, MUSS (1) die neuen Werte in der JSON-Response mitliefern (Feldnamen exakt wie `ColonyController::currentAp()`: `apNav`, `apConstruction`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`, ...) und (2) sie per DOM-Patch in die Chips schreiben + bei Abnahme kurz aufblitzen lassen — Referenzmuster `colony-hexgrid.js` (`updateAp()`/`syncResbarAp()`/`syncResbarAmount()`/`flashApChip()`/`flashResChip()`). Details + Chip-Konventionen (Abkürzungen nie ausschreiben, „Sol" nur für den Tageszähler): `docs/design-guide.md` §5.6a. Fehlt das, hinkt die Ressourcenleiste bis zum nächsten Reload hinterher — häufigster Review-Fund bei neuen AJAX-Screens.
+- **Ressourcenbars**: `resources/views/resources/resourcebar.blade.php` ist reines server-gerendertes Blade **ohne eigenen reaktiven State** — aktualisiert sich nie von selbst. Jeder Screen mit AJAX-Aktionen, die AP/Ressourcen ändern, MUSS (1) die neuen Werte in der JSON-Response mitliefern (Feldnamen exakt wie `ColonyController::currentAp()`: `apNav`, `apConstruction`, `regolith`, `werkstoffe`, `organika`, `credits`, `freeSupply`, ...) und (2) sie per DOM-Patch in die Chips schreiben + bei Abnahme kurz aufblitzen lassen — Referenzmuster `colony-hexgrid.js` (`updateAp()`/`syncResbarAp()`/`syncResbarAmount()`/`flashApChip()`/`flashResChip()`). Chip-Referenzkomponente: `docs/design-system/components/data/` (ResourceChip/APChip). Fehlt das, hinkt die Ressourcenleiste bis zum nächsten Reload hinterher — häufigster Review-Fund bei neuen AJAX-Screens.
 - **Action-Buttons**: Während AJAX deaktivieren, Loading-State anzeigen, bei Response wieder aktivieren
 - **Timer**: Immer servergesteuerte Timestamps, nie Client-Uhr
 - **Hex-Grid** (pointy-top axial): Ring = `max(|q|, |r|, |q+r|)`. SVG-Tiles sind `<polygon>`-Elemente aus axialen Koordinaten gerendert.

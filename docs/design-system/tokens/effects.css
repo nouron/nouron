@@ -1,0 +1,53 @@
+:root {
+    --radius-sm: 4px;
+    --radius-pill: 20px;
+    --radius-round: 999px;
+    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+    --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-flyout: 0 6px 20px rgba(0, 0, 0, 0.12);
+    --shadow-dialog: 0 8px 32px rgba(0, 0, 0, 0.18);
+    --shadow-report: 0 12px 40px rgba(0, 0, 0, 0.28);
+    --ease-standard: ease; /* @kind other */
+    --duration-fast: 0.15s; /* @kind other */
+    --duration-base: 0.3s; /* @kind other */
+    --duration-slow: 0.6s; /* @kind other */
+}
+@keyframes ds-slide-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@keyframes ds-flash-pulse {
+    0% {
+        transform: scale(1);
+    }
+    30% {
+        transform: scale(1.08);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+@keyframes ds-dialog-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97) translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+@keyframes ds-scrim-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
