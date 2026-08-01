@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-01
+
+Design System (mit Claude Design erstellt) unter `docs/design-system/` eingebunden und als verbindliche Design-Quelle verdrahtet: `.claude/skills/nouron-design` (Symlink) macht es als Skill discoverable, `ui-specialist`-Agent liest es jetzt vor jeder UI-Aufgabe. `docs/design-guide.md` entfernt — reine Optik-Inhalte sind im Design System abgedeckt, die vier verbliebenen Backend/Frontend-Engineering-Verträge (Live-Sync-Pflicht, Fehlerantwort-Format, Screen-Kompositionsregeln, Breakpoint-Details) nach neuem `docs/frontend-conventions.md` migriert statt gelöscht.
+
 ## 2026-07-31 (Fortsetzung 5)
 
 Cantina-Händler-Item-Zeile umgestellt: Angebotsname bricht nicht mehr um (Ellipsis bei Überlänge + Tooltip), Preis-Chip und Kaufen-Button stehen jetzt in eigener Zeile darunter statt in derselben Zeile gequetscht zu werden.
