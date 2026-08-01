@@ -23,7 +23,8 @@
   - `data/db/test.db` — Testdatenbank (befüllt via `data/sql/testdata.sqlite.sql`)
 - `Routen.txt` und `code/nouron_(pre_zend)/` veraltet — nur GitHub-Repo relevant
 - Vollständige Referenztabellen (Ressourcen, Gebäude, Schiffe, DB-Schema) → `docs/game-reference.md`
-- Design Guide (Farben, Typo, Spacing, Komponenten) → `docs/design-guide.md`
+- Design System (Farben, Typo, Spacing, Komponenten — verbindlich) → `docs/design-system/` (`readme.md` als Einstieg)
+- Frontend Engineering Conventions (AJAX-Contracts, Screen-Kompositionsregeln, Breakpoints — verbindlich) → `docs/frontend-conventions.md`. `docs/design-guide.md` ist entfernt (2026-08-01), Inhalt auf beide obigen Dateien aufgeteilt.
 
 ## Architektur (Laravel)
 

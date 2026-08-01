@@ -8,6 +8,63 @@
     --infra-border: #e8e8ec;
 }
 
+/* ── Design System tokens ──────────────────────────────────────────────────
+ * Mirrored from docs/design-system/tokens/{colors,typography,spacing,effects}.css
+ * — byte-identical values, only the subset used across infra screens (login,
+ * register, lobby, run result). Additive to --infra-* above, which stays for
+ * back-compat where already referenced.
+ * ─────────────────────────────────────────────────────────────────────────── */
+:root {
+    /* colors.css */
+    --color-bg: #ffffff;
+    --color-surface: #f7f7f5;
+    --color-text-primary: #1a1a1e;
+    --color-text-secondary: #6b6b7a;
+    --color-border: #e8e8ec;
+    --color-border-strong: #d0d0dc;
+    --color-accent: #8c2030;
+    --color-accent-hover: #731a27;
+    --color-accent-tint: rgba(140, 32, 48, 0.06);
+    --color-success: #27ae60;
+    --color-success-bg: #dcfce7;
+    --color-success-fg: #166534;
+    --color-danger: #c0392b;
+    --color-danger-bg: #fdf0f2;
+    --color-danger-fg: #8c2030;
+    --color-warning: #d4a017;
+    --color-warning-bg: #fef9e7;
+    --color-warning-fg: #7a5500;
+
+    /* typography.css */
+    --font-display: "Libre Baskerville", Baskerville, Georgia, serif;
+    --font-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --text-h1-size: 2rem;
+    --text-h1-weight: 400;
+    --text-h1-transform: uppercase;
+    --text-h1-tracking: 0.45em;
+    --text-h3-size: 1.1rem;
+    --text-h3-weight: 600;
+    --text-meta-size: 0.85rem;
+    --text-button-size: 0.9rem;
+    --text-button-weight: 600;
+
+    /* spacing.css */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 2rem;
+    --card-padding: 1.5rem;
+
+    /* effects.css */
+    --radius-sm: 4px;
+    --radius-pill: 20px;
+    --shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+    --shadow-dropdown: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --ease-standard: ease;
+    --duration-fast: 0.15s;
+    --duration-base: 0.3s;
+}
+
 /* ── Brand ──────────────────────────────────────────────────────────────── */
 .infra-brand {
     font-family: "Libre Baskerville", Baskerville, Georgia, serif;

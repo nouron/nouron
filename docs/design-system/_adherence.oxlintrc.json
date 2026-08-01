@@ -1,0 +1,420 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/core/**",
+              "components/data/**",
+              "components/feedback/**",
+              "components/forms/**",
+              "components/navigation/**",
+              "ui_kits/colony/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Libre Baskerville))/i]",
+        "message": "Font not provided by the design system. Available: Libre Baskerville."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='APChip'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|children|key|ref|className|style|children)$/]",
+        "message": "<APChip> doesn't accept that prop. Declared props: type, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='APChip'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:nav|build|research|economy|strategy|neutral)$/]",
+        "message": "<APChip> type must be one of 'nav' | 'build' | 'research' | 'economy' | 'strategy' | 'neutral'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|disabled|apCost|apType|children|onClick|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, disabled, apCost, apType, children, onClick."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|secondary|ghost)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'secondary' | 'ghost'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='apType'] > Literal[value!=/^(?:build|nav|research|economy|strategy)$/]",
+        "message": "<Button> apType must be one of 'build' | 'nav' | 'research' | 'economy' | 'strategy'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:title|badge|footer|children|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: title, badge, footer, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Checkbox'] > JSXAttribute > JSXIdentifier[name!=/^(?:checked|onChange|label|disabled|id|name|key|ref|className|style|children)$/]",
+        "message": "<Checkbox> doesn't accept that prop. Declared props: checked, onChange, label, disabled, id, name."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Dialog'] > JSXAttribute > JSXIdentifier[name!=/^(?:open|onClose|title|children|footer|width|key|ref|className|style|children)$/]",
+        "message": "<Dialog> doesn't accept that prop. Declared props: open, onClose, title, children, footer, width."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='EntityChip'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|label|level|description|key|ref|className|style|children)$/]",
+        "message": "<EntityChip> doesn't accept that prop. Declared props: type, label, level, description."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='EntityChip'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:building|knowledge|resource|ship|advisor|research)$/]",
+        "message": "<EntityChip> type must be one of 'building' | 'knowledge' | 'resource' | 'ship' | 'advisor' | 'research'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FormField'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|htmlFor|error|hint|children|key|ref|className|style|children)$/]",
+        "message": "<FormField> doesn't accept that prop. Declared props: label, htmlFor, error, hint, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Input'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|value|onChange|placeholder|disabled|id|name|style|key|ref|className|style|children)$/]",
+        "message": "<Input> doesn't accept that prop. Declared props: type, value, onChange, placeholder, disabled, id, name, style."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Input'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:text|number|email|password)$/]",
+        "message": "<Input> type must be one of 'text' | 'number' | 'email' | 'password'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='NavItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:key|label|icon|locked|key|ref|className|style|children)$/]",
+        "message": "<NavItem> doesn't accept that prop. Declared props: key, label, icon, locked."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ProgressBar'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|max|segmented|segments|color|key|ref|className|style|children)$/]",
+        "message": "<ProgressBar> doesn't accept that prop. Declared props: value, max, segmented, segments, color."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RangeSlider'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|min|max|step|onChange|disabled|id|name|key|ref|className|style|children)$/]",
+        "message": "<RangeSlider> doesn't accept that prop. Declared props: value, min, max, step, onChange, disabled, id, name."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ResourceBar'] > JSXAttribute > JSXIdentifier[name!=/^(?:sol|credits|supply|trust|resources|key|ref|className|style|children)$/]",
+        "message": "<ResourceBar> doesn't accept that prop. Declared props: sol, credits, supply, trust, resources."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ResourceChip'] > JSXAttribute > JSXIdentifier[name!=/^(?:abbr|amount|tone|empty|key|ref|className|style|children)$/]",
+        "message": "<ResourceChip> doesn't accept that prop. Declared props: abbr, amount, tone, empty."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ResourceChip'] > JSXAttribute[name.name='abbr'] > Literal[value!=/^(?:Cr|Sup|Rg|Co|Or|Tr|Sol|NX)$/]",
+        "message": "<ResourceChip> abbr must be one of 'Cr' | 'Sup' | 'Rg' | 'Co' | 'Or' | 'Tr' | 'Sol' | 'NX'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ResourceChip'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:default|warning|danger)$/]",
+        "message": "<ResourceChip> tone must be one of 'default' | 'warning' | 'danger'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SelectOption'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|key|ref|className|style|children)$/]",
+        "message": "<SelectOption> doesn't accept that prop. Declared props: value, label."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusBadge'] > JSXAttribute > JSXIdentifier[name!=/^(?:tone|children|key|ref|className|style|children)$/]",
+        "message": "<StatusBadge> doesn't accept that prop. Declared props: tone, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusBadge'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:success|danger|warning|neutral)$/]",
+        "message": "<StatusBadge> tone must be one of 'success' | 'danger' | 'warning' | 'neutral'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SubnavTab'] > JSXAttribute > JSXIdentifier[name!=/^(?:key|label|key|ref|className|style|children)$/]",
+        "message": "<SubnavTab> doesn't accept that prop. Declared props: key, label."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Switch'] > JSXAttribute > JSXIdentifier[name!=/^(?:checked|onChange|label|disabled|id|name|key|ref|className|style|children)$/]",
+        "message": "<Switch> doesn't accept that prop. Declared props: checked, onChange, label, disabled, id, name."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TableColumn'] > JSXAttribute > JSXIdentifier[name!=/^(?:key|label|numeric|key|ref|className|style|children)$/]",
+        "message": "<TableColumn> doesn't accept that prop. Declared props: key, label, numeric."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "APChip": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "Checkbox": {
+        "replaces": []
+      },
+      "Dialog": {
+        "replaces": []
+      },
+      "EntityChip": {
+        "replaces": []
+      },
+      "FormField": {
+        "replaces": []
+      },
+      "Input": {
+        "replaces": []
+      },
+      "NavItem": {
+        "replaces": []
+      },
+      "ProgressBar": {
+        "replaces": []
+      },
+      "RangeSlider": {
+        "replaces": []
+      },
+      "ResourceBar": {
+        "replaces": []
+      },
+      "ResourceChip": {
+        "replaces": []
+      },
+      "SelectOption": {
+        "replaces": []
+      },
+      "StatusBadge": {
+        "replaces": []
+      },
+      "SubnavTab": {
+        "replaces": []
+      },
+      "Switch": {
+        "replaces": []
+      },
+      "TableColumn": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--ap-build-bg",
+      "--ap-build-fg",
+      "--ap-economy-bg",
+      "--ap-economy-fg",
+      "--ap-nav-bg",
+      "--ap-nav-fg",
+      "--ap-neutral-bg",
+      "--ap-neutral-fg",
+      "--ap-research-bg",
+      "--ap-research-fg",
+      "--ap-strategy-bg",
+      "--ap-strategy-fg",
+      "--card-padding",
+      "--color-accent",
+      "--color-accent-hover",
+      "--color-accent-tint",
+      "--color-accent-wash",
+      "--color-anthracite",
+      "--color-bg",
+      "--color-border",
+      "--color-border-strong",
+      "--color-danger",
+      "--color-danger-bg",
+      "--color-danger-fg",
+      "--color-input-bg",
+      "--color-locked",
+      "--color-locked-fg",
+      "--color-navbar-bg",
+      "--color-navbar-border",
+      "--color-scrim",
+      "--color-success",
+      "--color-success-bg",
+      "--color-success-fg",
+      "--color-surface",
+      "--color-surface-alt",
+      "--color-text-primary",
+      "--color-text-secondary",
+      "--color-warning",
+      "--color-warning-bg",
+      "--color-warning-fg",
+      "--duration-base",
+      "--duration-fast",
+      "--duration-slow",
+      "--ease-standard",
+      "--font-body",
+      "--font-display",
+      "--radius-pill",
+      "--radius-round",
+      "--radius-sm",
+      "--res-compounds",
+      "--res-compounds-bg",
+      "--res-credits",
+      "--res-credits-bg",
+      "--res-nexus-debt",
+      "--res-nexus-debt-bg",
+      "--res-organics",
+      "--res-organics-bg",
+      "--res-regolith",
+      "--res-regolith-bg",
+      "--res-sol",
+      "--res-sol-bg",
+      "--res-supply",
+      "--res-supply-bg",
+      "--res-trust",
+      "--res-trust-bg",
+      "--shadow-card",
+      "--shadow-dialog",
+      "--shadow-dropdown",
+      "--shadow-flyout",
+      "--shadow-report",
+      "--space-2xl",
+      "--space-lg",
+      "--space-md",
+      "--space-sm",
+      "--space-xl",
+      "--space-xs",
+      "--text-body-size",
+      "--text-body-weight",
+      "--text-button-size",
+      "--text-button-tracking",
+      "--text-button-weight",
+      "--text-h1-size",
+      "--text-h1-tracking",
+      "--text-h1-transform",
+      "--text-h1-weight",
+      "--text-h2-size",
+      "--text-h2-tracking",
+      "--text-h2-transform",
+      "--text-h2-weight",
+      "--text-h3-size",
+      "--text-h3-weight",
+      "--text-h4-size",
+      "--text-h4-weight",
+      "--text-meta-size",
+      "--text-meta-weight",
+      "--text-nav-size",
+      "--text-nav-weight"
+    ],
+    "tokenKinds": {
+      "--color-bg": "color",
+      "--color-surface": "color",
+      "--color-surface-alt": "color",
+      "--color-text-primary": "font",
+      "--color-text-secondary": "font",
+      "--color-border": "color",
+      "--color-border-strong": "color",
+      "--color-input-bg": "color",
+      "--color-scrim": "color",
+      "--color-anthracite": "color",
+      "--color-accent": "color",
+      "--color-accent-hover": "color",
+      "--color-accent-tint": "color",
+      "--color-accent-wash": "color",
+      "--color-navbar-bg": "color",
+      "--color-navbar-border": "color",
+      "--color-success": "color",
+      "--color-success-bg": "color",
+      "--color-success-fg": "color",
+      "--color-danger": "color",
+      "--color-danger-bg": "color",
+      "--color-danger-fg": "color",
+      "--color-warning": "color",
+      "--color-warning-bg": "color",
+      "--color-warning-fg": "color",
+      "--color-locked": "color",
+      "--color-locked-fg": "color",
+      "--res-credits": "color",
+      "--res-credits-bg": "color",
+      "--res-supply": "color",
+      "--res-supply-bg": "color",
+      "--res-regolith": "color",
+      "--res-regolith-bg": "color",
+      "--res-compounds": "color",
+      "--res-compounds-bg": "color",
+      "--res-organics": "color",
+      "--res-organics-bg": "color",
+      "--res-trust": "color",
+      "--res-trust-bg": "color",
+      "--res-sol": "color",
+      "--res-sol-bg": "color",
+      "--res-nexus-debt": "color",
+      "--res-nexus-debt-bg": "color",
+      "--ap-nav-bg": "color",
+      "--ap-nav-fg": "color",
+      "--ap-build-bg": "color",
+      "--ap-build-fg": "color",
+      "--ap-research-bg": "color",
+      "--ap-research-fg": "color",
+      "--ap-economy-bg": "color",
+      "--ap-economy-fg": "color",
+      "--ap-strategy-bg": "color",
+      "--ap-strategy-fg": "color",
+      "--ap-neutral-bg": "color",
+      "--ap-neutral-fg": "color",
+      "--font-display": "font",
+      "--font-body": "font",
+      "--text-h1-size": "font",
+      "--text-h1-weight": "font",
+      "--text-h1-transform": "font",
+      "--text-h1-tracking": "font",
+      "--text-h2-size": "font",
+      "--text-h2-weight": "font",
+      "--text-h2-transform": "font",
+      "--text-h2-tracking": "font",
+      "--text-h3-size": "font",
+      "--text-h3-weight": "font",
+      "--text-h4-size": "font",
+      "--text-h4-weight": "font",
+      "--text-body-size": "font",
+      "--text-body-weight": "font",
+      "--text-meta-size": "font",
+      "--text-meta-weight": "font",
+      "--text-button-size": "font",
+      "--text-button-weight": "font",
+      "--text-button-tracking": "font",
+      "--text-nav-size": "font",
+      "--text-nav-weight": "font",
+      "--space-xs": "spacing",
+      "--space-sm": "spacing",
+      "--space-md": "spacing",
+      "--space-lg": "spacing",
+      "--space-xl": "spacing",
+      "--space-2xl": "spacing",
+      "--card-padding": "spacing",
+      "--radius-sm": "radius",
+      "--radius-pill": "radius",
+      "--radius-round": "radius",
+      "--shadow-card": "shadow",
+      "--shadow-dropdown": "shadow",
+      "--shadow-flyout": "shadow",
+      "--shadow-dialog": "shadow",
+      "--shadow-report": "shadow",
+      "--ease-standard": "other",
+      "--duration-fast": "other",
+      "--duration-base": "other",
+      "--duration-slow": "other"
+    },
+    "fontFamilies": [
+      "Libre Baskerville"
+    ]
+  }
+}

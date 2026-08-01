@@ -1,0 +1,103 @@
+<!-- @dsCard group="Motion" viewport="700x300" name="Live examples" subtitle="Alert slide-in, odometer ledger roll, dialog-in — tweakable mood/intensity" -->
+<link rel="stylesheet" href="../styles.css">
+<style id="dyn-keyframes"></style>
+<div style="padding:16px;font-family:var(--font-body);background:var(--color-bg);height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--color-border)">
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:11px;font-weight:600;color:var(--color-text-secondary);width:64px;flex-shrink:0">Mood</span>
+<div id="moodGroup" style="display:flex;gap:4px"></div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<span style="font-size:11px;font-weight:600;color:var(--color-text-secondary);width:64px;flex-shrink:0">Intensity</span>
+<div id="intGroup" style="display:flex;gap:4px"></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<button id="alertBtn" style="font-size:12px;padding:6px 10px;border-radius:4px;border:1px solid var(--color-border-strong);background:var(--color-input-bg);cursor:pointer">Replay alert slide-in</button>
+<div id="alertBar" style="font-size:12px;padding:6px 12px;border-radius:4px;background:var(--color-accent-wash);color:var(--color-accent);border:1px solid var(--color-accent);opacity:0">No Engineer on board — Construction AP is running at minimum.</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+<div id="deltaGroup" style="display:flex;gap:4px"></div>
+<div style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px 3px 8px;border-radius:var(--radius-round);background:var(--res-credits-bg);border:1px solid var(--res-credits);color:#8a6d00">
+<span style="font-size:11px;font-weight:700;opacity:.65;text-transform:uppercase;letter-spacing:.03em">Cr</span>
+<div id="reelsWrap" style="display:flex"></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<button id="dialogBtn" style="font-size:12px;padding:6px 10px;border-radius:4px;border:1px solid var(--color-border-strong);background:var(--color-input-bg);cursor:pointer">Replay dialog-in</button>
+<div id="dialogChip" style="font-size:12px;padding:6px 12px;border-radius:4px;background:#fff;border:1px solid var(--color-border);box-shadow:var(--shadow-card);opacity:0">Sol beenden?</div>
+</div>
+</div>
+<script>
+const MOODS = {
+  documented: {label:"Documented", ease:"ease", scale:1, desc:"ease only — the brand default"},
+  snappy: {label:"Snappy", ease:"cubic-bezier(.2,.7,.3,1)", scale:0.55, desc:"faster, decisive ease-out"},
+  cinematic: {label:"Cinematic", ease:"cubic-bezier(.4,0,.2,1)", scale:1.8, desc:"slower, deliberate — for exploring a heavier feel"}
+};
+const INTENSITIES = {subtle:{label:"Subtle",mul:0.5},standard:{label:"Standard",mul:1},bold:{label:"Bold",mul:1.9}};
+let mood='documented', intensity='standard';
+const REEL_H=16, REEL_W=8, DIGITS=4;
+let reelValue=3000;
+function buildReels(){
+  const wrap=document.getElementById('reelsWrap');
+  wrap.innerHTML='';
+  for(let i=0;i<DIGITS;i++){
+    const reel=document.createElement('div');
+    reel.style.cssText=`position:relative;overflow:hidden;height:${REEL_H}px;width:${REEL_W}px`;
+    const strip=document.createElement('div');
+    strip.className='reel-strip';
+    strip.dataset.pos=i;
+    strip.style.cssText=`display:flex;flex-direction:column`;
+    for(let d=0;d<10;d++){
+      const s=document.createElement('span');
+      s.textContent=9-d;
+      s.style.cssText=`display:block;height:${REEL_H}px;line-height:${REEL_H}px;text-align:center;font-variant-numeric:tabular-nums;font-family:var(--font-body);font-size:12px;font-weight:700;color:#8a6d00`;
+      strip.appendChild(s);
+    }
+    reel.appendChild(strip);
+    wrap.appendChild(reel);
+  }
+  positionReels(reelValue,false);
+}
+function positionReels(value,animate){
+  const {base,ease}=durations();
+  const str=String(value).padStart(DIGITS,'0');
+  document.querySelectorAll('.reel-strip').forEach((strip,i)=>{
+    const digit=+str[i];
+    strip.style.transition=animate?`transform ${base}s ${ease}`:'none';
+    strip.style.transform=`translateY(-${(9-digit)*REEL_H}px)`;
+  });
+}
+function buildKeyframes(){
+  const m=MOODS[mood], i=INTENSITIES[intensity];
+  const dist=8*i.mul;
+  document.getElementById('dyn-keyframes').textContent=`
+@keyframes dyn-slide{from{opacity:0;transform:translateY(-${dist}px)}to{opacity:1;transform:translateY(0)}}
+@keyframes dyn-dialog{from{opacity:0;transform:scale(${1-(0.03*i.mul)}) translateY(${dist/2}px)}to{opacity:1;transform:scale(1) translateY(0)}}`;
+}
+function durations(){const base=0.3*MOODS[mood].scale, fast=0.15*MOODS[mood].scale, slow=0.6*MOODS[mood].scale;return {base,fast,slow,ease:MOODS[mood].ease};}
+function renderGroup(el,map,current,onPick){
+  el.innerHTML='';
+  Object.entries(map).forEach(([key,v])=>{
+    const b=document.createElement('button');
+    b.textContent=v.label;
+    b.style.cssText=`font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid ${key===current?'var(--color-accent)':'var(--color-border-strong)'};background:${key===current?'var(--color-accent)':'var(--color-input-bg)'};color:${key===current?'#fff':'var(--color-text-primary)'};cursor:pointer;font-weight:600;transition:background .15s,color .15s,border-color .15s`;
+    b.onclick=()=>onPick(key);
+    el.appendChild(b);
+  });
+}
+function refresh(){
+  buildKeyframes();
+  renderGroup(document.getElementById('moodGroup'),MOODS,mood,(k)=>{mood=k;refresh();});
+  renderGroup(document.getElementById('intGroup'),INTENSITIES,intensity,(k)=>{intensity=k;refresh();});
+}
+refresh();
+buildReels();
+renderGroup(document.getElementById('deltaGroup'),{p1000:{label:'+1000'},p100:{label:'+100'},p10:{label:'+10'},m10:{label:'–10'},m100:{label:'−100'},m1000:{label:'−1000'}},null,(k)=>{
+  const delta={p1000:1000,p100:100,p10:10,m10:-10,m100:-100,m1000:-1000}[k];
+  reelValue=Math.max(0,Math.min(9999,reelValue+delta));
+  positionReels(reelValue,true);
+});
+document.getElementById('alertBtn').onclick=()=>{const {base,ease}=durations();const el=document.getElementById('alertBar');el.style.animation='none';el.offsetHeight;el.style.animation=`dyn-slide ${base}s ${ease}`;el.style.opacity='1'};
+document.getElementById('dialogBtn').onclick=()=>{const {base,ease}=durations();const el=document.getElementById('dialogChip');el.style.animation='none';el.offsetHeight;el.style.animation=`dyn-dialog ${base}s ${ease}`;el.style.opacity='1'};
+</script>

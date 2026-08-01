@@ -1,6 +1,62 @@
+/* ── Nouron Design System wiring ────────────────────────────────────────────
+ * Token names throughout this file match docs/design-system/tokens/*.css
+ * verbatim (mirrored into public/css/infra.css :root). Card bevel follows the
+ * same clip-path shape as dialogs.css (.sol-modal) for a consistent
+ * "beveled panel" language across cards and dialogs.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
 /* Alpine x-cloak */
 [x-cloak] {
     display: none !important;
+}
+
+/* ── Scoped Pico primary override ───────────────────────────────────────────
+ * Scoped to .lobby (not :root) so only this screen's default Pico buttons
+ * (Continue / Start Mission) pick up the Nouron accent instead of Pico's
+ * stock blue — custom properties on an element beat the inherited root
+ * value regardless of Pico's own :root specificity.
+ * ─────────────────────────────────────────────────────────────────────────── */
+.lobby {
+    --pico-primary: var(--color-accent, #8c2030);
+    --pico-primary-background: var(--color-accent, #8c2030);
+    --pico-primary-border: var(--color-accent, #8c2030);
+    --pico-primary-underline: var(--color-accent, #8c2030);
+    --pico-primary-hover: var(--color-accent-hover, #731a27);
+    --pico-primary-hover-background: var(--color-accent-hover, #731a27);
+    --pico-primary-hover-border: var(--color-accent-hover, #731a27);
+    /* No token covers a 25%-alpha focus ring — closest token
+       (--color-accent-tint) is a 6%-alpha wash meant for tinted
+       backgrounds, not focus rings. Literal kept deliberately. */
+    --pico-primary-focus: rgba(140, 32, 48, 0.25);
+    --pico-primary-inverse: #ffffff;
+    /* Bind Pico's semantic vars to DS tokens so hgroup subtitles, muted
+       borders and card backgrounds inherit the token values instead of
+       Pico's own defaults (which win on specificity over a plain class). */
+    --pico-muted-color: var(--color-text-secondary, #6b6b7a);
+    --pico-muted-border-color: var(--color-border, #e8e8ec);
+    --pico-card-background-color: var(--color-bg, #ffffff);
+}
+
+/* ── Page header spacing (moved off inline style) ───────────────────────── */
+.lobby-page-header {
+    margin-bottom: 1.75rem;
+}
+
+/* ── Page header ─────────────────────────────────────────────────────────── */
+.lobby-page-title {
+    margin: 0 0 0.25rem;
+    font-family: var(--font-display, "Libre Baskerville", Georgia, serif);
+    font-weight: var(--text-h1-weight, 400);
+    text-transform: var(--text-h1-transform, uppercase);
+    letter-spacing: var(--text-h1-tracking, 0.45em);
+    /* Clamp against the 0.45em tracking so "Mission Control" fits at 320px
+       without introducing a breakpoint outside the sanctioned set. */
+    font-size: clamp(1.25rem, 5vw, var(--text-h1-size, 2rem));
+    color: var(--color-text-primary, #1a1a1e);
+}
+.lobby-page-subtitle {
+    margin: 0;
+    color: var(--color-text-secondary, #6b6b7a);
 }
 
 /* ── Run card grid ──────────────────────────────────────────────────────── */
@@ -11,12 +67,22 @@
     margin-top: 0.75rem;
 }
 
-/* PicoCSS article cards — force light background */
+/* PicoCSS article cards — full accent frame + beveled top-right corner,
+   matching components/core/Card.jsx (accent-filled outer frame, clipped
+   corner) and the same bevel shape as dialogs.css's .sol-modal. Inset
+   box-shadow is clipped along with the box by clip-path, so the frame
+   traces the cut corner without a separate layer/markup change. Per the
+   design guide ("a card uses a border OR a shadow, never both") this is
+   frame-only — no drop-shadow. */
 .lobby-run-card {
+    position: relative;
     margin: 0;
-    padding: 1.25rem;
-    background: #ffffff;
-    color: #333;
+    padding: var(--card-padding, 1.5rem);
+    background: var(--color-bg, #ffffff);
+    color: var(--color-text-primary, #1a1a1e);
+    border: none;
+    box-shadow: inset 0 0 0 2px var(--color-accent, #8c2030);
+    clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
 }
 
 .lobby-run-card header {
@@ -33,8 +99,9 @@
 
 .lobby-run-card header h3 {
     margin: 0;
-    font-size: 1.1rem;
-    color: #1a1a2e;
+    font-size: var(--text-h3-size, 1.1rem);
+    font-weight: var(--text-h3-weight, 600);
+    color: var(--color-text-primary, #1a1a1e);
 }
 
 .lobby-run-card footer {
@@ -50,15 +117,32 @@
 
 /* Sol progress label */
 .lobby-sol-progress {
-    font-size: 0.85rem;
-    color: var(--pico-muted-color, #6c757d);
+    font-size: var(--text-meta-size, 0.85rem);
+    color: var(--color-text-secondary, #6b6b7a);
     margin-bottom: 0.25rem;
 }
 
-/* PicoCSS <progress> */
+/* PicoCSS <progress> — reuses the accent-fill pseudo-element pattern already
+   established in infra.css (.run-result__obj-progress). */
 .lobby-run-card progress {
-    margin-bottom: 0.5rem;
+    appearance: none;
     height: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: var(--radius-sm, 4px);
+    overflow: hidden;
+    background: var(--color-surface, #f7f7f5);
+    border: none;
+}
+.lobby-run-card progress::-webkit-progress-bar {
+    background: var(--color-surface, #f7f7f5);
+}
+.lobby-run-card progress::-webkit-progress-value {
+    background: var(--color-accent, #8c2030);
+    border-radius: var(--radius-sm, 4px);
+}
+.lobby-run-card progress::-moz-progress-bar {
+    background: var(--color-accent, #8c2030);
+    border-radius: var(--radius-sm, 4px);
 }
 
 /* Bypass warning badge */
@@ -67,18 +151,18 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.15em 0.55em;
-    border-radius: 0.3em;
+    border-radius: var(--radius-sm, 4px);
     font-size: 0.75rem;
     font-weight: 600;
-    background: var(--pico-del-color, #c0392b);
+    background: var(--color-danger, #c0392b);
     color: #fff;
     white-space: nowrap;
 }
 
 /* Settings meta list */
 .lobby-meta {
-    font-size: 0.85rem;
-    color: var(--pico-muted-color, #6c757d);
+    font-size: var(--text-meta-size, 0.85rem);
+    color: var(--color-text-secondary, #6b6b7a);
     margin: 0.5rem 0 0;
     padding: 0;
     list-style: none;
@@ -90,11 +174,11 @@
     content: none;
 }
 
-/* Status pills */
+/* Status pills — same shape/tone contract as the design system's StatusBadge */
 .lobby-status-pill {
     display: inline-block;
     padding: 0.15em 0.6em;
-    border-radius: 0.3em;
+    border-radius: var(--radius-sm, 4px);
     font-size: 0.78rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -102,23 +186,23 @@
     white-space: nowrap;
 }
 .lobby-status-pill--completed {
-    background: var(--pico-ins-color, #27ae60);
+    background: var(--color-success, #27ae60);
     color: #fff;
 }
 .lobby-status-pill--failed {
-    background: var(--pico-del-color, #c0392b);
+    background: var(--color-danger, #c0392b);
     color: #fff;
 }
 
 /* PicoCSS <details>/<summary> in cards */
 .lobby-run-card details {
     margin-top: 0.75rem;
-    font-size: 0.85rem;
+    font-size: var(--text-meta-size, 0.85rem);
 }
 .lobby-run-card details summary {
     cursor: pointer;
-    color: var(--pico-primary, #1095c1);
-    font-size: 0.85rem;
+    color: var(--color-accent, #8c2030);
+    font-size: var(--text-meta-size, 0.85rem);
     padding: 0.25rem 0;
 }
 
@@ -146,7 +230,7 @@
     flex: 1;
     min-width: 0;
     margin: 0;
-    font-size: 1rem; /* ≥16px prevents iOS focus zoom */
+    font-size: 1rem; /* >=16px prevents iOS focus zoom */
 }
 .lobby-rename-form button {
     margin: 0;
@@ -154,7 +238,7 @@
     width: auto;
 }
 .lobby-rename-error {
-    color: var(--pico-del-color, #c0392b);
+    color: var(--color-danger, #c0392b);
     font-size: 0.8rem;
     margin: 0.25rem 0 0;
 }
@@ -163,16 +247,17 @@
 .lobby-empty {
     text-align: center;
     padding: 3rem 1rem;
-    color: var(--pico-muted-color, #6c757d);
+    color: var(--color-text-secondary, #6b6b7a);
 }
 
 /* Section headings */
 .lobby-section-heading {
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: var(--text-h3-size, 1.1rem);
+    font-weight: var(--text-h3-weight, 600);
     margin: 1.75rem 0 0.25rem;
     padding-bottom: 0.35rem;
-    border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
+    color: var(--color-text-primary, #1a1a1e);
 }
 .lobby-section-heading:first-child {
     margin-top: 0;
@@ -186,8 +271,44 @@ button[disabled].lobby-btn-disabled {
 }
 .lobby-coming-soon-note {
     font-size: 0.8rem;
-    color: var(--pico-muted-color, #6c757d);
+    color: var(--color-text-secondary, #6b6b7a);
     margin-top: 0.35rem;
+}
+
+/* ── New-run action row ─────────────────────────────────────────────────── */
+.lobby-new-run-row {
+    margin-top: 1.5rem;
+}
+.lobby-new-run-row form {
+    display: inline;
+}
+
+/* Inline forms embedded in card footers — Pico gives <form> block spacing
+   by default, cards need it flush with sibling buttons. */
+.lobby-inline-form {
+    margin: 0;
+}
+
+/* Abandon-run button — outlined danger action, kept visually secondary to
+   the primary "Continue" button in the same footer. Pico's .secondary.outline
+   rules set color/border-color via its own custom properties at a higher
+   specificity than a plain class — override those properties, not the final
+   color/border-color, so the override always wins regardless of cascade order. */
+.lobby-btn-danger-outline {
+    --pico-color: var(--color-danger, #c0392b);
+    --pico-border-color: var(--color-danger, #c0392b);
+    --pico-background-color: transparent;
+}
+.lobby-btn-danger-outline:hover,
+.lobby-btn-danger-outline:focus {
+    --pico-color: #ffffff;
+    --pico-background-color: var(--color-danger, #c0392b);
+    --pico-border-color: var(--color-danger, #c0392b);
+}
+
+.lobby-highscore-scroll {
+    overflow-x: auto;
+    margin-top: 0.75rem;
 }
 
 /* ── Highscore table ────────────────────────────────────────────────────── */
@@ -200,7 +321,7 @@ button[disabled].lobby-btn-disabled {
 .lobby-highscore-table td {
     padding: 0.55rem 0.75rem;
     text-align: left;
-    border-bottom: 1px solid var(--pico-muted-border-color, #ddd);
+    border-bottom: 1px solid var(--color-border, #e8e8ec);
     vertical-align: middle;
 }
 .lobby-highscore-table thead th {
@@ -208,14 +329,15 @@ button[disabled].lobby-btn-disabled {
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--pico-muted-color, #6c757d);
-    border-bottom: 2px solid var(--pico-muted-border-color, #ddd);
+    color: var(--color-text-secondary, #6b6b7a);
+    border-bottom: 2px solid var(--color-border, #e8e8ec);
 }
 .lobby-highscore-table tbody tr:last-child td {
     border-bottom: none;
 }
 .lobby-highscore-table tbody tr:hover td {
-    background: var(--pico-card-background-color, #f9f9f9);
+    background: var(--color-surface, #f7f7f5);
+    transition: background var(--duration-fast, 0.15s) var(--ease-standard, ease);
 }
 .lobby-highscore-score {
     text-align: right !important;
@@ -223,10 +345,15 @@ button[disabled].lobby-btn-disabled {
 }
 .lobby-hs-meta {
     font-size: 0.78rem;
-    color: var(--pico-muted-color, #6c757d);
+    color: var(--color-text-secondary, #6b6b7a);
 }
 .lobby-hs-empty {
     font-size: 0.9rem;
-    color: var(--pico-muted-color, #6c757d);
+    color: var(--color-text-secondary, #6b6b7a);
     margin-top: 0.75rem;
+}
+
+/* ── Highscore section spacing ──────────────────────────────────────────── */
+.lobby-highscore-heading {
+    margin-top: var(--space-lg, 2rem);
 }

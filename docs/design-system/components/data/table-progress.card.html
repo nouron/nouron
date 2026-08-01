@@ -1,0 +1,16 @@
+<!-- @dsCard group="Components" viewport="700x280" name="Table &amp; progress" subtitle="Data table, linear and segmented progress" -->
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<div id="root" style="padding:1.25rem;background:#fff;display:flex;flex-direction:column;gap:1rem"></div>
+<script type="text/babel">
+const { Table, ProgressBar } = window.NouronDesignSystem_019dc5;
+function Demo(){return (<div style={{display:"flex",flexDirection:"column",gap:"1rem"}}>
+<Table columns={[{key:"m",label:"Mission"},{key:"s",label:"Status"},{key:"sc",label:"Score",numeric:true}]} rows={[{m:"Run #12",s:"Completed",sc:"48,200"},{m:"Run #11",s:"Failed",sc:"12,050"}]} />
+<div><div style={{fontSize:"0.72rem",color:"#888",marginBottom:"0.25rem"}}>Sol 42 / 100</div><ProgressBar value={42} max={100} /></div>
+<div><div style={{fontSize:"0.72rem",color:"#888",marginBottom:"0.25rem"}}>Repair investment</div><ProgressBar value={3} max={5} segmented segments={5} color="#27ae60" /></div>
+</div>);}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script>

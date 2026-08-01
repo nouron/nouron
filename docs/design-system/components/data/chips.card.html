@@ -1,0 +1,25 @@
+<!-- @dsCard group="Components" viewport="700x420" name="Resource &amp; AP chips" subtitle="Resource pills, resource bar, AP pools, status badges" -->
+<link rel="stylesheet" href="../../styles.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<div id="root" style="padding:1.25rem;background:#fff;display:flex;flex-direction:column;gap:1rem"></div>
+<script type="text/babel">
+const { ResourceChip, ResourceBar, APChip, StatusBadge, EntityChip } = window.NouronDesignSystem_019dc5;
+function Demo(){return (<div style={{display:"flex",flexDirection:"column",gap:"0.9rem"}}>
+<div style={{display:"flex",gap:"0.5rem",flexWrap:"wrap"}}>
+<ResourceChip abbr="Sol" amount={42} /><ResourceChip abbr="Cr" amount={3000} /><ResourceChip abbr="Rg" amount={200} /><ResourceChip abbr="Co" amount={0} empty /><ResourceChip abbr="NX" amount="8,400/12,000" tone="warning" />
+</div>
+<ResourceBar sol={42} credits={3000} supply={12} trust={68} resources={[{abbr:"Rg",amount:200},{abbr:"Or",amount:40}]} />
+<div style={{display:"flex",gap:"0.5rem",flexWrap:"wrap"}}>
+<APChip type="build">3 Con AP</APChip><APChip type="nav">1 Nav AP</APChip><APChip type="research">0 Res AP</APChip><APChip type="economy">2 Eco AP</APChip><APChip type="strategy">1 Str AP</APChip>
+</div>
+<div style={{display:"flex",gap:"0.5rem",flexWrap:"wrap"}}>
+<StatusBadge tone="success">Completed</StatusBadge><StatusBadge tone="danger">Failed</StatusBadge><StatusBadge tone="warning">Bypass</StatusBadge><StatusBadge tone="neutral">Draft</StatusBadge>
+</div>
+<div><EntityChip type="building" label="Command Center" level={2} description="Colony administration hub." /></div>
+</div>);}
+ReactDOM.createRoot(document.getElementById("root")).render(<Demo/>);
+</script>
