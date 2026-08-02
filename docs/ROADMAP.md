@@ -108,6 +108,8 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [ ] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten, CC-Ausbau)
 - [ ] `harvester.max_level` 8 → 1 in `config/buildings.php` (sonst setzt der nächste Sync die Owner-Entscheidung zurück)
 - [ ] Instanz-Preisregel: zweite und jede weitere Instanz zahlt Level-Up-Preis statt `build_cost` (`ColonyController::placeBuilding`) — löst den Hangar-Bootstrap-Zirkel und korrigiert dieselbe Inkonsistenz beim Wohnhabitat
+- [ ] **`max_level` aufteilen in `max_instances` und `max_level`** (§4c). Das Feld bedeutet heute zweierlei — bei instanzierten Gebäuden die Instanzzahl, sonst das Level —, weshalb kein Gebäude beides haben kann. Betrifft `buildings`-Tabelle, `config/buildings.php`, `testdata.sqlite.sql`, `SyncConfig`, `placeBuilding`, Techtree-Gates.
+- [ ] **Wachstumsachsen umstellen** (§4c): Agrardom Level → Instanz; Harvester Instanz-Deckel 2; Religiöse Stätte und Kolonialdenkmal auf je 1 Instanz / Lv1; Hangar bekommt beide Achsen (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse, wie der Techtree es ohnehin gatet)
 - [ ] `geology`-Effekt als hartverdrahteter Hook (~8 Zeilen in `GameTick` + Config-Key in der Shape eines späteren Frameworks). **Regel: maximal zwei hartverdrahtete Kenntniseffekte, danach zwingend das Framework** — sonst entsteht es schleichend nie.
 - [ ] `bar.base_prices` + `compound_import_price` nach der Knappheitsordnung
 - [ ] `knowledge.levelup_costs` und `credits` nachziehen
@@ -118,6 +120,7 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [ ] `mission_aid_transport` ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, schließt zugleich die Vertrauens-Lücke von Pfad B (§4b)
 - [ ] Cantina: Losgröße an die Zahlungsfähigkeit binden + Richtungslogik (entrauscht jede spätere Messung)
 - [ ] **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg (§13.7). Offen, ob Pfad C überhaupt einen großen Regolith-Hebel braucht.
+- [ ] **Harvester-Erschöpfung** (§4c): Ertrag eines Regolith-Tiles sinkt über die Zeit, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`, „Basis für Erschöpfungs-Counter"), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7), die von einem frischen Standort ausgeht.
 - [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7). Die Mechanik stimmt: Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum plus Missionsproviant und Events. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen aber entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen.
 
 ### Stufe 1c — Messbarkeit herstellen (vor jeder Kalibrierung)

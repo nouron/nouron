@@ -16,6 +16,7 @@
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
    - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
    - 4b. [Die drei Pfade](#4b-die-drei-pfade)
+   - 4c. [Instanzen oder Level — die Wachstumsachse je Gebäude](#4c-instanzen-oder-level--die-wachstumsachse-je-gebäude)
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
 6. [Supply-System (Cap-Modell)](#6-supply-system-cap-modell)
 7. [Verfall & Entropie](#7-verfall--entropie)
@@ -402,7 +403,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 **2. Level-Up (jedes Level, flach — keine Eskalation):**
 - **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Cantina ~17/Lvl, Analytik-Labor 20/Lvl, Hangar ~22/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
 - **CC-Upgrade (Sonderfall):** skaliert mit `Ziel-Level × 30` Regolith (Lv2 = 60 … Lv5 = 150) — das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben.
-- Harvester: **kein Level-Up** (`max_level = 1`, Entscheidung 2026-08-02, §13.5). Er liefert ein festes Regolith-Grundeinkommen; Wachstum kommt aus Kenntnissen, Missionen und Handel.
+- Harvester: **kein Level-Up** (Entscheidung 2026-08-02, §13.5). Er liefert ein festes Regolith-Grundeinkommen je Standort; Wachstum kommt aus einer zweiten Instanz (max. 2, §4c), aus Missionen, Events und Handel.
 
 **3. Reparatur (laufender Dauer-Sink):**
 - **2 Regolith pro Klick** (+1 SP), zusätzlich zu 1 Construction-AP. Decay läuft bis Run-Ende → Reparatur hält Regolith über den gesamten Run relevant (Errichtungs-/Level-Up-Kosten allein versiegen nach Vollausbau).
@@ -714,6 +715,93 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 ### Der Sicherheits-Hub ist kein vierter Pfad
 
 Der Sicherheits-Hub (CC Lv3) war bis 2026-08-02 als „Pfad D" mit dem Strategen-Slot gekoppelt. Mit der Zurückstellung des Strategen (§13) ist er ein **optionaler Resilienz-Baustein** ohne Berater-Kopplung und ohne Pfadwahl-Gate. Er steht außerhalb dieser Systematik.
+
+---
+## 4c. Instanzen oder Level — die Wachstumsachse je Gebäude
+
+Ein Gebäude kann auf zwei Arten wachsen, und die Wahl ist eine Designentscheidung, keine technische. Sie war bisher nirgends begründet, weshalb die Zuordnung im Katalog uneinheitlich ist.
+
+### Die beiden Achsen
+
+| | **Instanz** — mehr davon | **Level** — besser davon |
+|---|---|---|
+| kostet | ein weiteres Tile | kein Tile |
+| Supply | volle `supply_cost` je Instanz | `supply_cost × Level` |
+| Instandhaltung | eigene `decay_rate`-Zeile je Instanz | eine Zeile, unabhängig vom Level |
+| Sichtbarkeit | **die Kolonie wächst sichtbar** auf dem Hex-Grid | eine Zahl steigt |
+| Entscheidung | *wohin* — Platzierung, Nachbarschaft, Tile-Typ | *wie weit* — nur die Höhe |
+| Kostenverlauf | linear | steigend (`f(L)`, §13.6) |
+
+Instanzen bedienen damit die **Breiten-Achse** (Bauplatz + Instandhaltung), Level die **Tiefen-Achse** (Supply-Cap) — siehe §6 „Die drei Begrenzungsachsen".
+
+> **Grundsatz (Owner, 2026-08-02): Im Zweifel Instanz.** Instanzen sind auf dem Hex-Grid sichtbar, erzeugen eine Platzierungsentscheidung und binden das Wachstum an die 15 Koloniefelder — also an das „kleine Kolonie"-Prinzip aus §1. Level sind unsichtbar und erzeugen keine räumliche Entscheidung. Ein Level-Up muss sich rechtfertigen; eine Instanz nicht.
+
+### Der Test
+
+**Ergibt „zwei davon" in Fiktion und Mechanik einen Sinn?**
+
+- **Ja** → Instanz. Die Kolonie hat mehrere Wohnhabitate, mehrere Kuppeln, mehrere Hallen.
+- **Nein, weil das Gebäude die Kolonie als Ganzes repräsentiert** → Level. Es gibt eine Kommandozentrale, eine Funkanlage, einen Handelsposten.
+
+Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes freischaltet** statt nur eine Zahl zu erhöhen — beim Analytik-Labor sind die Level die Kenntnis-Stufen, beim Hangar die Schiffsklassen.
+
+### Zuordnung
+
+| Gebäude | Achse | Deckel | Begründung |
+|---|---|---|---|
+| **Kommandozentrale** | Level | Lv5 | Eine pro Kolonie, per Definition. Die Level tragen die Progressionsgates des gesamten Spiels. |
+| **Harvester** | **Instanz** | **2** | Mehrere Abbaurigs auf mehreren Regolith-Tiles. Bewusst knapp gedeckelt — siehe unten. |
+| **Wohnhabitat** | Instanz | 6 | Unverändert. |
+| **Agrardom** | **Instanz** | offen | Mehrere Kuppeln; Nahrungsproduktion skaliert natürlich mit der Anzahl. Umstellung von Level auf Instanz. |
+| **Hangar** | **Instanz + Level** | Instanzen offen, Lv3 | Der einzige Fall, der beide Achsen braucht — siehe unten. |
+| **Analytik-Labor** | Level | Lv3+ | Die Level **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3). Ohne sie bricht die Staffelung weg. |
+| **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
+| **Sicherheits-Hub** | Level | Lv3 | Eine pro Kolonie. |
+| **Handelsposten** | Level | Lv3 | Eine pro Kolonie. |
+| **Cantina** | Level | offen | Zwei Kneipen in einer Kleinkolonie wirken falsch; eine bessere Kneipe nicht. |
+| **Krankenstation** | Level | offen | Besser ausgestattet, nicht doppelt vorhanden. |
+| **Religiöse Stätte** | — | **1 Instanz, Lv1** | Weder Instanzen noch Level. Sie ist ein Bekenntnis, kein Ausbauprojekt. |
+| **Kolonialdenkmal** | — | **1 Instanz, Lv1** | Dito. Ein Denkmal, fertig oder nicht. |
+
+### Harvester: wenige Instanzen, dafür beweglich
+
+**Deckel: 2 Instanzen.** Die ersten ~20–30 Sole muss **einer** reichen; danach kommt höchstens einer dazu. Regolith kommt zusätzlich über Missionen, Events und Handel (§3, §13.7) — der Harvester ist der Sockel, nicht die Skalierung.
+
+Der Harvester ist das einzige **bewegliche** Gebäude des Spiels (§4 „Harvester-Transit"), und diese Eigenschaft soll im Spielverlauf tatsächlich genutzt werden: **Ein Harvester wird pro Run mehrfach umgesetzt.** Dafür braucht es einen Grund, der zwingt statt nur einlädt.
+
+**Erschöpfung der Vorkommen.** Ein Regolith-Tile trägt einen Harvester eine begrenzte Zeit, dann sinkt der Ertrag. Die Grundlagen dafür sind bereits angelegt:
+
+- `colony_tiles.resource_max` — im Schema beschrieben als „Startwert (Basis für Erschöpfungs-Counter im UI)"
+- drei Ergiebigkeitsstufen `regolith_rich` / `regolith_normal` / `regolith_poor` mit unterschiedlichem Vorkommen
+- die Verlege-Vorschau mit Ertragsvergleich („3 AP · 10→15 Rg", Playtest-Review 2026-07-11)
+- Verlegekosten: 1 AP je Hex Distanz, 1 Sol Transit ohne Produktion
+
+Damit entsteht die gewollte Schleife: fördern → Ertrag sinkt → Umzug lohnt → ein Sol Produktion und einige AP kosten → neues Tile. **Und Erkundung bekommt einen konkreten wirtschaftlichen Zweck**, weil man wissen muss, wo das nächste ergiebige Tile liegt, *bevor* der Umzug erzwungen ist.
+
+> **⚠️ Offen:** Erschöpfungsrate und Ertragskurve je Tile-Stufe. Zielbild: ein Tile trägt ~15–25 Sole, sodass es über einen Run zu mehreren Umzügen kommt, ohne dass Umziehen zur Daueraufgabe wird. Gehört in dieselbe Herleitung wie der Regolith-Zahlensatz (§13.7) — die Harvester-Grundproduktion dort setzt einen *frischen* Standort voraus.
+
+> **Später, noch nicht durchdacht:** Zusätzliche **Expeditionskarten** neben der Koloniekarte wurden angedacht. Sie würden dem Erschöpfungs-Kreislauf mehr Raum geben, sind aber nicht ausgearbeitet und stehen nicht auf der Roadmap.
+
+### Hangar: der einzige Fall mit beiden Achsen
+
+Der Techtree gatet Schiffe bereits über **Hangar-Level** — Drohne Lv1, Frachter Lv2, Korvette Lv3, dazu `defense` ab Hangar Lv2. Die Config macht den Hangar aber instanziert, wo `max_level` die Instanzzahl bedeutet. Nach dieser Lesart hieße „Hangar Lv2" schlicht „zwei Hangars", was mechanisch funktioniert, aber thematisch nichts erklärt: Warum erlaubt eine zweite identische Halle den Bau eines Frachters?
+
+**Auflösung — beide Achsen, mit getrennter Bedeutung:**
+
+| Achse | bedeutet | Deckel |
+|---|---|---|
+| **Instanzen** | Schiffsplätze — wie viele Schiffe die Kolonie halten kann | offen, supply-begrenzt |
+| **Level** | Schiffsklasse — Lv1 Drohne, Lv2 Frachter, Lv3 Korvette | Lv3 |
+
+Beides ist intuitiv: Eine Halle fasst ein Schiff, eine größere Halle ein größeres. Die primäre Wachstumsachse bleibt damit die Instanz (Grundsatz oben), das Level ist ein kleines, dreistufiges Freischalt-Gate.
+
+### Technische Voraussetzung: `max_level` ist überladen
+
+`max_level` bedeutet heute **zweierlei**: bei instanzierten Gebäuden die maximale Instanzzahl (Config-Kommentar beim Wohnhabitat: „max 6 instances"), bei allen übrigen das maximale Level. Ein Gebäude kann deshalb aktuell **nicht beides** haben — was den Hangar-Widerspruch überhaupt erst erzeugt.
+
+**Aufzuteilen in `max_instances` und `max_level`.** Beide nullable; `NULL` heißt jeweils unbegrenzt. Betroffen: `buildings`-Tabelle, `config/buildings.php`, `data/sql/testdata.sqlite.sql`, `SyncConfig`, `ColonyController::placeBuilding`, Techtree-Gates.
+
+> **⚠️ Vorher zu prüfen: der Instanz-Decay-Verdacht.** `GameTick::processBuildingDecay()` schreibt mit `['colony_id', 'building_id']` ohne Instanz-Unterscheidung. Verfallen instanzierte Gebäude dadurch superlinear, wird **jede** Umstellung auf Instanzen sofort bestraft — und dieser Abschnitt stellt zwei Gebäude um. Verifizieren, bevor umgestellt wird, nicht danach (ROADMAP Phase 3o, Stufe 1c).
 
 ---
 
@@ -1717,9 +1805,9 @@ Solange der AP-Pool über ~11 AP/Sol liegt, kann die Instandhaltung den Zufluss 
 
 **Die eigentliche Wachstumsgrenze ist Regolith.** 20,6 Rg/Sol Reparaturbedarf bei Vollausbau, dazu der Regolith der Level-Ups. Dagegen steht der Harvester mit einem festen Grundeinkommen plus Missionen, Events und Handel. Diese Bilanz — nicht der AP-Pool — entscheidet, wie groß eine Kolonie werden kann. Sie gehört deshalb ins Dashboard (13.4).
 
-#### Harvester: fest auf Level 1 (Owner-Entscheidung 2026-08-02)
+#### Harvester: kein Level-Up, höchstens zwei Instanzen (Owner-Entscheidung 2026-08-02)
 
-Der Harvester hat **kein Level-Up**. `max_level = 1` statt bisher 8. Er liefert ein **Grundeinkommen** an Regolith; Wachstum darüber hinaus kommt ausschließlich aus anderen Quellen.
+Der Harvester hat **kein Level-Up**. Er liefert je Standort ein **Grundeinkommen** an Regolith; Wachstum kommt aus einer zweiten Instanz — frühestens nach ~20–30 Solen, Deckel 2 — sowie aus Missionen, Events und Handel. Er ist zugleich das einzige bewegliche Gebäude und soll pro Run **mehrfach umgesetzt** werden, getrieben von der Erschöpfung der Vorkommen. Vollständige Begründung und die Abgrenzung Instanz/Level für alle Gebäude: **§4c**.
 
 Damit wird Regolith von passivem Einkommen zu **aktivem Spiel** — was der Designlinie „kein Leerlauf, aktives Spielen wird belohnt" (§1.1) entspricht, aber die Wirtschaft grundlegend umstellt.
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 5)
+
+Neuer **§4c „Instanzen oder Level — die Wachstumsachse je Gebäude"**. Die Unterscheidung war nirgends als Designentscheidung begründet, weshalb die Zuordnung im Katalog uneinheitlich ist. Grundsatz (Owner): **im Zweifel Instanz** — Instanzen sind auf dem Hex-Grid sichtbar, erzeugen eine Platzierungsentscheidung und binden Wachstum an die 15 Koloniefelder; Level sind unsichtbar. Ein Level-Up muss sich rechtfertigen, eine Instanz nicht. Test dafür: „Ergibt zwei davon in Fiktion und Mechanik einen Sinn?"
+
+Zuordnung geändert: **Agrardom** von Level auf Instanz, **Harvester** auf höchstens zwei Instanzen (die ersten ~20–30 Sole muss einer reichen), **Religiöse Stätte** und **Kolonialdenkmal** auf je eine Instanz ohne Level. Unverändert bei Level bleiben Kommandozentrale (Progressionsgates), Uplink-Station, Sicherheits-Hub, Handelsposten, Cantina, Krankenstation sowie das **Analytik-Labor** — dessen Level sind die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3), ohne sie bricht die Staffelung weg.
+
+**Harvester-Erschöpfung als neue Mechanik.** Der Harvester ist das einzige bewegliche Gebäude und soll pro Run mehrfach umgesetzt werden — dafür sinkt der Ertrag eines Regolith-Tiles über die Zeit. Die Grundlagen sind bereits angelegt: `colony_tiles.resource_max` ist im Schema als „Basis für Erschöpfungs-Counter" beschrieben, die drei Ergiebigkeitsstufen existieren, ebenso die Verlege-Vorschau mit Ertragsvergleich. Nebeneffekt: Erkundung bekommt einen konkreten wirtschaftlichen Zweck.
+
+**Hangar-Widerspruch aufgelöst.** Der Techtree gatet Schiffe über Hangar-Level (Drohne Lv1, Frachter Lv2, Korvette Lv3), die Config macht ihn instanziert — wo `max_level` die Instanzzahl bedeutet, hieße „Hangar Lv2" schlicht „zwei Hangars". Der Hangar bekommt beide Achsen mit getrennter Bedeutung: Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse. Voraussetzung ist, `max_level` in `max_instances` und `max_level` aufzuteilen — das Feld bedeutet heute zweierlei, weshalb kein Gebäude beides haben kann.
+
 ## 2026-08-02 (Fortsetzung 4)
 
 **Knappheitsordnung als Owner-Entscheidung in §3 festgeschrieben:** Regolith (Standard-Baustoff, soll verfügbar sein) < Organika (seltener, kann bei Missmanagement knapp werden) < Werkstoffe (anfangs sehr begrenzt, bleibt am knappsten). Daraus folgt zwingend die Preisreihenfolge und, für die Produktionsseite, dass Regolith reichlicher zufließt als Organika verbraucht wird.
