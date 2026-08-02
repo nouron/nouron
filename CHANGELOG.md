@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 3)
+
+Neuer GDD-Abschnitt **„Zum Umgang mit den Zahlen in diesem Dokument"** (Owner-Vorgabe): Die meisten Werte in Config, DB und GDD sind Platzhalter und dürfen bei Balance-Arbeit nicht als Randbedingung behandelt werden. Ein bestehender Wert ist kein Argument — geht eine Rechnung nicht auf, ist zuerst zu prüfen, ob die zugrundeliegenden Werte stimmen, statt einen Ausgleich zu konstruieren. Geschützt sind nur ausdrücklich als Owner-Entscheidung markierte Werte (aktuell sechs, mit Fundstelle gelistet). Gilt explizit auch für Subagenten.
+
+`ap_for_levelup` gegen die laufende DB verifiziert: **überall 10**, nur Monument 20 — die Migration `2026_04_17_000003` (10/20/30) ist nicht aktiv. Damit ist der Anhang-B-Blocker geschlossen und die Onboarding-Budgetrechnung bestätigt, der Wert bleibt aber ein Default ohne Herleitung.
+
+Dabei zwei Funde: **`harvester.max_level` ist in DB und Testfixture bereits 1, in `config/buildings.php` aber 8** — `game:sync-config` schreibt die Config in die DB und würde den Harvester still zurücksetzen. Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos, weil bei `max_level = 1` nur der erste Kurveneintrag greift (8 Rg/Sol, dauerhaft). Sieben Gebäude haben `max_level = NULL` (unbegrenzt), für die läuft die `f(L)`-Kostenkurve ohne Endpunkt weiter.
+
+Zwei ROADMAP-Punkte neu diagnostiziert, beide waren falsch beschrieben: **Hangar** — „Spieler kommt nie zum Frachter" ist ein Messartefakt, `BotStrategy` kauft hartkodiert eine Drohne und heuert den Raumfahrer nie an; die echten Ursachen sind der volle `build_cost` für die zweite Hangar-Instanz (Bootstrap-Zirkel: mit Regolith bezahlt, das der Frachter beschaffen soll), das Missionsverhältnis 3:1 zugunsten der Drohne und ein Verdacht auf superlinearen Instanz-Decay. **Cantina** — die Kaufrichtung existiert und ist der Regelfall, die Verkaufsrichtung existiert gar nicht; das „Not enough resources." kommt von Losgrößen mit ~1.400 Cr Erwartungswert gegen +5 Cr/Sol Einkommen.
+
+Frachter-Ertrag korrigiert: 6,25 Rg/Sol sind brutto, nach Verschleiß-Reparatur bleiben **4,25 netto**. Der Regolith-Sockel von 8 Rg/Sol ist als zu niedrig belegt (Bedarf der Zielkolonie ≈ 1.454 Rg über 80 Sole gegen 840 verfügbar, Spitze 15–18 Rg/Sol in den Solen 21–60) — der Zahlensatz wird komplett neu hergeleitet statt nachjustiert.
+
 ## 2026-08-02 (Fortsetzung 2)
 
 Umsetzungsplan für das AP-Ratenmodell als **Phase 3o** in die ROADMAP aufgenommen (acht Stufen von Owner-Klärung über den AP-Pool-Umbau bis Playtest-Kalibrierung und Nachzieharbeiten).

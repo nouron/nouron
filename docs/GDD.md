@@ -1732,7 +1732,7 @@ Zielgröße je Hebel: **~6 Rg/Sol** bei vergleichbarem Einsatz. Sie sollen sich 
 |---|---|---|---|---|
 | **Sockel (alle Pfade)** | Harvester Lv1 | 8 Rg/Sol | keine (passiv) | existiert |
 | **A — Analytik** | Kenntnis `geology` **steigert die Harvester-Ausbeute** | Vorschlag **+1,5 Rg/Sol je Level** → Lv4 = +6 | einmalig hoch (102 AP bis Lv4), danach **null laufende Kosten** | **fehlt komplett** |
-| **B — Hangar** | Frachter dauerhaft auf `mission_supply_run` (25 Rg / 4 Sole Umlauf) | 6,25 Rg/Sol je Frachter | laufend: ~1 AP/Sol + 1,5 Organika/Sol + Verschleiß | existiert |
+| **B — Hangar** | Frachter dauerhaft auf `mission_supply_run` (25 Rg / 4 Sole Umlauf) | **4,25 Rg/Sol netto** (6,25 brutto − 2,0 Reparatur-Regolith) | laufend: ~2 AP/Sol + 1,5 Organika/Sol | existiert, aber praktisch schwer erreichbar |
 | **C — Cantina** | garantierter Credits→Regolith-Ankauf | ~6 Rg/Sol bei regelmäßigem Kauf | laufend Credits (Basispreis 30 Cr/Einheit) + 2 AP je Angebot | halb vorhanden |
 
 Die drei Profile sind bewusst gegensätzlich und ergeben drei verschiedene Spielgefühle:
@@ -1745,11 +1745,21 @@ Die drei Profile sind bewusst gegensätzlich und ergeben drei verschiedene Spiel
 
 **Die Lücke liegt beim Analytik-Pfad.** `config/knowledge.php` enthält **keinen einzigen Produktionsbonus**. `geology` hat `trust_per_lv => 0` und außer den Levelup-Kosten keinerlei Effekt; der Supply-Cap-Bonus ist der einzige implementierte Kenntniseffekt überhaupt. `geology` ist der thematisch richtige Träger (Gate: Analytik-Labor Lv2 + Harvester Lv1) und braucht diesen Effekt ohnehin — bisher ist die Kenntnis mechanisch leer.
 
-**Zum Cantina-Pfad.** Regolith ist in `bar.base_prices` mit 30 Cr/Einheit hinterlegt, §12 beschreibt es aber als „Verkauf (Überschuss)" — die Ankaufsrichtung ist nicht garantiert. Es braucht einen **verlässlichen** Credits→Regolith-Kanal, nicht nur die Chance auf ein passendes Zufallsangebot; sonst hängt die Versorgung am Würfel. Naheliegend: Regolith als feste Angebotsklasse, die mindestens einmal pro N Sole erscheint, oder als Nexus-Anfrage über die Uplink-Station (die mit dem Wegfall des Werkstoff-Imports ohnehin eine tragende Lv1-Funktion sucht, §4).
+**Zum Cantina-Pfad — die Diagnose war umgekehrt.** Eine frühere Fassung dieses Abschnitts behauptete, die Ankaufsrichtung sei nicht garantiert. Gegen `BarService::buildOffer()` geprüft gilt das Gegenteil: **Die Credits→Ressource-Kaufrichtung existiert und ist mit 60 % der Angebote der Regelfall. Die Verkaufsrichtung existiert überhaupt nicht** — es gibt keinen Angebotstyp, bei dem der Spieler eine Ressource gibt und Credits bekommt. (Der Code-Kommentar in Zeile 305 sagt das Gegenteil des Codes darunter.)
+
+Das eigentliche Problem sind die **Losgrößen**: `rand(1,5) × 10` Einheiten ergibt einen Erwartungswert von **~1.400 Cr pro Angebot** — gegen ein Netto-Einkommen von +5 Cr/Sol nach Berater-Upkeep (§18.4). Das „Not enough resources." ist kein Bug in der Bestandsprüfung, sondern eine Fehlkalibrierung um eine Größenordnung.
+
+**Der tragfähige Hebel für Pfad C ist deshalb nicht der Credits-Kauf, sondern der Tausch.** Der Tauschtyp (40 % der Angebote) bepreist wertäquivalent — Organika → Regolith liefert bei 10–30 Or rund 17–50 Rg. Das ist genau der Pfadcharakter „Überschuss in Mangel wandeln", und es umgeht die kaputte Credits-Ökonomie vollständig. Give- und Get-Ressource werden heute allerdings gleichverteilt gewürfelt, sodass Or→Rg nur etwa 6,7 % der Angebote trifft — bei 0–2 Gästen pro Sol also eines alle 10–15 Sole.
+
+Vorschlag: **Losgröße an die Zahlungsfähigkeit binden** (höchstens ~35 % des Bestands) **und die Tauschrichtung nach Bestand wählen statt zu würfeln** — Give = Ressource mit dem größten Überschuss, Get = die knappste. Der Zufall bleibt in Preisvarianz, Gästezahl und Gültigkeitsdauer erhalten; er verlagert sich von „welches Angebot?" auf „wie günstig, und kommt heute jemand?". Das ist die planbarere und damit bessere Unsicherheit.
 
 > **⚠️ Offen — Zahlen und Umsetzung.** Die +1,5 Rg/Sol je `geology`-Level sind ein erster Ansatz, kalibriert auf Parität mit dem Frachter-Kanal. Zu prüfen ist, ob der Analytik-Pfad damit insgesamt zu stark wird — er trägt zusätzlich den Supply-Cap-Bonus **und** den Domänen-Effizienzbonus (13.3), leistet also dreifach. Falls ja: auf +1,2/Level senken statt einen der anderen Effekte zu beschneiden.
 
-> **⚠️ Offen — Startphase.** Vor dem ersten Pfadgebäude gibt es nur die 8 Rg/Sol des Harvesters. Bei vier Gebäudetypen bleiben davon 2,7 Rg/Sol für Level-Ups. Die 200 Startregolith tragen die Sol-1–4-Rampe, aber der Engpass verschiebt sich damit in die Sole ~8–20, also genau in die Phase, in der der Spieler sein erstes Pfadgebäude ausbaut. Diese Phase ist im Playtest gezielt zu beobachten (Metrik 6 in Anhang A.5).
+> **⚠️ Der Sockel ist zu niedrig — die Hebel sind nicht das Problem (Befund 2026-08-02).** Eine Gegenrechnung von der Bedarfsseite ergibt für die Zielkolonie aus §13.6 über 80 Sole rund **1.454 Rg Bedarf** (530 Errichtungen + 284 Level-Ups + 640 Reparatur) gegen **840 verfügbar** (200 Start + 8/Sol). Lücke ≈ 614 Rg. Schlimmer noch: Der Bedarf ist ungleich verteilt, die **Spitze liegt bei 15–18 Rg/Sol in den Solen 21–60** — während der zweite Pfad erst bei CC Lv3 (~Sol 30) und der dritte bei CC Lv4 (~Sol 50) dazukommt, also *nach* der Spitze. Mit einem Hebel ist die Zielkolonie bei Sockel 8 nicht baubar.
+>
+> Damit ist die Guard-Rail aus der Owner-Entscheidung vom 2026-07-20 verletzt: *„Grundproduktion muss für sich allein knapp, aber machbar sein, bevor irgendein Pfad-Bonus draufkommt."* Bei 8 Rg/Sol ist sie nicht machbar — die Kolonie ist ab sechs Gebäudetypen allein durch Reparatur negativ, bevor ein einziges Level-Up bezahlt ist. Die Zeile „−0,7" in der Tabelle oben ist kein Spannungsbogen, sondern ein Fehler.
+>
+> **Der Sockel wird deshalb neu hergeleitet, nicht nachjustiert.** Ein Anheben von 8 auf einen anderen Wert wäre ein Workaround: Der Bedarf, gegen den gerechnet wird, entsteht selbst aus Baukosten, `decay_rate` und Reparaturkosten, die allesamt Platzhalter sind (siehe „Zum Umgang mit den Zahlen"). Die Herleitung des gesamten Regolith-Zahlensatzes läuft — Ergebnis ersetzt diesen Kasten.
 
 > **Nachrüstoption, falls das späte Spiel im Playtest schlaff wirkt:** Reparaturkosten mit dem Level skalieren — `AP je SP = 1 + floor((level−1)/3)`. Die Instandhaltung skaliert dann mit der **Tiefe** und koppelt sich elegant an den Supply-Cap (§6); bei der Zielkolonie ergäbe das ~11 statt 7,3 AP/Sol, also rund 50 % des Pools. Das ist der saubere Hebel. Die Alternative `decay_rate × level` ist thematisch schwächer (warum verfällt ein größeres Gebäude schneller?) und verdoppelt zusätzlich den Regolith-Abfluss.
 
@@ -3048,15 +3058,45 @@ Gefunden bei der Durchsicht am 2026-08-02, alle unabhängig von den Designfragen
 | §13 „Rang-System" | Gesamt-AP = 6 + Bonus (10/13/18) | mit dem gemeinsamen Pool obsolet (§13.1) |
 | `config/knowledge.php` (Kommentar) | „base 6 + Rang-1-Bonus 4", „Rang 2 bei 10 aktiven Ticks" | `rank_thresholds = [1 => 15, 2 => 45]`; Grundwert ändert sich mit §13.6 |
 | `config/advisors.php` | `strategist` (id 93) + Slot-5-Kommentar | Stratege zurückgestellt (§13) |
-| `config/buildings.php` | `harvester.max_level = 8` mit Glockenkurven-Begründung (2026-07-20) | Owner-Entscheidung 2026-08-02: `max_level = 1` (§13.5) |
-| `data/sql/testdata.sqlite.sql` | Hangar supply 6, Cantina 4, Krankenstation decay 2.0, Hangar `ap_for_levelup` 10 | `config/buildings.php`: 4 / 6 / 0.67 — Testfixture ist auf dem Stand **vor** dem Pfadwahl-Rebalancing 2026-06-28 |
+| `data/sql/testdata.sqlite.sql` | Hangar supply 6, Cantina 4, Krankenstation decay 2.0 | `config/buildings.php`: 4 / 6 / 0.67 — Testfixture ist auf dem Stand **vor** dem Pfadwahl-Rebalancing 2026-06-28 |
 
-> **Der wichtigste Punkt — `ap_for_levelup` ist nicht eindeutig.** Die Migration `2026_04_17_000003_calibrate_building_ap_costs.php` setzt CC = 10, Harvester/Wohnhabitat/Analytik-Labor/Agrardom = 20, Hangar = 30. Die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) rechnet durchgängig mit **10 pro Level** („Ziel 10 kumuliert", „10 Invest-AP", „10 Construction-AP kumuliert") — mit den Migrationswerten geht die dort dokumentierte Sol-1–4-Rampe nicht auf. `data/db/` ist nicht im Repository (nur ein README), die Frage ist also nur lokal zu beantworten:
->
-> ```
-> sqlite3 data/db/nouron.db "SELECT id, name, ap_for_levelup FROM buildings ORDER BY id"
-> ```
->
-> Die Kalibrierung in §13.6 unterstellt, dass der *gespielte* Wert 10 war — nur damit reproduziert sie die playgetestete Rampe. Steht tatsächlich 20/30 in der DB, verschieben sich die Projektkosten-Vorschläge.
+### ⚠️ Akut: `harvester.max_level` — DB und Config widersprechen sich
+
+**Die laufende Datenbank hat `max_level = 1`, `config/buildings.php` hat 8.** `game:sync-config` schreibt `max_level` aus der Config in die DB (`SyncConfig.php` Z. 130) — **ein Sync-Lauf setzt den Harvester still auf 8 zurück.** Die Config ist vor jedem weiteren Sync anzugleichen. `data/sql/testdata.sqlite.sql` hat ebenfalls bereits `max_level = 1`, ist hier also mit der DB konsistent.
+
+**Nebenfolge:** Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos. `game.production_curve[27]` definiert Level 1–8, aber bei `max_level = 1` greift nur der erste Eintrag — **8 Rg/Sol, dauerhaft**. Der Config-Kommentar („Growth beyond Lv8 comes only from Kenntnisse/Missionen/Handel") beschreibt einen Zustand, den es in der DB nicht gibt. Beim Agrardom (`max_level = NULL`, unbegrenzt) wirkt die Kurve dagegen voll.
+
+**Sieben Gebäude haben `max_level = NULL`** (unbegrenzt): Sciencelab, Temple, Agrardom, Hangar, Krankenstation, Monument, Cantina. Für sie läuft die `f(L)`-Kostenkurve aus §13.6 ohne natürlichen Endpunkt weiter — bei Lv10 wäre `f` = 4,2, bei Lv15 = 6,2. Ob das gewollt ist oder ob diese Gebäude Deckel brauchen, ist offen.
+
+### ✅ Erledigt: `ap_for_levelup` verifiziert (2026-08-02)
+
+Owner hat die laufende DB geprüft. Ergebnis: **`ap_for_levelup` ist überall 10**, einzige Ausnahme Monument (50) mit 20. Die Migration `2026_04_17_000003_calibrate_building_ap_costs.php` (CC 10 / die meisten 20 / Hangar 30) ist **nicht aktiv** — entweder zurückgerollt oder später überschrieben.
+
+Damit ist die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) korrekt und die Kalibrierung in §13.6 steht auf der Basis, die sie unterstellt hat.
+
+> **Aber: eine flache 10 über alle Gebäude ist kein Balancing, sondern ein Default.** Dass der Wert die playgetestete Rampe reproduziert, macht ihn nicht richtig — es macht ihn nur konsistent mit dem, was bisher gespielt wurde. Er gehört zu den Platzhaltern (siehe „Zum Umgang mit den Zahlen" unten) und ist bei der Herleitung der Projektkosten frei wählbar.
 
 > **Bei Umsetzung mitzuziehen:** `app/Console/Commands/ResetPlayer.php` — alle fünf Szenarien (`pre-phase2`, `phase2`, `near-fail-trust`, `near-deadline`, `objectives-done`) haben hartcodierte `supply`- und `regolith`-Werte samt Herleitungskommentaren, die an `ap_for_levelup` und den Supply-Formeln hängen.
+
+---
+
+## Zum Umgang mit den Zahlen in diesem Dokument
+
+**Die meisten Zahlenwerte in Config, Datenbank und GDD sind Platzhalter.** Sie sind entstanden, weil irgendein Wert dastehen musste, nicht weil sie hergeleitet wurden. Das gilt für Baukosten, `decay_rate`, `supply_cost`, `ap_for_levelup`, Missionserträge, `bar.base_prices`, Verschleißraten und Kenntniskosten gleichermaßen.
+
+**Konsequenz für jede Balance-Arbeit:** Ein bestehender Wert ist kein Argument. Wenn eine Rechnung nicht aufgeht, ist die erste Frage nicht „wie baue ich einen Ausgleich?", sondern „stimmen die zugrundeliegenden Werte überhaupt?". Der Zahlensatz ist zusammenhängend von der Designabsicht her herzuleiten — wenn dabei herauskommt, dass die Reparatur die Hälfte kosten und der Harvester das Doppelte liefern muss, ist das ein legitimes Ergebnis, kein Sonderfall.
+
+**Geschützt sind nur ausdrücklich als Owner-Entscheidung markierte Werte.** Aktuell:
+
+| Wert | Ort |
+|---|---|
+| Harvester ohne Level-Up (`max_level = 1`) | §13.5 |
+| CC `max_level = 5` | §4 |
+| Run-Länge 100 Sole | §18.4 |
+| Ein gemeinsamer AP-Pool | §13.1 |
+| Vier Beratertypen (Stratege zurückgestellt) | §13 |
+| Werkstoffe bleiben als Ressource | §3 |
+
+Alles andere ist verhandelbar. Insbesondere gilt das für den Zahlenvorschlag in §13.6 — er ist gegen die heutigen Werte gerechnet und teilt damit deren Unsicherheit.
+
+> **Diese Regel gilt auch für Subagenten.** Wer mit Balance-Aufgaben beauftragt wird, bekommt sie explizit mitgegeben — sonst entstehen Vorschläge, die vorhandene Zahlen als Randbedingung behandeln und Workarounds darum herum bauen, statt den Satz neu zu rechnen.

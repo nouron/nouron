@@ -91,7 +91,8 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 
 ### Stufe 0 — Klären (Owner, keine Implementierung)
 
-- [ ] `ap_for_levelup` in der laufenden DB verifizieren — Migration sagt 10/20/30, Onboarding-Budgetrechnung rechnet mit 10 (Anhang B). `sqlite3 data/db/nouron.db "SELECT id, name, ap_for_levelup FROM buildings ORDER BY id"`. **Blockiert Stufe 3.**
+- [x] `ap_for_levelup` in der laufenden DB verifiziert (2026-08-02): **überall 10**, nur Monument 20. Die Migration `2026_04_17_000003` (10/20/30) ist nicht aktiv. Damit stimmt die Onboarding-Budgetrechnung — der Wert ist aber ein Default, kein Balancing, und bei der Herleitung frei wählbar.
+- [ ] **`harvester.max_level` angleichen, bevor jemand `game:sync-config` ausführt.** DB und Testfixture haben 1, `config/buildings.php` hat 8; der Sync würde die Config in die DB schreiben und den Harvester still zurücksetzen. Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos — bei `max_level = 1` greift nur `production_curve[27][3][1]`.
 - [ ] Zahlenvorschlag §13.6 freigeben oder anpassen (Grundwert 10, Berater 2/3/4, `f(1)=0.5`, Boni max 42 %)
 - [ ] Höhe des `geology`-Regolith-Bonus festlegen (Vorschlag +1,5/Level)
 - [ ] Entscheiden, ob Pfad A eine Credits-Antwort braucht (§4b, zweite Paritätslücke)
@@ -171,10 +172,17 @@ Design-Entscheidung getroffen, konkrete Zahlen noch offen: die drei Berater-Pfad
 
 Nächste Schritte, alle noch offen — **jetzt blockierend für Phase 3o**:
 
-- [ ] Bar/Cantina „Not enough resources." beheben — kein praktisch nutzbarer reiner Credits-Einkommenstyp
+- [ ] Bar/Cantina „Not enough resources." — **neu diagnostiziert 2026-08-02, die Ursache ist eine andere als vermutet.** Gegen `BarService::buildOffer()` geprüft: Die Credits→Ressource-**Kauf**richtung existiert und ist mit 60 % der Regelfall; die **Verkaufs**richtung existiert überhaupt nicht (der Code-Kommentar in Z. 305 sagt das Gegenteil des Codes darunter). Das Fehlschlagen kommt von den **Losgrößen**: `rand(1,5) × 10` Einheiten ergibt ~1.400 Cr Erwartungswert je Angebot gegen +5 Cr/Sol Netto-Einkommen. Keine kaputte Prüfung, eine Fehlkalibrierung um eine Größenordnung.
+  - [ ] Losgröße an die Zahlungsfähigkeit binden (höchstens ~35 % des Bestands)
+  - [ ] Tauschrichtung nach Bestand wählen statt würfeln (Give = größter Überschuss, Get = knappste Ressource) — damit wird der **Tausch** statt des Credits-Kaufs zum Pfad-C-Hebel und umgeht die kaputte Credits-Ökonomie
+  - [ ] Verkaufsrichtung als dritter Angebotstyp — **eigene Owner-Entscheidung**, revidiert die Einführung des Handelsvertrags vom 2026-07-19 teilweise. Betrifft zugleich die Post-Phase-1-Ökonomie: Organika ist der einzige strukturelle Überschuss (~14/Sol bei der Zielkolonie) und aktuell nicht monetarisierbar.
 - [ ] Post-Phase-1-Ökonomie-Erholung (Kollaps bei mehreren Rang-2/3-Beratern gleichzeitig)
 - [ ] Kenntnisse-Sekundäreffekt-Matrix ausfüllen (GDD §10, aktuell nur 6 von 35 Kombinationen als Platzhalter, keine Ressourcen-/AP-Boni)
-- [ ] Hangar-Missionsnutzbarkeit (Bot/Spieler kommt praktisch nie zum Freighter-Kauf, ressourcengebende Missionen bleiben unerreicht)
+- [ ] Hangar-Missionsnutzbarkeit — **neu diagnostiziert 2026-08-02, die ursprüngliche Formulierung war ein Messartefakt.** `BotStrategy` kauft hartkodiert eine Drohne (`ship_id => 85`), deckelt auf genau ein Schiff (`! hasAnyShip`) und heuert den Raumfahrer nie an (`HIRE_ORDER = [35, 36, 92]`) — der Bot *kann* keinen Frachter kaufen. Die echten Ursachen sind andere:
+  - [ ] **Bot-Fix zuerst** (sonst ist der Vorher-Zustand nicht messbar): Schiffstyp aus dem verfügbaren Missionskatalog ableiten statt hartkodieren, Schiffs-Deckel an freie Slots binden, `HIRE_ORDER` um den Raumfahrer ergänzen und pfadabhängig machen
+  - [ ] **Zweite Hangar-Instanz kostet den vollen `build_cost` (80 Rg)** statt der 25 % Level-Up-Kosten (`ColonyController::placeBuilding`) — und wird mit Regolith bezahlt, genau der Ressource, die der Frachter beschaffen soll. Bootstrap-Zirkel, den `harvester.max_level = 1` verschärft. Betrifft ebenso Wohnhabitat-Instanzen.
+  - [ ] Drohne hat 3 ungegatete Missionen, der Frachter genau 1 (`mission_supply_run`) — die anderen drei hängen an Kenntnissen, also am Analytik-Labor. Die Drohne zuerst zu kaufen ist heute korrektes Spiel, kein Fehler.
+  - [ ] **Verdacht auf Instanz-Decay-Bug:** `GameTick::processBuildingDecay()` schreibt mit `['colony_id', 'building_id']` ohne Instanz-Unterscheidung. Bei mehreren Instanzen könnte Decay superlinear wirken. Vor jeder Pfad-B-Balance verifizieren (`qa-tester`, Regressionstest).
 
 ### Entity-Chip-Rollout — weitere Views
 
