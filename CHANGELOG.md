@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 4)
+
+**Knappheitsordnung als Owner-Entscheidung in §3 festgeschrieben:** Regolith (Standard-Baustoff, soll verfügbar sein) < Organika (seltener, kann bei Missmanagement knapp werden) < Werkstoffe (anfangs sehr begrenzt, bleibt am knappsten). Daraus folgt zwingend die Preisreihenfolge und, für die Produktionsseite, dass Regolith reichlicher zufließt als Organika verbraucht wird.
+
+Neuer **§13.7 — Regolith-Zahlensatz, hergeleitet.** Erste Fassung, die nicht aus den Bestandswerten fortgeschrieben, sondern aus sieben Spielgefühl-Aussagen abgeleitet ist. Kernpunkte: Sockel 20 Rg/Sol (Begründung ist die **Auflösung** — bei 8 gibt es nur zwei unterscheidbare Baupreisklassen, bei 20 vier bis fünf), Reparatur 1 statt 2 Rg/SP (damit gilt `Instandhaltung in Rg = in AP = Σ decay_rate`, eine Zahl für beide Währungen), `decay_rate` in vier aus „Sole bis Level-Down" abgeleiteten Klassen, Errichtung 70/95/120 gegen Level-Up flach 25 — **Breite kostet Regolith, Tiefe kostet AP**, womit die beiden Währungen aufhören redundant zu sein. Zweite und weitere Instanzen zahlen den Level-Up-Preis, was den Hangar-Bootstrap-Zirkel auflöst. Hebel-Zielgröße auf 12 Rg/Sol bei voller Reife korrigiert (die alte „~6" war der Run-Mittelwert, angewandt als Reife-Wert).
+
+§13.6 als überholt markiert statt gelöscht — der Vergleich zeigt, was der Methodenwechsel bewirkt: Die AP-Struktur hat sich bestätigt, die Regolith-Zahlen nicht.
+
+Zwei Vorschläge des Zahlensatzes durch die Knappheitsordnung zurückgewiesen: Die vorgeschlagene Preisvertauschung (Regolith teurer als Organika) hätte die Ordnung verletzt — die heutigen Preise haben die richtige Reihenfolge, nur der Abstand zu den Werkstoffen ist zu klein. Und der Organika→Regolith-Tausch als Pfad-C-Hebel fällt weg, weil er voraussetzte, dass Organika der Überschuss ist.
+
+Agrardom-Kurve differenzierter bewertet: Die Mechanik stimmt (Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum). Zu prüfen ist nur das obere Ende — ab Lv4 ist das Rennen entschieden.
+
+ROADMAP Phase 3o umgestellt: Stufe 1 heißt jetzt „Zahlensatz in einem Zug ausliefern". Mit einem Sockel, der 75 % der Zielkolonie trägt, entscheidet der Pfad-Hebel über die Größe der Kolonie statt über ihr Überleben — Pfad B löst sich weitgehend auf, Pfad C wandert aus dem Regolith-Ticket, die Post-Phase-1-Ökonomie ist entkoppelt. Blockierend ist stattdessen die Auslieferungsreihenfolge.
+
 ## 2026-08-02 (Fortsetzung 3)
 
 Neuer GDD-Abschnitt **„Zum Umgang mit den Zahlen in diesem Dokument"** (Owner-Vorgabe): Die meisten Werte in Config, DB und GDD sind Platzhalter und dürfen bei Balance-Arbeit nicht als Randbedingung behandelt werden. Ein bestehender Wert ist kein Argument — geht eine Rechnung nicht auf, ist zuerst zu prüfen, ob die zugrundeliegenden Werte stimmen, statt einen Ausgleich zu konstruieren. Geschützt sind nur ausdrücklich als Owner-Entscheidung markierte Werte (aktuell sechs, mit Fundstelle gelistet). Gilt explizit auch für Subagenten.

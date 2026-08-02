@@ -93,18 +93,38 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 
 - [x] `ap_for_levelup` in der laufenden DB verifiziert (2026-08-02): **überall 10**, nur Monument 20. Die Migration `2026_04_17_000003` (10/20/30) ist nicht aktiv. Damit stimmt die Onboarding-Budgetrechnung — der Wert ist aber ein Default, kein Balancing, und bei der Herleitung frei wählbar.
 - [ ] **`harvester.max_level` angleichen, bevor jemand `game:sync-config` ausführt.** DB und Testfixture haben 1, `config/buildings.php` hat 8; der Sync würde die Config in die DB schreiben und den Harvester still zurücksetzen. Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos — bei `max_level = 1` greift nur `production_curve[27][3][1]`.
-- [ ] Zahlenvorschlag §13.6 freigeben oder anpassen (Grundwert 10, Berater 2/3/4, `f(1)=0.5`, Boni max 42 %)
-- [ ] Höhe des `geology`-Regolith-Bonus festlegen (Vorschlag +1,5/Level)
-- [ ] Entscheiden, ob Pfad A eine Credits-Antwort braucht (§4b, zweite Paritätslücke)
+- [ ] **AP-Struktur** freigeben (§13.6, weiterhin gültig): Grundwert 10, Berater 2/3/4, `f(1) = 0.5`, Boni additiv max. 42 %
+- [ ] **Regolith-Zahlensatz** freigeben (§13.7, hergeleitet): Sockel 20, Reparatur 1 Rg/SP, `decay_rate` in vier Klassen, Errichtung 70/95/120, Level-Up flach 25, Instanz 2+ zum Level-Up-Preis
+- [ ] `bar.base_prices` nach der Knappheitsordnung (§3) — Vorschlag Rg 25 / Or 50 / Wk 110, `compound_import_price` 165
+- [x] Höhe des `geology`-Bonus: **+3/3/2/2/2, kumuliert max 12** (§13.7)
+- [x] Pfad A und Credits: `knowledge.credits` von 100 auf **0** statt eine vierte Einnahmequelle (§13.7)
 
-### Stufe 1 — Pfad-Hebel funktionsfähig machen (Voraussetzung für alles Weitere)
+### Stufe 1 — Zahlensatz in einem Zug ausliefern
 
-Reihenfolge innerhalb der Stufe beliebig, aber alle drei vor Stufe 4.
+> **Umgestellt 2026-08-02 nach §13.7.** Die frühere Fassung dieser Stufe („Pfad-Hebel funktionsfähig machen") ging davon aus, dass alle drei Hebel blockierend sind. Mit einem Sockel, der 75 % der Zielkolonie trägt, entscheidet der Hebel über die **Größe** der Kolonie, nicht über ihr Überleben — Pfad B löst sich weitgehend auf, Pfad C wandert aus dem Regolith-Ticket heraus, die Post-Phase-1-Ökonomie ist vollständig entkoppelt. Blockierend ist stattdessen die **Auslieferungsreihenfolge**: Sockel 20 ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare.
 
-- [ ] **Kenntnisse-Sekundäreffekte**: Effekt-Infrastruktur bauen (es gibt bisher keinen einzigen Ressourcen-/Produktionsbonus in `config/knowledge.php`), `geology` → Harvester-Ausbeute als erste Anwendung
-- [ ] **Hangar-Erreichbarkeit**: Frachter muss im realen Spielverlauf erreichbar sein, sonst existiert Pfad B's Hebel nur auf dem Papier
-- [ ] **Cantina-Ankaufskanal**: verlässlicher Credits→Regolith-Weg, nicht nur die Chance auf ein passendes Zufallsangebot
-- [ ] Post-Phase-1-Ökonomie-Erholung (bestehender offener Punkt, beeinflusst alle drei)
+**Ein PR, ein Zug** — alles Folgende gehört zusammen:
+
+- [ ] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten, CC-Ausbau)
+- [ ] `harvester.max_level` 8 → 1 in `config/buildings.php` (sonst setzt der nächste Sync die Owner-Entscheidung zurück)
+- [ ] Instanz-Preisregel: zweite und jede weitere Instanz zahlt Level-Up-Preis statt `build_cost` (`ColonyController::placeBuilding`) — löst den Hangar-Bootstrap-Zirkel und korrigiert dieselbe Inkonsistenz beim Wohnhabitat
+- [ ] `geology`-Effekt als hartverdrahteter Hook (~8 Zeilen in `GameTick` + Config-Key in der Shape eines späteren Frameworks). **Regel: maximal zwei hartverdrahtete Kenntniseffekte, danach zwingend das Framework** — sonst entsteht es schleichend nie.
+- [ ] `bar.base_prices` + `compound_import_price` nach der Knappheitsordnung
+- [ ] `knowledge.levelup_costs` und `credits` nachziehen
+
+### Stufe 1b — klein, danach
+
+- [ ] `mission_supply_run.sol_distance` 2 → 1 (Hebel-Zielgröße, kürzerer Entscheidungstakt)
+- [ ] `mission_aid_transport` ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, schließt zugleich die Vertrauens-Lücke von Pfad B (§4b)
+- [ ] Cantina: Losgröße an die Zahlungsfähigkeit binden + Richtungslogik (entrauscht jede spätere Messung)
+- [ ] **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg (§13.7). Offen, ob Pfad C überhaupt einen großen Regolith-Hebel braucht.
+- [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7). Die Mechanik stimmt: Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum plus Missionsproviant und Events. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen aber entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen.
+
+### Stufe 1c — Messbarkeit herstellen (vor jeder Kalibrierung)
+
+- [ ] `BotStrategy` reparieren: Schiffstyp aus dem Missionskatalog ableiten statt hartkodieren, Schiffs-Deckel an freie Slots binden, Raumfahrer in `HIRE_ORDER`
+- [ ] Verdacht auf Instanz-Decay-Bug verifizieren (`GameTick::processBuildingDecay()` schreibt ohne Instanz-Unterscheidung)
+- [ ] Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz
 
 ### Stufe 2 — AP-Pool zusammenlegen (§13.1)
 
