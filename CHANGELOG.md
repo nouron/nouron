@@ -1,5 +1,35 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung)
+
+Design-Runde zum Ratenmodell, erarbeitet gegen Code und Configs statt gegen die GDD-Richtwerte. Alles als **Arbeitsstand** markiert — nichts ist implementiert, nichts festgeschrieben.
+
+Drei Stellen im GDD waren schlicht falsch und sind korrigiert: (1) Die Supply-Formel lautete `Σ(Gebäude-Kosten)`, der Code multipliziert aber mit dem Level (`SUM(cb.level * b.supply_cost)`) — **Supply begrenzt Ausbautiefe, nicht Gebäudeanzahl.** Damit ist auch die Frage beantwortet, ob Supply neben Bauplatz und Verfall noch eine Rolle trägt: ja, die einzige, die die Tiefe limitiert, plus Verpflegungs-Skalar, Wohnhabitat-Zweck und Primäreffekt aller Kenntnisse. (2) §13.5 beschrieb ein AP-Gleichgewicht, ab dem die Instandhaltung den ganzen Zufluss bindet — das kann bei level-unabhängigem Decay und 13 Gebäudetypen (Σ 10,3 AP/Sol) nicht eintreten; umgeschrieben auf wachsende Instandhaltungslast plus Regolith als eigentliche Wachstumsgrenze. (3) „Supply-Cap begrenzt Anzahl Schiffe + Gebäude" — Schiffe kosten seit Juni kein Supply.
+
+Neuer §6-Abschnitt „Die drei Begrenzungsachsen" (Breite ← Bauplatz + Instandhaltung, Tiefe ← Supply-Cap, Tempo ← AP-Rate) mit der Breite/Tiefe-Abwägung. Kolonisten-Framing von „Phase 4+" vorgezogen, weil die Level-Multiplikation ohne es nicht intuitiv ist.
+
+Neuer §13.6 mit konkretem Zahlenvorschlag: AP-Grundwert 10, Berater-Beitrag 2/3/4 (statt 4/7/12 — sonst wäre ein Pool von 58 AP/Sol möglich), Projektkosten `base_ap × f(L)` mit `f(1) = 0.5`, Bonus-Kurve additiv max. 42 %, Budgetprobe (67 % Auslastung bis Sol 80) und Validierung an der playgetesteten Sol-1–4-Rampe. Keine Bodengarantie je Domäne (AP sind ein Fluss, kein Bestand — vier Deadlock-Kandidaten geprüft und entschärft); der Instandhaltungsanteil im Dashboard ersetzt sie.
+
+Owner-Entscheidung: **Harvester ohne Level-Up** (`max_level = 1`). Er liefert ein Grundeinkommen von 8 Rg/Sol, Wachstum kommt aus Kenntnissen, Missionen und Handel. Daraus folgt eine verbindliche Anforderung: alle drei Pfade brauchen einen eigenen Regolith-Hebel mit vergleichbarem Ertrag (~6 Rg/Sol) bei gegensätzlichem Kostenprofil — Analytik über einen `geology`-Produktionsbonus (**fehlt komplett**), Hangar über Frachter-Versorgungsfahrten (existiert), Cantina über einen garantierten Ankaufskanal (halb vorhanden).
+
+Neuer **§4b „Die drei Pfade"** — die Pfade waren bisher nur mechanisch beschrieben (Gates, Slots, Kostenbalancing, Tie-Breaks, verstreut über §4, §6, §8b, §13), aber nirgends als Designentitäten. Der Abschnitt beschreibt die drei Identitäten mit Kernversprechen, Wirkungsweise und Kostenprofil, und formuliert die **Paritäts-Anforderung**: Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob* — hat ein Pfad auf ein Grundbedürfnis (Regolith, Organika, Credits, Vertrauen) keine Antwort, wird der Pfad, der sie hat, zur Pflicht. Die Paritäts-Matrix legt zwei Lücken offen: Pfad A (Analytik) hat weder einen Regolith-Hebel noch eine eigene Credits-Quelle.
+
+Neuer Anhang A.5 (Playtest-Instrumentierung, neun Metriken mit Zielkorridoren) und Anhang B (acht Drifts zwischen GDD, Config und Code). Wichtigster Drift: die tatsächlichen `ap_for_levelup`-Werte sind nicht eindeutig — Migration sagt 10/20/30, die Onboarding-Budgetrechnung rechnet mit 10. Da `data/db/` nicht im Repository liegt, nur lokal zu klären; die Kalibrierung in §13.6 unterstellt 10.
+
+## 2026-08-02
+
+AP-Konsolidierung im GDD festgeschrieben (reine Design-Änderung, Implementierung steht aus). Drei Entscheidungen: (1) Die fünf getrennten, nicht mischbaren AP-Typen werden zu **einem gemeinsamen AP-Pool** zusammengelegt — getrennte Pools erzeugten keine Allokationsentscheidung, ungenutzte Economy- und Strategy-AP verfielen still (§16 Befund 1 damit strukturell gelöst). (2) **Ratenmodell**: AP fließen sowohl in sofortige Handlungen (Missionen, Events, Handel) als auch in Projekte über mehrere Sole (Gebäude, Kenntnisse); Parallelbau ausdrücklich erlaubt, Kostenreduktionen wirken additiv, Gelegenheiten sind durch Verfügbarkeit statt durch AP begrenzt, der Late-Game-Kipppunkt von Aufbau auf Ausführung ist gewollt. (3) **Stratege zurückgestellt** — vier Beratertypen, Slot 5 entfällt, der Sicherheits-Hub bleibt als Gebäude ohne Berater-Kopplung; seine Informationsleistungen wandern ins Dashboard.
+
+Neuer §13.1–13.5 (gemeinsamer Pool, Ratenmodell, additive Boni, Kommandozentrale-Dashboard mit Prognosen, Verfallsgrenze als emergente Koloniegröße) sowie ein Übersichtsblock nach dem Inhaltsverzeichnis, der die Entscheidungen und die offen gebliebenen Fragen bündelt.
+
+**Werkstoffe-Streichung geprüft und zurückgestellt.** Die ebenfalls diskutierte Streichung der Werkstoffe wurde nach Prüfung der Auswirkungen nicht umgesetzt: Die Ressource trägt fünf eigenständige Rollen (dritte Achse des Tauschdreiecks, Lv1-Funktion der Uplink-Station, einziger qualitativer Rang-3-Vorteil des Konsuls, zwei Missionsbelohnungen, Run-Aufgabe „Selbstversorgung"). Werkstoffe bleiben unverändert im Spiel.
+
+GDD von 3.505 auf 2.687 Zeilen verkleinert und aufgeräumt. Ausgelagert nach `docs/gdd/`: §11 Techtree, §16 Onboarding, §17 Progressive Discovery (Entitätslisten und UX-/Content-Spezifikationen, die man beim Nachdenken über Spielregeln nicht mitliest) sowie §8 Flotten und §8a Systemansicht als Archiv (beide seit 2026-06-20 gestrichen, standen aber weiterhin als Phase-4+-Referenz im Regelteil). An allen Originalstellen stehen Verweisstubs.
+
+Inhaltsverzeichnis: zwei tote Anker korrigiert (§6 „Supply-Generierung" → „Supply-System (Cap-Modell)", §10 „Forschung" → „Kenntnisse"), toter Eintrag §11.4 entfernt. AP-Reste nachgezogen, die noch von getrennten Pools ausgingen (Cantina-Verhandlung, Außenmissions-Staffel, Missionsbelohnungen, Berater-Informationsebene, Onboarding-Hinweistexte) — teils direkt korrigiert, teils als ⚠️ markiert, wo neue Zahlen nötig sind.
+
+Neuer **Anhang A — Balance- und TODO-Index**: alle 31 verstreuten `BALANCE CONCERN`- und `TODO`-Marker in vier Gruppen indexiert (blockierend vor Ratenmodell-Implementierung, Folgearbeiten aus der AP-Zusammenlegung, nach erstem Playtest zu kalibrieren, offene Designfragen). Verzeichnis, keine zweite Quelle — die maßgebliche Formulierung bleibt am Originalort.
+
 ## 2026-08-01
 
 Design System (mit Claude Design erstellt) unter `docs/design-system/` eingebunden und als verbindliche Design-Quelle verdrahtet: `.claude/skills/nouron-design` (Symlink) macht es als Skill discoverable, `ui-specialist`-Agent liest es jetzt vor jeder UI-Aufgabe. `docs/design-guide.md` entfernt — reine Optik-Inhalte sind im Design System abgedeckt, die vier verbliebenen Backend/Frontend-Engineering-Verträge (Live-Sync-Pflicht, Fehlerantwort-Format, Screen-Kompositionsregeln, Breakpoint-Details) nach neuem `docs/frontend-conventions.md` migriert statt gelöscht.

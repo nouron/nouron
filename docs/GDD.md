@@ -15,26 +15,74 @@
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
    - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
+   - 4b. [Die drei Pfade](#4b-die-drei-pfade)
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
-6. [Supply-Generierung](#6-supply-generierung)
+6. [Supply-System (Cap-Modell)](#6-supply-system-cap-modell)
 7. [Verfall & Entropie](#7-verfall--entropie)
-8. [Flotten & Flottenorders](#8-flotten--flottenorders)
-   - 8a. [Systemansicht](#8a-systemansicht)
+8. [Flotten & Flottenorders](gdd/archiv-flotten-systemkarte.md) → gestrichen, Archiv
+   - 8a. [Systemansicht](gdd/archiv-flotten-systemkarte.md) → gestrichen, Archiv
    - 8b. [Hangar-Screen](#8b-hangar-screen)
 9. [Begegnungen & Gefahren](#9-begegnungen--gefahren)
-10. [Forschung](#10-forschung)
-11. [Techtree](#11-techtree)
-    - 11.1 [Entitäten-Übersicht](#111-entitäten-übersicht)
-    - 11.2 [Abhängigkeitsregeln](#112-abhängigkeitsregeln)
-    - 11.3 [Grid-Layout (Techtree-Ansicht)](#113-grid-layout-techtree-ansicht)
-    - 11.4 [Legacy-Entitäten (entfernt)](#114-legacy-entitäten-entfernt)
+10. [Kenntnisse (ehem. Forschung)](#10-kenntnisse-ehem-forschung)
+11. [Techtree](gdd/techtree.md) → eigene Datei
 12. [Handel (Trade)](#12-handel-trade)
 13. [Berater & Aktionspunkte (AP-System)](#13-berater--aktionspunkte-ap-system)
+    - 13.1 [Ein gemeinsamer AP-Pool](#131-ein-gemeinsamer-ap-pool-entscheidung-2026-08-02)
+    - 13.2 [Ratenmodell: Handlungen und Projekte](#132-ratenmodell-handlungen-und-projekte)
+    - 13.3 [Boni: additiv, nie multiplikativ](#133-boni-additiv-nie-multiplikativ)
+    - 13.4 [Kommandozentrale: Dashboard und Prognosen](#134-kommandozentrale-dashboard-und-prognosen)
+    - 13.5 [Verfallsgrenze als natürliche Koloniegröße](#135-verfallsgrenze-als-natürliche-koloniegröße)
 14. [Moralsystem](#14-moralsystem)
 15. [Run-Struktur (Roguelike-Modus)](#15-run-struktur-roguelike-modus)
-16. [Onboarding](#16-onboarding)
-17. [Progressive Discovery System](#17-progressive-discovery-system)
+16. [Onboarding](gdd/onboarding.md) → eigene Datei
+17. [Progressive Discovery System](gdd/progressive-discovery.md) → eigene Datei
 18. [Run-Ende & Fail-State](#18-run-ende--fail-state)
+- [Anhang A — Balance- und TODO-Index](#anhang-a--balance--und-todo-index)
+
+> **Ausgelagerte Kapitel** (2026-08-02, `docs/gdd/`): §8 + §8a (gestrichen, [Archiv](gdd/archiv-flotten-systemkarte.md)), §11 [Techtree](gdd/techtree.md), §16 [Onboarding](gdd/onboarding.md), §17 [Progressive Discovery](gdd/progressive-discovery.md). Kriterium: Kapitel, die man beim Nachdenken über Spielregeln nicht mitliest — nicht mehr geltende Mechanik, Entitätslisten und UX-/Content-Spezifikationen. Die Regelkapitel §1–7, §8b, §9–10, §12–15 und §18 bleiben zusammen. Ebenfalls in `docs/gdd/`: [`entity-chips.md`](gdd/entity-chips.md).
+
+---
+
+## Arbeitsstand 2026-08-02 (AP-Konsolidierung)
+
+> **Nichts davon ist festgeschrieben.** Dies ist der Diskussionsstand einer laufenden Design-Runde, nicht ein Beschluss. **Kein Punkt ist implementiert** — weder in `config/`, noch in der Datenbank, noch im Code. Alles bleibt anpassbar, auch die Richtungsentscheidungen unten. Der Zweck dieses Abschnitts ist, den Stand nachvollziehbar zu halten, damit die nächste Runde nicht bei null anfängt.
+
+Richtungsentscheidungen aus der Konsolidierungs-Session:
+
+| # | Richtung | Wo |
+|---|---|---|
+| 1 | **Ein gemeinsamer AP-Pool** statt fünf getrennter, nicht mischbarer AP-Typen | §13.1 |
+| 2 | **Ratenmodell**: AP fließen sowohl in sofortige Handlungen als auch in Projekte über mehrere Sole; Parallelbau erlaubt, Boni additiv | §13.2, §13.3 |
+| 3 | **Stratege zurückgestellt** — vier Beratertypen, Slot 5 entfällt | §13 |
+| 4 | **Harvester ohne Level-Up** (`max_level = 1`) — liefert ein Regolith-Grundeinkommen, Wachstum kommt aus Kenntnissen, Missionen und Handel | §13.5 |
+
+Dazu drei Korrekturen an Stellen, die schlicht falsch waren:
+
+| Was | Ort |
+|---|---|
+| Supply-Formel: `Σ(Level × supply_cost)`, nicht `Σ(Gebäude-Kosten)` — Supply begrenzt **Tiefe**, nicht Anzahl | §6 |
+| §13.5 „Verfallsgrenze" beschrieb ein AP-Gleichgewicht, das bei den aktuellen Werten nicht eintreten kann | §13.5 |
+| „Supply-Cap begrenzt Anzahl Schiffe + Gebäude" — Schiffe kosten seit 2026-06-08 kein Supply | §6 |
+
+Ein konkreter Zahlenvorschlag für Grundwert, Projektkosten und Bonus-Kurve liegt in **§13.6** — ausdrücklich als Vorschlag, ohne Entscheidung.
+
+> **Zurückgestellt: Werkstoffe streichen.** Die Streichung der Werkstoffe (Credits übernehmen die Rolle) war Teil derselben Session und wurde **bewusst nicht umgesetzt**. Die Prüfung der Auswirkungen ergab, dass die Ressource tiefer im Spiel verankert ist als angenommen: Sie trägt die dritte Achse des Tauschdreiecks (§4a), die tragende Lv1-Funktion der Uplink-Station (§4), den einzigen qualitativen Rang-3-Vorteil des Konsuls (§12), zwei Missionsbelohnungen (§8b) und eine Run-Aufgabe (§15). Werkstoffe bleiben vorerst unverändert im Spiel; eine Streichung wäre ein eigenes Vorhaben mit Ersatz für jede dieser fünf Rollen.
+
+### Offene Punkte aus dieser Session
+
+Diese Fragen sind mit den obigen Entscheidungen **nicht** beantwortet und brauchen eine eigene Runde:
+
+| Thema | Frage | Wo |
+|---|---|---|
+| **Balancing Ratenmodell** | AP-Zufluss pro Runphase, Projektkosten je Gebäudelevel, Bonus-Kurve, Lage des Verfall-Gleichgewichts | §13.5 |
+| **Grundwert AP** | Wie hoch ist der Grundwert des gemeinsamen Pools? Nicht die Summe der alten 5 × 6 | §13 „Verfügbare AP" |
+| **Early-Game-Tempo** | Erstes Gebäudelevel deutlich günstiger als Folgelevel? | §13.5 |
+| **Braucht es Versorgung noch?** | Mit Bauplatz, AP-Rate und Verfall existieren drei Begrenzungen — trägt Supply noch eine eigene Rolle, oder wird es zum reinen Früh-Gate? | §6 |
+| **Werkstoffe** | Bleiben vorerst. Falls die Streichung später erneut geprüft wird: Ersatz für Tauschdreieck, Uplink Lv1, Konsul Rang 3, zwei Missionen, Run-Aufgabe 4 | §3 |
+| **Bodengarantie** | Mindestanteil je Domäne, oder freie Allokation ohne Untergrenze? | §13.1 |
+| **Stratege** | Später neu bewerten und designen — als eigener Pfad oder als Modifikator der anderen? | §13 |
+
+> **GDD-Aufräumen ist erledigt** (2026-08-02): TOC-Anker korrigiert, gestrichene Kapitel §8/§8a ins Archiv ausgelagert, AP-Reste nachgezogen, alle Balance- und TODO-Marker in [Anhang A](#anhang-a--balance--und-todo-index) indexiert. Die dort gelisteten Punkte bleiben offen — sie sind jetzt nur auffindbar.
 
 ---
 
@@ -290,19 +338,23 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 | 44 | hangar | Hangar | Hangar | — | **CC Lv2** (vormals CC Lv3), Teil der **Pfadwahl** (siehe unten) |
 | 32 | temple | Religiöse Stätte | Sacred Site | — | CC Lv4 |
 | 50 | monument | Kolonialdenkmal | Colonial Monument | — | CC Lv5 |
-| 53 | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv3 (Strategen-Pfad, siehe unten) |
+| 53 | securityHub | Sicherheits-Hub | Security Hub | 3 | CC Lv3 |
 | 54 | uplinkStation | Uplink-Station | Uplink Station | 3 | CC Lv2 |
 | 55 | tradingPost | Handelsposten | Trading Post | 3 | CC Lv4 |
 
 > **Designentscheidung (2026-06-24) — Agrardom wird Pflichtgebäude vor CC Lv2.** Agrardom war bisher Teil der "Sol-3-Wahlfreiheit" (Cantina/Agrardom/Analytik, alle CC Lv2). Das widersprach der strikten Sol-1/2-Linearität (§16.5): Sol 1/2 garantieren bislang nur Bau- und Erkundungs-AP-Verwendung, keine Ressourcenfluss-Garantie. Ohne Agrardom bliebe Organika auf 0, bis der Spieler — möglicherweise erst Sole nach CC Lv2 — den Agrardom-Pfad wählt; in der Zwischenzeit frisst die Verpflegungsmechanik (§4a "Organika") den nicht vorhandenen Vorrat und der eskalierende Trust-Malus (`TrustService::hungerPenalty`) greift potenziell schon vor der ersten bewussten Wirtschaftsentscheidung. Agrardom wird daher aus der Wahlgruppe herausgelöst und zum **Pflicht-Gate für den CC-Lv2-Ausbau**: Der CC-Levelup-Endpoint prüft zusätzlich zu den AP-Kosten, ob Agrardom ≥ Lv1 gebaut ist. Das ändert nichts an der bisherigen Hint-Logik (`hint_agrardome` lief ohnehin unabhängig von der Wahlgruppe, siehe §16.2 "Agrardom ist unabhängig") — es macht aus einer starken Empfehlung ein hartes Gate.
 >
-> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar (Hangar-Gate von CC Lv3 auf CC Lv2 gesenkt), aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Siehe §13 "Pfadwahl & generische Berater-Slots" für das vollständige Modell.
+> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar (Hangar-Gate von CC Lv3 auf CC Lv2 gesenkt), aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Was die drei Pfade inhaltlich sind, steht in **§4b „Die drei Pfade"**; die Slot- und Gate-Mechanik in §13 „Slot-System".
 >
-> **Sicherheits-Hub (CC Lv3) — Strategen-Pfad:** Der Sicherheits-Hub ist analog zu den drei Pfad-Gebäuden das Gate für den Strategen-Slot (Slot 5). Er ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates viertes Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. Beim Bau öffnet der Strategen-Slot — unabhängig davon, welche der drei Pfad-Gebäude der Spieler bereits gewählt hat. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
+> **Sicherheits-Hub (CC Lv3) — optionaler Resilienz-Baustein:** Der Sicherheits-Hub ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
+>
+> **Geändert 2026-08-02:** Der Hub war bis dahin zusätzlich das Gate für den Strategen-Slot (Slot 5). Mit der Zurückstellung des Strategen (§13 „Die vier Berater-Typen") entfällt diese Funktion. Der Hub behält seine drei eigenständigen Effekte und ist damit ein rein optionaler Resilienz-Baustein ohne Berater-Kopplung.
 
 > **Harvester (Sondergebäude):** Der Harvester unterscheidet sich von allen anderen Gebäuden: Er steht nicht in der Kolonie-Zone, sondern auf einem Ressourcen-Tile in der Exploration Zone. Er produziert passiv je nach Tile-Typ (Regolith oder andere Mineralien). Er kann verlegt werden (Kosten: 1 Construction-AP **pro Hex Distanz**, keine Ressourcenabzüge; Transit-Zeit: **1 Sol flat**, unabhängig von der Distanz — der Harvester produziert im Transit-Sol nicht). Es gibt genau einen Harvester pro Kolonie. Technisch ist er ein Gebäude mit einer `tile_x/tile_y`-Position statt eines Kolonie-Slots.
 
-> **Designentscheidung Harvester-Transit (2026-06-28):** Eine distanzabhängige Transit-Zeit (z. B. 1 Sol pro 2 Hex) wurde geprüft und **verworfen**. Die AP-Kosten skalieren bereits mit der Distanz (1 AP/Hex) und erzeugen damit das gewünschte Planungs-Druckgefühl. Eine zusätzliche Sol-Staffel wäre eine doppelte Strafe für lange Verlegungen und würde im Transit Reparaturen blockieren (Reparatur kostet Regolith — kein Regolith-Zufluss ohne Harvester), was eine unkontrollierte Decay-Spirale riskiert. Der 1-Sol-Stopp ist ausreichend: 1 Sol ohne Regolith-Produktion (= 10 Rg Opportunitätsverlust bei Lv1) bei gleichzeitig bis zu 5 AP-Kosten bei einer Fünf-Hex-Verlegung. Falls der Playtest zeigt, dass Harvester-Verlegungen zu oft ohne Nachdenken passieren, ist der bessere Hebel die AP-Rate (1 AP/Hex erhöhen), nicht die Sol-Downtime.
+> **Designentscheidung Harvester-Transit (2026-06-28):** Eine distanzabhängige Transit-Zeit (z. B. 1 Sol pro 2 Hex) wurde geprüft und **verworfen**. Die AP-Kosten skalieren bereits mit der Distanz (1 AP/Hex) und erzeugen damit das gewünschte Planungs-Druckgefühl. Eine zusätzliche Sol-Staffel wäre eine doppelte Strafe für lange Verlegungen und würde im Transit Reparaturen blockieren (Reparatur kostet Regolith — kein Regolith-Zufluss ohne Harvester), was eine unkontrollierte Decay-Spirale riskiert. Der 1-Sol-Stopp ist ausreichend: 1 Sol ohne Regolith-Produktion (= 8 Rg Opportunitätsverlust) bei gleichzeitig bis zu 5 AP-Kosten bei einer Fünf-Hex-Verlegung. Falls der Playtest zeigt, dass Harvester-Verlegungen zu oft ohne Nachdenken passieren, ist der bessere Hebel die AP-Rate (1 AP/Hex erhöhen), nicht die Sol-Downtime.
+>
+> **Nachtrag 2026-08-02:** Mit `max_level = 1` (§13.5) wiegt der Transit-Sol relativ schwerer, weil das Grundeinkommen die einzige passive Regolith-Quelle bleibt. Der Verlegungsanreiz sinkt zugleich, da Tile-Ergiebigkeit nicht mehr über Level multipliziert wird — beides im Playtest zu beobachten.
 
 > **Verlege-Vorschau mit Ertragsvergleich (Playtest-Review 2026-07-11):** Der Vorschaupfeil zeigt neben den AP-Kosten auch den Ertragsvergleich aktuelles vs. Ziel-Tile (z. B. „3 AP · 10→15 Rg"). Grund: Der Onboarding-Hint lehrt die Mechanik korrekt, gab dem Spieler aber keine Entscheidungsgrundlage — er jagte ergiebigeren Tiles hinterher und verbrannte Bau-AP. Statt einer paternalistischen Warnung informiert die Vorschau die Abwägung (Catan-Designlinie: Entscheidungen ohne Optimalpfad). Ergänzend nennt der First-Click-Tooltip die Opportunitätskosten („lohnt nur, wenn das Ziel spürbar ergiebiger ist").
 
@@ -334,7 +386,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 **2. Level-Up (jedes Level, flach — keine Eskalation):**
 - **Regolith = 25 % der Errichtungskosten, fest pro Level** (z. B. Wohnhabitat 10/Lvl, Cantina ~17/Lvl, Analytik-Labor 20/Lvl, Hangar ~22/Lvl). Bewusst keine pro-Level-Steigerung. Abzug erst beim **Abschluss** des Level-Ups (`ap_spend ≥ ap_for_levelup`), nicht pro AP-Klick → AP-Invest bleibt reibungsarm.
 - **CC-Upgrade (Sonderfall):** skaliert mit `Ziel-Level × 30` Regolith (Lv2 = 60 … Lv5 = 150) — das CC ist der zentrale Progressionshebel und soll eine bewusste Regolith-Investition bleiben.
-- Harvester: Level-Up regolithfrei (Bootstrap-Schutz).
+- Harvester: **kein Level-Up** (`max_level = 1`, Entscheidung 2026-08-02, §13.5). Er liefert ein festes Regolith-Grundeinkommen; Wachstum kommt aus Kenntnissen, Missionen und Handel.
 
 **3. Reparatur (laufender Dauer-Sink):**
 - **2 Regolith pro Klick** (+1 SP), zusätzlich zu 1 Construction-AP. Decay läuft bis Run-Ende → Reparatur hält Regolith über den gesamten Run relevant (Errichtungs-/Level-Up-Kosten allein versiegen nach Vollausbau).
@@ -349,7 +401,7 @@ Der Hex-Bau-Flow zieht Ressourcen ab (canonical source: `config/buildings.php �
 
 ### Sicherheits-Hub (securityHub) — Mechanik
 
-Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv3, max. Lv3). Er öffnet beim Bau den **Strategen-Slot** (Slot 5) — analog zu den drei Pfad-Gebäuden die die Slots 2–4 öffnen, aber außerhalb der Pfadwahl-Gruppe: der Hub ist kein Pfadwahl-Kandidat und unterliegt keinem Pfadwahl-Bau-Gate. Er bietet drei unabhängige Effekte:
+Der Sicherheits-Hub ist ein auf 1 Instanz begrenztes Infrastrukturgebäude (CC Lv3, max. Lv3). Er ist kein Pfadwahl-Kandidat und unterliegt keinem Pfadwahl-Bau-Gate. Seit der Zurückstellung des Strategen (2026-08-02) öffnet er **keinen Berater-Slot mehr** — er trägt sich vollständig über seine drei unabhängigen Effekte:
 
 **Passiv — Vertrauen-Bonus:**
 `trust_per_lv = 1` pro Level (Lv1: +1, Lv2: +2, Lv3: +3 Vertrauen kumuliert). Thematisch: "Die Bevölkerung fühlt sich durch Schutzinfrastruktur sicherer." Bewusst niedriger als Bar (+2/Level) und Monument (+2/Level) — Sicherheitsinfrastruktur ist utilitaristisch, kein Wohlfahrtsgut.
@@ -360,7 +412,7 @@ Wenn der Hub aktiv ist, werden negative Vertrauensverluste aus Zwischenfällen u
 **Passiv — Level-Down-Recycling:**
 Wenn ein Gebäude durch Decay ein Level verliert, gibt die Kolonie automatisch einen kleinen Ressourcenanteil zurück (handelbare Ressourcen: Regolith, Werkstoffe, Organika). `recycle_pct = 0.10` — 10 % der Baukosten des Gebäudes werden zurückgegeben. Der Wert liegt bewusst deutlich unter dem Reparaturwert, damit kein Anreiz entsteht, Verfall absichtlich zu provozieren.
 
-> **TODO Balance:** Alle drei Effekte (trust-Bonus, Event-Dämpfungs-%, Recycling-%) nach erstem Playtest kalibrieren. Baukosten vorläufig: 80 Rg + 25 Compounds, Supply 8, Decay 0.67. Compounds-Anforderung ist akzeptiert: Hub ist kein Progression-Gate (CC Lv3 hat kein Pflichtgebäude), sondern ein optionaler Resilienz-Baustein. In runs mit schlechtem Trade-Zugang kann der Hub später kommen — das verzögert den Strategen-Slot, blockiert ihn aber nicht dauerhaft.
+> **TODO Balance:** Alle drei Effekte (trust-Bonus, Event-Dämpfungs-%, Recycling-%) nach erstem Playtest kalibrieren. Baukosten vorläufig: 80 Rg + 25 Compounds, Supply 8, Decay 0.67. Compounds-Anforderung ist akzeptiert: Hub ist kein Progression-Gate (CC Lv3 hat kein Pflichtgebäude), sondern ein optionaler Resilienz-Baustein. In runs mit schlechtem Trade-Zugang kann der Hub später kommen — das verzögert nichts Zwingendes.
 
 > **Entfernt (2026-06):** Der frühere Passiveffekt "defend-Order kostet 1 Nav-AP statt 2" wurde mit dem Flotten-/Galaxie-Layer entfernt (§8 GESTRICHEN). Er bleibt als Design-Kandidat für eine spätere Wiedereinführung wenn §8 reaktiviert wird.
 
@@ -387,7 +439,7 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
 
 **Passiv — Konsul-Effizienz:**
-Trade-Orders des Konsuls kosten 1 Economy-AP weniger (Minimum 0). Nur relevant wenn ein Konsul aktiv ist.
+Trade-Orders kosten 1 AP weniger (Minimum 0). Nur relevant wenn ein Konsul aktiv ist — dies ist ein Beispiel für einen Domänen-Effizienzbonus (§13.3).
 
 **Passiv — Händlerkonditionen:**
 Der Reisende Händler bietet bei Anwesenheit eines Handelspostens bessere Preiskonditionen (+10–15 % Handelswert). Konkreter Wert nach Playtest kalibrieren.
@@ -402,7 +454,7 @@ Jedes Koloniegebäude hat ein `status_points`-Feld. Das Maximum (`max_status_poi
 
 **Leveled vs. Instanced Buildings:**
 
-- **Leveled** — ein Objekt auf einem Tile, wird stufenweise ausgebaut (z.B. CC Lv1→5, Harvester, Agrardom). Ein Klick auf das Tile → "Ausbauen".
+- **Leveled** — ein Objekt auf einem Tile, wird stufenweise ausgebaut (z.B. CC Lv1→5, Agrardom). Ein Klick auf das Tile → "Ausbauen". (Der Harvester ist seit 2026-08-02 **nicht** mehr leveled — `max_level = 1`, §13.5.)
 - **Instanced** — jede Einheit ist ein eigenes Objekt auf einem eigenen Tile (z.B. Wohnhabitat max. 6 Einheiten, Hangar). Jede Instanz kann separat auf Lv1–3 ausgebaut werden und hat eigene Status-Points.
 
 Das Config-Flag `is_instanced` in `config/buildings.php` steuert das Verhalten. In der DB haben Instanced Buildings eine `instance_id` als Teil des zusammengesetzten PK (`colony_id + building_id + instance_id`).
@@ -594,6 +646,61 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 
 ---
 
+## 4b. Die drei Pfade
+
+Ab CC Lv2 stehen dem Spieler drei Gebäude offen — **Analytik-Labor**, **Hangar** und **Cantina** —, von denen zunächst nur eines gebaut werden kann. Diese Wahl ist die erste strategische Weichenstellung eines Runs und prägt seinen weiteren Verlauf.
+
+Die Mechanik der Pfadwahl (Bau-Gates, Berater-Slots, Reihenfolge-Auflösung) steht in §13 „Slot-System"; die Kostenbalance in §6 „Pfadwahl-Kostenbalancing". Dieser Abschnitt beschreibt, **was die Pfade sind** — als Designentitäten, nicht als Gate-Logik.
+
+### Was ein Pfad ist — und was er nicht ist
+
+Ein Pfad ist **kein Ausschluss, sondern eine Sequenzierung.** Wer bei CC Lv2 die Cantina baut, bekommt Analytik-Labor und Hangar bei CC Lv3 bzw. Lv4 trotzdem — nur später. Die Wahl bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das folgt dem Prinzip aus §1.1: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen.
+
+Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seinem Bereich — plus den zugehörigen Berater-Slot, der entsprechend früher besetzbar ist.
+
+### Die drei Identitäten
+
+| | **A — Analytik-Labor** | **B — Hangar** | **C — Cantina** |
+|---|---|---|---|
+| Berater | Analytiker | Raumfahrer | Konsul |
+| Domäne (§13.1) | Wissen | Navigation | Wirtschaft |
+| Kernversprechen | *Einmal investieren, dauerhaft profitieren* | *Aktiv arbeiten, breit versorgen* | *Flexibel zukaufen, stabil bleiben* |
+| Schaltet frei | alle sieben Kenntnisse (§10) | Drohne, Frachter, Korvette + Außenmissionen (§8b) | Handelsangebote, Verhandlung (§12) |
+| Wirkt über | permanente Boni ohne laufende Kosten | wiederholbare Missionen mit laufendem Aufwand | Credits-Umwandlung nach Bedarf |
+| Bezahlt mit | AP im Voraus | AP + Organika + Verschleiß, laufend | Credits, laufend |
+| Risiko | langsamer Start, Ertrag kommt spät | Logistikaufwand jeden Sol, Schiffe verschleißen | Angebotslage ist nicht vollständig planbar |
+
+**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihr Primäreffekt ist der Supply-Cap-Bonus (§6), also mehr Ausbautiefe. Der Analytiker liefert zusätzlich den stärksten Außenmissions-Bonus des Spiels (eine Kenntnis steigt gratis um ein Level, §13). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
+
+**Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith, Organika, Credits, Almanach-Funde und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
+
+**Pfad C — Cantina.** Der Pfad der Flexibilität. Der Konsul bringt mit dem Handelsvertrag eine garantierte Sol-Einnahme (§12), die Cantina selbst gibt Vertrauen (`trust_per_lv`), und der Handel erlaubt, jeden konkreten Engpass gegen Credits zu lösen — statt ihn produzieren zu müssen. Wer diesen Pfad zuerst geht, ist gegen Überraschungen am besten aufgestellt, hängt dafür aber an der Credits-Decke und an der Angebotslage.
+
+### Paritäts-Anforderung: jeder Pfad muss die Grundbedürfnisse decken
+
+**Dies ist die zentrale Designregel der Pfadwahl.** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Eine Kolonie braucht unabhängig vom gewählten Pfad Regolith, Credits, Organika und Vertrauen. Hat ein Pfad auf eines dieser Grundbedürfnisse keine Antwort, wird der Pfad, der sie hat, faktisch zur Pflicht — und die Pfadwahl zur Scheinentscheidung.
+
+Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Sockel**, den jede Kolonie hat. Was ein Pfad beisteuert, ist der Hebel darauf:
+
+| Grundbedürfnis | Sockel (alle) | Pfad A — Analytik | Pfad B — Hangar | Pfad C — Cantina |
+|---|---|---|---|---|
+| **Regolith** | Harvester, 8/Sol | `geology` steigert die Ausbeute — ⚠️ **fehlt komplett** | `mission_supply_run`, 6,25/Sol je Frachter | Credits→Regolith-Ankauf — ⚠️ **nur Verkaufsrichtung garantiert** |
+| **Organika** | Agrardom | `agronomy` — ⚠️ Effekt zu prüfen | `mission_supply_run`, 10 je Umlauf | Ankauf über Bar-Angebote |
+| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ **keine eigene Quelle** | Botenflug / Konvoi-Begleitung, 180–200 je Mission | Handelsvertrag 10/25/45 Cr/Sol + Handelsgewinne |
+| **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (+2) | Cantina `trust_per_lv` + Handelserfolge |
+
+> **⚠️ Zwei offene Lücken (2026-08-02).** Pfad A hat aktuell **weder** einen Regolith-Hebel **noch** eine Credits-Quelle. Der Regolith-Hebel ist mit dem Harvester-Umbau (§13.5) blockierend geworden — ohne ihn wird Pfad B zur Pflicht, sobald der Harvester nicht mehr levelbar ist. Die Credits-Lücke ist älter und weniger akut (Relaisvergütung und Ratssubvention laufen für alle), sollte aber mitgedacht werden: Ein Analytik-Run finanziert seine Berater heute schlechter als die anderen beiden.
+>
+> Kandidaten für Pfad A: `geology` → Regolith-Produktionsbonus (Vorschlag +1,5/Level, §13.5); für Credits ein Kenntnis-Effekt, der Kosten senkt statt Einnahmen zu schaffen — das passt besser zum Pfadcharakter „einmal investieren, dauerhaft profitieren" als eine weitere Einnahmequelle.
+
+> **Prüfregel für künftige Mechaniken:** Wird eine neue Ressource, Kosten- oder Bedarfsachse eingeführt, ist zu prüfen, ob alle drei Pfade sie bedienen können. Ist das nicht der Fall, ist entweder die Mechanik anzupassen oder den unterversorgten Pfaden ein Hebel zu geben — **nicht** die Ungleichheit hinzunehmen.
+
+### Der Sicherheits-Hub ist kein vierter Pfad
+
+Der Sicherheits-Hub (CC Lv3) war bis 2026-08-02 als „Pfad D" mit dem Strategen-Slot gekoppelt. Mit der Zurückstellung des Strategen (§13) ist er ein **optionaler Resilienz-Baustein** ohne Berater-Kopplung und ohne Pfadwahl-Gate. Er steht außerhalb dieser Systematik.
+
+---
+
 ## 5. Ressourcenproduktion
 
 ### Mechanik
@@ -646,13 +753,38 @@ Supply ist **kein fliessender Pool**, sondern ein **Kapazitätsdeckel** (Cap-Mod
 
 ```
 supply_cap    = CC-Level × 10 + Anzahl-Wohnkomplexe × 8 + Σ(Kenntnisse-Cap-Bonus)
-laufende_last = Σ(Gebäude-Kosten)
+laufende_last = Σ(Gebäude-Level × supply_cost)
 freies_supply = supply_cap − laufende_last
 ```
 
+> **Korrigiert 2026-08-02:** Die Formel lautete zuvor `laufende_last = Σ(Gebäude-Kosten)` und las sich als Pro-Gebäude-Wert. **Der Code multipliziert mit dem Level** — `SUM(cb.level * COALESCE(b.supply_cost, 0))` in `ResourcesService::getSupplyBreakdown()`, `GameTick.php` und `ValidateColony.php`. Der Abschnitt „Supply im Sol" weiter unten hatte es bereits korrekt. Die Unterscheidung ist nicht kosmetisch: **Supply begrenzt Ausbautiefe, nicht Gebäudeanzahl** — davon hängt ab, welche Rolle Supply im Gesamtmodell trägt (siehe „Die drei Begrenzungsachsen").
+
+### Die drei Begrenzungsachsen
+
+Die Koloniegröße wird von drei unabhängigen Achsen begrenzt. Jede hat eine eigene Währung, in der bezahlt wird — das ist der Catan-Zuschnitt aus §1.2: kein Optimalpfad, jede Strategie hat ihren eigenen Preis.
+
+| Achse | begrenzt | wird bezahlt mit |
+|---|---|---|
+| **Breite** — Anzahl Gebäudetypen | Bauplatz (15 Tiles) | Instandhaltung: Σ `decay_rate` in AP **und** 2 Rg je SP, jeden Sol |
+| **Tiefe** — Summe der Gebäudelevel | **Supply-Cap** | — (reines Cap, kein laufender Abfluss) |
+| **Tempo** | AP-Rate (§13.2) | die 100-Sol-Uhr (§18.4) |
+
+Daraus folgt die Strategie-Abwägung:
+
+| Strategie | wird billig | wird teuer |
+|---|---|---|
+| **Breit** (viele Gebäude auf niedrigem Level) | AP (Errichten kostet nur die halben Levelup-Kosten, §13.3), Supply (nur 1 Level je Gebäude) | Bauplatz, Instandhaltung (Decay zählt pro Gebäudetyp, level-unabhängig) |
+| **Tief** (wenige Gebäude hoch) | Bauplatz, Instandhaltung | AP (Kostenkurve wächst mit dem Level), Supply-Cap (Level × `supply_cost`) |
+
+> **Warum die Spreizung der `supply_cost`-Werte trägt:** Die Nennwerte liegen bei 2–10, aber weil sie mit dem Level multipliziert werden, ist die effektive Spreizung weit größer. Produktionsgebäude sind supply-billig (2/Level), Dienstleistungsgebäude teuer (8–10/Level). „Analytik-Labor Lv3" (24) bindet so viel Cap wie „Harvester Lv8 + Agrardom Lv4" (16 + 8). Das ist die eigentliche Kompositionsentscheidung des Supply-Systems — sie war nur durch die zweideutige Formel oben nicht sichtbar.
+
+> **Geprüft und verworfen (2026-08-02): Supply streichen.** Nach der AP-Zusammenlegung stand die Frage im Raum, ob Supply neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt. Die Prüfung ergab: ja, und zwar die einzige, die die **Tiefe** begrenzt. Zusätzlich hängen vier weitere Mechaniken daran — die Verpflegung (`food_need = intdiv(usedSupply, 4)`, §4a; Supply ist der Bevölkerungsskalar, an dem die Hunger→Vertrauen-Spirale hängt), das **Wohnhabitat** (`supply_cap 8`, sonst keinerlei Funktion — ohne Supply ein leeres Gebäude), der **Supply-Cap-Bonus als Primäreffekt aller sieben Kenntnisse** (§10), und der CC-Ausbau. Supply bleibt unverändert.
+
 > **Design-Entscheidung (2026-06-08):** Schiffe wurden aus der Supply-Last entfernt. Begründung: Schiffe sind räumlich getrennt von der Kolonie (externe Flotte), thematisch eigenversorgt, und bereits durch Hangar-Slots + Tile-Budget begrenzt. Supply als zweiter Limiter war redundant und thematisch inkonsistent. Flottenausbau wird weiterhin gebremst durch: Credits (Nexus-Kosten), Lieferzeit, und Navigator-AP.
 
-> **Design-Konzept (2026-06-08, nicht implementiert):** Supply könnte langfristig als **Kolonisten-Framing** dargestellt werden — "47 Kolonisten im Einsatz / 60 verfügbar" statt "Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Gebäude brauchen dann eine Anzahl Kolonisten zum Betrieb statt einer abstrakten Supply-Zahl. Implementierungsaufwand: minimal (nur Labels + Tooltips). Einzuplanen wenn Supply-Abstraktheit in Playtest als Verständnis-Problem auftaucht.
+> **Kolonisten-Framing — vorgezogen (2026-08-02, war „Phase 4+"):** Supply wird als **Kolonisten** dargestellt — „47 Kolonisten im Einsatz / 60 verfügbar" statt „Supply 47/60". Mechanik bleibt identisch (Cap-Modell), nur die UI-Sprache wird konkreter. Implementierungsaufwand: minimal (nur Labels + Tooltips).
+>
+> **Warum jetzt statt später:** Die Level-Multiplikation ist ohne Framing nicht intuitiv — bei einer abstrakten Zahl „Supply" versteht kein Spieler, warum ein Labor auf Lv3 dreimal so teuer ist wie auf Lv1. Mit Kolonisten ist es selbsterklärend: *ein größeres Labor braucht mehr Leute.* Da die Formel mit dem Ratenmodell ohnehin klargestellt wird, gehört das Framing in denselben Schritt.
 
 Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kosten der neuen Einheit`.
 
@@ -778,13 +910,16 @@ Das freie Supply (für Enforcement-Checks) ergibt sich live: `cap − Σ(entity_
 
 | Mechanismus | Was er begrenzt | Zeithorizont | Gegenmaßnahme |
 |-------------|----------------|--------------|---------------|
-| Supply-Cap | Anzahl Schiffe + Gebäude | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
-| AP | Aktionen pro Tag | täglich | mehr/bessere Berater |
-| Gebäude-Decay | Stand von Gebäuden | täglich | Reparatur-AP investieren |
-| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Sol auf Außenmission | Reparatur (1 Construction-AP/Klick) |
+| Supply-Cap | **Summe der Gebäudelevel** (Ausbautiefe) | permanent | CC ausbauen, Wohnhabitate bauen, Kenntnisse erforschen |
+| Bauplatz | Anzahl Gebäude (15 Tiles) | permanent | — (harte Grenze) |
+| AP | Arbeitsleistung pro Sol | täglich | mehr/bessere Berater, Kostenboni (§13.3) |
+| Gebäude-Decay | Stand von Gebäuden; skaliert mit der **Anzahl Gebäudetypen**, nicht mit deren Level | täglich | Reparatur (1 AP + 2 Regolith je SP) |
+| Schiffs-Verschleiß | Zustand aktiv genutzter Schiffe | pro Sol auf Außenmission | Reparatur (1 AP/Klick) |
 | Berater-Burnout | AP-Kapazität bei Überbelastung | probabilistisch | Erholungsphase abwarten |
 
-Diese drei Mechanismen sind bewusst unabhängig voneinander.
+> **Korrigiert 2026-08-02:** Die Zeile für den Supply-Cap lautete „Anzahl Schiffe + Gebäude" — beides falsch. Schiffe kosten seit dem 2026-06-08 kein Supply, und begrenzt wird die Summe der Level, nicht die Anzahl. Auch der Schlusssatz „Diese drei Mechanismen" passte nicht zur fünfzeiligen Tabelle.
+
+Die Mechanismen sind bewusst unabhängig voneinander — mit einer Ausnahme, die **keine** ist: Decay und Bauplatz greifen beide an der Breite an (siehe „Die drei Begrenzungsachsen" oben). Das ist gewollt: Breite kostet einmalig Bauplatz und dauerhaft Instandhaltung, Tiefe kostet einmalig AP und dauerhaft nichts, dafür permanent Supply-Cap.
 
 ---
 
@@ -941,8 +1076,8 @@ burnout_chance(tick) = base_chance × growth_factor^(active_ticks / threshold) �
 **Was passiert bei Burnout:**
 - `unavailable_until_tick = current_tick + recovery_ticks` (Richtwert: 5–15 Sole, abhängig von Rang)
 - `active_ticks` wird **zurückgesetzt** (der Berater startet frisch nach der Erholung)
-- Der AP-Pool dieses Typs fällt für die Dauer auf den Grundwert (6 AP/Sol)
-- INNN-Ereignis: „[Name] benötigt eine Auszeit — [AP-Typ]-Kapazität vorübergehend reduziert."
+- Der gemeinsame AP-Pool (§13.1) sinkt für die Dauer um den AP-Beitrag dieses Beraters; sein Domänen-Effizienzbonus (§13.3) entfällt ebenfalls
+- INNN-Ereignis: „[Name] benötigt eine Auszeit — Kolonie-Kapazität vorübergehend reduziert."
 
 **Rang-Erholungszeiten:**
 
@@ -962,131 +1097,13 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 ---
 
-## 8. Flotten & Flottenorders
+## 8. Flotten & Flottenorders · 8a. Systemansicht
 
-> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Galaxie- und Systemkarte samt Flottenbewegung/-kampf wurden entfernt (Backend, Tabellen `fleets`/`fleet_*`/`glx_system*`, Services). Schiffe existieren weiterhin ausschließlich über den **Hangar** (§8b) inkl. Außenmissionen (Dispatch). Der folgende Abschnitt bleibt als Referenz für eine mögliche spätere Wiedereinführung (Phase 4+) erhalten, beschreibt aber **keinen aktuellen Spielstand**.
-
-### Flottenorders
-
-Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle gespeichert. Jede Order ist einem Tick zugewiesen und wird beim zugehörigen Tick genau einmal verarbeitet (`was_processed = 1` nach Ausführung).
-
-### Navigation-AP-Kosten je Order-Typ
-
-Jede Flottenorder verbraucht Navigation-AP, die durch Raumfahrer generiert werden (siehe Abschnitt 13). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — konfrontative Orders sind teurer als zivile (siehe Abschnitt 1.1, Designprinzip "Aufbau vor Konflikt").
-
-| Order-Typ | Navigation-AP-Kosten | Kategorie |
-|-----------|----------------------|-----------|
-| move | 1 | zivil |
-| hold | 1 | zivil |
-| trade | 1 | zivil |
-| join | 1 | zivil |
-| convoy | 1 | zivil |
-| defend | 2 | semi-militarisch |
-| attack | 3 | militarisch |
-
-> Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
-
-### Move-Order
-
-Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensystems.
-
-**Bewegungs-Mechanik (Phase 2):**
-- Bewegung geschieht über mehrere Sole — die Flotte teleportiert sich nicht sofort
-- Geschwindigkeit = `moving_speed` des langsamsten Schiffs in der Flotte (Fallback: 1 Einheit/Sol)
-- `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Sol auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
-- Pro Sol des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
-
-**Einschränkungen (bewusste Designentscheidung):**
-- Ausschließlich innerhalb eines Sternensystems (gleiche `system_id`)
-- Interstellare Bewegung wird **nicht implementiert** — siehe unten
-
-**Datenspeicherung:**
-- Koordinaten in `fleet_orders.coordinates` werden als JSON gespeichert (`json_encode`)
-- Zusatzdaten für Trade/Attack in `fleet_orders.data` ebenfalls als JSON
-
-Nach Ausführung wird die Position der Flotte (`fleets.x`, `fleets.y`, `fleets.spot`) aktualisiert.
-INNN-Ereignis `galaxy.fleet_arrived` wird für den Flottenbesitzer erzeugt.
-
-### Interstellare Bewegung — bewusst nicht implementiert
-
-Flotten operieren ausschließlich im eigenen Sternensystem. Interstellare Bewegung zwischen Systemen wird nicht implementiert.
-
-**Begründung:** Bei einem Scope von einer Kolonie pro Spieler und wenigen Schiffen findet fast alles im eigenen System statt — Erkundung, Ressourcenbergung, Bewachung, PvP. Eine interstellare Bewegungsmechanik würde Komplexität hinzufügen ohne spielerischen Mehrwert für Phase 3.
-
-**Das Sprungtor als narratives Element:** Im System ist ein Sprungtor sichtbar (Galaxiekarte), das theoretisch den Weg zu anderen Systemen öffnen könnte. Es wird nicht benutzt — aber es kann bewacht werden (`defend`-Order). Narrativ: Warum siedelt Nexus ausgerechnet in diesem System? Das Sprungtor deutet eine Antwort an ohne sie zu geben.
-
-**"Gäste von außerhalb"** kommen via Events und Bar — Händler, Schmuggler, Boten aus anderen Systemen erscheinen ohne dass eine Bewegungsmechanik implementiert sein muss.
-
-> **Phase 4+:** Wenn Multiplayer-PvP zwischen Systemen gewünscht wird, kann interstellare Bewegung dann als eigene Mechanik nachgerüstet werden. `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits technisch.
-
-### Trade-Order
-
-Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
-
-| direction | Bedeutung |
-|-----------|-----------|
-| 0 | Kauf: Kolonie gibt Ressource an Flotte |
-| 1 | Verkauf: Flotte gibt Ressource an Kolonie |
-
-- Koloniebestand kann nicht unter 0 sinken (Schutz via `MAX(0, amount - amount)`)
-- Flottenbestand kann nicht unter 0 sinken
-- INNN-Ereignis `galaxy.trade` wird für den Flottenbesitzer erzeugt
-
----
-
-## 8a. Systemansicht
-
-> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Die Systemkarte (12×12-Grid, Sprungtor, Flottenplatzierung) wurde entfernt. Die Kolonie hat keinen navigierbaren Systemraum mehr und keine Koordinaten. Abschnitt bleibt als Phase-4+-Referenz.
-
-### Darstellung: 2D Top-Down Grid
-
-Die Systemansicht zeigt das gesamte Sternensystem als 2D top-down Darstellung. Das zugrundeliegende Grid (12×12) ist im Normalmodus unsichtbar — es erscheint nur wenn ein Flottenbefehl erteilt wird (Zielauswahl). Planeten, Flotten und Objekte sind Icons im freien Raum.
-
-### Koordinatensystem
-
-Einheitliches **12×12-Grid** (grid_x: 0–11, grid_y: 0–11) für alle Objekte und Flotten auf der Systemkarte. Der Stern steht immer bei **(6,6)** — Mittelpunkt. Alle anderen Objekte werden beim Run-Start prozedural platziert und in `glx_system_objects.grid_x/grid_y` gespeichert. Flotten nutzen dasselbe Koordinatensystem (`fleets.grid_x`, `fleets.grid_y`). Das veraltete `spot`-Feld entfällt.
-
-### Sichtbarkeit
-
-Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der Expedition vorab erkundet. Einige Tiles erfordern Detailerkundung.
-
-### Erkundungsstufen
-
-| Stufe | Kosten | Ergebnis |
-|-------|--------|---------|
-| Scan | 1 Navigation-AP, sofort | Tile aufgedeckt (leer / Ressource / normales Event) |
-| Tiefenscan | Mehrere Navigation-AP über mehrere Sole | Verborgener Event-Spot enthüllt (Schiffswrack, Ruine, Versteck) |
-
-### Fixe Objekte (immer vorhanden)
-
-- Stern (1) — immer bei (6,6)
-- Heimatplanet + Monde (je Spieler) — prozedural platziert
-- Sprungtor (1, narratives Element — nicht nutzbar, kann bewacht werden) — prozedural platziert
-- Nexus-Außenposten (1): Basishandel + Verwaltung der Nexus-Schulden — prozedural platziert
-
-### Prozedurale Objekte (variabel pro Run)
-
-Asteroiden, Schiffsfriedhöfe, Event-Tiles — zufällig generiert, tragen zum Roguelike-Charakter bei.
-
-### NPC-Präsenzen
-
-Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber bedeutsam. Drei Klassen von NPC-Präsenzen:
-
-| Klasse | Stärkewert | Auftreten | Auslöser |
-|--------|-----------|-----------|---------|
-| **Piratensonde** | 1 | häufig | Zufälliges Event-Tile in der Exploration Zone; erscheint wenn eine Flotte das Tile betritt |
-| **Schmugglerfrachter** | 0 | gelegentlich | Bewegt sich durch das System; auslösbar mit `attack`-Order; flieht bei Konfrontation (kein Kampf, aber +Vertrauen für Abwehr) |
-| **Schwerer Wächter** | 5 | selten | Bewacht ein hochwertiges Event-Tile (z.B. verlassenes Lager); erscheint nur bei Tiefenscan-Ergebnis mit `danger_high` |
-
-**Encounter-Auslöser:** NPC-Begegnungen entstehen ausschließlich durch Flottenorders — passiv trifft keine Flotte auf NPCs. Ein NPC-Event-Tile wird bei Erkundung (Sonde/Korvette) aufgedeckt; der Spieler entscheidet dann bewusst ob er `attack` oder `defend` ordert oder das Tile ignoriert.
-
-**Erscheinungsfrequenz pro Run:** 3–5 Piratensonden-Events, 1–3 Schmuggler, 0–1 schwere Wächter (prozedurale Verteilung bei Run-Generierung).
-
-> **Reisender Händler umgezogen (Juli 2026):** Die Beschreibung stand hier fälschlich unter dem "GESTRICHEN"-Banner dieses Abschnitts, obwohl der Reisender Händler eine aktive, unabhängig von der Systemkarte weiterhin implementierte Mechanik ist (`MerchantService`, `GameTick.php` Schritt 11, `config/game.php → merchant`). Vollständige Beschreibung jetzt in §12 Handel, Kanal 3.
-
-### Multiplayer
-
-> ⛔ **Veraltet (2026-07-01).** Der bisherige Ansatz (Interaktion über Flottenbewegung auf der Systemkarte) ist mit der Streichung der Systemkarte (siehe Banner oben) hinfällig. Derzeit ist **keine Multiplayer-Interaktionsmechanik geplant** — der Turn-Resolution-Layer aus ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`) ist davon unabhängig und unterstützt Multiplayer auch ohne gemeinsamen Interaktionsraum (z.B. mehrere Spieler, jeweils eigene isolierte Kolonie, gemeinsamer Sol-Rhythmus). Bei Bedarf neu evaluieren, sobald Multiplayer aktiv angegangen wird.
+> ⛔ **Gestrichen (2026-06-20, „bis auf weiteres") — ausgelagert nach [`docs/gdd/archiv-flotten-systemkarte.md`](gdd/archiv-flotten-systemkarte.md).**
+>
+> Galaxie- und Systemkarte samt Flottenbewegung und -kampf sind aus dem Spiel entfernt. Beide Kapitel beschrieben keinen aktuellen Spielstand mehr und standen nur noch als Phase-4+-Referenz im Regelteil; sie stehen jetzt vollständig im Archiv.
+>
+> **Was stattdessen gilt:** Schiffe existieren ausschließlich über den **Hangar** (§8b) inklusive Außenmissionen (Dispatch). Der **Reisende Händler** ist davon unabhängig aktiv und in §12 Handel, Kanal 3 beschrieben.
 
 ---
 
@@ -1157,7 +1174,9 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 - **Organika:** `sol_distance × 3` als Proviant & Betriebsstoffe (`organika_per_sol`; gilt einheitlich auch für die unbemannte Drohne — eine Ausnahme würde Drohnen-Missionen zum kostenlosen Optimalpfad machen)
 - Einzelne Missionen haben Zusatzkosten (z.B. Hilfsgüter-Fracht), im Katalog vermerkt.
 
-`sol_distance` ist die **einfache Strecke**; die Gesamtdauer beträgt `2 × sol_distance` Sole (Hin- und Rückweg — deckungsgleich mit der Verschleiß-Prognose aus §7). Die Kostenstaffel ist bewusst gegen den Navigation-AP-Pool (§13) kalibriert: Distanz 1–2 (2–4 AP) ist ohne Raumfahrer machbar, Distanz 3 (6 AP) kostet den kompletten Grundpool, Distanz 4–5 (8–10 AP) setzt einen Raumfahrer voraus. Lange Expeditionen sind damit über Opportunitätskosten an die Berater-Progression gekoppelt — kein hartes Gate, keine Strafe.
+`sol_distance` ist die **einfache Strecke**; die Gesamtdauer beträgt `2 × sol_distance` Sole (Hin- und Rückweg — deckungsgleich mit der Verschleiß-Prognose aus §7). Die Kostenstaffel war ursprünglich gegen den separaten Navigation-AP-Pool kalibriert: Distanz 1–2 (2–4 AP) ohne Raumfahrer machbar, Distanz 3 (6 AP) kostete den kompletten Grundpool, Distanz 4–5 (8–10 AP) setzte einen Raumfahrer voraus.
+
+> **⚠️ Neu zu kalibrieren (2026-08-02):** Mit dem gemeinsamen AP-Pool (§13.1) gibt es keinen eigenen Navigations-Grundpool mehr, gegen den diese Staffel gemessen werden könnte. Die Absicht bleibt gültig — lange Expeditionen sollen über Opportunitätskosten an die Raumfahrer-Progression gekoppelt sein, ohne hartes Gate — aber die konkreten Werte müssen gegen den neuen Grundwert und die Projektkosten neu gesetzt werden (§13.5).
 
 #### Katalog
 
@@ -1167,7 +1186,7 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 | `mission_recon_flight` | Erkundungsflug | Drohne | 1 | 2 / 3 | 2 unerkundete Tiles der Exploration Zone aufgedeckt | sofort |
 | `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | bekanntes Signal-Tile |
 | `mission_prospecting_flight` | Prospektionsflug | Drohne | 2 | 4 / 6 | 20–30 Regolith (variabel) | Geologie Lv1 |
-| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 Research-AP-Fortschritt auf eine gewählte Kenntnis (§10) | Kartografie Lv1 |
+| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 AP Fortschritt auf eine gewählte Kenntnis (§10) — als Projekt-Investition, ohne den AP-Pool zu belasten | Kartografie Lv1 |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | 2 | 4 / 6 | 25 Regolith + 10 Organika | Frachter vorhanden |
 | `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
 | `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | Gesundheit Lv1 |
@@ -1207,7 +1226,7 @@ Jede Mission wird in `colony_hangar_missions` gespeichert (`destination` trägt 
 
 > ⚠️ BALANCE CONCERN: Botenflug/Konvoi-Begleitung sind wiederholbare Credit-Quellen. Mit mehreren Drohnen skaliert das (~30 Cr/Sol je Drohne vor Reparaturkosten) — gegen Relaisvergütung und Berater-Upkeep (§13) prüfen; notfalls Prämien senken statt Cooldowns einführen.
 
-> ⚠️ BALANCE CONCERN: Der Milderungs-Effekt der Umkreis-Patrouille überschneidet sich mit dem Almanach-Bonus `encounter_prep` (§17) und der Strategen-Sicherheitsanalyse (§13). Regel: Milderungseffekte stapeln nicht — es gilt maximal eine Ausgangsstufe Milderung pro Gefahr, der stärkste Effekt wird verbraucht.
+> ⚠️ BALANCE CONCERN: Der Milderungs-Effekt der Umkreis-Patrouille überschneidet sich mit dem Almanach-Bonus `encounter_prep` (§17). (Die frühere dritte Überschneidung, die Strategen-Sicherheitsanalyse, entfällt mit der Zurückstellung des Strategen, §13.) Regel: Milderungseffekte stapeln nicht — es gilt maximal eine Ausgangsstufe Milderung pro Gefahr, der stärkste Effekt wird verbraucht.
 
 > ⚠️ BALANCE CONCERN: Erkundungsflug (2 Tiles für 2 AP + 3 Or + 2 Sole + Verschleiß) darf die Ring-Erkundung (1/2/3 AP, sofort) nicht obsolet machen. Er ist als AP-effiziente, aber langsame Alternative für äußere Ringe gedacht. Wirkt er im Playtest dominant → auf 1 Tile senken oder Distanz auf 2 erhöhen.
 
@@ -1379,180 +1398,7 @@ Bestimmte Kenntnisse beeinflussen auch das Vertrauen der Kolonie (agronomy, heal
 
 ## 11. Techtree
 
-Der Techtree ist die Verwaltungsansicht aller ausbaubaren Entitäten einer Kolonie: Gebäude, Kenntnisse, Schiffe und Berater. Er ist kein linearer Forschungsbaum, sondern ein **überschaubares Abhängigkeitsgitter** — die Kommandozentrale (CC) ist das einzige globale Gate, das den Fortschritt reguliert.
-
-Das Designziel: Ein Spieler soll in 30 Sekunden verstehen, was er bauen kann und warum etwas noch gesperrt ist. Kein Micromanagement, keine Forschungsketten die Monate dauern.
-
----
-
-### 11.1 Entitäten-Übersicht
-
-Die folgende Tabelle listet alle Entitäten im Techtree.
-
-#### Gebäude
-
-Grid-Koordinaten (phasen-lokal) siehe §11.3.
-
-| Key (intern) | Name (DE) | Voraussetzung | Max-Level |
-|---|---|---|---|
-| `commandCenter` | Kommandozentrale | — | 5 |
-| `housingComplex` | Wohnhabitat | CC Lv 1 | 6 Instanzen |
-| `harvester` | Harvester | CC Lv 1 | supply-limitiert |
-| `bioFacility` | Bio-Anlage | Harvester Lv 1 | supply-limitiert |
-| `sciencelab` | Analytik-Labor | CC Lv 2 | supply-limitiert |
-| `bar` | Bar / Cantina | CC Lv 2 + Wohnhabitat Lv 1 | supply-limitiert |
-| `infirmary` | Krankenstation | CC Lv 2 | supply-limitiert |
-| `hangar` | Hangar | CC Lv 2 (Pfadwahl) | supply-limitiert |
-| `securityHub` | Sicherheits-Hub | CC Lv 3 (Strategen-Pfad) | max. Lv 3 |
-| `uplinkStation` | Uplink-Station | CC Lv 2 | max. Lv 3 |
-| `temple` | Religiöse Stätte | CC Lv 4 | supply-limitiert |
-| `tradingPost` | Handelsposten | CC Lv 4 | max. 1 Instanz |
-| `monument` | Kolonialdenkmal | CC Lv 5 | supply-limitiert |
-
-Die 13 Gebäude decken alle Spielsäulen ab: Infrastruktur (CC, Wohnhabitat), Produktion (Harvester, Bio-Anlage), Wissenschaft (Analytik-Labor), Flotte (Hangar), Kommunikation (Uplink-Station), Sicherheit (Sicherheits-Hub), Handel (Handelsposten), Wohlfahrt (Bar, Krankenstation, Religiöse Stätte, Denkmal).
-
-#### Kenntnisse
-
-Die 7 Kenntnisse sind das einzige Forschungssystem. Alle setzen das Analytik-Labor voraus. Zusätzlich gelten funktionale Gebäude-Voraussetzungen je nach Kenntnis.
-
-| Key (intern) | Name (DE) | Voraussetzung | Max-Level |
-|---|---|---|---|
-| `construction` | Bautechnik | Analytik-Labor Lv 1 | 5 |
-| `agronomy` | Agronomie | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 | 5 |
-| `health` | Gesundheit | Analytik-Labor Lv 1 + Krankenstation Lv 1 | 5 |
-| `cartography` | Kartografie | Analytik-Labor Lv 1 + Hangar Lv 1 | 5 |
-| `geology` | Geologie | Analytik-Labor Lv 2 + Harvester Lv 1 | 5 |
-| `trade` | Handel & Logistik | Analytik-Labor Lv 2 + Bar Lv 1 | 5 |
-| `defense` | Verteidigung | Analytik-Labor Lv 3 + Hangar Lv 2 | 5 |
-
-**Begründung:** Das Analytik-Labor als Gate für alle Kenntnisse stellt sicher, dass der Spieler zuerst eine Wissenschaftsbasis aufbaut, bevor er Spezialkenntnisse erschließt. Die zusätzlichen Gebäude-Voraussetzungen verknüpfen jede Kenntnis mit dem passenden Kolonieteil — Agronomie braucht eine Bio-Anlage, Kartografie einen Hangar, Verteidigung ein höheres Analytik-Labor und einen ausgebauten Hangar. Die Kenntnisse Lv4 und Lv5 sind zusätzlich durch das CC-Level gegattet (siehe §11.2 Regel 3).
-
-> **Roguelike-Variabilität:** Pro Run steht nicht der vollständige Kenntnisbaum zur Verfügung — nur eine zufällig gezogene Teilmenge (z.B. 5 von 7). Details in §15 (Run-Struktur).
-
-#### Schiffe
-
-Drei semantisch klare Typen: Drohne erkundet, Frachter transportiert, Korvette kämpft. Kapazitätsskalierung läuft über Hangar-Slots (Anzahl Schiffe), nicht über verschiedene Schiffsgrößen.
-
-| Key (intern) | Name (DE) | Voraussetzung |
-|---|---|---|
-| `drone` | Drohne | Hangar Lv 1 |
-| `freighter` | Frachter | Hangar Lv 2 |
-| `corvette` | Korvette | Hangar Lv 3 |
-
-#### Berater (Personal)
-
-Berater erscheinen im Techtree in Spalte 0. Ihre Gates spiegeln die Einführungsreihenfolge im Run wider. Berater-Slots öffnen über zwei Mechanismen: CC-Level (Slot 1) oder den Bau eines spezifischen Gebäudes (Slots 2–5). Max. 5 Slots (1 je Beratertyp).
-
-| Key (intern) | Name (DE) | AP-Typ | Hire-Voraussetzung | Slot |
-|---|---|---|---|---|
-| `engineer` | Baumeister | construction | CC Lv 1 | 1 (fix) |
-| `scientist` | Analytiker | research | Analytik-Labor Lv 1 | 2–4 (generisch) |
-| `pilot` | Raumfahrer | navigation | Hangar Lv 1 | 2–4 (generisch) |
-| `trader` | Konsul | economy | Bar Lv 1 | 2–4 (generisch) |
-| `strategist` | Stratege | strategy | Sicherheits-Hub Lv 1 | 5 (fix) |
-
----
-
-### 11.2 Abhängigkeitsregeln
-
-Das Abhängigkeitssystem folgt vier Regeln:
-
-**Regel 1 — CC als Tier-Gate**
-Die Kommandozentrale hat 5 Level und schaltet je Level eine Gebäude-Tier frei. Kein Gebäude höherer Tier ist baubar, solange das CC-Level nicht erreicht ist. Die Tiers:
-
-| CC-Level | Freischaltet |
-|---|---|
-| 1 | Wohnhabitat, Harvester |
-| 2 | Analytik-Labor, Krankenstation, Cantina, Hangar (alle drei Pfadwahl-Gebäude ab Lv2 baubar, gestaffelt — siehe §13), Uplink-Station (Lv1) |
-| 3 | Sicherheits-Hub (→ Strategen-Slot); Uplink-Station Lv2 freischaltbar |
-| 4 | Religiöse Stätte, Handelsposten |
-| 5 | Denkmal; Uplink-Station Lv3 freischaltbar |
-
-**Regel 2 — Funktionale Abhängigkeiten**
-Einige Entitäten setzen nicht nur CC-Level, sondern ein konkretes Gebäude voraus:
-
-| Entität | Voraussetzung |
-|---|---|
-| `bioFacility` | Harvester Lv 1 |
-| `bar` | Wohnhabitat Lv 1 |
-| `construction` (Kenntnis) | Analytik-Labor Lv 1 |
-| `agronomy` (Kenntnis) | Analytik-Labor Lv 1 + Bio-Anlage Lv 1 |
-| `health` (Kenntnis) | Analytik-Labor Lv 1 + Krankenstation Lv 1 |
-| `cartography` (Kenntnis) | Analytik-Labor Lv 1 + Hangar Lv 1 |
-| `geology` (Kenntnis) | Analytik-Labor Lv 2 + Harvester Lv 1 |
-| `trade` (Kenntnis) | Analytik-Labor Lv 2 + Bar Lv 1 |
-| `defense` (Kenntnis) | Analytik-Labor Lv 3 + Hangar Lv 2 |
-| Drohne | Hangar Lv 1 |
-| Frachter | Hangar Lv 2 |
-| Korvette | Hangar Lv 3 |
-| Raumfahrer (Berater) | Hangar Lv 1 |
-| Konsul (Berater) | Bar Lv 1 |
-| Stratege (Berater) | Sicherheits-Hub Lv 1 |
-
-**Regel 3 — CC-Level-Cap für Kenntnisse Lv4/5**
-Kenntnisse können maximal auf das aktuelle CC-Level ausgebaut werden, sobald sie Lv4 oder Lv5 erreichen sollen. Lv1–3 sind immer erreichbar wenn die Gebäude-Voraussetzungen erfüllt sind. Lv4 erfordert zusätzlich CC Lv4, Lv5 erfordert CC Lv5.
-
-| Kenntnis-Level | Zusätzliche Voraussetzung |
-|---|---|
-| 1–3 | Nur Gebäude-Voraussetzungen (Regel 2) |
-| 4 | Gebäude-Voraussetzungen + CC Lv 4 |
-| 5 | Gebäude-Voraussetzungen + CC Lv 5 |
-
-**Regel 4 — Supply als weicher Gate**
-Jedes Gebäude und jedes Schiff verbraucht Supply. Supply-Cap ist durch CC-Level und Wohnhabitate begrenzt. Der Spieler kann theoretisch alles bauen wollen, ist aber durch Supply gezwungen, Prioritäten zu setzen. Das ist kein harter Abhängigkeitsbaum, sondern Ressourcendruck. Details in §6 (Supply-Generierung).
-
-> **Keine zyklischen Abhängigkeiten.** Jede Abhängigkeitskette endet beim CC. Ein Deadlock durch wechselseitige Abhängigkeiten ist konstruktiv ausgeschlossen.
-
----
-
-### 11.3 Grid-Layout (Techtree-Ansicht)
-
-Der Techtree ist in **5 Phasen** aufgeteilt, jede entspricht einem CC-Level-Meilenstein. Jede Phase ist ein **3-Spalten-Grid** (Koordinaten phasen-lokal, 1-indexiert). Pfeile verbinden Abhängigkeiten ausschließlich innerhalb einer Phase — das CC-Level-Gate kommuniziert der Phasen-Header.
-
-**Pfeil-Quellen:**
-
-- Gebäude, Schiffe, Berater: Pfeil von `required_building_id`
-- Kenntnisse: Pfeil vom **sekundären Gebäude** (nicht vom Analytik-Labor). Ausnahme: `construction` hat kein sekundäres Gebäude — Pfeil vom Analytik-Labor. Bei phasen-übergreifenden Sekundär-Voraussetzungen wird auf das Analytik-Labor als Phasen-internen Anker zurückgegriffen.
-
-**Vollständige Phasen-Grid-Koordinatentabelle** (row/col phasen-lokal, 1-indexiert):
-
-| Phase | CC-Lv | Entität | Typ | Row | Col |
-|-------|--------|---------|-----|-----|-----|
-| 1 | 1 | housingComplex | building | 1 | 1 |
-| 1 | 1 | harvester | building | 1 | 2 |
-| 1 | 1 | bioFacility | building | 2 | 2 |
-| 1 | 1 | engineer | personell | 2 | 3 |
-| 2 | 2 | sciencelab | building | 1 | 2 |
-| 2 | 2 | infirmary | building | 1 | 3 |
-| 2 | 2 | bar | building | 2 | 1 |
-| 2 | 2 | hangar | building | 2 | 2 |
-| 2 | 2 | scientist | personell | 2 | 3 |
-| 2 | 2 | trader | personell | 3 | 1 |
-| 2 | 2 | pilot | personell | 3 | 2 |
-| 2 | 2 | knowledge_construction | research | 4 | 3 |
-| 2 | 2 | knowledge_agronomy | research | 5 | 3 |
-| 2 | 2 | knowledge_health | research | 6 | 1 |
-| 2 | 2 | knowledge_trade | research | 6 | 3 |
-| 3 | 3 | securityHub | building | 1 | 1 |
-| 3 | 3 | strategist | personell | 1 | 2 |
-| 3 | 3 | drone | ship | 2 | 1 |
-| 3 | 3 | freighter | ship | 2 | 2 |
-| 3 | 3 | knowledge_geology | research | 3 | 1 |
-| 3 | 3 | knowledge_cartography | research | 3 | 3 |
-| 3 | 3 | corvette | ship | 4 | 2 |
-| 3 | 3 | knowledge_defense | research | 4 | 3 |
-| 4 | 4 | temple | building | 1 | 2 |
-| 5 | 5 | monument | building | 1 | 2 |
-
-> Die `row`/`col`-Werte sind kanonisch — sie werden 1:1 in die DB-Tabellen geschrieben. Das Grid-CSS liest sie als `grid-row: row + 1; grid-column: col + 1`.
-
-> ⚠️ BALANCE CONCERN: Die Phase-2-Grid-Koordinaten für `hangar` (2,2), `pilot` (3,2), `trader` (3,1) sind vorläufige Werte nach der Umstrukturierung (Hangar von Phase 3 auf Phase 2, 2026-06-28). Phase 2 hat nun 11 Einträge statt 9 — visuelle Kollisionen und Pfeil-Überschneidungen müssen nach Implementierung im Techtree-Screen geprüft und ggf. korrigiert werden. Gleiches gilt für Phase 3 (securityHub/strategist neu, alte Positionen von hangar/pilot frei).
-
-**Implementierungshinweise (Blade/JS):**
-
-Die bisherigen 4 getrennten `<section>`-Blöcke mit je eigenem `<div class="tech-grid">` werden zu einem einzigen gemeinsamen `<div class="tech-grid">` zusammengeführt. Kategorie-Toggle-Buttons steuern `display: none` auf den einzelnen Tech-Cards (per CSS-Klasse oder `x-show` auf Card-Ebene), nicht auf Grid-Container-Ebene. Section-Titel (Gebäude / Kenntnisse / Schiffe / Berater) bleiben als positionierte Label-Elemente im Grid erhalten.
-
-> ⚠️ BALANCE CONCERN: Die Kenntnisse `cartography` (row 7) und `defense` (row 8) liegen visuell weit unter ihrem sekundären Prereq Hangar (row 3). Das ist unvermeidbar bei 7 Kenntnissen in einer Spalte ohne Kollisionen. Falls die Pfeil-Länge als störend empfunden wird, kann `cartography` auf col 5 row 4 verschoben werden (neben drone, dem anderen Hangar-Lv1-Kind) — das würde die Kenntnisse-Spalte jedoch aufreißen und die visuelle Gruppierung schwächen.
+> **Ausgelagert:** Dieses Kapitel steht in [`docs/gdd/techtree.md`](gdd/techtree.md) — Entitäten-Übersicht (11.1), Abhängigkeitsregeln (11.2) und Grid-Layout der Techtree-Ansicht (11.3).
 
 ---
 
@@ -1574,7 +1420,7 @@ Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, 
 - Ressource gegen Credits (z.B. 50 Werkstoffe für 800 Cr) — 60 % aller Angebote
 - Ressource gegen Ressource (z.B. 30 Organika gegen 20 Regolith) — 40 % aller Angebote
 
-Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet 1 Economy-AP** — dieser Sink macht den Konsul-AP-Pool spielerisch relevant.
+Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet 1 AP** aus dem gemeinsamen Pool (§13.1) — der Handel konkurriert damit direkt mit Bau und Kenntnissen um dieselbe Kapazität.
 
 **Handelsvertrag (neue, garantierte Einnahmequelle, 2026-07-19):** Beide obigen Angebotstypen erzeugen kein Credits-Einkommen für den Spieler — sie kosten Credits (Kauf) oder sind ressourcenneutral (Tausch). Das war die Kernursache dafür, dass die Kolonie strukturell kein Credits-Einkommen aus Handel ziehen konnte (Playtest-Bot-Befund, PR #218; siehe §18 `task_credit_reserve`). Fix: kein Bar-Angebot im bisherigen Sinn (kein Karten-Slot, keine Annahme, kein AP-Kosten), sondern eine **passive Cr/Sol-Einnahme** — strukturell identisch zur Relaisvergütung (§3): sie fließt automatisch pro Tick, solange ein Konsul der Kolonie zugewiesen ist **und** die Cantina mind. Lv1 gebaut ist. Thematisch vermittelt der Konsul laufende Handelsverträge im Hintergrund; die Kolonie liefert dafür keine Ressourcen. Config-Key-Vorschlag: `game.credits.consul_contract_income_per_rank`, verarbeitet in `GameTick` im selben Schritt wie `nexus_subsidy`/`relay_bonus_per_uplink_level`. Werte nach Konsul-Rang:
 
@@ -1601,29 +1447,33 @@ Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtig
 
 | | Kein Konsul | Rang 1 (Junior) | Rang 2 (Senior) | Rang 3 (Experte) |
 |---|---|---|---|---|
-| Economy-AP/Sol | 6 (Basis) | 10 | 13 | 18 |
+| AP-Beitrag/Sol | — | 10 | 13 | 18 |
 | Gäste/Sol | 0–1 | 0–1 | 0–2 | 1–2 |
 | Preisrabatt | 0 % | 10 % | 20 % | 30 % |
 | Werkstoffe-Bias | ~33 % | ~33 % | ~33 % | 50 % |
+
+> **Geändert 2026-08-02:** Die erste Zeile hieß früher „Economy-AP/Sol" mit Basiswert 6 — seit der AP-Zusammenlegung (§13.1) zahlt der Konsul in den gemeinsamen Pool ein, es gibt keinen separaten Economy-Basiswert mehr.
 
 **Werkstoffe-Bias bei Rang 3:** Der Experten-Konsul hat Marktbeziehungen — bei Credits→Ressource-Angeboten erscheinen Werkstoffe mit 50 % Wahrscheinlichkeit (statt gleichverteilt ~33 %). Das gibt dem Experten-Konsul einen konkreten wirtschaftlichen Vorteil in der knappsten Ressource des Spiels (§3 Werkstoffe nicht lokal produzierbar).
 
 **Cantina-Verhandlung (Risiko-Handel):**
 
-Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 Economy-AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
 
 > **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
 
 **Ablauf — zwei Schritte (Owner-Entscheidung 2026-07-31, revidiert gegenüber der ursprünglichen Ein-Schritt-Fassung):** Verhandeln führt das Geschäft nicht sofort aus, sondern verbessert bei Erfolg nur die Konditionen des Angebots — der Spieler sieht das Ergebnis und bestätigt danach explizit mit **Annehmen**.
 
 1. Verfügbarkeits- und Ressourcen-Check wie bei Annehmen (Give-Seite muss gedeckt sein — sonst Fehler `bar_offer_insufficient_resources`, kein Würfeln auf ein Geschäft, das ohnehin nicht zustande kommen könnte). Ein bereits verhandeltes Angebot kann nicht erneut verhandelt werden.
-2. Economy-AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`) — unabhängig vom Ausgang.
+2. AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`) — unabhängig vom Ausgang.
 3. Einmaliger Erfolgs-Wurf, Konsul-Rang-abhängig (`negotiate_success_chance`).
    - **Erfolg:** Die Konditionen des Angebots (`give_amount`/`get_amount`) werden dauerhaft auf die verbesserten Werte aktualisiert (`negotiate_bonus`, gleiche Formel-Achse wie `trader_discount`, s.u.) und das Angebot als verhandelt markiert. Der Handel selbst führt sich **noch nicht** aus — der Verhandeln-Button wird gesperrt, der Annehmen-Button bleibt aktiv und zeigt jetzt 0 AP (die Kosten wurden bereits mit der Verhandlung bezahlt). Erst ein Klick auf Annehmen überträgt die Ressourcen.
    - **Fehlschlag:** Kein Handel. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die verlorene Chance ist die eigentliche Konsequenz, nicht die AP.
 4. **Kein Trust-Malus.** `trade_blocked` (§13/§14) bleibt für einen anderen Fall reserviert (blockierter Handel, nicht gescheiterte Verhandlung) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
 
-**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und Economy-AP/Sol von 6–18 (Rang 0–3, s. o.) sowie max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP ist hier kein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP war hier nie ein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+
+> **Neu zu prüfen nach der AP-Zusammenlegung (2026-08-02):** Das Argument stützte sich darauf, dass Economy-AP ein eigener Pool mit 6–18 AP/Sol war, der ohnehin nichts anderes zu tun hatte. Mit dem gemeinsamen Pool (§13.1) konkurrieren Handelsgeschäfte direkt mit Bau und Kenntnissen — AP wird damit erstmals zu einem echten Deckel für Vielhandel. Ob `ap_cost_negotiate` dadurch schon von selbst wirkt oder weiterhin die Verlust-Mechanik tragen muss, ist im Handels-Balancing zu prüfen.
 
 | | Rang 1 (Junior) | Rang 2 (Senior) | Rang 3 (Experte) |
 |---|---|---|---|
@@ -1720,29 +1570,319 @@ Kenntnisse sind personengebundenes Wissen — nicht transferierbar.
 
 ### Grundkonzept
 
-Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel ein Spieler pro Sol in Gebäude, Forschung, Erkundung/Missionen und Handel investieren kann.
+Aktionspunkte (AP) sind die zentrale Handlungswährung in Nouron. Sie begrenzen, wie viel Arbeit die Kolonie pro Sol leisten kann — in Gebäude, Kenntnisse, Erkundung/Missionen und Handel.
 
 Berater sind **individuelle Entitäten** — kein Mengenzähler. Jeder Berater hat einen eigenen Datensatz mit Rang, Aktivitätszähler und Verfügbarkeitsstatus. Der Spieler rekrutiert, benennt und entwickelt konkrete Individuen, keine abstrakten "Personal"-Stapel.
 
-**5 AP-Typen — nicht mischbar:**
+---
 
-| AP-Typ (intern) | Beraterbezeichnung | Verwendung |
-|-----------------|-------------------|-----------|
-| `construction` | Baumeister | Gebäude ausbauen, reparieren, Schiffsbau |
-| `research` | Analytiker | Kenntnisse vorantreiben, Wissensarbeit |
-| `navigation` | Raumfahrer | Tile-Erkundung, Außenmissions-Dispatch |
-| `economy` | Konsul | Handelsangebote, Marktgeschäfte |
-| `strategy` | Stratege | Schutzorders, Verteidigung, taktische Planung |
+### 13.1 Ein gemeinsamer AP-Pool (Entscheidung 2026-08-02)
 
-**Grundwert:** Jeder AP-Typ hat einen Grundwert von **6 AP/Sol** — auch ohne Berater. Ein frischer Spieler ist nie vollständig blockiert.
+**Es gibt genau einen AP-Pool.** Die früheren fünf getrennten, nicht mischbaren AP-Typen (`construction`, `research`, `navigation`, `economy`, `strategy`) sind zu einer einzigen Kolonie-Kapazität zusammengelegt.
 
-**Berater** erhöhen den Grundwert ihres AP-Typs. Max. **1 Berater pro Typ pro Kolonie** (Slot-System) — also maximal 5 gleichzeitig.
+**Begründung:** Fünf getrennte Pools erzeugen keine Entscheidung. Wenn Forschungs-AP nur für Forschung taugt, gibt es nichts abzuwägen — der Spieler gibt sie aus, weil sie sonst verfallen. Ungenutzte Pools verfallen still (dokumentiert für `economy` und `strategy` in §16), während der begehrte Pool leerläuft. Mit einem gemeinsamen Pool wird jede Ausgabe zu einer echten Allokationsentscheidung: **jeder Punkt in ein Gebäude ist ein Punkt, der nicht in eine Kenntnis, eine Mission oder ein Handelsgeschäft geht.**
+
+**Domänen bleiben als Begriff erhalten** — sie beschreiben, *wofür* AP ausgegeben werden, nicht mehr, *woher* sie kommen:
+
+| Domäne | Verwendung | Zugehöriger Berater |
+|--------|-----------|---------------------|
+| Bau | Gebäude errichten und ausbauen, reparieren, Schiffsbau | Baumeister |
+| Wissen | Kenntnisse vorantreiben | Analytiker |
+| Navigation | Tile-Erkundung, Außenmissions-Dispatch | Raumfahrer |
+| Wirtschaft | Handelsangebote, Marktgeschäfte | Konsul |
+
+**Berater erhöhen den gemeinsamen Pool** und geben zusätzlich einen **Effizienzbonus in ihrer Domäne** (siehe 13.3) — sie bleiben damit klar unterscheidbar, ohne den Pool zu zersplittern.
+
+**Keine Bodengarantie** (entschieden 2026-08-02). Es wird **kein** Mindestanteil je Domäne reserviert; die Allokation ist vollständig frei.
+
+**Begründung:** AP sind ein **Fluss, kein Bestand** — Locks verfallen zum nächsten Sol, der Pool erneuert sich täglich vollständig. Eine Fehlallokation wirkt damit per Konstruktion maximal einen Sol. Um sich dauerhaft auszusperren, bräuchte es eine permanente Bindung, die es nicht gibt. Die vier plausibelsten Deadlock-Kandidaten wurden geprüft und alle entschärft:
+
+| Kandidat | Deadlock? | Warum nicht |
+|---|---|---|
+| Kein Regolith → Reparatur gesperrt → Harvester verfällt → noch weniger Regolith | Nein | CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Ausnahme §4). Die Regolith-Quelle bleibt immer erreichbar. |
+| AP in ein Gebäude investiert, dessen Regolith fehlt | Nein | Regolith wird erst beim Abschluss abgezogen (§4). Investierte AP bleiben auf `ap_spend` liegen und werden gültig, sobald Regolith da ist — kein Verlust. |
+| Credits auf 0, kein Berater bezahlbar | Nein | Upkeep wird auf ≥ 0 geklemmt, der Verlust läuft über `nexus_debt`. Langsames Ausbluten über viele Sole, kein Lock. |
+| Über Supply-Cap → doppelter Decay → Leveldown-Spirale | Fast | Der schmalste Grat im System — siehe unten. |
+
+Hinzu kommt: die **Einstiegskosten jeder Domäne sind winzig** (1 AP erkunden, 1 AP in eine Baustelle, 2 AP ein Angebot annehmen). Es gibt keine Domäne, in die man nicht mit einem einzigen Restpunkt zurückfindet.
+
+Eine Untergrenze würde genau den Allokationsschmerz entfernen, der der Zweck der Zusammenlegung ist — und ein Problem lösen, das die Fluss-Natur des Pools bereits ausschließt.
+
+> **Die reale Gefahr ist die fehlende Obergrenze, nicht die fehlende Untergrenze.** Ein Spieler, der jeden Sol den ganzen Pool in Reparaturen kippt, verliert den Run langsam, ohne es zu merken. Dagegen hilft keine Bodengarantie — nur die Instandhaltungsanzeige im Dashboard (13.4). Sie ist der Ersatz für die Bodengarantie und darf deshalb nicht als Komfort-Feature wegpriorisiert werden.
+
+> **⚠️ Zu ändern: `decay.overcap_factor` von 2.0 auf 1.5.** Bei Überschreitung des Supply-Caps verdoppelt sich aktuell die Instandhaltung — bei ~7 AP/Sol Basislast springt der Anteil damit von 32 % auf 64 % des Pools. **Das** ist der in 13.5 ursprünglich befürchtete „ab Sol 50 steht der Spieler still, ohne die Ursache zu erkennen"-Fall; er entsteht nicht aus dem Verfall, sondern aus diesem Multiplikator. Zusätzlich muss Over-Cap ein **sichtbarer Zustand** sein (Dashboard + INNN-Meldung), nicht ein stiller Faktor, und es muss einen Gegenzug geben — zu prüfen ist, ob freiwilliger Abriss über die UI erreichbar ist (§13 „AP-Verbrauch" nennt „Reparatur/Abbau").
+
+---
+
+### 13.2 Ratenmodell: Handlungen und Projekte
+
+AP werden auf **zwei verschiedene Arten** ausgegeben. Beide ziehen aus demselben Pool.
+
+**Handlungen — sofort, einmalig.** Missionen, Events, Tile-Erkundung, Handelsgeschäfte. Kosten AP im Moment der Auslösung, das Ergebnis tritt sofort (oder nach fester Laufzeit) ein.
+
+**Projekte — investiert über mehrere Sole.** Gebäude und Kenntnisse haben Gesamtkosten in AP, die der Spieler über mehrere Sole hinweg einzahlt. Ein Gebäude ist fertig, wenn die Summe der investierten AP die Projektkosten erreicht. Die Mechanik existiert bereits für Kenntnisse (`AbstractTechnologyService::_invest`) und wird auf Gebäude ausgeweitet.
+
+Damit ist AP nicht primär ein Tagesbudget, sondern eine **Arbeitsrate**. Knappheit entsteht nicht daraus, dass die Punkte ausgehen, sondern daraus, dass ein Run **auf 100 Sole begrenzt** ist (§18.4): Ein Gebäude, das 5 Sole Bauzeit bindet, kostet 5 % des Runs.
+
+**Parallelbau ist erlaubt und ausdrücklich gewollt.** Der Spieler darf beliebig viele Projekte gleichzeitig laufen lassen und pro Sol frei entscheiden, welche er füttert. Die Rate verteilt sich dann entsprechend — mehr Baustellen heißt nicht mehr Durchsatz, sondern längere Einzellaufzeiten. Das ist eine **bewusste Planungsentscheidung** des Spielers, kein Fehler: Er kann Fertigstellungen absichtlich auf denselben Sol legen. (Ob es dafür einen konkreten Spielvorteil geben soll — z. B. gebündelte Vertrauens- oder Milestone-Effekte — ist offen und soll sich aus Playtests ergeben.)
+
+**Gelegenheiten sind durch Verfügbarkeit begrenzt, Projekte durch AP.** Das ist die tragende Regel des Hybrids. Sofortige Handlungen sind für Spieler unter Unsicherheit systematisch attraktiver als aufgeschobene Investitionen — wenn Missionen und Events unbegrenzt AP aufnehmen könnten, würde der Spieler den Aufbau aushungern, ohne es zu merken. Deshalb gilt: Es gibt pro Sol nur eine begrenzte Zahl verfügbarer Missionen und Events. AP-Überschuss hat dann keinen anderen Abfluss als Bauen und Forschen — ohne dass eine bevormundende Regel („max. X % für Missionen") nötig wird.
+
+**Der Late-Game-Kipppunkt ist gewollt.** Gegen Run-Ende lohnt sich kein langfristiges Projekt mehr: AP in ein 5-Sol-Gebäude bei Sol 92 ist verlorene Kapazität. Die letzten ~15 Sole verschieben sich dadurch von Aufbau auf Ausführung. Das ist ein designter Phasenwechsel und gibt dem Run-Ende Charakter — Voraussetzung ist, dass der Spieler ihn kommen sieht (siehe 13.4).
+
+---
+
+### 13.3 Boni: additiv, nie multiplikativ
+
+Boni senken die **AP-Kosten von Projekten** und verkürzen damit die Bauzeit in Solen. Das ist die primäre Progressionsachse des Systems: Ein Gebäude, das früh 5 Sole bindet, ist im Mid- und Late-Game in 2 Solen fertig. Beschleunigung wird als Zeitgewinn spürbar, nicht als größere Zahl in einem Balken.
+
+**Alle Kostenreduktionen wirken additiv.** Berater-Rang, Kenntnis-Level und Koloniereife addieren ihre Prozentwerte, bevor sie einmal auf die Projektkosten angewandt werden. Multiplikative Verkettung ist ausgeschlossen: Sie würde im Late-Game überschießen und Projekte praktisch sofort abschließen, was den Kipppunkt aus 13.2 zerstört.
+
+**Bonusquellen (Vorschlag, siehe 13.6):**
+
+| Quelle | Wert | Maximum |
+|---|---|---|
+| Domänen-Berater | Rang 1 +5 %, Rang 2 +10 %, Rang 3 +15 % | 15 % |
+| Domänen-Kenntnis | +3 % je Level | 15 % |
+| Koloniereife | +3 % je CC-Level über 1 | 12 % |
+| **Summe** | | **42 %** |
+
+Domänen-Kenntnis-Zuordnung: Bau ← `construction`, Navigation ← `cartography`, Wirtschaft ← `trade`. Für die Domäne **Wissen** gibt es keine passende Kenntnis — dort stattdessen **Analytik-Labor-Level +3 %** (max 15 %). Asymmetrisch in der Art, symmetrisch im Wert, und es gibt dem Laborausbau endlich einen eigenen mechanischen Effekt (heute hat er außer dem Kenntnis-Gate keinen).
+
+Ein **Mindest-Kostenanteil** (`project_min_cost_factor = 0.5`) verhindert, dass Projekte auf null fallen. Bei 42 % Maximalbonus greift er **nie** — das ist Absicht: Er ist eine Leitplanke für spätere Bonusquellen (Events, Missionsbelohnungen, Run-Modifier), keine aktive Regel zum Start. Wichtig, das so zu lesen, damit später niemand gegen einen Deckel kalibriert, der gar nicht wirkt.
+
+**Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit.
+
+---
+
+### 13.4 Kommandozentrale: Dashboard und Prognosen
+
+Das Ratenmodell ist nur spielbar, wenn der Spieler seine Rate und ihre Verwendung jederzeit sieht. Der Kommandozentrale-Screen wird deshalb zum **Dashboard** ausgebaut. Es ist keine Komfortfunktion, sondern tragende Voraussetzung: Mehr-Sol-Projekte machen nur Spaß, wenn sie planbar sind.
+
+Mindestumfang:
+
+| Anzeige | Zweck |
+|---|---|
+| AP-Zufluss pro Sol und wohin er aktuell fließt | Grundlage jeder Allokationsentscheidung |
+| Restzeit je Baustelle („noch 3 Sole bei aktueller Rate") | Planbarkeit von Projekten, Timing von Fertigstellungen |
+| Instandhaltungsanteil („Reparatur bindet 33 % deiner Kapazität") | Macht die wachsende Last aus 13.5 sichtbar, bevor sie drückt |
+| **Restertrag bis Run-Ende** je Projekt („Agrardom Lv5: noch 3 Sole, dann 8 Sole × 7 Organika") | Trägt den Late-Game-Kipppunkt (13.2) — siehe unten |
+| Regolith-Bilanz (Produktion − Reparatur − Levelups) | Die eigentliche Wachstumsgrenze (13.5) |
+| **Over-Cap-Warnung**, wenn die Supply-Last den Cap übersteigt | Ersetzt die stille Verdopplung der Instandhaltung durch einen sichtbaren Zustand (§7) |
+| Konzessions-Prognose („bei aktuellem Kurs in 12 Solen unterschritten") | Macht den Fail-State aus §18.2 vorhersehbar statt überraschend |
+| Fortschritt der Run-Aufgaben | Verbindet Tagesentscheidung mit Run-Ziel (§15) |
+
+**Zum Restertrag — er trägt den Kipppunkt, nicht die Kosten.** Der Late-Game-Kipppunkt aus 13.2 entsteht nicht dadurch, dass Projekte spät teurer werden, sondern dadurch, dass sich ihr Ertrag nicht mehr amortisiert: Ein Agrardom Lv5, der an Sol 92 fertig wird, liefert noch 8 × 7 = 56 Organika — das ist der Grund, es sein zu lassen. Wenn das Dashboard neben „noch 3 Sole" auch den Restertrag zeigt, entsteht der Phasenwechsel **ohne jede Zahlenänderung**. Ohne die Anzeige müsste man ihn über Kosten erzwingen, was das Fortschrittsgefühl aus 13.3 beschädigen würde.
+
+**Der Instandhaltungsanteil ersetzt die Bodengarantie.** Die eigentliche Selbst-Blockade-Gefahr im Ratenmodell ist nicht, dass ein Spieler eine Domäne aushungert (13.1), sondern dass er jeden Sol den ganzen Pool in Reparaturen kippt und den Run langsam verliert, ohne es zu merken. Dagegen hilft keine Untergrenze — nur Sichtbarkeit. Diese Anzeige ist deshalb kein Komfort-Feature und darf nicht wegpriorisiert werden.
+
+**Zur Konzessions-Prognose:** Run-Ziel (Expertenstab aufbauen) und Fail-State (Konzessionsentzug) ziehen in dieselbe Richtung — Berater kosten Credits und Unterhalt, und genau das kann die Konzessionsbedingungen reißen. Das ist als **Push-your-luck** gewollt: Der Spieler soll abwägen, ob er noch einen Berater einstellt oder Puffer hält. Diese Spannung funktioniert aber nur mit sichtbarer Prognose — ohne sie wird der Spieler für Zielverfolgung bestraft, ohne es zu merken.
+
+---
+
+### 13.5 Instandhaltungslast und die Regolith-Grenze
+
+> **Korrigiert 2026-08-02.** Dieser Abschnitt hieß „Verfallsgrenze als natürliche Koloniegröße" und beschrieb ein AP-Gleichgewicht, ab dem die Instandhaltung den gesamten Zufluss bindet und nichts Neues mehr fertig wird. **Das kann bei den aktuellen Werten nicht eintreten** — es war keine Kalibrierungsfrage, sondern strukturell unerreichbar. Die Grenze existiert trotzdem, nur in einer anderen Währung.
+
+**Warum das AP-Gleichgewicht nicht existiert.** `GameTick::processBuildingDecay()` iteriert über `colony_buildings`-Zeilen und zieht `decay_rate` ab — **unabhängig vom Level**. Ein Harvester Lv8 verfällt exakt so schnell wie ein Harvester Lv1. Weil der Gebäudekatalog 13 Einträge hat, hat die Instandhaltung damit eine harte Obergrenze:
+
+| Ausbaustand | Gebäudetypen | Σ `decay_rate` | AP/Sol | Regolith/Sol |
+|---|---|---|---|---|
+| Sol 1 (CC + Harvester) | 2 | 1,28 | 1,3 | 2,6 |
+| + Agrardom, Wohnhabitat | 4 | 2,67 | 2,7 | 5,3 |
+| + 1. Pfadgebäude, Uplink | 6 | 4,34 | 4,3 | 8,7 |
+| + 2. Pfadgebäude, Hangar | 8 | 5,96 | 6,0 | 11,9 |
+| + Krankenstation, Sicherheits-Hub | 10 | 7,30 | 7,3 | 14,6 |
+| **alle 13 Typen** | 13 | **10,30** | **10,3** | **20,6** |
+
+Solange der AP-Pool über ~11 AP/Sol liegt, kann die Instandhaltung den Zufluss nie vollständig binden.
+
+**Was stattdessen gilt: eine wachsende, sichtbare Last.** Der Instandhaltungsanteil steigt über den Run von ~20 % auf ~33 %, bei Vollausbau auf ~43 % des Pools. Das ist spürbarer Gegenwind, kein Stillstand — und es passt besser zum Designprinzip „kein Leerlauf, aktives Spielen wird belohnt" (§1.1) als ein echtes Gleichgewicht, das den Spieler ab Sol 50 einfriert.
+
+**Die eigentliche Wachstumsgrenze ist Regolith.** 20,6 Rg/Sol Reparaturbedarf bei Vollausbau, dazu der Regolith der Level-Ups. Dagegen steht der Harvester mit einem festen Grundeinkommen plus Missionen, Events und Handel. Diese Bilanz — nicht der AP-Pool — entscheidet, wie groß eine Kolonie werden kann. Sie gehört deshalb ins Dashboard (13.4).
+
+#### Harvester: fest auf Level 1 (Owner-Entscheidung 2026-08-02)
+
+Der Harvester hat **kein Level-Up**. `max_level = 1` statt bisher 8. Er liefert ein **Grundeinkommen** an Regolith; Wachstum darüber hinaus kommt ausschließlich aus anderen Quellen.
+
+Damit wird Regolith von passivem Einkommen zu **aktivem Spiel** — was der Designlinie „kein Leerlauf, aktives Spielen wird belohnt" (§1.1) entspricht, aber die Wirtschaft grundlegend umstellt.
+
+**Die Rechnung:** `game.production_curve` ist additiv pro Level (`27 => [3 => [1=>8, 2=>10, 3=>12, …]]`) — der Harvester produzierte auf Lv5 also 52 Rg/Sol, auf Lv1 sind es **8 Rg/Sol**. Gegen den Reparaturbedarf oben:
+
+| Gebäudetypen | Reparatur Rg/Sol | Bilanz nur mit Harvester Lv1 |
+|---|---|---|
+| 4 (Sol ~3) | 5,3 | +2,7 |
+| 6 (Sol ~10) | 8,7 | **−0,7** |
+| 8 | 11,9 | −3,9 |
+| 13 (Vollausbau) | 20,6 | −12,6 |
+
+Ab dem sechsten Gebäudetyp — etwa beim zweiten Pfadgebäude — reicht das Grundeinkommen nicht mehr für die Instandhaltung, Level-Ups noch gar nicht eingerechnet. **Die Beschaffung über andere Kanäle ist damit keine Option, sondern Pflicht.**
+
+> ⚠️ **`max_level = 1` ist noch nicht in der Config.** `config/buildings.php` hat weiterhin `max_level => 8` mit einem Kommentar, der die Glockenkurve als Begründung nennt (Entscheidung 2026-07-20). Die Änderung ist mit dem Umbau der Regolith-Kanäle unten zusammen umzusetzen — einzeln würde sie die Wirtschaft brechen.
+
+#### Regolith-Beschaffung: alle drei Pfade müssen gleichwertig liefern
+
+**Verbindliche Anforderung — siehe §4b „Paritäts-Anforderung".** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Wenn Regolith zur aktiv zu beschaffenden Ressource wird, muss jeder der drei Pfade einen eigenen Hebel mit vergleichbarem Ertrag haben — sonst wird der Pfad, der ihn hat, faktisch zur Pflicht und die Pfadwahl zur Scheinentscheidung.
+
+**Der Harvester ist der gemeinsame Sockel, nicht der Kanal eines Pfades.** Seine 8 Rg/Sol hat jede Kolonie, unabhängig von der Pfadwahl. Was einen Pfad ausmacht, ist der **Hebel obendrauf** — und davon braucht jeder der drei einen mit vergleichbarem Ertrag.
+
+Zielgröße je Hebel: **~6 Rg/Sol** bei vergleichbarem Einsatz. Sie sollen sich nicht in der Menge unterscheiden, sondern im **Kostenprofil** — das ist der Unterschied zwischen drei Wegen und drei Klonen.
+
+| | Quelle | Ertrag | Kostenprofil | Status |
+|---|---|---|---|---|
+| **Sockel (alle Pfade)** | Harvester Lv1 | 8 Rg/Sol | keine (passiv) | existiert |
+| **A — Analytik** | Kenntnis `geology` **steigert die Harvester-Ausbeute** | Vorschlag **+1,5 Rg/Sol je Level** → Lv4 = +6 | einmalig hoch (102 AP bis Lv4), danach **null laufende Kosten** | **fehlt komplett** |
+| **B — Hangar** | Frachter dauerhaft auf `mission_supply_run` (25 Rg / 4 Sole Umlauf) | 6,25 Rg/Sol je Frachter | laufend: ~1 AP/Sol + 1,5 Organika/Sol + Verschleiß | existiert |
+| **C — Cantina** | garantierter Credits→Regolith-Ankauf | ~6 Rg/Sol bei regelmäßigem Kauf | laufend Credits (Basispreis 30 Cr/Einheit) + 2 AP je Angebot | halb vorhanden |
+
+Die drei Profile sind bewusst gegensätzlich und ergeben drei verschiedene Spielgefühle:
+
+- **Analytik** verbessert den Sockel selbst — teuer im Aufbau, danach dauerhaft geschenkt, keine Logistik. Wer diesen Pfad geht, baut einmal auf und hat Ruhe.
+- **Hangar** legt einen zweiten Strom daneben — billig im Einstieg, aber jeden Sol Aufwand (AP, Organika, Verschleiß). Wer diesen Pfad geht, arbeitet dauerhaft dafür.
+- **Cantina** kauft zu — maximal flexibel, aber an Credits und Angebotslage gebunden.
+
+Über 60 Sole gerechnet liegen Analytik und Hangar bei rund 100 AP Gesamteinsatz: der Analytiker zahlt vorne, der Raumfahrer verteilt.
+
+**Die Lücke liegt beim Analytik-Pfad.** `config/knowledge.php` enthält **keinen einzigen Produktionsbonus**. `geology` hat `trust_per_lv => 0` und außer den Levelup-Kosten keinerlei Effekt; der Supply-Cap-Bonus ist der einzige implementierte Kenntniseffekt überhaupt. `geology` ist der thematisch richtige Träger (Gate: Analytik-Labor Lv2 + Harvester Lv1) und braucht diesen Effekt ohnehin — bisher ist die Kenntnis mechanisch leer.
+
+**Zum Cantina-Pfad.** Regolith ist in `bar.base_prices` mit 30 Cr/Einheit hinterlegt, §12 beschreibt es aber als „Verkauf (Überschuss)" — die Ankaufsrichtung ist nicht garantiert. Es braucht einen **verlässlichen** Credits→Regolith-Kanal, nicht nur die Chance auf ein passendes Zufallsangebot; sonst hängt die Versorgung am Würfel. Naheliegend: Regolith als feste Angebotsklasse, die mindestens einmal pro N Sole erscheint, oder als Nexus-Anfrage über die Uplink-Station (die mit dem Wegfall des Werkstoff-Imports ohnehin eine tragende Lv1-Funktion sucht, §4).
+
+> **⚠️ Offen — Zahlen und Umsetzung.** Die +1,5 Rg/Sol je `geology`-Level sind ein erster Ansatz, kalibriert auf Parität mit dem Frachter-Kanal. Zu prüfen ist, ob der Analytik-Pfad damit insgesamt zu stark wird — er trägt zusätzlich den Supply-Cap-Bonus **und** den Domänen-Effizienzbonus (13.3), leistet also dreifach. Falls ja: auf +1,2/Level senken statt einen der anderen Effekte zu beschneiden.
+
+> **⚠️ Offen — Startphase.** Vor dem ersten Pfadgebäude gibt es nur die 8 Rg/Sol des Harvesters. Bei vier Gebäudetypen bleiben davon 2,7 Rg/Sol für Level-Ups. Die 200 Startregolith tragen die Sol-1–4-Rampe, aber der Engpass verschiebt sich damit in die Sole ~8–20, also genau in die Phase, in der der Spieler sein erstes Pfadgebäude ausbaut. Diese Phase ist im Playtest gezielt zu beobachten (Metrik 6 in Anhang A.5).
+
+> **Nachrüstoption, falls das späte Spiel im Playtest schlaff wirkt:** Reparaturkosten mit dem Level skalieren — `AP je SP = 1 + floor((level−1)/3)`. Die Instandhaltung skaliert dann mit der **Tiefe** und koppelt sich elegant an den Supply-Cap (§6); bei der Zielkolonie ergäbe das ~11 statt 7,3 AP/Sol, also rund 50 % des Pools. Das ist der saubere Hebel. Die Alternative `decay_rate × level` ist thematisch schwächer (warum verfällt ein größeres Gebäude schneller?) und verdoppelt zusätzlich den Regolith-Abfluss.
+
+---
+
+### 13.6 Zahlenvorschlag (Stand 2026-08-02 — Vorschlag, nicht beschlossen)
+
+> **Status:** Erarbeitet gegen Code und Configs, nicht gegen die GDD-Richtwerte. **Noch keine Owner-Entscheidung.** Vor der Übernahme in `config/game.php` sind die in Anhang B gelisteten Drifts zu klären — insbesondere die tatsächlichen `ap_for_levelup`-Werte in der laufenden Datenbank.
+
+#### Ziel-Endzustand (guter Run, Sol ~75–80)
+
+| | |
+|---|---|
+| Gebäudetypen | 9–10 von 13 |
+| Summe der Gebäudelevel | ~30 |
+| CC | Lv4 (Lv5 = Streckziel, `max_level` ist 5) |
+| Harvester | Lv1 (fest — siehe unten) |
+| Agrardom | Lv4 |
+| Wohnhabitate | 3 Instanzen |
+| Pfadgebäude | eines Lv3, eines Lv2, eines Lv1 |
+| Uplink-Station | Lv2 |
+| Berater | 4, überwiegend Rang 2, einer Rang 3 |
+| Kenntnisse | 4 auf Lv3 |
+| Tiles belegt | 10–11 von 15 |
+
+Vier ungenutzte Tiles und ein Rest-Cap sind Absicht: Der Spieler soll am Run-Ende sehen, was er hätte tun können.
+
+#### AP-Grundwert und Berater-Beitrag
+
+```php
+'ap'      => ['base' => 10, 'project_min_cost_factor' => 0.5],
+'advisor' => ['ap_per_rank' => [1 => 2, 2 => 3, 3 => 4]],   // war [4, 7, 12]
+```
+
+Der Berater-Beitrag muss **drastisch** sinken. Bei den alten Werten wäre ein Pool von 10 + 4 × 12 = 58 AP/Sol möglich — das Sechsfache des Startwerts. Die Zielvorgabe „ein Gebäude, das früh 5 Sole bindet, ist spät in 2 Solen fertig" ist ein Faktor 2,5; der zerfällt in Pool-Wachstum × Kostenreduktion. Bei 35 % Reduktion bleibt für das Pool-Wachstum höchstens Faktor ~1,8.
+
+| Sol | Berater | Pool | Instandhaltung | Handlungen | **frei für Projekte** |
+|---|---|---|---|---|---|
+| 1–5 | 1 × R1 | 12 | 1,3–2,7 | ~2 | 7–9 |
+| 6–20 | 2 × R1 | 14 | 2,7–4,3 | ~3 | 7–8 |
+| 21–35 | 3, meist R1/R2 | 16 | 4,3–5,3 | ~4 | 7 |
+| 36–60 | 4, meist R2 | 19–21 | 6,0 | ~5 | 8–10 |
+| 61–85 | 4, R2 + 1 R3 | 22 | 7,3 | ~6 | 9 |
+| 86–100 | 4, R2/R3 | 23–24 | 7,3 | ~6 | 10 |
+
+Pool-Wachstum 12 → 22 = Faktor 1,8; mit 35 % Kostenreduktion ergibt das **2,8× Beschleunigung**. Der Vertrauens-Multiplikator (`trust.ap_multiplier`, ±10 %) kommt obendrauf: bei hohem Vertrauen 13 → 24.
+
+> ⚠️ **Der Grundwert 10 ist die empfindlichste Einzelzahl des Modells.** Er ist bewusst so gewählt, dass er die bereits playgetestete Sol-1–4-Rampe reproduziert (Validierung unten) — nicht aus einer Formel abgeleitet. Die defensivere Alternative wäre 8 (schärferer Early-Game-Druck, Instandhaltung erreicht 40 % statt 33 %), sie bricht aber die Rampe. Empfehlung: 10, dann messen statt diskutieren.
+
+#### Projektkosten je Gebäudelevel
+
+```
+ap_cost(building, L) = round(base_ap[building] × f(L))
+f(1) = 0.5          (Errichten kostet die Hälfte eines Level-Ups)
+f(L≥2) = 1 + 0.4 × (L − 2)
+→ f = [0.5, 1.0, 1.4, 1.8, 2.2, 2.6, 3.0, 3.4]
+```
+
+| Stufe | `base_ap` | Gebäude | Kosten Lv1…Lv5 |
+|---|---|---|---|
+| Produktion | 10 | Harvester, Agrardom | 5 / 10 / 14 / 18 / 22 |
+| Klein | 12 | Wohnhabitat, Kolonialdenkmal, Religiöse Stätte | 6 / 12 / 17 / 22 / 26 |
+| Mittel | 16 | Cantina, Uplink-Station, Handelsposten | 8 / 16 / 22 / 29 / 35 |
+| CC | 18 | Kommandozentrale | — / 18 / 25 / 32 / 40 |
+| Groß | 22 | Analytik-Labor, Hangar, Krankenstation, Sicherheits-Hub | 11 / 22 / 31 / 40 / 48 |
+
+Bei instanzierten Gebäuden (Wohnhabitat, Hangar) ist „Level" die Instanznummer: die 2. Wohnhabitat-Instanz kostet 12, die 3. kostet 17.
+
+Produktionsgebäude sind bewusst am billigsten — ihre Glockenkurve (`game.production_curve`) deckelt den Wert bereits, ein zweiter Deckel über die AP-Kosten wäre doppelt.
+
+**`f(1) = 0.5` ist zugleich die Antwort auf das Early-Game-Tempo.** Nicht als Sonderregel, sondern als erster Punkt derselben Kurve. Zusammen mit den Achsen aus §6 entsteht daraus das Breite/Tiefe-Dreieck ohne Optimalpfad. Die Alternativen wurden verworfen: Ein befristeter AP-Bonus früh wirkt dort, wo die Instandhaltungslast ohnehin am niedrigsten ist (22 %), und erzeugt beim Auslaufen eine Klippe. Mehr Vorbau in der Startkolonie würde den Agrardom-Lernmoment wegnehmen, der im Playtest-Review vom 2026-07-14 gerade erst als richtiger Einstieg bestätigt wurde — ein vorgebautes Wohnhabitat wäre sogar aktiv schädlich, weil es den ersten Supply-Cap-Sprung vorwegnimmt, an dem das System eingeführt wird.
+
+**Kenntnisse** behalten ihre `levelup_costs` `[12, 20, 30, 40, 50]` aus `config/knowledge.php` unverändert — sie passen gegen 12–22 AP/Sol weiterhin (Lv1 in ~2 Solen, Lv5 in ~12 Solen bei Teil-Allokation).
+
+#### Handlungs-AP nachziehen
+
+Die Sofort-Handlungen waren gegen 6–10 AP-Einzelpools kalibriert und werden gegen 12–22 AP relativ zu billig:
+
+| Wert | heute | Vorschlag | Begründung |
+|---|---|---|---|
+| `bar.ap_cost_accept` | 1 | **2** | 1 AP von 22 ist Rauschen |
+| `bar.ap_cost_negotiate` | 3 | **4** | Abstand zum Annehmen erhalten |
+| `missions.nav_ap_per_sol` | 2 | unverändert | Fernexpedition = 10 AP = 45 % des Pools, bleibt eine echte Entscheidung |
+| `colony.explore_cost_per_ring` | 1/2/3 | unverändert | 19 Zonen-Tiles ≈ 33 AP ≈ 1,5 volle Sole |
+
+> **Die Regel „Gelegenheiten sind durch Verfügbarkeit begrenzt" (13.2) ist bereits erfüllt — ohne neue Mechanik.** Missionen sind durch Schiffszahl und Rundlaufzeit begrenzt (2 Schiffe × Ø 5 Sole Umlauf × 5 AP ≈ 2 AP/Sol), Bar-Angebote durch `guest_count` und `level_max_concurrent` (≈ 4 AP/Sol). Zusammen ~6 von ~22 AP/Sol = 27 %. Das ist genau der beabsichtigte Deckel — es braucht keine zusätzliche Regel.
+
+#### Budgetprobe
+
+Verfügbare Projekt-AP: ~640 bis Sol 80, ~840 bis Sol 100.
+
+| Projekt | AP nominal |
+|---|---|
+| CC Lv1→Lv4 | 75 |
+| Agrardom Lv0→Lv4 | 47 |
+| Wohnhabitat ×3 | 35 |
+| Pfadgebäude 1 auf Lv3 | 46 |
+| Pfadgebäude 2 auf Lv2 | 33 |
+| Pfadgebäude 3 auf Lv1 | 11 |
+| Uplink-Station Lv2 | 24 |
+| Krankenstation Lv1 | 11 |
+| Harvester Lv1 | 5 |
+| **Gebäude Σ** | **287** |
+| 4 Kenntnisse auf Lv3 | 248 |
+| **Σ nominal** | **535** |
+| **Σ nach Ø 20 % Bonus** | **~430** |
+
+**430 von 640 = 67 % Auslastung.** Die verbleibenden ~210 AP sind der Spielraum für Vertiefung (CC Lv5, weitere Kenntnisse, weitere Wohnhabitate) — genau die „Phase 2 spät — Optimierung" aus §18.4. Das Budget geht mit rund einem Drittel Luft für Fehler und Umwege auf.
+
+#### Validierung an der playgetesteten Sol-1–4-Rampe
+
+Mit Pool 12, Agrardom Lv1 = 5 AP, Pfadgebäude Lv1 = 8 AP, CC Lv2 = 18 AP:
+
+| Sol | Ausgaben | Rest |
+|---|---|---|
+| 1 | Harvester-Move 3 + Agrardom platzieren 1 + investieren 5 → **Agrardom Lv1 fertig** | 3 → Ring-2-Tile erkunden |
+| 2 | Pfadgebäude platzieren 1 + investieren 8 → **Pfadgebäude Lv1 fertig** | 3 → erkunden |
+| 3 | CC-Invest 10 | 0 |
+| 4 | CC-Invest 8 → **CC Lv2 + Berater 2** | 2 → erkunden |
+
+Gleicher Endpunkt wie heute (CC Lv2 an Sol 4), aber **jeder Sol schließt ein sichtbares Projekt ab statt nur Balken zu füllen** — und Erkundung läuft nicht mehr in einem getrennten Pool nebenher, sondern konkurriert echt. Die Regolith-Rechnung der Rampe bleibt unverändert gültig.
+
+#### Wo der Vorschlag unsicher ist
+
+- **Ob 33 % Instandhaltungsanteil sich nach Druck anfühlt.** Kernunsicherheit, ohne Playtest nicht beantwortbar. Falls nein: die levelskalierte Reparatur aus 13.5 nachrüsten, **nicht** die `decay_rate` global anheben — die hängen auch am Regolith-Abfluss.
+- **Der Handlungsanteil (~5–6 AP/Sol) ist eine Schätzung.** Er hängt am Schiffsbestand und damit an der Credits-Ökonomie, die laut §18.4 noch instabil ist. Kommt der Spieler nie über ein Schiff hinaus, sinkt der Anteil auf ~3 und das Projektbudget steigt um ~15 %.
+- **`f(1) = 0.5` könnte zu weit gehen.** Bei Produktionsgebäuden ist Lv1 = 5 AP, der Agrardom wäre an Sol 1 mit halbem Pool fertig. Der Gegenwert steht in Regolith (40 von 200), es ist also keine Gratisleistung — aber es ist die Stelle, an der am ehesten auf 0,6 nachzujustieren wäre.
 
 ---
 
 ### Slot-System: CC-Level als Gate, Pfadwahl ab Slot 2
 
-Berater-Slots öffnen nicht mehr ausschließlich über CC-Level, sondern analog zu den Pfad-Gebäuden: durch den Bau eines spezifischen Gebäudes. Slot 1 und Slot 5 sind **fest** an einen Beratertyp gebunden (Baumeister zuerst — siehe §16.2 "Designentscheidung zu Rang 1"; Stratege über den Sicherheits-Hub). Slots 2–4 sind seit der Pfadwahl-Überarbeitung (2026-06-24) **generisch**: Welcher Beratertyp einen dieser drei Slots belegt, hängt davon ab, welches der drei Pfad-Gebäude der Spieler zuerst/zweit/dritt baut — nicht von einer fest verdrahteten CC-Level→Typ-Zuordnung.
+Berater-Slots öffnen nicht mehr ausschließlich über CC-Level, sondern analog zu den Pfad-Gebäuden: durch den Bau eines spezifischen Gebäudes. Slot 1 ist **fest** an den Baumeister gebunden (siehe §16.2 "Designentscheidung zu Rang 1"). Slots 2–4 sind seit der Pfadwahl-Überarbeitung (2026-06-24) **generisch**: Welcher Beratertyp einen dieser drei Slots belegt, hängt davon ab, welches der drei Pfad-Gebäude der Spieler zuerst/zweit/dritt baut — nicht von einer fest verdrahteten CC-Level→Typ-Zuordnung.
 
 | Gate | Slot | Bindung |
 |------|------|---------|
@@ -1750,18 +1890,16 @@ Berater-Slots öffnen nicht mehr ausschließlich über CC-Level, sondern analog 
 | CC Lv2 + 1. Pfad-Gebäude (sciencelab/hangar/bar) | Slot 2 | **generisch:** Analytiker/Raumfahrer/Konsul |
 | CC Lv3 + 2. Pfad-Gebäude | Slot 3 | **generisch:** Analytiker/Raumfahrer/Konsul |
 | CC Lv4 + 3. Pfad-Gebäude | Slot 4 | **generisch:** Analytiker/Raumfahrer/Konsul |
-| CC Lv3 + Sicherheits-Hub Lv1 | Slot 5 | **fix:** Stratege |
 
-> **Hinweis:** Slot 5 (Stratege, CC Lv3 + Hub) kann früher öffnen als Slot 4 (drittes Pfad-Gebäude, CC Lv4), wenn der Spieler bei CC Lv3 den Hub vor dem dritten Pfad-Gebäude baut. Die Slot-Nummerierung ist ein Label, keine strikt sequenzielle Pflicht-Reihenfolge.
+> **Slot 5 entfällt (2026-08-02):** Der frühere Slot 5 (fix Stratege, Gate CC Lv3 + Sicherheits-Hub Lv1) ist mit der Zurückstellung des Strategen weggefallen. Es gibt **vier** Berater-Slots. Der Sicherheits-Hub bleibt als Gebäude erhalten, ist aber kein Slot-Gate mehr — Details siehe „Die vier Berater-Typen" weiter unten.
 
-**Die drei Pfade + Strategen-Pfad** (siehe §4 "Pfadwahl ab Sol 3" und §4 "Sicherheits-Hub"):
+**Die drei Pfade** (siehe §4 "Pfadwahl ab Sol 3"):
 
-| Pfad | Gebäude | Beratertyp | AP-Pool | CC-Gate | Slot |
-|------|---------|-----------|---------|---------|------|
+| Pfad | Gebäude | Beratertyp | Domäne | CC-Gate | Slot |
+|------|---------|-----------|--------|---------|------|
 | A | Analytik-Labor (sciencelab) | Analytiker | research | CC Lv2 (Pfadwahl) | 2–4 (generisch) |
 | B | Hangar | Raumfahrer | navigation | CC Lv2 (Pfadwahl) | 2–4 (generisch) |
 | C | Cantina (bar) | Konsul | economy | CC Lv2 (Pfadwahl) | 2–4 (generisch) |
-| D | Sicherheits-Hub | Stratege | strategy | CC Lv3 (kein Pfadwahl-Gate) | 5 (fix) |
 
 **Gate-Logik (Bau, nicht nur Berater):** Alle drei Pfad-Gebäude sind ab CC Lv2 grundsätzlich baubar — aber gleichzeitig gilt ein zusätzliches Bau-Gate: `Anzahl bereits gebauter Pfad-Gebäude < CC-Level − 1`. Bei CC Lv2 darf also nur **eines** der drei gebaut werden; das zweite schaltet erst bei CC Lv3 frei, das dritte erst bei CC Lv4. Es gibt **keine permanente Ausschließung** — wer bei CC2 die Cantina wählt, bekommt Sciencelab und Hangar bei CC3 bzw. CC4 trotzdem, nur später. Die "Wahl" bei Sol 3 bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das hält die Entscheidung gewichtig (wer zuerst baut, bekommt den zugehörigen Berater-Slot 1–2 CC-Level früher als bei den anderen beiden Pfaden), vermeidet aber einen harten Lockout, der bei einer frühen Sol-3-Entscheidung zu hart wäre (Nouron-Prinzip: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen, siehe §1.1).
 
@@ -1779,7 +1917,8 @@ Jeder Berater ist ein eigener Datensatz. Die Tabelle hat folgendes Schema:
 advisors
 ├── id                      ← eindeutige ID des Beraters
 ├── user_id                 ← Eigentümer (immer gesetzt)
-├── personell_type          ← 'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
+├── personell_type          ← 'construction' | 'research' | 'navigation' | 'economy'
+│                             ('strategy' entfällt — Stratege zurückgestellt, 2026-08-02)
 ├── colony_id               ← nullable: aktiv auf dieser Kolonie
 ├── rank                    ← 1 = Junior | 2 = Senior | 3 = Experte
 ├── active_ticks            ← kumulierter Zähler für Rang-Aufstieg
@@ -1799,23 +1938,28 @@ advisors
 
 ---
 
-### Die fünf Berater-Typen
+### Die vier Berater-Typen
 
-| Beratertyp | AP-Pool (intern) | Thematische Rolle |
-|------------|-----------------|------------------|
+| Beratertyp | Domäne (intern) | Thematische Rolle |
+|------------|----------------|------------------|
 | Baumeister | `construction` | Infrastruktur, Gebäude, Schiffsbau |
 | Analytiker | `research` | Kenntnisse, Wissensarbeit |
-| Raumfahrer | `navigation` | Tile-Erkundung, Außenmissions-Dispatch; colony-scoped AP-Produzent |
+| Raumfahrer | `navigation` | Tile-Erkundung, Außenmissions-Dispatch |
 | Konsul | `economy` | Wirtschaftsbeziehungen, Markt |
-| Stratege | `strategy` | Schutz, Verteidigung, taktische Befehle |
 
-Der Raumfahrer generiert Navigation-AP auf der Kolonie — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
+> **Stratege zurückgestellt (Entscheidung 2026-08-02):** Der fünfte Beratertyp (`strategy`) ist **vorerst aus dem Spiel genommen**. Er war nie zu Ende designt — die Entwürfe schwankten zwischen „zusätzlicher später Pfad" und „modifiziert die drei anderen Pfade", ohne dass eine Richtung entschieden wurde. Statt ihn halbfertig mitzuschleppen, entfällt er zunächst vollständig und wird später neu bewertet und designt.
+>
+> **Was das konkret heißt:** Berater-Slot 5 entfällt; es gibt maximal **vier** gleichzeitig zugewiesene Berater. Der **Sicherheits-Hub bleibt als Gebäude bestehen** — er behält seine drei eigenständigen Effekte (Vertrauens-Bonus, Event-Dämpfung, Recycling, §4), verliert aber seine Funktion als Slot-Gate. Die vom Strategen getragenen Informationsleistungen (Gefahren-Vorwarnung mit Prognose, Ziel-Erreichbarkeits-Prognose) wandern in das Kommandozentrale-Dashboard (13.4), wo sie ohnehin besser aufgehoben sind.
+>
+> Betroffene Stellen, die bei der Umsetzung nachzuziehen sind: §4 (Sicherheits-Hub als Strategen-Pfad), §8b/§9 (Milderungs-Stacking mit Strategen-Sicherheitsanalyse), §11.1/§11.2 (Techtree-Entitäten und Abhängigkeiten), §13 (Slot-Tabelle, Außenmissionen, Rekrutierungskosten), §17.2 (`strategist_threat_assessment`-Dialog), `advisors.personell_type`-Enum, `config/advisors.php`.
+
+Der Raumfahrer trägt zum gemeinsamen AP-Pool bei — diese AP decken die Tile-Erkundung (ring-gestaffelt 1/2/3 AP, §4a) und den Dispatch von Hangar-Schiffen auf Außenmissionen (`sol_distance × 2` AP, §8b). Er verlässt die Kolonie nicht. Eine eventuelle Außendienst-Mechanik für den Raumfahrer selbst ist für Phase 4+ zurückgestellt und noch nicht definiert (siehe auch "Außenmissionen" weiter unten).
 
 ### Außenmissionen (Berater-Außendienst)
 
 > **Phase 4** — Vollständig ausgearbeitet, Implementierung ab Phase 4 geplant.
 
-Vier Beratertypen (Baumeister, Analytiker, Konsul, Stratege) können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr. Der Raumfahrer erscheint nicht in der Missions-Auswahl — eine spezifische Außendienst-Mechanik für ihn wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert).
+Drei Beratertypen (Baumeister, Analytiker, Konsul) können für eine begrenzte Anzahl Sole auf eine **Außenmission** entsendet werden — mit denselben Opportunitätskosten (AP fehlen während der Abwesenheit) und einem Bonus bei Rückkehr. Der Raumfahrer erscheint nicht in der Missions-Auswahl — eine spezifische Außendienst-Mechanik für ihn wird nach Playtest evaluiert (Phase 4+, noch kein konkreter Pfad definiert).
 
 ---
 
@@ -1834,14 +1978,13 @@ Vier Beratertypen (Baumeister, Analytiker, Konsul, Stratege) können für eine b
 | Beratertyp | Missionsname | Dauer (Sole) | Bonus bei Erfolg |
 |------------|--------------|--------------|-----------------|
 | Baumeister | Nexus-Notfall-Wartung | 3–5 | Ein beliebiges Koloniegebäude erhält sofort volle `status_points` |
-| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne Research-AP-Kosten, CC-Gates bleiben aktiv) |
+| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne AP-Kosten, CC-Gates bleiben aktiv) |
 | Konsul | Handelsreise | 3–4 | Exklusives Bar-Angebot bei Rückkehr (2 Sole gültig, erscheint als zusätzlicher Slot neben normalen Bar-Angeboten) |
-| Stratege | Sicherheitsanalyse | 3–4 | Die nächste Kolonistengefahr (§9) wird mit Typ, betroffenem Gebäude und prognostiziertem Ausgang angekündigt — statt der normalen 1-Sol-Vorwarnung ohne Details. **Voraussetzung:** Sicherheits-Hub Lv 1 aktiv (thematisch: Hub stellt die Infrastruktur für den Einsatz). |
 | Raumfahrer | — | — | Kein Berater-Außenmissions-Pfad — sein "Außendienst" läuft indirekt über den Schiffs-Dispatch (§8b); eine eigene Mechanik wird nach Playtest evaluiert |
 
 > **⚠️ Balance:** Der Analytiker-Bonus (Kenntnis +1 Level kostenlos) ist der stärkste Effekt. CC-Gates bleiben aktiv — ein Kenntnislevel das CC Lv5 voraussetzt, kann durch eine Außenmission nicht übersprungen werden. Dennoch muss nach Playtest geprüft werden, ob ein Free-Level-Upgrade bei Lv4→Lv5 zu mächtig ist. Ggf. Einschränkung: Bonus gilt nur für Lv1→Lv2 oder Lv2→Lv3.
 
-> **⚠️ Balance:** Der Stratege-Bonus (detaillierte Gefahren-Prognose) verändert die Risikostruktur von Begegnungen spürbar. Er sollte nur für die unmittelbar nächste Kolonistengefahr gelten, nicht pauschal für mehrere Sole voraus. Verfällt nach der nächsten Gefahr oder nach 5 Solen (je nachdem was früher eintritt).
+> **Entfallen (2026-08-02):** Die Strategen-Außenmission „Sicherheitsanalyse" (detaillierte Gefahren-Prognose) ist mit der Zurückstellung des Strategen weggefallen. Die Gefahren-Vorwarnung mit prognostiziertem Ausgang wandert als Dauerfunktion in das Kommandozentrale-Dashboard (§13.4) — sie war als seltener, an einen Berater gekoppelter Einmaleffekt ohnehin schwer planbar.
 
 ---
 
@@ -1930,7 +2073,6 @@ Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol
 | Analytiker | 400 | Mittlere Priorität — erst bei CC Lv2 verfügbar |
 | Raumfahrer | 500 | Erkundungs-/Missions-fokussiert — voller Nutzen erst mit Hangar |
 | Konsul | 350 | Handelssupport — mittlere Priorität |
-| Stratege | 600 | Teuerster — typischerweise Late-Game |
 
 - **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` gesetzt hat (Berater ist aktiv zugewiesen).
 - **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
@@ -1968,29 +2110,38 @@ Der Raumfahrer ist ein colony-scoped AP-Produzent für den `navigation`-Pool. Er
 ### Verfügbare AP
 
 ```
-availableAP(type) = 6 (Grundwert) + AP_bonus(rank) − lockedAP(tick, type)
+availableAP = Grundwert + Σ AP_bonus(rank) über alle zugewiesenen Berater − lockedAP(tick)
 ```
 
-Wobei `AP_bonus(rank)` der Bonus-Wert des aktuell zugewiesenen Beraters dieses Typs ist (0 wenn kein Berater im Slot). AP-Locks verfallen automatisch zum nächsten Sol — jeder Pool wird täglich vollständig erneuert. Die fünf Typen sind vollständig unabhängig voneinander.
+Ein einziger Pool je Kolonie (13.1). `AP_bonus(rank)` ist der Beitrag jedes aktuell zugewiesenen Beraters, unabhängig von seiner Domäne — vier Berater erhöhen denselben Pool viermal. AP-Locks verfallen automatisch zum nächsten Sol; der Pool wird täglich vollständig erneuert.
+
+> **⚠️ Offen — Grundwert:** Der frühere Grundwert war 6 AP/Sol **pro Typ** (5 × 6 = 30 AP/Sol nominell, praktisch unbrauchbar wegen der Nicht-Mischbarkeit). Der neue Grundwert des gemeinsamen Pools ist noch nicht festgelegt und muss zusammen mit den Projektkosten kalibriert werden (13.5). Er darf nicht die Summe der alten Werte sein — sonst wächst die effektive Handlungsfähigkeit sprunghaft.
 
 ### AP-Verbrauch
 
-1. **Bauen/Forschen/Handel:** AP werden beim Investieren gesperrt (`invest('add')`).
-2. **Reparatur/Abbau:** AP werden in Höhe der veränderten `status_points` gesperrt.
-3. **Erkundung/Dispatch:** Navigation-AP — Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 2` AP (§8b).
+**Projekte (mehrere Sole, siehe 13.2):**
+
+1. **Bauen/Ausbauen:** AP werden beim Investieren gesperrt (`invest('add')`), bis die Projektkosten erreicht sind.
+2. **Kenntnisse:** identisch — bereits implementiert über `AbstractTechnologyService::_invest`.
+
+**Handlungen (sofort, siehe 13.2):**
+
+3. **Reparatur/Abbau:** AP in Höhe der veränderten `status_points`.
+4. **Erkundung/Dispatch:** Tile-Erkundung ring-gestaffelt (1/2/3 AP, §4a), Außenmissions-Dispatch `sol_distance × 2` AP (§8b).
+5. **Handelsgeschäfte:** AP je angenommenem oder verhandeltem Angebot (§12).
 
 ### Implementierung
 
 - `app/Services/Techtree/PersonellService.php` — AP-Berechnung, Sperrung
 - `app/Services/Techtree/AbstractTechnologyService.php` — AP-Verbrauch beim Investieren
 - `app/Services/FleetService.php` — Navigation-AP-Check bei Order-Erstellung
-- Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_type, spend_ap)`
+- Tabelle `locked_actionpoints`: `(tick, scope_type, scope_id, personell_type, spend_ap)` — die Spalte `personell_type` verliert mit der Zusammenlegung ihre Funktion als Pool-Trennung; sie kann als reines Auswertungs-/Anzeigemerkmal („wofür wurde investiert") erhalten bleiben oder entfallen. Zu entscheiden bei der Implementierung.
 
 ### Berater-Burnout (Auswirkung auf AP)
 
-Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der AP-Pool des betroffenen Typs sinkt auf den **Grundwert (6 AP/Sol)**.
+Wenn ein Berater einen Burnout erleidet (Wahrscheinlichkeitsmechanik — Details in §7), fällt sein AP-Beitrag für die Dauer der Erholung auf null zurück. Der gemeinsame Pool sinkt um genau diesen Beitrag; zusätzlich entfällt sein Effizienzbonus in seiner Domäne (13.3).
 
-**Beispiel:** Ein Senior-Analytiker (rank=2) liefert normalerweise 20 AP/Sol für `research`. Bei Burnout: nur noch 6 AP/Sol für `research`.
+**Beispiel:** Ein Senior-Analytiker (rank=2) trägt normalerweise 20 AP/Sol zum Pool bei. Bei Burnout fehlen diese 20 AP/Sol — die Kolonie arbeitet insgesamt langsamer, aber kein Bereich fällt vollständig aus. Das ist die gewünschte Abschwächung gegenüber dem alten Modell, in dem ein Burnout eine ganze Domäne auf den Grundwert zurückwarf.
 
 **Dauer:** Abhängig vom Rang (Junior 15, Senior 10, Experte 5 Sole — Richtwerte, noch nicht in Config abgebildet; siehe „Implementierungsstand" in §7).
 
@@ -2024,10 +2175,11 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 | Berater | Screen | Primär-Information | Sekundär-Information |
 |---------|--------|--------------------|----------------------|
 | Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
-| Analytiker | Techtree | "Sole bis Level X bei aktuellem Forschungs-AP-Fluss" | Priorisierungshinweis für offene Run-Aufgaben |
+| Analytiker | Techtree | "Sole bis Level X beim aktuellen AP-Fluss in diese Kenntnis" | Priorisierungshinweis für offene Run-Aufgaben |
 | Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt |
 | Raumfahrer | Hangar | Aufgebrochene Missionszeit ("X Sole Hinweg + Rückkehr Sol Z") | Verschleiß-Prognose pro geplantem Dispatch (§7) |
-| Stratege | Run-Ziel-Panel | Ziel-Erreichbarkeits-Prognose ("Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") | Ausgangs-Prognose bei Gefahren-Vorwarnung (§9) |
+
+> **Ehemals Stratege:** Die Ziel-Erreichbarkeits-Prognose („Aufgabe X: ✓ in ~12 Solen; Aufgabe Y: ✗ — 400 Cr fehlen") und die Ausgangs-Prognose bei Gefahren-Vorwarnung (§9) waren als Strategen-Informationsebene geplant. Beide werden mit der Zurückstellung des Strategen zu **beraterunabhängigen Dauerfunktionen** des Kommandozentrale-Dashboards (§13.4) — sie sind für das Ratenmodell zu wichtig, um an einen optionalen Berater gekoppelt zu bleiben.
 
 > **⚠️ Balance — Konsul:** Händler-Einschätzung darf nicht binär sein ("kaufen / nicht kaufen"), sonst entwertet sie die Handelsentscheidung. Kontextuell: "günstig für Werkstoffe — du hast davon aber bereits 200" ist besser als "guter Deal".
 
@@ -2551,724 +2703,13 @@ Ein Modal bietet keinen Platz für die spätere Erweiterung (Highscores, Run-Lis
 
 ## 16. Onboarding
 
-### Designprinzipien für Onboarding
-
-Vier Prinzipien leiten das gesamte Onboarding-Design und haben Vorrang vor allen konkreten Maßnahmen:
-
-1. **Lernen durch Tun, nicht durch Lesen.** Erklärungen erscheinen genau dann, wenn sie relevant sind — nicht vorab und nicht als Pflichtlektüre.
-2. **Kein separater Tutorial-Modus.** Onboarding passiert im echten Spielzustand. Tag 1 ist der echte Spielstart. Was im Onboarding gebaut wird, bleibt erhalten.
-3. **Erfahrene Spieler werden nicht bevormundet.** Alle Hinweise sind schließbar, überspringbar oder deaktivierbar. Wer weiß was er tut, soll das sofort tun können.
-4. **Minimaler Implementierungsaufwand.** Das System darf keine komplexe State-Maschine erfordern. Jede Maßnahme muss einzeln implementierbar und wartbar sein.
-
----
-
-### Das Cold-Start-Problem
-
-Ein neuer Spieler sieht nach dem ersten Login:
-
-- Die **Koloniekarte** (Hex-Grid): CC Lv1 und Harvester sind gesetzt, der Rest der Kolonie-Zone ist leer.
-- Den **Techtree-Screen**: 11 Gebäude-Kacheln, 7 Kenntnis-Kacheln, 3 Schiffstypen, 5 Berater-Typen — alle ohne Erklärung der Zusammenhänge.
-- Die **Ressourcenleiste**: 3.000 Credits, 200 Regolith, 0 Werkstoffe, 0 Organika.
-
-Das Problem: Der Spieler sieht viele Optionen, hat aber keinen Hinweis, welche davon den größten Effekt hat. Jede Option sieht gleichwertig aus. Das erzeugt Paralyse.
-
-**Die Lösung ist nicht mehr Information — sie ist Fokussteuerung.** Eine einzige klar hervorgehobene "erste Aktion" beseitigt die Paralyse ohne den Spieler in eine Reihenfolge zu zwingen.
-
----
-
-### § 16.1 — Der erste Bildschirm: Nexus-Briefing
-
-**Mechanik:** Beim allerersten Login eines Runs erscheint eine **Nexus-Nachricht im INNN-Feed** (kein Popup, kein Modal). Die Nachricht ist bereits sichtbar ohne dass der Spieler aktiv etwas öffnen muss — sie ist der erste Eintrag im INNN-Feed, Absender "Nexus Command", Priorität "dringend".
-
-**Inhalt der Nachricht (Ton: karg, professionell, Roguelike-Atmosphäre):**
-
-> **Nexus Command — Einsatzüberblick**
->
-> Direktor, Ihre Konzession ist aktiv. Folgendes liegt vor:
->
-> — Kommandozentrale (Lv1): betriebsbereit
-> — Harvester (Lv1): Regolith-Produktion läuft
-> — Startkapital: 3.000 Cr. Regolith-Reserve: 200 Rg
->
-> Erste Priorität: Kolonie lebensfähig machen. Dafür brauchen Sie Wohnraum.
-> Zweite Priorität: Personal einstellen — Kolonien ohne Berater handeln langsam.
->
-> Der Rest liegt bei Ihnen.
-
-Diese Nachricht erfüllt vier Funktionen gleichzeitig:
-- Erklärt den Startzustand narrativ (Frontier-Atmosphäre bleibt erhalten)
-- Benennt die erste sinnvolle Aktion ("Wohnraum")
-- Verankert den Berater-Mechanic als frühe Priorität
-- Ist kein Popup — erfahrene Spieler überlesen sie ohne Unterbrechung
-
-**Technisch:** Die Nachricht wird beim Erzeugen eines neuen Runs über `InnnService::createEvent()` mit `sender = 'nexus'` erzeugt. Kein neues Schema erforderlich.
-
----
-
-### § 16.2 — "Nächste sinnvolle Aktion": das Hint-System
-
-Das **Hint-System** zeigt zu jedem Zeitpunkt genau **einen** hervorgehobenen Hinweis an. Nie mehr als einen gleichzeitig. Der Hinweis verschwindet sobald die Aktion ausgeführt wurde.
-
-**Darstellung:** Eine schmale, schließbare Hinweis-Leiste direkt unterhalb der Ressourcenleiste. Hintergrundfarbe: gedämpftes Gelb (Warnton, kein Alarm). Maximale Länge: eine Zeile Text + ein Aktions-Link.
-
-Beispiel-Darstellung:
-```
-[!] Kein Wohnhabitat gebaut — Supply-Cap bleibt bei 10. → Jetzt bauen
-                                                                          [×]
-```
-
-Der Aktions-Link führt direkt zum relevanten Screen oder zur entsprechenden Kachel — kein Suchen nötig.
-
-**Priorisierung: Der jeweils dringendste Zustand gewinnt.** Die Hinweise sind nach Dringlichkeit geordnet; wenn mehrere Bedingungen gleichzeitig zutreffen, gewinnt der Eintrag mit dem höchsten Rang:
-
-> **Überarbeitet (Playtest-Review 2026-07-14) — neue Rangfolge für die Sol-1→4-Rampe.** Owner-Befund: Die Hints führten in der falschen Reihenfolge (CC-Invest auf Sol 1, Pfadgebäude erst Sol 3, Beraterslot-Hint lief in die Sackgasse `path_building_missing`). Neue Ziellinie: **Sol 1 Agrardom → Sol 2/3 Pfadgebäude → Sol 3/4 CC Lv2 → sofort Berater 2** (Budget-Rechnung in §16.5). Tabelle entspricht dem implementierten Stand (`OnboardingHintService::buildHintList`).
-
-| Rang | Key | Bedingung | Hinweistext (Kurzfassung) | Ziel-Link | Sol-Schwelle |
-|------|-----|-----------|---------------------------|-----------|--------------|
-| 1 | `hint_1` | Kein Baumeister-Berater aktiv | "Noch kein Baumeister eingestellt — Bau-AP bleibt beim Grundwert von 6." | `/advisors` | — (siehe Designentscheidung unten — bewusst ohne Schwelle/Alternative) |
-| 2 | `hint_repair_urgent` | Gebäude (Level ≥ 1) auf/unter `hint_repair_urgent_sp` (3 von 20) — Leveldown-Gefahr | "Ein Gebäude steht kurz vor dem Stufenverlust — jetzt reparieren." | Colony-Screen | — |
-| 3 | `hint_2` | Harvester steht auf `is_colony_zone=1`-Tile (Ring 1) | "Harvester steht noch in der Kolonie-Zone — verlegen." | Colony-Screen | — |
-| 4 | `hint_agrardome` | Harvester ≥ Lv1, kein Agrardom platziert, bezahlbar — **erstes Bauprojekt der Kolonie**, Pflicht-Gate für CC Lv2 | "Erstes Bauprojekt: Agrardom — heute platzieren, restliche Bau-AP hineinstecken." | `/colony/view?build=41` | **Sol 1** (`hint_no_agrardome_after_tick=0`) |
-| 5 | `hint_repair` | Gebäude (Level ≥ 1) **unter der Sichtbarkeits-Schwelle** (`game.repair.display_threshold`, 70 % der Max-SP) | "Ein Gebäude zeigt deutlichen Verschleiß — reparieren, bevor der Verfall teurer wird." | Colony-Screen | — (zustandsbasiert; greift durch Decay faktisch ab ~Sol 4, siehe §16.5) |
-| 6 | `hint_invest_site` | Aktive Baustelle (platziertes Level-0-Gebäude oder begonnener CC-Ausbau `ap_spend>0`), Bau-AP übrig, CC < Lv2 (danach Rente) | "Bau-AP nicht verfallen lassen — in die laufende Baustelle investieren." | Colony-Screen | — (ersetzt das CC-fixierte `hint_cc_invest`) |
-| 7 | `hint_advisor_slot2` | CC ≥ Lv2, freier Slot **und** Pfadgebäude ≥ Lv1 (sonst liefe der Hire in `path_building_missing`) — bewusst **vor** den Pfad-Hints, damit nach CC Lv2 zuerst "Berater einstellen" kommt | "Berater-Slot 2 ist offen und das Pfadgebäude steht — Berater einstellen." | `/advisors` | — (sofort nach CC2) |
-| 8 | `hint_build_priority` | ≥ 2 von (Sciencelab/Hangar/Cantina) gleichzeitig baubar (Pfadwahl offen, s. u., bezahlbar) | "Mehrere Gebäude bereit — eines auswählen." | Colony-Screen | — |
-| 9 | `hint_6` | Pfadwahl offen, Housing ≥ Lv1, keine Cantina, bezahlbar | "Cantina noch nicht gebaut." | `/colony/view?build=52` | **Sol 2** (`hint_no_cantina_after_tick=1`) — gleichrangig mit `hint_analytik` und `hint_hangar_path` |
-| 10 | `hint_analytik` | Pfadwahl offen, kein Analytik-Labor, bezahlbar | "Analytik-Labor noch nicht gebaut." | `/colony/view?build=31` | **Sol 2** (`hint_no_analytik_after_tick=1`) |
-| 11 | `hint_hangar_path` | Pfadwahl offen, kein Hangar, bezahlbar | "Hangar noch nicht gebaut." | `/colony/view?build=44` | **Sol 2** (`hint_no_hangar_after_tick=1`) |
-| 12 | `hint_3` | **Zustandsbasiert:** Agrardom ≥ Lv1 **und** ein Pfadgebäude ≥ Lv1, CC < Lv2, CC-Ausbau noch nicht begonnen (`ap_spend=0` — sonst führt `hint_invest_site`) | "Agrardom und Pfadgebäude stehen — jetzt CC auf Level 2." | Colony-Screen | Sol 3 als Floor (`hint_cc_upgrade_after_tick=2`) |
-| 13 | `hint_explore` | Sol ≤ `hint_explore_until_tick` (0 → nur Sol 1), unentdeckte Tiles vorhanden, < 6 Ring-≥2-Tiles erkundet, günstigstes Tile bezahlbar | "Umgebung erkunden — Navigations-AP nutzen." | Colony-Screen | nur Sol 1 |
-| 14 | `hint_4` | Keine Kenntnis auf Level > 0 | "Noch keine Kenntnis erforscht." | `/techtree` | **Sol 9** (`hint_no_knowledge_after_tick=8`) |
-| 15 | `hint_5` | Trust < -20 | "Vertrauen der Kolonie sinkt." | Colony-Screen | **Sol 6** (`hint_trust_min_ticks=5`) |
-| 16 | `hint_spend_remaining_ap` | Mindestens ein **nutzbarer** AP-Pool ungenutzt (Forschung zählt nur mit gebautem Sciencelab, Wirtschaft nur mit gebauter Cantina, Navigation nur mit bezahlbarem Fog-Tile) — Pool mit den meisten Rest-AP gewinnt | "Noch AP übrig — investieren." | poolabhängig | — |
-| 17 | `hint_end_sol` | Fallback — greift nur wenn **kein nutzbarer AP-Pool** mehr übrig ist (Playtest-Fix 2026-07-14: feuerte vorher trotz nutzbarer Nav-AP) | "Nichts mehr zu tun — Sol beenden." | Colony-Screen | jedes Sol (Universal-Floor) |
-
-> **Bau-Gate-Hinweis (wichtig für Implementierung):** Sobald der Spieler eines der drei Pfad-Gebäude gebaut hat, dürfen `hint_6`/`hint_analytik`/`hint_hangar_path` für die jeweils noch nicht erreichte CC-Stufe nicht feuern — sie greifen erst wieder, wenn `Anzahl gebauter Pfad-Gebäude < CC-Level − 1` zutrifft (siehe §13). Beispiel: Bei CC Lv2 und bereits 1 gebautem Pfad-Gebäude zeigen die beiden übrigen Hints (für die anderen zwei Pfad-Gebäude) **nicht mehr** "jetzt bauen", weil das Bau-Gate sie blockiert — stattdessen sollte ein neuer, noch zu definierender Hint-Text "Bei CC Lv3 verfügbar" angezeigt werden (kein Aktions-Link, reine Information), damit der Spieler nicht auf ein Gebäude klickt, das der Server ablehnt.
-
-**Ergänzende Hinweise zur Tabelle:**
-- `hint_advisor_slot2` (Rang 7): Direktes Feedback auf den CC-Lv2-Ausbau — feuert garantiert in einen sofort besetzbaren Slot und **vor** den Pfad-Hints (sonst würde nach CC Lv2 zuerst "zweites Pfadgebäude bauen" genagt statt "Berater einstellen").
-- **"Pfadwahl offen"** (Gate der Ränge 8–11): Agrardom platziert **und** (noch kein Pfadgebäude platziert **oder** CC ≥ Lv2). Die Rampe will genau EIN Pfadgebäude vor CC Lv2 — solange das erste gebaut wird oder der CC-Ausbau aussteht, schweigen die anderen Pfad-Hints (Playtest-Befund 2026-07-14: "Kein Analytik-Labor"-Nag bei fertiger Cantina). Ab CC Lv2 dürfen sie wieder feuern.
-- `hint_invest_site` (Rang 6) und `hint_explore` (Rang 13): lenken verbleibende Bau-AP in die aktive Baustelle bzw. Navigations-AP in Erkundung, statt sie verfallen zu lassen (siehe Punkt "Kein Leerlauf" unten).
-- `hint_build_priority` (Rang 8): Reine Strategie-Hinweisebene, kein Aktionslink zu einem einzelnen Gebäude — signalisiert nur, dass eine Wahl zwischen mehreren gleichwertig bereiten Gebäuden besteht.
-- `hint_end_sol` (Rang 17): Universeller Fallback, der verhindert, dass die Hint-Leiste je leer bleibt.
-- `canAffordBuildingPlacement()`-Gate auf den Bau-Hints (Ränge 4, 9–11): Alle Bau-Hints prüfen tatsächliche Bezahlbarkeit (Bau-AP, Regolith, Werkstoffe, Supply) bevor sie feuern — verhindert, dass der Hint auf ein Gebäude zeigt, das der Spieler in diesem Sol gar nicht bauen kann.
-
-> **Designentscheidung zu Rang 2 (Reparieren dringend):** Eigener Hint getrennt vom Lehr-Hint `hint_repair` (Rang 4). `hint_repair` wird beim ersten Reparieren-Klick dauerhaft dismissed (Lehrmoment „du kannst reparieren"). `hint_repair_urgent` warnt dagegen **wiederkehrend** vor dem einzigen irreversiblen Verlust (Leveldown bei SP 0): er ist nicht dismissbar (kein Eintrag in `dismissed_hints`), selbst-clearend sobald alle Gebäude wieder über `hint_repair_urgent_sp` liegen, und feuert bei jedem erneuten Verfall. Höchste Repair-Priorität, nur hinter `hint_1` (Baumeister liefert die Bau-AP). Schwelle 3/20 (≈15%) gibt selbst beim schnellsten Verfall (Cantina, 2 SP/Tick) noch >1 Sol Reaktionszeit.
-
-> **Designentscheidung zu Rang 3 (Harvester):** Der Harvester startet auf Ring-1-Tile (1,0) = `regolith_normal, is_colony_zone=1`. Das ist technisch ein Regolith-Tile, liegt aber in der Kolonie-Zone — die für Gebäude reserviert ist. Der Hint motiviert, ihn auf Ring 2 zu verlegen. Ring-2-Tile (2,0) ist `regolith_normal, is_explored=1` (Nexus-Scout hat es bei Ankunft vorab erkundet, Nexus-Briefing erklärt das). Nach dem Verlegen ist das Ring-1-Tile für Gebäude frei.
-
-> **Designentscheidung zu Rang 5 (Reparieren — Lehr-Hint, überarbeitet 2026-07-14):** Alle drei Startgebäude starten auf `status_points=16/20` (80 % — beschädigt aber funktionsfähig), doch dieser Schaden wird **nicht mehr angezeigt**: Schadens-Badge, Statusfärbung und der Lehr-Hint greifen erst unterhalb der Sichtbarkeits-Schwelle `game.repair.display_threshold = 0.70` (14/20). Die Startbeschädigung wird damit vom sichtbaren Lehrmaterial zum **unsichtbaren Pacing-Timer**: Durch die unterschiedlichen Decay-Raten fällt der Harvester ~Sol 4 unter die Schwelle, das Wohnhabitat ~Sol 6, das CC ~Sol 8 — Repair-Lehrmomente tröpfeln gestaffelt ein, genau nach Abschluss der Sol-1–4-Bau-Rampe, wenn AP-Slack existiert. Vorher würde der Hint nur zum Verbrennen knapper Bau-AP einladen (Owner-Playtest-Befund). Exakte SP bleiben in der Tile-Sidebar sichtbar — nichts wird versteckt, nur nicht aufgedrängt (§16.4-Transparenzprinzip). **Verschwindet beim ersten Reparieren-Klick** (dauerhaft dismissed). Der kritische Fall (Leveldown-Gefahr) wird weiterhin vom separaten, nicht dismissbaren `hint_repair_urgent` (Rang 2) abgedeckt. Ein mechanisches Repair-Gate an den Baumeister-Hire wurde geprüft und **verworfen**: Es verletzt die Designlinie "Hints sind Hinweise, keine Gates" und würde im Urgent-Fall ohne angestellten Baumeister die einzige Rettungsaktion blockieren.
-
-> **Designentscheidung zu Rang 11 (CC-Lv2-Hint zustandsbasiert, 2026-07-14):** `hint_3` feuert nicht mehr rein tick-basiert ab Sol 2, sondern erst wenn Agrardom **und** ein Pfadgebäude fertig sind. Grund: CC Lv2 schaltet Beraterslot 2 frei, aber Anheuern in Slot 2–4 braucht ein gebautes Pfadgebäude — wer CC Lv2 vor dem Pfadgebäude baut, sitzt auf einem leeren Slot (Owner-Playtest-Befund: "CC ist zuerst fertig → Beraterslot frei → aber Berater kann nicht eingestellt werden"). Mit der neuen Reihenfolge zahlt sich CC Lv2 im selben Sol aus. `hint_cc_upgrade_after_tick=2` bleibt als reiner Floor.
->
-> **Verifikation (2026-06-21) — Werte bestätigt, Werte verschoben:** `config('game.advisor.ap_per_rank')[1] = 4` bestätigt den Junior-Bonus von +4 AP. `ap_for_levelup=10` für CC bestätigt (per DB-Migration `2026_04_17_000003_calibrate_building_ap_costs.php`, nicht in `config/buildings.php` selbst — dort gibt es kein `ap_for_levelup`-Feld, das Feld lebt in der `buildings`-Tabelle). Die Sol-Schwelle selbst hat sich jedoch verschoben: `config('game.onboarding.hint_cc_upgrade_after_tick') = 1`, das entspricht weiterhin Sol 2 (Tick 1 = Sol 2) — hier kein Drift. **Drift gefunden bei anderen Schwellen:** `hint_no_knowledge_after_tick=8` → Sol 9, nicht Sol 8 wie in der alten Tabelle (§16.2) stand; `hint_trust_min_ticks=5` → Sol 6, nicht Sol 5; die alte Cantina-Schwelle "Sol 8" existiert in der neuen Implementierung gar nicht mehr — `hint_no_cantina_after_tick=5` → Sol 6. Alle drei Korrekturen sind in der Tabelle in § 16.2 oben eingearbeitet.
-
-> **Designentscheidung (2026-06-21) zu Rang 1 — "Baumeister zuerst" ist gewollt, kein offener Punkt:** Der vorherige Befund 2 (siehe unten) kritisierte, dass `hint_1` ohne Tick-Schwelle und ohne Alternative ausschließlich auf den Baumeister verweist und damit faktisch die einzige vom Hint-System unterstützte Eröffnung erzwingt. Der Owner hat dazu entschieden: **Das ist beabsichtigt, nicht zu ändern.** Baumeister/Bau-AP ist die strukturell einzige Ressource, die in Sol 1 *alles* andere freischaltet — Wohnraum, Harvester-Verlegung, CC-Ausbau, später jedes Gebäude. Ohne Bau-AP-Hebel bleibt der Spieler in Sol 1 handlungsarm, unabhängig davon, welchen strategischen Pfad er danach einschlägt. Ein Spieler, der bewusst zuerst Konsul oder Analytiker einstellen will, kann das weiterhin jederzeit tun — `hint_1` ist dismissable (pro Hint-Typ) und blockiert keine Aktion, er ist lediglich der dauerhaft höchstrangige *Hinweis*, kein Gate. Die in Befund 2 vorgeschlagenen Alternativen (`hint_no_scientist`/`hint_no_trader` auf Rang 1, dynamischer Rang-1-Text) werden **nicht** umgesetzt. Befund 2 bleibt unten als Analyse-Dokumentation stehen, ist aber mit dieser Designentscheidung als abgeschlossen zu lesen — kein offener Implementierungsauftrag mehr an `game-developer`/`backend-coder`.
-
-> **Designentscheidung (2026-07-14, ersetzt die Fassungen vom 2026-06-21/24) — Sol-1-Fokus: Agrardom zuerst, Pfadwahl ab Sol 2.** Die frühere Sol-1/2-Verengung ("nur Bau + Erkundung, Pfadwahl ab Sol 3") führte im Playtest dazu, dass Sol 1 Bau-AP in den CC versenkte und der Beraterslot nach CC Lv2 leer blieb. Neue Linie:
-> - `hint_no_agrardome_after_tick = 0` → der Agrardom ist das **erste Bauprojekt der Kolonie** (Sol 1): platzieren + Rest-Bau-AP investieren, fertig Sol 2. Er ist Pflicht-Gate für CC Lv2 und serverseitige Voraussetzung für alle Pfadgebäude.
-> - `hint_no_cantina/analytik/hangar_after_tick = 1` → **Pfadwahl ab Sol 2** (sobald der Agrardom platziert ist). Kein Pfad hat strukturellen Vorlauf.
-> - CC Lv2 folgt **nach** dem ersten Pfadgebäude (zustandsbasiertes `hint_3`, s. o.) — so ist garantiert, dass der frisch freigeschaltete Beraterslot 2 sofort besetzbar ist.
-> - `hint_4` (Kenntnis fehlt, Sol 9) und `hint_5` (Vertrauen kritisch, Sol 6) liegen weiterhin weit dahinter und tangieren die Rampe nicht.
-
-> **Designentscheidung (2026-07-14, Schwelle aktualisiert; inhaltlich weiter gültig aus 2026-06-24) — echte, gleichwertige Wahl zwischen drei Pfaden (Sciencelab, Hangar, Cantina).** Alle drei Pfad-Hints stehen auf derselben Tick-Schwelle (jetzt 1 = Sol 2). Keiner hat strukturellen Vorlauf — alle drei werden, sobald ihre Prerequisites (Agrardom platziert für alle drei; Cantina zusätzlich Housing≥Lv1) erfüllt sind, gleichzeitig "bereit". Sobald der Spieler eines gebaut hat, verschwindet dessen Hint dauerhaft; `hint_build_priority` (Rang 7) signalisiert die Wahlsituation, solange ≥ 2 gleichzeitig bereit sind.
->
-> **Standard-Empfehlung, keine Zwangsregel:** Wer Cantina zuerst priorisiert, sollte als nächsten Berater eher den **Konsul** anwerben. Wer Sciencelab zuerst priorisiert, eher den **Analytiker**. Wer Hangar zuerst priorisiert, eher den **Raumfahrer**. Diese Zuordnung ist die naheliegende Standardlinie und ergibt sich jetzt sogar **mechanisch** aus dem generischen Slot-System (§13): Der Slot, der durch das zuerst gebaute Pfad-Gebäude freigeschaltet wird, *ist* genau dieser passende Beratertyp — es gibt keine Möglichkeit mehr, "das falsche" Pendant in Slot 2 zu bekommen. Es bleibt weiterhin **explizit Raum für ausgefuchste Taktiken** (z. B. Pfad-Gebäude über Grund-AP abdecken, ohne den zugehörigen Slot sofort zu besetzen — der Slot bleibt einfach offen, bis der Spieler ihn füllen will). Das deckt sich mit §16.7 "Kein Pflicht-Reihenfolge".
-
-> **Designentscheidung (2026-06-24, ersetzt "Agrardom ist unabhängig von der Sol-3-Wahlgruppe" vom 2026-06-21) — Agrardom ist Pflichtgebäude, kein Wahlgruppen-Mitglied mehr.** Frühere Fassung: Agrardom war von der Cantina-vs.-Analytik-Wahlgruppe entkoppelt, aber weiterhin optional. Neue Fassung: Agrardom ist jetzt **CC2-Bau-Voraussetzung** (siehe §4). Der `hint_agrardome`-Hint bleibt auf derselben Sol-2-Schwelle, ändert aber seine Funktion von "Empfehlung, weil keine vergleichbare strategische Verzweigung" zu "Pflicht-Warnung, weil CC-Ausbau sonst blockiert ist". `hint_build_priority` (Rang 11) bezieht Agrardom **nicht mehr** in die Eligibility-Zählung der Pfadwahl ein — die Wahlgruppe besteht jetzt ausschließlich aus den drei echten Pfaden Sciencelab/Hangar/Cantina.
-
-**Deaktivierung:** Das Hint-System kann in den Einstellungen dauerhaft abgeschaltet werden (`onboarding_hints = false` in User-Preferences). Default: aktiviert. Schließen (`[×]`) eines Hinweises deaktiviert nur diesen spezifischen Hinweistyp bis zum Ende des Runs.
-
-> **Designentscheidung:** Das System prüft Zustände, keine Sequenzen. Es gibt keine "abgehakten Tutorial-Schritte" — nur eine kontinuierliche Zustandsauswertung. Das ist wartungsarm und funktioniert ohne State-Maschine.
-
-> **Designentscheidung:** Nur ein Hinweis gleichzeitig, nie eine Liste. Eine Liste erzeugt denselben Paralyseeffekt wie keine Hinweise. Der Spieler braucht eine klare Richtung, keine Aufgabenübersicht.
-
-> ⚠️ BALANCE CONCERN: `hint_4` (Kenntnis-Hint, jetzt Rang 9) feuert ab Sol 9 (`hint_no_knowledge_after_tick=8`), während `hint_analytik` (Gebäude fehlt) bereits ab Sol 3 (`hint_no_analytik_after_tick=2`) feuert. Das Analytik-Labor hat damit in der Praxis schon 6 Sole Vorlauf, bevor `hint_4` überhaupt aktiv werden kann — der ursprüngliche Concern ("Kenntnis-Hint feuert vor dem Gebäude-Hint") ist mit der Sol-3-Anpassung von `hint_no_analytik_after_tick` hinfällig. Es bleibt aber sinnvoll, `hint_no_knowledge_after_tick` so zu belassen oder eher zu erhöhen als zu senken — er markiert keinen Eröffnungszwang, sondern eine späte Sicherheitswarnung für Spieler, die nach 9 Solen noch gar keine Kenntnis erforscht haben (unabhängig davon, ob sie den Cantina-, Analytik- oder Hangar-Pfad gewählt haben).
-
----
-
-### § 16.3 — Visuelles Hervorheben: "Pulse"-Indikator
-
-**Mechanik:** Wenn eine Techtree-Kachel oder ein Tile auf der Koloniekarte den ersten empfohlenen nächsten Schritt darstellt, erhält sie einen **Pulse-Indikator** — eine dezente, langsam pulsierende SVG-Umrandung (CSS animation `ring-pulse`, 2s Periode, ein Atemzug-Rhythmus, nicht aufdringlich).
-
-**Trigger:** Der Pulse-Indikator wird ausschließlich durch denselben Zustandscheck wie das Hint-System gesteuert. Er zeigt auf genau die Kachel oder den Tile, auf den der aktive Hinweis verweist. Kein Pulse ohne zugehörigen Hint.
-
-**Konkrete Darstellung (Phase 3e):**
-
-| Hint-Rang | Pulsierendes Element |
-|-----------|----------------------|
-| 1 (kein Baumeister) | Baumeister-Slot im Berater-Screen |
-| 3 (Harvester in Colony-Zone) | Harvester-Tile auf Koloniekarte + Ziel-Ring-2-Tile (2,0) |
-| 5 (Reparieren, < 70 % SP) | betroffenes Gebäude-Tile (gleiche Schwelle wie die Schadensanzeige, `game.repair.display_threshold`) |
-| 6 (Baustelle investieren) | aktive Baustelle (Level-0-Tile) bzw. CC-Tile bei begonnenem CC-Ausbau |
-| 9 (keine Cantina) | Cantina-Kachel im Techtree |
-| 11 (kein Hangar) | Hangar-Kachel im Techtree |
-| 12 (CC Level < 2) | CC-Tile auf Koloniekarte |
-| 14 (kein Wissen) | Analytik-Labor-Kachel im Techtree (wenn noch nicht gebaut) oder erste verfügbare Kenntnis-Kachel |
-| 15 (Vertrauen < -20) | Erste verfügbare positive Vertrauensgebäude-Kachel |
-
-**Deaktivierung:** Zusammen mit dem Hint-System (gleiche Einstellung).
-
-> ⚠️ BALANCE CONCERN / DOKU-DRIFT: Diese Tabelle deckt nur 7 der jetzt 16 vorgesehenen Hint-Ränge ab (siehe § 16.2). Für die seit Phase 3g neuen Hints (`hint_repair`, `hint_repair_urgent`, `hint_advisor_slot2`, `hint_cc_invest`, `hint_explore`, `hint_build_priority`, `hint_agrardome`, `hint_analytik`, `hint_hangar_path`, `hint_end_sol`) ist nicht spezifiziert, welches Element pulsieren soll bzw. ob sie überhaupt einen Pulse erhalten. Muss vor dem nächsten UI-Pass mit `ui-specialist` geklärt werden — insbesondere `hint_end_sol` (Rang 15) sollte vermutlich KEINEN Pulse auf eine Kachel legen, sondern (falls überhaupt visuell hervorgehoben) auf den „Sol beenden"-Button.
-
-**Abgrenzung zu bestehenden Indikatoren:** Der Tiefenscan-Pulse auf der Koloniekarte (bestehend, § 4a) ist ein anderer Indikator-Typ (orangefarbene Blitz-Animation). Onboarding-Pulse ist blau-weißlich — visuell eindeutig unterscheidbar.
-
-> ⚠️ BALANCE CONCERN: Wenn zu viele Elemente gleichzeitig pulsierten (eigener Scan-Indicator, Onboarding-Pulse, zukünftige Event-Marker), wird die Karte visuell unruhig. Die Regel "nie mehr als ein Onboarding-Pulse gleichzeitig" muss auch auf UI-Ebene durchgesetzt werden.
-
----
-
-### § 16.4 — Techtree-Kaltstart: Zugangshürde reduzieren
-
-Der Techtree-Screen hat 11 Gebäude-Kacheln, 7 Kenntnisse, 3 Schiffe, 5 Berater — alle auf einmal sichtbar. Das ist für neue Spieler ein Orientierungsproblem.
-
-**Maßnahme: Zustandsbasierte Kachel-Sortierung.**
-
-Kacheln werden in drei Gruppen dargestellt, visuell getrennt durch einen Zwischenstrich und eine kleine Gruppenbezeichnung:
-
-| Gruppe | Inhalt | Darstellung |
-|--------|--------|-------------|
-| **Jetzt verfügbar** | Gebäude, die Voraussetzungen erfüllt haben und sofort gebaut werden können | Normal hell, oben |
-| **Voraussetzung fehlt** | Gebäude, die noch gesperrt sind | Gedimmt (Opacity 0.6), Tooltip zeigt was fehlt |
-| **Bereits vorhanden** | Gebaute Gebäude | Grüner Statusring, unten oder ausgeblendet |
-
-**Kein separater "Anfänger-Modus"** — das ist die Standarddarstellung für alle Spieler. Erfahrene Spieler profitieren ebenfalls von einer schnellen "Was ist gerade baubar?"-Übersicht.
-
-**Tooltip bei gesperrten Kacheln:** Ein einzeiliger Hinweis direkt auf der Kachel (kein separates Modal): z.B. "Benötigt: CC Lv4" oder "Benötigt: Hangar". Der Tooltip erscheint nur on-hover — nicht dauerhaft als Text auf der Kachel.
-
-> **Designentscheidung:** Die Kacheln werden nicht dauerhaft verborgen oder ausgeblendet — der Spieler sieht immer den gesamten Techtree. "Jetzt verfügbar" herauszuheben ist weniger invasiv als Inhalte zu verstecken. Transparenz über das gesamte System ist ein Nouron-Merkmal.
-
----
-
-### § 16.5 — Die ersten 3–5 Aktionen: natürlicher Pfad
-
-Der Startzustand (CC Lv1 beschädigt, Harvester Lv1 auf Ring-1, Housing Lv1 beschädigt, 3.000 Cr, 200 Rg) erzwingt einen natürlichen Pfad, wenn der Spieler dem Hint-System folgt. Der Pfad ist nicht zwingend — aber er ist der offensichtlich sinnvolle:
-
-> **Startzustand (implementiert 2026-06-11, Sichtbarkeit überarbeitet 2026-07-14):** CC, Harvester und Wohnhabitat starten auf Level 1 mit `status_points=16/20` (80 % Zustand) — funktionsfähig und beschädigt, aber **nicht sichtbar beschädigt**: Schadensanzeige und Repair-Hint greifen erst unterhalb der Sichtbarkeits-Schwelle (`game.repair.display_threshold = 0.70`, siehe §16.2 Rang 5). Die Startbeschädigung wirkt als unsichtbarer Pacing-Timer — der Decay bringt Harvester ~Sol 4, Wohnhabitat ~Sol 6, CC ~Sol 8 unter die Schwelle, sodass Repair-Lehrmomente gestaffelt nach der Bau-Rampe eintreffen. Harvester startet auf Ring-1-Tile (1,0) = `regolith_normal, is_colony_zone=1`. Ein Ring-3-Regolith-Tile ist vorab erkundet (Nexus-Scout, randomisierte Koordinate).
-
-**Aktion 1 — Baumeister einstellen (Berater-Screen)**
-
-- Warum: Baumeister (+4 Construction-AP/Sol Junior) erhöht Bau-Tempo ab Sol 1; hint_1 zeigt auf `/advisors`
-- Kosten: 300 Cr (Junior-Baumeister)
-- Ergebnis: Construction-AP springt von 6 auf 10. AP-Chips aktualisieren sich sofort.
-- Feedback-Loop klar: Berater-Card erscheint, Construction-AP-Anzeige springt hoch
-
-**Aktion 2 — Harvester auf Ring-2-Regolith verlegen (Colony-Screen)**
-
-- Warum: Harvester steht in der Kolonie-Zone (Ring 1) — dieser Slot ist für Gebäude reserviert. Nexus-Scout hat Ring-2-Tile (2,0) vorab erkundet; Ziel ist sichtbar.
-- Kosten: 1 Construction-AP (Distanz 1 Hex)
-- Ergebnis: Tile (1,0) in Ring 1 wird frei für Gebäude; Harvester produziert weiterhin Regolith
-- Feedback-Loop klar: Harvester-Sprite bewegt sich auf neues Tile
-
-**Aktion 3 — Agrardom platzieren + Rest-Bau-AP investieren (Sol 1, `hint_agrardome` → `hint_invest_site`)**
-
-- Warum: Der Agrardom ist Pflicht-Gate für CC Lv2 und serverseitige Voraussetzung für alle Pfadgebäude — er ist das erste Bauprojekt der Kolonie. Ohne ihn bleibt Organika auf 0 (Verpflegungsmechanik §4a).
-- Kosten: 40 Rg + 1 Bau-AP (Platzieren) + Rest-Bau-AP als Invest (Ziel 10 kumuliert)
-- Ergebnis: Baustelle Sol 1 bei ~6/10, fertig Sol 2. `hint_invest_site` (Rang 6) lenkt die Rest-AP automatisch in die aktive Baustelle — der Rhythmus "platzieren → fertig investieren → nächstes platzieren" entsteht ohne Sequenz-Skript.
-- Parallel: `hint_explore` (Rang 13) lenkt die ungenutzten 6 Navigations-AP in die Tile-Erkundung (Nav-Schiene, unabhängig von der Bau-Schiene).
-
-**Aktion 4 — Pfadgebäude wählen und bauen (Sol 2/3, `hint_6`/`hint_analytik`/`hint_hangar_path`, ggf. `hint_build_priority`)**
-
-- Warum: Ab Sol 2 (Agrardom platziert) stehen Cantina, Sciencelab und Hangar auf derselben Tick-Schwelle — die erste gleichwertige strategische Wahl: Handel, Forschung oder Flotte zuerst. Das Pfadgebäude muss **vor** CC Lv2 stehen, damit der freigeschaltete Beraterslot 2 sofort besetzbar ist (Slots 2–4 verlangen ein gebautes Pfadgebäude).
-- Kosten: 70 (Cantina) / 80 (Sciencelab) / 80 (Hangar) Rg + 1 Bau-AP Platzieren + 10 Invest-AP
-- Ergebnis: Pfadgebäude fertig ~Sol 3. Wer zuerst baut, bekommt automatisch den passenden Berater-Slot-Typ (Sciencelab → Analytiker, Hangar → Raumfahrer, Cantina → Konsul) — die Bau-Entscheidung *ist* die Berater-Entscheidung.
-- **Kein permanenter Lockout:** Die anderen Pfade folgen bei höherem CC-Level — die Wahl bestimmt Reihenfolge, nicht endgültigen Zugang.
-
-**Aktion 5 — CC auf Level 2 ausbauen (Sol 3/4, `hint_3`)**
-
-- Warum: Jetzt zahlt sich CC Lv2 sofort aus — Agrardom (Pflicht-Gate) und Pfadgebäude (Slot-Gate) stehen. CC Lv2 schaltet den zweiten Berater-Slot frei + 6 neue Kolonie-Zone-Tiles.
-- Kosten: 10 Construction-AP kumuliert + 40 Rg (CC-Upgrade = Ziel-Level × 20 Rg, gesenkt von ×30 am 2026-07-14 — siehe Balance-Notiz unten)
-- Ergebnis: Koloniekarte aktualisiert sich live (Ring-Expansion §4a); `hint_advisor_slot2` (Rang 7) feuert sofort.
-
-**Aktion 6 — Zweiten Berater einstellen (`hint_advisor_slot2`)**
-
-- Der Slot ist generisch; der Typ ergibt sich aus dem gebauten Pfadgebäude (§13). Kosten 350–500 Cr — Credits sind zu diesem Zeitpunkt reichlich (~2.300+).
-- An diesem Punkt hat der Spieler alle Kernsysteme berührt: Berater, Tile-Management, Bauen/Investieren, Pfadwahl, CC-Ausbau, Erkundung.
-
-**Budget-Rechnung Sol 1–4** (10 Bau-AP/Sol ab Baumeister-Hire; Harvester-Move worst case 3 AP; Regolith-Start 200, +10/Sol ab Sol 2; Werte nach Balance-Anpassung 2026-07-14):
-
-| Sol | Bau-AP | Regolith (Endstand) |
-|-----|--------|---------------------|
-| 1 | Hire (0) + Harvester-Move (3) + Agrardom platzieren (1) + Invest (6) = 10/10 | −40 → **160** |
-| 2 | Agrardom-Invest 4 → **Lv1 ✓** + Pfadgebäude platzieren (1) + Invest (5) = 10/10 | +10 −10 −70/80 → **80–90** |
-| 3 | Pfad-Invest 5 → **Lv1 ✓** + CC-Invest 5 = 10/10 | +10 −18/20 → **70–82** |
-| 4 | CC-Invest 5 → **CC Lv2 ✓** → Berater 2 anheuern | +10 −40 → **37–52** |
-
-> **Balance-Anpassung (2026-07-14) — Regolith-Klemme der Rampe entschärft:** Vor der Anpassung endete der Hangar-Pfad bei Sol 4 mit ~7 Rg Rest (de facto null Puffer für Repairs à 2 Rg/SP oder Housing-Ausbau). Zwei chirurgische Hebel statt globaler Inflation: `cc_upgrade_regolith_per_level: 30 → 20` (CC Lv2 = 40 statt 60 Rg — der größte Einzelposten der Rampe) und `hangar.build_cost: 90 → 80` Rg (Pfad-Gleichwertigkeit: Cantina 70 / Sciencelab 80 / Hangar 80). Ein höherer Harvester-Yield wurde verworfen (globaler Hebel, Trivialisierungsrisiko im Midgame); der Nexus-Kredit hilft nicht (liefert Credits, Engpass ist Regolith — einziger Wandlungsweg ist ein Cantina-Kaufangebot). **Offen (nach Playtest):** Nexus-Kredit als eigener Discovery-Moment, sobald die Cantina steht.
-
-**Kein erzwungener Sequenz-Abschluss.** Der Spieler kann jederzeit von diesem Pfad abweichen. Die Hints verschwinden, wenn die jeweilige Bedingung nicht mehr zutrifft.
-
-> ⚠️ BALANCE CONCERN: Baumeister-Kosten (300 Cr, Junior) müssen nach Playtest geprüft werden — 300 Cr von 3.000 Startguthaben ist 10%, sollte kein Problem sein. Einstellungskosten in `config/advisors.php` konfigurierbar.
-
-> ⚠️ BALANCE CONCERN: Repair-Mechanik fehlt noch. Gebäude bei 80% sind 5–10 Sole lang funktionsfähig; sobald Verfall sie unter ~30% bringt, wirken sich Statusmalus-Effekte aus. Die Schwelle für "kritisch beschädigt" (aktuell: `80%`-Trigger in OnboardingTriggersService) soll nach erstem Playtest kalibriert werden.
->
-> **Korrektur (2026-06-21):** Repair-Mechanik ist inzwischen implementiert (`hint_repair`, `hint_repair_urgent`, Reparieren-Button kostet 1 Bau-AP/Klick, `hint_repair_urgent_sp=3` von 20). Dieser Concern ist erledigt — verbleibt nur als Hinweis, dass die Schwelle `3/20` nach Playtest noch validiert werden sollte (siehe Designentscheidung zu Rang 2 in § 16.2).
-
----
-
-#### Befund 1 — Leerlauf in den frühen Sols (AP- und Ressourcen-Sümpfe)
-
-> ⚠️ BALANCE CONCERN (Analyse 2026-06-21): Auch mit `hint_cc_invest` und `hint_explore` bleiben mehrere AP-Pools in frühen Sols strukturell ungenutzt, weil dafür **kein Hint existiert**:
->
-> - **Economy-AP (Konsul) und Strategy-AP (Stratege):** Es gibt bis heute keinen einzigen Hint, der auf eine Verwendung dieser beiden AP-Pools hinweist. Die Basis-6-AP/Sol verfallen ungenutzt, solange kein Konsul/Stratege eingestellt ist UND solange keiner der beiden eingestellt wird, weil kein Hint dazu motiviert (`hint_1` deckt nur den Baumeister ab; `hint_advisor_slot2` ist berater-typ-agnostisch und damit zwar eine Wahlmöglichkeit, aber keine Aufforderung speziell für Economy/Strategy). Solange Cantina (Handelsangebote) nicht gebaut ist, ist Economy-AP ohnehin praktisch wirkungslos — das ist ein struktureller Sumpf von Sol 1 bis frühestens Sol 6.
-> - **Strategy-AP** hat im aktuellen Frühspiel **gar keine Verwendung** (keine Begegnungen/Eskorte-Befehle vor Hangar/Korvette, Phase 3). Der Pool läuft potenziell viele Sole leer, ohne dass das im GDD irgendwo benannt wird. Das ist kein Hint-Problem, sondern ein strukturelles Pacing-Problem: Strategy-AP sollte entweder früher nutzbar sein (z.B. für Erkundungs-Risikobewertung) oder es sollte explizit dokumentiert sein, dass dieser Pool bewusst erst ab Phase 3 (Hangar/Korvette) relevant wird, damit niemand fälschlich einen fehlenden Hint als Bug einstuft.
-> - **Regolith-Überschuss:** Harvester Lv1 produziert kontinuierlich Regolith; bei Bauprojekten, die Bau-AP-limitiert sind (nicht Regolith-limitiert), kann sich Regolith schon vor Sol 5 anhäufen.
-> - **Credits:** Nach Aktion 1 (Baumeister, 300 Cr) bleiben ~2.700 Cr liegen. Vor `hint_advisor_slot2` (frühestens Sol 2/3) gibt es keine weitere Credits-Senke außer ggf. weiteren Berater-Anwerbungen — das ist beabsichtigt (Credits sind die "freie" Ressource, kein Hint nötig), aber sollte explizit als Designentscheidung benannt werden statt implizit zu bleiben.
->
-> **Update (2026-06-21) — Depot-Hint geprüft, nicht umsetzbar: blockiert durch fehlendes Resource-Cap-System.** Die ursprüngliche Empfehlung unten ging davon aus, dass Depot einen Lager-Cap für Regolith durchsetzt und überschüssiges Regolith am Cap "stillschweigend verfällt". Codeprüfung (`app/Services/ResourcesService.php`, `app/Console/Commands/GameTick.php`) zeigt: Es gibt aktuell **kein Resource-Storage-Cap-System** — `cap` im Code bezeichnet ausschließlich den *Supply*-Cap (Entity-Limit für Gebäude/Berater/Schiffe), nicht ein Lagerlimit für Regolith/Credits/Werkstoffe. Depot (`building_id=30`) hatte im Code **keine Funktion** — es war in `config/buildings.php` definiert, aber ohne jede Spielwirkung.
->
-> **Erledigt (2026-06-22) — Depot ersatzlos entfernt, statt Cap-System nachzuziehen.** Pro/Contra-Evaluation (siehe § "Errichten" oben) ergab: Das eigentliche Spielproblem ist Ressourcenknappheit, nicht -überschuss; ein Lagerlimit-System hätte aktive Produktion bestraft statt belohnt und stand quer zum Roguelike-Designprinzip. Owner-Entscheidung: Depot-Gebäude (`building_id=30`) komplett aus dem Spiel gestrichen (`config/buildings.php`, `lang/de+en/buildings.php`, `lang/de+en/techtree.php`, `MasterDataSeeder`, `ColonySeedDemo`, Migration `2026_06_22_000001_remove_depot_building.php`). Damit ist der Regolith-Überschuss-Punkt unten kein offener Hint-Blocker mehr, sondern erledigt durch Entfernung der betroffenen Mechanik-Idee. Bei Bedarf kann Depot + Cap-System später erneut eingeführt werden.
->
-> **Erledigt (2026-06-21):** Toter Config-Key `hint_no_engineer_ticks` aus `config/game.php → onboarding` entfernt (war in `OnboardingHintService::checkHint1()` nicht mehr referenziert). Code-Kommentar-Defaults in `OnboardingHintService.php` (die `config(..., $default)`-Fallbacks) auf die tatsächlich aktiven Config-Werte synchronisiert — betraf `hint_cc_upgrade_after_tick` (2→1), `hint_explore_until_tick` (2→0), `hint_no_knowledge_after_tick` (10→8), `hint_no_cantina_after_tick` (5→2), `hint_no_agrardome_after_tick` (6→1). Bestehende Test-Suite (`tests/Feature/Onboarding/OnboardingHintServiceTest.php`, 53 Tests) bestätigt grün — reine Fallback-Korrektur ohne Verhaltensänderung, da die Config-Werte ohnehin immer gesetzt sind.
->
-> **Weiterhin offen:** Economy-/Strategy-AP-Leerlauf (siehe oben) — keine Code-Änderung, aber die GDD-Notiz selbst (dieser Block) macht das Pacing jetzt bewusst/dokumentiert, statt implizit zu bleiben.
-
-#### Befund 2 — Erzwungene Berater-Reihenfolge (Status: entschieden, kein offener Punkt mehr)
-
-> **Erledigt durch Designentscheidung (2026-06-21), siehe § 16.2 "Designentscheidung zu Rang 1".** Die folgende Analyse bleibt als historische Dokumentation stehen, ist aber **nicht mehr als offener Balance-Concern zu behandeln** — der Owner hat "Baumeister zuerst" als bewusste, dauerhafte Designentscheidung bestätigt. Die unten stehenden Empfehlungen 1 und 4 (Rang 1 generalisieren bzw. zu einer Wahlgruppe umbauen) werden **nicht** umgesetzt. Empfehlung 3 war bereits zutreffend (kein Code-Änderungsbedarf). Die ursprüngliche Beobachtung selbst — dass die Hint-Priorisierung de facto eine nahegelegte Standardreihenfolge erzeugt — bleibt sachlich richtig, ändert aber nichts an der Design-Entscheidung: Eine *nahegelegte* Reihenfolge ist ausdrücklich erlaubt, solange sie nicht erzwungen wird (Hints bleiben dismissable, blockieren keine Aktion). Die echte Wahlfreiheit setzt laut Design bewusst erst **ab Sol 3** ein (Cantina vs. Analytik-Labor, siehe § 16.2) — Sol 1/2 sind als linearer Bau-/Erkundungs-Einstieg beabsichtigt, nicht als Wahlphase.
->
-> Ursprüngliche Analyse (2026-06-21, unverändert zur Nachvollziehbarkeit erhalten):
->
-> Rang 1 (`hint_1`, kein Baumeister) hat **keine Tick-Schwelle und keine Alternative** — er ist der einzige Hint, der einen bestimmten Berater-Typ (Engineer) namentlich verlangt, und er steht permanent an der höchsten Priorität, bis ein Baumeister eingestellt wird. In Kombination mit `hint_cc_invest`/`hint_explore` (die beide implizit voraussetzen, dass bereits ein Baumeister aktiv ist, weil sonst kaum Bau-AP für CC-Vorinvestition übrig bleibt) wird **"Baumeister zuerst" faktisch zur einzigen vom Hint-System unterstützten Eröffnung**. Ein Spieler, der z.B. zuerst einen Konsul (Handel) oder Analytiker (Forschung) einstellen möchte, bekommt:
-> - Weiterhin `hint_1` als höchstrangigen, nicht wegklickbaren-bis-erledigt Hinweis (dismissable nur pro Hint-Typ, aber er kommt zurück solange kein Baumeister da ist und wird sofort wieder zum dringendsten Hint, wenn andere abgearbeitet sind)
-> - Kein gleichwertiges Pendant `hint_no_scientist`/`hint_no_trader` o.ä. auf Rang 1 — die anderen vier Berater-Typen haben überhaupt keinen "fehlt noch"-Hint
-> - Das Gefühl, "falsch" zu spielen, weil die Hint-Leiste beharrlich auf den Baumeister verweist, auch wenn der gewählte Build (z.B. früher Handel über Cantina) strukturell ebenso valide ist
->
-> Das widerspricht dem in § 16.7 festgehaltenen Prinzip "Kein Pflicht-Reihenfolge" — de facto entsteht durch die Hint-Priorisierung trotzdem eine nahegelegte Standardreihenfolge (Baumeister → Harvester verlegen → CC-Vorinvestition/Erkunden → CC Lv2 → 2. Berater → Cantina/Agrardom/Analytik), die zwar nicht erzwungen, aber stark begünstigt ist, weil sie als einzige durchgängig durch Hints unterstützt wird.
->
-> Ursprüngliche Empfehlungen (1, 2, 4 zurückgezogen — siehe oben; 3 weiterhin gültig als Bestandsbeschreibung):
-> 1. ~~`hint_1` so erweitern, dass er nicht zwingend "Baumeister" verlangt~~ — verworfen, Baumeister-zuerst bleibt Designentscheidung.
-> 2. ~~Alternativ: explizit als Designentscheidung dokumentieren~~ — umgesetzt, siehe § 16.2.
-> 3. `hint_cc_invest`/`hint_explore` setzen den Engineer-Pfad nicht voraus, prüfen nur verbleibende Bau-AP bzw. Nav-AP — weiterhin korrekt, kein Änderungsbedarf.
-> 4. ~~Ränge 1–8 (Sol 1–2) zu einer Wahlgruppe umbauen~~ — verworfen. Sol 1/2 bleiben linear (Bau + Erkundung); die Wahlgruppe wird stattdessen ab Sol 3 (Cantina vs. Analytik) eingeführt, siehe § 16.2.
-
----
-
-#### Pfadwahl-Überarbeitung (2026-06-24) — Implementierungs-Checkliste
-
-> Diese Checkliste fasst zusammen, was konkret geändert werden muss, damit Code und Config der hier dokumentierten Pfadwahl (§4 "Pfadwahl ab Sol 3", §13 "Slot-System: CC-Level als Gate, Pfadwahl ab Slot 2") entsprechen. Kein offener Designpunkt mehr — die Entscheidung ist getroffen; das Folgende ist Implementierungsauftrag an `game-developer`/`backend-coder`/`db-migration-agent`.
-
-**1. Config-Änderungen:**
-
-| Datei | Änderung |
-|-------|----------|
-| `config/buildings.php` | `hangar.cc_level_required` (oder äquivalentes Gate-Feld, falls ein solches Feld eingeführt wird — aktuell ist das CC-Gate nicht in `buildings.php` selbst kodiert, siehe Punkt 2) — Hangar von "CC Lv3" auf "CC Lv2" senken. `bioFacility` braucht ein neues Flag, das es als CC2-Pflichtvoraussetzung markiert (z. B. `'cc2_prerequisite' => true`), falls der CC-Levelup-Check generisch über Config laufen soll statt hartcodiert. |
-| `config/advisors.php` | Keine Strukturänderung nötig — `ap_type`/`credits` bleiben pro Typ unverändert. Ggf. Kommentar ergänzen, dass `scientist`/`pilot`/`trader` jetzt über die generischen Pfad-Slots 2–4 gebunden werden, nicht mehr über feste CC-Level. |
-| `config/game.php → onboarding` | Neuer Key `hint_no_hangar_after_tick => 2` ergänzen (siehe §16.7-Codeblock oben). |
-
-**2. PHP-Dateien:**
-
-| Datei | Änderung |
-|-------|----------|
-| `app/Http/Controllers/Techtree/AdvisorController.php` | `SLOT_ORDER`-Konstante ersetzen durch `FIXED_SLOTS` (Position 1 → engineer, Position 5 → strategist) + `PATH_BUILDINGS`-Mapping (building_id → advisor key, siehe §13-Pseudocode). `buildSlots()` umbauen: Slots 2–4 nicht mehr statisch aus einem Array, sondern dynamisch aus der Bau-Reihenfolge der drei Pfad-Gebäude auf der Kolonie ermittelt (siehe Punkt 3, Migration). Neuer UI-Zustand für "Slot wartet auf Pfad-Gebäude-Bau" nötig (unterscheidet sich vom bisherigen `locked`-Zustand, der nur CC-Level prüft). |
-| `app/Services/Techtree/PersonellService.php` | `hire()` braucht **keine** Strukturänderung — die Methode ist bereits typ-agnostisch (CC-Level bestimmt nur die Slot-*Anzahl*, nicht den Typ). Zu prüfen: ob `hire()` zusätzlich validieren muss, dass der angefragte `personell_id` tatsächlich zu einem der drei bereits gebauten Pfad-Gebäude (oder den fixen Slots 1/5) gehört — aktuell gibt es keine Typ-Bindung in der Hire-Logik selbst, das wäre eine neue Geschäftsregel: Slot 2 darf nicht mit einem Typ besetzt werden, dessen Pfad-Gebäude noch nicht gebaut ist. |
-| `app/Services/ColonyService.php` (oder wo `placeBuilding()` lebt) | Neues Bau-Gate für die drei Pfad-Gebäude (Sciencelab/Hangar/Cantina, building_id 31/44/52): `Anzahl bereits platzierter Pfad-Gebäude < CC-Level − 1` muss vor der Platzierung geprüft werden. Fehlerfall (analog zu bestehenden Gate-Fehlern wie `slot_full`) z. B. `'path_gate_locked'`. |
-| CC-Levelup-Endpoint (vermutlich in `ColonyService` oder `ColonyController`) | Neue Voraussetzung für CC Lv1→Lv2: Agrardom (`building_id=41`) muss ≥ Lv1 sein. Fehlerfall z. B. `'agrardome_required'`. |
-| `app/Services/OnboardingHintService.php` | Siehe Punkt 4 unten — eigener Abschnitt, da umfangreich. |
-
-**3. Migration (DB-Schema):**
-
-`colony_buildings` hat aktuell **keine** Zeitstempel-/Reihenfolge-Spalte (siehe `0001_01_01_000014_create_colony_buildings_table.php`) — die Bau-Reihenfolge der drei Pfad-Gebäude kann nicht rekonstruiert werden, ohne eine neue Spalte einzuführen. Empfehlung: neue nullable Spalte `placed_at_tick` (Analogie zu `pending_until_tick`, siehe `2026_06_11_200000_add_pending_until_tick_to_colony_buildings.php`), gesetzt beim ersten `placeBuilding()`-Aufruf für dieses `colony_id + building_id`-Paar. Slot-Zuordnung in `buildSlots()` sortiert dann die drei Pfad-Gebäude nach `placed_at_tick ASC`, Tie-Break bei Gleichstand nach `building_id ASC` (siehe §13 "Reihenfolge-Auflösung").
-
-> ⚠️ Diese Migration ist die einzige tatsächliche Schema-Änderung dieser gesamten Design-Überarbeitung — alles andere ist Config + Service-Logik.
-
-**4. `OnboardingHintService.php` — detaillierter Rework-Bedarf:**
-
-- `allChoiceBuildingsPlaced()` (aktuell: Cantina + Agrardom + Analytik) → umstellen auf Sciencelab + Hangar + Cantina (Agrardom raus, weil jetzt Pflichtgebäude, kein Wahlgruppen-Mitglied mehr).
-- `checkHintBuildPriority()` → dieselbe Korrektur (Agrardom raus aus der `$eligible`-Zählung, Hangar rein).
-- Neue Methode `checkHintHangarPath()` + `hangarPrereqsMet()` — Analogie zu `checkHintAnalytik()`/`analytikPrereqsMet()`, prüft CC ≥ Lv2 + Bau-Gate frei + nicht gebaut + bezahlbar.
-- `cantinaPrereqsMet()`, `analytikPrereqsMet()`, neue `hangarPrereqsMet()` müssen alle zusätzlich das Bau-Gate prüfen (`Anzahl gebauter Pfad-Gebäude < CC-Level − 1`), nicht nur CC-Level — aktuell prüfen sie nur CC-Level, was nach der Überarbeitung falsch-positive Hints erzeugen würde (Hint zeigt auf ein Gebäude, das der Server wegen Bau-Gate ablehnt).
-- `checkHintAgrardome()`/`agrardomePrereqsMet()` bleiben strukturell gleich (Harvester ≥ Lv1, Sol-Schwelle), aber der Hinweistext (lang/de) muss von Empfehlung zu Pflicht-Warnung geändert werden — Aufgabe für `content-writer`, nicht `game-developer`.
-- Neuer Hint-Zustand für "Bau-Gate aktuell gesperrt, bei höherem CC-Level verfügbar" — kein Aktions-Link, reine Information (siehe Hinweis in der Hint-Tabelle oben). Muss definiert werden, ob dieser Zustand überhaupt einen eigenen Hint-Rang bekommt oder nur eine Tooltip-Information auf der gedimmten Techtree-Kachel ist (letzteres vermutlich konsistenter mit §16.4 "Zustandsbasierte Kachel-Sortierung" — kein neuer Hint-Rang nötig, nur ein Tooltip-Text "Verfügbar ab CC Lv3").
-- `checkHint3()` (CC-Levelup-Hinweis, Rang 5) muss den Agrardom-Pflicht-Check einbauen: Wenn CC < Lv2 UND Agrardom < Lv1, darf der Hinweistext nicht "CC ausbauen" lauten (der Button ist ja gesperrt), sondern muss auf Agrardom verweisen — sonst zeigt das Hint-System auf eine Aktion, die der Server ablehnt.
-
-**5. Lang-Dateien (`content-writer`):**
-
-- `lang/de/colony.php` (oder wo `onboarding_hint_*`-Keys liegen): Neuer Key für `hint_hangar_path`, Anpassung `hint_agrardome`-Text (Pflicht statt Empfehlung), Anpassung `hint_advisor_slot2`-Text (kein fester Beratertyp mehr nennbar).
-- `lang/de/advisors.php`: Ggf. Anpassung der Slot-Beschreibungstexte im Berater-Screen, falls dort bisher "Slot 2 — Analytiker" o. ä. fest beschriftet war (zu prüfen mit `ui-specialist`).
-
-**6. Tests (`qa-tester`):**
-
-- Bestehende `tests/Feature/Onboarding/OnboardingHintServiceTest.php` (53 Tests, Stand 2026-06-21) muss für alle Tests angepasst werden, die `bioFacility`/Cantina/Analytik als gleichrangige Wahlgruppe annehmen.
-- Neue Tests: Bau-Gate-Durchsetzung (2. Pfad-Gebäude bei CC2 ablehnen, bei CC3 erlauben), Agrardom-als-CC2-Voraussetzung, generische Slot-Zuordnung (Slot 2 = Typ des zuerst gebauten Pfad-Gebäudes), Tie-Break bei Gleichstand.
-
----
-
-### § 16.6 — Inline-Erklärungen statt Handbuch
-
-Bestimmte Konzepte sind für neue Spieler nicht intuitiv. Statt ein Handbuch anzubieten, gibt es **kontextsensitive Inline-Erklärungen** — kurze Einzeiler die genau dann erscheinen, wenn das Konzept zum ersten Mal relevant wird.
-
-**Trigger-Punkte (einmalig pro Run, nicht wiederholend):**
-
-| Konzept | Trigger | Anzeigeform |
-|---------|---------|-------------|
-| Decay (Verfall) | Erstes Gebäude fällt auf < 80% Status-Points | INNN-Ereignis: "Ihre [Gebäudename] zeigt erste Verfallserscheinungen. Reparatur-AP verlangsamen den Prozess." |
-| Supply-Cap erreicht | `freies_supply` sinkt auf 0 | Inline-Banner (gelb) im Ressourcen-Header: "Supply-Cap erreicht — kein neues Schiff oder Berater baubar." |
-| Vertrauen sinkt erstmals unter 0 | `vertrauen` wird negativ | INNN-Ereignis (Absender: Kolonist): "Die Stimmung in der Kolonie ist angespannt." |
-| Erstes AP-Limit | Spieler versucht Aktion aber AP = 0 | Tooltip am Button: "Keine [Typ]-AP mehr heute. Berater erhöhen den täglichen Vorrat." |
-| Harvester-Verlagerung | Erster Klick auf "Verlegen"-Aktion | Tooltip: "Harvester verlegen kostet 1 Bau-AP pro Hex Distanz — er kommt nächsten Sol an und produziert unterwegs nichts." |
-
-**Format:** INNN-Ereignisse für narrative Konzepte (Verfall, Vertrauen), Inline-Banner für kritische Systemgrenzen (Supply-Cap), Tooltips für Aktions-Mechaniken. Kein Modal, kein Overlay.
-
-**Technisch:** Alle fünf Trigger sind einmalige `innn_events`-Einträge mit einem Flag `is_onboarding_hint = true` (oder einem separaten `event_type`-Präfix `onboarding_*`). Sie werden beim Erzeugen markiert und nach dem Lesen nicht mehr wiederholt.
-
-> **Designentscheidung:** INNN ist der natürliche Kanal für alle narrativen Erklärungen — der Spieler lernt früh, dass INNN wichtige Informationen liefert. Onboarding-Hinweise über denselben Kanal zu liefern stärkt diese Gewohnheit statt eine neue UI-Schicht einzuführen.
-
----
-
-### § 16.7 — Was Onboarding bewusst nicht leistet
-
-Explizit ausgeschlossen — diese Maßnahmen verletzen die Designprinzipien und werden nicht implementiert:
-
-| Ausgeschlossen | Begründung |
-|----------------|-----------|
-| Pflicht-Reihenfolge (Story-Modus, "Schritt 1 von 5") | Macht den Roguelike-Start zur Lehrveranstaltung; verhindert eigene Erkundung |
-| Gesperrte Screens bis Tutorial fertig | Bevormundet erfahrene Spieler; zerstört die "echter Spielstart von Tag 1"-Eigenschaft |
-| Erklärungsmodal beim Laden des Spiels | Pop-up-Spam; wird weggeklickt; Informationen zu früh, nicht kontextsensitiv |
-| Animierter Cursor-Zeiger ("Klick hier!") | Infantilisiert; passt nicht zum Direktor-Ton von Nouron |
-| Permanente Sidebar-Erklärung aller Konzepte | Platzverschwendung; nach dem ersten Tag nicht mehr sinnvoll |
-| Separater Sandbox-/Tutorial-Run | Hoher Implementierungsaufwand; Spieler wollen spielen, nicht üben |
-
----
-
-### Technische Anforderungen (Zusammenfassung)
-
-| Maßnahme | Implementierungsaufwand | Abhängigkeiten |
-|----------|------------------------|----------------|
-| Nexus-Briefing (INNN-Nachricht beim Run-Start) | Klein — `InnnService::createEvent()` erweitern | Run-Erzeugung muss Hook haben |
-| Hint-System (Zustandscheck + Leiste unter Ressourcen) | Mittel — Alpine.js Komponente, 5 Bedingungsregeln | Ressourcenleiste-Layout, User-Preferences |
-| Pulse-Indikator (CSS-Animation auf Kacheln/Tiles) | Klein — CSS-Klasse `ring-pulse` + Condition-Flag im Blade | Hint-System (welches Element pulsiert) |
-| Kachel-Sortierung im Techtree | Mittel — Techtree-Controller liefert Gruppierungsflag | Techtree-Screen-Refactoring |
-| Inline-Erklärungen (5 Trigger-Punkte) | Klein pro Trigger — INNN-Event + Flag | Run-State (Trigger darf nur einmal feuern) |
-| User-Preference `onboarding_hints` | Klein — User-Settings-Tabelle oder Cookie | User-Settings-Screen |
-
-**Konfiguration:** `config/game.php → onboarding` (Stand 2026-06-21, vollständig — die vorherige Fassung dieser Liste war veraltet und nannte teils nicht mehr existierende Keys):
-
-```php
-'onboarding' => [
-    'hint_repair_urgent_sp'           => 3,   // Rang 2: SP-Schwelle (von max. 20) für Leveldown-Warnung
-    'hint_supply_cap_threshold'       => 10,  // (aktuell ungenutzt im Hint-Ranking selbst — Supply-Cap-Banner läuft über §16.6, nicht §16.2)
-    'hint_no_engineer_ticks'          => 3,   // Rang 1 referenziert dies nicht direkt mehr (checkHint1 prüft nur Advisor-Existenz) — TODO: toter Config-Wert?
-    'hint_no_knowledge_after_tick'    => 8,   // Rang 9 (hint_4): Sol 9
-    'hint_trust_threshold'            => -20, // Rang 10 (hint_5)
-    'hint_trust_min_ticks'            => 5,   // Rang 10 (hint_5): Sol 6
-    'hint_no_cantina_after_tick'      => 2,   // Rang 12 (hint_6) — Sol 3, gleichrangig mit hint_no_analytik_after_tick + hint_no_hangar_after_tick (Pfadwahl, siehe §13)
-    'hint_no_agrardome_after_tick'    => 1,   // Rang 13 (hint_agrardome) — Sol 2; jetzt Pflicht-Gate-Hinweis, nicht mehr Wahlgruppen-Mitglied (siehe §4, §13)
-    'hint_no_analytik_after_tick'     => 2,   // Rang 14 (hint_analytik) — Sol 3, gleichrangig mit hint_no_cantina_after_tick + hint_no_hangar_after_tick
-    'hint_no_hangar_after_tick'       => 2,   // Rang 14b (hint_hangar_path) — NEU (2026-06-24), Sol 3, gleichrangig mit den beiden obigen — drittes Pfadwahl-Mitglied
-    'hint_cc_upgrade_after_tick'      => 1,   // Rang 5 (hint_3): Sol 2
-    'hint_explore_until_tick'         => 0,   // Rang 8 (hint_explore): nur Sol 1
-    'hint_explore_max_explored_tiles' => 6,   // Rang 8 (hint_explore): Throttle
-],
-```
-
-> ⚠️ BALANCE CONCERN / IMPLEMENTIERUNGSAUFTRAG (2026-06-24): `hint_no_hangar_after_tick` ist ein neuer Config-Key, noch nicht in `config/game.php` angelegt — Teil der Implementierungs-Checkliste am Ende dieses Abschnitts.
->
-> ⚠️ BALANCE CONCERN / DOKU-DRIFT (2026-06-21, teilweise behoben): Die tatsächlichen Werte in `config/game.php` weichen weiterhin von den Code-Defaults in `OnboardingHintService.php` ab (z.B. `hint_no_agrardome_after_tick`: Config=1, Code-Default=6; `hint_no_analytik_after_tick`: Config=2, Code-Default=8). Das ist beabsichtigt (Config gewinnt immer; siehe `canAffordBuildingPlacement()`, die ohnehin die reale Bezahlbarkeit prüft) — die Code-Kommentare mit den höheren Default-Werten sollten dennoch zur Vermeidung von Verwirrung beim nächsten Code-Review aktualisiert werden (Aufgabe für `game-developer`, nicht `game-designer`). **Update (2026-06-21):** `hint_no_cantina_after_tick` wurde von `0` auf `2` korrigiert (war zuvor Sol 1, also zwei Sole vor `hint_no_analytik_after_tick`) — beide stehen jetzt auf identisch `2` (Sol 3), wie es die Designentscheidung "Pfadwahl" (§ 16.2, §13) verlangt. Diese eine Diskrepanz war kein reines Doku-Drift-Problem, sondern eine tatsächliche Balance-Lücke (Cantina hatte einen unbeabsichtigten Sol-Vorsprung) und wurde behoben.
->
-> `hint_no_engineer_ticks` scheint im aktuellen `OnboardingHintService::checkHint1()` gar nicht mehr gelesen zu werden (die Methode prüft nur, ob ein Advisor-Datensatz existiert, ohne Tick-Schwelle). Falls korrekt: toter Config-Eintrag, sollte entfernt oder die Doku-Kommentare im Config korrigiert werden — zu klären mit `game-developer`/`backend-coder`.
-
-> **TODO (Implementierung):** User-Preferences-Tabelle benötigt Spalte `onboarding_hints BOOLEAN DEFAULT 1`. Alternativ: Session-Storage für den ersten Run, persistente DB-Einstellung ab zweitem Run.
-
-> **TODO (Design):** Nexus-Briefing-Text ist bisher nur als Entwurf definiert. Finale Formulierung mit dem content-writer abstimmen (Ton: karg, lakonisch, Frontier-Atmosphäre — kein Tutorial-Handbuch-Ton).
-
-> **TODO (Design):** Reihenfolge der ersten freigeschalteten Kenntnis-Slots im Roguelike-Zufallssystem (§ 10) beeinflusst Onboarding — Hint Rang 4 muss prüfen ob das Analytik-Labor überhaupt Teil des laufenden Runs ist. Falls nicht: Hint anpassen auf "erste verfügbare Kenntnis".
+> **Ausgelagert:** Dieses Kapitel steht in [`docs/gdd/onboarding.md`](gdd/onboarding.md) — Designprinzipien, Cold-Start-Problem, Nexus-Briefing (16.1), Hint-System (16.2), Pulse-Indikator (16.3), Techtree-Kaltstart (16.4), die ersten 3–5 Aktionen (16.5), Inline-Erklärungen (16.6) und Abgrenzung (16.7).
 
 ---
 
 ## 17. Progressive Discovery System
 
-### Designprinzip
-
-Nouron-Runs sind kurz und wiederholbar — aber kein Run soll sich identisch anfühlen. Das Progressive Discovery System ist das Bindeglied zwischen Roguelike-Variabilität (§15) und dem Spielerlebnis: **Der Spieler entdeckt das Spiel im Verlauf des Runs, nicht davor.**
-
-Das Gegenprinzip wäre das klassische "Upfront-Reveal": Alle Objectives erscheinen sofort, alle Almanach-Artikel sind von Anfang an lesbar, alle Informationen liegen transparent auf dem Tisch. Das ist korrekt und spielerfreundlich — aber es beraubt den Run seiner Dynamik. Ein Run bei dem der Spieler von Sol 1 an den gesamten Weg kennt, fühlt sich wie eine Checkliste an, nicht wie eine Expedition.
-
-**Das Ziel dieser Mechaniken ist deshalb nicht Informationsentzug, sondern zeitliche Dosierung**: Informationen kommen genau dann, wenn sie relevant und erfahrbar sind — nicht als Vorlesung, sondern als Teil des Spielgeschehens.
-
-Die drei Mechaniken dieses Abschnitts sind eng verwandt:
-
-- **§17.1 — Objective Discovery:** Phase-2-Objectives werden durch Berater-Dialoge über mehrere Sole enthüllt, nicht sofort beim Phasenübergang angezeigt.
-- **§17.2 — Advisor Dialogs:** Berater führen strukturierte Multi-Sol-Dialoge. Sie können AP kosten und liefern dafür Informationen, Aufträge oder Bonuseffekte.
-- **§17.3 — Almanach Unlock:** Bestimmte Almanach-Artikel sind anfangs gesperrt. Freischaltung durch Run-Fortschritt. Einmaliger Wissensbonus beim ersten Lesen.
-
-Diese drei Mechaniken ziehen sich als **roter Faden** durch den gesamten Spielablauf. Sie sind unabhängig voneinander implementierbar, aber konzeptionell aufeinander aufgebaut: Berater-Dialoge (§17.2) liefern die narrative Schicht für Objective Discovery (§17.1), und Almanach-Einträge (§17.3) dokumentieren, was der Spieler durch Dialoge und Run-Fortschritt gelernt hat.
-
-> Das System schreibt keine feste Spielerfahrung vor. Spieler, die Objectives ignorieren oder Almanach-Artikel nie öffnen, werden nicht bestraft. Discovery ist ein Angebot, keine Pflicht.
-
----
-
-### 17.1 Objective Discovery — Berater enthüllen Phase-2-Aufgaben
-
-#### Problem
-
-Beim aktuellen Run-Design (§15) erscheinen alle drei Phase-2-Objectives sofort beim Übergang von Phase 1 zu Phase 2. Das ist klar und ehrlich — aber es tötet den Entdeckungsmoment. Der Spieler sieht sofort das vollständige Ziel-Set und plant rational. Die Transition von Phase 1 zu Phase 2 fühlt sich wie ein Menü-Wechsel an, nicht wie ein narrativer Wendepunkt.
-
-#### Lösung: Gestaffelte Enthüllung
-
-Phase-2-Objectives werden nicht sofort beim Phasenübergang angezeigt. Stattdessen enthüllen Berater die Objectives über die ersten **3–5 Sole** von Phase 2 durch individuelle Dialoge.
-
-**Ablauf (Referenzbeispiel, 3 Objectives):**
-
-| Sol nach Phase-2-Start | Ereignis |
-|------------------------|---------|
-| Sol +0 (Übergang) | INNN-Ereignis von Nexus: "Phase 1 abgeschlossen. Neue Direktive folgt." — keine Objectives sichtbar |
-| Sol +1 | Berater-Dialog (z.B. Baumeister): Objective 1 wird enthüllt. AP-Kosten entstehen, wenn der Spieler den Dialog aktiv annimmt. |
-| Sol +4–5 | Zweiter Berater (z.B. Analytiker) enthüllt Objective 2 |
-| Sol +8–12 | Dritter Berater enthüllt Objective 3 oder Objective wird durch ein Run-Ereignis ausgelöst |
-| Sol +15 | Sol-Threshold-Fallback: alle noch nicht enthüllten Objectives erscheinen automatisch |
-
-Der Spieler kann bereits ab Sol +1 mit den Arbeiten beginnen — er muss das vollständige Objective-Set nicht kennen um sinnvoll zu handeln. Das erzeugt echte Spannung: "Was kommt als nächstes?"
-
-#### Enthüllungs-Trigger
-
-Objectives können durch drei verschiedene Trigger enthüllt werden:
-
-| Trigger-Typ | Beschreibung | Beispiel |
-|-------------|-------------|---------|
-| `advisor_dialog` | Ein Berater-Dialog (§17.2) löst die Enthüllung aus | Baumeister berichtet nach erstem Sol von einem Nexus-Auftrag |
-| `sol_threshold` | Fester Sol-Zeitpunkt nach Phase-2-Start | Objective erscheint spätestens ab Sol +15 (Fallback wenn kein Dialog ausgelöst wurde) |
-| `run_event` | Ein bestimmtes Run-Ereignis löst das Objective aus | Korvette erkundet ein neues Tile → Objective "Expedition abschließen" wird sichtbar |
-
-**Fallback-Regel:** Jedes Objective hat einen `reveal_by_sol`-Wert (Anzahl Sole nach Phase-2-Start). Wurde das Objective bis dahin nicht durch Dialog oder Event enthüllt, erscheint es automatisch — stilles INNN-Ereignis mit Absender "Nexus Command". Kein Objective bleibt für immer versteckt.
-
-**UI-Darstellung:** Im Objectives-Screen gibt es einen dritten Zustand neben "in Bearbeitung" und "abgeschlossen": **"Unbekannt"** (Fragezeichen-Icon). Dieser Zustand zeigt, dass ein weiteres Objective existiert, aber noch nicht enthüllt wurde. So weiß der Spieler, dass er auf etwas wartet — ohne zu wissen was.
-
-> ⚠️ BALANCE CONCERN: Der Fallback-Mechanismus ist wichtig. Wenn ein Spieler keinen Analytiker-Berater hat und das zweite Objective nur durch den Analytiker enthüllbar ist, muss der Sol-Threshold-Fallback greifen. Die Discovery-Mechanik darf keinen Progression-Lock erzeugen.
-
-#### Roguelike-Variabilität
-
-Pro Run sind nicht nur die Objectives selbst variabel (§15), sondern auch die Enthüllungs-Reihenfolge. Ein Run mit `task_research_lead` als Objective 1 kann dieses durch den Analytiker enthüllen — derselbe Run ohne Analytiker-Berater würde es durch Nexus (Sol-Threshold) enthüllen. Das erzeugt unterschiedliche narrative Erfahrungen ohne unterschiedlichen Spielinhalt zu erzwingen.
-
----
-
-### 17.2 Advisor Dialogs — Multi-Sol-Dialoge
-
-#### Konzept
-
-Berater sind bisher passive AP-Produzenten mit Rang-Progression. Dialoge machen sie zu **aktiven Akteuren**: Sie sprechen den Direktoren gezielt an, bieten Informationen an, formulieren Bitten und können Aktionen anstoßen.
-
-Ein Advisor Dialog ist ein strukturierter Informationsaustausch über **1–3 Sole**. Er erscheint als INNN-Ereignis mit Absender `[Berater-Typ]:[Berater-Name]`. Der Spieler kann den Dialog annehmen, verzögern oder ablehnen. Annehmen kann AP kosten.
-
-#### Dialog-Struktur
-
-Jeder Dialog hat folgende Felder:
-
-| Feld | Beschreibung | Beispiel |
-|------|-------------|---------|
-| `dialog_key` | Eindeutiger Schlüssel | `engineer_phase2_objective_reveal` |
-| `advisor_type` | Welcher Berater-Typ | `construction` |
-| `trigger` | Was löst den Dialog aus | `phase2_start`, `run_event`, `sol_threshold` |
-| `duration_ticks` | Wie viele Sole dauert der Dialog | 1–3 |
-| `ap_cost_type` | AP-Typ der Entscheidungskosten | `construction`, oder `null` |
-| `ap_cost_amount` | Wie viele AP kostet Annehmen | 3–8 |
-| `reward_type` | Was liefert der Dialog | `objective_reveal`, `knowledge_hint`, `resource_bonus`, `none` |
-| `is_skippable` | Kann der Spieler ablehnen | `true` / `false` |
-
-**AP als Preis für Information:** Wenn ein Berater-Dialog AP kostet, sind das keine "Strafpunkte" — es ist der Preis für etwas Wertvolles. Ein Baumeister, der einen halben Sol damit verbringt, Nexus-Direktiven zu entziffern und dem Direktor zu erklären, steht in dieser Zeit nicht für Bauprojekte bereit. Das ist die saubere Nouron-Mechanik: **Opportunitätskosten statt Verbot** (§1.1).
-
-> Designprinzip: Dialog-AP-Kosten sollten spürbar, aber nicht prohibitiv sein. Richtwert: 3–8 AP (entspricht 25–65% eines Junior-Berater-Tagespools). Ein Junior-Baumeister mit 10 AP/Sol kann sich den Dialog "leisten" — aber nicht an demselben Sol gleichzeitig ein Gebäude ausbauen. Das ist die Entscheidung.
-
-#### Dialog-Verlauf
-
-**Sol 1 — Ankündigung:**
-INNN-Ereignis erscheint mit Absender-Name des Beraters. Kurze Eröffnung: "Direktor, ich habe etwas aufgegriffen das Ihre Aufmerksamkeit verdient. Haben Sie heute Zeit?"
-
-Zwei Response-Optionen:
-- "Jetzt anhören" — kostet sofort die definierten AP (oder 0 wenn `ap_cost_amount = null`)
-- "Morgen" — Dialog verschiebt sich um 1 Sol (max. 2-mal verschiebbar, dann wird er automatisch aufgelöst)
-
-**Sol 2 (oder selber Sol bei Sofortannahme) — Hauptdialog:**
-Der eigentliche Inhalt erscheint: Objective-Enthüllung, Wissenshinweis, Ressourcen-Info oder narratives Lore-Fragment. Das INNN-Ereignis ist ausführlicher als ein Standard-Ereignis — max. 3 kurze Absätze.
-
-**Sol 3 (optional) — Folgedialog oder Abschluss:**
-Berater-Dialoge mit `duration_ticks = 3` haben einen Abschluss-Sol mit einer optionalen Reaktion des Spielers. Kein weiterer AP-Verbrauch.
-
-#### Dialog-Typen (Phase 4 Katalog, Auswahl)
-
-| Dialog-Key | Berater | Trigger | Kosten | Ergebnis |
-|------------|---------|---------|--------|---------|
-| `engineer_phase2_objective_reveal` | Baumeister | `phase2_start` + 1 Sol | 4 construction-AP | Objective 1 enthüllt |
-| `scientist_anomaly_hint` | Analytiker | Anomalie-Tile erkundet | 5 research-AP | Event-Tile Tiefenscan-Kosten um 1 AP reduziert |
-| `pilot_patrol_report` | Raumfahrer | 3+ Außenmissionen abgeschlossen | 0 AP | Verschleiß-Prognose des nächsten Dispatch detailliert aufgeschlüsselt (§7) |
-| `trader_nexus_deal` | Konsul | Sol 20–30 (wenn `task_trade_volume` aktiv) | 6 economy-AP | Nexus-Handelsschiff erscheint 1 Sol früher als normal |
-| `strategist_threat_assessment` | Stratege | Kolonistengefahr-Vorwarnung aktiv (§9) | 0 AP | Prognostizierter Ausgang der angekündigten Gefahr enthüllt |
-
-> ⚠️ BALANCE CONCERN: Dialoge mit 0 AP-Kosten dürfen keinen spielentscheidenden Vorteil bieten. "Prognostizierter Gefahren-Ausgang" ist ein Komfort-Bonus, keine Entscheidungsverschiebung — das ist akzeptabel. Dialoge mit 5+ AP-Kosten müssen einen spürbaren Gegenwert liefern, sonst werden sie ignoriert.
-
-#### Ablehnung und Verfall
-
-Lehnt der Spieler einen Dialog explizit ab (`is_skippable = true`, Spieler wählt "Ablehnen"), wird er als `declined` abgeschlossen. Schiebt der Spieler ihn 2× auf ("Morgen") oder läuft `dialog_expire_after_ticks` ab, gilt er als `expired`. In beiden Fällen keine Konsequenz. Kein Dialog ist existenziell für den Run. Die Enthüllungen die über Dialoge transportiert werden, kommen im Zweifelsfall über den Sol-Threshold-Fallback (§17.1).
-
-**Nicht verfügbare Berater:** Wenn der Berater-Typ des Dialogs gerade keinen aktiven Berater hat (Slot leer, Burnout, Außenmission), ist der Dialog nicht verfügbar. Er erscheint nicht im INNN-Feed. Der Sol-Threshold-Fallback greift stattdessen.
-
----
-
-### 17.3 Almanach — Unlock & Wissensbonus
-
-#### Konzept
-
-Der Almanach (bisher als "Ingame-Nachschlagewerk" in der ROADMAP erwähnt) ist die In-Game-Dokumentation von Spielmechaniken, Gebäuden, Forschungen und Lore. Er ist ein wichtiges Onboarding-Werkzeug — aber er ist mehr als ein Handbuch: **Almanach-Artikel können einmalige Spielboni tragen**.
-
-Das Lesen eines Artikels wird zu einer echten Spielentscheidung wenn es einen Bonus gibt. Statt "ich lese das irgendwann wenn ich Fragen habe" wird es zu: "Ich sollte jetzt den Geology-Artikel lesen bevor ich den Harvester verlagere — der Bonus hilft mir."
-
-#### Freischaltsystem
-
-Almanach-Artikel sind in drei Kategorien aufgeteilt:
-
-| Kategorie | Freischalt-Bedingung | Beispiel-Artikel |
-|-----------|---------------------|-----------------|
-| **Immer verfügbar** | Kein Gate | Grundlegende Spielmechaniken (Supply, AP, Sol-Zyklus) |
-| **Fortschrittsabhängig** | Sol-Zahl, Gebäude-Level oder Objective-Fortschritt | "Verfall & Entropie" freigeschaltet wenn erstes Gebäude < 80% SP |
-| **Entdeckungsabhängig** | Explizites Ereignis (Berater-Dialog, Event-Tile) | "Stürme — Entstehung und Schutzmaßnahmen" freigeschaltet nach der ersten Kolonistengefahr (§9) |
-
-**Freischalt-Trigger-Typen:**
-
-| Trigger-Key | Bedingung |
-|-------------|-----------|
-| `sol_reached:{n}` | Run hat Sol n erreicht |
-| `building_built:{key}` | Gebäude wurde erstmals gebaut |
-| `objective_revealed:{key}` | Objective wurde enthüllt (§17.1) |
-| `encounter_event:{type}` | Bestimmter Encounter-Typ ist aufgetreten |
-| `advisor_dialog:{key}` | Berater-Dialog wurde abgeschlossen |
-| `always` | Immer verfügbar |
-
-**UI-Darstellung:** Gesperrte Artikel werden im Almanach-Index als grauer Eintrag mit dem Hinweis "Wird nach [Bedingung] freigeschaltet" gelistet. Der Spieler sieht, dass es dort etwas gibt — aber nicht den Inhalt. Das erzeugt Neugier ohne Frustration.
-
-Neu freigeschaltete Artikel werden mit einem Badge "Neu" markiert und erscheinen in einer kompakten INNN-Meldung: "Almanach — neuer Artikel freigeschaltet: [Titel]".
-
-#### Wissensbonus beim Lesen
-
-Wenn ein Spieler einen Artikel mit einem Wissensbonus öffnet und vollständig liest (Scroll-Threshold oder expliziter "Gelesen"-Button), erhält er einmalig pro Run einen kleinen Vorteil. Der Bonus ist thematisch mit dem Artikel-Inhalt verknüpft.
-
-**Bonus-Typen:**
-
-| Bonus-Typ | Beschreibung | Beispiel |
-|-----------|-------------|---------|
-| `ap_bonus` | Sofortiger einmaliger AP-Schub eines Typs | +6 construction-AP nach Lesen von "Bautechnik — fortgeschrittene Methoden" |
-| `resource_bonus` | Sofortiger einmaliger Ressourcen-Zuschuss | +30 Regolith nach Lesen von "Geologie — Abbauoptimierung" |
-| `knowledge_hint` | Erhöht AP-Effizienz für eine bestimmte Kenntnis für N Sole | -1 AP pro research-Level für "Agronomie" für 5 Sole |
-| `encounter_prep` | Mildert den Ausgang der nächsten Kolonistengefahr (§9) um eine Stufe | Nächster Sturm wird eine Ausgangsstufe milder bewertet (z.B. Kritisch → Beschädigt) |
-| `none` | Kein Spielbonus — reines Lore oder Nachschlagewerk | Hintergrundgeschichte des Planeten |
-
-**Einmalig pro Run:** Der Bonus wird nur beim ersten Lesen gutgeschrieben. Erneutes Öffnen des Artikels liefert keinen weiteren Bonus. Das Datum und der Erhalt des Bonus werden in `run_state` (oder einem neuen Feld `almanac_read_bonuses`) vermerkt.
-
-**Lesbarkeits-Prinzip:** Artikel mit Bonus müssen kurz sein — max. 150–200 Wörter. Sie sind keine Romankapitel. Der Spieler soll nicht 10 Minuten lesen müssen um einen AP-Bonus zu bekommen. Das wäre kein Anreiz, sondern Arbeit.
-
-> ⚠️ BALANCE CONCERN: AP-Boni über den Almanach dürfen die bestehende AP-Balance (§13) nicht aushebeln. Der Richtwert ist: ein Almanach-AP-Bonus entspricht dem Grundwert eines Tages (6 AP) oder dem Beitrag eines Junior-Beraters für 1 Sol (4 AP-Bonus). Höhere Boni sind nur für sehr späte oder sehr seltene Artikel akzeptabel. Die Boni summieren sich über einen Run: wenn alle freigeschalteten Artikel gelesen werden, sollte der Gesamteffekt spürbar, aber nicht spielverändernd sein.
-
-> ⚠️ BALANCE CONCERN: Artikel mit `encounter_prep`-Bonus (Ausgangs-Milderung) müssen sicherstellen, dass Kolonistengefahren dadurch nicht trivial werden. Richtwert: maximal eine Ausgangsstufe Milderung, nur für die unmittelbar nächste Gefahr.
-
-#### Almanach und Onboarding
-
-Der Almanach ergänzt das Onboarding-System (§16) ohne es zu ersetzen. Das Onboarding zeigt dem Spieler was er jetzt tun soll; der Almanach erklärt warum Systeme so funktionieren wie sie funktionieren. Die Zielgruppen sind verschieden:
-
-- **Neuer Spieler, erster Run:** Onboarding-Hints leiten, Almanach-Basics immer verfügbar
-- **Spieler nach 3–5 Runs:** Onboarding deaktiviert, Almanach als Nachschlagewerk und Discovery-Tool
-
-Almanach-Artikel die durch Berater-Dialoge (§17.2) freigeschaltet werden, erzeugen eine dritte Schicht: Der Dialog bringt den Spieler auf das Thema, der Artikel vertieft es. Das schafft einen kohärenten Informationsfluss ohne jeden Dialog zu einer Vorlesung zu machen.
-
----
-
-### 17.4 Implementierungshinweise
-
-Dieser Abschnitt beschreibt, was für Phase 4 konkret vorzubereiten ist. Es handelt sich um Design-Voraussetzungen, keine vollständige Implementierungsspezifikation.
-
-#### Datenbank
-
-**Neue Tabelle `advisor_dialogs`:**
-
-```
-advisor_dialogs
-├── id                    ← PK
-├── run_id                ← FK → runs
-├── advisor_type          ← 'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
-├── dialog_key            ← Verweis auf Config-Definition, z.B. 'engineer_phase2_objective_reveal'
-├── status                ← 'pending' | 'offered' | 'accepted' | 'declined' | 'expired'
-├── offered_at_tick       ← Sol in dem der Dialog angeboten wurde
-├── resolved_at_tick      ← Sol in dem der Dialog abgeschlossen oder verfallen ist
-└── postponed_count       ← Anzahl "Morgen"-Antworten (max 2)
-```
-
-**Neue Spalten auf `run_objectives`:**
-
-```
-run_objectives
-├── ...                   ← bestehende Felder (aus Phase 3i)
-├── revealed_at_tick      ← nullable int: Sol in dem das Objective enthüllt wurde (null = noch nicht enthüllt)
-└── reveal_trigger        ← nullable string: wie wurde es enthüllt ('advisor_dialog' | 'sol_threshold' | 'run_event')
-```
-
-**Neue Spalte auf `runs` oder erweitertes JSON-Feld:**
-
-```
-runs
-├── ...                   ← bestehende Felder
-└── almanac_read_bonuses  ← JSON: Liste von article_keys die gelesen + Bonus bereits gutgeschrieben wurden
-```
-
-**Neue Tabelle `almanac_articles`** (Stammdaten — wird per Migration/Seed befüllt, nicht pro Run):
-
-```
-almanac_articles
-├── id                    ← PK
-├── key                   ← eindeutiger Key, z.B. 'geology_extraction'
-├── title                 ← Anzeigetitel (via lang/de)
-├── category              ← 'mechanics' | 'buildings' | 'knowledge' | 'lore' | 'encounters'
-├── unlock_trigger        ← JSON: Trigger-Definition, z.B. {"type": "building_built", "key": "harvester"}
-├── bonus_type            ← nullable string: 'ap_bonus' | 'resource_bonus' | 'knowledge_hint' | 'encounter_prep' | null
-├── bonus_value           ← nullable int/JSON: Wert des Bonus
-└── bonus_ap_type         ← nullable string: AP-Typ wenn bonus_type = 'ap_bonus'
-```
-
-**Neue Tabelle `run_almanac_unlocks`** (welche Artikel sind in diesem Run freigeschaltet):
-
-```
-run_almanac_unlocks
-├── id                    ← PK
-├── run_id                ← FK → runs
-├── article_key           ← FK → almanac_articles.key
-└── unlocked_at_tick      ← Sol der Freischaltung
-```
-
-#### Config-Schlüssel
-
-Neuer Block in `config/game.php → progressive_discovery`:
-
-```php
-'progressive_discovery' => [
-    // Objective Discovery
-    'objective_reveal_fallback_ticks' => 15,  // Sole nach Phase-2-Start bis Sol-Threshold-Fallback greift
-    'objective_reveal_min_delay'      => 1,   // Minimale Sole zwischen zwei Objective-Enthüllungen
-
-    // Advisor Dialogs
-    'dialog_postpone_max'             => 2,   // Maximale Anzahl "Morgen"-Antworten
-    'dialog_expire_after_ticks'       => 3,   // Dialog verfällt nach N Solen ohne Antwort
-
-    // Almanach Bonus
-    'almanac_bonus_ap_max_per_run'    => 30,  // Maximale kumulierte AP-Boni aus Almanach pro Run
-    'almanac_bonus_resource_max_per_run' => 100, // Maximale kumulierte Ressourcen-Boni
-],
-```
-
-Dialoge und Artikel-Definitionen kommen in eigene Config-Dateien:
-- `config/advisor_dialogs.php` — alle Dialog-Definitionen (key, trigger, costs, reward)
-- `config/almanac.php` — alle Artikel-Definitionen (key, category, unlock_trigger, bonus)
-
-#### Tick-Integration
-
-- **Advisor Dialogs:** Tick-Schritt 7 (Advisor Ticks) prüft für jeden aktiven Berater ob ein Dialog-Trigger erfüllt ist und legt ggf. eine neue `advisor_dialogs`-Zeile an. Bereits laufende Dialoge werden um `offered_at_tick + postponed_count` ausgewertet.
-- **Objective Reveal:** Nach Tick-Schritt 7 prüft `RunProgressService` für jedes noch nicht enthüllte `run_objective` ob ein `reveal_trigger` ausgelöst wurde oder `sol_threshold` überschritten ist.
-- **Almanach Unlock:** Nach Tick-Schritt 6 (Resource Generation) prüft ein neuer `AlmanachService::checkUnlocks()` für jeden definierten Trigger ob neue Artikel freigeschaltet werden.
-
-#### Priorisierung für Phase 4
-
-Die drei Teilmechaniken können unabhängig voneinander implementiert werden. Empfohlene Reihenfolge:
-
-1. **Almanach-Grundstruktur** (Artikel-Tabelle, Freischalt-System, INNN-Benachrichtigung) — kleiner Aufwand, sichtbarer Effekt, keine Abhängigkeiten
-2. **Objective Discovery via Sol-Threshold** (nur den Fallback implementieren, ohne Berater-Dialoge) — schafft sofort den Enthüllungseffekt mit minimalem Schema-Aufwand
-3. **Advisor Dialogs** — aufwendiger, aber der narrativ reichhaltigste Teil. Setzt Almanach und Objective Discovery als Empfänger voraus.
-
-Die vollständige Integration aller drei Teilmechaniken ist der Zielzustand. Jede Teilmechanik alleine bringt aber bereits Wert — es gibt keinen "alles oder nichts"-Implementierungspunkt.
+> **Ausgelagert:** Dieses Kapitel steht in [`docs/gdd/progressive-discovery.md`](gdd/progressive-discovery.md) — Objective Discovery (17.1), Advisor Dialogs (17.2), Almanach (17.3) und Implementierungshinweise (17.4).
 
 ---
 
@@ -3503,3 +2944,119 @@ Bekannte Abweichungen zwischen GDD §15-Prosa und dem tatsächlichen Code/Config
 | Run-Ende-Screen Blade-Template | ui-specialist | Mittel |
 | Nexus-Kommentar-Texte | content-writer | Niedrig |
 | `config('game.run.nexus_debt_limit')` als Config-Key anlegen (aktuell hardcodiert 12000 in RunProgressService) | game-developer | Niedrig |
+
+---
+
+## Anhang A — Balance- und TODO-Index
+
+Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach einem Playtest an einer Stelle steht, was zu prüfen ist. Angelegt 2026-08-02. Die maßgebliche Formulierung steht jeweils am genannten Ort — dies ist ein Verzeichnis, keine zweite Quelle.
+
+### A.1 Blockierend — vor der Implementierung des Ratenmodells zu klären
+
+| Thema | Stand | Ort |
+|---|---|---|
+| **Regolith-Parität der drei Pfade** — Analytik-Pfad hat aktuell **keine** Regolith-Quelle | **offen, blockierend** | §13.5 |
+| **Harvester `max_level = 1`** — Umsetzung nur gemeinsam mit den Regolith-Kanälen, einzeln bricht sie die Wirtschaft | **offen, blockierend** | §13.5, §4 |
+| Tatsächliche `ap_for_levelup`-Werte in der laufenden DB (Migration sagt 10/20/30, Onboarding-Doku rechnet mit 10) | **offen, blockierend** | Anhang B |
+| AP-Grundwert, Projektkosten, Bonus-Kurve | Vorschlag liegt vor, Owner-Entscheidung offen | §13.6 |
+| Erstes Gebäudelevel günstiger (Early-Game-Tempo) | vorläufig: `f(1) = 0.5` | §13.6 |
+| Bodengarantie je Domäne | vorläufig: keine | §13.1 |
+| Braucht Versorgung noch eine eigene Rolle? | vorläufig: ja, bleibt unverändert | §6 |
+| Lage des Verfall-Gleichgewichts | geklärt — existiert bei den aktuellen Werten nicht, §13.5 umgeschrieben | §13.5 |
+| `decay.overcap_factor` 2.0 → 1.5 + sichtbarer Zustand | Vorschlag liegt vor | §13.1 |
+
+### A.2 Folgearbeiten aus der AP-Zusammenlegung
+
+Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
+
+| Thema | Ort |
+|---|---|
+| Außenmissions-AP-Staffel (2–10 AP) war gegen den Navigations-Grundpool kalibriert | §8b |
+| Cantina: AP als Deckel für Vielhandel — wirkt jetzt erstmals wirklich | §12 |
+| Onboarding-Hinweistexte sprechen von „Bau-AP verfällt" o. ä. | `gdd/onboarding.md` §16.2 |
+| Sol-1–4-Budget-Rechnung rechnet mit getrennten Pools | `gdd/onboarding.md` §16.5 |
+| `locked_actionpoints.personell_type` — Pool-Trennung oder nur Auswertungsmerkmal? | §13 „Implementierung" |
+| AP-Malus bei Aufruhr (−20 %) trifft jetzt die gesamte Kolonie statt einer Domäne | §14 |
+
+### A.3 Nach dem ersten Playtest zu kalibrieren
+
+| Thema | Ort |
+|---|---|
+| Sicherheits-Hub: Vertrauens-Bonus, Event-Dämpfung, Recycling-Anteil | §4 |
+| Uplink-Station: Tiefenscan-Basiskosten, Händler-Erscheinungsrate | §4 |
+| Handelsposten: Baukosten, Decay, Supply, Handelswert-Bonus | §4 |
+| Korvetten-Stacking ohne Supply-Limiter | §6 |
+| Schiffs-Verschleiß `wear_per_sol` | §7 |
+| Missionen: Werkstoff-Durchsatz, Credit-Missionen mit mehreren Drohnen, Erkundungsflug vs. Ring-Erkundung, Milderungs-Stacking | §8b |
+| Kolonistengefahren: Sturm und Seuchenausbruch lösen beide `colony_threatened` aus | §9 |
+| Cantina-Verhandlung: `negotiate_bonus`, `negotiate_success_chance` | §12 |
+| Berater-Außenmissionen: Analytiker-Bonus (stärkster Effekt), Rang-1-Misserfolgsrate | §13 |
+| Konsul: Händler-Einschätzung nicht binär, erster Cantina-Besuch ohne Konsul | §13 |
+| Vertrauen: theoretisches Maximum bei Voll-Ausbau, Kolonisten-Zulage ohne Cooldown, Bauwesen-Events wiederholbar | §14 |
+| Run-Aufgabenpool: Wirtschafts-Cluster (1, 7, 9), Kollision Aufgabe 11 mit 2/8 | §15 |
+| Highscore-Formel: Gewichtung | §15 |
+| Fail-State: −20-Trust-Schwelle, `nexus_debt`-Mechanik | §18 |
+| `task_expedition_coverage: 19` als schwierigster Task-Target-Wert | §18 |
+| Run-Ende: „Kolonie ansehen" setzt voraus, dass Koloniedaten erhalten bleiben | §18 |
+
+### A.4 Offene Designfragen (kein Playtest nötig, Entscheidung steht aus)
+
+| Thema | Ort |
+|---|---|
+| Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
+| Cantina: verlässlicher Credits→Regolith-Kanal (heute nur Verkaufsrichtung garantiert) | §13.5, §12 |
+| `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt | §13.5 |
+| Wird Pfad B (Hangar) durch den Regolith-Bedarf faktisch zur Pflicht? | §4b, §13.5 |
+| Pfad A (Analytik) hat keine eigene Credits-Quelle — Kostensenkung statt Einnahme? | §4b |
+| `agronomy`-Kenntnis: hat sie einen Organika-Effekt oder nur den Supply-Cap-Bonus? | §4b, §10 |
+| Optionale dritte Bedingung für Run-Phase 1 (Roguelike-Variabilität) | §15 |
+| Nexus-Boni in Phase 1 oder erst ab Phase 2? | §15 |
+| Schiffe ohne Hangar (Events, Handelsdeals) — Phase 4+ | §6 |
+| Kolonisten-Ausbildung — Design-Konzept, Phase 4+ | §10 |
+| Exotics als vierter handelbarer Rohstoff — Phase 4+ | §3 |
+| AP-Delegation zwischen Kolonien — Phase 4+ | §12 |
+
+### A.5 Playtest-Instrumentierung (vor dem ersten Lauf einzubauen)
+
+Ohne diese Messwerte ist keine der Zahlen aus §13.6 nach dem ersten Lauf begründet korrigierbar — man hätte nur Bauchgefühl.
+
+| # | Metrik | Zielkorridor / Auslöser |
+|---|---|---|
+| 1 | **AP-Bilanz je Sol**, fünf Zahlen: Zufluss / Reparatur / Projekte / Handlungen / **ungenutzt** | ungenutzt > 15 % über mehrere Sole = Grundwert zu hoch |
+| 2 | **Sole bis Fertigstellung** je Projekt, mit Start-Sol | erstes Drittel 4–6 Sole, letztes Drittel 1–2 |
+| 3 | **Median gleichzeitiger Baustellen** | > 4 = Spieler streut, weil Einzelprojekte zu lang wirken |
+| 4 | **Sol der letzten Projekt-Fertigstellung** (Kipppunkt-Test) | Ziel 85–92; über 95 = Kipppunkt fehlt |
+| 5 | **Instandhaltungsanteil am Pool** je Sol | Ziel 20 % → 33 %; bleibt er unter 25 %, levelskalierte Reparatur nachrüsten (§13.5) |
+| 6 | **Regolith-Bilanz**: Produktion / Reparatur / Level-Ups je Sol, aufgeschlüsselt nach Quelle (Harvester / Missionen / Handel / Events) | die eigentliche Wachstumsgrenze; besonders Sole 8–20 beobachten |
+| 7 | **Supply-Auslastung** (`used/cap`) je Sol + Anzahl Sole über Cap | bleibt die Auslastung dauerhaft unter 70 %, ist Supply doch nicht bindend — dann wäre die Streichungsfrage aus §6 neu zu stellen |
+| 8 | **Sole mit 0 AP je Domäne** | > 60 % in einer Domäne → prüfen, ob ein Hint nötig ist (keine Bodengarantie, §13.1) |
+| 9 | **Regolith-Durchsatz je Pfad** (Frachter / `geology` / Cantina) | die drei Kanäle sollen im Playtest tatsächlich vergleichbar liefern (§13.5) |
+
+Metrik 7 ist der explizite Falsifikationstest für die Entscheidung, Supply zu behalten. Metrik 9 für die Pfad-Parität.
+
+---
+
+## Anhang B — Drifts zwischen GDD, Config und Code
+
+Gefunden bei der Durchsicht am 2026-08-02, alle unabhängig von den Designfragen und **alle noch offen**. Wo GDD und Code auseinanderlaufen, gilt laut CLAUDE.md der Code bzw. die Config als kanonisch — das GDD ist nachzuziehen, nicht umgekehrt.
+
+| Ort | GDD/Doku sagt | Config/Code sagt |
+|---|---|---|
+| §4 „Level-Up" | CC-Upgrade = Ziel-Level × **30** Rg (Lv2 = 60) | `cc_upgrade_regolith_per_level = 20` (Lv2 = 40) |
+| §7 „Fraktionaler Decay" | Dezimalwert 0,05–0,3 SP/Sol | tatsächlich 0,33–2,0 |
+| §6 Config-Block | listet `supply.ship_cost` (Korvette 14, Frachter 6) | Key existiert in `config/game.php` nicht; die §6-Prosa sagt korrekt „Schiffe kosten kein Supply" |
+| §13 „Rang-System" | Gesamt-AP = 6 + Bonus (10/13/18) | mit dem gemeinsamen Pool obsolet (§13.1) |
+| `config/knowledge.php` (Kommentar) | „base 6 + Rang-1-Bonus 4", „Rang 2 bei 10 aktiven Ticks" | `rank_thresholds = [1 => 15, 2 => 45]`; Grundwert ändert sich mit §13.6 |
+| `config/advisors.php` | `strategist` (id 93) + Slot-5-Kommentar | Stratege zurückgestellt (§13) |
+| `config/buildings.php` | `harvester.max_level = 8` mit Glockenkurven-Begründung (2026-07-20) | Owner-Entscheidung 2026-08-02: `max_level = 1` (§13.5) |
+| `data/sql/testdata.sqlite.sql` | Hangar supply 6, Cantina 4, Krankenstation decay 2.0, Hangar `ap_for_levelup` 10 | `config/buildings.php`: 4 / 6 / 0.67 — Testfixture ist auf dem Stand **vor** dem Pfadwahl-Rebalancing 2026-06-28 |
+
+> **Der wichtigste Punkt — `ap_for_levelup` ist nicht eindeutig.** Die Migration `2026_04_17_000003_calibrate_building_ap_costs.php` setzt CC = 10, Harvester/Wohnhabitat/Analytik-Labor/Agrardom = 20, Hangar = 30. Die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) rechnet durchgängig mit **10 pro Level** („Ziel 10 kumuliert", „10 Invest-AP", „10 Construction-AP kumuliert") — mit den Migrationswerten geht die dort dokumentierte Sol-1–4-Rampe nicht auf. `data/db/` ist nicht im Repository (nur ein README), die Frage ist also nur lokal zu beantworten:
+>
+> ```
+> sqlite3 data/db/nouron.db "SELECT id, name, ap_for_levelup FROM buildings ORDER BY id"
+> ```
+>
+> Die Kalibrierung in §13.6 unterstellt, dass der *gespielte* Wert 10 war — nur damit reproduziert sie die playgetestete Rampe. Steht tatsächlich 20/30 in der DB, verschieben sich die Projektkosten-Vorschläge.
+
+> **Bei Umsetzung mitzuziehen:** `app/Console/Commands/ResetPlayer.php` — alle fünf Szenarien (`pre-phase2`, `phase2`, `near-fail-trust`, `near-deadline`, `objectives-done`) haben hartcodierte `supply`- und `regolith`-Werte samt Herleitungskommentaren, die an `ap_for_levelup` und den Supply-Formeln hängen.
