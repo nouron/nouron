@@ -15,6 +15,7 @@
 3. [Ressourcen](#3-ressourcen)
 4. [Kolonien & Gebäude](#4-kolonien--gebäude)
    - 4a. [Kolonieoberfläche](#4a-kolonieoberfläche)
+   - 4b. [Die drei Pfade](#4b-die-drei-pfade)
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
 6. [Supply-System (Cap-Modell)](#6-supply-system-cap-modell)
 7. [Verfall & Entropie](#7-verfall--entropie)
@@ -343,7 +344,7 @@ Ein vierter handelbarer Rohstoff ist für spätere Phasen reserviert: **Exotics*
 
 > **Designentscheidung (2026-06-24) — Agrardom wird Pflichtgebäude vor CC Lv2.** Agrardom war bisher Teil der "Sol-3-Wahlfreiheit" (Cantina/Agrardom/Analytik, alle CC Lv2). Das widersprach der strikten Sol-1/2-Linearität (§16.5): Sol 1/2 garantieren bislang nur Bau- und Erkundungs-AP-Verwendung, keine Ressourcenfluss-Garantie. Ohne Agrardom bliebe Organika auf 0, bis der Spieler — möglicherweise erst Sole nach CC Lv2 — den Agrardom-Pfad wählt; in der Zwischenzeit frisst die Verpflegungsmechanik (§4a "Organika") den nicht vorhandenen Vorrat und der eskalierende Trust-Malus (`TrustService::hungerPenalty`) greift potenziell schon vor der ersten bewussten Wirtschaftsentscheidung. Agrardom wird daher aus der Wahlgruppe herausgelöst und zum **Pflicht-Gate für den CC-Lv2-Ausbau**: Der CC-Levelup-Endpoint prüft zusätzlich zu den AP-Kosten, ob Agrardom ≥ Lv1 gebaut ist. Das ändert nichts an der bisherigen Hint-Logik (`hint_agrardome` lief ohnehin unabhängig von der Wahlgruppe, siehe §16.2 "Agrardom ist unabhängig") — es macht aus einer starken Empfehlung ein hartes Gate.
 >
-> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar (Hangar-Gate von CC Lv3 auf CC Lv2 gesenkt), aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Siehe §13 "Pfadwahl & generische Berater-Slots" für das vollständige Modell.
+> **Pfadwahl ab Sol 3 (CC Lv2 → Lv4):** Sciencelab, Hangar und Cantina sind alle ab CC Lv2 baubar (Hangar-Gate von CC Lv3 auf CC Lv2 gesenkt), aber **nur eines der drei kann bei CC Lv2 gebaut werden** — die anderen beiden schalten erst bei CC Lv3 bzw. CC Lv4 frei (gestaffelt nach Bau-Reihenfolge, nicht nach Gebäudetyp). Was die drei Pfade inhaltlich sind, steht in **§4b „Die drei Pfade"**; die Slot- und Gate-Mechanik in §13 „Slot-System".
 >
 > **Sicherheits-Hub (CC Lv3) — optionaler Resilienz-Baustein:** Der Sicherheits-Hub ist **nicht Teil der Pfadwahl-Gruppe** (kein Bau-Gate-Zähler), sondern ein separates Infrastrukturgebäude das ab CC Lv3 gebaut werden kann. CC Lv3 hat **kein Pflichtgebäude** als Voraussetzung (kein Äquivalent zum Agrardom-Gate bei CC Lv2): 90 Regolith + AP-Kosten sind das natürliche Gate.
 >
@@ -642,6 +643,61 @@ Jedes Tile der Kolonieoberfläche wird als Zeile in `colony_tiles` gespeichert:
 | `is_deep_scanned` | boolean | Tiefenscan abgeschlossen — enthüllt `event_type` |
 | `resource_amount` | integer nullable | Verbleibende Ressourcenmenge |
 | `resource_max` | integer nullable | Startwert (Basis für Erschöpfungs-Counter im UI) |
+
+---
+
+## 4b. Die drei Pfade
+
+Ab CC Lv2 stehen dem Spieler drei Gebäude offen — **Analytik-Labor**, **Hangar** und **Cantina** —, von denen zunächst nur eines gebaut werden kann. Diese Wahl ist die erste strategische Weichenstellung eines Runs und prägt seinen weiteren Verlauf.
+
+Die Mechanik der Pfadwahl (Bau-Gates, Berater-Slots, Reihenfolge-Auflösung) steht in §13 „Slot-System"; die Kostenbalance in §6 „Pfadwahl-Kostenbalancing". Dieser Abschnitt beschreibt, **was die Pfade sind** — als Designentitäten, nicht als Gate-Logik.
+
+### Was ein Pfad ist — und was er nicht ist
+
+Ein Pfad ist **kein Ausschluss, sondern eine Sequenzierung.** Wer bei CC Lv2 die Cantina baut, bekommt Analytik-Labor und Hangar bei CC Lv3 bzw. Lv4 trotzdem — nur später. Die Wahl bestimmt **Reihenfolge und Zeitvorsprung**, nicht endgültigen Zugang. Das folgt dem Prinzip aus §1.1: keine bestrafenden Permanent-Konsequenzen für frühe Entscheidungen.
+
+Was ein Pfad liefert, ist deshalb ein **Vorsprung von 1–2 CC-Leveln** in seinem Bereich — plus den zugehörigen Berater-Slot, der entsprechend früher besetzbar ist.
+
+### Die drei Identitäten
+
+| | **A — Analytik-Labor** | **B — Hangar** | **C — Cantina** |
+|---|---|---|---|
+| Berater | Analytiker | Raumfahrer | Konsul |
+| Domäne (§13.1) | Wissen | Navigation | Wirtschaft |
+| Kernversprechen | *Einmal investieren, dauerhaft profitieren* | *Aktiv arbeiten, breit versorgen* | *Flexibel zukaufen, stabil bleiben* |
+| Schaltet frei | alle sieben Kenntnisse (§10) | Drohne, Frachter, Korvette + Außenmissionen (§8b) | Handelsangebote, Verhandlung (§12) |
+| Wirkt über | permanente Boni ohne laufende Kosten | wiederholbare Missionen mit laufendem Aufwand | Credits-Umwandlung nach Bedarf |
+| Bezahlt mit | AP im Voraus | AP + Organika + Verschleiß, laufend | Credits, laufend |
+| Risiko | langsamer Start, Ertrag kommt spät | Logistikaufwand jeden Sol, Schiffe verschleißen | Angebotslage ist nicht vollständig planbar |
+
+**Pfad A — Analytik-Labor.** Der Pfad der dauerhaften Verbesserung. Kenntnisse sind die einzige Progression im Spiel ohne Verfall (§10): einmal erreicht, bleiben sie. Ihr Primäreffekt ist der Supply-Cap-Bonus (§6), also mehr Ausbautiefe. Der Analytiker liefert zusätzlich den stärksten Außenmissions-Bonus des Spiels (eine Kenntnis steigt gratis um ein Level, §13). Wer diesen Pfad zuerst geht, spielt auf Zinseszins: früh teuer, spät mühelos.
+
+**Pfad B — Hangar.** Der Pfad der aktiven Versorgung. Schiffe erschließen den Missionskatalog (§8b) und damit die breiteste Ressourcenbasis im Spiel — Regolith, Organika, Credits, Almanach-Funde und Tile-Aufklärung kommen alle über Missionen. Der Preis ist dauerhafter Aufwand: jede Mission kostet AP und Proviant, Schiffe verschleißen und wollen repariert werden. Wer diesen Pfad zuerst geht, hat früh viele Hebel, muss sie aber jeden Sol bedienen.
+
+**Pfad C — Cantina.** Der Pfad der Flexibilität. Der Konsul bringt mit dem Handelsvertrag eine garantierte Sol-Einnahme (§12), die Cantina selbst gibt Vertrauen (`trust_per_lv`), und der Handel erlaubt, jeden konkreten Engpass gegen Credits zu lösen — statt ihn produzieren zu müssen. Wer diesen Pfad zuerst geht, ist gegen Überraschungen am besten aufgestellt, hängt dafür aber an der Credits-Decke und an der Angebotslage.
+
+### Paritäts-Anforderung: jeder Pfad muss die Grundbedürfnisse decken
+
+**Dies ist die zentrale Designregel der Pfadwahl.** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Eine Kolonie braucht unabhängig vom gewählten Pfad Regolith, Credits, Organika und Vertrauen. Hat ein Pfad auf eines dieser Grundbedürfnisse keine Antwort, wird der Pfad, der sie hat, faktisch zur Pflicht — und die Pfadwahl zur Scheinentscheidung.
+
+Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Sockel**, den jede Kolonie hat. Was ein Pfad beisteuert, ist der Hebel darauf:
+
+| Grundbedürfnis | Sockel (alle) | Pfad A — Analytik | Pfad B — Hangar | Pfad C — Cantina |
+|---|---|---|---|---|
+| **Regolith** | Harvester, 8/Sol | `geology` steigert die Ausbeute — ⚠️ **fehlt komplett** | `mission_supply_run`, 6,25/Sol je Frachter | Credits→Regolith-Ankauf — ⚠️ **nur Verkaufsrichtung garantiert** |
+| **Organika** | Agrardom | `agronomy` — ⚠️ Effekt zu prüfen | `mission_supply_run`, 10 je Umlauf | Ankauf über Bar-Angebote |
+| **Credits** | Relaisvergütung, Ratssubvention | ⚠️ **keine eigene Quelle** | Botenflug / Konvoi-Begleitung, 180–200 je Mission | Handelsvertrag 10/25/45 Cr/Sol + Handelsgewinne |
+| **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (+2) | Cantina `trust_per_lv` + Handelserfolge |
+
+> **⚠️ Zwei offene Lücken (2026-08-02).** Pfad A hat aktuell **weder** einen Regolith-Hebel **noch** eine Credits-Quelle. Der Regolith-Hebel ist mit dem Harvester-Umbau (§13.5) blockierend geworden — ohne ihn wird Pfad B zur Pflicht, sobald der Harvester nicht mehr levelbar ist. Die Credits-Lücke ist älter und weniger akut (Relaisvergütung und Ratssubvention laufen für alle), sollte aber mitgedacht werden: Ein Analytik-Run finanziert seine Berater heute schlechter als die anderen beiden.
+>
+> Kandidaten für Pfad A: `geology` → Regolith-Produktionsbonus (Vorschlag +1,5/Level, §13.5); für Credits ein Kenntnis-Effekt, der Kosten senkt statt Einnahmen zu schaffen — das passt besser zum Pfadcharakter „einmal investieren, dauerhaft profitieren" als eine weitere Einnahmequelle.
+
+> **Prüfregel für künftige Mechaniken:** Wird eine neue Ressource, Kosten- oder Bedarfsachse eingeführt, ist zu prüfen, ob alle drei Pfade sie bedienen können. Ist das nicht der Fall, ist entweder die Mechanik anzupassen oder den unterversorgten Pfaden ein Hebel zu geben — **nicht** die Ungleichheit hinzunehmen.
+
+### Der Sicherheits-Hub ist kein vierter Pfad
+
+Der Sicherheits-Hub (CC Lv3) war bis 2026-08-02 als „Pfad D" mit dem Strategen-Slot gekoppelt. Mit der Zurückstellung des Strategen (§13) ist er ein **optionaler Resilienz-Baustein** ohne Berater-Kopplung und ohne Pfadwahl-Gate. Er steht außerhalb dieser Systematik.
 
 ---
 
@@ -1666,7 +1722,7 @@ Ab dem sechsten Gebäudetyp — etwa beim zweiten Pfadgebäude — reicht das Gr
 
 #### Regolith-Beschaffung: alle drei Pfade müssen gleichwertig liefern
 
-**Verbindliche Anforderung.** §13 „Pfadwahl" legt fest, dass kein Pfad strukturellen Vorlauf hat. Wenn Regolith zur aktiv zu beschaffenden Ressource wird, muss jeder der drei Pfade einen eigenen Kanal mit vergleichbarem Durchsatz haben — sonst wird der betreffende Pfad zur Pflicht und die Pfadwahl zur Scheinentscheidung.
+**Verbindliche Anforderung — siehe §4b „Paritäts-Anforderung".** Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob*. Wenn Regolith zur aktiv zu beschaffenden Ressource wird, muss jeder der drei Pfade einen eigenen Hebel mit vergleichbarem Ertrag haben — sonst wird der Pfad, der ihn hat, faktisch zur Pflicht und die Pfadwahl zur Scheinentscheidung.
 
 **Der Harvester ist der gemeinsame Sockel, nicht der Kanal eines Pfades.** Seine 8 Rg/Sol hat jede Kolonie, unabhängig von der Pfadwahl. Was einen Pfad ausmacht, ist der **Hebel obendrauf** — und davon braucht jeder der drei einen mit vergleichbarem Ertrag.
 
@@ -2950,7 +3006,9 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
 | Cantina: verlässlicher Credits→Regolith-Kanal (heute nur Verkaufsrichtung garantiert) | §13.5, §12 |
 | `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt | §13.5 |
-| Wird Pfad B (Hangar) durch den Regolith-Bedarf faktisch zur Pflicht? | §13.5 |
+| Wird Pfad B (Hangar) durch den Regolith-Bedarf faktisch zur Pflicht? | §4b, §13.5 |
+| Pfad A (Analytik) hat keine eigene Credits-Quelle — Kostensenkung statt Einnahme? | §4b |
+| `agronomy`-Kenntnis: hat sie einen Organika-Effekt oder nur den Supply-Cap-Bonus? | §4b, §10 |
 | Optionale dritte Bedingung für Run-Phase 1 (Roguelike-Variabilität) | §15 |
 | Nexus-Boni in Phase 1 oder erst ab Phase 2? | §15 |
 | Schiffe ohne Hangar (Events, Handelsdeals) — Phase 4+ | §6 |

@@ -12,6 +12,8 @@ Neuer §13.6 mit konkretem Zahlenvorschlag: AP-Grundwert 10, Berater-Beitrag 2/3
 
 Owner-Entscheidung: **Harvester ohne Level-Up** (`max_level = 1`). Er liefert ein Grundeinkommen von 8 Rg/Sol, Wachstum kommt aus Kenntnissen, Missionen und Handel. Daraus folgt eine verbindliche Anforderung: alle drei Pfade brauchen einen eigenen Regolith-Hebel mit vergleichbarem Ertrag (~6 Rg/Sol) bei gegensätzlichem Kostenprofil — Analytik über einen `geology`-Produktionsbonus (**fehlt komplett**), Hangar über Frachter-Versorgungsfahrten (existiert), Cantina über einen garantierten Ankaufskanal (halb vorhanden).
 
+Neuer **§4b „Die drei Pfade"** — die Pfade waren bisher nur mechanisch beschrieben (Gates, Slots, Kostenbalancing, Tie-Breaks, verstreut über §4, §6, §8b, §13), aber nirgends als Designentitäten. Der Abschnitt beschreibt die drei Identitäten mit Kernversprechen, Wirkungsweise und Kostenprofil, und formuliert die **Paritäts-Anforderung**: Die Pfade dürfen sich im *Wie* unterscheiden, nicht im *Ob* — hat ein Pfad auf ein Grundbedürfnis (Regolith, Organika, Credits, Vertrauen) keine Antwort, wird der Pfad, der sie hat, zur Pflicht. Die Paritäts-Matrix legt zwei Lücken offen: Pfad A (Analytik) hat weder einen Regolith-Hebel noch eine eigene Credits-Quelle.
+
 Neuer Anhang A.5 (Playtest-Instrumentierung, neun Metriken mit Zielkorridoren) und Anhang B (acht Drifts zwischen GDD, Config und Code). Wichtigster Drift: die tatsächlichen `ap_for_levelup`-Werte sind nicht eindeutig — Migration sagt 10/20/30, die Onboarding-Budgetrechnung rechnet mit 10. Da `data/db/` nicht im Repository liegt, nur lokal zu klären; die Kalibrierung in §13.6 unterstellt 10.
 
 ## 2026-08-02
