@@ -1,6 +1,6 @@
 # Nouron — Roadmap
 
-Stand: 2026-07-21
+Stand: 2026-08-02
 
 Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Keine Rassen, keine Kolonisierung, ein Run hat ein konkretes Ziel + klares Ende.
 
@@ -65,7 +65,99 @@ Abgeschlossen (PR #217 Vorarbeiten + PR #218, 2026-07-17/18): PHPUnit-basierter 
 ### Credit-Ökonomie-Balance (2-Schritt-Ticket)
 Abgeschlossen — Schritt 1, PR #219, gemergt (2026-07-19): Relaisvergütung Housing→Uplink-Station umgehängt, Advisor-Upkeep abgeflacht (`[10,50,160]`→`[10,30,80]` Cr/Tick), Rang-Schwellen gestreckt (`[10,20]`→`[15,45]` active_ticks), neue Handelsvertrag-Einkommensquelle (Konsul + Cantina). Playtest-Bot-Ergebnis: `phase2_start_sol` nie erreicht → Sol 49.
 
-In Review — Schritt 2, PR #220, noch nicht gemergt (2026-07-20): Harvester/Agrardom-Grundproduktion von flacher Rate (`×10/Level`, unbegrenzte Level) auf Glockenkurve mit Deckel umgestellt (`config/game.php: production_curve`, `max_level=8` in `config/buildings.php`). Playtest-Bot-Ergebnis: `phase2_start_sol` 49 → 18. Ökonomie-Kollaps nach Phase 1 bleibt weiterhin offen — siehe „Laufend" unten.
+Abgeschlossen — Schritt 2, PR #220, gemergt (2026-07-20): Harvester/Agrardom-Grundproduktion von flacher Rate (`×10/Level`, unbegrenzte Level) auf Glockenkurve mit Deckel umgestellt (`config/game.php: production_curve`, `max_level=8` in `config/buildings.php`). Playtest-Bot-Ergebnis: `phase2_start_sol` 49 → 18. Ökonomie-Kollaps nach Phase 1 bleibt weiterhin offen — siehe „Laufend" unten.
+
+---
+
+## Laufend — Phase 3o: AP-Ratenmodell (Umsetzungsplan, 2026-08-02)
+
+Design steht im GDD (§4b, §6, §13.1–13.6, Anhang A/B), gemergt mit PR #231. **Nichts davon ist implementiert.** Dieser Abschnitt ist der Umsetzungsplan.
+
+TDD ist verbindlich (CLAUDE.md): für jede Stufe mit Verhalten zuerst ein fehlschlagender Test, der das gewünschte Verhalten beschreibt.
+
+### Der kritische Pfad ist nicht der AP-Umbau
+
+Die Pfad-Parität (§4b) verlangt, dass jeder der drei Pfade einen eigenen Regolith-Hebel mit vergleichbarem Ertrag hat. **Alle drei Hebel hängen an Punkten, die seit dem 2026-07-20 offen unter „Brainstorming: Kenntnisse/Hangar/Cantina-Pfad-Parität" stehen** — die neue Design-Runde hat sie nicht gelöst, sondern präzisiert und verschärft:
+
+| Pfad | Hebel laut §4b | Bestehender offener Punkt |
+|---|---|---|
+| A — Analytik | `geology` → Regolith-Produktionsbonus | „Kenntnisse-Sekundäreffekt-Matrix ausfüllen — **keine Ressourcen-/AP-Boni**" |
+| B — Hangar | Frachter auf `mission_supply_run` | „Hangar-Missionsnutzbarkeit — Bot/Spieler kommt praktisch nie zum Freighter-Kauf" |
+| C — Cantina | Credits→Regolith-Ankauf | „Bar/Cantina ‚Not enough resources.' — kein nutzbarer reiner Credits-Einkommenstyp" |
+
+Solange diese drei offen sind, existiert **kein** funktionierender Pfad-Hebel. Der Harvester-Umbau (`max_level = 1`, §13.5) darf deshalb nicht vorher kommen — er nimmt die einzige heute funktionierende Regolith-Skalierung weg.
+
+Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion) bleibt gültig; §4b macht sie explizit und ergänzt die Zahlen-Zielgröße (~6 Rg/Sol je Hebel).
+
+### Stufe 0 — Klären (Owner, keine Implementierung)
+
+- [ ] `ap_for_levelup` in der laufenden DB verifizieren — Migration sagt 10/20/30, Onboarding-Budgetrechnung rechnet mit 10 (Anhang B). `sqlite3 data/db/nouron.db "SELECT id, name, ap_for_levelup FROM buildings ORDER BY id"`. **Blockiert Stufe 3.**
+- [ ] Zahlenvorschlag §13.6 freigeben oder anpassen (Grundwert 10, Berater 2/3/4, `f(1)=0.5`, Boni max 42 %)
+- [ ] Höhe des `geology`-Regolith-Bonus festlegen (Vorschlag +1,5/Level)
+- [ ] Entscheiden, ob Pfad A eine Credits-Antwort braucht (§4b, zweite Paritätslücke)
+
+### Stufe 1 — Pfad-Hebel funktionsfähig machen (Voraussetzung für alles Weitere)
+
+Reihenfolge innerhalb der Stufe beliebig, aber alle drei vor Stufe 4.
+
+- [ ] **Kenntnisse-Sekundäreffekte**: Effekt-Infrastruktur bauen (es gibt bisher keinen einzigen Ressourcen-/Produktionsbonus in `config/knowledge.php`), `geology` → Harvester-Ausbeute als erste Anwendung
+- [ ] **Hangar-Erreichbarkeit**: Frachter muss im realen Spielverlauf erreichbar sein, sonst existiert Pfad B's Hebel nur auf dem Papier
+- [ ] **Cantina-Ankaufskanal**: verlässlicher Credits→Regolith-Weg, nicht nur die Chance auf ein passendes Zufallsangebot
+- [ ] Post-Phase-1-Ökonomie-Erholung (bestehender offener Punkt, beeinflusst alle drei)
+
+### Stufe 2 — AP-Pool zusammenlegen (§13.1)
+
+Kernumbau. `ap_spend` existiert bereits auf `colony_buildings`, `colony_research` und `colony_ships` — die **Projekt-Investition über mehrere Sole funktioniert also schon**, sie ist nur typgebunden.
+
+- [ ] Tests zuerst: ein Pool, Berater aller Domänen zahlen ein, Locks verfallen zum Sol-Wechsel
+- [ ] `PersonellService` entkoppeln — `getTotalActionPoints(type, …)`, `getAvailableActionPoints(type, …)`, `lockActionPoints(type, …)`, `getConstructionPoints`/`getResearchPoints`/`getEconomyPoints`/`getStrategyPoints`, `creditApToType`, `resolveType`
+- [ ] Callsites: `AbstractTechnologyService`, `FleetService`, `BarService`, `HangarService`, `ColonyTileService`
+- [ ] Migration: `advisors.personell_type`-Enum ohne `strategy`; Entscheidung zu `locked_actionpoints.personell_type` (Pool-Trennung entfällt — als Auswertungsmerkmal behalten oder streichen)
+- [ ] `config/game.php`: `ap.base`, `advisor.ap_per_rank`; `config/advisors.php`: `strategist` entfernen
+- [ ] UI: AP-Chips, Ressourcenleiste, Berater-Screen auf einen Pool
+
+### Stufe 3 — Ratenmodell vervollständigen (§13.2–13.3, §13.6)
+
+- [ ] `f(L)`-Kostenkurve statt flacher `ap_for_levelup` je Level; `f(1) = 0.5` fürs Errichten
+- [ ] Bonus-System: additive Kostenreduktion aus Berater-Rang, Domänen-Kenntnis, Koloniereife; `project_min_cost_factor` als Leitplanke
+- [ ] Restzeit-Berechnung je Baustelle („noch 3 Sole bei aktueller Rate")
+- [ ] Handlungs-AP nachziehen: `bar.ap_cost_accept` 1→2, `ap_cost_negotiate` 3→4
+- [ ] `decay.overcap_factor` 2.0 → 1.5
+
+### Stufe 4 — Regolith-Ökonomie umstellen (§13.5)
+
+**Nur gemeinsam ausliefern.** Einzeln bricht jeder Teil die Wirtschaft.
+
+- [ ] `harvester.max_level` 8 → 1
+- [ ] `geology`-Produktionsbonus aktiv (aus Stufe 1)
+- [ ] Cantina-Ankaufskanal aktiv (aus Stufe 1)
+- [ ] Frachter real erreichbar (aus Stufe 1)
+- [ ] Regolith-Bilanz gegen die Reparaturkurve gegenprüfen: 8 Rg/Sol Sockel gegen 5,3 / 8,7 / 11,9 / 20,6 Rg/Sol bei 4 / 6 / 8 / 13 Gebäudetypen
+
+### Stufe 5 — Kommandozentrale-Dashboard (§13.4)
+
+Tragende Voraussetzung des Ratenmodells, kein Komfort — es ersetzt die bewusst weggelassene Bodengarantie.
+
+- [ ] AP-Zufluss und Verwendung, Restzeit je Baustelle, Instandhaltungsanteil
+- [ ] Restertrag bis Run-Ende je Projekt (trägt den Late-Game-Kipppunkt ohne Zahlenänderung)
+- [ ] Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose, Run-Aufgaben-Fortschritt
+
+### Stufe 6 — Instrumentierung, Playtest, Kalibrierung
+
+Der Playtest-Bot (Phase 3n) ist die Messumgebung.
+
+- [ ] Die neun Metriken aus GDD Anhang A.5 in `RunReport` aufnehmen
+- [ ] Determinismus-Bug `ColonyTileService::randomizeOuterRingRows()` beheben — ohne reproduzierbare Läufe ist Kalibrierung wertlos
+- [ ] Bot-Läufe, dann §13.6-Zahlen gegen die Zielkorridore nachziehen
+
+### Stufe 7 — Nachzieharbeiten
+
+Kein Blocker, aber Teil der Definition-of-Done.
+
+- [ ] Onboarding-Hinweistexte und Sol-1–4-Budgetrechnung (`gdd/onboarding.md` §16.2/§16.5) auf einen Pool und die neuen Grundwerte
+- [ ] Außenmissions-AP-Staffel (§8b) gegen den neuen Pool neu kalibrieren
+- [ ] Drifts aus GDD Anhang B abarbeiten (CC-Upgrade-Regolith, Decay-Richtwerte, `supply.ship_cost`, Kommentare in `knowledge.php`/`advisors.php`, `testdata.sqlite.sql`)
+- [ ] `ResetPlayer.php`: hartcodierte `supply`/`regolith`-Werte in allen fünf Szenarien nachziehen
 
 ---
 
@@ -75,7 +167,9 @@ In Review — Schritt 2, PR #220, noch nicht gemergt (2026-07-20): Harvester/Agr
 
 Design-Entscheidung getroffen, konkrete Zahlen noch offen: die drei Berater-Pfade behalten unterschiedliche, aber gleichwertige Wirkweisen statt eines neuen Subsystems — Analytiker/Kenntnisse = passiver Multiplikator, Pilot/Hangar = aktive Burst-Beschaffung (Missionen), Konsul/Cantina = aktive Konversion (Handel). Guard-Rail: Grundproduktion muss für sich allein "knapp, aber machbar" sein, bevor irgendein Pfad-Bonus draufkommt.
 
-Nächste Schritte, alle noch offen:
+> **Fortgeführt 2026-08-02 (GDD §4b, PR #231).** Diese Entscheidung ist unverändert gültig und jetzt im GDD ausformuliert — inklusive Zielgröße (~6 Rg/Sol je Pfad-Hebel) und einer Prüfregel für künftige Mechaniken. Die vier Punkte unten sind damit **von „offen" zu „blockierend" geworden**: Der Harvester-Umbau (`max_level = 1`, GDD §13.5) nimmt die einzige heute funktionierende Regolith-Skalierung weg, und die drei Pfad-Hebel, die sie ersetzen sollen, hängen genau an diesen Punkten. Siehe Phase 3o, Stufe 1.
+
+Nächste Schritte, alle noch offen — **jetzt blockierend für Phase 3o**:
 
 - [ ] Bar/Cantina „Not enough resources." beheben — kein praktisch nutzbarer reiner Credits-Einkommenstyp
 - [ ] Post-Phase-1-Ökonomie-Erholung (Kollaps bei mehreren Rang-2/3-Beratern gleichzeitig)

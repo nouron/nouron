@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 2)
+
+Umsetzungsplan für das AP-Ratenmodell als **Phase 3o** in die ROADMAP aufgenommen (acht Stufen von Owner-Klärung über den AP-Pool-Umbau bis Playtest-Kalibrierung und Nachzieharbeiten).
+
+Zentraler Befund beim Planen: **Der kritische Pfad ist nicht der AP-Umbau, sondern die Pfad-Parität.** Alle drei Regolith-Hebel aus GDD §4b hängen an Punkten, die seit dem 2026-07-20 unter „Brainstorming: Kenntnisse/Hangar/Cantina-Pfad-Parität" offen stehen — fehlende Kenntnis-Sekundäreffekte (Pfad A), unerreichbarer Frachter (Pfad B), fehlender Credits-Einkommenstyp in der Cantina (Pfad C). Diese vier Punkte sind damit von „offen" zu „blockierend" geworden, weil der Harvester-Umbau (`max_level = 1`) die einzige heute funktionierende Regolith-Skalierung wegnimmt. Die betreffende ROADMAP-Sektion ist entsprechend markiert und mit §4b verknüpft.
+
+Ebenfalls beim Planen aufgefallen: Die Projekt-Investition über mehrere Sole **existiert bereits** — `ap_spend` liegt auf `colony_buildings`, `colony_research` und `colony_ships`. Das Ratenmodell braucht sie nicht neu zu bauen, sondern nur vom AP-Typ zu entkoppeln und um die Kostenkurve plus das Bonus-System zu ergänzen.
+
+Zwei veraltete ROADMAP-Angaben korrigiert: Stand-Datum und der Status von PR #220 (als „In Review — noch nicht gemergt" geführt, tatsächlich am 2026-07-20 mit `adc2c13` gemergt).
+
 ## 2026-08-02 (Fortsetzung)
 
 Design-Runde zum Ratenmodell, erarbeitet gegen Code und Configs statt gegen die GDD-Richtwerte. Alles als **Arbeitsstand** markiert — nichts ist implementiert, nichts festgeschrieben.
