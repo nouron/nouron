@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-02
+
+Ressourcen- und AP-Konsolidierung im GDD festgeschrieben (reine Design-Änderung, Implementierung steht aus). Vier Entscheidungen: (1) Die fünf getrennten, nicht mischbaren AP-Typen werden zu **einem gemeinsamen AP-Pool** zusammengelegt — getrennte Pools erzeugten keine Entscheidung, ungenutzte Economy- und Strategy-AP verfielen still (§16 Befund 1 damit strukturell gelöst). (2) **Ratenmodell**: AP fließen sowohl in sofortige Handlungen (Missionen, Events, Handel) als auch in Projekte über mehrere Sole (Gebäude, Kenntnisse); Parallelbau ausdrücklich erlaubt, Kostenreduktionen wirken additiv, Gelegenheiten sind durch Verfügbarkeit statt durch AP begrenzt. (3) **Werkstoffe gestrichen** — sie waren faktisch eine Zwischenwährung mit fixem Wechselkurs zu Credits; Credits übernehmen die Rolle über einen High-Tech-Aufschlag. (4) **Stratege zurückgestellt** — vier Beratertypen, Slot 5 entfällt, der Sicherheits-Hub bleibt als Gebäude ohne Berater-Kopplung.
+
+Neuer §13.1–13.5 (gemeinsamer Pool, Ratenmodell, additive Boni, Kommandozentrale-Dashboard mit Prognosen, Verfallsgrenze als emergente Koloniegröße) sowie ein Übersichtsblock nach dem Inhaltsverzeichnis, der die Entscheidungen und die neun offen gebliebenen Fragen bündelt — darunter das gesamte Zahlen-Balancing des Ratenmodells, die Handelstiefe (nur noch zwei handelbare Ressourcen) und die Frage, ob Versorgung neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle trägt.
+
 ## 2026-08-01
 
 Design System (mit Claude Design erstellt) unter `docs/design-system/` eingebunden und als verbindliche Design-Quelle verdrahtet: `.claude/skills/nouron-design` (Symlink) macht es als Skill discoverable, `ui-specialist`-Agent liest es jetzt vor jeder UI-Aufgabe. `docs/design-guide.md` entfernt — reine Optik-Inhalte sind im Design System abgedeckt, die vier verbliebenen Backend/Frontend-Engineering-Verträge (Live-Sync-Pflicht, Fehlerantwort-Format, Screen-Kompositionsregeln, Breakpoint-Details) nach neuem `docs/frontend-conventions.md` migriert statt gelöscht.
