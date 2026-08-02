@@ -8,7 +8,11 @@ Neuer §13.1–13.5 (gemeinsamer Pool, Ratenmodell, additive Boni, Kommandozentr
 
 **Werkstoffe-Streichung geprüft und zurückgestellt.** Die ebenfalls diskutierte Streichung der Werkstoffe wurde nach Prüfung der Auswirkungen nicht umgesetzt: Die Ressource trägt fünf eigenständige Rollen (dritte Achse des Tauschdreiecks, Lv1-Funktion der Uplink-Station, einziger qualitativer Rang-3-Vorteil des Konsuls, zwei Missionsbelohnungen, Run-Aufgabe „Selbstversorgung"). Werkstoffe bleiben unverändert im Spiel.
 
-GDD von 3.505 auf 2.734 Zeilen verkleinert: §11 Techtree, §16 Onboarding und §17 Progressive Discovery nach `docs/gdd/` ausgelagert (Kriterium: Entitätslisten und UX-/Content-Spezifikationen, die man beim Nachdenken über Spielregeln nicht mitliest). An den Originalstellen stehen Verweisstubs. Zwei veraltete Inhaltsverzeichnis-Anker korrigiert (§6 „Supply-Generierung" → „Supply-System (Cap-Modell)", §10 „Forschung" → „Kenntnisse") und der tote Eintrag §11.4 entfernt.
+GDD von 3.505 auf 2.687 Zeilen verkleinert und aufgeräumt. Ausgelagert nach `docs/gdd/`: §11 Techtree, §16 Onboarding, §17 Progressive Discovery (Entitätslisten und UX-/Content-Spezifikationen, die man beim Nachdenken über Spielregeln nicht mitliest) sowie §8 Flotten und §8a Systemansicht als Archiv (beide seit 2026-06-20 gestrichen, standen aber weiterhin als Phase-4+-Referenz im Regelteil). An allen Originalstellen stehen Verweisstubs.
+
+Inhaltsverzeichnis: zwei tote Anker korrigiert (§6 „Supply-Generierung" → „Supply-System (Cap-Modell)", §10 „Forschung" → „Kenntnisse"), toter Eintrag §11.4 entfernt. AP-Reste nachgezogen, die noch von getrennten Pools ausgingen (Cantina-Verhandlung, Außenmissions-Staffel, Missionsbelohnungen, Berater-Informationsebene, Onboarding-Hinweistexte) — teils direkt korrigiert, teils als ⚠️ markiert, wo neue Zahlen nötig sind.
+
+Neuer **Anhang A — Balance- und TODO-Index**: alle 31 verstreuten `BALANCE CONCERN`- und `TODO`-Marker in vier Gruppen indexiert (blockierend vor Ratenmodell-Implementierung, Folgearbeiten aus der AP-Zusammenlegung, nach erstem Playtest zu kalibrieren, offene Designfragen). Verzeichnis, keine zweite Quelle — die maßgebliche Formulierung bleibt am Originalort.
 
 ## 2026-08-01
 

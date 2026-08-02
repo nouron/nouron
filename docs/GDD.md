@@ -18,8 +18,8 @@
 5. [Ressourcenproduktion](#5-ressourcenproduktion)
 6. [Supply-System (Cap-Modell)](#6-supply-system-cap-modell)
 7. [Verfall & Entropie](#7-verfall--entropie)
-8. [Flotten & Flottenorders](#8-flotten--flottenorders)
-   - 8a. [Systemansicht](#8a-systemansicht)
+8. [Flotten & Flottenorders](gdd/archiv-flotten-systemkarte.md) → gestrichen, Archiv
+   - 8a. [Systemansicht](gdd/archiv-flotten-systemkarte.md) → gestrichen, Archiv
    - 8b. [Hangar-Screen](#8b-hangar-screen)
 9. [Begegnungen & Gefahren](#9-begegnungen--gefahren)
 10. [Kenntnisse (ehem. Forschung)](#10-kenntnisse-ehem-forschung)
@@ -36,8 +36,9 @@
 16. [Onboarding](gdd/onboarding.md) → eigene Datei
 17. [Progressive Discovery System](gdd/progressive-discovery.md) → eigene Datei
 18. [Run-Ende & Fail-State](#18-run-ende--fail-state)
+- [Anhang A — Balance- und TODO-Index](#anhang-a--balance--und-todo-index)
 
-> **Ausgelagerte Kapitel** (2026-08-02, `docs/gdd/`): §11 Techtree, §16 Onboarding, §17 Progressive Discovery. Kriterium: Kapitel, die man beim Nachdenken über Spielregeln nicht mitliest — Entitätslisten und UX-/Content-Spezifikationen. Die Regelkapitel §1–10, §12–15 und §18 bleiben zusammen. Ebenfalls in `docs/gdd/`: [`entity-chips.md`](gdd/entity-chips.md).
+> **Ausgelagerte Kapitel** (2026-08-02, `docs/gdd/`): §8 + §8a (gestrichen, [Archiv](gdd/archiv-flotten-systemkarte.md)), §11 [Techtree](gdd/techtree.md), §16 [Onboarding](gdd/onboarding.md), §17 [Progressive Discovery](gdd/progressive-discovery.md). Kriterium: Kapitel, die man beim Nachdenken über Spielregeln nicht mitliest — nicht mehr geltende Mechanik, Entitätslisten und UX-/Content-Spezifikationen. Die Regelkapitel §1–7, §8b, §9–10, §12–15 und §18 bleiben zusammen. Ebenfalls in `docs/gdd/`: [`entity-chips.md`](gdd/entity-chips.md).
 
 ---
 
@@ -66,7 +67,8 @@ Diese Fragen sind mit den obigen Entscheidungen **nicht** beantwortet und brauch
 | **Werkstoffe** | Bleiben vorerst. Falls die Streichung später erneut geprüft wird: Ersatz für Tauschdreieck, Uplink Lv1, Konsul Rang 3, zwei Missionen, Run-Aufgabe 4 | §3 |
 | **Bodengarantie** | Mindestanteil je Domäne, oder freie Allokation ohne Untergrenze? | §13.1 |
 | **Stratege** | Später neu bewerten und designen — als eigener Pfad oder als Modifikator der anderen? | §13 |
-| **GDD-Aufräumen** | Eigene Runde: veraltete TOC-Einträge, Altlasten, Konsistenz nach der AP-Umstellung | — |
+
+> **GDD-Aufräumen ist erledigt** (2026-08-02): TOC-Anker korrigiert, gestrichene Kapitel §8/§8a ins Archiv ausgelagert, AP-Reste nachgezogen, alle Balance- und TODO-Marker in [Anhang A](#anhang-a--balance--und-todo-index) indexiert. Die dort gelisteten Punkte bleiben offen — sie sind jetzt nur auffindbar.
 
 ---
 
@@ -996,131 +998,13 @@ Erfahrenere Berater erholen sich schneller — und haben schon durch den `rank_d
 
 ---
 
-## 8. Flotten & Flottenorders
+## 8. Flotten & Flottenorders · 8a. Systemansicht
 
-> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Galaxie- und Systemkarte samt Flottenbewegung/-kampf wurden entfernt (Backend, Tabellen `fleets`/`fleet_*`/`glx_system*`, Services). Schiffe existieren weiterhin ausschließlich über den **Hangar** (§8b) inkl. Außenmissionen (Dispatch). Der folgende Abschnitt bleibt als Referenz für eine mögliche spätere Wiedereinführung (Phase 4+) erhalten, beschreibt aber **keinen aktuellen Spielstand**.
-
-### Flottenorders
-
-Flottenbewegungen und -aktionen werden als Orders in der `fleet_orders`-Tabelle gespeichert. Jede Order ist einem Tick zugewiesen und wird beim zugehörigen Tick genau einmal verarbeitet (`was_processed = 1` nach Ausführung).
-
-### Navigation-AP-Kosten je Order-Typ
-
-Jede Flottenorder verbraucht Navigation-AP, die durch Raumfahrer generiert werden (siehe Abschnitt 13). Die AP-Kosten unterscheiden sich bewusst je nach Charakter der Aktion — konfrontative Orders sind teurer als zivile (siehe Abschnitt 1.1, Designprinzip "Aufbau vor Konflikt").
-
-| Order-Typ | Navigation-AP-Kosten | Kategorie |
-|-----------|----------------------|-----------|
-| move | 1 | zivil |
-| hold | 1 | zivil |
-| trade | 1 | zivil |
-| join | 1 | zivil |
-| convoy | 1 | zivil |
-| defend | 2 | semi-militarisch |
-| attack | 3 | militarisch |
-
-> Die Kostenwerte sind in `config/game.php → fleet.order_costs` konfiguriert. Neue Order-Typen muessen beim Anlegen immer einen Eintrag dort erhalten. Das Verhaltnisprinzip (militarisch >= zivil) darf dabei nicht verletzt werden.
-
-### Move-Order
-
-Bewegt eine Flotte zu Zielkoordinaten `[x, y, spot]` innerhalb eines Sternensystems.
-
-**Bewegungs-Mechanik (Phase 2):**
-- Bewegung geschieht über mehrere Sole — die Flotte teleportiert sich nicht sofort
-- Geschwindigkeit = `moving_speed` des langsamsten Schiffs in der Flotte (Fallback: 1 Einheit/Sol)
-- `FleetService::addOrder()` berechnet den Pfad via `GalaxyService::getPath()` und legt für jeden Sol auf dem Weg eine 'move'-Order an; nur die letzte Order trägt den eigentlichen Order-Typ
-- Pro Sol des Weges werden Navigation-AP gesperrt (Gesamtkosten = Wegkosten + Order-Kosten)
-
-**Einschränkungen (bewusste Designentscheidung):**
-- Ausschließlich innerhalb eines Sternensystems (gleiche `system_id`)
-- Interstellare Bewegung wird **nicht implementiert** — siehe unten
-
-**Datenspeicherung:**
-- Koordinaten in `fleet_orders.coordinates` werden als JSON gespeichert (`json_encode`)
-- Zusatzdaten für Trade/Attack in `fleet_orders.data` ebenfalls als JSON
-
-Nach Ausführung wird die Position der Flotte (`fleets.x`, `fleets.y`, `fleets.spot`) aktualisiert.
-INNN-Ereignis `galaxy.fleet_arrived` wird für den Flottenbesitzer erzeugt.
-
-### Interstellare Bewegung — bewusst nicht implementiert
-
-Flotten operieren ausschließlich im eigenen Sternensystem. Interstellare Bewegung zwischen Systemen wird nicht implementiert.
-
-**Begründung:** Bei einem Scope von einer Kolonie pro Spieler und wenigen Schiffen findet fast alles im eigenen System statt — Erkundung, Ressourcenbergung, Bewachung, PvP. Eine interstellare Bewegungsmechanik würde Komplexität hinzufügen ohne spielerischen Mehrwert für Phase 3.
-
-**Das Sprungtor als narratives Element:** Im System ist ein Sprungtor sichtbar (Galaxiekarte), das theoretisch den Weg zu anderen Systemen öffnen könnte. Es wird nicht benutzt — aber es kann bewacht werden (`defend`-Order). Narrativ: Warum siedelt Nexus ausgerechnet in diesem System? Das Sprungtor deutet eine Antwort an ohne sie zu geben.
-
-**"Gäste von außerhalb"** kommen via Events und Bar — Händler, Schmuggler, Boten aus anderen Systemen erscheinen ohne dass eine Bewegungsmechanik implementiert sein muss.
-
-> **Phase 4+:** Wenn Multiplayer-PvP zwischen Systemen gewünscht wird, kann interstellare Bewegung dann als eigene Mechanik nachgerüstet werden. `GalaxyService::getPath()` unterstützt systemübergreifende Pfade bereits technisch.
-
-### Trade-Order
-
-Transferiert Ressourcen zwischen einer Kolonie und einer Flotte.
-
-| direction | Bedeutung |
-|-----------|-----------|
-| 0 | Kauf: Kolonie gibt Ressource an Flotte |
-| 1 | Verkauf: Flotte gibt Ressource an Kolonie |
-
-- Koloniebestand kann nicht unter 0 sinken (Schutz via `MAX(0, amount - amount)`)
-- Flottenbestand kann nicht unter 0 sinken
-- INNN-Ereignis `galaxy.trade` wird für den Flottenbesitzer erzeugt
-
----
-
-## 8a. Systemansicht
-
-> ⛔ **GESTRICHEN (2026-06-20, „bis auf weiteres").** Die Systemkarte (12×12-Grid, Sprungtor, Flottenplatzierung) wurde entfernt. Die Kolonie hat keinen navigierbaren Systemraum mehr und keine Koordinaten. Abschnitt bleibt als Phase-4+-Referenz.
-
-### Darstellung: 2D Top-Down Grid
-
-Die Systemansicht zeigt das gesamte Sternensystem als 2D top-down Darstellung. Das zugrundeliegende Grid (12×12) ist im Normalmodus unsichtbar — es erscheint nur wenn ein Flottenbefehl erteilt wird (Zielauswahl). Planeten, Flotten und Objekte sind Icons im freien Raum.
-
-### Koordinatensystem
-
-Einheitliches **12×12-Grid** (grid_x: 0–11, grid_y: 0–11) für alle Objekte und Flotten auf der Systemkarte. Der Stern steht immer bei **(6,6)** — Mittelpunkt. Alle anderen Objekte werden beim Run-Start prozedural platziert und in `glx_system_objects.grid_x/grid_y` gespeichert. Flotten nutzen dasselbe Koordinatensystem (`fleets.grid_x`, `fleets.grid_y`). Das veraltete `spot`-Feld entfällt.
-
-### Sichtbarkeit
-
-Das gesamte System ist von Beginn an sichtbar — Nexus hat das System vor der Expedition vorab erkundet. Einige Tiles erfordern Detailerkundung.
-
-### Erkundungsstufen
-
-| Stufe | Kosten | Ergebnis |
-|-------|--------|---------|
-| Scan | 1 Navigation-AP, sofort | Tile aufgedeckt (leer / Ressource / normales Event) |
-| Tiefenscan | Mehrere Navigation-AP über mehrere Sole | Verborgener Event-Spot enthüllt (Schiffswrack, Ruine, Versteck) |
-
-### Fixe Objekte (immer vorhanden)
-
-- Stern (1) — immer bei (6,6)
-- Heimatplanet + Monde (je Spieler) — prozedural platziert
-- Sprungtor (1, narratives Element — nicht nutzbar, kann bewacht werden) — prozedural platziert
-- Nexus-Außenposten (1): Basishandel + Verwaltung der Nexus-Schulden — prozedural platziert
-
-### Prozedurale Objekte (variabel pro Run)
-
-Asteroiden, Schiffsfriedhöfe, Event-Tiles — zufällig generiert, tragen zum Roguelike-Charakter bei.
-
-### NPC-Präsenzen
-
-Das System wirkt unbesiedelt und nach Frontier — Begegnungen sind selten aber bedeutsam. Drei Klassen von NPC-Präsenzen:
-
-| Klasse | Stärkewert | Auftreten | Auslöser |
-|--------|-----------|-----------|---------|
-| **Piratensonde** | 1 | häufig | Zufälliges Event-Tile in der Exploration Zone; erscheint wenn eine Flotte das Tile betritt |
-| **Schmugglerfrachter** | 0 | gelegentlich | Bewegt sich durch das System; auslösbar mit `attack`-Order; flieht bei Konfrontation (kein Kampf, aber +Vertrauen für Abwehr) |
-| **Schwerer Wächter** | 5 | selten | Bewacht ein hochwertiges Event-Tile (z.B. verlassenes Lager); erscheint nur bei Tiefenscan-Ergebnis mit `danger_high` |
-
-**Encounter-Auslöser:** NPC-Begegnungen entstehen ausschließlich durch Flottenorders — passiv trifft keine Flotte auf NPCs. Ein NPC-Event-Tile wird bei Erkundung (Sonde/Korvette) aufgedeckt; der Spieler entscheidet dann bewusst ob er `attack` oder `defend` ordert oder das Tile ignoriert.
-
-**Erscheinungsfrequenz pro Run:** 3–5 Piratensonden-Events, 1–3 Schmuggler, 0–1 schwere Wächter (prozedurale Verteilung bei Run-Generierung).
-
-> **Reisender Händler umgezogen (Juli 2026):** Die Beschreibung stand hier fälschlich unter dem "GESTRICHEN"-Banner dieses Abschnitts, obwohl der Reisender Händler eine aktive, unabhängig von der Systemkarte weiterhin implementierte Mechanik ist (`MerchantService`, `GameTick.php` Schritt 11, `config/game.php → merchant`). Vollständige Beschreibung jetzt in §12 Handel, Kanal 3.
-
-### Multiplayer
-
-> ⛔ **Veraltet (2026-07-01).** Der bisherige Ansatz (Interaktion über Flottenbewegung auf der Systemkarte) ist mit der Streichung der Systemkarte (siehe Banner oben) hinfällig. Derzeit ist **keine Multiplayer-Interaktionsmechanik geplant** — der Turn-Resolution-Layer aus ADR 0003 (`docs/adr/0003-simultan-turn-resolution-multiplayer.md`) ist davon unabhängig und unterstützt Multiplayer auch ohne gemeinsamen Interaktionsraum (z.B. mehrere Spieler, jeweils eigene isolierte Kolonie, gemeinsamer Sol-Rhythmus). Bei Bedarf neu evaluieren, sobald Multiplayer aktiv angegangen wird.
+> ⛔ **Gestrichen (2026-06-20, „bis auf weiteres") — ausgelagert nach [`docs/gdd/archiv-flotten-systemkarte.md`](gdd/archiv-flotten-systemkarte.md).**
+>
+> Galaxie- und Systemkarte samt Flottenbewegung und -kampf sind aus dem Spiel entfernt. Beide Kapitel beschrieben keinen aktuellen Spielstand mehr und standen nur noch als Phase-4+-Referenz im Regelteil; sie stehen jetzt vollständig im Archiv.
+>
+> **Was stattdessen gilt:** Schiffe existieren ausschließlich über den **Hangar** (§8b) inklusive Außenmissionen (Dispatch). Der **Reisende Händler** ist davon unabhängig aktiv und in §12 Handel, Kanal 3 beschrieben.
 
 ---
 
@@ -1191,7 +1075,9 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 - **Organika:** `sol_distance × 3` als Proviant & Betriebsstoffe (`organika_per_sol`; gilt einheitlich auch für die unbemannte Drohne — eine Ausnahme würde Drohnen-Missionen zum kostenlosen Optimalpfad machen)
 - Einzelne Missionen haben Zusatzkosten (z.B. Hilfsgüter-Fracht), im Katalog vermerkt.
 
-`sol_distance` ist die **einfache Strecke**; die Gesamtdauer beträgt `2 × sol_distance` Sole (Hin- und Rückweg — deckungsgleich mit der Verschleiß-Prognose aus §7). Die Kostenstaffel ist bewusst gegen den Navigation-AP-Pool (§13) kalibriert: Distanz 1–2 (2–4 AP) ist ohne Raumfahrer machbar, Distanz 3 (6 AP) kostet den kompletten Grundpool, Distanz 4–5 (8–10 AP) setzt einen Raumfahrer voraus. Lange Expeditionen sind damit über Opportunitätskosten an die Berater-Progression gekoppelt — kein hartes Gate, keine Strafe.
+`sol_distance` ist die **einfache Strecke**; die Gesamtdauer beträgt `2 × sol_distance` Sole (Hin- und Rückweg — deckungsgleich mit der Verschleiß-Prognose aus §7). Die Kostenstaffel war ursprünglich gegen den separaten Navigation-AP-Pool kalibriert: Distanz 1–2 (2–4 AP) ohne Raumfahrer machbar, Distanz 3 (6 AP) kostete den kompletten Grundpool, Distanz 4–5 (8–10 AP) setzte einen Raumfahrer voraus.
+
+> **⚠️ Neu zu kalibrieren (2026-08-02):** Mit dem gemeinsamen AP-Pool (§13.1) gibt es keinen eigenen Navigations-Grundpool mehr, gegen den diese Staffel gemessen werden könnte. Die Absicht bleibt gültig — lange Expeditionen sollen über Opportunitätskosten an die Raumfahrer-Progression gekoppelt sein, ohne hartes Gate — aber die konkreten Werte müssen gegen den neuen Grundwert und die Projektkosten neu gesetzt werden (§13.5).
 
 #### Katalog
 
@@ -1201,7 +1087,7 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 | `mission_recon_flight` | Erkundungsflug | Drohne | 1 | 2 / 3 | 2 unerkundete Tiles der Exploration Zone aufgedeckt | sofort |
 | `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | bekanntes Signal-Tile |
 | `mission_prospecting_flight` | Prospektionsflug | Drohne | 2 | 4 / 6 | 20–30 Regolith (variabel) | Geologie Lv1 |
-| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 Research-AP-Fortschritt auf eine gewählte Kenntnis (§10) | Kartografie Lv1 |
+| `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 AP Fortschritt auf eine gewählte Kenntnis (§10) — als Projekt-Investition, ohne den AP-Pool zu belasten | Kartografie Lv1 |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | 2 | 4 / 6 | 25 Regolith + 10 Organika | Frachter vorhanden |
 | `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
 | `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | Gesundheit Lv1 |
@@ -1473,20 +1359,22 @@ Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtig
 
 **Cantina-Verhandlung (Risiko-Handel):**
 
-Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 Economy-AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
+Zusätzlich zu **Annehmen** (feste Konditionen, garantiert, 1 AP) gibt es pro Bar-Angebot einen zweiten Button **Verhandeln** — sichtbar, sobald der Kolonie ein Konsul zugewiesen **und** verfügbar ist (nicht auf Außenmission, `unavailable_until_tick` ist `null` — dieselbe Prüfung wie bei der Angebots-Generierung, siehe `BarService::generateOffersForColony`). Jeder Rang genügt, auch Rang 1 (Junior) — analog zum bestehenden Muster, dass der Junior-Konsul sofort sichtbaren Wert bringt (`trader_discount[1] = 0.10`).
 
 > **Nicht zu verwechseln** mit der "Konsul-Verhandlung" beim Schiffskauf (§8b, Hangar-Screen): dort ist der niedrigere Preis garantiert, hier nicht. Diese Mechanik heißt bewusst anders.
 
 **Ablauf — zwei Schritte (Owner-Entscheidung 2026-07-31, revidiert gegenüber der ursprünglichen Ein-Schritt-Fassung):** Verhandeln führt das Geschäft nicht sofort aus, sondern verbessert bei Erfolg nur die Konditionen des Angebots — der Spieler sieht das Ergebnis und bestätigt danach explizit mit **Annehmen**.
 
 1. Verfügbarkeits- und Ressourcen-Check wie bei Annehmen (Give-Seite muss gedeckt sein — sonst Fehler `bar_offer_insufficient_resources`, kein Würfeln auf ein Geschäft, das ohnehin nicht zustande kommen könnte). Ein bereits verhandeltes Angebot kann nicht erneut verhandelt werden.
-2. Economy-AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`) — unabhängig vom Ausgang.
+2. AP-Kosten werden abgebucht (`ap_cost_negotiate`, höher als `ap_cost_accept`) — unabhängig vom Ausgang.
 3. Einmaliger Erfolgs-Wurf, Konsul-Rang-abhängig (`negotiate_success_chance`).
    - **Erfolg:** Die Konditionen des Angebots (`give_amount`/`get_amount`) werden dauerhaft auf die verbesserten Werte aktualisiert (`negotiate_bonus`, gleiche Formel-Achse wie `trader_discount`, s.u.) und das Angebot als verhandelt markiert. Der Handel selbst führt sich **noch nicht** aus — der Verhandeln-Button wird gesperrt, der Annehmen-Button bleibt aktiv und zeigt jetzt 0 AP (die Kosten wurden bereits mit der Verhandlung bezahlt). Erst ein Klick auf Annehmen überträgt die Ressourcen.
    - **Fehlschlag:** Kein Handel. Das Angebot ist **sofort und vollständig verloren** (gelöscht/verfallen) — kein zweiter Versuch, auch kein nachträgliches "Annehmen" zu den alten Konditionen. Die verlorene Chance ist die eigentliche Konsequenz, nicht die AP.
 4. **Kein Trust-Malus.** `trade_blocked` (§13/§14) bleibt für einen anderen Fall reserviert (blockierter Handel, nicht gescheiterte Verhandlung) — eine fehlgeschlagene Verhandlung soll bestraft, aber nicht zusätzlich über Vertrauen abgestraft werden, sonst wird der Button nie benutzt.
 
-**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und Economy-AP/Sol von 6–18 (Rang 0–3, s. o.) sowie max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP ist hier kein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+**Warum die Chance den Preis macht, nicht die AP:** Bei `ap_cost_accept = 1` und max. 2–6 gleichzeitigen Angeboten kann ein Konsul-Halter praktisch jedes Angebot verhandeln, egal wie hoch `ap_cost_negotiate` gesetzt wird — AP war hier nie ein wirksamer Deckel. Der eigentliche Preis ist der komplette Verlust des Angebots bei Fehlschlag.
+
+> **Neu zu prüfen nach der AP-Zusammenlegung (2026-08-02):** Das Argument stützte sich darauf, dass Economy-AP ein eigener Pool mit 6–18 AP/Sol war, der ohnehin nichts anderes zu tun hatte. Mit dem gemeinsamen Pool (§13.1) konkurrieren Handelsgeschäfte direkt mit Bau und Kenntnissen — AP wird damit erstmals zu einem echten Deckel für Vielhandel. Ob `ap_cost_negotiate` dadurch schon von selbst wirkt oder weiterhin die Verlust-Mechanik tragen muss, ist im Handels-Balancing zu prüfen.
 
 | | Rang 1 (Junior) | Rang 2 (Senior) | Rang 3 (Experte) |
 |---|---|---|---|
@@ -1766,7 +1654,7 @@ Drei Beratertypen (Baumeister, Analytiker, Konsul) können für eine begrenzte A
 | Beratertyp | Missionsname | Dauer (Sole) | Bonus bei Erfolg |
 |------------|--------------|--------------|-----------------|
 | Baumeister | Nexus-Notfall-Wartung | 3–5 | Ein beliebiges Koloniegebäude erhält sofort volle `status_points` |
-| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne Research-AP-Kosten, CC-Gates bleiben aktiv) |
+| Analytiker | Datenaustausch mit Forschungsstation | 4–6 | Spieler wählt eine Kenntnis — diese steigt sofort um 1 Level (ohne AP-Kosten, CC-Gates bleiben aktiv) |
 | Konsul | Handelsreise | 3–4 | Exklusives Bar-Angebot bei Rückkehr (2 Sole gültig, erscheint als zusätzlicher Slot neben normalen Bar-Angeboten) |
 | Raumfahrer | — | — | Kein Berater-Außenmissions-Pfad — sein "Außendienst" läuft indirekt über den Schiffs-Dispatch (§8b); eine eigene Mechanik wird nach Playtest evaluiert |
 
@@ -1963,7 +1851,7 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 | Berater | Screen | Primär-Information | Sekundär-Information |
 |---------|--------|--------------------|----------------------|
 | Baumeister | Colony-View | Decay-Prognose pro Gebäude ("in ~4 Solen Level-Down") | Kritische Gebäude hervorgehoben (SP < 30% Max) |
-| Analytiker | Techtree | "Sole bis Level X bei aktuellem Forschungs-AP-Fluss" | Priorisierungshinweis für offene Run-Aufgaben |
+| Analytiker | Techtree | "Sole bis Level X beim aktuellen AP-Fluss in diese Kenntnis" | Priorisierungshinweis für offene Run-Aufgaben |
 | Konsul | Cantina | Händler-Einschätzung "guter / durchschnittlich / schlechter Deal" (kontextuell, nicht binär) | Restlaufzeit-Countdown für Angebote prominent statt versteckt |
 | Raumfahrer | Hangar | Aufgebrochene Missionszeit ("X Sole Hinweg + Rückkehr Sol Z") | Verschleiß-Prognose pro geplantem Dispatch (§7) |
 
@@ -2732,3 +2620,68 @@ Bekannte Abweichungen zwischen GDD §15-Prosa und dem tatsächlichen Code/Config
 | Run-Ende-Screen Blade-Template | ui-specialist | Mittel |
 | Nexus-Kommentar-Texte | content-writer | Niedrig |
 | `config('game.run.nexus_debt_limit')` als Config-Key anlegen (aktuell hardcodiert 12000 in RunProgressService) | game-developer | Niedrig |
+
+---
+
+## Anhang A — Balance- und TODO-Index
+
+Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach einem Playtest an einer Stelle steht, was zu prüfen ist. Angelegt 2026-08-02. Die maßgebliche Formulierung steht jeweils am genannten Ort — dies ist ein Verzeichnis, keine zweite Quelle.
+
+### A.1 Blockierend — vor der Implementierung des Ratenmodells zu klären
+
+Diese Punkte sind Voraussetzung dafür, dass das AP-Ratenmodell (§13.2) überhaupt implementiert werden kann.
+
+| Thema | Ort |
+|---|---|
+| AP-Zufluss pro Runphase, Projektkosten je Gebäudelevel, Bonus-Kurve, Lage des Verfall-Gleichgewichts | §13.5 |
+| Grundwert des gemeinsamen AP-Pools | §13 „Verfügbare AP" |
+| Bodengarantie je Domäne — ja oder nein | §13.1 |
+| Erstes Gebäudelevel günstiger als Folgelevel (Early-Game-Tempo) | §13.5 |
+| Braucht Versorgung neben Bauplatz, AP-Rate und Verfall noch eine eigene Rolle? | §6 |
+
+### A.2 Folgearbeiten aus der AP-Zusammenlegung
+
+Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
+
+| Thema | Ort |
+|---|---|
+| Außenmissions-AP-Staffel (2–10 AP) war gegen den Navigations-Grundpool kalibriert | §8b |
+| Cantina: AP als Deckel für Vielhandel — wirkt jetzt erstmals wirklich | §12 |
+| Onboarding-Hinweistexte sprechen von „Bau-AP verfällt" o. ä. | `gdd/onboarding.md` §16.2 |
+| Sol-1–4-Budget-Rechnung rechnet mit getrennten Pools | `gdd/onboarding.md` §16.5 |
+| `locked_actionpoints.personell_type` — Pool-Trennung oder nur Auswertungsmerkmal? | §13 „Implementierung" |
+| AP-Malus bei Aufruhr (−20 %) trifft jetzt die gesamte Kolonie statt einer Domäne | §14 |
+
+### A.3 Nach dem ersten Playtest zu kalibrieren
+
+| Thema | Ort |
+|---|---|
+| Sicherheits-Hub: Vertrauens-Bonus, Event-Dämpfung, Recycling-Anteil | §4 |
+| Uplink-Station: Tiefenscan-Basiskosten, Händler-Erscheinungsrate | §4 |
+| Handelsposten: Baukosten, Decay, Supply, Handelswert-Bonus | §4 |
+| Korvetten-Stacking ohne Supply-Limiter | §6 |
+| Schiffs-Verschleiß `wear_per_sol` | §7 |
+| Missionen: Werkstoff-Durchsatz, Credit-Missionen mit mehreren Drohnen, Erkundungsflug vs. Ring-Erkundung, Milderungs-Stacking | §8b |
+| Kolonistengefahren: Sturm und Seuchenausbruch lösen beide `colony_threatened` aus | §9 |
+| Cantina-Verhandlung: `negotiate_bonus`, `negotiate_success_chance` | §12 |
+| Berater-Außenmissionen: Analytiker-Bonus (stärkster Effekt), Rang-1-Misserfolgsrate | §13 |
+| Konsul: Händler-Einschätzung nicht binär, erster Cantina-Besuch ohne Konsul | §13 |
+| Vertrauen: theoretisches Maximum bei Voll-Ausbau, Kolonisten-Zulage ohne Cooldown, Bauwesen-Events wiederholbar | §14 |
+| Run-Aufgabenpool: Wirtschafts-Cluster (1, 7, 9), Kollision Aufgabe 11 mit 2/8 | §15 |
+| Highscore-Formel: Gewichtung | §15 |
+| Fail-State: −20-Trust-Schwelle, `nexus_debt`-Mechanik | §18 |
+| `task_expedition_coverage: 19` als schwierigster Task-Target-Wert | §18 |
+| Run-Ende: „Kolonie ansehen" setzt voraus, dass Koloniedaten erhalten bleiben | §18 |
+
+### A.4 Offene Designfragen (kein Playtest nötig, Entscheidung steht aus)
+
+| Thema | Ort |
+|---|---|
+| Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
+| Optionale dritte Bedingung für Run-Phase 1 (Roguelike-Variabilität) | §15 |
+| Nexus-Boni in Phase 1 oder erst ab Phase 2? | §15 |
+| Schiffe ohne Hangar (Events, Handelsdeals) — Phase 4+ | §6 |
+| Kolonisten-Ausbildung — Design-Konzept, Phase 4+ | §10 |
+| Supply als Kolonisten-Framing in der UI — Phase 4+ | §6 |
+| Exotics als vierter handelbarer Rohstoff — Phase 4+ | §3 |
+| AP-Delegation zwischen Kolonien — Phase 4+ | §12 |
