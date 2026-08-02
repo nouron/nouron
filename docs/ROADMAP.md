@@ -71,23 +71,25 @@ Abgeschlossen — Schritt 2, PR #220, gemergt (2026-07-20): Harvester/Agrardom-G
 
 ## Laufend — Phase 3o: AP-Ratenmodell (Umsetzungsplan, 2026-08-02)
 
-Design steht im GDD (§4b, §6, §13.1–13.6, Anhang A/B), gemergt mit PR #231. **Nichts davon ist implementiert.** Dieser Abschnitt ist der Umsetzungsplan.
+Design steht im GDD (§3 Knappheitsordnung, §4b, §4c, §6, §13.1–13.7, Anhang A/B). PR #231 ist gemergt, die Ergänzungen danach liegen auf dem Branch. **Nichts davon ist implementiert.** Dieser Abschnitt ist der Umsetzungsplan.
 
 TDD ist verbindlich (CLAUDE.md): für jede Stufe mit Verhalten zuerst ein fehlschlagender Test, der das gewünschte Verhalten beschreibt.
 
-### Der kritische Pfad ist nicht der AP-Umbau
+### Der kritische Pfad ist die Auslieferungsreihenfolge, nicht die Pfad-Parität
 
-Die Pfad-Parität (§4b) verlangt, dass jeder der drei Pfade einen eigenen Regolith-Hebel mit vergleichbarem Ertrag hat. **Alle drei Hebel hängen an Punkten, die seit dem 2026-07-20 offen unter „Brainstorming: Kenntnisse/Hangar/Cantina-Pfad-Parität" stehen** — die neue Design-Runde hat sie nicht gelöst, sondern präzisiert und verschärft:
+> **Umgestellt 2026-08-02.** Eine frühere Fassung hielt hier fest, der kritische Pfad seien die drei Regolith-Hebel der Pfade — sie hingen an Punkten, die seit dem 2026-07-20 offen standen, und ohne sie existiere kein funktionierender Hebel. Mit dem hergeleiteten Zahlensatz (§13.7) und der Instanz-Entscheidung (§4c) gilt das nicht mehr.
 
-| Pfad | Hebel laut §4b | Bestehender offener Punkt |
-|---|---|---|
-| A — Analytik | `geology` → Regolith-Produktionsbonus | „Kenntnisse-Sekundäreffekt-Matrix ausfüllen — **keine Ressourcen-/AP-Boni**" |
-| B — Hangar | Frachter auf `mission_supply_run` | „Hangar-Missionsnutzbarkeit — Bot/Spieler kommt praktisch nie zum Freighter-Kauf" |
-| C — Cantina | Credits→Regolith-Ankauf | „Bar/Cantina ‚Not enough resources.' — kein nutzbarer reiner Credits-Einkommenstyp" |
+Zwei Befunde haben die Lage verändert:
 
-Solange diese drei offen sind, existiert **kein** funktionierender Pfad-Hebel. Der Harvester-Umbau (`max_level = 1`, §13.5) darf deshalb nicht vorher kommen — er nimmt die einzige heute funktionierende Regolith-Skalierung weg.
+**Der Sockel trägt 75 % der Zielkolonie.** Damit entscheidet ein Pfad-Hebel über die **Größe** der Kolonie, nicht über ihr Überleben. Die Paritätsfrage bleibt wichtig, ist aber kein Release-Blocker mehr — sie gilt als Schwelle („überlebt eine Kolonie 25 Sole mit nur diesem Pfad?"), nicht als Gleichung.
 
-Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion) bleibt gültig; §4b macht sie explizit und ergänzt die Zahlen-Zielgröße (~6 Rg/Sol je Hebel).
+**Regolith-Wachstum läuft über Harvester-Instanzen** (§4c), also über eine Achse, die allen drei Pfaden offensteht. Das entspricht §3 („Regolith soll verfügbar sein") und macht Regolith zu einer schlechten Achse, auf der die Pfade sich unterscheiden sollten. Ob der `geology`-Produktionsbonus damit überflüssig wird, ist offen (Anhang A.4).
+
+Was stattdessen blockiert: **Der Zahlensatz ist ein zusammenhängendes System.** Sockel 20 ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare. Und vor jeder Umstellung auf Instanzen muss der Instanz-Decay-Verdacht geprüft sein, sonst bestraft sich die Umstellung selbst.
+
+Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion) bleibt unverändert gültig; §4b macht sie explizit.
+
+> **Einstieg am 2026-08-03:** Stufe 0 ist bis auf zwei Freigaben abgearbeitet. Der erste Implementierungsschritt ist **Stufe 1c** (Instanz-Decay-Verdacht verifizieren, `BotStrategy` reparieren) — beides muss vor Stufe 1 stehen, weil sonst gegen einen Bug balanciert und ohne Messgrundlage kalibriert wird. Danach Stufe 1 als **ein** PR.
 
 ### Stufe 0 — Klären (Owner, keine Implementierung)
 
@@ -129,6 +131,17 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [ ] Verdacht auf Instanz-Decay-Bug verifizieren (`GameTick::processBuildingDecay()` schreibt ohne Instanz-Unterscheidung)
 - [ ] Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz
 
+### Stufe 1d — Nächste Design-Runde: die Supply-Achse
+
+Kein Implementierungsschritt, sondern die nächste zusammenhängende Herleitung — nach demselben Verfahren wie §13.7: von der Designabsicht her, ohne die Bestandswerte als Randbedingung.
+
+Anlass: Die `supply_cost`-Werte sind gegen eine Wirtschaft kalibriert, in der Regolith knapper war. Wird Bauen leichter, wird Supply relativ zum bindenderen Limiter — was §6 entspricht, aber verlangt, die Zielkolonie gegen den erreichbaren Cap gegenzuprüfen. Diese vier Fragen gehören zusammen, weil sie gemeinsam bestimmen, wie tief eine Kolonie wachsen kann:
+
+- [ ] `supply_cost` je Gebäude und die Cap-Quellen (CC-Level, Wohnhabitat, Kenntnisse) neu herleiten
+- [ ] **Level-Deckel für Cantina und Krankenstation** — beide heute `NULL` (unbegrenzt), im Widerspruch zum „kleine Kolonie"-Prinzip
+- [ ] **Instanz-Deckel für den Agrardom** — mit der Umstellung auf Instanzen (§4c) offen; hängt am Organika-Rennen und am Tile-Budget
+- [ ] Die übrigen `max_level = NULL`-Gebäude (Sciencelab, Temple, Hangar, Monument) mitentscheiden
+
 ### Stufe 2 — AP-Pool zusammenlegen (§13.1)
 
 Kernumbau. `ap_spend` existiert bereits auf `colony_buildings`, `colony_research` und `colony_ships` — die **Projekt-Investition über mehrere Sole funktioniert also schon**, sie ist nur typgebunden.
@@ -148,17 +161,7 @@ Kernumbau. `ap_spend` existiert bereits auf `colony_buildings`, `colony_research
 - [ ] Handlungs-AP nachziehen: `bar.ap_cost_accept` 1→2, `ap_cost_negotiate` 3→4
 - [ ] `decay.overcap_factor` 2.0 → 1.5
 
-### Stufe 4 — Regolith-Ökonomie umstellen (§13.5)
-
-**Nur gemeinsam ausliefern.** Einzeln bricht jeder Teil die Wirtschaft.
-
-- [ ] `harvester.max_level` 8 → 1
-- [ ] `geology`-Produktionsbonus aktiv (aus Stufe 1)
-- [ ] Cantina-Ankaufskanal aktiv (aus Stufe 1)
-- [ ] Frachter real erreichbar (aus Stufe 1)
-- [ ] Regolith-Bilanz gegen die Reparaturkurve gegenprüfen: 8 Rg/Sol Sockel gegen 5,3 / 8,7 / 11,9 / 20,6 Rg/Sol bei 4 / 6 / 8 / 13 Gebäudetypen
-
-### Stufe 5 — Kommandozentrale-Dashboard (§13.4)
+### Stufe 4 — Kommandozentrale-Dashboard (§13.4)
 
 Tragende Voraussetzung des Ratenmodells, kein Komfort — es ersetzt die bewusst weggelassene Bodengarantie.
 
@@ -166,7 +169,7 @@ Tragende Voraussetzung des Ratenmodells, kein Komfort — es ersetzt die bewusst
 - [ ] Restertrag bis Run-Ende je Projekt (trägt den Late-Game-Kipppunkt ohne Zahlenänderung)
 - [ ] Regolith-Bilanz, Over-Cap-Warnung, Konzessions-Prognose, Run-Aufgaben-Fortschritt
 
-### Stufe 6 — Instrumentierung, Playtest, Kalibrierung
+### Stufe 5 — Instrumentierung, Playtest, Kalibrierung
 
 Der Playtest-Bot (Phase 3n) ist die Messumgebung.
 
@@ -174,7 +177,7 @@ Der Playtest-Bot (Phase 3n) ist die Messumgebung.
 - [ ] Determinismus-Bug `ColonyTileService::randomizeOuterRingRows()` beheben — ohne reproduzierbare Läufe ist Kalibrierung wertlos
 - [ ] Bot-Läufe, dann §13.6-Zahlen gegen die Zielkorridore nachziehen
 
-### Stufe 7 — Nachzieharbeiten
+### Stufe 6 — Nachzieharbeiten
 
 Kein Blocker, aber Teil der Definition-of-Done.
 

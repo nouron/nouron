@@ -3212,9 +3212,13 @@ Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach eine
 
 | Thema | Stand | Ort |
 |---|---|---|
-| **Regolith-Parität der drei Pfade** — Analytik-Pfad hat aktuell **keine** Regolith-Quelle | **offen, blockierend** | §13.5 |
-| **Harvester `max_level = 1`** — Umsetzung nur gemeinsam mit den Regolith-Kanälen, einzeln bricht sie die Wirtschaft | **offen, blockierend** | §13.5, §4 |
-| Tatsächliche `ap_for_levelup`-Werte in der laufenden DB (Migration sagt 10/20/30, Onboarding-Doku rechnet mit 10) | **offen, blockierend** | Anhang B |
+| **`max_level` in `max_instances` + `max_level` aufteilen** — ohne die Trennung kann der Hangar seine beiden Achsen nicht haben | **offen, blockierend** | §4c |
+| **Instanz-Decay-Verdacht verifizieren** — `processBuildingDecay()` schreibt ohne Instanz-Unterscheidung. Bestraft sonst jede Umstellung auf Instanzen sofort | **offen, blockierend, vor der Umstellung** | §4c |
+| **Regolith-Zahlensatz freigeben** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) — in einem Zug auszuliefern, Teile einzeln brechen die Wirtschaft | Vorschlag liegt vor, Owner-Entscheidung offen | §13.7 |
+| **Harvester-Erschöpfungsrate** — die Grundproduktion in §13.7 unterstellt einen frischen Standort; mit Erschöpfung ist das ein Start-, kein Dauerwert | **offen, gehört in dieselbe Rechnung** | §4c, §13.7 |
+| Regolith-Parität der drei Pfade | **entschärft** — löst sich weitgehend auf, wenn Wachstum über Harvester-Instanzen läuft | §4b, §4c |
+| Harvester ohne Level-Up | entschieden; Umsetzung nur gemeinsam mit dem Zahlensatz | §13.5, §4c |
+| Tatsächliche `ap_for_levelup`-Werte in der laufenden DB | ✅ verifiziert 2026-08-02: überall 10, nur Monument 20 | Anhang B |
 | AP-Grundwert, Projektkosten, Bonus-Kurve | Vorschlag liegt vor, Owner-Entscheidung offen | §13.6 |
 | Erstes Gebäudelevel günstiger (Early-Game-Tempo) | vorläufig: `f(1) = 0.5` | §13.6 |
 | Bodengarantie je Domäne | vorläufig: keine | §13.1 |
@@ -3258,11 +3262,18 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 
 ### A.4 Offene Designfragen (kein Playtest nötig, Entscheidung steht aus)
 
+**Nächste zusammenhängende Design-Runde: die Supply-Achse.** Die `supply_cost`-Werte sind gegen eine Wirtschaft kalibriert, in der Regolith knapper war als nach §13.7. Wird Bauen leichter, wird Supply relativ zum bindenderen Limiter — was §6 entspricht, aber verlangt, die Zielkolonie gegen den erreichbaren Cap gegenzuprüfen. Zu dieser Runde gehören die drei folgenden Deckel-Fragen: sie bestimmen gemeinsam, wie tief eine Kolonie überhaupt wachsen kann.
+
 | Thema | Ort |
 |---|---|
+| **Supply-Achse unconstrained neu herleiten** — `supply_cost` je Gebäude, Cap-Quellen, Zielkolonie gegen erreichbaren Cap | §6, §13.7 |
+| **Level-Deckel für Cantina und Krankenstation** — beide heute `NULL` (unbegrenzt), was dem „kleine Kolonie"-Prinzip widerspricht | §4c, §1 |
+| **Instanz-Deckel für den Agrardom** — mit der Umstellung auf Instanzen offen; hängt am Organika-Rennen und am Tile-Budget | §4c, §3 |
+| **`max_level = NULL` bei sieben Gebäuden** (Sciencelab, Temple, Agrardom, Hangar, Krankenstation, Monument, Cantina) — die `f(L)`-Kostenkurve läuft dort ohne natürlichen Endpunkt weiter | §4c, §13.6 |
 | Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
 | Cantina: verlässlicher Credits→Regolith-Kanal (heute nur Verkaufsrichtung garantiert) | §13.5, §12 |
-| `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt | §13.5 |
+| **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg; offen, ob Pfad C überhaupt einen großen Regolith-Hebel braucht | §13.7, §4b |
+| `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt; **möglicherweise überflüssig**, wenn Regolith-Wachstum über Harvester-Instanzen läuft | §13.5, §4c |
 | Wird Pfad B (Hangar) durch den Regolith-Bedarf faktisch zur Pflicht? | §4b, §13.5 |
 | Pfad A (Analytik) hat keine eigene Credits-Quelle — Kostensenkung statt Einnahme? | §4b |
 | `agronomy`-Kenntnis: hat sie einen Organika-Effekt oder nur den Supply-Cap-Bonus? | §4b, §10 |
@@ -3288,6 +3299,8 @@ Ohne diese Messwerte ist keine der Zahlen aus §13.6 nach dem ersten Lauf begrü
 | 7 | **Supply-Auslastung** (`used/cap`) je Sol + Anzahl Sole über Cap | bleibt die Auslastung dauerhaft unter 70 %, ist Supply doch nicht bindend — dann wäre die Streichungsfrage aus §6 neu zu stellen |
 | 8 | **Sole mit 0 AP je Domäne** | > 60 % in einer Domäne → prüfen, ob ein Hint nötig ist (keine Bodengarantie, §13.1) |
 | 9 | **Regolith-Durchsatz je Pfad** (Frachter / `geology` / Cantina) | die drei Kanäle sollen im Playtest tatsächlich vergleichbar liefern (§13.5) |
+| 10 | **Harvester-Umzüge pro Run** und Sole ohne Produktion durch Transit | Zielbild §4c: mehrere Umzüge, aber Umziehen darf keine Daueraufgabe werden |
+| 11 | **Organika-Bilanz je Sol** (Produktion / Verpflegung / Missionsproviant / Events) und Anzahl Sole im Mangel | prüft, ob das Agrardom-Rennen aus §3 tatsächlich kippen kann |
 
 Metrik 7 ist der explizite Falsifikationstest für die Entscheidung, Supply zu behalten. Metrik 9 für die Pfad-Parität.
 

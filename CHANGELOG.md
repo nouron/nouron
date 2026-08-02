@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 6)
+
+Offene Punkte der Session in GDD-Anhang A und ROADMAP verankert, Phase 3o auf den Stand nach §13.7 und §4c gebracht.
+
+**Anhang A.1** neu sortiert: blockierend sind jetzt die Aufteilung von `max_level` in `max_instances` + `max_level` (ohne sie kann der Hangar seine beiden Achsen nicht haben), die Verifikation des Instanz-Decay-Verdachts (vor jeder Umstellung auf Instanzen, sonst bestraft sie sich selbst), die Freigabe des Regolith-Zahlensatzes und die Harvester-Erschöpfungsrate — letztere, weil die Grundproduktion in §13.7 einen frischen Standort unterstellt und mit Erschöpfung ein Start-, kein Dauerwert ist. Die Regolith-Parität ist von „blockierend" auf „entschärft" heruntergestuft.
+
+**Anhang A.4** um die nächste zusammenhängende Design-Runde ergänzt: die **Supply-Achse**, zusammen mit den drei Deckel-Fragen, die mit ihr entschieden werden müssen (Level-Deckel für Cantina und Krankenstation, Instanz-Deckel für den Agrardom, die übrigen `max_level = NULL`-Gebäude). Sie bestimmen gemeinsam, wie tief eine Kolonie wachsen kann. **Anhang A.5** um zwei Metriken erweitert (Harvester-Umzüge pro Run, Organika-Bilanz je Sol).
+
+**ROADMAP Phase 3o** aufgeräumt: Der Abschnitt „Der kritische Pfad ist nicht der AP-Umbau" war nach §13.7 überholt und ist ersetzt — der kritische Pfad ist jetzt die Auslieferungsreihenfolge, nicht die Pfad-Parität. Stufe 4 („Regolith-Ökonomie umstellen") ist in Stufe 1 aufgegangen und entfernt, die Folgestufen sind neu nummeriert, 1c und 1d in die richtige Reihenfolge gebracht. Neue Stufe 1d ist die Supply-Herleitung. Einstiegspunkt für den nächsten Arbeitstag steht oben im Abschnitt.
+
 ## 2026-08-02 (Fortsetzung 5)
 
 Neuer **§4c „Instanzen oder Level — die Wachstumsachse je Gebäude"**. Die Unterscheidung war nirgends als Designentscheidung begründet, weshalb die Zuordnung im Katalog uneinheitlich ist. Grundsatz (Owner): **im Zweifel Instanz** — Instanzen sind auf dem Hex-Grid sichtbar, erzeugen eine Platzierungsentscheidung und binden Wachstum an die 15 Koloniefelder; Level sind unsichtbar. Ein Level-Up muss sich rechtfertigen, eine Instanz nicht. Test dafür: „Ergibt zwei davon in Fiktion und Mechanik einen Sinn?"
