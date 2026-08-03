@@ -778,7 +778,45 @@ Der Harvester ist das einzige **bewegliche** Gebäude des Spiels (§4 „Harvest
 
 Damit entsteht die gewollte Schleife: fördern → Ertrag sinkt → Umzug lohnt → ein Sol Produktion und einige AP kosten → neues Tile. **Und Erkundung bekommt einen konkreten wirtschaftlichen Zweck**, weil man wissen muss, wo das nächste ergiebige Tile liegt, *bevor* der Umzug erzwungen ist.
 
-> **⚠️ Offen:** Erschöpfungsrate und Ertragskurve je Tile-Stufe. Zielbild: ein Tile trägt ~15–25 Sole, sodass es über einen Run zu mehreren Umzügen kommt, ohne dass Umziehen zur Daueraufgabe wird. Gehört in dieselbe Herleitung wie der Regolith-Zahlensatz (§13.7) — die Harvester-Grundproduktion dort setzt einen *frischen* Standort voraus.
+#### Erschöpfungskurve und Umzugstakt (freigegeben 2026-08-03)
+
+```
+Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+```
+
+Ein Tile beginnt beim vollen Frischwert und fällt bis zum Ausschöpfen auf die **Hälfte** — nie auf null, damit ein vergessener Harvester nicht schlagartig stillsteht. Bei erschöpftem Vorkommen: Produktion 0, der Umzug ist erzwungen.
+
+| Tile-Stufe | Frischwert | `resource_max` | Ø über den Zyklus | Standzeit |
+|---|---|---|---|---|
+| `regolith_rich` | **24** | **500** | 18 | ~28 Sole |
+| `regolith_normal` | **18** | **300** | 13,5 | ~22 Sole |
+| `regolith_poor` | **12** | **160** | 9 | ~18 Sole |
+
+`resource_max` sinkt gegenüber dem heutigen Stand (800 / 500 / 250) — sonst läge die Standzeit bei ~37 Solen und es käme kaum zu Umzügen.
+
+**Der Sockel aus §13.7 ist ein Durchschnitt, kein Frischwert.** Mit einem Transit-Sol ohne Produktion liefert ein Harvester im Zyklusmittel ~12,9 Rg/Sol. Über den Run:
+
+| Phase | Harvester | Ø Sockel |
+|---|---|---|
+| Sol 1–30 | 1 | 12,9 |
+| Sol 30–80 | 2 | 25,8 |
+| **Run-Mittel** | | **21,8** |
+
+Das trifft die ~20 Rg/Sol, gegen die der gesamte Kostensatz gerechnet ist.
+
+**Der eigentliche Regler ist die Umzugsgebühr, nicht die Kurve.** Bei 1 AP je Hex lohnt ein Umzug rechnerisch schon ab ~75 % Restertrag (Amortisation ~3 Sole), also **alle 5–7 Sole** — genau die Daueraufgabe, die nicht gewollt ist. Deshalb:
+
+> **Verlegekosten 1 → 2 AP je Hex.** Ein typischer Vier-Hex-Umzug kostet dann 8 AP plus die Erkundung des Ziels (2–3 AP im Ring 3), zusammen ~10 AP — fast ein halber Sol Kapazität, zzgl. einem Sol ohne Produktion. Der Umzug lohnt dann ab ~60 % Restertrag, was auf **einen Umzug alle 12–15 Sole** hinausläuft: **4–6 Umzüge pro Run bei zwei Harvestern.** Mehrfach, aber keine Routine.
+>
+> §4 „Harvester-Transit" nennt genau diesen Hebel bereits als den richtigen („Falls der Playtest zeigt, dass Harvester-Verlegungen zu oft ohne Nachdenken passieren, ist der bessere Hebel die AP-Rate, nicht die Sol-Downtime"). Die Erschöpfung macht ihn fällig.
+
+**Die zweite Instanz braucht ein Gate.** Ohne eines wäre sie ein Auto-Kauf: Sie kostet 5 AP und — wegen der Bootstrap-Ausnahme (§3, kein Regolith für den Harvester) — **null Regolith**, und verdoppelt das Einkommen. Das würde die Entscheidung „Harvester skaliert nicht passiv" durch die Hintertür umgehen.
+
+> **Die Bootstrap-Ausnahme gilt nur für die erste Instanz.** Instanz 1 bleibt regolithfrei — sie verhindert den Regolith-Catch-22. **Instanz 2: Gate CC Lv3** (fällt natürlich auf Sol ~25–30, passend zum „erst nach 20–30 Solen") **+ 100 Rg Errichtungskosten.** Sie ist eine Expansion und wird bezahlt wie jede andere.
+
+> **⚠️ Vertrauensgrad niedrig-mittel — als Erstes messen.** Die Standzeiten sind sauber gerechnet, aber die Umzugsfrequenz hängt davon ab, wie gut der Spieler die Karte kennt — und das hängt an der Erkundung, die ihrerseits AP kostet. Rückkopplung, die nicht sicher überschaubar ist. Messgrößen: Umzüge pro Run (Ziel 4–6) und Anteil der Sole, in denen ein Harvester unter 60 % Ertrag fördert (Ziel < 30 %).
+
+> **Regolith-Tiles sind kein Limiter.** `ColonyTileService` verteilt sie mit ~25 % `poor`, 20 % `normal`, 10 % `rich` über die Exploration Zone. Der Bremsklotz ist die Umzugsentscheidung, nicht die Verfügbarkeit von Standorten.
 
 > **Später, noch nicht durchdacht:** Zusätzliche **Expeditionskarten** neben der Koloniekarte wurden angedacht. Sie würden dem Erschöpfungs-Kreislauf mehr Raum geben, sind aber nicht ausgearbeitet und stehen nicht auf der Roadmap.
 
@@ -799,7 +837,9 @@ Beides ist intuitiv: Eine Halle fasst ein Schiff, eine größere Halle ein grö�
 
 `max_level` bedeutet heute **zweierlei**: bei instanzierten Gebäuden die maximale Instanzzahl (Config-Kommentar beim Wohnhabitat: „max 6 instances"), bei allen übrigen das maximale Level. Ein Gebäude kann deshalb aktuell **nicht beides** haben — was den Hangar-Widerspruch überhaupt erst erzeugt.
 
-**Aufzuteilen in `max_instances` und `max_level`.** Beide nullable; `NULL` heißt jeweils unbegrenzt. Betroffen: `buildings`-Tabelle, `config/buildings.php`, `data/sql/testdata.sqlite.sql`, `SyncConfig`, `ColonyController::placeBuilding`, Techtree-Gates.
+**Aufzuteilen in `max_instances` und `max_level`** (Owner-Entscheidung 2026-08-03). Beide nullable; `NULL` heißt jeweils unbegrenzt. Betroffen: `buildings`-Tabelle, `config/buildings.php`, `data/sql/testdata.sqlite.sql`, `SyncConfig`, `ColonyController::placeBuilding`, Techtree-Gates.
+
+> **Es ist ein Blocker, keine Aufräumarbeit.** Für den Harvester kollidieren zwei beschlossene Aussagen in einem Feld: „kein Level-Up" (§13.5) und „Deckel 2 Instanzen" (dieser Abschnitt). Solange `max_level` bei instanzierten Gebäuden die Instanzzahl bedeutet, lässt sich nur eine der beiden abbilden. Dasselbe gilt für den Hangar, der beide Achsen braucht. **Die Aufteilung muss vor der Umsetzung von §13.7 und §4c stehen** — sie ist Schema-Arbeit für `db-migration-agent`, keine Balance-Frage.
 
 > **⚠️ Vorher zu prüfen: der Instanz-Decay-Verdacht.** `GameTick::processBuildingDecay()` schreibt mit `['colony_id', 'building_id']` ohne Instanz-Unterscheidung. Verfallen instanzierte Gebäude dadurch superlinear, wird **jede** Umstellung auf Instanzen sofort bestraft — und dieser Abschnitt stellt zwei Gebäude um. Verifizieren, bevor umgestellt wird, nicht danach (ROADMAP Phase 3o, Stufe 1c).
 
@@ -1863,7 +1903,7 @@ Vorschlag: **Losgröße an die Zahlungsfähigkeit binden** (höchstens ~35 % des
 >
 > Damit ist die Guard-Rail aus der Owner-Entscheidung vom 2026-07-20 verletzt: *„Grundproduktion muss für sich allein knapp, aber machbar sein, bevor irgendein Pfad-Bonus draufkommt."* Bei 8 Rg/Sol ist sie nicht machbar — die Kolonie ist ab sechs Gebäudetypen allein durch Reparatur negativ, bevor ein einziges Level-Up bezahlt ist. Die Zeile „−0,7" in der Tabelle oben ist kein Spannungsbogen, sondern ein Fehler.
 >
-> **Der Sockel wurde deshalb neu hergeleitet, nicht nachjustiert** — Ergebnis in **§13.7**. Kurzfassung: Der maßgebliche Grund gegen 8 ist nicht die Deckungslücke, sondern die **Auflösung** (G7) — bei 8 Rg/Sol gibt es nur zwei unterscheidbare Baupreisklassen. Vorschlag ist ein Sockel von 20 bei gleichzeitig halbierten Reparaturkosten (1 statt 2 Rg/SP) und neu abgeleiteten `decay_rate`-Werten. Die Tabellen in diesem Abschnitt rechnen noch mit den alten Werten und gelten nur, solange §13.7 nicht übernommen ist.
+> **Der Sockel wurde deshalb neu hergeleitet, nicht nachjustiert** — Ergebnis in **§13.7**. Kurzfassung: Der maßgebliche Grund gegen 8 ist nicht die Deckungslücke, sondern die **Auflösung** (G7) — bei 8 Rg/Sol gibt es nur zwei unterscheidbare Baupreisklassen. Freigegeben ist ein Harvester-Frischwert von 18 auf `regolith_normal` (Run-Mittel ~21,8 mit zwei Instanzen, §4c) bei gleichzeitig halbierten Reparaturkosten (1 statt 2 Rg/SP) und neu abgeleiteten `decay_rate`-Werten. **Die Tabellen in diesem Abschnitt rechnen noch mit den alten Werten** und sind nur als Herleitung des Befunds zu lesen, nicht als geltende Zahlen.
 
 > **Nachrüstoption, falls das späte Spiel im Playtest schlaff wirkt:** Reparaturkosten mit dem Level skalieren — `AP je SP = 1 + floor((level−1)/3)`. Die Instandhaltung skaliert dann mit der **Tiefe** und koppelt sich elegant an den Supply-Cap (§6); bei der Zielkolonie ergäbe das ~11 statt 7,3 AP/Sol, also rund 50 % des Pools. Das ist der saubere Hebel. Die Alternative `decay_rate × level` ist thematisch schwächer (warum verfällt ein größeres Gebäude schneller?) und verdoppelt zusätzlich den Regolith-Abfluss.
 
@@ -1873,9 +1913,35 @@ Vorschlag: **Losgröße an die Zahlungsfähigkeit binden** (höchstens ~35 % des
 
 > **Überholt durch §13.7 (2026-08-02).** Diese Fassung ist gegen die bestehenden Config-Werte gerechnet und behandelt sie als Randbedingung — genau der Fehler, den „Zum Umgang mit den Zahlen" beschreibt. Sie bleibt stehen, weil der Vergleich mit §13.7 zeigt, was der Methodenwechsel bewirkt: Die AP-Struktur (Grundwert, Berater-Beitrag, `f(L)`-Kurve, Bonus-Kurve) hat sich bestätigt, die Regolith-Zahlen und die Hebel-Zielgröße nicht — letztere lag um Faktor 2 daneben.
 >
-> **Weiterhin gültig aus diesem Abschnitt:** Ziel-Endzustand, AP-Grundwert 10, Berater-Beitrag 2/3/4, `f(L)`-Kostenkurve mit `f(1) = 0.5`, Bonus-Kurve, Handlungs-AP. **Ersetzt:** alles Regolith-Bezogene und die Budgetprobe.
+> **Weiterhin gültig aus diesem Abschnitt:** Ziel-Endzustand, Berater-Beitrag 2/3/4, `f(L)`-Kostenkurve mit `f(1) = 0.5`, Bonus-Kurve, Handlungs-AP. **Ersetzt:** alles Regolith-Bezogene und die Budgetprobe. **Geändert:** der AP-Grundwert — siehe Freigabe unten.
 
-> **Status:** Erarbeitet gegen Code und Configs, nicht gegen die GDD-Richtwerte. **Noch keine Owner-Entscheidung.** Vor der Übernahme in `config/game.php` sind die in Anhang B gelisteten Drifts zu klären — insbesondere die tatsächlichen `ap_for_levelup`-Werte in der laufenden Datenbank.
+> ## ✅ Freigegeben (Owner, 2026-08-03) — mit einer Änderung
+>
+> Die AP-Struktur ist beschlossen, **aber `ap.base` steigt von 10 auf 12.**
+>
+> **Grund:** §4c („im Zweifel Instanz") verschiebt Wachstum von der Tiefen- auf die Breiten-Achse — und Instandhaltung hängt an der Breite, eine `decay_rate`-Zeile je Instanz. Die Zielkolonie geht damit von 10 auf **16 verfallende Zeilen**. Beide Zahlensätze waren vor §4c entstanden und mussten nachgerechnet werden:
+>
+> | | mit `base = 10` | mit `base = 12` |
+> |---|---|---|
+> | Pfad A — Analytik | 112 % ✗ | **88 %** ✓ |
+> | Pfad B — Hangar | **123 %** ✗ | **93 %** ✓ |
+> | Pfad C — Cantina | 99 % | **78 %** ✓ |
+>
+> Bei `base = 10` könnte ein Hangar-Spieler die Zielkolonie nicht erreichen — und das nicht durch besseres Spiel ausgleichen, weil die Enge aus laufenden Kosten stammt. Pfad B bleibt auch mit 12 der knappste Pfad; das ist beabsichtigt, er kauft sich die Enge mit Flexibilität.
+>
+> Die früher erwogene defensive Option `base = 8` ist damit ausgeschlossen — sie war gegen den kleineren Instandhaltungsbedarf vor §4c gerechnet.
+
+**Die drei tragenden Zahlen dieses Abschnitts:** `ap.base` (12), `f(1) = 0.5`, `advisor.ap_per_rank` [2, 3, 4]. Alles Übrige — `base_ap`-Klassen, Steigung von `f(L)`, `project_min_cost_factor`, Handlungs-AP — ist Feintuning und aus dem Playtest-Report korrigierbar.
+
+**Wenn sich die Zahlen als falsch erweisen — welche Stellschraube gilt:**
+
+| Beobachtung im Playtest | Stellschraube | **nicht** |
+|---|---|---|
+| Ungenutzte AP > 15 % über mehrere Sole | `ap.base` senken | Projektkosten erhöhen — das trifft die Sol-1–4-Rampe mit |
+| Zielkolonie wird nie erreicht, AP immer leer | erst prüfen, ob die Boni wirklich Ø 20 % erreichen; dann `ap.base` | `decay_rate` senken — die ist gegen die Regolith-Seite mitkalibriert |
+| Ab Sol 85 wird noch gebaut (Kipppunkt fehlt) | Steigung von `f(L)` auf +0,5 | Boni kappen — die sind der Fortschrittsanreiz, kein Balancing-Ventil |
+| Pfad B fühlt sich strukturell enger an als A und C | Frachter-Verschleiß senken (laufende AP) | `ap.base` erhöhen — das verwässert alle drei Pfade |
+| Early Game zäh trotz `f(1) = 0.5` | `f(1)` auf 0,4 | Startkolonie vorbauen — nimmt den Agrardom-Lernmoment (§16.5) |
 
 #### Ziel-Endzustand (guter Run, Sol ~75–80)
 
@@ -2310,7 +2376,29 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 ---
 ### 13.7 Regolith-Zahlensatz, hergeleitet (Stand 2026-08-02 — Vorschlag)
 
-> **Status:** Von der Designabsicht her hergeleitet statt aus den Bestandswerten fortgeschrieben. **Noch keine Owner-Freigabe** außer den ausdrücklich markierten Punkten. Ersetzt die Regolith-Anteile von §13.6.
+> ## ✅ Freigegeben (Owner, 2026-08-03) — mit zwei Korrekturen
+>
+> Der Satz ist beschlossen. Zwei Punkte der ersten Fassung sind zurückgenommen, beide als Folge von §4c:
+>
+> 1. **`decay_rate` um ein Fünftel gesenkt** auf 0,40 / 0,60 / 0,80 / 1,20 — Begründung bei der Klassentabelle unten.
+> 2. **Die Instanz-Preisregel ist zurückgezogen.** Die erste Fassung ließ die zweite und jede weitere Instanz den Level-Up-Preis zahlen; das war eine Reaktion auf den Hangar-Bootstrap-Zirkel unter dem alten, kleinen Sockel. Unter §4c sind Instanzen eine bewusste Designachse und echte Bauwerke — sie zahlen den **vollen Errichtungspreis**, linear. Der Zirkel löst sich von selbst: 120 Rg für den zweiten Hangar sind bei ~20 Rg/Sol netto sechs Sole, kein Blocker mehr.
+>
+> **Die vier tragenden Zahlen:** Harvester-Frischwert (18 auf `regolith_normal`), Reparatur 1 Rg je SP, die vier `decay_rate`-Klassen, Errichtung 70/95/120 gegen Level-Up flach 25. Alles Übrige — CC-Ausbau ×30, `bar.base_prices`, `compound_import_price`, `mission_supply_run`, `geology`-Kurve, Kenntniskosten, Startbestand — ist Feintuning.
+>
+> Eine Ausnahme mit Struktur-Charakter: Die **Preisrelation** aus der Knappheitsordnung (§3) ist tragend, auch wenn die konkreten Werte Feintuning sind. Steht der Überschuss teurer als der Mangel, funktioniert der Cantina-Hebel nicht.
+>
+> **Wenn sich die Zahlen als falsch erweisen — welche Stellschraube gilt:**
+>
+> | Beobachtung im Playtest | Stellschraube | **nicht** |
+> |---|---|---|
+> | Regolith staut sich an (Bestand steigt monoton) | Baukosten anheben | Sockel senken — trifft die Instandhaltung mit und riskiert die Verfallsspirale |
+> | Regolith klemmt bei 0, Reparatur konkurriert dauernd mit Bauen | Sockel anheben | Reparaturkosten senken — sonst verschwindet der Verfall als Mechanik |
+> | Verfall wirkt wie Dekoration, folgenlos ignorierbar | `decay_rate` anheben (bewegt beide Währungen zugleich) | Reparaturkosten anheben — das entkoppelt Regolith und AP wieder |
+> | Instandhaltung fühlt sich spät schlaff an | levelskalierte Reparatur (`1 + floor((level−1)/3)` AP je SP) | `decay_rate` global anheben — trifft das Early Game am härtesten |
+> | Ein Pfad hängt sichtbar zurück | den betreffenden **Hebel** anheben | Sockel oder Baukosten — die sind pfadneutral |
+> | Mehr als 4 Sole pro Run an Regolith blockiert (G5) | Startbestand, dann Errichtungspreise | die Hebel — sie greifen zu spät für die frühe Klemme |
+
+Von der Designabsicht her hergeleitet statt aus den Bestandswerten fortgeschrieben. Ersetzt die Regolith-Anteile von §13.6.
 
 #### Das Spielgefühl — zuerst, ohne Zahlen
 
@@ -2334,13 +2422,13 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 
 | Wert | heute | Vorschlag | folgt aus |
 |---|---|---|---|
-| `production_curve[27][3]` | `[8,10,12,12,10,8,6,4]` | **`[1 => 20]`**, einziger Wert | G7, `max_level = 1` |
+| Harvester-Ertrag | `[8,10,12,12,10,8,6,4]` kumuliert | **Frischwert 24 / 18 / 12** je Tile-Stufe, fallend mit der Erschöpfung (§4c) | G7, `max_level = 1` |
 | `repair.regolith_per_click` | 2 | **1** | G2 + Vereinfachung, s. u. |
-| `decay_rate` | 0,33–2,0 (geerbt) | **4 Klassen: 0,5 / 0,8 / 1,0 / 1,5** | G2, G3 |
+| `decay_rate` | 0,33–2,0 (geerbt) | **4 Klassen: 0,40 / 0,60 / 0,80 / 1,20** | G2, G3, korrigiert nach §4c |
 | Errichtung (Lv0→1) | 40–100 | **70 / 95 / 120** | G4 (5–8 Sole) |
 | Level-Up | 25 % der Errichtung | **flach 25** | G4 (1–2 Sole) |
 | CC-Ausbau | Ziel-Level × 20 | **× 30** | zentraler Progressionshebel |
-| Instanz 2 und folgende | voller `build_cost` | **Level-Up-Preis (25)** | Datenmodell; löst den Hangar-Bootstrap-Zirkel |
+| Instanz 2 und folgende | voller `build_cost` | **unverändert voller `build_cost`** | §4c: Instanzen sind eine bewusste Designachse, keine Level |
 | Startbestand | 200 | **200** (zufällig gleich) | Rampenprobe |
 | `mission_supply_run.sol_distance` | 2 | **1** | Hebel-Zielgröße, kürzerer Entscheidungstakt |
 | `geology`-Effekt | keiner | **+3/3/2/2/2 → kumuliert max 12** | 60 % des Sockels |
@@ -2360,10 +2448,12 @@ Das Dashboard (13.4) braucht dann keine zwei Zeilen und 13.5 keine zwei Tabellen
 
 | Klasse | Sole bis Level-Down | Rate | Gebäude |
 |---|---|---|---|
-| Robust | 40 | **0,50** | Kommandozentrale, Wohnhabitat, Kolonialdenkmal |
-| Standard | 25 | **0,80** | Agrardom, Uplink-Station, Hangar, Handelsposten, Sicherheits-Hub |
-| Beansprucht | 20 | **1,00** | Harvester, Analytik-Labor, Cantina, Krankenstation |
-| Fragil | 13 | **1,50** | Religiöse Stätte |
+| Robust | 50 | **0,40** | Kommandozentrale, Wohnhabitat, Kolonialdenkmal |
+| Standard | 33 | **0,60** | Agrardom, Uplink-Station, Hangar, Handelsposten, Sicherheits-Hub |
+| Beansprucht | 25 | **0,80** | Harvester, Analytik-Labor, Cantina, Krankenstation |
+| Fragil | 17 | **1,20** | Religiöse Stätte |
+
+> **Um ein Fünftel gesenkt gegenüber der ersten Fassung (2026-08-03).** Grund ist §4c: Mit Agrardom und Harvester als Instanzen hat die Zielkolonie **16 statt 10** verfallende Zeilen. Bei den ursprünglichen Raten (0,50/0,80/1,00/1,50) läge die Instandhaltung bei Σ 13,6 = **62 % des AP-Pools** — die Einfrier-Zone, die §13.5 ausdrücklich ablehnt. Mit den korrigierten Raten: Σ 9,0 = **41 % des Pools, 35 % des Regolith-Zuflusses**. Ein vernachlässigtes Gebäude verliert weiterhin innerhalb eines Runs ein Level (17–50 Sole), der Verfall bleibt als Systemprinzip spürbar.
 
 Bei den drei robusten ist ein Level-Down überproportional teuer (Supply-Cap bricht weg, Instanz verschwindet) — er muss langsam kommen, sonst verletzt er G3. Die Religiöse Stätte ist bewusst der teuerste Unterhalt im Spiel: Sie zahlt in Vertrauen, nicht in Funktion; wer sie hält, entscheidet sich aktiv dafür.
 
@@ -2415,7 +2505,7 @@ Der Vorschlag enthielt ursprünglich eine Preisänderung `bar.base_prices` auf R
 
 | | heute | Vorschlag |
 |---|---|---|
-| Regolith | 30 | **25** — wird mit Sockel 20 reichlicher, der Preis folgt |
+| Regolith | 30 | **25** — wird mit dem neuen Sockel reichlicher, der Preis folgt |
 | Organika | 50 | **50** (unverändert) |
 | Werkstoffe | 60 | **110** — „anfangs sehr begrenzt", der Abstand muss die Knappheit zeigen |
 | `compound_import_price` | 90 | **165** — hält das Verhältnis ~1,5 : 1 zum Spotpreis (§3) |
@@ -2437,7 +2527,7 @@ Der Vorschlag enthielt ursprünglich eine Preisänderung `bar.base_prices` auf R
 
 #### Auslieferung: alles in einem Zug
 
-Der Satz ist ein zusammenhängendes System. **Sockel 20 ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare.** Alles oben gehört in einen PR — zusammen mit `harvester.max_level` 8 → 1 in `config/buildings.php` (sonst setzt der nächste `game:sync-config`-Lauf die Owner-Entscheidung still zurück, Anhang B).
+Der Satz ist ein zusammenhängendes System. **Der neue Sockel ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare.** Alles oben gehört in einen PR — zusammen mit `harvester.max_level` in `config/buildings.php` (sonst setzt der nächste `game:sync-config`-Lauf die Owner-Entscheidung still zurück, Anhang B) und der Erschöpfungskurve aus §4c, die den Sockel erst zu einem Durchschnittswert macht.
 
 #### Wo dieser Satz unsicher ist
 
@@ -3212,14 +3302,14 @@ Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach eine
 
 | Thema | Stand | Ort |
 |---|---|---|
-| **`max_level` in `max_instances` + `max_level` aufteilen** — ohne die Trennung kann der Hangar seine beiden Achsen nicht haben | **offen, blockierend** | §4c |
+| **`max_level` in `max_instances` + `max_level` aufteilen** — für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen | **entschieden, Umsetzung offen — blockiert §13.7 und §4c** | §4c |
 | **Instanz-Decay-Verdacht verifizieren** — `processBuildingDecay()` schreibt ohne Instanz-Unterscheidung. Bestraft sonst jede Umstellung auf Instanzen sofort | **offen, blockierend, vor der Umstellung** | §4c |
-| **Regolith-Zahlensatz freigeben** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) — in einem Zug auszuliefern, Teile einzeln brechen die Wirtschaft | Vorschlag liegt vor, Owner-Entscheidung offen | §13.7 |
-| **Harvester-Erschöpfungsrate** — die Grundproduktion in §13.7 unterstellt einen frischen Standort; mit Erschöpfung ist das ein Start-, kein Dauerwert | **offen, gehört in dieselbe Rechnung** | §4c, §13.7 |
+| **Regolith-Zahlensatz** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) | ✅ freigegeben 2026-08-03, mit zwei Korrekturen — in einem Zug auszuliefern | §13.7 |
+| **Harvester-Erschöpfungsrate** | ✅ freigegeben 2026-08-03 (Kurve, `resource_max` 500/300/160, 2 AP/Hex, Instanz 2 an CC Lv3 + 100 Rg) — **Vertrauensgrad niedrig-mittel, als Erstes messen** | §4c |
 | Regolith-Parität der drei Pfade | **entschärft** — löst sich weitgehend auf, wenn Wachstum über Harvester-Instanzen läuft | §4b, §4c |
 | Harvester ohne Level-Up | entschieden; Umsetzung nur gemeinsam mit dem Zahlensatz | §13.5, §4c |
 | Tatsächliche `ap_for_levelup`-Werte in der laufenden DB | ✅ verifiziert 2026-08-02: überall 10, nur Monument 20 | Anhang B |
-| AP-Grundwert, Projektkosten, Bonus-Kurve | Vorschlag liegt vor, Owner-Entscheidung offen | §13.6 |
+| AP-Grundwert, Projektkosten, Bonus-Kurve | ✅ freigegeben 2026-08-03 mit `ap.base = 12` statt 10 | §13.6 |
 | Erstes Gebäudelevel günstiger (Early-Game-Tempo) | vorläufig: `f(1) = 0.5` | §13.6 |
 | Bodengarantie je Domäne | vorläufig: keine | §13.1 |
 | Braucht Versorgung noch eine eigene Rolle? | vorläufig: ja, bleibt unverändert | §6 |
@@ -3356,6 +3446,10 @@ Damit ist die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) korrekt und
 | Ein gemeinsamer AP-Pool | §13.1 |
 | Vier Beratertypen (Stratege zurückgestellt) | §13 |
 | Werkstoffe bleiben als Ressource | §3 |
+| Knappheitsordnung Regolith < Organika < Werkstoffe | §3 |
+| AP-Struktur inkl. `ap.base = 12` (freigegeben 2026-08-03) | §13.6 |
+| Regolith-Zahlensatz inkl. `decay_rate` 0,40/0,60/0,80/1,20 (freigegeben 2026-08-03) | §13.7 |
+| `max_instances` als eigenes Feld neben `max_level` | §4c |
 
 Alles andere ist verhandelbar. Insbesondere gilt das für den Zahlenvorschlag in §13.6 — er ist gegen die heutigen Werte gerechnet und teilt damit deren Unsicherheit.
 
