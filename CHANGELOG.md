@@ -1,5 +1,61 @@
 # Changelog
 
+## 2026-08-02 (Fortsetzung 6)
+
+Offene Punkte der Session in GDD-Anhang A und ROADMAP verankert, Phase 3o auf den Stand nach §13.7 und §4c gebracht.
+
+**Anhang A.1** neu sortiert: blockierend sind jetzt die Aufteilung von `max_level` in `max_instances` + `max_level` (ohne sie kann der Hangar seine beiden Achsen nicht haben), die Verifikation des Instanz-Decay-Verdachts (vor jeder Umstellung auf Instanzen, sonst bestraft sie sich selbst), die Freigabe des Regolith-Zahlensatzes und die Harvester-Erschöpfungsrate — letztere, weil die Grundproduktion in §13.7 einen frischen Standort unterstellt und mit Erschöpfung ein Start-, kein Dauerwert ist. Die Regolith-Parität ist von „blockierend" auf „entschärft" heruntergestuft.
+
+**Anhang A.4** um die nächste zusammenhängende Design-Runde ergänzt: die **Supply-Achse**, zusammen mit den drei Deckel-Fragen, die mit ihr entschieden werden müssen (Level-Deckel für Cantina und Krankenstation, Instanz-Deckel für den Agrardom, die übrigen `max_level = NULL`-Gebäude). Sie bestimmen gemeinsam, wie tief eine Kolonie wachsen kann. **Anhang A.5** um zwei Metriken erweitert (Harvester-Umzüge pro Run, Organika-Bilanz je Sol).
+
+**ROADMAP Phase 3o** aufgeräumt: Der Abschnitt „Der kritische Pfad ist nicht der AP-Umbau" war nach §13.7 überholt und ist ersetzt — der kritische Pfad ist jetzt die Auslieferungsreihenfolge, nicht die Pfad-Parität. Stufe 4 („Regolith-Ökonomie umstellen") ist in Stufe 1 aufgegangen und entfernt, die Folgestufen sind neu nummeriert, 1c und 1d in die richtige Reihenfolge gebracht. Neue Stufe 1d ist die Supply-Herleitung. Einstiegspunkt für den nächsten Arbeitstag steht oben im Abschnitt.
+
+## 2026-08-02 (Fortsetzung 5)
+
+Neuer **§4c „Instanzen oder Level — die Wachstumsachse je Gebäude"**. Die Unterscheidung war nirgends als Designentscheidung begründet, weshalb die Zuordnung im Katalog uneinheitlich ist. Grundsatz (Owner): **im Zweifel Instanz** — Instanzen sind auf dem Hex-Grid sichtbar, erzeugen eine Platzierungsentscheidung und binden Wachstum an die 15 Koloniefelder; Level sind unsichtbar. Ein Level-Up muss sich rechtfertigen, eine Instanz nicht. Test dafür: „Ergibt zwei davon in Fiktion und Mechanik einen Sinn?"
+
+Zuordnung geändert: **Agrardom** von Level auf Instanz, **Harvester** auf höchstens zwei Instanzen (die ersten ~20–30 Sole muss einer reichen), **Religiöse Stätte** und **Kolonialdenkmal** auf je eine Instanz ohne Level. Unverändert bei Level bleiben Kommandozentrale (Progressionsgates), Uplink-Station, Sicherheits-Hub, Handelsposten, Cantina, Krankenstation sowie das **Analytik-Labor** — dessen Level sind die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3), ohne sie bricht die Staffelung weg.
+
+**Harvester-Erschöpfung als neue Mechanik.** Der Harvester ist das einzige bewegliche Gebäude und soll pro Run mehrfach umgesetzt werden — dafür sinkt der Ertrag eines Regolith-Tiles über die Zeit. Die Grundlagen sind bereits angelegt: `colony_tiles.resource_max` ist im Schema als „Basis für Erschöpfungs-Counter" beschrieben, die drei Ergiebigkeitsstufen existieren, ebenso die Verlege-Vorschau mit Ertragsvergleich. Nebeneffekt: Erkundung bekommt einen konkreten wirtschaftlichen Zweck.
+
+**Hangar-Widerspruch aufgelöst.** Der Techtree gatet Schiffe über Hangar-Level (Drohne Lv1, Frachter Lv2, Korvette Lv3), die Config macht ihn instanziert — wo `max_level` die Instanzzahl bedeutet, hieße „Hangar Lv2" schlicht „zwei Hangars". Der Hangar bekommt beide Achsen mit getrennter Bedeutung: Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse. Voraussetzung ist, `max_level` in `max_instances` und `max_level` aufzuteilen — das Feld bedeutet heute zweierlei, weshalb kein Gebäude beides haben kann.
+
+## 2026-08-02 (Fortsetzung 4)
+
+**Knappheitsordnung als Owner-Entscheidung in §3 festgeschrieben:** Regolith (Standard-Baustoff, soll verfügbar sein) < Organika (seltener, kann bei Missmanagement knapp werden) < Werkstoffe (anfangs sehr begrenzt, bleibt am knappsten). Daraus folgt zwingend die Preisreihenfolge und, für die Produktionsseite, dass Regolith reichlicher zufließt als Organika verbraucht wird.
+
+Neuer **§13.7 — Regolith-Zahlensatz, hergeleitet.** Erste Fassung, die nicht aus den Bestandswerten fortgeschrieben, sondern aus sieben Spielgefühl-Aussagen abgeleitet ist. Kernpunkte: Sockel 20 Rg/Sol (Begründung ist die **Auflösung** — bei 8 gibt es nur zwei unterscheidbare Baupreisklassen, bei 20 vier bis fünf), Reparatur 1 statt 2 Rg/SP (damit gilt `Instandhaltung in Rg = in AP = Σ decay_rate`, eine Zahl für beide Währungen), `decay_rate` in vier aus „Sole bis Level-Down" abgeleiteten Klassen, Errichtung 70/95/120 gegen Level-Up flach 25 — **Breite kostet Regolith, Tiefe kostet AP**, womit die beiden Währungen aufhören redundant zu sein. Zweite und weitere Instanzen zahlen den Level-Up-Preis, was den Hangar-Bootstrap-Zirkel auflöst. Hebel-Zielgröße auf 12 Rg/Sol bei voller Reife korrigiert (die alte „~6" war der Run-Mittelwert, angewandt als Reife-Wert).
+
+§13.6 als überholt markiert statt gelöscht — der Vergleich zeigt, was der Methodenwechsel bewirkt: Die AP-Struktur hat sich bestätigt, die Regolith-Zahlen nicht.
+
+Zwei Vorschläge des Zahlensatzes durch die Knappheitsordnung zurückgewiesen: Die vorgeschlagene Preisvertauschung (Regolith teurer als Organika) hätte die Ordnung verletzt — die heutigen Preise haben die richtige Reihenfolge, nur der Abstand zu den Werkstoffen ist zu klein. Und der Organika→Regolith-Tausch als Pfad-C-Hebel fällt weg, weil er voraussetzte, dass Organika der Überschuss ist.
+
+Agrardom-Kurve differenzierter bewertet: Die Mechanik stimmt (Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum). Zu prüfen ist nur das obere Ende — ab Lv4 ist das Rennen entschieden.
+
+ROADMAP Phase 3o umgestellt: Stufe 1 heißt jetzt „Zahlensatz in einem Zug ausliefern". Mit einem Sockel, der 75 % der Zielkolonie trägt, entscheidet der Pfad-Hebel über die Größe der Kolonie statt über ihr Überleben — Pfad B löst sich weitgehend auf, Pfad C wandert aus dem Regolith-Ticket, die Post-Phase-1-Ökonomie ist entkoppelt. Blockierend ist stattdessen die Auslieferungsreihenfolge.
+
+## 2026-08-02 (Fortsetzung 3)
+
+Neuer GDD-Abschnitt **„Zum Umgang mit den Zahlen in diesem Dokument"** (Owner-Vorgabe): Die meisten Werte in Config, DB und GDD sind Platzhalter und dürfen bei Balance-Arbeit nicht als Randbedingung behandelt werden. Ein bestehender Wert ist kein Argument — geht eine Rechnung nicht auf, ist zuerst zu prüfen, ob die zugrundeliegenden Werte stimmen, statt einen Ausgleich zu konstruieren. Geschützt sind nur ausdrücklich als Owner-Entscheidung markierte Werte (aktuell sechs, mit Fundstelle gelistet). Gilt explizit auch für Subagenten.
+
+`ap_for_levelup` gegen die laufende DB verifiziert: **überall 10**, nur Monument 20 — die Migration `2026_04_17_000003` (10/20/30) ist nicht aktiv. Damit ist der Anhang-B-Blocker geschlossen und die Onboarding-Budgetrechnung bestätigt, der Wert bleibt aber ein Default ohne Herleitung.
+
+Dabei zwei Funde: **`harvester.max_level` ist in DB und Testfixture bereits 1, in `config/buildings.php` aber 8** — `game:sync-config` schreibt die Config in die DB und würde den Harvester still zurücksetzen. Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos, weil bei `max_level = 1` nur der erste Kurveneintrag greift (8 Rg/Sol, dauerhaft). Sieben Gebäude haben `max_level = NULL` (unbegrenzt), für die läuft die `f(L)`-Kostenkurve ohne Endpunkt weiter.
+
+Zwei ROADMAP-Punkte neu diagnostiziert, beide waren falsch beschrieben: **Hangar** — „Spieler kommt nie zum Frachter" ist ein Messartefakt, `BotStrategy` kauft hartkodiert eine Drohne und heuert den Raumfahrer nie an; die echten Ursachen sind der volle `build_cost` für die zweite Hangar-Instanz (Bootstrap-Zirkel: mit Regolith bezahlt, das der Frachter beschaffen soll), das Missionsverhältnis 3:1 zugunsten der Drohne und ein Verdacht auf superlinearen Instanz-Decay. **Cantina** — die Kaufrichtung existiert und ist der Regelfall, die Verkaufsrichtung existiert gar nicht; das „Not enough resources." kommt von Losgrößen mit ~1.400 Cr Erwartungswert gegen +5 Cr/Sol Einkommen.
+
+Frachter-Ertrag korrigiert: 6,25 Rg/Sol sind brutto, nach Verschleiß-Reparatur bleiben **4,25 netto**. Der Regolith-Sockel von 8 Rg/Sol ist als zu niedrig belegt (Bedarf der Zielkolonie ≈ 1.454 Rg über 80 Sole gegen 840 verfügbar, Spitze 15–18 Rg/Sol in den Solen 21–60) — der Zahlensatz wird komplett neu hergeleitet statt nachjustiert.
+
+## 2026-08-02 (Fortsetzung 2)
+
+Umsetzungsplan für das AP-Ratenmodell als **Phase 3o** in die ROADMAP aufgenommen (acht Stufen von Owner-Klärung über den AP-Pool-Umbau bis Playtest-Kalibrierung und Nachzieharbeiten).
+
+Zentraler Befund beim Planen: **Der kritische Pfad ist nicht der AP-Umbau, sondern die Pfad-Parität.** Alle drei Regolith-Hebel aus GDD §4b hängen an Punkten, die seit dem 2026-07-20 unter „Brainstorming: Kenntnisse/Hangar/Cantina-Pfad-Parität" offen stehen — fehlende Kenntnis-Sekundäreffekte (Pfad A), unerreichbarer Frachter (Pfad B), fehlender Credits-Einkommenstyp in der Cantina (Pfad C). Diese vier Punkte sind damit von „offen" zu „blockierend" geworden, weil der Harvester-Umbau (`max_level = 1`) die einzige heute funktionierende Regolith-Skalierung wegnimmt. Die betreffende ROADMAP-Sektion ist entsprechend markiert und mit §4b verknüpft.
+
+Ebenfalls beim Planen aufgefallen: Die Projekt-Investition über mehrere Sole **existiert bereits** — `ap_spend` liegt auf `colony_buildings`, `colony_research` und `colony_ships`. Das Ratenmodell braucht sie nicht neu zu bauen, sondern nur vom AP-Typ zu entkoppeln und um die Kostenkurve plus das Bonus-System zu ergänzen.
+
+Zwei veraltete ROADMAP-Angaben korrigiert: Stand-Datum und der Status von PR #220 (als „In Review — noch nicht gemergt" geführt, tatsächlich am 2026-07-20 mit `adc2c13` gemergt).
+
 ## 2026-08-02 (Fortsetzung)
 
 Design-Runde zum Ratenmodell, erarbeitet gegen Code und Configs statt gegen die GDD-Richtwerte. Alles als **Arbeitsstand** markiert — nichts ist implementiert, nichts festgeschrieben.
