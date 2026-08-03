@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
  *
  * Synced fields:
  *   ships     → moving_speed, decay_rate, supply_cost, max_status_points
- *   buildings → decay_rate, supply_cost, max_status_points, max_level
+ *   buildings → decay_rate, supply_cost, max_status_points, max_level, max_instances
  *   knowledge → decay_rate, max_status_points
  *
  * Only rows that actually differ are updated (safe to run repeatedly).
@@ -127,9 +127,12 @@ class SyncConfig extends Command
                 'decay_rate' => (float) ($cfg['decay_rate'] ?? $row->decay_rate),
                 'supply_cost' => (int) ($cfg['supply_cost'] ?? $row->supply_cost),
                 'max_status_points' => (int) ($cfg['max_status_points'] ?? $row->max_status_points),
-                'max_level' => isset($cfg['max_level'])
-                                           ? (int) $cfg['max_level']
+                'max_level' => array_key_exists('max_level', $cfg)
+                                           ? ($cfg['max_level'] === null ? null : (int) $cfg['max_level'])
                                            : $row->max_level,
+                'max_instances' => array_key_exists('max_instances', $cfg)
+                                           ? ($cfg['max_instances'] === null ? null : (int) $cfg['max_instances'])
+                                           : $row->max_instances,
             ] as $col => $newVal) {
                 // Loose comparison to handle null vs. empty string
                 if ($newVal != $row->$col || (is_null($newVal) !== is_null($row->$col))) {

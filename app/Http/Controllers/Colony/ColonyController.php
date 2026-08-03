@@ -237,7 +237,7 @@ class ColonyController extends BaseController
             ->exists();
 
         $buildings = DB::table('buildings')
-            ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level',
+            ->select('id', 'name', 'ap_for_levelup', 'max_status_points', 'max_level', 'max_instances',
                 'required_building_id', 'required_building_level', 'is_instanced', 'supply_cost')
             ->get()
             ->filter(function ($b) use ($ccLevel, $placedCounts, $agrardomPlaced) {
@@ -249,7 +249,7 @@ class ColonyController extends BaseController
                 }  // Harvester — regolith placement only
                 $count = $placedCounts[$b->id] ?? 0;
                 if ($b->is_instanced) {
-                    if ($count >= ($b->max_level ?? PHP_INT_MAX)) {
+                    if ($count >= ($b->max_instances ?? PHP_INT_MAX)) {
                         return false;
                     }
                 } else {
@@ -964,6 +964,7 @@ class ColonyController extends BaseController
                 'colony_buildings.pending_until_tick',
                 'buildings.name as building_key',
                 'buildings.max_level',
+                'buildings.max_instances',
                 'buildings.ap_for_levelup',
                 'buildings.max_status_points',
             )

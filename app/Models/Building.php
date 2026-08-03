@@ -12,6 +12,6 @@ class Building extends Model
 
     protected $fillable = [
         'id', 'purpose', 'name', 'required_building_id', 'required_building_level',
-        'prime_colony_only', 'row', 'column', 'max_level', 'ap_for_levelup', 'max_status_points',
+        'prime_colony_only', 'row', 'column', 'max_level', 'max_instances', 'ap_for_levelup', 'max_status_points',
     ];
 }

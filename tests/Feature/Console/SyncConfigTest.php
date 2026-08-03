@@ -128,6 +128,54 @@ class SyncConfigTest extends TestCase
         $this->assertSame(9, (int) DB::table('buildings')->where('id', 28)->value('max_level'));
     }
 
+    public function test_building_max_instances_syncs_to_configured_value(): void
+    {
+        // harvester (id=27) has max_instances=2 in config.
+        DB::table('buildings')->where('id', 27)->update(['max_instances' => 9]);
+
+        $this->artisan('game:sync-config')
+            ->expectsOutputToContain('[building]')
+            ->assertExitCode(0);
+
+        $this->assertSame(2, (int) DB::table('buildings')->where('id', 27)->value('max_instances'));
+    }
+
+    public function test_building_max_level_and_max_instances_sync_together_for_harvester(): void
+    {
+        DB::table('buildings')->where('id', 27)->update(['max_level' => 9, 'max_instances' => 9]);
+
+        $this->artisan('game:sync-config')->assertExitCode(0);
+
+        $row = DB::table('buildings')->where('id', 27)->first();
+        $this->assertSame(1, (int) $row->max_level);
+        $this->assertSame(2, (int) $row->max_instances);
+    }
+
+    /**
+     * A config value explicitly set to null must reach the DB as NULL, not 0 —
+     * (int) null casts to 0, which would silently make the building unbuildable
+     * (max_level=0) or forbid any instance at all (max_instances=0).
+     */
+    public function test_building_max_level_null_in_config_writes_null_not_zero(): void
+    {
+        config(['buildings.hangar.max_level' => null]);
+        DB::table('buildings')->where('id', 44)->update(['max_level' => 3]);
+
+        $this->artisan('game:sync-config')->assertExitCode(0);
+
+        $this->assertNull(DB::table('buildings')->where('id', 44)->value('max_level'));
+    }
+
+    public function test_building_max_instances_null_in_config_writes_null_not_zero(): void
+    {
+        config(['buildings.hangar.max_instances' => null]);
+        DB::table('buildings')->where('id', 44)->update(['max_instances' => 3]);
+
+        $this->artisan('game:sync-config')->assertExitCode(0);
+
+        $this->assertNull(DB::table('buildings')->where('id', 44)->value('max_instances'));
+    }
+
     public function test_syncs_building_costs_from_config(): void
     {
         DB::table('building_costs')->where('building_id', 25)->whereIn('resource_id', [3, 4])->delete();

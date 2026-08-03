@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property int $instance_id
+ */
 class ColonyBuilding extends Model
 {
     protected $table = 'colony_buildings';
@@ -12,5 +15,5 @@ class ColonyBuilding extends Model
 
     public $timestamps = false;
 
-    protected $fillable = ['colony_id', 'building_id', 'level', 'status_points', 'ap_spend'];
+    protected $fillable = ['colony_id', 'building_id', 'instance_id', 'level', 'status_points', 'ap_spend'];
 }
