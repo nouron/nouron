@@ -529,7 +529,11 @@ class GameTick extends Command
             $rate = (float) ($decayRates[$cb->building_id] ?? $fallbackRate);
             $overCapMult = in_array($cb->colony_id, $overCapColonies) ? $overcapFactor : 1.0;
             $newStatus = (float) $cb->status_points - ($rate * $overCapMult);
-            $where = ['colony_id' => $cb->colony_id, 'building_id' => $cb->building_id];
+            $where = [
+                'colony_id' => $cb->colony_id,
+                'building_id' => $cb->building_id,
+                'instance_id' => $cb->instance_id,
+            ];
 
             if ($newStatus <= 0) {
                 $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);

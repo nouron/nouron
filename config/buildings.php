@@ -18,6 +18,11 @@
  *   decay_rate       — status_points lost per tick (also stored in DB, used by GameTick decay)
  *   max_status_points — status_points reset value after level-down (also stored in DB)
  *   max_level        — hard level cap (null = uncapped, practically limited by supply)
+ *   max_instances    — hard instance cap for instanced buildings (null = uncapped,
+ *                      practically limited by supply). Separate axis from max_level
+ *                      (Owner-Entscheidung 2026-08-03, GDD §4c) — needed because a
+ *                      building can be capped on level, instance count, or both
+ *                      (hangar: instances = ship slots, level = ship class).
  *
  * Decay reference: decay_rate = max_status_points / target_days
  *   7 d → 2.86 | 10 d → 2.0 | 14 d → 1.43 | 21 d → 0.95
@@ -56,7 +61,19 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0.44,    // 45 days
         'max_status_points' => 20,
-        'max_level' => 6,       // max 6 instances (instanced building)
+        // max_level is a real per-instance level cap (not vestigial): each
+        // housingComplex instance levels independently and ResourcesService::
+        // getSupplyBreakdown() sums per-instance `level` for the supply
+        // contribution, so max_level=6 genuinely caps how much supply a single
+        // instance can contribute. max_instances=6 is the separate instance-count
+        // cap that ColonyController::buildableBuildings() was — before this split —
+        // reading out of the same max_level field by coincidence (both happened to
+        // be 6). Kept identical on purpose (2026-08-03, GDD §4c): decoupling the
+        // fields must not silently change current behaviour. Rewiring
+        // buildableBuildings() to read max_instances instead of max_level is
+        // separate controller work, not done here.
+        'max_level' => 6,
+        'max_instances' => 6,
     ],
 
     // ── Industry ──────────────────────────────────────────────────────────────
@@ -68,11 +85,12 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0.95,    // 21 days
         'max_status_points' => 20,
-        // Hard cap (2026-07-20, GDD §3/§18 balance ticket): bell-curve production
-        // (game.production_curve) needs a finite end, not an infinite fade-out —
-        // otherwise flat per-level costs never stop being "technically levelable but
-        // pointless". Growth beyond Lv8 comes only from Kenntnisse/Missionen/Handel.
-        'max_level' => 8,
+        // Harvester ohne Level-Up (Owner-Entscheidung, GDD §13.5/§4c, 2026-08-03):
+        // max_level bleibt 1, Wachstum läuft über max_instances (Deckel 2), nicht
+        // mehr über production_curve[27]-Level 2-8 — die Kurve bleibt als Daten
+        // stehen (inert), siehe Handoff docs/handoff-ap-ratenmodell.md §2/§4.1.
+        'max_level' => 1,
+        'max_instances' => 2,
     ],
 
     // bioFacility (Agrardom) — mandatory prerequisite for the CC Lv1→Lv2
@@ -143,7 +161,12 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0.67,    // 30 days
         'max_status_points' => 20,
-        'max_level' => null,    // repeatable, supply-limited
+        'max_level' => null,    // repeatable, supply-limited (per-instance ship-class level, uncapped)
+        // No prior max_level value to carry over (was already NULL) and nothing
+        // currently enforces an instance-count cap for the hangar — left NULL
+        // (uncapped) on purpose (2026-08-03, GDD §4c). Revisit once ship-slot
+        // balancing needs an explicit cap.
+        'max_instances' => null,
     ],
 
     // ── Civil welfare ─────────────────────────────────────────────────────────

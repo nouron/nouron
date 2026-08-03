@@ -14,6 +14,8 @@ Zwei Korrekturen lösen das: **`ap.base` 10 → 12** (danach A 88 % / B 93 % / C
 
 Handoff-Dokument `docs/handoff-ap-ratenmodell.md` für die Übergabe der AP-Ratenmodell-Umsetzung an einen anderen Agenten. Es enthält den Kontext, der nicht aus dem Code hervorgeht: die vier Richtungsentscheidungen, die Platzhalter-Regel als wichtigste Arbeitsanweisung, eine Landkarte der GDD-Abschnitte, fünf konkrete Fallen (Sync-Hazard beim Harvester, überladenes `max_level`, Verdacht auf superlinearen Instanz-Decay, Bot-Messartefakt beim Frachter, vertauschte Cantina-Diagnose), was bereits existiert und nicht neu gebaut werden muss, den Stufenplan mit Einstiegspunkt und die beiden beim Owner liegenden Freigaben.
 
+**Stufe 1c umgesetzt** (PR #234): `max_instances` als eigenes Feld getrennt von `max_level` (Harvester: `max_level=1`, `max_instances=2`), `SyncConfig` synct das Feld inkl. korrektem NULL-Handling, Instanz-Zähl-Check in `ColonyController` liest jetzt `max_instances`. Bestätigter Bug in `GameTick::processBuildingDecay()` gefixt — `instance_id` fehlte im Update-Filter, Decay traf alle Instanzen eines Gebäudes statt nur der iterierten Zeile. Playtest-`BotStrategy` repariert (Pilot fehlte in `HIRE_ORDER`, Schiffskauf war auf eine Drohne gedeckelt) — Bot-Lauf zeigt jetzt einen echten Balance-Befund (Credits verhungern vor dem Hangar-Fenster) statt Messartefakt. Offen: Harvester-Zweitinstanz ist in `placeBuilding` noch hardcoded auf Einzel-Instanz, gehört zu Stufe 1/§4c.
+
 ## 2026-08-02 (Fortsetzung 6)
 
 Offene Punkte der Session in GDD-Anhang A und ROADMAP verankert, Phase 3o auf den Stand nach §13.7 und §4c gebracht.

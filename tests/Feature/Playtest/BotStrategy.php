@@ -18,11 +18,11 @@ class BotStrategy
 {
     private const RES_REGOLITH = 3;
 
-    // Engineer -> Scientist -> Trader: matches the sciencelab/bar path
-    // buildings a fresh colony can reach first (hangar/pilot needs its own
-    // building placed first too, but engineer+scientist+trader alone
-    // satisfy Phase 1's "3 advisors" condition).
-    private const HIRE_ORDER = [35, 36, 92];
+    // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
+    // path buildings a fresh colony can reach first. Pilot (id 89, gated on
+    // Hangar being placed) sits between Scientist and Trader so the bot picks
+    // up whichever path building is placed first without starving either hire.
+    private const HIRE_ORDER = [35, 36, 89, 92];
 
     /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
@@ -129,16 +129,37 @@ class BotStrategy
             ],
             [
                 'name' => 'request_ship',
-                // Capped at one ship: request_ship has no mission-driven demand signal,
-                // and unbounded drone-buying (300cr each, repeatable every time a new
-                // hangar instance opens a slot) starves hire_advisor's Trader hire
-                // (350cr, needed for Phase 1's third advisor) of credits permanently.
+                // Bootstrap ship (drone, cheapest, matches mission_recon_flight — the
+                // only ship type mission_recon_flight accepts, config('missions')) is
+                // capped at one and requires a free hangar slot, so it always docks
+                // and can actually fly recon. request_ship has no mission-driven
+                // demand signal, and unbounded drone-buying (300cr each) would
+                // starve hire_advisor's remaining hires of credits permanently, so
+                // this stays gated until all 3 Phase-1 advisors are active.
+                //
+                // Once all 3 are active, shipToRequest() also allows buying further
+                // ships (preferring the freighter, 500cr) WITHOUT requiring a free
+                // hangar slot: HangarService::requestShip supports ship_state =
+                // 'pending' when no slot is free (it decays after
+                // pending_decay_ticks unless a hangar is later built to receive
+                // it) — that's a real, intentional game mechanic, not a bot
+                // workaround. Since the bot's placeCandidate() logic rarely builds
+                // a second Hangar instance, requiring a free slot here would make
+                // it structurally impossible to ever exercise Path B (trade) via a
+                // freighter; see docs/handoff-ap-ratenmodell.md §4/§7.
+                //
+                // NOTE (2026-08-03 measurement run, seed=4242): even with this rule
+                // reachable, no ship gets bought in that run — the Hangar isn't
+                // placed until Sol 44, by which point Credits have already been at
+                // 0 since Sol ~35 (advisor upkeep is net-negative against income,
+                // config('game.advisor') "3 advisors at rank 2 cost 150 Cr/Tick
+                // against ~30-70 Cr/Tick income"). That's a real Path-B finding
+                // about the credit economy, not a bug in this rule — see report.
                 'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1
-                    && ! self::hasAnyShip($b)
-                    && self::hasFreeHangarSlot($b)
-                    && self::credits($b) >= (int) config('ships.drone.nexus_cost', 0),
-                'do' => fn (BotSession $b) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
-                    'ship_id' => 85, // drone — cheapest, matches mission_recon_flight
+                    ? self::shipToRequest($b)
+                    : null,
+                'do' => fn (BotSession $b, int $shipId) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
+                    'ship_id' => $shipId,
                 ]),
             ],
         ];
@@ -208,6 +229,7 @@ class BotStrategy
             $cfg = collect(config('advisors'))->firstWhere('id', $personellId);
             $pathBuildingId = match ($personellId) {
                 36 => BuildingId::Sciencelab->value, // scientist -> sciencelab
+                89 => BuildingId::Hangar->value, // pilot -> hangar
                 92 => BuildingId::Bar->value, // trader -> bar
                 default => null,
             };
@@ -413,6 +435,41 @@ class BotStrategy
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::Hangar->value)
             ->value('level') ?? 0);
+    }
+
+    /**
+     * Which ship (if any) request_ship should buy next, or null if none is
+     * affordable/allowed right now. First ship is always the cheapest drone,
+     * bought only into a free hangar slot so it actually docks and can fly
+     * mission_recon_flight. Further purchases only open up once all 3
+     * Phase-1 advisors are hired, preferring the freighter (needed to ever
+     * exercise the trade/Path-B code path) over another drone — bought
+     * regardless of a free slot, since HangarService::requestShip supports
+     * a 'pending' ship_state when the hangar is full (real game mechanic,
+     * see request_ship rule comment above).
+     */
+    private static function shipToRequest(BotSession $b): ?int
+    {
+        $credits = self::credits($b);
+        $droneCost = (int) config('ships.drone.nexus_cost', 0);
+
+        if (! self::hasAnyShip($b)) {
+            return self::hasFreeHangarSlot($b) && $credits >= $droneCost
+                ? (int) config('ships.drone.id')
+                : null;
+        }
+
+        $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+        if ($activeAdvisors < 3) {
+            return null;
+        }
+
+        $freighterCost = (int) config('ships.freighter.nexus_cost', 0);
+        if ($credits >= $freighterCost) {
+            return (int) config('ships.freighter.id');
+        }
+
+        return $credits >= $droneCost ? (int) config('ships.drone.id') : null;
     }
 
     private static function hasAnyShip(BotSession $b): bool
