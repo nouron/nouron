@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-03
+
+Handoff-Dokument `docs/handoff-ap-ratenmodell.md` für die Übergabe der AP-Ratenmodell-Umsetzung an einen anderen Agenten. Es enthält den Kontext, der nicht aus dem Code hervorgeht: die vier Richtungsentscheidungen, die Platzhalter-Regel als wichtigste Arbeitsanweisung, eine Landkarte der GDD-Abschnitte, fünf konkrete Fallen (Sync-Hazard beim Harvester, überladenes `max_level`, Verdacht auf superlinearen Instanz-Decay, Bot-Messartefakt beim Frachter, vertauschte Cantina-Diagnose), was bereits existiert und nicht neu gebaut werden muss, den Stufenplan mit Einstiegspunkt und die beiden beim Owner liegenden Freigaben.
+
 ## 2026-08-02 (Fortsetzung 6)
 
 Offene Punkte der Session in GDD-Anhang A und ROADMAP verankert, Phase 3o auf den Stand nach §13.7 und §4c gebracht.
