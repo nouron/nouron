@@ -159,10 +159,16 @@ class GameTickDecayTest extends TestCase
      * SecurityHub recycles 10% of tradeable build costs back to the colony when any
      * building levels down.
      *
-     * harvester (building_id=27) build costs for tradeable resources (3,4,5):
-     *   resource 3 (regolith): 10 → 10% = 1
-     *   resource 4 (compounds): 10 → 10% = 1
+     * bioFacility (building_id=41) build costs for tradeable resources (3,4,5):
+     *   resource 3 (regolith): 40 → 10% = 4
      * SecurityHub must be present (level>0) in the colony.
+     *
+     * Uses bioFacility rather than Harvester (building_id=27) — the Harvester's
+     * only building_costs row is resource_id=2 (Supply, not tradeable), so it
+     * never had anything to recycle in the first place; the §4c depletion
+     * mechanic (2026-08-03) just stopped a coincidental Regolith-production
+     * side effect from masking that this test's Harvester-based assertion
+     * never actually exercised the recycle path.
      */
     public function test_security_hub_recycles_resources_on_building_level_down(): void
     {
@@ -172,10 +178,11 @@ class GameTickDecayTest extends TestCase
             ['level' => 1, 'status_points' => 20, 'ap_spend' => 0]
         );
 
-        // Drive harvester to level-down threshold
-        DB::table('colony_buildings')
-            ->where('colony_id', 1)->where('building_id', 27)
-            ->update(['level' => 2, 'status_points' => 0.1]);
+        // Drive bioFacility to level-down threshold
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => 1, 'building_id' => 41, 'instance_id' => 1],
+            ['level' => 2, 'status_points' => 0.1, 'ap_spend' => 0]
+        );
 
         // Record baseline colony resources
         $regolithBefore = (int) DB::table('colony_resources')
@@ -184,11 +191,11 @@ class GameTickDecayTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11004]);
 
         // Verify the building did level down
-        $row = $this->getBuildingRow(1, 27);
+        $row = $this->getBuildingRow(1, 41);
         $this->assertEquals(1, $row->level, 'Building must have leveled down for recycling to trigger');
 
         // Recycle amount = floor(base_amount × 0.10), min 1
-        // harvester costs resource 3: 10 → floor(10 × 0.10) = 1
+        // bioFacility costs resource 3: 40 → floor(40 × 0.10) = 4
         $regolithAfter = (int) DB::table('colony_resources')
             ->where('colony_id', 1)->where('resource_id', 3)->value('amount');
 

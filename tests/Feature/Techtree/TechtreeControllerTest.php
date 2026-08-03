@@ -381,19 +381,27 @@ class TechtreeControllerTest extends TestCase
 
         // cartography (research id 91): requires Analytik-Labor Lv1 (building 31) +
         // Hangar Lv1 (building 44) — both already built for colony 1 in test data.
-        // levelup_costs[1] = 12 (config/knowledge.php).
+        // levelup_costs[1] = 20 (config/knowledge.php).
         DB::table('advisors')->where('colony_id', $this->colonyIdBart)->where('personell_id', 36)->delete();
         DB::table('advisors')->insert([
             'user_id' => $this->userIdBart,
-            'personell_id' => 36, // scientist (research AP), rank 3 = 12 AP/tick
+            'personell_id' => 36, // scientist (research AP), rank 3 = 12 AP/tick advisor bonus
             'colony_id' => $this->colonyIdBart,
             'rank' => 3,
             'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
 
+        // Available research AP (base 6 + rank-3 advisor 12 = 18, at neutral trust) is
+        // below the 20-AP threshold in a single request — pre-seed 19 already invested
+        // so the final AP (1) is what pushes it over, exactly what auto-levelup proves.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 19, 'status_points' => 20]
+        );
+
         $response = $this->actingAs(User::find($this->userIdBart))
-            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 12]);
+            ->postJson(route('techtree.order', ['type' => 'research', 'id' => 91]), ['order' => 'add', 'ap' => 1]);
 
         $response->assertOk();
         $response->assertJsonPath('success', true);
@@ -401,9 +409,9 @@ class TechtreeControllerTest extends TestCase
         $response->assertJsonPath('levelup_blocked_reason', null);
         $response->assertJsonPath('tech.level', 1);
         $response->assertJsonPath('tech.ap_spend', 0);
-        // Next level (1->2) costs 20 per config/knowledge.php — the bar must rescale,
-        // not stay capped at the Lv0->1 threshold (12).
-        $response->assertJsonPath('tech.ap_for_levelup', 20);
+        // Next level (1->2) costs 28 per config/knowledge.php — the bar must rescale,
+        // not stay capped at the Lv0->1 threshold (20).
+        $response->assertJsonPath('tech.ap_for_levelup', 28);
 
         $this->assertSame(1, DB::table('colony_researches')
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 91)->value('level'));

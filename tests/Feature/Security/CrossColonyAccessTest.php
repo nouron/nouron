@@ -66,11 +66,11 @@ class CrossColonyAccessTest extends TestCase
         $this->assertSame(3, $ccLevel, 'precondition: CC must be at level 3 for this test');
 
         // Manually set knowledge to level 3, ap_spend to full for level 3→4 transition.
-        // config/knowledge.php: levelup_costs[4] = 40 → ap_spend must reach 40.
+        // config/knowledge.php: levelup_costs[4] = 44 → ap_spend must reach 44.
         // Setting it to the full threshold means only the CC-gate is the blocking condition.
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
-            ['level' => 3, 'status_points' => 20, 'ap_spend' => 40]
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 44]
         );
 
         // Config: knowledge_cc_level_cap[4] = 4, but CC is 3 → must block
@@ -116,10 +116,10 @@ class CrossColonyAccessTest extends TestCase
             'active_ticks' => 0,
         ]);
 
-        // Set knowledge to level 3, ap_spend satisfied: levelup_costs[4] = 40
+        // Set knowledge to level 3, ap_spend satisfied: levelup_costs[4] = 44
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
-            ['level' => 3, 'status_points' => 20, 'ap_spend' => 40]
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 44]
         );
 
         $service = $this->app->make(ResearchService::class);
@@ -164,10 +164,10 @@ class CrossColonyAccessTest extends TestCase
             'active_ticks' => 0,
         ]);
 
-        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 50
+        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 52
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
-            ['level' => 4, 'status_points' => 20, 'ap_spend' => 50]
+            ['level' => 4, 'status_points' => 20, 'ap_spend' => 52]
         );
 
         $service = $this->app->make(ResearchService::class);
@@ -206,10 +206,10 @@ class CrossColonyAccessTest extends TestCase
             ->value('level');
         $this->assertSame(4, $ccLevel, 'precondition: CC must be at level 4 for this test');
 
-        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 50
+        // Set knowledge to level 4, ap_spend satisfied: levelup_costs[5] = 52
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => $colonyId, 'research_id' => $knowledgeId],
-            ['level' => 4, 'status_points' => 20, 'ap_spend' => 50]
+            ['level' => 4, 'status_points' => 20, 'ap_spend' => 52]
         );
 
         // Config: knowledge_cc_level_cap[5] = 5, but CC is 4 → must block

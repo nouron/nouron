@@ -23,12 +23,10 @@
 return [
 
     // levelup_costs: AP needed to reach that level (index = target level, 1–5).
-    // Cumulative: Lv0→1 = 12 AP, Lv0→5 = 152 AP total (raised from 101, playtest
-    // review 2026-07-14 — Lv1 at 5 AP completed inside a single Sol, which read
-    // as "too cheap"/instant; the whole point of Kenntnisse is a multi-Sol
-    // investment even at Lv1). Richtwert: Junior-Analytiker (10 AP/Sol, base 6 +
-    // Rang-1-Bonus 4) braucht ~2 Sole für Lv1, ~11-13 Sole für Lv5 inklusive der
-    // eigenen Rangaufstiege (Rang 2 bei 10 aktiven Ticks, Rang 3 bei 20).
+    // Raised 12/20/30/40/50 → 20/28/36/44/52 (GDD §13.7, 2026-08-03, Owner-Entscheidung):
+    // amortization ~7 Sole against the new AP-Ratenmodell sockel (ap.base=12). credits
+    // dropped 100 → 0 in the same change (§4b Pfad-A-Credits-Lücke — Analytiker path
+    // has no other Credits sink to justify a per-level fee).
     // ⚠️ Diese Kurve ist an game.ap.base / advisor.ap_per_rank gekoppelt — bei
     // Änderung dort gegen die AP/Sol-Rate neu prüfen, nicht isoliert betrachten.
 
@@ -37,8 +35,8 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'cartography' => [
@@ -46,8 +44,8 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'geology' => [
@@ -55,8 +53,8 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'agronomy' => [
@@ -64,8 +62,8 @@ return [
         'trust_per_lv' => 1,       // see GDD §13
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'health' => [
@@ -73,8 +71,8 @@ return [
         'trust_per_lv' => 2,       // see GDD §13
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'trade' => [
@@ -82,8 +80,8 @@ return [
         'trust_per_lv' => 0,
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
     'defense' => [
@@ -91,8 +89,8 @@ return [
         'trust_per_lv' => -1,      // see GDD §13 — vigilance dampens trust slightly
         'decay_rate' => 0,
         'max_status_points' => 20,
-        'credits' => 100,
-        'levelup_costs' => [1 => 12, 2 => 20, 3 => 30, 4 => 40, 5 => 50],
+        'credits' => 0,
+        'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
     ],
 
 ];

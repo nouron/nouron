@@ -114,6 +114,7 @@ function colonyHexView(config) {
         exploreCostDefault: config.exploreCostDefault ?? 1,
         tileYields: config.tileYields ?? {},
         repairDisplayThreshold: config.repairDisplayThreshold ?? 0.7,
+        relocateApPerHex: config.relocateApPerHex ?? 2,
         phaseProgress: config.phaseProgress ?? null,
         nexusImportAmount: 10,
         selectedTile: null,
@@ -177,6 +178,7 @@ function colonyHexView(config) {
                 harvesterBuilding: this.harvesterMoveMode ? this.harvesterBuilding() : null,
                 tileYields: this.tileYields,
                 repairDisplayThreshold: this.repairDisplayThreshold,
+                relocateApPerHex: this.relocateApPerHex,
                 panState: this._panState,
             });
         },
@@ -1011,7 +1013,7 @@ function initHexGrid(container, tiles, opts = {}) {
 
             const hexPath = hexLinePath(hv.tile_x, hv.tile_y, tile.q, tile.r);
             const pixelPath = hexPath.map(([q, r]) => axialToPixel(q, r));
-            const apCost = Math.max(1, hexPath.length - 1);
+            const apCost = Math.max(1, hexPath.length - 1) * (opts.relocateApPerHex ?? 2);
             const targetYield = yields[tile.tile_type] ?? 0;
             const label = `${apCost} AP · ${currentYield}→${targetYield} Rg`;
             const targetPos = pixelPath[pixelPath.length - 1];

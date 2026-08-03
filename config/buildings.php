@@ -11,8 +11,9 @@
  *                      (3 = Regolith, 4 = Werkstoffe/compounds). Absent = no resource cost
  *                      (CommandCenter + Harvester only — bootstrap exemption). Werkstoffe
  *                      appear only on late/high-tech buildings (accent, 10–25). Level-up
- *                      Regolith is derived as 25 % of build_cost[3] (min 10); CC scales
- *                      separately via cc_upgrade_regolith_per_level. Reparatur: 2 Rg/click.
+ *                      Regolith is a flat 25 for all non-CC/non-Harvester buildings,
+ *                      independent of build_cost (GDD §13.7, 2026-08-03); CC scales
+ *                      separately via cc_upgrade_regolith_per_level. Reparatur: 1 Rg/click.
  *                      Canonical source — synced into building_costs by game:sync-config.
  *   trust_per_lv     — trust change per building level (used by TrustService)
  *   decay_rate       — status_points lost per tick (also stored in DB, used by GameTick decay)
@@ -44,11 +45,15 @@ return [
         // 30 → 20 (playtest review 2026-07-14): with the new Sol-1-4 onboarding ramp
         // (Agrardom → path building → CC Lv2) the CC-Lv2 levelup was the single
         // biggest regolith drain, leaving ~7 Rg buffer on the hangar path by Sol 4.
-        'cc_upgrade_regolith_per_level' => 20,
+        // 20 → 30 (GDD §13.7, 2026-08-03): "zentraler Progressionshebel" — der Zahlensatz
+        // trägt CC-Ausbau jetzt als teuersten Einzelposten des Runs (Bilanz: 75% Sockel-
+        // Deckung der Zielkolonie), s. Handoff docs/handoff-ap-ratenmodell.md §7.
+        'cc_upgrade_regolith_per_level' => 30,
         'supply_cap' => 10,      // cap per level (CC Lv1 = 10, Lv5 = 50 — hard cap Lv5)
         'supply_cost' => 0,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.33,    // 60 days
+        // Klasse "Robust" (GDD §13.7 decay_rate-Klassentabelle, 2026-08-03): 50 Sole bis Level-Down.
+        'decay_rate' => 0.40,
         'max_status_points' => 20,
         'max_level' => 5,
     ],
@@ -59,7 +64,8 @@ return [
         'supply_cap' => 8,       // per unit (instance), max 6 units → +48 cap
         'supply_cost' => 0,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.44,    // 45 days
+        // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.
+        'decay_rate' => 0.40,
         'max_status_points' => 20,
         // max_level is a real per-instance level cap (not vestigial): each
         // housingComplex instance levels independently and ResourcesService::
@@ -83,7 +89,8 @@ return [
         // No build_cost: Harvester is the only Regolith source (bootstrap exemption).
         'supply_cost' => 2,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.95,    // 21 days
+        // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
+        'decay_rate' => 0.80,
         'max_status_points' => 20,
         // Harvester ohne Level-Up (Owner-Entscheidung, GDD §13.5/§4c, 2026-08-03):
         // max_level bleibt 1, Wachstum läuft über max_instances (Deckel 2), nicht
@@ -102,10 +109,13 @@ return [
     // levelup endpoint (ColonyService — NOT in this config), not here.
     'bioFacility' => [                  // ex silicatemine (ID 41) — now produces Organika
         'id' => 41,
-        'build_cost' => [3 => 40],   // Regolith only (early)
+        // 40 → 70 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): Agrardom ist der erste Kauf des
+        // Runs, die Rampenprobe rechnet ihn explizit mit 70 gegen Startbestand 200.
+        'build_cost' => [3 => 70],
         'supply_cost' => 2,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.95,
+        // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
+        'decay_rate' => 0.60,
         'max_status_points' => 20,
         // Hard cap (2026-07-20, GDD §3/§18 balance ticket) — see harvester comment above.
         'max_level' => 8,
@@ -124,10 +134,13 @@ return [
         // Werkstoffe aren't reachable this early (Uplink-Station Lv1 +
         // Cantina/merchant, both later). The previous [Rg+Wk] cost made the
         // Analytiker structurally useless for several Sols right after hiring.
-        'build_cost' => [3 => 80],
+        // 80 → 95 (GDD §13.7, 2026-08-03): Pfad-Parität mit Cantina — die Rampenprobe
+        // rechnet beide Nicht-Hangar-Pfadgebäude mit 95, nur der Hangar-Pfad kostet mehr (120).
+        'build_cost' => [3 => 95],
         'supply_cost' => 8,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.95,    // 21 days
+        // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
+        'decay_rate' => 0.80,
         'max_status_points' => 20,
         'max_level' => null,
     ],
@@ -151,21 +164,25 @@ return [
     //     design decision); the hangar shell itself is the cheapest-to-run path
     //     building, making it the "supply-friendly, Rg-heavy" option.
     //   Trade-off character: supply-light long-term, expensive to build (Rg 90).
-    //   Level-up Rg cost derives as 25% of build_cost[3] → ~22 Rg/level.
+    //   Level-up Rg cost is the flat rate (25), same as every other non-CC building.
     // Building it grants the matching generic advisor slot (Raumfahrer) — see
     // AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
-        'build_cost' => [3 => 80],    // Rg only (90 → 80, playtest review 2026-07-14: path parity — Cantina 70/Lab 80/Hangar 80)
+        // 80 → 120 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): the priciest of the three path
+        // buildings on purpose — "die teuerste Pfadwahl wird damit zur echten Entscheidung
+        // statt zur kosmetischen." Path parity via trade-off character, not equal cost.
+        'build_cost' => [3 => 120],
         'supply_cost' => 4,       // low: hangar is a shell; ships add no supply cost (2026-06-08)
         'trust_per_lv' => 0,
-        'decay_rate' => 0.67,    // 30 days
+        // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
+        'decay_rate' => 0.60,
         'max_status_points' => 20,
-        'max_level' => null,    // repeatable, supply-limited (per-instance ship-class level, uncapped)
-        // No prior max_level value to carry over (was already NULL) and nothing
-        // currently enforces an instance-count cap for the hangar — left NULL
-        // (uncapped) on purpose (2026-08-03, GDD §4c). Revisit once ship-slot
-        // balancing needs an explicit cap.
+        // max_level = 3 (GDD §4c "Hangar: der einzige Fall mit beiden Achsen", 2026-08-03):
+        // Level ist die Schiffsklasse (Lv1 Drohne, Lv2 Frachter, Lv3 Korvette) — der Techtree
+        // gatet Schiffe bereits so, das Feld holt nur nach. Instanzen bleiben die primäre
+        // Wachstumsachse (Schiffsplätze), unverändert unbegrenzt/supply-limitiert.
+        'max_level' => 3,
         'max_instances' => null,
     ],
 
@@ -176,7 +193,8 @@ return [
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 10,
         'trust_per_lv' => 3,
-        'decay_rate' => 0.67,    // 30 days — core infrastructure, same tier as hangar
+        // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
+        'decay_rate' => 0.80,
         'max_status_points' => 20,
         'max_level' => null,
     ],
@@ -196,13 +214,16 @@ return [
     //     the unambiguous cheapest option.
     //   Trade-off character: balanced cost with Trust bonus — the "always-valid"
     //   option for players who need Trust stability.
-    //   Level-up Rg cost derives as 25% of build_cost[3] → ~17 Rg/level.
+    //   Level-up Rg cost is the flat rate (25), same as every other non-CC building.
     'bar' => [
         'id' => 52,
-        'build_cost' => [3 => 70],   // Regolith only (raised from 50 — see rebalancing note above)
+        // 70 → 95 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): Pfad-Parität mit Sciencelab —
+        // s. Kommentar dort.
+        'build_cost' => [3 => 95],
         'supply_cost' => 6,          // raised from 4 — balanced by trust_per_lv bonus
         'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
-        'decay_rate' => 1.0,     // 20 days — sturdy enough, but needs occasional maintenance
+        // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
+        'decay_rate' => 0.80,
         'max_status_points' => 20,
         'max_level' => null,
     ],
@@ -212,9 +233,13 @@ return [
         'build_cost' => [3 => 60, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 2,
         'trust_per_lv' => 2,
-        'decay_rate' => 0.33,    // 60 days — monuments are built to last
+        // Klasse "Robust" (GDD §13.7, 2026-08-03): 50 Sole bis Level-Down.
+        'decay_rate' => 0.40,
         'max_status_points' => 20,
-        'max_level' => null,
+        // 1 Instanz, Lv1 (GDD §4c Zuordnungstabelle, 2026-08-03): "Ein Denkmal, fertig
+        // oder nicht" — weder Instanz- noch Level-Wachstum. is_instanced bleibt false
+        // (eine Kopie), max_level=1 kappt das bisher unbegrenzte Hochleveln.
+        'max_level' => 1,
     ],
 
     'temple' => [
@@ -222,9 +247,12 @@ return [
         'build_cost' => [3 => 50, 4 => 15],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 4,
         'trust_per_lv' => 2,
-        'decay_rate' => 2.0,     // 10 days — needs regular upkeep
+        // Klasse "Fragil" (GDD §13.7, 2026-08-03): 17 Sole bis Level-Down — bewusst der
+        // teuerste Unterhalt im Spiel, sie zahlt in Vertrauen statt Funktion.
+        'decay_rate' => 1.20,
         'max_status_points' => 20,
-        'max_level' => null,
+        // 1 Instanz, Lv1 (GDD §4c, 2026-08-03) — "ein Bekenntnis, kein Ausbauprojekt".
+        'max_level' => 1,
     ],
 
     // ── Phase 3g — implementiert (Mai 2026) ──────────────────────────────────
@@ -250,7 +278,8 @@ return [
         'build_cost' => [3 => 80, 4 => 25],   // Regolith + Werkstoffe (Compounds gate accepted — see GDD §4)
         'supply_cost' => 8,
         'trust_per_lv' => 1,                   // +1 trust per level (Lv3 max = +3)
-        'decay_rate' => 0.67,    // 30 days — provisional
+        // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
+        'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
@@ -270,7 +299,8 @@ return [
         'build_cost' => [3 => 80],
         'supply_cost' => 6,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.67,    // 30 days — provisional
+        // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
+        'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
     ],
@@ -284,7 +314,8 @@ return [
         'build_cost' => [3 => 100, 4 => 25],   // late: Regolith + Werkstoffe (accent)
         'supply_cost' => 6,
         'trust_per_lv' => 0,
-        'decay_rate' => 0.67,    // 30 days — provisional
+        // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
+        'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
         'merchant_price_bonus' => 0.12,    // +12% trade value when Reisender Händler present
