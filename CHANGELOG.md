@@ -2,6 +2,16 @@
 
 ## 2026-08-03
 
+**Beide ausstehenden Freigaben erteilt** — die AP-Struktur (§13.6) und der Regolith-Zahlensatz (§13.7) sind beschlossen, jeweils mit Korrekturen aus einer Konsistenzprüfung gegen §4c.
+
+Die Prüfung ergab, dass §4c („im Zweifel Instanz") **beide Zahlensätze gebrochen hatte**: Wachstum verschiebt sich von der Tiefen- auf die Breiten-Achse, und Instandhaltung hängt an der Breite — eine `decay_rate`-Zeile je Instanz. Die Zielkolonie geht damit von 10 auf 16 verfallende Zeilen. Folgen: Die Instandhaltung wäre bei 62 % des AP-Pools gelandet (Einfrier-Zone laut §13.5), und die Budgetauslastung bei 123 % für Pfad Hangar und 112 % für Analytik.
+
+Zwei Korrekturen lösen das: **`ap.base` 10 → 12** (danach A 88 % / B 93 % / C 78 %) und **`decay_rate` um ein Fünftel gesenkt** auf 0,40 / 0,60 / 0,80 / 1,20 (Σ 9,0 = 41 % des Pools). Zurückgezogen wurde die Instanz-Preisregel — unter §4c sind Instanzen eine bewusste Designachse und zahlen den vollen Errichtungspreis; der Hangar-Bootstrap-Zirkel löst sich mit dem größeren Sockel von selbst.
+
+**Harvester-Erschöpfung ausgearbeitet und freigegeben** (§4c). Der Ertrag fällt bis zum Ausschöpfen auf die Hälfte, `resource_max` sinkt auf 500/300/160, Frischwerte 24/18/12 je Tile-Stufe. Damit ist der Sockel aus §13.7 ein **Durchschnitt, kein Frischwert** — mit zwei Harvestern liegt das Run-Mittel bei 21,8 Rg/Sol. Der eigentliche Regler ist die Umzugsgebühr: **1 → 2 AP je Hex**, sonst lohnte ein Umzug alle 5–7 Sole statt alle 12–15. Die zweite Instanz bekommt ein Gate (CC Lv3 + 100 Rg), weil sie sonst wegen der Bootstrap-Ausnahme gratis wäre und das Einkommen verdoppeln würde.
+
+**`max_instances` als eigenes Feld beschlossen.** Für den Harvester kollidierten zwei beschlossene Aussagen in einem Feld — „kein Level-Up" und „Deckel 2 Instanzen". Blockiert die Umsetzung von §13.7 und §4c und steht deshalb in Stufe 1c.
+
 Handoff-Dokument `docs/handoff-ap-ratenmodell.md` für die Übergabe der AP-Ratenmodell-Umsetzung an einen anderen Agenten. Es enthält den Kontext, der nicht aus dem Code hervorgeht: die vier Richtungsentscheidungen, die Platzhalter-Regel als wichtigste Arbeitsanweisung, eine Landkarte der GDD-Abschnitte, fünf konkrete Fallen (Sync-Hazard beim Harvester, überladenes `max_level`, Verdacht auf superlinearen Instanz-Decay, Bot-Messartefakt beim Frachter, vertauschte Cantina-Diagnose), was bereits existiert und nicht neu gebaut werden muss, den Stufenplan mit Einstiegspunkt und die beiden beim Owner liegenden Freigaben.
 
 ## 2026-08-02 (Fortsetzung 6)

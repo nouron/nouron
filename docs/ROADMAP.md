@@ -1,6 +1,6 @@
 # Nouron — Roadmap
 
-Stand: 2026-08-02
+Stand: 2026-08-03
 
 Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Keine Rassen, keine Kolonisierung, ein Run hat ein konkretes Ziel + klares Ende.
 
@@ -69,9 +69,9 @@ Abgeschlossen — Schritt 2, PR #220, gemergt (2026-07-20): Harvester/Agrardom-G
 
 ---
 
-## Laufend — Phase 3o: AP-Ratenmodell (Umsetzungsplan, 2026-08-02)
+## Laufend — Phase 3o: AP-Ratenmodell (Umsetzungsplan, Stand 2026-08-03)
 
-Design steht im GDD (§3 Knappheitsordnung, §4b, §4c, §6, §13.1–13.7, Anhang A/B). PR #231 ist gemergt, die Ergänzungen danach liegen auf dem Branch. **Nichts davon ist implementiert.** Dieser Abschnitt ist der Umsetzungsplan.
+Design steht im GDD (§3 Knappheitsordnung, §4b, §4c, §6, §13.1–13.7, Anhang A/B) und ist seit dem 2026-08-03 **vollständig freigegeben**. PR #231 und #232 sind gemergt. **Nichts davon ist implementiert.** Dieser Abschnitt ist der Umsetzungsplan.
 
 TDD ist verbindlich (CLAUDE.md): für jede Stufe mit Verhalten zuerst ein fehlschlagender Test, der das gewünschte Verhalten beschreibt.
 
@@ -85,19 +85,20 @@ Zwei Befunde haben die Lage verändert:
 
 **Regolith-Wachstum läuft über Harvester-Instanzen** (§4c), also über eine Achse, die allen drei Pfaden offensteht. Das entspricht §3 („Regolith soll verfügbar sein") und macht Regolith zu einer schlechten Achse, auf der die Pfade sich unterscheiden sollten. Ob der `geology`-Produktionsbonus damit überflüssig wird, ist offen (Anhang A.4).
 
-Was stattdessen blockiert: **Der Zahlensatz ist ein zusammenhängendes System.** Sockel 20 ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare. Und vor jeder Umstellung auf Instanzen muss der Instanz-Decay-Verdacht geprüft sein, sonst bestraft sich die Umstellung selbst.
+Was stattdessen blockiert: **Der Zahlensatz ist ein zusammenhängendes System.** Der Sockel ohne die neuen Baukosten ergibt eine triviale Wirtschaft, die neuen Baukosten ohne den Sockel eine unspielbare. Dazu zwei technische Vorbedingungen: `max_instances` muss als eigenes Feld existieren, und der Instanz-Decay-Verdacht muss geprüft sein — sonst bestraft sich die Umstellung auf Instanzen selbst.
 
 Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion) bleibt unverändert gültig; §4b macht sie explizit.
 
-> **Einstieg am 2026-08-03:** Stufe 0 ist bis auf zwei Freigaben abgearbeitet. Der erste Implementierungsschritt ist **Stufe 1c** (Instanz-Decay-Verdacht verifizieren, `BotStrategy` reparieren) — beides muss vor Stufe 1 stehen, weil sonst gegen einen Bug balanciert und ohne Messgrundlage kalibriert wird. Danach Stufe 1 als **ein** PR.
+> **Einstieg:** Stufe 0 ist abgeschlossen, alle Freigaben sind erteilt (2026-08-03). Der erste Implementierungsschritt ist **Stufe 1c** — dazu gehört jetzt auch die Einführung von `max_instances` als eigenem Feld, ohne die weder §13.7 noch §4c umsetzbar sind. Erst danach Stufe 1 als **ein** PR.
 
 ### Stufe 0 — Klären (Owner, keine Implementierung)
 
 - [x] `ap_for_levelup` in der laufenden DB verifiziert (2026-08-02): **überall 10**, nur Monument 20. Die Migration `2026_04_17_000003` (10/20/30) ist nicht aktiv. Damit stimmt die Onboarding-Budgetrechnung — der Wert ist aber ein Default, kein Balancing, und bei der Herleitung frei wählbar.
-- [ ] **`harvester.max_level` angleichen, bevor jemand `game:sync-config` ausführt.** DB und Testfixture haben 1, `config/buildings.php` hat 8; der Sync würde die Config in die DB schreiben und den Harvester still zurücksetzen. Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos — bei `max_level = 1` greift nur `production_curve[27][3][1]`.
-- [ ] **AP-Struktur** freigeben (§13.6, weiterhin gültig): Grundwert 10, Berater 2/3/4, `f(1) = 0.5`, Boni additiv max. 42 %
-- [ ] **Regolith-Zahlensatz** freigeben (§13.7, hergeleitet): Sockel 20, Reparatur 1 Rg/SP, `decay_rate` in vier Klassen, Errichtung 70/95/120, Level-Up flach 25, Instanz 2+ zum Level-Up-Preis
-- [ ] `bar.base_prices` nach der Knappheitsordnung (§3) — Vorschlag Rg 25 / Or 50 / Wk 110, `compound_import_price` 165
+- [x] **AP-Struktur freigegeben** (2026-08-03, §13.6): **`ap.base = 12`** statt 10, Berater 2/3/4, `f(1) = 0.5`, Boni additiv max. 42 %. Die Erhöhung war nötig, weil §4c die Instandhaltung von 10 auf 16 verfallende Zeilen hebt — mit `base = 10` läge Pfad B bei 123 % Auslastung.
+- [x] **Regolith-Zahlensatz freigegeben** (2026-08-03, §13.7): Harvester-Frischwert 18, Reparatur 1 Rg/SP, `decay_rate` **0,40 / 0,60 / 0,80 / 1,20** (um ein Fünftel gesenkt), Errichtung 70/95/120, Level-Up flach 25. **Die Instanz-Preisregel ist zurückgezogen** — Instanzen zahlen den vollen Errichtungspreis.
+- [x] **Harvester-Erschöpfung freigegeben** (2026-08-03, §4c): Ertragskurve fällt auf 50 %, `resource_max` 500/300/160, Verlegekosten **2 AP/Hex**, zweite Instanz an CC Lv3 + 100 Rg. Vertrauensgrad niedrig-mittel — als Erstes messen.
+- [x] **`max_instances` als eigenes Feld** beschlossen (2026-08-03, §4c)
+- [ ] `bar.base_prices` nach der Knappheitsordnung (§3) — Feintuning, Vorschlag Rg 25 / Or 50 / Wk 110, `compound_import_price` 165
 - [x] Höhe des `geology`-Bonus: **+3/3/2/2/2, kumuliert max 12** (§13.7)
 - [x] Pfad A und Credits: `knowledge.credits` von 100 auf **0** statt eine vierte Einnahmequelle (§13.7)
 
@@ -110,7 +111,6 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [ ] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten, CC-Ausbau)
 - [ ] `harvester.max_level` 8 → 1 in `config/buildings.php` (sonst setzt der nächste Sync die Owner-Entscheidung zurück)
 - [ ] Instanz-Preisregel: zweite und jede weitere Instanz zahlt Level-Up-Preis statt `build_cost` (`ColonyController::placeBuilding`) — löst den Hangar-Bootstrap-Zirkel und korrigiert dieselbe Inkonsistenz beim Wohnhabitat
-- [ ] **`max_level` aufteilen in `max_instances` und `max_level`** (§4c). Das Feld bedeutet heute zweierlei — bei instanzierten Gebäuden die Instanzzahl, sonst das Level —, weshalb kein Gebäude beides haben kann. Betrifft `buildings`-Tabelle, `config/buildings.php`, `testdata.sqlite.sql`, `SyncConfig`, `placeBuilding`, Techtree-Gates.
 - [ ] **Wachstumsachsen umstellen** (§4c): Agrardom Level → Instanz; Harvester Instanz-Deckel 2; Religiöse Stätte und Kolonialdenkmal auf je 1 Instanz / Lv1; Hangar bekommt beide Achsen (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse, wie der Techtree es ohnehin gatet)
 - [ ] `geology`-Effekt als hartverdrahteter Hook (~8 Zeilen in `GameTick` + Config-Key in der Shape eines späteren Frameworks). **Regel: maximal zwei hartverdrahtete Kenntniseffekte, danach zwingend das Framework** — sonst entsteht es schleichend nie.
 - [ ] `bar.base_prices` + `compound_import_price` nach der Knappheitsordnung
@@ -125,8 +125,10 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [ ] **Harvester-Erschöpfung** (§4c): Ertrag eines Regolith-Tiles sinkt über die Zeit, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`, „Basis für Erschöpfungs-Counter"), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7), die von einem frischen Standort ausgeht.
 - [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7). Die Mechanik stimmt: Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum plus Missionsproviant und Events. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen aber entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen.
 
-### Stufe 1c — Messbarkeit herstellen (vor jeder Kalibrierung)
+### Stufe 1c — Schema und Messbarkeit (vor allem anderen)
 
+- [ ] **`max_level` aufteilen in `max_instances` und `max_level`** (§4c, Owner-Entscheidung). Für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen. Betrifft `buildings`-Tabelle, `config/buildings.php`, `testdata.sqlite.sql`, `SyncConfig`, `placeBuilding`, Techtree-Gates. **Blockiert §13.7 und §4c.**
+- [ ] `config/buildings.php`: `harvester.max_level` angleichen, bevor jemand `game:sync-config` ausführt
 - [ ] `BotStrategy` reparieren: Schiffstyp aus dem Missionskatalog ableiten statt hartkodieren, Schiffs-Deckel an freie Slots binden, Raumfahrer in `HIRE_ORDER`
 - [ ] Verdacht auf Instanz-Decay-Bug verifizieren (`GameTick::processBuildingDecay()` schreibt ohne Instanz-Unterscheidung)
 - [ ] Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz

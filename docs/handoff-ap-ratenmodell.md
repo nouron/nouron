@@ -1,6 +1,6 @@
 # Handoff — AP-Ratenmodell und Ressourcen-Zahlensatz
 
-**Stand:** 2026-08-03 · **Vorarbeit:** PR #231 und #232, beide gemergt · **Status:** Design steht, **nichts ist implementiert**
+**Stand:** 2026-08-03 · **Vorarbeit:** PR #231, #232, #233 · **Status:** Design steht und ist **freigegeben**, nichts ist implementiert
 
 Dieses Dokument ist die Übergabe an einen Agenten, der die Umsetzung beginnt. Es enthält den Kontext, der nicht aus dem Code hervorgeht — die Details stehen im GDD und in der ROADMAP, hier steht, was man wissen muss, um sie richtig zu lesen.
 
@@ -8,7 +8,7 @@ Dieses Dokument ist die Übergabe an einen Agenten, der die Umsetzung beginnt. E
 
 ## 1. Worum es geht
 
-Zwei Design-Runden (2026-08-01/02) haben das Aktionspunkt-System und die Ressourcen-Ökonomie neu aufgesetzt. Die Ergebnisse liegen vollständig im GDD. Was fehlt, ist die Implementierung — und zwei Freigaben des Owners.
+Drei Design-Runden (2026-08-01 bis -03) haben das Aktionspunkt-System und die Ressourcen-Ökonomie neu aufgesetzt. Die Ergebnisse liegen vollständig im GDD und sind vom Owner **freigegeben**. Was fehlt, ist die Implementierung.
 
 **Die vier Richtungsentscheidungen:**
 
@@ -16,6 +16,8 @@ Zwei Design-Runden (2026-08-01/02) haben das Aktionspunkt-System und die Ressour
 2. **Ratenmodell** — AP fließen in sofortige Handlungen *und* in Projekte über mehrere Sole (§13.2)
 3. **Stratege zurückgestellt** — vier Beratertypen statt fünf (§13)
 4. **Harvester ohne Level-Up**, höchstens zwei Instanzen, dafür beweglich mit Erschöpfung (§4c, §13.5)
+
+**Die freigegebenen Zahlen** (2026-08-03) stehen in §13.6 (AP) und §13.7 (Regolith), jeweils im ✅-Kasten am Anfang des Abschnitts. Beide Kästen enthalten außerdem eine Tabelle „wenn im Playtest X passiert, ist Y die Stellschraube — **nicht** Z". **Die ist beim Nachjustieren wichtiger als der Ausgangswert** — mehrere der Zahlen sind gegeneinander verspannt, und der naheliegende Regler ist oft der falsche.
 
 ---
 
@@ -29,7 +31,7 @@ Das gilt für Baukosten, `decay_rate`, `supply_cost`, `ap_for_levelup`, Missions
 
 Diese Regel steht im GDD unter **„Zum Umgang mit den Zahlen in diesem Dokument"** und ist dort mit der Liste der geschützten Werte hinterlegt. Sie wurde festgeschrieben, nachdem zwei Analyse-Runden genau diesen Fehler gemacht hatten: Der erste Regolith-Vorschlag eichte eine Kenntniskurve an `freighter.wear_per_sol` — einen Platzhalter — und leitete daraus einen „Sockel 8 → 12"-Workaround ab. Die zweite, unconstrained Runde kam auf einen Sockel von 20 mit halbierten Reparaturkosten und komplett anderen Baukosten.
 
-**Geschützt sind nur diese sechs Werte** (Owner-Entscheidungen):
+**Geschützt sind nur diese Werte** (Owner-Entscheidungen, vollständige Liste im GDD unter „Zum Umgang mit den Zahlen"):
 
 | Wert | Ort |
 |---|---|
@@ -39,8 +41,14 @@ Diese Regel steht im GDD unter **„Zum Umgang mit den Zahlen in diesem Dokument
 | Ein gemeinsamer AP-Pool | §13.1 |
 | Vier Beratertypen | §13 |
 | Werkstoffe bleiben als Ressource | §3 |
+| Knappheitsordnung `Regolith < Organika < Werkstoffe` | §3 |
+| AP-Struktur inkl. `ap.base = 12` | §13.6 |
+| Regolith-Zahlensatz inkl. `decay_rate` 0,40/0,60/0,80/1,20 | §13.7 |
+| `max_instances` als eigenes Feld | §4c |
 
-Dazu die **Knappheitsordnung** (§3), ebenfalls Owner-Entscheidung: `Regolith < Organika < Werkstoffe`. Regolith ist der Standard-Baustoff und soll verfügbar sein; Organika kann bei Missmanagement knapp werden; Werkstoffe bleiben am knappsten. Preise und Produktionsraten müssen das abbilden.
+Zur **Knappheitsordnung**: Regolith ist der Standard-Baustoff und soll verfügbar sein; Organika kann bei Missmanagement knapp werden; Werkstoffe bleiben am knappsten. Preise und Produktionsraten müssen das abbilden.
+
+**Wichtig:** Die vier zuletzt genannten sind seit dem 2026-08-03 beschlossen, aber sie sind *Setzungen mit Vertrauensgrad*, keine Naturgesetze — siehe Abschnitt 7. Geschützt heißt hier: nicht beiläufig beim Balancing verändern, sondern nur mit Rückfrage beim Owner und nur entlang der jeweils dokumentierten Stellschraube.
 
 ---
 
@@ -60,7 +68,7 @@ Dazu die **Knappheitsordnung** (§3), ebenfalls Owner-Entscheidung: `Regolith < 
 | Drifts zwischen GDD, Config und Code | GDD Anhang B |
 | Umsetzungsplan in Stufen | ROADMAP „Phase 3o" |
 
-**§13.6 ist teilweise überholt.** Gültig bleiben AP-Grundwert, Berater-Beitrag, `f(L)`-Kostenkurve und Bonus-Kurve. Ersetzt sind alle Regolith-Zahlen und die Budgetprobe — die stehen in §13.7. Der Abschnitt bleibt bewusst stehen, weil der Vergleich zeigt, was der Methodenwechsel bewirkt hat.
+**§13.6 ist teilweise überholt — auf den ✅-Kasten am Anfang achten.** Gültig bleiben Berater-Beitrag, `f(L)`-Kostenkurve und Bonus-Kurve. **Geändert:** der AP-Grundwert (10 → 12). **Ersetzt:** alle Regolith-Zahlen und die Budgetprobe — die stehen in §13.7. Der Abschnitt bleibt bewusst stehen, weil der Vergleich mit §13.7 zeigt, was der Methodenwechsel bewirkt hat.
 
 ---
 
@@ -71,8 +79,10 @@ Dazu die **Knappheitsordnung** (§3), ebenfalls Owner-Entscheidung: `Regolith < 
 
 Nebenfolge: Die Glockenkurve aus PR #220 ist für den Harvester wirkungslos — bei `max_level = 1` greift nur `production_curve[27][3][1]`.
 
-**2. `max_level` bedeutet zweierlei.**
-Bei instanzierten Gebäuden ist es die maximale *Instanzzahl* (Config-Kommentar beim Wohnhabitat: „max 6 instances"), sonst das maximale *Level*. Deshalb kann kein Gebäude beides haben — und deshalb widerspricht der Techtree (Frachter = Hangar Lv2) der Config (Hangar ist instanziert). **Aufzuteilen in `max_instances` und `max_level`.**
+**2. `max_level` bedeutet zweierlei — und das ist der erste Blocker.**
+Bei instanzierten Gebäuden ist es die maximale *Instanzzahl* (Config-Kommentar beim Wohnhabitat: „max 6 instances"), sonst das maximale *Level*. Für den **Harvester kollidieren dadurch zwei beschlossene Aussagen in einem Feld**: „kein Level-Up" (§13.5) und „Deckel 2 Instanzen" (§4c). Der Hangar braucht beide Achsen gleichzeitig (Instanzen = Schiffsplätze, Level = Schiffsklasse), was der Techtree ohnehin voraussetzt.
+
+**`max_instances` als eigenes Feld ist beschlossen** (Owner, 2026-08-03). Beide nullable, `NULL` = unbegrenzt. Schema-Arbeit für `db-migration-agent`, **muss vor der Umsetzung von §13.7 und §4c stehen.**
 
 **3. Verdacht auf superlinearen Instanz-Decay.**
 `GameTick::processBuildingDecay()` schreibt mit `['colony_id', 'building_id']` ohne Instanz-Unterscheidung. Wenn instanzierte Gebäude dadurch mehrfach verfallen, bestraft sich jede Umstellung auf Instanzen sofort selbst — und §4c stellt zwei Gebäude um. **Vor der Umstellung verifizieren, nicht danach.** Regressionstest: zwei Hangar-Instanzen, ein Tick, SP beider Zeilen prüfen.
@@ -98,13 +108,14 @@ Die Credits→Ressource-**Kauf**richtung existiert und ist mit 60 % der Regelfal
 Vollständig in der ROADMAP unter **„Phase 3o"**. Kurzfassung mit den Abhängigkeiten:
 
 ```
-Stufe 0   Owner-Freigaben (siehe Abschnitt 7) — blockiert Stufe 1
-          + Config-Angleichung harvester.max_level
+Stufe 0   ✅ erledigt — alle Freigaben erteilt (2026-08-03)
 
-Stufe 1c  Messbarkeit herstellen                      ← HIER ANFANGEN
+Stufe 1a  Schema + Messbarkeit                        ← HIER ANFANGEN
+          - max_instances als eigenes Feld (db-migration-agent)
           - Instanz-Decay-Verdacht verifizieren
           - BotStrategy reparieren
-          Beides klein, beides blockiert alles Weitere.
+          - config/buildings.php: harvester.max_level angleichen
+          Alles klein, alles blockiert Stufe 1.
 
 Stufe 1   Zahlensatz in EINEM Zug (ein PR)
           Sockel ohne neue Baukosten = triviale Wirtschaft.
@@ -130,16 +141,27 @@ Stufe 6   Nachzieharbeiten (Onboarding-Texte, Drifts, ResetPlayer)
 
 ---
 
-## 7. Was beim Owner liegt
+## 7. Freigegebene Zahlen und ihr Vertrauensgrad
 
-Zwei Freigaben blockieren Stufe 1:
+Alles freigegeben am 2026-08-03. Nichts liegt mehr beim Owner.
 
-1. **AP-Struktur** (§13.6): Grundwert 10, Berater-Beitrag 2/3/4 statt 4/7/12, `f(1) = 0.5`, Boni additiv max. 42 %
-2. **Regolith-Zahlensatz** (§13.7): Sockel 20 Rg/Sol, Reparatur 1 statt 2 Rg/SP, `decay_rate` in vier Klassen (0,5/0,8/1,0/1,5), Errichtung 70/95/120, Level-Up flach 25, CC-Ausbau × 30
+**Tragende Zahlen — sieben.** Falsch gesetzt bricht etwas, und der Playtest zeigt es nicht unbedingt von allein:
 
-Dazu offen, aber nicht blockierend: `bar.base_prices` nach der Knappheitsordnung (Vorschlag Rg 25 / Or 50 / Wk 110, `compound_import_price` 165).
+| Zahl | Wert | Vertrauen |
+|---|---|---|
+| `ap.base` | **12** | mittel-hoch |
+| `f(1)` | **0,5** | hoch — folgt aus der Währungstrennung |
+| `advisor.ap_per_rank` | **[2, 3, 4]** | mittel |
+| Harvester-Frischwert (`regolith_normal`) | **18** | mittel |
+| Reparatur je SP | **1 Regolith** | hoch — Strukturargument |
+| `decay_rate`-Klassen | **0,40 / 0,60 / 0,80 / 1,20** | mittel |
+| Errichtung / Level-Up | **70 / 95 / 120** gegen **flach 25** | mittel-hoch |
 
----
+**Feintuning — alles Übrige.** `base_ap`-Klassen, Steigung von `f(L)`, `project_min_cost_factor`, Handlungs-AP, CC-Ausbau ×30, `bar.base_prices`, `compound_import_price`, `mission_supply_run`, `geology`-Kurve, Kenntniskosten, Startbestand. Aus dem Bot-Report korrigierbar, keine davon bricht etwas.
+
+Eine Ausnahme mit Struktur-Charakter: Die **Preisrelation** aus der Knappheitsordnung (§3) ist tragend, auch wenn die konkreten Werte Feintuning sind.
+
+**Der unsicherste Punkt, als Erstes zu messen:** die Harvester-Erschöpfung (§4c). Vertrauensgrad niedrig-mittel — die Standzeiten sind sauber gerechnet, aber die Umzugsfrequenz hängt daran, wie gut der Spieler die Karte kennt, und das hängt an der Erkundung, die ihrerseits AP kostet. Messgrößen: Umzüge pro Run (Ziel 4–6) und Anteil der Sole, in denen ein Harvester unter 60 % Ertrag fördert (Ziel < 30 %).
 
 ## 8. Arbeitsweise
 
