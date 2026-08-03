@@ -63,10 +63,13 @@ class ColonyController extends BaseController
         return array_map('intval', $cfg['build_cost'] ?? []);
     }
 
+    /** Flat Regolith cost for a level-up on any non-CC, non-Harvester building (GDD §13.7). */
+    private const LEVELUP_REGOLITH_FLAT = 25;
+
     /**
-     * Regolith consumed when a building completes a level-up (flat, no escalation).
+     * Regolith consumed when a building completes a level-up.
      * Rules: CommandCenter scales as target_level × cc_upgrade_regolith_per_level;
-     * Harvester is free (bootstrap); all others = 25 % of build_cost Regolith (min 10).
+     * Harvester is free (bootstrap); all others pay a flat rate, independent of build_cost.
      */
     private function levelupRegolithFor(int $buildingId, int $targetLevel): int
     {
@@ -80,12 +83,7 @@ class ColonyController extends BaseController
             return $targetLevel * $perLevel;
         }
 
-        $erectRegolith = $this->buildCostFor($buildingId)[self::RES_REGOLITH] ?? 0;
-        if ($erectRegolith <= 0) {
-            return 0;
-        }
-
-        return max(10, (int) round($erectRegolith * 0.25));
+        return self::LEVELUP_REGOLITH_FLAT;
     }
 
     public function hexview(): View
@@ -289,6 +287,8 @@ class ColonyController extends BaseController
             'building_id' => 'required|integer',
             'q' => 'required|integer',
             'r' => 'required|integer',
+            // Harvester only: 1 (default, bootstrap-exempt) or 2 (paid expansion, GDD §4c).
+            'instance_id' => 'sometimes|integer|in:1,2',
         ]);
 
         $colony = $this->colonyService->getPrimeColony(Auth::id());
@@ -338,13 +338,16 @@ class ColonyController extends BaseController
             return $this->fail('building_not_found');
         }
 
-        // Path-gate: sciencelab/hangar/bar may only be placed when CC level allows.
-        // Harvester is marked is_instanced=1 in schema but has exactly one instance per colony
-        // and must always be moved (UPDATE), never duplicated (INSERT).
+        // Harvester instance targeted by this request — 1 (default, bootstrap-exempt,
+        // always moved/UPDATEd, never duplicated) or 2 (paid expansion, GDD §4c). Every
+        // other building keeps the existing single-row-per-instanced-slot lookup.
+        $requestedInstanceId = $isHarvester ? (int) ($data['instance_id'] ?? 1) : 1;
+
         $existingBuilding = ($isHarvester || ! $building->is_instanced)
             ? DB::table('colony_buildings')
                 ->where('colony_id', $colony->id)
                 ->where('building_id', $data['building_id'])
+                ->where('instance_id', $requestedInstanceId)
                 ->first()
             : null;
 
@@ -356,6 +359,32 @@ class ColonyController extends BaseController
                 && $existingBuilding->pending_until_tick !== null
                 && (int) $existingBuilding->pending_until_tick >= $this->getTick()) {
             return $this->fail('harvester_in_transit');
+        }
+
+        // Second Harvester instance gate (GDD §4c "Die zweite Instanz braucht ein
+        // Gate"): instance 1 keeps the Regolith-free bootstrap exemption; instance 2
+        // is a paid expansion, gated on CommandCenter level. Only applies to the
+        // FRESH placement (not a subsequent relocation of an already-placed instance 2).
+        $isSecondInstanceFreshPlacement = $isHarvester && $requestedInstanceId === 2 && ! $isHarvesterMove;
+
+        if ($isSecondInstanceFreshPlacement) {
+            $requiredCcLevel = (int) config('game.harvester.second_instance_cc_level', 3);
+            $ccLevel = (int) DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)
+                ->where('building_id', BuildingId::CommandCenter->value)
+                ->value('level');
+
+            if ($ccLevel < $requiredCcLevel) {
+                return $this->fail('harvester_second_instance_cc_gate');
+            }
+
+            $secondInstanceCost = (int) config('game.harvester.second_instance_regolith_cost', 100);
+            if (! config('game.bypass.resource_costs')
+                && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $secondInstanceCost]], $colony->id)) {
+                return $this->fail('resource_limit', __('colony.error_insufficient_resources'), [
+                    'cost' => [self::RES_REGOLITH => $secondInstanceCost],
+                ]);
+            }
         }
 
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
@@ -372,8 +401,11 @@ class ColonyController extends BaseController
             }
         }
 
+        // Verlegekosten 1 → 2 AP je Hex (GDD §4c, freigegeben 2026-08-03) — the
+        // relocation-frequency lever, not the depletion curve (config('game.harvester.relocate_ap_per_hex')).
         $apCost = $isHarvesterMove
-            ? max(1, $this->hexDistance((int) $existingBuilding->tile_x, (int) $existingBuilding->tile_y, (int) $data['q'], (int) $data['r']))
+            ? max(1, $this->hexDistance((int) $existingBuilding->tile_x, (int) $existingBuilding->tile_y, (int) $data['q'], (int) $data['r'])
+                * (int) config('game.harvester.relocate_ap_per_hex', 2))
             : 1;
 
         if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < $apCost) {
@@ -383,12 +415,20 @@ class ColonyController extends BaseController
             ]);
         }
 
-        // Resource + supply gate for regular buildings (the harvester relocates for free,
-        // and CC/Harvester carry no build_cost — bootstrap exemption). Checked before any
-        // DB write so a failed gate leaves the colony untouched.
-        $buildCost = $isHarvester ? [] : $this->buildCostFor((int) $data['building_id']);
+        // Resource + supply gate. Harvester relocation (and its first, bootstrap
+        // instance) is free — CC/Harvester carry no build_cost. The Harvester's
+        // SECOND instance is the one exception: a paid expansion (GDD §4c), charged
+        // its own flat Regolith cost instead of the generic buildCostFor() lookup
+        // (Harvester has no build_cost entry at all). Checked before any DB write so
+        // a failed gate leaves the colony untouched.
+        $buildCost = match (true) {
+            $isSecondInstanceFreshPlacement => [self::RES_REGOLITH => (int) config('game.harvester.second_instance_regolith_cost', 100)],
+            $isHarvester => [],
+            default => $this->buildCostFor((int) $data['building_id']),
+        };
+        $chargesBuildCost = ! $isHarvester || $isSecondInstanceFreshPlacement;
 
-        if (! $isHarvester) {
+        if ($chargesBuildCost) {
             if (! config('game.bypass.resource_costs') && $buildCost !== []) {
                 $costs = [];
                 foreach ($buildCost as $resourceId => $amount) {
@@ -463,7 +503,7 @@ class ColonyController extends BaseController
                 DB::table('colony_buildings')->insert([
                     'colony_id' => $colony->id,
                     'building_id' => $data['building_id'],
-                    'instance_id' => 1,
+                    'instance_id' => $requestedInstanceId,
                     'level' => 0,
                     'status_points' => $building->max_status_points ?? 20,
                     'ap_spend' => 1,
@@ -471,6 +511,7 @@ class ColonyController extends BaseController
                     'tile_y' => $data['r'],
                     'placed_at_tick' => $this->getTick(),
                 ]);
+                $nextInstanceId = $requestedInstanceId;
             }
         }
 
@@ -478,8 +519,9 @@ class ColonyController extends BaseController
             $this->personellService->lockActionPoints('construction', $colony->id, $apCost);
         }
 
-        // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation is free.
-        if (! $isHarvester && ! config('game.bypass.resource_costs') && $buildCost !== []) {
+        // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation (and its
+        // bootstrap instance) is free — the second instance's flat Regolith cost is not.
+        if ($chargesBuildCost && ! config('game.bypass.resource_costs') && $buildCost !== []) {
             $costs = [];
             foreach ($buildCost as $resourceId => $amount) {
                 $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];

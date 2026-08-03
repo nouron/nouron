@@ -754,6 +754,36 @@ class GameTick extends Command
         return $total;
     }
 
+    /**
+     * Harvester yield for a single tile (GDD §4c "Erschöpfungskurve und Umzugstakt",
+     * freigegeben 2026-08-03) — pure, no DB access.
+     *
+     *   Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+     *
+     * Never drops below half of fresh_yield while resources remain; 0 once exhausted
+     * ($remaining <= 0). $geologyLevel adds the geology Kenntnis bonus (GDD §13.7,
+     * config('game.geology_harvester_bonus_per_level')) on top — callers that apply
+     * the bonus only once per colony (not per harvester instance) must pass 0 here
+     * for every instance but the one carrying the bonus (see generateHarvesterYield()).
+     */
+    public static function harvesterYield(string $tileType, int $remaining, int $resourceMax, int $geologyLevel): int
+    {
+        if ($resourceMax <= 0 || $remaining <= 0) {
+            return 0;
+        }
+
+        $fresh = (int) (config('game.harvester.fresh_yield', [])[$tileType] ?? 0);
+        if ($fresh <= 0) {
+            return 0;
+        }
+
+        $ratio = min(1.0, $remaining / $resourceMax);
+        $base = $fresh * (0.5 + 0.5 * $ratio);
+        $geologyBonus = self::cumulativeCurveYield(config('game.geology_harvester_bonus_per_level', []), $geologyLevel);
+
+        return (int) round($base) + $geologyBonus;
+    }
+
     private function generateResources(int $tick): int
     {
         $productionConfig = config('game.production_curve', []);
@@ -777,7 +807,20 @@ class GameTick extends Command
             $trust = $this->trustService->getTrust($colony->id);
             $multiplier = $this->trustService->getProductionMultiplier($trust);
 
+            $harvesterYield = $this->generateHarvesterYield($tick, $colony, $multiplier);
+            if ($harvesterYield > 0) {
+                ColonyResource::where('colony_id', $colony->id)
+                    ->where('resource_id', 3) // Regolith
+                    ->update(['amount' => DB::raw("amount + {$harvesterYield}")]);
+            }
+
             foreach ($productionConfig as $buildingId => $outputs) {
+                // Harvester (27) is handled above via the depletion mechanic (GDD §4c) —
+                // production_curve[27] stays inert historical data (GDD §13.7).
+                if ((int) $buildingId === BuildingId::Harvester->value) {
+                    continue;
+                }
+
                 $building = DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)
                     ->where('building_id', $buildingId)
@@ -803,6 +846,99 @@ class GameTick extends Command
         }
 
         return $colonies->count();
+    }
+
+    /**
+     * Sums Regolith yield across every Harvester instance of a colony (GDD §4c),
+     * deducting the credited (trust-adjusted) amount from each tile's resource_amount
+     * and clamping stale resource_max values down to the current config (legacy tiles
+     * seeded before the 2026-08-03 500/300/160 reduction — no retroactive migration).
+     *
+     * The geology Kenntnis bonus (§13.7) is applied ONCE per colony — not per Harvester
+     * instance — on whichever active instance is evaluated first, matching "kumuliert
+     * max 12" as a cap on the total effect rather than a per-rig multiplier. The bonus
+     * is deducted from that instance's tile like any other credited yield.
+     */
+    private function generateHarvesterYield(int $tick, Colony $colony, float $multiplier): int
+    {
+        $resourceMaxCfg = config('game.harvester.resource_max', []);
+        $geologyId = (int) config('knowledge.geology.id', 92);
+
+        $instances = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('level', '>', 0)
+            ->get();
+
+        if ($instances->isEmpty()) {
+            return 0;
+        }
+
+        $geologyLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)
+            ->where('research_id', $geologyId)
+            ->value('level');
+        $geologyApplied = false;
+
+        $totalCredited = 0;
+
+        foreach ($instances as $instance) {
+            if ($instance->tile_x === null || $instance->tile_y === null) {
+                continue; // not placed yet
+            }
+
+            if ($instance->pending_until_tick !== null && (int) $instance->pending_until_tick >= $tick) {
+                continue; // in transit — no production this Sol
+            }
+
+            $tile = DB::table('colony_tiles')
+                ->where('colony_id', $colony->id)
+                ->where('q', $instance->tile_x)
+                ->where('r', $instance->tile_y)
+                ->first();
+
+            if (! $tile) {
+                continue;
+            }
+
+            $configMax = (int) ($resourceMaxCfg[$tile->tile_type] ?? 0);
+            if ($configMax <= 0) {
+                continue; // not a regolith tile — nothing to deplete/produce
+            }
+
+            $remaining = min((int) ($tile->resource_amount ?? $configMax), $configMax);
+
+            $geologyForThisTile = $geologyApplied ? 0 : $geologyLevel;
+            $base = self::harvesterYield($tile->tile_type, $remaining, $configMax, $geologyForThisTile);
+
+            if ($base <= 0) {
+                // Still clamp the stale resource_max down for consistency, even
+                // when exhausted or misconfigured.
+                DB::table('colony_tiles')
+                    ->where('colony_id', $colony->id)
+                    ->where('q', $instance->tile_x)
+                    ->where('r', $instance->tile_y)
+                    ->update(['resource_max' => $configMax, 'resource_amount' => $remaining]);
+
+                continue;
+            }
+
+            if (! $geologyApplied) {
+                $geologyApplied = true;
+            }
+
+            $credited = (int) round($base * $multiplier);
+            $totalCredited += $credited;
+
+            $newRemaining = max(0, $remaining - $credited);
+            DB::table('colony_tiles')
+                ->where('colony_id', $colony->id)
+                ->where('q', $instance->tile_x)
+                ->where('r', $instance->tile_y)
+                ->update(['resource_max' => $configMax, 'resource_amount' => $newRemaining]);
+        }
+
+        return $totalCredited;
     }
 
     // ── 8a. Food consumption (Organika provisioning) ──────────────────────────

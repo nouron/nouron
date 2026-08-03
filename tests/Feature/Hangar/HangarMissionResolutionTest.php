@@ -224,13 +224,12 @@ class HangarMissionResolutionTest extends TestCase
     public function test_completion_grants_research_ap_capped_at_levelup_threshold(): void
     {
         // mission_data_sweep reward: research_ap => 8, invested into cartography (id 91).
-        // Lv0→1 threshold is 12 (config/knowledge.php) — the reward alone (8) no
-        // longer exceeds it, so seed a partial 6 ap_spend first: 6+8=14 would
-        // overshoot the 12 threshold, proving the reward still caps rather than
-        // overflowing past the level-up requirement.
+        // Lv0→1 threshold is 20 (config/knowledge.php) — seed a partial 15 ap_spend first:
+        // 15+8=23 would overshoot the 20 threshold, proving the reward still caps rather
+        // than overflowing past the level-up requirement.
         DB::table('colony_researches')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'research_id' => 91],
-            ['level' => 0, 'ap_spend' => 6, 'status_points' => 20]
+            ['level' => 0, 'ap_spend' => 15, 'status_points' => 20]
         );
         $this->dispatchFixture('mission_data_sweep', 3, dispatchTick: 20500, target: ['research_id' => 91]);
 
@@ -239,7 +238,7 @@ class HangarMissionResolutionTest extends TestCase
         $row = DB::table('colony_researches')
             ->where('colony_id', self::COLONY_ID)->where('research_id', 91)->first();
 
-        $this->assertSame(12, (int) $row->ap_spend, 'ap_spend must cap at the Lv1 threshold, not reach the full 6+8');
+        $this->assertSame(20, (int) $row->ap_spend, 'ap_spend must cap at the Lv1 threshold, not reach the full 15+8');
         $this->assertSame(0, (int) $row->level, 'research_ap reward must not auto-levelup');
     }
 

@@ -53,12 +53,18 @@ class HarvesterTransitTest extends TestCase
             ['level' => 1, 'status_points' => 16, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 0, 'pending_until_tick' => null]
         );
 
-        // Tiles: start tile + two explored regolith targets outside the colony zone
+        // Tiles: start tile + two explored regolith targets outside the colony zone.
+        // Start tile is regolith (GDD §4c depletion wiring reads the Harvester's actual
+        // tile) — resource_amount/resource_max set so production is exercised, not a
+        // fixture artefact that happens to be terrain.
         DB::table('colony_tiles')->insertOrIgnore([
-            ['colony_id' => self::COLONY_ID, 'q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0],
-            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0],
-            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_poor', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0],
+            ['colony_id' => self::COLONY_ID, 'q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 1, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => 3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 300, 'resource_max' => 300],
+            ['colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3, 'tile_type' => 'regolith_poor', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0, 'resource_amount' => 160, 'resource_max' => 160],
         ]);
+        DB::table('colony_tiles')
+            ->where('colony_id', self::COLONY_ID)->where('q', 1)->where('r', 0)
+            ->update(['tile_type' => 'regolith_normal', 'resource_amount' => 300, 'resource_max' => 300]);
     }
 
     private function makeUser(int $userId): User

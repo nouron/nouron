@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-08-03 (Fortsetzung 7)
+
+**§4c-Harvester-Mechanik implementiert** (Erschöpfung, Verlegekosten, Zweitinstanz-Gate, Geologie-Bonus). Bisher war die Erschöpfungsmechanik komplett unverdrahtet — `colony_tiles.resource_max`/`resource_amount` wurden nur bei Tile-Erstellung gesetzt, nie gelesen oder abgebaut; Harvester-Produktion lief ausschließlich über die jetzt inerte `production_curve[27]`-Glockenkurve.
+
+- **Erschöpfung:** `GameTick::harvesterYield()` (pure Funktion) + `generateHarvesterYield()` ersetzen die Level-Kurve für den Harvester durch `Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)`, gespeist aus der Tile-Instanz, auf der der Harvester steht. `resource_max` sinkt in `ColonyTileService` auf 500/300/160 (Frischwerte 24/18/12 in `config/game.php → harvester.*`). Alte Tiles mit höherem `resource_max` werden beim nächsten Produktionslauf geclampt, keine rückwirkende Migration.
+- **Verlegekosten:** 1 → 2 AP je Hex (`config('game.harvester.relocate_ap_per_hex')`), verdrahtet in `ColonyController::placeBuilding`.
+- **Zweitinstanz-Gate:** Instanz 1 bleibt Regolith-frei (Bootstrap-Ausnahme); Instanz 2 braucht CC Lv3 und kostet pauschal 100 Regolith. `placeBuilding` akzeptiert jetzt optional `instance_id` (1 oder 2), analog zu Reparieren/Ausbauen.
+- **Geologie-Kenntnis:** erster hartverdrahtete Kenntniseffekt (ROADMAP-Vorgabe: max. zwei vor dem generischen Framework) — +3/+3/+2/+2/+2 je Level, kumuliert max 12, einmal pro Kolonie (nicht je Instanz) additiv auf den Harvester-Ertrag.
+- Aufgedeckter, vorbestehender maskierter Bug: `GameTickDecayTest::test_security_hub_recycles_resources_on_building_level_down` testete Recycling am Harvester, dessen einzige `building_costs`-Zeile (Supply) nicht handelbar ist — das Recycling griff dort nie, nur die zufällige Harvester-Produktion im selben Tick maskierte das. Test auf Agrardom (echter Regolith-Baukosten-Eintrag) umgestellt.
+- `randomizeOuterRingRows()` (Ring-2/3-Seeding) setzt jetzt `resource_amount`/`resource_max` konsistent — vorher liefen echte neue Runs mit NULL-Werten auf den zufälligen Regolith-Tiles.
+- **Sol-1-Pacing-Änderung, Owner/Game-Designer-Bestätigung ausstehend:** Der Start-Harvester steht auf (1,0), einem Koloniezonen-Tile — Koloniezone ist laut `computeColonyZoneCoords()` grundsätzlich regolithfrei. Unter §4c produziert der Harvester dort **0 Regolith bis zur ersten Verlegung**, die Onboarding mit `hint_2` ohnehin schon lehrt. Vorher (Level-Kurve) produzierte er unabhängig vom Tile-Typ sofort. Das macht `hint_2` von einem weichen Hinweis zu einem harten Wirtschafts-Gate — passt zur Mechanik, war aber niemandes explizite Entscheidung. Siehe `HarvesterSol1BootstrapTest`.
+- `public/js/colony-hexgrid.js` / `hexview.blade.php`: Verlege-AP-Vorschau folgt jetzt `config('game.harvester.relocate_ap_per_hex')` statt fest 1 AP/Hex (analog zu `repairDisplayThreshold`).
+
+**§13.7-Zahlensatz umgesetzt** (Stufe 1, ein PR wie im Handoff gefordert). `config/buildings.php`: `decay_rate` in vier Klassen sortiert (0,40/0,60/0,80/1,20), Errichtungskosten der Sol-1-4-Rampe (Agrardom 70, Sciencelab/Cantina 95, Hangar 120), `cc_upgrade_regolith_per_level` 20→30, Hangar `max_level=3` (Schiffsklasse) + Temple/Monument `max_level=1` (§4c "1 Instanz, Lv1"). `config/game.php`: `repair.regolith_per_click` 2→1, `bar.base_prices`/`compound_import_price` nach Knappheitsordnung (Rg 25/Wk 110/165). `config/knowledge.php`: `levelup_costs` 20/28/36/44/52, `credits` 100→0. `ColonyController::levelupRegolithFor()`: Level-Up-Kosten jetzt flach 25 statt 25 % von `build_cost` (CC/Harvester-Sonderfälle unverändert). Elf Tests mit hardcodierten Alt-Werten auf den neuen Zahlensatz nachgezogen (kein Regressionsbruch, erwartete Fallout laut Handoff §2 Platzhalter-Regel). Agrardom Level→Instanz-Umstellung bewusst zurückgestellt auf Stufe 1d (Deckel + Produktionskurve dort noch offen).
+
 ## 2026-08-03
 
 **Beide ausstehenden Freigaben erteilt** — die AP-Struktur (§13.6) und der Regolith-Zahlensatz (§13.7) sind beschlossen, jeweils mit Korrekturen aus einer Konsistenzprüfung gegen §4c.

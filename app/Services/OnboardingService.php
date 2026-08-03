@@ -145,16 +145,27 @@ class OnboardingService
         // Ring 2+3: randomized every call (roguelike) — see
         // ColonyTileService::randomizeOuterRingRows(). Exactly one ring-3 tile is
         // guaranteed pre-explored regolith (Nexus-Scout Harvester relocation target).
+        //
+        // (1,0) — the bootstrap Harvester's starting tile — stays terrain_empty, NOT
+        // regolith: colony-zone tiles are never regolith by design (computeColonyZoneCoords
+        // explicitly skips regolith_* — a zone tile hosts buildings, not extraction), and
+        // onboarding's hint_2 ("Harvester in colony zone → move it out", checkHint2())
+        // already exists specifically to teach the player to relocate it. Under the §4c
+        // depletion mechanic (2026-08-03) this means the Sol-1 Harvester produces 0
+        // Regolith until that relocation happens — a real pacing change from the old
+        // level-curve mechanic (which produced regardless of tile), not a bug: it makes
+        // hint_2 a hard economic step instead of a soft nudge. Flagged for game-designer/
+        // owner confirmation — see HarvesterSol1BootstrapTest and the session report.
         $tiles = [
             // ── Ring 0 ────────────────────────────────────────────────────────
-            ['q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 0, 'r' => 0, 'ring' => 0, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
             // ── Ring 1 ────────────────────────────────────────────────────────
-            ['q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => 0, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => -1, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => -1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => 0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
-            ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1],
+            ['q' => 1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => 0, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => -1, 'r' => 1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => -1, 'r' => 0, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => 0, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
+            ['q' => 1, 'r' => -1, 'ring' => 1, 'tile_type' => 'terrain_empty', 'is_colony_zone' => 0, 'is_explored' => 1, 'resource_amount' => null, 'resource_max' => null],
         ];
 
         $tiles = array_merge($tiles, $this->tileService->randomizeOuterRingRows());

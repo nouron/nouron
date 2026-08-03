@@ -11,12 +11,18 @@ use Tests\TestCase;
 /**
  * GameTick step 8 — Resource generation from industry buildings.
  *
- * Config (game.production_curve, bell-curve per level, cumulative — GDD §18, 2026-07-20):
- *   building_id 27 (harvester)    → resource 3 (Regolith): [8,10,12,12,10,8,6,4] per level 1-8
- *                                    cumulative: L1=8 L2=18 L3=30 L4=42 L5=52 L6=60 L7=66 L8=70
- *   building_id 41 (bioFacility)  → resource 5 (Organics): [8,12,12,9,7,5,3,2] per level 1-8
- *                                    cumulative: L1=8 L2=20 L3=32 L4=41 L5=48 L6=53 L7=56 L8=58
- *   Both capped at max_level=8 (config/buildings.php) — higher levels are not reachable.
+ * bioFacility (building_id 41) still follows the level-based bell curve
+ * (game.production_curve[41], GDD §18, 2026-07-20): [8,12,12,9,7,5,3,2] per
+ * level 1-8, cumulative — L1=8 L2=20 L3=32 …, capped at max_level=8.
+ *
+ * Harvester (building_id 27) production_curve is INERT since the §4c depletion
+ * mechanic (2026-08-03) — the Harvester no longer levels up (max_level=1,
+ * GDD §13.5) and instead produces from the specific regolith tile it is placed
+ * on: Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max), see
+ * GameTick::harvesterYield() and GameTick::generateHarvesterYield(). Full
+ * depletion/geology-bonus coverage lives in HarvesterDepletionTest — this file
+ * covers only the interaction with the level-0 gate, the trust multiplier,
+ * and simultaneous production alongside bioFacility.
  *
  * Production is modified by a trust multiplier. To isolate production from trust
  * drift, these tests fix trust at 0 (multiplier = 1.0) by setting colony
@@ -24,21 +30,20 @@ use Tests\TestCase;
  *
  * Covered scenarios:
  *  Happy path:
- *  - harvester at level N generates N×10 Regolith per tick (neutral trust)
+ *  - harvester placed on a full-reserve regolith_normal tile produces its fresh value (18)
  *  - bioFacility at level N generates N×10 Organics per tick (neutral trust)
  *  - Stacking: both buildings produce in the same tick
  *
  *  Edge cases:
- *  - Building at level 0 produces nothing
- *  - Production rounds correctly (int rounding with multiplier)
+ *  - Building at level 0 produces nothing even when placed on a producing tile
+ *  - Yield does not depend on the stored level value beyond the level>0 gate
  *
  *  Adversarial:
  *  - NPC colony (user_id=null) still receives production (no user gate on this step)
- *  - Very high building level produces proportionally
  *
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3
- *     harvester (building_id=27): level=1
+ *     harvester (building_id=27): level=1, unplaced (tile_x=NULL) by default
  *     bioFacility not seeded for colony 1 (must be inserted)
  *   Colony resource (id=3, colony 1): amount=250 initially
  *
@@ -59,6 +64,10 @@ class GameTickResourceGenerationTest extends TestCase
     private const RES_ORGANICS = 5;
 
     private const TRUST_RES_ID = 12;
+
+    private const HARVESTER_TILE_Q = 3;
+
+    private const HARVESTER_TILE_R = 0;
 
     protected function setUp(): void
     {
@@ -97,37 +106,53 @@ class GameTickResourceGenerationTest extends TestCase
         );
     }
 
+    /**
+     * Places the Harvester (instance 1) on a fresh regolith_normal tile
+     * (fresh_yield 18, resource_max 300) — the fixture's default harvester
+     * row has no tile_x/tile_y, so production requires explicit placement
+     * under the §4c depletion mechanic.
+     */
+    private function placeHarvesterOnFreshTile(int $level = 1): void
+    {
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => self::HARVESTER_ID, 'instance_id' => 1],
+            [
+                'level' => $level,
+                'status_points' => 20,
+                'ap_spend' => 0,
+                'tile_x' => self::HARVESTER_TILE_Q,
+                'tile_y' => self::HARVESTER_TILE_R,
+                'pending_until_tick' => null,
+            ]
+        );
+
+        DB::table('colony_tiles')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('q', self::HARVESTER_TILE_Q)->where('r', self::HARVESTER_TILE_R)
+            ->delete();
+        DB::table('colony_tiles')->insert([
+            'colony_id' => self::COLONY_ID, 'q' => self::HARVESTER_TILE_Q, 'r' => self::HARVESTER_TILE_R, 'ring' => 3,
+            'tile_type' => 'regolith_normal', 'is_explored' => 1, 'is_colony_zone' => 0, 'is_deep_scanned' => 0,
+            'resource_amount' => 300, 'resource_max' => 300,
+        ]);
+    }
+
     // ── Happy path ─────────────────────────────────────────────────────────────
 
     /**
-     * harvester at level 1 produces exactly 8 Regolith per tick (curve[1]=8, multiplier 1.0).
+     * Harvester placed on a full-reserve regolith_normal tile produces exactly
+     * its fresh value (18) per tick at neutral trust — GDD §4c.
      */
-    public function test_harvester_generates_regolith_per_level(): void
+    public function test_harvester_generates_regolith_from_placed_tile(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 1);
+        $this->placeHarvesterOnFreshTile();
         $before = $this->getColonyResource(self::RES_REGOLITH);
 
         Artisan::call('game:tick', ['--tick' => 11200]);
 
         $after = $this->getColonyResource(self::RES_REGOLITH);
-        // At multiplier 1.0: yield = round(8 × 1.0) = 8
-        $this->assertEquals($before + 8, $after,
-            'Harvester level 1 must produce exactly 8 Regolith per tick');
-    }
-
-    /**
-     * harvester at level 3 produces 30 Regolith per tick (cumulative curve 8+10+12, multiplier 1.0).
-     */
-    public function test_harvester_production_scales_with_level(): void
-    {
-        $this->setBuildingLevel(self::HARVESTER_ID, 3);
-        $before = $this->getColonyResource(self::RES_REGOLITH);
-
-        Artisan::call('game:tick', ['--tick' => 11201]);
-
-        $after = $this->getColonyResource(self::RES_REGOLITH);
-        $this->assertEquals($before + 30, $after,
-            'Harvester level 3 must produce 30 Regolith per tick');
+        $this->assertEquals($before + 18, $after,
+            'Harvester on a full-reserve regolith_normal tile must produce exactly 18 Regolith per tick');
     }
 
     /**
@@ -149,11 +174,12 @@ class GameTickResourceGenerationTest extends TestCase
     }
 
     /**
-     * Both harvester and bioFacility produce in the same tick.
+     * Both harvester (tile-based, §4c) and bioFacility (level-based curve) produce
+     * in the same tick.
      */
     public function test_multiple_production_buildings_produce_simultaneously(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 2);
+        $this->placeHarvesterOnFreshTile();
         $this->setBuildingLevel(self::BIO_FACILITY_ID, 1);
 
         DB::table('colony_resources')->updateOrInsert(
@@ -170,19 +196,21 @@ class GameTickResourceGenerationTest extends TestCase
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
         $organics = $this->getColonyResource(self::RES_ORGANICS);
 
-        // harvester level 2 → cumulative 8+10=18 Regolith; bioFacility level 1 → 8 Organics
-        $this->assertEquals(18, $regolith, 'Harvester level 2 must produce 18 Regolith');
+        // harvester on full-reserve regolith_normal tile → 18 Regolith; bioFacility level 1 → 8 Organics
+        $this->assertEquals(18, $regolith, 'Harvester on full-reserve regolith_normal tile must produce 18 Regolith');
         $this->assertEquals(8, $organics, 'BioFacility level 1 must produce 8 Organics');
     }
 
     // ── Edge cases ─────────────────────────────────────────────────────────────
 
     /**
-     * A building at level 0 must not produce any resources.
+     * A building at level 0 must not produce any resources — even when placed
+     * on a tile that would otherwise yield Regolith (the level>0 gate applies
+     * before the tile-based yield is computed).
      */
     public function test_building_at_level_zero_produces_nothing(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 0);
+        $this->placeHarvesterOnFreshTile(level: 0);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
             ['amount' => 50]
@@ -200,19 +228,18 @@ class GameTickResourceGenerationTest extends TestCase
     }
 
     /**
-     * Production is capped at max_level=8 — a level beyond the cap (10, which is not
-     * actually reachable via levelup since max_level=8 gates it) must not produce more
-     * than the level-8 cumulative yield (70 Regolith). Guards against the curve lookup
-     * indexing past its highest defined level.
+     * Harvester no longer levels up beyond 1 (GDD §13.5) — the tile-based yield
+     * does not depend on the stored level at all beyond the level>0 gate. A
+     * stale/invalid level value (e.g. leftover from before the §13.5 change)
+     * must not inflate or otherwise change the yield.
      */
-    public function test_production_scales_proportionally_at_high_levels(): void
+    public function test_harvester_yield_is_independent_of_stored_level_beyond_one(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 10);
+        $this->placeHarvesterOnFreshTile(level: 10);
         DB::table('colony_resources')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_REGOLITH],
             ['amount' => 0]
         );
-        // Disable bioFacility for clean isolation
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
             ->update(['level' => 0]);
@@ -220,18 +247,18 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11211]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        $this->assertEquals(70, $regolith, 'Harvester level 10 (beyond cap) must produce the level-8 cap yield of 70 Regolith');
+        $this->assertEquals(18, $regolith, 'Yield must stay at the tile fresh value regardless of the stored level');
     }
 
     // ── Trust multiplier interaction ────────────────────────────────────────────
 
     /**
      * High trust (>60) applies a 1.20× production multiplier.
-     * harvester level 5 × 10 × 1.20 = round(60) = 60.
+     * harvester fresh yield 18 × 1.20 = round(21.6) = 22.
      */
     public function test_high_trust_applies_production_bonus(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 5);
+        $this->placeHarvesterOnFreshTile();
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
             ->update(['level' => 0]);
@@ -249,18 +276,18 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11220]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // cumulative curve at level 5 = 52; yield = round(52 × 1.20) = 62
-        $this->assertEquals(62, $regolith,
-            'Production at trust=75 must apply 1.20× multiplier → 62 Regolith');
+        // fresh yield 18; yield = round(18 × 1.20) = 22
+        $this->assertEquals(22, $regolith,
+            'Production at trust=75 must apply 1.20× multiplier → 22 Regolith');
     }
 
     /**
      * Low trust (<-60) applies a 0.70× production penalty.
-     * harvester level 5 cumulative curve (52) × 0.70 = round(36.4) = 36.
+     * harvester fresh yield 18 × 0.70 = round(12.6) = 13.
      */
     public function test_low_trust_applies_production_penalty(): void
     {
-        $this->setBuildingLevel(self::HARVESTER_ID, 5);
+        $this->placeHarvesterOnFreshTile();
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::BIO_FACILITY_ID)
             ->update(['level' => 0]);
@@ -278,8 +305,8 @@ class GameTickResourceGenerationTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11221]);
 
         $regolith = $this->getColonyResource(self::RES_REGOLITH);
-        // cumulative curve at level 5 = 52; yield = round(52 × 0.70) = 36
-        $this->assertEquals(36, $regolith,
-            'Production at trust=-80 must apply 0.70× penalty → 36 Regolith');
+        // fresh yield 18; yield = round(18 × 0.70) = 13
+        $this->assertEquals(13, $regolith,
+            'Production at trust=-80 must apply 0.70× penalty → 13 Regolith');
     }
 }

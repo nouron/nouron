@@ -15,9 +15,10 @@ use Tests\TestCase;
  *  - Erecting a building deducts Regolith (+ Werkstoffe on late buildings); CC/Harvester
  *    are bootstrap-exempt. A shortfall is rejected with no DB write.
  *  - Supply is a cap gate (free cap ≥ supply_cost), not a stockpile deduction.
- *  - Level-up deducts flat Regolith (25 % of erect cost; CC scales target_level × 30),
- *    charged only on the completing click — a shortfall never burns the AP.
- *  - Repair deducts 2 Regolith per click (hard gate); CC + Harvester are exempt.
+ *  - Level-up deducts flat Regolith (flat 25 for non-CC/non-Harvester; CC scales
+ *    target_level × 30), charged only on the completing click — a shortfall never
+ *    burns the AP.
+ *  - Repair deducts 1 Regolith per click (hard gate); CC + Harvester are exempt.
  *  - Nexus compound import: gated by Uplink Lv1, spends Credits, grants Werkstoffe.
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart). Start resources: 250 Regolith (3),
@@ -119,9 +120,9 @@ class BuildResourceSinkTest extends TestCase
         $rg = $this->colonyRes(self::RES_REGOLITH);
         $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 80 Rg
+        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 120 Rg
 
-        $this->assertSame($rg - 80, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($rg - 120, $this->colonyRes(self::RES_REGOLITH));
         $this->assertSame($wk, $this->colonyRes(self::RES_COMPOUNDS));   // Wk unchanged
     }
 
@@ -150,19 +151,33 @@ class BuildResourceSinkTest extends TestCase
 
     public function test_cc_levelup_deducts_scaled_regolith(): void
     {
-        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2 → 2×20 = 40 Rg
+        $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);   // 1 AP from Lv2 → 2×30 = 60 Rg
         $before = $this->colonyRes(self::RES_REGOLITH);
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertOk()->assertJsonPath('leveled_up', true);
 
-        $this->assertSame($before - 40, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH));
+    }
+
+    public function test_non_cc_levelup_deducts_flat_regolith_regardless_of_build_cost(): void
+    {
+        // Sciencelab build_cost[3]=95 (25% would be 24) — GDD §13.7 flat 25 applies
+        // regardless of the erect cost.
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 31)
+            ->update(['level' => 1, 'ap_spend' => 9, 'status_points' => 10]);
+        $before = $this->colonyRes(self::RES_REGOLITH);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 31])
+            ->assertOk()->assertJsonPath('leveled_up', true);
+
+        $this->assertSame($before - 25, $this->colonyRes(self::RES_REGOLITH));
     }
 
     public function test_levelup_blocked_without_regolith_keeps_ap(): void
     {
         $this->setCc(['level' => 1, 'ap_spend' => 9, 'status_points' => 16]);
-        $this->setColonyRes(self::RES_REGOLITH, 10);   // < 40 needed for CC Lv2
+        $this->setColonyRes(self::RES_REGOLITH, 10);   // < 60 needed for CC Lv2
 
         $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
             ->assertStatus(422)->assertJsonPath('ok', false)->assertJsonPath('error', 'resource_limit');
@@ -175,7 +190,7 @@ class BuildResourceSinkTest extends TestCase
 
     // ── Repair costs ─────────────────────────────────────────────────────────
 
-    public function test_repair_deducts_two_regolith(): void
+    public function test_repair_deducts_one_regolith(): void
     {
         $this->ensureBuildableTile(1, 0);
         config(['game.bypass.supply_checks' => true]);
@@ -187,7 +202,7 @@ class BuildResourceSinkTest extends TestCase
         $this->actingAs($this->bart())->postJson(route('colony.building.repair'), ['building_id' => 46])
             ->assertOk()->assertJsonPath('ok', true);
 
-        $this->assertSame($before - 2, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($before - 1, $this->colonyRes(self::RES_REGOLITH));
     }
 
     public function test_repair_hard_gate_without_regolith(): void

@@ -211,16 +211,8 @@ class ColonyTileService
                 $isExplored = $isCC || $ring <= 1;
                 $tileType = $isCC ? 'terrain_empty' : $this->pickTileType($q, $r, $colonyId, $ring);
 
-                $resourceAmount = null;
-                $resourceMax = null;
-                if (str_starts_with($tileType, 'regolith_')) {
-                    $resourceMax = match ($tileType) {
-                        'regolith_rich' => 800,
-                        'regolith_normal' => 500,
-                        default => 250,
-                    };
-                    $resourceAmount = $resourceMax;
-                }
+                $resourceMax = $this->resourceMaxFor($tileType);
+                $resourceAmount = $resourceMax;
 
                 $rows[] = [
                     'colony_id' => $colonyId,
@@ -242,6 +234,20 @@ class ColonyTileService
 
         DB::table('colony_tiles')->insertOrIgnore($rows);
         $this->assignColonyZone($colonyId, $ccLevel);
+    }
+
+    /**
+     * Fresh resource_max for a regolith tile_type, sourced from config/game.php
+     * (single source of truth shared with GameTick's harvester yield formula).
+     * Returns null for non-regolith tile types.
+     */
+    private function resourceMaxFor(string $tileType): ?int
+    {
+        if (! str_starts_with($tileType, 'regolith_')) {
+            return null;
+        }
+
+        return (int) (config('game.harvester.resource_max')[$tileType] ?? config('game.harvester.resource_max.regolith_poor', 160));
     }
 
     private function transformTile(ColonyTile $tile): array
@@ -332,17 +338,20 @@ class ColonyTileService
      * (not just their content) — otherwise the "frontier" shape would look
      * identical across every run/reset even though tile_type varies.
      *
-     * @return list<array{q:int,r:int,ring:int,tile_type:string,is_colony_zone:int,is_explored:int}>
+     * @return list<array{q:int,r:int,ring:int,tile_type:string,is_colony_zone:int,is_explored:int,resource_amount:?int,resource_max:?int}>
      */
     public function randomizeOuterRingRows(): array
     {
         $rows = [];
 
         foreach ($this->ringCoords(2) as [$q, $r]) {
+            $tileType = $this->randomTileType(2);
+            $resourceMax = $this->resourceMaxFor($tileType);
             $rows[] = [
                 'q' => $q, 'r' => $r, 'ring' => 2,
-                'tile_type' => $this->randomTileType(2),
+                'tile_type' => $tileType,
                 'is_colony_zone' => 0, 'is_explored' => 0,
+                'resource_amount' => $resourceMax, 'resource_max' => $resourceMax,
             ];
         }
 
@@ -363,6 +372,9 @@ class ColonyTileService
         foreach ($ring3Rows as $i => $row) {
             $row['is_colony_zone'] = 0;
             $row['is_explored'] = ($i === $targetIndex) ? 1 : 0;
+            $resourceMax = $this->resourceMaxFor($row['tile_type']);
+            $row['resource_amount'] = $resourceMax;
+            $row['resource_max'] = $resourceMax;
             $rows[] = $row;
         }
 

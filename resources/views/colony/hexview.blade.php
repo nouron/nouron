@@ -48,6 +48,7 @@
             exploreCostDefault: {{ (int) config("game.colony.explore_cost_default", 1) }},
             tileYields: @json(collect(config("tile_types"))->map(fn($t) => $t["base_yield"])->filter()),
             repairDisplayThreshold: {{ (float) config("game.repair.display_threshold", 0.7) }},
+            relocateApPerHex: {{ (int) config("game.harvester.relocate_ap_per_hex", 2) }},
             phaseProgress: @json($phaseProgress),
             routes: {
                 explore: '{{ route("colony.tile.explore") }}',

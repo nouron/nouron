@@ -65,18 +65,57 @@ return [
     // CC upgrades, path buildings, repairs); bioFacility peaks early (Organika/food
     // security must stand up fast, before the hunger→trust spiral bites).
     'production_curve' => [
-        27 => [3 => [1 => 8, 2 => 10, 3 => 12, 4 => 12, 5 => 10, 6 => 8, 7 => 6, 8 => 4]],   // harvester → Regolith
+        27 => [3 => [1 => 8, 2 => 10, 3 => 12, 4 => 12, 5 => 10, 6 => 8, 7 => 6, 8 => 4]],   // harvester → Regolith (inert since §4c depletion wiring — see game.harvester below)
         41 => [5 => [1 => 8, 2 => 12, 3 => 12, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],     // bioFacility → Organika
     ],
+
+    // Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
+    // freigegeben 2026-08-03). Replaces production_curve[27] as the actual Regolith
+    // source — the curve above stays as inert historical data (GDD §13.7).
+    //
+    //   Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
+    //
+    // Never drops below half of fresh_yield; at resource_amount <= 0, yield is 0
+    // (relocation is player-triggered, not automatic). ColonyTileService reads the
+    // same resource_max map so tile seeding and production can't drift apart.
+    'harvester' => [
+        'fresh_yield' => [
+            'regolith_rich' => 24,
+            'regolith_normal' => 18,
+            'regolith_poor' => 12,
+        ],
+        'resource_max' => [
+            'regolith_rich' => 500,
+            'regolith_normal' => 300,
+            'regolith_poor' => 160,
+        ],
+        // Verlegekosten 1 → 2 AP je Hex (GDD §4c, 2026-08-03) — the relocation-frequency
+        // lever, not the depletion curve itself (see GDD §4c "Der eigentliche Regler...").
+        'relocate_ap_per_hex' => 2,
+        // Second harvester instance gate (GDD §4c "Die zweite Instanz braucht ein Gate"):
+        // instance 1 keeps the Regolith-free bootstrap exemption; instance 2 is a paid
+        // expansion, gated on CommandCenter level.
+        'second_instance_cc_level' => 3,
+        'second_instance_regolith_cost' => 100,
+    ],
+
+    // Geology (config/knowledge.php id 92) production bonus — first of at most two
+    // hardcoded Kenntnis-Effekte before the generic effect framework is mandatory
+    // (ROADMAP Stufe 1, GDD §13.7). Additive Regolith bonus per Harvester-Sol,
+    // cumulative across levels, capped at level 5 (+3+3+2+2+2 = 12 max).
+    'geology_harvester_bonus_per_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 2],
 
     // Economy — resource pricing for player-facing buy/sell mechanics.
     'economy' => [
         // Werkstoffe (compounds, resource 4) are not locally producible (GDD §3).
         // The Nexus direct import (gated behind Uplink-Station Lv1) is the guaranteed
         // safety-net source: a fixed Credits price per unit, always available. Set
-        // deliberately above the Cantina spot price (~60) so the Cantina/merchant stay
+        // deliberately above the Cantina spot price so the Cantina/merchant stay
         // the cheaper, opportunistic source and the Nexus stays the expensive fallback.
-        'compound_import_price' => 90,
+        // 90 → 165 (GDD §13.7, 2026-08-03): holds the ~1.5:1 ratio to the new Werkstoffe
+        // spot price (110) required by the Knappheitsordnung (§3) after the bar.base_prices
+        // correction below — Werkstoffe stay the scarcest good, Regolith < Organika < Werkstoffe.
+        'compound_import_price' => 165,
     ],
 
     // Kolonisten-Zulage (GDD §14) — player-triggered Credits→Trust action.
@@ -93,7 +132,10 @@ return [
     // Manual building repair — Regolith cost per click (1 SP), on top of 1 Construction-AP.
     // CommandCenter + Harvester are exempt (AP-only, bootstrap anchor against decay spiral).
     'repair' => [
-        'regolith_per_click' => 2,
+        // 2 → 1 (GDD §13.7, 2026-08-03): with repair also costing 1 Construction-AP,
+        // 1 Rg/click makes Instandhaltung [Rg/Sol] = Instandhaltung [AP/Sol] = Σ decay_rate —
+        // one number drives both currencies, no separate "feels expensive" multiplier needed.
+        'regolith_per_click' => 1,
 
         // Damage display threshold (fraction of max_status_points): tiles show the
         // damage badge/status tint only below this. The 16/20 (80%) starting damage
@@ -201,7 +243,10 @@ return [
     // level_max_concurrent: max simultaneous active offers per colony, keyed by bar level.
     // compounds_bias_at_rank3: probability that a credits→resource offer targets compounds at trader rank 3.
     'bar' => [
-        'base_prices' => [3 => 30, 4 => 60, 5 => 50], // regolith, compounds, organics
+        // Rg 30→25 / Or 50 (unverändert) / Wk 60→110 (GDD §13.7 "Korrektur durch die
+        // Knappheitsordnung", 2026-08-03): respektiert §3 Regolith < Organika < Werkstoffe —
+        // der Abstand Organika↔Werkstoffe war zu klein, um "deutlich knapper" zu zeigen.
+        'base_prices' => [3 => 25, 4 => 110, 5 => 50], // regolith, compounds, organics
         'price_variance' => 0.20,
         'trader_discount' => [0 => 0.00, 1 => 0.10, 2 => 0.20, 3 => 0.30],
         'guest_count' => [0 => [0, 1], 1 => [0, 1], 2 => [0, 2], 3 => [1, 2]],
