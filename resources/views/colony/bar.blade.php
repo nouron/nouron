@@ -42,9 +42,18 @@
             5 => __("resources.res_organika"),
         ];
         // Matches resources.abbreviation in the DB — same values the resource bar's
-        // .res-{abbr} chip classes are built for (Cr/Rg/Co/Or).
-        $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
-        $spotForOffer = ["spot_1", "spot_2"]; // offer index → spot key
+// .res-{abbr} chip classes are built for (Cr/Rg/Co/Or).
+$resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
+// Offer index → spot key. spot_0 is reserved for Corvan's curated special
+        // inventory (merchant hotspot, catalog dialog) — offers (guest barter +
+        // Corvan's Alltagsgeschäft commodity offers, GDD §12 Kanal 1) share the
+        // remaining 5 hotspots. Cycled with modulo below since a Corvan visit alone
+        // can add up to ~4 commodity offers (2-3 sell lots + 1 buy) on top of the
+        // anonymous guest rotation (up to level_max_concurrent, 2-6 by bar level) —
+        // known capacity gap, flagged for game-designer/game-developer: at high bar
+        // levels + an active Corvan visit, offer count can still exceed 5 available
+        // spots and hotspots will overlap.
+        $spotForOffer = ["spot_1", "spot_2", "spot_3", "spot_4", "spot_5"];
     @endphp
 
     <div class="bar-page"
@@ -80,18 +89,29 @@
                         </button>
                     @endif
 
-                    {{-- Offer Hotspots — Panel 1 center: 39%, Panel 2 center: 61% --}}
+                    {{-- Offer Hotspots — anonymous guest barter offers + Corvan's Alltagsgeschäft
+                     commodity offers (bar_offers.visit_id set, GDD §12 Kanal 1). Corvan's offers
+                     get his own portrait/name instead of the random per-slot guest character, so
+                     the player can tell "Corvan is selling Organika" apart from "Dax wants to barter". --}}
                     @foreach ($offers as $idx => $offer)
                         @php
-                            $hsSlot = $spotForOffer[$idx] ?? "spot_1";
+                            $hsSlot = $spotForOffer[$idx % count($spotForOffer)];
                             $offerId = $offer->id;
-                            $char = $characterAssignment[$hsSlot] ?? null;
-                            $charName = $char["name"] ?? "???";
+                            $isCorvanOffer = $offer->visit_id !== null;
+                            $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
+                            $charName = $isCorvanOffer ? __("colony.merchant_title") : $char["name"] ?? "???";
                         @endphp
-                        <button class="cantina-hotspot{{ $char ? " has-portrait" : "" }} hs-slot-{{ $hsSlot }}"
+                        <button
+                            class="cantina-hotspot{{ $isCorvanOffer || $char ? " has-portrait" : "" }}{{ $isCorvanOffer ? " hotspot-corvan-offer" : "" }} hs-slot-{{ $hsSlot }}"
                             @click="openOffer({{ $offerId }})">
                             <span class="hotspot-pulse"></span>
-                            @if ($char)
+                            @if ($isCorvanOffer)
+                                <span class="hotspot-badge hotspot-badge--corvan" aria-hidden="true"><i
+                                        class="bi bi-coin"></i></span>
+                                <img class="hotspot-portrait" src="{{ asset("img/characters/merchant.webp") }}"
+                                    srcset="{{ asset("img/characters/merchant.webp") }} 1x, {{ asset("img/characters/merchant_lg.webp") }} 2x"
+                                    alt="{{ $charName }}">
+                            @elseif ($char)
                                 <img class="hotspot-portrait"
                                     src="{{ asset("img/characters/" . $char["slug"] . ".webp") }}"
                                     srcset="{{ asset("img/characters/" . $char["slug"] . ".webp") }} 1x, {{ asset("img/characters/" . $char["slug"] . "_lg.webp") }} 2x"
@@ -174,10 +194,18 @@
                 @foreach ($offers as $idx => $offer)
                     @php
                         $offerId = $offer->id;
-                        $char = $characterAssignment[$spotForOffer[$idx] ?? "spot_1"] ?? null;
-                        $name = $char["name"] ?? "???";
-                        $role = $char["role"] ?? "";
-                        $offerCharSlug = $char["slug"] ?? "stranger";
+                        $isCorvanOffer = $offer->visit_id !== null;
+                        $hsSlot = $spotForOffer[$idx % count($spotForOffer)];
+                        $char = $isCorvanOffer ? null : $characterAssignment[$hsSlot] ?? null;
+                        // Corvan offers reuse his existing, already-translated identity
+                        // (same portrait/title as the special-inventory hotspot) rather
+                        // than introducing new copy — "Bleibt bis Sol X" mirrors the
+                        // catalog dialog's role text for a consistent Corvan presentation.
+                        $name = $isCorvanOffer ? __("colony.merchant_title") : $char["name"] ?? "???";
+                        $role = $isCorvanOffer
+                            ? __("colony.merchant_until_sol") . " " . $offer->expires_tick
+                            : $char["role"] ?? "";
+                        $offerCharSlug = $isCorvanOffer ? "merchant" : $char["slug"] ?? "stranger";
                         $offerPortraitSrc = asset("img/characters/" . $offerCharSlug . ".webp");
                         $offerPortraitLgSrc = asset("img/characters/" . $offerCharSlug . "_lg.webp");
                     @endphp
