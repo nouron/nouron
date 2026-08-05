@@ -89,7 +89,7 @@ Was stattdessen blockiert: **Der Zahlensatz ist ein zusammenhängendes System.**
 
 Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion) bleibt unverändert gültig; §4b macht sie explizit.
 
-> **Einstieg:** Stufe 0 ist abgeschlossen, alle Freigaben sind erteilt (2026-08-03). Der erste Implementierungsschritt ist **Stufe 1c** — dazu gehört jetzt auch die Einführung von `max_instances` als eigenem Feld, ohne die weder §13.7 noch §4c umsetzbar sind. Erst danach Stufe 1 als **ein** PR.
+> **Einstieg (Stand 2026-08-04):** Stufe 0, 1c und 1 sind umgesetzt (PR #234, #235) — bis auf Agrardom Level→Instanz, bewusst auf Stufe 1d verschoben. Offen: Sol-1-Pacing-Frage aus PR #235 ist vom Owner am 2026-08-04 als **gewollt** bestätigt (Harvester auf Koloniezone = 0 Rg bis erste Verlegung); `hint_2` muss dafür von der aktuellen Onboarding-Formulierung zu einem generellen "Regolith-Tile erschöpft, Harvester verlegen"-Alert werden (nicht mehr nur Koloniezonen-Fall). Nächster Schritt: Stufe 1b (klein) oder Stufe 1d (Supply-Achse) — Owner-Entscheidung ausstehend.
 
 ### Stufe 0 — Klären (Owner, keine Implementierung)
 
@@ -98,7 +98,7 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 - [x] **Regolith-Zahlensatz freigegeben** (2026-08-03, §13.7): Harvester-Frischwert 18, Reparatur 1 Rg/SP, `decay_rate` **0,40 / 0,60 / 0,80 / 1,20** (um ein Fünftel gesenkt), Errichtung 70/95/120, Level-Up flach 25. **Die Instanz-Preisregel ist zurückgezogen** — Instanzen zahlen den vollen Errichtungspreis.
 - [x] **Harvester-Erschöpfung freigegeben** (2026-08-03, §4c): Ertragskurve fällt auf 50 %, `resource_max` 500/300/160, Verlegekosten **2 AP/Hex**, zweite Instanz an CC Lv3 + 100 Rg. Vertrauensgrad niedrig-mittel — als Erstes messen.
 - [x] **`max_instances` als eigenes Feld** beschlossen (2026-08-03, §4c)
-- [ ] `bar.base_prices` nach der Knappheitsordnung (§3) — Feintuning, Vorschlag Rg 25 / Or 50 / Wk 110, `compound_import_price` 165
+- [x] `bar.base_prices` nach der Knappheitsordnung (§3) umgesetzt: Rg 25 / Or 50 / Wk 110, `compound_import_price` 165
 - [x] Höhe des `geology`-Bonus: **+3/3/2/2/2, kumuliert max 12** (§13.7)
 - [x] Pfad A und Credits: `knowledge.credits` von 100 auf **0** statt eine vierte Einnahmequelle (§13.7)
 
@@ -108,29 +108,29 @@ Die Design-Entscheidung vom 2026-07-20 (Analytiker = passiver Multiplikator, Pil
 
 **Ein PR, ein Zug** — alles Folgende gehört zusammen:
 
-- [ ] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten, CC-Ausbau)
-- [ ] `harvester.max_level` 8 → 1 in `config/buildings.php` (sonst setzt der nächste Sync die Owner-Entscheidung zurück)
-- [ ] Instanz-Preisregel: zweite und jede weitere Instanz zahlt Level-Up-Preis statt `build_cost` (`ColonyController::placeBuilding`) — löst den Hangar-Bootstrap-Zirkel und korrigiert dieselbe Inkonsistenz beim Wohnhabitat
-- [ ] **Wachstumsachsen umstellen** (§4c): Agrardom Level → Instanz; Harvester Instanz-Deckel 2; Religiöse Stätte und Kolonialdenkmal auf je 1 Instanz / Lv1; Hangar bekommt beide Achsen (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse, wie der Techtree es ohnehin gatet)
-- [ ] `geology`-Effekt als hartverdrahteter Hook (~8 Zeilen in `GameTick` + Config-Key in der Shape eines späteren Frameworks). **Regel: maximal zwei hartverdrahtete Kenntniseffekte, danach zwingend das Framework** — sonst entsteht es schleichend nie.
-- [ ] `bar.base_prices` + `compound_import_price` nach der Knappheitsordnung
-- [ ] `knowledge.levelup_costs` und `credits` nachziehen
+- [x] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten, CC-Ausbau) — PR #235
+- [x] `harvester.max_level` 8 → 1 in `config/buildings.php` — PR #235
+- [x] Harvester-Zweitinstanz-Gate umgesetzt (CC Lv3 + 100 Rg pauschal, `ColonyController::placeBuilding`) — PR #235. **Nicht** die ursprünglich geplante generische "Level-Up-Preis für jede weitere Instanz"-Regel — die bleibt für Hangar/Wohnhabitat offen (siehe Stufe 1b/1d, Hangar-Bootstrap-Zirkel dort noch ungelöst)
+- [ ] **Wachstumsachsen umstellen** (§4c): Agrardom Level → Instanz **zurückgestellt auf Stufe 1d** (Deckel + Produktionskurve dort offen); Religiöse Stätte und Kolonialdenkmal auf je 1 Instanz / Lv1 noch offen; Hangar beide Achsen (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse) noch offen
+- [x] `geology`-Effekt als hartverdrahteter Hook — PR #235 (erster von max. zwei erlaubten hartverdrahteten Kenntniseffekten)
+- [x] `bar.base_prices` + `compound_import_price` nach der Knappheitsordnung — PR #235
+- [x] `knowledge.levelup_costs` und `credits` nachgezogen — PR #235
 
 ### Stufe 1b — klein, danach
 
-- [ ] `mission_supply_run.sol_distance` 2 → 1 (Hebel-Zielgröße, kürzerer Entscheidungstakt)
-- [ ] `mission_aid_transport` ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, schließt zugleich die Vertrauens-Lücke von Pfad B (§4b)
-- [ ] Cantina: Losgröße an die Zahlungsfähigkeit binden + Richtungslogik (entrauscht jede spätere Messung)
+- [x] `mission_supply_run.sol_distance` 2 → 1 (Hebel-Zielgröße, kürzerer Entscheidungstakt) — 2026-08-04
+- [x] `mission_aid_transport` ungegatet — zweite Frachter-Mission ohne Kenntnis-Gate, schließt zugleich die Vertrauens-Lücke von Pfad B (§4b) — 2026-08-04
+- [x] Cantina: Losgröße an die Zahlungsfähigkeit binden (höchstens ~35 % des Bestands) — 2026-08-04. **Richtungslogik** (Tauschrichtung nach Bestand statt Zufall) noch offen, siehe Phase 3, Abschnitt „Bar/Cantina" Z. 205
 - [ ] **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg (§13.7). Offen, ob Pfad C überhaupt einen großen Regolith-Hebel braucht.
 - [ ] **Harvester-Erschöpfung** (§4c): Ertrag eines Regolith-Tiles sinkt über die Zeit, damit der Harvester pro Run mehrfach umgesetzt werden muss. Schema-Grundlage existiert (`colony_tiles.resource_max`, „Basis für Erschöpfungs-Counter"), ebenso die drei Ergiebigkeitsstufen und die Verlege-Vorschau. Zielbild: ein Tile trägt ~15–25 Sole. Rate gehört in die Regolith-Herleitung (§13.7), die von einem frischen Standort ausgeht.
 - [ ] **Agrardom-Kurve am oberen Ende prüfen** (§3, §13.7). Die Mechanik stimmt: Verbrauch skaliert über `intdiv(usedSupply, 4)` mit der Ausbautiefe, es ist ein Rennen zwischen Agrardom-Level und Koloniewachstum plus Missionsproviant und Events. Ab Lv4 (41 Or/Sol gegen max. ~31 Bedarf) ist das Rennen aber entschieden und Organika hört auf, eine Sorge zu sein — offen ist, ob die Kurve dort flacher auslaufen soll oder ob Missionen/Events genug Zusatzlast tragen.
 
 ### Stufe 1c — Schema und Messbarkeit (vor allem anderen)
 
-- [ ] **`max_level` aufteilen in `max_instances` und `max_level`** (§4c, Owner-Entscheidung). Für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen. Betrifft `buildings`-Tabelle, `config/buildings.php`, `testdata.sqlite.sql`, `SyncConfig`, `placeBuilding`, Techtree-Gates. **Blockiert §13.7 und §4c.**
-- [ ] `config/buildings.php`: `harvester.max_level` angleichen, bevor jemand `game:sync-config` ausführt
-- [ ] `BotStrategy` reparieren: Schiffstyp aus dem Missionskatalog ableiten statt hartkodieren, Schiffs-Deckel an freie Slots binden, Raumfahrer in `HIRE_ORDER`
-- [ ] Verdacht auf Instanz-Decay-Bug verifizieren (`GameTick::processBuildingDecay()` schreibt ohne Instanz-Unterscheidung)
+- [x] **`max_level` aufgeteilt in `max_instances` und `max_level`** — PR #234
+- [x] `config/buildings.php`: `harvester.max_level` angeglichen — PR #235
+- [x] `BotStrategy` repariert (Raumfahrer in `HIRE_ORDER`, Schiffskauf nicht mehr auf eine Drohne gedeckelt) — PR #234
+- [x] Instanz-Decay-Bug verifiziert und gefixt (`processBuildingDecay()` filterte nicht nach `instance_id`) — PR #234
 - [ ] Post-Phase-1-Ökonomie / Verkaufsrichtung in der Cantina — eigenes Ticket, kein Blocker mehr für den Zahlensatz
 
 ### Stufe 1d — Nächste Design-Runde: die Supply-Achse

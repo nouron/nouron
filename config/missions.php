@@ -90,7 +90,7 @@ return [
 
         'mission_supply_run' => [
             'ships' => ['freighter'],
-            'sol_distance' => 2,
+            'sol_distance' => 1,
             'requires' => [],
             'reward' => ['regolith' => 25, 'organics' => 10],
             'repeatable' => true,
@@ -105,7 +105,7 @@ return [
         'mission_aid_transport' => [
             'ships' => ['freighter'],
             'sol_distance' => 2,
-            'requires' => ['knowledge' => ['health' => 1]],
+            'requires' => [], // ungegatet (Stufe 1b) — schließt Pfad-B-Vertrauenslücke, war zuvor an knowledge.health Lv1 gegatet
             'extra_cost' => ['organics' => 10], // aid cargo, on top of provisions
             'reward' => ['credits' => 60, 'trust_event' => 'encounter_won'],
             'repeatable' => true,

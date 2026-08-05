@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-08-04
+
+**Phase 3o Stufe 1b (Teil 1/3): kleine Balance-Fixes.** `mission_supply_run.sol_distance` 2→1 (kürzerer Entscheidungstakt für Pfad B). `mission_aid_transport` ungegatet (kein `knowledge.health`-Gate mehr) — schließt die Vertrauens-Lücke von Pfad B, da der Frachter vorher nur eine ungegatete Mission hatte. Cantina-Losgröße an Zahlungsfähigkeit gebunden: Kauf-Angebote (`BarService::buildOffer()`) kosten jetzt höchstens ~35 % des Credits-Bestands statt eines festen `10–50`-Einheiten-Zufallswerts — vorher lag der Erwartungswert (~1.400 Cr) weit über dem Netto-Einkommen (+5 Cr/Sol), das Angebot war faktisch nie annehmbar. Ist selbst 1 Einheit unerschwinglich, generiert die Funktion ein Tauschangebot statt eines Kaufangebots. ROADMAP Stufe 1/1c-Checkboxen für den bereits am 2026-08-03 gemergten Zahlensatz (PR #234/#235) nachgezogen — waren nicht abgehakt.
+
+**Owner-Entscheidung (Sol-1-Harvester 0 Regolith):** bestätigt gewollt. `hint_2` soll in einer Folgearbeit von der Onboarding-Spezialformulierung zu einem generellen "Regolith-Tile erschöpft, Harvester verlegen"-Alert werden — noch nicht umgesetzt, siehe ROADMAP-Einstiegshinweis Phase 3o.
+
 ## 2026-08-03 (Fortsetzung 7)
 
 **§4c-Harvester-Mechanik implementiert** (Erschöpfung, Verlegekosten, Zweitinstanz-Gate, Geologie-Bonus). Bisher war die Erschöpfungsmechanik komplett unverdrahtet — `colony_tiles.resource_max`/`resource_amount` wurden nur bei Tile-Erstellung gesetzt, nie gelesen oder abgebaut; Harvester-Produktion lief ausschließlich über die jetzt inerte `production_curve[27]`-Glockenkurve.

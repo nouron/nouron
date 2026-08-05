@@ -211,6 +211,38 @@ class BarServiceTest extends TestCase
         $this->assertFalse($exists, 'Expired unaccepted offers must be deleted on generate');
     }
 
+    public function test_generate_caps_credit_offer_price_to_affordability(): void
+    {
+        // Losgröße muss an die Zahlungsfähigkeit gebunden sein (höchstens ~35 %
+        // des Credits-Bestands) — sonst kostet ein Angebot ein Vielfaches des
+        // Netto-Einkommens und ist faktisch nie annehmbar.
+        $this->setBarLevel(3); // max concurrent slots, mehr Chancen auf Buy-Angebote
+        $this->setCredits(100);
+        $cap = (int) floor(100 * 0.35); // 35
+
+        $sawBuyOffer = false;
+        for ($tick = 100; $tick <= 400; $tick++) {
+            $this->clearBarOffers();
+            $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
+
+            $offers = DB::table('bar_offers')
+                ->where('colony_id', self::COLONY_ID)
+                ->where('give_resource_id', self::RES_CREDITS)
+                ->get();
+
+            foreach ($offers as $offer) {
+                $sawBuyOffer = true;
+                $this->assertLessThanOrEqual(
+                    $cap,
+                    $offer->give_amount,
+                    'Credit-Angebot darf höchstens ~35% des Bestands kosten'
+                );
+            }
+        }
+
+        $this->assertTrue($sawBuyOffer, 'Test setup must produce at least one credit-buy offer to be meaningful');
+    }
+
     public function test_generate_does_not_delete_accepted_expired_offers(): void
     {
         // Accepted offers are historical records — they should NOT be purged even if expired.
