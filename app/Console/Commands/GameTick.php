@@ -13,6 +13,7 @@ use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
 use App\Services\EventService;
+use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
@@ -58,6 +59,7 @@ class GameTick extends Command
         private readonly OnboardingTriggerService $onboardingTriggerService,
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
+        private readonly HarvesterEntitlementService $harvesterEntitlementService,
     ) {
         parent::__construct();
     }
@@ -401,6 +403,15 @@ class GameTick extends Command
                 $this->deepScanTarget($colonyId, $target);
             } elseif ($type === 'research_ap') {
                 $this->grantResearchAp($colonyId, $target, (int) $value);
+            } elseif ($type === 'harvester_instance') {
+                // Weg B (mission_harvester_salvage, GDD §4c "Harvester-Zweitinstanz:
+                // Bezugsquelle", freigegeben 2026-08-05): grants the earned entitlement,
+                // it does NOT place the building — the player still picks a Regolith
+                // tile via ColonyController::placeBuilding, which then arrives damaged
+                // (HarvesterEntitlementService::isSalvageSourced).
+                if ($userId !== null) {
+                    $this->harvesterEntitlementService->grantSalvage($userId);
+                }
             }
 
             $details[$type] = $value;

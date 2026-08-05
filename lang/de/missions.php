@@ -47,6 +47,13 @@ return [
     'mission_ruin_expedition_desc' => 'Wer die Ruine hinterlassen hat, ist lange fort — aber was zwischen ihren Wänden liegt, ist eine Expedition wert.',
     'mission_ruin_expedition_reward' => '150 Credits',
 
+    // TODO(content-writer): Platzhalter, GDD §4c "Harvester-Zweitinstanz: Bezugsquelle"
+    // Weg B (freigegeben 2026-08-05) — narrative Rahmung folgt (havarierte Förderanlage
+    // einer früheren Expedition, siehe GDD-Abschnitt für Details).
+    'mission_harvester_salvage_name' => 'Bergungsauftrag: Förderanlage',
+    'mission_harvester_salvage_desc' => 'In der Ruine liegt eine ausgeschlachtete Förderanlage — beschädigt, aber vielleicht noch zu retten.',
+    'mission_harvester_salvage_reward' => 'Geborgener Harvester (beschädigt)',
+
     'mission_escort_convoy_name' => 'Konvoi-Begleitung',
     'mission_escort_convoy_desc' => 'Die Korvette begleitet einen fremden Konvoi durch unwegsames Gelände — meist reicht schon ihre Silhouette am Himmel, damit nichts passiert.',
     'mission_escort_convoy_reward' => '200 Credits',
@@ -72,6 +79,7 @@ return [
     'error_knowledge_gate' => 'Der Kolonie fehlt die nötige Kenntnis für diese Mission.',
     'error_invalid_target' => 'Kein gültiges Ziel für diese Mission gewählt.',
     'error_target_consumed' => 'Diese Ruine wurde bereits geborgen.',
+    'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 

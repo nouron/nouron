@@ -428,6 +428,22 @@ class HangarService
                 }
             }
 
+            // Harvester second-instance entitlement missions (mission_harvester_salvage,
+            // GDD §4c "Harvester-Zweitinstanz: Bezugsquelle", freigegeben 2026-08-05) must
+            // not be dispatchable once the colony already holds max_instances Harvesters —
+            // the entitlement would be earned for nothing.
+            if (($mission['reward']['harvester_instance'] ?? false) === true) {
+                $harvesterInstanceCount = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', BuildingId::Harvester->value)
+                    ->whereNotNull('tile_x')
+                    ->count();
+                $maxInstances = (int) (collect(config('buildings'))->firstWhere('id', BuildingId::Harvester->value)['max_instances'] ?? 2);
+                if ($harvesterInstanceCount >= $maxInstances) {
+                    throw new RuntimeException(__('missions.error_harvester_instance_full'));
+                }
+            }
+
             // Target requirement (player-picked tile or knowledge).
             $targetJson = null;
             if (($mission['target_type'] ?? null) !== null) {

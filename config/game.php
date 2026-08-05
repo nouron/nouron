@@ -92,11 +92,43 @@ return [
         // Verlegekosten 1 → 2 AP je Hex (GDD §4c, 2026-08-03) — the relocation-frequency
         // lever, not the depletion curve itself (see GDD §4c "Der eigentliche Regler...").
         'relocate_ap_per_hex' => 2,
-        // Second harvester instance gate (GDD §4c "Die zweite Instanz braucht ein Gate"):
-        // instance 1 keeps the Regolith-free bootstrap exemption; instance 2 is a paid
-        // expansion, gated on CommandCenter level.
+        // Second harvester instance gate (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle",
+        // freigegeben 2026-08-05): instance 1 keeps the Regolith-free bootstrap exemption.
+        // Instance 2 keeps the CommandCenter-level gate, but the old flat Regolith cost is
+        // gone — the second instance is no longer a deterministic buy. It requires an
+        // entitlement earned through one of two opportunistic, not-guaranteed paths:
+        // Orin (`corporate_contact`, 400-800 Cr, see below) or the `mission_harvester_salvage`
+        // reward. See ColonyController::placeBuilding — 'harvester_second_instance_unlocked_*'
+        // onboarding-trigger keys carry the entitlement (no dedicated table needed).
         'second_instance_cc_level' => 3,
-        'second_instance_regolith_cost' => 100,
+
+        // Bergungsmission (Weg B): the salvaged instance arrives damaged, not fully
+        // productive. Deliberately mirrors missions.dispatch_min_sp_pct (0.25) — same
+        // "barely operational" threshold, not a coincidence, not re-derived. Applied
+        // against buildings.max_status_points at placement time. Full-health placement
+        // (Weg A / Orin) does not use this value.
+        'salvage_arrival_sp_pct' => 0.25,
+    ],
+
+    // Orin (`corporate_rep`, config('characters').corporate_contact) — Weg A for the
+    // Harvester second instance (GDD §4c, freigegeben 2026-08-05). A dedicated, small
+    // spawn-check modelled after MerchantService's shouldSpawn() pattern, but with its
+    // own config namespace and its own service (CorporateContactService) — NOT part of
+    // `game.merchant` / MerchantService, and NOT part of the generic BarService guest
+    // rotation. Stateless by design: no visits table, the offer is a pure function of
+    // (colony, tick) re-derived on every read and on purchase, so the display path and
+    // the buy path can't drift apart from each other.
+    //
+    // Two-level roll: level 1 = does Orin appear at all this Sol (rare — GDD character
+    // sheet calls his Cantina frequency "rare"); level 2 = does he bring the harvester
+    // deal, conditional on level 1. Both intervals/chances are explicit playtest
+    // candidates per GDD, not tuned further here.
+    'corporate_contact' => [
+        'appearance_interval_min' => 15,   // Sole between level-1 appearances (playtest candidate)
+        'appearance_interval_max' => 25,
+        'offer_chance' => 0.30,            // level-2: chance the appearance carries the harvester deal (GDD range 25-35%)
+        'price_min' => 400,                // Cr (GDD-confirmed range, 2026-08-05)
+        'price_max' => 800,
     ],
 
     // Geology (config/knowledge.php id 92) production bonus — first of at most two

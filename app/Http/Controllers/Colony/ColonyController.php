@@ -7,6 +7,7 @@ use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
+use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
@@ -35,6 +36,7 @@ class ColonyController extends BaseController
         private readonly EventService $eventService,
         private readonly ResourcesService $resourcesService,
         private readonly TrustService $trustService,
+        private readonly HarvesterEntitlementService $harvesterEntitlementService,
     ) {
         parent::__construct($tick);
     }
@@ -361,11 +363,16 @@ class ColonyController extends BaseController
             return $this->fail('harvester_in_transit');
         }
 
-        // Second Harvester instance gate (GDD §4c "Die zweite Instanz braucht ein
-        // Gate"): instance 1 keeps the Regolith-free bootstrap exemption; instance 2
-        // is a paid expansion, gated on CommandCenter level. Only applies to the
-        // FRESH placement (not a subsequent relocation of an already-placed instance 2).
+        // Second Harvester instance gate (GDD §4c "Harvester-Zweitinstanz:
+        // Bezugsquelle", freigegeben 2026-08-05): instance 1 keeps the Regolith-free
+        // bootstrap exemption. Instance 2 keeps the CommandCenter-level gate, but is no
+        // longer a deterministic Regolith buy — it requires an opportunistic entitlement
+        // earned via Weg A (Orin's purchase, CorporateContactService) or Weg B
+        // (mission_harvester_salvage reward), see HarvesterEntitlementService. Only
+        // applies to the FRESH placement (not a subsequent relocation of an
+        // already-placed instance 2).
         $isSecondInstanceFreshPlacement = $isHarvester && $requestedInstanceId === 2 && ! $isHarvesterMove;
+        $secondInstanceIsSalvageSourced = false;
 
         if ($isSecondInstanceFreshPlacement) {
             $requiredCcLevel = (int) config('game.harvester.second_instance_cc_level', 3);
@@ -378,13 +385,11 @@ class ColonyController extends BaseController
                 return $this->fail('harvester_second_instance_cc_gate');
             }
 
-            $secondInstanceCost = (int) config('game.harvester.second_instance_regolith_cost', 100);
-            if (! config('game.bypass.resource_costs')
-                && ! $this->resourcesService->check([['resource_id' => self::RES_REGOLITH, 'amount' => $secondInstanceCost]], $colony->id)) {
-                return $this->fail('resource_limit', __('colony.error_insufficient_resources'), [
-                    'cost' => [self::RES_REGOLITH => $secondInstanceCost],
-                ]);
+            if (! $this->harvesterEntitlementService->hasEntitlement(Auth::id())) {
+                return $this->fail('harvester_second_instance_locked');
             }
+
+            $secondInstanceIsSalvageSourced = $this->harvesterEntitlementService->isSalvageSourced(Auth::id());
         }
 
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.
@@ -415,18 +420,13 @@ class ColonyController extends BaseController
             ]);
         }
 
-        // Resource + supply gate. Harvester relocation (and its first, bootstrap
-        // instance) is free — CC/Harvester carry no build_cost. The Harvester's
-        // SECOND instance is the one exception: a paid expansion (GDD §4c), charged
-        // its own flat Regolith cost instead of the generic buildCostFor() lookup
-        // (Harvester has no build_cost entry at all). Checked before any DB write so
-        // a failed gate leaves the colony untouched.
-        $buildCost = match (true) {
-            $isSecondInstanceFreshPlacement => [self::RES_REGOLITH => (int) config('game.harvester.second_instance_regolith_cost', 100)],
-            $isHarvester => [],
-            default => $this->buildCostFor((int) $data['building_id']),
-        };
-        $chargesBuildCost = ! $isHarvester || $isSecondInstanceFreshPlacement;
+        // Resource + supply gate. Harvester relocation (and both instances — the first
+        // stays the bootstrap exemption, the second is now paid in Credits via Orin or
+        // in reparation effort via the salvage mission, not in Regolith at placement
+        // time, GDD §4c 2026-08-05) is free — CC/Harvester carry no build_cost. Checked
+        // before any DB write so a failed gate leaves the colony untouched.
+        $buildCost = $isHarvester ? [] : $this->buildCostFor((int) $data['building_id']);
+        $chargesBuildCost = ! $isHarvester;
 
         if ($chargesBuildCost) {
             if (! config('game.bypass.resource_costs') && $buildCost !== []) {
@@ -500,12 +500,20 @@ class ColonyController extends BaseController
                     ->update($update);
                 $nextInstanceId = (int) $existingBuilding->instance_id;
             } else {
+                $maxSp = (int) ($building->max_status_points ?? 20);
+                // Salvage-sourced second Harvester instance (Weg B, GDD §4c 2026-08-05):
+                // arrives damaged, not fully productive — the "cheaper but not free" trade
+                // against Orin's Credits price (Weg A, always full health).
+                $initialStatusPoints = $secondInstanceIsSalvageSourced
+                    ? (int) round($maxSp * (float) config('game.harvester.salvage_arrival_sp_pct', 0.25))
+                    : $maxSp;
+
                 DB::table('colony_buildings')->insert([
                     'colony_id' => $colony->id,
                     'building_id' => $data['building_id'],
                     'instance_id' => $requestedInstanceId,
                     'level' => 0,
-                    'status_points' => $building->max_status_points ?? 20,
+                    'status_points' => $initialStatusPoints,
                     'ap_spend' => 1,
                     'tile_x' => $data['q'],
                     'tile_y' => $data['r'],

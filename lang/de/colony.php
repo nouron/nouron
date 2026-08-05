@@ -153,6 +153,7 @@ return [
     'error_tile_outside_colony' => 'Dieses Tile liegt außerhalb der Koloniezone.',
     'error_harvester_needs_regolith' => 'Harvester kann nur auf Regolith-Tiles platziert werden.',
     'error_harvester_second_instance_cc_gate' => 'Zweiter Harvester erst ab Kommandozentrale Level 3 möglich.',
+    'error_harvester_second_instance_locked' => 'Für einen zweiten Harvester braucht es einen Bezugsweg — ein Angebot von Orin in der Cantina oder eine geborgene Anlage.',
     'harvester_move' => 'Verlegen',
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone anklicken — zeigt Vorschaupfeil mit AP-Kosten. Gedrückt halten zum Verlegen.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',

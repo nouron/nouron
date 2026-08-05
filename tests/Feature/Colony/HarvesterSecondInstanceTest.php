@@ -3,6 +3,7 @@
 namespace Tests\Feature\Colony;
 
 use App\Models\User;
+use App\Services\HarvesterEntitlementService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -10,12 +11,14 @@ use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 /**
- * Second Harvester instance gate (GDD §4c "Die zweite Instanz braucht ein Gate",
- * freigegeben 2026-08-03).
+ * Second Harvester instance gate (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle",
+ * freigegeben 2026-08-05).
  *
- * Instance 1 keeps the Regolith-free bootstrap exemption (§3). Instance 2 is a
- * paid expansion: requires CommandCenter Lv3 AND costs a flat 100 Regolith —
- * not the generic buildCostFor() path (Harvester has no build_cost entry).
+ * Instance 1 keeps the Regolith-free bootstrap exemption (§3). Instance 2 keeps the
+ * CommandCenter Lv3 gate, but the old flat 100 Regolith cost is gone — it now requires
+ * an opportunistic entitlement (HarvesterEntitlementService) earned via Weg A (Orin's
+ * purchase) or Weg B (mission_harvester_salvage). Salvage-sourced instances arrive
+ * damaged (~25% SP); purchase-sourced instances arrive at full health.
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart), harvester building_id=27,
  * CC building_id=25.
@@ -98,6 +101,11 @@ class HarvesterSecondInstanceTest extends TestCase
             ->value('amount');
     }
 
+    private function entitlementService(): HarvesterEntitlementService
+    {
+        return $this->app->make(HarvesterEntitlementService::class);
+    }
+
     private function placeSecondInstance()
     {
         return $this->actingAs($this->makeUser())
@@ -119,28 +127,64 @@ class HarvesterSecondInstanceTest extends TestCase
     public function test_second_instance_rejected_before_cc_level_3(): void
     {
         $this->setCcLevel(2);
-        $this->setRegolith(500);
+        $this->entitlementService()->grantPurchase(self::BART_USER_ID);
 
         $response = $this->placeSecondInstance();
 
         $response->assertStatus(422)->assertJsonPath('ok', false);
         $this->assertSame('harvester_second_instance_cc_gate', $response->json('error'));
         $this->assertNull($this->instance2Row(), 'No instance 2 row must be created when the CC gate fails');
-        $this->assertSame(500, $this->regolithAmount(), 'Regolith must not be deducted when the gate fails');
     }
 
-    public function test_second_instance_accepted_after_cc_level_3_with_enough_regolith(): void
+    public function test_second_instance_rejected_without_entitlement_even_at_cc_level_3(): void
     {
         $this->setCcLevel(3);
-        $this->setRegolith(150);
+        // No entitlement granted — neither purchase nor salvage.
+
+        $response = $this->placeSecondInstance();
+
+        $response->assertStatus(422)->assertJsonPath('ok', false);
+        $this->assertSame('harvester_second_instance_locked', $response->json('error'));
+        $this->assertNull($this->instance2Row(), 'No instance 2 row must be created without an earned entitlement');
+    }
+
+    public function test_second_instance_accepted_with_purchase_entitlement_costs_no_regolith(): void
+    {
+        $this->setCcLevel(3);
+        $this->setRegolith(0);
+        $this->entitlementService()->grantPurchase(self::BART_USER_ID);
 
         $response = $this->placeSecondInstance();
 
         $response->assertOk()->assertJsonPath('ok', true);
         $row = $this->instance2Row();
-        $this->assertNotNull($row, 'Instance 2 must be created once the CC gate is met');
+        $this->assertNotNull($row, 'Instance 2 must be created once CC gate + entitlement are met');
         $this->assertSame(-3, (int) $row->tile_x);
-        $this->assertSame(150 - 100, $this->regolithAmount(), 'Second instance must cost exactly 100 Regolith');
+        $this->assertSame(0, $this->regolithAmount(), 'Weg A (purchase) charges Credits, not Regolith — placement itself must stay free');
+    }
+
+    public function test_second_instance_via_purchase_arrives_at_full_health(): void
+    {
+        $this->setCcLevel(3);
+        $this->entitlementService()->grantPurchase(self::BART_USER_ID);
+
+        $this->placeSecondInstance()->assertOk()->assertJsonPath('ok', true);
+
+        $maxSp = (int) DB::table('buildings')->where('id', self::HARVESTER_ID)->value('max_status_points');
+        $this->assertSame($maxSp, (int) $this->instance2Row()->status_points, 'Purchase-sourced instance must arrive undamaged');
+    }
+
+    public function test_second_instance_via_salvage_arrives_damaged(): void
+    {
+        $this->setCcLevel(3);
+        $this->entitlementService()->grantSalvage(self::BART_USER_ID);
+        config(['game.harvester.salvage_arrival_sp_pct' => 0.25]);
+
+        $this->placeSecondInstance()->assertOk()->assertJsonPath('ok', true);
+
+        $maxSp = (int) DB::table('buildings')->where('id', self::HARVESTER_ID)->value('max_status_points');
+        $expected = (int) round($maxSp * 0.25);
+        $this->assertSame($expected, (int) $this->instance2Row()->status_points, 'Salvage-sourced instance must arrive at ~25% SP');
     }
 
     /**
@@ -155,7 +199,7 @@ class HarvesterSecondInstanceTest extends TestCase
     public function test_second_instance_produces_only_after_being_leveled_up_via_invest(): void
     {
         $this->setCcLevel(3);
-        $this->setRegolith(150);
+        $this->entitlementService()->grantPurchase(self::BART_USER_ID);
         $this->placeSecondInstance()->assertOk()->assertJsonPath('ok', true);
 
         $this->assertSame(0, $this->instance2Row()->level, 'Freshly placed instance 2 starts at level 0, same as any other instanced building');
@@ -188,22 +232,9 @@ class HarvesterSecondInstanceTest extends TestCase
         $this->assertGreaterThan($before, $this->regolithAmount(), 'Instance 2 must produce once levelled to 1, exactly like instance 1');
     }
 
-    public function test_second_instance_rejected_without_enough_regolith(): void
-    {
-        $this->setCcLevel(3);
-        $this->setRegolith(50);
-
-        $response = $this->placeSecondInstance();
-
-        $response->assertStatus(422)->assertJsonPath('ok', false);
-        $this->assertSame('resource_limit', $response->json('error'));
-        $this->assertNull($this->instance2Row(), 'No instance 2 row must be created when Regolith is insufficient');
-        $this->assertSame(50, $this->regolithAmount(), 'Regolith must not be deducted when the check fails');
-    }
-
     public function test_first_instance_stays_regolith_free_regardless_of_cc_level(): void
     {
-        // Regression guard: the gate/cost must apply ONLY to instance 2 — moving
+        // Regression guard: the gate/entitlement must apply ONLY to instance 2 — moving
         // instance 1 stays free at any CC level (bootstrap exemption, GDD §3).
         $this->setCcLevel(1);
         $this->setRegolith(0);

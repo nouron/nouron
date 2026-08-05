@@ -565,6 +565,50 @@ class HangarServiceTest extends TestCase
         $this->hangarService->dispatchShip(self::COLONY_ID, 2, 'mission_ruin_expedition', ['q' => 5, 'r' => -2]);
     }
 
+    public function test_dispatch_ship_throws_for_harvester_salvage_when_two_instances_already_placed(): void
+    {
+        // GDD §4c "Harvester-Zweitinstanz: Bezugsquelle" (2026-08-05): the salvage
+        // mission must not be dispatchable once the colony already holds both
+        // Harvester instances — the entitlement would be earned for nothing.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 2],
+            ['level' => 0, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 2, 'tile_y' => 2]
+        );
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
+    }
+
+    public function test_dispatch_ship_succeeds_for_harvester_salvage_when_only_one_instance_placed(): void
+    {
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)->where('instance_id', 2)
+            ->delete();
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
+
+        $mission = DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)->where('state', 'active')->first();
+        $this->assertNotNull($mission);
+    }
+
     // ── organikaCostFor ───────────────────────────────────────────────────────
 
     public function test_organika_cost_scales_down_with_knowledge_level_above_gate(): void
