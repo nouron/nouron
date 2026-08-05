@@ -213,6 +213,28 @@ class ResourcesService
     }
 
     /**
+     * Colony's Organika need for the current Sol (GDD §14 Hunger-Mechanik).
+     *
+     * food_need = floor(used_supply / supply_per_eater), where used_supply sums
+     * cb.level × b.supply_cost over every colony_buildings row at level > 0. Kept
+     * as the single source of truth for this formula — GameTick::processFoodConsumption()
+     * and any reserve-floor check gated on the food buffer (e.g. Corvan's Organika-Verkauf,
+     * GDD §4b/§12) must read it from here rather than re-deriving it.
+     */
+    public function foodNeed(int $colonyId): int
+    {
+        $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
+
+        $usedSupply = (int) DB::table('colony_buildings as cb')
+            ->join('buildings as b', 'b.id', '=', 'cb.building_id')
+            ->where('cb.colony_id', $colonyId)
+            ->where('cb.level', '>', 0)
+            ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
+
+        return intdiv($usedSupply, $perEater);
+    }
+
+    /**
      * Breakdown of a colony's supply cap and usage, for display in the resource-bar
      * SUP chip popup (so the player can see e.g. "CC → 10, 3× Wohnhabitat → 24" and
      * where the used supply actually goes, instead of just a single opaque number).

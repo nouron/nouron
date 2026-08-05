@@ -2668,6 +2668,15 @@ dialog[x-ref="discoveryDialog"] {
     z-index: 1;
 }
 
+/* Corvan's Alltagsgeschäft offer badge (GDD §12 Kanal 1) — gold/credits accent
+   (matches .res-Cr's border-color in resources.css) instead of the urgent-red
+   merchant-visit badge, so a Corvan commodity offer reads as "trade opportunity",
+   not "don't miss this". */
+.hotspot-badge--corvan {
+    background: #e6c84a;
+    color: var(--color-anthracite, #333333);
+}
+
 .cantina-hotspot i {
     font-size: 1.5rem;
     pointer-events: none;

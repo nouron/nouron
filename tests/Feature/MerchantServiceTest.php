@@ -11,7 +11,8 @@ namespace Tests\Feature;
  *    - test_should_spawn_returns_false_before_first_appearance_min
  *    - test_should_spawn_returns_false_when_active_visit_exists
  *    - test_should_spawn_returns_false_when_interval_min_not_elapsed
- *    - test_should_spawn_returns_true_when_conditions_met
+ *    - test_should_spawn_eventually_returns_true_within_first_appearance_window
+ *    - test_should_spawn_visit_gap_falls_within_configured_interval
  *
  *  getActiveVisit
  *    - test_get_active_visit_returns_visit_within_range
@@ -22,6 +23,14 @@ namespace Tests\Feature;
  *    - test_spawn_visit_creates_one_merchant_visits_row
  *    - test_spawn_visit_creates_correct_number_of_items
  *    - test_spawn_visit_items_have_required_fields
+ *
+ *  spawnVisit — Corvan commodity offers (GDD §4b/§12, Freigegeben 2026-08-05)
+ *    - test_spawn_visit_creates_organics_sell_lots
+ *    - test_spawn_visit_sell_lots_expire_with_the_visit
+ *    - test_spawn_visit_creates_buy_offer_when_affordable
+ *    - test_spawn_visit_omits_buy_offer_when_unaffordable
+ *    - test_spawn_visit_sell_lots_respect_reserve_floor
+ *    - test_spawn_visit_without_commodity_config_creates_no_bar_offers
  *
  *  buyItem
  *    - test_buy_item_returns_false_when_item_not_found
@@ -200,15 +209,66 @@ class MerchantServiceTest extends TestCase
         $this->assertFalse($result, 'shouldSpawn must return false when interval_min has not elapsed since last visit');
     }
 
-    public function test_should_spawn_returns_true_when_conditions_met(): void
+    public function test_should_spawn_eventually_returns_true_within_first_appearance_window(): void
     {
-        // No prior visits, tick=17 >= first_appearance_min=15.
-        // Deterministic seed check for colonyId=1, tick=17:
-        //   seed = 1*1664525 + 17*1013904223 = 17238036316
-        //   hash = 58167132, frac ≈ 0.0271 < 0.08 (=1/12.5) → true
-        $result = $this->service->shouldSpawn(self::COLONY_ID, 17);
+        // No prior visits — the first spawn must land within [first_appearance_min,
+        // first_appearance_max], not open-endedly later or never (a probability roll
+        // that never crosses its threshold would silently break the merchant forever).
+        $firstMin = (int) config('game.merchant.first_appearance_min', 15);
+        $firstMax = (int) config('game.merchant.first_appearance_max', 20);
 
-        $this->assertTrue($result, 'shouldSpawn must return true when no prior visits and tick passes the random threshold');
+        $spawnedAt = null;
+        for ($tick = $firstMin; $tick <= $firstMax; $tick++) {
+            if ($this->service->shouldSpawn(self::COLONY_ID, $tick)) {
+                $spawnedAt = $tick;
+                break;
+            }
+        }
+
+        $this->assertNotNull($spawnedAt, 'shouldSpawn must return true at least once within the first-appearance window');
+    }
+
+    public function test_should_spawn_visit_gap_falls_within_configured_interval(): void
+    {
+        // GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina"
+        // (Direction 1): the recurring visit gap must land within
+        // [interval_min, interval_max] — not the composed
+        // "cooldown + independent probability roll" of the old implementation,
+        // which pushed the real average gap well past interval_max.
+        config(['game.merchant.interval_min' => 5, 'game.merchant.interval_max' => 8]);
+        $this->service = $this->app->make(MerchantService::class);
+
+        $intervalMin = (int) config('game.merchant.interval_min');
+        $intervalMax = (int) config('game.merchant.interval_max');
+
+        $lastEnd = null;
+        $gaps = [];
+
+        for ($tick = 15; $tick <= 200 && count($gaps) < 10; $tick++) {
+            if ($this->service->getActiveVisit(self::COLONY_ID, $tick)) {
+                continue;
+            }
+
+            if ($this->service->shouldSpawn(self::COLONY_ID, $tick)) {
+                if ($lastEnd !== null) {
+                    $gaps[] = $tick - $lastEnd;
+                }
+
+                $this->service->spawnVisit(self::COLONY_ID, $tick);
+                $visit = DB::table('merchant_visits')
+                    ->where('colony_id', self::COLONY_ID)
+                    ->orderBy('id', 'desc')
+                    ->first();
+                $lastEnd = (int) $visit->tick_end;
+            }
+        }
+
+        $this->assertGreaterThanOrEqual(3, count($gaps), 'Test setup must observe several visit gaps to be meaningful');
+
+        foreach ($gaps as $gap) {
+            $this->assertGreaterThanOrEqual($intervalMin, $gap, "Visit gap {$gap} must be >= interval_min");
+            $this->assertLessThanOrEqual($intervalMax, $gap, "Visit gap {$gap} must be <= interval_max");
+        }
     }
 
     // ── getActiveVisit ────────────────────────────────────────────────────────
@@ -283,6 +343,143 @@ class MerchantServiceTest extends TestCase
             $this->assertNotEmpty($item->label, 'Each item must have a non-empty label');
             $this->assertGreaterThan(0, $item->cost_credits, 'Each item must have a positive cost_credits');
         }
+    }
+
+    // ── spawnVisit — Corvan commodity offers (GDD §4b/§12) ──────────────────────
+
+    private static function commodityConfig(): array
+    {
+        return [
+            'sell_resource_id' => 5,
+            'sell_price_per_unit' => 35,
+            'sell_lot_count_min' => 2,
+            'sell_lot_count_max' => 3,
+            'sell_lot_size_min' => 15,
+            'sell_lot_size_max' => 25,
+            'sell_reserve_multiplier' => 2,
+            'compounds_bias_at_rank3' => 0.50,
+        ];
+    }
+
+    /** Zero out every seeded colony_buildings row so ResourcesService::foodNeed() is deterministically 0. */
+    private function zeroFoodNeed(): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->update(['level' => 0]);
+        // Bar itself must stay built for spawnVisit's precondition-independent generation to matter in context.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 52)
+            ->update(['level' => 1]);
+    }
+
+    public function test_spawn_visit_creates_organics_sell_lots(): void
+    {
+        config(['game.merchant' => array_merge(self::merchantConfig(), ['commodity' => self::commodityConfig()])]);
+        $this->service = $this->app->make(MerchantService::class);
+        $this->zeroFoodNeed();
+        $this->setColonyResource(5, 1000); // ample organics stock
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $sellLots = DB::table('bar_offers')
+            ->where('visit_id', $visit->id)
+            ->where('give_resource_id', 5)
+            ->where('get_resource_id', 1)
+            ->get();
+
+        $this->assertGreaterThanOrEqual(2, $sellLots->count(), 'spawnVisit must create at least sell_lot_count_min Organika sell lots');
+        $this->assertLessThanOrEqual(3, $sellLots->count(), 'spawnVisit must not exceed sell_lot_count_max Organika sell lots');
+
+        foreach ($sellLots as $lot) {
+            $this->assertGreaterThanOrEqual(15, $lot->give_amount);
+            $this->assertLessThanOrEqual(25, $lot->give_amount);
+            $this->assertEquals(35 * $lot->give_amount, $lot->get_amount, 'Sell lot payout must be size × sell_price_per_unit');
+        }
+    }
+
+    public function test_spawn_visit_sell_lots_expire_with_the_visit(): void
+    {
+        config(['game.merchant' => array_merge(self::merchantConfig(), ['commodity' => self::commodityConfig()])]);
+        $this->service = $this->app->make(MerchantService::class);
+        $this->zeroFoodNeed();
+        $this->setColonyResource(5, 1000);
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $lot = DB::table('bar_offers')->where('visit_id', $visit->id)->where('give_resource_id', 5)->first();
+
+        // Active predicate elsewhere is expires_tick > tick — must still be active
+        // at tick_end (21) and expired right after.
+        $this->assertGreaterThan($visit->tick_end, $lot->expires_tick);
+    }
+
+    public function test_spawn_visit_creates_buy_offer_when_affordable(): void
+    {
+        config(['game.merchant' => array_merge(self::merchantConfig(), ['commodity' => self::commodityConfig()])]);
+        $this->service = $this->app->make(MerchantService::class);
+        $this->zeroFoodNeed();
+        $this->setCredits(100000);
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $buyOffer = DB::table('bar_offers')
+            ->where('visit_id', $visit->id)
+            ->where('give_resource_id', 1)
+            ->first();
+
+        $this->assertNotNull($buyOffer, 'spawnVisit must create a Credits→resource buy offer when affordable');
+        $this->assertContains((int) $buyOffer->get_resource_id, [3, 4, 5]);
+    }
+
+    public function test_spawn_visit_omits_buy_offer_when_unaffordable(): void
+    {
+        config(['game.merchant' => array_merge(self::merchantConfig(), ['commodity' => self::commodityConfig()])]);
+        $this->service = $this->app->make(MerchantService::class);
+        $this->zeroFoodNeed();
+        $this->setCredits(0);
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $buyOffer = DB::table('bar_offers')->where('visit_id', $visit->id)->where('give_resource_id', 1)->first();
+
+        $this->assertNull($buyOffer, 'spawnVisit must not create a buy offer Corvan cannot sell — no barter fallback for Corvan');
+    }
+
+    public function test_spawn_visit_sell_lots_respect_reserve_floor(): void
+    {
+        config(['game.merchant' => array_merge(self::merchantConfig(), ['commodity' => self::commodityConfig()])]);
+        $this->service = $this->app->make(MerchantService::class);
+        $this->zeroFoodNeed(); // food_need = 0 → reserve floor = 0 → stock itself is the only limit
+        $this->setColonyResource(5, 10); // too little for even one 15-unit lot
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $sellLots = DB::table('bar_offers')
+            ->where('visit_id', $visit->id)
+            ->where('give_resource_id', 5)
+            ->count();
+
+        $this->assertEquals(0, $sellLots, 'No sell lot may be generated when the reserve floor blocks even the smallest lot size');
+    }
+
+    public function test_spawn_visit_without_commodity_config_creates_no_bar_offers(): void
+    {
+        // Default merchantConfig() (used across the older spawnVisit tests above)
+        // has no 'commodity' key — spawnVisit must not error and must not create
+        // any bar_offers rows in that case.
+        $this->setColonyResource(5, 1000);
+        $this->setCredits(100000);
+
+        $this->service->spawnVisit(self::COLONY_ID, 20);
+
+        $visit = DB::table('merchant_visits')->where('colony_id', self::COLONY_ID)->first();
+        $count = DB::table('bar_offers')->where('visit_id', $visit->id)->count();
+
+        $this->assertEquals(0, $count);
     }
 
     // ── buyItem ───────────────────────────────────────────────────────────────

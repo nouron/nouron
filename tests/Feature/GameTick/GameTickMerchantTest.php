@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\GameTick;
 
+use App\Services\MerchantService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -85,25 +86,46 @@ class GameTickMerchantTest extends TestCase
         );
     }
 
-    /** Find a tick >= first_appearance_min where the merchant seed passes for colony 1. */
+    /**
+     * Find a tick >= first_appearance_min where MerchantService::shouldSpawn()
+     * would return true for colony 1 — delegates to the actual service (a pure
+     * read-check with no side effects) instead of re-deriving its formula, so this
+     * helper never drifts out of sync with the real spawn algorithm.
+     *
+     * Probes with the Bar temporarily enabled (level=1) regardless of the test's
+     * own fixture state, then restores it — the spawn *tick* itself does not
+     * depend on the Bar precondition, only whether a visit actually spawns does,
+     * and some callers (e.g. "does not spawn without a Bar") deliberately test
+     * with the Bar disabled.
+     */
     private function findSpawnableTick(int $startFrom = self::FIRST_MIN): ?int
     {
-        $colonyId = self::COLONY_ID;
-        $intervalMin = (int) config('game.merchant.interval_min', 10);
-        $intervalMax = (int) config('game.merchant.interval_max', 15);
-        $intervalAvg = ($intervalMin + $intervalMax) / 2.0;
-        $threshold = 1.0 / $intervalAvg;
+        $originalLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::BAR_ID)
+            ->value('level');
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::BAR_ID)
+            ->update(['level' => 1]);
+
+        $service = app(MerchantService::class);
+        $found = null;
 
         for ($tick = $startFrom; $tick < $startFrom + 200; $tick++) {
-            $seed = $colonyId * 1664525 + $tick * 1013904223;
-            $hash = abs($seed & 0x7FFFFFFF);
-            $frac = $hash / 0x7FFFFFFF;
-            if ($frac < $threshold) {
-                return $tick;
+            if ($service->shouldSpawn(self::COLONY_ID, $tick)) {
+                $found = $tick;
+                break;
             }
         }
 
-        return null;
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::BAR_ID)
+            ->update(['level' => $originalLevel]);
+
+        return $found;
     }
 
     private function getVisit(): ?object
@@ -135,6 +157,12 @@ class GameTickMerchantTest extends TestCase
     public function test_merchant_spawns_when_all_conditions_met(): void
     {
         $this->enableBar();
+        // Ample Organika so Corvan's commodity sell lots also generate through
+        // the real production config, not just the special-item pool.
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'resource_id' => 5],
+            ['amount' => 1000]
+        );
 
         $spawnTick = $this->findSpawnableTick(self::FIRST_MIN);
 
@@ -146,6 +174,12 @@ class GameTickMerchantTest extends TestCase
 
         $visit = $this->getVisit();
         $this->assertNotNull($visit, 'merchant_visits row must be created when merchant spawns');
+
+        // GDD §4b/§12: Corvan's Alltagsgeschäft (commodity bar_offers tied to this
+        // visit) must be produced through the real game:tick path, not just when
+        // spawnVisit() is called directly with test-local config.
+        $commodityOfferCount = DB::table('bar_offers')->where('visit_id', $visit->id)->count();
+        $this->assertGreaterThan(0, $commodityOfferCount, 'game:tick must produce at least one Corvan commodity bar_offer alongside the special-item visit');
     }
 
     /**

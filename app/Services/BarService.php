@@ -43,11 +43,7 @@ class BarService
             ->delete();
 
         // Trader advisor rank (0 if none assigned)
-        $traderRank = (int) (DB::table('advisors')
-            ->where('colony_id', $colonyId)
-            ->where('personell_id', self::TRADER_ADVISOR_ID)
-            ->whereNull('unavailable_until_tick')
-            ->value('rank') ?? 0);
+        $traderRank = $this->traderRank($colonyId);
 
         [$minGuests, $maxGuests] = config("game.bar.guest_count.{$traderRank}", [0, 1]);
         $guestCount = $this->pseudoRand($colonyId * 997 + $tick * 31, $minGuests, $maxGuests);
@@ -56,13 +52,17 @@ class BarService
             return;
         }
 
-        // Cap to level_max_concurrent — don't exceed simultaneous active slots
+        // Cap to level_max_concurrent — don't exceed simultaneous active guest slots.
+        // Corvan's commodity offers (bar_offers.visit_id set, GDD §12 Kanal 1) have
+        // their own budget from game.merchant.commodity and must not consume — or be
+        // consumed by — the generic guest rotation's slot count.
         $levelMaxConcurrent = config('game.bar.level_max_concurrent', []);
         $maxConcurrent = $levelMaxConcurrent[$barLevel] ?? 2;
         $activeCount = DB::table('bar_offers')
             ->where('colony_id', $colonyId)
             ->where('expires_tick', '>', $tick)
             ->where('is_accepted', false)
+            ->whereNull('visit_id')
             ->count();
         $guestCount = min($guestCount, max(0, $maxConcurrent - $activeCount));
 
@@ -75,15 +75,11 @@ class BarService
         $expiresTick = $tick + $duration;
         $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
-        $variance = (float) config('game.bar.price_variance', 0.20);
-
-        $userId = DB::table('v_glx_colonies')->where('id', $colonyId)->value('user_id');
-        $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
 
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
             [$giveResId, $giveAmount, $getResId, $getAmount] =
-                $this->buildOffer($seed, $basePrices, $variance, $discount, $traderRank, $credits);
+                $this->buildBarterOffer($seed, $basePrices, $discount);
 
             BarOffer::create([
                 'colony_id' => $colonyId,
@@ -150,6 +146,21 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
         }
 
+        // Reserve floor (GDD §4b) — only for Corvan's Organika sell offers
+        // (visit_id set). Re-checked here, not just at generation, because stock
+        // can drop between generation and accept (an earlier lot accepted in the
+        // same visit, or ongoing food consumption) — see generateCommodityOffers().
+        if ($offer->visit_id !== null) {
+            $sellResId = (int) config('game.merchant.commodity.sell_resource_id', 5);
+            if ((int) $offer->give_resource_id === $sellResId) {
+                $reserveMultiplier = (int) config('game.merchant.commodity.sell_reserve_multiplier', 2);
+                $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
+                if (($giveBalance - $offer->give_amount) < $reserve) {
+                    return ['ok' => false, 'error' => __('colony.bar_offer_reserve_floor')];
+                }
+            }
+        }
+
         // Execute trade atomically — partial transfer must not persist
         DB::transaction(function () use ($offer, $colonyId, $apCost): void {
             $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
@@ -209,11 +220,7 @@ class BarService
             return ['ok' => false, 'error' => __('colony.bar_offer_expired')];
         }
 
-        $traderRank = (int) (DB::table('advisors')
-            ->where('colony_id', $colonyId)
-            ->where('personell_id', self::TRADER_ADVISOR_ID)
-            ->whereNull('unavailable_until_tick')
-            ->value('rank') ?? 0);
+        $traderRank = $this->traderRank($colonyId);
 
         if ($traderRank < 1) {
             return ['ok' => false, 'error' => __('colony.bar_offer_no_consul')];
@@ -303,44 +310,57 @@ class BarService
     }
 
     /**
-     * Build a single offer deterministically from seed.
-     * Returns [give_resource_id, give_amount, get_resource_id, get_amount].
-     * Offer types: resource→credits (buy) or barter (resource↔resource).
+     * Build a Credits→resource "buy" offer for Corvan's Alltagsgeschäft (GDD §12
+     * Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina"). This replaces
+     * the generic-guest credits offer type removed from generateOffersForColony() —
+     * the anonymous guest rotation no longer trades Credits at all.
+     *
+     * Unlike the old generic-guest type, there is no barter fallback: Corvan
+     * doesn't barter. If even 1 unit is unaffordable at the given credits balance,
+     * this returns null and the caller simply omits the buy offer for that visit —
+     * the sell lots (Organika→Credits, see §4b) still stand on their own.
+     *
+     * @return array{0:int,1:int,2:int,3:int}|null [give_resource_id, give_amount, get_resource_id, get_amount]
      */
-    private function buildOffer(int $seed, array $basePrices, float $variance, float $discount, int $traderRank = 0, int $credits = 0): array
+    public function buildCorvanBuyOffer(int $seed, int $traderRank, int $credits): ?array
     {
-        // 60% resource-for-credits, 40% barter
-        $type = $this->pseudoRand($seed, 0, 9);
+        $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
+        $variance = (float) config('game.bar.price_variance', 0.20);
+        $discount = (float) config("game.bar.trader_discount.{$traderRank}", 0.0);
 
-        if ($type < 6) {
-            // Player pays Credits, gets a tradeable resource.
-            // At rank 3 the trader has compound connections — bias towards compounds.
-            $compoundsBias = (float) config('game.bar.compounds_bias_at_rank3', 0.50);
-            if ($traderRank >= 3 && $this->pseudoRand($seed + 10, 0, 99) < (int) ($compoundsBias * 100)) {
-                $getResId = 4; // compounds
-            } else {
-                $getResId = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
-            }
-            $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
-            $basePrice = $basePrices[$getResId] ?? 40;
-            $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
-            $unitPrice = max(0.01, $rawPrice * (1 - $discount));
-
-            // Losgröße an die Zahlungsfähigkeit binden (höchstens ~35% des
-            // Credits-Bestands), sonst kostet ein Angebot ein Vielfaches des
-            // Netto-Einkommens und ist faktisch nie annehmbar. Ist selbst 1
-            // Einheit unerschwinglich, gibt es kein Kauf- sondern ein Tauschangebot.
-            $affordableCap = max(10, (int) floor($credits * 0.35));
-            if ($unitPrice > $affordableCap) {
-                return $this->buildBarterOffer($seed, $basePrices, $discount);
-            }
-            $getAmount = min($getAmount, max(1, (int) floor($affordableCap / $unitPrice)));
-            $finalPrice = (int) max(1, round($unitPrice * $getAmount));
-
-            return [self::RES_CREDITS, $finalPrice, $getResId, $getAmount];
+        // At rank 3 Corvan has compound connections — bias towards compounds.
+        $compoundsBias = (float) config('game.merchant.commodity.compounds_bias_at_rank3', 0.50);
+        if ($traderRank >= 3 && $this->pseudoRand($seed + 10, 0, 99) < (int) ($compoundsBias * 100)) {
+            $getResId = 4; // compounds
         } else {
-            return $this->buildBarterOffer($seed, $basePrices, $discount);
+            $getResId = self::TRADEABLE[$this->pseudoRand($seed + 1, 0, count(self::TRADEABLE) - 1)];
         }
+        $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
+        $basePrice = $basePrices[$getResId] ?? 40;
+        $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
+        $unitPrice = max(0.01, $rawPrice * (1 - $discount));
+
+        // Losgröße an die Zahlungsfähigkeit binden (höchstens ~35% des
+        // Credits-Bestands), sonst kostet ein Angebot ein Vielfaches des
+        // Netto-Einkommens und ist faktisch nie annehmbar.
+        $affordableCap = max(10, (int) floor($credits * 0.35));
+        if ($unitPrice > $affordableCap) {
+            return null;
+        }
+        $getAmount = min($getAmount, max(1, (int) floor($affordableCap / $unitPrice)));
+        $finalPrice = (int) max(1, round($unitPrice * $getAmount));
+
+        return [self::RES_CREDITS, $finalPrice, $getResId, $getAmount];
+    }
+
+    /** Trader advisor (Konsul) rank for a colony — 0 if none assigned or unavailable. */
+    public function traderRank(int $colonyId): int
+    {
+        return (int) (DB::table('advisors')
+            ->where('colony_id', $colonyId)
+            ->where('personell_id', self::TRADER_ADVISOR_ID)
+            ->whereNull('unavailable_until_tick')
+            ->value('rank') ?? 0);
     }
 
     /** Barter: player gives one resource, gets another (no credits involved). */

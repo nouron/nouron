@@ -235,13 +235,19 @@ return [
 
     // Bar/Cantina NPC offer generation (GDD §12 Kanal 1).
     // base_prices: Cr per 1 unit of tradeable resource (before variance/discount).
+    //   Also read by MerchantService for Corvan's buy offers (game.merchant.commodity).
     // price_variance: ±fraction applied to base price (pseudo-random per offer).
     // trader_discount: Rank 0 = no trader. Rank 1 gives 10% — Junior must have visible value.
-    // guest_count: [min, max] NPC guests per tick keyed by trader rank.
+    //   Also read by MerchantService for Corvan's prices (Konsul pflegt die Kontakte).
+    // guest_count: [min, max] NPC guests per tick keyed by trader rank. Guests only
+    //   ever barter (resource↔resource) — Credits-Handel moved entirely to Corvan
+    //   (GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina",
+    //   Freigegeben 2026-08-05).
     // ap_cost_accept: Economy-AP consumed when the player accepts any bar offer (shown as chip on button).
     // level_offer_duration: how many ticks an offer stays valid, keyed by bar building level.
-    // level_max_concurrent: max simultaneous active offers per colony, keyed by bar level.
-    // compounds_bias_at_rank3: probability that a credits→resource offer targets compounds at trader rank 3.
+    // level_max_concurrent: max simultaneous active *guest* offers per colony, keyed by
+    //   bar level — Corvan's commodity offers (bar_offers.visit_id set) have their own
+    //   budget (game.merchant.commodity) and are excluded from this cap.
     'bar' => [
         // Rg 30→25 / Or 50 (unverändert) / Wk 60→110 (GDD §13.7 "Korrektur durch die
         // Knappheitsordnung", 2026-08-03): respektiert §3 Regolith < Organika < Werkstoffe —
@@ -254,7 +260,6 @@ return [
         'ap_cost_accept' => 1,
         'level_offer_duration' => [1 => 2, 2 => 3, 3 => 3, 4 => 3, 5 => 4],
         'level_max_concurrent' => [1 => 2, 2 => 3, 3 => 4, 4 => 5, 5 => 6],
-        'compounds_bias_at_rank3' => 0.50,
 
         // Cantina-Verhandlung (Risiko-Handel, GDD §12 Kanal 1) — Konsul (advisor_trader)
         // muss zugewiesen und verfügbar sein (kein Rang-Minimum über Rang 1 hinaus).
@@ -373,14 +378,28 @@ return [
         ],
     ],
 
-    // Traveling Merchant (Reisender Händler) — random system event, separate from Bar/Cantina.
-    // The merchant appears once from Sol first_appearance_min–max, then every interval_min–max Sols.
-    // Each visit lasts duration_ticks Sols and offers items_count items for Credits.
+    // Traveling Merchant (Corvan Ashe) — GDD §12 Kanal 1 "Corvan wird die zentrale
+    // Handelsfigur der Cantina" (Freigegeben 2026-08-05, Direction 1). Corvan is now
+    // the Cantina's ONLY Credits-Handel identity — the anonymous guest rotation
+    // (game.bar) lost its credits offer type entirely and barters only.
+    //
+    // Each Corvan visit carries two independent offer layers:
+    //   1. commodity (below) — Alltagsgeschäft: buy (Credits→Regolith/Compounds/
+    //      Organics, reusing game.bar.base_prices/trader_discount) + sell
+    //      (Organics→Credits, the §4b Pfad-C-Hebel). Persisted as bar_offers rows
+    //      with visit_id set — same accept/negotiate/AP pipeline as guest offers.
+    //   2. items (below) — the curated special inventory (AP packages, ships,
+    //      information, one-off items, exotics), unchanged in content and rarity.
+    //
+    // The merchant appears once from Sol first_appearance_min–max, then every
+    // interval_min–max Sols (~5–8, raised from 10–15 — Direction 1's "häufigeres
+    // Erscheinen" is what makes the commodity layer's sizing work, see §4b/§12).
+    // Each visit lasts duration_ticks Sols and offers items_count special items.
     'merchant' => [
         'first_appearance_min' => 15,   // earliest Sol the merchant can first appear
         'first_appearance_max' => 20,   // latest Sol for the first appearance
-        'interval_min' => 10,   // minimum Sols between visits
-        'interval_max' => 15,   // maximum Sols between visits
+        'interval_min' => 5,   // minimum Sols between visits (Direction 1: was 10)
+        'interval_max' => 8,   // maximum Sols between visits (Direction 1: was 15)
         'duration_ticks' => 2,    // how many Sols the merchant stays (inclusive)
         'items_count' => 3,    // items offered per visit (3 default, up to 4)
         'items' => [
@@ -389,6 +408,34 @@ return [
             'information' => ['label' => 'Systemkarte vollständig',   'cost' => 1200],
             'repair_kit' => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
             'trust_boost' => ['label' => 'Vertrauensschub (+15)',     'cost' => 600,  'trust_amount' => 15],
+        ],
+
+        // Corvan's Alltagsgeschäft (GDD §4b "Pfad-C-Hebel: von Regolith zu Credits",
+        // §12 Kanal 1). Generated once per visit, alongside the special items above.
+        'commodity' => [
+            // Sell side: only Organika (resource_id=5) — the deliberately narrow
+            // scope from §4b, not a generic sell-everything channel.
+            'sell_resource_id' => 5,
+            // ≈35 Cr/unit vs. the 50 Cr/unit buy base price (game.bar.base_prices[5])
+            // — a 30% spread that makes buy-then-sell arbitrage unattractive.
+            'sell_price_per_unit' => 35,
+            // 2–3 lots per visit, ~15–25 units each (§12 "Sizing gegen §4b
+            // nachgerechnet"): a single lot at this interval falls well short of the
+            // ~247 Cr/Sol target; several lots per stop is the chosen lever, not a
+            // shorter interval or one oversized lot (that would blow the reserve
+            // floor below).
+            'sell_lot_count_min' => 2,
+            'sell_lot_count_max' => 3,
+            'sell_lot_size_min' => 15,
+            'sell_lot_size_max' => 25,
+            // Reserve floor (§4b): a sell lot may not be generated, or accepted,
+            // if it would leave the colony's Organika stock below this multiple of
+            // ResourcesService::foodNeed() — protects the hunger→trust buffer.
+            'sell_reserve_multiplier' => 2,
+            // At Konsul rank 3, Corvan's buy offers bias towards compounds (moved
+            // from the old game.bar.compounds_bias_at_rank3 — the effect travels
+            // with the mechanic, see GDD §12 Kanal 1 "Folgefrage 1").
+            'compounds_bias_at_rank3' => 0.50,
         ],
     ],
 
