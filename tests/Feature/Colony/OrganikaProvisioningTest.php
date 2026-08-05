@@ -183,14 +183,14 @@ class OrganikaProvisioningTest extends TestCase
 
     public function test_dispatch_consumes_organika_provisions(): void
     {
-        // mission_supply_run: freighter, ungated, sol_distance 2 → 2 × 3 = 6 Organika.
+        // mission_supply_run: freighter, ungated, sol_distance 1 → 1 × 3 = 3 Organika.
         config(['game.bypass.resource_costs' => false, 'game.bypass.ap_checks' => false]);
         $svc = $this->setupDockedShip(self::SHIP_FREIGHTER);
         $this->setOrganika(20);
 
         $svc->dispatchShip(self::COLONY_ID, 1, 'mission_supply_run');
 
-        $this->assertSame(14, $this->organika());
+        $this->assertSame(17, $this->organika());
         $this->assertSame('dispatched', DB::table('colony_ships')
             ->where('colony_id', self::COLONY_ID)->where('ship_id', self::SHIP_FREIGHTER)->value('ship_state'));
     }

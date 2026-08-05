@@ -591,7 +591,7 @@ class HangarServiceTest extends TestCase
 
     public function test_organika_cost_includes_extra_cost(): void
     {
-        $mission = config('missions.catalog.mission_aid_transport'); // health Lv1 gate, dist 2, +10 extra
+        $mission = config('missions.catalog.mission_aid_transport'); // ungegatet (Stufe 1b), dist 2, +10 extra
         $this->setKnowledgeLevel('health', 1);
 
         // Base 3/sol × 2 = 6, plus 10 extra cargo = 16

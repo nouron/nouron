@@ -77,10 +77,13 @@ class BarService
         $basePrices = config('game.bar.base_prices', [3 => 30, 4 => 60, 5 => 50]);
         $variance = (float) config('game.bar.price_variance', 0.20);
 
+        $userId = DB::table('v_glx_colonies')->where('id', $colonyId)->value('user_id');
+        $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
+
         for ($i = 0; $i < $guestCount; $i++) {
             $seed = $colonyId * 1009 + $tick * 127 + $i * 37;
             [$giveResId, $giveAmount, $getResId, $getAmount] =
-                $this->buildOffer($seed, $basePrices, $variance, $discount, $traderRank);
+                $this->buildOffer($seed, $basePrices, $variance, $discount, $traderRank, $credits);
 
             BarOffer::create([
                 'colony_id' => $colonyId,
@@ -304,7 +307,7 @@ class BarService
      * Returns [give_resource_id, give_amount, get_resource_id, get_amount].
      * Offer types: resource→credits (buy) or barter (resource↔resource).
      */
-    private function buildOffer(int $seed, array $basePrices, float $variance, float $discount, int $traderRank = 0): array
+    private function buildOffer(int $seed, array $basePrices, float $variance, float $discount, int $traderRank = 0, int $credits = 0): array
     {
         // 60% resource-for-credits, 40% barter
         $type = $this->pseudoRand($seed, 0, 9);
@@ -321,24 +324,40 @@ class BarService
             $getAmount = $this->pseudoRand($seed + 2, 1, 5) * 10; // 10–50 units
             $basePrice = $basePrices[$getResId] ?? 40;
             $rawPrice = $basePrice * (1 + ($this->pseudoRand($seed + 3, -10, 10) / 100) * ($variance / 0.2));
-            $finalPrice = (int) max(1, round($rawPrice * $getAmount * (1 - $discount)));
+            $unitPrice = max(0.01, $rawPrice * (1 - $discount));
+
+            // Losgröße an die Zahlungsfähigkeit binden (höchstens ~35% des
+            // Credits-Bestands), sonst kostet ein Angebot ein Vielfaches des
+            // Netto-Einkommens und ist faktisch nie annehmbar. Ist selbst 1
+            // Einheit unerschwinglich, gibt es kein Kauf- sondern ein Tauschangebot.
+            $affordableCap = max(10, (int) floor($credits * 0.35));
+            if ($unitPrice > $affordableCap) {
+                return $this->buildBarterOffer($seed, $basePrices, $discount);
+            }
+            $getAmount = min($getAmount, max(1, (int) floor($affordableCap / $unitPrice)));
+            $finalPrice = (int) max(1, round($unitPrice * $getAmount));
 
             return [self::RES_CREDITS, $finalPrice, $getResId, $getAmount];
         } else {
-            // Barter: player gives one resource, gets another
-            $shuffled = self::TRADEABLE;
-            $giveResId = $shuffled[$this->pseudoRand($seed + 4, 0, count($shuffled) - 1)];
-            $getResId = $shuffled[$this->pseudoRand($seed + 5, 0, count($shuffled) - 1)];
-            if ($getResId === $giveResId) {
-                $getResId = $shuffled[($this->pseudoRand($seed + 5, 0, count($shuffled) - 1) + 1) % count($shuffled)];
-            }
-            $giveAmount = $this->pseudoRand($seed + 6, 2, 6) * 5; // 10–30 units
-            $givePrice = ($basePrices[$giveResId] ?? 40) * $giveAmount;
-            $getPrice = ($basePrices[$getResId] ?? 40);
-            $getAmount = (int) max(1, round($givePrice * (1 + $discount) / $getPrice));
-
-            return [$giveResId, $giveAmount, $getResId, $getAmount];
+            return $this->buildBarterOffer($seed, $basePrices, $discount);
         }
+    }
+
+    /** Barter: player gives one resource, gets another (no credits involved). */
+    private function buildBarterOffer(int $seed, array $basePrices, float $discount): array
+    {
+        $shuffled = self::TRADEABLE;
+        $giveResId = $shuffled[$this->pseudoRand($seed + 4, 0, count($shuffled) - 1)];
+        $getResId = $shuffled[$this->pseudoRand($seed + 5, 0, count($shuffled) - 1)];
+        if ($getResId === $giveResId) {
+            $getResId = $shuffled[($this->pseudoRand($seed + 5, 0, count($shuffled) - 1) + 1) % count($shuffled)];
+        }
+        $giveAmount = $this->pseudoRand($seed + 6, 2, 6) * 5; // 10–30 units
+        $givePrice = ($basePrices[$giveResId] ?? 40) * $giveAmount;
+        $getPrice = ($basePrices[$getResId] ?? 40);
+        $getAmount = (int) max(1, round($givePrice * (1 + $discount) / $getPrice));
+
+        return [$giveResId, $giveAmount, $getResId, $getAmount];
     }
 
     private function pseudoRand(int $seed, int $min, int $max): int
