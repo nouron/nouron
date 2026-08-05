@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Models\Colony;
 use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -36,6 +37,7 @@ class HangarService
         private readonly TickService $tickService,
         private readonly TrustService $trustService,
         private readonly PersonellService $personellService,
+        private readonly HarvesterEntitlementService $harvesterEntitlementService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -425,6 +427,29 @@ class HangarService
                 [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
                 if ($this->knowledgeLevel($colonyId, $knowledgeKey) < $requiredLevel) {
                     throw new RuntimeException(__('missions.error_knowledge_gate'));
+                }
+            }
+
+            // Harvester second-instance entitlement missions (mission_harvester_salvage,
+            // GDD §4c "Harvester-Zweitinstanz: Bezugsquelle", freigegeben 2026-08-05) must
+            // not be dispatchable once the colony already holds max_instances Harvesters
+            // (would earn an entitlement for nothing), NOR when the owning user already
+            // holds an earned-but-unplaced entitlement via any path (Weg A/B must not
+            // stack — instance_count alone doesn't catch an already-bought Orin offer).
+            if (($mission['reward']['harvester_instance'] ?? false) === true) {
+                $harvesterInstanceCount = DB::table('colony_buildings')
+                    ->where('colony_id', $colonyId)
+                    ->where('building_id', BuildingId::Harvester->value)
+                    ->whereNotNull('tile_x')
+                    ->count();
+                $maxInstances = (int) (collect(config('buildings'))->firstWhere('id', BuildingId::Harvester->value)['max_instances'] ?? 2);
+                if ($harvesterInstanceCount >= $maxInstances) {
+                    throw new RuntimeException(__('missions.error_harvester_instance_full'));
+                }
+
+                $ownerUserId = Colony::find($colonyId)?->user_id;
+                if ($ownerUserId !== null && $this->harvesterEntitlementService->hasEntitlement($ownerUserId)) {
+                    throw new RuntimeException(__('missions.error_harvester_instance_full'));
                 }
             }
 

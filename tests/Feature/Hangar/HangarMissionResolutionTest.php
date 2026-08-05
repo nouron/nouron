@@ -19,11 +19,13 @@ namespace Tests\Feature\Hangar;
  *   - test_completion_reveals_unexplored_tiles
  *   - test_completion_grants_research_ap_capped_at_levelup_threshold
  *   - test_seeded_roll_is_deterministic_for_same_seed
+ *   - test_completion_grants_harvester_entitlement_via_salvage
  *
  * Fixture: Colony 1 (Springfield), user_id=3 (Bart). Hangar building_id=44,
  * instance 1 already exists in TestSeeder (freed of pre-seeded ships here).
  */
 use App\Console\Commands\GameTick;
+use App\Services\HarvesterEntitlementService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -240,6 +242,29 @@ class HangarMissionResolutionTest extends TestCase
 
         $this->assertSame(20, (int) $row->ap_spend, 'ap_spend must cap at the Lv1 threshold, not reach the full 15+8');
         $this->assertSame(0, (int) $row->level, 'research_ap reward must not auto-levelup');
+    }
+
+    public function test_completion_grants_harvester_entitlement_via_salvage(): void
+    {
+        // mission_harvester_salvage reward: harvester_instance => true (GDD §4c
+        // "Harvester-Zweitinstanz: Bezugsquelle", freigegeben 2026-08-05, Weg B). This
+        // grants the earned entitlement (HarvesterEntitlementService) — it does NOT
+        // place the building itself, the player still picks a Regolith tile via the
+        // normal ColonyController::placeBuilding flow.
+        $this->dispatchFixture('mission_harvester_salvage', 4, dispatchTick: 20600, target: ['q' => 10, 'r' => 1]);
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 20608]); // return_tick = 20600 + 2×4
+
+        $entitlementService = $this->app->make(HarvesterEntitlementService::class);
+        $this->assertTrue($entitlementService->hasEntitlement(self::USER_ID));
+        $this->assertTrue($entitlementService->isSalvageSourced(self::USER_ID));
+
+        $log = DB::table('colony_log')
+            ->where('user', self::USER_ID)->where('tick', 20608)->where('event', 'hangar.mission_completed')
+            ->first();
+        $this->assertNotNull($log);
+        $params = json_decode($log->parameters, true);
+        $this->assertTrue($params['rewards']['harvester_instance']);
     }
 
     // ── Determinism (ADR 0003 rng_seed) ──────────────────────────────────────

@@ -65,7 +65,9 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
     @json(route("colony.bar.accept", ["offer" => "__OFFER__"])),
     @json(route("colony.bar.negotiate", ["offer" => "__OFFER__"])),
     @json($resourceAbbr),
-    @json($offers->count())
+    @json($offers->count()),
+    @json(route("colony.corporate-contact.offer")),
+    @json(route("colony.corporate-contact.buy-harvester"))
 )'
         x-cloak>
 
@@ -143,6 +145,27 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
             </div>
 
+            {{-- Orin (corporate_rep) — Harvester second-instance offer, Weg A (GDD §4c,
+             freigegeben 2026-08-05). Fetched client-side (GET
+             colony.corporate-contact.offer) on page load — deliberately NOT part of
+             the $offers/$characterAssignment hotspot-rotation system above (BarService),
+             see CorporateContactService docblock. A fixed banner rather than a scene
+             hotspot: no reserved position exists for a rare, one-off visitor in
+             data/cantina_hotspots.json, and the deal is meant to stand out, not blend
+             into the random-guest rotation. --}}
+            <div class="corporate-contact-banner" x-show="corporateContactOffer" x-cloak @click="openCorporateContact()">
+                <img class="corporate-contact-banner__portrait" src="{{ asset("img/characters/corporate_rep.webp") }}"
+                    alt="{{ config("characters.corporate_rep.name") }}">
+                <div class="corporate-contact-banner__text">
+                    <strong>{{ config("characters.corporate_rep.name") }}</strong>
+                    <span>{{ __("colony.corporate_contact_banner_hint") }}</span>
+                </div>
+                <span class="corporate-contact-banner__price res-chip res-Cr" x-show="corporateContactOffer">
+                    <span class="res-abbr">Cr</span>
+                    <span class="res-amount" x-text="corporateContactOffer?.price"></span>
+                </span>
+            </div>
+
             {{-- Backdrop to dim page behind modal --}}
             <div class="cantina-modal-backdrop" x-show="activeModal !== null" @click="closeModal()" x-transition.opacity
                 style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 999;" x-cloak></div>
@@ -190,6 +213,38 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     </div>
                 @endif
 
+                {{-- Orin's harvester offer dialog --}}
+                @php
+                    $corporateContactPortraitSrc = asset("img/characters/corporate_rep.webp");
+                    $corporateContactPortraitLgSrc = asset("img/characters/corporate_rep_lg.webp");
+                    $corporateContactName = config("characters.corporate_rep.name");
+                    $corporateContactRole = config("characters.corporate_rep.role");
+                @endphp
+                <div x-show="activeModal === 'corporate_contact'">
+                    <x-cantina-dialog :portrait-src="$corporateContactPortraitSrc" :portrait-lg-src="$corporateContactPortraitLgSrc" :name="$corporateContactName" :role="$corporateContactRole">
+                        {{-- Toast feedback --}}
+                        <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
+                            x-text="toast.message" aria-live="polite" role="status"></div>
+
+                        <p>{{ __("colony.corporate_contact_dialog_intro") }}</p>
+
+                        <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+                            <div>
+                                <small
+                                    style="color:var(--pico-muted-color)">{{ __("colony.corporate_contact_price_label") }}</small>
+                                <span class="res-chip res-Cr">
+                                    <span class="res-abbr">Cr</span>
+                                    <span class="res-amount" x-text="corporateContactOffer?.price"></span>
+                                </span>
+                            </div>
+                            <button class="tile-action-btn" style="width:auto;" :disabled="corporateContactBuying"
+                                @click="buyCorporateContact()">
+                                <span class="tile-action-btn__body">{{ __("colony.merchant_buy") }}</span>
+                            </button>
+                        </div>
+                    </x-cantina-dialog>
+                </div>
+
                 {{-- Offers listings --}}
                 @foreach ($offers as $idx => $offer)
                     @php
@@ -212,8 +267,9 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     <div x-show="activeModal === 'offer_{{ $offerId }}'">
                         <x-cantina-dialog :portrait-src="$offerPortraitSrc" :portrait-lg-src="$offerPortraitLgSrc" :name="$name" :role="$role">
                             {{-- Toast feedback --}}
-                            <div x-show="toast.visible" x-transition :class="'merchant-toast merchant-toast--' + toast.type"
-                                x-text="toast.message" aria-live="polite" role="status"></div>
+                            <div x-show="toast.visible" x-transition
+                                :class="'merchant-toast merchant-toast--' + toast.type" x-text="toast.message"
+                                aria-live="polite" role="status"></div>
 
                             <div
                                 style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;background: #f7f7f5;padding:0.75rem 1rem;border-radius:6px;border:1px solid var(--pico-muted-border-color)">
@@ -298,7 +354,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
     <script>
         function barPage(merchantVisit, merchantItems, buyRoute, openRoute, acceptRoute, negotiateRoute, resourceAbbr,
-            offersCount = 0) {
+            offersCount = 0, corporateContactOfferRoute, corporateContactBuyRoute) {
             const hasGuests = (merchantVisit !== null) || (merchantItems && merchantItems.length > 0) || offersCount > 0;
             const panelCount = hasGuests ? 4 : 1;
 
@@ -378,6 +434,75 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
 
                 // Modal Drawer state
                 activeModal: null,
+
+                // Orin (corporate_rep) — Harvester second-instance offer, Weg A (GDD §4c,
+                // freigegeben 2026-08-05). Stateless server-side (CorporateContactService
+                // re-derives the offer on every read and on purchase), so a plain GET on
+                // load is enough — no visits table to reconcile with, unlike the Merchant.
+                corporateContactOffer: null,
+                corporateContactBuying: false,
+
+                init() {
+                    this.loadCorporateContactOffer();
+                },
+
+                async loadCorporateContactOffer() {
+                    try {
+                        const res = await fetch(corporateContactOfferRoute, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                        });
+                        const data = await res.json();
+                        this.corporateContactOffer = data.offer ?? null;
+                    } catch {
+                        this.corporateContactOffer = null;
+                    }
+                },
+
+                openCorporateContact() {
+                    this.activeModal = 'corporate_contact';
+                },
+
+                async buyCorporateContact() {
+                    if (!this.corporateContactOffer || this.corporateContactBuying) return;
+                    this.corporateContactBuying = true;
+                    try {
+                        const res = await fetch(corporateContactBuyRoute, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content ?? '',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: JSON.stringify({}),
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            this.corporateContactOffer = null;
+                            this.closeModal();
+                            this.syncResbarAmount(1, data.credits);
+                            this.showToast(@json(__("colony.merchant_buy_success")), 'info');
+                        } else {
+                            // Fallback map for older/unmapped error codes — the backend
+                            // sends a pre-translated `message` for every current case.
+                            const messages = {
+                                corporate_contact_offer_unavailable: @json(__("colony.error_corporate_contact_offer_unavailable")),
+                                insufficient_credits: @json(__("colony.error_insufficient_credits")),
+                            };
+                            this.showToast(
+                                data.message ?? messages[data.error] ?? @json(__("colony.merchant_buy_error")),
+                                'error',
+                            );
+                        }
+                    } catch {
+                        this.showToast(@json(__("colony.merchant_buy_error")), 'error');
+                    } finally {
+                        this.corporateContactBuying = false;
+                    }
+                },
 
                 // AP-type accent for the dialog border — both offers and the merchant
                 // currently always cost economy AP. Kept as a seam for future event

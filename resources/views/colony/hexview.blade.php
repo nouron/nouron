@@ -261,7 +261,8 @@
                             </template>
                             <template
                                 x-if="selectedBuilding?.building_key === 'building_harvester' && selectedBuilding?.level > 0 && !selectedBuilding?.in_transit">
-                                <button class="tile-action-btn tile-action-btn--secondary" @click="startHarvesterMove()">
+                                <button class="tile-action-btn tile-action-btn--secondary"
+                                    @click="startHarvesterMove(selectedBuilding)">
                                     <span class="tile-action-btn__body">{{ __("colony.harvester_move") }}</span>
                                     @include("partials.ap-cost-chip", [
                                         "type" => "build",
@@ -277,6 +278,23 @@
                                 <button class="tile-action-btn tile-action-btn--secondary"
                                     @click="startBuildForTile(selectedTile)">
                                     <span class="tile-action-btn__body">{{ __("colony.build") }}</span>
+                                </button>
+                            </template>
+                            {{-- Second Harvester instance (GDD §4c "Harvester-Zweitinstanz:
+                             Bezugsquelle") — placement, not the build menu (Harvester is
+                             excluded from getBuildableBuildings(), see
+                             ColonyController::availableBuildings()). Shown on any empty,
+                             explored Regolith tile once a second slot isn't taken yet — the
+                             server is the only source of truth for whether the player has
+                             actually earned the entitlement (Orin's offer or the salvage
+                             mission), so a rejected attempt surfaces the real reason
+                             (error_harvester_second_instance_locked / _cc_gate) instead of
+                             the button silently disappearing. --}}
+                            <template
+                                x-if="!selectedBuilding && isHarvesterTarget(selectedTile) && !hasSecondHarvesterInstance()">
+                                <button class="tile-action-btn tile-action-btn--secondary"
+                                    @click="doPlaceHarvesterInstance2(selectedTile)">
+                                    <span class="tile-action-btn__body">{{ __("colony.harvester_place_second") }}</span>
                                 </button>
                             </template>
                         </div>

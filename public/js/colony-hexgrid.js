@@ -130,6 +130,12 @@ function colonyHexView(config) {
         _lvlTimer: null,
         _apFlashTimers: {}, // per-chip flash timers (resbar AP chips)
         harvesterMoveMode: false,
+        // Instance being relocated while harvesterMoveMode is active — captured from
+        // the tile the player pressed "Verlegen" on, since a colony can now hold two
+        // Harvester instances (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle") and
+        // harvesterBuilding() must resolve the *same* instance the player picked, not
+        // just the first Harvester row in this.buildings.
+        movingHarvesterInstanceId: null,
         buildTargetTile: null,
         _svgPolygons: new Map(),
         _tilePositions: new Map(),
@@ -425,7 +431,11 @@ function colonyHexView(config) {
 
         // ── Harvester relocation ──────────────────────────────────────────────
 
-        startHarvesterMove() {
+        // `building` is the Harvester instance the player picked (selectedBuilding on
+        // the tile they clicked "Verlegen" from) — required now that a colony can hold
+        // two instances at once.
+        startHarvesterMove(building) {
+            this.movingHarvesterInstanceId = building?.instance_id ?? 1;
             this.harvesterMoveMode = true;
             this.buildMode = false;
             this.pendingBuilding = null;
@@ -435,6 +445,7 @@ function colonyHexView(config) {
 
         cancelHarvesterMove() {
             this.harvesterMoveMode = false;
+            this.movingHarvesterInstanceId = null;
             this.$nextTick(() => this.redrawGrid());
         },
 
@@ -444,12 +455,59 @@ function colonyHexView(config) {
             return !this.buildings.some((b) => b.tile_x === tile.q && b.tile_y === tile.r);
         },
 
+        // Resolves the Harvester instance currently being relocated
+        // (movingHarvesterInstanceId, set by startHarvesterMove()). Falls back to the
+        // first Harvester row when no instance was captured yet (e.g. before the move
+        // gesture starts), matching the pre-multi-instance behavior.
         harvesterBuilding() {
+            if (this.movingHarvesterInstanceId !== null) {
+                return (
+                    this.buildings.find(
+                        (b) =>
+                            b.building_key === 'building_harvester' && b.instance_id === this.movingHarvesterInstanceId,
+                    ) ?? null
+                );
+            }
+
             return this.buildings.find((b) => b.building_key === 'building_harvester') ?? null;
         },
 
         hasHarvesterTargets() {
             return this.tiles.some((t) => this.isHarvesterTarget(t));
+        },
+
+        // Second Harvester instance (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle",
+        // freigegeben 2026-08-05) — earned via Orin's offer (Weg A, Cantina) or the
+        // mission_harvester_salvage reward (Weg B), never built from a menu. Placement
+        // reuses the normal placeBuilding endpoint with instance_id: 2; the server is
+        // the sole source of truth for whether the player has actually earned it
+        // (HarvesterEntitlementService) — this button intentionally shows whenever a
+        // second slot could exist so the server's rejection message
+        // (error_harvester_second_instance_locked / _cc_gate) is the explanation, not a
+        // guess made client-side about an entitlement the client cannot observe.
+        hasSecondHarvesterInstance() {
+            return this.buildings.some((b) => b.building_key === 'building_harvester' && b.instance_id === 2);
+        },
+
+        async doPlaceHarvesterInstance2(tile) {
+            const hv = this.buildings.find((b) => b.building_key === 'building_harvester');
+            if (!hv) return;
+            const res = await this.post(this.routes.placeBuilding, {
+                building_id: hv.building_id,
+                q: tile.q,
+                r: tile.r,
+                instance_id: 2,
+            });
+            if (res.ok) {
+                this.updateBuilding(res.building);
+                this.selectedTile = tile;
+                this.updateAp(res);
+                this.updateHint(res);
+                this.$nextTick(() => this.redrawGrid());
+            } else {
+                const msg = res.message ?? res.error;
+                this.showToast(msg, 'error');
+            }
         },
 
         async doMoveHarvester(tile) {
@@ -463,6 +521,10 @@ function colonyHexView(config) {
                     building_id: hv.building_id,
                     q: tile.q,
                     r: tile.r,
+                    // Which instance is moving — without this the server defaults to
+                    // instance_id 1 (ColonyController::placeBuilding), so relocating the
+                    // second Harvester instance would silently move the wrong one.
+                    instance_id: hv.instance_id ?? 1,
                 });
             } catch {
                 this.showToast(this.i18n.networkError ?? 'Network error.', 'error');
@@ -471,6 +533,7 @@ function colonyHexView(config) {
             if (res.ok) {
                 this.updateBuilding(res.building);
                 this.harvesterMoveMode = false;
+                this.movingHarvesterInstanceId = null;
                 this.selectedTile = tile;
                 this.updateAp(res);
                 this.updateHint(res);

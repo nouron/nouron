@@ -152,7 +152,10 @@ return [
     'error_tile_not_buildable' => 'Only buildable terrain tiles allowed.',
     'error_tile_outside_colony' => 'This tile is outside the colony zone.',
     'error_harvester_needs_regolith' => 'Harvester can only be placed on Regolith tiles.',
+    'error_harvester_second_instance_cc_gate' => 'A second Harvester requires Command Center level 3.',
+    'error_harvester_second_instance_locked' => 'A second Harvester needs a source — an offer from Orin in the cantina or a salvaged unit.',
     'harvester_move' => 'Relocate',
+    'harvester_place_second' => 'Place Harvester',
     'harvester_move_mode_hint' => 'Click an explored Regolith tile outside the colony zone — shows a preview arrow with AP cost. Hold to relocate.',
     'harvester_move_no_targets' => 'No free explored Regolith tile available — explore new tiles first (Nav AP).',
     'harvester_move_invalid_target' => 'Not a valid target — the Harvester needs a free, explored Regolith tile (highlighted in light blue).',
@@ -211,6 +214,14 @@ return [
     'merchant_sold' => 'Sold',
     'merchant_buy_success' => 'Purchase successful.',
     'merchant_buy_error' => 'Purchase failed.',
+
+    // ── Orin (corporate_rep) — Harvester second-instance Weg A (GDD §4c) ───────
+    // TODO(content-writer): placeholder, mirrors lang/de/colony.php.
+    'corporate_contact_banner_hint' => 'An offer is waiting.',
+    'corporate_contact_dialog_intro' => 'Orin has a Harvester module for sale — origin unclear, price due on the spot.',
+    'corporate_contact_price_label' => 'Price',
+    'error_corporate_contact_offer_unavailable' => 'This offer is no longer available.',
+    'error_insufficient_credits' => 'Not enough Credits for this offer.',
 
     // ── Bar / Cantina ─────────────────────────────────────────────────────────
 
