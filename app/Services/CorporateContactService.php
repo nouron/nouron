@@ -28,14 +28,15 @@ class CorporateContactService
     ) {}
 
     /**
-     * Returns the active harvester offer for this colony/tick, or null when Orin
-     * isn't offering it (gate not met, already at max instances, or the roll misses).
+     * Returns the active harvester offer for this colony/user/tick, or null when
+     * Orin isn't offering it (gate not met, already at max instances, the user
+     * already holds an entitlement via any path, or the roll misses).
      *
      * @return array{price: int}|null
      */
-    public function getActiveOffer(int $colonyId, int $tick): ?array
+    public function getActiveOffer(int $colonyId, int $userId, int $tick): ?array
     {
-        if (! $this->gatesSatisfied($colonyId)) {
+        if (! $this->gatesSatisfied($colonyId, $userId)) {
             return null;
         }
 
@@ -59,7 +60,7 @@ class CorporateContactService
      */
     public function buyHarvesterOffer(int $colonyId, int $userId, int $tick): array
     {
-        $offer = $this->getActiveOffer($colonyId, $tick);
+        $offer = $this->getActiveOffer($colonyId, $userId, $tick);
         if ($offer === null) {
             return ['ok' => false, 'error' => 'corporate_contact_offer_unavailable'];
         }
@@ -80,11 +81,18 @@ class CorporateContactService
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**
-     * CC-Lv3 gate (unchanged, GDD §4c) plus the instance-count gate: the offer must
-     * not appear at all when the colony couldn't buy it anyway.
+     * CC-Lv3 gate (unchanged, GDD §4c) plus the instance-count gate and the
+     * entitlement gate: the offer must not appear at all when the colony couldn't
+     * buy it anyway, OR when the user already holds an earned-but-unplaced
+     * entitlement via any path (Weg A/B must not stack — instance_count alone
+     * doesn't catch an earned-but-not-yet-placed entitlement).
      */
-    private function gatesSatisfied(int $colonyId): bool
+    private function gatesSatisfied(int $colonyId, int $userId): bool
     {
+        if ($this->harvesterEntitlementService->hasEntitlement($userId)) {
+            return false;
+        }
+
         $requiredCcLevel = (int) config('game.harvester.second_instance_cc_level', 3);
         $ccLevel = (int) DB::table('colony_buildings')
             ->where('colony_id', $colonyId)

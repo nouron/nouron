@@ -29,6 +29,22 @@ class CorporateContactController extends BaseController
     }
 
     /**
+     * GET /colony/corporate-contact/offer
+     *
+     * Returns Orin's current harvester offer for the player's colony, or null when
+     * he isn't offering it right now. Read-only — never trusted for the purchase
+     * itself, buyHarvester() re-derives the offer independently.
+     */
+    public function offer(Request $request): JsonResponse
+    {
+        $userId = Auth::id();
+        $colony = $this->colonyService->getPrimeColony($userId);
+        $offer = $this->corporateContactService->getActiveOffer($colony->id, $userId, $this->getTick());
+
+        return response()->json(['offer' => $offer]);
+    }
+
+    /**
      * POST /colony/corporate-contact/buy-harvester
      *
      * Purchases Orin's current harvester offer, if any. Grants the entitlement

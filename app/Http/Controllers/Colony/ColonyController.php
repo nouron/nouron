@@ -389,7 +389,11 @@ class ColonyController extends BaseController
                 return $this->fail('harvester_second_instance_locked');
             }
 
-            $secondInstanceIsSalvageSourced = $this->harvesterEntitlementService->isSalvageSourced(Auth::id());
+            // Purchase wins over salvage when both are somehow present (edge case: both
+            // earned before either is consumed by placement) — a paid-for instance must
+            // never be downgraded by an also-earned salvage entitlement.
+            $secondInstanceIsSalvageSourced = $this->harvesterEntitlementService->isSalvageSourced(Auth::id())
+                && ! $this->harvesterEntitlementService->hasPurchaseEntitlement(Auth::id());
         }
 
         // Agrardom gate: path buildings require Agrardom (41) to be placed first.

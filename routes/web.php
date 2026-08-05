@@ -98,6 +98,7 @@ Route::middleware(['auth', 'run.started'])->prefix('colony')->name('colony.')->g
     Route::post('/merchant/visit/{visitId}/open', [MerchantController::class, 'markVisited'])->name('merchant.open')->where('visitId', '[0-9]+');
 
     // Orin (corporate_rep) — Harvester second instance Weg A (GDD §4c, 2026-08-05)
+    Route::get('/corporate-contact/offer', [CorporateContactController::class, 'offer'])->name('corporate-contact.offer');
     Route::post('/corporate-contact/buy-harvester', [CorporateContactController::class, 'buyHarvester'])->name('corporate-contact.buy-harvester');
 
     // Hangar

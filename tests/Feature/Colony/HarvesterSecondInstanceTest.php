@@ -187,6 +187,20 @@ class HarvesterSecondInstanceTest extends TestCase
         $this->assertSame($expected, (int) $this->instance2Row()->status_points, 'Salvage-sourced instance must arrive at ~25% SP');
     }
 
+    public function test_second_instance_prefers_purchase_over_salvage_when_both_entitlements_present(): void
+    {
+        // Edge case: both paths earned before either is consumed by placement — a
+        // paid-for instance must never be downgraded by an also-earned salvage.
+        $this->setCcLevel(3);
+        $this->entitlementService()->grantSalvage(self::BART_USER_ID);
+        $this->entitlementService()->grantPurchase(self::BART_USER_ID);
+
+        $this->placeSecondInstance()->assertOk()->assertJsonPath('ok', true);
+
+        $maxSp = (int) DB::table('buildings')->where('id', self::HARVESTER_ID)->value('max_status_points');
+        $this->assertSame($maxSp, (int) $this->instance2Row()->status_points, 'Purchase must win over salvage when both entitlements are present');
+    }
+
     /**
      * Instance 2 is placed at level=0 (the same convention as every other
      * instanced building, e.g. Housing) — it does not produce until levelled

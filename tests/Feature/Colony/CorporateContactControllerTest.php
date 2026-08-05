@@ -12,6 +12,9 @@ namespace Tests\Feature\Colony;
  *   - test_buy_harvester_requires_auth
  *   - test_buy_harvester_returns_ok_true_for_valid_purchase
  *   - test_buy_harvester_returns_422_when_no_offer_active
+ *   - test_get_offer_requires_auth
+ *   - test_get_offer_returns_offer_on_a_hit_tick
+ *   - test_get_offer_returns_null_offer_when_none_active
  */
 use App\Models\User;
 use App\Services\TickService;
@@ -86,5 +89,30 @@ class CorporateContactControllerTest extends TestCase
             ->postJson(route('colony.corporate-contact.buy-harvester'));
 
         $response->assertStatus(422)->assertJsonPath('ok', false);
+    }
+
+    public function test_get_offer_requires_auth(): void
+    {
+        $response = $this->getJson(route('colony.corporate-contact.offer'));
+
+        $response->assertStatus(401);
+    }
+
+    public function test_get_offer_returns_offer_on_a_hit_tick(): void
+    {
+        $response = $this->actingAs($this->makeUser())
+            ->getJson(route('colony.corporate-contact.offer'));
+
+        $response->assertOk()->assertJsonPath('offer.price', fn ($price) => $price >= 400 && $price <= 800);
+    }
+
+    public function test_get_offer_returns_null_offer_when_none_active(): void
+    {
+        $this->app->instance(TickService::class, new TickService(1));
+
+        $response = $this->actingAs($this->makeUser())
+            ->getJson(route('colony.corporate-contact.offer'));
+
+        $response->assertOk()->assertJsonPath('offer', null);
     }
 }

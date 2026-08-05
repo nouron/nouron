@@ -129,6 +129,13 @@ return [
         'offer_chance' => 0.30,            // level-2: chance the appearance carries the harvester deal (GDD range 25-35%)
         'price_min' => 400,                // Cr (GDD-confirmed range, 2026-08-05)
         'price_max' => 800,
+        // GDD §4c mentions a "2-Sol-Fenster" the player must have credits ready in.
+        // This implementation rolls per-tick (duration_ticks=1, not 2) — the stateless
+        // getActiveOffer(colonyId, tick) design (no visits table) makes a wider window
+        // possible via intdiv($tick, duration_ticks), but that wasn't built here to keep
+        // the roll formula simple and directly testable. Knowingly narrower than the
+        // GDD's hit-rate math assumes — flag before relying on the ~40-60% figure.
+        'duration_ticks' => 1,
     ],
 
     // Geology (config/knowledge.php id 92) production bonus — first of at most two

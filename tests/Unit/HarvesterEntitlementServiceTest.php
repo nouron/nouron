@@ -20,6 +20,9 @@ namespace Tests\Unit;
  *   - test_is_salvage_sourced_is_true_after_grant_salvage
  *   - test_is_salvage_sourced_is_false_after_grant_purchase_only
  *   - test_grants_are_idempotent
+ *   - test_has_purchase_entitlement_is_false_by_default
+ *   - test_has_purchase_entitlement_is_true_after_grant_purchase
+ *   - test_has_purchase_entitlement_is_false_after_grant_salvage_only
  */
 
 use App\Services\HarvesterEntitlementService;
@@ -87,5 +90,24 @@ class HarvesterEntitlementServiceTest extends TestCase
         $this->service->grantPurchase(self::USER_ID);
 
         $this->assertTrue($this->service->hasEntitlement(self::USER_ID));
+    }
+
+    public function test_has_purchase_entitlement_is_false_by_default(): void
+    {
+        $this->assertFalse($this->service->hasPurchaseEntitlement(self::USER_ID));
+    }
+
+    public function test_has_purchase_entitlement_is_true_after_grant_purchase(): void
+    {
+        $this->service->grantPurchase(self::USER_ID);
+
+        $this->assertTrue($this->service->hasPurchaseEntitlement(self::USER_ID));
+    }
+
+    public function test_has_purchase_entitlement_is_false_after_grant_salvage_only(): void
+    {
+        $this->service->grantSalvage(self::USER_ID);
+
+        $this->assertFalse($this->service->hasPurchaseEntitlement(self::USER_ID));
     }
 }

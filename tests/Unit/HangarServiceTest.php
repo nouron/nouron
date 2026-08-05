@@ -57,6 +57,7 @@ namespace Tests\Unit;
  */
 
 use App\Services\HangarService;
+use App\Services\HarvesterEntitlementService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -607,6 +608,31 @@ class HangarServiceTest extends TestCase
         $mission = DB::table('colony_hangar_missions')
             ->where('colony_id', self::COLONY_ID)->where('instance_id', 1)->where('state', 'active')->first();
         $this->assertNotNull($mission);
+    }
+
+    public function test_dispatch_ship_throws_for_harvester_salvage_when_user_already_has_entitlement(): void
+    {
+        // Regression guard: instance_count alone doesn't catch an earned-but-not-yet-
+        // placed entitlement (e.g. Orin's offer already bought, GDD §4c) — dispatching
+        // the salvage mission on top would earn a second, unusable entitlement.
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_FREIGHTER, 'docked');
+        $this->insertTile(5, -2, 'event_ruin', deepScanned: true);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)->where('instance_id', 2)
+            ->delete();
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 27, 'instance_id' => 1],
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 1, 'tile_y' => 1]
+        );
+
+        // Colony 1 belongs to user_id=3 (Bart) — TestSeeder fixture.
+        $this->app->make(HarvesterEntitlementService::class)->grantPurchase(3);
+
+        $this->expectException(\RuntimeException::class);
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_harvester_salvage', ['q' => 5, 'r' => -2]);
     }
 
     // ── organikaCostFor ───────────────────────────────────────────────────────

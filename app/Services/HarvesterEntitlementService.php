@@ -52,4 +52,15 @@ class HarvesterEntitlementService
     {
         return $this->onboardingTriggerService->hasFired($userId, self::TRIGGER_SALVAGE);
     }
+
+    /**
+     * True when the earned entitlement includes the purchase path (Weg A, Orin).
+     * Used to give purchase precedence over salvage when both are somehow present
+     * (both earned before either is consumed by placement) — a paid-for instance
+     * must never be downgraded by an also-earned salvage entitlement.
+     */
+    public function hasPurchaseEntitlement(int $userId): bool
+    {
+        return $this->onboardingTriggerService->hasFired($userId, self::TRIGGER_PURCHASE);
+    }
 }

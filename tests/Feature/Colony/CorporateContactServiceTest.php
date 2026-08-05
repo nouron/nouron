@@ -90,7 +90,7 @@ class CorporateContactServiceTest extends TestCase
     {
         $this->setCcLevel(2);
 
-        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::OFFER_HIT_TICK));
+        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK));
     }
 
     public function test_get_active_offer_returns_null_when_both_instances_already_placed(): void
@@ -100,26 +100,37 @@ class CorporateContactServiceTest extends TestCase
             ['level' => 0, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 5]
         );
 
-        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::OFFER_HIT_TICK));
+        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK));
     }
 
     public function test_get_active_offer_returns_null_on_a_tick_without_appearance(): void
     {
-        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::NO_APPEAR_TICK));
+        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::NO_APPEAR_TICK));
     }
 
     public function test_get_active_offer_returns_null_on_appearance_without_offer_roll(): void
     {
-        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::APPEAR_ONLY_TICK));
+        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::APPEAR_ONLY_TICK));
     }
 
     public function test_get_active_offer_returns_offer_within_price_range_on_a_hit_tick(): void
     {
-        $offer = $this->service->getActiveOffer(self::COLONY_ID, self::OFFER_HIT_TICK);
+        $offer = $this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
 
         $this->assertNotNull($offer);
         $this->assertGreaterThanOrEqual(400, $offer['price']);
         $this->assertLessThanOrEqual(800, $offer['price']);
+    }
+
+    public function test_get_active_offer_returns_null_when_user_already_has_entitlement(): void
+    {
+        // Regression guard: an already-earned entitlement (e.g. Weg B salvage, still
+        // unplaced) must not stack with a second, independently earned Weg A offer —
+        // instance_count alone doesn't catch this because the earned instance hasn't
+        // been placed yet.
+        $this->app->make(HarvesterEntitlementService::class)->grantSalvage(self::USER_ID);
+
+        $this->assertNull($this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK));
     }
 
     public function test_buy_harvester_offer_fails_when_no_offer_active(): void
