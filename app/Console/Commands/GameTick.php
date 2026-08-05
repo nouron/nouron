@@ -954,17 +954,10 @@ class GameTick extends Command
      */
     private function processFoodConsumption(int $tick): int
     {
-        $perEater = max(1, (int) config('game.food.supply_per_eater', 4));
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
-            $usedSupply = (int) DB::table('colony_buildings as cb')
-                ->join('buildings as b', 'b.id', '=', 'cb.building_id')
-                ->where('cb.colony_id', $colony->id)
-                ->where('cb.level', '>', 0)
-                ->sum(DB::raw('cb.level * COALESCE(b.supply_cost, 0)'));
-
-            $foodNeed = intdiv($usedSupply, $perEater);
+            $foodNeed = $this->resourcesService->foodNeed($colony->id);
 
             if ($foodNeed < 1) {
                 // Tiny early colony — nobody to feed. Clear any streak, no bonus.

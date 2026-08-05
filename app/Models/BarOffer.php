@@ -16,6 +16,7 @@ class BarOffer extends Model
 
     protected $fillable = [
         'colony_id',
+        'visit_id',
         'give_resource_id',
         'give_amount',
         'get_resource_id',

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Run;
+use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
@@ -49,6 +50,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EventService::class, EventService::class);
         $this->app->bind(MerchantService::class, fn ($app) => new MerchantService(
             $app->make(PersonellService::class),
+            $app->make(BarService::class),
+            $app->make(ResourcesService::class),
         ));
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn ($app) => new TrustService(

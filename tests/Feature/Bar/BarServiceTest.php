@@ -105,6 +105,21 @@ class BarServiceTest extends TestCase
         return DB::table('bar_offers')->insertGetId(array_merge($defaults, $overrides));
     }
 
+    /** Insert a merchant_visits row (bar_offers.visit_id has a FK to this table) and return its id. */
+    private function insertMerchantVisit(array $overrides = []): int
+    {
+        $defaults = [
+            'colony_id' => self::COLONY_ID,
+            'tick_start' => 10,
+            'tick_end' => 11,
+            'was_visited' => false,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
+
+        return DB::table('merchant_visits')->insertGetId(array_merge($defaults, $overrides));
+    }
+
     /** Set the colony-level resource amount for Springfield. */
     private function setColonyResource(int $resourceId, int $amount): void
     {
@@ -211,36 +226,71 @@ class BarServiceTest extends TestCase
         $this->assertFalse($exists, 'Expired unaccepted offers must be deleted on generate');
     }
 
-    public function test_generate_caps_credit_offer_price_to_affordability(): void
+    // ── buildCorvanBuyOffer ───────────────────────────────────────────────────
+    //
+    // The generic-guest credits offer type was removed (GDD §12 Kanal 1, Freigegeben
+    // 2026-08-05) — Credits-Handel now exists only through Corvan's Alltagsgeschäft.
+    // buildCorvanBuyOffer() is what generateOffersForColony()'s old type<6 branch
+    // became; the affordability-cap regression it used to cover now targets this
+    // method directly instead of the (now barter-only) guest offer generator.
+
+    public function test_corvan_buy_offer_caps_price_to_affordability(): void
     {
         // Losgröße muss an die Zahlungsfähigkeit gebunden sein (höchstens ~35 %
         // des Credits-Bestands) — sonst kostet ein Angebot ein Vielfaches des
         // Netto-Einkommens und ist faktisch nie annehmbar.
-        $this->setBarLevel(3); // max concurrent slots, mehr Chancen auf Buy-Angebote
-        $this->setCredits(100);
-        $cap = (int) floor(100 * 0.35); // 35
+        $credits = 100;
+        $cap = (int) floor($credits * 0.35); // 35
 
-        $sawBuyOffer = false;
-        for ($tick = 100; $tick <= 400; $tick++) {
-            $this->clearBarOffers();
-            $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
+        $sawOffer = false;
+        for ($seed = 1; $seed <= 500; $seed++) {
+            $offer = $this->barService->buildCorvanBuyOffer($seed, 2, $credits);
 
-            $offers = DB::table('bar_offers')
-                ->where('colony_id', self::COLONY_ID)
-                ->where('give_resource_id', self::RES_CREDITS)
-                ->get();
-
-            foreach ($offers as $offer) {
-                $sawBuyOffer = true;
-                $this->assertLessThanOrEqual(
-                    $cap,
-                    $offer->give_amount,
-                    'Credit-Angebot darf höchstens ~35% des Bestands kosten'
-                );
+            if ($offer !== null) {
+                $sawOffer = true;
+                [, $giveAmount] = $offer;
+                $this->assertLessThanOrEqual($cap, $giveAmount, 'Corvan buy offer must cost at most ~35% of credits on hand');
             }
         }
 
-        $this->assertTrue($sawBuyOffer, 'Test setup must produce at least one credit-buy offer to be meaningful');
+        $this->assertTrue($sawOffer, 'Test setup must produce at least one non-null Corvan buy offer to be meaningful');
+    }
+
+    public function test_corvan_buy_offer_returns_null_when_even_one_unit_is_unaffordable(): void
+    {
+        // No barter fallback for Corvan (unlike the old generic-guest type):
+        // an unaffordable offer is simply omitted, never downgraded to a trade.
+        $offer = $this->barService->buildCorvanBuyOffer(7, 0, 0);
+
+        $this->assertNull($offer, 'buildCorvanBuyOffer must return null, not a barter offer, when unaffordable');
+    }
+
+    public function test_generate_never_creates_credits_offers_for_generic_guest_rotation(): void
+    {
+        // GDD §12 Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina"
+        // (Freigegeben 2026-08-05): the anonymous guest rotation (Dax, Voss, ...)
+        // loses Credits-Handel entirely — barter (resource↔resource) only. No row
+        // may ever carry give/get resource_id = 1 (credits), regardless of rank.
+        $this->setBarLevel(5); // widest concurrent slot budget, most guests/sol
+        DB::table('advisors')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'personell_id' => self::TRADER_ADVISOR_ID],
+            ['rank' => 3, 'user_id' => self::USER_ID, 'active_ticks' => 0, 'unavailable_until_tick' => null]
+        );
+
+        for ($tick = 100; $tick <= 500; $tick++) {
+            $this->clearBarOffers();
+            $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
+
+            $creditOffers = DB::table('bar_offers')
+                ->where('colony_id', self::COLONY_ID)
+                ->where(function ($q) {
+                    $q->where('give_resource_id', self::RES_CREDITS)
+                        ->orWhere('get_resource_id', self::RES_CREDITS);
+                })
+                ->count();
+
+            $this->assertEquals(0, $creditOffers, "No credits-involving bar_offer may be generated for generic guests at tick {$tick}");
+        }
     }
 
     public function test_generate_does_not_delete_accepted_expired_offers(): void
@@ -425,6 +475,128 @@ class BarServiceTest extends TestCase
 
         $this->assertFalse($result['ok'], 'acceptOffer must fail when player cannot afford give_amount');
         $this->assertArrayHasKey('error', $result);
+    }
+
+    // ── reserve floor (Corvan Organika sell offers, GDD §4b) ────────────────────
+
+    public function test_accept_rejects_corvan_sell_offer_that_breaches_reserve_floor(): void
+    {
+        // GDD §4b: a sell offer (Organika→Credits) must not be acceptable if it
+        // would drop the colony's Organika stock below sell_reserve_multiplier ×
+        // ResourcesService::foodNeed() — even if it was generated when the stock
+        // was still comfortably above that floor (drained by an earlier accept in
+        // the same visit, or by ongoing food consumption).
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+
+        config([
+            'game.merchant.commodity.sell_resource_id' => self::RES_ORGANICS,
+            'game.merchant.commodity.sell_reserve_multiplier' => 2,
+        ]);
+
+        // Zero every seeded building so ResourcesService::foodNeed() = 0... then
+        // set one to a known level to get a deterministic non-zero food_need.
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->update(['level' => 0]);
+        DB::table('buildings')->where('id', 25)->update(['supply_cost' => 8]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 25, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+        config(['game.food.supply_per_eater' => 4]);
+        // food_need = floor(3*8/4) = 6 → reserve floor = 2 × 6 = 12
+
+        // Stock is only just above the give_amount + reserve floor.
+        $this->setColonyResource(self::RES_ORGANICS, 30);
+
+        $offerId = $this->insertOffer([
+            'visit_id' => $this->insertMerchantVisit(),
+            'give_resource_id' => self::RES_ORGANICS,
+            'give_amount' => 20, // 30 - 20 = 10 < reserve floor 12
+            'get_resource_id' => self::RES_CREDITS,
+            'get_amount' => 700,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertFalse($result['ok'], 'acceptOffer must reject a Corvan sell offer that would breach the reserve floor');
+        $this->assertEquals(30, $this->getColonyResource(self::RES_ORGANICS), 'Organika stock must be untouched when the reserve floor blocks the trade');
+    }
+
+    public function test_accept_allows_corvan_sell_offer_above_reserve_floor(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+
+        config([
+            'game.merchant.commodity.sell_resource_id' => self::RES_ORGANICS,
+            'game.merchant.commodity.sell_reserve_multiplier' => 2,
+        ]);
+
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->update(['level' => 0]);
+        DB::table('buildings')->where('id', 25)->update(['supply_cost' => 8]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 25, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+        config(['game.food.supply_per_eater' => 4]);
+        // food_need = 6 → reserve floor = 12
+
+        $this->setColonyResource(self::RES_ORGANICS, 100);
+
+        $offerId = $this->insertOffer([
+            'visit_id' => $this->insertMerchantVisit(),
+            'give_resource_id' => self::RES_ORGANICS,
+            'give_amount' => 20, // 100 - 20 = 80 >= reserve floor 12
+            'get_resource_id' => self::RES_CREDITS,
+            'get_amount' => 700,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok'], 'acceptOffer must allow a Corvan sell offer that stays above the reserve floor');
+    }
+
+    public function test_accept_reserve_floor_does_not_apply_to_generic_guest_barter_offers(): void
+    {
+        // A generic guest offer (visit_id=null) trading Organika away must not be
+        // gated by the reserve floor — that check only applies to Corvan's sell
+        // offers (visit_id set), matching the GDD's Bar-gated-not-run-wide scope.
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->barService = $this->app->make(BarService::class);
+
+        config([
+            'game.merchant.commodity.sell_resource_id' => self::RES_ORGANICS,
+            'game.merchant.commodity.sell_reserve_multiplier' => 2,
+        ]);
+
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->update(['level' => 0]);
+        DB::table('buildings')->where('id', 25)->update(['supply_cost' => 8]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 25, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+        config(['game.food.supply_per_eater' => 4]);
+        // food_need = 6 → reserve floor = 12 (would block if applied)
+
+        $this->setColonyResource(self::RES_ORGANICS, 30);
+
+        $offerId = $this->insertOffer([
+            // no visit_id — generic guest offer
+            'give_resource_id' => self::RES_ORGANICS,
+            'give_amount' => 20, // 30 - 20 = 10 < reserve floor 12, but not a Corvan sell offer
+            'get_resource_id' => self::RES_COMPOUNDS,
+            'get_amount' => 5,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok'], 'Reserve floor must not apply to non-Corvan (visit_id=null) barter offers');
     }
 
     public function test_accept_returns_error_when_zero_credits(): void

@@ -26,13 +26,24 @@ use Illuminate\Support\Facades\Log;
  *
  * Item effects still deferred:
  *   - credit_loan — not yet offered (config placeholder)
+ *
+ * Corvan's Alltagsgeschäft (GDD §4b "Pfad-C-Hebel: von Regolith zu Credits", §12
+ * Kanal 1 "Corvan wird die zentrale Handelsfigur der Cantina", Freigegeben
+ * 2026-08-05): each visit also carries commodity offers — an Organika sell
+ * channel plus an optional Credits→resource buy offer — persisted as bar_offers
+ * rows with visit_id set (see generateCommodityOffers()). Reuses BarService's
+ * existing accept/negotiate/AP-charge pipeline instead of a parallel one.
  */
 class MerchantService
 {
     private const TRUST_RESOURCE_ID = 12;
 
+    private const RES_CREDITS = 1;
+
     public function __construct(
         private readonly PersonellService $personellService,
+        private readonly BarService $barService,
+        private readonly ResourcesService $resourcesService,
     ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
@@ -81,6 +92,110 @@ class MerchantService
                 'updated_at' => now(),
             ]);
         }
+
+        $this->generateCommodityOffers($colonyId, $visitId, $currentTick, $currentTick + $duration - 1);
+    }
+
+    /**
+     * Corvan's Alltagsgeschäft (GDD §4b/§12): persisted as bar_offers rows with
+     * visit_id set, valid for the whole visit (expires_tick = tick_end + 1, matching
+     * the existing "expires_tick > tick" active predicate).
+     *
+     *   - Sell lots: Organika→Credits, 2–3 lots (sell_lot_count_min/max) sized
+     *     sell_lot_size_min–max each. Generated only while the running total stays
+     *     above sell_reserve_multiplier × ResourcesService::foodNeed() — the
+     *     reserve floor also re-checked live at accept time in
+     *     BarService::acceptOffer(), since stock can drop between generation and
+     *     the player accepting a later lot.
+     *   - Buy offer: Credits→resource via BarService::buildCorvanBuyOffer(). No
+     *     barter fallback for Corvan — if unaffordable, simply omitted.
+     *
+     * No-op (and no error) when game.merchant.commodity is not configured.
+     */
+    private function generateCommodityOffers(int $colonyId, int $visitId, int $currentTick, int $tickEnd): void
+    {
+        $cfg = config('game.merchant.commodity', []);
+
+        if (empty($cfg)) {
+            return;
+        }
+
+        $expiresTick = $tickEnd + 1;
+        $sellResId = (int) ($cfg['sell_resource_id'] ?? 5);
+        $pricePerUnit = (int) ($cfg['sell_price_per_unit'] ?? 35);
+        $lotCountMin = (int) ($cfg['sell_lot_count_min'] ?? 2);
+        $lotCountMax = (int) ($cfg['sell_lot_count_max'] ?? 3);
+        $lotSizeMin = (int) ($cfg['sell_lot_size_min'] ?? 15);
+        $lotSizeMax = (int) ($cfg['sell_lot_size_max'] ?? 25);
+        $reserveMultiplier = (int) ($cfg['sell_reserve_multiplier'] ?? 2);
+
+        $stock = (int) (DB::table('colony_resources')
+            ->where('colony_id', $colonyId)
+            ->where('resource_id', $sellResId)
+            ->value('amount') ?? 0);
+        $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
+        $available = max(0, $stock - $reserve);
+
+        $lotCount = $this->pseudoRand($colonyId * 331 + $currentTick * 71, $lotCountMin, $lotCountMax);
+
+        for ($i = 0; $i < $lotCount; $i++) {
+            $size = $this->pseudoRand($colonyId * 4441 + $currentTick * 211 + $i * 17, $lotSizeMin, $lotSizeMax);
+
+            if ($size > $available) {
+                // Reserve floor reached — stop generating further lots this visit
+                // rather than shrinking below sell_lot_size_min (§4b: a lot must
+                // stay within the documented 15–25 range, not be squeezed thinner).
+                break;
+            }
+
+            $available -= $size;
+
+            DB::table('bar_offers')->insert([
+                'colony_id' => $colonyId,
+                'visit_id' => $visitId,
+                'give_resource_id' => $sellResId,
+                'give_amount' => $size,
+                'get_resource_id' => self::RES_CREDITS,
+                'get_amount' => $size * $pricePerUnit,
+                'expires_tick' => $expiresTick,
+                'is_accepted' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $traderRank = $this->barService->traderRank($colonyId);
+        $userId = DB::table('v_glx_colonies')->where('id', $colonyId)->value('user_id');
+        $credits = (int) (DB::table('user_resources')->where('user_id', $userId)->value('credits') ?? 0);
+        $buySeed = $colonyId * 8887 + $currentTick * 349;
+        $buyOffer = $this->barService->buildCorvanBuyOffer($buySeed, $traderRank, $credits);
+
+        if ($buyOffer !== null) {
+            [$giveResId, $giveAmount, $getResId, $getAmount] = $buyOffer;
+
+            DB::table('bar_offers')->insert([
+                'colony_id' => $colonyId,
+                'visit_id' => $visitId,
+                'give_resource_id' => $giveResId,
+                'give_amount' => $giveAmount,
+                'get_resource_id' => $getResId,
+                'get_amount' => $getAmount,
+                'expires_tick' => $expiresTick,
+                'is_accepted' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+    }
+
+    private function pseudoRand(int $seed, int $min, int $max): int
+    {
+        if ($min >= $max) {
+            return $min;
+        }
+        $hash = abs(($seed * 1664525 + 1013904223) & 0x7FFFFFFF);
+
+        return $min + ($hash % ($max - $min + 1));
     }
 
     public function shouldSpawn(int $colonyId, int $currentTick): bool
@@ -88,9 +203,9 @@ class MerchantService
         $cfg = config('game.merchant', []);
 
         $firstMin = (int) ($cfg['first_appearance_min'] ?? 15);
+        $firstMax = (int) ($cfg['first_appearance_max'] ?? 20);
         $intervalMin = (int) ($cfg['interval_min'] ?? 10);
         $intervalMax = (int) ($cfg['interval_max'] ?? 15);
-        $intervalAvg = ($intervalMin + $intervalMax) / 2.0;
 
         // No spawn without a built Cantina (bar building_id=52, level > 0)
         $barBuilt = DB::table('colony_buildings')
@@ -123,20 +238,42 @@ class MerchantService
             ->where('colony_id', $colonyId)
             ->max('tick_end');
 
-        if ($lastEnd !== null) {
-            // Must wait at least interval_min Sols since last visit ended
-            if (($currentTick - (int) $lastEnd) < $intervalMin) {
-                return false;
-            }
+        if ($lastEnd === null) {
+            // First appearance: spawn exactly on a deterministic tick within
+            // [first_appearance_min, first_appearance_max] — not an independent
+            // per-tick probability roll, which can (and, at the tighter Direction-1
+            // interval, reliably does) push the effective gap well past the max.
+            $targetTick = $this->deterministicTarget($colonyId, -1, $firstMin, $firstMax);
+
+            return $currentTick >= $targetTick;
         }
 
-        // Random chance: ~1/interval_avg per tick so visits are spread out naturally.
-        // Deterministic seed per colony+tick so parallel processing is idempotent.
-        $seed = $colonyId * 1664525 + $currentTick * 1013904223;
-        $hash = abs($seed & 0x7FFFFFFF);
-        $frac = $hash / 0x7FFFFFFF; // 0.0 – 1.0
+        $gap = $currentTick - (int) $lastEnd;
 
-        return $frac < (1.0 / $intervalAvg);
+        // Must wait at least interval_min Sols since last visit ended
+        if ($gap < $intervalMin) {
+            return false;
+        }
+
+        $targetGap = $this->deterministicTarget($colonyId, (int) $lastEnd, $intervalMin, $intervalMax);
+
+        return $gap >= $targetGap;
+    }
+
+    /**
+     * Deterministic pseudo-random integer in [$min, $max], seeded by colony + anchor
+     * (the previous visit's tick_end, or -1 for "no prior visit"). Same seed inputs →
+     * same output, so parallel tick processing stays idempotent — see shouldSpawn().
+     */
+    private function deterministicTarget(int $colonyId, int $anchor, int $min, int $max): int
+    {
+        if ($min >= $max) {
+            return $min;
+        }
+
+        $seed = abs(($colonyId * 1664525 + ($anchor + 1) * 1013904223) & 0x7FFFFFFF);
+
+        return $min + ($seed % ($max - $min + 1));
     }
 
     public function buyItem(int $itemId, int $colonyId, int $userId): array

@@ -168,4 +168,31 @@ class ResourcesServiceTest extends TestCase
         $after = $this->service->getColonyResources(['colony_id' => $this->colonyId, 'resource_id' => 3])->first();
         $this->assertEquals($amountBefore + 500, $after->amount);
     }
+
+    // ── foodNeed ─────────────────────────────────────────────────────────────
+
+    public function test_food_need_computes_floor_of_used_supply_over_per_eater(): void
+    {
+        config(['game.food.supply_per_eater' => 4]);
+
+        // Isolate: zero out every seeded building level, then set a single known one.
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->update(['level' => 0]);
+        DB::table('buildings')->where('id', 25)->update(['supply_cost' => 8]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'building_id' => 25, 'instance_id' => 1],
+            ['level' => 3, 'status_points' => 20, 'ap_spend' => 0]
+        );
+
+        // used_supply = 3 × 8 = 24; foodNeed = floor(24 / 4) = 6
+        $this->assertEquals(6, $this->service->foodNeed($this->colonyId));
+    }
+
+    public function test_food_need_ignores_buildings_at_level_zero(): void
+    {
+        config(['game.food.supply_per_eater' => 4]);
+
+        DB::table('colony_buildings')->where('colony_id', $this->colonyId)->update(['level' => 0]);
+
+        $this->assertEquals(0, $this->service->foodNeed($this->colonyId));
+    }
 }
