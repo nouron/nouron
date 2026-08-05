@@ -66,34 +66,41 @@ class MerchantService
             return;
         }
 
-        $visitId = DB::table('merchant_visits')->insertGetId([
-            'colony_id' => $colonyId,
-            'tick_start' => $currentTick,
-            'tick_end' => $currentTick + $duration - 1,
-            'was_visited' => false,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $tickEnd = $currentTick + $duration - 1;
 
-        // Pick $count unique item types pseudo-randomly, seeded by colonyId + tick.
-        $types = array_keys($pool);
-        $picked = $this->pickItems($types, $count, $colonyId, $currentTick);
-
-        foreach ($picked as $type) {
-            $def = $pool[$type] ?? [];
-            DB::table('merchant_items')->insert([
-                'visit_id' => $visitId,
-                'item_type' => $type,
-                'label' => $def['label'] ?? $type,
-                'cost_credits' => (int) ($def['cost'] ?? 0),
-                'payload' => $this->buildPayload($type, $def),
-                'sold' => false,
+        // Atomic: merchant_visits + merchant_items + Corvan's commodity bar_offers
+        // (up to ~7 rows) must appear together or not at all — a failure partway
+        // through must not leave a visit with a half-built Alltagsgeschäft.
+        DB::transaction(function () use ($colonyId, $currentTick, $tickEnd, $pool, $count): void {
+            $visitId = DB::table('merchant_visits')->insertGetId([
+                'colony_id' => $colonyId,
+                'tick_start' => $currentTick,
+                'tick_end' => $tickEnd,
+                'was_visited' => false,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        }
 
-        $this->generateCommodityOffers($colonyId, $visitId, $currentTick, $currentTick + $duration - 1);
+            // Pick $count unique item types pseudo-randomly, seeded by colonyId + tick.
+            $types = array_keys($pool);
+            $picked = $this->pickItems($types, $count, $colonyId, $currentTick);
+
+            foreach ($picked as $type) {
+                $def = $pool[$type] ?? [];
+                DB::table('merchant_items')->insert([
+                    'visit_id' => $visitId,
+                    'item_type' => $type,
+                    'label' => $def['label'] ?? $type,
+                    'cost_credits' => (int) ($def['cost'] ?? 0),
+                    'payload' => $this->buildPayload($type, $def),
+                    'sold' => false,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            $this->generateCommodityOffers($colonyId, $visitId, $currentTick, $tickEnd);
+        });
     }
 
     /**

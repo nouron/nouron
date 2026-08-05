@@ -1008,6 +1008,56 @@ class BarServiceTest extends TestCase
         $this->assertTrue($found);
     }
 
+    public function test_negotiate_success_increases_get_amount_for_corvan_sell_offer(): void
+    {
+        // A Corvan sell offer (visit_id set, give=Organika/get=Credits) takes the
+        // barter branch in negotiateOffer() — $isCreditsOffer checks the GIVE side,
+        // and Organika isn't Credits — so a successful negotiation scales get_amount
+        // (more Credits), not give_amount. That's correct for this shape, but is an
+        // artifact of which side the check reads; pin it explicitly so a future
+        // "fix" that switches the check to get_resource_id can't silently turn
+        // Corvan's sell channel into an Organika discount instead.
+        $this->clearBarOffers();
+        $this->assignTrader(3);
+        $visitId = $this->insertMerchantVisit();
+
+        $found = false;
+        for ($tick = 1; $tick <= 200; $tick++) {
+            $this->clearBarOffers();
+            $this->mockTick($tick);
+            $this->barService = $this->app->make(BarService::class);
+            $this->setColonyResource(self::RES_ORGANICS, 1000);
+
+            $offerId = $this->insertOffer([
+                'visit_id' => $visitId,
+                'give_resource_id' => self::RES_ORGANICS,
+                'give_amount' => 20,
+                'get_resource_id' => self::RES_CREDITS,
+                'get_amount' => 700,
+                'expires_tick' => $tick + 10,
+            ]);
+
+            $result = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+
+            if ($result['ok'] && $result['success']) {
+                $found = true;
+                $bonus = (float) config('game.bar.negotiate_bonus.3', 0.2);
+                $expectedGet = (int) max(1, round(700 * (1 + $bonus)));
+                $this->assertEquals($expectedGet, $result['get_amount'], 'A negotiated Corvan sell offer must pay out more Credits, not fewer Organika');
+                $this->assertEquals(20, $result['give_amount'], 'give_amount (Organika owed) is unaffected by a successful negotiation on a sell offer');
+
+                // Reserve floor still governs at accept — negotiation only moved
+                // get_amount for this shape, give_amount (and thus the stock check
+                // in acceptOffer()) is unchanged.
+                $accepted = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, $tick);
+                $this->assertTrue($accepted['ok'], 'A negotiated sell offer must still be acceptable when comfortably above the reserve floor');
+                break;
+            }
+        }
+
+        $this->assertTrue($found);
+    }
+
     public function test_negotiate_rejects_an_already_negotiated_offer(): void
     {
         $this->clearBarOffers();

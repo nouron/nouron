@@ -157,6 +157,12 @@ class GameTickMerchantTest extends TestCase
     public function test_merchant_spawns_when_all_conditions_met(): void
     {
         $this->enableBar();
+        // Ample Organika so Corvan's commodity sell lots also generate through
+        // the real production config, not just the special-item pool.
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'resource_id' => 5],
+            ['amount' => 1000]
+        );
 
         $spawnTick = $this->findSpawnableTick(self::FIRST_MIN);
 
@@ -168,6 +174,12 @@ class GameTickMerchantTest extends TestCase
 
         $visit = $this->getVisit();
         $this->assertNotNull($visit, 'merchant_visits row must be created when merchant spawns');
+
+        // GDD §4b/§12: Corvan's Alltagsgeschäft (commodity bar_offers tied to this
+        // visit) must be produced through the real game:tick path, not just when
+        // spawnVisit() is called directly with test-local config.
+        $commodityOfferCount = DB::table('bar_offers')->where('visit_id', $visit->id)->count();
+        $this->assertGreaterThan(0, $commodityOfferCount, 'game:tick must produce at least one Corvan commodity bar_offer alongside the special-item visit');
     }
 
     /**
