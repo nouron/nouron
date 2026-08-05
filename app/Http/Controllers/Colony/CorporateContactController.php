@@ -6,6 +6,7 @@ use App\Http\Controllers\BaseController;
 use App\Services\ColonyService;
 use App\Services\CorporateContactService;
 use App\Services\EventService;
+use App\Services\ResourcesService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +25,7 @@ class CorporateContactController extends BaseController
         private readonly ColonyService $colonyService,
         private readonly CorporateContactService $corporateContactService,
         private readonly EventService $eventService,
+        private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct($tick);
     }
@@ -65,6 +67,11 @@ class CorporateContactController extends BaseController
                 'area' => 'colony',
                 'parameters' => json_encode(['colony_id' => $colony->id, 'price' => $result['price']]),
             ]);
+
+            $possessions = $this->resourcesService->getPossessionsByColonyId($colony->id);
+            $result['credits'] = $possessions[ResourcesService::RES_CREDITS]['amount'] ?? null;
+        } else {
+            $result['message'] = __("colony.error_{$result['error']}");
         }
 
         return response()->json($result, $result['ok'] ? 200 : 422);

@@ -155,6 +155,7 @@ return [
     'error_harvester_second_instance_cc_gate' => 'Zweiter Harvester erst ab Kommandozentrale Level 3 möglich.',
     'error_harvester_second_instance_locked' => 'Für einen zweiten Harvester braucht es einen Bezugsweg — ein Angebot von Orin in der Cantina oder eine geborgene Anlage.',
     'harvester_move' => 'Verlegen',
+    'harvester_place_second' => 'Harvester platzieren',
     'harvester_move_mode_hint' => 'Erkundetes Regolith-Tile außerhalb der Koloniezone anklicken — zeigt Vorschaupfeil mit AP-Kosten. Gedrückt halten zum Verlegen.',
     'harvester_move_no_targets' => 'Kein freies erkundetes Regolith-Tile verfügbar — erst neue Tiles erkunden (Nav-AP).',
     'harvester_move_invalid_target' => 'Kein gültiges Ziel — der Harvester braucht ein freies, erkundetes Regolith-Tile (hellblau markiert).',
@@ -213,6 +214,16 @@ return [
     'merchant_sold' => 'Verkauft',
     'merchant_buy_success' => 'Kauf erfolgreich.',
     'merchant_buy_error' => 'Kauf fehlgeschlagen.',
+
+    // ── Orin (corporate_rep) — Harvester-Zweitinstanz Weg A (GDD §4c,
+    // freigegeben 2026-08-05) ───────────────────────────────────────────────
+    // TODO(content-writer): Platzhalter — narrative Feinabstimmung folgt
+    // zusammen mit Orins Charakterblatt-Update (Game Role: bar_trade).
+    'corporate_contact_banner_hint' => 'Ein Angebot wartet.',
+    'corporate_contact_dialog_intro' => 'Orin hat ein Harvester-Modul im Angebot — Herkunft ungeklärt, Preis fällig sofort.',
+    'corporate_contact_price_label' => 'Preis',
+    'error_corporate_contact_offer_unavailable' => 'Das Angebot ist nicht mehr verfügbar.',
+    'error_insufficient_credits' => 'Nicht genug Credits für dieses Angebot.',
 
     // ── Bar/Cantina ───────────────────────────────────────────────────────────
 

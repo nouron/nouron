@@ -2914,3 +2914,48 @@ dialog[x-ref="discoveryDialog"] {
     text-align: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
+
+/* ── Orin (corporate_rep) — Harvester second-instance offer banner ──────────
+   (GDD §4c "Harvester-Zweitinstanz: Bezugsquelle", Weg A). A fixed banner
+   rather than a scene hotspot — no reserved position exists for a rare,
+   one-off visitor in data/cantina_hotspots.json (see bar.blade.php). */
+.corporate-contact-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--pico-border-radius, 6px);
+    background: rgba(140, 32, 48, 0.08);
+    border: 1px solid var(--color-accent, #8c2030);
+    cursor: pointer;
+}
+
+.corporate-contact-banner:hover {
+    background: rgba(140, 32, 48, 0.16);
+}
+
+.corporate-contact-banner__portrait {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: top center;
+    flex-shrink: 0;
+}
+
+.corporate-contact-banner__text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    flex-grow: 1;
+}
+
+.corporate-contact-banner__text span {
+    font-size: 0.82rem;
+    color: var(--pico-muted-color, #666);
+}
+
+.corporate-contact-banner__price {
+    flex-shrink: 0;
+}

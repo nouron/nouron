@@ -80,6 +80,21 @@ class CorporateContactControllerTest extends TestCase
         $response->assertOk()->assertJsonPath('ok', true);
     }
 
+    public function test_buy_harvester_syncs_resourcebar_credits(): void
+    {
+        $creditsBefore = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('credits');
+
+        $response = $this->actingAs($this->makeUser())
+            ->postJson(route('colony.corporate-contact.buy-harvester'));
+
+        $response->assertOk();
+        $price = (int) $response->json('price');
+        $creditsAfter = (int) DB::table('user_resources')->where('user_id', self::USER_ID)->value('credits');
+
+        $this->assertSame($creditsBefore - $price, $creditsAfter, 'purchase must actually deduct credits');
+        $response->assertJsonPath('credits', $creditsAfter);
+    }
+
     public function test_buy_harvester_returns_422_when_no_offer_active(): void
     {
         // A tick with no appearance at all (see CorporateContactServiceTest).
@@ -89,6 +104,7 @@ class CorporateContactControllerTest extends TestCase
             ->postJson(route('colony.corporate-contact.buy-harvester'));
 
         $response->assertStatus(422)->assertJsonPath('ok', false);
+        $response->assertJsonPath('message', __('colony.error_corporate_contact_offer_unavailable'));
     }
 
     public function test_get_offer_requires_auth(): void
