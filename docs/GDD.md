@@ -703,7 +703,7 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 | Grundbedürfnis | Sockel (alle) | Pfad A — Analytik | Pfad B — Hangar | Pfad C — Cantina |
 |---|---|---|---|---|
-| **Regolith** | 1 Harvester-Instanz, Ø 12,9 Rg/Sol (Standard-Baseline, ⚠️ Owner-Entscheidung 2026-08-05 — 2. Instanz ist optionaler Bonus, nicht Teil des Sockels, §4c „Harvester-Zweitinstanz") | `geology`, +3/3/2/2/2 kumuliert, max 12 (§13.7) | `mission_supply_run`, 6,25/Sol je Frachter | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
+| **Regolith** | 1 Harvester-Instanz, Ø 12,9 Rg/Sol (Standard-Baseline seit Owner-Entscheidung 2026-08-05, §4c „Harvester-Zweitinstanz"; Sockel-Bilanz gegen diese Baseline neu hergeleitet in §13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline") | `geology`, +3/3/2/2/2 kumuliert, max 12 (§13.7) | `mission_supply_run`, 6,25/Sol je Frachter | **kein dedizierter Wachstumshebel** — opportunistischer Credits→Regolith-Kauf als Sicherheitsnetz (§12), siehe „Pfad-C-Hebel" unten |
 | **Organika** | Agrardom | `agronomy` — ⚠️ Effekt zu prüfen | `mission_supply_run`, 10 je Umlauf | Ankauf über Bar-Angebote |
 | **Credits** | Relaisvergütung, Ratssubvention | ⚠️ **keine eigene Quelle** | Botenflug / Konvoi-Begleitung, 180–200 je Mission | Handelsvertrag 10/25/45 Cr/Sol + **Organika-Verkauf (Vorschlag, siehe unten)** |
 | **Vertrauen** | Gebäude-Boni, Ereignisse | `health` + Krankenstation | `mission_aid_transport` (+2) | Cantina `trust_per_lv` + Handelserfolge |
@@ -714,11 +714,11 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 ### Pfad-C-Hebel: von Regolith zu Credits (Freigegeben 2026-08-05)
 
-> **Status: Freigegeben.** Beantwortet die in §13.7 offen gelassene Frage „braucht Pfad C überhaupt einen großen Regolith-Hebel?" und den ROADMAP-Punkt „Pfad-C-Regolith-Hebel neu denken" (Stufe 1b). Die Verkaufsrichtung im Bar/Cantina-System (siehe unten, „Corvan wird die zentrale Handelsfigur der Cantina") ist am 2026-08-05 ebenfalls freigegeben. Offen bleibt nur die vollständige §13.7-Neuherleitung gegen die neue 1-Harvester-Sockel-Baseline (eigener Folge-Termin, siehe §4c) — Zahlen in diesem Abschnitt (Zielgröße ~247 Cr/Sol etc.) sind bereits gegen diese neue Baseline gerechnet, der Sockel-Vergleichswert unten (75 %) noch nicht.
+> **Status: Freigegeben, mit einer Korrektur (2026-08-06).** Beantwortet die in §13.7 offen gelassene Frage „braucht Pfad C überhaupt einen großen Regolith-Hebel?" und den ROADMAP-Punkt „Pfad-C-Regolith-Hebel neu denken" (Stufe 1b). Die Verkaufsrichtung im Bar/Cantina-System (siehe unten, „Corvan wird die zentrale Handelsfigur der Cantina") ist am 2026-08-05 ebenfalls freigegeben. Die §13.7-Neuherleitung liegt jetzt vor (§13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline"): Sie bestätigt, dass Pfad A + Pfad B die Regolith-Lücke gemeinsam schließen (18,25 Rg/Sol reif gegen 14,1 Rg/Sol benötigt) — Pfad C braucht dafür keinen eigenen Regolith-Hebel, wie hier bereits richtig angenommen. **Was sich ändert:** Die 247-Cr/Sol-Zielgröße unten war aus der Regolith-Lücke umgerechnet — das widerspricht der eigenen Prämisse dieses Abschnitts, dass Pfad C keinen Regolith-Hebel trägt. Sie wird unten zurückgezogen, siehe „Dimensionierung — korrigiert".
 
 **Warum der alte Hebel wegfällt.** Der ursprüngliche Pfad-C-Vorschlag war ein Organika→Regolith-Tausch über die Cantina. Das widerspricht der Knappheitsordnung (§3, `Regolith < Organika < Werkstoffe`): Ein Tausch, der die knappere Ressource (Organika, Rang 2) in die reichlichere (Regolith, Rang 1) umwandelt, läuft der Preis- und Verfügbarkeitslogik entgegen, die diese Ordnung vorgibt.
 
-**Warum Pfad C keinen eigenen Regolith-Hebel braucht.** Regolith ist nach §3 die Ressource, die „verfügbar sein soll" — Bauen soll an AP, Bauplatz und Supply scheitern, nicht am Rohstoff. Seit §4c/§13.7 läuft das Regolith-Wachstum über die zweite Harvester-Instanz, eine **pfad-unabhängige** Achse: Jeder Pfad kann sie bauen, unabhängig von der gewählten Reihenfolge. Der Sockel trägt bereits 75 % des Zielkolonie-Bedarfs (§13.7, „Bilanz über den Run"). Ein Regolith-spezifischer Pfad-C-Hebel würde damit ein Grundbedürfnis bedienen, das faktisch schon gedeckt ist — die Paritätsfrage stellt sich für Regolith nicht in der Schärfe, die sie für Credits hat.
+**Warum Pfad C keinen eigenen Regolith-Hebel braucht.** Regolith ist nach §3 die Ressource, die „verfügbar sein soll" — Bauen soll an AP, Bauplatz und Supply scheitern, nicht am Rohstoff. Die Regolith-Parität der drei Pfade wird von A (`geology`) und B (`mission_supply_run`) getragen, beide pfad-eigen, siehe §4b-Tabelle oben. Sockel allein deckt ~57,5 % des Zielkolonie-Bedarfs; mit Pfad A allein (12 Rg/Sol reif) steigt das auf ~94 %, mit Pfad A + einem aufgestockten Pfad B gemeinsam auf ~100 % und mehr (§13.7, „Neuherleitung gegen die 1-Instanz-Sockel-Baseline", Punkt 5) — Pfad B mit nur einem Frachter allein reicht dagegen nur auf ~76 %, lässt sich aber durch weitere Frachter aufstocken. Ein zusätzlicher Regolith-spezifischer Pfad-C-Hebel würde damit ein Grundbedürfnis bedienen, das bereits von den beiden anderen Pfaden gedeckt wird oder werden kann — die Paritätsfrage stellt sich für Regolith nicht in der Schärfe, die sie für Credits hat.
 
 **Wo der reale Engpass liegt.** Der Rang-System-Beispielrechnung (§13, „Entschieden 2026-07-19") zufolge trägt eine Kolonie mit Uplink-Station Lv2, Nexus-Subvention und Handelsvertrag Rang 2 gerade **+5 Cr/Sol Überschuss** — knapp, aber stabil, ohne Puffer für Unvorhergesehenes. Gleichzeitig ist Organika laut ROADMAP der einzige strukturelle Überschuss der Zielkolonie (~14/Sol) und aktuell nicht monetarisierbar. Beides zusammen zeigt: Der Engpass, gegen den sich Pfad C als „Pfad der Flexibilität" beweisen soll, ist nicht Regolith, sondern **Credits** — und der ungenutzte Rohstoff dafür liegt bereits in der Kolonie.
 
@@ -731,9 +731,9 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 
 **Dimensionierung — überholt durch die neue Sockel-Baseline (2026-08-05), hier direktional nachgezogen, nicht als neuer Festwert.** Die ursprüngliche Rechnung (145 Cr/Sol) ging von §13.7s „Bilanz über den Run" gegen die inzwischen verworfene Zielgröße 21,8 Rg/Sol (1→2 Harvester-Instanzen als Normalfall) aus. Mit der Owner-Entscheidung „ein Harvester ist die Baseline" (§4c, „Harvester: wenige Instanzen, dafür beweglich") liegt der Sockel jetzt bei **12,9 Rg/Sol durchgehend**. Gegen dieselbe Zielkolonie-Bedarfsgröße (~1.820 Rg, selbst noch nicht neu hergeleitet — siehe unten) wächst die Lücke von ~460 Rg auf **~790 Rg über 80 Sole ≈ 9,9 Rg/Sol im Run-Mittel** — umgerechnet ≈ **247 Cr/Sol**, deutlich über den vorherigen 145.
 >
-> **Beide Zahlen sind vorläufig — die eigentliche §13.7-Neuherleitung (dort als Punkt 5 vermerkt) ist noch offen.** Insbesondere dürfte die Zielkolonie-Bedarfsgröße selbst nicht unverändert bleiben, wenn die zweite Instanz vom Normalfall zum seltenen Bonus wird (§4c) — die 247-Cr/Sol-Zahl hier ist eine grobe Richtungsangabe, kein neuer harter Zielwert, bis diese Neuherleitung erfolgt ist.
+> **Korrektur (2026-08-06): Die 247-Cr/Sol-Zahl wird zurückgezogen — nicht neu kalibriert, sondern als falsch hergeleitet verworfen.** Die §13.7-Neuherleitung liegt jetzt vor: Zielkolonie-Bedarf ist stabil bei 1.795 Rg (nur die Zweitinstanz-Zeile entfällt gegenüber der alten 1.895), Sockel-Einnahmen 1.032 Rg (12,9 Rg/Sol × 80 Sole), Lücke 763 Rg ≈ 14,1 Rg/Sol reif. **Diese Lücke wird von Pfad A (`geology`, 12 Rg/Sol reif) und Pfad B (`mission_supply_run`, 6,25+/Sol reif, skalierbar) gemeinsam geschlossen (18,25 ≥ 14,1) — nicht von Pfad C.** Genau das hatte dieser Abschnitt weiter oben bereits selbst festgestellt („Pfad C braucht keinen großen Regolith-Hebel"). Die 247-Cr/Sol-Rechnung widersprach dieser eigenen Prämisse, indem sie die Regolith-Lücke trotzdem in einen Pfad-C-Credits-Zielwert umrechnete. Mit der Neuherleitung schließt sich die Regolith-Lücke unabhängig von Pfad C — der Organika-Verkauf-Hebel braucht deshalb eine **eigene** Zielgröße, hergeleitet aus dem Credits-Bedarf, nicht aus Regolith. Diese Credits-Bilanz-über-den-Run existiert im GDD noch nicht (nur die Momentaufnahme „+5 Cr/Sol Überschuss, kein Puffer" oben) — sie ist ein eigenständiges, offenes Vorhaben (neu in Anhang A A.4 aufgenommen), keine Rechenaufgabe, die sich aus der Regolith-Neuherleitung nebenbei mitlöst. **Bis dahin gilt: keine belastbare Cr/Sol-Zielgröße für den Organika-Verkauf-Hebel.**
 >
-> **Konsequenz für die Rang-Kurve unten: der bisherige „reife" Wert wird zum neuen Run-Mittel-Ziel, nicht mehr zum Bonus obendrauf.** Bei Rang 2 (~0,2 Verkaufsangebote/Sol × ~20 Einheiten) ≈ **4 Or/Sol ≈ 145 Cr/Sol** — das war der alte Zielwert, reicht jetzt nicht mehr für den Run-Mittel-Bedarf. Bei Rang 3 (~0,375/Sol × ~20) ≈ **7,5 Or/Sol ≈ 265 Cr/Sol** — das liegt nah an den neuen ~247 Cr/Sol. Unter der neuen Baseline trägt der Organika-Verkauf sein Zielvolumen also realistisch nur noch bei **Rang 3**, nicht schon ab Rang 2 wie zuvor angenommen. Zwei Stellschrauben, falls das zu knapp wirkt: höhere Losgröße/Preis, oder — konsistent mit der oben empfohlenen Direction-1-Lösung (Corvans Frequenz wird angehoben, nicht an die anonyme Gästerotation gekoppelt) — eine direkt höhere Erscheinungsrate, die nicht mehr über den Umweg „Anteil an anonymen Gästen" limitiert ist. Gegenprobe Reserve bei Rang 3: 7,5 Or/Sol Abfluss gegen ~14 Or/Sol Überschuss lässt **+6,5 Or/Sol** Aufbau übrig — die Reserve-Untergrenze bleibt komfortabel. Bei Rang 0–1 ist der Kanal nahezu inaktiv; dort trägt der Handelsvertrag (10–25 Cr/Sol) das Credits-Grundbedürfnis allein, mit einer jetzt größeren Lücke als zuvor angenommen.
+> **Rang-Kurve — Zahlen bleiben als Kapazitäts-Referenz stehen, der Vergleich gegen einen Zielwert entfällt vorerst.** Bei Rang 2 (~0,2 Verkaufsangebote/Sol × ~20 Einheiten) ≈ **4 Or/Sol ≈ 145 Cr/Sol**, bei Rang 3 (~0,375/Sol × ~20) ≈ **7,5 Or/Sol ≈ 265 Cr/Sol** — beides weiterhin gültige Angaben dazu, was der Kanal unter dem Anteils-Modell (Direction 2) technisch liefern kann. Ohne validierte Credits-Zielgröße (siehe Korrektur oben) lässt sich daraus aber vorerst nicht ableiten, ob das genug, zu viel oder zu wenig ist — das ist Teil der offenen Credits-Bilanz-Aufgabe, nicht mit dieser Neuherleitung gelöst. Gegenprobe Reserve bei Rang 3 bleibt informativ: 7,5 Or/Sol Abfluss gegen ~14 Or/Sol Überschuss lässt **+6,5 Or/Sol** Aufbau übrig — die Reserve-Untergrenze bleibt in jedem Fall komfortabel, unabhängig vom noch offenen Zielwert.
 
 > **⚠️ Diese Herleitung gilt für den Direction-2-Fallback (anonyme Gäste „im Auftrag Corvans", Anteils-Modell), nicht für die primär empfohlene Direction 1 (Corvans eigene, angehobene Erscheinungsrate).** Unter Direction 1 ist die Angebotsfrequenz direkt Corvans Erscheinungsintervall (~5–8 Sole) × Trefferchance für das Alltagsgeschäft — ein einfacheres Modell ohne den „Anteil an anonymen Gästen"-Umweg unten, das die Dimensionierung oben direkt trägt. Der Anteils-Rechnung hier (zuerst 2026-08-04 gerechnet) bleibt als Fallback-Herleitung stehen, falls Direction 2 gewählt wird: die 4-Or/Sol-Zahl oben war gegen den 60-%-Credits-Anteil aller Gäste gerechnet, nicht gegen einen auf Corvan beschränkten Anteil. Mit der Owner-Vorgabe (Credits-Handel nur über Corvan, §12 Kanal 1) ist die tatsächliche Angebotsfrequenz in diesem Modell deutlich niedriger:
 >
@@ -741,9 +741,9 @@ Der Harvester (Regolith) und der Agrardom (Organika) sind der **gemeinsame Socke
 > - × Anteil „Corvans Netzwerk" an den Gästen (~25 % ohne Konsul, steigend auf ~50 % bei Rang 3) → ~0,1–0,75 solcher Gäste/Sol.
 > - × Kauf/Verkauf-Split (~50/50 vorgeschlagen) → **~0,05–0,4 Verkaufsangebote/Sol.**
 >
-> Um im Mittel 4 Or/Sol zu erreichen, müsste ein einzelnes Angebot bei Rang 2 (~0,2/Sol) ~20 Einheiten bewegen, bei Rang 0/1 (~0,1/Sol oder seltener) ~30–40 — Letzteres kollidiert mit der Reserve-Untergrenze (2× `food_need`): ein 30er-Verkauf verlangt ~90+ Organika Bestand, mehrere Sole Aufbauzeit gegen den Überschuss von ~14/Sol. **Konsequenz, nicht nur Randnotiz:** Der Kanal trägt sein Zielvolumen realistisch erst ab Konsul-Rang 2–3, mit einer Losgröße von **~15–25 Organika pro Verkaufsangebot** (Vorschlag, in derselben Größenordnung wie die bestehenden Kauf-/Tauschlosgrößen 10–50 bzw. 10–30 Einheiten). Bei niedrigem oder fehlendem Konsul-Rang ist der Kanal nahezu inaktiv — das ist **beabsichtigt und konsistent mit der Pfad-C-Identität** (wer früh in den Konsul investiert, bekommt den Kanal früher und stärker), heißt aber: Der „nicht verdoppelte Reifewert" oben ist der Zielwert bei Rang 2–3, nicht ein garantierter Run-Durchschnitt. Bei Rang 0–1 trägt Pfad C sein Credits-Grundbedürfnis primär über den Handelsvertrag (10–25 Cr/Sol) — der Organika-Verkauf ist ein **Zusatz für einen investierten Konsul**, nicht die alleinige Antwort auf die Paritätsfrage. Playtest-Metrik: erreichte Cr/Sol aus Organika-Verkauf je Konsul-Rang, gegen die 145-Cr/Sol-Zielgröße bei Rang 2–3.
+> Um im Mittel 4 Or/Sol zu erreichen, müsste ein einzelnes Angebot bei Rang 2 (~0,2/Sol) ~20 Einheiten bewegen, bei Rang 0/1 (~0,1/Sol oder seltener) ~30–40 — Letzteres kollidiert mit der Reserve-Untergrenze (2× `food_need`): ein 30er-Verkauf verlangt ~90+ Organika Bestand, mehrere Sole Aufbauzeit gegen den Überschuss von ~14/Sol. **Konsequenz, nicht nur Randnotiz:** Der Kanal trägt sein Zielvolumen realistisch erst ab Konsul-Rang 2–3, mit einer Losgröße von **~15–25 Organika pro Verkaufsangebot** (Vorschlag, in derselben Größenordnung wie die bestehenden Kauf-/Tauschlosgrößen 10–50 bzw. 10–30 Einheiten). Bei niedrigem oder fehlendem Konsul-Rang ist der Kanal nahezu inaktiv — das ist **beabsichtigt und konsistent mit der Pfad-C-Identität** (wer früh in den Konsul investiert, bekommt den Kanal früher und stärker), heißt aber: Der „nicht verdoppelte Reifewert" oben ist der Zielwert bei Rang 2–3, nicht ein garantierter Run-Durchschnitt. Bei Rang 0–1 trägt Pfad C sein Credits-Grundbedürfnis primär über den Handelsvertrag (10–25 Cr/Sol) — der Organika-Verkauf ist ein **Zusatz für einen investierten Konsul**, nicht die alleinige Antwort auf die Paritätsfrage. Playtest-Metrik: erreichte Cr/Sol aus Organika-Verkauf je Konsul-Rang, gegen die (noch zu validierende) Zielgröße aus der offenen Credits-Bilanz — nicht mehr gegen einen festen 145-Cr/Sol-Wert, siehe Korrektur oben.
 
-> ⚠️ **BALANCE CONCERN:** Ein Organika-Verkauf schafft indirekt einen zweiten Regolith-Kanal (Organika → Credits → Regolith-Kauf beim Nexus), auch wenn der direkte Tausch vermieden wird. Mit der oben nachgerechneten, niedrigeren Angebotsfrequenz (auf Corvans Netzwerk beschränkt, ~0,05–0,4 Verkaufsangebote/Sol statt der ursprünglich angenommenen 60 % aller Gäste) ist dieses Risiko eher kleiner als in der ersten Fassung dieses Vorschlags — bleibt aber im selben Zielband wie der ohnehin vorgesehene Sockel-Lückenschluss (§13.7: ~5,8 Rg/Sol Run-Mittel) und läuft nicht auf den vollen 14 Or/Sol-Überschuss hinaus. Playtest-Metrik: Anteil des Regolith-Zuflusses, der über Credits aus Organika-Verkauf stammt, Zielband analog zu §13.7 (30–40 % eines reifen Hebels, nicht mehr).
+> ⚠️ **BALANCE CONCERN:** Ein Organika-Verkauf schafft indirekt einen zweiten Regolith-Kanal (Organika → Credits → Regolith-Kauf über Orin/Weg A, §4c), auch wenn der direkte Tausch vermieden wird. Mit der oben nachgerechneten, niedrigeren Angebotsfrequenz (auf Corvans Netzwerk beschränkt, ~0,05–0,4 Verkaufsangebote/Sol statt der ursprünglich angenommenen 60 % aller Gäste) ist dieses Risiko eher kleiner als in der ersten Fassung dieses Vorschlags. **Nach der §13.7-Neuherleitung (2026-08-06) ist die Regolith-Lücke ohnehin bereits durch Pfad A + B gedeckt** (18,25 ≥ 14,1 Rg/Sol reif, §13.7) — ein zusätzlicher Credits→Regolith-Umweg über Corvan käme also on top einer bereits geschlossenen Lücke, nicht zu deren Schließung. Playtest-Metrik: Anteil des Regolith-Zuflusses, der über Credits aus Organika-Verkauf stammt — Zielband eng (nicht mehr „30–40 % eines reifen Hebels" wie zuvor angenommen, da dieser Kanal jetzt reiner Überschuss ist, kein tragender Baustein).
 
 **Zwei Folgefragen — geschrieben gegen das Direction-2-Fallback-Modell (anonyme Gäste mit Anteils-Rechnung); unter der primär empfohlenen Direction 1 lösen sie sich anders, nicht durch Playtest-Kalibrierung, sondern strukturell:**
 
@@ -848,9 +848,9 @@ Ein Tile beginnt beim vollen Frischwert und fällt bis zum Ausschöpfen auf die 
 | **Standard, ganzer Run** | **1** | **12,9** |
 | Bonusfall, ab Erwerb der 2. Instanz | 2 | 25,8 |
 
-> **⚠️ Tabelle historisch, Run-Mittel-Zeile „21,8" gestrichen (Owner-Entscheidung 2026-08-05).** Die vorherige Fassung dieser Tabelle blendete Sol 1–30 (1 Instanz, 12,9) und Sol 30–80 (2 Instanzen, 25,8) zu einem Run-Mittel von 21,8 Rg/Sol — das war die Zielgröße, gegen die §13.7 aktuell noch gerechnet ist. Neue Zielgröße für den **Standardfall ist durchgehend 12,9 Rg/Sol** (1 Instanz, den ganzen Run); die 25,8-Zeile gilt nur noch für die Sole, in denen ein Run tatsächlich (opportunistisch, nicht garantiert, siehe unten) eine zweite Instanz hat — als Bonus, nicht als eingerechneter Normalfall. §13.7 muss auf diese Basis neu gerechnet werden (Zielkolonie-Bedarf, Sockel-Einnahmen, Hebel-Lücke) — hier nur die Richtung markiert, siehe Warnhinweis dort.
+> **⚠️ Tabelle historisch, Run-Mittel-Zeile „21,8" gestrichen (Owner-Entscheidung 2026-08-05).** Die vorherige Fassung dieser Tabelle blendete Sol 1–30 (1 Instanz, 12,9) und Sol 30–80 (2 Instanzen, 25,8) zu einem Run-Mittel von 21,8 Rg/Sol — das war die Zielgröße, gegen die §13.7 vormals gerechnet war. Neue Zielgröße für den **Standardfall ist durchgehend 12,9 Rg/Sol** (1 Instanz, den ganzen Run); die 25,8-Zeile gilt nur noch für die Sole, in denen ein Run tatsächlich (opportunistisch, nicht garantiert, siehe unten) eine zweite Instanz hat — als Bonus, nicht als eingerechneter Normalfall. **§13.7 ist jetzt vollständig auf diese Basis neu gerechnet und freigegeben (2026-08-06)** — siehe §13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline".
 
-Das trifft nicht mehr die ~20 Rg/Sol, gegen die der bisherige Kostensatz gerechnet ist — das ist jetzt eine offene Baustelle in §13.7, kein gelöstes Problem.
+Das trifft nicht mehr die ~20 Rg/Sol, gegen die der bisherige Kostensatz gerechnet war — §13.7 zeigt jetzt, dass daraus ein echter, ungelöster Konflikt mit der 08-03-`decay_rate`-Freigabe folgt (G2-60-%-Obergrenze wird gerissen, §13.7 Punkt 7), kein bloßer Rechenrückstand mehr.
 
 **Der eigentliche Regler ist die Umzugsgebühr, nicht die Kurve.** Bei 1 AP je Hex lohnt ein Umzug rechnerisch schon ab ~75 % Restertrag (Amortisation ~3 Sole), also **alle 5–7 Sole** — genau die Daueraufgabe, die nicht gewollt ist. Deshalb:
 
@@ -896,7 +896,8 @@ Das trifft nicht mehr die ~20 Rg/Sol, gegen die der bisherige Kostensatz gerechn
 - **Belohnung ist ein Freischalt-Flag, kein Ressourcenwert** — neuer Reward-Typ (`'harvester_instance' => true` o. ä.), den das Missionssystem bisher nicht kennt (bisher nur `credits`, `regolith`, `compounds`, `research_ap`, `reveal_tiles`, `deep_scan`, `trust_event`, `loot_table`). **Umsetzungsaufwand-Hinweis:** derselbe Reward-Resolver-Mehraufwand wie bei Weg A, an anderer Stelle im Code (`HangarService`/`MissionService` statt der neuen Orin-Ergänzung).
 - **CC-Lv3-Gate teilen, nicht verdoppeln.** Die Mission selbst braucht im `requires`-Block keine eigene CC-Prüfung, solange `ruin_tile`-Sichtbarkeit typischerweise erst nach vergleichbar viel Erkundung eintritt wie CC Lv3 selbst; feuert das im Playtest zu früh, ist ein explizites `requires.building_level` das Sicherheitsnetz.
 - **⚠️ Unverifiziert: Spawnrate von `ruin_tile` pro Run.** Anders als die Regolith-Tile-Verteilung (~25 % `poor`/20 % `normal`/10 % `rich`, `ColonyTileService`, siehe unten) ist für `event_ruin`-Tiles aktuell keine Erzeugungslogik in der Codebase auffindbar (nur ein hartcodiertes Beispiel-Tile in `ColonySeedDemo`) — die „opportunistisch, selten"-Einstufung dieses Wegs ist unbelegt. Vor Umsetzung klären: sind Ruinen pro Run tatsächlich knapp?
-- **Weg A und Weg B sind nicht gleich teuer, und das bleibt auch mit der Reparatur-Auflage so — Weg B ist die günstigere Route, ihre Knappheit ist die Verfügbarkeit, nicht der Preis.** Weg A kostet immer 400–800 Cr zu einem Zufallszeitpunkt; eine kostenlose Bergung über Weg B wäre strikt besser, sobald sie verfügbar ist. Konsequenz: **die geborgene Instanz kommt beschädigt an, mit `status_points` auf ~25–30 % des Maximums** — derselbe Schwellenwert wie `dispatch_min_sp_pct = 0.25` in `config/missions.php`, damit die Zahl nicht neu erfunden, sondern an eine bestehende Konvention angelehnt ist. Über den §7-Reparaturpfad (1 AP + 1 Rg je SP, §13.7) ergibt das bei angenommenen 20 max. SP grob **14–15 SP Reparaturbedarf ≈ 14–15 AP + 14–15 Rg** — spürbar, aber weit unter 400–800 Cr-Äquivalent. **Das ist beabsichtigt, keine verfehlte Parität:** Weg B bleibt die günstigere Route; ihr Preis ist die Seltenheit der Ruine selbst (⚠️ unverifiziert, s. o.), nicht ein künstlich angeglichener Reparaturaufwand. Die Reparaturauflage verhindert nur, dass Weg B **zusätzlich noch sofort produktiv** ist — nicht, dass er billiger als Weg A ist.
+- **Korrektur (2026-08-06, Code-Befund PR #237): Harvester-Reparatur ist grundsätzlich regolithfrei, für jede Instanz — die ursprüngliche Fassung dieses Punkts war falsch.** Die erste Fassung nahm den allgemeinen §7-Reparaturpfad (1 AP + 1 Rg je SP, §13.7) für die geborgene Instanz an. Bei der Umsetzung der Harvester-Zweitinstanz-UI (PR #237) stellte sich heraus: Der Harvester ist strukturell von Regolith-Reparaturkosten ausgenommen — er zahlt Reparatur ausschließlich in AP, unabhängig von der Instanznummer. Das ist keine neue, gesondert zu treffende Regel für Instanz 2, sondern dieselbe Bootstrap-Logik, die für den **Bau** von Instanz 1 gilt („Instanz 1 bleibt regolithfrei", weiter unten in diesem Abschnitt), vom Code konsequent auch auf die **Reparatur** angewendet — keine zwei getrennten Ausnahmen, eine einzige, konsistent durchgezogene.
+  > **Konsequenz für Weg B:** Die geborgene Instanz (beschädigt ankommend, `status_points` ~25–30 % des Maximums — derselbe Schwellenwert wie `dispatch_min_sp_pct = 0.25` in `config/missions.php`) kostet zur Reparatur **0 Rg + ~14–15 AP** (bei angenommenen 20 max. SP, 1 AP je SP) — kein Regolith-Anteil. **Die frühere Aussage „Weg B ist günstiger als Weg A, aber nicht kostenlos" wird zurückgenommen:** Weg B ist noch günstiger als bisher angenommen — reine AP-Kosten gegen Weg As 400–800 Cr. Das ist okay, kein Balance-Fehler: Weg B ist ohnehin als die günstigere Route konzipiert, ihr Preis liegt in der Verfügbarkeit, nicht im Ressourcenaufwand. **Es verschärft aber die Bedeutung der `ruin_tile`-Spawnrate:** Diese war bisher als Randnotiz markiert (⚠️ unverifiziert, s. o.) — sie ist jetzt die **einzige** Bremse, die Weg B von einer strikt dominanten Route gegenüber Weg A unterscheidet. Ist sie zu hoch (Ruinen zu häufig auffindbar), verliert Orin/Weg A seinen Sinn als eigenständiger Bezugsweg; ist sie realistisch selten, bleibt die Zwei-Wege-Struktur intakt. Damit wird die Spawnrate zu einer **Vorbedingung** für die Balance dieses Abschnitts, nicht mehr nur zu einem offenen Detail.
 
 **Warum zwei Wege, keine dritte parallele Route:** `geology` liefert bereits einen Produktionsbonus auf bestehende Instanzen (§13.7) — ein zusätzlicher kenntnisgebundener *Erwerbs*pfad würde die Pfad-A-Identität unnötig verwischen. Zwei unabhängige, seltene Quellen (kommerziell über Orin, physisch über Ruinen) decken die gewünschte Varianz ab, ohne dass beide in jedem Run gleichzeitig fehlen müssen.
 
@@ -904,8 +905,8 @@ Das trifft nicht mehr die ~20 Rg/Sol, gegen die der bisherige Kostensatz gerechn
 1. Zustimmung zu Orin (`corporate_rep`) als dedizierte Kontaktperson für Weg A, mit eigenem Spawn-Check statt Anbindung an `MerchantService` (Corvan) oder die generische Bar-Gästerotation — inkl. Content-Nacharbeit an seinem `Game Role`-Feld.
 2. Die eigentliche Freigabefrage ist die **kombinierte Trefferquote**, nicht die zwei Einzelfaktoren: **spürbar weniger als die Hälfte der Runs sieht überhaupt ein kaufbares Angebot** (~40–60 %, siehe Rechnung oben). Die Einzelfaktoren (Erscheinung ~alle 15–25 Sole, ~25–35 % Trefferchance pro Erscheinung) sind Playtest-Kandidaten und gegeneinander verschiebbar — die Trefferquote selbst ist das, was der Owner bewusst absegnen sollte.
 3. Preisniveau 400–800 Cr für Orins Angebot (Reparatur-Kit-/AP-Paket-Bereich, echte Opportunitätskosten statt Unerreichbarkeit) — **vom Owner bereits bestätigt** ("teuer soll es sein").
-4. Zustimmung zur Ruinen-Bergungsmission (`mission_harvester_salvage`) als Weg B, inkl. der neuen „beschädigt ankommen"-Regel (Reparaturpfad §7) und dem offenen Punkt zur `ruin_tile`-Spawnrate.
-5. §13.7 muss auf die neue Baseline (1 Instanz = Standard, siehe „Deckel"-Abschnitt oben) neu gerechnet werden — grobe Richtung ist im GDD markiert, vollständige Neuherleitung für einen Folge-Termin vorgesehen.
+4. Zustimmung zur Ruinen-Bergungsmission (`mission_harvester_salvage`) als Weg B, inkl. der „beschädigt ankommen"-Regel — **Reparatur ist AP-only (0 Rg), korrigiert 2026-08-06** — und der jetzt zur Vorbedingung gewordenen `ruin_tile`-Spawnrate-Frage (siehe Korrektur oben).
+5. **Erledigt (2026-08-06):** §13.7-Neuherleitung liegt vor und ist freigegeben (§13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline"). Ergebnis: Sockel-Anteil an der Zielkolonie sinkt auf ~57,5 % (statt der alten 72–75 %); Pfad A (`geology`) + Pfad B (`mission_supply_run`) schließen die Regolith-Lücke gemeinsam (18,25 ≥ 14,1 Rg/Sol reif benötigt), kein Zahlenwert musste sich ändern. Die beiden daraus entstandenen Owner-Entscheidungen sind ebenfalls gefallen: (a) G6-Formulierung angepasst (Option 1, kein Spielwert geändert), (b) `decay_rate`/G2-Konflikt gelöst (Option B, G2-Metrik auf „Sockel + aktiver Pfad-Hebel" umgestellt, kein Spielwert geändert) — siehe §13.7 Punkt 6/7.
 
 Erst nach Freigabe: TDD-Umsetzung durch `game-developer`/`backend-coder` (eigene Orin-Spawn-Check-Ergänzung für Weg A, `mission_harvester_salvage` für Weg B — unabhängig voneinander umsetzbar), `content-writer` für Orins Charakterblatt-Update (`Game Role`) sowie Item- und Missionstext.
 
@@ -1670,7 +1671,7 @@ Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, 
 **Empfehlung: Zwei-Ebenen-Modell innerhalb einer erhöhten Corvan-Frequenz, statt zwei getrennter Systeme.**
 
 1. **Corvans Erscheinungsintervall wird angehoben** — Vorschlag ~5–8 Sole (statt bisher 10–15) — und bei jedem Erscheinen laufen **zwei unabhängige Rollen**:
-   - **Alltagsgeschäft (häufig bei jedem Erscheinen):** Standard-Commodity-Handel — Regolith/Organika/Werkstoffe gegen Credits, beide Richtungen (Kauf bestehend, Verkauf neu — der Organika-Verkauf-Vorschlag aus §4b). Strukturell das, was heute `BarService`s Credits↔Ressource-Angebotstyp leistet, jetzt aber an Corvans Erscheinen gebunden statt an anonyme Gäste. **Sizing gegen §4b nachgerechnet, nicht nur behauptet:** Ein Erscheinen alle 5–8 Sole (~0,15/Sol) mit **einem** Verkaufslos à ~20 Einheiten reicht nicht — das ergibt nur ~105 Cr/Sol gegen das §4b-Ziel von ~247 Cr/Sol (neue Baseline). **Hebel: mehrere Verkaufslose pro Besuch**, nicht ein kürzeres Intervall oder ein einzelnes Riesenlos — ein Händler, der im Hafen liegt, wickelt plausibel mehrere Geschäfte ab, bevor er weiterzieht. 2–3 Lose à ~20 Einheiten pro Besuch ergeben ~210–315 Cr/Sol, trifft die Zielgröße innerhalb der bestehenden Losgrößen-Spanne (15–25 Organika/Angebot) und ohne die Reserve-Untergrenze zu strapazieren (ein einzelnes ~47-Einheiten-Los, die Alternative bei nur einem Los pro Besuch, würde ~110 Organika Bestand verlangen — außerhalb der komfortablen Zone). Ein kürzeres Intervall (~3–4 Sole) ist die schwächere Alternative, weil sie „occasional" schon im Entwurfsstadium der Bio überstrapaziert.
+   - **Alltagsgeschäft (häufig bei jedem Erscheinen):** Standard-Commodity-Handel — Regolith/Organika/Werkstoffe gegen Credits, beide Richtungen (Kauf bestehend, Verkauf neu — der Organika-Verkauf-Vorschlag aus §4b). Strukturell das, was heute `BarService`s Credits↔Ressource-Angebotstyp leistet, jetzt aber an Corvans Erscheinen gebunden statt an anonyme Gäste. **Sizing — Zielzahl zurückgezogen (2026-08-06), Mechanismus bleibt.** Die ursprüngliche Rechnung kalibrierte gegen ~247 Cr/Sol (§4b) — diese Zahl ist zurückgezogen, weil sie aus der Regolith-Lücke statt aus einem Credits-Bedarf hergeleitet war (§13.7 „Neuherleitung", Punkt 5; §4b „Dimensionierung — korrigiert"). Ohne validierte Cr/Sol-Zielgröße lässt sich die genaue Losanzahl pro Besuch nicht mehr belastbar herleiten — das wartet auf die in Anhang A neu aufgenommene Credits-Bilanz-über-den-Run. **Der strukturelle Punkt bleibt unabhängig davon gültig:** Mit nur einem Verkaufslos à ~20 Einheiten pro Besuch (~0,15 Besuche/Sol × 20 Einheiten × 35 Cr) kommen ~105 Cr/Sol zusammen — der richtige Hebel, falls mehr gebraucht wird, ist **mehrere Verkaufslose pro Besuch**, nicht ein kürzeres Intervall (überstrapaziert Corvans „occasional"-Bio schon im Entwurfsstadium) oder ein einzelnes Riesenlos (sprengt die Reserve-Untergrenze). Exakte Losanzahl: Playtest-Kandidat, sobald die Credits-Bilanz eine Zielgröße liefert.
    - **Kuratiertes Sonderinventar (seltener, Sub-Chance bei einem Erscheinen):** AP-Pakete, Schiffe, Information, Einmal-Items, Exotics — die bisherige `MerchantService`-Kategorie-Tabelle, unverändert in Inhalt und Seltenheit innerhalb seiner Besuche.
 2. **`BarService`s anonyme Gästerotation bleibt nur für Tauschhandel (Ressource↔Ressource)** — Dax (`smuggler`), Voss (`scrap_dealer`) und ähnliche passen inhaltlich bereits. **Für Credits-Handel entfällt sie ganz**, wörtlich wie vom Owner vorgeschlagen: kein Kauf, kein Verkauf gegen Credits ohne Corvan.
 3. Technisch am ehesten als **eine gemeinsame Erscheinungs-/Angebots-Pipeline** umsetzbar (nicht zwei getrennte Spawn-Checks `MerchantService` + `BarService`-Credits-Zweig) — Detailarchitektur ist `game-developer`-Entscheidung, hier nur die Design-Anforderung: ein Corvan-Besuch, zwei Angebotsebenen.
@@ -1681,7 +1682,7 @@ Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, 
 
 **Cantina-Verhandlung (Risiko-Handel):** bleibt für beide Angebotstypen (Commodity/Corvan und Tausch/sekundäre Charaktere) nutzbar — keine zwingende Notwendigkeit, sie einzuschränken.
 
-**Konsul-Rang-Skalierung, wie zuvor:** Ohne Konsul erscheint Corvans Alltagsgeschäft seltener, aber nicht nie; mit Konsul häufiger und zu besseren Konditionen (`trader_discount`) — thematisch: der Konsul pflegt die Kontakte, die Corvan öfter vorbeikommen lassen. Die untenstehende Dimensionierung (§4b) rechnet dieses Prinzip gegen die **neue** Sockel-Baseline (12,9 Rg/Sol, siehe „Harvester: wenige Instanzen, dafür beweglich" oben) durch — die vorherige Fassung (145 Cr/Sol) war noch gegen die verworfene 21,8-Rg/Sol-Baseline gerechnet.
+**Konsul-Rang-Skalierung, wie zuvor:** Ohne Konsul erscheint Corvans Alltagsgeschäft seltener, aber nicht nie; mit Konsul häufiger und zu besseren Konditionen (`trader_discount`) — thematisch: der Konsul pflegt die Kontakte, die Corvan öfter vorbeikommen lassen. Die untenstehende Dimensionierung (§4b) hatte dieses Prinzip zuvor gegen eine aus der Regolith-Lücke umgerechnete Cr/Sol-Zielgröße durchgerechnet — diese Zielgröße ist am 2026-08-06 zurückgezogen (§13.7 „Neuherleitung", Punkt 5; §4b „Dimensionierung — korrigiert"), weil Pfad C laut eigener Entscheidung keinen Regolith-Hebel trägt und die Regolith-Lücke inzwischen unabhängig von Pfad C durch A + B gedeckt ist. Der Mechanismus (mehrere Verkaufslose pro Corvan-Besuch statt kürzeres Intervall) bleibt gültig; die genaue Losanzahl wartet auf eine eigene Credits-Bilanz.
 
 **Owner-Freigabe 2026-08-05, alle drei Punkte bestätigt:**
 1. Direction 1: Corvan-Frequenz angehoben (~5–8 Sole), zwei Angebotsebenen bei jedem Erscheinen, `BarService`-Gästerotation verliert Credits-Handel vollständig an ihn.
@@ -2524,6 +2525,8 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 > | Ein Pfad hängt sichtbar zurück | den betreffenden **Hebel** anheben | Sockel oder Baukosten — die sind pfadneutral |
 > | Mehr als 4 Sole pro Run an Regolith blockiert (G5) | Startbestand, dann Errichtungspreise | die Hebel — sie greifen zu spät für die frühe Klemme |
 
+> **Nachtrag 2026-08-06 — Sockel-Neuherleitung gegen die 1-Harvester-Baseline, vollständig freigegeben.** Die obige Freigabe vom 2026-08-03 gilt weiterhin für die vier tragenden Zahlen (Harvester-Frischwert, allgemeine Reparatur 1 Rg/SP, `decay_rate`-Klassen, Errichtung 70/95/120 vs. Level-Up 25). Die Owner-Entscheidung vom 2026-08-05 (§4c, „Ein Harvester ist die Baseline") machte den Sockel kleiner (12,9 statt der vormals angenommenen ~20–21,8 Rg/Sol) und riss dadurch zwei Rechnungen dieses Kapitels neu auf: die „Bilanz über den Run" (unten, neu hergeleitet) und die `decay_rate`-Anteilstabelle bei G2. **Beide sind am 2026-08-06 entschieden** (G6 umformuliert, G2-Metrik auf „Sockel + aktiver Pfad-Hebel" umgestellt — Details in der Neuherleitung unten und in G2/G6 der Guard-Rail-Tabelle) — kein Spielwert dieses Kapitels wurde dabei geändert, nur zwei Kennzahlen-Definitionen. Das Kapitel gilt jetzt als vollständig freigegeben.
+
 Von der Designabsicht her hergeleitet statt aus den Bestandswerten fortgeschrieben. Ersetzt die Regolith-Anteile von §13.6.
 
 #### Das Spielgefühl — zuerst, ohne Zahlen
@@ -2533,11 +2536,11 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | | Aussage |
 |---|---|
 | **G1** | **Regolith ist nie bequem und nie tödlich.** Der Bestand schwingt um eine niedrige zweistellige Zahl. Ein wachsender Haufen heißt, die Kolonie ist fertig; eine Null heißt, sie stirbt. Beides beendet die Spannung. |
-| **G2** | **Instandhaltung ist Routine, nicht Krise.** Sie bindet ~15 % des Einkommens früh und ~40 % bei der Zielkolonie. Unter 10 % ist Verfall Dekoration und die USP fällt weg; über 60 % ist er eine Strafe fürs Bauen. |
+| **G2** | **Instandhaltung ist Routine, nicht Krise.** Gemessen am Gesamteinkommen (Sockel + aktiver Pfad-Hebel, nicht Sockel allein — *umgestellt 2026-08-06, Owner-Entscheidung, kein Spielwert geändert*): Sie bindet ~15 % des Einkommens früh und ~40 % bei der Zielkolonie. Unter 10 % ist Verfall Dekoration und die USP fällt weg; über 60 % ist er eine Strafe fürs Bauen. |
 | **G3** | **Vernachlässigung kostet ein Level, nicht den Run.** Ein Level-Down ist in 5–8 Solen aufgeholt, ohne Kaskadenrisiko. |
 | **G4** | **Errichten ist eine Entscheidung, Level-Up ein Schritt.** Eine Errichtung kostet 5–8 Sole Sparen, ein Level-Up 1–2. |
 | **G5** | **Der Spieler soll 2–4 Mal pro Run an Regolith scheitern** — nicht dauernd (Grind), nicht einmal (Gate). |
-| **G6** | **Der Sockel trägt das Überleben, der Pfad-Hebel das Wachstum.** Ohne genutzten Hebel erreicht die Kolonie ~70 % der Zielgröße: kleiner, aber vollständig spielbar. |
+| **G6** | **Der Sockel trägt das Überleben, der Pfad-Hebel das Wachstum.** Der Sockel allein trägt eine spielbare, aber unterdimensionierte Kolonie (~57 % der Zielgröße) — genug, um nicht zu scheitern, zu wenig, um die Zielkolonie zu erreichen. Der gewählte Pfad-Hebel schließt die Lücke auf annähernd 100 %, sobald er aktiv genutzt wird. Ein Run ohne jede Pfad-Aktivität ist im aktuellen Design nicht vorgesehen. *(Umformuliert 2026-08-06, Owner-Entscheidung — ersetzt „ohne genutzten Hebel ~70 %", das seit der 1-Instanz-Sockel-Baseline vom 2026-08-05 arithmetisch nicht mehr zutrifft; kein Spielwert geändert, siehe §13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline", Punkt 6.)* |
 | **G7** | **Der Spieler muss im Kopf rechnen können.** „Ich mache 20 pro Sol, das kostet 95, das sind fünf Sole." |
 
 **G4 ist die wichtigste Aussage**, weil sie Regolith und AP entkoppelt: Das AP-Modell macht es genau umgekehrt (`f(1) = 0.5` — Errichten AP-billig, Level-Up AP-teuer). **Breite kostet Regolith, Tiefe kostet AP.** Damit sind die beiden Währungen nicht mehr redundant, sondern greifen an gegenüberliegenden Enden an.
@@ -2560,9 +2563,9 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | `geology`-Effekt | keiner | **+3/3/2/2/2 → kumuliert max 12** | 60 % des Sockels |
 | `knowledge.levelup_costs` | 12/20/30/40/50 | **20/28/36/44/52** | Amortisation ~7 Sole |
 | `knowledge.credits` | 100 | **0** | Credits-Lücke von Pfad A (§4b) |
-| Hebel-Zielgröße | ~6 Rg/Sol | **12 Rg/Sol reif, ~6 im Run-Mittel** | Rampe + 60-%-Regel |
+| Hebel-Zielgröße | ~6 Rg/Sol | ~~12 Rg/Sol reif, ~6 im Run-Mittel~~ → **14,1 Rg/Sol reif, ~9,5 im Run-Mittel** (korrigiert 2026-08-06, §13.7 „Neuherleitung", Punkt 4 — gegen die 1-Instanz-Sockel-Baseline, nicht die alte 2-Instanzen-Bilanz) | Rampe + Sol-Äquivalente-Rechnung |
 
-> **⚠️ Zeile „Instanz 2 und folgende" oben ist für den Harvester überholt — nicht Teil dieses freigegebenen Satzes.** Der 100-Rg-Regolith-Kostenanteil für die zweite Harvester-Instanz ist mit dem am 2026-08-05 freigegebenen Vorschlag hinfällig (§4c „Harvester-Zweitinstanz: Bezugsquelle"): Weg A (Orin, `corporate_rep`) kostet 400–800 Cr statt Regolith, Weg B (Bergungsmission `mission_harvester_salvage`) kostet keinen Ressourcenpreis, sondern Reparaturaufwand (~14–15 AP + ~14–15 Rg für den beschädigt ankommenden Fund). Beide Wege sind zusätzlich nicht garantiert verfügbar (§4c). Die „voller `build_cost`"-Regel bleibt für alle anderen instanzierten Gebäude (Agrardom, Hangar, Wohnhabitat) unverändert gültig — nur der Harvester ist die Ausnahme, wegen der beschlossenen Bootstrap-Sonderrolle dieses einen Gebäudes. **Zusätzlich überholt:** die 1-Instanz-Sockel-Baseline (§4c „Deckel"-Abschnitt) macht die obige Tabellenzeile „Hebel-Zielgröße" und die Run-Mittel-Werte in diesem Abschnitt (auf 2 Instanzen kalibriert) ebenfalls neu rechenbedürftig — vollständige Neuherleitung als eigener Folge-Termin, siehe §4c Punkt 5.
+> **⚠️ Zeile „Instanz 2 und folgende" oben ist für den Harvester überholt — nicht Teil dieses freigegebenen Satzes.** Der 100-Rg-Regolith-Kostenanteil für die zweite Harvester-Instanz ist mit dem am 2026-08-05 freigegebenen Vorschlag hinfällig (§4c „Harvester-Zweitinstanz: Bezugsquelle"): Weg A (Orin, `corporate_rep`) kostet 400–800 Cr statt Regolith, Weg B (Bergungsmission `mission_harvester_salvage`) kostet keinen Regolith-Anteil, sondern ausschließlich AP (**korrigiert 2026-08-06**, siehe §4c „Weg B": der Harvester ist strukturell von Regolith-Reparaturkosten ausgenommen, für jede Instanz, nicht nur die erste — ~14–15 AP, 0 Rg für den beschädigt ankommenden Fund). Beide Wege sind zusätzlich nicht garantiert verfügbar (§4c). Die „voller `build_cost`"-Regel bleibt für alle anderen instanzierten Gebäude (Agrardom, Hangar, Wohnhabitat) unverändert gültig — nur der Harvester ist die Ausnahme, wegen der beschlossenen Bootstrap-Sonderrolle dieses einen Gebäudes. **Die 1-Instanz-Sockel-Baseline (§4c „Deckel"-Abschnitt) ist jetzt vollständig neu hergeleitet und freigegeben (2026-08-06)** — siehe unten, „Neuherleitung gegen die 1-Instanz-Sockel-Baseline".
 
 **Zur Reparatur — eine Zahl, zwei Währungen.** Reparatur kostet bereits 1 AP je SP. Bei ebenfalls 1 Regolith je SP gilt:
 
@@ -2585,18 +2588,20 @@ Das Dashboard (13.4) braucht dann keine zwei Zeilen und 13.5 keine zwei Tabellen
 
 Bei den drei robusten ist ein Level-Down überproportional teuer (Supply-Cap bricht weg, Instanz verschwindet) — er muss langsam kommen, sonst verletzt er G3. Die Religiöse Stätte ist bewusst der teuerste Unterhalt im Spiel: Sie zahlt in Vertrauen, nicht in Funktion; wer sie hält, entscheidet sich aktiv dafür.
 
-Instandhaltung gegen G2:
+Instandhaltung gegen G2 — **umgestellt 2026-08-06 (Owner-Entscheidung, Option B der §13.7-Neuherleitung): Bezugsgröße ist Sockel + aktiver Pfad-Hebel, nicht Sockel allein.** Grund: Seit der 1-Instanz-Sockel-Baseline (2026-08-05) trägt der reine Sockel nur noch 12,9 statt vormals ~20 Rg/Sol — dieselben Σ-`decay_rate`-Werte hätten gegen den kleineren Sockel allein die 60-%-Obergrenze gerissen (Vollausbau ~79 %, siehe §13.7 „Neuherleitung", Punkt 7). Die neue Bezugsgröße ab dem ersten Pfad-Gebäude ist Sockel + reifer Wert des aktiven Pfad-Hebels (hier: Pfad A/`geology`, 12 Rg/Sol, als repräsentativer Referenzwert — die Tabelle bildet nicht jeden der drei Pfade einzeln ab):
 
-| Ausbaustand | Typen | Σ `decay_rate` = Rg/Sol = AP/Sol | Anteil am Sockel | Ziel |
-|---|---|---|---|---|
-| Start (CC, Harvester, Wohnhabitat) | 3 | 2,00 | 10 % | — |
-| + Agrardom | 4 | 2,80 | **14 %** | ~15 % ✓ |
-| + Pfad 1, Uplink | 6 | 4,60 | 23 % | — |
-| + Pfad 2 | 7 | 5,60 | **28 %** | ~30 % ✓ |
-| + Pfad 3, Krankenstation, Denkmal | 10 | 7,90 | **40 %** | ~40 % ✓ |
-| alle 13 | 13 | 11,00 | 55 % | ≤ 60 % ✓ |
+| Ausbaustand | Typen | Σ `decay_rate` = Rg/Sol = AP/Sol | Bezugsgröße (Rg/Sol) | Anteil | Ziel |
+|---|---|---|---|---|---|
+| Start (CC, Harvester, Wohnhabitat) | 3 | 2,00 | 12,9 (nur Sockel, noch kein Pfad-Gebäude) | **15,5 %** | ~15 % ✓ |
+| + Agrardom | 4 | 2,80 | 12,9 (nur Sockel) | **21,7 %** | — |
+| + Pfad 1, Uplink | 6 | 4,60 | 24,9 (Sockel + Pfad-Hebel aktiv) | 18,5 % | — |
+| + Pfad 2 | 7 | 5,60 | 24,9 | 22,5 % | ~30 % (Richtwert) |
+| + Pfad 3, Krankenstation, Denkmal | 10 | 7,90 | 24,9 | 31,7 % | — |
+| alle 13 (ohne Harvester-Zweitinstanz, jetzt Bonusfall) | 13 | 10,20 | 24,9 | **41,0 %** | ~40 % ✓ |
 
-Die AP-Seite fällt dabei von selbst richtig: 7,9 AP/Sol gegen den Pool von 22 sind 36 % — der in 13.5 formulierte Zielkorridor. Kein Zufall, sondern die Folge davon, dass beide Kosten an derselben Zahl hängen.
+Die Vollausbau-Zeile trifft G2s eigenen Zielwert (~40 % bei der Zielkolonie) fast exakt — ein starker Hinweis, dass Option B (Metrik umstellen) die stimmigere Lösung ist, nicht nur eine formale Umgehung: G2 war schon immer implizit gegen ein Einkommen inklusive aktivem Hebel kalibriert, die alte Tabelle hatte das nur nie explizit gemacht, weil der Sockel früher (~20 Rg/Sol) allein nahe genug an diesem Zielkorridor lag.
+
+Die AP-Seite bleibt unverändert an Σ `decay_rate` gekoppelt (7,9 AP/Sol beim Zwischenstand „+ Pfad 3", ≤ 22er-Pool, im 13.5-Zielkorridor) — die Umstellung betrifft nur die Regolith-Seite der Kennzahl, nicht die AP-Seite.
 
 #### Proben
 
@@ -2613,17 +2618,153 @@ Die AP-Seite fällt dabei von selbst richtig: 7,9 AP/Sol gegen den Pool von 22 s
 
 Gleicher Endpunkt wie heute (CC Lv2 an Sol 4), aber mit einem Einkommen, das den Puffer trägt statt ihn zu verzehren. Der in 13.5 als offen markierte Engpass „Sole 8–20" verschwindet. Beim Hangar-Pfad (120 statt 95) endet Sol 4 bei ~15 Rg — knapper, aber nicht negativ; die teuerste Pfadwahl wird damit zur echten Entscheidung statt zur kosmetischen.
 
-**Bilanz über den Run.** Zielkolonie ≈ 1.820 Rg Bedarf (835 Errichtungen + 720 Level-Ups + 25 Zweitinstanz + ~240 Reibung). Sockel-Einnahmen bis Sol 80 ≈ 1.363 Rg. **Der Sockel trägt 75 % der Zielkolonie** — G6 verlangt ~70 %. ✓ Die Lücke von ~460 Rg ≈ 6 Rg/Sol im Mittel ist das, was der Pfad-Hebel schließt.
-
-> **⚠️ Diese Bilanz ist mit der 2-Instanzen-Sockelannahme gerechnet — durch Owner-Entscheidung 2026-08-05 überholt (§4c „Harvester: wenige Instanzen, dafür beweglich").** Die neue Baseline ist 1 Harvester-Instanz für den ganzen Run (~12,9 statt ~21,8 Rg/Sol Sockel); die zweite Instanz ist ein nicht garantierter Bonus, kein Bestandteil der Zielkolonie-Rechnung mehr. Die Sockel-Einnahmen bis Sol 80 sinken dadurch spürbar unter die hier notierten ≈1.363 Rg, und der Anteil, den der Pfad-Hebel schließen muss, wächst entsprechend über die ~460 Rg / ~6 Rg/Sol hinaus. **Vollständige Neuherleitung aussteht** (Zielkolonie-Bedarf ggf. anpassen, Sockel-Prozentsatz gegen G6 neu prüfen) — hier nur die Richtung markiert, kein neuer Zahlensatz. Folge-Termin nötig, bevor dieser Abschnitt wieder als „freigegeben" gilt.
-
-> **⚠️ Stale Zahl gefunden (2026-08-04, bei der Pfad-C-Hebel-Neuherleitung entdeckt).** Die „25 Zweitinstanz" oben ist die zurückgezogene Instanz-Preisregel (25 % Level-Up-Kosten) — seit der Owner-Entscheidung „Instanzen zahlen den vollen Errichtungspreis" (§13.7-Auslieferungsnotiz, Anhang B Zeile ~2412) und `config('game.harvester.second_instance_regolith_cost')` sind es **100 Rg**, nicht 25. Mit 100 statt 25: Zielkolonie ≈ 1.895 Rg, Lücke ≈ 535 Rg ≈ 6,7 Rg/Sol im Mittel, Sockel-Anteil ≈ 72 % (statt 75 %) — bleibt über der G6-Vorgabe (~70 %), verschiebt aber die 145-Cr/Sol-Zielgröße des Pfad-C-Hebel-Vorschlags oben leicht nach oben (~168 Cr/Sol). Kleine Korrektur, aber innerhalb eines bereits „freigegebenen" Kapitels — gehört als eigener Korrektur-Durchgang behandelt, nicht als stille Änderung in dieser Bearbeitung mitgezogen.
+**Bilanz über den Run — historisch (Stand 2026-08-04, überholt).** Zielkolonie ≈ 1.895 Rg Bedarf (835 Errichtungen + 720 Level-Ups + 100 Zweitinstanz + ~240 Reibung — die 100 Rg sind die korrigierte Zweitinstanz-Zahl aus dem „Stale Zahl"-Fund vom 2026-08-04, ursprünglich fälschlich mit 25 Rg angesetzt). Sockel-Einnahmen bis Sol 80 ≈ 1.363 Rg, unter der damals gültigen 2-Instanzen-Sockelannahme (Sol 1–30 bei 1, Sol 30–80 bei 2 Instanzen). Sockel-Anteil ≈ 72 %, Lücke ≈ 535 Rg ≈ 6,7 Rg/Sol im Mittel. **Überholt durch die Owner-Entscheidung 2026-08-05** (§4c „Ein Harvester ist die Baseline") — die zweite Instanz ist kein Bestandteil der Standard-Zielkolonie mehr. Vollständige Neuherleitung unten.
 
 #### Warum die Hebel-Zielgröße vorher um Faktor 2 danebenlag
 
 Die alte Zahl „~6 Rg/Sol je Hebel" war der **Mittelwert über den Run**, angewandt als **Reife-Wert**. Ein Hebel läuft aber nicht ab Sol 1: Pfad A braucht Kenntnisstufen, Pfad B ein Schiff. Realistisch greift er ab Sol ~12 und ist ab ~40 voll — die reife Höhe muss deshalb beim Doppelten liegen. (Gilt für die verbliebenen Regolith-Hebel A und B — Pfad C hat seit dem §4b-Vorschlag „von Regolith zu Credits" keinen eigenen Regolith-Hebel mehr; sein Credits-Hebel folgt derselben Verdopplungsregel, aber über die Konsul-Rang-Progression statt über die Sol-Zeitachse, siehe dort.)
 
 Gegenprobe aus anderer Richtung, zugleich die Merkregel: **ein reifer Pfad-Hebel ist etwa 60 % eines Harvesters.** Spürbar, aber kein Ersatz für den Sockel. Beide Herleitungen landen bei 12.
+
+---
+
+#### Neuherleitung gegen die 1-Instanz-Sockel-Baseline (Freigegeben 2026-08-06)
+
+Ersetzt die „Bilanz über den Run" oben vollständig. Löst die dort zuvor stehenden ⚠️-Marker auf, ebenso die Verweise in §4b („Pfad-C-Hebel: von Regolith zu Credits") und §4c (Punkt 5 der „Für die Owner-Entscheidung"-Liste, „Deckel"-Abschnitt).
+
+**Run-Länge dieser Rechnung: 80 Sole**, dieselbe Fensterbreite wie die alte Bilanz — sie deckt sich mit der Phase-2-Sol-80-Konvention (§18.4/§15, Countdown-Anker bei typischem Phase-1-Ende Sol 20). Diese Annahme wird hier übernommen, nicht neu hergeleitet.
+
+**1. Zielkolonie-Bedarf — bleibt stabil, minus die gestrichene Zweitinstanz-Zeile.**
+
+Die 835 Rg (Errichtungen), 720 Rg (Level-Ups) und ~240 Rg (Reibung: Reparaturen, Fehlplatzierungen, Verlegungen) hängen am Gebäude- und Level-Katalog der Zielkolonie, nicht an der Harvester-Instanzzahl — sie bleiben unverändert. Was entfällt: die 100-Rg-„Zweitinstanz"-Zeile, weil die zweite Harvester-Instanz seit der Owner-Entscheidung 2026-08-05 kein Bestandteil der Standard-Zielkolonie mehr ist, sondern ein optionaler, nicht garantierter Bonus (§4c). Ein Run, der sie nie bekommt, muss sie auch nicht bezahlen — folgerichtig zählt sie nicht mehr zum Bedarf, den Sockel + Hebel decken müssen.
+
+```
+Zielkolonie-Bedarf = 835 (Errichtungen) + 720 (Level-Ups) + 240 (Reibung) = 1.795 Rg
+```
+
+**2. Sockel-Einnahmen — neu aus der freigegebenen Erschöpfungskurve gerechnet, nicht aus der alten 1.363-Rg-Zahl fortgeschrieben.**
+
+§4c legt die Zyklusmittel-Zahl für den Standardfall (1 Instanz, `regolith_normal`, inkl. Transit-Sol) bereits fest: **12,9 Rg/Sol**, konstant über den gesamten Run — kein Sprung mehr auf eine zweite Instanz, die ist Bonusfall.
+
+```
+Sockel-Einnahmen = 12,9 Rg/Sol × 80 Sole = 1.032 Rg
+```
+
+*Zur alten 1.363-Rg-Zahl:* Sie lässt sich nicht sauber auf einen einzelnen, benennbaren Blendfaktor der 2-Instanzen-Annahme zurückführen — vermutlich ein Zwischenstand von vor der 2026-08-03-Freigabe der Erschöpfungskurve, mit anderen Annahmen gerechnet (z. B. unrabattierter Frischwert statt Zyklusmittel). Die neue Zahl hier ist unabhängig davon direkt aus der freigegebenen Kurve und der 08-05-Baseline hergeleitet; sie ersetzt die alte, statt an sie anzuknüpfen.
+
+**3. Sockel-Anteil — bricht die G6-Vorgabe (~70 %), zentraler Befund dieser Neuherleitung.**
+
+```
+Sockel-Anteil = 1.032 / 1.795 ≈ 57,5 %
+```
+
+Das liegt spürbar unter den ~70 % aus G6 und unter den 72–75 %, die die alte, jetzt überholte Bilanz auswies. **Das ist kein Rechenfehler, sondern die unmittelbare, erwartbare Folge der Owner-Entscheidung**, den Sockel von ~21 auf 12,9 Rg/Sol zu senken, ohne die Zielkolonie im selben Schritt zu verkleinern.
+
+**4. Hebel-Lücke — die Fläche direkt gerechnet, nicht der Mittelwert verdoppelt.**
+
+Nominale Lücke:
+
+```
+1.795 − 1.032 = 763 Rg über 80 Sole ≈ 9,5 Rg/Sol im Run-Mittel
+```
+
+Wie oben begründet („Warum die Hebel-Zielgröße vorher um Faktor 2 danebenlag"), greift ein Pfad-Hebel nicht ab Sol 1 — er braucht Vorlauf (Kenntnisstufen bei A, ein Schiff bei B) und ist erst ab einem späteren Sol voll wirksam. Statt der bisherigen groben Faustregel „reife Höhe = Doppeltes des Mittels" hier die Fläche direkt: Der Hebel greift ab ~Sol 12, rampt linear bis ~Sol 40, ist danach voll wirksam bis Sol 80.
+
+```
+Sol-Äquivalente = (Sol 12–40: 28 Sole × 0,5 Rampe) + (Sol 40–80: 40 Sole × volle Wirkung)
+                = 14 + 40 = 54 effektive Sole (von 80 nominell)
+
+reife Hebelhöhe = 763 Rg / 54 Sole ≈ 14,1 Rg/Sol
+```
+
+**5. Deckung — Pfad A und Pfad B schließen die Lücke gemeinsam, mit Puffer; Pfad C bleibt bei null, wie in §4b bereits entschieden.**
+
+Die beiden Regolith-Hebel aus der Paritätstabelle (§4b):
+
+| Pfad | Hebel | reifer Wert |
+|---|---|---|
+| A — Analytik | `geology`, kumuliert max 12 | 12 Rg/Sol |
+| B — Hangar | `mission_supply_run`, 6,25/Sol je Frachter | 6,25 Rg/Sol (1 Schiff), skaliert mit Flottengröße |
+| C — Cantina | kein dedizierter Regolith-Hebel (Entscheidung §4b, unverändert) | 0 |
+
+```
+A + B gestapelt (1 Frachter) = 12 + 6,25 = 18,25 Rg/Sol ≥ 14,1 Rg/Sol benötigt
+```
+
+Gemeinsam übersteigen A und B die benötigten 14,1 Rg/Sol um ~29 % — die Lücke schließt sich rechnerisch komfortabel, **wenn beide Hebel im relevanten Zeitfenster aktiv sind.** Das ist der Punkt, an dem die Rechnung eine Prämisse braucht, die das GDD bisher nicht exakt beziffert: §4b beschreibt, dass jeder Run **alle drei** Pfad-Gebäude bekommt, nur gestaffelt über CC-Level (erster Pfad ab CC Lv2, die anderen bei CC Lv3/Lv4) — wann genau ein zweiter Pfad-Hebel im selben Run aktiv wird, hängt am CC-Lv3/4-Timing, das hier nicht neu hergeleitet wird.
+
+**Konsequenz, konservativ betrachtet — auch ein einzelner, isoliert genutzter Hebel reicht nahe an die Zielgröße heran:**
+
+- Nur Pfad A aktiv (kein Pfad B): 12 Rg/Sol reif ≈ **85 % der benötigten Hebelhöhe** (14,1 Rg/Sol reif; entspricht ~94 % des Zielkolonie-Bedarfs, §4b) — eine kleine Restlücke, innerhalb der Toleranz, die G5 ohnehin vorsieht („2–4 Mal pro Run an Regolith scheitern").
+- Nur Pfad B mit 1 Frachter aktiv: 6,25 Rg/Sol reif ≈ **44 % der benötigten Hebelhöhe** (entspricht ~76 % des Zielkolonie-Bedarfs, §4b) — spürbar knapper, aber Pfad B lässt sich durch weitere Frachter aufstocken (2 Frachter ≈ 12,5, 3 ≈ 18,75) — genau die „aktiv arbeiten, breit versorgen"-Identität aus §4b.
+- Ein Run, der primär Pfad C verfolgt und A/B erst spät bekommt, läuft in der Zwischenzeit näher am reinen Sockel (57,5 %) — spürbar knapper, aber nicht tödlich (Regolith „nie tödlich", G1) und deckungsgleich mit der bereits in §4c dokumentierten Owner-Absicht, dass ein starker Regolith-Hebel nicht garantiert früh in jedem Run vorkommen muss.
+
+**Bestätigt (2026-08-06): keine Änderung an `geology`-Kurve oder `mission_supply_run`-Rate.** Die Zahlen tragen die Lücke, sobald mindestens ein Regolith-Hebel aktiv genutzt wird — genau das, was G6 jetzt auch so formuliert (Punkt 6, umgesetzt).
+
+**6. G6 muss umformuliert werden — Owner-Entscheidung, keine stille Korrektur.**
+
+G6 lautet aktuell: „Ohne genutzten Hebel erreicht die Kolonie ~70 % der Zielgröße." Das trifft arithmetisch nicht mehr zu (57,5 % ohne jeden Hebel, Punkt 3) — nicht weil die Rechnung falsch wäre, sondern weil die Prämisse „ohne genutzten Hebel" unter dem heutigen Pfad-Design nicht mehr der relevante Grenzfall ist: Die Pfadwahl ist verpflichtend (§4b, „ab CC Lv2 ... von denen zunächst nur eines gebaut werden kann"), jeder Run hat spätestens ab seinem ersten Pfad-Gebäude einen Hebel-Kandidaten. Ein Run ganz ohne jede Pfad-Aktivität ist im Design nicht vorgesehen. Vorschlag für die neue Formulierung:
+
+> **G6 (Vorschlag):** *Der Sockel trägt eine spielbare, aber unterdimensionierte Kolonie allein (~57 % der Zielgröße) — genug, um nicht zu scheitern, zu wenig, um die Zielkolonie zu erreichen. Der gewählte Pfad-Hebel schließt die Lücke auf annähernd 100 %, sobald er aktiv genutzt wird. Ein Run ohne jede Pfad-Aktivität ist im aktuellen Design nicht vorgesehen — die alte Formulierung „ohne genutzten Hebel" beschrieb einen Grenzfall, der es nicht mehr ist.*
+
+Drei Stellschrauben, falls der Owner die 57,5-%-Untergrenze zu niedrig findet — zur Wahl vorgelegt, nicht selbst entschieden:
+
+| Option | Wirkung | Kosten |
+|---|---|---|
+| G6 wie oben umformulieren, Zahlen unverändert lassen | keine Balance-Änderung, nur Aussage korrigiert | keine |
+| Zielkolonie verkleinern (weniger Errichtungen/Level-Ups in der Referenzrechnung) | hebt den Sockel-Anteil an, ohne den Sockel selbst zu ändern | reißt die freigegebenen §13.7-Kernzahlen (Errichtung 70/95/120, CC-Ausbau ×30) wieder auf — hohe Kollateralwirkung auf G4/G7 |
+| Sockel erneut anheben (z. B. Frischwert/`resource_max` der Erschöpfungskurve) | direktes Gegenmittel | widerspricht der ausdrücklichen 08-05-Entscheidung, den Sockel klein zu halten |
+
+**Empfehlung: erste Option.** Sie ändert keinen einzigen Spielwert, nur die Formulierung von G6 — konsistent mit der Owner-Absicht („ein Harvester soll reichen, ein zweiter ist Bonus"), ohne die am 08-03 freigegebenen Kernzahlen erneut anzufassen.
+
+**7. Offener Konflikt, nicht Teil dieser Freigabe: die G2-Instandhaltungslast-Tabelle bricht unter der neuen Sockelgröße.**
+
+Die Instandhaltungs-Tabelle bei G2 (oben, „Instandhaltung gegen G2") ist gegen einen Sockel von **~20 Rg/Sol** gerechnet (Rückrechnung: 2,00 / 0,10 = 20; 5,60 / 0,28 = 20; 7,90 / 0,40 ≈ 19,75) — nicht gegen 12,9. Unter der neuen Baseline steigen dieselben Σ-`decay_rate`-Werte auf deutlich höhere Sockel-Anteile:
+
+| Ausbaustand | Σ `decay_rate` | Anteil am Sockel (alt, ~20) | Anteil am Sockel (neu, 12,9) |
+|---|---|---|---|
+| Start | 2,00 | 10 % | 15,5 % |
+| + Agrardom | 2,80 | 14 % | 21,7 % |
+| + Pfad 1, Uplink | 4,60 | 23 % | 35,7 % |
+| + Pfad 2 | 5,60 | 28 % | 43,4 % |
+| + Pfad 3, Krankenstation, Denkmal | 7,90 | 40 % | 61,2 % |
+| alle 13 | 11,00 | 55 % | 85,3 % |
+
+G2 selbst zieht die Grenze: „unter 10 % ist Verfall Dekoration ... über 60 % ist er eine Strafe fürs Bauen." Unter der neuen Sockelgröße überschreitet bereits die Zwischenstufe „+ Pfad 3, Krankenstation, Denkmal" diese Grenze (61,2 %), die Vollausbaustufe liegt bei 85,3 % — weit im Bereich, den §13.5 als „Einfrier-Zone" ausdrücklich ablehnt.
+
+**Das war eine echte Kollision zwischen der 08-05-Sockel-Entscheidung und der 08-03-`decay_rate`-Freigabe — inzwischen entschieden.**
+
+> **Owner-Entscheidung 2026-08-06: Option B — G2-Metrik umgestellt auf „Anteil am Gesamteinkommen (Sockel + aktiver Pfad-Hebel)" statt „Anteil am Sockel allein".** Kein Spielwert geändert (`decay_rate` bleibt bei 0,40/0,60/0,80/1,20, Zielkolonie-Instanzzahl unverändert) — nur die Bezugsgröße der Kennzahl. Ergebnis, mit Pfad-A-Referenzwert (`geology`, reif 12 Rg/Sol) als aktivem Hebel: Vollausbau fällt von 85,3 % (bzw. 79,1 % nach Abzug der gestrichenen Zweitinstanz-Zeile) auf **41,0 %** — trifft G2s eigenen Zielwert „~40 % bei der Zielkolonie" fast exakt. Umgesetzt in der Tabelle „Instandhaltung gegen G2" oben. Die beiden verworfenen Alternativen (erneute `decay_rate`-Senkung, kleinere Zielkolonie) sind damit vom Tisch.
+
+> *Fußnote (weiterhin gültig):* Die Σ-Werte 2,00/2,80/4,60/5,60/7,90/11,00 der ursprünglichen Tabelle ließen sich nicht vollständig aus den dokumentierten Einzel-`decay_rate`-Werten rekonstruieren, ohne die genaue Instanzzahl je Zeile zu kennen. Ein Teilstück ließ sich vorab beantworten: Die gestrichene Harvester-Zweitinstanz war eine der 13 Zeilen der Vollausbaustufe, Klasse „Beansprucht" = 0,80 — ohne sie sinkt Σ von 11,00 auf **10,20**, die aktuelle Basis für die obige 41,0-%-Rechnung.
+
+**8. G4 und G7 — geprüft, halten früh, driften erst spät.**
+
+G7 begründete die Sockelhöhe ursprünglich mit unterscheidbaren Preisklassen („bei 8 Rg/Sol liegen die Baupreise ... im Reparaturrauschen; bei 20 sind es vier bis fünf Klassen") und G4 mit „Errichtung = 5–8 Sole Sparen" — beide implizit gegen einen Sockel von ~20 Rg/Sol kalibriert. Bei 12,9 Rg/Sol dauert der 120er-Hangar-Bau rechnerisch 9,3 statt 6 Sole — außerhalb des G4-Korridors.
+
+**Das ist kein dritter Konflikt neben Punkt 7, sondern entschärft sich durch dieselbe Unterscheidung, die §4c bereits trifft: 12,9 ist der Zyklusmittel-Wert über Erschöpfung und Transit, nicht das, was ein Spieler früh im Run tatsächlich sieht.** Ein frisch platzierter Harvester auf `regolith_normal` liefert **18 Rg/Sol** (Frischwert, kein Verfall) — die Sol-1–4-Rampe (oben, „Proben") rechnet korrekt mit diesem Wert, nicht mit 12,9, und bleibt deshalb unverändert gültig: ihr +16,2-Netto-Einkommen ist Frischwert-Einkommen, keine Zahl, die diese Neuherleitung berührt. G4/G7 halten also dort, wo sie im Spielgefühl wirken — in der frühen Errichtungsphase auf frischen Tiles. Sie driften erst im späten Run, wenn Tiles erschöpft sind und Verlegungen den Ertrag auf den Zyklusmittelwert drücken — dort sind längere Sparzeiten ohnehin beabsichtigt (Zielkolonie-Ausbau ist Spätspiel-Arbeit, kein Sol-1–4-Tempo). **Keine Handlungsempfehlung nötig; die Sol-1–4-Rampe-Tabelle bleibt unverändert.**
+
+---
+
+### Für die Owner-Entscheidung
+
+1. **Erledigt (2026-08-06): G6-Umformulierung** (Punkt 6) — Option 1 gewählt („Sockel trägt ~57 % allein, Pfad-Hebel schließt auf ~100 %"), kein Spielwert geändert, nur die Aussage. Umgesetzt in der Guard-Rail-Tabelle oben.
+2. **Erledigt (2026-08-06): `decay_rate`/G2-Kollision** (Punkt 7) — Option B gewählt (G2-Metrik auf „Sockel + aktiver Pfad-Hebel" umgestellt statt „Sockel allein"). Kein Spielwert geändert; Vollausbau-Anteil fällt dadurch von 79,1 % auf 41,0 %, trifft G2s eigenen ~40-%-Zielwert. Umgesetzt in der Tabelle „Instandhaltung gegen G2" oben. Passt zur selben Logik wie Entscheidung 1 (G6) — beide beruhen darauf, dass „ohne Hebel" im aktuellen Pfad-Design kein relevanter Regelfall mehr ist.
+3. **Keine Änderung an `geology` (max 12) oder `mission_supply_run` (6,25/Sol je Frachter)** — beide reichen zusammen (18,25 Rg/Sol reif) für die benötigten 14,1 Rg/Sol; Zustimmung zur Empfehlung „Zahlen unverändert lassen" (Punkt 5).
+4. **Zurückziehung der 247-Cr/Sol-Pfad-C-Zielgröße** (§4b „Dimensionierung — korrigiert") — Zustimmung, dass diese Zahl falsch hergeleitet war (aus der Regolith-Lücke statt aus dem Credits-Bedarf), und dass eine eigenständige Credits-Bilanz-über-den-Run als neues, offenes Vorhaben in Anhang A A.4 aufgenommen wird (noch nicht terminiert).
+5. **Weg-B-Reparatur ist 0 Rg + ~14–15 AP** (§4c „Weg B", Code-Befund PR #237) — Kenntnisnahme, keine Entscheidung nötig. Konsequenz: die `ruin_tile`-Spawnrate (bisher ⚠️ unverifiziert) wird dadurch zur **Vorbedingung** für die Balance von Weg A vs. Weg B, nicht mehr nur zu einem offenen Detail — vor Umsetzung von `mission_harvester_salvage` klären.
+6. **G4/G7 (Punkt 8)** — keine Entscheidung nötig, nur zur Kenntnisnahme: beide bleiben gültig, weil sie an Frischwert-Einkommen (frühes Spiel) hängen, nicht am Zyklusmittel (12,9 Rg/Sol, Spätspiel).
+
+**Config-Keys, betroffen bei Freigabe:**
+
+| Key | Änderung | Bedingung |
+|---|---|---|
+| `game.harvester.second_instance_regolith_cost` | verliert seine Bedeutung (war 100 Rg) — ersetzt durch Weg-A-Credits-Preis (400–800 Cr) bzw. Weg-B-Freischaltung | bereits mit §4c-Freigabe vom 08-05 fällig, unabhängig von dieser Neuherleitung |
+| `game.harvester.second_instance_*` (weitere Felder) | Semantik ändert sich mit Weg A/B (Gate statt Direktkauf) | dito |
+| `buildings.decay_rate` | **keine Änderung** — Option B gewählt (G2-Metrik umgestellt, nicht die Rate selbst) | entschieden, Owner-Entscheidung 2 oben |
+| `game.bar.*` (Verkaufspreis Organika, Reserve-Untergrenze), `game.merchant.*` (Corvan-Frequenz/Losanzahl unter Direction 1) | **blockiert** — keine Zahl ableitbar, solange die Credits-Bilanz-über-den-Run offen ist | wartet auf Owner-Entscheidung 4 oben |
+| `game.corporate_contact.*` | neu anzulegen (Orin, Weg A) | unverändert bereits aus §4c fällig |
+| `geology_harvester_bonus_per_level`, `mission_supply_run.*` | **unverändert** — ausdrücklich bestätigt, keine Anpassung nötig | Owner-Entscheidung 3 oben |
 
 ---
 
@@ -2644,7 +2785,7 @@ Der Vorschlag enthielt ursprünglich eine Preisänderung `bar.base_prices` auf R
 
 **Zwei Folgen, die noch offen sind:**
 
-> **⚠️ Der Pfad-C-Hebel muss neu gedacht werden — Vorschlag siehe §4b.** Der vorgeschlagene Organika→Regolith-Tausch setzte voraus, dass Organika der Überschuss ist. Nach der Knappheitsordnung ist es umgekehrt — man würde das knappere Gut gegen das häufigere tauschen. Der Credits→Regolith-Ankauf ist bei 25 Cr/Rg zwar billiger als zuvor gerechnet (12 Rg/Sol ≈ 300 Cr/Sol), trägt aber immer noch keine Ökonomie. **Pfad C braucht keinen großen Regolith-Hebel:** Wenn Regolith laut §3 „verfügbar sein soll", ist es nicht der Engpass, gegen den die Pfade sich beweisen müssen, und seit §4c läuft das Regolith-Wachstum ohnehin über die pfad-unabhängige Harvester-Zweitinstanz. Pfad C's Beitrag liegt stattdessen bei Credits — Design-Vorschlag „Pfad-C-Hebel: von Regolith zu Credits" in **§4b**, noch nicht freigegeben (Owner-Review ausstehend, hängt an der offenen Bar/Cantina-Verkaufsrichtungs-Entscheidung).
+> **⚠️ Der Pfad-C-Hebel muss neu gedacht werden — Vorschlag siehe §4b.** Der vorgeschlagene Organika→Regolith-Tausch setzte voraus, dass Organika der Überschuss ist. Nach der Knappheitsordnung ist es umgekehrt — man würde das knappere Gut gegen das häufigere tauschen. Der Credits→Regolith-Ankauf ist bei 25 Cr/Rg zwar billiger als zuvor gerechnet (12 Rg/Sol ≈ 300 Cr/Sol), trägt aber immer noch keine Ökonomie. **Pfad C braucht keinen großen Regolith-Hebel:** Wenn Regolith laut §3 „verfügbar sein soll", ist es nicht der Engpass, gegen den die Pfade sich beweisen müssen, und seit §4c läuft das Regolith-Wachstum ohnehin über die pfad-unabhängige Harvester-Zweitinstanz. Pfad C's Beitrag liegt stattdessen bei Credits — Design „Pfad-C-Hebel: von Regolith zu Credits" in **§4b**, freigegeben 2026-08-05 (mit Korrektur 2026-08-06, siehe dort).
 
 > **⚠️ Agrardom-Kurve: das obere Ende prüfen, nicht die Mechanik.** Der Organika-Verbrauch skaliert über `food_need = intdiv(usedSupply, 4)` mit der **Ausbautiefe** der Kolonie — es ist also ein Rennen zwischen Agrardom-Level und Koloniewachstum, dazu der einmalige Missionsproviant (`sol_distance × 3`) und Event-Kosten. Das ist genau der Mechanismus, den die Knappheitsordnung verlangt, und er funktioniert:
 >
@@ -3436,8 +3577,8 @@ Sammelübersicht aller offenen Balance- und Designfragen im GDD, damit nach eine
 |---|---|---|
 | **`max_level` in `max_instances` + `max_level` aufteilen** — für den Harvester kollidieren „kein Level-Up" und „Deckel 2 Instanzen" in einem Feld; der Hangar braucht beide Achsen | **entschieden, Umsetzung offen — blockiert §13.7 und §4c** | §4c |
 | **Instanz-Decay-Verdacht verifizieren** — `processBuildingDecay()` schreibt ohne Instanz-Unterscheidung. Bestraft sonst jede Umstellung auf Instanzen sofort | **offen, blockierend, vor der Umstellung** | §4c |
-| **Regolith-Zahlensatz** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) | ✅ freigegeben 2026-08-03, mit zwei Korrekturen — in einem Zug auszuliefern | §13.7 |
-| **Harvester-Erschöpfungsrate** | ✅ freigegeben 2026-08-03 (Kurve, `resource_max` 500/300/160, 2 AP/Hex) — **Vertrauensgrad niedrig-mittel, als Erstes messen.** Instanz-2-Bezugsweg „CC Lv3 + 100 Rg" ist **⚠️ überholt** durch Owner-Entscheidung 2026-08-05 (zweite Runde): 2. Instanz ist jetzt Bonus statt Sockel-Baseline, Bezugsweg = Cantina-Händler-Item (Weg A) oder Ruinen-Bergung (Weg B), beide nicht garantiert — CC-Lv3-Gate bleibt als fiktionale Untergrenze, Sockelrechnung (§13.7) selbst muss auf 1-Instanz-Baseline neu hergeleitet werden | §4c |
+| **Regolith-Zahlensatz** (Sockel, Reparatur, `decay_rate`, Bau- und Level-Up-Kosten) | ✅ vollständig freigegeben — Bau-/Level-Up-Kosten + Erschöpfungskurve (08-03), Sockel-Bilanz + G6/G2-Metrik-Umstellung (2026-08-06) | §13.7 |
+| **Harvester-Erschöpfungsrate** | ✅ freigegeben 2026-08-03 (Kurve, `resource_max` 500/300/160, 2 AP/Hex) — **Vertrauensgrad niedrig-mittel, als Erstes messen.** Instanz-2-Bezugsweg „CC Lv3 + 100 Rg" ist überholt durch Owner-Entscheidung 2026-08-05 (zweite Runde): 2. Instanz ist jetzt Bonus statt Sockel-Baseline, Bezugsweg = Cantina-Händler-Item (Weg A, AP+Cr) oder Ruinen-Bergung (Weg B, nur AP, 0 Rg — korrigiert 2026-08-06), beide nicht garantiert — CC-Lv3-Gate bleibt als fiktionale Untergrenze. **Sockelrechnung (§13.7) auf 1-Instanz-Baseline neu hergeleitet und freigegeben (2026-08-06):** Sockel-Anteil ~57,5 %, G6-Formulierung + `decay_rate`-G2-Konflikt entschieden | §4c |
 | Regolith-Parität der drei Pfade | **entschärft** — löst sich weitgehend auf, wenn Wachstum über Harvester-Instanzen läuft | §4b, §4c |
 | Harvester ohne Level-Up | entschieden; Umsetzung nur gemeinsam mit dem Zahlensatz | §13.5, §4c |
 | Tatsächliche `ap_for_levelup`-Werte in der laufenden DB | ✅ verifiziert 2026-08-02: überall 10, nur Monument 20 | Anhang B |
@@ -3494,10 +3635,11 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | **`max_level = NULL` bei sieben Gebäuden** (Sciencelab, Temple, Agrardom, Hangar, Krankenstation, Monument, Cantina) — die `f(L)`-Kostenkurve läuft dort ohne natürlichen Endpunkt weiter | §4c, §13.6 |
 | Stratege — neu bewerten und designen (eigener Pfad oder Modifikator?) | §13 |
 | Cantina: verlässlicher Credits→Regolith-Kanal (heute nur Verkaufsrichtung garantiert) | §13.5, §12 |
-| **Pfad-C-Regolith-Hebel neu denken** — der Organika→Regolith-Tausch fällt mit der Knappheitsordnung weg; offen, ob Pfad C überhaupt einen großen Regolith-Hebel braucht | §13.7, §4b |
-| `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt; **möglicherweise überflüssig**, wenn Regolith-Wachstum über Harvester-Instanzen läuft | §13.5, §4c |
+| Pfad-C-Regolith-Hebel neu denken | **✅ beantwortet** (§4b, freigegeben 2026-08-05; bestätigt durch die §13.7-Neuherleitung 2026-08-06: Pfad A + B schließen die Regolith-Lücke gemeinsam, 18,25 ≥ 14,1 Rg/Sol reif, ohne Pfad-C-Beitrag) | §13.7, §4b |
+| `geology` als Träger des Regolith-Produktionsbonus — Höhe und Balance gegen den Analytik-Pfad insgesamt; bleibt nötig (trägt 12 der benötigten 14,1 Rg/Sol reif allein, §13.7 Punkt 5) — **nicht überflüssig** | §13.5, §4c |
 | Wird Pfad B (Hangar) durch den Regolith-Bedarf faktisch zur Pflicht? | §4b, §13.5 |
 | Pfad A (Analytik) hat keine eigene Credits-Quelle — Kostensenkung statt Einnahme? | §4b |
+| **Credits-Bilanz über den Run** (analog zur Regolith-Bilanz in §13.7) — fehlt komplett; nötig, um die Organika-Verkauf-Zielgröße (Pfad C) neu und korrekt herzuleiten, nachdem die 247-Cr/Sol-Zahl am 2026-08-06 als falsch hergeleitet (aus dem Regolith-Gap statt aus dem Credits-Bedarf) zurückgezogen wurde | §13.7, §4b, §12 |
 | `agronomy`-Kenntnis: hat sie einen Organika-Effekt oder nur den Supply-Cap-Bonus? | §4b, §10 |
 | Optionale dritte Bedingung für Run-Phase 1 (Roguelike-Variabilität) | §15 |
 | Nexus-Boni in Phase 1 oder erst ab Phase 2? | §15 |
@@ -3580,7 +3722,7 @@ Damit ist die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) korrekt und
 | Werkstoffe bleiben als Ressource | §3 |
 | Knappheitsordnung Regolith < Organika < Werkstoffe | §3 |
 | AP-Struktur inkl. `ap.base = 12` (freigegeben 2026-08-03) | §13.6 |
-| Regolith-Zahlensatz inkl. `decay_rate` 0,40/0,60/0,80/1,20 (freigegeben 2026-08-03) | §13.7 |
+| Regolith-Zahlensatz: Harvester-Frischwert, Reparatur 1 Rg/SP, Errichtung 70/95/120, Level-Up 25 (freigegeben 2026-08-03) — `decay_rate` 0,40/0,60/0,80/1,20 dagegen **vorläufig**, kollidiert unter der neuen 1-Instanz-Sockel-Baseline mit der G2-60-%-Obergrenze (§13.7 Punkt 7, Owner-Entscheidung ausstehend) | §13.7 |
 | `max_instances` als eigenes Feld neben `max_level` | §4c |
 
 Alles andere ist verhandelbar. Insbesondere gilt das für den Zahlenvorschlag in §13.6 — er ist gegen die heutigen Werte gerechnet und teilt damit deren Unsicherheit.
