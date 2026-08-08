@@ -15,11 +15,8 @@ use Illuminate\Support\Facades\DB;
  * Each advisor has a rank (1–3) that determines AP per tick:
  *   Junior (1) = 2 AP, Senior (2) = 3 AP, Experte (3) = 4 AP
  *
- * AP types and their scopes (all colony-scoped):
- *   construction  — advisors.engineer   colony-scoped
- *   research      — advisors.scientist  colony-scoped
- *   economy       — advisors.trader     colony-scoped
- *   navigation    — advisors.pilot      colony-scoped
+ * All advisors, regardless of type, contribute to a single shared AP pool
+ * per colony (GDD §13.1) — see getTotalActionPoints().
  *
  * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
  * Use AdvisorService::idFor('engineer') etc. for all lookups.
@@ -47,35 +44,31 @@ class AdvisorService
     ) {}
 
     // ── AP calculation ────────────────────────────────────────────────────────
+    // One shared pool per colony (GDD §13.1) — no domain parameter anymore.
+    // Domains (construction/research/navigation/economy) will only determine
+    // an efficiency bonus in the future (§13.3, separate implementation step),
+    // not which pool gets filled.
 
-    public function getTotalActionPoints(string $type, int $scopeId): int
+    public function getTotalActionPoints(int $colonyId): int
     {
-        return $this->getApBreakdown($type, $scopeId)['total'];
+        return $this->getApBreakdown($colonyId)['total'];
     }
 
     /**
-     * Breakdown of a colony's total AP for one pool — base/advisor/multiplier
-     * components, for display in the resource-bar AP chip popups (so the player
-     * can see e.g. "6 Basis-AP + 4 AP durch Berater × 0.8 Vertrauen = 8").
+     * Breakdown of a colony's total AP — base/advisor/multiplier components,
+     * for display in the resource-bar AP chip popup.
      *
      * @return array{base: int, advisor: int, multiplier: float, total: int}
      */
-    public function getApBreakdown(string $type, int $scopeId): array
+    public function getApBreakdown(int $colonyId): array
     {
-        [$personellId, $scope] = $this->resolveType($type);
-        if (! $personellId) {
-            return ['base' => 0, 'advisor' => 0, 'multiplier' => 1.0, 'total' => 0];
-        }
-
-        $baseAp = (int) config('game.ap.base', 6);
-        $advisorAp = Advisor::where('personell_id', $personellId)
+        $baseAp = (int) config('game.ap.base', 12);
+        $advisorAp = Advisor::where('colony_id', $colonyId)
             ->whereNull('unavailable_until_tick')
-            ->where('colony_id', $scopeId)
             ->get()
             ->sum(fn (Advisor $a) => $a->getApPerTick());
 
-        // Apply trust AP multiplier for colony-scoped types.
-        $trust = $this->trustService->getTrust($scopeId);
+        $trust = $this->trustService->getTrust($colonyId);
         $multiplier = $this->trustService->getApMultiplier($trust);
 
         return [
@@ -86,66 +79,42 @@ class AdvisorService
         ];
     }
 
-    public function getAvailableActionPoints(string $type, int $scopeId): int
+    public function getAvailableActionPoints(int $colonyId): int
     {
-        [$personellId, $scope] = $this->resolveType($type);
-        if (! $personellId) {
-            return 0;
-        }
-
-        $total = $this->getTotalActionPoints($type, $scopeId);
+        $total = $this->getTotalActionPoints($colonyId);
         $tick = $this->tickService->getTickCount();
 
-        $locked = DB::table('locked_actionpoints')
+        $locked = (int) (DB::table('locked_actionpoints')
             ->where('tick', $tick)
-            ->where('scope_type', $scope)
-            ->where('scope_id', $scopeId)
-            ->where('personell_id', $personellId)
-            ->value('spend_ap') ?? 0;
+            ->where('scope_type', 'colony')
+            ->where('scope_id', $colonyId)
+            ->sum('spend_ap'));
 
-        return max(0, $total - (int) $locked);
+        return max(0, $total - $locked);
     }
 
-    public function lockActionPoints(string $type, int $scopeId, int $ap): bool
+    /**
+     * Locks AP against the shared colony pool for the current tick.
+     * $personellId identifies which advisor/action triggered the lock, purely
+     * for audit purposes (locked_actionpoints.personell_id) — it no longer
+     * partitions the pool. Falls back to the engineer's id when the caller
+     * doesn't know/care which advisor to attribute it to.
+     */
+    public function lockActionPoints(int $colonyId, int $ap, ?int $personellId = null): bool
     {
-        [$personellId, $scope] = $this->resolveType($type);
-        if (! $personellId) {
-            return false;
-        }
-
+        $personellId ??= self::idFor('engineer');
         $tick = $this->tickService->getTickCount();
+
         $existing = DB::table('locked_actionpoints')
-            ->where(['tick' => $tick, 'scope_type' => $scope, 'scope_id' => $scopeId, 'personell_id' => $personellId])
+            ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => $colonyId, 'personell_id' => $personellId])
             ->value('spend_ap') ?? 0;
 
         DB::table('locked_actionpoints')->updateOrInsert(
-            ['tick' => $tick, 'scope_type' => $scope, 'scope_id' => $scopeId, 'personell_id' => $personellId],
+            ['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => $colonyId, 'personell_id' => $personellId],
             ['spend_ap' => $existing + abs($ap)]
         );
 
         return true;
-    }
-
-    // ── Convenience wrappers ──────────────────────────────────────────────────
-
-    public function getConstructionPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('construction', $colonyId);
-    }
-
-    public function getResearchPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('research', $colonyId);
-    }
-
-    public function getEconomyPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('economy', $colonyId);
-    }
-
-    public function getStrategyPoints(int $colonyId): int
-    {
-        return $this->getAvailableActionPoints('strategy', $colonyId);
     }
 
     // ── Hire / Fire ───────────────────────────────────────────────────────────
@@ -284,112 +253,30 @@ class AdvisorService
     // ── AP credit (merchant / external grants) ───────────────────────────────
 
     /**
-     * Credit AP directly to a colony, bypassing the normal per-tick earn cycle.
+     * Credit AP directly to a colony's shared pool, bypassing the normal
+     * per-tick earn cycle. Used by the Traveling Merchant when the player
+     * buys an AP item (ap_flex / ap_targeted, both credit the same single
+     * pool now — the item's flavor text still varies, the effect doesn't).
      *
-     * This is used by the Traveling Merchant when the player buys an AP item.
-     * The grant is recorded as "negative spend" on the current tick so that
-     * getAvailableActionPoints() returns a higher value until the AP is consumed.
-     *
-     * ap_flex   → type is 'any': distribute the amount across all advisor types
-     *             that have at least one active advisor on the colony, spreading
-     *             it as evenly as possible (remainder goes to the first type).
-     *             If no advisors are present, falls back to 'construction'.
-     *
-     * ap_targeted → type is a specific AP type key (e.g. 'research'):
-     *             credit the full amount to that single pool only.
-     *
-     * @param  string  $apType  'any' for flex, or a specific type key
-     * @param  int  $amount  total AP to grant (must be > 0)
+     * Recorded as "negative spend" on the current tick so that
+     * getAvailableActionPoints() returns a higher value until consumed.
      */
-    public function creditAp(int $colonyId, string $apType, int $amount): void
+    public function creditAp(int $colonyId, int $amount): void
     {
         if ($amount <= 0) {
             return;
         }
 
         $tick = $this->tickService->getTickCount();
-
-        if ($apType === 'any') {
-            $this->creditApFlex($colonyId, $amount, $tick);
-        } else {
-            $this->creditApToType($colonyId, $apType, $amount, $tick);
-        }
-    }
-
-    /**
-     * Distribute AP evenly across all advisor types with active advisors on the colony.
-     * Falls back to 'construction' when no advisors are present.
-     */
-    private function creditApFlex(int $colonyId, int $amount, int $tick): void
-    {
-        // Collect all AP types that have at least one advisor currently on the colony.
-        $allTypes = ['construction', 'research', 'economy', 'strategy', 'navigation'];
-        $activeTypes = [];
-
-        foreach ($allTypes as $type) {
-            [$personellId] = $this->resolveType($type);
-            if (! $personellId) {
-                continue;
-            }
-            $hasAdvisor = Advisor::where('colony_id', $colonyId)
-                ->where('personell_id', $personellId)
-                ->whereNull('unavailable_until_tick')
-                ->exists();
-            if ($hasAdvisor) {
-                $activeTypes[] = $type;
-            }
-        }
-
-        // If no advisors are active, grant to construction as a sensible default.
-        if (empty($activeTypes)) {
-            $activeTypes = ['construction'];
-        }
-
-        $count = count($activeTypes);
-        $base = intdiv($amount, $count);
-        $remainder = $amount % $count;
-
-        foreach ($activeTypes as $i => $type) {
-            $grant = $base + ($i === 0 ? $remainder : 0);
-            if ($grant > 0) {
-                $this->creditApToType($colonyId, $type, $grant, $tick);
-            }
-        }
-    }
-
-    /**
-     * Grant AP to a single named type by recording a negative spend_ap entry
-     * for the current tick. This increases the available AP budget by $amount.
-     */
-    private function creditApToType(int $colonyId, string $apType, int $amount, int $tick): void
-    {
-        [$personellId, $scope] = $this->resolveType($apType);
-
-        // Unknown type — silently skip rather than crash so a bad payload can't break a purchase.
-        if (! $personellId) {
-            return;
-        }
+        $personellId = self::idFor('engineer');
 
         $existing = (int) (DB::table('locked_actionpoints')
-            ->where([
-                'tick' => $tick,
-                'scope_type' => $scope,
-                'scope_id' => $colonyId,
-                'personell_id' => $personellId,
-            ])
+            ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => $colonyId, 'personell_id' => $personellId])
             ->value('spend_ap') ?? 0);
 
-        // A negative spend_ap increases the available AP pool for this tick.
-        $newValue = $existing - $amount;
-
         DB::table('locked_actionpoints')->updateOrInsert(
-            [
-                'tick' => $tick,
-                'scope_type' => $scope,
-                'scope_id' => $colonyId,
-                'personell_id' => $personellId,
-            ],
-            ['spend_ap' => $newValue]
+            ['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => $colonyId, 'personell_id' => $personellId],
+            ['spend_ap' => $existing - $amount]
         );
     }
 
@@ -403,18 +290,18 @@ class AdvisorService
     // ── Internal ──────────────────────────────────────────────────────────────
 
     /**
-     * Returns [personell_id, scope_type] for the given AP type string.
-     * All types are colony-scoped.
+     * Returns the personell_id for a given advisor-type key — used by hire()
+     * to resolve which advisor the player is hiring. No longer used for AP
+     * pool calculation (there is only one pool, see getTotalActionPoints()).
      */
-    private function resolveType(string $type): array
+    public function resolveType(string $type): ?int
     {
         return match (strtolower($type)) {
-            'construction' => [self::idFor('engineer'),  'colony'],
-            'research' => [self::idFor('scientist'), 'colony'],
-            'economy' => [self::idFor('trader'),    'colony'],
-            'strategy' => [self::idFor('strategist'), 'colony'],
-            'navigation' => [self::idFor('pilot'),     'colony'],
-            default => [null, null],
+            'construction' => self::idFor('engineer'),
+            'research' => self::idFor('scientist'),
+            'economy' => self::idFor('trader'),
+            'navigation' => self::idFor('pilot'),
+            default => null,
         };
     }
 }
