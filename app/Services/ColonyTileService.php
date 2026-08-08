@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Enums\BuildingId;
 use App\Models\Colony;
 use App\Models\ColonyTile;
-use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -15,7 +14,7 @@ class ColonyTileService
     private const RING3_FRONTIER_COUNT = 9;
 
     public function __construct(
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
     ) {}
 
     public function getTilesForColony(int $colonyId): Collection
@@ -41,14 +40,14 @@ class ColonyTileService
 
         $apCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $apCost) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints('navigation', $colonyId) < $apCost) {
             return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap')];
         }
 
         $tile->is_explored = true;
         $tile->save();
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('navigation', $colonyId, $apCost);
+            $this->advisorService->lockActionPoints('navigation', $colonyId, $apCost);
         }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];
@@ -78,14 +77,14 @@ class ColonyTileService
             ->value('level') ?? 0;
         $scanApCost = ($uplinkLv >= 2) ? 1 : 2;
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints('navigation', $colonyId) < $scanApCost) {
             return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap_2')];
         }
 
         $tile->is_deep_scanned = true;
         $tile->save();
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('navigation', $colonyId, $scanApCost);
+            $this->advisorService->lockActionPoints('navigation', $colonyId, $scanApCost);
         }
 
         return ['ok' => true, 'tile' => $this->transformTile($tile)];

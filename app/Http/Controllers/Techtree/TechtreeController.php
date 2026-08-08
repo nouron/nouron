@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Techtree;
 
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
+use App\Services\AdvisorService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\AbstractTechnologyService;
 use App\Services\Techtree\BuildingService;
-use App\Services\Techtree\PersonellService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
@@ -29,7 +29,7 @@ class TechtreeController extends BaseController
         private readonly BuildingService $buildingService,
         private readonly ResearchService $researchService,
         private readonly ShipService $shipService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly ResourcesService $resourcesService,
         private readonly OnboardingHintService $onboardingHintService,
@@ -88,8 +88,8 @@ class TechtreeController extends BaseController
         $hangarCap = (int) ($instanceCounts[44] ?? 0);
 
         // Available AP for sidebar invest
-        $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colonyId);
-        $researchAp = $this->personellService->getAvailableActionPoints('research', $colonyId);
+        $constructionAp = $this->advisorService->getAvailableActionPoints('construction', $colonyId);
+        $researchAp = $this->advisorService->getAvailableActionPoints('research', $colonyId);
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             foreach ($techtree[$type] as $id => $tech) {
@@ -293,7 +293,7 @@ class TechtreeController extends BaseController
             'building' => $this->buildingService,
             'research' => $this->researchService,
             'ship' => $this->shipService,
-            'personell' => $this->personellService,
+            'personell' => $this->advisorService,
             default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
@@ -315,7 +315,7 @@ class TechtreeController extends BaseController
             'tech' => $tech,
             'costs' => $service->getEntityCosts($id),
             'resources' => $this->resourcesService->getResources()->keyBy('id'),
-            'apAvailable' => $this->personellService->getAvailableActionPoints($apType, $colonyId),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($apType, $colonyId),
             'requiredBuildingsCheck' => $service->checkRequiredBuildingsByEntityId($colonyId, $id),
             'requiredResourcesCheck' => $this->resourcesService->check($service->getEntityCosts($id), $colonyId),
             // Passed so the view can resolve required building/research names
@@ -354,7 +354,7 @@ class TechtreeController extends BaseController
      * Resolve the techtree service for a {type} route segment.
      *
      * Only the types that actually implement the invest/levelup contract are listed.
-     * `personell` is deliberately absent: PersonellService does not extend
+     * `personell` is deliberately absent: AdvisorService does not extend
      * AbstractTechnologyService and has no invest()/levelup() at all — mapping it here
      * turned `POST /techtree/personell/35/order` into a fatal "call to undefined method"
      * (HTTP 500). Advisors are hired through AdvisorController, not the techtree.
@@ -442,7 +442,7 @@ class TechtreeController extends BaseController
             'levelup_blocked_reason' => $levelupBlockedReason,
             'levelup_blocked_message' => $levelupBlockedReason ? __("techtree.error_{$levelupBlockedReason}") : null,
             'tech' => $this->techStateFor($type, $id, $colonyId),
-            'ap_available' => $this->personellService->getAvailableActionPoints($apType, $colonyId),
+            'ap_available' => $this->advisorService->getAvailableActionPoints($apType, $colonyId),
         ]);
     }
 

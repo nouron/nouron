@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\BarOffer;
-use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +19,7 @@ class BarService
 
     public function __construct(
         private readonly ResourcesService $resourcesService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -134,7 +133,7 @@ class BarService
         // just confirming the improved terms, not a second priced action).
         $apCost = $offer->is_negotiated ? 0 : (int) config('game.bar.ap_cost_accept', 1);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
-            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            $availableAp = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
             if ($availableAp < $apCost) {
                 return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
             }
@@ -168,7 +167,7 @@ class BarService
             $offer->is_accepted = true;
             $offer->save();
             if ($apCost > 0) {
-                $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+                $this->advisorService->lockActionPoints('economy', $colonyId, $apCost);
             }
         });
 
@@ -228,7 +227,7 @@ class BarService
 
         $apCost = (int) config('game.bar.ap_cost_negotiate', 3);
         if ($apCost > 0 && ! config('game.bypass.ap_checks')) {
-            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            $availableAp = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
             if ($availableAp < $apCost) {
                 return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_ap')];
             }
@@ -245,7 +244,7 @@ class BarService
 
         return DB::transaction(function () use ($offer, $colonyId, $apCost, $traderRank, $success): array {
             if ($apCost > 0) {
-                $this->personellService->lockActionPoints('economy', $colonyId, $apCost);
+                $this->advisorService->lockActionPoints('economy', $colonyId, $apCost);
             }
 
             if (! $success) {

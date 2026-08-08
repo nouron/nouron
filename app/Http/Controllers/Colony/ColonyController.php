@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Colony;
 
 use App\Enums\BuildingId;
 use App\Http\Controllers\BaseController;
+use App\Services\AdvisorService;
 use App\Services\ColonyService;
 use App\Services\ColonyTileService;
 use App\Services\EventService;
@@ -12,7 +13,6 @@ use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
 use App\Services\ResourcesService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use App\Services\TrustService;
 use Illuminate\Http\JsonResponse;
@@ -29,7 +29,7 @@ class ColonyController extends BaseController
         TickService $tick,
         private readonly ColonyService $colonyService,
         private readonly ColonyTileService $tileService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly OnboardingHintService $hintService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
         private readonly MerchantService $merchantService,
@@ -142,11 +142,11 @@ class ColonyController extends BaseController
                 return $b;
             });
 
-        $navAp = $this->personellService->getAvailableActionPoints('navigation', $colony->id);
-        $constructionAp = $this->personellService->getAvailableActionPoints('construction', $colony->id);
-        $researchAp = $this->personellService->getAvailableActionPoints('research', $colony->id);
-        $economyAp = $this->personellService->getAvailableActionPoints('economy', $colony->id);
-        $strategyAp = $this->personellService->getAvailableActionPoints('strategy', $colony->id);
+        $navAp = $this->advisorService->getAvailableActionPoints('navigation', $colony->id);
+        $constructionAp = $this->advisorService->getAvailableActionPoints('construction', $colony->id);
+        $researchAp = $this->advisorService->getAvailableActionPoints('research', $colony->id);
+        $economyAp = $this->advisorService->getAvailableActionPoints('economy', $colony->id);
+        $strategyAp = $this->advisorService->getAvailableActionPoints('strategy', $colony->id);
         $activeHint = $this->resolveHint($colony->id);
 
         $fireds = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
@@ -417,10 +417,10 @@ class ColonyController extends BaseController
                 * (int) config('game.harvester.relocate_ap_per_hex', 2))
             : 1;
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < $apCost) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < $apCost) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
-                'current' => $this->personellService->getConstructionPoints($colony->id),
+                'current' => $this->advisorService->getConstructionPoints($colony->id),
             ]);
         }
 
@@ -528,7 +528,7 @@ class ColonyController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('construction', $colony->id, $apCost);
+            $this->advisorService->lockActionPoints('construction', $colony->id, $apCost);
         }
 
         // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation (and its
@@ -578,7 +578,7 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < 1) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
@@ -625,7 +625,7 @@ class ColonyController extends BaseController
             ->update(['ap_spend' => $newApSpend]);
 
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('construction', $colony->id, 1);
+            $this->advisorService->lockActionPoints('construction', $colony->id, 1);
         }
 
         $leveledUp = false;
@@ -716,7 +716,7 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < 1) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
@@ -774,7 +774,7 @@ class ColonyController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('construction', $colony->id, 1);
+            $this->advisorService->lockActionPoints('construction', $colony->id, 1);
         }
 
         // Repair is a teaching hint, not a chore: dismiss it after the first repair
@@ -981,8 +981,8 @@ class ColonyController extends BaseController
     private function currentAp(int $colonyId): array
     {
         return [
-            'apNav' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
-            'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+            'apNav' => $this->advisorService->getAvailableActionPoints('navigation', $colonyId),
+            'apConstruction' => $this->advisorService->getAvailableActionPoints('construction', $colonyId),
             // Build-chip affordability check (greys out unaffordable buildings) needs
             // these alongside AP — kept on the same payload so every action that
             // refreshes AP also refreshes resources.

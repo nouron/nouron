@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
-use App\Services\Techtree\PersonellService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +41,7 @@ class ColonyTileExploreCostTest extends TestCase
 
     private function navAp(): int
     {
-        return $this->app->make(PersonellService::class)
+        return $this->app->make(AdvisorService::class)
             ->getAvailableActionPoints('navigation', self::COLONY_ID);
     }
 
@@ -82,7 +82,7 @@ class ColonyTileExploreCostTest extends TestCase
     {
         $this->fogTile(2, 0, 2);
 
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
         $available = $personell->getAvailableActionPoints('navigation', self::COLONY_ID);
         $personell->lockActionPoints('navigation', self::COLONY_ID, $available - 1);
 

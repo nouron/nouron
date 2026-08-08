@@ -3,7 +3,7 @@
 namespace Tests\Feature\Techtree;
 
 use App\Models\Advisor;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use App\Services\Techtree\ResearchService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,7 +43,7 @@ class KnowledgeServiceTest extends TestCase
         Advisor::where('colony_id', $this->colonyId)->delete();
         Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('scientist'),
+            'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId,
             'rank' => 2,
             'active_ticks' => 0,

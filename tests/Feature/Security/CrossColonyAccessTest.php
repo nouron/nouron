@@ -4,7 +4,7 @@ namespace Tests\Feature\Security;
 
 use App\Models\Advisor;
 use App\Models\User;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use App\Services\Techtree\ResearchService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -110,7 +110,7 @@ class CrossColonyAccessTest extends TestCase
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
             'user_id' => $this->homer->user_id,
-            'personell_id' => PersonellService::idFor('scientist'),
+            'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $colonyId,
             'rank' => 2,
             'active_ticks' => 0,
@@ -158,7 +158,7 @@ class CrossColonyAccessTest extends TestCase
         Advisor::where('colony_id', $colonyId)->delete();
         Advisor::create([
             'user_id' => $this->homer->user_id,
-            'personell_id' => PersonellService::idFor('scientist'),
+            'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $colonyId,
             'rank' => 2,
             'active_ticks' => 0,

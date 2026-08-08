@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Techtree;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Advisor;
+use App\Services\AdvisorService;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -49,7 +49,7 @@ class AdvisorController extends BaseController
 
     public function __construct(
         TickService $tick,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
         private readonly EventService $eventService,
         private readonly OnboardingHintService $hintService,
@@ -82,7 +82,7 @@ class AdvisorController extends BaseController
      * path_open until the player places the matching building.
      *
      * @param  Collection  $advisors  Active advisors on the colony (Advisor models).
-     * @param  array  $slotInfo  Output of PersonellService::getAdvisorSlotInfo().
+     * @param  array  $slotInfo  Output of AdvisorService::getAdvisorSlotInfo().
      * @param  int  $currentTick  Current game tick for unavailability checks.
      * @param  int  $colonyId  Used for path-building lookup and building-warning checks.
      * @return array<int, array<string, mixed>>
@@ -298,8 +298,8 @@ class AdvisorController extends BaseController
         $colonyId = $this->resolveColonyId();
         $currentTick = $this->getTick();
 
-        $advisors = $this->personellService->getColonyAdvisors($colonyId);
-        $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
         $slots = $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId);
 
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
@@ -320,14 +320,14 @@ class AdvisorController extends BaseController
     public function hire(Request $request): View|RedirectResponse|JsonResponse
     {
         $request->validate([
-            'personell_id' => ['required', 'integer', Rule::in(PersonellService::allIds())],
+            'personell_id' => ['required', 'integer', Rule::in(AdvisorService::allIds())],
         ]);
 
         $colonyId = $this->resolveColonyId();
         $userId = $this->getCurrentUserId();
         $personellId = (int) $request->input('personell_id');
 
-        $result = $this->personellService->hire($userId, $personellId, $colonyId);
+        $result = $this->advisorService->hire($userId, $personellId, $colonyId);
 
         if (is_string($result)) {
             $errorMessages = [
@@ -369,8 +369,8 @@ class AdvisorController extends BaseController
 
         if ($request->expectsJson()) {
             $currentTick = $this->getTick();
-            $advisors = $this->personellService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
             return response()->json([
                 'ok' => true,
@@ -399,12 +399,12 @@ class AdvisorController extends BaseController
 
         $colonyId = (int) $advisor->colony_id;
 
-        $this->personellService->fire($id);
+        $this->advisorService->fire($id);
 
         if ($request->expectsJson()) {
             $currentTick = $this->getTick();
-            $advisors = $this->personellService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
             return response()->json([
                 'ok' => true,

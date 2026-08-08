@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Services\AdvisorService;
 use App\Services\OnboardingHintService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -565,7 +565,7 @@ class OnboardingHintServiceTest extends TestCase
         // construction AP pool → invest_site self-clears (Bau-AP exhausted).
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -629,7 +629,7 @@ class OnboardingHintServiceTest extends TestCase
         // left (ring 2 = 2 AP/tile here). Lock down to 1 Nav-AP — unaffordable.
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -780,7 +780,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->placeSecondAdvisor();
         $this->clearFog();
 
-        $this->app->make(PersonellService::class)->lockActionPoints('construction', $this->colonyId, 9999);
+        $this->app->make(AdvisorService::class)->lockActionPoints('construction', $this->colonyId, 9999);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -797,7 +797,7 @@ class OnboardingHintServiceTest extends TestCase
         // the end-sol fallback.
         $this->app->instance(TickService::class, new TickService(1));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -826,7 +826,7 @@ class OnboardingHintServiceTest extends TestCase
         // the pool must not be suggested.
         $this->app->instance(TickService::class, new TickService(1));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -856,7 +856,7 @@ class OnboardingHintServiceTest extends TestCase
         // were waiting. Economy pool counts as usable once the Cantina is built.
         $this->app->instance(TickService::class, new TickService(3));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -1053,7 +1053,7 @@ class OnboardingHintServiceTest extends TestCase
         // Fill the 3rd slot CC3 unlocks — otherwise hint_advisor_slot2 (rank 6) wins first.
         DB::table('advisors')->insertOrIgnore([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 0,
@@ -1193,7 +1193,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -1374,9 +1374,9 @@ class OnboardingHintServiceTest extends TestCase
     /** Locks every AP pool (construction/research/navigation/economy) so none remain unspent. */
     private function exhaustAllActionPoints(): void
     {
-        $personellService = $this->app->make(PersonellService::class);
+        $advisorService = $this->app->make(AdvisorService::class);
         foreach (['construction', 'research', 'navigation', 'economy'] as $type) {
-            $personellService->lockActionPoints($type, $this->colonyId, 9999);
+            $advisorService->lockActionPoints($type, $this->colonyId, 9999);
         }
     }
 
@@ -1440,7 +1440,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         DB::table('advisors')->insertOrIgnore([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('scientist'),
+            'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 0,

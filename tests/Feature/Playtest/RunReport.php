@@ -3,7 +3,7 @@
 namespace Tests\Feature\Playtest;
 
 use App\Models\Run;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
 
@@ -35,7 +35,7 @@ class RunReport
         $ap = [];
         $apUnspent = 0;
         foreach (self::AP_TYPES as $type) {
-            $available = app(PersonellService::class)->getAvailableActionPoints($type, $colonyId);
+            $available = app(AdvisorService::class)->getAvailableActionPoints($type, $colonyId);
             $ap[$type] = $available;
             $apUnspent += $available;
         }

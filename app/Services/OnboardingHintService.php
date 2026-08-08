@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
-use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -17,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 class OnboardingHintService
 {
     public function __construct(
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
     ) {}
 
@@ -258,7 +257,7 @@ class OnboardingHintService
      */
     private function checkHint1(int $colonyId): bool
     {
-        $engineerId = PersonellService::idFor('engineer');
+        $engineerId = AdvisorService::idFor('engineer');
 
         return DB::table('advisors')
             ->where('colony_id', $colonyId)
@@ -354,10 +353,10 @@ class OnboardingHintService
     private function bestRemainingApPool(int $colonyId): ?string
     {
         $pools = [
-            'construction' => $this->personellService->getConstructionPoints($colonyId),
-            'research' => $this->personellService->getResearchPoints($colonyId),
-            'navigation' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
-            'economy' => $this->personellService->getEconomyPoints($colonyId),
+            'construction' => $this->advisorService->getConstructionPoints($colonyId),
+            'research' => $this->advisorService->getResearchPoints($colonyId),
+            'navigation' => $this->advisorService->getAvailableActionPoints('navigation', $colonyId),
+            'economy' => $this->advisorService->getEconomyPoints($colonyId),
         ];
 
         if (! $this->hasBuiltBuilding($colonyId, 31)) { // sciencelab gates the techtree
@@ -506,7 +505,7 @@ class OnboardingHintService
      */
     private function checkHintAdvisorSlot2(int $colonyId): bool
     {
-        $slots = $this->personellService->getAdvisorSlotInfo($colonyId);
+        $slots = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
         // CC>=2 explicitly, not just "free>0": a fresh colony at CC1 with zero
         // advisors hired also has a free slot (slot 1) — that case is hint_1's
@@ -573,7 +572,7 @@ class OnboardingHintService
         }
 
         // Only while there is still Bau-AP left to invest this Sol.
-        return $this->personellService->getConstructionPoints($colonyId) > 0;
+        return $this->advisorService->getConstructionPoints($colonyId) > 0;
     }
 
     /**
@@ -628,7 +627,7 @@ class OnboardingHintService
         $cheapestCost = (int) (config('game.colony.explore_cost_per_ring')[$cheapestRing]
             ?? config('game.colony.explore_cost_default', 1));
 
-        return $this->personellService->getAvailableActionPoints('navigation', $colonyId) >= $cheapestCost;
+        return $this->advisorService->getAvailableActionPoints('navigation', $colonyId) >= $cheapestCost;
     }
 
     /**
@@ -844,7 +843,7 @@ class OnboardingHintService
      */
     private function canAffordBuildingPlacement(int $colonyId, int $buildingId): bool
     {
-        if ($this->personellService->getConstructionPoints($colonyId) < 1) {
+        if ($this->advisorService->getConstructionPoints($colonyId) < 1) {
             return false;
         }
 

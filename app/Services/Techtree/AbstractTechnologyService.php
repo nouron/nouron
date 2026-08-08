@@ -2,6 +2,7 @@
 
 namespace App\Services\Techtree;
 
+use App\Services\AdvisorService;
 use App\Services\Concerns\ValidatesId;
 use App\Services\ResourcesService;
 use App\Services\TickService;
@@ -40,7 +41,7 @@ abstract class AbstractTechnologyService
     public function __construct(
         protected readonly TickService $tickService,
         protected readonly ResourcesService $resourcesService,
-        protected readonly ?PersonellService $personellService = null,
+        protected readonly ?AdvisorService $advisorService = null,
     ) {}
 
     // ── Read ─────────────────────────────────────────────────────────────────
@@ -327,8 +328,8 @@ abstract class AbstractTechnologyService
             if ($changeMode === 'add' && ! $bypassAp) {
                 // Lock the AP actually spent toward levelup so they cannot be reused in the same tick
                 $apSpent = $newApSpend - $currentApSpend;
-                if ($apSpent > 0 && $this->personellService !== null) {
-                    $this->personellService->lockActionPoints($apType, $colonyId, $apSpent);
+                if ($apSpent > 0 && $this->advisorService !== null) {
+                    $this->advisorService->lockActionPoints($apType, $colonyId, $apSpent);
                 }
             }
 
@@ -354,8 +355,8 @@ abstract class AbstractTechnologyService
             // Lock AP when status_points changed (repair or remove)
             if (in_array($changeMode, ['repair', 'remove'])) {
                 $effectiveAp = abs($newStatus - $statusBefore);
-                if ($effectiveAp > 0 && $this->personellService !== null) {
-                    $this->personellService->lockActionPoints($apType, $colonyId, $effectiveAp);
+                if ($effectiveAp > 0 && $this->advisorService !== null) {
+                    $this->advisorService->lockActionPoints($apType, $colonyId, $effectiveAp);
                 }
             }
         });
@@ -413,8 +414,8 @@ abstract class AbstractTechnologyService
         }
 
         $available = match ($this->apPointsType()) {
-            'research_points' => $this->personellService?->getResearchPoints($colonyId) ?? 0,
-            default => $this->personellService?->getConstructionPoints($colonyId) ?? 0,
+            'research_points' => $this->advisorService?->getResearchPoints($colonyId) ?? 0,
+            default => $this->advisorService?->getConstructionPoints($colonyId) ?? 0,
         };
 
         return $available < abs($points) ? 'insufficient_ap' : null;

@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Colony;
 
 use App\Http\Controllers\BaseController;
 use App\Models\Run;
+use App\Services\AdvisorService;
 use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,7 +29,7 @@ class BarController extends BaseController
         private readonly MerchantService $merchantService,
         private readonly EventService $eventService,
         private readonly OnboardingHintService $onboardingHintService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
     ) {
         parent::__construct($tick);
@@ -79,7 +79,7 @@ class BarController extends BaseController
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
         $economyAp = $barLevel > 0
-            ? $this->personellService->getAvailableActionPoints('economy', $colony->id)
+            ? $this->advisorService->getAvailableActionPoints('economy', $colony->id)
             : 0;
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 3);
@@ -162,7 +162,7 @@ class BarController extends BaseController
             return $result;
         }
 
-        $result['economy_ap'] = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+        $result['economy_ap'] = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
 
         if (isset($result['give_resource_id'], $result['get_resource_id'])) {
             $possessions = $this->resourcesService->getPossessionsByColonyId($colonyId);

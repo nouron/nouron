@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\BuildingId;
 use App\Models\Colony;
-use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -36,7 +35,7 @@ class HangarService
     public function __construct(
         private readonly TickService $tickService,
         private readonly TrustService $trustService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
     ) {}
 
@@ -194,7 +193,7 @@ class HangarService
         }
 
         if ($consulApSpent > 0 && ! config('game.bypass.ap_checks')) {
-            $availableAp = $this->personellService->getAvailableActionPoints('economy', $colonyId);
+            $availableAp = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
             if ($consulApSpent > $availableAp) {
                 throw new RuntimeException(
                     "Insufficient economy AP: requested {$consulApSpent}, available {$availableAp}."
@@ -317,7 +316,7 @@ class HangarService
             ]);
 
             if ($consulApSpent > 0) {
-                $this->personellService->lockActionPoints('economy', $colonyId, $consulApSpent);
+                $this->advisorService->lockActionPoints('economy', $colonyId, $consulApSpent);
             }
         });
     }
@@ -464,7 +463,7 @@ class HangarService
             $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             if (! config('game.bypass.ap_checks')
-                && $this->personellService->getAvailableActionPoints('navigation', $colonyId) < $navApCost) {
+                && $this->advisorService->getAvailableActionPoints('navigation', $colonyId) < $navApCost) {
                 throw new RuntimeException(__('colony.hangar_dispatch_no_nav_ap'));
             }
 
@@ -484,7 +483,7 @@ class HangarService
                 ->update(['ship_state' => 'dispatched']);
 
             if (! config('game.bypass.ap_checks') && $navApCost > 0) {
-                $this->personellService->lockActionPoints('navigation', $colonyId, $navApCost);
+                $this->advisorService->lockActionPoints('navigation', $colonyId, $navApCost);
             }
             if (! config('game.bypass.resource_costs') && $organikaCost > 0) {
                 DB::table('colony_resources')
@@ -612,7 +611,7 @@ class HangarService
         $shipsConfig = config('ships');
 
         // Same for every mission this call — compute once, not per catalog entry.
-        $availableNavAp = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
+        $availableNavAp = $this->advisorService->getAvailableActionPoints('navigation', $colonyId);
         $availableOrganika = (int) (DB::table('colony_resources')
             ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0);
         $bypassAp = (bool) config('game.bypass.ap_checks');

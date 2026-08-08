@@ -1,18 +1,15 @@
 <?php
 
-namespace App\Services\Techtree;
+namespace App\Services;
 
 use App\Enums\BuildingId;
 use App\Models\Advisor;
 use App\Services\Concerns\ValidatesId;
-use App\Services\ResourcesService;
-use App\Services\TickService;
-use App\Services\TrustService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * PersonellService — manages advisors and action points.
+ * AdvisorService — manages advisors and action points.
  *
  * Advisors are individual entities stored in the `advisors` table.
  * Each advisor has a rank (1–3) that determines AP per tick:
@@ -25,9 +22,9 @@ use Illuminate\Support\Facades\DB;
  *   navigation    — advisors.pilot      colony-scoped
  *
  * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
- * Use PersonellService::idFor('engineer') etc. for all lookups.
+ * Use AdvisorService::idFor('engineer') etc. for all lookups.
  */
-class PersonellService
+class AdvisorService
 {
     use ValidatesId;
 

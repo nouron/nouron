@@ -3,7 +3,7 @@
 namespace Tests\Feature\Colony;
 
 use App\Models\User;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -180,7 +180,7 @@ class BuildingRepairTest extends TestCase
         $this->setCcState(['status_points' => 16]);
 
         // Drain the construction AP pool by locking more than available.
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
         $available = $personell->getConstructionPoints(self::COLONY_ID);
         if ($available > 0) {
             $personell->lockActionPoints('construction', self::COLONY_ID, $available);
