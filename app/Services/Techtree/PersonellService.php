@@ -16,13 +16,12 @@ use Illuminate\Support\Facades\DB;
  *
  * Advisors are individual entities stored in the `advisors` table.
  * Each advisor has a rank (1–3) that determines AP per tick:
- *   Junior (1) = 4 AP, Senior (2) = 7 AP, Experte (3) = 12 AP
+ *   Junior (1) = 2 AP, Senior (2) = 3 AP, Experte (3) = 4 AP
  *
  * AP types and their scopes (all colony-scoped):
  *   construction  — advisors.engineer   colony-scoped
  *   research      — advisors.scientist  colony-scoped
  *   economy       — advisors.trader     colony-scoped
- *   strategy      — advisors.stratege   colony-scoped
  *   navigation    — advisors.pilot      colony-scoped
  *
  * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
