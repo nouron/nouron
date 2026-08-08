@@ -78,11 +78,6 @@ class ResearchService extends AbstractTechnologyService
         return parent::levelupBlocker($colonyId, $entityId);
     }
 
-    protected function apPointsType(): string
-    {
-        return 'research_points';
-    }
-
     /**
      * For Kenntnisse (purpose='knowledge'), AP cost varies per target level (config/knowledge.php).
      * Legacy researches use the flat DB value.

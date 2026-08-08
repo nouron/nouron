@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Advisor;
 use App\Services\AdvisorService;
 use App\Services\Techtree\BuildingService;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -303,8 +304,6 @@ class AdvisorServiceTest extends TestCase
      */
     public function test_invest_adds_locks_delta_ap(): void
     {
-        $this->markTestSkipped('BuildingService still calls the removed getConstructionPoints() wrapper; re-enable once its callsite moves to getAvailableActionPoints() (Task 4/5).');
-
         // This test is about the AP lock itself, so the gate must be live: phpunit.xml
         // sets GAME_BYPASS_AP=true globally, and a bypassed invest() locks nothing.
         config(['game.bypass.ap_checks' => false]);
@@ -322,6 +321,35 @@ class AdvisorServiceTest extends TestCase
         $after = $this->service->getAvailableActionPoints($this->colonyId);
 
         $this->assertEquals($before - 3, $after);
+    }
+
+    public function test_building_and_research_investment_share_one_pool(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+
+        $buildingService = $this->app->make(BuildingService::class);
+        $researchService = $this->app->make(ResearchService::class);
+
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
+            ->update(['ap_spend' => 0]);
+
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $buildingService->invest($this->colonyId, 27, 'add', 3);
+        $afterBuilding = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->assertEquals($before - 3, $afterBuilding);
+
+        // A research investment right after must draw from the SAME remaining
+        // pool, not from an untouched "research" pool — this is the behavior
+        // that only exists once construction/research share one pool.
+        $researchEntity = DB::table('researches')->first();
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'research_id' => $researchEntity->id],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 0]
+        );
+        $researchService->invest($this->colonyId, $researchEntity->id, 'add', 2);
+        $afterResearch = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->assertEquals($afterBuilding - 2, $afterResearch);
     }
 
     /**
