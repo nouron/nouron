@@ -50,9 +50,9 @@ class Advisor extends Model
 
     public function getApPerTick(): int
     {
-        $map = config('game.advisor.ap_per_rank', [1 => 4, 2 => 7, 3 => 12]);
+        $map = config('game.advisor.ap_per_rank', [1 => 2, 2 => 3, 3 => 4]);
 
-        return $map[$this->rank] ?? 4;
+        return $map[$this->rank] ?? 2;
     }
 
     public function isUnemployed(): bool

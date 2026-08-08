@@ -32,7 +32,7 @@ class PersonellService
 {
     use ValidatesId;
 
-    const DEFAULT_ACTIONPOINTS = 4;    // Junior AP fallback
+    const DEFAULT_ACTIONPOINTS = 2;    // Junior AP fallback
 
     public static function idFor(string $key): int
     {

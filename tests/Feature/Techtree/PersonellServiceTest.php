@@ -112,26 +112,26 @@ class PersonellServiceTest extends TestCase
     public function test_get_ap_per_tick_rank_one(): void
     {
         $advisor = new Advisor(['rank' => 1]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(2, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_two(): void
     {
         $advisor = new Advisor(['rank' => 2]);
-        $this->assertEquals(7, $advisor->getApPerTick());
+        $this->assertEquals(3, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_three(): void
     {
         $advisor = new Advisor(['rank' => 3]);
-        $this->assertEquals(12, $advisor->getApPerTick());
+        $this->assertEquals(4, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_unknown_rank_falls_back_to_default(): void
     {
-        // rank 99 is not in AP_BY_RANK — should fall back to 4
+        // rank 99 is not in ap_per_rank — should fall back to the Junior (rank-1) value
         $advisor = new Advisor(['rank' => 99]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(2, $advisor->getApPerTick());
     }
 
     // ── Advisor model: isUnemployed ───────────────────────────────────────────

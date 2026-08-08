@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  */
 class RunReport
 {
-    private const AP_TYPES = ['construction', 'research', 'navigation', 'economy', 'strategy'];
+    private const AP_TYPES = ['construction', 'research', 'navigation', 'economy'];
 
     /** @var array<int, array> */
     private array $sols = [];

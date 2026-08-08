@@ -186,11 +186,12 @@ return [
         'display_threshold' => 0.70,
     ],
 
-    // Action Points — base value per AP type per Sol, regardless of advisors.
-    // Advisors add their rank bonus on top. See GDD §13.
-    // Formula: availableAP = base + AP_bonus(advisor_rank) - lockedAP(tick)
+    // Action Points — base value for the single shared colony pool, regardless
+    // of advisors. Advisors add their per-rank contribution on top (see
+    // 'advisor.ap_per_rank' below). One pool for the whole colony — GDD §13.1
+    // ("Ein gemeinsamer AP-Pool", Entscheidung 2026-08-02).
     'ap' => [
-        'base' => 6,
+        'base' => 12,
     ],
 
     // Supply cap model — supply is not generated per tick, it is a capacity ceiling.
@@ -235,13 +236,13 @@ return [
         // income infrastructure (Uplink Station, Konsul-Handelsvertrag) before upkeep
         // escalates. See GDD §18 task_credit_reserve.
         'rank_thresholds' => [1 => 15, 2 => 45],
-        'ap_per_rank' => [1 => 4, 2 => 7, 3 => 12],
+        'ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
         // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
         'promotion_costs' => [2 => 150, 3 => 400],
-        // Slot system: CC level = number of advisor slots (max 5).
+        // Slot system: CC level = number of advisor slots (max 4).
         // Formula: min(cc_level, max_slots)
-        'max_slots' => 5,
+        'max_slots' => 4,
         // Credits deducted from the owning user each tick per active advisor (GDD §12).
         // Processed in GameTick after passive Credits income to prevent false-negative
         // deficits when income and upkeep fire in the same tick.
