@@ -338,45 +338,39 @@ class OnboardingHintService
     }
 
     /**
-     * Picks the *usable* AP pool with the most unspent points this Sol. A pool
-     * only counts when the player can actually act on it (playtest review
-     * 2026-07-14 — a "spend your research AP" nag without a Sciencelab, or
-     * "end the Sol, nothing left" with idle-but-usable Nav-AP, are both wrong):
-     * research needs a built Sciencelab, economy a built Cantina, navigation an
-     * affordable fog tile. Ties broken by fixed pool priority (construction >
-     * research > navigation > economy) — matches the order in which those
-     * mechanics were introduced. Returns null once no usable pool remains (the
-     * real "nothing left" state that lets hint_end_sol fire).
+     * Picks the *usable* action this Sol's remaining AP could go to. There is
+     * only one shared pool now (GDD §13.1) — amount comparison across domains
+     * is meaningless, so this only decides *which screen* to point the player
+     * at, not *how much* is left there. A domain only counts when the player
+     * can actually act on it (playtest review 2026-07-14 — a "spend your
+     * research AP" nag without a Sciencelab, or "end the Sol, nothing left"
+     * with idle-but-usable Nav-AP, are both wrong): research needs a built
+     * Sciencelab, economy a built Cantina, navigation an affordable fog tile.
+     * Construction has no gate, so it is checked last (not first) — otherwise
+     * it would always win once any AP is left and the other three branches
+     * would never fire. Returns null once the pool itself is empty (the real
+     * "nothing left" state that lets hint_end_sol fire).
      *
      * @return 'construction'|'research'|'navigation'|'economy'|null
      */
     private function bestRemainingApPool(int $colonyId): ?string
     {
-        $pools = [
-            'construction' => $this->advisorService->getConstructionPoints($colonyId),
-            'research' => $this->advisorService->getResearchPoints($colonyId),
-            'navigation' => $this->advisorService->getAvailableActionPoints('navigation', $colonyId),
-            'economy' => $this->advisorService->getEconomyPoints($colonyId),
-        ];
-
-        if (! $this->hasBuiltBuilding($colonyId, 31)) { // sciencelab gates the techtree
-            $pools['research'] = 0;
-        }
-        if (! $this->hasBuiltBuilding($colonyId, 52)) { // cantina gates trade offers
-            $pools['economy'] = 0;
-        }
-        if ($pools['navigation'] > 0 && ! $this->canAffordCheapestFogTile($colonyId, $pools['navigation'])) {
-            $pools['navigation'] = 0;
+        $ap = $this->advisorService->getAvailableActionPoints($colonyId);
+        if ($ap < 1) {
+            return null;
         }
 
-        $best = null;
-        foreach ($pools as $pool => $amount) {
-            if ($amount > 0 && ($best === null || $amount > $pools[$best])) {
-                $best = $pool;
-            }
+        if ($this->hasBuiltBuilding($colonyId, 31)) { // sciencelab gates the techtree
+            return 'research';
+        }
+        if ($this->canAffordCheapestFogTile($colonyId, $ap)) {
+            return 'navigation';
+        }
+        if ($this->hasBuiltBuilding($colonyId, 52)) { // cantina gates trade offers
+            return 'economy';
         }
 
-        return $best;
+        return 'construction';
     }
 
     /** True when the colony has the given building finished (level >= 1). */
@@ -571,8 +565,8 @@ class OnboardingHintService
             return false;
         }
 
-        // Only while there is still Bau-AP left to invest this Sol.
-        return $this->advisorService->getConstructionPoints($colonyId) > 0;
+        // Only while there is still AP left to invest this Sol.
+        return $this->advisorService->getAvailableActionPoints($colonyId) > 0;
     }
 
     /**
@@ -627,7 +621,7 @@ class OnboardingHintService
         $cheapestCost = (int) (config('game.colony.explore_cost_per_ring')[$cheapestRing]
             ?? config('game.colony.explore_cost_default', 1));
 
-        return $this->advisorService->getAvailableActionPoints('navigation', $colonyId) >= $cheapestCost;
+        return $this->advisorService->getAvailableActionPoints($colonyId) >= $cheapestCost;
     }
 
     /**
@@ -843,7 +837,7 @@ class OnboardingHintService
      */
     private function canAffordBuildingPlacement(int $colonyId, int $buildingId): bool
     {
-        if ($this->advisorService->getConstructionPoints($colonyId) < 1) {
+        if ($this->advisorService->getAvailableActionPoints($colonyId) < 1) {
             return false;
         }
 

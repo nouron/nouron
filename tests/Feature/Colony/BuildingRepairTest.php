@@ -181,9 +181,9 @@ class BuildingRepairTest extends TestCase
 
         // Drain the construction AP pool by locking more than available.
         $personell = $this->app->make(AdvisorService::class);
-        $available = $personell->getConstructionPoints(self::COLONY_ID);
+        $available = $personell->getAvailableActionPoints(self::COLONY_ID);
         if ($available > 0) {
-            $personell->lockActionPoints('construction', self::COLONY_ID, $available);
+            $personell->lockActionPoints(self::COLONY_ID, $available);
         }
 
         $response = $this->repair();

@@ -193,7 +193,7 @@ class HangarService
         }
 
         if ($consulApSpent > 0 && ! config('game.bypass.ap_checks')) {
-            $availableAp = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
+            $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
             if ($consulApSpent > $availableAp) {
                 throw new RuntimeException(
                     "Insufficient economy AP: requested {$consulApSpent}, available {$availableAp}."
@@ -316,7 +316,7 @@ class HangarService
             ]);
 
             if ($consulApSpent > 0) {
-                $this->advisorService->lockActionPoints('economy', $colonyId, $consulApSpent);
+                $this->advisorService->lockActionPoints($colonyId, $consulApSpent);
             }
         });
     }
@@ -463,7 +463,7 @@ class HangarService
             $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             if (! config('game.bypass.ap_checks')
-                && $this->advisorService->getAvailableActionPoints('navigation', $colonyId) < $navApCost) {
+                && $this->advisorService->getAvailableActionPoints($colonyId) < $navApCost) {
                 throw new RuntimeException(__('colony.hangar_dispatch_no_nav_ap'));
             }
 
@@ -483,7 +483,7 @@ class HangarService
                 ->update(['ship_state' => 'dispatched']);
 
             if (! config('game.bypass.ap_checks') && $navApCost > 0) {
-                $this->advisorService->lockActionPoints('navigation', $colonyId, $navApCost);
+                $this->advisorService->lockActionPoints($colonyId, $navApCost);
             }
             if (! config('game.bypass.resource_costs') && $organikaCost > 0) {
                 DB::table('colony_resources')
@@ -611,7 +611,7 @@ class HangarService
         $shipsConfig = config('ships');
 
         // Same for every mission this call — compute once, not per catalog entry.
-        $availableNavAp = $this->advisorService->getAvailableActionPoints('navigation', $colonyId);
+        $availableAp = $this->advisorService->getAvailableActionPoints($colonyId);
         $availableOrganika = (int) (DB::table('colony_resources')
             ->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0);
         $bypassAp = (bool) config('game.bypass.ap_checks');
@@ -649,7 +649,7 @@ class HangarService
                 }
             }
 
-            if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableNavAp) {
+            if ($availability === 'ok' && ! $bypassAp && $navApCost > $availableAp) {
                 $availability = 'missing_ap';
             }
             if ($availability === 'ok' && ! $bypassResources && $organikaCost > $availableOrganika) {
@@ -670,7 +670,7 @@ class HangarService
                 'sol_distance' => $dist,
                 'duration' => 2 * $dist,
                 'nav_ap' => $navApCost,
-                'nav_ap_available' => $availableNavAp,
+                'nav_ap_available' => $availableAp,
                 'organika' => $organikaCost,
                 'organika_available' => $availableOrganika,
                 'wear' => $wear,

@@ -681,9 +681,11 @@ class BarServiceTest extends TestCase
         $this->barService = $this->app->make(BarService::class); // refresh after mockTick
         $this->setColonyResource(self::RES_REGOLITH, 100);
 
-        // Lock all economy AP so none is available
+        // Lock all AP so none is available — reads the real total (base + any
+        // advisor bonuses in the fixture), not the config default, since the
+        // shared pool no longer isolates a per-domain amount.
         $apCost = (int) config('game.bar.ap_cost_accept', 1);
-        $totalAp = (int) config('game.ap.base', 6);
+        $totalAp = $this->app->make(AdvisorService::class)->getTotalActionPoints(self::COLONY_ID);
         DB::table('locked_actionpoints')->insert([
             'tick' => 10,
             'scope_type' => 'colony',
@@ -865,7 +867,7 @@ class BarServiceTest extends TestCase
         $this->assignTrader(2);
         $this->setColonyResource(self::RES_REGOLITH, 100);
 
-        $totalAp = $this->app->make(AdvisorService::class)->getTotalActionPoints('economy', self::COLONY_ID);
+        $totalAp = $this->app->make(AdvisorService::class)->getTotalActionPoints(self::COLONY_ID);
         DB::table('locked_actionpoints')->insert([
             'tick' => 10,
             'scope_type' => 'colony',

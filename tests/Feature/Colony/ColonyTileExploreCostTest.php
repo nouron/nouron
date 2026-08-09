@@ -42,7 +42,7 @@ class ColonyTileExploreCostTest extends TestCase
     private function navAp(): int
     {
         return $this->app->make(AdvisorService::class)
-            ->getAvailableActionPoints('navigation', self::COLONY_ID);
+            ->getAvailableActionPoints(self::COLONY_ID);
     }
 
     public function test_exploring_ring1_tile_costs_1_nav_ap(): void
@@ -83,8 +83,8 @@ class ColonyTileExploreCostTest extends TestCase
         $this->fogTile(2, 0, 2);
 
         $personell = $this->app->make(AdvisorService::class);
-        $available = $personell->getAvailableActionPoints('navigation', self::COLONY_ID);
-        $personell->lockActionPoints('navigation', self::COLONY_ID, $available - 1);
+        $available = $personell->getAvailableActionPoints(self::COLONY_ID);
+        $personell->lockActionPoints(self::COLONY_ID, $available - 1);
 
         $this->assertSame(1, $this->navAp(), 'precondition: exactly 1 Nav-AP left');
 
