@@ -100,15 +100,11 @@ class SolController extends Controller
     {
         $colonyId = $this->resolveColonyId();
 
-        $construction = $this->advisorService->getConstructionPoints($colonyId);
-        $research = $this->advisorService->getAvailableActionPoints('research', $colonyId);
-        $navigation = $this->advisorService->getAvailableActionPoints('navigation', $colonyId);
+        $colonyAp = $this->advisorService->getAvailableActionPoints($colonyId);
 
         return response()->json([
-            'construction' => $construction,
-            'research' => $research,
-            'navigation' => $navigation,
-            'total' => $construction + $research + $navigation,
+            'colonyAp' => $colonyAp,
+            'total' => $colonyAp,
         ]);
     }
 }

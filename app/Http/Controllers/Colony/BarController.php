@@ -79,7 +79,7 @@ class BarController extends BaseController
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
         $economyAp = $barLevel > 0
-            ? $this->advisorService->getAvailableActionPoints('economy', $colony->id)
+            ? $this->advisorService->getAvailableActionPoints($colony->id)
             : 0;
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 3);
@@ -152,7 +152,7 @@ class BarController extends BaseController
      * Adds the fresh totals the resourcebar needs to sync live after an
      * AP-/resource-changing AJAX action (project convention — every such action
      * must be able to update the resourcebar without a full page reload).
-     * economy_ap is added whenever the request succeeded at all (accept always
+     * ap_available is added whenever the request succeeded at all (accept always
      * spends AP on success; negotiate spends it on both a win and a loss), the
      * give/get resource balances only when a trade actually happened.
      */
@@ -162,7 +162,7 @@ class BarController extends BaseController
             return $result;
         }
 
-        $result['economy_ap'] = $this->advisorService->getAvailableActionPoints('economy', $colonyId);
+        $result['ap_available'] = $this->advisorService->getAvailableActionPoints($colonyId);
 
         if (isset($result['give_resource_id'], $result['get_resource_id'])) {
             $possessions = $this->resourcesService->getPossessionsByColonyId($colonyId);

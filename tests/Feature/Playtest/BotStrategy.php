@@ -122,7 +122,7 @@ class BotStrategy
             ],
             [
                 'name' => 'accept_bar_offer',
-                'when' => fn (BotSession $b) => self::advisorService()->getAvailableActionPoints('economy', $b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1)
+                'when' => fn (BotSession $b) => self::advisorService()->getAvailableActionPoints($b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1)
                     ? self::barOfferCandidate($b)
                     : null,
                 'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
@@ -190,12 +190,12 @@ class BotStrategy
 
     private static function constructionAp(BotSession $b): int
     {
-        return self::advisorService()->getAvailableActionPoints('construction', $b->colonyId);
+        return self::advisorService()->getAvailableActionPoints($b->colonyId);
     }
 
     private static function navigationAp(BotSession $b): int
     {
-        return self::advisorService()->getAvailableActionPoints('navigation', $b->colonyId);
+        return self::advisorService()->getAvailableActionPoints($b->colonyId);
     }
 
     private static function repairCandidate(BotSession $b): ?object
@@ -361,7 +361,7 @@ class BotStrategy
 
     private static function researchAp(BotSession $b): int
     {
-        return self::advisorService()->getResearchPoints($b->colonyId);
+        return self::advisorService()->getAvailableActionPoints($b->colonyId);
     }
 
     /**

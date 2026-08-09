@@ -99,7 +99,7 @@ class BuildingRepairTest extends TestCase
         $response = $this->repair();
 
         $response->assertJsonPath('ok', true);
-        $this->assertIsInt($response->json('apConstruction'));
+        $this->assertIsInt($response->json('apAvailable'));
     }
 
     public function test_repair_returns_resource_amounts_for_build_chip_affordability(): void

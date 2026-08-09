@@ -183,20 +183,10 @@ class AppServiceProvider extends ServiceProvider
                 if ($colonyId) {
                     $advisorService = app(AdvisorService::class);
                     $view->with('trust', (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 12)->value('amount') ?? 0));
-                    $view->with('navAp', $advisorService->getAvailableActionPoints('navigation', $colonyId));
-                    $view->with('constructionAp', $advisorService->getAvailableActionPoints('construction', $colonyId));
-                    $view->with('researchAp', $advisorService->getAvailableActionPoints('research', $colonyId));
-                    $view->with('economyAp', $advisorService->getAvailableActionPoints('economy', $colonyId));
-                    $view->with('strategyAp', $advisorService->getAvailableActionPoints('strategy', $colonyId));
+                    $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
 
                     $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
-                    $view->with('apBreakdown', [
-                        'navigation' => $advisorService->getApBreakdown('navigation', $colonyId),
-                        'construction' => $advisorService->getApBreakdown('construction', $colonyId),
-                        'research' => $advisorService->getApBreakdown('research', $colonyId),
-                        'economy' => $advisorService->getApBreakdown('economy', $colonyId),
-                        'strategy' => $advisorService->getApBreakdown('strategy', $colonyId),
-                    ]);
+                    $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));
 
                     $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
                     if ($hint) {

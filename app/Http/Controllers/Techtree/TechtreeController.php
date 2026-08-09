@@ -88,8 +88,7 @@ class TechtreeController extends BaseController
         $hangarCap = (int) ($instanceCounts[44] ?? 0);
 
         // Available AP for sidebar invest
-        $constructionAp = $this->advisorService->getAvailableActionPoints('construction', $colonyId);
-        $researchAp = $this->advisorService->getAvailableActionPoints('research', $colonyId);
+        $colonyAp = $this->advisorService->getAvailableActionPoints($colonyId);
 
         foreach (['building', 'research', 'ship', 'personell'] as $type) {
             foreach ($techtree[$type] as $id => $tech) {
@@ -127,8 +126,7 @@ class TechtreeController extends BaseController
                     'ap_for_levelup' => $type === 'research'
                         ? $this->researchService->knowledgeLevelupCost($colonyId, (int) $id, (int) ($tech['ap_for_levelup'] ?? 0))
                         : (int) ($tech['ap_for_levelup'] ?? 0),
-                    'ap_available' => $type === 'building' ? $constructionAp
-                                        : ($type === 'research' ? $researchAp : 0),
+                    'ap_available' => in_array($type, ['building', 'research'], true) ? $colonyAp : 0,
                 ];
 
                 // Generate within-phase arrow for this item.
@@ -297,11 +295,6 @@ class TechtreeController extends BaseController
             default => throw new \InvalidArgumentException("Unknown type: $type"),
         };
 
-        $apType = match (strtolower($type)) {
-            'research' => 'research',
-            default => 'construction',
-        };
-
         $tech = $techtree[$type][$id] ?? null;
         if ($tech !== null && strtolower($type) === 'research') {
             $tech['ap_for_levelup'] = $this->researchService->knowledgeLevelupCost(
@@ -315,7 +308,7 @@ class TechtreeController extends BaseController
             'tech' => $tech,
             'costs' => $service->getEntityCosts($id),
             'resources' => $this->resourcesService->getResources()->keyBy('id'),
-            'apAvailable' => $this->advisorService->getAvailableActionPoints($apType, $colonyId),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
             'requiredBuildingsCheck' => $service->checkRequiredBuildingsByEntityId($colonyId, $id),
             'requiredResourcesCheck' => $this->resourcesService->check($service->getEntityCosts($id), $colonyId),
             // Passed so the view can resolve required building/research names
@@ -433,8 +426,6 @@ class TechtreeController extends BaseController
             }
         }
 
-        $apType = $this->apTypeFor($type);
-
         return response()->json([
             'success' => true,
             'order' => $order,
@@ -442,7 +433,7 @@ class TechtreeController extends BaseController
             'levelup_blocked_reason' => $levelupBlockedReason,
             'levelup_blocked_message' => $levelupBlockedReason ? __("techtree.error_{$levelupBlockedReason}") : null,
             'tech' => $this->techStateFor($type, $id, $colonyId),
-            'ap_available' => $this->advisorService->getAvailableActionPoints($apType, $colonyId),
+            'ap_available' => $this->advisorService->getAvailableActionPoints($colonyId),
         ]);
     }
 
@@ -478,14 +469,6 @@ class TechtreeController extends BaseController
             'ap_for_levelup' => $apForLevelup,
             'status' => $this->computeStatus($tech, $techtree),
         ];
-    }
-
-    private function apTypeFor(string $type): string
-    {
-        return match (strtolower($type)) {
-            'research' => 'research',
-            default => 'construction',
-        };
     }
 
     private function orderFailed(string $code, string $order): JsonResponse

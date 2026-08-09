@@ -142,11 +142,7 @@ class ColonyController extends BaseController
                 return $b;
             });
 
-        $navAp = $this->advisorService->getAvailableActionPoints('navigation', $colony->id);
-        $constructionAp = $this->advisorService->getAvailableActionPoints('construction', $colony->id);
-        $researchAp = $this->advisorService->getAvailableActionPoints('research', $colony->id);
-        $economyAp = $this->advisorService->getAvailableActionPoints('economy', $colony->id);
-        $strategyAp = $this->advisorService->getAvailableActionPoints('strategy', $colony->id);
+        $colonyAp = $this->advisorService->getAvailableActionPoints($colony->id);
         $activeHint = $this->resolveHint($colony->id);
 
         $fireds = json_decode(DB::table('user_preferences')->where('user_id', Auth::id())->value('fired_triggers') ?? '[]', true) ?? [];
@@ -167,7 +163,7 @@ class ColonyController extends BaseController
 
         $phaseProgress = $this->colonyService->getPhaseProgress($colony);
 
-        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'navAp', 'constructionAp', 'researchAp', 'economyAp', 'strategyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress'));
+        return view('colony.hexview', compact('colony', 'tiles', 'ccLevel', 'buildings', 'colonyAp', 'activeHint', 'supplyCapFull', 'trust', 'regolith', 'werkstoffe', 'freeSupply', 'currentSol', 'solLimit', 'merchantVisit', 'merchantItems', 'phaseProgress'));
     }
 
     // ── Tile actions ──────────────────────────────────────────────────────────
@@ -417,10 +413,10 @@ class ColonyController extends BaseController
                 * (int) config('game.harvester.relocate_ap_per_hex', 2))
             : 1;
 
-        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < $apCost) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < $apCost) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
-                'current' => $this->advisorService->getConstructionPoints($colony->id),
+                'current' => $this->advisorService->getAvailableActionPoints($colony->id),
             ]);
         }
 
@@ -528,7 +524,7 @@ class ColonyController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->advisorService->lockActionPoints('construction', $colony->id, $apCost);
+            $this->advisorService->lockActionPoints($colony->id, $apCost);
         }
 
         // Deduct erect cost (Regolith + any Werkstoffe). Harvester relocation (and its
@@ -578,7 +574,7 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
@@ -625,7 +621,7 @@ class ColonyController extends BaseController
             ->update(['ap_spend' => $newApSpend]);
 
         if (! config('game.bypass.ap_checks')) {
-            $this->advisorService->lockActionPoints('construction', $colony->id, 1);
+            $this->advisorService->lockActionPoints($colony->id, 1);
         }
 
         $leveledUp = false;
@@ -716,7 +712,7 @@ class ColonyController extends BaseController
         $buildingId = (int) $data['building_id'];
         $instanceId = (int) ($data['instance_id'] ?? 1);
 
-        if (! config('game.bypass.ap_checks') && $this->advisorService->getConstructionPoints($colony->id) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
             return $this->fail('ap_limit', __('colony.onboarding_trigger_ap_limit'), [
                 'ap_type' => 'construction',
                 'current' => 0,
@@ -774,7 +770,7 @@ class ColonyController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->advisorService->lockActionPoints('construction', $colony->id, 1);
+            $this->advisorService->lockActionPoints($colony->id, 1);
         }
 
         // Repair is a teaching hint, not a chore: dismiss it after the first repair
@@ -981,8 +977,7 @@ class ColonyController extends BaseController
     private function currentAp(int $colonyId): array
     {
         return [
-            'apNav' => $this->advisorService->getAvailableActionPoints('navigation', $colonyId),
-            'apConstruction' => $this->advisorService->getAvailableActionPoints('construction', $colonyId),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
             // Build-chip affordability check (greys out unaffordable buildings) needs
             // these alongside AP — kept on the same payload so every action that
             // refreshes AP also refreshes resources.
