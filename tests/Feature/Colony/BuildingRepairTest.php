@@ -92,7 +92,7 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(3, (int) $row->ap_spend, 'Repair must not change ap_spend');
     }
 
-    public function test_repair_returns_updated_construction_ap(): void
+    public function test_repair_returns_updated_available_ap(): void
     {
         $this->setCcState(['status_points' => 16]);
 
@@ -171,7 +171,7 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(__('colony.error_building_not_found'), $response->json('message'));
     }
 
-    public function test_repair_rejected_without_construction_ap(): void
+    public function test_repair_rejected_without_available_ap(): void
     {
         // phpunit.xml bypasses AP checks by default (GAME_BYPASS_AP=true) — this
         // test exercises the real gate, so it must turn that back on for itself.

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Playtest;
 
+use App\Services\AdvisorService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -19,12 +20,15 @@ class BotSessionNormalizeTest extends TestCase
 
     public function test_structured_422_with_context_fields_is_captured(): void
     {
-        // Base Construction-AP (6, no advisors yet) runs out after 6 invests —
-        // the 7th hits the ap_limit gate. Exhausted via the real endpoint, not
-        // a DB shortcut, so this doubles as proof the gate is reachable at all.
+        // Base AP (ap.base=12, single shared pool, no advisors yet) runs out
+        // after that many invests — the next one hits the ap_limit gate.
+        // Exhausted via the real endpoint, not a DB shortcut, so this doubles
+        // as proof the gate is reachable at all. Read from the service rather
+        // than hardcoded so this doesn't drift from config('game.ap.base').
         $bot = BotSession::boot($this, seed: 1);
+        $available = app(AdvisorService::class)->getAvailableActionPoints($bot->colonyId);
 
-        for ($i = 0; $i < 6; $i++) {
+        for ($i = 0; $i < $available; $i++) {
             $res = $bot->act('invest_cc', 'POST', '/colony/building/invest', ['building_id' => 25]);
             $this->assertTrue($res['ok'], "invest #{$i} unexpectedly failed: ".json_encode($res['body']));
         }
