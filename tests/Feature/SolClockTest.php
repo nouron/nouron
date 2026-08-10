@@ -21,7 +21,7 @@ namespace Tests\Feature;
 
 use App\Models\Run;
 use App\Models\User;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Console\Command;
@@ -136,23 +136,23 @@ class SolClockTest extends TestCase
     {
         // Simulate the web request clock at run tick 0.
         $this->app->instance(TickService::class, new TickService(0));
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
-        $available = $personell->getAvailableActionPoints('construction', self::COLONY_ID);
-        $this->assertGreaterThan(0, $available, 'Expected construction AP at run start');
+        $available = $personell->getAvailableActionPoints(self::COLONY_ID);
+        $this->assertGreaterThan(0, $available, 'Expected AP at run start');
 
-        // Lock all available construction AP on tick 0.
-        $this->assertTrue($personell->lockActionPoints('construction', self::COLONY_ID, $available));
-        $this->assertSame(0, $personell->getAvailableActionPoints('construction', self::COLONY_ID));
+        // Lock all available AP on tick 0.
+        $this->assertTrue($personell->lockActionPoints(self::COLONY_ID, $available));
+        $this->assertSame(0, $personell->getAvailableActionPoints(self::COLONY_ID));
 
         // Advance the Sol: the clock moves to run tick 1.
         $this->app->instance(TickService::class, new TickService(1));
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         // The lock recorded against tick 0 must no longer reduce the budget.
         $this->assertSame(
             $available,
-            $personell->getAvailableActionPoints('construction', self::COLONY_ID),
+            $personell->getAvailableActionPoints(self::COLONY_ID),
             'AP should regenerate on the next Sol — previous tick locks must not carry over'
         );
 

@@ -435,15 +435,15 @@ function hangarCarousel(config) {
 
         /**
          * Syncs the resourcebar (layout header, outside this Alpine component)
-         * after dispatch/repair — design-guide.md §5.6a. Mirrors
+         * after dispatch/repair — frontend-conventions.md live-sync rule. Mirrors
          * colony-hexgrid.js's updateAp() pattern; the previous value is read
          * from the DOM rather than tracked locally since hangar.js doesn't
-         * otherwise need AP/resource state for affordability checks.
-         * @param {object} res - JSON response, may carry apNav/apConstruction/organika
+         * otherwise need AP/resource state for affordability checks. One shared
+         * colony AP pool (GDD §13.1) — no more per-domain chip.
+         * @param {object} res - JSON response, may carry apAvailable/organika
          */
         syncHangarResources(res) {
-            if (res.apNav !== undefined) this.syncResbarChip('#resbar-ap-nav', res.apNav);
-            if (res.apConstruction !== undefined) this.syncResbarChip('#resbar-ap-build', res.apConstruction);
+            if (res.apAvailable !== undefined) this.syncResbarChip('#resbar-ap', res.apAvailable);
             if (res.organika !== undefined) this.syncResbarChip('.res-Or', res.organika);
         },
 

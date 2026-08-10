@@ -3,8 +3,8 @@
 namespace Tests\Feature\Playtest;
 
 use App\Enums\BuildingId;
+use App\Services\AdvisorService;
 use App\Services\ResourcesService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
 
@@ -32,7 +32,7 @@ class BotStrategy
         return [
             [
                 'name' => 'repair_critical',
-                'when' => fn (BotSession $b) => self::constructionAp($b) >= 1
+                'when' => fn (BotSession $b) => self::availableAp($b) >= 1
                     && self::regolith($b) >= config('game.repair.regolith_per_click', 2)
                     ? self::repairCandidate($b)
                     : null,
@@ -50,7 +50,7 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_cc',
-                'when' => fn (BotSession $b) => self::ccLevel($b) < 3 && self::constructionAp($b) >= 1,
+                'when' => fn (BotSession $b) => self::ccLevel($b) < 3 && self::availableAp($b) >= 1,
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
                 ]),
@@ -78,7 +78,7 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_production',
-                'when' => fn (BotSession $b) => self::constructionAp($b) >= 1 ? self::productionInvestCandidate($b) : null,
+                'when' => fn (BotSession $b) => self::availableAp($b) >= 1 ? self::productionInvestCandidate($b) : null,
                 'do' => fn (BotSession $b, object $row) => $b->act('invest_production', 'POST', '/colony/building/invest', [
                     'building_id' => $row->building_id,
                     'instance_id' => $row->instance_id,
@@ -86,7 +86,7 @@ class BotStrategy
             ],
             [
                 'name' => 'research_knowledge',
-                'when' => fn (BotSession $b) => self::researchAp($b) >= 1 ? self::researchCandidate($b) : null,
+                'when' => fn (BotSession $b) => self::availableAp($b) >= 1 ? self::researchCandidate($b) : null,
                 'do' => function (BotSession $b, int $researchId) {
                     // Try to close out a level first (accumulated ap_spend may already
                     // meet the threshold); investBlocker() doesn't cap 'add' on ap_spend,
@@ -122,7 +122,7 @@ class BotStrategy
             ],
             [
                 'name' => 'accept_bar_offer',
-                'when' => fn (BotSession $b) => self::personellService()->getAvailableActionPoints('economy', $b->colonyId) >= (int) config('game.bar.ap_cost_accept', 1)
+                'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.bar.ap_cost_accept', 1)
                     ? self::barOfferCandidate($b)
                     : null,
                 'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
@@ -165,9 +165,9 @@ class BotStrategy
         ];
     }
 
-    private static function personellService(): PersonellService
+    private static function advisorService(): AdvisorService
     {
-        return app(PersonellService::class);
+        return app(AdvisorService::class);
     }
 
     /** Shared with RunReport — the single source for this lookup. */
@@ -188,14 +188,13 @@ class BotStrategy
             ->value('level') ?? 0);
     }
 
-    private static function constructionAp(BotSession $b): int
+    /**
+     * Available AP in the shared colony pool (GDD §13.1 — single pool, no
+     * per-domain split anymore).
+     */
+    private static function availableAp(BotSession $b): int
     {
-        return self::personellService()->getAvailableActionPoints('construction', $b->colonyId);
-    }
-
-    private static function navigationAp(BotSession $b): int
-    {
-        return self::personellService()->getAvailableActionPoints('navigation', $b->colonyId);
+        return self::advisorService()->getAvailableActionPoints($b->colonyId);
     }
 
     private static function repairCandidate(BotSession $b): ?object
@@ -270,7 +269,7 @@ class BotStrategy
         }
 
         $cost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
-        if (self::navigationAp($b) < $cost) {
+        if (self::availableAp($b) < $cost) {
             return null;
         }
 
@@ -359,11 +358,6 @@ class BotStrategy
             ->first();
     }
 
-    private static function researchAp(BotSession $b): int
-    {
-        return self::personellService()->getResearchPoints($b->colonyId);
-    }
-
     /**
      * Lowest-id Knowledge entity (90-96) not yet at max level whose required Sciencelab
      * (building_id=31) level is already met — cheap stand-in for the full
@@ -397,7 +391,7 @@ class BotStrategy
         $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
         $navApCost = 1 * (int) config('missions.nav_ap_per_sol', 2); // mission_recon_flight: sol_distance = 1
 
-        if (self::navigationAp($b) < $navApCost) {
+        if (self::availableAp($b) < $navApCost) {
             return null;
         }
 

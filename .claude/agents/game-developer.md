@@ -29,7 +29,7 @@ Serverseitige Spielmechaniken für Nouron implementieren: tick-basiertes, single
 
 ## Bestehende Spielsysteme
 - **Tick-System**: `config/game.php → tick.length` (24h pro Tick). Verarbeitung in Game-Tick-Services.
-- **Action Points (AP)**: `app/Services/Techtree/PersonellService` — `getAvailableActionPoints($type, $colonyId)` / `lockActionPoints($type, $colonyId, $amount)`. Tracked in `locked_actionpoints`-Tabelle.
+- **Action Points (AP)**: `app/Services/AdvisorService` — single shared colony pool (GDD §13.1): `getAvailableActionPoints(int $colonyId): int` / `lockActionPoints(int $colonyId, int $ap, ?int $personellId = null): bool`. Tracked in `locked_actionpoints`-Tabelle.
 - **Colony-Tiles**: `app/Services/ColonyTileService` — Hex-Grid, Fog of War, `assignColonyZone()`, `exploreTile()`, `deepScanTile()`. Zonen-Erweiterungs-Config in `config/game.php → colony_zone_expansion`.
 - **Colony-Gebäude**: `app/Http/Controllers/Colony/ColonyController` — Gebäude platzieren, AP investieren, instanced Buildings (Harvester `id=27`, Wohnhabitat `id=28`, Hangar `id=44`).
 - **Instanced Buildings**: `is_instanced=true` in `buildings`-Tabelle. Mehrere Rows pro Kolonie in `colony_buildings` mit eigener `instance_id`. Instanz-Cap = `max_level`-Feld.

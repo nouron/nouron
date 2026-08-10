@@ -22,8 +22,8 @@ namespace Tests\Feature\Bar;
  *    - test_accept_returns_error_for_foreign_offer
  */
 
+use App\Services\AdvisorService;
 use App\Services\BarService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -681,14 +681,16 @@ class BarServiceTest extends TestCase
         $this->barService = $this->app->make(BarService::class); // refresh after mockTick
         $this->setColonyResource(self::RES_REGOLITH, 100);
 
-        // Lock all economy AP so none is available
+        // Lock all AP so none is available — reads the real total (base + any
+        // advisor bonuses in the fixture), not the config default, since the
+        // shared pool no longer isolates a per-domain amount.
         $apCost = (int) config('game.bar.ap_cost_accept', 1);
-        $totalAp = (int) config('game.ap.base', 6);
+        $totalAp = $this->app->make(AdvisorService::class)->getTotalActionPoints(self::COLONY_ID);
         DB::table('locked_actionpoints')->insert([
             'tick' => 10,
             'scope_type' => 'colony',
             'scope_id' => self::COLONY_ID,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'spend_ap' => $totalAp + $apCost, // exhaust entire pool
         ]);
 
@@ -709,7 +711,7 @@ class BarServiceTest extends TestCase
 
         $offerId = $this->insertOffer(['expires_tick' => 20]);
 
-        $personellId = PersonellService::idFor('trader');
+        $personellId = AdvisorService::idFor('trader');
         $lockedBefore = (int) DB::table('locked_actionpoints')
             ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
             ->value('spend_ap');
@@ -739,7 +741,7 @@ class BarServiceTest extends TestCase
             'is_negotiated' => true,
         ]);
 
-        $personellId = PersonellService::idFor('trader');
+        $personellId = AdvisorService::idFor('trader');
         $lockedBefore = (int) DB::table('locked_actionpoints')
             ->where(['tick' => 10, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
             ->value('spend_ap');
@@ -865,12 +867,12 @@ class BarServiceTest extends TestCase
         $this->assignTrader(2);
         $this->setColonyResource(self::RES_REGOLITH, 100);
 
-        $totalAp = $this->app->make(PersonellService::class)->getTotalActionPoints('economy', self::COLONY_ID);
+        $totalAp = $this->app->make(AdvisorService::class)->getTotalActionPoints(self::COLONY_ID);
         DB::table('locked_actionpoints')->insert([
             'tick' => 10,
             'scope_type' => 'colony',
             'scope_id' => self::COLONY_ID,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'spend_ap' => $totalAp + (int) config('game.bar.ap_cost_negotiate', 3),
         ]);
 
@@ -921,7 +923,7 @@ class BarServiceTest extends TestCase
                 $this->assertTrue((bool) $row->is_negotiated, 'Offer must be flagged is_negotiated on a successful roll');
                 $this->assertEquals(1000, $this->getColonyResource(self::RES_REGOLITH), 'No resources may move until the player clicks Annehmen');
 
-                $personellId = PersonellService::idFor('trader');
+                $personellId = AdvisorService::idFor('trader');
                 $locked = (int) DB::table('locked_actionpoints')
                     ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
                     ->value('spend_ap');
@@ -1104,7 +1106,7 @@ class BarServiceTest extends TestCase
                 $exists = DB::table('bar_offers')->where('id', $offerId)->exists();
                 $this->assertFalse($exists, 'Offer must be deleted entirely on negotiation failure — no fallback to plain accept');
 
-                $personellId = PersonellService::idFor('trader');
+                $personellId = AdvisorService::idFor('trader');
                 $locked = (int) DB::table('locked_actionpoints')
                     ->where(['tick' => $tick, 'scope_type' => 'colony', 'scope_id' => self::COLONY_ID, 'personell_id' => $personellId])
                     ->value('spend_ap');

@@ -3,7 +3,7 @@
 namespace Tests\Feature\Colony;
 
 use App\Models\User;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -92,14 +92,14 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(3, (int) $row->ap_spend, 'Repair must not change ap_spend');
     }
 
-    public function test_repair_returns_updated_construction_ap(): void
+    public function test_repair_returns_updated_available_ap(): void
     {
         $this->setCcState(['status_points' => 16]);
 
         $response = $this->repair();
 
         $response->assertJsonPath('ok', true);
-        $this->assertIsInt($response->json('apConstruction'));
+        $this->assertIsInt($response->json('apAvailable'));
     }
 
     public function test_repair_returns_resource_amounts_for_build_chip_affordability(): void
@@ -171,7 +171,7 @@ class BuildingRepairTest extends TestCase
         $this->assertSame(__('colony.error_building_not_found'), $response->json('message'));
     }
 
-    public function test_repair_rejected_without_construction_ap(): void
+    public function test_repair_rejected_without_available_ap(): void
     {
         // phpunit.xml bypasses AP checks by default (GAME_BYPASS_AP=true) — this
         // test exercises the real gate, so it must turn that back on for itself.
@@ -180,10 +180,10 @@ class BuildingRepairTest extends TestCase
         $this->setCcState(['status_points' => 16]);
 
         // Drain the construction AP pool by locking more than available.
-        $personell = $this->app->make(PersonellService::class);
-        $available = $personell->getConstructionPoints(self::COLONY_ID);
+        $personell = $this->app->make(AdvisorService::class);
+        $available = $personell->getAvailableActionPoints(self::COLONY_ID);
         if ($available > 0) {
-            $personell->lockActionPoints('construction', self::COLONY_ID, $available);
+            $personell->lockActionPoints(self::COLONY_ID, $available);
         }
 
         $response = $this->repair();

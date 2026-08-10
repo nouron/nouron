@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Colony;
 
 use App\Http\Controllers\BaseController;
+use App\Services\AdvisorService;
 use App\Services\ColonyService;
 use App\Services\HangarService;
 use App\Services\OnboardingHintService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +20,7 @@ class HangarController extends BaseController
         TickService $tick,
         private readonly ColonyService $colonyService,
         private readonly HangarService $hangarService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
@@ -64,7 +64,7 @@ class HangarController extends BaseController
             ->where('personell_id', $konsulPersonellId)
             ->exists();
         $verfuegbareVerhandlungsAP = $hasAktivierterKonsul
-            ? $this->personellService->getEconomyPoints($colony->id)
+            ? $this->advisorService->getAvailableActionPoints($colony->id)
             : 0;
 
         // IDs of ship types that are already commissioned (docked/building/dispatched)
@@ -206,7 +206,7 @@ class HangarController extends BaseController
         $colony = $this->colonyService->getPrimeColony(Auth::id());
 
         // Fixed cost: 1 Construction-AP per repair (mirrors building repair).
-        if (! config('game.bypass.ap_checks') && $this->personellService->getConstructionPoints($colony->id) < 1) {
+        if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colony->id) < 1) {
             return response()->json([
                 'ok' => false,
                 'error' => 'ap_limit',
@@ -223,7 +223,7 @@ class HangarController extends BaseController
         }
 
         if (! config('game.bypass.ap_checks')) {
-            $this->personellService->lockActionPoints('construction', $colony->id, 1);
+            $this->advisorService->lockActionPoints($colony->id, 1);
         }
 
         return response()->json([
@@ -241,8 +241,7 @@ class HangarController extends BaseController
     private function currentHangarResources(int $colonyId): array
     {
         return [
-            'apNav' => $this->personellService->getAvailableActionPoints('navigation', $colonyId),
-            'apConstruction' => $this->personellService->getAvailableActionPoints('construction', $colonyId),
+            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
             'organika' => (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 5)->value('amount') ?? 0),
         ];
     }

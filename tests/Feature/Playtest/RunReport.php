@@ -3,7 +3,7 @@
 namespace Tests\Feature\Playtest;
 
 use App\Models\Run;
-use App\Services\Techtree\PersonellService;
+use App\Services\AdvisorService;
 use App\Services\TrustService;
 use Illuminate\Support\Facades\DB;
 
@@ -14,8 +14,6 @@ use Illuminate\Support\Facades\DB;
  */
 class RunReport
 {
-    private const AP_TYPES = ['construction', 'research', 'navigation', 'economy', 'strategy'];
-
     /** @var array<int, array> */
     private array $sols = [];
 
@@ -32,13 +30,8 @@ class RunReport
         $colonyId = $bot->colonyId;
         $ccLevel = BotStrategy::ccLevel($bot);
 
-        $ap = [];
-        $apUnspent = 0;
-        foreach (self::AP_TYPES as $type) {
-            $available = app(PersonellService::class)->getAvailableActionPoints($type, $colonyId);
-            $ap[$type] = $available;
-            $apUnspent += $available;
-        }
+        // Note: AP pool is now unified (GDD §13.1) — no longer separate by type
+        $apAvailable = app(AdvisorService::class)->getAvailableActionPoints($colonyId);
 
         $phase = (int) (DB::table('runs')->where('id', $bot->runId)->value('phase') ?? 1);
         if ($phase >= 2 && $this->phase2StartSol === null) {
@@ -50,8 +43,8 @@ class RunReport
             'trust' => app(TrustService::class)->getTrust($colonyId),
             'credits' => BotStrategy::credits($bot),
             'regolith' => BotStrategy::regolith($bot),
-            'ap' => $ap,
-            'ap_unspent' => $apUnspent,
+            'ap' => ['total' => $apAvailable],
+            'ap_unspent' => $apAvailable,
             'cc_level' => $ccLevel,
             'advisors' => DB::table('advisors')->where('colony_id', $colonyId)->count(),
         ];

@@ -391,9 +391,11 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                     this.flashChip(chip, 'res-chip--flash');
                 },
 
-                syncEconomyAp(amount) {
+                // Syncs the single shared AP pool chip (#resbar-ap, GDD §13.1) — no
+                // longer a per-domain chip, so this now updates the one global AP chip.
+                syncAp(amount) {
                     if (amount === undefined) return;
-                    const chip = document.getElementById('resbar-ap-economy');
+                    const chip = document.getElementById('resbar-ap');
                     const el = chip?.querySelector('.res-amount');
                     if (el) el.textContent = amount;
                     this.flashChip(chip, 'ap-chip--flash');
@@ -599,7 +601,7 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                             this.accepted[offerId] = true;
                             this.syncResbarAmount(data.give_resource_id, data.give_resource_amount);
                             this.syncResbarAmount(data.get_resource_id, data.get_resource_amount);
-                            this.syncEconomyAp(data.economy_ap);
+                            this.syncAp(data.ap_available);
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';
                         }
@@ -629,12 +631,12 @@ $resourceAbbr = [1 => "Cr", 3 => "Rg", 4 => "Co", 5 => "Or"];
                         if (data.ok && data.success) {
                             this.negotiated[offerId] = true;
                             // No resources move here (see backend docblock) — only AP.
-                            this.syncEconomyAp(data.economy_ap);
+                            this.syncAp(data.ap_available);
                             this.updateOfferChipAmounts(btn, data.give_amount, data.get_amount);
                             this.showToast(@js(__("colony.bar_offer_negotiate_success")), 'info');
                         } else if (data.ok && !data.success) {
                             this.negotiateResult[offerId] = 'failed';
-                            this.syncEconomyAp(data.economy_ap);
+                            this.syncAp(data.ap_available);
                             this.showToast(@js(__("colony.bar_offer_negotiate_failed")), 'error');
                         } else {
                             this.error[offerId] = data.error ?? 'Fehler';

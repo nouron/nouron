@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
-use App\Services\Techtree\PersonellService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -41,8 +41,8 @@ class ColonyTileExploreCostTest extends TestCase
 
     private function navAp(): int
     {
-        return $this->app->make(PersonellService::class)
-            ->getAvailableActionPoints('navigation', self::COLONY_ID);
+        return $this->app->make(AdvisorService::class)
+            ->getAvailableActionPoints(self::COLONY_ID);
     }
 
     public function test_exploring_ring1_tile_costs_1_nav_ap(): void
@@ -82,9 +82,9 @@ class ColonyTileExploreCostTest extends TestCase
     {
         $this->fogTile(2, 0, 2);
 
-        $personell = $this->app->make(PersonellService::class);
-        $available = $personell->getAvailableActionPoints('navigation', self::COLONY_ID);
-        $personell->lockActionPoints('navigation', self::COLONY_ID, $available - 1);
+        $personell = $this->app->make(AdvisorService::class);
+        $available = $personell->getAvailableActionPoints(self::COLONY_ID);
+        $personell->lockActionPoints(self::COLONY_ID, $available - 1);
 
         $this->assertSame(1, $this->navAp(), 'precondition: exactly 1 Nav-AP left');
 

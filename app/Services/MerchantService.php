@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Services\Techtree\PersonellService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,7 +20,7 @@ use Illuminate\Support\Facades\Log;
  *   - information  → sets colony_tiles.is_explored = 1 for all tiles of the colony
  *
  * Item effects implemented in Phase 4:
- *   - ap_flex     → distributes AP across all advisor types with active advisors (PersonellService::creditAp)
+ *   - ap_flex     → distributes AP across all advisor types with active advisors (AdvisorService::creditAp)
  *   - ap_targeted → credits AP to the specific type stored in the item payload
  *
  * Item effects still deferred:
@@ -41,7 +40,7 @@ class MerchantService
     private const RES_CREDITS = 1;
 
     public function __construct(
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly BarService $barService,
         private readonly ResourcesService $resourcesService,
     ) {}
@@ -411,8 +410,8 @@ class MerchantService
      * repair_kit   → heal the colony building with the lowest relative SP
      * trust_boost  → add trust to colony_resources (resource_id = 12)
      * information  → reveal all colony_tiles for this colony
-     * ap_flex      → distribute AP across advisor types via PersonellService::creditAp
-     * ap_targeted  → credit AP to a specific advisor type via PersonellService::creditAp
+     * ap_flex      → distribute AP across advisor types via AdvisorService::creditAp
+     * ap_targeted  → credit AP to a specific advisor type via AdvisorService::creditAp
      */
     private function applyItemEffect(object $item, int $colonyId): void
     {
@@ -441,16 +440,15 @@ class MerchantService
             case 'ap_flex':
                 // ap_flex: distribute AP across all advisor types that have active advisors.
                 $apAmount = (int) ($payload['amount'] ?? 20);
-                $this->personellService->creditAp($colonyId, 'any', $apAmount);
+                $this->advisorService->creditAp($colonyId, $apAmount);
                 Log::info("MerchantService: ap_flex applied — {$apAmount} AP distributed across active advisors on colony {$colonyId}.");
                 break;
 
             case 'ap_targeted':
-                // ap_targeted: credit AP to the specific type stored in the payload.
+                // ap_targeted: credit AP to the single unified pool (ignoring item-level ap_type from payload).
                 $apAmount = (int) ($payload['amount'] ?? 15);
-                $apType = (string) ($payload['ap_type'] ?? 'construction');
-                $this->personellService->creditAp($colonyId, $apType, $apAmount);
-                Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to '{$apType}' on colony {$colonyId}.");
+                $this->advisorService->creditAp($colonyId, $apAmount);
+                Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to colony {$colonyId}.");
                 break;
 
             default:

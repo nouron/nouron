@@ -312,4 +312,25 @@ class SolControllerTest extends TestCase
             'current_tick' => 3,
         ]);
     }
+
+    // ── REMAINING AP (GET /sol/remaining-ap) ─────────────────────────────────
+
+    /**
+     * Regression guard for the single-AP-pool consolidation: the JSON response
+     * must expose the consolidated `colonyAp`/`total` shape only. The old
+     * per-domain keys (construction/research/navigation) were removed from the
+     * controller but the Sol-button JS silently kept reading them, so this
+     * endpoint needs its own coverage independent of sol.next.
+     */
+    public function test_remaining_ap_returns_consolidated_pool_shape(): void
+    {
+        $response = $this->actingAs($this->bart())
+            ->getJson(route('sol.remaining-ap'));
+
+        $response->assertOk();
+        $response->assertJsonStructure(['colonyAp', 'total']);
+        $response->assertJsonMissingPath('construction');
+        $response->assertJsonMissingPath('research');
+        $response->assertJsonMissingPath('navigation');
+    }
 }

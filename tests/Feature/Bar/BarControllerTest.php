@@ -190,7 +190,7 @@ class BarControllerTest extends TestCase
             ->postJson(route('colony.bar.accept', ['offer' => $offerId]));
 
         $response->assertOk()
-            ->assertJsonStructure(['ok', 'give_resource_amount', 'get_resource_amount', 'economy_ap']);
+            ->assertJsonStructure(['ok', 'give_resource_amount', 'get_resource_amount', 'ap_available']);
     }
 
     public function test_accept_returns_json_ok(): void
@@ -354,9 +354,9 @@ class BarControllerTest extends TestCase
             ->assertJsonStructure(['ok', 'success']);
     }
 
-    public function test_negotiate_response_always_includes_economy_ap_for_resourcebar_sync(): void
+    public function test_negotiate_response_always_includes_ap_available_for_resourcebar_sync(): void
     {
-        // economy_ap must be present even on a failed roll — AP is spent either way
+        // ap_available must be present even on a failed roll — AP is spent either way
         // (see BarService::negotiateOffer docblock) and the resourcebar needs to
         // reflect that regardless of win/loss.
         DB::table('advisors')->updateOrInsert(
@@ -373,7 +373,7 @@ class BarControllerTest extends TestCase
             $response = $this->actingAs($this->bart())
                 ->postJson(route('colony.bar.negotiate', ['offer' => $offerId]));
 
-            $response->assertOk()->assertJsonStructure(['ok', 'success', 'economy_ap']);
+            $response->assertOk()->assertJsonStructure(['ok', 'success', 'ap_available']);
         }
     }
 

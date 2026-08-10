@@ -157,7 +157,7 @@ class TechtreeControllerTest extends TestCase
     }
 
     /**
-     * Regression: PersonellService neither extends AbstractTechnologyService nor has
+     * Regression: AdvisorService neither extends AbstractTechnologyService nor has
      * invest()/levelup(), yet the controller used to map 'personell' onto it — so this
      * request died with "call to undefined method" (HTTP 500). {type} is unconstrained
      * in the route, so it was reachable from outside. Advisors are hired via AdvisorController.

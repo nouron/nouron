@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Techtree;
 use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Advisor;
+use App\Services\AdvisorService;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -24,9 +24,10 @@ class AdvisorController extends BaseController
     use ResolvesActiveColony;
 
     /**
-     * Positions 1 and 5 are always the same advisor type regardless of path choice.
+     * Position 1 is always engineer; strategist postponed (GDD §13.6, decision 2026-08-02).
+     * Slots 2–4 are path-based (scientist/pilot/trader).
      */
-    private const FIXED_SLOTS = [1 => 'engineer', 5 => 'strategist'];
+    private const FIXED_SLOTS = [1 => 'engineer'];
 
     /**
      * Maps building_id → advisor key for the three path buildings.
@@ -49,7 +50,7 @@ class AdvisorController extends BaseController
 
     public function __construct(
         TickService $tick,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
         private readonly EventService $eventService,
         private readonly OnboardingHintService $hintService,
@@ -74,15 +75,15 @@ class AdvisorController extends BaseController
     }
 
     /**
-     * Build the canonical 5-slot array for the advisor carousel UI.
+     * Build the canonical 4-slot array for the advisor carousel UI.
      *
-     * Positions 1 and 5 are fixed (FIXED_SLOTS). Positions 2–4 are determined
-     * by which path buildings (sciencelab/hangar/bar) have been placed in the
-     * colony, ordered by placed_at_tick ASC. Unresolved positions show as
-     * path_open until the player places the matching building.
+     * Position 1 is fixed (FIXED_SLOTS = [1 => 'engineer']). Positions 2–4 are
+     * determined by which path buildings (sciencelab/hangar/bar) have been
+     * placed in the colony, ordered by placed_at_tick ASC. Unresolved positions
+     * show as path_open until the player places the matching building.
      *
      * @param  Collection  $advisors  Active advisors on the colony (Advisor models).
-     * @param  array  $slotInfo  Output of PersonellService::getAdvisorSlotInfo().
+     * @param  array  $slotInfo  Output of AdvisorService::getAdvisorSlotInfo().
      * @param  int  $currentTick  Current game tick for unavailability checks.
      * @param  int  $colonyId  Used for path-building lookup and building-warning checks.
      * @return array<int, array<string, mixed>>
@@ -91,14 +92,16 @@ class AdvisorController extends BaseController
     {
         $rankThresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
-        $apPerRank = config('game.advisor.ap_per_rank', [1 => 4]);
+        $apPerRank = config('game.advisor.ap_per_rank', [1 => 2]);
         $ccLevel = $slotInfo['cc_level'];
 
         // Index active advisors by personell_id for O(1) lookup.
         $advisorsByPersonellId = $advisors->keyBy('personell_id');
 
         // Resolve path advisor keys for positions 2–4, in placement order.
+        // DISTINCT ensures instanced buildings (e.g., multiple hangar instances) contribute only once.
         $pathBuildingIds = DB::table('colony_buildings')
+            ->distinct()
             ->whereIn('building_id', array_keys(self::PATH_BUILDINGS))
             ->where('colony_id', $colonyId)
             ->whereNotNull('placed_at_tick')
@@ -119,7 +122,7 @@ class AdvisorController extends BaseController
 
         $slots = [];
 
-        for ($position = 1; $position <= 5; $position++) {
+        for ($position = 1; $position <= 4; $position++) {
             // Resolve advisor key for this position.
             if (isset(self::FIXED_SLOTS[$position])) {
                 $key = self::FIXED_SLOTS[$position];
@@ -164,17 +167,9 @@ class AdvisorController extends BaseController
 
             /** @var Advisor|null $advisor */
             $advisor = $advisorsByPersonellId->get($personellId);
-            // Strategist: CC Lv3 + SecurityHub (building_id=53) Lv1. Other fixed slots: cc < position.
-            $ccGate = $key === 'strategist' ? 3 : $position;
+            // Each slot requires CC level >= position.
+            $ccGate = $position;
             $isLocked = $ccLevel < $ccGate;
-            if (! $isLocked && $key === 'strategist') {
-                $hubBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyId)
-                    ->where('building_id', 53)
-                    ->where('level', '>', 0)
-                    ->exists();
-                $isLocked = ! $hubBuilt;
-            }
 
             if ($isLocked) {
                 $state = 'locked';
@@ -240,7 +235,7 @@ class AdvisorController extends BaseController
                 'personell_id' => $personellId,
                 'ap_type' => $apType,
                 'hire_cost' => $hireCost,
-                'junior_ap' => (int) ($apPerRank[1] ?? 4),
+                'junior_ap' => (int) ($apPerRank[1] ?? 2),
                 'junior_upkeep' => (int) ($upkeepMap[1] ?? 10),
                 'cc_required' => $ccGate,
                 'state' => $state,
@@ -298,8 +293,8 @@ class AdvisorController extends BaseController
         $colonyId = $this->resolveColonyId();
         $currentTick = $this->getTick();
 
-        $advisors = $this->personellService->getColonyAdvisors($colonyId);
-        $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+        $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+        $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
         $slots = $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId);
 
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
@@ -320,14 +315,14 @@ class AdvisorController extends BaseController
     public function hire(Request $request): View|RedirectResponse|JsonResponse
     {
         $request->validate([
-            'personell_id' => ['required', 'integer', Rule::in(PersonellService::allIds())],
+            'personell_id' => ['required', 'integer', Rule::in(AdvisorService::allIds())],
         ]);
 
         $colonyId = $this->resolveColonyId();
         $userId = $this->getCurrentUserId();
         $personellId = (int) $request->input('personell_id');
 
-        $result = $this->personellService->hire($userId, $personellId, $colonyId);
+        $result = $this->advisorService->hire($userId, $personellId, $colonyId);
 
         if (is_string($result)) {
             $errorMessages = [
@@ -369,8 +364,8 @@ class AdvisorController extends BaseController
 
         if ($request->expectsJson()) {
             $currentTick = $this->getTick();
-            $advisors = $this->personellService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
             return response()->json([
                 'ok' => true,
@@ -399,12 +394,12 @@ class AdvisorController extends BaseController
 
         $colonyId = (int) $advisor->colony_id;
 
-        $this->personellService->fire($id);
+        $this->advisorService->fire($id);
 
         if ($request->expectsJson()) {
             $currentTick = $this->getTick();
-            $advisors = $this->personellService->getColonyAdvisors($colonyId);
-            $slotInfo = $this->personellService->getAdvisorSlotInfo($colonyId);
+            $advisors = $this->advisorService->getColonyAdvisors($colonyId);
+            $slotInfo = $this->advisorService->getAdvisorSlotInfo($colonyId);
 
             return response()->json([
                 'ok' => true,

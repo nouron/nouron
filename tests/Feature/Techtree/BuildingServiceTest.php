@@ -147,7 +147,7 @@ class BuildingServiceTest extends TestCase
 
     public function test_invest(): void
     {
-        // With real PersonellService: engineer level=9 -> totalAP=50, no locked AP -> availableAP=50
+        // With real AdvisorService: engineer level=9 -> totalAP=50, no locked AP -> availableAP=50
         // infirmary ap_spend already=10 (max), invest returns true (no effective change but succeeds)
         $result = $this->service->invest($this->colonyId, $this->entityId, 'add', 1);
         $this->assertTrue($result);

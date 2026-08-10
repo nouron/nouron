@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Run;
+use App\Services\AdvisorService;
 use App\Services\BarService;
 use App\Services\ColonyService;
 use App\Services\EventService;
@@ -10,7 +11,6 @@ use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
-use App\Services\Techtree\PersonellService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
@@ -49,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ColonyService::class, ColonyService::class);
         $this->app->bind(EventService::class, EventService::class);
         $this->app->bind(MerchantService::class, fn ($app) => new MerchantService(
-            $app->make(PersonellService::class),
+            $app->make(AdvisorService::class),
             $app->make(BarService::class),
             $app->make(ResourcesService::class),
         ));
@@ -58,8 +58,8 @@ class AppServiceProvider extends ServiceProvider
             $app->make(TickService::class),
         ));
 
-        // Techtree services
-        $this->app->bind(PersonellService::class, fn ($app) => new PersonellService(
+        // Advisor + techtree services
+        $this->app->bind(AdvisorService::class, fn ($app) => new AdvisorService(
             $app->make(TickService::class),
             $app->make(TrustService::class),
             $app->make(ResourcesService::class),
@@ -67,17 +67,17 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(BuildingService::class, fn ($app) => new BuildingService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
-            $app->make(PersonellService::class),
+            $app->make(AdvisorService::class),
         ));
         $this->app->bind(ResearchService::class, fn ($app) => new ResearchService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
-            $app->make(PersonellService::class),
+            $app->make(AdvisorService::class),
         ));
         $this->app->bind(ShipService::class, fn ($app) => new ShipService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
-            $app->make(PersonellService::class),
+            $app->make(AdvisorService::class),
         ));
         $this->app->bind(TechtreeColonyService::class, TechtreeColonyService::class);
     }
@@ -181,22 +181,12 @@ class AppServiceProvider extends ServiceProvider
                 // way and passes its own copy through @extends' shared scope, which simply
                 // overwrites these with identical numbers there — no conflict.
                 if ($colonyId) {
-                    $personellService = app(PersonellService::class);
+                    $advisorService = app(AdvisorService::class);
                     $view->with('trust', (int) (DB::table('colony_resources')->where('colony_id', $colonyId)->where('resource_id', 12)->value('amount') ?? 0));
-                    $view->with('navAp', $personellService->getAvailableActionPoints('navigation', $colonyId));
-                    $view->with('constructionAp', $personellService->getAvailableActionPoints('construction', $colonyId));
-                    $view->with('researchAp', $personellService->getAvailableActionPoints('research', $colonyId));
-                    $view->with('economyAp', $personellService->getAvailableActionPoints('economy', $colonyId));
-                    $view->with('strategyAp', $personellService->getAvailableActionPoints('strategy', $colonyId));
+                    $view->with('colonyAp', $advisorService->getAvailableActionPoints($colonyId));
 
                     $view->with('supplyBreakdown', app(ResourcesService::class)->getSupplyBreakdown($colonyId));
-                    $view->with('apBreakdown', [
-                        'navigation' => $personellService->getApBreakdown('navigation', $colonyId),
-                        'construction' => $personellService->getApBreakdown('construction', $colonyId),
-                        'research' => $personellService->getApBreakdown('research', $colonyId),
-                        'economy' => $personellService->getApBreakdown('economy', $colonyId),
-                        'strategy' => $personellService->getApBreakdown('strategy', $colonyId),
-                    ]);
+                    $view->with('apBreakdown', $advisorService->getApBreakdown($colonyId));
 
                     $hint = app(OnboardingHintService::class)->getActiveHint($colonyId, Auth::id());
                     if ($hint) {

@@ -4,9 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Models\Run;
+use App\Services\AdvisorService;
 use App\Services\EventService;
 use App\Services\SolReportService;
-use App\Services\Techtree\PersonellService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -22,7 +22,7 @@ class SolController extends Controller
     use ResolvesActiveColony;
 
     public function __construct(
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
         private readonly EventService $eventService,
         private readonly SolReportService $solReportService,
     ) {}
@@ -100,15 +100,11 @@ class SolController extends Controller
     {
         $colonyId = $this->resolveColonyId();
 
-        $construction = $this->personellService->getConstructionPoints($colonyId);
-        $research = $this->personellService->getAvailableActionPoints('research', $colonyId);
-        $navigation = $this->personellService->getAvailableActionPoints('navigation', $colonyId);
+        $colonyAp = $this->advisorService->getAvailableActionPoints($colonyId);
 
         return response()->json([
-            'construction' => $construction,
-            'research' => $research,
-            'navigation' => $navigation,
-            'total' => $construction + $research + $navigation,
+            'colonyAp' => $colonyAp,
+            'total' => $colonyAp,
         ]);
     }
 }

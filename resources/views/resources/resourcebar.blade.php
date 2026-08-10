@@ -72,7 +72,7 @@
             : null;
 
         // AP chip popup extras: base + advisor + trust-multiplier composition —
-        // see PersonellService::getApBreakdown().
+        // see AdvisorService::getApBreakdown().
         $apPopupExtra = function (?array $breakdown) use ($breakdownRows) {
             if (!$breakdown) {
                 return null;
@@ -208,64 +208,22 @@
             @endforeach
         @endif
 
-        {{-- AP + trust chips — shared globally (see AppServiceProvider). On colony.view
-         these IDs are also used by colony-hexgrid.js to sync values + flash after AJAX
-         actions; on other screens they just reflect the server-rendered values. --}}
-        @if (isset($navAp, $constructionAp, $trust))
+        {{-- AP chip — shared globally (see AppServiceProvider). On colony.view
+         this ID is also used by colony-hexgrid.js to sync the value + flash
+         after AJAX actions; on other screens it just reflects the server-
+         rendered value. One shared colony pool (GDD §13.1) — no more
+         per-domain split. --}}
+        @if (isset($colonyAp, $trust))
             <span class="res-divider" aria-hidden="true"></span>
-            <span id="resbar-ap-nav" class="ap-chip ap-chip--nav" @mouseenter="openChip = 'nav'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'nav' ? null : 'nav'"
-                @click.outside="openChip === 'nav' && (openChip = null)" style="position:relative;cursor:default">
-                <span>Nav <span class="res-amount">{{ (int) $navAp }}</span> AP</span>
+            <span id="resbar-ap" class="ap-chip ap-chip--neutral" @mouseenter="openChip = 'ap'"
+                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'ap' ? null : 'ap'"
+                @click.outside="openChip === 'ap' && (openChip = null)" style="position:relative;cursor:default">
+                <span>AP <span class="res-amount">{{ (int) $colonyAp }}</span></span>
                 @include("partials.res-popup", [
-                    "popup_key" => "nav",
-                    "popup_title" => __("resources.popup_nav_ap_title"),
-                    "popup_desc" => __("resources.popup_nav_ap_desc"),
-                    "popup_extra" => $apPopupExtra($apBreakdown["navigation"] ?? null),
-                ])
-            </span>
-            <span id="resbar-ap-build" class="ap-chip ap-chip--build" @mouseenter="openChip = 'build'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'build' ? null : 'build'"
-                @click.outside="openChip === 'build' && (openChip = null)" style="position:relative;cursor:default">
-                <span>Con <span class="res-amount">{{ (int) $constructionAp }}</span> AP</span>
-                @include("partials.res-popup", [
-                    "popup_key" => "build",
-                    "popup_title" => __("resources.popup_bau_ap_title"),
-                    "popup_desc" => __("resources.popup_bau_ap_desc"),
-                    "popup_extra" => $apPopupExtra($apBreakdown["construction"] ?? null),
-                ])
-            </span>
-            <span id="resbar-ap-research" class="ap-chip ap-chip--research" @mouseenter="openChip = 'research'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'research' ? null : 'research'"
-                @click.outside="openChip === 'research' && (openChip = null)" style="position:relative;cursor:default">
-                <span>Res <span class="res-amount">{{ (int) ($researchAp ?? 0) }}</span> AP</span>
-                @include("partials.res-popup", [
-                    "popup_key" => "research",
-                    "popup_title" => __("resources.popup_research_ap_title"),
-                    "popup_desc" => __("resources.popup_research_ap_desc"),
-                    "popup_extra" => $apPopupExtra($apBreakdown["research"] ?? null),
-                ])
-            </span>
-            <span id="resbar-ap-economy" class="ap-chip ap-chip--economy" @mouseenter="openChip = 'economy'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'economy' ? null : 'economy'"
-                @click.outside="openChip === 'economy' && (openChip = null)" style="position:relative;cursor:default">
-                <span>Eco <span class="res-amount">{{ (int) ($economyAp ?? 0) }}</span> AP</span>
-                @include("partials.res-popup", [
-                    "popup_key" => "economy",
-                    "popup_title" => __("resources.popup_economy_ap_title"),
-                    "popup_desc" => __("resources.popup_economy_ap_desc"),
-                    "popup_extra" => $apPopupExtra($apBreakdown["economy"] ?? null),
-                ])
-            </span>
-            <span id="resbar-ap-strategy" class="ap-chip ap-chip--strategy" @mouseenter="openChip = 'strategy'"
-                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'strategy' ? null : 'strategy'"
-                @click.outside="openChip === 'strategy' && (openChip = null)" style="position:relative;cursor:default">
-                <span>Str <span class="res-amount">{{ (int) ($strategyAp ?? 0) }}</span> AP</span>
-                @include("partials.res-popup", [
-                    "popup_key" => "strategy",
-                    "popup_title" => __("resources.popup_strategy_ap_title"),
-                    "popup_desc" => __("resources.popup_strategy_ap_desc"),
-                    "popup_extra" => $apPopupExtra($apBreakdown["strategy"] ?? null),
+                    "popup_key" => "ap",
+                    "popup_title" => __("resources.popup_ap_title"),
+                    "popup_desc" => __("resources.popup_ap_desc"),
+                    "popup_extra" => $apPopupExtra($apBreakdown ?? null),
                 ])
             </span>
         @endif

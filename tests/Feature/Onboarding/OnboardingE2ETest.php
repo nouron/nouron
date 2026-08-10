@@ -5,10 +5,10 @@ namespace Tests\Feature\Onboarding;
 use App\Events\RunStarted;
 use App\Models\ColonyLog;
 use App\Models\Run;
+use App\Services\AdvisorService;
 use App\Services\EventService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -85,7 +85,7 @@ class OnboardingE2ETest extends TestCase
         // ── 4. Hire engineer → rank-1 resolved; rank-3 (Harvester in colony zone) surfaces ──
         // Buildings start at 16/20 — above the urgent threshold (3), so the rank-2
         // urgent repair hint stays silent and the Harvester hint is next.
-        $engineerId = PersonellService::idFor('engineer');
+        $engineerId = AdvisorService::idFor('engineer');
         DB::table('advisors')->insert([
             'user_id' => $this->userId,
             'colony_id' => $colony->id,

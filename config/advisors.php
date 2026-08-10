@@ -6,21 +6,19 @@
  * Fields:
  *   id           — DB primary key in `personell` table
  *   ap_type      — which action-point pool this advisor fills
- *                  'construction' | 'research' | 'navigation' | 'economy' | 'strategy'
+ *                  'construction' | 'research' | 'navigation' | 'economy'
  *   trust_per_unit — trust change per active advisor (minor effects)
  *   credits      — hire cost in credits
  *
  * Advisors do NOT consume Supply — their cost runs through Credits only (see GDD §12).
  * Advisors do not decay. Rank promotion is governed by config('game.advisor').
  *
- * Slot binding (2026-06-28, GDD §13 "Slot-System"):
+ * Slot binding (2026-08-08, GDD §13 "Slot-System"):
  *   Slot 1 (fix): engineer — gate: CC Lv1.
  *   Slots 2–4 (generic): scientist/pilot/trader — gate: build order of the
  *     matching path building (sciencelab→scientist, hangar→pilot, bar→trader).
  *     See AdvisorController::PATH_BUILDINGS.
- *   Slot 5 (fix): strategist — gate: CC Lv3 + SecurityHub Lv1 (Pfad D).
- *     Both checks live in AdvisorController ($ccGate=3 + SecurityHub level lookup)
- *     and are mirrored in PersonellService::hire() for the actual hire gate.
+ *   Slot 5 (strategist) postponed — GDD §13.6, Entscheidung 2026-08-02.
  *
  * Localization: lang/de/advisors.php
  */
@@ -54,13 +52,6 @@ return [
         'ap_type' => 'economy',
         'trust_per_unit' => 0,
         'credits' => 350,
-    ],
-
-    'strategist' => [
-        'id' => 93,
-        'ap_type' => 'strategy',
-        'trust_per_unit' => 0,
-        'credits' => 600,    // military/strategy — typically late-game hire
     ],
 
 ];

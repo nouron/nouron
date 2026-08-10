@@ -58,8 +58,6 @@ class AdvisorControllerTest extends TestCase
 
     protected int $personellTrader = 92;
 
-    protected int $personellStratege = 93;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -143,7 +141,7 @@ class AdvisorControllerTest extends TestCase
         $this->assertArrayHasKey('colonyId', $pageData);
 
         $slots = $pageData['slots'];
-        $this->assertCount(5, $slots, 'There must be exactly 5 advisor slots');
+        $this->assertCount(4, $slots, 'There must be exactly 4 advisor slots');
 
         $requiredKeys = ['position', 'key', 'name', 'state', 'personell_id', 'hire_cost', 'cc_required', 'advisor'];
         foreach ($slots as $i => $slot) {
@@ -163,9 +161,10 @@ class AdvisorControllerTest extends TestCase
 
         $slots = $response->viewData('pageData')['slots'];
 
-        // Engineer (pos 1): cc_required=1. Path slots (2-4): cc_required=2.
-        // Strategist (pos 5): cc_required=3 (CC Lv3 + SecurityHub gate).
-        $expected = [1 => 1, 2 => 2, 3 => 2, 4 => 2, 5 => 3];
+        // Engineer (pos 1): cc_required=1. Placed path slots (2-3): position-based gate (2, 3).
+        // Unplaced path slot (pos 4, bar not yet built): cc_required=2 (path_open gate).
+        // Strategist (pos 5) is postponed (GDD §13.6, decision 2026-08-02).
+        $expected = [1 => 1, 2 => 2, 3 => 3, 4 => 2];
         foreach ($slots as $slot) {
             $this->assertEquals(
                 $expected[$slot['position']],
@@ -177,11 +176,12 @@ class AdvisorControllerTest extends TestCase
 
     /**
      * Bart's colony 1 has CC level 3.
-     * Slots 1–3 should be 'active' or 'empty'; slots 4–5 must be 'locked'.
+     * Positions 1–3 are filled with fixed/path advisors and should be 'active' or 'empty'.
+     * Position 4 is a path_open slot (bar not yet placed) which requires CC Lv2 and is therefore
+     * 'empty' when no advisor hired (not locked).
      * The test data pre-seeds advisors 35, 36, 92, 93 for Bart on colony 1.
-     * We clear them so all unlocked slots appear as 'empty', which is the
-     * clean baseline state the task description calls "test_locked_slots_when_cc_level_one".
-     * Since the actual CC level in test data is 3, we test with that real value.
+     * We clear them so all unlocked slots appear as 'empty'.
+     * Slot 5 (strategist) is postponed (GDD §13.6, decision 2026-08-02).
      */
     public function test_locked_slots_when_cc_level_three(): void
     {
@@ -195,16 +195,11 @@ class AdvisorControllerTest extends TestCase
 
         $slots = $response->viewData('pageData')['slots'];
 
-        // CC=3: slots 1-4 unlock. Slot 5 (strategist) requires CC Lv3 + SecurityHub Lv1.
-        // SecurityHub is not built in test data → slot 5 remains locked.
+        // CC=3: slots 1-3 are fixed/path slots (unlocked with CC Lv3). Slot 4 is path_open
+        // requiring CC Lv2 (unlocked with CC Lv3, shows as path_open state).
         foreach ($slots as $slot) {
-            if ($slot['position'] === 5) {
-                $this->assertEquals('locked', $slot['state'],
-                    'Slot 5 (strategist) should be locked without SecurityHub');
-            } else {
-                $this->assertNotEquals('locked', $slot['state'],
-                    "Slot {$slot['position']} should not be locked with CC level 3");
-            }
+            $this->assertNotEquals('locked', $slot['state'],
+                "Slot {$slot['position']} should not be locked with CC level 3");
         }
 
     }
@@ -374,25 +369,29 @@ class AdvisorControllerTest extends TestCase
 
     public function test_hire_json_returns_422_when_slot_full(): void
     {
-        // Colony 1 has CC level 3, so max 3 slots.
-        // We fill all 3 slots, then try to hire a 4th.
+        // Colony 1 has CC level 3, so maxSlots = min(cc_level=3, config max_slots=4) = 3
+        // (AdvisorService::hire(), CC-Level gate). Fill exactly 3 distinct slots, then
+        // attempt to hire a 4th, still-unused type — this must hit the slot_full branch,
+        // not the duplicate branch (which fires earlier in AdvisorService::hire() and
+        // would mask slot_full if we tried to re-hire an already-hired type instead).
         $this->clearBartAdvisors();
         $this->ensureCredits($this->userIdBart, 10000);
 
         $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
         $this->insertAdvisor($this->userIdBart, $this->personellScientist, $this->colonyIdBart);
-        $this->insertAdvisor($this->userIdBart, $this->personellTrader, $this->colonyIdBart);
+        $this->insertAdvisor($this->userIdBart, $this->personellPilot, $this->colonyIdBart);
 
         $bart = User::find($this->userIdBart);
 
-        // Pilot is the 4th distinct type — slot is locked (CC=3, position 3 already full)
+        // 3 of 3 slots filled (CC=3). Trader is a distinct, not-yet-hired type —
+        // this exercises slot_full, since a duplicate check would not apply here.
         $response = $this->actingAs($bart)
             ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(route('advisors.hire'), ['personell_id' => $this->personellStratege]);
+            ->post(route('advisors.hire'), ['personell_id' => $this->personellTrader]);
 
         $response->assertStatus(422)
-            ->assertJson(['ok' => false]);
+            ->assertJson(['ok' => false, 'error' => 'slot_full']);
     }
 
     // ── FIRE — redirect branch ────────────────────────────────────────────────

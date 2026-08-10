@@ -707,6 +707,55 @@ class MerchantServiceTest extends TestCase
         );
     }
 
+    public function test_buy_item_ap_flex_succeeds(): void
+    {
+        $this->mockTick(20);
+        $apAmount = 20;
+
+        $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'ap_flex',
+            'payload' => json_encode(['amount' => $apAmount]),
+            'cost_credits' => 800,
+        ]);
+        $this->setCredits(1000);
+
+        $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
+
+        $this->assertTrue($result['ok'], 'buyItem must return ok=true for ap_flex item');
+
+        $sold = (bool) DB::table('merchant_items')->where('id', $itemId)->value('sold');
+        $this->assertTrue($sold, 'buyItem must mark ap_flex item as sold');
+
+        $creditsBefore = 1000;
+        $creditsAfter = $this->getCredits();
+        $this->assertEquals(200, $creditsAfter, 'buyItem must deduct ap_flex cost from user credits');
+    }
+
+    public function test_buy_item_ap_targeted_succeeds(): void
+    {
+        $this->mockTick(20);
+        $apAmount = 15;
+
+        $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'ap_targeted',
+            'payload' => json_encode(['amount' => $apAmount, 'ap_type' => 'construction']),
+            'cost_credits' => 500,
+        ]);
+        $this->setCredits(1000);
+
+        $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
+
+        $this->assertTrue($result['ok'], 'buyItem must return ok=true for ap_targeted item');
+
+        $sold = (bool) DB::table('merchant_items')->where('id', $itemId)->value('sold');
+        $this->assertTrue($sold, 'buyItem must mark ap_targeted item as sold');
+
+        $creditsAfter = $this->getCredits();
+        $this->assertEquals(500, $creditsAfter, 'buyItem must deduct ap_targeted cost from user credits');
+    }
+
     // ── getItemsForVisit ──────────────────────────────────────────────────────
 
     public function test_get_items_for_visit_returns_all_items(): void

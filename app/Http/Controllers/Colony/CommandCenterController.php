@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Colony;
 
 use App\Http\Controllers\BaseController;
 use App\Models\Run;
+use App\Services\AdvisorService;
 use App\Services\ColonyService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -25,7 +25,7 @@ class CommandCenterController extends BaseController
     public function __construct(
         TickService $tick,
         private readonly ColonyService $colonyService,
-        private readonly PersonellService $personellService,
+        private readonly AdvisorService $advisorService,
     ) {
         parent::__construct($tick);
     }
@@ -84,7 +84,7 @@ class CommandCenterController extends BaseController
 
         $advisorTypeByPersonellId = collect(config('advisors', []))
             ->mapWithKeys(fn ($cfg, $key) => [$cfg['id'] => $key]);
-        $advisors = $this->personellService->getColonyAdvisors($colony->id)
+        $advisors = $this->advisorService->getColonyAdvisors($colony->id)
             ->map(function ($advisor) use ($advisorTypeByPersonellId) {
                 $typeKey = $advisorTypeByPersonellId[$advisor->personell_id] ?? null;
 

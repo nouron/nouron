@@ -83,7 +83,7 @@ class HarvesterRelocateApCostTest extends TestCase
             ->value('spend_ap') ?? 0;
     }
 
-    public function test_four_hex_move_costs_eight_construction_ap(): void
+    public function test_four_hex_move_costs_eight_ap(): void
     {
         $response = $this->actingAs($this->makeUser())
             ->postJson(route('colony.building.place'), [

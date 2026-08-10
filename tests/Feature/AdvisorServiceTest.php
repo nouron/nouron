@@ -1,21 +1,22 @@
 <?php
 
-namespace Tests\Feature\Techtree;
+namespace Tests\Feature;
 
 use App\Models\Advisor;
+use App\Services\AdvisorService;
 use App\Services\Techtree\BuildingService;
-use App\Services\Techtree\PersonellService;
+use App\Services\Techtree\ResearchService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class PersonellServiceTest extends TestCase
+class AdvisorServiceTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected PersonellService $service;
+    protected AdvisorService $service;
 
     protected int $userId = 3;   // Bart in test data
 
@@ -25,7 +26,7 @@ class PersonellServiceTest extends TestCase
     {
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
-        $this->service = $this->app->make(PersonellService::class);
+        $this->service = $this->app->make(AdvisorService::class);
 
         // Clear existing seeded advisors for our test colony so counts are predictable
         Advisor::where('colony_id', $this->colonyId)->delete();
@@ -37,56 +38,72 @@ class PersonellServiceTest extends TestCase
                 'tile_x' => 5, 'tile_y' => 5]
         );
 
-        // 1 engineer: rank 2 (7 AP) = 7 construction AP
+        // 1 engineer: rank 2 = +3 AP into the shared colony pool
         Advisor::create([
-            'user_id' => $this->userId, 'personell_id' => PersonellService::idFor('engineer'),
+            'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('engineer'),
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
         ]);
-        // 1 scientist: rank 1 = 4 research AP
+        // 1 scientist: rank 1 = +2 AP into the shared colony pool
         Advisor::create([
-            'user_id' => $this->userId, 'personell_id' => PersonellService::idFor('scientist'),
+            'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
         ]);
     }
 
     public function test_get_total_action_points(): void
     {
-        // 6 base + engineer rank2 (7) = 13
-        $this->assertEquals(13, $this->service->getTotalActionPoints('construction', $this->colonyId));
-        // 6 base + scientist rank1 (4) = 10
-        $this->assertEquals(10, $this->service->getTotalActionPoints('research', $this->colonyId));
-        // unknown type: no base AP (early return)
-        $this->assertEquals(0, $this->service->getTotalActionPoints('unknown', $this->colonyId));
+        // 12 base + engineer rank2 (3) + scientist rank1 (2) = 17 — a shared pool,
+        // both advisors contribute regardless of their domain.
+        $this->assertEquals(17, $this->service->getTotalActionPoints($this->colonyId));
     }
 
     public function test_get_available_action_points(): void
     {
-        $this->assertEquals(13, $this->service->getAvailableActionPoints('construction', $this->colonyId));
-        $this->assertEquals(0, $this->service->getAvailableActionPoints('unknown', $this->colonyId));
-    }
-
-    public function test_get_construction_points(): void
-    {
-        $this->assertGreaterThan(0, $this->service->getConstructionPoints($this->colonyId));
-    }
-
-    public function test_get_research_points(): void
-    {
-        $this->assertGreaterThan(0, $this->service->getResearchPoints($this->colonyId));
+        $this->assertEquals(17, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_lock_action_points(): void
     {
-        $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
-        $this->assertTrue($this->service->lockActionPoints('construction', $this->colonyId, 3));
-        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->assertTrue($this->service->lockActionPoints($this->colonyId, 3));
+        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints($this->colonyId));
+    }
 
-        $this->assertFalse($this->service->lockActionPoints('unknown', $this->colonyId, 1));
+    public function test_get_ap_breakdown(): void
+    {
+        $breakdown = $this->service->getApBreakdown($this->colonyId);
+
+        $this->assertEquals(12, $breakdown['base']);
+        $this->assertEquals(5, $breakdown['advisor']);
+        $this->assertEquals($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
+    }
+
+    public function test_credit_ap_raises_available_action_points(): void
+    {
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->service->creditAp($this->colonyId, 4);
+        $this->assertEquals($before + 4, $this->service->getAvailableActionPoints($this->colonyId));
+    }
+
+    public function test_credit_ap_with_zero_or_negative_amount_is_noop(): void
+    {
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->service->creditAp($this->colonyId, 0);
+        $this->service->creditAp($this->colonyId, -5);
+        $this->assertEquals($before, $this->service->getAvailableActionPoints($this->colonyId));
+    }
+
+    public function test_credit_ap_nets_against_a_prior_lock(): void
+    {
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->service->lockActionPoints($this->colonyId, 5);
+        $this->service->creditAp($this->colonyId, 3);
+        $this->assertEquals($before - 2, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_hire(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId);
         $this->assertInstanceOf(Advisor::class, $advisor);
         $this->assertEquals($this->colonyId, $advisor->colony_id);
         $this->assertEquals(1, $advisor->rank);
@@ -94,7 +111,7 @@ class PersonellServiceTest extends TestCase
 
     public function test_fire(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId);
         $this->assertTrue($this->service->fire($advisor->id));
         $advisor->refresh();
         $this->assertNull($advisor->colony_id);
@@ -112,26 +129,26 @@ class PersonellServiceTest extends TestCase
     public function test_get_ap_per_tick_rank_one(): void
     {
         $advisor = new Advisor(['rank' => 1]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(2, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_two(): void
     {
         $advisor = new Advisor(['rank' => 2]);
-        $this->assertEquals(7, $advisor->getApPerTick());
+        $this->assertEquals(3, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_rank_three(): void
     {
         $advisor = new Advisor(['rank' => 3]);
-        $this->assertEquals(12, $advisor->getApPerTick());
+        $this->assertEquals(4, $advisor->getApPerTick());
     }
 
     public function test_get_ap_per_tick_unknown_rank_falls_back_to_default(): void
     {
-        // rank 99 is not in AP_BY_RANK — should fall back to 4
+        // rank 99 is not in ap_per_rank — should fall back to the Junior (rank-1) value
         $advisor = new Advisor(['rank' => 99]);
-        $this->assertEquals(4, $advisor->getApPerTick());
+        $this->assertEquals(2, $advisor->getApPerTick());
     }
 
     // ── Advisor model: isUnemployed ───────────────────────────────────────────
@@ -181,49 +198,49 @@ class PersonellServiceTest extends TestCase
 
     public function test_total_action_points_excludes_unavailable_advisors(): void
     {
-        // Add a trader that is temporarily unavailable — economy AP should be 0
         Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 3,
             'active_ticks' => 10,
             'unavailable_until_tick' => 99999,
         ]);
 
-        // Economy AP should be base 6 only — the unavailable trader is excluded
-        $this->assertEquals(6, $this->service->getTotalActionPoints('economy', $this->colonyId));
+        // 12 base + engineer rank2 (3) + scientist rank1 (2) = 17 — the unavailable
+        // trader (rank 3 = +4) does not count.
+        $this->assertEquals(17, $this->service->getTotalActionPoints($this->colonyId));
     }
 
     // ── hire(): rank clamping and validation ──────────────────────────────────
 
     public function test_hire_with_rank_below_one_is_clamped_to_one(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId, 0);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId, 0);
         $this->assertEquals(1, $advisor->rank);
     }
 
     public function test_hire_with_rank_above_three_is_clamped_to_three(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId, 99);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId, 99);
         $this->assertEquals(3, $advisor->rank);
     }
 
     public function test_hire_with_negative_user_id_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->hire(-1, PersonellService::idFor('engineer'), $this->colonyId);
+        $this->service->hire(-1, AdvisorService::idFor('engineer'), $this->colonyId);
     }
 
     public function test_hire_with_negative_colony_id_throws(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->service->hire($this->userId, PersonellService::idFor('engineer'), -5);
+        $this->service->hire($this->userId, AdvisorService::idFor('engineer'), -5);
     }
 
     public function test_hired_advisor_starts_with_zero_active_ticks(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId);
         $this->assertEquals(0, $advisor->active_ticks);
         $this->assertNull($advisor->unavailable_until_tick);
     }
@@ -237,7 +254,7 @@ class PersonellServiceTest extends TestCase
 
     public function test_fireed_advisor_becomes_unemployed(): void
     {
-        $advisor = $this->service->hire($this->userId, PersonellService::idFor('trader'), $this->colonyId);
+        $advisor = $this->service->hire($this->userId, AdvisorService::idFor('trader'), $this->colonyId);
         $this->service->fire($advisor->id);
 
         $advisor->refresh();
@@ -248,26 +265,33 @@ class PersonellServiceTest extends TestCase
 
     public function test_lock_action_points_accumulates_across_multiple_calls(): void
     {
-        $this->service->lockActionPoints('construction', $this->colonyId, 3);
-        $this->service->lockActionPoints('construction', $this->colonyId, 2);
-        // 13 total − 5 locked = 8
-        $this->assertEquals(8, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->service->lockActionPoints($this->colonyId, 3);
+        $this->service->lockActionPoints($this->colonyId, 2);
+        // 17 total − 5 locked = 12
+        $this->assertEquals(12, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_lock_action_points_with_negative_amount_is_sanitised(): void
     {
-        // Passing a negative amount: abs() is applied inside the service, so it
-        // still reduces available AP (not increases it — no cheat possible).
-        $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
-        $this->service->lockActionPoints('construction', $this->colonyId, -3);
-        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->service->lockActionPoints($this->colonyId, -3);
+        $this->assertEquals($before - 3, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     public function test_get_available_action_points_floors_at_zero_when_over_locked(): void
     {
-        // Lock more AP than exist — result must never go negative
-        $this->service->lockActionPoints('construction', $this->colonyId, 9999);
-        $this->assertEquals(0, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->service->lockActionPoints($this->colonyId, 9999);
+        $this->assertEquals(0, $this->service->getAvailableActionPoints($this->colonyId));
+    }
+
+    public function test_locking_ap_via_one_advisor_action_reduces_pool_for_all_domains(): void
+    {
+        // Core behavior of the shared pool: one lock (e.g. from a construction
+        // action) reduces the same number a trade action would see — there is
+        // no second, independent "economy" remainder anymore.
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->service->lockActionPoints($this->colonyId, 5);
+        $this->assertEquals($before - 5, $this->service->getAvailableActionPoints($this->colonyId));
     }
 
     // ── E1: invest() locks AP (delta-locking) ────────────────────────────────
@@ -292,11 +316,40 @@ class PersonellServiceTest extends TestCase
             ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
             ->update(['ap_spend' => 0]);
 
-        $before = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
         $buildingService->invest($this->colonyId, 27, 'add', 3);
-        $after = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+        $after = $this->service->getAvailableActionPoints($this->colonyId);
 
         $this->assertEquals($before - 3, $after);
+    }
+
+    public function test_building_and_research_investment_share_one_pool(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+
+        $buildingService = $this->app->make(BuildingService::class);
+        $researchService = $this->app->make(ResearchService::class);
+
+        DB::table('colony_buildings')
+            ->where(['colony_id' => $this->colonyId, 'building_id' => 27])
+            ->update(['ap_spend' => 0]);
+
+        $before = $this->service->getAvailableActionPoints($this->colonyId);
+        $buildingService->invest($this->colonyId, 27, 'add', 3);
+        $afterBuilding = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->assertEquals($before - 3, $afterBuilding);
+
+        // A research investment right after must draw from the SAME remaining
+        // pool, not from an untouched "research" pool — this is the behavior
+        // that only exists once construction/research share one pool.
+        $researchEntity = DB::table('researches')->first();
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyId, 'research_id' => $researchEntity->id],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 0]
+        );
+        $researchService->invest($this->colonyId, $researchEntity->id, 'add', 2);
+        $afterResearch = $this->service->getAvailableActionPoints($this->colonyId);
+        $this->assertEquals($afterBuilding - 2, $afterResearch);
     }
 
     /**
@@ -307,10 +360,10 @@ class PersonellServiceTest extends TestCase
      */
     public function test_ap_locks_expire_after_tick_advance(): void
     {
-        $tickBefore = $this->service->getAvailableActionPoints('construction', $this->colonyId);
+        $tickBefore = $this->service->getAvailableActionPoints($this->colonyId);
 
-        $this->service->lockActionPoints('construction', $this->colonyId, 5);
-        $this->assertEquals($tickBefore - 5, $this->service->getAvailableActionPoints('construction', $this->colonyId));
+        $this->service->lockActionPoints($this->colonyId, 5);
+        $this->assertEquals($tickBefore - 5, $this->service->getAvailableActionPoints($this->colonyId));
 
         // Advance the tick — GameTick runs with the next tick number so the old lock no longer applies
         $currentTick = $this->app->make(TickService::class)->getTickCount();
@@ -319,30 +372,9 @@ class PersonellServiceTest extends TestCase
         // After tick, available must equal total — no locked AP from the old tick applies.
         // (Trust may change during the tick, so we compare against the new total, not tickBefore.)
         $this->assertEquals(
-            $this->service->getTotalActionPoints('construction', $this->colonyId),
-            $this->service->getAvailableActionPoints('construction', $this->colonyId)
+            $this->service->getTotalActionPoints($this->colonyId),
+            $this->service->getAvailableActionPoints($this->colonyId)
         );
-    }
-
-    // ── getEconomyPoints() convenience wrapper ────────────────────────────────
-
-    public function test_get_economy_points_returns_base_with_no_traders(): void
-    {
-        // Base 6 AP always present even without advisor
-        $this->assertEquals(6, $this->service->getEconomyPoints($this->colonyId));
-    }
-
-    public function test_get_economy_points_with_trader(): void
-    {
-        Advisor::create([
-            'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
-            'colony_id' => $this->colonyId,
-            'rank' => 2,
-            'active_ticks' => 0,
-        ]);
-        // 6 base + trader rank2 (7) = 13
-        $this->assertEquals(13, $this->service->getEconomyPoints($this->colonyId));
     }
 
     // ── incrementAdvisorTicks() via GameTick command ──────────────────────────
@@ -351,7 +383,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 5,
@@ -366,7 +398,7 @@ class PersonellServiceTest extends TestCase
     {
         $unemployed = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => null,
             'rank' => 1,
             'active_ticks' => 3,
@@ -381,7 +413,7 @@ class PersonellServiceTest extends TestCase
     {
         $unavailable = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 7,
@@ -397,7 +429,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 14,
@@ -413,7 +445,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 2,
             'active_ticks' => 44,
@@ -429,7 +461,7 @@ class PersonellServiceTest extends TestCase
     {
         $advisor = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 3,
             'active_ticks' => 99,
@@ -444,23 +476,27 @@ class PersonellServiceTest extends TestCase
     {
         // Start with 1 engineer at rank 1, 14 ticks — after one tick it hits 15 and promotes
         Advisor::where('colony_id', $this->colonyId)
-            ->where('personell_id', PersonellService::idFor('engineer'))
+            ->where('personell_id', AdvisorService::idFor('engineer'))
             ->delete();
 
         $advisor = Advisor::create([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('engineer'),
+            'personell_id' => AdvisorService::idFor('engineer'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 14,
         ]);
 
+        $totalBefore = $this->service->getTotalActionPoints($this->colonyId);
+
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
 
-        // After promotion to rank 2, AP must exceed rank-1 value (4).
-        // The exact value depends on the trust multiplier, so we just assert the promotion raised AP.
+        // After promotion to rank 2, AP must exceed the pre-promotion total.
+        // The exact value depends on the trust multiplier and other advisors already
+        // present in the pool, so we compare against a captured baseline instead of
+        // a fixed constant (a fixed threshold is unfalsifiable against ap.base=12).
         $this->assertEquals(2, $advisor->rank);
-        $this->assertGreaterThan(4, $this->service->getTotalActionPoints('construction', $this->colonyId));
+        $this->assertGreaterThan($totalBefore, $this->service->getTotalActionPoints($this->colonyId));
     }
 }

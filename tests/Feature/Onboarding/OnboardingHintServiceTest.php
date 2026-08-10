@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Onboarding;
 
+use App\Services\AdvisorService;
 use App\Services\OnboardingHintService;
-use App\Services\Techtree\PersonellService;
 use App\Services\TickService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -565,7 +565,7 @@ class OnboardingHintServiceTest extends TestCase
         // construction AP pool → invest_site self-clears (Bau-AP exhausted).
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -575,9 +575,9 @@ class OnboardingHintServiceTest extends TestCase
             ->where('building_id', 41)
             ->update(['level' => 0, 'ap_spend' => 2]);
 
-        $available = $personell->getConstructionPoints($this->colonyId);
-        $this->assertGreaterThan(0, $available, 'precondition: construction AP available before lock');
-        $personell->lockActionPoints('construction', $this->colonyId, $available);
+        $available = $personell->getAvailableActionPoints($this->colonyId);
+        $this->assertGreaterThan(0, $available, 'precondition: AP available before lock');
+        $personell->lockActionPoints($this->colonyId, $available);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
@@ -629,7 +629,7 @@ class OnboardingHintServiceTest extends TestCase
         // left (ring 2 = 2 AP/tile here). Lock down to 1 Nav-AP — unaffordable.
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -637,9 +637,9 @@ class OnboardingHintServiceTest extends TestCase
         $this->upgradeCc();
         $this->placeSecondAdvisor();
 
-        $available = $personell->getAvailableActionPoints('navigation', $this->colonyId);
-        $this->assertGreaterThan(1, $available, 'precondition: base Nav-AP must exceed 1 to test the lock-down');
-        $personell->lockActionPoints('navigation', $this->colonyId, $available - 1);
+        $available = $personell->getAvailableActionPoints($this->colonyId);
+        $this->assertGreaterThan(1, $available, 'precondition: available AP must exceed 1 to test the lock-down');
+        $personell->lockActionPoints($this->colonyId, $available - 1);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
@@ -710,8 +710,12 @@ class OnboardingHintServiceTest extends TestCase
         // Sol 1 (current_tick 0): engineer hired, Harvester relocated, buildings full.
         // suppressLateHints() places Cantina/Agrardom/Sciencelab/Hangar, so once the
         // CC pre-invest hint (CC >= level 2), the advisor-slot-2 hint (slot filled),
-        // and the explore hint (no fog left) are all exhausted, unused Bau-AP surfaces
+        // and the explore hint (no fog left) are all exhausted, unused AP surfaces
         // hint_spend_remaining_ap (rank 16) rather than the true end-sol floor.
+        // A finished Sciencelab is among the placed buildings — bestRemainingApPool()
+        // checks research first (no domain-amount comparison with one shared pool,
+        // see OnboardingHintService::bestRemainingApPool docblock), so this points
+        // to research, not construction.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
@@ -724,7 +728,7 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertNotNull($hint);
         $this->assertSame(16, $hint['rank']);
         $this->assertSame('hint_spend_remaining_ap', $hint['key']);
-        $this->assertSame('colony.onboarding_hint_spend_ap_construction', $hint['text_key']);
+        $this->assertSame('colony.onboarding_hint_spend_ap_research', $hint['text_key']);
     }
 
     public function test_end_sol_hint_fires_when_choice_buildings_placed_and_no_ap_left(): void
@@ -773,14 +777,15 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_spend_remaining_ap_hint_points_to_research_when_construction_exhausted(): void
     {
+        // "Construction exhausted" is no longer a distinct pool state (one
+        // shared pool, GDD §13.1) — this now covers the plain case: a built
+        // Sciencelab wins the priority chain regardless of remaining AP.
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints();
         $this->upgradeCc();
         $this->placeSecondAdvisor();
         $this->clearFog();
-
-        $this->app->make(PersonellService::class)->lockActionPoints('construction', $this->colonyId, 9999);
 
         $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
 
@@ -792,12 +797,11 @@ class OnboardingHintServiceTest extends TestCase
     public function test_end_sol_silent_while_usable_nav_ap_remains(): void
     {
         // Playtest finding (2026-07-14, Sol 2): "alle sinnvollen Aktionen getätigt"
-        // while Nav-AP + affordable fog remained. With construction locked and fog
-        // present, spend_remaining_ap must surface the navigation pool instead of
-        // the end-sol fallback.
+        // while Nav-AP + affordable fog remained. With fog present and no
+        // Sciencelab/Cantina built, spend_remaining_ap must surface the
+        // navigation action instead of the end-sol fallback.
         $this->app->instance(TickService::class, new TickService(1));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -805,13 +809,12 @@ class OnboardingHintServiceTest extends TestCase
         $this->upgradeCc();
         $this->placeSecondAdvisor();
         // Real Sol-2 state: no finished Sciencelab/Cantina yet → research and
-        // economy pools are unusable, only navigation can act.
+        // economy are unusable, only navigation can act.
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)
             ->whereIn('building_id', [31, 52])
             ->update(['level' => 0]);
         $this->setRunTick(1); // Sol 2 — explore hint (Sol-1-only) is gone
-        $personell->lockActionPoints('construction', $this->colonyId, 9999);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
@@ -822,11 +825,12 @@ class OnboardingHintServiceTest extends TestCase
 
     public function test_spend_remaining_ap_skips_research_pool_without_sciencelab(): void
     {
-        // Research AP is unusable without a built Sciencelab (techtree locked) —
-        // the pool must not be suggested.
+        // Research is unusable without a built Sciencelab (techtree locked) —
+        // it must not be suggested. With Cantina also unbuilt and the shared
+        // pool fully locked, there is nothing left to point the player at.
         $this->app->instance(TickService::class, new TickService(1));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -838,13 +842,12 @@ class OnboardingHintServiceTest extends TestCase
             ->whereIn('building_id', [31, 52])
             ->update(['level' => 0]); // sciencelab + cantina unusable
         $this->setRunTick(1);
-        $personell->lockActionPoints('construction', $this->colonyId, 9999);
-        $personell->lockActionPoints('navigation', $this->colonyId, 9999);
+        $personell->lockActionPoints($this->colonyId, 9999);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
-        // research + economy pools idle but unusable, construction + navigation
-        // locked → the genuine "nothing left" fallback wins.
+        // Sciencelab/Cantina both unbuilt (research/economy unusable) and the
+        // shared pool fully locked → the genuine "nothing left" fallback wins.
         $this->assertNotNull($hint);
         $this->assertSame('hint_end_sol', $hint['key']);
     }
@@ -853,20 +856,21 @@ class OnboardingHintServiceTest extends TestCase
     {
         // Playtest finding (2026-07-14, Sol 4): after CC Lv2 + Konsul hire the bar
         // said "Sol beenden" although the freshly built Cantina + idle economy AP
-        // were waiting. Economy pool counts as usable once the Cantina is built.
+        // were waiting. Economy counts as usable once the Cantina is built and
+        // both research (no Sciencelab here) and navigation (no fog) are ruled out.
         $this->app->instance(TickService::class, new TickService(3));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
         $this->suppressLateHints(); // places a finished Cantina (52) among others
         $this->upgradeCc();
         $this->placeSecondAdvisor();
+        DB::table('colony_buildings')
+            ->where('colony_id', $this->colonyId)->where('building_id', 31)
+            ->update(['level' => 0]); // sciencelab unbuilt → research unusable
         $this->clearFog(); // navigation unusable
         $this->setRunTick(3);
-        $personell->lockActionPoints('construction', $this->colonyId, 9999);
-        $personell->lockActionPoints('research', $this->colonyId, 9999);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
@@ -1053,7 +1057,7 @@ class OnboardingHintServiceTest extends TestCase
         // Fill the 3rd slot CC3 unlocks — otherwise hint_advisor_slot2 (rank 6) wins first.
         DB::table('advisors')->insertOrIgnore([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('trader'),
+            'personell_id' => AdvisorService::idFor('trader'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 0,
@@ -1193,7 +1197,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         $this->app->instance(TickService::class, new TickService(0));
         $service = $this->app->make(OnboardingHintService::class);
-        $personell = $this->app->make(PersonellService::class);
+        $personell = $this->app->make(AdvisorService::class);
 
         $this->placeEngineer();
         $this->moveHarvesterOutside();
@@ -1203,8 +1207,8 @@ class OnboardingHintServiceTest extends TestCase
         DB::table('colony_buildings')
             ->where('colony_id', $this->colonyId)->where('building_id', 31)->delete();
 
-        $available = $personell->getConstructionPoints($this->colonyId);
-        $personell->lockActionPoints('construction', $this->colonyId, $available);
+        $available = $personell->getAvailableActionPoints($this->colonyId);
+        $personell->lockActionPoints($this->colonyId, $available);
 
         $hint = $service->getActiveHint($this->colonyId, $this->userId);
 
@@ -1371,13 +1375,10 @@ class OnboardingHintServiceTest extends TestCase
             ->update(['is_explored' => 1]);
     }
 
-    /** Locks every AP pool (construction/research/navigation/economy) so none remain unspent. */
+    /** Locks the entire shared AP pool (GDD §13.1) so none remains unspent. */
     private function exhaustAllActionPoints(): void
     {
-        $personellService = $this->app->make(PersonellService::class);
-        foreach (['construction', 'research', 'navigation', 'economy'] as $type) {
-            $personellService->lockActionPoints($type, $this->colonyId, 9999);
-        }
+        $this->app->make(AdvisorService::class)->lockActionPoints($this->colonyId, 9999);
     }
 
     /**
@@ -1440,7 +1441,7 @@ class OnboardingHintServiceTest extends TestCase
     {
         DB::table('advisors')->insertOrIgnore([
             'user_id' => $this->userId,
-            'personell_id' => PersonellService::idFor('scientist'),
+            'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId,
             'rank' => 1,
             'active_ticks' => 0,
