@@ -440,16 +440,15 @@ class MerchantService
             case 'ap_flex':
                 // ap_flex: distribute AP across all advisor types that have active advisors.
                 $apAmount = (int) ($payload['amount'] ?? 20);
-                $this->advisorService->creditAp($colonyId, 'any', $apAmount);
+                $this->advisorService->creditAp($colonyId, $apAmount);
                 Log::info("MerchantService: ap_flex applied — {$apAmount} AP distributed across active advisors on colony {$colonyId}.");
                 break;
 
             case 'ap_targeted':
-                // ap_targeted: credit AP to the specific type stored in the payload.
+                // ap_targeted: credit AP to the single unified pool (ignoring item-level ap_type from payload).
                 $apAmount = (int) ($payload['amount'] ?? 15);
-                $apType = (string) ($payload['ap_type'] ?? 'construction');
-                $this->advisorService->creditAp($colonyId, $apType, $apAmount);
-                Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to '{$apType}' on colony {$colonyId}.");
+                $this->advisorService->creditAp($colonyId, $apAmount);
+                Log::info("MerchantService: ap_targeted applied — {$apAmount} AP credited to colony {$colonyId}.");
                 break;
 
             default:
