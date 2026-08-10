@@ -25,6 +25,25 @@ Subagenten-Definitionen für Nouron-Projekt.
 | `project-manager` | Roadmap, ADRs, Feature-Breakdown, CHANGELOG | Code schreiben, lang-Dateien ändern |
 | `content-writer` | lang/de/*.php Texte, Lore, Tooltips, INNN | Code schreiben, Blade/JS ändern |
 
+## Bash-Zugriff pro Agent
+
+Subagenten delegieren **nicht** untereinander — keiner hat das `Agent`-Tool. Wer etwas
+nicht selbst kann, gibt den Befehl im Ergebnis an den Aufrufer (Hauptthread) zurück.
+
+Damit Doku- und UI-Agenten ihre eigene Arbeit trotzdem verifizieren können, haben zwei
+von ihnen ein **eingeschränktes** Bash über einen `PreToolUse`-Hook
+(`.claude/hooks/bash-allowlist.sh <profil>`, Tests: `.claude/hooks/tests/`):
+
+| Agent | Bash | Profil / Umfang |
+|---|---|---|
+| `game-developer`, `backend-coder`, `db-migration-agent`, `qa-tester`, `GIT Expert` | voll | uneingeschränkt |
+| `project-manager` | eingeschränkt | `git-readonly` — lesende git-Befehle (CHANGELOG, PR-Body aus echter History) |
+| `ui-specialist` | eingeschränkt | `frontend` — Prettier, `npm run build\|install\|ci`, lesende git-Befehle |
+| `game-designer`, `content-writer` | keins | reine Doku-/Lang-Arbeit, kein Build-Schritt |
+
+Neue erlaubte Befehle gehören in die Allowlist im Hook-Skript **plus** einen Testfall —
+nicht als Ausnahme im Agent-Prompt.
+
 ## Typischer Feature-Workflow
 
 ```
