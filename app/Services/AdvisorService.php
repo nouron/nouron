@@ -9,14 +9,12 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
- * AdvisorService — manages advisors and action points.
+ * AdvisorService — manages advisors and the colony's shared AP pool.
  *
  * Advisors are individual entities stored in the `advisors` table.
- * Each advisor has a rank (1–3) that determines AP per tick:
- *   Junior (1) = 2 AP, Senior (2) = 3 AP, Experte (3) = 4 AP
- *
- * All advisors, regardless of type, contribute to a single shared AP pool
- * per colony (GDD §13.1) — see getTotalActionPoints().
+ * Each advisor has a rank (1–3) that adds a flat AP contribution to the
+ * colony's single shared pool (GDD §13.1), regardless of advisor type:
+ *   Junior (1) = +2 AP, Senior (2) = +3 AP, Experte (3) = +4 AP
  *
  * Advisor IDs come exclusively from config/advisors.php — never hardcode them.
  * Use AdvisorService::idFor('engineer') etc. for all lookups.
@@ -174,18 +172,6 @@ class AdvisorService
                     ->whereNotNull('tile_x')
                     ->exists();
                 if (! $isPlaced) {
-                    return 'path_building_missing';
-                }
-            }
-
-            // Strategist gate — requires SecurityHub (building_id=53) Lv1.
-            if ($personellId === self::idFor('strategist')) {
-                $hubBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyId)
-                    ->where('building_id', 53)
-                    ->where('level', '>', 0)
-                    ->exists();
-                if (! $hubBuilt) {
                     return 'path_building_missing';
                 }
             }

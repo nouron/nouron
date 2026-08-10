@@ -24,9 +24,10 @@ class AdvisorController extends BaseController
     use ResolvesActiveColony;
 
     /**
-     * Positions 1 and 5 are always the same advisor type regardless of path choice.
+     * Position 1 is always engineer; strategist postponed (GDD §13.6, decision 2026-08-02).
+     * Slots 2–4 are path-based (scientist/pilot/trader).
      */
-    private const FIXED_SLOTS = [1 => 'engineer', 5 => 'strategist'];
+    private const FIXED_SLOTS = [1 => 'engineer'];
 
     /**
      * Maps building_id → advisor key for the three path buildings.
@@ -98,7 +99,9 @@ class AdvisorController extends BaseController
         $advisorsByPersonellId = $advisors->keyBy('personell_id');
 
         // Resolve path advisor keys for positions 2–4, in placement order.
+        // DISTINCT ensures instanced buildings (e.g., multiple hangar instances) contribute only once.
         $pathBuildingIds = DB::table('colony_buildings')
+            ->distinct()
             ->whereIn('building_id', array_keys(self::PATH_BUILDINGS))
             ->where('colony_id', $colonyId)
             ->whereNotNull('placed_at_tick')
@@ -119,7 +122,7 @@ class AdvisorController extends BaseController
 
         $slots = [];
 
-        for ($position = 1; $position <= 5; $position++) {
+        for ($position = 1; $position <= 4; $position++) {
             // Resolve advisor key for this position.
             if (isset(self::FIXED_SLOTS[$position])) {
                 $key = self::FIXED_SLOTS[$position];
@@ -164,17 +167,9 @@ class AdvisorController extends BaseController
 
             /** @var Advisor|null $advisor */
             $advisor = $advisorsByPersonellId->get($personellId);
-            // Strategist: CC Lv3 + SecurityHub (building_id=53) Lv1. Other fixed slots: cc < position.
-            $ccGate = $key === 'strategist' ? 3 : $position;
+            // Each slot requires CC level >= position.
+            $ccGate = $position;
             $isLocked = $ccLevel < $ccGate;
-            if (! $isLocked && $key === 'strategist') {
-                $hubBuilt = DB::table('colony_buildings')
-                    ->where('colony_id', $colonyId)
-                    ->where('building_id', 53)
-                    ->where('level', '>', 0)
-                    ->exists();
-                $isLocked = ! $hubBuilt;
-            }
 
             if ($isLocked) {
                 $state = 'locked';

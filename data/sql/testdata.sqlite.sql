@@ -107,7 +107,7 @@ INSERT INTO "personell_costs" VALUES(93,2,2);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,25,3,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,27,1,20,0);
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,28,2,20,2);
-INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,31,1,10,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,31,1,10,0,0);
 -- Infirmary (46) for colony 1: used as a generic "uncapped, upgradable building" stand-in
 -- by BuildingServiceTest/ColonyZoneDecoupleTest/BuildResourceSinkTest (ex-depot, removed 2026-06-22).
 INSERT INTO "colony_buildings" (colony_id,building_id,level,status_points,ap_spend) VALUES(1,46,3,10,10);
@@ -127,8 +127,8 @@ INSERT INTO "colony_resources" VALUES(4,1,50);
 INSERT INTO "colony_resources" VALUES(5,1,50);
 INSERT INTO "colony_resources" VALUES(12,1,0);
 -- colony_buildings: two hangar bays (building_id=44) for colony 1 (Springfield)
-INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,1,1,20,0);
-INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend) VALUES(1,44,2,1,20,0);
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,1,1,20,0,1);
+INSERT INTO "colony_buildings" (colony_id,building_id,instance_id,level,status_points,ap_spend,placed_at_tick) VALUES(1,44,2,1,20,0,1);
 
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,29,0,10,1,NULL,'docked',NULL,NULL);
 INSERT INTO "colony_ships" (colony_id,ship_id,level,status_points,ap_spend,hangar_instance_id,ship_state,deliver_at_tick,pending_until_tick) VALUES(1,37,9,10,1,NULL,'docked',NULL,NULL);

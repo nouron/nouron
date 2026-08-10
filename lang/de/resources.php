@@ -51,21 +51,6 @@ return [
     'popup_or_title' => 'Organika',
     'popup_or_desc' => 'Alles, was der Agrardom unter seinem Dach anbaut: Nahrung, Medizin, Biodünger. Ohne ausreichend Organika hungern die Kolonisten — und das Vertrauen bricht schnell ein.',
 
-    'popup_nav_ap_title' => 'Navigations-AP',
-    'popup_nav_ap_desc' => 'Jeder erkundete Sektor ist ein Stück mehr Handlungsspielraum. Navigations-AP treiben Erkundung und Missionen an — und kommen nur über den Raumfahrer-Berater.',
-
-    'popup_bau_ap_title' => 'Bau-AP',
-    'popup_bau_ap_desc' => 'Ein Sol ohne Bau-AP ist ein Sol, in dem Verfall gewinnt. Der Baumeister erhöht das Kontingent — ohne ihn bleibt der Pool knapp.',
-
-    'popup_research_ap_title' => 'Forschungs-AP',
-    'popup_research_ap_desc' => 'Kenntnisse wachsen nicht von selbst. Forschungs-AP werden im Techtree einer Kenntnis zugewiesen und zahlen sich Sol für Sol aus.',
-
-    'popup_economy_ap_title' => 'Wirtschafts-AP',
-    'popup_economy_ap_desc' => 'Cantina-Angebote, Nexus-Verhandlungen, Handelsrouten — das alles kostet Wirtschafts-AP. Ohne Konsul bleibt der Pool dünn.',
-
-    'popup_strategy_ap_title' => 'Strategie-AP',
-    'popup_strategy_ap_desc' => 'Für alles, was Schutz und taktische Koordination kostet. Der Stratege baut den Pool auf — ohne ihn hält sich das Budget in engen Grenzen.',
-
     'popup_trust_title' => 'Vertrauen',
     'popup_trust_desc' => 'Was die Kolonisten noch hält. Sinkt dieser Wert zu weit, arbeitet niemand mehr sein Bestes — und irgendwann hört niemand mehr hin.',
 ];
