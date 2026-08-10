@@ -78,9 +78,6 @@ class BarController extends BaseController
         }
 
         $firstVisit = $this->onboardingHintService->checkFirstVisit('cantina', Auth::id());
-        $economyAp = $barLevel > 0
-            ? $this->advisorService->getAvailableActionPoints($colony->id)
-            : 0;
         $offerApCost = (int) config('game.bar.ap_cost_accept', 1);
         $negotiateApCost = (int) config('game.bar.ap_cost_negotiate', 3);
         $hasConsul = $barLevel > 0 && $this->barService->hasAvailableConsul($colony->id);
@@ -88,7 +85,7 @@ class BarController extends BaseController
         return view('colony.bar', compact(
             'colony', 'offers', 'barLevel', 'currentSol',
             'merchantVisit', 'merchantItems', 'hotspots', 'characterAssignment',
-            'firstVisit', 'economyAp', 'offerApCost', 'negotiateApCost', 'hasConsul',
+            'firstVisit', 'offerApCost', 'negotiateApCost', 'hasConsul',
         ));
     }
 
