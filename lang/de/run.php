@@ -5,7 +5,7 @@ return [
     'run_completed' => 'Mission erfüllt — Die Expedition ist abgeschlossen. Die Kolonie besteht weiter, trotz allem.',
     'run_failed_trust' => 'Abberufung — Das Vertrauen der Kolonisten ist zerbröckelt. Die Führung wird abberufen.',
     'run_failed_time' => 'Zeitablauf — Die Konzessionslaufzeit ist verstrichen. Der Nexus zieht den Direktor zurück.',
-    'task_senior_advisors' => 'Expertenstab: Alle 5 Berater-Slots besetzt, min. 2 auf Senior-Rang',
+    'task_senior_advisors' => 'Expertenstab: Alle Berater-Slots besetzt, min. 2 auf Senior-Rang',
     'task_credit_reserve' => 'Kreditimperium: Credits-Bestand ≥ 5.000 für 10 aufeinanderfolgende Sole',
     'task_colony_prosperity' => 'Kolonieblüte: Vertrauen > 70 für 10 aufeinanderfolgende Sole',
     'task_research_lead' => 'Forschungsvorsprung: Mindestens 3 Forschungen auf Level 5+',

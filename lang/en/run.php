@@ -5,7 +5,7 @@ return [
     'run_completed' => 'Mission accomplished — the expedition is concluded. The colony endures, despite everything.',
     'run_failed_trust' => 'Recalled — the colonists\' trust has crumbled. Command is relieved.',
     'run_failed_time' => 'Time expired — the concession period has lapsed. The Nexus withdraws the Director.',
-    'task_senior_advisors' => 'Expert Staff: all 5 advisor slots filled, min. 2 at Senior rank',
+    'task_senior_advisors' => 'Expert Staff: all advisor slots filled, min. 2 at Senior rank',
     'task_credit_reserve' => 'Credit Empire: Credits balance ≥ 5,000 for 10 consecutive Sols',
     'task_colony_prosperity' => 'Colony Prosperity: Trust > 70 for 10 consecutive Sols',
     'task_research_lead' => 'Research Lead: at least 3 knowledge fields at Level 5+',

@@ -18,7 +18,7 @@ namespace Tests\Feature;
  *   - drawObjectives sets correct target values
  *
  * UPDATE OBJECTIVE PROGRESS
- *   - task_senior_advisors completes when 5 advisors with 2 senior
+ *   - task_senior_advisors completes when 4 advisors with 2 senior
  *   - task_research_lead completes when 3 researches at level 5
  *   - task_credit_reserve increments streak when credits above threshold
  *   - task_credit_reserve resets streak when credits below threshold
@@ -385,16 +385,15 @@ class RunProgressServiceTest extends TestCase
 
     // ── updateObjectiveProgress: task_senior_advisors ────────────────────────────
 
-    public function test_task_senior_advisors_completes_when_5_advisors_with_2_senior(): void
+    public function test_task_senior_advisors_completes_when_4_advisors_with_2_senior(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         $objective = $this->makeObjective($run, 'task_senior_advisors', 1);
 
-        // 5 advisors: 3 rank-1, 2 rank-2 (senior).
+        // 4 advisors (= config('game.advisor.max_slots')): 2 rank-1, 2 rank-2 (senior).
         // Each uses a distinct personell_id to satisfy the (colony_id, personell_id) unique constraint.
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 35, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 36, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
-        Advisor::create(['user_id' => $this->userId, 'personell_id' => 89, 'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0]);
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 92, 'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 0]);
         Advisor::create(['user_id' => $this->userId, 'personell_id' => 93, 'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 0]);
 
