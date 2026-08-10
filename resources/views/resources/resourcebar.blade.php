@@ -215,8 +215,8 @@
          per-domain split. --}}
         @if (isset($colonyAp, $trust))
             <span class="res-divider" aria-hidden="true"></span>
-            <span id="resbar-ap" class="ap-chip ap-chip--build" @mouseenter="openChip = 'ap'" @mouseleave="openChip = null"
-                @click.stop="openChip = openChip === 'ap' ? null : 'ap'"
+            <span id="resbar-ap" class="ap-chip ap-chip--neutral" @mouseenter="openChip = 'ap'"
+                @mouseleave="openChip = null" @click.stop="openChip = openChip === 'ap' ? null : 'ap'"
                 @click.outside="openChip === 'ap' && (openChip = null)" style="position:relative;cursor:default">
                 <span>AP <span class="res-amount">{{ (int) $colonyAp }}</span></span>
                 @include("partials.res-popup", [
