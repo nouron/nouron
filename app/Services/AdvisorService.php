@@ -151,7 +151,7 @@ class AdvisorService
                 ->where('colony_id', $colonyId)
                 ->where('building_id', BuildingId::CommandCenter->value)
                 ->value('level') ?? 0);
-            $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
+            $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 4));
             $usedSlots = Advisor::where('colony_id', $colonyId)->count();
             if ($usedSlots >= $maxSlots) {
                 return 'slot_full';
@@ -213,7 +213,7 @@ class AdvisorService
             ->where('colony_id', $colonyId)
             ->where('building_id', BuildingId::CommandCenter->value)
             ->value('level') ?? 0);
-        $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 5));
+        $maxSlots = min($ccLevel, (int) config('game.advisor.max_slots', 4));
         $usedSlots = Advisor::where('colony_id', $colonyId)->count();
 
         return [

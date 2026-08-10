@@ -259,8 +259,8 @@ class ResetPlayerTest extends TestCase
             ->count();
         $this->assertSame(2, $seniorCount);
 
-        // 5 advisors total (engineer, scientist, pilot, trader, strategist).
-        $this->assertSame(5, DB::table('advisors')->where('colony_id', $run->colony_id)->count());
+        // 4 advisors total (engineer, scientist, pilot, trader) — strategist retired.
+        $this->assertSame(4, DB::table('advisors')->where('colony_id', $run->colony_id)->count());
     }
 
     // ── wipe behavior ─────────────────────────────────────────────────────────

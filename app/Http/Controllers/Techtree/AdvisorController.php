@@ -75,12 +75,12 @@ class AdvisorController extends BaseController
     }
 
     /**
-     * Build the canonical 5-slot array for the advisor carousel UI.
+     * Build the canonical 4-slot array for the advisor carousel UI.
      *
-     * Positions 1 and 5 are fixed (FIXED_SLOTS). Positions 2–4 are determined
-     * by which path buildings (sciencelab/hangar/bar) have been placed in the
-     * colony, ordered by placed_at_tick ASC. Unresolved positions show as
-     * path_open until the player places the matching building.
+     * Position 1 is fixed (FIXED_SLOTS = [1 => 'engineer']). Positions 2–4 are
+     * determined by which path buildings (sciencelab/hangar/bar) have been
+     * placed in the colony, ordered by placed_at_tick ASC. Unresolved positions
+     * show as path_open until the player places the matching building.
      *
      * @param  Collection  $advisors  Active advisors on the colony (Advisor models).
      * @param  array  $slotInfo  Output of AdvisorService::getAdvisorSlotInfo().
@@ -92,7 +92,7 @@ class AdvisorController extends BaseController
     {
         $rankThresholds = config('game.advisor.rank_thresholds', [1 => 15, 2 => 45]);
         $upkeepMap = config('game.advisor.upkeep', [1 => 10, 2 => 30, 3 => 80]);
-        $apPerRank = config('game.advisor.ap_per_rank', [1 => 4]);
+        $apPerRank = config('game.advisor.ap_per_rank', [1 => 2]);
         $ccLevel = $slotInfo['cc_level'];
 
         // Index active advisors by personell_id for O(1) lookup.
@@ -235,7 +235,7 @@ class AdvisorController extends BaseController
                 'personell_id' => $personellId,
                 'ap_type' => $apType,
                 'hire_cost' => $hireCost,
-                'junior_ap' => (int) ($apPerRank[1] ?? 4),
+                'junior_ap' => (int) ($apPerRank[1] ?? 2),
                 'junior_upkeep' => (int) ($upkeepMap[1] ?? 10),
                 'cc_required' => $ccGate,
                 'state' => $state,

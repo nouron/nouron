@@ -717,16 +717,11 @@ class ResetPlayer extends Command
             ])
             ->update(['rank' => 2]);
 
-        // Slot 4: trader (Konsul, rank 2), Slot 5: strategist (rank 1)
+        // Slot 4: trader (Konsul, rank 2)
         DB::table('advisors')->insert([
             'user_id' => $colony->user_id, 'personell_id' => 92,
             'colony_id' => $cid, 'rank' => 2,
             'active_ticks' => 40, 'unavailable_until_tick' => null,
-        ]);
-        DB::table('advisors')->insert([
-            'user_id' => $colony->user_id, 'personell_id' => 93,
-            'colony_id' => $cid, 'rank' => 1,
-            'active_ticks' => 25, 'unavailable_until_tick' => null,
         ]);
 
         // Cap: CC_flat(10) + Housing_Lv3(24) + knowledge(constr4=17+carto3=13+geo1=3+agro2=8+hlth1=3) = 78

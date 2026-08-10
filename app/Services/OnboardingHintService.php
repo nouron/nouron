@@ -253,7 +253,7 @@ class OnboardingHintService
 
     /**
      * Hint 1: No engineer advisor active on this colony.
-     * Active from Sol 1 — engineer provides build AP beyond the 6-AP base.
+     * Active from Sol 1 — engineer provides build AP beyond the 12-AP base.
      */
     private function checkHint1(int $colonyId): bool
     {
@@ -570,7 +570,7 @@ class OnboardingHintService
     }
 
     /**
-     * Explore hint (rank 8, Sol 1 only): the base Navigation AP (6/Sol) sits idle
+     * Explore hint (rank 8, Sol 1 only): the base colony AP pool (12/Sol) sits idle
      * early because nothing guides the player to scout. While unexplored tiles
      * remain and Navigation AP is available, nudge exploration — it lifts fog,
      * reveals regolith for the Harvester relocation and surrounding hazards.

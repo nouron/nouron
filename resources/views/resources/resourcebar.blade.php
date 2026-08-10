@@ -72,7 +72,7 @@
             : null;
 
         // AP chip popup extras: base + advisor + trust-multiplier composition —
-        // see PersonellService::getApBreakdown().
+        // see AdvisorService::getApBreakdown().
         $apPopupExtra = function (?array $breakdown) use ($breakdownRows) {
             if (!$breakdown) {
                 return null;
