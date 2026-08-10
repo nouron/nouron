@@ -1575,7 +1575,7 @@ Beispiele für Sekundäreffekte (konkrete Werte folgen nach erstem Playtest):
 | trade | advisor_trader | +15% Handelsgewinn |
 | cartography | advisor_pilot | +1 zusätzlich aufgedecktes Tile pro Erkundung |
 
-> **TODO Design:** Vollständige 7×5-Matrix (alle Kenntnisse × alle Berater) ausarbeiten — nach erstem Playtest, wenn klar ist welche Kombinationen strategisch interessant sind.
+> **TODO Design:** Vollständige 7×4-Matrix (alle Kenntnisse × alle Berater) ausarbeiten — nach erstem Playtest, wenn klar ist welche Kombinationen strategisch interessant sind.
 >
 > **Korrektur (Juli 2026):** Die ursprünglichen Platzhalterwerte für `defense`/`advisor_pilot` ("AP-Kosten für Angriff") und `cartography`/`advisor_pilot` ("Bewegungsreichweite") referenzierten die 2026-06-20 gestrichene Flotten-/Systemkarten-Mechanik (Angriffsorder, Flottenbewegung). Durch zivile Äquivalente ersetzt (Schutzmissions-AP, Tile-Erkundung) — weiterhin nur Platzhalter, keine finalen Werte.
 
@@ -1593,7 +1593,9 @@ Freigeschaltete Kenntnisse können einem Berater zugewiesen werden (UI: Drag & D
 
 Rang-Aufstieg schaltet bei Rang 2 den Slot frei; Rang 3 erhöht den Slot nicht weiter (dafür steigt der AP-Bonus — §13).
 
-**Max. aktive Sekundäreffekte:** 5 (je ein Slot pro Berater, wenn alle auf Rang 2+). Bei 7 Kenntnissen und 5 Slots muss der Spieler 2 Kenntnisse ohne Sekundäreffekt lassen — das erzeugt echte Spezialisierungsentscheidungen.
+**Max. aktive Sekundäreffekte:** 4 (je ein Slot pro Berater, wenn alle auf Rang 2+ — vier Berater-Typen seit Zurückstellung des Strategen, 2026-08-02). Bezogen auf den vollen Kenntnisbaum (7 Kenntnisse, 4 Slots) bleiben 3 Kenntnisse ohne Sekundäreffekt.
+
+> ⚠️ BALANCE CONCERN: Innerhalb eines einzelnen Runs ist der volle Baum ohnehin nicht verfügbar (§ "Roguelike-Variabilität", z.B. 5 von 7 Kenntnissen). Bei 5 Kenntnissen und 4 Slots bleibt nur noch 1 Kenntnis ohne Sekundäreffekt — die Spezialisierungsentscheidung, die dieser Abschnitt als Designziel nennt, ist auf Run-Ebene damit deutlich schwächer als auf Baum-Ebene (war bei 5 Slots / 5-von-7 bereits 0, also eine Verbesserung, aber die Zielaussage "erzeugt echte Spezialisierungsentscheidungen" gilt so nur für den Baum, nicht für den Run). Nach erstem Playtest prüfen, ob Run-Ziehungsgröße oder Slot-/Kenntnisanzahl nachjustiert werden muss, damit auf Run-Ebene tatsächlich eine spürbare Auswahl entsteht.
 
 > **Balancing-Notiz:** Slot-Anzahl und Kenntnisanzahl sind Ausgangswerte für den ersten Playtest. Nach Erfahrungen aus dem Betrieb können zusätzliche Kenntnisse und/oder ein zweiter Slot bei Rang 3 eingeführt werden.
 
@@ -3150,7 +3152,7 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 | 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |
 | 8 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
 | 9 | **Kreditimperium** | Credits-Bestand X Sole uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
-| 10 | **Expertenstab** | Alle 5 Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher | Aufbau/Personal |
+| 10 | **Expertenstab** | Alle Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher | Aufbau/Personal |
 | 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Sole (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
 
 > ⚠️ BALANCE CONCERN: Aufgaben 1, 7, 9 (alle Wirtschaft) dürfen nicht alle drei gleichzeitig gezogen werden. Aufgaben-Sets müssen mindestens 2 verschiedene Spielstilkategorien abdecken — eine Kombo-Blacklist ist vor der Implementierung zu definieren.
