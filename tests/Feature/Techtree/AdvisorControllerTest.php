@@ -58,8 +58,6 @@ class AdvisorControllerTest extends TestCase
 
     protected int $personellTrader = 92;
 
-    protected int $personellStratege = 93;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -371,26 +369,29 @@ class AdvisorControllerTest extends TestCase
 
     public function test_hire_json_returns_422_when_slot_full(): void
     {
-        // Colony 1 has CC level 3. All 4 advisor types (engineer, scientist, pilot, trader) can be hired.
-        // We fill all 4, then try to hire a 5th by attempting duplicate.
+        // Colony 1 has CC level 3, so maxSlots = min(cc_level=3, config max_slots=4) = 3
+        // (AdvisorService::hire(), CC-Level gate). Fill exactly 3 distinct slots, then
+        // attempt to hire a 4th, still-unused type — this must hit the slot_full branch,
+        // not the duplicate branch (which fires earlier in AdvisorService::hire() and
+        // would mask slot_full if we tried to re-hire an already-hired type instead).
         $this->clearBartAdvisors();
         $this->ensureCredits($this->userIdBart, 10000);
 
         $this->insertAdvisor($this->userIdBart, $this->personellEngineer, $this->colonyIdBart);
         $this->insertAdvisor($this->userIdBart, $this->personellScientist, $this->colonyIdBart);
         $this->insertAdvisor($this->userIdBart, $this->personellPilot, $this->colonyIdBart);
-        $this->insertAdvisor($this->userIdBart, $this->personellTrader, $this->colonyIdBart);
 
         $bart = User::find($this->userIdBart);
 
-        // All 4 slots filled. Try to hire engineer again (duplicate).
+        // 3 of 3 slots filled (CC=3). Trader is a distinct, not-yet-hired type —
+        // this exercises slot_full, since a duplicate check would not apply here.
         $response = $this->actingAs($bart)
             ->withSession($this->bartSession())
             ->withHeaders(['Accept' => 'application/json'])
-            ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
+            ->post(route('advisors.hire'), ['personell_id' => $this->personellTrader]);
 
         $response->assertStatus(422)
-            ->assertJson(['ok' => false]);
+            ->assertJson(['ok' => false, 'error' => 'slot_full']);
     }
 
     // ── FIRE — redirect branch ────────────────────────────────────────────────
