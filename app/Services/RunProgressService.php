@@ -231,7 +231,7 @@ class RunProgressService
             ->where('rank', '>=', 2)
             ->count();
 
-        $fulfilled = $totalAdvisors >= 5 && $seniorAdvisors >= 2;
+        $fulfilled = $totalAdvisors >= config('game.advisor.max_slots') && $seniorAdvisors >= 2;
 
         $objective->current_value = $fulfilled ? 1 : 0;
 
