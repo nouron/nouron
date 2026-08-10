@@ -38,12 +38,12 @@ class AdvisorServiceTest extends TestCase
                 'tile_x' => 5, 'tile_y' => 5]
         );
 
-        // 1 engineer: rank 2 (7 AP) = 7 construction AP
+        // 1 engineer: rank 2 = +3 AP into the shared colony pool
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('engineer'),
             'colony_id' => $this->colonyId, 'rank' => 2, 'active_ticks' => 5,
         ]);
-        // 1 scientist: rank 1 = 4 research AP
+        // 1 scientist: rank 1 = +2 AP into the shared colony pool
         Advisor::create([
             'user_id' => $this->userId, 'personell_id' => AdvisorService::idFor('scientist'),
             'colony_id' => $this->colonyId, 'rank' => 1, 'active_ticks' => 0,
@@ -487,12 +487,16 @@ class AdvisorServiceTest extends TestCase
             'active_ticks' => 14,
         ]);
 
+        $totalBefore = $this->service->getTotalActionPoints($this->colonyId);
+
         $this->artisan('game:tick')->assertSuccessful();
         $advisor->refresh();
 
-        // After promotion to rank 2, AP must exceed rank-1 value (4).
-        // The exact value depends on the trust multiplier, so we just assert the promotion raised AP.
+        // After promotion to rank 2, AP must exceed the pre-promotion total.
+        // The exact value depends on the trust multiplier and other advisors already
+        // present in the pool, so we compare against a captured baseline instead of
+        // a fixed constant (a fixed threshold is unfalsifiable against ap.base=12).
         $this->assertEquals(2, $advisor->rank);
-        $this->assertGreaterThan(4, $this->service->getTotalActionPoints($this->colonyId));
+        $this->assertGreaterThan($totalBefore, $this->service->getTotalActionPoints($this->colonyId));
     }
 }

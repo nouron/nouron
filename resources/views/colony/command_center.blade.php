@@ -168,13 +168,6 @@
                             "economy" => "ap-chip--economy",
                             "strategy" => "ap-chip--strategy",
                         ];
-                        $apAbbr = [
-                            "construction" => "Con",
-                            "research" => "Res",
-                            "navigation" => "Nav",
-                            "economy" => "Eco",
-                            "strategy" => "Str",
-                        ];
                     @endphp
                     @foreach ($advisors as $a)
                         <li class="cc-list-item">
@@ -185,7 +178,7 @@
                                     ({{ $a["rank_name"] }})
                             </span>
                             <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
-                                {{ $apAbbr[$a["ap_type"]] ?? "" }} AP</span>
+                                AP</span>
                         </li>
                     @endforeach
                 </ul>

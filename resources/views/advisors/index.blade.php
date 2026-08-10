@@ -11,10 +11,10 @@
 @endpush
 
 @php
-    // Static per-key chip data for the 5 canonical advisor roles. Role names/descriptions
+    // Static per-key chip data for the 4 canonical advisor roles. Role names/descriptions
     // are fixed per config('advisors') + lang/de/advisors.php, not per-request, so this can
     // be pre-computed once server-side and matched client-side against slot.key / .preview_advisor_key.
-    $advisorChipData = collect(["engineer", "scientist", "pilot", "trader", "strategist"])->mapWithKeys(
+    $advisorChipData = collect(["engineer", "scientist", "pilot", "trader"])->mapWithKeys(
         fn($key) => [
             $key => [
                 "label" => __("advisors.{$key}"),
@@ -42,8 +42,7 @@
             <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
                 <template x-for="slot in slots" :key="'chip-' + slot.key">
                     <span class="ap-chip" x-show="slot.state === 'active'">
-                        <strong x-text="apTypeLabel(slot.ap_type)"></strong>
-                        <span x-text="slot.advisor ? slot.advisor.ap_per_tick + ' AP' : ''"></span>
+                        <strong x-text="slot.advisor ? '+' + slot.advisor.ap_per_tick + ' AP' : ''"></strong>
                     </span>
                 </template>
             </div>
@@ -152,16 +151,15 @@
                                 </div>
 
                                 <template x-if="slot.advisor !== null">
-                                    <span class="advisor-subtitle"
-                                        x-text="apTypeLabel(slot.ap_type) + ' · ' + slot.advisor.ap_per_tick + ' AP/Tick'">
+                                    <span class="advisor-subtitle" x-text="slot.advisor.ap_per_tick + ' AP/Tick'">
                                     </span>
                                 </template>
                                 <template x-if="slot.advisor === null && slot.state === 'empty' && !slot.is_path_open">
-                                    <span class="advisor-subtitle" x-text="apTypeLabel(slot.ap_type) + ' · Vakant'"></span>
+                                    <span class="advisor-subtitle">Vakant</span>
                                 </template>
                                 <template x-if="slot.is_path_open && slot.state !== 'locked'">
                                     <span class="advisor-subtitle"
-                                        x-text="slot.ap_type ? apTypeLabel(slot.ap_type) + ' · Vakant' : 'Pfad ausstehend'"></span>
+                                        x-text="slot.ap_type ? 'Vakant' : 'Pfad ausstehend'"></span>
                                 </template>
                                 <template x-if="slot.state === 'locked'">
                                     <span class="advisor-subtitle">Gesperrt</span>
@@ -322,7 +320,7 @@
 
                     <dl class="dialog-stats">
                         <div class="dialog-stat">
-                            <dt x-text="apTypeLabel(dialogSlot.ap_type)"></dt>
+                            <dt>AP</dt>
                             <dd class="dialog-stat-positive"
                                 x-text="'+' + dialogSlot.junior_ap + ' {{ __("advisors.dialog_ap_label") }}'"></dd>
                         </div>

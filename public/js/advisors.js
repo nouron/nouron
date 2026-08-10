@@ -112,8 +112,6 @@ function advisorCarousel(config) {
                 scientist: { slug: 'sciencelab', name: 'Analytiklabor' },
                 pilot: { slug: 'hangar', name: 'Hangar' },
                 trader: { slug: 'cantina', name: 'Cantina' },
-                // ponytail: security-hub.webp missing until graphic delivery; gate wired later
-                strategist: { slug: 'security-hub', name: 'Sicherheits-Hub', ccLevel: 3 },
             };
             return map[key] ?? null;
         },
@@ -124,7 +122,6 @@ function advisorCarousel(config) {
                 scientist: 'Forschungs-AP · Techtree · Kenntnisforschung',
                 pilot: 'Navigations-AP · Missionen · Hangar-Events',
                 trader: 'Wirtschafts-AP · Handel · Cantina-Events',
-                strategist: 'Strategie-AP · Verteidigung · Kampfoperationen',
             };
             if (isPathOpen) {
                 // Use preview advisor key (path_open_2 → scientist, etc.)
@@ -135,24 +132,18 @@ function advisorCarousel(config) {
         },
 
         /**
-         * Returns the human-readable AP type label for a given ap_type key.
-         * @param {string} type
+         * Returns the human-readable AP label. Advisors feed one shared colony
+         * AP pool now (single-pool consolidation), so the label is neutral and
+         * no longer branches on the domain-specific ap_type key.
          * @returns {string}
          */
-        apTypeLabel(type) {
-            const labels = {
-                construction: 'Bau-AP',
-                research: 'Forschungs-AP',
-                navigation: 'Navigations-AP',
-                economy: 'Wirtschafts-AP',
-                strategy: 'Strategie-AP',
-            };
-            return labels[type] ?? type;
+        apTypeLabel() {
+            return 'AP';
         },
 
         /**
          * Returns the two-letter initials displayed as a watermark in the portrait area.
-         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader, strategist)
+         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader)
          * @returns {string}
          */
         portraitInitials(key) {
@@ -161,7 +152,6 @@ function advisorCarousel(config) {
                 scientist: 'An',
                 pilot: 'Rf',
                 trader: 'Ko',
-                strategist: 'St',
             };
             return map[key] ?? key.substring(0, 2).toUpperCase();
         },
@@ -169,7 +159,7 @@ function advisorCarousel(config) {
         /**
          * Returns the portrait image URL for a given advisor slot key.
          * Gender is fixed per slot (index-based alternation, no gender attribute on model).
-         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader, strategist)
+         * @param {string} key - Advisor type key (engineer, scientist, pilot, trader)
          * @returns {string}
          */
         portraitImageUrl(key) {
@@ -178,7 +168,6 @@ function advisorCarousel(config) {
                 scientist: '/img/advisors/analyst_female.webp',
                 pilot: '/img/advisors/pilot_male.webp',
                 trader: '/img/advisors/trader_female.webp',
-                strategist: '/img/advisors/strategist_male.webp',
             };
             return map[key] ?? '';
         },
