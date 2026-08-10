@@ -28,6 +28,9 @@ return [
     'popup_sup_used_researches' => 'Forschung',
     'popup_sup_used_advisors' => 'Berater',
 
+    'popup_ap_title' => 'Aktionspunkte',
+    'popup_ap_desc' => 'Der gemeinsame Pool deiner Kolonie — Bau, Kenntnisse, Erkundung und Handel teilen sich dieselbe Kapazität.',
+
     'popup_ap_base' => 'Basis-AP',
     'popup_ap_advisor' => 'durch Berater',
     'popup_ap_trust_multiplier' => 'Vertrauen-Multiplikator',

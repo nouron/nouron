@@ -316,7 +316,7 @@ function techtreeView(config) {
             if (json.tech) Object.assign(tech, json.tech);
             if (json.ap_available !== undefined) {
                 tech.ap_available = json.ap_available;
-                this.syncApChip(type, json.ap_available);
+                this.syncApChip(json.ap_available);
             }
 
             if (json.leveled_up) {
@@ -326,12 +326,12 @@ function techtreeView(config) {
             }
         },
 
-        // The AP chips live in the resource bar (layout header), outside this Alpine
-        // component — sync them via DOM after every AJAX action, mirroring
-        // colony-hexgrid.js::syncResbarAp().
-        syncApChip(type, value) {
-            const chipId = type === 'research' ? 'resbar-ap-research' : 'resbar-ap-build';
-            const el = document.querySelector(`#${chipId} .res-amount`);
+        // The AP chip lives in the resource bar (layout header), outside this Alpine
+        // component — sync it via DOM after every AJAX action, mirroring
+        // colony-hexgrid.js::syncResbarAp(). One shared colony pool (GDD §13.1) —
+        // no more per-domain chip, so `type` no longer selects a chip ID.
+        syncApChip(value) {
+            const el = document.querySelector('#resbar-ap .res-amount');
             if (el) el.textContent = value;
         },
 

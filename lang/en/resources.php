@@ -28,6 +28,9 @@ return [
     'popup_sup_used_researches' => 'Research',
     'popup_sup_used_advisors' => 'Advisors',
 
+    'popup_ap_title' => 'Action Points',
+    'popup_ap_desc' => 'Your colony\'s shared pool — construction, research, exploration, and trade all draw from the same capacity.',
+
     'popup_ap_base' => 'Base AP',
     'popup_ap_advisor' => 'from advisors',
     'popup_ap_trust_multiplier' => 'Trust multiplier',

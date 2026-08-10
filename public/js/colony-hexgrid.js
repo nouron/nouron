@@ -97,8 +97,8 @@ function colonyHexView(config) {
         buildingCatalog: config.buildingCatalog ?? {},
         routes: config.routes ?? {},
         i18n: config.i18n ?? {},
-        apNav: config.apNav ?? 0,
-        apConstruction: config.apConstruction ?? 0,
+        // One shared colony AP pool (GDD §13.1) — no more per-domain split.
+        apAvailable: config.apAvailable ?? 0,
         regolith: config.regolith ?? 0,
         werkstoffe: config.werkstoffe ?? 0,
         freeSupply: config.freeSupply ?? 0,
@@ -581,15 +581,10 @@ function colonyHexView(config) {
         // ── State helpers ─────────────────────────────────────────────────────
 
         updateAp(res) {
-            if (res.apNav !== undefined) {
-                if (res.apNav < this.apNav) this.flashApChip('resbar-ap-nav');
-                this.apNav = res.apNav;
-                this.syncResbarAp('resbar-ap-nav', res.apNav);
-            }
-            if (res.apConstruction !== undefined) {
-                if (res.apConstruction < this.apConstruction) this.flashApChip('resbar-ap-build');
-                this.apConstruction = res.apConstruction;
-                this.syncResbarAp('resbar-ap-build', res.apConstruction);
+            if (res.apAvailable !== undefined) {
+                if (res.apAvailable < this.apAvailable) this.flashApChip('resbar-ap');
+                this.apAvailable = res.apAvailable;
+                this.syncResbarAp('resbar-ap', res.apAvailable);
             }
             if (res.regolith !== undefined) {
                 if (res.regolith < this.regolith) this.flashResChip('.res-Rg');
@@ -609,11 +604,11 @@ function colonyHexView(config) {
             if (el) el.textContent = value.toLocaleString('de-DE');
         },
 
-        // Build chip affordability: placing always costs exactly 1 Bau-AP
+        // Build chip affordability: placing always costs exactly 1 AP
         // (see ColonyController::placeBuilding) — full resource/supply cost is
         // paid on placement too, so all three gates must clear up front.
         canAffordBuilding(b) {
-            if (this.apConstruction < 1) return false;
+            if (this.apAvailable < 1) return false;
             if ((b.build_cost?.[3] ?? 0) > this.regolith) return false;
             if ((b.build_cost?.[4] ?? 0) > this.werkstoffe) return false;
             if ((b.supply_cost ?? 0) > this.freeSupply) return false;
