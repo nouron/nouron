@@ -149,12 +149,12 @@ Anlass: Die `supply_cost`-Werte sind gegen eine Wirtschaft kalibriert, in der Re
 
 Kernumbau. `ap_spend` existiert bereits auf `colony_buildings`, `colony_research` und `colony_ships` — die **Projekt-Investition über mehrere Sole funktioniert also schon**, sie ist nur typgebunden.
 
-- [ ] Tests zuerst: ein Pool, Berater aller Domänen zahlen ein, Locks verfallen zum Sol-Wechsel
-- [ ] `PersonellService` entkoppeln — `getTotalActionPoints(type, …)`, `getAvailableActionPoints(type, …)`, `lockActionPoints(type, …)`, `getConstructionPoints`/`getResearchPoints`/`getEconomyPoints`/`getStrategyPoints`, `creditApToType`, `resolveType`
-- [ ] Callsites: `AbstractTechnologyService`, `FleetService`, `BarService`, `HangarService`, `ColonyTileService`
-- [ ] Migration: `advisors.personell_type`-Enum ohne `strategy`; Entscheidung zu `locked_actionpoints.personell_type` (Pool-Trennung entfällt — als Auswertungsmerkmal behalten oder streichen)
-- [ ] `config/game.php`: `ap.base`, `advisor.ap_per_rank`; `config/advisors.php`: `strategist` entfernen
-- [ ] UI: AP-Chips, Ressourcenleiste, Berater-Screen auf einen Pool
+- [x] Tests zuerst: ein Pool, Berater aller Domänen zahlen ein, Locks verfallen zum Sol-Wechsel (siehe Branch feat/ap-pool-consolidation)
+- [x] `PersonellService` entkoppeln — `getTotalActionPoints(type, …)`, `getAvailableActionPoints(type, …)`, `lockActionPoints(type, …)`, `getConstructionPoints`/`getResearchPoints`/`getEconomyPoints`/`getStrategyPoints`, `creditApToType` — umbenannt zu `AdvisorService` und nach `app/Services/` verschoben, alle vier Domänen-Getter entfallen, `$type`-Parameter entfernt (siehe Branch feat/ap-pool-consolidation)
+- [x] Callsites: `AbstractTechnologyService`, `FleetService`, `BarService`, `HangarService`, `ColonyTileService` — `FleetService` existiert nicht mehr; zusätzlich `OnboardingHintService`, Controller-Layer und `MerchantService::creditAp` umgestellt (siehe Branch feat/ap-pool-consolidation)
+- [x] Migration: `advisors.personell_type`-Enum ohne `strategy`; Entscheidung zu `locked_actionpoints.personell_type` — entfällt: Spalte existiert nicht unter diesem Namen, keine Migration nötig (siehe Branch feat/ap-pool-consolidation)
+- [x] `config/game.php`: `ap.base`, `advisor.ap_per_rank`; `config/advisors.php`: `strategist` entfernen (siehe Branch feat/ap-pool-consolidation)
+- [x] UI: AP-Chips, Ressourcenleiste, Berater-Screen auf einen Pool (siehe Branch feat/ap-pool-consolidation)
 
 ### Stufe 3 — Ratenmodell vervollständigen (§13.2–13.3, §13.6)
 
