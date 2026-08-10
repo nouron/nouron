@@ -240,11 +240,8 @@
 
             get apSummary() {
                 if (!this.apData) return '';
-                const parts = [];
-                if (this.apData.construction > 0) parts.push(this.apData.construction + ' Bau-AP');
-                if (this.apData.research > 0) parts.push(this.apData.research + ' Forschungs-AP');
-                if (this.apData.navigation > 0) parts.push(this.apData.navigation + ' Nav-AP');
-                return parts.join(', ');
+
+                return this.apData.total > 0 ? this.apData.total + ' AP' : '';
             },
 
             get headerTitle() {
