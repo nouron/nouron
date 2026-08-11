@@ -120,9 +120,9 @@ class BuildResourceSinkTest extends TestCase
         $rg = $this->colonyRes(self::RES_REGOLITH);
         $wk = $this->colonyRes(self::RES_COMPOUNDS);
 
-        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 120 Rg
+        $this->place(44, 1, 0)->assertOk()->assertJsonPath('ok', true);   // hangar = 95 Rg
 
-        $this->assertSame($rg - 120, $this->colonyRes(self::RES_REGOLITH));
+        $this->assertSame($rg - 95, $this->colonyRes(self::RES_REGOLITH));
         $this->assertSame($wk, $this->colonyRes(self::RES_COMPOUNDS));   // Wk unchanged
     }
 

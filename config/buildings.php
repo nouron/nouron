@@ -134,8 +134,9 @@ return [
         // Werkstoffe aren't reachable this early (Uplink-Station Lv1 +
         // Cantina/merchant, both later). The previous [Rg+Wk] cost made the
         // Analytiker structurally useless for several Sols right after hiring.
-        // 80 → 95 (GDD §13.7, 2026-08-03): Pfad-Parität mit Cantina — die Rampenprobe
-        // rechnet beide Nicht-Hangar-Pfadgebäude mit 95, nur der Hangar-Pfad kostet mehr (120).
+        // 80 → 95 (GDD §13.7, 2026-08-03): Pfad-Parität mit Cantina. Seit GDD-Audit
+        // G4 (2026-08-11) kostet auch der Hangar-Pfad 95 — alle drei Pfadgebäude sind
+        // jetzt preisgleich.
         'build_cost' => [3 => 95],
         'supply_cost' => 8,
         'trust_per_lv' => 0,
@@ -169,10 +170,11 @@ return [
     // AdvisorController::PATH_BUILDINGS.
     'hangar' => [                       // replaces civilianSpaceyard + militarySpaceyard
         'id' => 44,      // ex civilianSpaceyard — 1 hangar = 1 ship slot
-        // 80 → 120 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): the priciest of the three path
-        // buildings on purpose — "die teuerste Pfadwahl wird damit zur echten Entscheidung
-        // statt zur kosmetischen." Path parity via trade-off character, not equal cost.
-        'build_cost' => [3 => 120],
+        // 120 → 95 (GDD Balance-Audit G4, 2026-08-11): all three path buildings now cost
+        // the same 95 Rg — at 120 this was the only one to miss the 5-8-Sole G4 corridor
+        // at the cycle-mean 12.9 Rg/Sol income (9.3 Sole). Path parity via equal cost now
+        // (GDD §4b Paritäts-Anforderung), superseding the 2026-08-03 trade-off rationale.
+        'build_cost' => [3 => 95],
         'supply_cost' => 4,       // low: hangar is a shell; ships add no supply cost (2026-06-08)
         'trust_per_lv' => 0,
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.

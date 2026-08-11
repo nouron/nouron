@@ -604,7 +604,7 @@ class BotStrategy
 
     /**
      * Return the Regolith cost of the cheapest path building not yet placed in
-     * the colony (sciencelab 95 / hangar 120 / bar 95 — from config('buildings')).
+     * the colony (sciencelab/hangar/bar all 95 Rg — from config('buildings')).
      * Returns null when all three path buildings are already placed (no saving needed).
      */
     private static function cheapestPendingPathBuildingCost(BotSession $b): ?int
