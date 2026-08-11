@@ -56,6 +56,16 @@ class BotStrategy
                 ]),
             ],
             [
+                'name' => 'relocate_harvester',
+                'when' => fn (BotSession $b) => self::harvesterRelocateCandidate($b),
+                'do' => fn (BotSession $b, object $tile) => $b->act('relocate_harvester', 'POST', '/colony/building/place', [
+                    'building_id' => BuildingId::Harvester->value,
+                    'instance_id' => 1,
+                    'q' => $tile->q,
+                    'r' => $tile->r,
+                ]),
+            ],
+            [
                 'name' => 'explore_tile',
                 'when' => fn (BotSession $b) => self::exploreCandidate($b),
                 'do' => fn (BotSession $b, object $tile) => $b->act('explore_tile', 'POST', '/colony/tile/explore', [
@@ -257,10 +267,15 @@ class BotStrategy
 
     private static function exploreCandidate(BotSession $b): ?object
     {
+        // No ring cap: harvesterRelocateCandidate() only ever offers already-explored
+        // regolith tiles, so once ring<=2 regolith is exhausted the bot must be able
+        // to explore further out (config('game.colony.explore_cost_per_ring') prices
+        // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
+        // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
+        // storage/logs/playtest/4242-20260811_175942.json).
         $tile = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)
             ->where('is_explored', 0)
-            ->where('ring', '<=', 2)
             ->orderBy('ring')
             ->first();
 
@@ -288,10 +303,14 @@ class BotStrategy
             $available = $b->peek('/colony/buildings/available');
             $buildings = $available['body']['buildings'] ?? [];
 
-            // Prefer a new building type over duplicating an already-placed instanced
-            // one (Housing/Hangar) — otherwise the bot happily re-instances the first
-            // building in id order forever and never reaches the path buildings
-            // (sciencelab/hangar/bar) the third advisor slot depends on.
+            // Sort priority (ascending key = higher priority):
+            //   key[0] = 0 for bioFacility (must be first — ramp gate),
+            //             1 for path buildings (sciencelab/hangar/bar — unlock advisor slots),
+            //             2 for everything else
+            //   key[1] = existing instance count (prefer new building types)
+            $pathIds = [31, 44, 52];       // sciencelab, hangar, bar
+            $bioFacilityId = 41;
+
             $placedCounts = DB::table('colony_buildings')
                 ->where('colony_id', $b->colonyId)
                 ->whereNotNull('tile_x')
@@ -299,7 +318,27 @@ class BotStrategy
                 ->groupBy('building_id')
                 ->pluck('cnt', 'building_id');
 
-            usort($buildings, fn ($a, $c) => ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0));
+            usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId) {
+                $priority = function (array $building) use ($pathIds, $bioFacilityId): int {
+                    $id = (int) $building['building_id'];
+                    if ($id === $bioFacilityId) {
+                        return 0;
+                    }
+                    if (in_array($id, $pathIds, true)) {
+                        return 1;
+                    }
+
+                    return 2;
+                };
+
+                $pa = $priority($a);
+                $pc = $priority($c);
+                if ($pa !== $pc) {
+                    return $pa <=> $pc;
+                }
+
+                return ($placedCounts[$a['building_id']] ?? 0) <=> ($placedCounts[$c['building_id']] ?? 0);
+            });
 
             // Real cap/possession logic lives in ResourcesService — supply is CC level +
             // Housing count + knowledge bonus, not the flat user_resources.supply seed
@@ -344,6 +383,16 @@ class BotStrategy
 
     private static function productionInvestCandidate(BotSession $b): ?object
     {
+        // Hold back Regolith if a path building is still needed — but only
+        // enough for the cheapest unplaced one, not a flat 100.
+        $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+        if ($activeAdvisors < 3) {
+            $needed = self::cheapestPendingPathBuildingCost($b);
+            if ($needed !== null && self::regolith($b) < $needed) {
+                return null;
+            }
+        }
+
         return DB::table('colony_buildings as cb')
             ->join('buildings as bld', 'bld.id', '=', 'cb.building_id')
             ->where('cb.colony_id', $b->colonyId)
@@ -366,6 +415,15 @@ class BotStrategy
      */
     private static function researchCandidate(BotSession $b): ?int
     {
+        // Same Rg-buffer logic as productionInvestCandidate.
+        $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+        if ($activeAdvisors < 3) {
+            $needed = self::cheapestPendingPathBuildingCost($b);
+            if ($needed !== null && self::regolith($b) < $needed) {
+                return null;
+            }
+        }
+
         $sciencelabLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
             ->where('building_id', BuildingId::Sciencelab->value)
@@ -466,6 +524,58 @@ class BotStrategy
         return $credits >= $droneCost ? (int) config('ships.drone.id') : null;
     }
 
+    private static function harvesterRelocateCandidate(BotSession $b): ?object
+    {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('instance_id', 1)
+            ->first();
+
+        if (! $harvester) {
+            return null;
+        }
+
+        // Check if currently on a valid regolith tile with substantial resources remaining (>50)
+        if ($harvester->tile_x !== null && $harvester->tile_y !== null) {
+            $currentTile = DB::table('colony_tiles')
+                ->where('colony_id', $b->colonyId)
+                ->where('q', $harvester->tile_x)
+                ->where('r', $harvester->tile_y)
+                ->first();
+
+            if ($currentTile && str_starts_with($currentTile->tile_type, 'regolith_') && ($currentTile->resource_amount ?? 0) > 50) {
+                return null;
+            }
+        }
+
+        // Find an explored regolith tile with available resources
+        $targetTile = DB::table('colony_tiles')
+            ->where('colony_id', $b->colonyId)
+            ->where('is_explored', 1)
+            ->where('tile_type', 'like', 'regolith_%')
+            ->where('resource_amount', '>', 0)
+            ->orderByDesc('resource_amount')
+            ->first();
+
+        if (! $targetTile) {
+            return null;
+        }
+
+        $qx = $harvester->tile_x ?? 0;
+        $qy = $harvester->tile_y ?? 0;
+        $dx = $targetTile->q - $qx;
+        $dy = $targetTile->r - $qy;
+        $distance = (int) ((abs($dx) + abs($dy) + abs($dx + $dy)) / 2);
+        $apCost = max(1, (int) ceil($distance * (int) config('game.harvester.relocate_ap_per_hex', 2)));
+
+        if (self::availableAp($b) < $apCost) {
+            return null;
+        }
+
+        return $targetTile;
+    }
+
     private static function hasAnyShip(BotSession $b): bool
     {
         return DB::table('colony_ships')->where('colony_id', $b->colonyId)->exists();
@@ -490,5 +600,39 @@ class BotStrategy
     public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
+    }
+
+    /**
+     * Return the Regolith cost of the cheapest path building not yet placed in
+     * the colony (sciencelab 95 / hangar 120 / bar 95 — from config('buildings')).
+     * Returns null when all three path buildings are already placed (no saving needed).
+     */
+    private static function cheapestPendingPathBuildingCost(BotSession $b): ?int
+    {
+        // IDs mirror AdvisorController::PATH_BUILDINGS
+        $pathBuildingIds = [31, 44, 52];
+
+        $placed = DB::table('colony_buildings')
+            ->where('colony_id', $b->colonyId)
+            ->whereIn('building_id', $pathBuildingIds)
+            ->whereNotNull('tile_x')
+            ->pluck('building_id')
+            ->all();
+
+        $unplaced = array_diff($pathBuildingIds, $placed);
+        if (empty($unplaced)) {
+            return null; // All path buildings placed — no Rg buffer needed
+        }
+
+        $buildings = config('buildings');
+        $costs = [];
+        foreach ($buildings as $buildingData) {
+            if (in_array($buildingData['id'] ?? null, $unplaced, true)) {
+                // build_cost is keyed by resource_id; 3 = Regolith
+                $costs[] = (int) ($buildingData['build_cost'][self::RES_REGOLITH] ?? 0);
+            }
+        }
+
+        return empty($costs) ? null : min($costs);
     }
 }
