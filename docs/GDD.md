@@ -2510,9 +2510,9 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 > Der Satz ist beschlossen. Zwei Punkte der ersten Fassung sind zurückgenommen, beide als Folge von §4c:
 >
 > 1. **`decay_rate` um ein Fünftel gesenkt** auf 0,40 / 0,60 / 0,80 / 1,20 — Begründung bei der Klassentabelle unten.
-> 2. **Die Instanz-Preisregel ist zurückgezogen.** Die erste Fassung ließ die zweite und jede weitere Instanz den Level-Up-Preis zahlen; das war eine Reaktion auf den Hangar-Bootstrap-Zirkel unter dem alten, kleinen Sockel. Unter §4c sind Instanzen eine bewusste Designachse und echte Bauwerke — sie zahlen den **vollen Errichtungspreis**, linear. Der Zirkel löst sich von selbst: 120 Rg für den zweiten Hangar sind bei ~20 Rg/Sol netto sechs Sole, kein Blocker mehr.
+> 2. **Die Instanz-Preisregel ist zurückgezogen.** Die erste Fassung ließ die zweite und jede weitere Instanz den Level-Up-Preis zahlen; das war eine Reaktion auf den Hangar-Bootstrap-Zirkel unter dem alten, kleinen Sockel. Unter §4c sind Instanzen eine bewusste Designachse und echte Bauwerke — sie zahlen den **vollen Errichtungspreis**, linear. Der Zirkel löst sich von selbst: ~~120~~ **95** Rg (Preis korrigiert 2026-08-11, s. G4-Audit unten) für den zweiten Hangar sind bei ~20 Rg/Sol netto knapp fünf Sole (95/20 ≈ 4,75), kein Blocker mehr.
 >
-> **Die vier tragenden Zahlen:** Harvester-Frischwert (18 auf `regolith_normal`), Reparatur 1 Rg je SP, die vier `decay_rate`-Klassen, Errichtung 70/95/120 gegen Level-Up flach 25. Alles Übrige — CC-Ausbau ×30, `bar.base_prices`, `compound_import_price`, `mission_supply_run`, `geology`-Kurve, Kenntniskosten, Startbestand — ist Feintuning.
+> **Die vier tragenden Zahlen:** Harvester-Frischwert (18 auf `regolith_normal`), Reparatur 1 Rg je SP, die vier `decay_rate`-Klassen, Errichtung ~~70/95/120~~ → **70 / 95 (alle drei Pfadgebäude, korrigiert 2026-08-11, s. G4-Audit unten)** gegen Level-Up flach 25. Alles Übrige — CC-Ausbau ×30, `bar.base_prices`, `compound_import_price`, `mission_supply_run`, `geology`-Kurve, Kenntniskosten, Startbestand — ist Feintuning.
 >
 > Eine Ausnahme mit Struktur-Charakter: Die **Preisrelation** aus der Knappheitsordnung (§3) ist tragend, auch wenn die konkreten Werte Feintuning sind. Steht der Überschuss teurer als der Mangel, funktioniert der Cantina-Hebel nicht.
 >
@@ -2527,7 +2527,7 @@ Dieses Konzept — "Fog of Information" — ist analog zum Fog of War in der Exp
 > | Ein Pfad hängt sichtbar zurück | den betreffenden **Hebel** anheben | Sockel oder Baukosten — die sind pfadneutral |
 > | Mehr als 4 Sole pro Run an Regolith blockiert (G5) | Startbestand, dann Errichtungspreise | die Hebel — sie greifen zu spät für die frühe Klemme |
 
-> **Nachtrag 2026-08-06 — Sockel-Neuherleitung gegen die 1-Harvester-Baseline, vollständig freigegeben.** Die obige Freigabe vom 2026-08-03 gilt weiterhin für die vier tragenden Zahlen (Harvester-Frischwert, allgemeine Reparatur 1 Rg/SP, `decay_rate`-Klassen, Errichtung 70/95/120 vs. Level-Up 25). Die Owner-Entscheidung vom 2026-08-05 (§4c, „Ein Harvester ist die Baseline") machte den Sockel kleiner (12,9 statt der vormals angenommenen ~20–21,8 Rg/Sol) und riss dadurch zwei Rechnungen dieses Kapitels neu auf: die „Bilanz über den Run" (unten, neu hergeleitet) und die `decay_rate`-Anteilstabelle bei G2. **Beide sind am 2026-08-06 entschieden** (G6 umformuliert, G2-Metrik auf „Sockel + aktiver Pfad-Hebel" umgestellt — Details in der Neuherleitung unten und in G2/G6 der Guard-Rail-Tabelle) — kein Spielwert dieses Kapitels wurde dabei geändert, nur zwei Kennzahlen-Definitionen. Das Kapitel gilt jetzt als vollständig freigegeben.
+> **Nachtrag 2026-08-06 — Sockel-Neuherleitung gegen die 1-Harvester-Baseline, vollständig freigegeben.** Die obige Freigabe vom 2026-08-03 gilt weiterhin für die vier tragenden Zahlen (Harvester-Frischwert, allgemeine Reparatur 1 Rg/SP, `decay_rate`-Klassen, Errichtung ~~70/95/120~~ → **70 / 95 (alle drei Pfadgebäude, korrigiert 2026-08-11, s. G4-Audit unten)** vs. Level-Up 25). Die Owner-Entscheidung vom 2026-08-05 (§4c, „Ein Harvester ist die Baseline") machte den Sockel kleiner (12,9 statt der vormals angenommenen ~20–21,8 Rg/Sol) und riss dadurch zwei Rechnungen dieses Kapitels neu auf: die „Bilanz über den Run" (unten, neu hergeleitet) und die `decay_rate`-Anteilstabelle bei G2. **Beide sind am 2026-08-06 entschieden** (G6 umformuliert, G2-Metrik auf „Sockel + aktiver Pfad-Hebel" umgestellt — Details in der Neuherleitung unten und in G2/G6 der Guard-Rail-Tabelle) — kein Spielwert dieses Kapitels wurde dabei geändert, nur zwei Kennzahlen-Definitionen. Das Kapitel gilt jetzt als vollständig freigegeben.
 
 Von der Designabsicht her hergeleitet statt aus den Bestandswerten fortgeschrieben. Ersetzt die Regolith-Anteile von §13.6.
 
@@ -2540,7 +2540,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | **G1** | **Regolith ist nie bequem und nie tödlich.** Der Bestand schwingt um eine niedrige zweistellige Zahl. Ein wachsender Haufen heißt, die Kolonie ist fertig; eine Null heißt, sie stirbt. Beides beendet die Spannung. |
 | **G2** | **Instandhaltung ist Routine, nicht Krise.** Gemessen am Gesamteinkommen (Sockel + aktiver Pfad-Hebel, nicht Sockel allein — *umgestellt 2026-08-06, Owner-Entscheidung, kein Spielwert geändert*): Sie bindet ~15 % des Einkommens früh und ~40 % bei der Zielkolonie. Unter 10 % ist Verfall Dekoration und die USP fällt weg; über 60 % ist er eine Strafe fürs Bauen. |
 | **G3** | **Vernachlässigung kostet ein Level, nicht den Run.** Ein Level-Down ist in 5–8 Solen aufgeholt, ohne Kaskadenrisiko. |
-| **G4** | **Errichten ist eine Entscheidung, Level-Up ein Schritt.** Eine Errichtung kostet 5–8 Sole Sparen, ein Level-Up 1–2. |
+| **G4** | **Errichten ist eine Entscheidung, Level-Up ein Schritt.** Eine Errichtung [eines Pfadgebäudes] kostet 5–8 Sole Sparen, ein Level-Up 1–2. *(Präzisiert 2026-08-11, Owner-Entscheidung im G4-Audit: gilt für die drei Pfadgebäude Sciencelab/Hangar/Bar, jetzt einheitlich 95 Rg. Alle übrigen Errichtungen — bioFacility als Pflicht-Ramp-Gate vor CC Lv2 (dokumentierte Ausnahme, s. u.) ebenso wie reine Infrastrukturgebäude wie Wohnhabitat, Depot, Krankenstation, Sicherheits-Hub, Tempel, Monument — stehen außerhalb dieses Korridors; ihre Preise sind hier nicht geprüft und folgen anderen Kriterien, siehe Audit-Block unten.)* |
 | **G5** | **Der Spieler soll 2–4 Mal pro Run an Regolith scheitern** — nicht dauernd (Grind), nicht einmal (Gate). |
 | **G6** | **Der Sockel trägt das Überleben, der Pfad-Hebel das Wachstum.** Der Sockel allein trägt eine spielbare, aber unterdimensionierte Kolonie (~57 % der Zielgröße) — genug, um nicht zu scheitern, zu wenig, um die Zielkolonie zu erreichen. Der gewählte Pfad-Hebel schließt die Lücke auf annähernd 100 %, sobald er aktiv genutzt wird. Ein Run ohne jede Pfad-Aktivität ist im aktuellen Design nicht vorgesehen. *(Umformuliert 2026-08-06, Owner-Entscheidung — ersetzt „ohne genutzten Hebel ~70 %", das seit der 1-Instanz-Sockel-Baseline vom 2026-08-05 arithmetisch nicht mehr zutrifft; kein Spielwert geändert, siehe §13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline", Punkt 6.)* |
 | **G7** | **Der Spieler muss im Kopf rechnen können.** „Ich mache 20 pro Sol, das kostet 95, das sind fünf Sole." |
@@ -2556,7 +2556,7 @@ Jede Zahl unten ist auf eine dieser Aussagen zurückführbar. Wo das nicht gelin
 | Harvester-Ertrag | `[8,10,12,12,10,8,6,4]` kumuliert | **Frischwert 24 / 18 / 12** je Tile-Stufe, fallend mit der Erschöpfung (§4c) | G7, `max_level = 1` |
 | `repair.regolith_per_click` | 2 | **1** | G2 + Vereinfachung, s. u. |
 | `decay_rate` | 0,33–2,0 (geerbt) | **4 Klassen: 0,40 / 0,60 / 0,80 / 1,20** | G2, G3, korrigiert nach §4c |
-| Errichtung (Lv0→1) | 40–100 | **70 / 95 / 120** | G4 (5–8 Sole) |
+| Errichtung (Lv0→1) | 40–100 | ~~70 / 95 / 120~~ → **70 (bioFacility, Ramp-Gate-Ausnahme) / 95 (alle drei Pfadgebäude: Sciencelab, Hangar, Bar)** (korrigiert 2026-08-11, Owner-Entscheidung Option 3 im G4-Audit, s. u. — Hangar 120→95 gesenkt, Sciencelab/Bar unverändert) | G4 (5–8 Sole) für die drei Pfadgebäude; bioFacility bewusste Ausnahme (s. u.) |
 | Level-Up | 25 % der Errichtung | **flach 25** | G4 (1–2 Sole) |
 | CC-Ausbau | Ziel-Level × 20 | **× 30** | zentraler Progressionshebel |
 | Instanz 2 und folgende | voller `build_cost` | **unverändert voller `build_cost`** | §4c: Instanzen sind eine bewusste Designachse, keine Level |
@@ -2618,7 +2618,9 @@ Die AP-Seite bleibt unverändert an Σ `decay_rate` gekoppelt (7,9 AP/Sol beim Z
 | 4 | CC Lv2 = 60 → Berater 2 | +16,2 | **40** |
 | 5 | Startschaden reparieren (12 SP) | +16,2 | 44 |
 
-Gleicher Endpunkt wie heute (CC Lv2 an Sol 4), aber mit einem Einkommen, das den Puffer trägt statt ihn zu verzehren. Der in 13.5 als offen markierte Engpass „Sole 8–20" verschwindet. Beim Hangar-Pfad (120 statt 95) endet Sol 4 bei ~15 Rg — knapper, aber nicht negativ; die teuerste Pfadwahl wird damit zur echten Entscheidung statt zur kosmetischen.
+Gleicher Endpunkt wie heute (CC Lv2 an Sol 4), aber mit einem Einkommen, das den Puffer trägt statt ihn zu verzehren. Der in 13.5 als offen markierte Engpass „Sole 8–20" verschwindet.
+
+> **Korrektur 2026-08-11 (G4-Audit, Owner-Entscheidung Option 3):** Der Satz „Beim Hangar-Pfad (120 statt 95) endet Sol 4 bei ~15 Rg — knapper, aber nicht negativ; die teuerste Pfadwahl wird damit zur echten Entscheidung statt zur kosmetischen" ist überholt. Hangar kostet jetzt ebenfalls 95 (s. u.) — alle drei Pfadgebäude sind preislich identisch, die Rampe verläuft für jeden der drei Pfade gleich wie oben für Cantina gezeigt (Sol 2 endet bei 68 Rg, Sol 4 bei 40 Rg); die frühere ~15-Rg-Variante des 120er-Hangar-Pfads entfällt. Die Pfadwahl bleibt eine echte Entscheidung, aber sie unterscheidet sich jetzt ausschließlich über den Hebel-Mechanismus (§4b: `geology` vs. `mission_supply_run` vs. Cantina-Credits-Hebel) und die AP-/Gate-Struktur, nicht mehr über den Regolith-Preis. Das ist eine Vereinfachung, keine Verarmung: die drei Pfade waren nie primär über den Bau-Preis differenziert gedacht (§4b, „Paritäts-Anforderung" — Gleichwertigkeit ist ausdrückliches Designziel, nicht nur Kollateraleffekt).
 
 **Bilanz über den Run — historisch (Stand 2026-08-04, überholt).** Zielkolonie ≈ 1.895 Rg Bedarf (835 Errichtungen + 720 Level-Ups + 100 Zweitinstanz + ~240 Reibung — die 100 Rg sind die korrigierte Zweitinstanz-Zahl aus dem „Stale Zahl"-Fund vom 2026-08-04, ursprünglich fälschlich mit 25 Rg angesetzt). Sockel-Einnahmen bis Sol 80 ≈ 1.363 Rg, unter der damals gültigen 2-Instanzen-Sockelannahme (Sol 1–30 bei 1, Sol 30–80 bei 2 Instanzen). Sockel-Anteil ≈ 72 %, Lücke ≈ 535 Rg ≈ 6,7 Rg/Sol im Mittel. **Überholt durch die Owner-Entscheidung 2026-08-05** (§4c „Ein Harvester ist die Baseline") — die zweite Instanz ist kein Bestandteil der Standard-Zielkolonie mehr. Vollständige Neuherleitung unten.
 
@@ -2714,7 +2716,7 @@ Drei Stellschrauben, falls der Owner die 57,5-%-Untergrenze zu niedrig findet �
 | Option | Wirkung | Kosten |
 |---|---|---|
 | G6 wie oben umformulieren, Zahlen unverändert lassen | keine Balance-Änderung, nur Aussage korrigiert | keine |
-| Zielkolonie verkleinern (weniger Errichtungen/Level-Ups in der Referenzrechnung) | hebt den Sockel-Anteil an, ohne den Sockel selbst zu ändern | reißt die freigegebenen §13.7-Kernzahlen (Errichtung 70/95/120, CC-Ausbau ×30) wieder auf — hohe Kollateralwirkung auf G4/G7 |
+| Zielkolonie verkleinern (weniger Errichtungen/Level-Ups in der Referenzrechnung) | hebt den Sockel-Anteil an, ohne den Sockel selbst zu ändern | reißt die freigegebenen §13.7-Kernzahlen (Errichtung 70/95/120, CC-Ausbau ×30) wieder auf — hohe Kollateralwirkung auf G4/G7 (diese Warnung hat sich am 2026-08-11 in begrenztem Umfang bewahrheitet: Hangar 120→95 im G4-Audit korrigiert, s. u. — betrifft nur einen der drei Werte, nicht CC-Ausbau) |
 | Sockel erneut anheben (z. B. Frischwert/`resource_max` der Erschöpfungskurve) | direktes Gegenmittel | widerspricht der ausdrücklichen 08-05-Entscheidung, den Sockel klein zu halten |
 
 **Empfehlung: erste Option.** Sie ändert keinen einzigen Spielwert, nur die Formulierung von G6 — konsistent mit der Owner-Absicht („ein Harvester soll reichen, ein zweiter ist Bonus"), ohne die am 08-03 freigegebenen Kernzahlen erneut anzufassen.
@@ -2746,6 +2748,8 @@ G7 begründete die Sockelhöhe ursprünglich mit unterscheidbaren Preisklassen (
 
 **Das ist kein dritter Konflikt neben Punkt 7, sondern entschärft sich durch dieselbe Unterscheidung, die §4c bereits trifft: 12,9 ist der Zyklusmittel-Wert über Erschöpfung und Transit, nicht das, was ein Spieler früh im Run tatsächlich sieht.** Ein frisch platzierter Harvester auf `regolith_normal` liefert **18 Rg/Sol** (Frischwert, kein Verfall) — die Sol-1–4-Rampe (oben, „Proben") rechnet korrekt mit diesem Wert, nicht mit 12,9, und bleibt deshalb unverändert gültig: ihr +16,2-Netto-Einkommen ist Frischwert-Einkommen, keine Zahl, die diese Neuherleitung berührt. G4/G7 halten also dort, wo sie im Spielgefühl wirken — in der frühen Errichtungsphase auf frischen Tiles. Sie driften erst im späten Run, wenn Tiles erschöpft sind und Verlegungen den Ertrag auf den Zyklusmittelwert drücken — dort sind längere Sparzeiten ohnehin beabsichtigt (Zielkolonie-Ausbau ist Spätspiel-Arbeit, kein Sol-1–4-Tempo). **Keine Handlungsempfehlung nötig; die Sol-1–4-Rampe-Tabelle bleibt unverändert.**
 
+> **Überholt durch den Audit vom 2026-08-07 und die Owner-Entscheidung vom 2026-08-11.** Die obige Einschätzung „G4/G7 halten früh, driften erst spät" beruhte auf einer einzigen Stichprobe (nur der 120er-Hangar-Preis). Der Audit unten prüfte die volle Matrix (70/95/120 gegen beide Referenzwerte) und fand, dass auch der 70er-bioFacility-Preis am Frischwert unter die Untergrenze fällt (3,9 statt ≥5 Sole) — kein reines Spätspiel-Problem. Die Owner-Entscheidung vom 2026-08-11 (Option 3, s. u.) hat daraufhin den Hangar-Preis von 120 auf 95 gesenkt und die drei Pfadgebäude damit auf einen gemeinsamen Preis vereinheitlicht; bioFacility bleibt bei 70 als bewusst dokumentierte Ausnahme (kein Pfadgebäude, sondern Pflicht-Ramp-Gate vor CC Lv2, s. u.).
+
 ---
 
 ### Für die Owner-Entscheidung
@@ -2767,6 +2771,76 @@ G7 begründete die Sockelhöhe ursprünglich mit unterscheidbaren Preisklassen (
 | `game.bar.*` (Verkaufspreis Organika, Reserve-Untergrenze), `game.merchant.*` (Corvan-Frequenz/Losanzahl unter Direction 1) | **blockiert** — keine Zahl ableitbar, solange die Credits-Bilanz-über-den-Run offen ist | wartet auf Owner-Entscheidung 4 oben |
 | `game.corporate_contact.*` | neu anzulegen (Orin, Weg A) | unverändert bereits aus §4c fällig |
 | `geology_harvester_bonus_per_level`, `mission_supply_run.*` | **unverändert** — ausdrücklich bestätigt, keine Anpassung nötig | Owner-Entscheidung 3 oben |
+| `buildings.php` → `build_cost` (Regolith-Anteil), Hangar (id 44) | **120 → 95** | entschieden + implementiert 2026-08-11, G4-Audit unten (PR #243) |
+
+---
+
+#### Audit: G1, G3, G4, G5, G7 gegen die 12,9-Rg/Sol-Baseline (2026-08-07)
+
+**Status: Audit, Owner-Review ausstehend.** Kein Spielwert geändert. Diese Prüfung rechnet nicht neu her, was in der Neuherleitung oben (Punkte 1–8) bereits freigegeben ist — sie schließt die Lücke, dass dort nur G2/G6 (Punkte 6–7) und G4/G7 in einer einzigen Stichprobe (Punkt 8, nur die 120er-Errichtung) geprüft wurden. G1, G3 und G5 waren seit der 08-05-Baseline-Änderung noch nie explizit gegen die neuen Zahlen gerechnet worden. Geprüft gegen die beiden Referenz-Einkommen aus der Neuherleitung: Frischwert 18 Rg/Sol (`regolith_normal`, frisch platzierter Harvester) und Zyklusmittel 12,9 Rg/Sol (Sockel, Spätspiel), sowie 24,9 Rg/Sol (Sockel + reifer Pfad-A-Hebel, Referenzwert aus der G2-Tabelle).
+
+**G3 — verifiziert, hält (a).**
+
+Aus der bereits freigegebenen Klassentabelle (`decay_rate = max_status_points / Sole_bis_Level_Down`) folgt für alle vier Klassen derselbe `max_status_points`-Wert, ohne dass Zeile 1217 nötig ist: Robust 0,40 × 50 = 20, Standard 0,60 × 33 ≈ 20, Beansprucht 0,80 × 25 = 20, Fragil 1,20 × 17 ≈ 20. Ein vollständiges Level-Down-Aufholen kostet damit **20 Rg + 20 AP** (1 Rg + 1 AP je SP, s. o.).
+
+| Szenario | Rg-Seite | AP-Seite (Pool ~22, Instandhaltung 7,9–10,2 AP/Sol, s. Punkt 7) |
+|---|---|---|
+| Sockel-only, Spätspiel (12,9 − 10,2 Instandhaltung = 2,7 Rg/Sol netto) | 20 / 2,7 ≈ **7,4 Sole** | 20 / (22 − 10,2) ≈ 1,7 Sole |
+| Sockel + Pfad-Hebel aktiv (24,9 − 10,2 = 14,7 Rg/Sol netto) | 20 / 14,7 ≈ **1,4 Sole** | dito |
+
+Beide Fälle liegen innerhalb des 5–8-Sole-Korridors — auch der pessimistische Sockel-only-Fall (7,4 von 5–8), wenn auch am oberen Rand. G3 war nicht Teil der 08-06-Prüfung, hält aber unter Nachrechnung. Keine Korrektur nötig.
+
+> ✅ **G4 — entschieden (Owner, 2026-08-11): Option 3, Errichtungspreise neu justiert.**
+>
+> §13.7 Punkt 8 hatte nur eine Stichprobe geprüft (Errichtung 120 bei 12,9 Rg/Sol → 9,3 Sole, über der Obergrenze) und daraus geschlossen, G4 „hält früh, driftet erst spät". Das galt nicht für die volle Matrix:
+>
+> | Errichtung | bei Frischwert 18 Rg/Sol | bei Zyklusmittel 12,9 Rg/Sol |
+> |---|---|---|
+> | 70 | 3,9 Sole — unter der Untergrenze 5 | 5,4 ✓ |
+> | 95 | 5,3 ✓ | 7,4 ✓ |
+> | 120 | 6,7 ✓ | 9,3 Sole — über der Obergrenze 8 |
+>
+> Der mathematische Schnittbereich, in dem ein Preis bei **beiden** Referenzwerten gleichzeitig im 5–8-Sole-Korridor liegt, ist eng: `preis/18 ∈ [5,8]` verlangt `preis ∈ [90,144]`, `preis/12,9 ∈ [5,8]` verlangt `preis ∈ [64,5; 103,2]` — Schnittmenge `[90; 103]`. Drei spürbar unterscheidbare Preisklassen (G7) hineinzuzwingen hätte den Effekt, dass die Differenzen zwischen den Klassen (~5–13 Rg) unter die Rauschgrenze fallen, die G7 selbst benennt: ein vollständiges Level-Down-Aufholen kostet 20 Rg (G3), Preisklassen, die enger als das auseinanderliegen, verschwinden im Reparaturrauschen — dieselbe Formulierung, die G7 (Zeile 2550) für den alten 8-Rg/Sol-Fall verwendet.
+>
+> **Die eigentliche Auflösung kam nicht aus der Preis-Arithmetik, sondern aus einer Kategorien-Korrektur:** Die 70/95/120-Tabelle vermischte zwei unterschiedliche Gebäudekategorien. Nur Sciencelab (31), Hangar (44) und Bar (52) sind „die drei Pfadgebäude" im Sinn von §4 („Pfadwahl ab Sol 3", Zeile 366) und §4b — bioFacility/Agrardom (41) ist **kein** Pfadgebäude, sondern das Pflicht-Ramp-Gate vor CC Lv2 (Zeile 353: „**Pflichtgebäude vor CC Lv2**"), zuständig für die Nahrungssicherheits-Dringlichkeit (§3, Organika-Rennen), nicht für die Pfadwahl-Abwägung. G4 als „Preisklassen-Spreizung, die kopfrechenbar bleiben muss" (G7) war implizit nur gegen die drei tatsächlich gegeneinander abzuwägenden Pfadgebäude gedacht — bioFacility steht nicht zur Wahl, es ist obligatorisch und früh, sein Preis muss nicht gegen die anderen beiden differenzierbar sein.
+>
+> **Beschluss:**
+> - **Hangar (44): 120 → 95.** Damit kosten alle drei Pfadgebäude identisch 95 Rg. Rechnung unverändert gültig für alle drei: 95/18 ≈ 5,3 Sole, 95/12,9 ≈ 7,4 Sole — beide klar innerhalb [5,8], kein Rand mehr. Die Preisgleichheit ist kein Verlust an Entscheidungstiefe: §4b („Paritäts-Anforderung", Zeile 713) verlangt ausdrücklich, dass die drei Pfade gleichwertig sind — Gleichpreisigkeit ist die konsequente Umsetzung dieser bereits bestehenden Vorgabe, nicht ein neuer Kompromiss. Die Pfade unterscheiden sich weiterhin über ihren Hebel-Mechanismus (`geology` vs. `mission_supply_run` vs. Cantina-Credits-Hebel, §4b) und ihre AP-/Gate-Struktur — nur nicht mehr über den Regolith-Bau-Preis.
+> - **bioFacility (41): 70, unverändert — dokumentierte Ausnahme, nicht Teil des G4-Korridors, aber nur für die erste Instanz volle Absicht.** Der Preis bleibt außerhalb von [5,8] am Frischwert (3,9 Sole) und ist das für die **erste** Instanz absichtlich: bioFacility ist das erste Gebäude nach CC Lv1 + Harvester Lv1 (Pflichtgebäude vor CC Lv2, Zeile 353), muss unter Zeitdruck (Nahrungssicherheit) schnell erreichbar sein, und ist zu diesem Zeitpunkt keine Abwägungsentscheidung zwischen mehreren Optionen. bioFacility ist aber laut §4c/Zeile 800 eine **Instanz** wie Harvester — weitere Domes werden bei Bedarf mittel- und spätspielig nachgebaut, zum vollen `build_cost` (Zeile 2570: „voller Errichtungspreis, linear" gilt für alle instanzierten Gebäude außer Harvester). Für diese späteren Instanzen ist das relevante Einkommen ohnehin näher am Zyklusmittel als am Frischwert eines Sol-1-Harvesters — dort liegt 70/12,9 ≈ 5,4 Sole sauber im Korridor. Die Ausnahme gilt also präzise für den Zeitdruck-Sonderfall „erste Instanz, früh im Run", nicht für bioFacility als Preisklasse insgesamt.
+>
+> **Verworfen:** Option 1 (Korridor als reinen Referenzfall der mittleren Klasse umdeuten) und Option 2 (Korridor pauschal auf 4–10 Sole aufweiten) sind mit der Kategorien-Korrektur hinfällig — es gibt jetzt keine „Matrix aus drei Klassen" mehr, gegen die diese Optionen hätten abwägen müssen, sondern eine (die drei Pfadgebäude, jetzt bei 95) plus eine bewusst außerhalb stehende Ausnahme (bioFacility).
+>
+> **Ergänzung der Guard-Rail-Formulierung von G4 selbst** (Zeile 2543): *„Eine Errichtung [eines Pfadgebäudes] kostet 5–8 Sole Sparen, ein Level-Up 1–2. bioFacility/Agrardom ist als Pflicht-Ramp-Gate vor CC Lv2 von diesem Korridor ausdrücklich ausgenommen — es ist kein Pfadgebäude und steht nicht zur Abwägung."*
+
+**G7 — durch die G4-Entscheidung entschärft; Formulierungskorrektur weiterhin empfohlen (b), keine Zahlenänderung.**
+
+Das Beispiel „Ich mache 20 pro Sol, das kostet 95, das sind fünf Sole" verwendet weiterhin den literalen Wert 20 — weder Frischwert (18) noch Zyklusmittel (12,9) treffen ihn exakt, bleibt aber nach der G4-Entscheidung (2026-08-11) sogar treffender als zuvor: **95 ist jetzt der Preis aller drei Pfadgebäude**, nicht mehr nur der Cantina-Preis einer Drei-Klassen-Spreizung. Die Substanz von G7 (Preisklassen bleiben unterscheidbar) betrifft nach der Korrektur nur noch die Abgrenzung zwischen den Pfadgebäuden (95, alle drei identisch — keine Spreizung mehr nötig, da Preisgleichheit hier gewollt ist, s. G4-Audit oben) und der bioFacility-Ausnahme (70, kategorisch verschieden, kein Vergleich mit den Pfadgebäuden nötig). Das alte Rauschgrenzen-Argument (Zeile 2550, „der Unterschied zwischen einem 25er und einem 30er Gebäude verschwindet im Reparaturrauschen") betraf explizit den Fall enger, aber ungewollter Preisnähe zwischen tatsächlich zur Wahl stehenden Alternativen — bei 95 = 95 = 95 ist das kein Rauschen, sondern die beabsichtigte Aussage.
+
+Kein Vorschlag, 20 durch 18 zu ersetzen: 95/18 ≈ 5,3 ist schlechteres Kopfrechnen als 95/20 = 4,75 ≈ 5 — und G7s Kernaussage ist gerade, dass Kopfrechnen einfach bleiben muss. Ein exakterer, aber unrunderer Wert würde die Illustration der behaupteten Eigenschaft selbst schwächen. Vorschlag stattdessen: das Beispiel als illustrativen Platzhalter kennzeichnen und die tatsächlichen Referenzwerte danebenstellen, damit niemand „20" künftig für eine reale, aktuelle Sockelzahl hält:
+
+> **G7 (Vorschlag, nur Formulierung):** *Der Spieler muss im Kopf rechnen können. „Ich mache 20 pro Sol, das kostet 95, das sind fünf Sole." (Illustrativer Platzhalter für runde Kopfrechenzahlen, kein Sockel-Live-Wert — die tatsächlichen Referenzwerte sind Frischwert 18 Rg/Sol bzw. Zyklusmittel 12,9 Rg/Sol, siehe §13.7. 95 ist seit der G4-Entscheidung 2026-08-11 zudem der einheitliche Preis aller drei Pfadgebäude, nicht mehr nur einer von drei Klassen.)*
+
+**G1 — hält (a), mit Abhängigkeitsvermerk.**
+
+G1 beschreibt den Bestand, nicht die Einkommensrate, und „nie tödlich" ist in der Neuherleitung (Punkt 5, dritter Punkt) für den Sockel-only-Fall bereits ausdrücklich bestätigt. Ergänzung für die Dokumentation: Im Sockel-only-Spätspielfall (2,7 Rg/Sol netto nach Instandhaltung, s. G3-Rechnung oben) „schwingt" der Bestand nicht mehr um eine niedrige zweistellige Zahl, sondern kriecht nur noch langsam — G1 erbt damit dieselbe Hebel-aktiv-Prämisse, gegen die G2 und G6 bereits umformuliert wurden. Kein eigener Korrekturbedarf, nur derselbe Vorbehalt wie dort.
+
+**G5 — unverändert (a), rein qualitative Pacing-Absicht ohne eigene Herleitung.**
+
+Es gibt keine quantitative Herleitung für „2–4 Mal pro Run scheitern" im GDD, die die neue Baseline widerlegen oder bestätigen könnte — insofern nichts zu korrigieren. Zwei Anmerkungen zur Einordnung: Erstens ist G5 nicht folgenlos unquantifiziert — Zeile 2526 gibt ihr einen playtest-beobachtbaren Trigger („mehr als 4 Sole pro Run blockiert") und eine benannte Stellschraube (Startbestand, dann Errichtungspreise), ist also in der Praxis falsifizierbar. Zweitens **trägt** G5 in der bereits freigegebenen Neuherleitung bereits Gewicht als quantitatives Toleranzbudget: Punkt 5, erster Aufzählungspunkt, rechnet die verbleibende 15-%-Lücke bei reinem Pfad-A-Einsatz ausdrücklich „innerhalb der Toleranz, die G5 ohnehin vorsieht" gegen. Eine unquantifizierte Leitplanke trägt hier bereits eine bezifferte Schlussfolgerung — das ist kein Fehler, aber erwähnenswert, falls G5 später selbst beziffert werden soll.
+
+**Für die Owner-Entscheidung (Audit):**
+
+1. **G3** — keine Entscheidung nötig, Nachrechnung bestätigt den 5–8-Sole-Korridor (Randfall 7,4 Sole im Sockel-only-Spätspiel).
+2. **G4** — entschieden UND implementiert (2026-08-11, Option 3, PR #243): Hangar 120→95 gesenkt, alle drei Pfadgebäude jetzt einheitlich 95 Rg; bioFacility bleibt bei 70 als dokumentierte Ausnahme (kein Pfadgebäude). Details und Begründung siehe Audit-Block oben. `config/buildings.php` + betroffener Test (`BuildResourceSinkTest`) angepasst, CHANGELOG-Eintrag vorhanden. **Weiterhin offen, bewusst nicht Teil dieser PR:** `app/Console/Commands/ResetPlayer.php` (Szenario-Kommentare referenzieren bereits vor diesem Fix einen veralteten 80-Rg-Wert, nicht 120 — eigenständige Altlast) und die 835-Rg-Zielkolonie-Bedarfskette (Punkt 1–4 der Neuherleitung oben, s. Folgepunkt unten). **Kollateraleffekt mitgezogen (Owner, 2026-08-11):** Hangar (`supply_cost=4`) war vor der Preisänderung durch den höheren Baupreis (120) teilweise gegen Sciencelab (`supply_cost=8`) und Bar (`supply_cost=6`) ausbalanciert — bei gleichem Baupreis (95) wäre Hangar sonst auf beiden Achsen der günstigste der drei Pfade gewesen. Provisorisch behoben, um weiter playtesten zu können: `supply_cost` aller drei Pfadgebäude auf **6** vereinheitlicht (Sciencelab 8→6, Hangar 4→6, Bar unverändert 6). Keine vollständige Neuherleitung — reine Testkonvenienz, bei Bedarf eigener, späterer Balance-Punkt. `php artisan game:sync-config` in der Dev-DB ausgeführt (dabei fiel auf: die Dev-DB war seit dem 08-03-Rebalancing insgesamt nicht gesynct — `decay_rate`/`build_cost` mehrerer weiterer Gebäude+Schiffe waren veraltet, mit synchronisiert, unabhängig von G4).
+3. **G7** — Formulierungsvorschlag oben zur Freigabe, kein Spielwert betroffen.
+4. **G1** — keine Entscheidung nötig, nur Kenntnisnahme des Hebel-aktiv-Vorbehalts (analog G2/G6).
+5. **G5** — keine Entscheidung nötig, nur Kenntnisnahme, dass die Leitplanke bereits als Toleranzbudget in Punkt 5 verwendet wird, ohne selbst hergeleitet zu sein.
+
+**Rückwirkungsprüfung der G4-Entscheidung (2026-08-11) auf G3/G6/G2:**
+
+- **G3 — nicht betroffen.** Die Level-Down-Aufholrechnung (oben, „G3 — verifiziert, hält") hängt an `decay_rate × Sole_bis_Level_Down = max_status_points` (20 Rg + 20 AP je volles Level) — keine Errichtungspreis-Größe fließt dort ein. Einzige indirekte Berührung: Zeile 2528 nennt Errichtungspreise als Stellschraube für G5 (nicht G3), falls „mehr als 4 Sole pro Run an Regolith blockiert" beobachtet wird — die G5-Sensitivität verschiebt sich geringfügig (ein Pfadgebäude ist jetzt nie teurer als 95 statt bis zu 120), das schwächt eher ein mögliches G5-Risiko am oberen Rand, verschärft keins.
+- **G6/G2 — 835-Rg-Zielkolonie-Bedarfskette leicht verschoben, nicht neu hergeleitet.** Die Neuherleitung oben (Punkt 1–4) rechnet mit „835 Rg (Errichtungen)" als Summe über den Gebäude-/Level-Katalog der Zielkolonie. Diese Summe enthält die Hangar-Errichtung(en) zum alten Preis (120); mit 95 sinkt sie um 25 Rg je Hangar-Instanz in der Zielkolonie. Die genaue Instanzzahl pro Preisklasse ist aus dem GDD nicht rekonstruierbar (dieselbe Lücke, die Zeile 2741 für die Σ-`decay_rate`-Tabelle bereits dokumentiert) — die Richtung ist eindeutig (Bedarf sinkt leicht, Sockel-Anteil 57,5 % steigt leicht, reife Hebelhöhe 14,1 Rg/Sol sinkt leicht), die neue Größenordnung nicht. **Offener Folgepunkt, nicht Teil dieser Freigabe:** 835/1.795/57,5 %/763/14,1 in der Neuherleitung sowie die Σ-`decay_rate`-Anteilstabelle bei G2 (falls sie Hangar-Errichtungskosten referenziert, was sie aktuell nicht direkt tut — sie rechnet über `decay_rate`, nicht über `build_cost`) bei Gelegenheit mit dem 95er-Hangar-Preis neu rechnen. Da die Verschiebung strukturell begünstigend ist (kleinerer Bedarf, größerer Sockel-Anteil), ist keine Dringlichkeit gegeben.
+- **Sol-1–4-Rampe-Tabelle (oben, „Proben")** — bereits im Fließtext direkt nach der Tabelle korrigiert (s. o.): Hangar-Pfad läuft jetzt identisch zum dort gezeigten Cantina-Beispiel (95, Sol 4 bei 40 Rg statt vormals ~15 Rg beim 120er-Pfad).
 
 ---
 
@@ -3724,7 +3798,7 @@ Damit ist die Onboarding-Budgetrechnung (`gdd/onboarding.md` §16.5) korrekt und
 | Werkstoffe bleiben als Ressource | §3 |
 | Knappheitsordnung Regolith < Organika < Werkstoffe | §3 |
 | AP-Struktur inkl. `ap.base = 12` (freigegeben 2026-08-03) | §13.6 |
-| Regolith-Zahlensatz: Harvester-Frischwert, Reparatur 1 Rg/SP, Errichtung 70/95/120, Level-Up 25 (freigegeben 2026-08-03) — `decay_rate` 0,40/0,60/0,80/1,20 dagegen **vorläufig**, kollidiert unter der neuen 1-Instanz-Sockel-Baseline mit der G2-60-%-Obergrenze (§13.7 Punkt 7, Owner-Entscheidung ausstehend) | §13.7 |
+| Regolith-Zahlensatz: Harvester-Frischwert, Reparatur 1 Rg/SP, Errichtung ~~70/95/120~~ → 70 (bioFacility, Ausnahme) / 95 (alle drei Pfadgebäude, korrigiert 2026-08-11), Level-Up 25 (freigegeben 2026-08-03) — `decay_rate` 0,40/0,60/0,80/1,20 dagegen **vorläufig**, kollidiert unter der neuen 1-Instanz-Sockel-Baseline mit der G2-60-%-Obergrenze (§13.7 Punkt 7, Owner-Entscheidung ausstehend) | §13.7 |
 | `max_instances` als eigenes Feld neben `max_level` | §4c |
 
 Alles andere ist verhandelbar. Insbesondere gilt das für den Zahlenvorschlag in §13.6 — er ist gegen die heutigen Werte gerechnet und teilt damit deren Unsicherheit.
