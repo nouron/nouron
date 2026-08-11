@@ -138,7 +138,9 @@ return [
         // G4 (2026-08-11) kostet auch der Hangar-Pfad 95 — alle drei Pfadgebäude sind
         // jetzt preisgleich.
         'build_cost' => [3 => 95],
-        'supply_cost' => 8,
+        // 8 → 6 (Owner, 2026-08-11, provisorisch): gleicher supply_cost wie Hangar/Bar,
+        // s. Kommentar bei Hangar. Testkonvenienz, keine vollständige Neuherleitung.
+        'supply_cost' => 6,
         'trust_per_lv' => 0,
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
@@ -175,7 +177,11 @@ return [
         // at the cycle-mean 12.9 Rg/Sol income (9.3 Sole). Path parity via equal cost now
         // (GDD §4b Paritäts-Anforderung), superseding the 2026-08-03 trade-off rationale.
         'build_cost' => [3 => 95],
-        'supply_cost' => 4,       // low: hangar is a shell; ships add no supply cost (2026-06-08)
+        // 4 → 6 (Owner, 2026-08-11, provisorisch): gleicher supply_cost wie Sciencelab/Bar,
+        // damit alle drei Pfadgebäude auch hier gleichauf sind für weitere Playtests —
+        // löst den G4-Fix-Kollateraleffekt (Hangar war sonst auf beiden Achsen günstigster
+        // Pfad). Keine vollständige Neuherleitung, nur Testkonvenienz.
+        'supply_cost' => 6,
         'trust_per_lv' => 0,
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
@@ -222,7 +228,9 @@ return [
         // 70 → 95 (GDD §13.7 Sol-1-4-Rampe, 2026-08-03): Pfad-Parität mit Sciencelab —
         // s. Kommentar dort.
         'build_cost' => [3 => 95],
-        'supply_cost' => 6,          // raised from 4 — balanced by trust_per_lv bonus
+        // 6 (unverändert seit 2026-06-28) — jetzt zugleich der gemeinsame supply_cost
+        // aller drei Pfadgebäude (Owner, 2026-08-11, provisorisch, s. Hangar/Sciencelab).
+        'supply_cost' => 6,
         'trust_per_lv' => 2,       // social hub — leisure in an otherwise bleak colony life
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
