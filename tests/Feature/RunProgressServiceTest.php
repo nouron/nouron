@@ -546,7 +546,7 @@ class RunProgressServiceTest extends TestCase
     {
         $tickLimit = (int) config('game.run.tick_limit', 100);
 
-        $run = $this->makeRun(['current_tick' => $tickLimit]);
+        $run = $this->makeRun(['current_tick' => $tickLimit, 'phase' => 2]);
 
         // Trust at a safe level so it does not trigger trust_collapse first
         $this->setTrust(50);
@@ -565,6 +565,42 @@ class RunProgressServiceTest extends TestCase
         $result = $this->service->checkFailStates($run);
 
         $this->assertNull($result, 'Must return null when neither fail condition is active');
+    }
+
+    public function test_check_fail_states_returns_phase1_deadline_when_phase1_incomplete_at_deadline_sol(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol, 'phase' => 1]);
+
+        $this->setTrust(50); // safe, doesn't trigger trust_collapse first
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertEquals('phase1_deadline', $result, 'Must return phase1_deadline when still in Phase 1 at the deadline Sol');
+    }
+
+    public function test_check_fail_states_does_not_return_phase1_deadline_before_deadline_sol(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol - 1, 'phase' => 1]);
+
+        $this->setTrust(50);
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertNull($result, 'Must not fail one Sol before the deadline');
+    }
+
+    public function test_check_fail_states_does_not_return_phase1_deadline_when_already_phase2(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol + 5, 'phase' => 2]);
+
+        $this->setTrust(50);
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertNull($result, 'Must not apply the Phase-1 deadline once Phase 2 has started');
     }
 
     // ── endRun ────────────────────────────────────────────────────────────────

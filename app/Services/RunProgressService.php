@@ -561,9 +561,10 @@ class RunProgressService
      * Returns the fail reason key (for endRun()) or null if the run continues.
      *
      * Fail states checked:
-     *  trust_collapse — trust value < trust_fail_threshold (instant fail).
-     *  nexus_debt     — nexus_debt > nexus_debt_fail_threshold (checked here as secondary path).
-     *  time_limit     — current_tick >= tick_limit.
+     *  trust_collapse   — trust value < trust_fail_threshold (instant fail).
+     *  nexus_debt       — nexus_debt > nexus_debt_fail_threshold (checked here as secondary path).
+     *  phase1_deadline  — still in Phase 1 at current_tick >= phase1_deadline_sol (instant fail).
+     *  time_limit       — current_tick >= tick_limit.
      */
     public function checkFailStates(Run $run): ?string
     {
@@ -580,6 +581,10 @@ class RunProgressService
 
         if (($run->nexus_debt ?? 0) > $this->nexusDebtFailThreshold()) {
             return 'nexus_debt';
+        }
+
+        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 30)) {
+            return 'phase1_deadline';
         }
 
         if ($run->current_tick >= $run->getTickLimit()) {
