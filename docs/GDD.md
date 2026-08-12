@@ -3523,7 +3523,7 @@ Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird.
 
 ### 18.2 Fail States
 
-Drei Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Objective-Update (damit ein Sieg auf demselben Tick immer Vorrang vor einem gleichzeitigen Fail State hat). Kanonische Implementierung: `RunProgressService::checkFailStates()`.
+Vier Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Objective-Update (damit ein Sieg auf demselben Tick immer Vorrang vor einem gleichzeitigen Fail State hat). Kanonische Implementierung: `RunProgressService::checkFailStates()`. Der vierte (Phase-1-Fristbruch) kann nur in Phase 1 auftreten — sobald Phase 2 erreicht ist, greifen ausschließlich die anderen drei.
 
 #### Fail State 1 — Vertrauenskollaps
 
@@ -3583,6 +3583,27 @@ Begründung gegen eine Streak-Mechanikverzögerung (wie in §15 ursprünglich sk
 | tick_limit (Sol 100) | Fail State — Run endet |
 
 **Narrativer Ausgang:** "Fristablauf. Die Konzession wurde nicht verlängert."
+
+---
+
+#### Fail State 4 — Phase-1-Fristbruch
+
+**Bedingung:** `run.phase === 1 && current_tick >= config('game.run.phase1_deadline_sol')` → Standardwert **Sol 30**
+
+**Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
+
+Owner-Vorgabe 2026-08-12: Phase 1 soll im Normalfall Sol 15-20 abgeschlossen sein, spätestens Sol 30. Datenbasis: PlaytestBot-Auswertung (PR #244, mehrere Seeds/Reruns) zeigte Phase 1 aktuell frühestens Sol 55-65 abgeschlossen — deutlich außerhalb des Zielkorridors. Dieser Fail State macht die Deadline spielmechanisch verbindlich; die zugehörige Rebalancierung (Harvester-Ertrag u.a.), die Sol 15-20 überhaupt erreichbar macht, ist ein separater, größerer Auftrag (Anhang A.4, "Phase-1-Pacing auf Sol-15-20-Ziel neu herleiten").
+
+**Warnstufen (INNN):**
+
+| Sol | Maßnahme |
+|-----|---------|
+| Sol 22 (`config('game.run.phase1_warning_sol')`) | INNN-Warnung von Nexus, sofern Phase 1 noch nicht abgeschlossen — einmalig pro Run |
+| Sol 30 | Fail State — Run endet sofort |
+
+Vollständiges Design: `docs/superpowers/specs/2026-08-12-phase1-sol30-deadline-design.md`.
+
+**Narrativer Ausgang:** "Die Stabilisierungsphase wurde nicht rechtzeitig abgeschlossen. Nexus zieht die Konzession mit sofortiger Wirkung."
 
 ---
 
