@@ -513,6 +513,7 @@ class SolReportService
                 'trust_collapse' => 'run.run_failed_trust',
                 'time_limit' => 'run.run_failed_time',
                 'nexus_debt' => 'run.run_failed_nexus_debt',
+                'phase1_deadline' => 'run.run_failed_phase1_deadline',
                 default => 'colony.sol_report_finale_lose_body',
             };
 
