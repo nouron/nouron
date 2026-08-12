@@ -615,6 +615,16 @@ class BotStrategy
             return null;
         }
 
+        // Weg B (salvage) carries no CC-Lv3 gate of its own (HangarService::dispatchShip
+        // only checks instance count + entitlement) — unlike Weg A, where
+        // CorporateContactService::gatesSatisfied already requires CC-Lv3 before the
+        // offer appears. Server still enforces it here (ColonyController::placeBuilding),
+        // so without this check a salvage-earned entitlement before CC-3 would retry
+        // and fail every Sol (qa-tester review PR #244).
+        if (self::ccLevel($b) < 3) {
+            return null;
+        }
+
         return DB::table('colony_tiles as ct')
             ->where('ct.colony_id', $b->colonyId)
             ->where('ct.is_explored', 1)
@@ -670,11 +680,19 @@ class BotStrategy
             return null;
         }
 
+        // Same min-SP floor as dispatchCandidate() (qa-tester review PR #244: this rule
+        // was missing it — a worn docked ship would otherwise match every Sol and fail
+        // every Sol, masking real ship/ruin-availability rarity behind a self-inflicted
+        // rejection loop).
+        $shipMaxStatus = 20; // HangarService::SHIP_MAX_STATUS — not exposed, mirrored here
+        $minSp = $shipMaxStatus * (float) config('missions.dispatch_min_sp_pct', 0.25);
+
         $eligibleShipIds = [(int) config('ships.freighter.id'), (int) config('ships.corvette.id')];
         $ship = DB::table('colony_ships')
             ->where('colony_id', $b->colonyId)
             ->where('ship_state', 'docked')
             ->whereIn('ship_id', $eligibleShipIds)
+            ->where('status_points', '>=', $minSp)
             ->first();
         if ($ship === null) {
             return null;
@@ -726,13 +744,24 @@ class BotStrategy
             }
         }
 
-        // Find an explored regolith tile with available resources
-        $targetTile = DB::table('colony_tiles')
-            ->where('colony_id', $b->colonyId)
-            ->where('is_explored', 1)
-            ->where('tile_type', 'like', 'regolith_%')
-            ->where('resource_amount', '>', 0)
-            ->orderByDesc('resource_amount')
+        // Find an explored, unbuilt regolith tile with available resources (qa-tester
+        // review PR #244: same missing-occupied-check bug as harvesterInstance2Candidate
+        // had — orderByDesc('resource_amount') often picked an already-built tile,
+        // e.g. the harvester's own current one, wasting several Sols of tile_occupied
+        // rejections before landing on a free one by chance).
+        $targetTile = DB::table('colony_tiles as ct')
+            ->where('ct.colony_id', $b->colonyId)
+            ->where('ct.is_explored', 1)
+            ->where('ct.tile_type', 'like', 'regolith_%')
+            ->where('ct.resource_amount', '>', 0)
+            ->whereNotExists(function ($query) use ($b) {
+                $query->select(DB::raw(1))
+                    ->from('colony_buildings as cb')
+                    ->where('cb.colony_id', $b->colonyId)
+                    ->whereColumn('cb.tile_x', 'ct.q')
+                    ->whereColumn('cb.tile_y', 'ct.r');
+            })
+            ->orderByDesc('ct.resource_amount')
             ->first();
 
         if (! $targetTile) {
