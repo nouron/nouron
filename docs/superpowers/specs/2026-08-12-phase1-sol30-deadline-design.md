@@ -100,7 +100,7 @@ Kein `eventAlreadyFired`-Sol-Exakt-Check wie bei `maybeFireSol30Warning()` (dort
 - Content-Texte (Nexus-Briefing-Ergänzung, Warnungs-INNN-Text, Game-Over-Screen-Text) — `content-writer`, nach GDD-Freigabe.
 - UI (Countdown-Anzeige o. ä.) — falls gewünscht, eigener `ui-specialist`-Folgeauftrag, hier nicht spezifiziert.
 
-## Offene Fragen für die Owner-Freigabe
+## Freigabe (Owner, 2026-08-12)
 
-1. `phase1_warning_sol=22` als Default — passt die Zahl (grob 2/3 der Deadline), oder anderer Wert?
-2. Soll `phase1_deadline` als Fail-Reason einen eigenen, wahrnehmbar anderen Game-Over-Screen-Ton bekommen (im Sinne von "Nexus zieht die Reißleine") als die bestehenden Fails, oder reicht generische Game-Over-Behandlung? (Reine Content-Frage, keine Logik-Frage — nur für Scope-Klarheit hier vermerkt.)
+1. `phase1_warning_sol=22` als Default — **bestätigt**.
+2. `phase1_deadline` bekommt einen eigenen, wahrnehmbar anderen Game-Over-Ton ("Nexus zieht die Reißleine") — **bestätigt**. Reine Content-Frage (Run-Ende-Screen-Text je nach `fail_reason`, `content-writer`-Scope), keine zusätzliche Logik nötig — `endRun()` persistiert `fail_reason` bereits, das Blade-Template kann darauf verzweigen.
