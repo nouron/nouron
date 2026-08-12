@@ -1316,6 +1316,69 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals(1, $count, 'nexus_warning_sol50 must only be inserted once per run');
     }
 
+    // ── checkPhase1DeadlineWarnings ─────────────────────────────────────────
+
+    public function test_phase1_deadline_warning_fires_at_warning_sol_when_still_phase1(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_phase1_warning must fire once current_tick reaches phase1_warning_sol while still in Phase 1');
+    }
+
+    public function test_phase1_deadline_warning_does_not_fire_before_warning_sol(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol - 1, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_phase1_warning must not fire before phase1_warning_sol');
+    }
+
+    public function test_phase1_deadline_warning_does_not_fire_once_phase2(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol + 5, 'phase' => 2, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_phase1_warning must not fire once Phase 2 has started');
+    }
+
+    public function test_phase1_deadline_warning_fires_only_once(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $count = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->count();
+
+        $this->assertEquals(1, $count, 'nexus_phase1_warning must fire at most once per run');
+    }
+
     public function test_draw_objectives_fallback_with_pool_of_2_tasks(): void
     {
         // Task pool has only 2 tasks — both non-economy.

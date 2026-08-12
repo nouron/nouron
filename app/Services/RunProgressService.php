@@ -540,6 +540,39 @@ class RunProgressService
         ]);
     }
 
+    // ── Phase-1 deadline warning ──────────────────────────────────────────────
+
+    /**
+     * Escalating Nexus warning if Phase 1 is still not complete by
+     * config('game.run.phase1_warning_sol') — heads-up before the hard
+     * config('game.run.phase1_deadline_sol') fail state in checkFailStates().
+     *
+     * Called once per tick, only while the run is in Phase 1 (see GameTick.php).
+     * Fires at most once per run (guarded by colony_log lookup, same pattern
+     * as maybeFireSol30Warning() etc.).
+     */
+    public function checkPhase1DeadlineWarnings(Run $run): void
+    {
+        if ($run->phase !== 1) {
+            return;
+        }
+
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        if ($run->current_tick < $warningSol) {
+            return;
+        }
+
+        $eventKey = 'run.nexus_phase1_warning';
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+            'run_id' => $run->id,
+            'colony_id' => $run->colony_id,
+        ]);
+    }
+
     /**
      * Return true if an colony_log row with this event key already exists
      * for this user, created at or after the run's start time.
@@ -707,7 +740,7 @@ class RunProgressService
     ): void {
         $isNexus = $area === 'nexus' || in_array($event, [
             'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
-            'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80',
+            'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80', 'run.nexus_phase1_warning',
             'run.run_completed', 'run.run_failed_trust',
             'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.phase1_complete',
         ], true);
