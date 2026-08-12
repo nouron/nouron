@@ -98,6 +98,16 @@ return [
                 'body' => 'Das Sol-Limit wurde erreicht ohne die erforderlichen Ziele abzuschließen. Nexus beendet die Konzession.',
                 'badge' => 'Gescheitert',
             ],
+            'nexus_phase1_warning' => [
+                'title' => 'Nexus-Warnung — Phase 1',
+                'body' => 'Nexus-Protokoll §4.2: Die Stabilisierungsphase ist noch nicht abgeschlossen. Beschleunigen Sie den Fortschritt — bei Fristbruch wird die Konzession beendet.',
+                'badge' => 'Warnung',
+            ],
+            'run_failed_phase1_deadline' => [
+                'title' => 'Mission gescheitert — Fristbruch Phase 1',
+                'body' => 'Nexus-Protokoll §4.3: Die Stabilisierungsphase wurde nicht innerhalb der Frist abgeschlossen. Die Konzession wird zwangsbeendet.',
+                'badge' => 'Gescheitert',
+            ],
         ],
     ],
 

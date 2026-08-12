@@ -98,6 +98,16 @@ return [
                 'body' => 'The Sol limit was reached without completing the required objectives. Nexus terminates the concession.',
                 'badge' => 'Failed',
             ],
+            'nexus_phase1_warning' => [
+                'title' => 'Nexus Warning — Phase 1',
+                'body' => 'Nexus Protocol §4.2: The stabilization phase is not yet complete. Accelerate progress — a deadline breach terminates the concession.',
+                'badge' => 'Warning',
+            ],
+            'run_failed_phase1_deadline' => [
+                'title' => 'Mission failed — Phase 1 deadline breach',
+                'body' => 'Nexus Protocol §4.3: The stabilization phase was not completed within the deadline. The concession is forcibly terminated.',
+                'badge' => 'Failed',
+            ],
         ],
     ],
 
