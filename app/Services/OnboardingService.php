@@ -128,9 +128,12 @@ class OnboardingService
         // Colony-level resources.
         // Werkstoffe (4) and Organika (5) start at 0 — produced by Harvester/bioFacility.
         $colonyResources = [
-            // 200 → 300 (GDD §13.7 Nachtrag 2026-08-12, Phase-1-Sol-15-20-Pacing):
-            // alleiniger Hebel, verschiebt den rechnerischen Floor von ≈Sol 22,5 auf ≈Sol 15,4.
-            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 300],  // regolith
+            // 200 → 300 → 340 (GDD §13.7 Nachtrag 2026-08-12 + Korrektur 2026-08-13):
+            // die erste Bedarfsrechnung hatte den 0→1-Level-Up-Schritt (25 Rg,
+            // ColonyController::LEVELUP_REGOLITH_FLAT) für die Pfadgebäude komplett
+            // und für bioFacility teilweise unterschlagen — korrigierte Bedarfssumme
+            // 535 Rg statt 500. Verschiebt den Floor auf ≈Sol 15,1.
+            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 340],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust

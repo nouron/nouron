@@ -2961,6 +2961,84 @@ Bei heutigem Startbestand (200) und aufgelöst nach `Verfügbar(N) = 500`: `N �
 
 ---
 
+#### Nachtrag 2026-08-13 — Zweite Iteration: Bedarfskette war um 100 Rg unterzählt, nicht der Floor „zu optimistisch"
+
+> **Status: Neu hergeleitet, Umsetzung offen.** Löst die verschärfte Owner-Vorgabe vom 2026-08-13 (Phase 2 verlässlich unter Sol 25, bei sehr gutem Run unter Sol 20) und korrigiert den Nachtrag vom 2026-08-12, der stehen bleibt (nicht überschrieben) — die dortige Herleitungsmethode war richtig, die Bedarfskette darin war es nicht. Kein Codepfad in diesem Schritt geändert.
+
+**Ausgangsbefund (Startbestand 300, umgesetzt + PlaytestBot-Läufe am 2026-08-13, Seed 4242 repräsentativ):** Zwei echte PlaytestBot-Bugs wurden im Vorfeld gefunden und gefixt (bioFacility-Prioritäts-Loop, fehlender Rg-Puffer in `placeCandidate()`). Nach beiden Fixes: CC Lv3 weiterhin Sol 1 (kein Engpass), aber der **2. Berater** (= 1. Pfadgebäude nutzbar) kommt erst **Sol 23** — nicht ≈Sol 15,4 wie der Floor aus dem 08-12-Nachtrag vorhersagte. Regolith oszilliert die ganze Zeit unter ~90, obwohl die Formel ~14 Rg/Sol Netto-Zufluss ansetzt. AP ist durchgehend nicht der Engpass (`ap_unspent` 13–15). Phase 2 wird in keinem der 3 Testläufe erreicht.
+
+**Ursache 1 (Hauptfehler, Bedarfskette): Errichtung bringt ein Gebäude auf Level 0, nicht Level 1 — der Sprung 0→1 kostet einen weiteren, vollen Level-Up.** Bestätigt im Code:
+
+```php
+// ColonyController::placeBuilding()
+DB::table('colony_buildings')->insert([
+    ...
+    'level' => 0,
+    'status_points' => $building->max_status_points ?? 20,
+    'ap_spend' => 1,
+    ...
+]);
+```
+
+`level: 0` — ein frisch platziertes Gebäude ist **nicht** auf Level 1. Erst ein separater `investBuilding()`-Aufruf (AP-Invests bis `ap_spend >= ap_for_levelup`) hebt es auf Level 1, und **dieser Sprung kostet zusätzlich `LEVELUP_REGOLITH_FLAT = 25` Rg** — dieselbe Flatrate wie jeder andere Level-Up, dokumentiert im eigenen Code-Kommentar zum Hangar: *„Level-up Rg cost is the flat rate (25), same as every other non-CC building."* Das gilt für **jeden** Level-Sprung eines nicht-CC-Gebäudes, nicht nur für „echte" Ausbaustufen — 0→1 ist kein Sonderfall, der im `build_cost` schon inbegriffen wäre.
+
+Die Bedarfskette vom 08-12-Nachtrag hat das für die zwei Pfadgebäude komplett übersehen (Zeile „Errichtung 95+95, Lv1 reicht" — implizit als „Errichtung = Lv1", ohne den separaten 25-Rg-Sprung) **und** für bioFacility den zweiten nötigen Sprung (0→1) vergessen (die Tabelle nannte „Errichtung + →Lv2 (70 + 25)" — das deckt nur 1→2, nicht 0→1).
+
+**Korrektur an dieser Stelle — Wohnhabitat ist KEIN Bau-Posten, sondern Sol-1-Bootstrap.** `OnboardingService::seedStartingBuilding()` seedet CommandCenter, Harvester **und** HousingComplex bereits bei Kolonie-Erstellung auf `level: 1` (16/20 SP, „80 % beschädigt, aber level 1"). Das im 08-12-Nachtrag geführte Wohnhabitat-„Errichtung 40 + →Lv2 25"-Posten ist damit doppelt falsch: Die 40 Rg „Errichtung" fallen nie an (das Gebäude existiert schon), und der einzig reale Kostenpunkt ist der **eine** verbleibende Sprung Lv1→2 (25 Rg) — nicht Lv0→1 wie bei bioFacility/den Pfadgebäuden, die der Spieler tatsächlich neu baut. Nur CC (ebenfalls Sol-1-Bootstrap auf Lv1) und Harvester (kein Rg-Repair-Kostenfaktor) sind vorbestehend; bioFacility und alle drei Pfadgebäude müssen vom Spieler neu errichtet werden und starten dabei bei Level 0. Korrigierte Bedarfskette:
+
+| Posten | Rg (08-12, fehlerhaft) | Rg (korrigiert) | Differenz |
+|---|---|---|---|
+| CC Lv1→Lv2→Lv3 (Sol-1-Bootstrap auf Lv1, eigene CC-Formel) | 150 | 150 | 0 |
+| bioFacility (neu gebaut): Errichtung 70 + Lv0→1 (25) + Lv1→2 (25) | 95 | **120** | +25 |
+| Wohnhabitat (Sol-1-Bootstrap auf Lv1, nur noch Lv1→2 fällig): 25 | 65 | **25** | −40 |
+| Pfadgebäude 1 (neu gebaut): Errichtung 95 + Lv0→1 (25) | 95 | **120** | +25 |
+| Pfadgebäude 2 (neu gebaut): Errichtung 95 + Lv0→1 (25) | 95 | **120** | +25 |
+| **Summe** | **500** | **535** | **+35** |
+
+CC ist unbetroffen — `levelupRegolithFor()` behandelt die CC-ID gesondert (`targetLevel × cc_upgrade_regolith_per_level`, keine Flatrate, kein 0-Level-Sonderfall in der bestehenden Formel), und der empirische Sol-0/1-Verlauf (300 → 240 → 150) bestätigt exakt 150 Rg für Lv1→3, keine Abweichung — konsistent mit CC als Sol-1-Bootstrap-Gebäude, nicht Neubau.
+
+> **Zwischenschritt, verworfen — festgehalten, damit er sich nicht wiederholt.** Eine erste Fassung dieses Nachtrags rechnete Wohnhabitat fälschlich wie bioFacility/die Pfadgebäude als Neubau (Errichtung 40 + zwei Sprünge = 90 Rg) und kam auf eine Summe von 600 Rg statt 535 — das hätte den empfohlenen Startbestand unnötig auf ≈400 statt ≈300–350 getrieben. Der Fehler: die Prüfung, welche Gebäude tatsächlich vom Spieler gebaut werden müssen und welche bereits als Sol-1-Bootstrap existieren, wurde nicht gegen `OnboardingService::seedStartingBuilding()` verifiziert, bevor die Tabelle geschrieben wurde. Reviewer-Hinweis, der den Fehler aufgedeckt hat, bevor er in die Empfehlung einging — hier dokumentiert, um das gleiche Muster (Bedarfsposten ungeprüft aus der falschen Analogie übernehmen) beim nächsten Mal zu vermeiden.
+
+**Ursache 2 (Nebenbefund, nicht Balance — Bot-Defekt, hier nur benannt, nicht behoben):** `BotStrategy::cheapestPendingPathBuildingCost()` bestimmt den zu reservierenden Betrag als `min(build_cost)` über alle noch **unplatzierten** (`tile_x IS NULL`) Pfadgebäude — das liefert **95**, solange irgendeines der drei noch nicht steht, unabhängig davon, ob ein bereits platziertes Pfadgebäude eigentlich nur noch 25 Rg für seinen Lv0→1-Sprung braucht. Der Puffer in `productionInvestCandidate()`/`researchCandidate()` gibt `null` zurück, solange `regolith < 95` — er reserviert also weiter für ein Gebäude, das der Bot als nächstes gar nicht bauen muss, und blockiert dabei genau den günstigen 25-Rg-Schritt, der tatsächlich den nächsten Beraterslot freischaltet. Die Rohdaten bestätigen dieses Muster (nicht das gegenteilige): Sol 4 (−148 Rg) ≈ bioFacility 70 + ein Pfadgebäude 95 (beide auf Lv0 platziert, Puffer erlaubte beides da Rg ≥95 war); Sol 4→14 wächst Regolith danach nur um ~4,9/Sol netto trotz ~17 Rg/Sol brutto — der 25-Rg-Levelup des bereits stehenden Pfadgebäudes feuert nicht, weil der Puffer weiter auf 95 wartet; Sol 15 (−83 Rg) ≈ ein weiteres 95-Rg-Placement (Puffer erlaubte es, sobald wieder ≥95 erreicht war). Berater 2 kommt dadurch erst Sol 23, weil das Pfadgebäude ~18 Sole lang auf Level 0 sitzen bleibt, obwohl nur 25 (nicht 95) Rg fehlen. **Zwei konkrete Fundstellen für den Dev-Follow-up:** (1) der Puffer muss die Kosten des **nächsten Beraterslots** reservieren, nicht die eines beliebigen unplatzierten Pfadgebäudes — für ein bereits platziertes, aber ungeleveltes Pfadgebäude sind das 25 Rg (Lv0→1), für ein noch nicht platziertes 95 + 25; reserviert wird das Minimum über die für die verbleibenden Berater-Slots noch nötigen Pfadgebäude (2 für 3 Berater), nicht über alle drei; (2) `productionInvestCandidate()` braucht zusätzlich eine Präferenz für ein platziertes-aber-ungelevletes Pfadgebäude vor anderen Kandidaten gleichen Levels. **Ohne diesen Fix validiert ein erneuter PlaytestBot-Lauf den unten vorgeschlagenen Zielwert nicht zuverlässig** — ein erneutes Scheitern des Bots am Korridor wäre dann kein Beleg gegen die neue Zahl, sondern Wiederholung desselben, hier schon benannten Ausführungsfehlers. Das ist ein Bot-Ausführungsdefekt (ein guter menschlicher Spieler würde nach dem Errichten eines Pfadgebäudes selbstverständlich zuerst dessen Lv1-Freischaltung fertigstellen, bevor er in Wohnhabitat oder eine weitere bioFacility investiert) — kein Balance-Hebel, wird hier deshalb nicht in die Zahlenempfehlung eingerechnet, aber explizit als Blocker für die empirische Nachprüfung benannt.
+
+**Nebenbefund, geprüft und für unauffällig befunden — Supply-Cap zwingt keine zweite Wohnhabitat-Instanz und keine Reihenfolge-Zwangspause.** Autoritative Quelle ist `GameTick::calculateSupply()` (setzt `user_resources.supply` jeden Tick neu — `ResourcesService::getSupplyBreakdown()` liest `$cap` nur als bereits gesetzten Wert, ist nicht die Formel selbst): `cap = min(capCC + housingLevel × capHousing + knowledgeCap, capMax)`, mit `capCC = 10` (flat, sobald CC > Lv0 — nicht CC-level-skalierend, trotz des einzelnen `supply_cap`-Kommentars „cap per level" in `config/buildings.php`, das ist eine weitere kleine Doku/Code-Diskrepanz, hier nur benannt) und `capHousing = 8`. Da Wohnhabitat bereits ab Sol 1 auf Lv1 existiert (s. o.), liegt der Cap von Beginn an bei `10 + 8 = 18`, nicht erst bei 10. Verbrauch der vollen Zielkette (Harvester 2 + bioFacility Lv2 `2×2=4` + 2 Pfadgebäude auf Lv1 `2×6=12`) = 18 — passt exakt in den Sol-1-Cap, ganz ohne dass Wohnhabitat erst auf Lv2 gehoben werden müsste. Sobald Wohnhabitat auf Lv2 investiert wird (Cap 26), bleibt zusätzlicher Puffer von 8. Weder eine zweite Wohnhabitat-Instanz noch ein erzwungenes Vorziehen des Wohnhabitat-Levelups sind strukturell nötig.
+
+**Nebenbefund, geprüft und für unauffällig befunden — die −2,94-Rg/Sol-Reparaturannahme ist im 15–20-Sol-Fenster konservativer als real nötig, bewusst so belassen.** `repairCandidate()` greift erst unter 30 % `max_status_points` (< 6 von 20). Frisch platzierte Gebäude starten auf vollen 20 SP (`ColonyController::placeBuilding()`, s.o.) — bei `decay_rate` 0,40–0,80/Sol dauert es 17,5–50 Sole, bis ein neu gebautes Gebäude die Reparaturschwelle überhaupt erreicht. Innerhalb eines 15–20-Sol-Floor-Fensters lösen frisch gebaute Gebäude realistisch **keine** Rg-kostende Reparatur aus; nur die Sol-1-Bootstrap-Gebäude (80 % SP, 16/20 — CC, Harvester, Wohnhabitat) kämen rechnerisch in die Nähe, erreichen die Schwelle bei `decay_rate` 0,40 (CC, Wohnhabitat) aber ebenfalls erst nach ≈25 Solen — außerhalb des Zielfensters. Der Term bleibt trotzdem im Modell (keine Neuherleitung nötig) — er ist eine bewusste, unveränderte Sicherheitsmarge, keine nachträglich „entdeckte" zweite Modellungenauigkeit.
+
+**Nebenbefund, dokumentiert, nicht Teil dieses Hebels — der in `config/buildings.php` behauptete „harte" CC-Lv2-Gate für bioFacility ist im Code nicht auffindbar.** Der Kommentar bei `bioFacility` nennt sie „mandatory prerequisite for the CC Lv1→Lv2 upgrade"; `ColonyController::investBuilding()` (CC-Levelup-Pfad) enthält aber keine bioFacility-Prüfung — nur `OnboardingHintService` verweist weich darauf (`checkHintAgrardome`), und `placeBuilding()` erzwingt Agrardom nur als Voraussetzung für die **Pfadgebäude** (`error_agrardom_required`), nicht für CC-Invests. Der Bot bestätigt das empirisch: CC erreichte Lv3 bereits Sol 1, ohne dass bioFacility zu dem Zeitpunkt gebaut war. Diese Diskrepanz zwischen Config-Kommentar/GDD-Beschreibung und tatsächlichem Codeverhalten ist ein eigener, kleiner Dokumentations- bzw. Gate-Findungs-Punkt (nicht klar, ob der Kommentar oder der fehlende Code der Fehler ist) — hier nur benannt, nicht Teil dieses Nachtrags-Hebels, da CC ohnehin nachweislich kein Engpass ist (Sol 1 fertig).
+
+**Korrigierter Hebel — derselbe Hebel wie am 2026-08-12 (Startbestand), neu aufgelöst gegen die korrigierte 535er-Summe:**
+
+```
+Verfügbar(N) = Startbestand + 17×(N−1) − 2,94×N = Startbestand − 17 + 14,06×N
+```
+
+| Startbestand | Floor N (Verfügbar(N) = 535) | Poor-Tile-Worst-Case (Formel s. u.) |
+|---|---|---|
+| 300 (aktuell umgesetzt) | ≈ 17,9 | ≈ Sol 23 |
+| 320 | ≈ 16,5 | ≈ Sol 21 |
+| **340** | **≈ 15,1** | **≈ Sol 20** |
+| 400 (verworfen, s. u.) | ≈ 10,8 | ≈ Sol 16 |
+
+**Empfehlung: Startbestand 300 → 340** (nicht 400 — dieser Wert stand in einer Zwischenfassung dieses Nachtrags, siehe Kasten oben, und beruhte auf der inzwischen korrigierten Wohnhabitat-Zeile). Bei 340 landet der Floor bei ≈Sol 15,1 (volle Kette, beide Pfadgebäude) — nahezu exakt der Wert, den der 08-12-Nachtrag als Zielposition beabsichtigt hatte (≈15,4), jetzt aber gegen die korrekt gerechnete 535er-Kette statt der fehlerhaften 500er. **400 wäre eine Überkorrektur:** Floor ≈10,8 würde die Kolonie strukturell zu schnell durch Phase 1 tragen und mit G5 („2–4 Mal pro Run an Regolith scheitern") sowie der G4-5–8-Sole-pro-Gebäude-Kalibrierung kollidieren — der gleiche Fehler in die andere Richtung, den die verschärfte Owner-Vorgabe vermeiden soll (Tempo-Ziel gegen Varianz-Ziel eingetauscht). 340 hält den Floor nah an der ursprünglich beabsichtigten Position, ohne den Korridor nach unten zu sprengen.
+
+`resource_max['regolith_normal'] = 300` bleibt unverändert ausreichend: kumulierte Extraktion bei Floor-Sol 15,1 ≈ `17×14,1 ≈ 240 Rg`, weiterhin unter der Mengengrenze.
+
+**Poor-Tile-Worst-Case, neu gerechnet gegen 340/535:** `Verfügbar(14, poor) = 340 + 12×13 − 2,0×14 = 340 + 156 − 28 = 468`. Rest-Bedarf `535 − 468 = 67` Rg, bei ≈15 Rg/Sol netto auf dem neuen Tile ≈5 weitere Sole → Abschluss ≈ Sol 14 + 1 (Transit) + 5 = **Sol 20** — deckt sich mit dem 08-12-Zielwert. Bei unverändertem Startbestand 300 läge der Worst-Case bei ≈Sol 23 (immer noch unter der harten Sol-25-Grenze, aber ohne Sicherheitsmarge) — ein weiteres Argument für den moderaten Sprung auf 340 statt „300 unverändert lassen".
+
+**Zu Auftragspunkt 3 — 2-Pfadgebäude-Kopplung an Slot 3 bleibt mit dem <25-Ziel vereinbar, bei Startbestand 340.** Der Floor von ≈Sol 15,1 gilt für die **volle** Zielkette einschließlich beider Pfadgebäude auf Lv1 (nicht nur eines) — die 2-Pfadgebäude-Anforderung selbst ist also kein struktureller Blocker für <25 oder <20. **Erwogene, aber nicht empfohlene Alternative:** Slot 3 vom 2. Pfadgebäude entkoppeln (z. B. an einen AP- oder Kenntnis-Meilenstein statt an ein zweites 95-Rg-Gebäude). Verworfen, weil (a) mit Startbestand 340 kein Bedarf dafür besteht — die Rechnung geht ohne Eingriff ins Slot-System auf — und (b) eine Entkopplung tiefer in die Slot-System-Kopplungslogik eingreifen würde als ein reiner Config-Zahlenwert, mit Kollateralrisiko für die Pfadwahl-Parität (§13 „Pfadwahl ab Sol 3"), die bewusst alle drei Pfade gleich gewichtet.
+
+**Einordnung — warum dieser Nachtrag anders benannt ist als „Floor war zu optimistisch".** Der Fehler im 08-12-Nachtrag war **kein** zu optimistisches Friktions-Assessment, sondern eine konkrete, nachrechenbare Lücke in der Bedarfstabelle: ein struktureller Schritt (Errichtung setzt Level 0, nicht Level 1; der 0→1-Sprung ist ein separater, kostenpflichtiger Level-Up) wurde für die Pfadgebäude komplett ausgelassen und für bioFacility zur Hälfte gezählt — während Wohnhabitat fälschlich überhaupt als Neubau statt als Sol-1-Bootstrap-Gebäude geführt wurde. Diese Unterscheidung ist wichtig für zukünftige Iterationen: „der Floor war zu optimistisch" lädt dazu ein, beim nächsten Mal wieder blind den Startbestand hochzusetzen, ohne die Kette nachzurechnen. „Die Kette hat einen Pflichtschritt pro Level-Sprung übersehen, und ein Posten wurde gegen die falsche Analogie berechnet" ist dagegen an der Codebasis nachprüfbar (s. o. und `OnboardingService::seedStartingBuilding()`) und wiederholt sich nicht von selbst — vorausgesetzt, jede künftige Bedarfstabelle wird wieder explizit gegen den Sol-1-Bootstrap-Zustand verifiziert, nicht nur gegen `build_cost`/`levelupRegolithFor()`.
+
+**Erforderliche Folgearbeiten bei Umsetzung (nicht Teil dieses GDD-Nachtrags):**
+
+1. Startbestand Regolith 300 → 340 — `OnboardingService::setupNewPlayer()` (genauer: `seedResources()`), `app/Console/Commands/ResetPlayer.php`-Szenarien, `data/sql/testdata.sqlite.sql` (Szenario-Pflege-Pflicht, s. Agent-Rollenbeschreibung).
+2. **Vor jeder erneuten empirischen Bestätigung per PlaytestBot:** die zwei in „Ursache 2" benannten Fundstellen in `tests/Feature/Playtest/BotStrategy.php` fixen (`level >= 1` statt `tile_x`-Check im Rg-Puffer; Pfadgebäude-Präferenz im `productionInvestCandidate()`-Tie-Break). Ohne diesen Fix ist ein erneuter Sol-23+-Befund kein Gegenbeweis gegen Startbestand 340 — er wiederholt nur den bereits identifizierten Ausführungsfehler.
+3. TDD-Pflicht (CLAUDE.md) für beide Punkte (1) und (2) getrennt beachten — (1) ist ein Konfigurationswert ohne eigenen Codepfad (Ausnahme von TDD zulässig, s. CLAUDE.md „Ausnahmen"), (2) ist Bot-Testlogik mit Verhalten und braucht einen vorab roten Test.
+4. Nach beiden Fixes: erneuter PlaytestBot-Lauf (mehrere Seeds) zur empirischen Bestätigung des Sol-15-20-Korridors für die volle Phase-1-Kette (3 Berater, 2 Pfadgebäude, CC Lv3, bioFacility Lv2, Wohnhabitat Lv2).
+
+---
+
 ## 14. Moralsystem
 
 ### Design-Absicht
