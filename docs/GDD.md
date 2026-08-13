@@ -2887,6 +2887,80 @@ Der Satz ist ein zusammenhängendes System. **Der neue Sockel ohne die neuen Bau
 
 ---
 
+#### Nachtrag 2026-08-12 — Phase-1-Pacing auf Sol-15-20 neu hergeleitet
+
+> **Status: Neu hergeleitet, Umsetzung offen.** Löst Anhang A.4 „Phase-1-Pacing auf Sol-15-20-Ziel neu herleiten" (Owner, 2026-08-12). Kein Codepfad in diesem Schritt geändert — nur die Herleitung und der daraus folgende Zielwert für den Regolith-Startbestand (aktuell hartcodiert in `OnboardingService::setupNewPlayer()`, s. u.).
+
+**Ausgangsbefund (PlaytestBot, PR #244, mehrere Seeds/Reruns):** Phase 1 (`RunProgressService::checkPhase1Completion()` — CC Lv3 + mindestens 2 Nicht-CC-Gebäude auf Level ≥2 + 3 aktive Berater) wird aktuell frühestens Sol 55–65 abgeschlossen, nie früher. Beste bekannte Timeline (Seed 4242): CC Lv3 bereits Sol 1, aber vom zweiten Berater (Sol 1) zum dritten (Sol 55) vergehen 54 Sole — obwohl CC-Ausbau selbst kein Engpass ist. Owner-Ziel: Regelfall Sol 15–20, harte Obergrenze Sol 30 (eigener, paralleler Auftrag — `docs/superpowers/specs/2026-08-12-phase1-sol30-deadline-design.md`).
+
+**Wichtige Vorklärung — welche Bedingung tatsächlich gilt.** `RunProgressService` prüft `building_id != CommandCenter` bei Level ≥2, nicht „Produktionsgebäude" — Wohnhabitat zählt also mit. Die Herleitung unten rechnet konsequent gegen das Code-Verhalten (Bedingung 2 lässt sich am günstigsten mit Agrardom Lv2 + Wohnhabitat Lv2 erfüllen, nicht zwingend mit einem der drei Pfadgebäude). **Diskrepanz zur GDD-Formulierung in §15 („mindestens 2 Produktionsgebäude") — bewusst offen gelassen für eine eigene Owner-Entscheidung:** entweder §15 auf den Code-Wortlaut angleichen, oder das Code-Verhalten auf „Produktionsgebäude" einschränken. **Würde Letzteres umgesetzt, bricht die gesamte Rechnung unten** — der Harvester hat `max_level = 1` (nie level-fähig), bioFacility wäre dann das einzige verbleibende Nicht-CC-Produktionsgebäude, das überhaupt Level 2 erreichen kann, und Bedingung 2 würde faktisch an ein zweites Pfadgebäude gekoppelt (mehr Regolith, nicht weniger). Diese Rechnung gilt also nur für die aktuelle, tatsächliche Code-Bedingung.
+
+**Bedarfskette für die Phase-1-Teilmenge (nicht die volle Zielkolonie aus der Neuherleitung oben) — günstigster Pfad:**
+
+| Posten | Rg |
+|---|---|
+| CC Lv1→Lv2→Lv3 (2×30 + 3×30) | 150 |
+| bioFacility Errichtung + →Lv2 (70 + 25) | 95 |
+| Wohnhabitat Errichtung + →Lv2 (40 + 25) | 65 |
+| 2 Pfadgebäude Errichtung (95 + 95, Lv1 reicht — schaltet Slot 2 und Slot 3 frei) | 190 |
+| **Errichtung/Level-Up-Summe** | **500** |
+| Instandhaltung über ~18 Sole (Σ `decay_rate` ramp 1,20 → 3,60 je nach Bauzustand, Fläche gerechnet) | ~50 |
+| **Gesamtbedarf** | **≈ 550** |
+
+Die 2 Pfadgebäude sind notwendig, nicht optional: Slot 2 (2. Berater) öffnet mit dem 1., Slot 3 (3. Berater = Bedingung 3) mit dem 2. Pfadgebäude (§13 „Slot-System"). Credits sind dabei **nicht** der Engpass — 3 Anwerbungen (Baumeister 300, günstigste zwei der übrigen drei Typen z. B. Konsul 350 + Analytiker 400 = 1.050 Cr) sind aus dem Startkapital von 3.000 Cr trivial finanzierbar, unabhängig vom laufenden Berater-Unterhalt. **Das widerlegt die ursprüngliche Anhang-A.4-Vermutung** „Berater-Hire-Credits reichen nicht annähernd schnell genug nach" — der Unterhaltskollaps bei 2–3 Beratern auf Rang 2/3 (§18.4, 07-19/07-20) ist ein reales, aber späteres und separates Problem, nicht die Ursache der Sol-55-65-Verzögerung.
+
+**Warum Regolith trotzdem der Flaschenhals ist — zwei getrennte Grenzen, die gegeneinander geprüft werden müssen.** Der Harvester hat sowohl eine **Raten**- als auch eine **Mengen**-Grenze:
+
+1. **Ratengrenze:** Die Erschöpfungskurve (`Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen/resource_max)`) liefert nie mehr als den Frischwert (18 Rg/Sol auf `regolith_normal`) — auch bei vollem Vorkommen. Solange das Tile nicht knapp wird, extrahiert ein Harvester im Schnitt ~17 Rg/Sol (nahe Frischwert, da die Restvorkommen-Quote lange nahe 1 bleibt).
+2. **Mengengrenze:** Kumulativ kann ein einzelnes Tile nie mehr als `resource_max` liefern — unabhängig von der Rate. `regolith_normal` liegt aktuell bei **300**.
+
+Sol-1-Start-Harvester produziert 0 Rg bis zur ersten Verlegung (Owner-bestätigte Absicht, kein Bug) — die Bedarfsdeckung beginnt effektiv erst mit dem ersten produktiven Tile.
+
+**Verfügbares Regolith gegen die reine Errichtungs-/Level-Up-Summe (500, ohne die Instandhaltung ein zweites Mal abzuziehen — die steckt bereits in der Nettobetrachtung):**
+
+```
+Verfügbar(N) = Startbestand + Σ(Harvester-Ertrag, Sol 2…N) − Σ(Reparatur, Sol 1…N)
+             ≈ Startbestand + 17×(N−1) − 2,94×N      (Ø-Reparatur über das Fenster, s. Bedarfstabelle oben)
+```
+
+Bei heutigem Startbestand (200) und aufgelöst nach `Verfügbar(N) = 500`: `N ≈ 22,5` — knapp am oberen Rand des bisherigen „15–25"-Richtwerts aus §18.4, aber deutlich über dem neuen Sol-15-20-Ziel. Die beobachteten Sol 55–65 sind damit **nicht** allein durch diese Idealrechnung erklärt: Ein erheblicher Teil der zusätzlichen Verzögerung liegt an Ausführungsfriktion, die dieses Modell nicht abbildet (Reihenfolgezwang — bioFacility vor CC Lv2, zweites Pfadgebäude erst ab CC Lv3 baubar, s. „Gate-Logik" §13 „Slot-System" —, Erkundung/Verlegung, Bot-Suboptimalität, teils bereits behobene Bugs wie der Ring-Erkundungsdeadlock vom 2026-08-11). Das Modell liefert deshalb eine **untere Schranke** (Floor), keinen Erwartungswert — der reale Abschluss-Sol liegt aufgrund dieser zusätzlichen Reibung typischerweise darüber.
+
+**Ein Hebel, kein zweiter — Startbestand, ohne Eingriff in `resource_max`.** Löst man dieselbe Gleichung nach dem nötigen Startbestand für `N = 15` auf: `Startbestand + 17×14 − 2,94×15 = 500 → Startbestand ≈ 306`. Gerundet:
+
+| Hebel | heute | Vorschlag | Wirkung |
+|---|---|---|---|
+| Startbestand Regolith | 200 | **300** | verschiebt den Floor von ≈Sol 22,5 auf ≈**Sol 15,4** — an die untere Kante des Zielkorridors, mit Raum für die oben beschriebene reale Ausführungsfriktion, ohne dass der Regelfall dadurch schon über Sol 20 hinausgeschoben wird |
+
+**`resource_max['regolith_normal']` bewusst NICHT angehoben — geprüft und verworfen, nicht übersehen.** Mit Startbestand 300 liegt die kumulierte Tile-Extraktion beim Floor-Sol (≈15,4) bei `17×14,4 ≈ 245 Rg` — deutlich unter der bestehenden 300er-Mengengrenze. Die Mengengrenze bindet in diesem Fenster also nicht, ein zweiter Hebel an dieser Stelle kostet Kollateralschaden ohne Nutzen: §4c legt die Umzugsgebühr bewusst so aus, dass ein Harvester **4–6 Mal pro Run** verlegt wird („Der eigentliche Regler ist die Umzugsgebühr, nicht die Kurve"); eine Standzeit-Verlängerung von ~22 auf ~27 Sole hätte das Richtung „seltener als gewollt" verschoben — und würde sich bei einer künftigen Konstant-Yield-Umstellung (Frischwert als harter Cutoff statt Rampe, §4c-Spec 2026-08-10) noch stärker auswirken (Standzeit dann `resource_max / Frischwert`, bei 400/18 ≈ 22 statt heute effektiv ~17 unter Rampe — der Umzugstakt würde spürbar seltener als die im Spec dokumentierten ~17 Sole bei unverändertem `resource_max`). Ein Hebel, der die Mengengrenze anhebt, ohne dass sie im Zielfenster überhaupt bindet, ist reiner Kollateralschaden gegen eine unabhängige Designentscheidung — deshalb hier verworfen.
+
+**Einordnung des Ergebnisses.** Der Floor von ≈Sol 15,4 ist eine untere Schranke unter Idealbedingungen (kontinuierlicher Bau ohne Leerlauf, keine Fehlkäufe, keine Erkundungs-/Verlege-Verzögerung, kein Reihenfolgezwang-Verlust). Realistisch — mit dem oben beschriebenen Reihenfolgezwang und normaler Spielfriktion — liegt der Regelfall eher am oberen Rand des 15–20-Korridors oder knapp darüber, nicht exakt beim Floor-Wert. Genau dieses Verhältnis (Floor nahe der unteren Kante, damit Streuung nach oben in den Korridor fällt statt ihn sofort zu verlassen) ist beabsichtigt — ein Floor bei Sol 18–19 (wie eine frühere Fassung dieser Rechnung fälschlich auswies, s. u.) hätte keinen Spielraum für Streuung nach oben gelassen und den Regelfall strukturell über Sol 20 gedrückt.
+
+> **Korrektur gegenüber einer ersten Fassung dieser Rechnung:** Eine frühere Version zählte die Instandhaltung sowohl in der Bedarfssumme (550 = 500 + ~50 Reparatur) als auch ein zweites Mal in der Verfügbarkeits-Formel (`Verfügbar = Start + Ertrag − Reparatur`) — Doppelzählung, die die Lücke um ~50 Rg zu groß und den Floor um ~7 Sole zu spät auswies (fälschlich ≈Sol 22 statt korrekt ≈Sol 15,4 bei Startbestand 300, bzw. ≈Sol 22,5 statt der irrtümlich behaupteten Sol 25–26 bei Startbestand 200). Diese Version rechnet konsistent nur mit einer Instandhaltungs-Erfassung (in der Verfügbarkeits-Formel, gegen die reine Errichtungs-/Level-Up-Summe 500). Auf dieser korrigierten Basis erwies sich der zunächst vorgeschlagene zweite Hebel (`resource_max`-Anhebung) als unnötig — s. u.
+
+**`regolith_poor`/`regolith_rich` bewusst unverändert.** Ein Run, der auf einem `poor`-Tile startet (Frischwert 12, `resource_max` 160, ~25 % Häufigkeit — die häufigste Einzelklasse), erreicht dieselbe Rechnung nicht: Kumulative Extraktion ist dort bereits bei `12×(N−1) = 160` erschöpft, also nach ≈14 produktiven Solen (≈Sol 14–15 im Run) — eine frühe Zwangsverlegung ist eingebaut. **Das ist die gewollte Variabilität** (G5, „2–4 Mal pro Run an Regolith scheitern"), keine zu behebende Lücke. Gegenprobe, Worst-Case-Pfad (Start auf `poor`, Zwangsverlegung auf `regolith_normal` bei Sol 14, 1 Transit-Sol ohne Ertrag): `Verfügbar(14, poor) ≈ 300 + 12×13 − 2,0×14 ≈ 300 + 156 − 28 = 428` (niedrigere Ø-Reparatur hier bewusst angesetzt, da bei Sol 14 typischerweise noch nicht alle Gebäudetypen der Bedarfskette stehen). Rest-Bedarf `500 − 428 = 72` Rg, bei ~15 Rg/Sol netto auf dem neuen Tile (Frischwert 18 minus Reparatur, nach dem Transit-Sol) ≈ 5 weitere Sole → Abschluss ≈ Sol 14 + 1 (Transit) + 5 = **Sol 20**. Am oberen Rand des 15–20-Zielfensters, klar unter der Sol-30-Grenze — als bewusst akzeptierte, etwas langsamere Variante für den unglücklicheren Start, nicht als Ausreißer außerhalb des Zielkorridors. `resource_max['regolith_poor']` künstlich anzuheben würde diese Varianz gerade wegnehmen, die G1/G5 ausdrücklich wollen — deshalb hier **kein** Änderungsvorschlag.
+
+**Bewusst nicht angefasst — und warum:**
+
+- **`resource_max['regolith_normal']` unverändert (erwogen, dann verworfen — s. o.).** Die Mengengrenze bindet im Zielfenster nicht (245 von 300 Rg kumulierter Extraktion beim Floor-Sol) — eine Anhebung hätte nur Kollateralschaden gegen die §4c-Umzugstakt-Vorgabe (4–6 Verlegungen/Run) gekostet, ohne die Sol-15-20-Erreichbarkeit zu verbessern.
+- **`fresh_yield` (Harvester-Frischwert) unverändert.** Solange das Tile nicht knapp ist (s. o.), liefert eine Rate-Erhöhung nur schnelleren Vorlauf auf dieselbe `resource_max`-Wand, nicht mehr Gesamtmenge — und würde zusätzlich die Standzeit verkürzen (mehr, nicht weniger, ungeplante Verlegungen), das Gegenteil dessen, was hier gebraucht wird.
+- **Konstant-Yield-Umstellung (§4c-Spec vom 2026-08-10) ist NICHT Teil dieses Hebels.** Sie ist Owner-approved, aber **nicht implementiert** — `GameTick::harvesterYield()` läuft weiterhin mit der Rampenformel, die GDD-§4c-Formelzeile ist unverändert. Diese Neuherleitung rechnet bewusst gegen die **live laufende** Rampenformel, nicht gegen die noch nicht gebaute konstante Variante. Beide Formeln liefern in diesem Fenster ähnliche Werte (die Rampe liegt nahe am Frischwert, solange das Vorkommen nicht knapp wird — das ist hier über weite Strecken des Sol-1–20-Fensters der Fall) — der hier vorgeschlagene Startbestand-Wert ist gegen **beide** Formeln robust, kein Nachrechnen nötig, falls die Konstant-Yield-Umstellung später unabhängig davon landet. Da `resource_max` hier unverändert bleibt, ändert sich an der bestehenden Konstant-Yield-Standzeit-Rechnung aus dem Spec (300/18 ≈ 17 Sole) ebenfalls nichts.
+- **Pfadgebäude-Baukosten (95 Rg) unverändert.** Der G4-Audit vom 2026-08-11 hat diesen Wert bereits gegen den 5–8-Sole-Korridor **pro Einzelgebäude** kalibriert; das hier gefundene Problem ist kumulativ (mehrere Bauprojekte konkurrieren um denselben frühen Regolith-Strom), keine Einzelpreis-Fehlkalibrierung. Eine weitere Senkung würde den G4-Korridor erneut aufreißen, ohne die eigentliche Ursache zu treffen.
+- **CC-Ausbaukosten (`cc_upgrade_regolith_per_level`, ×30) unverändert.** Bestätigt „kein Engpass" durch den Ausgangsbefund selbst (Sol 1 bereits fertig in der besten bekannten Timeline).
+- **`config/advisors.php` (Hire-Credits) unverändert.** Siehe oben — Credits sind für die Ersteinstellung nicht bindend; eine Senkung würde ein Problem lösen, das hier nicht vorliegt, und stattdessen unbeabsichtigt den späteren Rang-2/3-Unterhaltsdruck (§18.4) abschwächen, der bewusst kalibriert ist.
+- **AP-Achse unverändert — Einschränkung: gilt nachweislich nur für den `regolith_normal`-Referenzpfad ohne Zwangsverlegung.** Nominal-Bedarf für CC Lv1→3 + bioFacility Lv1→2 + Wohnhabitat Lv1→2 + 2 Pfadgebäude Lv1 ≈ 43+5+6+8+11 ≈ 73 AP (§13.6-Kostentabelle) gegen einen Pool, der ab Sol 1 bei ~14 AP/Sol beginnt (Basis 12 + Baumeister Rang 1) und mit Slot 2/3 auf ~16–19 AP/Sol wächst — über 15 Sole kumuliert weit mehr als 73 AP verfügbar, auch nach Abzug der Instandhaltung. Für den `poor`-Zweig (s. o.) ist die Aussage **nicht** ungeprüft übertragbar: dort kommt Erkundungs-AP (ring-gestaffelt 1/2/3 AP, §13.6 „19 Zonen-Tiles ≈ 33 AP") für ein Verlege-Ziel sowie Verlege-AP (2 AP/Hex, §4c) hinzu, bevor die Zwangsverlegung überhaupt ausgeführt werden kann — genau das Fehlen eines erkundeten Ziels blockierte laut CHANGELOG 2026-08-11 einen Bot-Lauf real bis Sol 20. Diese zusätzliche AP-Last ist hier nicht quantifiziert; für den `poor`-Zweig gilt deshalb nur die schwächere Aussage „AP ist auf dem `regolith_normal`-Pfad nicht bindend", nicht pauschal für alle Startbedingungen.
+
+**Nebenbefund — Asymmetrie zwischen den Pfadgebäuden bleibt bestehen, nicht Teil dieses Fixes.** Die G4-Preisgleichheit (95 Rg für alle drei) gilt nur für Regolith. In AP-Kosten sind Analytik-Labor und Hangar „Groß" (`base_ap=22`, Lv1 = 11 AP), Cantina ist „Mittel" (`base_ap=16`, Lv1 = 8 AP) — bei gleichem Regolith-Preis ist die Cantina AP-günstiger. Da AP hier nicht die bindende Achse ist (s. o.), ändert das nichts an der Sol-15-20-Erreichbarkeit, ist aber eine Inkonsistenz in der „Paritäts-Anforderung" (§4b), die bei Gelegenheit (nicht hier) zu prüfen ist.
+
+**Erforderliche Folgearbeiten bei Umsetzung (nicht Teil dieses GDD-Nachtrags, für den Implementierungs-Task):**
+
+1. Startbestand Regolith 200 → 300 — hartcodiert in `OnboardingService::setupNewPlayer()`, außerdem in `app/Console/Commands/ResetPlayer.php`-Szenarien und `data/sql/testdata.sqlite.sql` nachzuziehen (siehe game-designer-Rollenpflicht „Szenario-Pflege"). Kein weiterer Config-Key betroffen — `resource_max`/`fresh_yield`/Errichtungspreise/Berater-Kosten bleiben unverändert (s. o.).
+2. §15 „Startzustand" (aktuell „200 Regolith") und §15-Bedingungstext („2 Produktionsgebäude" vs. Code-Verhalten, s. Vorklärung oben) auf Konsistenz prüfen — Owner-Entscheidung zur Bedingung-2-Formulierung ist ein eigener, offener Punkt.
+3. TDD-Pflicht (CLAUDE.md): neue/angepasste Tests für `HarvesterSol1BootstrapTest` (falls dort der Startbestand referenziert wird), ggf. `PlaytestBotTest`-Erwartungen.
+4. Nach Umsetzung: erneuter PlaytestBot-Lauf (mehrere Seeds) zur empirischen Bestätigung — diese Herleitung ist eine Floor-Rechnung, kein Simulationsersatz; der Sol-55-65-Ist-Wert enthielt nachweislich Ausführungsfriktion (Reihenfolgezwang, Erkundung/Verlegung, teils behobene Bugs), die diese Rechnung explizit nicht vollständig abbildet. Sollte der reale Regelfall trotz des Fixes spürbar über Sol 20 bleiben, ist die Erkundungs-/Verlege-AP-Last aus dem `poor`-Zweig (s. o.) der nächstplausible, hier noch nicht quantifizierte Kandidat — nicht `resource_max` erneut.
+5. Falls die Konstant-Yield-Umstellung (§4c-Spec 2026-08-10) unabhängig davon umgesetzt wird: keine Rückwirkung auf diesen Nachtrag nötig, da `resource_max` hier unverändert bleibt (s. „Bewusst nicht angefasst").
+
+---
+
 ## 14. Moralsystem
 
 ### Design-Absicht
@@ -3301,7 +3375,7 @@ Wer hingegen bei Sol 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale St
 
 ### Fail States
 
-Genau 3 Fail States.
+Genau 4 Fail States (vollständige, aktuelle Liste inkl. Fail State 4 „Phase-1-Fristbruch" in §18.2 — dieser Abschnitt ist älter und noch nicht vollständig nachgezogen).
 
 **Fail State 1 — Vertrauen kollabiert:**
 Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende Sole unter einem kritischen Schwellenwert (z.B. < 10).
@@ -3443,13 +3517,13 @@ Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird.
 
 **Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 60 ergibt mehr Punkte als derselbe Sieg bei Sol 90. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
 
-**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte).
+**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte — sowie Phase-1-Fristbruch, Sol 30, Fail State 4 unten, der einzige der vier Fail States, der ausschließlich in Phase 1 auslösen kann).
 
 ---
 
 ### 18.2 Fail States
 
-Drei Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Objective-Update (damit ein Sieg auf demselben Tick immer Vorrang vor einem gleichzeitigen Fail State hat). Kanonische Implementierung: `RunProgressService::checkFailStates()`.
+Vier Fail States. Alle werden am Ende der Tick-Phase 5 geprüft, nach dem Objective-Update (damit ein Sieg auf demselben Tick immer Vorrang vor einem gleichzeitigen Fail State hat). Kanonische Implementierung: `RunProgressService::checkFailStates()`. Der vierte (Phase-1-Fristbruch) kann nur in Phase 1 auftreten — sobald Phase 2 erreicht ist, greifen ausschließlich die anderen drei.
 
 #### Fail State 1 — Vertrauenskollaps
 
@@ -3509,6 +3583,27 @@ Begründung gegen eine Streak-Mechanikverzögerung (wie in §15 ursprünglich sk
 | tick_limit (Sol 100) | Fail State — Run endet |
 
 **Narrativer Ausgang:** "Fristablauf. Die Konzession wurde nicht verlängert."
+
+---
+
+#### Fail State 4 — Phase-1-Fristbruch
+
+**Bedingung:** `run.phase === 1 && current_tick >= config('game.run.phase1_deadline_sol')` → Standardwert **Sol 30**
+
+**Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
+
+Owner-Vorgabe 2026-08-12: Phase 1 soll im Normalfall Sol 15-20 abgeschlossen sein, spätestens Sol 30. Datenbasis: PlaytestBot-Auswertung (PR #244, mehrere Seeds/Reruns) zeigte Phase 1 aktuell frühestens Sol 55-65 abgeschlossen — deutlich außerhalb des Zielkorridors. Dieser Fail State macht die Deadline spielmechanisch verbindlich; die zugehörige Rebalancierung, die Sol 15-20 überhaupt erreichbar macht, ist bereits hergeleitet (§13.7 „Nachtrag 2026-08-12 — Phase-1-Pacing auf Sol-15-20 neu hergeleitet"): entgegen der ursprünglichen Vermutung ist **nicht** der Harvester-Ertrag der bindende Engpass — weder er noch die Tile-Mengengrenze (`resource_max`) noch Berater-Hire-Credits binden im Zielfenster. Der alleinige Hebel ist der Regolith-Startbestand, **200 → 300**, der den rechnerischen Floor von ≈Sol 22,5 auf ≈Sol 15,4 verschiebt. Die Herleitung ist abgeschlossen, die Umsetzung im Code steht noch aus (siehe Anhang A.4).
+
+**Warnstufen (INNN):**
+
+| Sol | Maßnahme |
+|-----|---------|
+| Sol 22 (`config('game.run.phase1_warning_sol')`) | INNN-Warnung von Nexus, sofern Phase 1 noch nicht abgeschlossen — einmalig pro Run |
+| Sol 30 | Fail State — Run endet sofort |
+
+Vollständiges Design: `docs/superpowers/specs/2026-08-12-phase1-sol30-deadline-design.md`.
+
+**Narrativer Ausgang:** "Die Stabilisierungsphase wurde nicht rechtzeitig abgeschlossen. Nexus zieht die Konzession mit sofortiger Wirkung."
 
 ---
 
@@ -3718,6 +3813,7 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | **Credits-Bilanz über den Run** (analog zur Regolith-Bilanz in §13.7) — fehlt komplett; nötig, um die Organika-Verkauf-Zielgröße (Pfad C) neu und korrekt herzuleiten, nachdem die 247-Cr/Sol-Zahl am 2026-08-06 als falsch hergeleitet (aus dem Regolith-Gap statt aus dem Credits-Bedarf) zurückgezogen wurde | §13.7, §4b, §12 |
 | `agronomy`-Kenntnis: hat sie einen Organika-Effekt oder nur den Supply-Cap-Bonus? | §4b, §10 |
 | **Kenntnisse-Boni komplett ausarbeiten** (Owner, 2026-08-12) — `config/knowledge.php` definiert bisher nur einheitliche `levelup_costs`/`credits` (0/20-28-36-44-52 für alle 7 Kenntnisse identisch), aber keine differenzierten Spieleffekte pro Kenntnis/Level. Kosten sind ebenfalls noch nicht gegeneinander austariert (aktuell für alle Kenntnisse gleich). Hängt mit dem `agronomy`-Punkt direkt darüber zusammen (ein Symptom desselben Problems), betrifft aber alle 7 Kenntnisse, nicht nur `agronomy` | §10, `config/knowledge.php` |
+| **Phase-1-Pacing auf Sol-15-20-Ziel neu hergeleitet** (Owner, 2026-08-12) — ✅ **hergeleitet, Umsetzung offen** (§13.7 „Nachtrag 2026-08-12 — Phase-1-Pacing auf Sol-15-20 neu hergeleitet"). Befund: weder Harvester-Ertrag noch die Mengengrenze eines Tiles (`resource_max`) binden im Zielfenster, noch Berater-Hire-Credits (3 Anwerbungen ≈1.050 Cr sind aus dem Startkapital 3.000 Cr trivial finanzierbar) — der alleinige Engpass ist der zu knappe Startbestand gegen die Ratengrenze des Harvesters. Einziger Zielwert: Startbestand Regolith 200→300, verschiebt den rechnerischen Floor von ≈Sol 22,5 auf ≈Sol 15,4 (kein Eingriff in `resource_max`, Frischwert, Pfadgebäude-Baukosten, CC-Ausbau oder Berater-Kosten — eine `resource_max`-Anhebung wurde geprüft und verworfen, sie würde die §4c-Umzugstakt-Vorgabe 4–6 Verlegungen/Run kollateral verletzen, ohne im Zielfenster etwas beizutragen). Constant-Yield-Umstellung (2026-08-10) bleibt separat und ist gegen diesen Zielwert robust (nicht implementiert, GDD §4c weiterhin mit Rampenformel). Ergebnis ist ein Floor, kein Erwartungswert — realer Regelfall liegt wegen Reihenfolgezwang (2. Pfadgebäude erst ab CC Lv3) und Ausführungsfriktion darüber. `poor`-Start-Tiles (häufigste Einzelklasse) landen im Worst Case bei ≈Sol 20, klar unter Sol 30. Offen: TDD-Umsetzung, `ResetPlayer.php`/`testdata.sqlite.sql`-Nachzug, §15-Bedingung-2-Wortlaut („2 Produktionsgebäude" vs. Code „2 Nicht-CC-Gebäude") klären, erneuter PlaytestBot-Lauf zur empirischen Bestätigung | §13.7, §15, `app/Services/OnboardingService.php` |
 | **Events + Missionen im Detail ausarbeiten** (Owner, 2026-08-12) — Deep-Scan/`event_ruin`/Bergungsmission-Pfad wurde im PlaytestBot verdrahtet (PR #244, 2026-08-12) und dabei sichtbar, dass der Bot vorher nie deep-gescannt hat, weil Event-Content strukturell kaum genutzt wurde; wie viel davon am fehlenden Bot-Verhalten lag vs. am noch dünn ausgearbeiteten Event-/Missionskatalog selbst ist offen. Betrifft `config/missions.php` (bisher nur `mission_recon_flight`, `mission_ruin_expedition`, `mission_harvester_salvage`, `mission_supply_run` echt ausgearbeitet) und die Event-Typen hinter `event_type`/`is_deep_scanned` allgemein | §8b, §9, `config/missions.php` |
 | Optionale dritte Bedingung für Run-Phase 1 (Roguelike-Variabilität) | §15 |
 | Nexus-Boni in Phase 1 oder erst ab Phase 2? | §15 |

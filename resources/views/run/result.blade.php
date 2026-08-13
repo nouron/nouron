@@ -24,6 +24,8 @@
                         {{ __("run.run_completed") }}
                     @elseif($run->fail_reason === "trust_collapse")
                         {{ __("run.result_fail_trust") }}
+                    @elseif($run->fail_reason === "phase1_deadline")
+                        {{ __("run.result_fail_phase1_deadline") }}
                     @else
                         {{ __("run.result_fail_time") }}
                     @endif

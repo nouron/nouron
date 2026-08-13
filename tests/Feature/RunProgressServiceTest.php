@@ -546,7 +546,7 @@ class RunProgressServiceTest extends TestCase
     {
         $tickLimit = (int) config('game.run.tick_limit', 100);
 
-        $run = $this->makeRun(['current_tick' => $tickLimit]);
+        $run = $this->makeRun(['current_tick' => $tickLimit, 'phase' => 2]);
 
         // Trust at a safe level so it does not trigger trust_collapse first
         $this->setTrust(50);
@@ -565,6 +565,42 @@ class RunProgressServiceTest extends TestCase
         $result = $this->service->checkFailStates($run);
 
         $this->assertNull($result, 'Must return null when neither fail condition is active');
+    }
+
+    public function test_check_fail_states_returns_phase1_deadline_when_phase1_incomplete_at_deadline_sol(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol, 'phase' => 1]);
+
+        $this->setTrust(50); // safe, doesn't trigger trust_collapse first
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertEquals('phase1_deadline', $result, 'Must return phase1_deadline when still in Phase 1 at the deadline Sol');
+    }
+
+    public function test_check_fail_states_does_not_return_phase1_deadline_before_deadline_sol(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol - 1, 'phase' => 1]);
+
+        $this->setTrust(50);
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertNull($result, 'Must not fail one Sol before the deadline');
+    }
+
+    public function test_check_fail_states_does_not_return_phase1_deadline_when_already_phase2(): void
+    {
+        $deadlineSol = (int) config('game.run.phase1_deadline_sol', 30);
+        $run = $this->makeRun(['current_tick' => $deadlineSol + 5, 'phase' => 2]);
+
+        $this->setTrust(50);
+
+        $result = $this->service->checkFailStates($run);
+
+        $this->assertNull($result, 'Must not apply the Phase-1 deadline once Phase 2 has started');
     }
 
     // ── endRun ────────────────────────────────────────────────────────────────
@@ -593,6 +629,27 @@ class RunProgressServiceTest extends TestCase
         $this->assertEquals('completed', $row->status);
         $this->assertNull($row->fail_reason, 'fail_reason must be null for a successful run');
         $this->assertNotNull($row->ended_at);
+    }
+
+    public function test_end_run_logs_phase1_deadline_event_key_for_phase1_deadline_fail_reason(): void
+    {
+        $run = $this->makeRun();
+
+        $this->service->endRun($run, 'failed', 'phase1_deadline');
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.run_failed_phase1_deadline')
+            ->exists();
+
+        $this->assertTrue($fired, 'endRun must log run.run_failed_phase1_deadline for fail_reason=phase1_deadline');
+
+        $genericFired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.run_failed_time')
+            ->exists();
+
+        $this->assertFalse($genericFired, 'endRun must NOT fall back to the generic run.run_failed_time event key');
     }
 
     /**
@@ -1278,6 +1335,69 @@ class RunProgressServiceTest extends TestCase
             ->count();
 
         $this->assertEquals(1, $count, 'nexus_warning_sol50 must only be inserted once per run');
+    }
+
+    // ── checkPhase1DeadlineWarnings ─────────────────────────────────────────
+
+    public function test_phase1_deadline_warning_fires_at_warning_sol_when_still_phase1(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertTrue($fired, 'nexus_phase1_warning must fire once current_tick reaches phase1_warning_sol while still in Phase 1');
+    }
+
+    public function test_phase1_deadline_warning_does_not_fire_before_warning_sol(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol - 1, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_phase1_warning must not fire before phase1_warning_sol');
+    }
+
+    public function test_phase1_deadline_warning_does_not_fire_once_phase2(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol + 5, 'phase' => 2, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->exists();
+
+        $this->assertFalse($fired, 'nexus_phase1_warning must not fire once Phase 2 has started');
+    }
+
+    public function test_phase1_deadline_warning_fires_only_once(): void
+    {
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        $run = $this->makeRun(['current_tick' => $warningSol, 'phase' => 1, 'started_at' => now()->subHour()]);
+
+        $this->service->checkPhase1DeadlineWarnings($run);
+        $this->service->checkPhase1DeadlineWarnings($run);
+
+        $count = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.nexus_phase1_warning')
+            ->count();
+
+        $this->assertEquals(1, $count, 'nexus_phase1_warning must fire at most once per run');
     }
 
     public function test_draw_objectives_fallback_with_pool_of_2_tasks(): void

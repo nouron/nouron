@@ -386,6 +386,10 @@ return [
         'tick_limit' => 100,    // total ticks per run (60–100, default 100)
         'trust_fail_threshold' => -20,    // instant fail when trust drops below this value
         'nexus_debt_fail_threshold' => 12000,  // instant fail when nexus_debt exceeds this value
+        'phase1_deadline_sol' => 30,    // hard fail if Phase 1 isn't complete by this Sol (checkFailStates)
+        'phase1_warning_sol' => 22,     // escalating Nexus warning if Phase 1 still incomplete by this Sol
+        // Invariant: phase1_warning_sol must stay below phase1_deadline_sol, or the warning
+        // and the hard fail would land on the same tick.
         'task_pool' => [       // all available Phase-2 task keys
             'task_senior_advisors',
             'task_credit_reserve',

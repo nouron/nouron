@@ -48,7 +48,7 @@ return [
         'onboarding' => [
             'nexus_briefing' => [
                 'title' => 'Nexus First Contact',
-                'body' => 'Connection to Nexus Central established. Your concession is registered. We are monitoring your colony. Ensure that you meet the agreed mission objectives.',
+                'body' => 'Connection to Nexus Central established. Your concession is registered. We are monitoring your colony. Ensure that you meet the agreed mission objectives. Phase 1 of your concession must be completed by Sol 30 — a deadline breach terminates the concession.',
                 'badge' => 'First Contact',
             ],
         ],
@@ -96,6 +96,16 @@ return [
             'run_failed_time' => [
                 'title' => 'Mission failed — Time limit',
                 'body' => 'The Sol limit was reached without completing the required objectives. Nexus terminates the concession.',
+                'badge' => 'Failed',
+            ],
+            'nexus_phase1_warning' => [
+                'title' => 'Nexus Warning — Phase 1',
+                'body' => 'Nexus Protocol §4.2: The stabilization phase is not yet complete. Accelerate progress — a deadline breach terminates the concession.',
+                'badge' => 'Warning',
+            ],
+            'run_failed_phase1_deadline' => [
+                'title' => 'Mission failed — Phase 1 deadline breach',
+                'body' => 'Nexus Protocol §4.3: The stabilization phase was not completed within the deadline. The concession is forcibly terminated.',
                 'badge' => 'Failed',
             ],
         ],

@@ -48,7 +48,7 @@ return [
         'onboarding' => [
             'nexus_briefing' => [
                 'title' => 'Nexus-Erstkontakt',
-                'body' => 'Verbindung zur Nexus-Zentrale hergestellt. Ihre Konzession ist registriert. Wir überwachen Ihre Kolonie. Stellen Sie sicher, dass Sie die vereinbarten Missionsziele erreichen.',
+                'body' => 'Verbindung zur Nexus-Zentrale hergestellt. Ihre Konzession ist registriert. Wir überwachen Ihre Kolonie. Stellen Sie sicher, dass Sie die vereinbarten Missionsziele erreichen. Phase 1 Ihrer Konzession muss bis Sol 30 abgeschlossen sein — bei Fristbruch wird die Konzession beendet.',
                 'badge' => 'Erstkontakt',
             ],
         ],
@@ -96,6 +96,16 @@ return [
             'run_failed_time' => [
                 'title' => 'Mission gescheitert — Zeitlimit',
                 'body' => 'Das Sol-Limit wurde erreicht ohne die erforderlichen Ziele abzuschließen. Nexus beendet die Konzession.',
+                'badge' => 'Gescheitert',
+            ],
+            'nexus_phase1_warning' => [
+                'title' => 'Nexus-Warnung — Phase 1',
+                'body' => 'Nexus-Protokoll §4.2: Die Stabilisierungsphase ist noch nicht abgeschlossen. Beschleunigen Sie den Fortschritt — bei Fristbruch wird die Konzession beendet.',
+                'badge' => 'Warnung',
+            ],
+            'run_failed_phase1_deadline' => [
+                'title' => 'Mission gescheitert — Fristbruch Phase 1',
+                'body' => 'Nexus-Protokoll §4.3: Die Stabilisierungsphase wurde nicht innerhalb der Frist abgeschlossen. Die Konzession wird zwangsbeendet.',
                 'badge' => 'Gescheitert',
             ],
         ],

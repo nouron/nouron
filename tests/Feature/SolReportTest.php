@@ -360,6 +360,23 @@ class SolReportTest extends TestCase
         $this->assertNull($this->groupByKey($report, 'run'));
     }
 
+    public function test_finale_on_failed_run_uses_phase1_deadline_body(): void
+    {
+        $run = $this->setRunTick(30);
+        $before = $this->snapshot($run);
+        $run->update(['status' => 'failed', 'fail_reason' => 'phase1_deadline']);
+        $run->refresh();
+
+        $report = $this->service()->buildReport($run, $before, false);
+
+        $this->assertNotNull($report['finale']);
+        $this->assertSame('lose', $report['finale']['outcome']);
+        $this->assertSame(__('run.run_failed_phase1_deadline'), $report['finale']['body']);
+        $this->assertNotNull($report['result_url']);
+        $this->assertTrue($report['force_show']);
+        $this->assertNull($this->groupByKey($report, 'run'));
+    }
+
     public function test_sol_next_endpoint_returns_report_and_increments_tick(): void
     {
         $this->fakeGameTick();

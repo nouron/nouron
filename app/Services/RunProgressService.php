@@ -540,6 +540,39 @@ class RunProgressService
         ]);
     }
 
+    // ── Phase-1 deadline warning ──────────────────────────────────────────────
+
+    /**
+     * Escalating Nexus warning if Phase 1 is still not complete by
+     * config('game.run.phase1_warning_sol') — heads-up before the hard
+     * config('game.run.phase1_deadline_sol') fail state in checkFailStates().
+     *
+     * Called once per tick, only while the run is in Phase 1 (see GameTick.php).
+     * Fires at most once per run (guarded by colony_log lookup, same pattern
+     * as maybeFireSol30Warning() etc.).
+     */
+    public function checkPhase1DeadlineWarnings(Run $run): void
+    {
+        if ($run->phase !== 1) {
+            return;
+        }
+
+        $warningSol = (int) config('game.run.phase1_warning_sol', 22);
+        if ($run->current_tick < $warningSol) {
+            return;
+        }
+
+        $eventKey = 'run.nexus_phase1_warning';
+        if ($this->eventAlreadyFired($run, $eventKey)) {
+            return;
+        }
+
+        $this->createEvent($run->user_id, $run->current_tick, $eventKey, 'run', [
+            'run_id' => $run->id,
+            'colony_id' => $run->colony_id,
+        ]);
+    }
+
     /**
      * Return true if an colony_log row with this event key already exists
      * for this user, created at or after the run's start time.
@@ -561,9 +594,10 @@ class RunProgressService
      * Returns the fail reason key (for endRun()) or null if the run continues.
      *
      * Fail states checked:
-     *  trust_collapse — trust value < trust_fail_threshold (instant fail).
-     *  nexus_debt     — nexus_debt > nexus_debt_fail_threshold (checked here as secondary path).
-     *  time_limit     — current_tick >= tick_limit.
+     *  trust_collapse   — trust value < trust_fail_threshold (instant fail).
+     *  nexus_debt       — nexus_debt > nexus_debt_fail_threshold (checked here as secondary path).
+     *  phase1_deadline  — still in Phase 1 at current_tick >= phase1_deadline_sol (instant fail).
+     *  time_limit       — current_tick >= tick_limit.
      */
     public function checkFailStates(Run $run): ?string
     {
@@ -580,6 +614,10 @@ class RunProgressService
 
         if (($run->nexus_debt ?? 0) > $this->nexusDebtFailThreshold()) {
             return 'nexus_debt';
+        }
+
+        if ($run->phase === 1 && $run->current_tick >= (int) config('game.run.phase1_deadline_sol', 30)) {
+            return 'phase1_deadline';
         }
 
         if ($run->current_tick >= $run->getTickLimit()) {
@@ -641,6 +679,7 @@ class RunProgressService
                 $status === 'completed' => 'run.run_completed',
                 $failReason === 'trust_collapse' => 'run.run_failed_trust',
                 $failReason === 'nexus_debt' => 'run.run_failed_nexus_debt',
+                $failReason === 'phase1_deadline' => 'run.run_failed_phase1_deadline',
                 default => 'run.run_failed_time',
             };
 
@@ -702,9 +741,10 @@ class RunProgressService
     ): void {
         $isNexus = $area === 'nexus' || in_array($event, [
             'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
-            'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80',
+            'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80', 'run.nexus_phase1_warning',
             'run.run_completed', 'run.run_failed_trust',
-            'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.phase1_complete',
+            'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.run_failed_phase1_deadline',
+            'run.phase1_complete',
         ], true);
 
         DB::table('colony_log')->insert([

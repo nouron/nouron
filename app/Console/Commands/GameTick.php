@@ -166,6 +166,8 @@ class GameTick extends Command
                 $runProgressService->transitionToPhase2($run);
                 $run->refresh();
                 $this->line('  Phase 1 completed — transitioning to Phase 2.');
+            } else {
+                $runProgressService->checkPhase1DeadlineWarnings($run);
             }
         }
 
