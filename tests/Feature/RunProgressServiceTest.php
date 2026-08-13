@@ -631,6 +631,27 @@ class RunProgressServiceTest extends TestCase
         $this->assertNotNull($row->ended_at);
     }
 
+    public function test_end_run_logs_phase1_deadline_event_key_for_phase1_deadline_fail_reason(): void
+    {
+        $run = $this->makeRun();
+
+        $this->service->endRun($run, 'failed', 'phase1_deadline');
+
+        $fired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.run_failed_phase1_deadline')
+            ->exists();
+
+        $this->assertTrue($fired, 'endRun must log run.run_failed_phase1_deadline for fail_reason=phase1_deadline');
+
+        $genericFired = DB::table('colony_log')
+            ->where('user', $this->userId)
+            ->where('event', 'run.run_failed_time')
+            ->exists();
+
+        $this->assertFalse($genericFired, 'endRun must NOT fall back to the generic run.run_failed_time event key');
+    }
+
     /**
      * endRun fires RunEnded with the final status and fail reason (ADR 0003).
      */

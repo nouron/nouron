@@ -679,6 +679,7 @@ class RunProgressService
                 $status === 'completed' => 'run.run_completed',
                 $failReason === 'trust_collapse' => 'run.run_failed_trust',
                 $failReason === 'nexus_debt' => 'run.run_failed_nexus_debt',
+                $failReason === 'phase1_deadline' => 'run.run_failed_phase1_deadline',
                 default => 'run.run_failed_time',
             };
 
@@ -742,7 +743,8 @@ class RunProgressService
             'run.nexus_warning_sol30', 'run.nexus_warning_sol50',
             'run.nexus_sanction_sol65', 'run.nexus_countdown_sol80', 'run.nexus_phase1_warning',
             'run.run_completed', 'run.run_failed_trust',
-            'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.phase1_complete',
+            'run.run_failed_nexus_debt', 'run.run_failed_time', 'run.run_failed_phase1_deadline',
+            'run.phase1_complete',
         ], true);
 
         DB::table('colony_log')->insert([

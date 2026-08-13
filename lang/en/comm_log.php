@@ -48,7 +48,7 @@ return [
         'onboarding' => [
             'nexus_briefing' => [
                 'title' => 'Nexus First Contact',
-                'body' => 'Connection to Nexus Central established. Your concession is registered. We are monitoring your colony. Ensure that you meet the agreed mission objectives.',
+                'body' => 'Connection to Nexus Central established. Your concession is registered. We are monitoring your colony. Ensure that you meet the agreed mission objectives. Phase 1 of your concession must be completed by Sol 30 — a deadline breach terminates the concession.',
                 'badge' => 'First Contact',
             ],
         ],

@@ -98,6 +98,22 @@ class CommLogControllerTest extends TestCase
         $this->assertSame(0, $response->viewData('unreadCount'));
     }
 
+    public function test_nexus_includes_phase1_deadline_warning_and_fail_events(): void
+    {
+        $this->log('run.nexus_phase1_warning', [], area: 'colony'); // nexus key, non-nexus area
+        $this->log('run.run_failed_phase1_deadline', [], area: 'colony'); // nexus key, non-nexus area
+        $this->log('colony.building_placed', ['building_id' => 25], area: 'colony');
+
+        $response = $this->actingAs($this->user())->get(route('comm.nexus'));
+
+        $response->assertOk();
+        $entries = $response->viewData('entries');
+        $this->assertCount(2, $entries);
+        $events = $entries->pluck('event')->all();
+        $this->assertContains('run.nexus_phase1_warning', $events);
+        $this->assertContains('run.run_failed_phase1_deadline', $events);
+    }
+
     public function test_nexus_marks_entries_as_read(): void
     {
         $this->log('run.nexus_warning_sol30', [], area: 'nexus');

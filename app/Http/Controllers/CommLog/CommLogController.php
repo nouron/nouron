@@ -18,10 +18,12 @@ class CommLogController extends BaseController
         'run.nexus_warning_sol50',
         'run.nexus_sanction_sol65',
         'run.nexus_countdown_sol80',
+        'run.nexus_phase1_warning',
         'run.run_completed',
         'run.run_failed_trust',
         'run.run_failed_nexus_debt',
         'run.run_failed_time',
+        'run.run_failed_phase1_deadline',
         'run.phase1_complete',
     ];
 

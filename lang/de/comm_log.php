@@ -48,7 +48,7 @@ return [
         'onboarding' => [
             'nexus_briefing' => [
                 'title' => 'Nexus-Erstkontakt',
-                'body' => 'Verbindung zur Nexus-Zentrale hergestellt. Ihre Konzession ist registriert. Wir überwachen Ihre Kolonie. Stellen Sie sicher, dass Sie die vereinbarten Missionsziele erreichen.',
+                'body' => 'Verbindung zur Nexus-Zentrale hergestellt. Ihre Konzession ist registriert. Wir überwachen Ihre Kolonie. Stellen Sie sicher, dass Sie die vereinbarten Missionsziele erreichen. Phase 1 Ihrer Konzession muss bis Sol 30 abgeschlossen sein — bei Fristbruch wird die Konzession beendet.',
                 'badge' => 'Erstkontakt',
             ],
         ],
