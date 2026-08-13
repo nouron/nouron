@@ -44,7 +44,7 @@ class OnboardingTest extends TestCase
         $res = DB::table('colony_resources')
             ->where('colony_id', $colony->id)
             ->pluck('amount', 'resource_id');
-        $this->assertEquals(200, $res[3]);   // regolith
+        $this->assertEquals(300, $res[3]);   // regolith
         $this->assertEquals(0, $res[4]);   // werkstoffe — produced by harvester, no starting stock
         $this->assertEquals(0, $res[5]);   // organika   — produced by bioFacility, no starting stock
 
