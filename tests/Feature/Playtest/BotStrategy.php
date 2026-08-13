@@ -365,9 +365,16 @@ class BotStrategy
                 ->pluck('cnt', 'building_id');
 
             usort($buildings, function ($a, $c) use ($placedCounts, $pathIds, $bioFacilityId) {
-                $priority = function (array $building) use ($pathIds, $bioFacilityId): int {
+                $priority = function (array $building) use ($pathIds, $bioFacilityId, $placedCounts): int {
                     $id = (int) $building['building_id'];
-                    if ($id === $bioFacilityId) {
+                    // bioFacility is priority 0 only for its first (mandatory Ramp-Gate)
+                    // instance — uncapped max_instances means it would otherwise always
+                    // outrank the 95-Rg path buildings (70 < 95) and get re-built
+                    // indefinitely, starving path-building progress forever regardless of
+                    // starting Regolith (found empirically: got WORSE after the Sol-15-20
+                    // pacing fix raised the starting stock 200→300, giving the bot even
+                    // more headroom to keep affording bioFacility repeats).
+                    if ($id === $bioFacilityId && ($placedCounts[$bioFacilityId] ?? 0) === 0) {
                         return 0;
                     }
                     if (in_array($id, $pathIds, true)) {
@@ -392,7 +399,23 @@ class BotStrategy
             $resourcesService = app(ResourcesService::class);
             $freeSupply = $resourcesService->getFreeSupply($b->colonyId);
 
+            // Rg-buffer: while a path building is still needed and unaffordable, don't
+            // let a cheaper tier-2 (or already-placed bioFacility) candidate leak the
+            // accumulating Regolith away — same discipline productionInvestCandidate()/
+            // researchCandidate() already apply, but placeCandidate() itself previously
+            // had none. Without this, the sorted-by-priority-then-first-affordable loop
+            // below happily buys whatever's cheap and available right now, so Rg never
+            // reaches the 95 needed for Sciencelab/Hangar/Bar — found empirically as a
+            // Sol-25 stall (identical across seeds) even after the Sol-15-20 pacing fix.
+            $activeAdvisors = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
+            $pendingPathCost = $activeAdvisors < 3 ? self::cheapestPendingPathBuildingCost($b) : null;
+            $bufferedRegolith = $pendingPathCost !== null && self::regolith($b) < $pendingPathCost;
+
             foreach ($buildings as $building) {
+                if ($bufferedRegolith && ! in_array((int) $building['building_id'], $pathIds, true)) {
+                    continue;
+                }
+
                 $costs = [];
                 foreach ($building['build_cost'] as $resourceId => $amount) {
                     $costs[] = ['resource_id' => $resourceId, 'amount' => $amount];
