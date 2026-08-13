@@ -3375,7 +3375,7 @@ Wer hingegen bei Sol 85 bereits 1 Aufgabe erfüllt hat, erhält eine neutrale St
 
 ### Fail States
 
-Genau 3 Fail States.
+Genau 4 Fail States (vollständige, aktuelle Liste inkl. Fail State 4 „Phase-1-Fristbruch" in §18.2 — dieser Abschnitt ist älter und noch nicht vollständig nachgezogen).
 
 **Fail State 1 — Vertrauen kollabiert:**
 Das Vertrauen der Kolonisten in den Direktor bleibt für N aufeinanderfolgende Sole unter einem kritischen Schwellenwert (z.B. < 10).
@@ -3517,7 +3517,7 @@ Der Run endet in demselben Tick, in dem die zweite Objective abgeschlossen wird.
 
 **Frühzeitiger Sieg belohnt Effizienz:** Die Score-Formel enthält `(tick_limit − done_tick) × 10` — ein Sieg bei Sol 60 ergibt mehr Punkte als derselbe Sieg bei Sol 90. Das schafft permanenten Anreiz für schnelles Spielen, ohne Erkundung und Aufbau zu bestrafen.
 
-**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte).
+**Sieg ist nur in Phase 2 möglich:** `endRun('completed')` wird nur aufgerufen wenn `run.phase == 2`. In Phase 1 gibt es ausschließlich Fail States (Trust, Schulden, Zeit — letzterer praktisch nie, da Phase 1 deutlich kürzer als `tick_limit` dauern sollte — sowie Phase-1-Fristbruch, Sol 30, Fail State 4 unten, der einzige der vier Fail States, der ausschließlich in Phase 1 auslösen kann).
 
 ---
 
@@ -3592,7 +3592,7 @@ Begründung gegen eine Streak-Mechanikverzögerung (wie in §15 ursprünglich sk
 
 **Auslösung:** Instant in dem Tick, in dem die Deadline erreicht wird, sofern Phase 1 noch nicht abgeschlossen ist (`RunProgressService::checkPhase1Completion()`).
 
-Owner-Vorgabe 2026-08-12: Phase 1 soll im Normalfall Sol 15-20 abgeschlossen sein, spätestens Sol 30. Datenbasis: PlaytestBot-Auswertung (PR #244, mehrere Seeds/Reruns) zeigte Phase 1 aktuell frühestens Sol 55-65 abgeschlossen — deutlich außerhalb des Zielkorridors. Dieser Fail State macht die Deadline spielmechanisch verbindlich; die zugehörige Rebalancierung (Harvester-Ertrag u.a.), die Sol 15-20 überhaupt erreichbar macht, ist ein separater, größerer Auftrag (Anhang A.4, "Phase-1-Pacing auf Sol-15-20-Ziel neu herleiten").
+Owner-Vorgabe 2026-08-12: Phase 1 soll im Normalfall Sol 15-20 abgeschlossen sein, spätestens Sol 30. Datenbasis: PlaytestBot-Auswertung (PR #244, mehrere Seeds/Reruns) zeigte Phase 1 aktuell frühestens Sol 55-65 abgeschlossen — deutlich außerhalb des Zielkorridors. Dieser Fail State macht die Deadline spielmechanisch verbindlich; die zugehörige Rebalancierung, die Sol 15-20 überhaupt erreichbar macht, ist bereits hergeleitet (§13.7 „Nachtrag 2026-08-12 — Phase-1-Pacing auf Sol-15-20 neu hergeleitet"): entgegen der ursprünglichen Vermutung ist **nicht** der Harvester-Ertrag der bindende Engpass — weder er noch die Tile-Mengengrenze (`resource_max`) noch Berater-Hire-Credits binden im Zielfenster. Der alleinige Hebel ist der Regolith-Startbestand, **200 → 300**, der den rechnerischen Floor von ≈Sol 22,5 auf ≈Sol 15,4 verschiebt. Die Herleitung ist abgeschlossen, die Umsetzung im Code steht noch aus (siehe Anhang A.4).
 
 **Warnstufen (INNN):**
 
