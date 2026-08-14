@@ -481,6 +481,25 @@ class RunProgressServiceTest extends TestCase
 
     // ── updateObjectiveProgress: task_credit_reserve ─────────────────────────
 
+    /**
+     * Threshold lowered 5000→3000 (GDD §18.4 Nachtrag 2026-08-14) — the old
+     * threshold was effectively unreachable under the pre-fix Credit-Ökonomie
+     * collapse (Rang-3-Upkeep-Klippe). 3500 sits between the two values: must
+     * count as "above" under the new threshold.
+     */
+    public function test_task_credit_reserve_increments_streak_at_new_lowered_threshold(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_credit_reserve', 10, 0);
+
+        $this->setCredits(3500);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment at the new 3000 threshold (3500 credits)');
+    }
+
     public function test_task_credit_reserve_increments_streak_when_credits_above_threshold(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);

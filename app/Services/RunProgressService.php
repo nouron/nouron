@@ -252,7 +252,7 @@ class RunProgressService
             ->where('user_id', $run->user_id)
             ->value('credits') ?? 0);
 
-        if ($credits >= 5000) {
+        if ($credits >= (int) config('game.run.task_credit_reserve_threshold', 3000)) {
             $objective->streak_value++;
         } else {
             $objective->streak_value = 0;

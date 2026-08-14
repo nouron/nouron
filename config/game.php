@@ -239,7 +239,11 @@ return [
         'ap_per_rank' => [1 => 2, 2 => 3, 3 => 4],
         // One-time Credits cost when advisor is promoted to this rank (keyed by target rank).
         // If user cannot afford it the promotion is deferred until next tick (ROADMAP Phase 3a).
-        'promotion_costs' => [2 => 150, 3 => 400],
+        // Rank-3 cost lowered 400 → 250 (GDD §18.4 Nachtrag 2026-08-14) — up to
+        // 3 advisors promoting near-simultaneously around Phase-2-Sol 45-60 could
+        // stack to 1200 Cr in one-time cost right when the ongoing upkeep jump
+        // (see 'upkeep' below) also hits, compounding the Post-Phase-1 collapse.
+        'promotion_costs' => [2 => 150, 3 => 250],
         // Slot system: CC level = number of advisor slots (max 4).
         // Formula: min(cc_level, max_slots)
         'max_slots' => 4,
@@ -249,21 +253,31 @@ return [
         // Flattened 2026-07-19 (was [1=>10, 2=>50, 3=>160]) — the old Rang-2 cliff made
         // 3 advisors at rank 2 cost 150 Cr/Tick against ~30-70 Cr/Tick income, a
         // structural collapse no player action could prevent (GDD §18 task_credit_reserve).
-        'upkeep' => [1 => 10, 2 => 30, 3 => 80],
+        // Flattened again 2026-08-14 (was [1=>10, 2=>30, 3=>80]) — the 07-19 fix only
+        // checked the Rang-2 case; the Rang-2→3 jump stayed at 2.67× and was the actual,
+        // *permanent* Post-Phase-1 collapse trigger (advisors never demote). See GDD §18.4
+        // Nachtrag 2026-08-14 for the full break-even derivation.
+        'upkeep' => [1 => 10, 2 => 25, 3 => 50],
     ],
 
     // Passive Credits income per tick (GDD §3).
     // Applied in GameTick step 8b (generatePassiveCredits), after resource generation.
     'credits' => [
         // Flat Cr/Tick subsidy from the Nexus for every colony that has CC > 0.
-        'nexus_subsidy' => 30,
+        // 30 → 50 (GDD §18.4 Nachtrag 2026-08-14) — this is the only income source
+        // with no building/advisor prerequisite at all, so it has to carry the
+        // absolute floor regardless of path choice (Sciencelab/Hangar/Cantina).
+        'nexus_subsidy' => 50,
         // "Relaisvergütung" — Cr/Tick per Uplink Station level, paid by the Nexus for
         // the relay/sensor infrastructure the station hosts on its network (GDD §3).
         // Not housing-based: colonists' living quarters have no thematic connection
         // to Nexus relay capacity, and Uplink Station (CC Lv2+, single instance) is
         // the building that already gates every other Nexus-facing mechanic
         // (deep-scan cost, direct import, merchant frequency).
-        'relay_bonus_per_uplink_level' => 20,
+        // 20 → 35 (GDD §18.4 Nachtrag 2026-08-14) — Uplink Station doesn't conflict
+        // with the Sciencelab/Hangar/Cantina path choice (separate CC-Lv2 gate), so
+        // it's the deliberate active-effort lever for players who skip the Cantina.
+        'relay_bonus_per_uplink_level' => 35,
         // "Handelsvertrag" — Cr/Tick flat income while a Konsul (trader advisor,
         // personell_id 92) is assigned to the colony AND the Cantina (Bar, building_id
         // 52) is built (level >= 1). Keyed by the Konsul's current rank. Represents the
@@ -390,6 +404,13 @@ return [
         'phase1_warning_sol' => 22,     // escalating Nexus warning if Phase 1 still incomplete by this Sol
         // Invariant: phase1_warning_sol must stay below phase1_deadline_sol, or the warning
         // and the hard fail would land on the same tick.
+        // task_credit_reserve: Credits threshold a colony must hold for the
+        // objective's streak (RunProgressService::TASK_TARGETS, 10 consecutive
+        // sols, unchanged). 5000 → 3000 (GDD §18.4 Nachtrag 2026-08-14) — 5000 was
+        // effectively unreachable under the pre-fix Post-Phase-1 Credit-Ökonomie
+        // collapse; kept as a real, non-trivial savings goal (not just a side
+        // effect of baseline income) after the fix.
+        'task_credit_reserve_threshold' => 3000,
         'task_pool' => [       // all available Phase-2 task keys
             'task_senior_advisors',
             'task_credit_reserve',

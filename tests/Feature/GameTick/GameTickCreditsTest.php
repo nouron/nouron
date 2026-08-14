@@ -12,7 +12,7 @@ use Tests\TestCase;
  * GameTick steps 8c + 8d — Passive Credits generation and Advisor upkeep.
  *
  * Step 8c — Passive Credits (generatePassiveCredits):
- *   Formula: nexus_subsidy (30) + uplinkStation.level × relay_bonus_per_uplink_level (20)
+ *   Formula: nexus_subsidy (50) + uplinkStation.level × relay_bonus_per_uplink_level (35)
  *            + consul_contract_income_per_rank[konsulRank] (Konsul assigned + Cantina >= Lv1)
  *   "Relaisvergütung" is anchored on Uplink Station, not Housing — colonists' living
  *   quarters have no thematic connection to Nexus relay/sensor capacity.
@@ -22,14 +22,14 @@ use Tests\TestCase;
  *   NPC colonies (user_id = null) are skipped.
  *
  * Step 8d — Advisor upkeep (deductAdvisorUpkeep):
- *   Upkeep per rank: 1 → 10 Cr, 2 → 30 Cr, 3 → 80 Cr (flattened 2026-07-19, GDD §18)
+ *   Upkeep per rank: 1 → 10 Cr, 2 → 25 Cr, 3 → 50 Cr (flattened 2026-07-19, re-flattened 2026-08-14, GDD §18.4)
  *   Deducted AFTER passive credits (so income is applied before costs).
  *   Credits clamped to ≥ 0 — never goes negative from upkeep alone.
  *   Advisors without a colony assignment incur no upkeep.
  *
  * Covered scenarios:
  *  Happy path:
- *  - Nexus subsidy (30 Cr) added each tick when CC > 0
+ *  - Nexus subsidy (50 Cr) added each tick when CC > 0
  *  - Relay bonus added per Uplink Station level
  *  - Handelsvertrag contract income added when Konsul + Cantina present
  *  - Advisor upkeep deducted (rank 1 = 10 Cr)
@@ -42,7 +42,7 @@ use Tests\TestCase;
  *  - Konsul assigned but no Cantina built → no contract income
  *  - Advisor upkeep clamped to 0 (credits cannot go negative)
  *  - Multiple advisors: each deducts independently
- *  - Advisor rank 2 (30 Cr) and rank 3 (80 Cr) upkeep correct
+ *  - Advisor rank 2 (25 Cr) and rank 3 (50 Cr) upkeep correct
  *
  *  Adversarial:
  *  - Upkeep fires AFTER passive income (order of operations)
@@ -123,6 +123,16 @@ class GameTickCreditsTest extends TestCase
             'active_ticks' => 0,
             'unavailable_until_tick' => null,
         ]);
+    }
+
+    private function upkeep(int $rank): int
+    {
+        return (int) config("game.advisor.upkeep.{$rank}");
+    }
+
+    private function nexusSubsidy(): int
+    {
+        return (int) config('game.credits.nexus_subsidy', 50);
     }
 
     /** Auto-increments personell_id to avoid UNIQUE(colony_id, personell_id) violations. */
@@ -209,7 +219,8 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11403]);
 
         $after = $this->getCredits();
-        $expected = $before + 30 + (3 * 20); // nexus + relay bonus
+        $relayBonusPerLevel = (int) config('game.credits.relay_bonus_per_uplink_level', 35);
+        $expected = $before + $this->nexusSubsidy() + (3 * $relayBonusPerLevel); // nexus + relay bonus
         $this->assertEquals($expected, $after, 'Relay bonus must scale with Uplink Station level');
     }
 
@@ -228,10 +239,9 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11410]);
 
         $after = $this->getCredits();
-        // nexus=30 income - rank1 upkeep=10 = net +20
-        $expected = 1000 + 30 - 10;
+        $expected = 1000 + $this->nexusSubsidy() - $this->upkeep(1);
         $this->assertEquals($expected, $after,
-            'Rank-1 advisor upkeep (10 Cr) must be deducted after passive income');
+            'Rank-1 advisor upkeep must be deducted after passive income');
     }
 
     /**
@@ -246,9 +256,9 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11411]);
 
         $after = $this->getCredits();
-        $expected = 1000 + 30 - 30; // 1000
+        $expected = 1000 + $this->nexusSubsidy() - $this->upkeep(2);
         $this->assertEquals($expected, $after,
-            'Rank-2 advisor upkeep (30 Cr) must be deducted after passive income');
+            'Rank-2 advisor upkeep must be deducted after passive income');
     }
 
     /**
@@ -262,9 +272,9 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11412]);
 
         $after = $this->getCredits();
-        $expected = 1000 + 30 - 80; // 950
+        $expected = 1000 + $this->nexusSubsidy() - $this->upkeep(3);
         $this->assertEquals($expected, $after,
-            'Rank-3 advisor upkeep (80 Cr) must be deducted after passive income');
+            'Rank-3 advisor upkeep must be deducted after passive income');
     }
 
     /**
@@ -301,7 +311,7 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11414]);
 
         $after = $this->getCredits();
-        $expected = 1000 + 30 - 10 - 30; // 990
+        $expected = 1000 + $this->nexusSubsidy() - $this->upkeep(1) - $this->upkeep(2);
         $this->assertEquals($expected, $after,
             'Multiple advisor upkeep costs must all be deducted independently');
     }
@@ -322,7 +332,8 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11416]);
 
         $after = $this->getCredits();
-        $expected = $before + 30 + 25 - 30;
+        $contractRank2 = (int) config('game.credits.consul_contract_income_per_rank.2', 25);
+        $expected = $before + $this->nexusSubsidy() + $contractRank2 - $this->upkeep(2);
         $this->assertEquals($expected, $after,
             'Contract income must be added when a Konsul is assigned and the Cantina is built');
     }
@@ -338,7 +349,7 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11417]);
 
         $after = $this->getCredits();
-        $expected = $before + 30;
+        $expected = $before + $this->nexusSubsidy();
         $this->assertEquals($expected, $after,
             'No contract income without a Konsul assigned, even with Cantina built');
     }
@@ -355,7 +366,7 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11418]);
 
         $after = $this->getCredits();
-        $expected = $before + 30 - 30;
+        $expected = $before + $this->nexusSubsidy() - $this->upkeep(2);
         $this->assertEquals($expected, $after,
             'No contract income without a Cantina built, even with a Konsul assigned');
     }
@@ -384,8 +395,8 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11415]);
 
         $after = $this->getCredits();
-        // Only assigned advisor (rank 1 = 10 Cr) deducted; unassigned (rank 3) = 0
-        $expected = 1000 + 30 - 10; // 1020
+        // Only assigned advisor (rank 1) deducted; unassigned (rank 3) = 0
+        $expected = 1000 + $this->nexusSubsidy() - $this->upkeep(1);
         $this->assertEquals($expected, $after,
             'Unassigned advisor must not incur upkeep cost');
     }
@@ -410,8 +421,10 @@ class GameTickCreditsTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11420]);
 
         $after = $this->getCredits();
-        // Income first (30), then upkeep (10): 0+30-10 = 20
-        $this->assertEquals(20, $after,
+        // Income first, then upkeep: if upkeep applied first, credits would clamp to
+        // 0 before income lands, giving a different (wrong) result than income-first.
+        $expected = $this->nexusSubsidy() - $this->upkeep(1);
+        $this->assertEquals($expected, $after,
             'Passive income must be applied before advisor upkeep in the same tick');
     }
 }
