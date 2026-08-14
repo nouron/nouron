@@ -16,7 +16,7 @@ use Tests\TestCase;
  *
  * When active_ticks reaches a rank threshold, the advisor is promoted:
  *   rank 1 → rank 2: requires 15 active_ticks, costs 150 Cr (one-time)
- *   rank 2 → rank 3: requires 45 active_ticks, costs 400 Cr (one-time)
+ *   rank 2 → rank 3: requires 45 active_ticks, costs 250 Cr (one-time)
  *
  * If the player cannot afford the promotion cost it is deferred until next tick.
  *
@@ -40,7 +40,7 @@ use Tests\TestCase;
  *   Colony 1 (Springfield), user_id=3 (Bart)
  *   Seeded advisor: personell 35 (engineer), rank=1, active_ticks=0
  *   Config rank_thresholds: [1 => 15, 2 => 45]
- *   Config promotion_costs:  [2 => 150, 3 => 400]
+ *   Config promotion_costs:  [2 => 150, 3 => 250]
  *
  * Uses tick numbers 11500–11549.
  */
@@ -59,7 +59,7 @@ class GameTickAdvisorTest extends TestCase
 
     private const RANK2_COST = 150;
 
-    private const RANK3_COST = 400;
+    private const RANK3_COST = 250;
 
     protected function setUp(): void
     {
@@ -216,9 +216,9 @@ class GameTickAdvisorTest extends TestCase
         Artisan::call('game:tick', ['--tick' => 11511]);
 
         $after = $this->getCredits();
-        // income=30 (nexus), upkeep rank1=10, promotion cost=150
-        // delta = 30 - 10 - 150 = -130
-        $expected = $before + 30 - 10 - self::RANK2_COST;
+        $nexus = (int) config('game.credits.nexus_subsidy', 50);
+        $upkeepRank1 = (int) config('game.advisor.upkeep.1', 10);
+        $expected = $before + $nexus - $upkeepRank1 - self::RANK2_COST;
         $this->assertEquals($expected, $after,
             'Promotion must charge exactly the configured rank-2 cost (150 Cr)');
     }
