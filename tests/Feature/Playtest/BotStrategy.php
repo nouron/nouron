@@ -27,7 +27,7 @@ class BotStrategy
     /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
-    public static function default(): array
+    public static function default(BotProfile $profile = new BotProfile): array
     {
         return [
             [
@@ -188,6 +188,7 @@ class BotStrategy
             [
                 'name' => 'accept_bar_offer',
                 'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.bar.ap_cost_accept', 1)
+                    && ! self::creditReserveGuardBlocks($b, $profile)
                     ? self::barOfferCandidate($b)
                     : null,
                 'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
@@ -220,7 +221,7 @@ class BotStrategy
                 // config('game.advisor') "3 advisors at rank 2 cost 150 Cr/Tick
                 // against ~30-70 Cr/Tick income"). That's a real Path-B finding
                 // about the credit economy, not a bug in this rule — see report.
-                'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1
+                'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1 && ! self::creditReserveGuardBlocks($b, $profile)
                     ? self::shipToRequest($b)
                     : null,
                 'do' => fn (BotSession $b, int $shipId) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
@@ -860,6 +861,43 @@ class BotStrategy
     public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
+    }
+
+    /**
+     * True when a drawn, still-incomplete Phase-2 objective of this task_key
+     * exists for the run. Objectives only exist once Phase 2 has started
+     * (RunProgressService::transitionToPhase2() → drawObjectives()) — during
+     * Phase 1 this query simply finds no rows yet, no separate phase check needed.
+     */
+    private static function hasActiveObjective(BotSession $b, string $taskKey): bool
+    {
+        return DB::table('run_objectives')
+            ->where('run_id', $b->runId)
+            ->where('task_key', $taskKey)
+            ->whereNull('completed_at')
+            ->exists();
+    }
+
+    /**
+     * True when accept_bar_offer/request_ship should hold back this Sol because
+     * task_credit_reserve is an active goal and spending now would jeopardize
+     * reaching/holding the threshold. Scales the safety buffer with
+     * savingsAggressiveness (0.0 → gate never blocks, matches pre-profile
+     * behavior; 1.0 → 1.5× threshold buffer).
+     */
+    private static function creditReserveGuardBlocks(BotSession $b, BotProfile $profile): bool
+    {
+        if ($profile->savingsAggressiveness <= 0.0) {
+            return false;
+        }
+        if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
+            return false;
+        }
+
+        $threshold = (int) config('game.run.task_credit_reserve_threshold', 3000);
+        $buffer = (int) round($threshold * (1 + 0.5 * $profile->savingsAggressiveness));
+
+        return self::credits($b) < $buffer;
     }
 
     /**
