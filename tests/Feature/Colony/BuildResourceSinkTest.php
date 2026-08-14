@@ -160,6 +160,21 @@ class BuildResourceSinkTest extends TestCase
         $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH));
     }
 
+    public function test_cc_levelup_to_max_level_is_capped_at_previous_step_cost(): void
+    {
+        // Uncapped formula would charge 5×30=150; degressive cap charges the same as
+        // Lv4 (4×30=120) so the final CC step isn't the run's single most expensive
+        // action for a marginal 1-of-16 expedition tile (game-designer review 2026-08-14,
+        // PlaytestBot: expedition_coverage plateaued at 15/16 across most seeds).
+        $this->setCc(['level' => 4, 'ap_spend' => 9, 'status_points' => 16]);
+        $before = $this->colonyRes(self::RES_REGOLITH);
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
+            ->assertOk()->assertJsonPath('leveled_up', true);
+
+        $this->assertSame($before - 120, $this->colonyRes(self::RES_REGOLITH));
+    }
+
     public function test_non_cc_levelup_deducts_flat_regolith_regardless_of_build_cost(): void
     {
         // Sciencelab build_cost[3]=95 (25% would be 24) — GDD §13.7 flat 25 applies

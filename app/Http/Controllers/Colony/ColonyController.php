@@ -70,8 +70,13 @@ class ColonyController extends BaseController
 
     /**
      * Regolith consumed when a building completes a level-up.
-     * Rules: CommandCenter scales as target_level × cc_upgrade_regolith_per_level;
-     * Harvester is free (bootstrap); all others pay a flat rate, independent of build_cost.
+     * Rules: CommandCenter scales as target_level × cc_upgrade_regolith_per_level, capped
+     * at max_level−1 so the final step never costs more than the previous one — otherwise
+     * it becomes the single most expensive action of the run for a marginal payoff
+     * (game-designer review 2026-08-14: expedition_coverage plateaued at 15/16 because the
+     * last colony-zone tile requires CC max_level and its uncapped cost (150 Rg) outweighed
+     * the 1-tile gain it unlocks). Harvester is free (bootstrap); all others pay a flat
+     * rate, independent of build_cost.
      */
     private function levelupRegolithFor(int $buildingId, int $targetLevel): int
     {
@@ -80,9 +85,11 @@ class ColonyController extends BaseController
         }
 
         if ($buildingId === BuildingId::CommandCenter->value) {
-            $perLevel = (int) (collect(config('buildings'))->firstWhere('id', $buildingId)['cc_upgrade_regolith_per_level'] ?? 30);
+            $cfg = collect(config('buildings'))->firstWhere('id', $buildingId);
+            $perLevel = (int) ($cfg['cc_upgrade_regolith_per_level'] ?? 30);
+            $maxLevel = (int) ($cfg['max_level'] ?? 5);
 
-            return $targetLevel * $perLevel;
+            return min($targetLevel, $maxLevel - 1) * $perLevel;
         }
 
         return self::LEVELUP_REGOLITH_FLAT;
