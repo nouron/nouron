@@ -19,7 +19,7 @@ class RunReport
 
     private ?int $phase2StartSol = null;
 
-    public function __construct(private readonly int $seed) {}
+    public function __construct(private readonly int $seed, private readonly string $profile = 'default') {}
 
     /**
      * Capture one Sol's state — call once per Sol, after the strategy has
@@ -122,7 +122,7 @@ class RunReport
             mkdir($dir, 0755, true);
         }
 
-        $path = "{$dir}/{$this->seed}-".now()->format('Ymd_His').'.json';
+        $path = "{$dir}/{$this->profile}-{$this->seed}-".now()->format('Ymd_His').'.json';
         file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT));
 
         return $path;
