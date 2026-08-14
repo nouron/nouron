@@ -51,7 +51,7 @@ class RunReport
     }
 
     /**
-     * @return array{seed:int, outcome:array, phase2_start_sol:?int, objectives:array,
+     * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
      *               actions:array, rejections:array, burnout:array, sols:array}
      */
     public function build(BotSession $bot): array
@@ -89,6 +89,7 @@ class RunReport
 
         return [
             'seed' => $this->seed,
+            'profile' => $this->profile,
             'outcome' => [
                 'status' => $run->status,
                 'fail_reason' => $run->fail_reason,
@@ -131,8 +132,9 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d\n",
+            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d\n",
             $report['seed'],
+            $report['profile'],
             $report['outcome']['status'],
             $report['outcome']['fail_reason'] ?? '-',
             $report['outcome']['sols'],

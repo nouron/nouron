@@ -18,6 +18,8 @@ class BotStrategy
 {
     private const RES_REGOLITH = 3;
 
+    private const RES_CREDITS = 1;
+
     // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
     // path buildings a fresh colony can reach first. Pilot (id 89, gated on
     // Hangar being placed) sits between Scientist and Trader so the bot picks
@@ -188,8 +190,7 @@ class BotStrategy
             [
                 'name' => 'accept_bar_offer',
                 'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.bar.ap_cost_accept', 1)
-                    && ! self::creditReserveGuardBlocks($b, $profile)
-                    ? self::barOfferCandidate($b)
+                    ? self::barOfferCandidate($b, self::creditReserveGuardBlocks($b, $profile))
                     : null,
                 'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
             ],
@@ -333,7 +334,7 @@ class BotStrategy
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
         // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
-        // storage/logs/playtest/4242-20260811_175942.json).
+        // storage/logs/playtest/default-4242-20260811_175942.json).
         //
         // is_colony_zone DESC first: a ring only has a handful of actual colony-zone
         // tiles (ColonyTileService::computeColonyZoneCoords(), e.g. 3 of 12 ring-2
@@ -561,7 +562,15 @@ class BotStrategy
             ->first();
     }
 
-    private static function barOfferCandidate(BotSession $b): ?object
+    /**
+     * When $guardBlocks is true (creditReserveGuardBlocks()), only credit-income
+     * offers (get_resource_id = RES_CREDITS, e.g. Corvan's Organika->Credits sell
+     * offers) remain candidates — a thrifty bot below the credit buffer should
+     * still be able to earn credits, just not spend them (qa-tester finding: the
+     * old whole-rule guard also blocked income, exactly when the bot needed
+     * credits most).
+     */
+    private static function barOfferCandidate(BotSession $b, bool $guardBlocks = false): ?object
     {
         $barLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -578,6 +587,7 @@ class BotStrategy
             ->where('colony_id', $b->colonyId)
             ->where('expires_tick', '>', $tick)
             ->where('is_accepted', false)
+            ->when($guardBlocks, fn ($q) => $q->where('get_resource_id', self::RES_CREDITS))
             ->orderBy('id')
             ->first();
     }

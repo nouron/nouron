@@ -23,8 +23,8 @@ class PlaytestBotTest extends TestCase
 
     public function test_bot_plays_a_full_run_and_produces_a_report(): void
     {
-        $seed = (int) (getenv('PLAYTEST_SEED') ?: 4242);
-        $profile = BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
+        $seed = self::resolveSeed();
+        $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
         $rules = BotStrategy::default($profile);
         $report = new RunReport($seed, $profile->name);
@@ -57,8 +57,8 @@ class PlaytestBotTest extends TestCase
         putenv('PLAYTEST_PROFILE=thrifty');
 
         try {
-            $seed = (int) (getenv('PLAYTEST_SEED') ?: 4242);
-            $profile = BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
+            $seed = self::resolveSeed();
+            $profile = self::resolveProfile();
 
             $this->assertSame(1337, $seed);
             $this->assertSame('thrifty', $profile->name);
@@ -120,5 +120,20 @@ class PlaytestBotTest extends TestCase
     private function phaseOf(BotSession $bot): int
     {
         return (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
+    }
+
+    /**
+     * Same parsing the production test method and game:playtest's env-var
+     * contract both rely on — extracted so test_env_vars_override_seed_and_profile
+     * exercises this exact code path instead of a duplicated copy of it.
+     */
+    private static function resolveSeed(): int
+    {
+        return (int) (getenv('PLAYTEST_SEED') ?: 4242);
+    }
+
+    private static function resolveProfile(): BotProfile
+    {
+        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
     }
 }
