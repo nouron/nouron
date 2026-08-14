@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-14
+
+**Fix: `task_expedition_coverage`-Ziel (19) war unerreichbar, jetzt 16** (`app/Services/RunProgressService.php`). Bei der Phase-2-Pacing-Untersuchung (Punkt 1 von gestern) fiel auf: alle 3 PlaytestBot-Seeds blieben identisch bei 13/19 Colony-Zone-Tiles stehen — die maximale Zonengröße über alle 5 CC-Level (`config('game.colony_zone_expansion')`, Summe 15) plus das immer-Zone-und-vorerkundete CC-Ring-0-Tile ergibt maximal 16, nicht 19. War also seit der Einführung strukturell nie erreichbar, kein Balance-Problem. Regressionstest ergänzt, der künftige `colony_zone_expansion`-Änderungen gegen den Zielwert prüft. GDD-Balance-Concern (hatte das Risiko bereits vor Finalisierung benannt) als behoben markiert. Suite grün (981 Tests, 0 Skips).
+
 ## 2026-08-13
 
 **Regolith-Startbestand 200→300 umgesetzt** (GDD §13.7 Nachtrag 2026-08-12, `OnboardingService::seedResources()`). Einziger identifizierter Hebel für die Phase-1-Sol-15-20-Zielsetzung. Dabei zwei zusammenhängende PlaytestBot-Bugs gefunden und gefixt (`BotStrategy.php`): (1) `bioFacility` hatte Priorität 0 ohne Instanz-Obergrenze — mit mehr Start-Regolith baute der Bot noch öfter bioFacility-Kopien statt Pfadgebäude zu erreichen, jetzt Priorität 0 nur für die erste Pflicht-Instanz; (2) `placeCandidate()` hatte anders als die Invest-/Research-Regeln keinen Regolith-Puffer für noch fehlende Pfadgebäude und kaufte stattdessen das nächstgünstigste leistbare Gebäude, was Rg nie auf 95 anwachsen ließ — Pufferlogik ergänzt. Ergebnis: Bot erreicht jetzt zuverlässig den 2. Berater in allen 3 Test-Seeds (vorher nie mit dem neuen Sol-30-Deadline). 3. Berater/Phase-2 wird in den ~25 verfügbaren Solen noch knapp verfehlt — weitere Balance-Iteration nötig, kein Bot-Bug mehr. Suite grün (978 Tests, 2 vorbestehende Skips).
