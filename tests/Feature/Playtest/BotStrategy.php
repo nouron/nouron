@@ -50,7 +50,16 @@ class BotStrategy
             ],
             [
                 'name' => 'invest_cc',
-                'when' => fn (BotSession $b) => self::ccLevel($b) < 3 && self::availableAp($b) >= 1,
+                // Phase 1: cap at Lv3 (the completion requirement) — investing further
+                // here competed with path-building Regolith and broke Phase-1 pacing
+                // (found empirically: seed 4242 regressed to a phase1_deadline fail).
+                // Phase 2: no cap up to CC max_level (5) — colony-zone size
+                // (task_expedition_coverage) grows with CC level
+                // (ColonyTileService::assignColonyZone()); the bot plateaued at exactly
+                // 13/16 coverage every run because it never invested past Lv3 (12 of
+                // the max 15 zone tiles), regardless of the exploreCandidate()
+                // zone-priority fix above.
+                'when' => fn (BotSession $b) => self::ccLevel($b) < (self::runPhase($b) >= 2 ? 5 : 3) && self::availableAp($b) >= 1,
                 'do' => fn (BotSession $b) => $b->act('invest_cc', 'POST', '/colony/building/invest', [
                     'building_id' => BuildingId::CommandCenter->value,
                 ]),
@@ -244,6 +253,11 @@ class BotStrategy
             ->value('level') ?? 0);
     }
 
+    private static function runPhase(BotSession $b): int
+    {
+        return (int) (DB::table('runs')->where('id', $b->runId)->value('phase') ?? 1);
+    }
+
     /**
      * Available AP in the shared colony pool (GDD §13.1 — single pool, no
      * per-domain split anymore).
@@ -319,9 +333,18 @@ class BotStrategy
         // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
         // storage/logs/playtest/4242-20260811_175942.json).
+        //
+        // is_colony_zone DESC first: a ring only has a handful of actual colony-zone
+        // tiles (ColonyTileService::computeColonyZoneCoords(), e.g. 3 of 12 ring-2
+        // tiles) — plain ring-ascending order explores whichever non-zone tile
+        // happens to sit at that ring first, wasting AP against task_expedition_coverage
+        // (which only counts is_colony_zone=1 explored tiles) while zone tiles at the
+        // same ring stay fogged. Found empirically: all 3 PlaytestBot seeds stalled at
+        // 13/16 coverage regardless of remaining game length.
         $tile = DB::table('colony_tiles')
             ->where('colony_id', $b->colonyId)
             ->where('is_explored', 0)
+            ->orderByDesc('is_colony_zone')
             ->orderBy('ring')
             ->first();
 
