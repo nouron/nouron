@@ -2,6 +2,7 @@
 
 ## 2026-08-14
 
+- Fix PlaytestBot: Explore-Priorität nach `is_colony_zone` + CC-Investitionsdeckel nach Phase 1 auf Lv5 gelöst — `task_expedition_coverage` 13/16 → 15/16 über 3 Seeds, Phase 1 bleibt sauber. PR #249.
 - Fix: `task_expedition_coverage`-Ziel (19) war unerreichbar (max. 16 Colony-Zone-Tiles) — auf 16 korrigiert, Regressionstest ergänzt. PR #247.
 - Fix: Post-Phase-1-Credit-Kollaps behoben (Rang-3-Upkeep-Klippe + Cantina-abhängige Zusatzeinkommen) — vier Config-Hebel, siehe GDD §18.4 Nachtrag 2026-08-14. PR #248.
 
