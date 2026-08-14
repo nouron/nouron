@@ -39,7 +39,11 @@ class RunProgressService
         'task_colony_prosperity' => 10,
         'task_research_lead' => 3,
         'task_self_sufficiency' => 15,
-        'task_expedition_coverage' => 19,
+        // Max reachable is 1 (CC ring-0, always colony zone + pre-explored) + Σ
+        // config('game.colony_zone_expansion') over all 5 CC levels (15) = 16.
+        // Was 19 — mathematically unwinnable regardless of play skill (found
+        // empirically 2026-08-14, PlaytestBot stalled at 13/19 across all seeds).
+        'task_expedition_coverage' => 16,
         'task_engineering_output' => 200,
         'task_trade_volume' => 5,
     ];

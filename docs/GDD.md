@@ -3766,7 +3766,7 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 | Typischer Sieg > Sol 90 | `TASK_TARGETS`-Werte in `RunProgressService` senken (Objectives zu schwer) |
 | Typischer Sieg < Sol 55 | `TASK_TARGETS`-Werte erhöhen oder tick_limit auf 80 senken |
 
-> ⚠️ BALANCE CONCERN: `task_expedition_coverage: 19` (alle Colony-Zone-Tiles erkundet) ist der schwierigste Task-Target-Wert und braucht als erstes Playtest-Validierung. 19 Tiles bei ring-gestaffelten Kosten (1/2/3 Nav-AP/Ring) und einem Junior-Raumfahrer mit ~7 Nav-AP/Sol ergibt rechnerisch ~3–5 Sole reiner Erkundungsarbeit, was realistisch ist — aber stark von der Tile-Verteilung der Karte abhängt (impassable Tiles zählen nicht; auf vulkanischen Planeten könnten sehr viele Tiles aus der Zone fallen). Vor dem Finalisieren dieses Task-Targets den Colony-Zone-Expansion-Mechanismus (§4a) gegen typische Karten durchrechnen.
+> ✅ BEHOBEN (2026-08-14): `task_expedition_coverage: 19` war **mathematisch unerreichbar**, nicht nur schwierig — die Colony-Zone wächst über `config('game.colony_zone_expansion')` (Summe 15 Terrain-Tiles über alle 5 CC-Level) plus das immer-Zone-und-vorerkundete CC-Ring-0-Tile, macht maximal **16** je erreichbare `is_colony_zone=1`-Tiles. PlaytestBot bestätigte den Deadlock empirisch: alle 3 Testseeds blieben identisch bei 13/19 stehen (Phase-2-Pacing-Untersuchung, 2026-08-14). `RunProgressService::TASK_TARGETS['task_expedition_coverage']` auf **16** korrigiert, Regressionstest ergänzt (`RunProgressServiceTest::test_task_expedition_coverage_target_does_not_exceed_max_reachable_colony_zone_tiles`), der jede künftige `colony_zone_expansion`-Änderung gegen diesen Zielwert prüft.
 
 > **Entschieden (2026-07-19):** `task_credit_reserve: 10` (10 aufeinanderfolgende Sole mit Credits > 5.000) war mit der alten Ökonomie strukturell unerreichbar — Playtest-Bot-Befund PR #218 bestätigt: Credits fielen auf 0 und blieben dort geklemmt, der dritte Berater wurde nie leistbar, Phase 1 nie abgeschlossen. Fix über drei Hebel (Details siehe §13 "Rang-System" und §12 "Kanal 1: Bar/Cantina"):
 >
@@ -3869,7 +3869,7 @@ Stellen, die noch von getrennten AP-Pools ausgehen und nachzuziehen sind.
 | Run-Aufgabenpool: Wirtschafts-Cluster (1, 7, 9), Kollision Aufgabe 11 mit 2/8 | §15 |
 | Highscore-Formel: Gewichtung | §15 |
 | Fail-State: −20-Trust-Schwelle, `nexus_debt`-Mechanik | §18 |
-| `task_expedition_coverage: 19` als schwierigster Task-Target-Wert | §18 |
+| ~~`task_expedition_coverage: 19` als schwierigster Task-Target-Wert~~ — ✅ behoben 2026-08-14, war unerreichbar, jetzt 16 (s. §18) | §18 |
 | Run-Ende: „Kolonie ansehen" setzt voraus, dass Koloniedaten erhalten bleiben | §18 |
 
 ### A.4 Offene Designfragen (kein Playtest nötig, Entscheidung steht aus)

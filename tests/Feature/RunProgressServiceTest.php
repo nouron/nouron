@@ -844,6 +844,30 @@ class RunProgressServiceTest extends TestCase
 
     // ── task_expedition_coverage (counter) ──────────────────────────────────────
 
+    /**
+     * Regression guard: the hardcoded TASK_TARGETS value must never exceed the
+     * maximum number of is_colony_zone=1 tiles a colony can ever have (1 CC ring-0
+     * tile, always colony zone and pre-explored, + config('game.colony_zone_expansion')
+     * summed over all 5 CC levels) — otherwise the objective is mathematically
+     * unwinnable regardless of play skill. Found empirically 2026-08-14: target was
+     * 19, real max was 16 (colony_zone_expansion sums to 15 + the CC tile).
+     */
+    public function test_task_expedition_coverage_target_does_not_exceed_max_reachable_colony_zone_tiles(): void
+    {
+        $maxExpansion = array_sum(config('game.colony_zone_expansion'));
+        $maxReachable = $maxExpansion + 1; // +1 for the always-zone, pre-explored CC ring-0 tile
+
+        $reflection = new \ReflectionClass(RunProgressService::class);
+        $targets = $reflection->getConstant('TASK_TARGETS');
+        $realTarget = $targets['task_expedition_coverage'];
+
+        $this->assertLessThanOrEqual(
+            $maxReachable,
+            $realTarget,
+            "RunProgressService::TASK_TARGETS['task_expedition_coverage'] ({$realTarget}) must not exceed the maximum reachable colony-zone tile count ({$maxReachable}), or the objective can never complete."
+        );
+    }
+
     public function test_task_expedition_coverage_completes_when_19_explored_colony_zone_tiles_exist(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
