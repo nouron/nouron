@@ -23,10 +23,11 @@ class PlaytestBotTest extends TestCase
 
     public function test_bot_plays_a_full_run_and_produces_a_report(): void
     {
-        $seed = 4242;
+        $seed = self::resolveSeed();
+        $profile = self::resolveProfile();
         $bot = BotSession::boot($this, $seed);
-        $rules = BotStrategy::default();
-        $report = new RunReport($seed);
+        $rules = BotStrategy::default($profile);
+        $report = new RunReport($seed, $profile->name);
 
         $this->playSolsUntil($bot, $rules, afterAction: fn (BotSession $b) => $report->snapshot($b));
 
@@ -43,6 +44,29 @@ class PlaytestBotTest extends TestCase
         $this->assertGreaterThan(0, $data['actions']['ok'], 'Bot must have taken at least one successful action');
         $this->assertFileExists($path);
         $this->assertIsArray(json_decode(file_get_contents($path), true), 'Report artifact must be valid JSON');
+    }
+
+    /**
+     * The env-var override (used by the game:playtest command, Task 5 of the
+     * bot-playstyle-profiles plan) must actually change which seed/profile the
+     * bot runs with — not silently fall back to the hardcoded defaults.
+     */
+    public function test_env_vars_override_seed_and_profile(): void
+    {
+        putenv('PLAYTEST_SEED=1337');
+        putenv('PLAYTEST_PROFILE=thrifty');
+
+        try {
+            $seed = self::resolveSeed();
+            $profile = self::resolveProfile();
+
+            $this->assertSame(1337, $seed);
+            $this->assertSame('thrifty', $profile->name);
+            $this->assertSame(1.0, $profile->savingsAggressiveness);
+        } finally {
+            putenv('PLAYTEST_SEED');
+            putenv('PLAYTEST_PROFILE');
+        }
     }
 
     /**
@@ -96,5 +120,20 @@ class PlaytestBotTest extends TestCase
     private function phaseOf(BotSession $bot): int
     {
         return (int) DB::table('runs')->where('id', $bot->runId)->value('phase');
+    }
+
+    /**
+     * Same parsing the production test method and game:playtest's env-var
+     * contract both rely on — extracted so test_env_vars_override_seed_and_profile
+     * exercises this exact code path instead of a duplicated copy of it.
+     */
+    private static function resolveSeed(): int
+    {
+        return (int) (getenv('PLAYTEST_SEED') ?: 4242);
+    }
+
+    private static function resolveProfile(): BotProfile
+    {
+        return BotProfile::named(getenv('PLAYTEST_PROFILE') ?: 'default');
     }
 }

@@ -18,6 +18,8 @@ class BotStrategy
 {
     private const RES_REGOLITH = 3;
 
+    private const RES_CREDITS = 1;
+
     // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
     // path buildings a fresh colony can reach first. Pilot (id 89, gated on
     // Hangar being placed) sits between Scientist and Trader so the bot picks
@@ -27,7 +29,7 @@ class BotStrategy
     /**
      * @return array<int, array{name:string, when:callable(BotSession):mixed, do:callable(BotSession, mixed):array}>
      */
-    public static function default(): array
+    public static function default(BotProfile $profile = new BotProfile): array
     {
         return [
             [
@@ -188,7 +190,7 @@ class BotStrategy
             [
                 'name' => 'accept_bar_offer',
                 'when' => fn (BotSession $b) => self::availableAp($b) >= (int) config('game.bar.ap_cost_accept', 1)
-                    ? self::barOfferCandidate($b)
+                    ? self::barOfferCandidate($b, self::creditReserveGuardBlocks($b, $profile))
                     : null,
                 'do' => fn (BotSession $b, object $offer) => $b->act('accept_bar_offer', 'POST', "/colony/bar/accept/{$offer->id}"),
             ],
@@ -220,7 +222,7 @@ class BotStrategy
                 // config('game.advisor') "3 advisors at rank 2 cost 150 Cr/Tick
                 // against ~30-70 Cr/Tick income"). That's a real Path-B finding
                 // about the credit economy, not a bug in this rule — see report.
-                'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1
+                'when' => fn (BotSession $b) => self::hangarLevel($b) >= 1 && ! self::creditReserveGuardBlocks($b, $profile)
                     ? self::shipToRequest($b)
                     : null,
                 'do' => fn (BotSession $b, int $shipId) => $b->act('request_ship', 'POST', '/colony/hangar/request', [
@@ -332,7 +334,7 @@ class BotStrategy
         // to explore further out (config('game.colony.explore_cost_per_ring') prices
         // ring 3 at 3 AP — a real, affordable game mechanic) or it deadlocks forever
         // with idle AP (root cause of seed=4242 runs stalling flat at Sol 20-95, see
-        // storage/logs/playtest/4242-20260811_175942.json).
+        // storage/logs/playtest/default-4242-20260811_175942.json).
         //
         // is_colony_zone DESC first: a ring only has a handful of actual colony-zone
         // tiles (ColonyTileService::computeColonyZoneCoords(), e.g. 3 of 12 ring-2
@@ -560,7 +562,15 @@ class BotStrategy
             ->first();
     }
 
-    private static function barOfferCandidate(BotSession $b): ?object
+    /**
+     * When $guardBlocks is true (creditReserveGuardBlocks()), only credit-income
+     * offers (get_resource_id = RES_CREDITS, e.g. Corvan's Organika->Credits sell
+     * offers) remain candidates — a thrifty bot below the credit buffer should
+     * still be able to earn credits, just not spend them (qa-tester finding: the
+     * old whole-rule guard also blocked income, exactly when the bot needed
+     * credits most).
+     */
+    private static function barOfferCandidate(BotSession $b, bool $guardBlocks = false): ?object
     {
         $barLevel = (int) (DB::table('colony_buildings')
             ->where('colony_id', $b->colonyId)
@@ -577,6 +587,7 @@ class BotStrategy
             ->where('colony_id', $b->colonyId)
             ->where('expires_tick', '>', $tick)
             ->where('is_accepted', false)
+            ->when($guardBlocks, fn ($q) => $q->where('get_resource_id', self::RES_CREDITS))
             ->orderBy('id')
             ->first();
     }
@@ -860,6 +871,43 @@ class BotStrategy
     public static function credits(BotSession $b): int
     {
         return (int) (DB::table('user_resources')->where('user_id', $b->userId)->value('credits') ?? 0);
+    }
+
+    /**
+     * True when a drawn, still-incomplete Phase-2 objective of this task_key
+     * exists for the run. Objectives only exist once Phase 2 has started
+     * (RunProgressService::transitionToPhase2() → drawObjectives()) — during
+     * Phase 1 this query simply finds no rows yet, no separate phase check needed.
+     */
+    private static function hasActiveObjective(BotSession $b, string $taskKey): bool
+    {
+        return DB::table('run_objectives')
+            ->where('run_id', $b->runId)
+            ->where('task_key', $taskKey)
+            ->whereNull('completed_at')
+            ->exists();
+    }
+
+    /**
+     * True when accept_bar_offer/request_ship should hold back this Sol because
+     * task_credit_reserve is an active goal and spending now would jeopardize
+     * reaching/holding the threshold. Scales the safety buffer with
+     * savingsAggressiveness (0.0 → gate never blocks, matches pre-profile
+     * behavior; 1.0 → 1.5× threshold buffer).
+     */
+    private static function creditReserveGuardBlocks(BotSession $b, BotProfile $profile): bool
+    {
+        if ($profile->savingsAggressiveness <= 0.0) {
+            return false;
+        }
+        if (! self::hasActiveObjective($b, 'task_credit_reserve')) {
+            return false;
+        }
+
+        $threshold = (int) config('game.run.task_credit_reserve_threshold', 3000);
+        $buffer = (int) round($threshold * (1 + 0.5 * $profile->savingsAggressiveness));
+
+        return self::credits($b) < $buffer;
     }
 
     /**

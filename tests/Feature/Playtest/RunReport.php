@@ -19,7 +19,7 @@ class RunReport
 
     private ?int $phase2StartSol = null;
 
-    public function __construct(private readonly int $seed) {}
+    public function __construct(private readonly int $seed, private readonly string $profile = 'default') {}
 
     /**
      * Capture one Sol's state — call once per Sol, after the strategy has
@@ -51,7 +51,7 @@ class RunReport
     }
 
     /**
-     * @return array{seed:int, outcome:array, phase2_start_sol:?int, objectives:array,
+     * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
      *               actions:array, rejections:array, burnout:array, sols:array}
      */
     public function build(BotSession $bot): array
@@ -89,6 +89,7 @@ class RunReport
 
         return [
             'seed' => $this->seed,
+            'profile' => $this->profile,
             'outcome' => [
                 'status' => $run->status,
                 'fail_reason' => $run->fail_reason,
@@ -122,7 +123,7 @@ class RunReport
             mkdir($dir, 0755, true);
         }
 
-        $path = "{$dir}/{$this->seed}-".now()->format('Ymd_His').'.json';
+        $path = "{$dir}/{$this->profile}-{$this->seed}-".now()->format('Ymd_His').'.json';
         file_put_contents($path, json_encode($report, JSON_PRETTY_PRINT));
 
         return $path;
@@ -131,8 +132,9 @@ class RunReport
     public function printTable(array $report): void
     {
         fwrite(STDERR, sprintf(
-            "\n[playtest] seed=%d status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d\n",
+            "\n[playtest] seed=%d profile=%s status=%s fail_reason=%s sols=%d phase2_start_sol=%s score=%d actions=%d/%d rejected=%d\n",
             $report['seed'],
+            $report['profile'],
             $report['outcome']['status'],
             $report['outcome']['fail_reason'] ?? '-',
             $report['outcome']['sols'],
