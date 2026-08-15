@@ -1928,6 +1928,15 @@ Ein **Mindest-Kostenanteil** (`project_min_cost_factor = 0.5`) verhindert, dass 
 
 **Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit.
 
+> **Nachtrag 2026-08-15 (Owner-Entscheidung, PlaytestBot-Befund):** Umgesetzt für
+> `construction`/`cartography`/`trade` — glockenförmig statt linear (Σ15% je Kenntnis
+> bei Lv5, Peak Lv2–4), wirkt additiv auf **alle** Gebäude-Levelups (inkl.
+> CommandCenter), nicht nach Projekttyp getrennt, da im aktuellen Spiel nur
+> Bau-Projekte existieren (Navigation/Wirtschaft haben keine passende Projekt-
+> Kategorie). Berater-Rang- und Koloniereife-Bonusquellen aus der Tabelle oben sind
+> weiterhin nicht implementiert. Siehe `app/Services/ProjectBonusService.php`,
+> `docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md`.
+
 ---
 
 ### 13.4 Kommandozentrale: Dashboard und Prognosen
@@ -2027,6 +2036,13 @@ Das eigentliche Problem sind die **Losgrößen**: `rand(1,5) × 10` Einheiten er
 **Der tragfähige Hebel für Pfad C ist deshalb nicht der Credits-Kauf, sondern der Tausch.** Der Tauschtyp (40 % der Angebote) bepreist wertäquivalent — Organika → Regolith liefert bei 10–30 Or rund 17–50 Rg. Das ist genau der Pfadcharakter „Überschuss in Mangel wandeln", und es umgeht die kaputte Credits-Ökonomie vollständig. Give- und Get-Ressource werden heute allerdings gleichverteilt gewürfelt, sodass Or→Rg nur etwa 6,7 % der Angebote trifft — bei 0–2 Gästen pro Sol also eines alle 10–15 Sole.
 
 Vorschlag: **Losgröße an die Zahlungsfähigkeit binden** (höchstens ~35 % des Bestands) **und die Tauschrichtung nach Bestand wählen statt zu würfeln** — Give = Ressource mit dem größten Überschuss, Get = die knappste. Der Zufall bleibt in Preisvarianz, Gästezahl und Gültigkeitsdauer erhalten; er verlagert sich von „welches Angebot?" auf „wie günstig, und kommt heute jemand?". Das ist die planbarere und damit bessere Unsicherheit.
+
+> **Nachtrag 2026-08-15:** `agronomy`-Organika-Parität zu `geology` umgesetzt
+> (`config('game.agronomy_agrardom_bonus_per_level')`, Σ7 Or/Sol bei Lv5, glockenförmig
+> — bewusst NICHT front-loaded wie `geology`, da neu ohne Kalibrierungshistorie). Der
+> Cantina-Pfad-C-Fix (Losgrößen/Tauschrichtung) ist weiterhin offen; `trade`s neuer
+> Kenntniseffekt (zusätzliche Angebotsslots, `BarService::tradeConcurrentSlotBonus()`)
+> läuft parallel dazu, ohne ihn zu ersetzen.
 
 > **⚠️ Offen — Zahlen und Umsetzung.** Die +1,5 Rg/Sol je `geology`-Level sind ein erster Ansatz, kalibriert auf Parität mit dem Frachter-Kanal. Zu prüfen ist, ob der Analytik-Pfad damit insgesamt zu stark wird — er trägt zusätzlich den Supply-Cap-Bonus **und** den Domänen-Effizienzbonus (13.3), leistet also dreifach. Falls ja: auf +1,2/Level senken statt einen der anderen Effekte zu beschneiden.
 
