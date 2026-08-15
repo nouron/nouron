@@ -94,10 +94,10 @@ class BarService
     }
 
     /**
-     * trade Kenntnis-Bonus auf gleichzeitige Cantina-Angebotsslots (GDD §13.5 Pfad-C,
+     * Trade knowledge bonus on concurrent Cantina offer slots (GDD §13.5 Pfad-C,
      * docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md §4)
-     * — separat vom Bau-AP-Rabatt (ProjectBonusService), da dieser Effekt Handlungen
-     * (Cantina-Angebote), nicht Projekte betrifft.
+     * — separate from the build-AP discount (ProjectBonusService), since this effect
+     * concerns actions (Cantina offers), not projects.
      */
     private function tradeConcurrentSlotBonus(int $colonyId): int
     {

@@ -270,7 +270,7 @@ class ColonyController extends BaseController
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
                 'description' => __('buildings.'.preg_replace('/^building_/', '', $b->name).'_desc'),
-                'ap_for_levelup' => $b->ap_for_levelup,
+                'ap_for_levelup' => $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup),
                 'max_level' => $b->max_level,
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
@@ -659,7 +659,7 @@ class ColonyController extends BaseController
                 'building_id' => $buildingId,
                 'building_name' => $building->name ?? '',
                 'ap_spend' => $newApSpend,
-                'ap_for_levelup' => (int) $building->ap_for_levelup,
+                'ap_for_levelup' => $effectiveApForLevelup,
                 'level_up' => $leveledUp,
                 'new_level' => $leveledUp ? $row->level + 1 : $row->level,
             ]),
@@ -1029,6 +1029,7 @@ class ColonyController extends BaseController
         $row->image_slug = self::buildingImageSlug($row->building_key);
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
+        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
 
         return $row;
     }

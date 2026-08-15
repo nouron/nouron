@@ -69,10 +69,10 @@ return [
         41 => [5 => [1 => 8, 2 => 12, 3 => 12, 4 => 9, 5 => 7, 6 => 5, 7 => 3, 8 => 2]],     // bioFacility → Organika
     ],
 
-    // Untergrenze für additive Projekt-AP-Rabatte (§13.3) — verhindert, dass Boni
-    // ap_for_levelup auf 0 drücken. Bei aktuellem Max-Rabatt (45%, construction+
-    // cartography+trade voll investiert) nie bindend; Leitplanke für spätere
-    // Bonusquellen (Berater-Rang, Koloniereife), die noch nicht implementiert sind.
+    // Lower bound for additive project-AP discounts (§13.3) — prevents bonuses from
+    // pushing ap_for_levelup to 0. Not binding at the current max discount (45%,
+    // construction+cartography+trade fully invested); a guard rail for future bonus
+    // sources (advisor rank, colony maturity) that are not yet implemented.
     'project_min_cost_factor' => 0.5,
 
     // Harvester depletion mechanic (GDD §4c "Erschöpfungskurve und Umzugstakt",
@@ -144,10 +144,12 @@ return [
         'duration_ticks' => 1,
     ],
 
-    // Geology (config/knowledge.php id 92) production bonus — first of at most two
-    // hardcoded Kenntnis-Effekte before the generic effect framework is mandatory
-    // (ROADMAP Stufe 1, GDD §13.7). Additive Regolith bonus per Harvester-Sol,
-    // cumulative across levels, capped at level 5 (+3+3+2+2+2 = 12 max).
+    // Geology (config/knowledge.php id 92) production bonus — originally the first of
+    // at most two hardcoded Kenntnis-Effekte before a generic effect framework became
+    // mandatory; superseded by the deliberate decision (2026-08-15, design/knowledge-
+    // effects-and-encounters spec) to add four more ad-hoc per-effect config keys
+    // instead. Additive Regolith bonus per Harvester-Sol, cumulative across levels,
+    // capped at level 5 (+3+3+2+2+2 = 12 max).
     'geology_harvester_bonus_per_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 2],
 
     // agronomy Kenntnis bonus on bioFacility Organika output — parity with geology's
