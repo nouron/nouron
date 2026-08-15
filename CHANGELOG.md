@@ -2,7 +2,6 @@
 
 ## 2026-08-14
 
-- Fix: CC-Levelup Lv4→Lv5 kostete unverhältnismäßig 150 Regolith (teuerster Einzelposten des Runs für nur 1 von 16 Colony-Zone-Tiles) — jetzt auf Lv4-Niveau (120 Rg) gedeckelt, per game-designer-Review nach PlaytestBot-Befund (`task_expedition_coverage` hing bei 15/16 fest).
 - PlaytestBot: `BotProfile`-Mechanismus (Playstyle-Parameter, startet mit `savingsAggressiveness`) + neuer `game:playtest`-Command zum Vergleich mehrerer Seeds/Profile. Siehe `docs/superpowers/specs/2026-08-14-bot-playstyle-profiles-design.md`.
 - Fix PlaytestBot: Explore-Priorität nach `is_colony_zone` + CC-Investitionsdeckel nach Phase 1 auf Lv5 gelöst — `task_expedition_coverage` 13/16 → 15/16 über 3 Seeds, Phase 1 bleibt sauber. PR #249.
 - Fix: `task_expedition_coverage`-Ziel (19) war unerreichbar (max. 16 Colony-Zone-Tiles) — auf 16 korrigiert, Regressionstest ergänzt. PR #247.
