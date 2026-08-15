@@ -309,4 +309,33 @@ class GameTickResourceGenerationTest extends TestCase
         $this->assertEquals(13, $regolith,
             'Production at trust=-80 must apply 0.70× penalty → 13 Regolith');
     }
+
+    // ── agronomy Kenntnis bonus ──────────────────────────────────────────────
+
+    /**
+     * agronomy Kenntnis adds a flat, colony-level Organika bonus on top of
+     * bioFacility's own level-based production — mirrors geology's Harvester
+     * bonus pattern (GDD §13.5 Paritäts-Anforderung).
+     */
+    public function test_agronomy_knowledge_adds_organika_bonus_on_top_of_biofacility_output(): void
+    {
+        // bioFacility Lv1 alone yields 8 Organika/Sol (production_curve[41][5][1]).
+        $this->setBuildingLevel(self::BIO_FACILITY_ID, 1);
+        DB::table('colony_resources')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'resource_id' => self::RES_ORGANICS],
+            ['amount' => 0]
+        );
+        // agronomy (research_id=93) Lv3 → cumulative [1,2,2] = 5 bonus Organika/Sol.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 93],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        Artisan::call('game:tick', ['--tick' => 11222]);
+
+        $organics = $this->getColonyResource(self::RES_ORGANICS);
+        // 8 (base) + 5 (agronomy bonus) = 13, at trust multiplier 1.0 (neutral, fixed in setUp).
+        $this->assertEquals(13, $organics,
+            'bioFacility Lv1 (8 Organika) + agronomy Lv3 bonus (5 Organika) must total 13 Organika');
+    }
 }
