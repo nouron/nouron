@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-15
+
+- Revert: CC-Lv5-Regolith-Deckel (PR #251) zurückgenommen — breitere PlaytestBot-Stichprobe (10 Seeds × 2 Profile) zeigt: CC Lv4 wird erst bei Sol 65–91 von ~95 erreicht, der Flaschenhals ist Timing, nicht der Rg-Preis der letzten Stufe. Nächster Schritt: Analytik/Handel/Missionen-Pfade auf fehlende Regolith-/AP-Boni prüfen.
+
 ## 2026-08-14
 
 - PlaytestBot: `BotProfile`-Mechanismus (Playstyle-Parameter, startet mit `savingsAggressiveness`) + neuer `game:playtest`-Command zum Vergleich mehrerer Seeds/Profile. Siehe `docs/superpowers/specs/2026-08-14-bot-playstyle-profiles-design.md`.
