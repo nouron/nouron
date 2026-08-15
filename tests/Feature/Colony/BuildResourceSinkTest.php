@@ -160,6 +160,20 @@ class BuildResourceSinkTest extends TestCase
         $this->assertSame($before - 60, $this->colonyRes(self::RES_REGOLITH));
     }
 
+    public function test_construction_knowledge_reduces_ap_needed_for_levelup(): void
+    {
+        // construction Lv5 (research_id=90) = 15% discount → CC's ap_for_levelup
+        // (10) drops to round(10 * 0.85) = 9. One less invest click needed to level up.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 90],
+            ['level' => 5, 'ap_spend' => 0, 'status_points' => 20]
+        );
+        $this->setCc(['level' => 1, 'ap_spend' => 8, 'status_points' => 16]);   // 1 AP from the discounted threshold (9)
+
+        $this->actingAs($this->bart())->postJson(route('colony.building.invest'), ['building_id' => 25])
+            ->assertOk()->assertJsonPath('leveled_up', true);
+    }
+
     public function test_non_cc_levelup_deducts_flat_regolith_regardless_of_build_cost(): void
     {
         // Sciencelab build_cost[3]=95 (25% would be 24) — GDD §13.7 flat 25 applies

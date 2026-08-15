@@ -827,6 +827,13 @@ class GameTick extends Command
                     ->update(['amount' => DB::raw("amount + {$harvesterYield}")]);
             }
 
+            $agronomyBonus = $this->generateAgronomyBonus($colony, $multiplier);
+            if ($agronomyBonus > 0) {
+                ColonyResource::where('colony_id', $colony->id)
+                    ->where('resource_id', 5) // Organika
+                    ->update(['amount' => DB::raw("amount + {$agronomyBonus}")]);
+            }
+
             foreach ($productionConfig as $buildingId => $outputs) {
                 // Harvester (27) is handled above via the depletion mechanic (GDD §4c) —
                 // production_curve[27] stays inert historical data (GDD §13.7).
@@ -952,6 +959,34 @@ class GameTick extends Command
         }
 
         return $totalCredited;
+    }
+
+    /**
+     * agronomy Kenntnis bonus on bioFacility Organika output (GDD §13.5 parity
+     * requirement, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-
+     * design.md §3) — mirrors generateHarvesterYield()'s geology bonus pattern, but
+     * bioFacility has no per-tile depletion, so this is a flat colony-level add-on.
+     */
+    private function generateAgronomyBonus(Colony $colony, float $multiplier): int
+    {
+        $bioFacilityLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', 41)
+            ->value('level');
+
+        if ($bioFacilityLevel <= 0) {
+            return 0;
+        }
+
+        $agronomyId = (int) config('knowledge.agronomy.id', 93);
+        $agronomyLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)
+            ->where('research_id', $agronomyId)
+            ->value('level');
+
+        $bonus = self::cumulativeCurveYield(config('game.agronomy_agrardom_bonus_per_level', []), $agronomyLevel);
+
+        return (int) round($bonus * $multiplier);
     }
 
     // ── 8a. Food consumption (Organika provisioning) ──────────────────────────

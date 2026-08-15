@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Console\Commands\GameTick;
 use App\Models\BarOffer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -56,7 +57,7 @@ class BarService
         // their own budget from game.merchant.commodity and must not consume — or be
         // consumed by — the generic guest rotation's slot count.
         $levelMaxConcurrent = config('game.bar.level_max_concurrent', []);
-        $maxConcurrent = $levelMaxConcurrent[$barLevel] ?? 2;
+        $maxConcurrent = ($levelMaxConcurrent[$barLevel] ?? 2) + $this->tradeConcurrentSlotBonus($colonyId);
         $activeCount = DB::table('bar_offers')
             ->where('colony_id', $colonyId)
             ->where('expires_tick', '>', $tick)
@@ -90,6 +91,26 @@ class BarService
                 'is_accepted' => false,
             ]);
         }
+    }
+
+    /**
+     * Trade knowledge bonus on concurrent Cantina offer slots (GDD §13.5 Pfad-C,
+     * docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md §4)
+     * — separate from the build-AP discount (ProjectBonusService), since this effect
+     * concerns actions (Cantina offers), not projects.
+     */
+    private function tradeConcurrentSlotBonus(int $colonyId): int
+    {
+        $tradeId = (int) config('knowledge.trade.id', 95);
+        $tradeLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', $tradeId)
+            ->value('level');
+
+        return GameTick::cumulativeCurveYield(
+            config('knowledge.trade.bar_offer_boost_per_lv', []),
+            $tradeLevel
+        );
     }
 
     public function getActiveOffers(int $colonyId, int $tick): Collection

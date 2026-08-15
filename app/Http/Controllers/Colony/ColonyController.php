@@ -12,6 +12,7 @@ use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
 use App\Services\OnboardingTriggerService;
+use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\TickService;
 use App\Services\TrustService;
@@ -37,6 +38,7 @@ class ColonyController extends BaseController
         private readonly ResourcesService $resourcesService,
         private readonly TrustService $trustService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {
         parent::__construct($tick);
     }
@@ -133,11 +135,12 @@ class ColonyController extends BaseController
                 'buildings.max_status_points',
             )
             ->get()
-            ->map(function ($b) use ($globalTick) {
+            ->map(function ($b) use ($globalTick, $colony) {
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
+                $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
 
                 return $b;
             });
@@ -267,7 +270,7 @@ class ColonyController extends BaseController
                 'key' => $b->name,
                 'label' => __('techtree.'.$b->name),
                 'description' => __('buildings.'.preg_replace('/^building_/', '', $b->name).'_desc'),
-                'ap_for_levelup' => $b->ap_for_levelup,
+                'ap_for_levelup' => $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup),
                 'max_level' => $b->max_level,
                 'max_status_points' => $b->max_status_points,
                 'is_instanced' => (bool) $b->is_instanced,
@@ -597,10 +600,13 @@ class ColonyController extends BaseController
             return $this->fail('max_level_reached');
         }
 
-        // Level-up Regolith is charged only on the click that completes the level (flat,
-        // no escalation; CC scales by target level). Check it BEFORE spending the AP so a
-        // shortfall never burns the final Construction-AP — the player tops up first.
-        $willLevelUp = ($row->ap_spend + 1) >= (int) $building->ap_for_levelup;
+        // Construction/cartography/trade knowledge additively discounts the AP
+        // threshold (GDD §13.3, docs/superpowers/specs/2026-08-15-knowledge-effects-
+        // and-encounters-design.md §2). Level-up Regolith is charged only on the click
+        // that completes the level — checked BEFORE spending the AP so a shortfall
+        // never burns the final Construction-AP.
+        $effectiveApForLevelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $building->ap_for_levelup);
+        $willLevelUp = ($row->ap_spend + 1) >= $effectiveApForLevelup;
         $levelupRegolith = $willLevelUp
             ? $this->levelupRegolithFor($buildingId, (int) $row->level + 1)
             : 0;
@@ -612,7 +618,7 @@ class ColonyController extends BaseController
             ]);
         }
 
-        $newApSpend = min($row->ap_spend + 1, $building->ap_for_levelup);
+        $newApSpend = min($row->ap_spend + 1, $effectiveApForLevelup);
 
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -625,7 +631,7 @@ class ColonyController extends BaseController
         }
 
         $leveledUp = false;
-        if ($newApSpend >= $building->ap_for_levelup) {
+        if ($newApSpend >= $effectiveApForLevelup) {
             if ($levelupRegolith > 0 && ! config('game.bypass.resource_costs')) {
                 $this->resourcesService->payCosts(
                     [['resource_id' => self::RES_REGOLITH, 'amount' => $levelupRegolith]],
@@ -653,7 +659,7 @@ class ColonyController extends BaseController
                 'building_id' => $buildingId,
                 'building_name' => $building->name ?? '',
                 'ap_spend' => $newApSpend,
-                'ap_for_levelup' => (int) $building->ap_for_levelup,
+                'ap_for_levelup' => $effectiveApForLevelup,
                 'level_up' => $leveledUp,
                 'new_level' => $leveledUp ? $row->level + 1 : $row->level,
             ]),
@@ -1023,6 +1029,7 @@ class ColonyController extends BaseController
         $row->image_slug = self::buildingImageSlug($row->building_key);
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
+        $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
 
         return $row;
     }
