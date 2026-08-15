@@ -1,0 +1,56 @@
+<?php
+
+namespace App\Services;
+
+use App\Console\Commands\GameTick;
+use Illuminate\Support\Facades\DB;
+
+/**
+ * Additive AP-cost discounts for building projects (GDD §13.3). Currently sums the
+ * three "domain knowledge" curves (construction, cartography, trade) — advisor-rank
+ * and CC-level bonus sources from the same GDD table are not yet implemented (out of
+ * scope for this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
+ * encounters-design.md §2).
+ */
+class ProjectBonusService
+{
+    /** research_id values from config/knowledge.php that discount building projects. */
+    private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'cartography', 'trade'];
+
+    public function buildingApDiscountPercent(int $colonyId): int
+    {
+        $total = 0;
+
+        foreach (self::DOMAIN_KNOWLEDGE_KEYS as $key) {
+            $cfg = config("knowledge.{$key}");
+            $researchId = (int) $cfg['id'];
+            $curve = $cfg['ap_cost_reduction_per_lv'] ?? [];
+
+            $level = (int) DB::table('colony_researches')
+                ->where('colony_id', $colonyId)
+                ->where('research_id', $researchId)
+                ->value('level');
+
+            $total += GameTick::cumulativeCurveYield($curve, $level);
+        }
+
+        return $total;
+    }
+
+    public function effectiveApForLevelup(int $colonyId, int $baseApForLevelup): int
+    {
+        $discountPercent = $this->buildingApDiscountPercent($colonyId);
+        $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
+
+        return self::applyDiscount($baseApForLevelup, $discountPercent, $minCostFactor);
+    }
+
+    /** Pure discount math, factored out so the floor logic is testable without DB state. */
+    public static function applyDiscount(int $base, int $discountPercent, float $minCostFactor): int
+    {
+        $floor = (int) ceil($base * $minCostFactor);
+        $discounted = (int) round($base * (1 - $discountPercent / 100));
+
+        return max($floor, $discounted);
+    }
+}
