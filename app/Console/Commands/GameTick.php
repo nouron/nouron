@@ -962,8 +962,8 @@ class GameTick extends Command
     }
 
     /**
-     * agronomy Kenntnis-Bonus auf bioFacility-Organika-Ausstoß (GDD §13.5 Paritäts-
-     * Anforderung, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-
+     * agronomy Kenntnis bonus on bioFacility Organika output (GDD §13.5 parity
+     * requirement, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-
      * design.md §3) — mirrors generateHarvesterYield()'s geology bonus pattern, but
      * bioFacility has no per-tile depletion, so this is a flat colony-level add-on.
      */

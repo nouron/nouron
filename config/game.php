@@ -150,9 +150,9 @@ return [
     // cumulative across levels, capped at level 5 (+3+3+2+2+2 = 12 max).
     'geology_harvester_bonus_per_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 2],
 
-    // agronomy Kenntnis-Bonus auf bioFacility-Organika-Ertrag — Parität zu geology's
-    // Harvester-Bonus (GDD §13.5 Paritäts-Anforderung). Glockenförmig, NICHT front-
-    // loaded wie geology: dieser Effekt ist neu, ohne bestehende Kalibrierungshistorie.
+    // agronomy Kenntnis bonus on bioFacility Organika output — parity with geology's
+    // Harvester bonus (GDD §13.5 parity requirement). Bell-shaped, NOT front-loaded
+    // like geology: this effect is new, with no existing calibration history.
     'agronomy_agrardom_bonus_per_level' => [1 => 1, 2 => 2, 3 => 2, 4 => 1, 5 => 1],   // Σ7 Or/Sol
 
     // Economy — resource pricing for player-facing buy/sell mechanics.
