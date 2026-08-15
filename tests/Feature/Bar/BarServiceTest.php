@@ -1143,4 +1143,69 @@ class BarServiceTest extends TestCase
 
         $this->assertLessThanOrEqual(2, $count, 'max_concurrent=2 at bar Lv1 must not be exceeded');
     }
+
+    public function test_trade_knowledge_increases_concurrent_offer_slots(): void
+    {
+        // trade (research_id=95) Lv3 → cumulative [0,1,1] = 2 extra slots
+        // (config/knowledge.php → trade.bar_offer_boost_per_lv).
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 95],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $this->setBarLevel(1);
+        $baseMax = config('game.bar.level_max_concurrent')[1] ?? 2;
+
+        // Rank 3 trader guarantees guest_count in [1,2] (config/game.php → bar.guest_count.3)
+        // — deterministic, no need to brute-force a lucky tick/seed.
+        $this->assignTrader(3);
+
+        // Pre-fill exactly baseMax active offers, so the *unboosted* concurrent cap is
+        // already exhausted (maxConcurrent - activeCount = 0 → no new offer possible
+        // without the bonus). This makes the assertion load-bearing instead of a weak
+        // upper bound: with the trade bonus, 2 extra slots open up and — since guest_count
+        // is guaranteed >=1 at rank 3 — at least one new offer MUST be created.
+        $this->clearBarOffers();
+        for ($i = 0; $i < $baseMax; $i++) {
+            $this->insertOffer(['expires_tick' => 20]);
+        }
+
+        $tick = 5;
+        $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
+
+        $activeCount = DB::table('bar_offers')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('expires_tick', '>', $tick)
+            ->where('is_accepted', false)
+            ->count();
+
+        $this->assertGreaterThan($baseMax, $activeCount, 'trade Lv3 must open extra concurrent Cantina offer slots beyond the base cap');
+        $this->assertLessThanOrEqual($baseMax + 2, $activeCount, 'The bonus must not exceed the configured Σ2 extra slots for trade Lv3');
+    }
+
+    public function test_trade_knowledge_level_zero_does_not_change_concurrent_offer_slots(): void
+    {
+        // Lv0 (no colony_researches row / default) must be a strict no-op — same
+        // exhausted-cap setup as above, but without leveling trade: no new offer
+        // may appear since the unboosted cap is already full.
+        $this->setBarLevel(1);
+        $baseMax = config('game.bar.level_max_concurrent')[1] ?? 2;
+        $this->assignTrader(3);
+
+        $this->clearBarOffers();
+        for ($i = 0; $i < $baseMax; $i++) {
+            $this->insertOffer(['expires_tick' => 20]);
+        }
+
+        $tick = 5;
+        $this->barService->generateOffersForColony(self::COLONY_ID, $tick);
+
+        $activeCount = DB::table('bar_offers')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('expires_tick', '>', $tick)
+            ->where('is_accepted', false)
+            ->count();
+
+        $this->assertEquals($baseMax, $activeCount, 'trade Lv0 must leave the concurrent offer cap unchanged');
+    }
 }
