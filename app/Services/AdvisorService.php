@@ -56,7 +56,7 @@ class AdvisorService
      * Breakdown of a colony's total AP — base/advisor/multiplier components,
      * for display in the resource-bar AP chip popup.
      *
-     * @return array{base: int, advisor: int, multiplier: float, total: int}
+     * @return array{base: int, advisor: int, multiplier: float, plague_multiplier: float, total: int}
      */
     public function getApBreakdown(int $colonyId): array
     {
@@ -69,11 +69,18 @@ class AdvisorService
         $trust = $this->trustService->getTrust($colonyId);
         $multiplier = $this->trustService->getApMultiplier($trust);
 
+        // Seuchenausbruch (GDD §9): temporary AP-reduction debuff while
+        // glx_colonies.plague_until_tick is still in the future.
+        $plagueUntilTick = DB::table('glx_colonies')->where('id', $colonyId)->value('plague_until_tick');
+        $plagueActive = $plagueUntilTick !== null && (int) $plagueUntilTick >= $this->tickService->getTickCount();
+        $plagueMultiplier = $plagueActive ? (1 - (float) config('game.encounter.plague.ap_reduction_pct', 0.20)) : 1.0;
+
         return [
             'base' => $baseAp,
             'advisor' => (int) $advisorAp,
             'multiplier' => $multiplier,
-            'total' => (int) round(($baseAp + $advisorAp) * $multiplier),
+            'plague_multiplier' => $plagueMultiplier,
+            'total' => (int) round(($baseAp + $advisorAp) * $multiplier * $plagueMultiplier),
         ];
     }
 

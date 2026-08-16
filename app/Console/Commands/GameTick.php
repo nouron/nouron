@@ -12,6 +12,7 @@ use App\Models\ColonyResource;
 use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
+use App\Services\EncounterService;
 use App\Services\EventService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
@@ -135,6 +136,9 @@ class GameTick extends Command
 
             $n = $this->processFoodConsumption($tick);
             $this->line("  Colonies fed:             {$n}");
+
+            $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0));
+            $this->line("  Encounters processed:     {$n}");
 
             $n = $this->calculateTrust($tick);
             $this->line("  Colonies trust updated:   {$n}");
@@ -516,9 +520,9 @@ class GameTick extends Command
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         // Sicherheits-Hub recycling: colonies that have securityHub built get a
-        // fraction of build costs back on any building level-down.
+        // fraction of build costs back on any building level-down (recycle_pct
+        // itself is read inside applyLevelDown()).
         $secHubId = (int) config('buildings.securityHub.id', 53);
-        $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
         $secHubColonies = DB::table('colony_buildings')
             ->where('building_id', $secHubId)
             ->where('level', '>', 0)
@@ -549,40 +553,7 @@ class GameTick extends Command
             ];
 
             if ($newStatus <= 0) {
-                $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
-                $newLevel = max(0, $cb->level - 1);
-
-                DB::table('colony_buildings')->where($where)->update([
-                    'level' => $newLevel,
-                    'status_points' => $maxSP,
-                ]);
-
-                $colony = Colony::find($cb->colony_id);
-                $this->eventService->createEvent([
-                    'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
-                    'tick' => $tick,
-                    'event' => 'techtree.level_down',
-                    'area' => 'techtree',
-                    'parameters' => json_encode([
-                        'entity_type' => 'building',
-                        'entity_name' => $buildingNames[$cb->building_id] ?? '',
-                        'new_level' => $newLevel,
-                        'tech_id' => $cb->building_id,
-                        'colony_id' => $cb->colony_id,
-                    ]),
-                ]);
-
-                // Sicherheits-Hub: return recycle_pct of tradeable build costs on level-down.
-                if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
-                    foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
-                        $returned = (int) max(1, floor($baseAmount * $recyclePct));
-                        DB::table('colony_resources')->updateOrInsert(
-                            ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
-                            ['amount' => DB::raw("amount + {$returned}")]
-                        );
-                    }
-                }
-
+                $this->applyLevelDown($cb, $tick, $maxSPMap->all(), $buildingNames->all(), $secHubColonies, $buildCostMap);
                 $levelled++;
             } else {
                 DB::table('colony_buildings')->where($where)
@@ -609,6 +580,60 @@ class GameTick extends Command
         }
 
         return $levelled;
+    }
+
+    /**
+     * Levels a building down by 1 (min 0), restores its status_points to max, logs
+     * a techtree.level_down event, and applies securityHub build-cost recycling if
+     * active. Shared by processBuildingDecay() (SP hits 0 from ordinary decay) and
+     * processEncounters() (SP hits 0 from a Kritisch-tier danger, GDD §9).
+     */
+    private function applyLevelDown(
+        object $cb,
+        int $tick,
+        array $maxSPMap,
+        array $buildingNames,
+        array $secHubColonies,
+        array $buildCostMap
+    ): void {
+        $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
+        $newLevel = max(0, $cb->level - 1);
+        $where = [
+            'colony_id' => $cb->colony_id,
+            'building_id' => $cb->building_id,
+            'instance_id' => $cb->instance_id,
+        ];
+
+        DB::table('colony_buildings')->where($where)->update([
+            'level' => $newLevel,
+            'status_points' => $maxSP,
+        ]);
+
+        $colony = Colony::find($cb->colony_id);
+        $this->eventService->createEvent([
+            'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
+            'tick' => $tick,
+            'event' => 'techtree.level_down',
+            'area' => 'techtree',
+            'parameters' => json_encode([
+                'entity_type' => 'building',
+                'entity_name' => $buildingNames[$cb->building_id] ?? '',
+                'new_level' => $newLevel,
+                'tech_id' => $cb->building_id,
+                'colony_id' => $cb->colony_id,
+            ]),
+        ]);
+
+        if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
+            $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
+            foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
+                $returned = (int) max(1, floor($baseAmount * $recyclePct));
+                DB::table('colony_resources')->updateOrInsert(
+                    ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
+                    ['amount' => DB::raw("amount + {$returned}")]
+                );
+            }
+        }
     }
 
     // ── 6. Research decay ────────────────────────────────────────────────────
@@ -908,7 +933,11 @@ class GameTick extends Command
             }
 
             if ($instance->pending_until_tick !== null && (int) $instance->pending_until_tick >= $tick) {
-                continue; // in transit — no production this Sol
+                continue; // in transit (relocating) — no production this Sol
+            }
+
+            if (($instance->instability_outage_until_tick ?? null) !== null && (int) $instance->instability_outage_until_tick >= $tick) {
+                continue; // Geologische Instabilität outage — no production this Sol (§9, distinct from relocation transit)
             }
 
             $tile = DB::table('colony_tiles')
@@ -1036,6 +1065,400 @@ class GameTick extends Command
         }
 
         return $colonies->count();
+    }
+
+    // ── 8a. Encounters (GDD §9 "Begegnungen & Gefahren") ────────────────────────
+
+    /**
+     * GDD §9 "Begegnungen & Gefahren" — per-Sol encounter pipeline. Two phases per
+     * call: (1) resolve any encounter WARNED at tick-1 for each colony (reads
+     * colony_log for area='encounter', event='...instability_warning'|'storm_warning'
+     * etc. at tick-1, resolves using CURRENT status_points), (2) roll new warnings
+     * for tick, respecting the cooldown against each colony's last resolved encounter.
+     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability,
+     * rollPlague) is dispatched from here. Note: instability has no warning phase
+     * — its trigger event doubles as its resolution (see rollInstability()'s
+     * docblock).
+     *
+     * Per colony, the three NEW-roll phases (storm/instability/plague) are mutually
+     * exclusive within a single tick: as soon as one of them triggers, the
+     * remaining roll phases are skipped for that colony this tick. The cooldown
+     * (encounterOnCooldown()) only ever sees RESOLVED encounters from previous
+     * Sols — Sturm's warning phase writes no resolution row on the warning tick —
+     * so without this short-circuit all three could independently succeed on the
+     * same Sol, defeating the cooldown's anti-spiral intent. Warning-resolution
+     * (resolveStormWarning()) is not subject to this — it always runs.
+     *
+     * @return int number of encounters resolved this call (warnings + resolutions)
+     */
+    private function processEncounters(int $tick, int $rngSeed): int
+    {
+        $processed = 0;
+        $encounterService = new EncounterService;
+        $cooldownSols = (int) config('game.encounter.cooldown_sols', 3);
+        $securityHubColonies = DB::table('colony_buildings')
+            ->where('building_id', (int) config('buildings.securityHub.id', 53))
+            ->where('level', '>', 0)
+            ->pluck('colony_id')
+            ->flip()
+            ->all();
+
+        $colonies = Colony::all();
+
+        foreach ($colonies as $colony) {
+            // Phase 1: resolve yesterday's storm warning, if any (not subject to
+            // the same-Sol mutual exclusion below — it's a resolution, not a roll).
+            $processed += $this->resolveStormWarning($colony, $tick, $encounterService, $securityHubColonies);
+
+            if ($this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
+                continue;
+            }
+
+            // Phase 2: roll each danger type in turn — the first one that
+            // triggers wins the Sol for this colony, the rest are skipped.
+            $rollPhases = [
+                fn () => $this->rollStorm($colony, $tick, $rngSeed),
+                // Geologische Instabilität: tied to the Harvester tile, no warning/
+                // resolution split (GDD §9 — production outage triggers immediately,
+                // it's not a building-SP encounter, EncounterService's tiers don't apply).
+                fn () => $this->rollInstability($colony, $tick, $rngSeed),
+                // Seuchenausbruch: emergent trigger only (GDD §9) — never rolls on a
+                // healthy colony, unlike Sturm/Instabilität which always have a nonzero
+                // base chance.
+                fn () => $this->rollPlague($colony, $tick, $rngSeed),
+            ];
+
+            foreach ($rollPhases as $rollPhase) {
+                $rolled = $rollPhase();
+                $processed += $rolled;
+                if ($rolled > 0) {
+                    break;
+                }
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Whether the given colony_log row's `parameters` JSON references $colonyId.
+     * Never match colony_id via a raw LIKE '%"colony_id":N%' on the JSON string —
+     * that substring-matches without a delimiter boundary, so colony_id=1 would
+     * false-positive on colony_id=10, 11, 100, … Decoding is the only safe way.
+     * Shared by all three encounter types (storm now; instability/plague later).
+     */
+    private function encounterLogMatchesColony(object $row, int $colonyId): bool
+    {
+        $params = json_decode($row->parameters, true);
+
+        return is_array($params) && (int) ($params['colony_id'] ?? -1) === $colonyId;
+    }
+
+    /**
+     * Whether this colony resolved ANY encounter within the last $cooldownSols Sols.
+     * "Resolved" = any encounter.* colony_log event that is NOT a warning — storm's
+     * three outcome-tier events, plus instability/plague's immediate trigger events
+     * (which have no separate warning phase, so the trigger event IS the resolution).
+     */
+    private function encounterOnCooldown(int $colonyId, int $tick, int $cooldownSols): bool
+    {
+        if ($cooldownSols <= 0) {
+            return false;
+        }
+
+        $rows = DB::table('colony_log')
+            ->where('area', 'encounter')
+            ->where('tick', '>=', $tick - $cooldownSols)
+            ->where('event', 'not like', '%_warning')
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($this->encounterLogMatchesColony($row, $colonyId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function rollStorm(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $buildingCount = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('level', '>', 0)
+            ->where('building_id', '!=', BuildingId::Harvester->value)
+            ->count();
+
+        if ($buildingCount === 0) {
+            return 0;
+        }
+
+        $cfg = config('game.encounter.storm', []);
+        $baseChance = (float) ($cfg['base_chance'] ?? 0.02);
+        $perBuilding = (float) ($cfg['chance_per_building'] ?? 0.01);
+        $cap = (float) ($cfg['chance_cap'] ?? 0.10);
+
+        $defenseId = (int) config('knowledge.defense.id', 96);
+        $defenseLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)->where('research_id', $defenseId)->value('level');
+        $reductionPct = self::cumulativeCurveYield(config('game.defense_storm_risk_reduction_per_lv', []), $defenseLevel) / 100;
+
+        $chance = min($cap, $baseChance + $buildingCount * $perBuilding) * (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 7919 + $tick * 104729;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        // Target: 1 random non-Harvester building of the colony zone (deterministic pick).
+        //
+        // Deliberately NOT filtered on whereNotNull('tile_x'): CommandCenter (25) is
+        // "anchored" — always tile_x=NULL by design (it doesn't occupy a hex tile,
+        // see OnboardingHintService's CC comments) — yet it is a legitimate,
+        // fully-built storm target, and IS the sole eligible target in the existing
+        // fixture-driven tests. A tile_x filter would wrongly exclude it. Any
+        // *tile-placed* building still requires level>0, which in practice means
+        // "actually built", so a level>0/tile_x=NULL combination among placeable
+        // (is_instanced) buildings is not expected to occur in seeded data.
+        $targets = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('level', '>', 0)
+            ->where('building_id', '!=', BuildingId::Harvester->value)
+            ->orderBy('building_id')->orderBy('instance_id')
+            ->get(['building_id', 'instance_id']);
+        $targetIdx = $this->seededRoll($seed + 1, 0, $targets->count() - 1);
+        $target = $targets[$targetIdx];
+
+        $this->fireEncounterOnboardingHint($colony, $tick);
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.storm_warning',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'building_id' => $target->building_id,
+                'instance_id' => $target->instance_id,
+            ]),
+        ]);
+
+        return 1;
+    }
+
+    private function resolveStormWarning(Colony $colony, int $tick, EncounterService $service, array $securityHubColonies): int
+    {
+        $warning = DB::table('colony_log')
+            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
+            ->where('tick', $tick - 1)
+            ->get()
+            ->first(fn ($row) => $this->encounterLogMatchesColony($row, $colony->id));
+
+        if (! $warning) {
+            return 0;
+        }
+
+        $params = json_decode($warning->parameters, true);
+        $cb = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $params['building_id'])
+            ->where('instance_id', $params['instance_id'])
+            ->first();
+
+        if (! $cb || $cb->level <= 0) {
+            return 0;   // building was demolished/relocated between warning and resolution
+        }
+
+        $maxSP = (int) DB::table('buildings')->where('id', $cb->building_id)->value('max_status_points') ?: 20;
+        $hubActive = isset($securityHubColonies[$colony->id]);
+        $outcome = $service->resolveOutcome((int) $cb->status_points, $maxSP, $hubActive);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', $cb->building_id)->where('instance_id', $cb->instance_id)
+            ->update(['status_points' => $outcome['sp_after']]);
+
+        $this->trustService->fireEvent($colony->id, $outcome['trust_event'], $tick);
+
+        if ($outcome['forces_level_down']) {
+            $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id')->all();
+            $buildingNames = DB::table('buildings')->pluck('name', 'id')->all();
+            $buildCostMap = DB::table('building_costs')->whereIn('resource_id', [3, 4, 5])
+                ->get()->groupBy('building_id')->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())->all();
+            $this->applyLevelDown($cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
+        }
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.storm_'.$outcome['tier'],
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'building_id' => $cb->building_id,
+                'instance_id' => $cb->instance_id,
+                'tier' => $outcome['tier'],
+            ]),
+        ]);
+
+        return 1;
+    }
+
+    /**
+     * Geologische Instabilität (GDD §9): unlike Sturm/Seuche, this has no SP-based
+     * outcome tier — it directly disrupts Harvester production for N Sols via its
+     * own instability_outage_until_tick field (colony_buildings), kept separate
+     * from pending_until_tick (relocation transit) so that a player can still
+     * relocate the Harvester while an instability outage is active — GDD §9's
+     * stated counter-play ("Relocation setzt Zähler zurück") requires relocation
+     * to remain possible during the outage; ColonyController::placeBuilding()
+     * clears instability_outage_until_tick on a successful move. No warning/
+     * resolution split either: it triggers and resolves in the same call, since
+     * there's nothing to "defend" against.
+     */
+    private function rollInstability(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('level', '>', 0)
+            ->orderBy('instance_id')
+            ->first();
+
+        if (! $harvester || $harvester->placed_at_tick === null) {
+            return 0;
+        }
+
+        // Already relocating, or already in an active instability outage — skip.
+        if ($harvester->pending_until_tick !== null && (int) $harvester->pending_until_tick >= $tick) {
+            return 0;
+        }
+        if (($harvester->instability_outage_until_tick ?? null) !== null && (int) $harvester->instability_outage_until_tick >= $tick) {
+            return 0;
+        }
+
+        $solsSinceRelocation = max(0, $tick - (int) $harvester->placed_at_tick);
+        $cfg = config('game.encounter.instability', []);
+        $chancePerSol = (float) ($cfg['chance_per_sol_since_relocation'] ?? 0.0015);
+        $cap = (float) ($cfg['chance_cap'] ?? 0.05);
+
+        $geologyId = (int) config('knowledge.geology.id', 92);
+        $geologyLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)->where('research_id', $geologyId)->value('level');
+        $reductionPct = self::cumulativeCurveYield(config('game.geology_instability_risk_reduction_per_lv', []), $geologyLevel) / 100;
+
+        $chance = min($cap, $solsSinceRelocation * $chancePerSol) * (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 15485863 + $tick * 32452843;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        $outageSols = (int) ($cfg['outage_sols'] ?? 3);
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', BuildingId::Harvester->value)->where('instance_id', $harvester->instance_id)
+            ->update(['instability_outage_until_tick' => $tick + $outageSols]);
+
+        $this->fireEncounterOnboardingHint($colony, $tick);
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.instability_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'instance_id' => $harvester->instance_id,
+                'outage_until_tick' => $tick + $outageSols,
+            ]),
+        ]);
+
+        return 1;
+    }
+
+    /**
+     * Seuchenausbruch (GDD §9): emergent, not ambient — only rolls when
+     * hunger_streak≥3 OR Trust<-20 (a healthy colony has 0% base risk, hard-gated,
+     * not just a very low chance). Resolves immediately (no warning/resolution
+     * split, matching instability's shape, not storm's) as a colony_threatened Trust
+     * hit plus a temporary AP-reduction debuff via glx_colonies.plague_until_tick.
+     */
+    private function rollPlague(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $hungerStreak = (int) DB::table('glx_colonies')->where('id', $colony->id)->value('hunger_streak');
+        $trust = $this->trustService->getTrust($colony->id);
+
+        if ($hungerStreak < 3 && $trust >= -20) {
+            return 0;   // healthy colony — hard gate, not a chance roll
+        }
+
+        $alreadyActive = DB::table('glx_colonies')->where('id', $colony->id)->value('plague_until_tick');
+        if ($alreadyActive !== null && (int) $alreadyActive >= $tick) {
+            return 0;   // don't stack a second plague on top of an active one
+        }
+
+        $chance = (float) config('game.encounter.plague.chance_per_sol_when_emergent', 0.05);
+
+        $infirmaryLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', (int) config('buildings.infirmary.id', 46))->value('level');
+        $perLevel = (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level', 0.08);
+        $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
+        $reductionPct = min($cap, $infirmaryLevel * $perLevel);
+
+        $chance *= (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 179424673 + $tick * 32416187;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
+        DB::table('glx_colonies')->where('id', $colony->id)->update(['plague_until_tick' => $tick + $debuffSols]);
+        $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
+
+        $this->fireEncounterOnboardingHint($colony, $tick);
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.plague_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode(['colony_id' => $colony->id, 'debuff_until_tick' => $tick + $debuffSols]),
+        ]);
+
+        return 1;
+    }
+
+    /**
+     * Fires the `onboarding_encounter` hint-bar trigger once per user, forever
+     * (not run-scoped — user_preferences.fired_triggers has no run dimension,
+     * same as the existing onboarding_decay/onboarding_trust triggers) — the
+     * first time any of the three danger types (Sturm/Instabilität/Seuche)
+     * triggers for this colony's user. Shared by rollStorm()/rollInstability()/
+     * rollPlague() to avoid tripling this logic.
+     *
+     * Event key is `onboarding_encounter` (no `colony.` prefix) so it matches
+     * CommLogController::log()'s `event LIKE 'onboarding%'` exclusion filter —
+     * with the prefix it used to leak into the Komm-Log as a raw, untranslated
+     * key instead of only driving the hint bar.
+     */
+    private function fireEncounterOnboardingHint(Colony $colony, int $tick): void
+    {
+        $userId = $colony->user_id;
+        if ($userId === null || $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
+            return;
+        }
+
+        $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
+        $this->eventService->createEvent([
+            'user' => $userId,
+            'tick' => $tick,
+            'event' => 'onboarding_encounter',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => $colony->id]),
+        ]);
     }
 
     // ── 8b. Trust calculation ─────────────────────────────────────────────────

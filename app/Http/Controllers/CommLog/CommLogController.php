@@ -200,6 +200,14 @@ class CommLogController extends BaseController
             'trade.bar_accepted' => $this->descBarAccepted($params),
             'trade.merchant_purchase' => [$this->seg(__('comm_log.desc.merchant_purchase'))],
             'merchant.visit' => [$this->seg(__('comm_log.desc.merchant_visit'))],
+            'encounter.storm_warning' => $this->descStormWarning($params),
+            'encounter.storm_abgewehrt' => $this->descStormOutcome($params, 'abgewehrt'),
+            'encounter.storm_beschaedigt' => $this->descStormOutcome($params, 'beschaedigt'),
+            'encounter.storm_kritisch' => $this->descStormOutcome($params, 'kritisch'),
+            'encounter.instability_triggered' => [$this->seg(__('comm_log.desc.instability_triggered', [
+                'sols' => (int) config('game.encounter.instability.outage_sols', 3),
+            ]))],
+            'encounter.plague_triggered' => [$this->seg(__('comm_log.desc.plague_triggered'))],
             default => [],
         };
     }
@@ -389,6 +397,49 @@ class CommLogController extends BaseController
         }
 
         return [$this->seg(__('comm_log.desc.bar_accepted'))];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descStormWarning(array $params): array
+    {
+        $id = $params['building_id'] ?? null;
+        $intId = $id !== null ? (int) $id : null;
+        $name = $this->resolveBuildingName($intId, null);
+        $bKey = $intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?';
+
+        return [
+            $this->seg('Sturmwarnung: '),
+            $this->entitySeg('building', (string) $bKey, $name, [
+                'level' => null,
+                'link' => '/nexus-db',
+            ]),
+            $this->seg(' ist im Vorfeld gefährdet.'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descStormOutcome(array $params, string $tier): array
+    {
+        $id = $params['building_id'] ?? null;
+        $intId = $id !== null ? (int) $id : null;
+        $name = $this->resolveBuildingName($intId, null);
+        $bKey = $intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?';
+
+        $suffix = match ($tier) {
+            'abgewehrt' => ' erfolgreich verteidigt — kein Schaden.',
+            'beschaedigt' => ' beschädigt.',
+            'kritisch' => ' kritisch beschädigt — Level gesunken.',
+            default => '.',
+        };
+
+        return [
+            $this->seg('Sturm: '),
+            $this->entitySeg('building', (string) $bKey, $name, [
+                'level' => null,
+                'link' => '/nexus-db',
+            ]),
+            $this->seg($suffix),
+        ];
     }
 
     /** @return array<int, array<string, mixed>> */

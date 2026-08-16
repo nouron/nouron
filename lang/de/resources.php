@@ -34,6 +34,7 @@ return [
     'popup_ap_base' => 'Basis-AP',
     'popup_ap_advisor' => 'durch Berater',
     'popup_ap_trust_multiplier' => 'Vertrauen-Multiplikator',
+    'popup_ap_plague_multiplier' => 'Seuchenausbruch',
 
     'popup_rg_title' => 'Regolith',
     'popup_rg_desc' => 'Das Gestein unter den Füßen. Der Harvester bricht es aus dem Boden — die Kolonie verbaut es. Fast alles, was hier gebaut wird, beginnt mit Regolith.',

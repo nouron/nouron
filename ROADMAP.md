@@ -1,6 +1,6 @@
 # Nouron — Roadmap
 
-Stand: 2026-08-13
+Stand: 2026-08-16
 
 ## Phase 1b: Laminas → Laravel Migration
 
@@ -610,6 +610,8 @@ INNN-Nachrichtensystem vollständig ersetzt. Neuer Screen `/comm-log` mit zwei T
 - **08-05/06 Harvester-Zweitinstanz-Bezugswege + Corvan/Pfad-C** (§4c) — Sockel-Baseline auf 1 Harvester-Instanz umgestellt, zweite Instanz optional über Weg A (Orin/`corporate_rep`, Cantina-Kauf 400–800 Cr) oder Weg B (Bergungsmission `mission_harvester_salvage`); Corvan (Reisender Händler) übernimmt Alltagsgeschäft (Credits-Handel) als Pfad-C-Hebel, anonyme Bar-Gäste nur noch Tauschhandel.
 - **08-10 AP-Pool-Konsolidierung** (Phase 3o Stufe 2, GDD §13.1) — die fünf getrennten AP-Domänen sind zu einem gemeinsamen Kolonie-Pool zusammengelegt; `strategist`-Beratertyp zurückgestellt, `advisor.max_slots` 5→4 (PR #240/#241).
 - **08-12 Phase-1-Sol-30-Deadline** — vierter Fail-State (`RunProgressService`), eskalierende Nexus-Warnung ab Sol 22, eigener Fail-Screen-Ton.
+- **08-15 Kenntnis-Effekte, erste Welle** (PR #253) — `construction`/`cartography`/`trade` erhalten additiven Bau-AP-Rabatt (`app/Services/ProjectBonusService.php`), `agronomy` erhält Organika-Produktionsbonus (Parität zu `geology`), `trade` zusätzlich Cantina-Angebotsslot-Bonus. GDD §13.3/§13.5-Nachträge.
+- **08-16 GDD §9 „Begegnungen & Gefahren" implementiert** (Branch `design/encounters-and-defense`) — drei Gefahrentypen (Sturm, Geologische Instabilität, Seuchenausbruch) erstmals codiert (§9 war zuvor nur spezifiziert); neuer `app/Services/EncounterService.php`, Cooldown-Mechanismus gegen Ereignis-Spiralen, vollständige Kolonieprotokoll-Integration, Onboarding-Hint. `defense`-Kenntnis bekommt ihren ersten aktiven Effekt (Sturm-Risiko-Reduktion), `geology` bekommt einen zweiten Effekt (Instabilitäts-Risiko-Reduktion). GDD §9-Nachtrag.
 
 ---
 
@@ -635,7 +637,7 @@ Offene Stufen: 1b/1d (Supply-Achse-Herleitung, Pfad-C-Regolith-Hebel), 3 (Ratenm
 - [x] Kompletter Zahlensatz aus §13.7 (Produktion, Reparatur, `decay_rate`, Bau-/Level-Up-Kosten, CC-Ausbau)
 - [x] `harvester.max_level` 8 → 1
 - [x] Harvester-Zweitinstanz-Gate (CC Lv3 + 100 Rg pauschal, `ColonyController::placeBuilding`) — die generische "Level-Up-Preis für jede weitere Instanz"-Regel für Hangar/Wohnhabitat bleibt offen (Bootstrap-Zirkel, siehe Stufe 1b)
-- [x] `geology`-Effekt als hartverdrahteter Hook (erster von max. zwei erlaubten hartverdrahteten Kenntniseffekten)
+- [x] `geology`-Effekt als hartverdrahteter Hook (erster von ursprünglich max. zwei erlaubten hartverdrahteten Kenntniseffekten — die Guard-Rail ist durch Owner-Entscheidung vom 2026-08-15 überholt, siehe `docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md`: mittlerweile 6 von 7 Kenntnissen mit hartverdrahtetem Effekt — `construction`/`cartography`/`trade` Bau-AP-Rabatt, `agronomy` Organika-Bonus, `trade` zusätzlich Cantina-Slot-Bonus (PR #253, 2026-08-15), `geology` zusätzlich Instabilitäts-Risiko-Reduktion, `defense` erster eigener Effekt (Sturm-Risiko-Reduktion) (Branch `design/encounters-and-defense`, 2026-08-16); `health` bewusst ohne Zusatzeffekt)
 - [x] `bar.base_prices` + `compound_import_price`, `knowledge.levelup_costs` + `credits` nachgezogen
 - [ ] Wachstumsachsen-Umstellung (§4c) unvollständig: Agrardom Level→Instanz zurückgestellt auf Stufe 1d; Religiöse Stätte/Kolonialdenkmal je 1 Instanz/Lv1 offen; Hangar-Doppelachse (Instanzen = Schiffsplätze, Level 1–3 = Schiffsklasse) offen
 
@@ -680,7 +682,8 @@ Kernumbau. `ap_spend` existierte bereits auf `colony_buildings`, `colony_researc
 ### Stufe 3 — Ratenmodell vervollständigen (§13.2–13.3, §13.6) — offen
 
 - [ ] `f(L)`-Kostenkurve statt flacher `ap_for_levelup` je Level; `f(1) = 0.5` fürs Errichten
-- [ ] Bonus-System: additive Kostenreduktion aus Berater-Rang, Domänen-Kenntnis, Koloniereife; `project_min_cost_factor` als Leitplanke
+- [x] Bonus-System, Domänen-Kenntnis-Teil (§13.3) — additive, glockenförmige Bau-AP-Kostenreduktion aus `construction`/`cartography`/`trade` (Σ15% je Kenntnis bei Lv5), wirkt auf alle Gebäude-Levelups; `app/Services/ProjectBonusService.php` (PR #253, 2026-08-15)
+- [ ] Bonus-System, Rest offen: Berater-Rang- und Koloniereife-Kostenreduktion (§13.3-Tabelle) sind weiterhin nicht implementiert; `project_min_cost_factor` als Leitplanke bleibt ungenutzt, solange nur der Kenntnis-Bonus (max. 15%) aktiv ist
 - [ ] Restzeit-Berechnung je Baustelle („noch 3 Sole bei aktueller Rate")
 - [ ] Handlungs-AP nachziehen: `bar.ap_cost_accept` 1→2, `ap_cost_negotiate` 3→4
 - [ ] `decay.overcap_factor` 2.0 → 1.5
@@ -718,7 +721,7 @@ Kein Blocker, aber Teil der Definition-of-Done.
 
 Design-Entscheidung vom 2026-07-20 bleibt gültig (Analytiker = passiver Multiplikator, Pilot = aktive Burst-Beschaffung, Konsul = aktive Konversion), jetzt in GDD §4b ausformuliert. 1b/1c haben einen Teil der ursprünglich als blockierend markierten Punkte bereits gelöst (Losgröße, Zweitinstanz-Bezugsquelle, `BotStrategy`-Fix, Instanz-Decay-Bug). Verbleibend offen:
 
-- [ ] Kenntnisse-Sekundäreffekt-Matrix ausfüllen (GDD §10, aktuell nur 6 von 35 Kombinationen als Platzhalter, keine Ressourcen-/AP-Boni)
+- [x] Kenntnisse-Sekundäreffekt-Matrix, größter Teil — die Aussage „keine Ressourcen-/AP-Boni" ist überholt: 6 von 7 Kenntnissen haben inzwischen einen hartverdrahteten Primäreffekt (Bau-AP-Rabatt, Organika-/Regolith-Produktion, Cantina-Slots, Sturm-/Instabilitäts-Risiko — siehe Stufe 1 oben + Branch `design/encounters-and-defense`, 2026-08-16). Offen bleibt nur die feinere Kosten-Differenzierung je Kenntnis/Level (siehe GDD Anhang A.4 „Kenntnisse-Boni komplett ausarbeiten") — `config/knowledge.php → levelup_costs`/`credits` sind weiterhin für alle 7 Kenntnisse identisch
 - [ ] Post-Phase-1-Ökonomie-Erholung (Kollaps bei mehreren Rang-2/3-Beratern gleichzeitig)
 - [ ] Bar/Cantina: Verkaufsrichtung als dritter Angebotstyp (eigene Owner-Entscheidung, revidiert die Handelsvertrag-Einführung vom 2026-07-19 teilweise) + Tauschrichtung nach Bestand wählen statt würfeln (Give = größter Überschuss, Get = knappste Ressource)
 - [ ] Zweite Hangar-Instanz kostet den vollen `build_cost` (80 Rg) statt der 25 % Level-Up-Kosten (`ColonyController::placeBuilding`) — Bootstrap-Zirkel, den `harvester.max_level = 1` verschärft; betrifft ebenso Wohnhabitat-Instanzen

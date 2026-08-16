@@ -205,6 +205,11 @@ return [
         'decay_rate' => 0.80,
         'max_status_points' => 20,
         'max_level' => null,
+        // Reduces Seuchenausbruch trigger chance (GDD §9) — flat per-level, capped.
+        // Not a bell curve: infirmary has no max_level, so a 5-slot array doesn't fit;
+        // this mirrors decay_rate's own flat-per-level-times-multiplier style instead.
+        'plague_risk_reduction_pct_per_level' => 0.08,
+        'plague_risk_reduction_cap' => 0.50,
     ],
 
     // Cantina (bar) — CC Lv2, one of three parallel "path" buildings

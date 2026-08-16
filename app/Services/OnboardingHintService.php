@@ -18,6 +18,7 @@ class OnboardingHintService
     public function __construct(
         private readonly AdvisorService $advisorService,
         private readonly ResourcesService $resourcesService,
+        private readonly OnboardingTriggerService $onboardingTriggerService,
     ) {}
 
     /**
@@ -46,7 +47,7 @@ class OnboardingHintService
         $solTick = $run ? (int) $run->current_tick : 0;
 
         // Build the ordered list of hints to evaluate (rank 1 first).
-        $hints = $this->buildHintList($colonyId, $solTick);
+        $hints = $this->buildHintList($colonyId, $solTick, $userId);
 
         foreach ($hints as $hint) {
             if (! $hint['active']) {
@@ -126,7 +127,7 @@ class OnboardingHintService
      *
      * @return list<array{rank: int, key: string, active: bool, text_key: string, target_url: string}>
      */
-    private function buildHintList(int $colonyId, int $currentTick): array
+    private function buildHintList(int $colonyId, int $currentTick, int $userId): array
     {
         return [
             [
@@ -248,7 +249,28 @@ class OnboardingHintService
                 'text_key' => 'colony.onboarding_end_sol',
                 'target_url' => '/colony/view',
             ],
+            [
+                'rank' => 18,
+                'key' => 'hint_encounter',
+                'active' => $this->checkHintEncounter($userId),
+                'text_key' => 'colony.onboarding_hint_encounter',
+                'target_url' => '/colony/view',
+            ],
         ];
+    }
+
+    /**
+     * Encounter hint (GDD §9 "Begegnungen & Gefahren"): surfaces once the
+     * `onboarding_encounter` trigger has fired for this user — i.e. once any of
+     * the three danger types (Sturm/Instabilität/Seuche) has triggered for the
+     * first time (see GameTick::fireEncounterOnboardingHint()). Lowest rank —
+     * purely informational, never pre-empts the build/repair/AP-spend guidance
+     * above it, and (like every other trigger-fired hint) stays active forever
+     * until dismissed since OnboardingTriggerService has no reset/expiry.
+     */
+    private function checkHintEncounter(int $userId): bool
+    {
+        return $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter');
     }
 
     /**

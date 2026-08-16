@@ -1318,6 +1318,36 @@ class OnboardingHintServiceTest extends TestCase
         $this->assertEquals('/advisors', $hint['target_url']);
     }
 
+    /**
+     * The `onboarding_encounter` trigger (fired once by GameTick when any of the
+     * three danger types — Sturm/Instabilität/Seuche — triggers for the first
+     * time, GDD §9) must surface a real hint-bar entry — previously it fired an
+     * event with no corresponding hint registration, so it never reached the
+     * player. Lowest rank (18): only surfaces once every higher-ranked hint is
+     * dismissed.
+     */
+    public function test_encounter_trigger_fired_surfaces_hint_once_everything_else_is_dismissed(): void
+    {
+        foreach (['hint_1', 'hint_repair_urgent', 'hint_repair', 'hint_2', 'hint_3', 'hint_advisor_slot2', 'hint_cc_invest', 'hint_explore', 'hint_4', 'hint_5', 'hint_build_priority', 'hint_6', 'hint_agrardome', 'hint_analytik', 'hint_hangar_path', 'hint_spend_remaining_ap', 'hint_end_sol'] as $key) {
+            $this->service->dismissHint($this->userId, $key);
+        }
+        $this->setRunTick(99);
+
+        // Without the trigger fired, still no hint at all — same as the existing
+        // "all dismissed" baseline (test_all_hints_dismissed_returns_null).
+        $this->assertNull($this->service->getActiveHint($this->colonyId, $this->userId));
+
+        DB::table('user_preferences')->where('user_id', $this->userId)
+            ->update(['fired_triggers' => json_encode(['onboarding_encounter'])]);
+
+        $hint = $this->service->getActiveHint($this->colonyId, $this->userId);
+
+        $this->assertNotNull($hint);
+        $this->assertSame('hint_encounter', $hint['key']);
+        $this->assertSame(18, $hint['rank']);
+        $this->assertSame('colony.onboarding_hint_encounter', $hint['text_key']);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private function moveHarvesterOutside(): void

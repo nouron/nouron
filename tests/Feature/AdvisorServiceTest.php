@@ -76,6 +76,44 @@ class AdvisorServiceTest extends TestCase
         $this->assertEquals(12, $breakdown['base']);
         $this->assertEquals(5, $breakdown['advisor']);
         $this->assertEquals($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
+        $this->assertEquals(1.0, $breakdown['plague_multiplier'], 'plague_multiplier must be 1.0 (inactive) when no plague debuff is active');
+    }
+
+    /**
+     * getApBreakdown()'s `plague_multiplier` must reflect the active plague
+     * reduction — without it the resource-bar popup's visible arithmetic
+     * (base + advisor, × multiplier) silently didn't add up to `total` during
+     * an active plague, with no row explaining the missing amount.
+     */
+    public function test_ap_breakdown_plague_multiplier_reflects_active_debuff(): void
+    {
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
+
+        $breakdown = $this->app->make(AdvisorService::class)->getApBreakdown($this->colonyId);
+
+        $this->assertEquals(0.80, $breakdown['plague_multiplier']);
+        $this->assertEqualsWithDelta(
+            (int) round(($breakdown['base'] + $breakdown['advisor']) * $breakdown['multiplier'] * $breakdown['plague_multiplier']),
+            $breakdown['total'],
+            0
+        );
+    }
+
+    /**
+     * Seuchenausbruch (GDD §9) debuff: while glx_colonies.plague_until_tick is
+     * still in the future, getApBreakdown()/getTotalActionPoints() must shrink the
+     * total by config('game.encounter.plague.ap_reduction_pct') (default 0.20).
+     */
+    public function test_active_plague_debuff_reduces_total_ap_by_configured_percent(): void
+    {
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
+        $withPlague = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => null]);
+        $baseline = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
+
+        // ap_reduction_pct default 0.20 → plague total should be ~80% of baseline.
+        $this->assertLessThan($baseline, $withPlague);
+        $this->assertEqualsWithDelta((int) round($baseline * 0.80), $withPlague, 1);
     }
 
     public function test_credit_ap_raises_available_action_points(): void

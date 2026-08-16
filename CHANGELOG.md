@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-16
+
+- Feature: GDD §9 „Begegnungen & Gefahren" implementiert (Sturm/Geologische Instabilität/Seuchenausbruch) — bisher nur spezifiziert, nie codiert. `defense`-Kenntnis bekommt ihren ersten aktiven Effekt (Sturm-Risikominderung), `geology` einen zweiten (Instabilitäts-Risikominderung, zusätzlich zum Regolith-Bonus). Siehe `docs/superpowers/plans/2026-08-16-encounters-and-defense.md`.
+- Fix (Whole-Branch-Review-Nachzügler zu §9 Begegnungen): Komm-Log zeigte rohe Event-Keys statt Beschreibungen; Onboarding-Hint für Begegnungen erreichte den Spieler nie; Geologische Instabilität blockierte fälschlich die Harvester-Verlegung (eigenes Feld `instability_outage_until_tick` statt Wiederverwendung von `pending_until_tick`, neue Migration); AP-Popup rechnete sich während Seuchenausbruch nicht zusammen (`plague_multiplier` ergänzt); alle drei Gefahrentypen konnten trotz Cooldown am selben Sol gleichzeitig triggern (Mutual-Exclusion pro Kolonie/Tick ergänzt). Details siehe `.superpowers/sdd/2026-08-16-encounters-and-defense/final-fix-report.md`.
+
 ## 2026-08-15
 
 - Feature: 4 der 7 Kenntnisse bekommen aktive Effekte (`construction`/`cartography`/`trade` → additiver Bau-AP-Rabatt, `agronomy` → Organika-Bonus, `trade` → Cantina-Angebotsslots) — alle glockenförmig über 5 Level statt linear. Siehe `docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md`. `defense` + GDD §9 Begegnungen folgen als separater Plan.
