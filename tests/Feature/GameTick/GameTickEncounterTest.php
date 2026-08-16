@@ -387,6 +387,7 @@ class GameTickEncounterTest extends TestCase
         config([
             'game.encounter.plague.chance_per_sol_when_emergent' => 1.0,
             'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 1, // this test isn't about the ramp; keep it at full strength
         ]);
         DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 3]);
         // processFoodConsumption() runs BEFORE processEncounters() in the pipeline and
@@ -438,6 +439,7 @@ class GameTickEncounterTest extends TestCase
             'game.encounter.storm.base_chance' => 1.0,
             'game.encounter.storm.chance_cap' => 1.0,
             'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 1, // this test isn't about the ramp; keep it at full strength
         ]);
 
         $this->artisan('game:tick')->assertExitCode(0);   // warning fires — this is the trigger point, not resolution
@@ -445,5 +447,74 @@ class GameTickEncounterTest extends TestCase
 
         $fired = DB::table('colony_log')->where('event', 'onboarding_encounter')->where('user', 3)->count();
         $this->assertSame(1, $fired, 'the onboarding hint must fire exactly once, on the FIRST encounter of the run');
+    }
+
+    // ── Phase 1 ramp ─────────────────────────────────────────────────────────
+
+    /**
+     * A freshly-landed colony (Sol 1 of Phase 1) has no realistic mitigation
+     * (securityHub/geology/defense all hang off the Analytik-Labor, a Phase-2
+     * building) against a Sol-30 deadline with only ~5-10 Sol slack — GDD §9's
+     * own flagged spiral-risk concern. Trigger chance ramps 0 -> full strength
+     * over game.encounter.phase1_ramp_sols (default 15) Sols instead of applying
+     * full strength from Sol 1.
+     *
+     * base_chance/chance_cap forced to 1.0 so the ONLY thing gating the roll is
+     * the ramp multiplier. rollFor(1)=0.9047, rollFor(15)=0.3421 — pre-computed
+     * locally (see rollFor()) for colony_id=1, rngSeed=0, matching rollStorm()'s
+     * exact seed formula.
+     */
+    public function test_phase1_ramp_dampens_storm_chance_at_sol1_but_not_at_ramp_boundary(): void
+    {
+        config([
+            'game.encounter.storm.base_chance' => 1.0,
+            'game.encounter.storm.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 15,
+        ]);
+        DB::table('runs')->where('id', 1)->update(['phase' => 1]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->whereNotIn('building_id', [self::CC_ID, 27])
+            ->update(['level' => 0]);
+
+        // Sol 1: multiplier = 1/15 ≈ 0.067 -> chance ≈ 0.067, roll 0.9047 >= chance -> no trigger.
+        Artisan::call('game:tick', ['--tick' => 1]);
+        $sol1Warning = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 1),
+            self::COLONY_ID
+        )->first();
+        $this->assertNull($sol1Warning, 'Sol 1 of Phase 1 must be dampened enough that a forced chance=1.0 roll still misses');
+
+        // Sol 15 (= ramp boundary): multiplier = 1.0 -> chance = 1.0, any roll < 1.0 triggers.
+        Artisan::call('game:tick', ['--tick' => 15]);
+        $sol15Warning = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 15),
+            self::COLONY_ID
+        )->first();
+        $this->assertNotNull($sol15Warning, 'At the ramp boundary the multiplier must be 1.0, so a forced chance=1.0 roll must trigger');
+    }
+
+    public function test_phase1_ramp_does_not_apply_in_phase2(): void
+    {
+        config([
+            'game.encounter.storm.base_chance' => 1.0,
+            'game.encounter.storm.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 15,
+        ]);
+        DB::table('runs')->where('id', 1)->update(['phase' => 2]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->whereNotIn('building_id', [self::CC_ID, 27])
+            ->update(['level' => 0]);
+
+        // Sol 1 in Phase 2: no ramp, multiplier = 1.0 -> chance = 1.0, roll 0.9047 < 1.0 -> triggers.
+        Artisan::call('game:tick', ['--tick' => 1]);
+        $warning = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 1),
+            self::COLONY_ID
+        )->first();
+        $this->assertNotNull($warning, 'the Phase 1 ramp must not apply once the colony has reached Phase 2');
     }
 }

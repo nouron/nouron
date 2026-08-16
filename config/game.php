@@ -260,6 +260,14 @@ return [
         // RESOLVED encounter (any type) — GDD §9's own flagged spiral-risk guard.
         'cooldown_sols' => 3,
 
+        // Phase 1 ramp (2026-08-16, Owner-Entscheidung): a freshly-landed colony
+        // has no mitigation infrastructure (securityHub/geology/defense all hang
+        // off the Analytik-Labor, a Phase-2 building) and only ~5-10 Sol slack
+        // against the Sol-30 deadline. Trigger chance ramps 0 -> full strength
+        // linearly over the first N Sols of Phase 1 instead of applying full
+        // strength from Sol 1 — "early is weaker", not "early is absent".
+        'phase1_ramp_sols' => 15,
+
         'storm' => [
             'base_chance' => 0.02,
             'chance_per_building' => 0.01,   // additive per colony_zone building (excl. Harvester)
