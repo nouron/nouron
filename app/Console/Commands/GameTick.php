@@ -1359,7 +1359,7 @@ class GameTick extends Command
         $chance = (float) config('game.encounter.plague.chance_per_sol_when_emergent', 0.05);
 
         $infirmaryLevel = (int) DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)->where('building_id', 46)->value('level');
+            ->where('colony_id', $colony->id)->where('building_id', (int) config('buildings.infirmary.id', 46))->value('level');
         $perLevel = (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level', 0.08);
         $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
         $reductionPct = min($cap, $infirmaryLevel * $perLevel);
