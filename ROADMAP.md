@@ -553,6 +553,7 @@ Lokale Admin-Tools für den Entwickler — kein Spieler-Feature, kein Laravel-St
 - [x] **Debug-Statusleiste** — Fixed Bottom-Bar, nur für `role=admin` sichtbar. Kompakte Zeile: Run-ID, Sol/Tick-Limit, Bypass-Flags (farbkodiert), App-Env. „Config ▾"-Toggle öffnet Detailpanel mit Run-, Tick-, Supply-, Credits-, Fleet-AP- und Moral-Event-Werten aus `config/game.php`. Alpine.js x-show, kein Bootstrap.
 - [ ] **Berechnungs-Toggle** — Artisan-Kommando oder .env-Flag zum An-/Abschalten einzelner Berechnungen für Testzwecke: Ressourcenberechnung, AP-Berechnung, Decay, Moral-Multiplikator. Erlaubt isoliertes Testen einzelner Systeme ohne Interferenz.
 - [x] **Tick-Simulator** (`game:tick-dry-run`) — Simuliert einen Tick und zeigt Credits-, Ressourcen- und Decay-Diff ohne DB-Schreibzugriff. `--colony=ID` filtert auf eine Kolonie. Ideal für Balancing-Checks.
+- [x] **Playtest Dashboard** (`tools/playtest-dashboard.php`, 2026-08-16) — Browser-Viewer für `storage/logs/playtest/*.json`-Reports (von `game:playtest`/`PlaytestBotTest` erzeugt, keine neue Datenerhebung). Sidebar mit allen Läufen, Mehrfachauswahl, Chart.js-Liniendiagramme (Regolith/Credits/AP/Vertrauen/CC-Level über Sol) + Summary-Tabelle (Outcome, Objectives, Rejections). Teilt sich `tools/assets/dev-panel.css` mit Dev Panel (eigene `PLAYTEST DASHBOARD`-Sektion). Start: `php -S localhost:8082 tools/playtest-dashboard.php`
 
 ---
 

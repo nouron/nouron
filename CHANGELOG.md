@@ -2,6 +2,7 @@
 
 ## 2026-08-16
 
+- Tool: `tools/playtest-dashboard.php` — Browser-Dashboard für PlaytestBot-Läufe (Chart.js-Graphen über Sol, Mehrfachvergleich, Summary-Tabelle), liest bestehende `storage/logs/playtest/*.json`-Reports, teilt sich `dev-panel.css` mit dem Dev Panel.
 - Feature: GDD §9 „Begegnungen & Gefahren" implementiert (Sturm/Geologische Instabilität/Seuchenausbruch) — bisher nur spezifiziert, nie codiert. `defense`-Kenntnis bekommt ihren ersten aktiven Effekt (Sturm-Risikominderung), `geology` einen zweiten (Instabilitäts-Risikominderung, zusätzlich zum Regolith-Bonus). Siehe `docs/superpowers/plans/2026-08-16-encounters-and-defense.md`.
 - Fix (Whole-Branch-Review-Nachzügler zu §9 Begegnungen): Komm-Log zeigte rohe Event-Keys statt Beschreibungen; Onboarding-Hint für Begegnungen erreichte den Spieler nie; Geologische Instabilität blockierte fälschlich die Harvester-Verlegung (eigenes Feld `instability_outage_until_tick` statt Wiederverwendung von `pending_until_tick`, neue Migration); AP-Popup rechnete sich während Seuchenausbruch nicht zusammen (`plague_multiplier` ergänzt); alle drei Gefahrentypen konnten trotz Cooldown am selben Sol gleichzeitig triggern (Mutual-Exclusion pro Kolonie/Tick ergänzt). Details siehe `.superpowers/sdd/2026-08-16-encounters-and-defense/final-fix-report.md`.
 
