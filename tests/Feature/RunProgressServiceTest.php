@@ -36,9 +36,9 @@ namespace Tests\Feature;
  *   - calculateScore returns positive score for completed run with objectives
  *
  * TASK_SELBSTVERSORGUNG (streak)
- *   - streak increments when regolith>50 AND organics>50 AND supply>0
- *   - streak resets to 0 when regolith fails (<= 50)
- *   - completes (completed_at set) when streak reaches target_value (15)
+ *   - streak increments when regolith>25 AND organics>50 AND supply>0
+ *   - streak resets to 0 when regolith fails (<= 25)
+ *   - completes (completed_at set) when streak reaches target_value (8)
  *
  * TASK_EXPEDITIONSSTATUS (counter)
  *   - completes when 19+ explored colony-zone tiles exist
@@ -810,10 +810,11 @@ class RunProgressServiceTest extends TestCase
     public function test_task_self_sufficiency_increments_streak_when_all_conditions_met(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 0);
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 0);
 
-        // regolith (resource_id=3) > 50, organics (resource_id=5) > 50, supply (user_resources) > 0
-        $this->setColonyResource(3, 60);
+        // regolith (resource_id=3) > 25 (30 passes new threshold, fails old >50 —
+        // a discriminating value, not just any passing value), organics > 50, supply > 0
+        $this->setColonyResource(3, 30);
         $this->setColonyResource(5, 55);
         $this->setSupply(1);
 
@@ -829,17 +830,17 @@ class RunProgressServiceTest extends TestCase
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
         // Pre-load a streak of 7
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 7);
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
 
-        // Regolith at exactly 50 — condition requires > 50, so this fails
-        $this->setColonyResource(3, 50);
+        // Regolith at exactly 25 — condition requires > 25, so this fails
+        $this->setColonyResource(3, 25);
         $this->setColonyResource(5, 55);
         $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= 50');
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset to 0 when regolith <= 25');
         $this->assertEquals(0, $objective->current_value);
         $this->assertNull($objective->completed_at);
     }
@@ -847,8 +848,8 @@ class RunProgressServiceTest extends TestCase
     public function test_task_self_sufficiency_completes_when_streak_reaches_target(): void
     {
         $run = $this->makeRun(['current_tick' => 20, 'phase' => 2]);
-        // Pre-load streak at 14 — one passing tick should complete it (target=15)
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 14);
+        // Pre-load streak at 7 — one passing tick should complete it (target=8)
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 7);
 
         $this->setColonyResource(3, 100);
         $this->setColonyResource(5, 100);
@@ -857,7 +858,7 @@ class RunProgressServiceTest extends TestCase
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(15, $objective->streak_value, 'streak_value must reach 15');
+        $this->assertEquals(8, $objective->streak_value, 'streak_value must reach 8');
         $this->assertNotNull($objective->completed_at, 'task_self_sufficiency must be marked complete when streak reaches target_value');
     }
 
@@ -1242,7 +1243,7 @@ class RunProgressServiceTest extends TestCase
     public function test_task_self_sufficiency_resets_streak_when_supply_is_zero(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 5);
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 5);
 
         $this->setColonyResource(3, 60);
         $this->setColonyResource(5, 55);
@@ -1257,7 +1258,7 @@ class RunProgressServiceTest extends TestCase
     public function test_task_self_sufficiency_resets_streak_when_organics_fails(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 5);
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 5);
 
         $this->setColonyResource(3, 60);
         $this->setColonyResource(5, 50); // exactly 50 — requires > 50, so fails

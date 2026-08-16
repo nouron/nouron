@@ -38,7 +38,11 @@ class RunProgressService
         'task_credit_reserve' => 10,
         'task_colony_prosperity' => 10,
         'task_research_lead' => 3,
-        'task_self_sufficiency' => 15,
+        // 15 → 8 (2026-08-16, game-designer review): PlaytestBot data showed
+        // Regolith above the old >50 threshold only 18/95 Sols (Ø 31.4) — a
+        // 15-Sol streak was practically unreachable. Halved streak length +
+        // lowered Regolith threshold (see updateSelfSufficiency()) together.
+        'task_self_sufficiency' => 8,
         // Max reachable is 1 (CC ring-0, always colony zone + pre-explored) + Σ
         // config('game.colony_zone_expansion') over all 5 CC levels (15) = 16.
         // Was 19 — mathematically unwinnable regardless of play skill (found
@@ -307,7 +311,7 @@ class RunProgressService
 
     /**
      * Streak task: all three conditions must hold simultaneously each sol.
-     * Regolith (colony_resources, resource_id=3) > 50, Organika (resource_id=5) > 50,
+     * Regolith (colony_resources, resource_id=3) > 25, Organika (resource_id=5) > 50,
      * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void
@@ -326,7 +330,11 @@ class RunProgressService
             ->where('user_id', $run->user_id)
             ->value('supply') ?? 0);
 
-        $allMet = $regolith > 50 && $organics > 50 && $supply > 0;
+        // Regolith threshold 50 → 25 (2026-08-16, game-designer review): Regolith
+        // is a running-consumption resource (build/level-up), not a stable
+        // reserve — 50 was above the observed Sol-average (Ø 31.4), see
+        // TASK_TARGETS['task_self_sufficiency'] comment above.
+        $allMet = $regolith > 25 && $organics > 50 && $supply > 0;
 
         if ($allMet) {
             $objective->streak_value++;

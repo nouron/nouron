@@ -10,7 +10,7 @@ return [
     'task_credit_reserve' => 'Kreditimperium: Credits-Bestand ≥ 5.000 für 10 aufeinanderfolgende Sole',
     'task_colony_prosperity' => 'Kolonieblüte: Vertrauen > 70 für 10 aufeinanderfolgende Sole',
     'task_research_lead' => 'Forschungsvorsprung: Mindestens 3 Forschungen auf Level 5+',
-    'task_self_sufficiency' => 'Selbstversorgung: Werkstoffe + Organika produzieren + Supply > 0 für 15 Sole',
+    'task_self_sufficiency' => 'Selbstversorgung: Regolith + Organika produzieren + Supply > 0 für 8 Sole',
     'task_expedition_coverage' => 'Expeditionsstatus: Alle Colony-Zone-Tiles erkundet',
     'task_engineering_output' => 'Ingenieursleistung: Gesamt-Zustand aller Gebäude ≥ 200 SP',
     'task_trade_volume' => 'Handelspartner: 5 Käufe beim Reisenden Händler',

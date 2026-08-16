@@ -29,7 +29,13 @@ return [
     // Walk order: ring 1 → ring 2 → ring 3; skip regolith_* and terrain_impassable.
     // Ring 1 (6 tiles) fully unlocked at Lv1 = your immediate base area.
     // Ring 2 expands step by step at Lv2–Lv5. Max = 15 terrain tiles + CC = 16 total.
-    'colony_zone_expansion' => [6, 3, 3, 2, 1],
+    // Redistributed 2026-08-16 (game-designer review): the last slot used to be
+    // CC Lv5-only (1 tile), which made the last colony-zone tile unreachable in
+    // practice — CC rarely hits Lv5 before the run's time limit (PlaytestBot,
+    // 2026-08-14/16). Sum unchanged (15, +1 CC ring-0 tile = 16); the 15th tile
+    // now unlocks at Lv4 instead of Lv5, so task_expedition_coverage (target 16)
+    // stays reachable within the typical Lv4 timing window.
+    'colony_zone_expansion' => [6, 3, 3, 3, 0],
 
     // Navigation-AP cost to explore a fogged tile, keyed by ring distance from the
     // CC (ring 0). Staggers the fog-of-war reveal pace: ring 2 costs more than ring 1,
