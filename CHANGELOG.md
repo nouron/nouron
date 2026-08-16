@@ -3,6 +3,7 @@
 ## 2026-08-16
 
 - Feature: `game:playtest` läuft jetzt parallel (`--concurrency=N`, Default 10) statt sequentiell — für spätere große Seed-Sweeps (100+). Dabei entdeckt und gefixt: `phpunit.xml`s `DB_DATABASE=:memory:`-Force griff nicht zuverlässig, wenn `bin/phpunit` aus einem laufenden `artisan`-Prozess heraus gestartet wurde — DB-Env wird jetzt explizit pro Kindprozess erzwungen.
+- Fix: Cantina (bar) war seit Mai 2026 fälschlich bereits ab CC Lv1 baubar statt wie Hangar/Sciencelab erst ab CC Lv2 — bei Migration der CC-Gate-Vereinheitlichung übersehen, per Owner-Playtest gefunden.
 - Fix: Regolith-Startbestand 340→370 — GDD-§9-Begegnungen können jetzt auch in Phase 1 landen (trotz Ramp-Dämpfung), ein Kritisch-Tier-Sturmtreffer (Ø ~77,5 Rg) reichte, um die Sol-30-Deadline zu reißen (PlaytestBot-Standardseed 4242 verifiziert betroffen und mit dem Fix wieder behoben).
 - Fix: `task_expedition_coverage` (Ziel 16) praktisch nie erreichbar, weil die letzte Kachel exklusiv an CC Lv5 hing — `colony_zone_expansion` umverteilt, jetzt bei CC Lv4 erreichbar. `task_self_sufficiency`-Streak 15→8 Sole + Regolith-Schwelle 50→25 gelockert (PlaytestBot: Regolith nur 18/95 Sole über der alten Schwelle). Dabei auch Text/Code-Mismatch in lang-Strings korrigiert (nannte "Werkstoffe" statt Regolith).
 - Fix: Encounter-Trigger-Chance rampt jetzt 0→volle Stärke über die ersten 15 Sole der Phase 1 (`game.encounter.phase1_ramp_sols`) — frisch gelandete Kolonie hat noch keine Mitigation-Infrastruktur, PlaytestBot-Batch zeigte einen `phase1_deadline`-Ausreißer als Symptom.
