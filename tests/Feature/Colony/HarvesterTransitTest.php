@@ -190,4 +190,22 @@ class HarvesterTransitTest extends TestCase
         $this->assertGreaterThan($before, $this->regolithAmount(), 'Arrived harvester must produce again');
         $this->assertNull($this->harvesterRow()->pending_until_tick, 'Arrived transit must be cleared');
     }
+
+    // ── placed_at_tick advances on relocation, not just initial placement ─────
+
+    public function test_relocation_updates_placed_at_tick(): void
+    {
+        // Seed an existing Harvester with a stale placed_at_tick, then move it.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HARVESTER_ID)
+            ->update(['placed_at_tick' => 5]);
+
+        $tick = $this->currentTick();
+
+        $this->moveHarvester(3, 0)->assertOk()->assertJsonPath('ok', true);
+
+        $row = $this->harvesterRow();
+        $this->assertSame($tick, (int) $row->placed_at_tick, 'placed_at_tick must advance on relocation, not just on first placement');
+    }
 }

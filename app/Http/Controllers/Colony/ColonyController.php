@@ -492,10 +492,13 @@ class ColonyController extends BaseController
                 } elseif (! $isHarvesterMove) {
                     $update['ap_spend'] = 1;
                 }
-                // Harvester move: tile updates, ap_spend unchanged.
-                // Relocation takes 1 Sol — no production until arrival.
+                // Harvester move: tile updates, ap_spend unchanged. Relocation takes
+                // 1 Sol — no production until arrival. placed_at_tick also advances
+                // here (GDD §9 "Geologische Instabilität": risk is keyed off Sols
+                // since the LAST relocation, not just the original placement).
                 if ($isHarvesterMove) {
                     $update['pending_until_tick'] = $this->getTick();
+                    $update['placed_at_tick'] = $this->getTick();
                 }
                 DB::table('colony_buildings')
                     ->where('colony_id', $colony->id)
