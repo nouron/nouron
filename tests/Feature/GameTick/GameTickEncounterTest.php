@@ -373,4 +373,42 @@ class GameTickEncounterTest extends TestCase
         $this->assertEquals(0, $lv5Triggers, 'At geology Lv5 (chance 0.4) none of the curated ticks may trigger instability');
         $this->assertLessThan($lv0Triggers, $lv5Triggers, 'Lv5 trigger count must be strictly lower than Lv0');
     }
+
+    // ── Seuchenausbruch (plague) ─────────────────────────────────────────────
+
+    /**
+     * Plague is emergent-only (GDD §9): it must never roll on a healthy colony
+     * (hunger_streak<3 AND trust>=-20), even at chance_per_sol_when_emergent=1.0 —
+     * the gate is hard, not a very-low-probability roll.
+     */
+    public function test_plague_triggers_only_when_hunger_streak_or_low_trust_condition_met(): void
+    {
+        config([
+            'game.encounter.plague.chance_per_sol_when_emergent' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 3]);
+        // processFoodConsumption() runs BEFORE processEncounters() in the pipeline and
+        // resets hunger_streak to 0 whenever the colony is fed — zero the Organika
+        // stock so the colony stays hungry (streak only grows) through that step too.
+        DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->update(['amount' => 0]);
+
+        $this->artisan('game:tick')->assertExitCode(0);
+
+        $colony = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
+        $this->assertNotNull($colony->plague_until_tick, 'plague debuff must trigger when hunger_streak >= 3 and roll succeeds');
+    }
+
+    public function test_plague_does_not_trigger_on_a_healthy_colony(): void
+    {
+        config(['game.encounter.plague.chance_per_sol_when_emergent' => 1.0]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 0]);
+        // Fixture default trust for colony 1 (colony_resources resource_id=12) is 0,
+        // well above the -20 emergent-trust threshold — healthy colony.
+
+        $this->artisan('game:tick')->assertExitCode(0);
+
+        $colony = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
+        $this->assertNull($colony->plague_until_tick, 'plague must never roll on a healthy colony — 0% base risk is a hard gate, not just a low chance');
+    }
 }

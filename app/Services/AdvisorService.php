@@ -69,11 +69,17 @@ class AdvisorService
         $trust = $this->trustService->getTrust($colonyId);
         $multiplier = $this->trustService->getApMultiplier($trust);
 
+        // Seuchenausbruch (GDD §9): temporary AP-reduction debuff while
+        // glx_colonies.plague_until_tick is still in the future.
+        $plagueUntilTick = DB::table('glx_colonies')->where('id', $colonyId)->value('plague_until_tick');
+        $plagueActive = $plagueUntilTick !== null && (int) $plagueUntilTick >= $this->tickService->getTickCount();
+        $plagueMultiplier = $plagueActive ? (1 - (float) config('game.encounter.plague.ap_reduction_pct', 0.20)) : 1.0;
+
         return [
             'base' => $baseAp,
             'advisor' => (int) $advisorAp,
             'multiplier' => $multiplier,
-            'total' => (int) round(($baseAp + $advisorAp) * $multiplier),
+            'total' => (int) round(($baseAp + $advisorAp) * $multiplier * $plagueMultiplier),
         ];
     }
 

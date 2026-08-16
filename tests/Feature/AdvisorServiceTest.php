@@ -78,6 +78,23 @@ class AdvisorServiceTest extends TestCase
         $this->assertEquals($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
     }
 
+    /**
+     * Seuchenausbruch (GDD §9) debuff: while glx_colonies.plague_until_tick is
+     * still in the future, getApBreakdown()/getTotalActionPoints() must shrink the
+     * total by config('game.encounter.plague.ap_reduction_pct') (default 0.20).
+     */
+    public function test_active_plague_debuff_reduces_total_ap_by_configured_percent(): void
+    {
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
+        $withPlague = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => null]);
+        $baseline = $this->app->make(AdvisorService::class)->getTotalActionPoints($this->colonyId);
+
+        // ap_reduction_pct default 0.20 → plague total should be ~80% of baseline.
+        $this->assertLessThan($baseline, $withPlague);
+        $this->assertEqualsWithDelta((int) round($baseline * 0.80), $withPlague, 1);
+    }
+
     public function test_credit_ap_raises_available_action_points(): void
     {
         $before = $this->service->getAvailableActionPoints($this->colonyId);

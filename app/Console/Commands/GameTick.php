@@ -1107,6 +1107,13 @@ class GameTick extends Command
             if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
                 $processed += $this->rollInstability($colony, $tick, $rngSeed);
             }
+
+            // Seuchenausbruch: emergent trigger only (GDD §9) — never rolls on a
+            // healthy colony, unlike Sturm/Instabilität which always have a nonzero
+            // base chance.
+            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
+                $processed += $this->rollPlague($colony, $tick, $rngSeed);
+            }
         }
 
         return $processed;
@@ -1323,6 +1330,58 @@ class GameTick extends Command
                 'instance_id' => $harvester->instance_id,
                 'outage_until_tick' => $tick + $outageSols,
             ]),
+        ]);
+
+        return 1;
+    }
+
+    /**
+     * Seuchenausbruch (GDD §9): emergent, not ambient — only rolls when
+     * hunger_streak≥3 OR Trust<-20 (a healthy colony has 0% base risk, hard-gated,
+     * not just a very low chance). Resolves immediately (no warning/resolution
+     * split, matching instability's shape, not storm's) as a colony_threatened Trust
+     * hit plus a temporary AP-reduction debuff via glx_colonies.plague_until_tick.
+     */
+    private function rollPlague(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $hungerStreak = (int) DB::table('glx_colonies')->where('id', $colony->id)->value('hunger_streak');
+        $trust = $this->trustService->getTrust($colony->id);
+
+        if ($hungerStreak < 3 && $trust >= -20) {
+            return 0;   // healthy colony — hard gate, not a chance roll
+        }
+
+        $alreadyActive = DB::table('glx_colonies')->where('id', $colony->id)->value('plague_until_tick');
+        if ($alreadyActive !== null && (int) $alreadyActive >= $tick) {
+            return 0;   // don't stack a second plague on top of an active one
+        }
+
+        $chance = (float) config('game.encounter.plague.chance_per_sol_when_emergent', 0.05);
+
+        $infirmaryLevel = (int) DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', 46)->value('level');
+        $perLevel = (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level', 0.08);
+        $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
+        $reductionPct = min($cap, $infirmaryLevel * $perLevel);
+
+        $chance *= (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 179424673 + $tick * 32416187;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
+        DB::table('glx_colonies')->where('id', $colony->id)->update(['plague_until_tick' => $tick + $debuffSols]);
+        $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.plague_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode(['colony_id' => $colony->id, 'debuff_until_tick' => $tick + $debuffSols]),
         ]);
 
         return 1;
