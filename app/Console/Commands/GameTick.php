@@ -12,6 +12,7 @@ use App\Models\ColonyResource;
 use App\Models\Run;
 use App\Models\UserResource;
 use App\Services\BarService;
+use App\Services\EncounterService;
 use App\Services\EventService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
@@ -135,6 +136,9 @@ class GameTick extends Command
 
             $n = $this->processFoodConsumption($tick);
             $this->line("  Colonies fed:             {$n}");
+
+            $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0));
+            $this->line("  Encounters processed:     {$n}");
 
             $n = $this->calculateTrust($tick);
             $this->line("  Colonies trust updated:   {$n}");
@@ -1057,6 +1061,178 @@ class GameTick extends Command
         }
 
         return $colonies->count();
+    }
+
+    // ── 8a. Encounters (GDD §9 "Begegnungen & Gefahren") ────────────────────────
+
+    /**
+     * GDD §9 "Begegnungen & Gefahren" — per-Sol encounter pipeline. Two phases per
+     * call: (1) resolve any encounter WARNED at tick-1 for each colony (reads
+     * colony_log for area='encounter', event='...instability_warning'|'storm_warning'
+     * etc. at tick-1, resolves using CURRENT status_points), (2) roll new warnings
+     * for tick, respecting the cooldown against each colony's last resolved encounter.
+     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability — Task 5,
+     * rollPlague — Task 6) is dispatched from here; this task implements Sturm.
+     *
+     * @return int number of encounters resolved this call (warnings + resolutions)
+     */
+    private function processEncounters(int $tick, int $rngSeed): int
+    {
+        $processed = 0;
+        $encounterService = new EncounterService;
+        $cooldownSols = (int) config('game.encounter.cooldown_sols', 3);
+        $securityHubColonies = DB::table('colony_buildings')
+            ->where('building_id', (int) config('buildings.securityHub.id', 53))
+            ->where('level', '>', 0)
+            ->pluck('colony_id')
+            ->flip()
+            ->all();
+
+        $colonies = Colony::all();
+
+        foreach ($colonies as $colony) {
+            // Phase 1: resolve yesterday's storm warning, if any.
+            $processed += $this->resolveStormWarning($colony, $tick, $encounterService, $securityHubColonies);
+
+            // Phase 2: roll a new storm warning for today, if not on cooldown.
+            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
+                $processed += $this->rollStorm($colony, $tick, $rngSeed);
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Whether this colony resolved ANY encounter within the last $cooldownSols Sols.
+     * "Resolved" = any encounter.* colony_log event that is NOT a warning — storm's
+     * three outcome-tier events, plus instability/plague's immediate trigger events
+     * (which have no separate warning phase, so the trigger event IS the resolution).
+     */
+    private function encounterOnCooldown(int $colonyId, int $tick, int $cooldownSols): bool
+    {
+        if ($cooldownSols <= 0) {
+            return false;
+        }
+
+        return DB::table('colony_log')
+            ->where('area', 'encounter')
+            ->where('tick', '>=', $tick - $cooldownSols)
+            ->where('parameters', 'like', '%"colony_id":'.$colonyId.'%')
+            ->where('event', 'not like', '%_warning')
+            ->exists();
+    }
+
+    private function rollStorm(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $buildingCount = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('level', '>', 0)
+            ->where('building_id', '!=', BuildingId::Harvester->value)
+            ->count();
+
+        if ($buildingCount === 0) {
+            return 0;
+        }
+
+        $cfg = config('game.encounter.storm', []);
+        $baseChance = (float) ($cfg['base_chance'] ?? 0.02);
+        $perBuilding = (float) ($cfg['chance_per_building'] ?? 0.01);
+        $cap = (float) ($cfg['chance_cap'] ?? 0.10);
+
+        $defenseId = (int) config('knowledge.defense.id', 96);
+        $defenseLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)->where('research_id', $defenseId)->value('level');
+        $reductionPct = self::cumulativeCurveYield(config('game.defense_storm_risk_reduction_per_lv', []), $defenseLevel) / 100;
+
+        $chance = min($cap, $baseChance + $buildingCount * $perBuilding) * (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 7919 + $tick * 104729;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        // Target: 1 random non-Harvester building of the colony zone (deterministic pick).
+        $targets = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('level', '>', 0)
+            ->where('building_id', '!=', BuildingId::Harvester->value)
+            ->orderBy('building_id')->orderBy('instance_id')
+            ->get(['building_id', 'instance_id']);
+        $targetIdx = $this->seededRoll($seed + 1, 0, $targets->count() - 1);
+        $target = $targets[$targetIdx];
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.storm_warning',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'building_id' => $target->building_id,
+                'instance_id' => $target->instance_id,
+            ]),
+        ]);
+
+        return 1;
+    }
+
+    private function resolveStormWarning(Colony $colony, int $tick, EncounterService $service, array $securityHubColonies): int
+    {
+        $warning = DB::table('colony_log')
+            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
+            ->where('tick', $tick - 1)
+            ->where('parameters', 'like', '%"colony_id":'.$colony->id.'%')
+            ->first();
+
+        if (! $warning) {
+            return 0;
+        }
+
+        $params = json_decode($warning->parameters, true);
+        $cb = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', $params['building_id'])
+            ->where('instance_id', $params['instance_id'])
+            ->first();
+
+        if (! $cb || $cb->level <= 0) {
+            return 0;   // building was demolished/relocated between warning and resolution
+        }
+
+        $maxSP = (int) DB::table('buildings')->where('id', $cb->building_id)->value('max_status_points') ?: 20;
+        $hubActive = isset($securityHubColonies[$colony->id]);
+        $outcome = $service->resolveOutcome((int) $cb->status_points, $maxSP, $hubActive);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', $cb->building_id)->where('instance_id', $cb->instance_id)
+            ->update(['status_points' => $outcome['sp_after']]);
+
+        $this->trustService->fireEvent($colony->id, $outcome['trust_event'], $tick);
+
+        if ($outcome['forces_level_down']) {
+            $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id')->all();
+            $buildingNames = DB::table('buildings')->pluck('name', 'id')->all();
+            $buildCostMap = DB::table('building_costs')->whereIn('resource_id', [3, 4, 5])
+                ->get()->groupBy('building_id')->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())->all();
+            $this->applyLevelDown((object) (array) $cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
+        }
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.storm_'.$outcome['tier'],
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'building_id' => $cb->building_id,
+                'instance_id' => $cb->instance_id,
+                'tier' => $outcome['tier'],
+            ]),
+        ]);
+
+        return 1;
     }
 
     // ── 8b. Trust calculation ─────────────────────────────────────────────────
