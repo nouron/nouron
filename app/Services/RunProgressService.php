@@ -311,7 +311,7 @@ class RunProgressService
 
     /**
      * Streak task: all three conditions must hold simultaneously each sol.
-     * Regolith (colony_resources, resource_id=3) > 50, Organika (resource_id=5) > 50,
+     * Regolith (colony_resources, resource_id=3) > 25, Organika (resource_id=5) > 50,
      * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void

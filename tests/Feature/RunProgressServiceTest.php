@@ -36,9 +36,9 @@ namespace Tests\Feature;
  *   - calculateScore returns positive score for completed run with objectives
  *
  * TASK_SELBSTVERSORGUNG (streak)
- *   - streak increments when regolith>50 AND organics>50 AND supply>0
- *   - streak resets to 0 when regolith fails (<= 50)
- *   - completes (completed_at set) when streak reaches target_value (15)
+ *   - streak increments when regolith>25 AND organics>50 AND supply>0
+ *   - streak resets to 0 when regolith fails (<= 25)
+ *   - completes (completed_at set) when streak reaches target_value (8)
  *
  * TASK_EXPEDITIONSSTATUS (counter)
  *   - completes when 19+ explored colony-zone tiles exist
