@@ -549,40 +549,7 @@ class GameTick extends Command
             ];
 
             if ($newStatus <= 0) {
-                $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
-                $newLevel = max(0, $cb->level - 1);
-
-                DB::table('colony_buildings')->where($where)->update([
-                    'level' => $newLevel,
-                    'status_points' => $maxSP,
-                ]);
-
-                $colony = Colony::find($cb->colony_id);
-                $this->eventService->createEvent([
-                    'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
-                    'tick' => $tick,
-                    'event' => 'techtree.level_down',
-                    'area' => 'techtree',
-                    'parameters' => json_encode([
-                        'entity_type' => 'building',
-                        'entity_name' => $buildingNames[$cb->building_id] ?? '',
-                        'new_level' => $newLevel,
-                        'tech_id' => $cb->building_id,
-                        'colony_id' => $cb->colony_id,
-                    ]),
-                ]);
-
-                // Sicherheits-Hub: return recycle_pct of tradeable build costs on level-down.
-                if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
-                    foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
-                        $returned = (int) max(1, floor($baseAmount * $recyclePct));
-                        DB::table('colony_resources')->updateOrInsert(
-                            ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
-                            ['amount' => DB::raw("amount + {$returned}")]
-                        );
-                    }
-                }
-
+                $this->applyLevelDown($cb, $tick, $maxSPMap->all(), $buildingNames->all(), $secHubColonies, $buildCostMap);
                 $levelled++;
             } else {
                 DB::table('colony_buildings')->where($where)
@@ -609,6 +576,60 @@ class GameTick extends Command
         }
 
         return $levelled;
+    }
+
+    /**
+     * Levels a building down by 1 (min 0), restores its status_points to max, logs
+     * a techtree.level_down event, and applies securityHub build-cost recycling if
+     * active. Shared by processBuildingDecay() (SP hits 0 from ordinary decay) and
+     * processEncounters() (SP hits 0 from a Kritisch-tier danger, GDD §9).
+     */
+    private function applyLevelDown(
+        object $cb,
+        int $tick,
+        array $maxSPMap,
+        array $buildingNames,
+        array $secHubColonies,
+        array $buildCostMap
+    ): void {
+        $maxSP = (int) ($maxSPMap[$cb->building_id] ?? 20);
+        $newLevel = max(0, $cb->level - 1);
+        $where = [
+            'colony_id' => $cb->colony_id,
+            'building_id' => $cb->building_id,
+            'instance_id' => $cb->instance_id,
+        ];
+
+        DB::table('colony_buildings')->where($where)->update([
+            'level' => $newLevel,
+            'status_points' => $maxSP,
+        ]);
+
+        $colony = Colony::find($cb->colony_id);
+        $this->eventService->createEvent([
+            'user' => $colony === null ? 0 : ($colony->user_id ?? 0),
+            'tick' => $tick,
+            'event' => 'techtree.level_down',
+            'area' => 'techtree',
+            'parameters' => json_encode([
+                'entity_type' => 'building',
+                'entity_name' => $buildingNames[$cb->building_id] ?? '',
+                'new_level' => $newLevel,
+                'tech_id' => $cb->building_id,
+                'colony_id' => $cb->colony_id,
+            ]),
+        ]);
+
+        if (isset($secHubColonies[$cb->colony_id]) && isset($buildCostMap[$cb->building_id])) {
+            $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
+            foreach ($buildCostMap[$cb->building_id] as $resId => $baseAmount) {
+                $returned = (int) max(1, floor($baseAmount * $recyclePct));
+                DB::table('colony_resources')->updateOrInsert(
+                    ['colony_id' => $cb->colony_id, 'resource_id' => $resId],
+                    ['amount' => DB::raw("amount + {$returned}")]
+                );
+            }
+        }
     }
 
     // ── 6. Research decay ────────────────────────────────────────────────────
