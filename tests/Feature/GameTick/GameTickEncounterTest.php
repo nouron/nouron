@@ -411,4 +411,38 @@ class GameTickEncounterTest extends TestCase
         $colony = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
         $this->assertNull($colony->plague_until_tick, 'plague must never roll on a healthy colony — 0% base risk is a hard gate, not just a low chance');
     }
+
+    // ── Onboarding hint (Task 7) ─────────────────────────────────────────────
+
+    /**
+     * The one-shot `colony.onboarding_encounter` hint must fire exactly once,
+     * on the FIRST danger-type trigger of the run — not again on resolution
+     * (storm's second tick) and not again on any subsequent trigger.
+     *
+     * chance_cap is also forced to 1.0 (matching test 1's established fixture
+     * pattern) since the default cap (0.10) would clamp base_chance=1.0 back
+     * down and the roll might not actually succeed.
+     *
+     * The fixture has two real (non-NPC) colonies — colony 1/Bart and colony
+     * 2/Homer (see test 1's fixture-summary docblock) — so with base_chance
+     * forced globally to 1.0, BOTH colonies' users independently earn the
+     * hint. That is correct per-user behavior, not a bug; this test scopes
+     * its assertion to colony 1's owner (user 3) to keep the "exactly once"
+     * claim about a single user's onboarding, same isolation approach test 1
+     * uses for its "other colonies roll too" ambiguity.
+     */
+    public function test_first_encounter_ever_fires_the_onboarding_hint_once(): void
+    {
+        config([
+            'game.encounter.storm.base_chance' => 1.0,
+            'game.encounter.storm.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+
+        $this->artisan('game:tick')->assertExitCode(0);   // warning fires — this is the trigger point, not resolution
+        $this->artisan('game:tick')->assertExitCode(0);   // resolution — no second hint here
+
+        $fired = DB::table('colony_log')->where('event', 'colony.onboarding_encounter')->where('user', 3)->count();
+        $this->assertSame(1, $fired, 'the onboarding hint must fire exactly once, on the FIRST encounter of the run');
+    }
 }

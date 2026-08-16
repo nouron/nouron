@@ -1200,6 +1200,21 @@ class GameTick extends Command
         $targetIdx = $this->seededRoll($seed + 1, 0, $targets->count() - 1);
         $target = $targets[$targetIdx];
 
+        // Onboarding hint (Task 7): fires once, the first time any of the
+        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
+        // this colony's user in this run.
+        $userId = $colony->user_id;
+        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
+            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
+            $this->eventService->createEvent([
+                'user' => $userId,
+                'tick' => $tick,
+                'event' => 'colony.onboarding_encounter',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
+
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
             'tick' => $tick,
@@ -1320,6 +1335,21 @@ class GameTick extends Command
             ->where('colony_id', $colony->id)->where('building_id', BuildingId::Harvester->value)->where('instance_id', $harvester->instance_id)
             ->update(['pending_until_tick' => $tick + $outageSols]);
 
+        // Onboarding hint (Task 7): fires once, the first time any of the
+        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
+        // this colony's user in this run.
+        $userId = $colony->user_id;
+        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
+            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
+            $this->eventService->createEvent([
+                'user' => $userId,
+                'tick' => $tick,
+                'event' => 'colony.onboarding_encounter',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
+
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
             'tick' => $tick,
@@ -1375,6 +1405,21 @@ class GameTick extends Command
         $debuffSols = (int) config('game.encounter.plague.debuff_sols', 5);
         DB::table('glx_colonies')->where('id', $colony->id)->update(['plague_until_tick' => $tick + $debuffSols]);
         $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
+
+        // Onboarding hint (Task 7): fires once, the first time any of the
+        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
+        // this colony's user in this run.
+        $userId = $colony->user_id;
+        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
+            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
+            $this->eventService->createEvent([
+                'user' => $userId,
+                'tick' => $tick,
+                'event' => 'colony.onboarding_encounter',
+                'area' => 'colony',
+                'parameters' => json_encode(['colony_id' => $colony->id]),
+            ]);
+        }
 
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,

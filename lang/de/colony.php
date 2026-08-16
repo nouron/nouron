@@ -101,6 +101,7 @@ return [
     'onboarding_hint_hangar_path' => 'Erst den Hangar bauen, dann einen Raumfahrer einstellen — erst dann stehen Missionen und Navigations-AP richtig zur Verfügung.',
     'onboarding_hint_invest_site' => 'Bau-AP nicht verfallen lassen — in die laufende Baustelle investieren. Was eingezahlt ist, bleibt; der Abschluss rückt damit näher.',
     'onboarding_hint_explore' => 'Navigations-AP für Erkundung einsetzen (1 AP pro Feld) — jenseits der Zone warten Regolith-Vorkommen und unbekannte Signale.',
+    'onboarding_hint_encounter' => 'Gebäude mit niedrigem Zustand sind anfälliger für Zwischenfälle — regelmäßige Reparatur zahlt sich doppelt aus.',
     'onboarding_end_sol' => 'Sol beenden — alle sinnvollen Aktionen getätigt. Nächster Sol bringt frische Aktionspunkte und neue Entwicklungen.',
     'onboarding_hint_spend_ap_construction' => 'Noch Bau-AP übrig — in ein Gebäude investieren oder CC-Ausbau vorfinanzieren. AP verfallen am Sol-Ende.',
     'onboarding_hint_spend_ap_research' => 'Forschungs-AP übrig — im Techtree einer Kenntnis zuweisen, bevor der Sol endet.',
