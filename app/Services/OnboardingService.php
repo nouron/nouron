@@ -133,7 +133,12 @@ class OnboardingService
             // ColonyController::LEVELUP_REGOLITH_FLAT) für die Pfadgebäude komplett
             // und für bioFacility teilweise unterschlagen — korrigierte Bedarfssumme
             // 535 Rg statt 500. Verschiebt den Floor auf ≈Sol 15,1.
-            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 340],  // regolith
+            // 340 → 370 (Nachtrag 2026-08-16, game-designer review): GDD §9-Begegnungen
+            // können jetzt auch in Phase 1 einen Kritisch-Tier-Sturm-Treffer landen
+            // (Ø ~77,5 Rg Verlust, Band 60-95). +30 Puffer deckt ~40% eines typischen
+            // Treffers ab, verschiebt den No-Storm-Floor auf ≈Sol 12,9 — bewusst kein
+            // Vollschutz (das wäre eine Überkorrektur, siehe §13.7-Warnung bei 400).
+            ['resource_id' => 3,  'colony_id' => $colonyId, 'amount' => 370],  // regolith
             ['resource_id' => 4,  'colony_id' => $colonyId, 'amount' => 0],    // werkstoffe — produced by harvester
             ['resource_id' => 5,  'colony_id' => $colonyId, 'amount' => 0],    // organika  — produced by bioFacility
             ['resource_id' => 12, 'colony_id' => $colonyId, 'amount' => 0],    // trust
