@@ -3811,6 +3811,19 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 | Typischer Sieg < Sol 55 | `TASK_TARGETS`-Werte erhöhen oder tick_limit auf 80 senken |
 
 > ✅ BEHOBEN (2026-08-14): `task_expedition_coverage: 19` war **mathematisch unerreichbar**, nicht nur schwierig — die Colony-Zone wächst über `config('game.colony_zone_expansion')` (Summe 15 Terrain-Tiles über alle 5 CC-Level) plus das immer-Zone-und-vorerkundete CC-Ring-0-Tile, macht maximal **16** je erreichbare `is_colony_zone=1`-Tiles. PlaytestBot bestätigte den Deadlock empirisch: alle 3 Testseeds blieben identisch bei 13/19 stehen (Phase-2-Pacing-Untersuchung, 2026-08-14). `RunProgressService::TASK_TARGETS['task_expedition_coverage']` auf **16** korrigiert, Regressionstest ergänzt (`RunProgressServiceTest::test_task_expedition_coverage_target_does_not_exceed_max_reachable_colony_zone_tiles`), der jede künftige `colony_zone_expansion`-Änderung gegen diesen Zielwert prüft.
+>
+> **Nachtrag 2026-08-16:** Ziel 16 war zwar rechnerisch erreichbar, praktisch aber
+> fast nie — die 16. Kachel hing exklusiv an CC Lv5, das typischerweise erst
+> weit nach Sol 65 erreicht wird (CC-Lv4-Timing-Befund, siehe §13.5-Diskussion).
+> `colony_zone_expansion` von `[6,3,3,2,1]` auf `[6,3,3,3,0]` umverteilt (Summe
+> weiterhin 15) — die 15. Kachel (Ziel-Gesamt 16 mit CC-Ring-0-Tile) schaltet
+> jetzt bereits bei CC Lv4 frei. `task_expedition_coverage`-Ziel bleibt bei 16.
+> Gleicher Nachtrag korrigiert `task_self_sufficiency`: Streak-Ziel 15→8 Sole,
+> Regolith-Schwelle `>50`→`>25` (PlaytestBot zeigte Regolith nur in 18/95 Solen
+> über der alten Schwelle, Ø 31,4 — Regolith ist laufender Verbrauch, keine
+> stabile Reserve). `lang/de+en/run.php` korrigiert dabei auch einen
+> Text/Code-Mismatch: der Text nannte "Werkstoffe", der Code prüft schon immer
+> Regolith (resource_id=3).
 
 > **Entschieden (2026-07-19):** `task_credit_reserve: 10` (10 aufeinanderfolgende Sole mit Credits > 5.000) war mit der alten Ökonomie strukturell unerreichbar — Playtest-Bot-Befund PR #218 bestätigt: Credits fielen auf 0 und blieben dort geklemmt, der dritte Berater wurde nie leistbar, Phase 1 nie abgeschlossen. Fix über drei Hebel (Details siehe §13 "Rang-System" und §12 "Kanal 1: Bar/Cantina"):
 >

@@ -2,6 +2,7 @@
 
 ## 2026-08-16
 
+- Fix: `task_expedition_coverage` (Ziel 16) praktisch nie erreichbar, weil die letzte Kachel exklusiv an CC Lv5 hing — `colony_zone_expansion` umverteilt, jetzt bei CC Lv4 erreichbar. `task_self_sufficiency`-Streak 15→8 Sole + Regolith-Schwelle 50→25 gelockert (PlaytestBot: Regolith nur 18/95 Sole über der alten Schwelle). Dabei auch Text/Code-Mismatch in lang-Strings korrigiert (nannte "Werkstoffe" statt Regolith).
 - Fix: Encounter-Trigger-Chance rampt jetzt 0→volle Stärke über die ersten 15 Sole der Phase 1 (`game.encounter.phase1_ramp_sols`) — frisch gelandete Kolonie hat noch keine Mitigation-Infrastruktur, PlaytestBot-Batch zeigte einen `phase1_deadline`-Ausreißer als Symptom.
 - Tool: `tools/playtest-dashboard.php` — Browser-Dashboard für PlaytestBot-Läufe (Chart.js-Graphen über Sol, Mehrfachvergleich, Summary-Tabelle), liest bestehende `storage/logs/playtest/*.json`-Reports, teilt sich `dev-panel.css` mit dem Dev Panel.
 - Feature: GDD §9 „Begegnungen & Gefahren" implementiert (Sturm/Geologische Instabilität/Seuchenausbruch) — bisher nur spezifiziert, nie codiert. `defense`-Kenntnis bekommt ihren ersten aktiven Effekt (Sturm-Risikominderung), `geology` einen zweiten (Instabilitäts-Risikominderung, zusätzlich zum Regolith-Bonus). Siehe `docs/superpowers/plans/2026-08-16-encounters-and-defense.md`.
