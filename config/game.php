@@ -152,6 +152,16 @@ return [
     // capped at level 5 (+3+3+2+2+2 = 12 max).
     'geology_harvester_bonus_per_level' => [1 => 3, 2 => 3, 3 => 2, 4 => 2, 5 => 2],
 
+    // defense Kenntnis-Bonus: reduces Sturm trigger chance (GDD §9, docs/superpowers/
+    // specs/2026-08-15-knowledge-effects-and-encounters-design.md §5). Bell-shaped,
+    // Σ20% at Lv5, ~17% at Lv4 (spec's "~15-20% bei Lv4" target).
+    'defense_storm_risk_reduction_per_lv' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
+
+    // geology Kenntnis: SEPARATE from geology_harvester_bonus_per_level (Regolith
+    // production) — this curve reduces Geologische-Instabilität trigger chance (GDD
+    // §9), geology's second, independent effect. Same bell shape as defense's curve.
+    'geology_instability_risk_reduction_per_lv' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
+
     // agronomy Kenntnis bonus on bioFacility Organika output — parity with geology's
     // Harvester bonus (GDD §13.5 parity requirement). Bell-shaped, NOT front-loaded
     // like geology: this effect is new, with no existing calibration history.
@@ -240,6 +250,36 @@ return [
     // Per-entity decay_rate values live in config/buildings.php, config/ships.php, config/techs.php.
     'decay' => [
         'overcap_factor' => 2.0,  // decay multiplier when colony is over supply cap
+    ],
+
+    // GDD §9 "Begegnungen & Gefahren" — first-pass calibration figures (Richtwerte),
+    // to be tuned after PlaytestBot runs, same convention as other "erste Fassung"
+    // numbers in this file.
+    'encounter' => [
+        // Cooldown: no new danger WARNING for a colony within N Sols of its last
+        // RESOLVED encounter (any type) — GDD §9's own flagged spiral-risk guard.
+        'cooldown_sols' => 3,
+
+        'storm' => [
+            'base_chance' => 0.02,
+            'chance_per_building' => 0.01,   // additive per colony_zone building (excl. Harvester)
+            'chance_cap' => 0.10,
+        ],
+        'instability' => [
+            'chance_per_sol_since_relocation' => 0.0015,
+            'chance_cap' => 0.05,
+            'outage_sols' => 3,               // Harvester produces nothing for N Sols on trigger
+        ],
+        'plague' => [
+            'chance_per_sol_when_emergent' => 0.05,   // only rolled when hunger_streak≥3 or trust<-20
+            'debuff_sols' => 5,
+            'ap_reduction_pct' => 0.20,        // total AP reduced by this fraction while active
+        ],
+
+        // Outcome tiers (GDD §9 table) — SP% thresholds and consequences.
+        'damaged_threshold_pct' => 0.66,   // ≥66% SP → Abgewehrt; below → Beschädigt tier starts
+        'critical_threshold_pct' => 0.33,  // <33% SP → Kritisch
+        'damaged_sp_loss_pct' => 0.20,     // fraction of max_status_points lost on Beschädigt
     ],
 
     // Advisor rank-up: cumulative active_ticks required per rank (rank => ticks).
@@ -374,6 +414,8 @@ return [
             'nexus_credit' => -5,  // trust penalty when ship is acquired on Nexus-Kredit
             'well_fed' => 1,       // colony's Organika stock covered the food need this Sol
             'encounter_won' => 2,  // successful protective/aid action (e.g. mission_aid_transport)
+            'encounter_lost' => -4,        // damaged outcome (GDD §9, 33-65% SP)
+            'colony_threatened' => -5,     // critical outcome (GDD §9, <33% SP)
             'stipend_small' => 2,  // Kolonisten-Zulage (GDD §14) — see stipend.tiers above
             'stipend_medium' => 3,
             'stipend_large' => 4,
