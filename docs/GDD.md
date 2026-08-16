@@ -3066,6 +3066,18 @@ Verfügbar(N) = Startbestand + 17×(N−1) − 2,94×N = Startbestand − 17 + 1
 
 **Empfehlung: Startbestand 300 → 340** (nicht 400 — dieser Wert stand in einer Zwischenfassung dieses Nachtrags, siehe Kasten oben, und beruhte auf der inzwischen korrigierten Wohnhabitat-Zeile). Bei 340 landet der Floor bei ≈Sol 15,1 (volle Kette, beide Pfadgebäude) — nahezu exakt der Wert, den der 08-12-Nachtrag als Zielposition beabsichtigt hatte (≈15,4), jetzt aber gegen die korrekt gerechnete 535er-Kette statt der fehlerhaften 500er. **400 wäre eine Überkorrektur:** Floor ≈10,8 würde die Kolonie strukturell zu schnell durch Phase 1 tragen und mit G5 („2–4 Mal pro Run an Regolith scheitern") sowie der G4-5–8-Sole-pro-Gebäude-Kalibrierung kollidieren — der gleiche Fehler in die andere Richtung, den die verschärfte Owner-Vorgabe vermeiden soll (Tempo-Ziel gegen Varianz-Ziel eingetauscht). 340 hält den Floor nah an der ursprünglich beabsichtigten Position, ohne den Korridor nach unten zu sprengen.
 
+> **Nachtrag 2026-08-16:** 340 → 370. GDD §9-Begegnungen (Sturm) können seit
+> ihrer Implementierung auch in Phase 1 landen (trotz der Phase-1-Ramp-
+> Dämpfung, die die Chance nur senkt, nie auf 0 setzt) — ein Kritisch-Tier-
+> Treffer kostet Ø ~77,5 Rg (Band 60-95), genug um die knappe Sol-30-Deadline
+> zu reißen (empirisch beobachtet: PlaytestBot-Standardseed 4242 kippte von
+> zuverlässigem Phase-1-Erfolg zu `phase1_deadline`-Fail, sobald Encounters
+> aktiv waren). +30 Rg deckt ~40 % eines typischen Treffers, verschiebt den
+> No-Storm-Floor auf ≈Sol 12,9 — bewusst kein Vollschutz, um nicht erneut in
+> die oben verworfene 400er-Überkorrektur zu laufen. Verifiziert: Seed 4242
+> schließt mit 370 wieder zuverlässig ab (in einem Testlauf sogar komplett,
+> Score 2966, statt nur Phase 1 zu erreichen).
+
 `resource_max['regolith_normal'] = 300` bleibt unverändert ausreichend: kumulierte Extraktion bei Floor-Sol 15,1 ≈ `17×14,1 ≈ 240 Rg`, weiterhin unter der Mengengrenze.
 
 **Poor-Tile-Worst-Case, neu gerechnet gegen 340/535:** `Verfügbar(14, poor) = 340 + 12×13 − 2,0×14 = 340 + 156 − 28 = 468`. Rest-Bedarf `535 − 468 = 67` Rg, bei ≈15 Rg/Sol netto auf dem neuen Tile ≈5 weitere Sole → Abschluss ≈ Sol 14 + 1 (Transit) + 5 = **Sol 20** — deckt sich mit dem 08-12-Zielwert. Bei unverändertem Startbestand 300 läge der Worst-Case bei ≈Sol 23 (immer noch unter der harten Sol-25-Grenze, aber ohne Sicherheitsmarge) — ein weiteres Argument für den moderaten Sprung auf 340 statt „300 unverändert lassen".
