@@ -520,9 +520,9 @@ class GameTick extends Command
         $overCapColonies = $this->resourcesService->getOverCapColonyIds();
 
         // Sicherheits-Hub recycling: colonies that have securityHub built get a
-        // fraction of build costs back on any building level-down.
+        // fraction of build costs back on any building level-down (recycle_pct
+        // itself is read inside applyLevelDown()).
         $secHubId = (int) config('buildings.securityHub.id', 53);
-        $recyclePct = (float) config('buildings.securityHub.recycle_pct', 0.10);
         $secHubColonies = DB::table('colony_buildings')
             ->where('building_id', $secHubId)
             ->where('level', '>', 0)
@@ -1104,6 +1104,20 @@ class GameTick extends Command
     }
 
     /**
+     * Whether the given colony_log row's `parameters` JSON references $colonyId.
+     * Never match colony_id via a raw LIKE '%"colony_id":N%' on the JSON string —
+     * that substring-matches without a delimiter boundary, so colony_id=1 would
+     * false-positive on colony_id=10, 11, 100, … Decoding is the only safe way.
+     * Shared by all three encounter types (storm now; instability/plague later).
+     */
+    private function encounterLogMatchesColony(object $row, int $colonyId): bool
+    {
+        $params = json_decode($row->parameters, true);
+
+        return is_array($params) && (int) ($params['colony_id'] ?? -1) === $colonyId;
+    }
+
+    /**
      * Whether this colony resolved ANY encounter within the last $cooldownSols Sols.
      * "Resolved" = any encounter.* colony_log event that is NOT a warning — storm's
      * three outcome-tier events, plus instability/plague's immediate trigger events
@@ -1115,12 +1129,19 @@ class GameTick extends Command
             return false;
         }
 
-        return DB::table('colony_log')
+        $rows = DB::table('colony_log')
             ->where('area', 'encounter')
             ->where('tick', '>=', $tick - $cooldownSols)
-            ->where('parameters', 'like', '%"colony_id":'.$colonyId.'%')
             ->where('event', 'not like', '%_warning')
-            ->exists();
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($this->encounterLogMatchesColony($row, $colonyId)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function rollStorm(Colony $colony, int $tick, int $rngSeed): int
@@ -1183,8 +1204,8 @@ class GameTick extends Command
         $warning = DB::table('colony_log')
             ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
             ->where('tick', $tick - 1)
-            ->where('parameters', 'like', '%"colony_id":'.$colony->id.'%')
-            ->first();
+            ->get()
+            ->first(fn ($row) => $this->encounterLogMatchesColony($row, $colony->id));
 
         if (! $warning) {
             return 0;
@@ -1216,7 +1237,7 @@ class GameTick extends Command
             $buildingNames = DB::table('buildings')->pluck('name', 'id')->all();
             $buildCostMap = DB::table('building_costs')->whereIn('resource_id', [3, 4, 5])
                 ->get()->groupBy('building_id')->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())->all();
-            $this->applyLevelDown((object) (array) $cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
+            $this->applyLevelDown($cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
         }
 
         $this->eventService->createEvent([

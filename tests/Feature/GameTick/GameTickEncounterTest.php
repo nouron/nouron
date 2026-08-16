@@ -3,7 +3,9 @@
 namespace Tests\Feature\GameTick;
 
 use Database\Seeders\TestSeeder;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -84,6 +86,25 @@ class GameTickEncounterTest extends TestCase
         return $this->seededRoll($seed, 0, 9999) / 10000;
     }
 
+    /**
+     * Mirrors GameTick::encounterLogMatchesColony() — a raw LIKE '%"colony_id":N%'
+     * on the JSON string would false-match colony_id=10, 11, 100, … so tests must
+     * decode too, not just production code.
+     */
+    private function colonyLogQuery(): Builder
+    {
+        return DB::table('colony_log')->where('area', 'encounter');
+    }
+
+    private function rowsForColony(Builder $query, int $colonyId): Collection
+    {
+        return $query->get()->filter(function ($row) use ($colonyId) {
+            $params = json_decode($row->parameters, true);
+
+            return is_array($params) && (int) ($params['colony_id'] ?? -1) === $colonyId;
+        })->values();
+    }
+
     // ── Storm warning → resolution ───────────────────────────────────────────
 
     /**
@@ -109,11 +130,10 @@ class GameTickEncounterTest extends TestCase
         // Filter by colony_id — with base_chance/chance_cap set globally, other
         // (NPC) colonies in the fixture roll storms too, so "latest by id" alone
         // is ambiguous between colonies.
-        $warning = DB::table('colony_log')
-            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
-            ->where('tick', 11700)
-            ->where('parameters', 'like', '%"colony_id":'.self::COLONY_ID.'%')
-            ->latest('id')->first();
+        $warning = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 11700),
+            self::COLONY_ID
+        )->sortByDesc('id')->first();
         $this->assertNotNull($warning, 'a storm warning colony_log entry must exist after the roll succeeds');
 
         $params = json_decode($warning->parameters, true);
@@ -122,12 +142,12 @@ class GameTickEncounterTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11701]); // Sol N+1: resolution fires
 
-        $resolution = DB::table('colony_log')
-            ->where('area', 'encounter')
-            ->whereIn('event', ['encounter.storm_abgewehrt', 'encounter.storm_beschaedigt', 'encounter.storm_kritisch'])
-            ->where('tick', 11701)
-            ->where('parameters', 'like', '%"colony_id":'.self::COLONY_ID.'%')
-            ->latest('id')->first();
+        $resolution = $this->rowsForColony(
+            $this->colonyLogQuery()
+                ->whereIn('event', ['encounter.storm_abgewehrt', 'encounter.storm_beschaedigt', 'encounter.storm_kritisch'])
+                ->where('tick', 11701),
+            self::COLONY_ID
+        )->sortByDesc('id')->first();
         $this->assertNotNull($resolution, 'a storm resolution colony_log entry must exist one Sol after the warning');
 
         $resParams = json_decode($resolution->parameters, true);
@@ -153,11 +173,10 @@ class GameTickEncounterTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 11702]);
 
-        $warning = DB::table('colony_log')
-            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
-            ->where('tick', 11702)
-            ->where('parameters', 'like', '%"colony_id":'.self::COLONY_ID.'%')
-            ->first();
+        $warning = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 11702),
+            self::COLONY_ID
+        )->first();
         $this->assertNull($warning, 'No eligible buildings must mean no storm warning, even with base_chance=1.0');
     }
 
@@ -198,11 +217,10 @@ class GameTickEncounterTest extends TestCase
             Artisan::call('game:tick', ['--tick' => $t]);
         }
 
-        $lv0Count = DB::table('colony_log')
-            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
-            ->whereIn('tick', $curatedTicks)
-            ->where('parameters', 'like', '%"colony_id":'.self::COLONY_ID.'%')
-            ->count();
+        $lv0Count = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->whereIn('tick', $curatedTicks),
+            self::COLONY_ID
+        )->count();
         $this->assertEquals(count($curatedTicks), $lv0Count, 'At defense Lv0 (chance 0.5) every curated tick must trigger a storm warning');
 
         // Scenario B: defense Lv5 — same ticks must NOT trigger (chance drops to 0.4).
@@ -215,11 +233,10 @@ class GameTickEncounterTest extends TestCase
             Artisan::call('game:tick', ['--tick' => $t]);
         }
 
-        $lv5Count = DB::table('colony_log')
-            ->where('area', 'encounter')->where('event', 'encounter.storm_warning')
-            ->whereIn('tick', $curatedTicks)
-            ->where('parameters', 'like', '%"colony_id":'.self::COLONY_ID.'%')
-            ->count();
+        $lv5Count = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->whereIn('tick', $curatedTicks),
+            self::COLONY_ID
+        )->count();
         $this->assertEquals(0, $lv5Count, 'At defense Lv5 (chance 0.4) none of the curated ticks may trigger a storm warning');
         $this->assertLessThan($lv0Count, $lv5Count, 'Lv5 trigger count must be strictly lower than Lv0');
     }
