@@ -240,4 +240,137 @@ class GameTickEncounterTest extends TestCase
         $this->assertEquals(0, $lv5Count, 'At defense Lv5 (chance 0.4) none of the curated ticks may trigger a storm warning');
         $this->assertLessThan($lv0Count, $lv5Count, 'Lv5 trigger count must be strictly lower than Lv0');
     }
+
+    // ── Geologische Instabilität ─────────────────────────────────────────────
+
+    private const HARVESTER_ID = 27;
+
+    private const GEOLOGY_RESEARCH_ID = 92;
+
+    /**
+     * Instability has no warning/resolution split: a successful roll directly
+     * writes pending_until_tick onto the Harvester row within the same tick call.
+     */
+    public function test_geological_instability_causes_harvester_production_outage(): void
+    {
+        config([
+            'game.encounter.instability.chance_per_sol_since_relocation' => 1.0,
+            'game.encounter.instability.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+
+        // sols_since_relocation × 1.0 ≥ 1.0 for any tick > placed_at_tick, so a
+        // relocation far in the past guarantees min($cap, ...) saturates at 1.0.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+            ->update(['placed_at_tick' => 11000]);
+
+        $this->artisan('game:tick', ['--tick' => 11800])->assertExitCode(0);
+
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+            ->first();
+        $this->assertNotNull($harvester->pending_until_tick, 'Harvester must be put into a production-outage state (pending_until_tick set)');
+        $this->assertEquals(11800 + config('game.encounter.instability.outage_sols'), (int) $harvester->pending_until_tick);
+    }
+
+    public function test_geological_instability_skipped_when_harvester_never_relocated(): void
+    {
+        config([
+            'game.encounter.instability.chance_per_sol_since_relocation' => 1.0,
+            'game.encounter.instability.chance_cap' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+
+        // Fixture default: placed_at_tick is NULL (never relocated) — no trigger possible.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+            ->update(['placed_at_tick' => null]);
+
+        $this->artisan('game:tick', ['--tick' => 11801])->assertExitCode(0);
+
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+            ->first();
+        $this->assertNull($harvester->pending_until_tick, 'A Harvester that was never relocated must not roll for instability');
+    }
+
+    /**
+     * geology knowledge (research_id 92) reduces the instability trigger chance per
+     * config('game.geology_instability_risk_reduction_per_lv') — same mechanism as
+     * defense/storm. At Lv5 the cumulative reduction is 20% ([1=>3,2=>5,3=>5,4=>4,5=>3]).
+     * With chance_per_sol_since_relocation and chance_cap tuned so the pre-reduction
+     * chance is a flat 0.5, Lv0 gives 0.5 and Lv5 gives 0.5 × 0.8 = 0.4 — mirrors the
+     * storm/defense test's curated-tick approach, but via rollInstability()'s own seed
+     * formula ($rngSeed + colony_id * 15485863 + tick * 32452843).
+     */
+    public function test_geology_knowledge_reduces_instability_trigger_probability(): void
+    {
+        $rollFor = function (int $tick): float {
+            $seed = 0 + self::COLONY_ID * 15485863 + $tick * 32452843;
+
+            return $this->seededRoll($seed, 0, 9999) / 10000;
+        };
+
+        $curatedTicks = [];
+        for ($t = 11810; $t < 11900 && count($curatedTicks) < 4; $t++) {
+            $roll = $rollFor($t);
+            if ($roll >= 0.4 && $roll < 0.5) {
+                $curatedTicks[] = $t;
+            }
+        }
+        $this->assertCount(4, $curatedTicks, 'test fixture assumption: at least 4 ticks with roll in [0.4, 0.5) must exist in the scanned window');
+
+        config([
+            // chance_per_sol_since_relocation × sols_since = 0.5 flat, independent of tick,
+            // by setting placed_at_tick so that sols_since is always 1 and the per-sol rate is 0.5.
+            'game.encounter.instability.chance_per_sol_since_relocation' => 0.5,
+            'game.encounter.instability.chance_cap' => 0.5,
+            'game.encounter.cooldown_sols' => 0,
+        ]);
+
+        $harvesterOutage = function () {
+            return (int) DB::table('colony_buildings')
+                ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+                ->value('pending_until_tick');
+        };
+
+        // Scenario A: geology Lv0 — no colony_researches row is seeded for geology
+        // (research_id=92) in the fixture, unlike defense (96), so insert explicitly.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::GEOLOGY_RESEARCH_ID],
+            ['level' => 0]
+        );
+
+        $lv0Triggers = 0;
+        foreach ($curatedTicks as $t) {
+            DB::table('colony_buildings')
+                ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null]);
+            Artisan::call('game:tick', ['--tick' => $t]);
+            if ($harvesterOutage() !== 0) {
+                $lv0Triggers++;
+            }
+        }
+        $this->assertEquals(count($curatedTicks), $lv0Triggers, 'At geology Lv0 (chance 0.5) every curated tick must trigger instability');
+
+        // Scenario B: geology Lv5 — same ticks must NOT trigger (chance drops to 0.4).
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::GEOLOGY_RESEARCH_ID],
+            ['level' => 5]
+        );
+
+        $lv5Triggers = 0;
+        foreach ($curatedTicks as $t) {
+            DB::table('colony_buildings')
+                ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
+                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null]);
+            Artisan::call('game:tick', ['--tick' => $t]);
+            if ($harvesterOutage() !== 0) {
+                $lv5Triggers++;
+            }
+        }
+        $this->assertEquals(0, $lv5Triggers, 'At geology Lv5 (chance 0.4) none of the curated ticks may trigger instability');
+        $this->assertLessThan($lv0Triggers, $lv5Triggers, 'Lv5 trigger count must be strictly lower than Lv0');
+    }
 }

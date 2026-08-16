@@ -1071,8 +1071,10 @@ class GameTick extends Command
      * colony_log for area='encounter', event='...instability_warning'|'storm_warning'
      * etc. at tick-1, resolves using CURRENT status_points), (2) roll new warnings
      * for tick, respecting the cooldown against each colony's last resolved encounter.
-     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability — Task 5,
-     * rollPlague — Task 6) is dispatched from here; this task implements Sturm.
+     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability;
+     * rollPlague — Task 6) is dispatched from here. Note: instability has no
+     * warning phase — its trigger event doubles as its resolution (see
+     * rollInstability()'s docblock).
      *
      * @return int number of encounters resolved this call (warnings + resolutions)
      */
@@ -1097,6 +1099,13 @@ class GameTick extends Command
             // Phase 2: roll a new storm warning for today, if not on cooldown.
             if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
                 $processed += $this->rollStorm($colony, $tick, $rngSeed);
+            }
+
+            // Geologische Instabilität: tied to the Harvester tile, no warning/
+            // resolution split (GDD §9 — production outage triggers immediately,
+            // it's not a building-SP encounter, EncounterService's tiers don't apply).
+            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
+                $processed += $this->rollInstability($colony, $tick, $rngSeed);
             }
         }
 
@@ -1250,6 +1259,69 @@ class GameTick extends Command
                 'building_id' => $cb->building_id,
                 'instance_id' => $cb->instance_id,
                 'tier' => $outcome['tier'],
+            ]),
+        ]);
+
+        return 1;
+    }
+
+    /**
+     * Geologische Instabilität (GDD §9): unlike Sturm/Seuche, this has no SP-based
+     * outcome tier — it directly disrupts Harvester production for N Sols by reusing
+     * pending_until_tick (the same field Harvester relocation already uses to mean
+     * "no output until this tick"). No warning/resolution split either: it triggers
+     * and resolves in the same call, since there's nothing to "defend" against.
+     */
+    private function rollInstability(Colony $colony, int $tick, int $rngSeed): int
+    {
+        $harvester = DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)
+            ->where('building_id', BuildingId::Harvester->value)
+            ->where('level', '>', 0)
+            ->orderBy('instance_id')
+            ->first();
+
+        if (! $harvester || $harvester->placed_at_tick === null) {
+            return 0;
+        }
+
+        // Already in an outage (relocating or a prior instability trigger) — skip.
+        if ($harvester->pending_until_tick !== null && (int) $harvester->pending_until_tick >= $tick) {
+            return 0;
+        }
+
+        $solsSinceRelocation = max(0, $tick - (int) $harvester->placed_at_tick);
+        $cfg = config('game.encounter.instability', []);
+        $chancePerSol = (float) ($cfg['chance_per_sol_since_relocation'] ?? 0.0015);
+        $cap = (float) ($cfg['chance_cap'] ?? 0.05);
+
+        $geologyId = (int) config('knowledge.geology.id', 92);
+        $geologyLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)->where('research_id', $geologyId)->value('level');
+        $reductionPct = self::cumulativeCurveYield(config('game.geology_instability_risk_reduction_per_lv', []), $geologyLevel) / 100;
+
+        $chance = min($cap, $solsSinceRelocation * $chancePerSol) * (1 - $reductionPct);
+
+        $seed = $rngSeed + $colony->id * 15485863 + $tick * 32452843;
+        $roll = $this->seededRoll($seed, 0, 9999) / 10000;
+        if ($roll >= $chance) {
+            return 0;
+        }
+
+        $outageSols = (int) ($cfg['outage_sols'] ?? 3);
+        DB::table('colony_buildings')
+            ->where('colony_id', $colony->id)->where('building_id', BuildingId::Harvester->value)->where('instance_id', $harvester->instance_id)
+            ->update(['pending_until_tick' => $tick + $outageSols]);
+
+        $this->eventService->createEvent([
+            'user' => $colony->user_id ?? 0,
+            'tick' => $tick,
+            'event' => 'encounter.instability_triggered',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => $colony->id,
+                'instance_id' => $harvester->instance_id,
+                'outage_until_tick' => $tick + $outageSols,
             ]),
         ]);
 
