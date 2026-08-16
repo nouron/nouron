@@ -1505,6 +1505,18 @@ Alpine.js + PicoCSS. Carousel-Logik in `public/js/carousel.js`, Styles in `publi
 > Default 3 Sole) adressiert die im Abschnitt "Offene Punkte" genannte Spiral-Sorge.
 > Alle Basis-Chancen sind erste Fassung, Kalibrierung nach PlaytestBot-Läufen aussteht.
 > Siehe `app/Services/EncounterService.php`, `docs/superpowers/plans/2026-08-16-encounters-and-defense.md`.
+>
+> **Nachtrag 2026-08-16 (2):** Frischer PlaytestBot-Batch nach obiger Implementierung
+> zeigte einen `phase1_deadline`-Ausreißer und bestätigte das bereits oben genannte
+> Spiral-Risiko strukturell: Phase 1 hatte keinerlei Mitigation verfügbar
+> (`defense`/`securityHub`/`geology` hängen alle am Analytik-Labor, einem
+> Phase-2-Gebäude), bei nur ~5-10 Sol Marge gegen die Sol-30-Deadline. Trigger-
+> Chance rampt jetzt linear 0 → volle Stärke über `game.encounter.phase1_ramp_sols`
+> (Default 15 Sole), solange `run.phase === 1` — "früh ist schwächer", nicht "früh
+> ist abwesend" (lore-konsistent: Startbestand kommt aus einem automatisierten
+> Frontier-Depot, die Welt ist von Anfang an gefährlich, nur eine frisch gelandete
+> Kolonie ist verwundbarer als eine etablierte). Gilt einheitlich für alle drei
+> Gefahrentypen.
 
 Die Kolonie ist keine Festung, sondern eine verwundbare Ansiedlung auf einer kaum erschlossenen Welt. Gefahren haben keinen Marschbefehl und keine Absicht — sie sind lokale Zwischenfälle: Wetter, Geologie, Erschöpfung der Kolonisten. Es gibt keine Konfrontation im militärischen Sinn, nur einen Zustand vorher und einen Zustand danach.
 
