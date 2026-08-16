@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-16
+
+- Feature: GDD §9 „Begegnungen & Gefahren" implementiert (Sturm/Geologische Instabilität/Seuchenausbruch) — bisher nur spezifiziert, nie codiert. `defense`-Kenntnis bekommt ihren ersten aktiven Effekt (Sturm-Risikominderung), `geology` einen zweiten (Instabilitäts-Risikominderung, zusätzlich zum Regolith-Bonus). Siehe `docs/superpowers/plans/2026-08-16-encounters-and-defense.md`.
+
 ## 2026-08-15
 
 - Feature: 4 der 7 Kenntnisse bekommen aktive Effekte (`construction`/`cartography`/`trade` → additiver Bau-AP-Rabatt, `agronomy` → Organika-Bonus, `trade` → Cantina-Angebotsslots) — alle glockenförmig über 5 Level statt linear. Siehe `docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md`. `defense` + GDD §9 Begegnungen folgen als separater Plan.
