@@ -121,4 +121,41 @@ class BuildingInstanceCapTest extends TestCase
         $response->assertStatus(422)->assertJsonPath('ok', false);
         $this->assertSame('max_level_reached', $response->json('error'));
     }
+
+    /**
+     * Cantina (bar, id=52) is one of three parallel "path" buildings
+     * (sciencelab/hangar/bar), all meant to unlock at CC Lv2 in parity
+     * (ColonyController::PATH_BUILDING_IDS docblock, GDD §13 "Pfadwahl ab
+     * Sol 3"). Bug found 2026-08-16 (Owner playtest): bar's DB row still had
+     * `required_building_id=28` (housingComplex) `required_building_level=1`
+     * from migration 2026_05_08_000004_techtree_dependencies_phase3g.php —
+     * it was never updated when hangar's CC-gate was lowered from Lv3 to Lv2
+     * in migration 2026_06_25_000100, so bar bypassed the CC-Lv2 gate
+     * entirely (available from Sol 1 instead of CC Lv2, unlike its two
+     * siblings).
+     */
+    public function test_cantina_requires_cc_level_2_like_sciencelab_and_hangar(): void
+    {
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 25) // CommandCenter
+            ->update(['level' => 1]);
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 41, 'instance_id' => 1], // bioFacility
+            ['level' => 1, 'status_points' => 20, 'ap_spend' => 0, 'tile_x' => 5, 'tile_y' => 0]
+        );
+
+        $availableAtLv1 = $this->availableBuildingIds();
+        $this->assertNotContains(31, $availableAtLv1, 'sciencelab must not be available at CC Lv1');
+        $this->assertNotContains(44, $availableAtLv1, 'hangar must not be available at CC Lv1');
+        $this->assertNotContains(52, $availableAtLv1, 'bar/Cantina must not be available at CC Lv1 either — same gate as its two path-building siblings');
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 25)
+            ->update(['level' => 2]);
+
+        $availableAtLv2 = $this->availableBuildingIds();
+        $this->assertContains(31, $availableAtLv2, 'sciencelab must be available at CC Lv2');
+        $this->assertContains(44, $availableAtLv2, 'hangar must be available at CC Lv2');
+        $this->assertContains(52, $availableAtLv2, 'bar/Cantina must be available at CC Lv2, matching its siblings');
+    }
 }
