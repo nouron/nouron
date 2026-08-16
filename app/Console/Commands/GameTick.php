@@ -137,7 +137,7 @@ class GameTick extends Command
             $n = $this->processFoodConsumption($tick);
             $this->line("  Colonies fed:             {$n}");
 
-            $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0));
+            $n = $this->processEncounters($tick, (int) ($run->rng_seed ?? 0), (int) $run->phase);
             $this->line("  Encounters processed:     {$n}");
 
             $n = $this->calculateTrust($tick);
@@ -1091,7 +1091,7 @@ class GameTick extends Command
      *
      * @return int number of encounters resolved this call (warnings + resolutions)
      */
-    private function processEncounters(int $tick, int $rngSeed): int
+    private function processEncounters(int $tick, int $rngSeed, int $phase): int
     {
         $processed = 0;
         $encounterService = new EncounterService;
@@ -1102,6 +1102,16 @@ class GameTick extends Command
             ->pluck('colony_id')
             ->flip()
             ->all();
+
+        // Phase 1: the colony has no infrastructure yet (no securityHub/geology/
+        // defense mitigation is realistically obtainable — those hang off the
+        // Analytik-Labor, a Phase-2 building) and the Sol-30 deadline leaves only
+        // ~5-10 Sol of slack. GDD §9 places danger "early" but does not intend a
+        // freshly-landed colony to be as exposed as a mature one — ramp trigger
+        // chance from 0 up to full strength over the first N Sols instead of
+        // applying it at full strength from Sol 1.
+        $phase1RampSols = max(1, (int) config('game.encounter.phase1_ramp_sols', 15));
+        $rampMultiplier = $phase === 1 ? min(1.0, $tick / $phase1RampSols) : 1.0;
 
         $colonies = Colony::all();
 
@@ -1117,15 +1127,15 @@ class GameTick extends Command
             // Phase 2: roll each danger type in turn — the first one that
             // triggers wins the Sol for this colony, the rest are skipped.
             $rollPhases = [
-                fn () => $this->rollStorm($colony, $tick, $rngSeed),
+                fn () => $this->rollStorm($colony, $tick, $rngSeed, $rampMultiplier),
                 // Geologische Instabilität: tied to the Harvester tile, no warning/
                 // resolution split (GDD §9 — production outage triggers immediately,
                 // it's not a building-SP encounter, EncounterService's tiers don't apply).
-                fn () => $this->rollInstability($colony, $tick, $rngSeed),
+                fn () => $this->rollInstability($colony, $tick, $rngSeed, $rampMultiplier),
                 // Seuchenausbruch: emergent trigger only (GDD §9) — never rolls on a
                 // healthy colony, unlike Sturm/Instabilität which always have a nonzero
                 // base chance.
-                fn () => $this->rollPlague($colony, $tick, $rngSeed),
+                fn () => $this->rollPlague($colony, $tick, $rngSeed, $rampMultiplier),
             ];
 
             foreach ($rollPhases as $rollPhase) {
@@ -1181,7 +1191,7 @@ class GameTick extends Command
         return false;
     }
 
-    private function rollStorm(Colony $colony, int $tick, int $rngSeed): int
+    private function rollStorm(Colony $colony, int $tick, int $rngSeed, float $rampMultiplier = 1.0): int
     {
         $buildingCount = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -1203,7 +1213,7 @@ class GameTick extends Command
             ->where('colony_id', $colony->id)->where('research_id', $defenseId)->value('level');
         $reductionPct = self::cumulativeCurveYield(config('game.defense_storm_risk_reduction_per_lv', []), $defenseLevel) / 100;
 
-        $chance = min($cap, $baseChance + $buildingCount * $perBuilding) * (1 - $reductionPct);
+        $chance = min($cap, $baseChance + $buildingCount * $perBuilding) * (1 - $reductionPct) * $rampMultiplier;
 
         $seed = $rngSeed + $colony->id * 7919 + $tick * 104729;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
@@ -1316,7 +1326,7 @@ class GameTick extends Command
      * resolution split either: it triggers and resolves in the same call, since
      * there's nothing to "defend" against.
      */
-    private function rollInstability(Colony $colony, int $tick, int $rngSeed): int
+    private function rollInstability(Colony $colony, int $tick, int $rngSeed, float $rampMultiplier = 1.0): int
     {
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
@@ -1347,7 +1357,7 @@ class GameTick extends Command
             ->where('colony_id', $colony->id)->where('research_id', $geologyId)->value('level');
         $reductionPct = self::cumulativeCurveYield(config('game.geology_instability_risk_reduction_per_lv', []), $geologyLevel) / 100;
 
-        $chance = min($cap, $solsSinceRelocation * $chancePerSol) * (1 - $reductionPct);
+        $chance = min($cap, $solsSinceRelocation * $chancePerSol) * (1 - $reductionPct) * $rampMultiplier;
 
         $seed = $rngSeed + $colony->id * 15485863 + $tick * 32452843;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
@@ -1384,7 +1394,7 @@ class GameTick extends Command
      * split, matching instability's shape, not storm's) as a colony_threatened Trust
      * hit plus a temporary AP-reduction debuff via glx_colonies.plague_until_tick.
      */
-    private function rollPlague(Colony $colony, int $tick, int $rngSeed): int
+    private function rollPlague(Colony $colony, int $tick, int $rngSeed, float $rampMultiplier = 1.0): int
     {
         $hungerStreak = (int) DB::table('glx_colonies')->where('id', $colony->id)->value('hunger_streak');
         $trust = $this->trustService->getTrust($colony->id);
@@ -1406,7 +1416,7 @@ class GameTick extends Command
         $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
         $reductionPct = min($cap, $infirmaryLevel * $perLevel);
 
-        $chance *= (1 - $reductionPct);
+        $chance *= (1 - $reductionPct) * $rampMultiplier;
 
         $seed = $rngSeed + $colony->id * 179424673 + $tick * 32416187;
         $roll = $this->seededRoll($seed, 0, 9999) / 10000;
