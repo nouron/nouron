@@ -10,7 +10,7 @@ return [
     'task_credit_reserve' => 'Credit Empire: Credits balance ≥ 5,000 for 10 consecutive Sols',
     'task_colony_prosperity' => 'Colony Prosperity: Trust > 70 for 10 consecutive Sols',
     'task_research_lead' => 'Research Lead: at least 3 knowledge fields at Level 5+',
-    'task_self_sufficiency' => 'Self-Sufficiency: producing Compounds + Organics + Supply > 0 for 15 Sols',
+    'task_self_sufficiency' => 'Self-Sufficiency: producing Regolith + Organics + Supply > 0 for 8 Sols',
     'task_expedition_coverage' => 'Expedition Status: all colony zone tiles explored',
     'task_engineering_output' => 'Engineering Output: total condition of all buildings ≥ 200 SP',
     'task_trade_volume' => 'Trade Partner: 5 purchases from the Travelling Merchant',
