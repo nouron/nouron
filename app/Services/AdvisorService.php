@@ -56,7 +56,7 @@ class AdvisorService
      * Breakdown of a colony's total AP — base/advisor/multiplier components,
      * for display in the resource-bar AP chip popup.
      *
-     * @return array{base: int, advisor: int, multiplier: float, total: int}
+     * @return array{base: int, advisor: int, multiplier: float, plague_multiplier: float, total: int}
      */
     public function getApBreakdown(int $colonyId): array
     {
@@ -79,6 +79,7 @@ class AdvisorService
             'base' => $baseAp,
             'advisor' => (int) $advisorAp,
             'multiplier' => $multiplier,
+            'plague_multiplier' => $plagueMultiplier,
             'total' => (int) round(($baseAp + $advisorAp) * $multiplier * $plagueMultiplier),
         ];
     }

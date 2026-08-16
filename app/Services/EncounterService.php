@@ -45,6 +45,9 @@ class EncounterService
             ];
         }
 
+        // Deliberate first-pass simplification (calibrate after playtest, GDD §9):
+        // Kritisch always forces a level-down and securityHub's mitigationPct does
+        // NOT reduce this tier — the Hub only softens Beschädigt's SP loss above.
         return [
             'tier' => 'kritisch',
             'trust_event' => 'colony_threatened',

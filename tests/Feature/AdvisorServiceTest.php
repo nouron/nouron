@@ -76,6 +76,27 @@ class AdvisorServiceTest extends TestCase
         $this->assertEquals(12, $breakdown['base']);
         $this->assertEquals(5, $breakdown['advisor']);
         $this->assertEquals($this->service->getTotalActionPoints($this->colonyId), $breakdown['total']);
+        $this->assertEquals(1.0, $breakdown['plague_multiplier'], 'plague_multiplier must be 1.0 (inactive) when no plague debuff is active');
+    }
+
+    /**
+     * getApBreakdown()'s `plague_multiplier` must reflect the active plague
+     * reduction — without it the resource-bar popup's visible arithmetic
+     * (base + advisor, × multiplier) silently didn't add up to `total` during
+     * an active plague, with no row explaining the missing amount.
+     */
+    public function test_ap_breakdown_plague_multiplier_reflects_active_debuff(): void
+    {
+        DB::table('glx_colonies')->where('id', $this->colonyId)->update(['plague_until_tick' => 999999]);
+
+        $breakdown = $this->app->make(AdvisorService::class)->getApBreakdown($this->colonyId);
+
+        $this->assertEquals(0.80, $breakdown['plague_multiplier']);
+        $this->assertEqualsWithDelta(
+            (int) round(($breakdown['base'] + $breakdown['advisor']) * $breakdown['multiplier'] * $breakdown['plague_multiplier']),
+            $breakdown['total'],
+            0
+        );
     }
 
     /**

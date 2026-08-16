@@ -191,6 +191,62 @@ class HarvesterTransitTest extends TestCase
         $this->assertNull($this->harvesterRow()->pending_until_tick, 'Arrived transit must be cleared');
     }
 
+    // ── Geologische Instabilität outage vs. relocation transit (GDD §9) ───────
+
+    /**
+     * An active instability outage (instability_outage_until_tick) must NOT
+     * block a relocation attempt — unlike a true in-transit relocation
+     * (pending_until_tick, see test_second_move_blocked_while_in_transit()),
+     * which correctly still blocks a second relocation. GDD §9's counter-play
+     * for Geologische Instabilität is "Relocation setzt Zähler zurück" — that
+     * requires relocation to remain possible while the outage is active.
+     */
+    public function test_relocation_allowed_during_active_instability_outage(): void
+    {
+        $tick = $this->currentTick();
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HARVESTER_ID)
+            ->update(['instability_outage_until_tick' => $tick + 5, 'pending_until_tick' => null]);
+
+        $response = $this->moveHarvester(3, 0);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $this->assertSame(3, (int) $this->harvesterRow()->tile_x);
+    }
+
+    /**
+     * Relocating during an active instability outage clears it — the
+     * "Relocation setzt Zähler zurück" counter-play. Verified end-to-end: the
+     * Harvester produces again at the new location the very next Sol, instead
+     * of still sitting under the old outage.
+     */
+    public function test_relocation_during_instability_outage_clears_it(): void
+    {
+        $tick = $this->currentTick();
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HARVESTER_ID)
+            ->update(['instability_outage_until_tick' => $tick + 50, 'pending_until_tick' => null]);
+
+        $this->moveHarvester(3, 0)->assertJsonPath('ok', true);
+
+        $row = $this->harvesterRow();
+        $this->assertNull($row->instability_outage_until_tick, 'relocation must clear the instability outage');
+
+        // Simulate arrival (transit ended before the tick used below) so the
+        // next tick's production check is exercised, not the transit skip.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('building_id', self::HARVESTER_ID)
+            ->update(['pending_until_tick' => $tick - 1]);
+
+        $before = $this->regolithAmount();
+        Artisan::call('game:tick', ['--tick' => $tick + 1]);
+
+        $this->assertGreaterThan($before, $this->regolithAmount(), 'Harvester must produce again at the new location — the cleared instability outage must not still block it');
+    }
+
     // ── placed_at_tick advances on relocation, not just initial placement ─────
 
     public function test_relocation_updates_placed_at_tick(): void

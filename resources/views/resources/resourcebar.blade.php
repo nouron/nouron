@@ -91,6 +91,12 @@
                     ? $breakdownRows([
                         __("resources.popup_ap_trust_multiplier") => "× " . number_format($breakdown["multiplier"], 2),
                     ])
+                    : "") .
+                (($breakdown["plague_multiplier"] ?? 1.0) < 1.0
+                    ? $breakdownRows([
+                        __("resources.popup_ap_plague_multiplier") =>
+                            "× " . number_format($breakdown["plague_multiplier"], 2),
+                    ])
                     : "");
         };
 

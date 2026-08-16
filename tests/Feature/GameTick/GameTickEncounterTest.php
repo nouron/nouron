@@ -270,8 +270,9 @@ class GameTickEncounterTest extends TestCase
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
             ->first();
-        $this->assertNotNull($harvester->pending_until_tick, 'Harvester must be put into a production-outage state (pending_until_tick set)');
-        $this->assertEquals(11800 + config('game.encounter.instability.outage_sols'), (int) $harvester->pending_until_tick);
+        $this->assertNotNull($harvester->instability_outage_until_tick, 'Harvester must be put into a production-outage state (instability_outage_until_tick set)');
+        $this->assertEquals(11800 + config('game.encounter.instability.outage_sols'), (int) $harvester->instability_outage_until_tick);
+        $this->assertNull($harvester->pending_until_tick, 'instability must not set pending_until_tick — that field means "relocating" and must stay free so the player can still relocate during the outage');
     }
 
     public function test_geological_instability_skipped_when_harvester_never_relocated(): void
@@ -292,7 +293,7 @@ class GameTickEncounterTest extends TestCase
         $harvester = DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
             ->first();
-        $this->assertNull($harvester->pending_until_tick, 'A Harvester that was never relocated must not roll for instability');
+        $this->assertNull($harvester->instability_outage_until_tick, 'A Harvester that was never relocated must not roll for instability');
     }
 
     /**
@@ -332,7 +333,7 @@ class GameTickEncounterTest extends TestCase
         $harvesterOutage = function () {
             return (int) DB::table('colony_buildings')
                 ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
-                ->value('pending_until_tick');
+                ->value('instability_outage_until_tick');
         };
 
         // Scenario A: geology Lv0 — no colony_researches row is seeded for geology
@@ -346,7 +347,7 @@ class GameTickEncounterTest extends TestCase
         foreach ($curatedTicks as $t) {
             DB::table('colony_buildings')
                 ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
-                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null]);
+                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null, 'instability_outage_until_tick' => null]);
             Artisan::call('game:tick', ['--tick' => $t]);
             if ($harvesterOutage() !== 0) {
                 $lv0Triggers++;
@@ -364,7 +365,7 @@ class GameTickEncounterTest extends TestCase
         foreach ($curatedTicks as $t) {
             DB::table('colony_buildings')
                 ->where('colony_id', self::COLONY_ID)->where('building_id', self::HARVESTER_ID)
-                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null]);
+                ->update(['placed_at_tick' => $t - 1, 'pending_until_tick' => null, 'instability_outage_until_tick' => null]);
             Artisan::call('game:tick', ['--tick' => $t]);
             if ($harvesterOutage() !== 0) {
                 $lv5Triggers++;
@@ -442,7 +443,7 @@ class GameTickEncounterTest extends TestCase
         $this->artisan('game:tick')->assertExitCode(0);   // warning fires — this is the trigger point, not resolution
         $this->artisan('game:tick')->assertExitCode(0);   // resolution — no second hint here
 
-        $fired = DB::table('colony_log')->where('event', 'colony.onboarding_encounter')->where('user', 3)->count();
+        $fired = DB::table('colony_log')->where('event', 'onboarding_encounter')->where('user', 3)->count();
         $this->assertSame(1, $fired, 'the onboarding hint must fire exactly once, on the FIRST encounter of the run');
     }
 }

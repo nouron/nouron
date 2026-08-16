@@ -933,7 +933,11 @@ class GameTick extends Command
             }
 
             if ($instance->pending_until_tick !== null && (int) $instance->pending_until_tick >= $tick) {
-                continue; // in transit — no production this Sol
+                continue; // in transit (relocating) — no production this Sol
+            }
+
+            if (($instance->instability_outage_until_tick ?? null) !== null && (int) $instance->instability_outage_until_tick >= $tick) {
+                continue; // Geologische Instabilität outage — no production this Sol (§9, distinct from relocation transit)
             }
 
             $tile = DB::table('colony_tiles')
@@ -1071,10 +1075,19 @@ class GameTick extends Command
      * colony_log for area='encounter', event='...instability_warning'|'storm_warning'
      * etc. at tick-1, resolves using CURRENT status_points), (2) roll new warnings
      * for tick, respecting the cooldown against each colony's last resolved encounter.
-     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability;
-     * rollPlague — Task 6) is dispatched from here. Note: instability has no
-     * warning phase — its trigger event doubles as its resolution (see
-     * rollInstability()'s docblock).
+     * Danger-type-specific roll/resolve logic (rollStorm, rollInstability,
+     * rollPlague) is dispatched from here. Note: instability has no warning phase
+     * — its trigger event doubles as its resolution (see rollInstability()'s
+     * docblock).
+     *
+     * Per colony, the three NEW-roll phases (storm/instability/plague) are mutually
+     * exclusive within a single tick: as soon as one of them triggers, the
+     * remaining roll phases are skipped for that colony this tick. The cooldown
+     * (encounterOnCooldown()) only ever sees RESOLVED encounters from previous
+     * Sols — Sturm's warning phase writes no resolution row on the warning tick —
+     * so without this short-circuit all three could independently succeed on the
+     * same Sol, defeating the cooldown's anti-spiral intent. Warning-resolution
+     * (resolveStormWarning()) is not subject to this — it always runs.
      *
      * @return int number of encounters resolved this call (warnings + resolutions)
      */
@@ -1093,26 +1106,34 @@ class GameTick extends Command
         $colonies = Colony::all();
 
         foreach ($colonies as $colony) {
-            // Phase 1: resolve yesterday's storm warning, if any.
+            // Phase 1: resolve yesterday's storm warning, if any (not subject to
+            // the same-Sol mutual exclusion below — it's a resolution, not a roll).
             $processed += $this->resolveStormWarning($colony, $tick, $encounterService, $securityHubColonies);
 
-            // Phase 2: roll a new storm warning for today, if not on cooldown.
-            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
-                $processed += $this->rollStorm($colony, $tick, $rngSeed);
+            if ($this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
+                continue;
             }
 
-            // Geologische Instabilität: tied to the Harvester tile, no warning/
-            // resolution split (GDD §9 — production outage triggers immediately,
-            // it's not a building-SP encounter, EncounterService's tiers don't apply).
-            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
-                $processed += $this->rollInstability($colony, $tick, $rngSeed);
-            }
+            // Phase 2: roll each danger type in turn — the first one that
+            // triggers wins the Sol for this colony, the rest are skipped.
+            $rollPhases = [
+                fn () => $this->rollStorm($colony, $tick, $rngSeed),
+                // Geologische Instabilität: tied to the Harvester tile, no warning/
+                // resolution split (GDD §9 — production outage triggers immediately,
+                // it's not a building-SP encounter, EncounterService's tiers don't apply).
+                fn () => $this->rollInstability($colony, $tick, $rngSeed),
+                // Seuchenausbruch: emergent trigger only (GDD §9) — never rolls on a
+                // healthy colony, unlike Sturm/Instabilität which always have a nonzero
+                // base chance.
+                fn () => $this->rollPlague($colony, $tick, $rngSeed),
+            ];
 
-            // Seuchenausbruch: emergent trigger only (GDD §9) — never rolls on a
-            // healthy colony, unlike Sturm/Instabilität which always have a nonzero
-            // base chance.
-            if (! $this->encounterOnCooldown($colony->id, $tick, $cooldownSols)) {
-                $processed += $this->rollPlague($colony, $tick, $rngSeed);
+            foreach ($rollPhases as $rollPhase) {
+                $rolled = $rollPhase();
+                $processed += $rolled;
+                if ($rolled > 0) {
+                    break;
+                }
             }
         }
 
@@ -1191,6 +1212,15 @@ class GameTick extends Command
         }
 
         // Target: 1 random non-Harvester building of the colony zone (deterministic pick).
+        //
+        // Deliberately NOT filtered on whereNotNull('tile_x'): CommandCenter (25) is
+        // "anchored" — always tile_x=NULL by design (it doesn't occupy a hex tile,
+        // see OnboardingHintService's CC comments) — yet it is a legitimate,
+        // fully-built storm target, and IS the sole eligible target in the existing
+        // fixture-driven tests. A tile_x filter would wrongly exclude it. Any
+        // *tile-placed* building still requires level>0, which in practice means
+        // "actually built", so a level>0/tile_x=NULL combination among placeable
+        // (is_instanced) buildings is not expected to occur in seeded data.
         $targets = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
             ->where('level', '>', 0)
@@ -1200,20 +1230,7 @@ class GameTick extends Command
         $targetIdx = $this->seededRoll($seed + 1, 0, $targets->count() - 1);
         $target = $targets[$targetIdx];
 
-        // Onboarding hint (Task 7): fires once, the first time any of the
-        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
-        // this colony's user in this run.
-        $userId = $colony->user_id;
-        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
-            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
-            $this->eventService->createEvent([
-                'user' => $userId,
-                'tick' => $tick,
-                'event' => 'colony.onboarding_encounter',
-                'area' => 'colony',
-                'parameters' => json_encode(['colony_id' => $colony->id]),
-            ]);
-        }
+        $this->fireEncounterOnboardingHint($colony, $tick);
 
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
@@ -1289,10 +1306,15 @@ class GameTick extends Command
 
     /**
      * Geologische Instabilität (GDD §9): unlike Sturm/Seuche, this has no SP-based
-     * outcome tier — it directly disrupts Harvester production for N Sols by reusing
-     * pending_until_tick (the same field Harvester relocation already uses to mean
-     * "no output until this tick"). No warning/resolution split either: it triggers
-     * and resolves in the same call, since there's nothing to "defend" against.
+     * outcome tier — it directly disrupts Harvester production for N Sols via its
+     * own instability_outage_until_tick field (colony_buildings), kept separate
+     * from pending_until_tick (relocation transit) so that a player can still
+     * relocate the Harvester while an instability outage is active — GDD §9's
+     * stated counter-play ("Relocation setzt Zähler zurück") requires relocation
+     * to remain possible during the outage; ColonyController::placeBuilding()
+     * clears instability_outage_until_tick on a successful move. No warning/
+     * resolution split either: it triggers and resolves in the same call, since
+     * there's nothing to "defend" against.
      */
     private function rollInstability(Colony $colony, int $tick, int $rngSeed): int
     {
@@ -1307,8 +1329,11 @@ class GameTick extends Command
             return 0;
         }
 
-        // Already in an outage (relocating or a prior instability trigger) — skip.
+        // Already relocating, or already in an active instability outage — skip.
         if ($harvester->pending_until_tick !== null && (int) $harvester->pending_until_tick >= $tick) {
+            return 0;
+        }
+        if (($harvester->instability_outage_until_tick ?? null) !== null && (int) $harvester->instability_outage_until_tick >= $tick) {
             return 0;
         }
 
@@ -1333,22 +1358,9 @@ class GameTick extends Command
         $outageSols = (int) ($cfg['outage_sols'] ?? 3);
         DB::table('colony_buildings')
             ->where('colony_id', $colony->id)->where('building_id', BuildingId::Harvester->value)->where('instance_id', $harvester->instance_id)
-            ->update(['pending_until_tick' => $tick + $outageSols]);
+            ->update(['instability_outage_until_tick' => $tick + $outageSols]);
 
-        // Onboarding hint (Task 7): fires once, the first time any of the
-        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
-        // this colony's user in this run.
-        $userId = $colony->user_id;
-        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
-            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
-            $this->eventService->createEvent([
-                'user' => $userId,
-                'tick' => $tick,
-                'event' => 'colony.onboarding_encounter',
-                'area' => 'colony',
-                'parameters' => json_encode(['colony_id' => $colony->id]),
-            ]);
-        }
+        $this->fireEncounterOnboardingHint($colony, $tick);
 
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
@@ -1406,20 +1418,7 @@ class GameTick extends Command
         DB::table('glx_colonies')->where('id', $colony->id)->update(['plague_until_tick' => $tick + $debuffSols]);
         $this->trustService->fireEvent($colony->id, 'colony_threatened', $tick);
 
-        // Onboarding hint (Task 7): fires once, the first time any of the
-        // three danger types (Sturm/Instabilität/Seuche) ever triggers for
-        // this colony's user in this run.
-        $userId = $colony->user_id;
-        if ($userId !== null && ! $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
-            $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
-            $this->eventService->createEvent([
-                'user' => $userId,
-                'tick' => $tick,
-                'event' => 'colony.onboarding_encounter',
-                'area' => 'colony',
-                'parameters' => json_encode(['colony_id' => $colony->id]),
-            ]);
-        }
+        $this->fireEncounterOnboardingHint($colony, $tick);
 
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
@@ -1430,6 +1429,36 @@ class GameTick extends Command
         ]);
 
         return 1;
+    }
+
+    /**
+     * Fires the `onboarding_encounter` hint-bar trigger once per user, forever
+     * (not run-scoped — user_preferences.fired_triggers has no run dimension,
+     * same as the existing onboarding_decay/onboarding_trust triggers) — the
+     * first time any of the three danger types (Sturm/Instabilität/Seuche)
+     * triggers for this colony's user. Shared by rollStorm()/rollInstability()/
+     * rollPlague() to avoid tripling this logic.
+     *
+     * Event key is `onboarding_encounter` (no `colony.` prefix) so it matches
+     * CommLogController::log()'s `event LIKE 'onboarding%'` exclusion filter —
+     * with the prefix it used to leak into the Komm-Log as a raw, untranslated
+     * key instead of only driving the hint bar.
+     */
+    private function fireEncounterOnboardingHint(Colony $colony, int $tick): void
+    {
+        $userId = $colony->user_id;
+        if ($userId === null || $this->onboardingTriggerService->hasFired($userId, 'onboarding_encounter')) {
+            return;
+        }
+
+        $this->onboardingTriggerService->markFired($userId, 'onboarding_encounter');
+        $this->eventService->createEvent([
+            'user' => $userId,
+            'tick' => $tick,
+            'event' => 'onboarding_encounter',
+            'area' => 'colony',
+            'parameters' => json_encode(['colony_id' => $colony->id]),
+        ]);
     }
 
     // ── 8b. Trust calculation ─────────────────────────────────────────────────

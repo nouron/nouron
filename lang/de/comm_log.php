@@ -41,6 +41,14 @@ return [
         ],
         'encounter_won' => 'Begegnung gewonnen',
         'encounter_lost' => 'Begegnung verloren',
+        'encounter' => [
+            'storm_warning' => 'Sturmwarnung',
+            'storm_abgewehrt' => 'Sturm abgewehrt',
+            'storm_beschaedigt' => 'Sturmschaden',
+            'storm_kritisch' => 'Sturm — kritischer Schaden',
+            'instability_triggered' => 'Geologische Instabilität',
+            'plague_triggered' => 'Seuchenausbruch',
+        ],
     ],
 
     // Nexus messages — nested (comm_log.nexus_events.onboarding.nexus_briefing.title)
@@ -138,6 +146,8 @@ return [
         'tile_deep_scanned' => 'Tiefen-Scan eines Sektors durchgeführt.',
         'tile_deep_scanned_coords' => 'Tiefen-Scan von Sektor (:q/:r) durchgeführt.',
         'colony_renamed' => 'Kolonie umbenannt.',
+        'instability_triggered' => 'Geologische Instabilität: Harvester-Ertrag für :sols Sole gestört.',
+        'plague_triggered' => 'Seuchenausbruch: Kolonie bedroht, Aktionspunkte vorübergehend reduziert.',
     ],
 
     // Area icons (Bootstrap Icons class) — flat, keys are simple strings (no dots)
@@ -149,6 +159,7 @@ return [
         'run' => 'bi-flag',
         'nexus' => 'bi-broadcast-pin',
         'merchant' => 'bi-bag',
+        'encounter' => 'bi-exclamation-triangle',
         'default' => 'bi-journal-text',
     ],
 ];
