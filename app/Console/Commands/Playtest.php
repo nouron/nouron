@@ -70,7 +70,12 @@ class Playtest extends Command
                             'DB_CONNECTION' => 'sqlite',
                             'DB_DATABASE' => ':memory:',
                         ])
-                        ->timeout(120)
+                        // 120 → 240 (2026-08-17): the 4th advisor slot fix
+                        // (BotStrategy::nextHireCandidate()) and tougher Phase-2
+                        // objectives both mean more AP spent and more actions
+                        // attempted per Sol — a single seed solo (concurrency=1,
+                        // no contention) exceeded 120s after those changes.
+                        ->timeout(240)
                         ->command([
                             // opcache.enable_cli defaults to Off system-wide, so every
                             // spawned child cold-compiles the whole vendor tree from
