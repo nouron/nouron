@@ -6,6 +6,7 @@
 - Perf: `game:playtest`s gespawnte `bin/phpunit`-Kindprozesse laufen jetzt mit `-d opcache.enable_cli=1` — `--concurrency=5` überschritt vorher zuverlässig das 120s-Pool-Timeout, läuft jetzt in ~88s durch.
 - Feature: PlaytestBot-Reports tragen jetzt den vollen Aktions-Log (Sol/Regel/OK/Error), nicht mehr nur aggregierte Rejection-Zähler. Dashboard zeigt ihn pro Lauf an + zwei zuschaltbare Ereignis-Marker (CC-Level-Aufstieg, Berater angestellt) als Linien in allen Charts.
 - Chore: `tools/playtest-dashboard.php` auf 3-Spalten-Layout umgestellt (Läufe | Charts gestapelt | Aktions-Log), jede Spalte eigenständig scrollbar über volle Viewport-Höhe.
+- Fix: `OnboardingService::resetColonyToSol1()` ließ einen zuvor aktiven Run als `status='active'` liegen statt ihn zu schließen — bei Aufrufern ohne `LobbyController`-Guard (PlaytestBot, `game:reset-player`) entstanden zwei aktive Runs gleichzeitig, jede ungeordnete "der aktive Run"-Query traf deterministisch den falschen (älteren). Dadurch waren alle bisherigen PlaytestBot-Reports um 5 Ticks verfälscht (Fixture-Leak aus `testdata.sqlite.sql`, gefunden über eine Dashboard-Anomalie: ein Lauf mit `completed_at` eines Objectives NACH dem eigenen Run-Ende). Schließt jetzt vorherige aktive Runs vor dem Neuanlegen.
 
 ## 2026-08-16
 
