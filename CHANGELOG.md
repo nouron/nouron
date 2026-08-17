@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-08-17
+
+- Fix: `tools/playtest-dashboard.php` — Chart-Linien/Sidebar-Swatches färbten alle Läufe eines Profils identisch (`colorFor()` keyte auf Profilname statt Lauf), Mehrfachvergleich damit unlesbar. Färbt jetzt pro Lauf (Profil+Seed+Datei).
+- Perf: `game:playtest`s gespawnte `bin/phpunit`-Kindprozesse laufen jetzt mit `-d opcache.enable_cli=1` — `--concurrency=5` überschritt vorher zuverlässig das 120s-Pool-Timeout, läuft jetzt in ~88s durch.
+
 ## 2026-08-16
 
 - Feature: `game:playtest` läuft jetzt parallel (`--concurrency=N`, Default 10) statt sequentiell — für spätere große Seed-Sweeps (100+). Dabei entdeckt und gefixt: `phpunit.xml`s `DB_DATABASE=:memory:`-Force griff nicht zuverlässig, wenn `bin/phpunit` aus einem laufenden `artisan`-Prozess heraus gestartet wurde — DB-Env wird jetzt explizit pro Kindprozess erzwungen.
