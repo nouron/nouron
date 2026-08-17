@@ -79,6 +79,7 @@ if (is_dir($reportDir)) {
 
         <div class="pd-chart-stack">
             <div class="pd-chart-card"><h3>Regolith</h3><canvas id="chart-regolith"></canvas></div>
+            <div class="pd-chart-card"><h3>Organika</h3><canvas id="chart-organics"></canvas></div>
             <div class="pd-chart-card"><h3>Credits</h3><canvas id="chart-credits"></canvas></div>
             <div class="pd-chart-card"><h3>AP (verfügbar)</h3><canvas id="chart-ap"></canvas></div>
             <div class="pd-chart-card"><h3>Vertrauen</h3><canvas id="chart-trust"></canvas></div>
@@ -192,6 +193,7 @@ if (window['chartjs-plugin-annotation']) {
 // ── Charts ───────────────────────────────────────────────────────────────
 const chartDefs = [
     { id: 'chart-regolith', field: 'regolith' },
+    { id: 'chart-organics', field: 'organics' },
     { id: 'chart-credits', field: 'credits' },
     { id: 'chart-ap', field: 'ap_unspent' },
     { id: 'chart-trust', field: 'trust' },

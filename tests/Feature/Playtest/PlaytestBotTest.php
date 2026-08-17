@@ -49,6 +49,11 @@ class PlaytestBotTest extends TestCase
         // sol/rule/ok/error per action — not just the aggregated rejection
         // counts, so the report must carry it through unchanged.
         $this->assertSame($bot->log, $data['log'], 'Report must include the full raw action log for dashboard event markers');
+
+        // Organics wasn't tracked per-Sol at all (2026-08-17, Owner dashboard
+        // review) — only Regolith was, even though both are sellable via
+        // Corvan's bar offers.
+        $this->assertArrayHasKey('organics', $data['sols'][0], 'Each Sol snapshot must include organics for the dashboard chart');
     }
 
     /**

@@ -18,6 +18,8 @@ class BotStrategy
 {
     private const RES_REGOLITH = 3;
 
+    private const RES_ORGANICS = 5;
+
     private const RES_CREDITS = 1;
 
     // Engineer -> Scientist -> Pilot -> Trader: matches the sciencelab/hangar/bar
@@ -243,6 +245,15 @@ class BotStrategy
         return (int) (DB::table('colony_resources')
             ->where('colony_id', $b->colonyId)
             ->where('resource_id', self::RES_REGOLITH)
+            ->value('amount') ?? 0);
+    }
+
+    /** Shared with RunReport — the single source for this lookup. */
+    public static function organics(BotSession $b): int
+    {
+        return (int) (DB::table('colony_resources')
+            ->where('colony_id', $b->colonyId)
+            ->where('resource_id', self::RES_ORGANICS)
             ->value('amount') ?? 0);
     }
 
