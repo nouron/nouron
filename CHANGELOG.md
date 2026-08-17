@@ -11,6 +11,7 @@
 - Fix: PlaytestBot stellte nie mehr als 3 Berater ein (hardcoded Deckel in `BotStrategy::nextHireCandidate()`), obwohl 4 Slots existieren (`config('game.advisor.max_slots')`) — verfälschte mid/lategame-AP in jedem bisherigen Report nach unten. Liest jetzt den Config-Wert statt der Magic-3.
 - Chore: `game:playtest`s Kindprozess-Timeout 120s→240s — der gelöste Berater-Deckel + verschärfte Objectives bedeuten mehr AP und mehr Bot-Aktionen pro Sol, ein einzelner Lauf ohne jede Concurrency-Konkurrenz überschritt danach bereits die alte Grenze.
 - Feature: PlaytestBot-Reports tracken jetzt Organika pro Sol (bisher nur Regolith, obwohl beide über Corvans Bar-Offers verkaufbar sind) — eigenes Dashboard-Chart.
+- Balance: Missions-Credit-Belohnungen +40-45% (lagen effektiv unter dem passiven Einkommenssockel), Regolith-Ertrag +25-30% (`regolith_rich/normal/poor` 24/18/12 → 30/23/15) — PlaytestBot-Daten zeigten chronischen Mangel bei beiden Ressourcen. PlaytestBot priorisiert jetzt Credits-Verkaufsangebote statt wahllos das erste verfügbare Bar-Angebot zu akzeptieren. Regolith bleibt bewusst NICHT verkaufbar (GDD §4b, freigegeben 2026-08-05: Knappheitsordnung sieht Regolith als die Ressource, die verfügbar bleiben soll, nicht als Handelsware — Owner hat diese Linie 2026-08-17 bestätigt statt sie zu kippen).
 
 ## 2026-08-16
 
