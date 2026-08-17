@@ -5,7 +5,7 @@ return [
 
     'mission_courier_run_name' => 'Courier Run',
     'mission_courier_run_desc' => 'The drone carries data packets and mail to the nearest relay — small cargo, but out here someone pays well to stay connected.',
-    'mission_courier_run_reward' => '60 Credits',
+    'mission_courier_run_reward' => '90 Credits',
 
     'mission_recon_flight_name' => 'Recon Flight',
     'mission_recon_flight_desc' => 'The drone sweeps across uncharted terrain, radioing back what lies beyond the horizon.',
@@ -33,11 +33,11 @@ return [
 
     'mission_trade_convoy_name' => 'Trade Convoy',
     'mission_trade_convoy_desc' => 'Loaded with everything the colony can spare, the freighter runs the trade route — and everyone likes to see it come back heavy.',
-    'mission_trade_convoy_reward' => '180 Credits + Trust',
+    'mission_trade_convoy_reward' => '260 Credits + Trust',
 
     'mission_aid_transport_name' => 'Aid Transport',
     'mission_aid_transport_desc' => 'Somewhere a station is worse off than we are — the freighter carries organics out, and the colony remembers what it works for.',
-    'mission_aid_transport_reward' => '60 Credits + Trust',
+    'mission_aid_transport_reward' => '90 Credits + Trust',
 
     'mission_salvage_sweep_name' => 'Salvage Sweep',
     'mission_salvage_sweep_desc' => 'The wreck fields hold what the colony cannot make itself — the salvage crew cuts loose whatever is still good.',
@@ -45,11 +45,11 @@ return [
 
     'mission_ruin_expedition_name' => 'Ruin Expedition',
     'mission_ruin_expedition_desc' => 'Whoever left the ruin is long gone — but what lies between its walls is worth an expedition.',
-    'mission_ruin_expedition_reward' => '150 Credits',
+    'mission_ruin_expedition_reward' => '220 Credits',
 
     'mission_escort_convoy_name' => 'Convoy Escort',
     'mission_escort_convoy_desc' => 'The corvette shadows a convoy through rough country — most days nothing happens, and that is exactly the point.',
-    'mission_escort_convoy_reward' => '200 Credits',
+    'mission_escort_convoy_reward' => '280 Credits',
 
     // ── Dispatch dialog ──────────────────────────────────────────────────────
 

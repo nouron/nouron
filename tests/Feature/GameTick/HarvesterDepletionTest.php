@@ -94,14 +94,14 @@ class HarvesterDepletionTest extends TestCase
 
     public function test_harvester_yield_at_full_reserves_equals_fresh_value(): void
     {
-        // regolith_normal: fresh 18, resource_max 300, remaining 300 → ratio 1.0 → 18.
-        $this->assertSame(18, GameTick::harvesterYield('regolith_normal', 300, 300, 0));
+        // regolith_normal: fresh 23, resource_max 300, remaining 300 → ratio 1.0 → 23.
+        $this->assertSame(23, GameTick::harvesterYield('regolith_normal', 300, 300, 0));
     }
 
     public function test_harvester_yield_near_depletion_approaches_half_fresh_value(): void
     {
-        // remaining=10/300 → ratio ~0.033 → 18*(0.5+0.5*0.033) ≈ 9.3 → round 9.
-        $this->assertSame(9, GameTick::harvesterYield('regolith_normal', 10, 300, 0));
+        // remaining=10/300 → ratio ~0.033 → 23*(0.5+0.5*0.033) ≈ 11.88 → round 12.
+        $this->assertSame(12, GameTick::harvesterYield('regolith_normal', 10, 300, 0));
     }
 
     public function test_harvester_yield_is_zero_when_exhausted(): void
@@ -113,7 +113,7 @@ class HarvesterDepletionTest extends TestCase
     {
         // Legacy tile with resource_amount > resource_max (pre-2026-08-03 seed) — ratio
         // clamps at 1.0, never exceeds the fresh value.
-        $this->assertSame(18, GameTick::harvesterYield('regolith_normal', 500, 300, 0));
+        $this->assertSame(23, GameTick::harvesterYield('regolith_normal', 500, 300, 0));
     }
 
     // ── Teil A — integration via game:tick ──────────────────────────────────
@@ -122,8 +122,8 @@ class HarvesterDepletionTest extends TestCase
     {
         Artisan::call('game:tick', ['--tick' => 20001]);
 
-        $this->assertSame(18, $this->regolithAmount());
-        $this->assertSame(300 - 18, $this->tileRemaining());
+        $this->assertSame(23, $this->regolithAmount());
+        $this->assertSame(300 - 23, $this->tileRemaining());
     }
 
     public function test_tick_credits_reduced_yield_near_depletion(): void
@@ -134,8 +134,8 @@ class HarvesterDepletionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 20002]);
 
-        $this->assertSame(9, $this->regolithAmount());
-        $this->assertSame(1, $this->tileRemaining());
+        $this->assertSame(12, $this->regolithAmount());
+        $this->assertSame(0, $this->tileRemaining(), 'yield (12) exceeds remaining (10) — clamps to 0, never negative');
     }
 
     public function test_tick_credits_nothing_once_tile_exhausted(): void
@@ -159,7 +159,7 @@ class HarvesterDepletionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 20004]);
 
-        $this->assertSame(18, $this->regolithAmount(), 'yield must not exceed fresh value even with a stale over-cap remaining');
+        $this->assertSame(23, $this->regolithAmount(), 'yield must not exceed fresh value even with a stale over-cap remaining');
         $this->assertSame(
             300,
             (int) DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', 3)->where('r', 0)->value('resource_max'),
@@ -171,12 +171,12 @@ class HarvesterDepletionTest extends TestCase
 
     public function test_harvester_yield_pure_function_adds_geology_bonus(): void
     {
-        $this->assertSame(18 + 3, GameTick::harvesterYield('regolith_normal', 300, 300, 1));
-        $this->assertSame(18 + 6, GameTick::harvesterYield('regolith_normal', 300, 300, 2));
-        $this->assertSame(18 + 8, GameTick::harvesterYield('regolith_normal', 300, 300, 3));
-        $this->assertSame(18 + 12, GameTick::harvesterYield('regolith_normal', 300, 300, 5));
+        $this->assertSame(23 + 3, GameTick::harvesterYield('regolith_normal', 300, 300, 1));
+        $this->assertSame(23 + 6, GameTick::harvesterYield('regolith_normal', 300, 300, 2));
+        $this->assertSame(23 + 8, GameTick::harvesterYield('regolith_normal', 300, 300, 3));
+        $this->assertSame(23 + 12, GameTick::harvesterYield('regolith_normal', 300, 300, 5));
         // Cap: level beyond the configured curve does not add further bonus.
-        $this->assertSame(18 + 12, GameTick::harvesterYield('regolith_normal', 300, 300, 99));
+        $this->assertSame(23 + 12, GameTick::harvesterYield('regolith_normal', 300, 300, 99));
     }
 
     public function test_tick_applies_geology_bonus_once_per_colony_not_per_instance(): void
@@ -186,7 +186,7 @@ class HarvesterDepletionTest extends TestCase
             ['level' => 2, 'status_points' => 20, 'ap_spend' => 0]
         );
 
-        // Second Harvester instance on a regolith_poor tile (fresh 12, max 160).
+        // Second Harvester instance on a regolith_poor tile (fresh 15, max 160).
         DB::table('colony_tiles')->where('colony_id', self::COLONY_ID)->where('q', -3)->where('r', 0)->delete();
         DB::table('colony_tiles')->insert([
             'colony_id' => self::COLONY_ID, 'q' => -3, 'r' => 0, 'ring' => 3,
@@ -200,10 +200,10 @@ class HarvesterDepletionTest extends TestCase
 
         Artisan::call('game:tick', ['--tick' => 20005]);
 
-        // Without any bonus: 18 (normal, instance 1) + 12 (poor, instance 2) = 30.
-        // Geology level 2 bonus is +6 applied ONCE per colony → 36 total.
-        // (If it were applied per instance instead, the total would be 30 + 12 = 42.)
-        $this->assertSame(36, $this->regolithAmount());
+        // Without any bonus: 23 (normal, instance 1) + 15 (poor, instance 2) = 38.
+        // Geology level 2 bonus is +6 applied ONCE per colony → 44 total.
+        // (If it were applied per instance instead, the total would be 38 + 12 = 50.)
+        $this->assertSame(44, $this->regolithAmount());
     }
 
     public function test_geology_bonus_not_credited_when_no_harvester_active(): void

@@ -584,6 +584,13 @@ class BotStrategy
      * still be able to earn credits, just not spend them (qa-tester finding: the
      * old whole-rule guard also blocked income, exactly when the bot needed
      * credits most).
+     *
+     * Even when not guard-blocked, a credit-income offer is preferred over any
+     * other available offer that Sol (2026-08-17, Owner review: the bot picked
+     * whichever offer happened to have the lowest id, never weighing whether
+     * selling a resource for Credits was worth prioritizing over spending
+     * them) — the bot otherwise has no reason to prefer earning over spending,
+     * and chronic Credit shortage was a top playtest finding.
      */
     private static function barOfferCandidate(BotSession $b, bool $guardBlocks = false): ?object
     {
@@ -603,6 +610,7 @@ class BotStrategy
             ->where('expires_tick', '>', $tick)
             ->where('is_accepted', false)
             ->when($guardBlocks, fn ($q) => $q->where('get_resource_id', self::RES_CREDITS))
+            ->orderByRaw('CASE WHEN get_resource_id = ? THEN 0 ELSE 1 END', [self::RES_CREDITS])
             ->orderBy('id')
             ->first();
     }

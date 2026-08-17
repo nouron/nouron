@@ -41,7 +41,10 @@ return [
             'ships' => ['drone'],
             'sol_distance' => 1,
             'requires' => [],
-            'reward' => ['credits' => 60],
+            // 60 → 90 (2026-08-17, game-designer review): effective Cr/Tick of the
+            // active mission schedule sat below the passive income floor
+            // (nexus_subsidy + relay bonus) — not worth the ship/Nav-AP cost.
+            'reward' => ['credits' => 90],
             'repeatable' => true,
         ],
         'mission_recon_flight' => [
@@ -78,8 +81,10 @@ return [
             'ships' => ['drone'],
             'sol_distance' => 5,
             'requires' => ['knowledge' => ['cartography' => 3]],
+            // Credits option 250-400 → 350-550 (2026-08-17, game-designer review),
+            // see mission_courier_run comment.
             'reward' => ['loot_table' => [
-                ['credits' => [250, 400]],
+                ['credits' => [350, 550]],
                 ['compounds' => [8, 12]],
                 ['regolith' => [30, 45]],
             ]],
@@ -99,7 +104,8 @@ return [
             'ships' => ['freighter'],
             'sol_distance' => 3,
             'requires' => ['knowledge' => ['trade' => 1]],
-            'reward' => ['credits' => 180, 'trust_event' => 'trade_success'],
+            // 180 → 260 (2026-08-17), see mission_courier_run comment.
+            'reward' => ['credits' => 260, 'trust_event' => 'trade_success'],
             'repeatable' => true,
         ],
         'mission_aid_transport' => [
@@ -107,7 +113,8 @@ return [
             'sol_distance' => 2,
             'requires' => [], // ungegatet (Stufe 1b) — schließt Pfad-B-Vertrauenslücke, war zuvor an knowledge.health Lv1 gegatet
             'extra_cost' => ['organics' => 10], // aid cargo, on top of provisions
-            'reward' => ['credits' => 60, 'trust_event' => 'encounter_won'],
+            // 60 → 90 (2026-08-17), see mission_courier_run comment.
+            'reward' => ['credits' => 90, 'trust_event' => 'encounter_won'],
             'repeatable' => true,
         ],
 
@@ -126,7 +133,8 @@ return [
             'requires' => ['target' => 'ruin_tile'],
             'target_type' => 'ruin_tile',
             // almanac_unlock reward follows once §17 (Almanach) is implemented
-            'reward' => ['credits' => 150],
+            // 150 → 220 (2026-08-17), see mission_courier_run comment.
+            'reward' => ['credits' => 220],
             'repeatable' => false, // once per revealed ruin tile
         ],
 
@@ -152,7 +160,8 @@ return [
             'ships' => ['corvette'],
             'sol_distance' => 3,
             'requires' => [],
-            'reward' => ['credits' => 200],
+            // 200 → 280 (2026-08-17), see mission_courier_run comment.
+            'reward' => ['credits' => 280],
             'repeatable' => true,
         ],
 

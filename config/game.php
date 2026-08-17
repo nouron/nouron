@@ -91,10 +91,15 @@ return [
     // (relocation is player-triggered, not automatic). ColonyTileService reads the
     // same resource_max map so tile seeding and production can't drift apart.
     'harvester' => [
+        // +25-30% (2026-08-17, game-designer review): PlaytestBot data showed
+        // Regolith crashing to 0-30 within the first 7-10 Sole in most runs —
+        // not enough surplus over build/repair/CC-upgrade consumption to ever
+        // consider selling it. Moderate bump, not a doubling — the depletion/
+        // relocation decision (GDD §4c) still has to matter.
         'fresh_yield' => [
-            'regolith_rich' => 24,
-            'regolith_normal' => 18,
-            'regolith_poor' => 12,
+            'regolith_rich' => 30,
+            'regolith_normal' => 23,
+            'regolith_poor' => 15,
         ],
         'resource_max' => [
             'regolith_rich' => 500,
