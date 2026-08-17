@@ -87,10 +87,17 @@ class OnboardingService
             // harnesses) invoke this method directly without that guard — found
             // 2026-08-17 via a PlaytestBot tick/sol offset caused by a stale
             // active run left dangling here.
+            //
+            // status='superseded' (not RunProgressService::endRun()'s 'failed'/
+            // 'completed') deliberately — this isn't a real playthrough attempt,
+            // it's an internal replacement. Using 'failed' would surface it in
+            // LobbyController's highscore/history queries
+            // (whereIn('status', ['completed', 'failed'])) with a NULL score and
+            // no RunEnded event/INNN trail, since none of those are computed here.
             DB::table('runs')
                 ->where('user_id', $userId)
                 ->where('status', 'active')
-                ->update(['status' => 'failed', 'fail_reason' => 'superseded', 'ended_at' => now()]);
+                ->update(['status' => 'superseded', 'ended_at' => now()]);
 
             $this->seedSol1State($userId, $colonyId);
         });

@@ -50,10 +50,18 @@ class OnboardingResetActiveRunTest extends TestCase
         app(OnboardingService::class)->resetColonyToSol1(self::USER_ID, self::COLONY_ID);
 
         $staleRun->refresh();
-        $this->assertNotSame('active', $staleRun->status, 'Pre-existing active run must be closed, not left dangling');
+        $this->assertSame('superseded', $staleRun->status, 'Pre-existing active run must be closed as superseded — not "failed" (would pollute highscore/history queries with a NULL-score internal-cleanup artifact)');
 
         $activeRuns = Run::where('user_id', self::USER_ID)->where('status', 'active')->get();
         $this->assertCount(1, $activeRuns, 'Exactly one active run must exist after reset');
         $this->assertSame(0, $activeRuns->first()->current_tick, 'The surviving active run must be the freshly seeded Sol-1 run');
+
+        // LobbyController's highscore/history views filter on
+        // whereIn('status', ['completed', 'failed']) — a superseded run must
+        // not appear there as a fake finished attempt with a NULL score.
+        $highscoreEligible = Run::where('user_id', self::USER_ID)
+            ->whereIn('status', ['completed', 'failed'])
+            ->pluck('id');
+        $this->assertFalse($highscoreEligible->contains($staleRun->id), 'Superseded run must not surface in highscore/history queries');
     }
 }
