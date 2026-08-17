@@ -160,7 +160,7 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertNotNull($log);
         $params = json_decode($log->parameters, true);
         $this->assertSame('mission_courier_run', $params['mission_key']);
-        $this->assertSame(60, $params['rewards']['credits']);
+        $this->assertSame(90, $params['rewards']['credits']);
     }
 
     public function test_completion_does_not_fire_before_return_tick(): void
