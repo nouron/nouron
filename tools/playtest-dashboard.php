@@ -77,7 +77,7 @@ if (is_dir($reportDir)) {
             <label><input type="checkbox" id="pd-event-advisor" checked> Berater angestellt</label>
         </div>
 
-        <div class="pd-chart-grid">
+        <div class="pd-chart-stack">
             <div class="pd-chart-card"><h3>Regolith</h3><canvas id="chart-regolith"></canvas></div>
             <div class="pd-chart-card"><h3>Credits</h3><canvas id="chart-credits"></canvas></div>
             <div class="pd-chart-card"><h3>AP (verfügbar)</h3><canvas id="chart-ap"></canvas></div>
@@ -91,18 +91,18 @@ if (is_dir($reportDir)) {
             </thead>
             <tbody id="pd-summary-body"></tbody>
         </table>
+    </div>
 
-        <div class="pd-log-card">
-            <div class="pd-log-header">
-                <h3>Aktions-Log</h3>
-                <select id="pd-log-run-select"></select>
-            </div>
-            <div class="pd-log-scroll">
-                <table class="pd-log-table">
-                    <thead><tr><th>Sol</th><th>Aktion</th><th>Status</th></tr></thead>
-                    <tbody id="pd-log-body"></tbody>
-                </table>
-            </div>
+    <div class="pd-log-panel">
+        <div class="pd-log-header">
+            <h3>Aktions-Log</h3>
+            <select id="pd-log-run-select"></select>
+        </div>
+        <div class="pd-log-scroll">
+            <table class="pd-log-table">
+                <thead><tr><th>Sol</th><th>Aktion</th><th>Status</th></tr></thead>
+                <tbody id="pd-log-body"></tbody>
+            </table>
         </div>
     </div>
 </div>

@@ -633,12 +633,14 @@ table.hs-matrix .col-active {
 
 .pd-main {
     flex: 1;
+    min-width: 0;
     padding: 1.2rem;
     overflow-y: auto;
+    max-height: calc(100vh - 52px);
 }
-.pd-chart-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+.pd-chart-stack {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -708,17 +710,22 @@ table.pd-summary tr:hover td {
     cursor: pointer;
 }
 
-.pd-log-card {
+.pd-log-panel {
+    width: 340px;
+    flex-shrink: 0;
     background: #161625;
-    border: 1px solid #252535;
-    border-radius: 6px;
-    padding: 0.8rem;
-    margin-top: 1.5rem;
+    border-left: 1px solid #252535;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 52px);
+    overflow: hidden;
 }
 .pd-log-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
     margin-bottom: 0.5rem;
 }
 .pd-log-header h3 {
@@ -736,8 +743,9 @@ table.pd-summary tr:hover td {
     font-size: 0.76rem;
 }
 .pd-log-scroll {
-    max-height: 320px;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
 }
 table.pd-log-table {
     border-collapse: collapse;
