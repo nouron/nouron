@@ -44,6 +44,11 @@ class PlaytestBotTest extends TestCase
         $this->assertGreaterThan(0, $data['actions']['ok'], 'Bot must have taken at least one successful action');
         $this->assertFileExists($path);
         $this->assertIsArray(json_decode(file_get_contents($path), true), 'Report artifact must be valid JSON');
+
+        // Dashboard event markers (2026-08-17) need the raw per-action log —
+        // sol/rule/ok/error per action — not just the aggregated rejection
+        // counts, so the report must carry it through unchanged.
+        $this->assertSame($bot->log, $data['log'], 'Report must include the full raw action log for dashboard event markers');
     }
 
     /**
