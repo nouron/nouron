@@ -10,6 +10,7 @@
 - Balance: 4 Phase-2-Objectives verschärft (`task_credit_reserve` Streak 10→14 + Schwelle 3000→4000, `task_self_sufficiency` Streak 8→15 + Organika-Schwelle 50→75, `task_engineering_output` 200→320) — ein 20-Läufe-Batch zeigte Läufe, die viel zu früh (Sol 39-54 statt angepeilt 80-85) "completed" gingen, weil diese Tasks nebenbei durch normales Spielen erfüllt wurden. `task_expedition_coverage` bleibt bei 16 (bereits am mathematischen Maximum erreichbarer Zone-Tiles). `task_colony_prosperity` (Vertrauen>70) unverändert — vermutlich Trust-Ökonomie-Kalibrierungsproblem, eigenes Ticket.
 - Fix: PlaytestBot stellte nie mehr als 3 Berater ein (hardcoded Deckel in `BotStrategy::nextHireCandidate()`), obwohl 4 Slots existieren (`config('game.advisor.max_slots')`) — verfälschte mid/lategame-AP in jedem bisherigen Report nach unten. Liest jetzt den Config-Wert statt der Magic-3.
 - Chore: `game:playtest`s Kindprozess-Timeout 120s→240s — der gelöste Berater-Deckel + verschärfte Objectives bedeuten mehr AP und mehr Bot-Aktionen pro Sol, ein einzelner Lauf ohne jede Concurrency-Konkurrenz überschritt danach bereits die alte Grenze.
+- Feature: PlaytestBot-Reports tracken jetzt Organika pro Sol (bisher nur Regolith, obwohl beide über Corvans Bar-Offers verkaufbar sind) — eigenes Dashboard-Chart.
 
 ## 2026-08-16
 

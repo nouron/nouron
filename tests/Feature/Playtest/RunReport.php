@@ -43,6 +43,7 @@ class RunReport
             'trust' => app(TrustService::class)->getTrust($colonyId),
             'credits' => BotStrategy::credits($bot),
             'regolith' => BotStrategy::regolith($bot),
+            'organics' => BotStrategy::organics($bot),
             'ap' => ['total' => $apAvailable],
             'ap_unspent' => $apAvailable,
             'cc_level' => $ccLevel,
