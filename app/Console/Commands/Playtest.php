@@ -72,7 +72,14 @@ class Playtest extends Command
                         ])
                         ->timeout(120)
                         ->command([
-                            'php', 'bin/phpunit',
+                            // opcache.enable_cli defaults to Off system-wide, so every
+                            // spawned child cold-compiles the whole vendor tree from
+                            // scratch — measured ~47s for a single run just from that.
+                            // Forcing it on here (scoped to this process only, no global
+                            // php.ini change) lets concurrency scale past ~2 without
+                            // hitting the timeout below (found 2026-08-17).
+                            'php', '-d', 'opcache.enable_cli=1',
+                            'bin/phpunit',
                             '--filter', 'test_bot_plays_a_full_run_and_produces_a_report',
                             'tests/Feature/Playtest/PlaytestBotTest.php',
                         ]);

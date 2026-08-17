@@ -90,15 +90,17 @@ if (is_dir($reportDir)) {
 <script>
 const RUNS = JSON.parse(document.getElementById('playtest-data').textContent);
 
-// Stable color per profile name — cycles through a fixed palette so the same
-// profile always reads as the same color across page reloads.
-const PALETTE = ['#7fbbff', '#ff9f7f', '#7fff9f', '#e0a0ff', '#ffe07f', '#7fe0e0', '#ff7fa0'];
-const profileColors = {};
-function colorFor(profile) {
-    if (!(profile in profileColors)) {
-        profileColors[profile] = PALETTE[Object.keys(profileColors).length % PALETTE.length];
+// Stable color per individual run (profile+seed) — cycles through a fixed
+// palette so every run line is distinguishable, even when several runs
+// share the same profile name.
+const PALETTE = ['#7fbbff', '#ff9f7f', '#7fff9f', '#e0a0ff', '#ffe07f', '#7fe0e0', '#ff7fa0', '#b0ff7f', '#ff7fd0', '#7fa0ff', '#ffd07f', '#a0ff7f'];
+const runColors = {};
+function colorFor(run) {
+    const key = `${run.profile}-${run.seed}-${run.file}`;
+    if (!(key in runColors)) {
+        runColors[key] = PALETTE[Object.keys(runColors).length % PALETTE.length];
     }
-    return profileColors[profile];
+    return runColors[key];
 }
 
 function runLabel(run) {
@@ -115,7 +117,7 @@ if (listEl) {
         item.className = 'pd-run-item';
         const swatch = document.createElement('span');
         swatch.className = 'pd-run-swatch';
-        swatch.style.background = colorFor(run.profile);
+        swatch.style.background = colorFor(run);
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
         checkbox.dataset.idx = idx;
@@ -176,8 +178,8 @@ function render() {
         chart.data.datasets = activeRuns.map(run => ({
             label: runLabel(run),
             data: run.sols.map(s => ({ x: s.sol, y: s[def.field] })),
-            borderColor: colorFor(run.profile),
-            backgroundColor: colorFor(run.profile),
+            borderColor: colorFor(run),
+            backgroundColor: colorFor(run),
             borderWidth: 2,
             pointRadius: 0,
             tension: 0.15,
