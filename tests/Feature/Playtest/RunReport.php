@@ -52,7 +52,7 @@ class RunReport
 
     /**
      * @return array{seed:int, profile:string, outcome:array, phase2_start_sol:?int, objectives:array,
-     *               actions:array, rejections:array, burnout:array, sols:array}
+     *               actions:array, rejections:array, burnout:array, sols:array, log:array}
      */
     public function build(BotSession $bot): array
     {
@@ -113,6 +113,9 @@ class RunReport
                 'advisor_active_ticks' => $advisorActiveTicks,
             ],
             'sols' => $this->sols,
+            // Raw per-action log (sol/rule/ok/error) — dashboard event markers
+            // read this directly, kept unaggregated unlike 'rejections' above.
+            'log' => $bot->log,
         ];
     }
 

@@ -689,3 +689,76 @@ table.pd-summary tr:hover td {
     color: #888;
     font-size: 0.74rem;
 }
+
+.pd-event-toggles {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.78rem;
+    color: #aaa;
+    margin-bottom: 0.8rem;
+}
+.pd-event-toggles-label {
+    color: #666;
+}
+.pd-event-toggles label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.pd-log-card {
+    background: #161625;
+    border: 1px solid #252535;
+    border-radius: 6px;
+    padding: 0.8rem;
+    margin-top: 1.5rem;
+}
+.pd-log-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+.pd-log-header h3 {
+    color: #aaa;
+    font-size: 0.8rem;
+    margin: 0;
+    font-weight: 600;
+}
+.pd-log-header select {
+    background: #0d0d18;
+    color: #ccc;
+    border: 1px solid #2a2a3d;
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.76rem;
+}
+.pd-log-scroll {
+    max-height: 320px;
+    overflow-y: auto;
+}
+table.pd-log-table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.76rem;
+}
+table.pd-log-table th {
+    background: #1a1a2e;
+    color: #7fbbff;
+    text-align: left;
+    padding: 4px 8px;
+    position: sticky;
+    top: 0;
+}
+table.pd-log-table td {
+    padding: 3px 8px;
+    border-top: 1px solid #1e1e30;
+}
+tr.pd-log-ok td:last-child {
+    color: #7fff7f;
+}
+tr.pd-log-error td:last-child {
+    color: #f87171;
+}

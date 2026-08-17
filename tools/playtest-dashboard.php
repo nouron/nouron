@@ -39,6 +39,7 @@ if (is_dir($reportDir)) {
             'actions' => $data['actions'] ?? [],
             'rejections' => $data['rejections'] ?? [],
             'sols' => $data['sols'] ?? [],
+            'log' => $data['log'] ?? [],
         ];
     }
 }
@@ -50,6 +51,7 @@ if (is_dir($reportDir)) {
 <title>Nouron Playtest Dashboard</title>
 <link rel="stylesheet" href="/tools/assets/dev-panel.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3"></script>
 </head>
 <body>
 
@@ -69,6 +71,12 @@ if (is_dir($reportDir)) {
     </div>
 
     <div class="pd-main">
+        <div class="pd-event-toggles">
+            <span class="pd-event-toggles-label">Ereignis-Marker:</span>
+            <label><input type="checkbox" id="pd-event-cc" checked> CC-Level-Aufstieg</label>
+            <label><input type="checkbox" id="pd-event-advisor" checked> Berater angestellt</label>
+        </div>
+
         <div class="pd-chart-grid">
             <div class="pd-chart-card"><h3>Regolith</h3><canvas id="chart-regolith"></canvas></div>
             <div class="pd-chart-card"><h3>Credits</h3><canvas id="chart-credits"></canvas></div>
@@ -83,6 +91,19 @@ if (is_dir($reportDir)) {
             </thead>
             <tbody id="pd-summary-body"></tbody>
         </table>
+
+        <div class="pd-log-card">
+            <div class="pd-log-header">
+                <h3>Aktions-Log</h3>
+                <select id="pd-log-run-select"></select>
+            </div>
+            <div class="pd-log-scroll">
+                <table class="pd-log-table">
+                    <thead><tr><th>Sol</th><th>Aktion</th><th>Status</th></tr></thead>
+                    <tbody id="pd-log-body"></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -141,6 +162,33 @@ if (listEl) {
     });
 }
 
+// ── Event markers ────────────────────────────────────────────────────────
+// Derived from sols[] deltas — no extra data needed beyond what's already
+// snapshotted per Sol. Cached per run since RUNS is immutable after load.
+const eventsCache = new Map();
+function eventsFor(run) {
+    if (eventsCache.has(run)) return eventsCache.get(run);
+    const events = [];
+    let prevCc = null;
+    let prevAdvisors = null;
+    run.sols.forEach(s => {
+        if (prevCc !== null && s.cc_level > prevCc) {
+            events.push({ sol: s.sol, type: 'cc', label: `CC → Lv${s.cc_level}` });
+        }
+        if (prevAdvisors !== null && s.advisors > prevAdvisors) {
+            events.push({ sol: s.sol, type: 'advisor', label: `Berater #${s.advisors}` });
+        }
+        prevCc = s.cc_level;
+        prevAdvisors = s.advisors;
+    });
+    eventsCache.set(run, events);
+    return events;
+}
+
+if (window['chartjs-plugin-annotation']) {
+    Chart.register(window['chartjs-plugin-annotation']);
+}
+
 // ── Charts ───────────────────────────────────────────────────────────────
 const chartDefs = [
     { id: 'chart-regolith', field: 'regolith' },
@@ -164,13 +212,52 @@ chartDefs.forEach(def => {
                 x: { type: 'linear', title: { display: true, text: 'Sol', color: '#888' }, ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
                 y: { ticks: { color: '#888' }, grid: { color: '#1e1e30' } },
             },
-            plugins: { legend: { labels: { color: '#ccc', boxWidth: 12, font: { size: 10 } } } },
+            plugins: {
+                legend: { labels: { color: '#ccc', boxWidth: 12, font: { size: 10 } } },
+                annotation: { annotations: {} },
+            },
         },
     });
 });
 
+function activeEventTypes() {
+    const types = [];
+    if (document.getElementById('pd-event-cc')?.checked) types.push('cc');
+    if (document.getElementById('pd-event-advisor')?.checked) types.push('advisor');
+    return types;
+}
+
+function annotationsFor(activeRuns) {
+    const types = activeEventTypes();
+    if (types.length === 0) return {};
+    const annotations = {};
+    let n = 0;
+    activeRuns.forEach(run => {
+        eventsFor(run).filter(e => types.includes(e.type)).forEach(e => {
+            annotations[`ev${n++}`] = {
+                type: 'line',
+                xMin: e.sol,
+                xMax: e.sol,
+                borderColor: colorFor(run),
+                borderWidth: 1,
+                borderDash: [4, 3],
+                label: {
+                    display: true,
+                    content: e.label,
+                    position: 'start',
+                    font: { size: 9 },
+                    color: colorFor(run),
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                },
+            };
+        });
+    });
+    return annotations;
+}
+
 function render() {
     const activeRuns = [...selected].map(idx => RUNS[idx]).filter(Boolean);
+    const annotations = annotationsFor(activeRuns);
 
     chartDefs.forEach(def => {
         const chart = charts[def.field];
@@ -184,8 +271,13 @@ function render() {
             pointRadius: 0,
             tension: 0.15,
         }));
+        if (chart.options.plugins.annotation) {
+            chart.options.plugins.annotation.annotations = annotations;
+        }
         chart.update();
     });
+
+    renderLogSelect(activeRuns);
 
     const body = document.getElementById('pd-summary-body');
     if (!body) return;
@@ -208,6 +300,40 @@ function render() {
         </tr>`;
     }).join('');
 }
+
+// ── Log panel ────────────────────────────────────────────────────────────
+const logSelect = document.getElementById('pd-log-run-select');
+const logBody = document.getElementById('pd-log-body');
+
+function renderLogSelect(activeRuns) {
+    if (!logSelect) return;
+    const prevValue = logSelect.value;
+    logSelect.innerHTML = activeRuns.map((run, i) => `<option value="${i}">${runLabel(run)}</option>`).join('');
+    const restoreIdx = [...logSelect.options].findIndex(o => o.value === prevValue);
+    logSelect.selectedIndex = restoreIdx >= 0 ? restoreIdx : 0;
+    renderLogTable(activeRuns[logSelect.selectedIndex] ?? null);
+}
+
+function renderLogTable(run) {
+    if (!logBody) return;
+    if (!run || !run.log || run.log.length === 0) {
+        logBody.innerHTML = '<tr><td colspan="3" class="pd-empty">Kein Log in diesem Report (ältere Reports vor 2026-08-17 haben keins).</td></tr>';
+        return;
+    }
+    logBody.innerHTML = run.log.map(entry => `<tr class="${entry.ok ? 'pd-log-ok' : 'pd-log-error'}">
+        <td>${entry.sol}</td>
+        <td>${entry.rule}</td>
+        <td>${entry.ok ? 'OK' : (entry.error || 'error')}</td>
+    </tr>`).join('');
+}
+
+logSelect?.addEventListener('change', () => {
+    const activeRuns = [...selected].map(idx => RUNS[idx]).filter(Boolean);
+    renderLogTable(activeRuns[logSelect.selectedIndex] ?? null);
+});
+
+document.getElementById('pd-event-cc')?.addEventListener('change', render);
+document.getElementById('pd-event-advisor')?.addEventListener('change', render);
 
 render();
 </script>
