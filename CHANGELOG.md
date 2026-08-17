@@ -4,6 +4,7 @@
 
 - Fix: `tools/playtest-dashboard.php` — Chart-Linien/Sidebar-Swatches färbten alle Läufe eines Profils identisch (`colorFor()` keyte auf Profilname statt Lauf), Mehrfachvergleich damit unlesbar. Färbt jetzt pro Lauf (Profil+Seed+Datei).
 - Perf: `game:playtest`s gespawnte `bin/phpunit`-Kindprozesse laufen jetzt mit `-d opcache.enable_cli=1` — `--concurrency=5` überschritt vorher zuverlässig das 120s-Pool-Timeout, läuft jetzt in ~88s durch.
+- Feature: PlaytestBot-Reports tragen jetzt den vollen Aktions-Log (Sol/Regel/OK/Error), nicht mehr nur aggregierte Rejection-Zähler. Dashboard zeigt ihn pro Lauf an + zwei zuschaltbare Ereignis-Marker (CC-Level-Aufstieg, Berater angestellt) als Linien in allen Charts.
 
 ## 2026-08-16
 
