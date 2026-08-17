@@ -35,20 +35,37 @@ class RunProgressService
 
     private const TASK_TARGETS = [
         'task_senior_advisors' => 1,
-        'task_credit_reserve' => 10,
+        // 10 → 14 (2026-08-17, game-designer review): threshold+streak were both
+        // lowered 2026-08-14 as an emergency measure against the (since-fixed)
+        // Post-Phase-1 Credit-Ökonomie collapse. With that bug gone, a 20-run
+        // PlaytestBot batch showed the task completing suspiciously fast (Sol
+        // 38-39) — raised the streak back up (not fully back to the old 10, as
+        // a safety margin) alongside the threshold (see task_credit_reserve_threshold).
+        'task_credit_reserve' => 14,
         'task_colony_prosperity' => 10,
         'task_research_lead' => 3,
-        // 15 → 8 (2026-08-16, game-designer review): PlaytestBot data showed
-        // Regolith above the old >50 threshold only 18/95 Sols (Ø 31.4) — a
-        // 15-Sol streak was practically unreachable. Halved streak length +
-        // lowered Regolith threshold (see updateSelfSufficiency()) together.
-        'task_self_sufficiency' => 8,
+        // 8 → 15 (2026-08-17, game-designer review): reverts most of the
+        // 2026-08-16 halving — that fix addressed a genuinely unreachable old
+        // Regolith threshold, but a 20-run PlaytestBot batch after the fix
+        // showed the task completing in 8/20 runs, often as a passive
+        // side-effect of normal play rather than a deliberate goal. Regolith
+        // threshold stays at the 2026-08-16 value (25); only the streak length
+        // and the Organics threshold (see updateSelfSufficiency()) go back up.
+        'task_self_sufficiency' => 15,
         // Max reachable is 1 (CC ring-0, always colony zone + pre-explored) + Σ
         // config('game.colony_zone_expansion') over all 5 CC levels (15) = 16.
         // Was 19 — mathematically unwinnable regardless of play skill (found
         // empirically 2026-08-14, PlaytestBot stalled at 13/19 across all seeds).
+        // Already at that ceiling — cannot be raised further without expanding
+        // the colony zone itself (see game.colony_zone_expansion), a separate
+        // design change, not a task-difficulty tweak (2026-08-17).
         'task_expedition_coverage' => 16,
-        'task_engineering_output' => 200,
+        // 200 → 320 (2026-08-17, game-designer review): a 20-run PlaytestBot
+        // batch showed this completing via normal incidental building leveling
+        // (no dedicated strategy needed) — 320 across ~11 active buildings
+        // (~29 status_points/building vs. the old ~18) requires deliberate
+        // prioritization instead.
+        'task_engineering_output' => 320,
         'task_trade_volume' => 5,
     ];
 
@@ -311,7 +328,7 @@ class RunProgressService
 
     /**
      * Streak task: all three conditions must hold simultaneously each sol.
-     * Regolith (colony_resources, resource_id=3) > 25, Organika (resource_id=5) > 50,
+     * Regolith (colony_resources, resource_id=3) > 25, Organika (resource_id=5) > 75,
      * Supply (user_resources.supply) > 0. Any single failure resets the streak to 0.
      */
     private function updateSelfSufficiency(RunObjective $objective, Run $run): void
@@ -332,9 +349,10 @@ class RunProgressService
 
         // Regolith threshold 50 → 25 (2026-08-16, game-designer review): Regolith
         // is a running-consumption resource (build/level-up), not a stable
-        // reserve — 50 was above the observed Sol-average (Ø 31.4), see
-        // TASK_TARGETS['task_self_sufficiency'] comment above.
-        $allMet = $regolith > 25 && $organics > 50 && $supply > 0;
+        // reserve — 50 was above the observed Sol-average (Ø 31.4). Organics
+        // threshold 50 → 75 (2026-08-17): see TASK_TARGETS['task_self_sufficiency']
+        // comment above — the streak length went back up alongside this.
+        $allMet = $regolith > 25 && $organics > 75 && $supply > 0;
 
         if ($allMet) {
             $objective->streak_value++;

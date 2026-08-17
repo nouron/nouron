@@ -474,12 +474,15 @@ return [
         // Invariant: phase1_warning_sol must stay below phase1_deadline_sol, or the warning
         // and the hard fail would land on the same tick.
         // task_credit_reserve: Credits threshold a colony must hold for the
-        // objective's streak (RunProgressService::TASK_TARGETS, 10 consecutive
-        // sols, unchanged). 5000 → 3000 (GDD §18.4 Nachtrag 2026-08-14) — 5000 was
-        // effectively unreachable under the pre-fix Post-Phase-1 Credit-Ökonomie
-        // collapse; kept as a real, non-trivial savings goal (not just a side
-        // effect of baseline income) after the fix.
-        'task_credit_reserve_threshold' => 3000,
+        // objective's streak (RunProgressService::TASK_TARGETS, 14 consecutive
+        // sols as of 2026-08-17). 5000 → 3000 (GDD §18.4 Nachtrag 2026-08-14) —
+        // 5000 was effectively unreachable under the pre-fix Post-Phase-1
+        // Credit-Ökonomie collapse. 3000 → 4000 (2026-08-17, game-designer
+        // review): that bug is fixed now, and a 20-run PlaytestBot batch showed
+        // the task completing suspiciously fast (Sol 38-39) — raised partway
+        // back up, not fully to the old 5000, as a safety margin against
+        // re-triggering the old collapse scenario.
+        'task_credit_reserve_threshold' => 4000,
         'task_pool' => [       // all available Phase-2 task keys
             'task_senior_advisors',
             'task_credit_reserve',

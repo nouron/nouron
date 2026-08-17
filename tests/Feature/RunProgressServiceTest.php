@@ -36,17 +36,17 @@ namespace Tests\Feature;
  *   - calculateScore returns positive score for completed run with objectives
  *
  * TASK_SELBSTVERSORGUNG (streak)
- *   - streak increments when regolith>25 AND organics>50 AND supply>0
+ *   - streak increments when regolith>25 AND organics>75 AND supply>0
  *   - streak resets to 0 when regolith fails (<= 25)
- *   - completes (completed_at set) when streak reaches target_value (8)
+ *   - completes (completed_at set) when streak reaches target_value (15)
  *
  * TASK_EXPEDITIONSSTATUS (counter)
  *   - completes when 19+ explored colony-zone tiles exist
  *   - does not complete with only 10 such tiles
  *
  * TASK_INGENIEURSLEISTUNG (counter)
- *   - completes when sum of status_points >= 200
- *   - does not complete when sum < 200
+ *   - completes when sum of status_points >= 320
+ *   - does not complete when sum < 320
  *
  * TASK_HANDELSPARTNER (counter)
  *   - completes when 5+ sold items from visits after run.started_at
@@ -361,7 +361,7 @@ class RunProgressServiceTest extends TestCase
 
         $expectedTargets = [
             'task_senior_advisors' => 1,
-            'task_credit_reserve' => 10,
+            'task_credit_reserve' => 14,
             'task_colony_prosperity' => 10,
             'task_research_lead' => 3,
         ];
@@ -482,22 +482,36 @@ class RunProgressServiceTest extends TestCase
     // ── updateObjectiveProgress: task_credit_reserve ─────────────────────────
 
     /**
-     * Threshold lowered 5000→3000 (GDD §18.4 Nachtrag 2026-08-14) — the old
-     * threshold was effectively unreachable under the pre-fix Credit-Ökonomie
-     * collapse (Rang-3-Upkeep-Klippe). 3500 sits between the two values: must
-     * count as "above" under the new threshold.
+     * Threshold raised 3000→4000 (2026-08-17, game-designer review) — the
+     * 3000 value was an emergency measure against the (since-fixed)
+     * Post-Phase-1 Credit-Ökonomie collapse; 4200 sits above the new
+     * threshold and must count as "above", 3800 sits below the new
+     * threshold (but above the old 3000) and must NOT count as "above".
      */
-    public function test_task_credit_reserve_increments_streak_at_new_lowered_threshold(): void
+    public function test_task_credit_reserve_increments_streak_at_the_4000_threshold(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_credit_reserve', 10, 0);
+        $objective = $this->makeObjective($run, 'task_credit_reserve', 14, 0);
 
-        $this->setCredits(3500);
+        $this->setCredits(4200);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment at the new 3000 threshold (3500 credits)');
+        $this->assertEquals(1, $objective->streak_value, 'streak_value must increment at the new 4000 threshold (4200 credits)');
+    }
+
+    public function test_task_credit_reserve_does_not_increment_streak_below_the_4000_threshold(): void
+    {
+        $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
+        $objective = $this->makeObjective($run, 'task_credit_reserve', 14, 0);
+
+        $this->setCredits(3800);
+
+        $this->service->updateObjectiveProgress($run);
+
+        $objective->refresh();
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must not increment below the 4000 threshold (3800 credits) even though it is above the old 3000 threshold');
     }
 
     public function test_task_credit_reserve_increments_streak_when_credits_above_threshold(): void
@@ -813,9 +827,9 @@ class RunProgressServiceTest extends TestCase
         $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 0);
 
         // regolith (resource_id=3) > 25 (30 passes new threshold, fails old >50 —
-        // a discriminating value, not just any passing value), organics > 50, supply > 0
+        // a discriminating value, not just any passing value), organics > 75, supply > 0
         $this->setColonyResource(3, 30);
-        $this->setColonyResource(5, 55);
+        $this->setColonyResource(5, 80);
         $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
@@ -1258,16 +1272,16 @@ class RunProgressServiceTest extends TestCase
     public function test_task_self_sufficiency_resets_streak_when_organics_fails(): void
     {
         $run = $this->makeRun(['current_tick' => 10, 'phase' => 2]);
-        $objective = $this->makeObjective($run, 'task_self_sufficiency', 8, 5);
+        $objective = $this->makeObjective($run, 'task_self_sufficiency', 15, 5);
 
         $this->setColonyResource(3, 60);
-        $this->setColonyResource(5, 50); // exactly 50 — requires > 50, so fails
+        $this->setColonyResource(5, 75); // exactly 75 — requires > 75, so fails
         $this->setSupply(1);
 
         $this->service->updateObjectiveProgress($run);
 
         $objective->refresh();
-        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when organics <= 50');
+        $this->assertEquals(0, $objective->streak_value, 'streak_value must reset when organics <= 75');
     }
 
     public function test_task_credit_reserve_reads_credits_from_user_resources(): void

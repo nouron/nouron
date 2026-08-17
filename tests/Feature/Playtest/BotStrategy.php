@@ -284,8 +284,12 @@ class BotStrategy
 
     private static function nextHireCandidate(BotSession $b): ?int
     {
+        // Was hardcoded at 3 — the bot never touched the 4th advisor slot
+        // (config('game.advisor.max_slots')), understating mid/lategame AP in
+        // every PlaytestBot report to date (found 2026-08-17, Owner playtest
+        // dashboard review). HIRE_ORDER already has a 4th personell_id (35).
         $activeCount = DB::table('advisors')->where('colony_id', $b->colonyId)->count();
-        if ($activeCount >= 3) {
+        if ($activeCount >= (int) config('game.advisor.max_slots', 4)) {
             return null;
         }
 
