@@ -833,20 +833,24 @@ Ertrag = Frischwert × (0,5 + 0,5 × Restvorkommen / resource_max)
 
 Ein Tile beginnt beim vollen Frischwert und fällt bis zum Ausschöpfen auf die **Hälfte** — nie auf null, damit ein vergessener Harvester nicht schlagartig stillsteht. Bei erschöpftem Vorkommen: Produktion 0, der Umzug ist erzwungen.
 
+> **Korrektur (2026-08-18):** Frischwert +25–30 % angehoben (game-designer-Review, PlaytestBot zeigte Regolith-Absturz auf 0–30 in den ersten 7–10 Solen der meisten Läufe — kein Puffer über Bau-/Reparatur-/CC-Upgrade-Verbrauch). `resource_max` unverändert. Ø-Zyklus und Standzeit unten direkt aus der Formel neu abgeleitet (Ø ≈ 0,75 × Frischwert, Standzeit ≈ `resource_max` / Ø). **Der §13.7-Sockelwert (12,9 Rg/Sol) und alle darauf aufbauenden Herleitungen sind NICHT mitgezogen** — das ist eine eigenständige Neuherleitung über den ganzen §13.7-Abschnitt, kein Zahlentausch hier (siehe Warnhinweis am Ende dieses Abschnitts).
+
 | Tile-Stufe | Frischwert | `resource_max` | Ø über den Zyklus | Standzeit |
 |---|---|---|---|---|
-| `regolith_rich` | **24** | **500** | 18 | ~28 Sole |
-| `regolith_normal` | **18** | **300** | 13,5 | ~22 Sole |
-| `regolith_poor` | **12** | **160** | 9 | ~18 Sole |
+| `regolith_rich` | **30** | **500** | 22,5 | ~22 Sole |
+| `regolith_normal` | **23** | **300** | 17,25 | ~17 Sole |
+| `regolith_poor` | **15** | **160** | 11,25 | ~14 Sole |
 
 `resource_max` sinkt gegenüber dem heutigen Stand (800 / 500 / 250) — sonst läge die Standzeit bei ~37 Solen und es käme kaum zu Umzügen.
 
 **Der Sockel aus §13.7 ist ein Durchschnitt, kein Frischwert.** Mit einem Transit-Sol ohne Produktion liefert ein Harvester im Zyklusmittel ~12,9 Rg/Sol.
 
+> **⚠️ Veraltet seit dem 2026-08-18-Frischwert-Fix, noch nicht neu hergeleitet.** Die 12,9-Rg/Sol-Zeile unten rechnet mit dem alten `regolith_normal`-Frischwert (18). Mit dem neuen Frischwert (23, Tabelle oben) und derselben Methode (Ø-Zyklus × Standzeit / (Standzeit+1)) ergäbe sich ~16,3 Rg/Sol für 1 Instanz bzw. ~32,6 für 2 — aber dieser Sockelwert ist im ganzen restlichen §13.7 („Neuherleitung gegen die 1-Instanz-Sockel-Baseline") und darüber hinaus (z. B. Pfad-Paritäts-/Credits-Zielgrößen) an vielen weiteren Stellen verrechnet. Eine punktuelle Korrektur nur dieser einen Tabelle würde das GDD in einen intern widersprüchlichen Zustand versetzen (diese Zeile neu, alle Folgerechnungen alt) — braucht einen eigenen, vollständigen Neuherleitungs-Pass über §13.7, kein Nebenbei-Fix. Vorgemerkt in ROADMAP.md.
+
 | Phase | Harvester | Ø Sockel |
 |---|---|---|
-| **Standard, ganzer Run** | **1** | **12,9** |
-| Bonusfall, ab Erwerb der 2. Instanz | 2 | 25,8 |
+| **Standard, ganzer Run** | **1** | **12,9** (⚠️ veraltet, siehe oben) |
+| Bonusfall, ab Erwerb der 2. Instanz | 2 | 25,8 (⚠️ veraltet, siehe oben) |
 
 > **⚠️ Tabelle historisch, Run-Mittel-Zeile „21,8" gestrichen (Owner-Entscheidung 2026-08-05).** Die vorherige Fassung dieser Tabelle blendete Sol 1–30 (1 Instanz, 12,9) und Sol 30–80 (2 Instanzen, 25,8) zu einem Run-Mittel von 21,8 Rg/Sol — das war die Zielgröße, gegen die §13.7 vormals gerechnet war. Neue Zielgröße für den **Standardfall ist durchgehend 12,9 Rg/Sol** (1 Instanz, den ganzen Run); die 25,8-Zeile gilt nur noch für die Sole, in denen ein Run tatsächlich (opportunistisch, nicht garantiert, siehe unten) eine zweite Instanz hat — als Bonus, nicht als eingerechneter Normalfall. **§13.7 ist jetzt vollständig auf diese Basis neu gerechnet und freigegeben (2026-08-06)** — siehe §13.7 „Neuherleitung gegen die 1-Instanz-Sockel-Baseline".
 
@@ -1424,21 +1428,23 @@ Beim Dispatch fallen einmalig an (beide Kosten gaten den Start, AP-Chip-Konventi
 
 #### Katalog
 
+> **Korrektur (2026-08-18):** Credit-Belohnungen +40–45 % angehoben (game-designer-Review, PlaytestBot zeigte chronischen Credits-Mangel — die aktive Missionsschiene lag effektiv unter dem passiven Einkommenssockel aus `nexus_subsidy` + Relaisvergütung). Tabelle unten zeigt die aktuellen Werte aus `config/missions.php`.
+
 | Key | Name | Schiff | Dist | Kosten (AP / Or) | Belohnung bei Rückkehr | Verfügbar ab |
 |---|---|---|---|---|---|---|
-| `mission_courier_run` | Botenflug | Drohne | 1 | 2 / 3 | 60 Cr | sofort |
+| `mission_courier_run` | Botenflug | Drohne | 1 | 2 / 3 | 90 Cr | sofort |
 | `mission_recon_flight` | Erkundungsflug | Drohne | 1 | 2 / 3 | 2 unerkundete Tiles der Exploration Zone aufgedeckt | sofort |
 | `mission_deep_survey` | Signalvermessung | Drohne | 2 | 4 / 6 | Tiefenscan eines Signal-Tiles abgeschlossen (`event_type` enthüllt, §4a) | bekanntes Signal-Tile |
 | `mission_prospecting_flight` | Prospektionsflug | Drohne | 2 | 4 / 6 | 20–30 Regolith (variabel) | Geologie Lv1 |
 | `mission_data_sweep` | Datensammelflug | Drohne | 3 | 6 / 9 | +8 AP Fortschritt auf eine gewählte Kenntnis (§10) — als Projekt-Investition, ohne den AP-Pool zu belasten | Kartografie Lv1 |
 | `mission_supply_run` | Versorgungsfahrt | Frachter | 2 | 4 / 6 | 25 Regolith + 10 Organika | Frachter vorhanden |
-| `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 180 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
-| `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 60 Cr Nexus-Prämie | Gesundheit Lv1 |
+| `mission_trade_convoy` | Handelsfahrt | Frachter | 3 | 6 / 9 | 260 Cr + Trust-Event `trade_success` (+2, §14) | Handel Lv1 |
+| `mission_aid_transport` | Hilfsgütertransport | Frachter | 2 | 4 / 6 + **10 Or Fracht** | Trust-Event `encounter_won` (+2) + 90 Cr Nexus-Prämie | Gesundheit Lv1 |
 | `mission_salvage_sweep` | Trümmerbergung | Frachter o. Korvette | 4 | 8 / 12 | 6–10 Werkstoffe (variabel) | Bautechnik Lv1 |
-| `mission_escort_convoy` | Konvoi-Begleitung | Korvette | 3 | 6 / 9 | 200 Cr (Nexus-Schutzprämie) | Korvette vorhanden |
+| `mission_escort_convoy` | Konvoi-Begleitung | Korvette | 3 | 6 / 9 | 280 Cr (Nexus-Schutzprämie) | Korvette vorhanden |
 | `mission_perimeter_patrol` | Umkreis-Patrouille | Korvette | 3 | 6 / 9 | Nächste Kolonistengefahr (§9) wird eine Ausgangsstufe milder bewertet; verfällt nach 10 Solen | Verteidigung Lv1 |
-| `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | 4 | 8 / 12 | Almanach-Artikel freigeschaltet (§17, inkl. Lesebonus) + 150 Cr | tiefengescanntes Ruinen-Event-Tile; einmalig pro Tile |
-| `mission_long_range_expedition` | Fernexpedition | Drohne | 5 | 10 / 15 | Zufallsfund: 250–400 Cr oder 8–12 Werkstoffe oder 30–45 Regolith | Kartografie Lv3 |
+| `mission_ruin_expedition` | Ruinen-Expedition | Frachter o. Korvette | 4 | 8 / 12 | Almanach-Artikel freigeschaltet (§17, inkl. Lesebonus) + 220 Cr | tiefengescanntes Ruinen-Event-Tile; einmalig pro Tile |
+| `mission_long_range_expedition` | Fernexpedition | Drohne | 5 | 10 / 15 | Zufallsfund: 350–550 Cr oder 8–12 Werkstoffe oder 30–45 Regolith | Kartografie Lv3 |
 
 **Schiffsrollen:** Drohne = Information (Tiles, Scans, Daten), Frachter = Güter, Korvette = Schutzdienste und Bergung. Nicht jede Mission steht jedem Schiff offen — das gibt der Akquise-Entscheidung (§8b Akquise-Pfade) strategisches Gewicht.
 
@@ -3837,6 +3843,15 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 > Text/Code-Mismatch: der Text nannte "Werkstoffe", der Code prüft schon immer
 > Regolith (resource_id=3).
 
+> **Nachtrag (2026-08-17) — drei Objectives nachträglich verschärft, `task_self_sufficiency` teilweise zurückgedreht.** Ein 20-Läufe-PlaytestBot-Batch (nach dem 08-16-Fix + dem Tick/Sol-Offset-Bugfix vom selben Tag) zeigte: Läufe gingen viel zu früh (Sol 39–54, Zielkorridor 80–85) als „completed" durch, weil die 2-von-3-Objectives-Siegbedingung (`GameTick.php`) leicht erreichbare Tasks kombinierte. Von 8 Task-Typen im Pool wurden nur 4 je erfüllt — `task_self_sufficiency` (8×), `task_expedition_coverage` (7×), `task_engineering_output` (3×), `task_credit_reserve` (2×) — die anderen vier nie (`task_senior_advisors` strukturell durch den damaligen Bot-Berater-Deckel blockiert, `task_colony_prosperity` vermutlich eigenes Trust-Kalibrierungsproblem, s.u.). Drei Korrekturen:
+> - `task_self_sufficiency`: Streak **8→15** Sole, Organika-Schwelle `>50`→`>75` (Regolith-Schwelle bleibt bei `>25`). Reißt die 08-16-Lockerung teilweise zurück — die lief zu leicht nebenbei mit, ohne echte Anstrengung.
+> - `task_credit_reserve`: Schwelle **3.000→4.000 Cr**, Streak **10→14** Sole. Die 3.000er-Schwelle war die 08-14-Notmaßnahme gegen den damaligen Collapse — jetzt (nach den 08-14/08-17/08-18-Fixes) ohne Repro-Risiko teilweise zurückkorrigierbar, bewusst nicht voll auf die alten 5.000 (Sicherheitsabstand).
+> - `task_engineering_output` (Summe `status_points` über alle Gebäude): Ziel **200→320** (`RunProgressService::TASK_TARGETS`, nirgends sonst im GDD referenziert). ~29 Status-Points/Gebäude (bei ~11 aktiven Gebäuden) statt ~18 — erzwingt aktive Priorisierung statt beiläufigem Mitlaufen beim normalen Leveln.
+> - `task_expedition_coverage` bewusst **nicht** erhöht — bereits am mathematischen Maximum (16, siehe 08-14-Nachtrag oben). Eine Erhöhung würde das Objective erneut unerreichbar machen.
+> - `task_colony_prosperity` (Vertrauen > 70, 10 Sole Streak) bewusst **nicht** angefasst — Trust bewegte sich in allen 20 Läufen nur zwischen ca. −10 und +10, nie in Nähe von 70. Vermutlich eine Trust-Ökonomie-Fehlkalibrierung (Quellen zu schwach/Decay zu stark), kein Balance-Ziel-Problem — eigene, noch nicht begonnene Untersuchung.
+>
+> **Verifiziert (nach diesem Fix + dem 08-17-Bot-Berater-Deckel-Fix):** frischer 20-Läufe-Batch zeigte 3/20 „completed" bei Sol 84, 91, 65 — die ersten beiden treffen den Zielkorridor, die dritte ist noch etwas früh, aber deutlich näher als zuvor.
+
 > **Entschieden (2026-07-19):** `task_credit_reserve: 10` (10 aufeinanderfolgende Sole mit Credits > 5.000) war mit der alten Ökonomie strukturell unerreichbar — Playtest-Bot-Befund PR #218 bestätigt: Credits fielen auf 0 und blieben dort geklemmt, der dritte Berater wurde nie leistbar, Phase 1 nie abgeschlossen. Fix über drei Hebel (Details siehe §13 "Rang-System" und §12 "Kanal 1: Bar/Cantina"):
 >
 > 1. **Upkeep-Kurve abgeflacht:** `advisor.upkeep` von `[1=>10, 2=>50, 3=>160]` auf **`[1=>10, 2=>30, 3=>80]`**. Rang-2-Sprung war 5×, jetzt 3×; Rang-3-Sprung war 3,2×, jetzt 2,67×. Weiterhin eine echte Eskalation (teure Berater bleiben teuer), aber kein Klippensturz.
@@ -3884,6 +3899,19 @@ Bei Phase-1-Ende Sol 20 fällt Phase-2-Sol 80 exakt auf Gesamt-Sol 100 — das i
 > **Umsetzung ist separater, nachgelagerter Schritt** (game-developer/backend-coder, TDD-Pflicht) — dieser Nachtrag ist die Design-Entscheidung, kein Code wurde hier geändert. `ResetPlayer`-Testszenarien mit hartcodierten Credits-/Upkeep-Annahmen (Szenario-Pflege-Pflicht, siehe Agent-Konfiguration) müssen bei Umsetzung der `advisor.upkeep`/`promotion_costs`-Änderung mitgeprüft werden.
 >
 > **Umgesetzt + empirisch bestätigt (2026-08-14).** Alle vier Hebel implementiert (`config/game.php`), `task_credit_reserve`-Schwelle nach `config('game.run.task_credit_reserve_threshold')` ausgelagert (war Literal in `RunProgressService`). PlaytestBot-Nachlauf (Seed 4242) bestätigt: **der permanente 0-Kollaps ist behoben** — Credits pendeln ab Sol ~40 niedrig (36–291 Cr), statt dauerhaft bei exakt 0 zu kleben, deckt sich mit der hergeleiteten Near-Breakeven-Lage. `task_credit_reserve` (3000 Cr, 10 Sole Streak) wird davon unabhängig **nicht** erreicht — nicht weil die Ökonomie wieder kollabiert, sondern weil der Bot jeden Überschuss sofort für andere Regeln ausgibt (Schiffskauf, Bar-Angebote, Berater-Anwerbung) statt gezielt zu sparen. Das ist ein Bot-Spielstil-Defizit, kein Ökonomie-Fehler mehr — offener Folgepunkt, kein Blocker für diesen Nachtrag. `task_senior_advisors` (0/1) ebenfalls weiterhin unerreicht — braucht den 4. Beraterslot besetzt, eigener, noch nicht untersuchter Punkt.
+>
+> **Nachtrag (2026-08-17/18) — 4. Beraterslot gelöst, Kollaps kehrt strukturell zurück, zweiter Zahlen-Fix + offene Design-Frage.** Der 08-14-Fix rechnete durchgehend mit 3 Beratern — der PlaytestBot hatte einen hardcoded Deckel bei `activeCount >= 3` (`BotStrategy::nextHireCandidate()`), obwohl das Slot-System 4 erlaubt (`advisor.max_slots`). Nach Auflösung dieses Deckels (2026-08-17) zeigte ein frischer 10-Läufe-Batch: Credits kleben in 8/10 Läufen wieder fast die ganze Laufzeit nahe 0 (Ø Sol 41+: 57–116 Cr). Durchgerechnet (Sol 50–70, CC Lv3–4, 4 Berater): **Pfad B (Sciencelab/Hangar, keine Cantina)** — Einnahmen ~110–155 Cr/Sol (Nexus-Subvention + Relaisvergütung + episodische Missionen) gegen ~150–200 Cr/Sol Unterhalt bei 4 Beratern (bis Rang 3) → strukturell negativ. **Pfad A (Cantina + Konsul)** — zusätzlich Corvans Alltagsgeschäft ~180–320 Cr/Sol → überkompensiert deutlich (2/10 Läufe wachsen auf 1.800–2.800+ Cr). Root Cause bleibt also derselbe Mechanismus wie 08-14 (Cliff bei mehr gleichzeitigen Rang-2/3-Beratern), nur mit dem jetzt erreichbaren 4. Slot erneut verschärft.
+>
+> **Zweiter Zahlen-Fix (umgesetzt 2026-08-18, PR #270):** `advisor.upkeep[3]` **50 → 35** (4 × Rang 3 damit 140 statt 200 Cr/Sol) + `credits.relay_bonus_per_uplink_level` **35 → 45** (pfadneutral, stärkt gezielt Pfad B ohne den bereits überkompensierenden Cantina-Kanal weiter aufzublähen). Neue Break-even-Rechnung, worst case (4 Berater, keine Cantina, kein Konsul, kein Corvan):
+>
+> | Rang | Upkeep (4 Berater) | Einkommen, Uplink Lv0 | Einkommen, Uplink Lv2 | Einkommen, Uplink Lv3 (max.) |
+> |------|---------------------|------------------------|-------------------------|---------------------------------|
+> | 2 | 100 Cr/Sol | 50 Cr/Sol (−50) | 140 Cr/Sol (+40) | 185 Cr/Sol (+85) |
+> | 3 | 140 Cr/Sol | 50 Cr/Sol (−90) | 140 Cr/Sol (0) | 185 Cr/Sol (+45) |
+>
+> Struktur identisch zum 08-14-Muster: Rang-2-Defizit bei niedrigem Uplink-Ausbau bleibt (absorbierbar aus Phase-1-Reststand), Rang-3 erreicht mit Uplink Lv2+ eine positive bis neutrale Marge statt eines permanenten Bodens — aber deutlich knapper als der Cantina-Pfad.
+>
+> **Offene Design-Frage, kein Zahlen-Fix (Owner-Entscheidung 2026-08-17): sowohl der Sciencelab- als auch der Hangar-Pfad sollen ein EIGENES Credits-Einkommen bekommen**, unabhängig davon ob/wann die Cantina gebaut wird (Randfall: gar nicht oder erst spät). Die zwei Zahlen-Fixes oben nivellieren die Bilanz nur teilweise — sie ersetzen keinen fehlenden dritten Kanal. Welcher Mechanismus (Sciencelab-Forschungsverkauf? Hangar-Bergungsertrag in Credits? etwas Drittes?) ist noch nicht spezifiziert — eigener Design-Schritt für eine kommende Session, siehe ROADMAP.md „Offene Pfad-Paritäts-Fragen".
 
 ---
 
@@ -4035,6 +4063,7 @@ Gefunden bei der Durchsicht am 2026-08-02, alle unabhängig von den Designfragen
 | `config/knowledge.php` (Kommentar) | „base 6 + Rang-1-Bonus 4", „Rang 2 bei 10 aktiven Ticks" | `rank_thresholds = [1 => 15, 2 => 45]`; Grundwert ändert sich mit §13.6 |
 | `config/advisors.php` | `strategist` (id 93) + Slot-5-Kommentar | Stratege zurückgestellt (§13) |
 | `data/sql/testdata.sqlite.sql` | Hangar supply 6, Cantina 4, Krankenstation decay 2.0 | `config/buildings.php`: 4 / 6 / 0.67 — Testfixture ist auf dem Stand **vor** dem Pfadwahl-Rebalancing 2026-06-28 |
+| §15 „Aufgabenpool" (Prosa, Z. 3423–3444) | listet 10 Aufgaben mit anderen Mechaniken (z. B. „Selbstversorgung" prüft Werkstoff-Vorrat + Credits-Saldo) | tatsächlich 8 Tasks (`RunProgressService::TASK_TARGETS`/`TASK_CATEGORIES`), z. B. `updateSelfSufficiency()` prüft `regolith > 25 && organics > 75 && supply > 0` — keine Werkstoffe, kein Credits-Saldo. §18 ist die autoritative Quelle (§18.5-Hinweis „§15-Prosa ist alt"), restated die Liste dort aber nicht vollständig — gefunden 2026-08-18, nicht neu, nur vorher nicht explizit hier erfasst |
 
 ### ⚠️ Akut: `harvester.max_level` — DB und Config widersprechen sich
 

@@ -5,6 +5,7 @@
 - Balance: `advisor.upkeep[3]` 50→35, `credits.relay_bonus_per_uplink_level` 35→45 — die zwei am 2026-08-17 durchgerechneten, kleinen Fixes gegen die Credits-Pfad-Lücke (4×Rang3-Unterhalt 200→140 Cr/Tick, pfadneutraler zweiter Hebel für Nicht-Cantina-Läufe).
 - Fix: `merchant.items.information.label` hieß noch "Systemkarte vollständig" (Rest der 2026-06-20 gestrichenen Galaxiekarte) — beschreibt jetzt den echten Effekt (alle Kolonie-Kacheln erkundet).
 - Docs: `GameTick.php`-Klassen-Docblock (Tick-Schritt-Liste) neu durchnummeriert (war lückenhaft 0→4→6, fehlende Schritte ergänzt), Credits-Mechanik-Beschreibung korrigiert.
+- Docs: GDD/ROADMAP-Drift-Audit — 6 Unstimmigkeiten gefunden und behoben (veraltete Missions-/Regolith-Werte in §8b/§4c, überholte §18.4-Break-even-Rechnung, undokumentierte Objective-Ziel-Änderungen, stale ROADMAP-Zeile, §15-Aufgabenpool-Prosa vs. tatsächliche 8-Task-Implementierung ins Anhang-B-Drift-Register aufgenommen).
 
 ## 2026-08-17
 
