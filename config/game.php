@@ -329,7 +329,13 @@ return [
         // checked the Rang-2 case; the Rang-2→3 jump stayed at 2.67× and was the actual,
         // *permanent* Post-Phase-1 collapse trigger (advisors never demote). See GDD §18.4
         // Nachtrag 2026-08-14 for the full break-even derivation.
-        'upkeep' => [1 => 10, 2 => 25, 3 => 50],
+        // Rank-3 50 → 35 (2026-08-18, game-designer review): with the 4th advisor
+        // slot now reachable (max_slots above), 4× Rank-3 = 200 Cr/Tick against a
+        // realistic ~110-155 Cr/Tick non-Cantina income — structurally negative.
+        // 35 brings 4× Rank-3 down to 140 Cr/Tick, a small positive-to-neutral
+        // margin instead of -40 to -90 Cr/Tick (see docs re: Post-Phase-1 collapse,
+        // ROADMAP.md "Offene Pfad-Paritäts-Fragen").
+        'upkeep' => [1 => 10, 2 => 25, 3 => 35],
     ],
 
     // Passive Credits income per tick (GDD §3).
@@ -349,7 +355,12 @@ return [
         // 20 → 35 (GDD §18.4 Nachtrag 2026-08-14) — Uplink Station doesn't conflict
         // with the Sciencelab/Hangar/Cantina path choice (separate CC-Lv2 gate), so
         // it's the deliberate active-effort lever for players who skip the Cantina.
-        'relay_bonus_per_uplink_level' => 35,
+        // 35 → 45 (2026-08-18, game-designer review): non-Cantina paths' income
+        // (nexus_subsidy + this + episodic missions) still sat below 4-advisor
+        // upkeep even after the upkeep[3] cut above — this is the second, smaller
+        // lever, chosen because it's path-neutral (doesn't inflate the already
+        // overcompensating Cantina/Corvan channel).
+        'relay_bonus_per_uplink_level' => 45,
         // "Handelsvertrag" — Cr/Tick flat income while a Konsul (trader advisor,
         // personell_id 92) is assigned to the colony AND the Cantina (Bar, building_id
         // 52) is built (level >= 1). Keyed by the Konsul's current rank. Represents the
@@ -547,7 +558,11 @@ return [
         'items' => [
             'ap_flex' => ['label' => 'AP-Paket (flexibel)',       'cost' => 800,  'ap_amount' => 20],
             'ap_targeted' => ['label' => 'AP-Paket (Kenntnis)',       'cost' => 500,  'ap_amount' => 15],
-            'information' => ['label' => 'Systemkarte vollständig',   'cost' => 1200],
+            // Label corrected 2026-08-18 — "Systemkarte" was the pre-2026-06-20
+            // galaxy map feature (removed); this item actually sets
+            // colony_tiles.is_explored=true for every tile (MerchantService::apply(),
+            // case 'information'), not a system-wide map.
+            'information' => ['label' => 'Vollständige Kartierung (alle Kacheln)',   'cost' => 1200],
             'repair_kit' => ['label' => 'Reparatur-Kit (+30 SP)',    'cost' => 400,  'sp_amount' => 30],
             'trust_boost' => ['label' => 'Vertrauensschub (+15)',     'cost' => 600,  'trust_amount' => 15],
         ],

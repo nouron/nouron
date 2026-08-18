@@ -31,18 +31,27 @@ use Illuminate\Support\Facades\DB;
  * Run for a given run:  php artisan game:tick --run=1
  * Override tick number: php artisan game:tick --tick=16300
  *
- * Steps per tick:
- *  0. Hangar deliveries   — transition building→docked ships; expire pending ships
- *  4. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
- *  6. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
- *  7. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
- *  8. Resource generation — produce colony resources per industry building level (trust multiplier applied)
- *  8b. Trust calculation  — recalculate colony trust and store in colony_resources (resource_id=12)
- *  8c. Passive Credits    — Nexus subsidy (30 Cr) + colony tax per housing level (20 Cr/level) added to user Credits
- *  8d. Advisor upkeep     — deduct Credits per active advisor by rank (10/50/160 Cr); clamped to ≥ 0
- *  9. Advisor ticks       — increment active_ticks, check rank promotions
- * 10. Bar offers          — expire stale offers, generate new NPC offers per colony with Bar
- * 11. Merchant spawn      — check each colony for a new Traveling Merchant visit
+ * Steps per tick (renumbered sequentially 2026-08-18 — was gapped 0→4→6 from
+ * removed/merged steps, and missing several since added; step order below
+ * matches handle()'s actual call order):
+ *  1. Hangar deliveries   — transition building→docked ships; expire pending ships
+ *  2. Hangar missions     — resolve dispatched missions (complete/abort), apply rewards
+ *  3. Building decay      — decrement status_points (per-type decay_rate); level-down at ≤ 0
+ *  4. Research decay      — decrement colony_researches.status_points; level-down at ≤ 0
+ *  5. Supply cap          — SET user_resources.supply = CC_flat + housing_level × 8 (cap model)
+ *  6. Resource generation — produce colony resources per industry building level (trust multiplier applied)
+ *  7. Food consumption    — deduct Organics per colonist; trust penalty on shortfall
+ *  8. Encounters          — roll GDD §9 hazards (storm/instability/plague) per colony, Phase-1 ramp applies
+ *  9. Trust calculation   — recalculate colony trust and store in colony_resources (resource_id=12)
+ * 10. Passive Credits     — nexus_subsidy (config('game.credits.nexus_subsidy')) + Uplink Station level ×
+ *                           relay_bonus_per_uplink_level, added to user Credits
+ * 11. Advisor upkeep      — deduct Credits per active advisor by rank (config('game.advisor.upkeep')); clamped to ≥ 0
+ * 12. Advisor ticks       — increment active_ticks, check rank promotions
+ * 13. Bar offers          — expire stale offers, generate new NPC/Corvan offers per colony with Bar
+ * 14. Merchant spawn      — check each colony for a new Traveling Merchant visit
+ * 15. Run structure       — phase transitions, objective progress, run-end checks (outside the DB transaction
+ *                           above so endRun() can commit independently — see inline comment at the call site)
+ * 15a. Nexus interventions — Phase-2-only: Sol-30/50/65/80 warnings/sanctions, nexus_debt fail
  */
 class GameTick extends Command
 {
@@ -159,7 +168,7 @@ class GameTick extends Command
             $this->line("  Merchant visits spawned:  {$n}");
         });
 
-        // Step 12 — Run structure: phase transitions, objective progress, run-end checks.
+        // Step 15 — Run structure: phase transitions, objective progress, run-end checks.
         // Runs outside the main DB::transaction so that endRun() can commit independently
         // and return early without rolling back the tick's resource/decay work.
         $run->refresh();
@@ -178,7 +187,7 @@ class GameTick extends Command
         if ($run->phase === 2) {
             $runProgressService->updateObjectiveProgress($run);
 
-            // Step 12a — Nexus interventions (warnings, sanctions, nexus_debt fail).
+            // Step 15a — Nexus interventions (warnings, sanctions, nexus_debt fail).
             $runProgressService->checkNexusInterventions($run);
             $run->refresh();
 
