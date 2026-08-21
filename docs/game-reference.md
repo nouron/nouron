@@ -121,8 +121,10 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | Schiff | Supply-Kosten | Max SP | Decay-Rate | Hangar-Gate | Stärkewert |
 |---|---|---|---|---|---|
 | **Drohne** | 0 | ? | ? | Nein | 0 |
-| **Frachter** | 6 | ? | ? | Ja (Hangar Lv1) | 0 |
-| **Korvette** | 14 | ? | ? | Ja (Hangar Lv3) | 3 |
+| **Frachter** | 0 | ? | ? | Ja (Hangar Lv1) | 0 |
+| **Korvette** | 0 | ? | ? | Ja (Hangar Lv3) | 3 |
+
+> **Supply-Kosten**: alle Schiffe 0 — Schiffe verbrauchen kein Supply (Design-Entscheidung 2026-06-08, `config/ships.php` → `supply_cost`)
 
 > **Hangar-Level = Schiffsklasse**: Lv1 = Drohne, Lv2 = Frachter, Lv3 = Korvette
 > Instanzen sind separate Achse (supply-limitiert, unbegrenzt Slots theoretisch)
@@ -226,7 +228,7 @@ Alle Werte Cr/Tick, angewendet nach Ressourcen-Generierung in GameTick Schritt 8
 | Aktion | Betrag |
 |---|---|
 | Advisor Hire (Rang 1) | je Typ: 300–500 Cr |
-| Advisor Rank 2 → 3 Promotion | 150 Cr (einmalig) |
+| Advisor Rank 1 → 2 Promotion | 150 Cr (einmalig) |
 | Advisor Rank 2 → 3 Promotion | 250 Cr (einmalig) |
 | Advisor Upkeep (Rang 1–3) | 10/25/35 Cr/Tick (laufend) |
 

@@ -6,6 +6,7 @@
 - Docs: Anhänge aus GDD ausgegliedert — `docs/gdd-balance-checklist.md` (Balance-Index, Playtest-Instrumentierung) + `docs/gdd-config-audit.md` (GDD↔Config-Drifts). GDD 4034 → 3900 Zeilen.
 - Docs: ADR 0004 umgesetzt — GDD-Zahlen-Scope Reorganisation (Zwei-Schichten-Modell). GDD behält Mechanik/Formeln/Beispiele, alle konkreten Zahlenwerte raus (~265 Zeilen), Config wird Source of Truth für alle Spielwerte, game-reference.md als Lookup-Tabellen-Layer. GDD 3900 → 3635 Zeilen nach game-designer Cleanup.
 - Docs: CLAUDE.md aktualisiert — neue Sektion "GDD Dokumentation (ADR 0004)" mit Zwei-Schichten-Modell dokumentiert.
+- Docs: frischer GDD↔Code-Drift-Audit (`docs/gdd-config-audit.md` neu geschrieben, ersetzt Stand 2026-08-02) — 6 Abweichungen behoben: §13 Rang-System auf den echten AP-Pool umgeschrieben (alte per-Berater-Tabelle war Vor-Konsolidierung-Stand), §10 Kenntnis-Effekte an die tatsächliche Implementierung angepasst (totes Primär-/Sekundäreffekt-Modell + toter Config-Key entfernt), §14 "Moralsystem" → "Vertrauenssystem" umbenannt (Implementierungs-TODOs waren längst erledigt), §15 Aufgabenpool-Tabelle auf die echten 8 `RunProgressService`-Tasks korrigiert, Decay-Dezimalwert-Range korrigiert, `game-reference.md` Schiffs-Supply-Kosten (waren 6/14, tatsächlich 0) + Promotion-Zeilenbeschriftung gefixt.
 
 ## 2026-08-18 (Nachtrag)
 
