@@ -928,7 +928,7 @@ produzierte Menge = Σ curve[1..aktuelles Level]
 ],
 ```
 
-Kumulierte Gesamtwerte bei max_level=8: Harvester **70** Regolith/Sol, Agrardom **58** Organika/Sol.
+Genaue kumulierte Gesamtwerte pro Gebäude und Level: siehe `docs/game-reference.md#ressourcenproduktion`.
 
 Neue Produktionsgebäude können ohne Code-Änderung ausschließlich durch Erweiterung dieser Config hinzugefügt werden — dabei jeweils `max_level` in `config/buildings.php` setzen, sonst läuft die Kurve unbegrenzt am letzten definierten Wert weiter (Deckel via `GameTick::cumulativeCurveYield()`).
 
@@ -954,7 +954,7 @@ Die Koloniegröße wird von drei unabhängigen Achsen begrenzt. Jede hat eine ei
 
 | Achse | begrenzt | wird bezahlt mit |
 |---|---|---|
-| **Breite** — Anzahl Gebäudetypen | Bauplatz (15 Tiles) | Instandhaltung: Σ `decay_rate` in AP **und** 2 Rg je SP, jeden Sol |
+| **Breite** — Anzahl Gebäudetypen | Bauplatz (15 Tiles) | Instandhaltung: Σ `decay_rate` in AP und Regolith pro Schadenpunkt, jeden Sol |
 | **Tiefe** — Summe der Gebäudelevel | **Supply-Cap** | — (reines Cap, kein laufender Abfluss) |
 | **Tempo** | AP-Rate (§13.2) | die 100-Sol-Uhr (§18.4) |
 
@@ -985,7 +985,7 @@ Eine neue Einheit kann nur gebaut / angestellt werden wenn `freies_supply >= Kos
 | Wohnhabitat | wächst pro Einheit, max. 6 Instanzen (ergibt Tile-Limit) |
 | Kenntnisse | **nicht-linear pro Level** (siehe unten) |
 
-**Startsituation:** CC Lv1 = 10, 0 Wohnhabitate → Supply-Cap = **10**. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap springt auf 18.
+**Startsituation:** CC Lv1 liefert einen Basis-Cap, ohne Wohnhabitate. Erster Tutorial-Schritt: Wohnhabitat bauen → Cap erhöht sich. Genaue Werte: `config/game.php`.
 **Hard-Cap:** 200 Supply.
 
 > **Tile-Budget:** 10 Nicht-CC-Gebäude + 5 Wohnhabitat = 15 Tiles (voll). Wer das 6. Wohnhabitat will, muss ein anderes Gebäude opfern — bewusste Designentscheidung für Knappheit.
@@ -1114,13 +1114,13 @@ Beispiel: max_status_points=5, decay_rate=0.3
 | Entität | Typ | Konsequenz bei SP ≤ 0 |
 |---------|-----|----------------------|
 | Leveled Building (allgemein) | Leveled | Level − 1; status_points reset auf max_status_points; INNN-Ereignis |
-| Wohnhabitat | Instanced | **Instanz zerstört** (kein Level zum Abziehen); Supply-Cap sinkt um 8; INNN-Ereignis |
+| Wohnhabitat | Instanced | **Instanz zerstört** (kein Level zum Abziehen); Supply-Cap sinkt; INNN-Ereignis |
 | Hangar | Instanced | **Instanz zerstört**; zugewiesenes Schiff wird **unbrauchbar** (nicht zerstört); INNN-Ereignis |
 *(Kenntnis — kein Decay; Kenntnisse haben kein SP-System, siehe §10)*
 
 > **Instanced vs. Leveled:** Leveled Buildings verlieren ein Level und regenerieren SP — sie geben mehrere Chancen. Instanced Buildings (Wohnhabitat, Hangar) haben kein Level: Decay auf 0 zerstört die Instanz sofort. Das macht sie gefährlicher zu vernachlässigen, erlaubt aber bewusst riskantes Spiel (Repair-AP sparen auf eigene Gefahr).
 
-> **Manuelle Reparatur:** kostet 1 Construction-AP **+ 2 Regolith pro Klick** (+1 SP). Hartes Gate — ohne Regolith ist der Reparatur-Button gesperrt. CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Schutz). Vollständige Kosten-Regeln siehe §4 „Baukosten & Level-Up-Kosten".
+> **Manuelle Reparatur:** kostet Construction-AP und Regolith pro Schritt. Hartes Gate — ohne Regolith ist der Reparatur-Button gesperrt. CC und Harvester sind regolithfrei reparierbar (AP-only, Bootstrap-Schutz). Vollständige Kosten-Regeln siehe §4 „Baukosten & Level-Up-Kosten" und `config/game.php`.
 
 > **Notreparatur (CC und Wohnhabitat):** Wenn SP dieser kritischen Strukturen unter einen Schwellwert fällt, wird automatisch eine Notreparatur ausgelöst — kostet Credits statt AP. Verhindert unbeabsichtigten Verlust, nicht aber bewusste Vernachlässigung (Credits müssen vorhanden sein).
 
@@ -1136,24 +1136,14 @@ Die Technologie-Tabelle enthält für jede Entität einen "Sole bis Verlust"-Wer
 decay_rate = max_status_points / ticks_until_lost
 ```
 
-Mit `max_status_points = 20` als Standard ergeben sich z.B.:
-
-| Entität | Sole bis Verlust (ticks_until_lost) | decay_rate (bei SP=20) |
-|---------|-----------------|------------------------|
-| Religiöse Stätte (temple) | 10 | 2.0 |
-| Cantina (bar) | 20 | 1.0 |
-| Harvester, Agrardom | 21 | 0.95 |
-| Analytik-Labor (sciencelab) | 21 | 0.95 |
-| Krankenstation (infirmary), Hangar | 30 | 0.67 |
-| Wohnhabitat (housingComplex) | 45 | 0.44 |
-| Kommandozentrale (max Lv5), Kolonialdenkmal | 60 | 0.33 |
+Genaue `decay_rate`-Werte pro Gebäude und berechnete Verlustzeitspannen: siehe `docs/game-reference.md#verfall-und-decay-raten`.
 
 
 > **Sol-Skalierung:** Die Sol-Anzahl ist zeitunabhängig — nur die Echtzeit-Dauer ändert sich je nach wie lang ein einzelner Sol in echten Stunden dauert. Das ist die gewünschte Eigenschaft des Sol-basierten Systems (intern: tick-basiert).
 
 > Konkrete Werte per Migration in die Stammdaten-Tabelle (`buildings.decay_rate`). **Kenntnisse haben kein Decay-System** — `researches.decay_rate` ist für alle `knowledge_*`-Einträge 0 und wird im Tick-Loop übersprungen (GDD §10). **Schiffe haben keinen Zeit-Decay** — ihr Verschleiß läuft über Außenmissionen (siehe "Schiffs-Verschleiß" unten).
 
-**Minimum:** Jede Entität hat mindestens **5 max_status_points**.
+**Minimum:** Jede Entität hat einen Mindestwert für max_status_points; siehe `config/buildings.php`.
 
 > ⚠️ **Gnadenfrist** (kein Decay für neue Schiffe/Gebäude für X Sole): vorerst nicht implementiert. Kann in einer späteren Phase evaluiert werden.
 
@@ -1202,11 +1192,10 @@ Jeder Schiffstyp hat eine unterschiedliche Verschleiß-Rate pro Sol im Einsatz. 
 
 **Kein passiver Decay:** Ein gedocktes Schiff verliert keine SP. Das unterscheidet Schiffs-Verschleiß fundamental von Gebäude-Decay — nur Aktivität kostet.
 
-**Reparatur:** Wie Gebäude — **1 Construction-AP → +2 SP** (`REPAIR_SP_PER_AP`), gedeckelt auf 20 (`SHIP_MAX_STATUS`), AP-Chip am Button. Bereits implementiert (`HangarService::repairShip`).
 
 > ⚠️ BALANCE CONCERN: `wear_per_sol`-Richtwerte sind ungetestet. Zielgröße: eine 3-Sol-Mission kostet 2–3 Construction-AP Reparatur (Drohne). Fühlt sich Verschleiß im Playtest wie Rauschen an → Werte ×1,5; frisst er den Construction-Pool → Drohne auf 1,0 senken.
 
-**Reparatur:** Fixkosten pro Klick — **1 Construction-AP → +2 `status_points`** (`REPAIR_SP_PER_AP`), gedeckelt auf `max_status_points` (20). Gleiche Interaktion wie Gebäude-Reparatur (1 Klick = 1 AP), damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Kein spielergewählter AP-Betrag mehr.
+**Reparatur:** Fixkosten pro Klick — Construction-AP gegen Statuswiederherstellung, gedeckelt auf `max_status_points`. Gleiche Interaktion wie Gebäude-Reparatur, damit sich „Reparieren" spielweit konsistent anfühlt; der AP-Verbrauch wird vorab als Chip am Button angezeigt. Exakte Kosten: siehe `config/ships.php`.
 
 > **Offen:** Zusätzliche Credit-Kosten pro Reparatur (`config/ships.php → repair_cost_per_point`) sind im Design vorgesehen, aber noch nicht implementiert — eigener Balance-Task.
 
@@ -1585,7 +1574,7 @@ Die Bar ist ab CC Lv2 verfügbar. Pro Sol erscheinen 0–2 Gäste — Händler, 
 
 Erst nach Freigabe: TDD-Umsetzung durch `game-developer`/`backend-coder` (Zusammenführung der Spawn-/Angebotslogik, Architekturentscheidung dort), `content-writer` für Corvans Charakterblatt-Update.
 
-Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet 1 AP** aus dem gemeinsamen Pool (§13.1) — der Handel konkurriert damit direkt mit Bau und Kenntnissen um dieselbe Kapazität.
+Der Spieler entscheidet pro Angebot: annehmen oder ablehnen. **Annehmen kostet AP** aus dem gemeinsamen Pool (§13.1) — der Handel konkurriert damit direkt mit Bau und Kenntnissen um dieselbe Kapazität. Exakte Kosten: siehe `config/game.php`.
 
 **Handelsvertrag (neue, garantierte Einnahmequelle, 2026-07-19):** Beide obigen Angebotstypen erzeugen kein Credits-Einkommen für den Spieler — sie kosten Credits (Kauf) oder sind ressourcenneutral (Tausch). Das war die Kernursache dafür, dass die Kolonie strukturell kein Credits-Einkommen aus Handel ziehen konnte (Playtest-Bot-Befund, PR #218; siehe §18 `task_credit_reserve`). Fix: kein Bar-Angebot im bisherigen Sinn (kein Karten-Slot, keine Annahme, kein AP-Kosten), sondern eine **passive Cr/Sol-Einnahme** — strukturell identisch zur Relaisvergütung (§3): sie fließt automatisch pro Tick, solange ein Konsul der Kolonie zugewiesen ist **und** die Cantina mind. Lv1 gebaut ist. Thematisch vermittelt der Konsul laufende Handelsverträge im Hintergrund; die Kolonie liefert dafür keine Ressourcen. Config-Key-Vorschlag: `game.credits.consul_contract_income_per_rank`, verarbeitet in `GameTick` im selben Schritt wie `nexus_subsidy`/`relay_bonus_per_uplink_level`. Werte nach Konsul-Rang:
 
@@ -2623,26 +2612,13 @@ Der Vorschlag enthielt ursprünglich eine Preisänderung `bar.base_prices` auf R
 
 **Das ist zurückgewiesen.** Die Beobachtung stimmt für den Ist-Zustand, aber die Knappheitsordnung aus §3 ist die Vorgabe: `Regolith < Organika < Werkstoffe`. Die heutigen Preise (Rg 30 / Or 50 / Wk 60) haben die **richtige Reihenfolge**; der Vorschlag hätte sie vertauscht.
 
-**Was bleibt:** Der Abstand zwischen Organika und Werkstoffen ist zu klein für „deutlich knapper als Organika". Eine Anpassung, die die Ordnung respektiert:
-
-| | heute | Vorschlag |
-|---|---|---|
-| Regolith | 30 | **25** — wird mit dem neuen Sockel reichlicher, der Preis folgt |
-| Organika | 50 | **50** (unverändert) |
-| Werkstoffe | 60 | **110** — „anfangs sehr begrenzt", der Abstand muss die Knappheit zeigen |
-| `compound_import_price` | 90 | **165** — hält das Verhältnis ~1,5 : 1 zum Spotpreis (§3) |
+**Was bleibt:** Der Abstand zwischen Organika und Werkstoffen ist zu klein für „deutlich knapper als Organika". Eine Anpassung der Handelpreise, die die Knappheitsordnung (§3) respektiert. Genaue Preiswerte und die Nexus-Direktimport-Preise: siehe `docs/game-reference.md#handelpreise` und `config/game.php`.
 
 **Zwei Folgen, die noch offen sind:**
 
 > **⚠️ Der Pfad-C-Hebel muss neu gedacht werden — Vorschlag siehe §4b.** Der vorgeschlagene Organika→Regolith-Tausch setzte voraus, dass Organika der Überschuss ist. Nach der Knappheitsordnung ist es umgekehrt — man würde das knappere Gut gegen das häufigere tauschen. Der Credits→Regolith-Ankauf ist bei 25 Cr/Rg zwar billiger als zuvor gerechnet (12 Rg/Sol ≈ 300 Cr/Sol), trägt aber immer noch keine Ökonomie. **Pfad C braucht keinen großen Regolith-Hebel:** Wenn Regolith laut §3 „verfügbar sein soll", ist es nicht der Engpass, gegen den die Pfade sich beweisen müssen, und seit §4c läuft das Regolith-Wachstum ohnehin über die pfad-unabhängige Harvester-Zweitinstanz. Pfad C's Beitrag liegt stattdessen bei Credits — Design „Pfad-C-Hebel: von Regolith zu Credits" in **§4b**, freigegeben 2026-08-05 (mit Korrektur 2026-08-06, siehe dort).
 
-> **⚠️ Agrardom-Kurve: das obere Ende prüfen, nicht die Mechanik.** Der Organika-Verbrauch skaliert über `food_need = intdiv(usedSupply, 4)` mit der **Ausbautiefe** der Kolonie — es ist also ein Rennen zwischen Agrardom-Level und Koloniewachstum, dazu der einmalige Missionsproviant (`sol_distance × 3`) und Event-Kosten. Das ist genau der Mechanismus, den die Knappheitsordnung verlangt, und er funktioniert:
->
-> | verbrauchter Supply | Bedarf/Sol | nötiges Agrardom-Level (kumuliert 8/20/32/41/48) |
-> |---|---|---|
-> | 40 | 10 | Lv2 |
-> | 80 | 20 | Lv2 knapp, Lv3 sicher |
-> | 100 | 25 | Lv3 |
+> **⚠️ Agrardom-Kurve: das obere Ende prüfen, nicht die Mechanik.** Der Organika-Verbrauch skaliert über `food_need = intdiv(usedSupply, 4)` mit der **Ausbautiefe** der Kolonie — es ist also ein Rennen zwischen Agrardom-Level und Koloniewachstum, dazu der einmalige Missionsproviant und Event-Kosten. Das ist genau der Mechanismus, den die Knappheitsordnung verlangt. Genaue Beispielwerte und die Produktionskurven: siehe `docs/game-reference.md#ressourcenverbrauch` und `config/game.php`.
 > | 126 (Cap der Zielkolonie) | 31 | Lv3 grenzwertig, Lv4 komfortabel |
 >
 > Wer die Kolonie in die Tiefe baut, ohne den Agrardom nachzuziehen, gerät in den Mangel — so gewollt. **Zu prüfen ist deshalb nur das obere Ende:** Lv4/Lv5 liefern 41/48 gegen einen Bedarf, der bei der Zielkolonie nicht über ~31 steigt. Ab Lv4 ist das Rennen entschieden und Organika hört auf, eine Sorge zu sein. Ob die Kurve dort flacher auslaufen sollte — oder ob Missionen und Events genug Zusatzlast erzeugen, um die Marge dünn zu halten —, gehört in dieselbe Herleitung wie der Regolith-Satz.
@@ -3147,7 +3123,7 @@ Nexus belohnt Kolonien, die ihre Milestone-Ziele übertreffen:
 #### Sanktionen (wenn der Spieler hinter Plan liegt)
 
 Nexus erhöht den Druck auf Kolonien, die Milestones verfehlen:
-- Berater kurz abgezogen ("vorübergehend für administrative Zwecke einberufen") — 1 Sol AP-Drop
+- Berater kurz abgezogen ("vorübergehend für administrative Zwecke einberufen") — temporärer AP-Kapazitätsverlust
 - Kleine Credits-Gebühr ("Overhead für Missionsaufsicht")
 - Gnadenfrist-Verkürzung (siehe unten)
 
