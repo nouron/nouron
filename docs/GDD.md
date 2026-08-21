@@ -35,7 +35,7 @@
     - 13.5 [Instandhaltungslast und die Regolith-Grenze](#135-instandhaltungslast-und-die-regolith-grenze)
     - 13.6 [Zahlenvorschlag, erste Fassung (überholt)](#136-zahlenvorschlag-erste-fassung-überholt--siehe-137)
     - 13.7 [Regolith-Zahlensatz, hergeleitet](#137-regolith-zahlensatz-hergeleitet-stand-2026-08-02--vorschlag)
-14. [Moralsystem](#14-moralsystem)
+14. [Vertrauenssystem](#14-vertrauenssystem)
 15. [Run-Struktur (Roguelike-Modus)](#15-run-struktur-roguelike-modus)
 16. [Onboarding](gdd/onboarding.md) → eigene Datei
 17. [Progressive Discovery System](gdd/progressive-discovery.md) → eigene Datei
@@ -1099,14 +1099,15 @@ Entropie ist ein übergreifendes Designprinzip: Ohne aktive Pflege degradiert di
 
 Gebäude verfallen ohne aktive Pflege. Jedes Exemplar hat individuelle Werte für `max_status_points` und `decay_rate` (SP/Sol, intern SP/Tick), die in den Stammdaten-Tabellen (`buildings`) gespeichert sind.
 
-**Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert (0.05–0.3 SP/Sol). Pro Sol wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
+**Fraktionaler Decay:** Die `decay_rate` ist ein Dezimalwert, gestaffelt in Klassen von "Robust" (langsamster Verfall) bis "Fragil" (schnellster Verfall) — siehe `config/buildings.php` bzw. die vollständige Tabelle in `docs/game-reference.md#4-gebäude-decay-raten--status-points`. Pro Sol wird dieser Wert von den `status_points` des Exemplars abgezogen. Ein ganzer SP geht erst verloren, wenn sich genug Verlust akkumuliert hat.
 
 ```
-Beispiel: max_status_points=5, decay_rate=0.3
-  Nach Sol 1: status_points = 4.70
-  Nach Sol 2: status_points = 4.40
-  Nach Sol 3: status_points = 4.10
-  Nach Sol 4: status_points = 3.80  ← erster ganzer SP verloren
+Beispiel (Formel-Illustration, nicht die aktuelle Klasse "Robust"):
+max_status_points=5, decay_rate=0.5
+  Nach Sol 1: status_points = 4.50
+  Nach Sol 2: status_points = 4.00
+  Nach Sol 3: status_points = 3.50
+  Nach Sol 4: status_points = 3.00  ← zwei ganze SP verloren
 ```
 
 **Konsequenzen nach Building-Typ:**
@@ -1461,32 +1462,19 @@ Jedes Level wird durch Investition von Analytiker-AP erarbeitet. AP-Kosten steig
 > **Wichtig:** Diese Kostenkurve ist an `game.ap.base`/`advisor.ap_per_rank` gekoppelt — bei Änderung dort erneut gegen die AP/Sol-Rate prüfen, nicht isoliert betrachten.
 > **Zusätzlicher Bugfix (2026-07-14):** Die Techtree-UI zeigte bis dahin für jede Kenntnis konstant 3 AP an (Fortschrittsleiste + Ausbau-Button) — ein stiller Off-Sync zwischen dem statischen `researches.ap_for_levelup`-DB-Feld (nur beim initialen Migrations-Seed gesetzt, nie synchronisiert) und den tatsächlichen, gestaffelten `levelup_costs` in dieser Config. Das Serverbackend (`ResearchService::resolveApForLevelup`) verlangte schon immer den korrekten, höheren Wert — nur die UI-Anzeige und die Klick-Grenze der Leiste hingen am veralteten Wert, sodass eine Investition über 3 AP hinaus optisch möglich schien, aber lautlos nichts bewirkte. `TechtreeController` liest den Kenntnis-Kostenwert jetzt dynamisch aus derselben Quelle wie das Backend.
 
-### Zwei Effekt-Ebenen
+### Effekte wirken direkt aus dem Kenntnis-Level
 
-Jede Kenntnis hat:
+Kenntnis-Effekte werden **automatisch** wirksam, sobald die Kenntnis das nötige Level erreicht hat — ohne dass sie einem Berater zugewiesen werden muss. Das frühere Modell (Primär-/Sekundäreffekt mit Berater-Zuweisungspflicht für den zweiten Effekt) ist entfallen; es gibt keine Zuweisungs-UI und keine Slot-Beschränkung mehr.
 
-- **Primäreffekt** — aktiv sobald freigeschaltet, unabhängig von Beratern (z.B. Supply-Cap-Bonus, Vertrauenseffekt)
-- **Sekundäreffekt** — nur aktiv wenn die Kenntnis einem Berater zugewiesen ist; variiert je nach Berater-Typ
+Bereits implementierte Effekte (`config/knowledge.php`):
 
-Jede Kenntnis-Berater-Kombination bietet einen Sekundäreffekt, der die Domäne des Beraters mit dem Wissen der Kenntnis verbindet. Beispiele: geology als Baumeister senkt Gebäudekosten, geology als Konsul verbessert Rohstoff-Preise, cartography als Raumfahrer verbessert Erkundungs-Effizienz, etc.
+- `construction`, `cartography`, `trade` senken additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`).
+- `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
+- `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
 
-Konkrete Sekundär-Effekt-Werte und komplette 7×4-Matrix: siehe `config/game.php → knowledge_effects.*` und `docs/game-reference.md#wissen-sekundär-effekte`.
+Nicht jede Kenntnis trägt zwingend einen mechanischen Effekt dieser Art — alle Kenntnisse tragen zusätzlich einheitlich zum Supply-Cap-Wachstum bei (§7). Welche Kenntnis welchen Effekt trägt und in welcher Höhe, ist ausschließlich in `config/knowledge.php` gepflegt; Lookup-Tabelle: `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
 
-> **TODO Design:** Vollständige 7×4-Matrix (alle Kenntnisse × alle Berater) ausarbeiten — nach erstem Playtest, wenn klar ist welche Kombinationen strategisch interessant sind.
->
-> **Korrektur (Juli 2026):** Die ursprünglichen Platzhalterwerte für `defense`/`advisor_pilot` ("AP-Kosten für Angriff") und `cartography`/`advisor_pilot` ("Bewegungsreichweite") referenzierten die 2026-06-20 gestrichene Flotten-/Systemkarten-Mechanik (Angriffsorder, Flottenbewegung). Durch zivile Äquivalente ersetzt (Schutzmissions-AP, Tile-Erkundung) — weiterhin nur Platzhalter, keine finalen Werte.
-
-### Berater-Zuweisung
-
-Freigeschaltete Kenntnisse können einem Berater zugewiesen werden (UI: Drag & Drop). Der Sekundäreffekt der Kenntnis wird durch den zugewiesenen Berater bestimmt.
-
-**Slots je Berater nach Rang:** Jüngere Berater können keine Kenntnisse zugewiesen bekommen (kein Spezialisierungswissen). Bei Rang 2 ändert sich das — der Berater kann eine Kenntnis haben. Rang 3 erweitert das nicht weiter (dafür steigt der AP-Bonus — §13). Dadurch ist Rang-Aufstieg strategisch wertvoll nicht nur für mehr AP, sondern auch für Spezialisierungsmöglichkeiten.
-
-**Max. aktive Sekundäreffekte:** 4 (je ein Slot pro Berater, wenn alle auf Rang 2+ — vier Berater-Typen seit Zurückstellung des Strategen, 2026-08-02). Bezogen auf den vollen Kenntnisbaum (7 Kenntnisse, 4 Slots) bleiben 3 Kenntnisse ohne Sekundäreffekt.
-
-> ⚠️ BALANCE CONCERN: Innerhalb eines einzelnen Runs ist der volle Baum ohnehin nicht verfügbar (§ "Roguelike-Variabilität", z.B. 5 von 7 Kenntnissen). Bei 5 Kenntnissen und 4 Slots bleibt nur noch 1 Kenntnis ohne Sekundäreffekt — die Spezialisierungsentscheidung, die dieser Abschnitt als Designziel nennt, ist auf Run-Ebene damit deutlich schwächer als auf Baum-Ebene (war bei 5 Slots / 5-von-7 bereits 0, also eine Verbesserung, aber die Zielaussage "erzeugt echte Spezialisierungsentscheidungen" gilt so nur für den Baum, nicht für den Run). Nach erstem Playtest prüfen, ob Run-Ziehungsgröße oder Slot-/Kenntnisanzahl nachjustiert werden muss, damit auf Run-Ebene tatsächlich eine spürbare Auswahl entsteht.
-
-> **Balancing-Notiz:** Slot-Anzahl und Kenntnisanzahl sind Ausgangswerte für den ersten Playtest. Nach Erfahrungen aus dem Betrieb können zusätzliche Kenntnisse und/oder ein zweiter Slot bei Rang 3 eingeführt werden.
+> **TODO Design:** Weitere Kenntnis-Effekte (insbesondere für Kenntnisse ohne eigenen mechanischen Effekt bislang) sind offen für spätere Balancing-Passes — nach Playtest, wenn klar ist, welche Lücken am meisten drücken.
 
 ### Roguelike-Variabilität
 
@@ -1592,6 +1580,8 @@ Ohne zugewiesenen Konsul entfällt diese Einnahme vollständig — **beabsichtig
 **Bar-Level-Progression:**
 
 Höhere Bar-Level erhöhen die Angebots-Gültigkeit (Dauer) und die maximale Anzahl gleichzeitig aktiver Angebote. Details: siehe `config/buildings.php`.
+
+Zusätzlich zum Bar-Level selbst erhöht die Kenntnis **Handel** (`trade`) ab einem bestimmten Level die Zahl gleichzeitig aktiver Angebots-Slots weiter — der Effekt wirkt direkt aus dem Kenntnis-Level, ohne dass ein Berater zugewiesen sein muss (§10). Details: `config/knowledge.php → trade.bar_offer_boost_per_lv`, `docs/game-reference.md#kenntnisse-7-levelup-kosten-effekte`.
 
 **Konsul (advisor_trader) — Rang-Effekte:**
 
@@ -2148,32 +2138,19 @@ Missions-Auflösung läuft in **Tick-Schritt 7** (Advisor Ticks), nach AP-Berech
 
 ### Rang-System
 
-Jeder Berater hat einen von drei Rängen. Der Rang bestimmt den AP-Bonus pro Sol und den laufenden Upkeep in Credits.
+Jeder Berater hat einen von drei Rängen. Der Rang bestimmt, wie stark der Berater den gemeinsamen AP-Pool erhöht (§13.1) und wie hoch sein laufender Upkeep in Credits ist — beide Werte wachsen mit dem Rang, additiv auf den gemeinsamen Pool angerechnet, unabhängig von der Domäne des Beraters.
 
-| Rang | Bezeichnung | AP-Bonus/Sol | Gesamt-AP/Sol | Upkeep (Cr/Sol) |
-|------|-------------|--------------|---------------|-----------------|
-| 1 | Junior | +4 | 10 | 10 |
-| 2 | Senior | +7 | 13 | 25 |
-| 3 | Experte | +12 | 18 | 50 |
+Exakte Werte (AP-Bonus je Rang, Upkeep, Rang-Aufstiegs-Schwellen in aktiven Ticks, Beförderungskosten): siehe `config/game.php → advisor` und `docs/game-reference.md#5-berater-advisors-hire-kosten--ap-beiträge`.
 
-*(Gesamt-AP = 6 Grundwert + AP-Bonus)*
+> **Balance-Historie:** Die Upkeep-Kurve wurde mehrfach abgeflacht (2026-07-19, 2026-08-14, 2026-08-18) — ursprünglich steile Rang-Sprünge ließen die Credits-Ökonomie strukturell kollabieren, sobald mehrere Berater gleichzeitig aufstiegen (Playtest-Bot-Befund, PR #218; volle Herleitung inkl. Break-even-Rechnung siehe §18.4 Balancing-Richtlinien, `task_credit_reserve`). Begleitend wurden die Rang-Aufstiegs-Schwellen gestreckt — mehr Zeit, um Uplink-Station und Cantina vor dem teureren Upkeep hochzuziehen.
 
-> **Balance-Entscheidung (2026-07-19):** Upkeep-Kurve gegenüber der ursprünglichen Kalibrierung (10/50/160) abgeflacht — die alte Kurve ließ die Credits-Ökonomie strukturell kollabieren, sobald mehrere Berater gleichzeitig Rang 2 erreichten (Playtest-Bot-Befund, PR #218). Begleitend wurden die Beförderungs-Schwellen (`rank_thresholds`) von `[1=>10, 2=>20]` auf **`[1=>15, 2=>45]`** aktive Ticks gestreckt — mehr Zeit, um Uplink-Station und Cantina vor dem teureren Upkeep hochzuziehen.
->
-> **Nachtrag (2026-08-14):** die 07-19-Rechnung prüfte nur den Rang-2-Fall — der Rang-2→3-Sprung (30→80, 2,67×) blieb fast so scharf wie vorher und war der eigentliche, dauerhafte Kollaps-Auslöser in Phase 2 (Credits fielen dauerhaft auf 0, nicht nur vorübergehend). Upkeep-Kurve daher erneut abgeflacht auf **10/25/50** (Rang-3-Sprung jetzt 2,0×). Volle Herleitung inkl. Break-even-Rechnung für Rang 2 UND 3: siehe §18.4 Balancing-Richtlinien (`task_credit_reserve`, Nachtrag 2026-08-14).
+**Einstellungskosten (Rang 1) — typ-spezifisch:** Baumeister ist der günstigste Einstieg (Kernanforderung Tag 1); Analytiker, Raumfahrer und Konsul sind höher gestaffelt, gekoppelt an ihre spätere Verfügbarkeit (Analytiker erst ab CC Lv2, Raumfahrer voller Nutzen erst mit Hangar, Konsul mittlere Priorität). Exakte Beträge: `config/advisors.php`, `docs/game-reference.md`.
 
-**Einstellungskosten (Rang 1) — typ-spezifisch:**
-
-| Beratertyp | Kosten (Cr) | Begründung |
-|------------|-------------|-----------|
-| Baumeister | 300 | Kernanforderung Tag 1 — günstigster Einstieg |
-| Analytiker | 400 | Mittlere Priorität — erst bei CC Lv2 verfügbar |
-| Raumfahrer | 500 | Erkundungs-/Missions-fokussiert — voller Nutzen erst mit Hangar |
-| Konsul | 350 | Handelssupport — mittlere Priorität |
+**Beförderung** kostet beim Erreichen von Rang 2 bzw. Rang 3 zusätzlich zum laufenden Upkeep einen einmaligen Credits-Betrag (`config/game.php → advisor.promotion_costs`). Kann der Spieler die Beförderung nicht bezahlen, wird sie auf den nächsten Sol verschoben, bis genug Credits verfügbar sind.
 
 - **Upkeep** wird jeden Sol von den Colony-Credits abgezogen, solange der Berater `colony_id` gesetzt hat (Berater ist aktiv zugewiesen).
-- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisors.rank_thresholds`).
-- Alle Werte stehen in `config/game.php → advisor` (Einstellungskosten, AP, Upkeep, Rang-Thresholds).
+- **Rang-Aufstieg:** automatisch nach ausreichend kumulierten `active_ticks` (`config/game.php → advisor.rank_thresholds`).
+- Alle Werte stehen in `config/game.php → advisor` (Einstellungskosten, AP-Bonus, Upkeep, Rang-Thresholds, Beförderungskosten).
 
 > **UI-Anforderung:** Die Berater-Verwaltung zeigt für jeden aktiven Berater: Rang, AP-Beitrag/Sol, laufender Upkeep (Cr/Sol) und `active_ticks` zum nächsten Rang-Aufstieg. Diese vier Werte müssen auf einen Blick lesbar sein.
 
@@ -2212,7 +2189,7 @@ availableAP = Grundwert + Σ AP_bonus(rank) über alle zugewiesenen Berater − 
 
 Ein einziger Pool je Kolonie (13.1). `AP_bonus(rank)` ist der Beitrag jedes aktuell zugewiesenen Beraters, unabhängig von seiner Domäne — vier Berater erhöhen denselben Pool viermal. AP-Locks verfallen automatisch zum nächsten Sol; der Pool wird täglich vollständig erneuert.
 
-> **⚠️ Offen — Grundwert:** Der frühere Grundwert war 6 AP/Sol **pro Typ** (5 × 6 = 30 AP/Sol nominell, praktisch unbrauchbar wegen der Nicht-Mischbarkeit). Der neue Grundwert des gemeinsamen Pools ist noch nicht festgelegt und muss zusammen mit den Projektkosten kalibriert werden (13.5). Er darf nicht die Summe der alten Werte sein — sonst wächst die effektive Handlungsfähigkeit sprunghaft.
+Der Grundwert des gemeinsamen Pools ist seit 2026-08-03 kalibriert und freigegeben (`config/game.php → ap.base`) — bewusst deutlich kleiner als die Summe der früheren fünf Einzel-Pools, damit die effektive Handlungsfähigkeit gegenüber dem Vor-Konsolidierungs-Modell nicht sprunghaft wächst. Vertrauens- und Seuchen-Multiplikatoren (§9, §14) wirken zusätzlich multiplikativ auf den fertigen Grundwert+Bonus-Betrag, siehe `AdvisorService::getApBreakdown`. Exakter Wert: `docs/game-reference.md#9-action-points-ap`.
 
 ### AP-Verbrauch
 
@@ -2800,7 +2777,7 @@ Verfügbar(N) = Startbestand + 17×(N−1) − 2,94×N = Startbestand − 17 + 1
 
 ---
 
-## 14. Moralsystem
+## 14. Vertrauenssystem
 
 ### Design-Absicht
 
@@ -2983,7 +2960,7 @@ Vertrauen beeinflusst den Supply-Cap **nicht**. Das Supply-System ist ein separa
 
 **Kein neues Schema erforderlich.** `colony_resources.amount` (resource_id=12) speichert den aktuellen Vertrauenswert als Integer im Bereich -100 bis +100. Das ist ausreichend — Vertrauen ist ein Zustand, keine akkumulierte Menge.
 
-**Benötigt wird ausschließlich eine Konfiguration** in `config/game.php` unter dem Schlüssel `moral`. Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
+**Die Konfiguration** steht produktiv in `config/game.php` unter dem Schlüssel `trust` (Umbenennung von `moral`→`trust` abgeschlossen). Die vollständigen Werte (buildings, researches, ships, ships_cap, production_multiplier, ap_multiplier, events) sind dort implementiert — `config/game.php` ist die einzige Quelle der Wahrheit für alle Zahlenwerte. Dieses Dokument beschreibt die Semantik; die konkreten Zahlen stehen in der Konfigurationsdatei.
 
 ### Sol-Integration
 
@@ -2997,14 +2974,16 @@ Vertrauen wird als neuer **Tick-Schritt 6b** nach der Ressourcenproduktion berec
 
 Die Reihenfolge ist bewusst: Die Produktion von Sol N verwendet den Vertrauenswert von Sol N-1. Der neue Vertrauenswert gilt erst ab Sol N+1. Das verhindert zirkuläre Abhängigkeiten.
 
-### Implementierungsschritte
+### Implementierung (Stand)
 
-1. `config/game.php` — `moral`-Block hinzufügen (alle Werte aus obiger Tabelle)
-2. `app/Services/VertrauenService.php` — Service mit Methode `calculate(int $colonyId): int`
-3. `app/Services/ResourceService.php` (oder TickService) — `VertrauenService::calculate()` in Schritt 6b aufrufen und `colony_resources` (res_id=12) schreiben
-4. `app/Services/Techtree/PersonellService.php` — AP-Berechnung um `vertrauen_multiplier` erweitern
-5. Produktionslogik (`config/game.php → production`) — Vertrauen-Multiplikator anwenden
-6. UI: Vertrauen-Anzeige in der Ressourcenleiste (existiert als resource_id=12 bereits)
+Vollständig implementiert, kein offener TODO mehr:
+
+1. `config/game.php` — `trust`-Block produktiv (alle Werte, siehe oben).
+2. `app/Services/TrustService.php` — berechnet den Vertrauenswert je Kolonie.
+3. Tick-Integration in Schritt 6b (siehe unten) — schreibt `colony_resources` (res_id=12).
+4. `app/Services/AdvisorService.php` — AP-Berechnung berücksichtigt den Trust-AP-Multiplikator (`getApBreakdown`).
+5. Produktionslogik — Trust-Produktionsmultiplikator wird angewandt.
+6. UI: Vertrauen-Anzeige in der Ressourcenleiste (resource_id=12).
 
 ### Mögliche Erweiterungen (nach Playtest)
 
@@ -3062,24 +3041,22 @@ Startet direkt nach Phase 1. Dem Spieler werden 3 Aufgaben aus dem Aufgabenpool 
 
 ### Aufgabenpool
 
-10 Aufgabentypen (Pool). Pro Run werden 3 gezogen — mehr Varianz reduziert Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf mehr — Flotte/Systemkarte gestrichen, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
+8 Aufgabentypen (Pool, `RunProgressService::TASK_CATEGORIES`/`TASK_TARGETS`). Pro Run werden 3 gezogen — Varianz reduziert Wiederholungsgefühl. Alle Aufgaben sind zivil erfüllbar (es gibt keinen Kampf mehr — Flotte/Systemkarte gestrichen, §8). Jede Aufgabe passt zu vorhandenen Spielmechaniken.
 
-| # | Aufgabe | Kernmechanik | Spielstil |
-|---|---------|-------------|-----------|
-| 1 | **Handelsnetz** | X Handelsrouten aktiv + Gesamtvolumen Y Credits/Sol uber Z Sole aufrecht halten | Wirtschaft |
-| 2 | **Forschungsvorsprung** | Mindestens 3 Forschungen auf Level 5+ bringen | Forschung/Aufbau |
-| 3 | **Kolonieblute** | Vertrauen > 70 fur 10 aufeinanderfolgende Sole | Diplomatie/Zivilaufbau |
-| 4 | **Selbstversorgung** | Organika positiv produzieren (Netto > 0) **und** einen Werkstoff-Vorrat ≥ X Einheiten bei durchgehend positivem Credits-Saldo halten — für 15 aufeinanderfolgende Sole. (Werkstoffe sind nicht produzierbar, §3 — getestet wird stabiles Import-Management, nicht Eigenproduktion.) | Wirtschaft/Aufbau |
-| 5 | **Expeditionsstatus** | Alle Tiles der Exploration Zone vollständig aufgedeckt (gesamter äußerer Bereich, nicht nur Ring 1–2) | Exploration/Navigation |
-| 7 | **Handelspartner** | Mindestens X Transaktionen mit dem Reisenden Händler abgeschlossen + Credits-Saldo danach stets positiv | Wirtschaft |
-| 8 | **Ingenieursleistung** | Gesamt-SP-Kapazität aller Gebäude (Summe `max_status_points` aller colony_buildings) uber Schwelle Y | Aufbau/Optimierung |
-| 9 | **Kreditimperium** | Credits-Bestand X Sole uber Schwelle Y halten (kein einmaliger Peak, sondern anhaltender Wohlstand) | Wirtschaft |
-| 10 | **Expertenstab** | Alle Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher | Aufbau/Personal |
-| 11 | **Effizienzsprung** | AP-Nutzungsrate >= 90% fur 5 aufeinanderfolgende Sole (verbrauchte AP / produzierte AP) | Optimierung/Hardcore |
+| Aufgabe (`task_key`) | Kategorie | Kernmechanik |
+|---|---|---|
+| Handelsnetz (`task_trade_volume`) | Wirtschaft | Abgeschlossene Transaktionen mit dem Reisenden Händler im laufenden Run über einer Schwelle |
+| Forschungsvorsprung (`task_research_lead`) | Forschung/Aufbau | Mindestens einige Kenntnisse auf Höchstlevel gebracht |
+| Kolonieblüte (`task_colony_prosperity`) | Diplomatie/Zivilaufbau | Vertrauen über einer Schwelle für mehrere aufeinanderfolgende Sole |
+| Selbstversorgung (`task_self_sufficiency`) | Wirtschaft/Aufbau | Regolith- **und** Organika-Vorrat gleichzeitig über ihren jeweiligen Mindestschwellen **und** Supply > 0 — alle drei Bedingungen gleichzeitig, für mehrere aufeinanderfolgende Sole; jeder einzelne Ausfall setzt den Streak zurück |
+| Expeditionsstatus (`task_expedition_coverage`) | Exploration/Navigation | Alle Tiles der Kolonie-Zone erkundet |
+| Ingenieursleistung (`task_engineering_output`) | Aufbau/Optimierung | Gesamt-SP-Kapazität aller Gebäude (Summe `status_points` aller `colony_buildings`) über einer Schwelle |
+| Kreditreserve (`task_credit_reserve`) | Wirtschaft | Credits-Bestand über einer Schwelle für mehrere aufeinanderfolgende Sole (kein einmaliger Peak, sondern anhaltender Wohlstand) |
+| Expertenstab (`task_senior_advisors`) | Aufbau/Personal | Alle Berater-Slots besetzt + mindestens 2 Berater auf Rang Senior oder höher |
 
-> ⚠️ BALANCE CONCERN: Aufgaben 1, 7, 9 (alle Wirtschaft) dürfen nicht alle drei gleichzeitig gezogen werden. Aufgaben-Sets müssen mindestens 2 verschiedene Spielstilkategorien abdecken — eine Kombo-Blacklist ist vor der Implementierung zu definieren.
+Exakte Schwellen, Streak-Längen und Herleitung: `docs/game-reference.md#18-run-struktur`, vollständige Balancing-Historie unten in §18.4.
 
-> ⚠️ BALANCE CONCERN: Aufgabe 11 (Effizienz) kollidiert strukturell mit massivem Bauen (Aufgaben 2, 8) — "AP-effizient" und "viel bauen" sind Gegensätze. Aufgabe 11 sollte nie zusammen mit Aufgabe 2 oder 8 gezogen werden.
+> ⚠️ BALANCE CONCERN: Aufgaben-Sets sollten mindestens 2 verschiedene Kategorien abdecken, damit ein Run nicht ausschließlich Wirtschaftsaufgaben zieht (`task_trade_volume` + `task_credit_reserve` sind beide Wirtschaft). Eine Kombo-Blacklist bzw. -Regel für die Ziehung ist noch nicht implementiert.
 
 ---
 
