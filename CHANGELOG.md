@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-18 (Nachtrag)
+
+- Docs: GDD-Pflegestil-Umstellung, erste Runde (§4b Pfad-C-Hebel, §4c Harvester-Zweitinstanz, §18.4 Konsul/Cantina) — gestapelte Nachtrag-/Korrektur-Blöcke zu einer aktuellen Fassung konsolidiert (Git managed die Historie, nicht der Text mehr), Zahlenwerte aus Fließtext-Prosa entfernt zugunsten von Config-Verweisen. Rest des Dokuments folgt in weiteren Sessions.
+
 ## 2026-08-18
 
 - Balance: `advisor.upkeep[3]` 50→35, `credits.relay_bonus_per_uplink_level` 35→45 — die zwei am 2026-08-17 durchgerechneten, kleinen Fixes gegen die Credits-Pfad-Lücke (4×Rang3-Unterhalt 200→140 Cr/Tick, pfadneutraler zweiter Hebel für Nicht-Cantina-Läufe).
