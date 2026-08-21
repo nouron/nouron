@@ -85,6 +85,18 @@ Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
 | GDD, ROADMAP, CHANGELOG, ADRs | **Deutsch** |
 | Blade-Templates (sichtbare Texte) | immer via `__('key')`, nie hardcoded |
 
+## GDD Dokumentation (ADR 0004: Zahlen-Scope)
+
+**Zwei-Schichten-Modell seit 2026-08-21:**
+
+| Schicht | Inhalt | Wartung |
+|---|---|---|
+| **GDD Prosa** (§1–18) | Mechanik, Design-Intent, Formeln, Beispiel-Herleitungen. **Keine konkreten Zahlenwerte.** Formulierungen: "kosten Credits" statt "kosten 30 Cr"; "deutlich höher" statt "Wert = 150". Exception: narrative Pacing (Sol 30, Sol 80) gehört ins GDD. | Live-Editing, keine Zahlen-Nachzüge nötig |
+| **Config** (`config/*.php`) | **Canonical source of truth** für alle Spielwerte. Agenten lesen Config direkt bei konkreten Aufgaben. | Direct Code Change |
+| **game-reference.md** | Lookup-Tabellen aller aktuellen Config-Werte. Wird manuell nach größeren Balance-Passes refreshed. GDD verweist via Fußnote: "siehe `docs/game-reference.md#gebäude-kosten`". | Manuell, nach Balance-Pass |
+
+**Konsequenz:** Zahlen-Drift sinkt, GDD bleibt lesbares Designdokument, Agenten arbeiten gegen Config statt Dokumentation.
+
 ## Subagenten (`.claude/agents/`)
 
 **Proaktiv** einsetzen — nicht erst auf Nachfrage:
