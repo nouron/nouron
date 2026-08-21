@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-08-21
+
+- Docs: GDD-Konsolidierung Phase 2 — gestapelte Korrektur-Blöcke in §4c (Harvester-Baseline + Frischwerte + Reparatur), §4b (Credits-Pfad-A-Lücke), §9 (Encounters-Implementierung) live integriert, ~130 Zeilen Blockzitate entfernt.
+- Docs: Anhänge aus GDD ausgegliedert — `docs/gdd-balance-checklist.md` (Balance-Index, Playtest-Instrumentierung) + `docs/gdd-config-audit.md` (GDD↔Config-Drifts). GDD 4034 → 3900 Zeilen.
+- Docs: ADR 0004 umgesetzt — GDD-Zahlen-Scope Reorganisation (Zwei-Schichten-Modell). GDD behält Mechanik/Formeln/Beispiele, alle konkreten Zahlenwerte raus (~265 Zeilen), Config wird Source of Truth für alle Spielwerte, game-reference.md als Lookup-Tabellen-Layer. GDD 3900 → 3635 Zeilen nach game-designer Cleanup.
+- Docs: CLAUDE.md aktualisiert — neue Sektion "GDD Dokumentation (ADR 0004)" mit Zwei-Schichten-Modell dokumentiert.
+
 ## 2026-08-18 (Nachtrag)
 
 - Docs: GDD-Pflegestil-Umstellung, erste Runde (§4b Pfad-C-Hebel, §4c Harvester-Zweitinstanz, §18.4 Konsul/Cantina) — gestapelte Nachtrag-/Korrektur-Blöcke zu einer aktuellen Fassung konsolidiert (Git managed die Historie, nicht der Text mehr), Zahlenwerte aus Fließtext-Prosa entfernt zugunsten von Config-Verweisen. Rest des Dokuments folgt in weiteren Sessions.
