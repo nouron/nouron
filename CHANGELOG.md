@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-22
+
+- Fix: `data/sql/testdata.sqlite.sql` decay_rate/supply_cost-Drift gegen `config/buildings.php` behoben — Hangar decay 0.67→0.60, Krankenstation decay 2.0→0.80, Cantina decay 1.0→0.80 + supply_cost 4→6 (Fund aus GDD-Code-Drift-Audit, `docs/gdd-config-audit.md`).
+
 ## 2026-08-21
 
 - Docs: GDD-Konsolidierung Phase 2 — gestapelte Korrektur-Blöcke in §4c (Harvester-Baseline + Frischwerte + Reparatur), §4b (Credits-Pfad-A-Lücke), §9 (Encounters-Implementierung) live integriert, ~130 Zeilen Blockzitate entfernt.
