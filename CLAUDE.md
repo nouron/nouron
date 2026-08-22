@@ -4,17 +4,17 @@
 
 **Nouron** Sci-Fi-Strategiespiel, entwickelt 2008–2014, seit 2026 wieder aktiv.
 - GitHub: https://github.com/nouron/nouron
-- Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS (neu, Phase 3b+), SVG für Spielfelder
-- Frontend-Migration: jQuery vollständig entfernt (Mai 2026). Legacy-Screens noch Bootstrap 5 (schrittweise auf Alpine.js + PicoCSS — kein Mix in neuen Screens)
-- Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3 (UI) aktiv
+- Techstack: PHP/Laravel, SQLite, Blade-Templates, Alpine.js + PicoCSS, SVG für Spielfelder
+- Frontend-Migration: jQuery vollständig entfernt (Mai 2026). Bootstrap-5-Migration ebenfalls abgeschlossen — einzige bekannte Ausnahme: `resources/views/techtree/technology.blade.php` (Bootstrap-Modal-Klassen + `data-bs-*`, noch nicht auf Alpine.js + PicoCSS migriert). Kein Bootstrap-CSS/JS mehr eingebunden (nur `bootstrap-icons`-Font, unabhängig vom Framework).
+- Status: Laravel-Migration abgeschlossen, Design-Sprints DS-1–DS-4 abgeschlossen, Phase 3 (UI) abgeschlossen (Mai 2026, siehe ROADMAP.md)
 
-## Aktueller Stand (Stand: Mai 2026)
+## Aktueller Stand (Stand: 2026-08-22)
 
 **Spielkonzept:** Singleplayer Roguelike Mini-4X (FTL/Catan-Stil). Kleine, ressourcenarme Kolonie am Leben erhalten. Kein Imperiumsaufbau, keine Rassen, keine organisierten Kriege. Runs haben konkretes Ziel + klares Ende.
 
-**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Trust-System (Vertrauen), Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
+**Abgeschlossen:** ZF2 → Laminas → Laravel Migration, Techtree-Redesign, Tick-System, AP-System, Berater-System, Flottenoperationen, Decay-System, Trust-System (Vertrauen), Supply-System, INNN-Nachrichten, Hex-Grid Kolonieansicht, Systemkarte, Reisender Händler, jQuery-Migration (vollständig), Bootstrap-5-Migration (bis auf eine Ausnahme, s.o.), Berater-Screen (Alpine.js + PicoCSS), Onboarding-System (Triggers + Hints-Bar), Run-System, Lobby/Runs-Übersicht, Debug-Statusleiste (Admin), Fleet Command Overlay (Systemkarte), Kommandanten-Zuweisung (Fleet, PR #139), Ressourcen-DB-Cleanup (ENrg/LNrg/ANrg entfernt).
 
-**Laufend (Phase 3):** UI-Migration Bootstrap 5 → Alpine.js + PicoCSS. Ausstehend: GDD-Cleanup (Balance-TODOs nach Playtest), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow). Cantina-Redesign abgeschlossen (Bar-Hintergrund `cantina-interior.webp` + NPC-Charaktere via `config('characters')` + Hotspot-Portraits).
+**Laufend:** GDD-Cleanup (Balance-TODOs nach Playtest, siehe `docs/gdd-config-audit.md`), Onboarding-Wizard (Triggers + Hints implementiert, kein dedizierter New-Player-Flow), `techtree/technology.blade.php` auf Alpine.js + PicoCSS nachziehen (letzter Bootstrap-Rest). Cantina-Redesign abgeschlossen (Bar-Hintergrund `cantina-interior.webp` + NPC-Charaktere via `config('characters')` + Hotspot-Portraits).
 
 ## Wichtige Korrekturen
 
@@ -52,7 +52,7 @@ Schichtung: `Controller → Service → Eloquent Model → SQLite`
 
 - `config/game.php` und `config/buildings.php` sind **canonical source of truth** für alle Spielwerte — GDD folgt Config, nicht umgekehrt
 - Neue Screens: Alpine.js + PicoCSS — kein jQuery, kein Bootstrap
-- Legacy-Screens: noch Bootstrap 5 — werden schrittweise auf Alpine.js + PicoCSS migriert (jQuery vollständig entfernt)
+- Legacy-Screens: Bootstrap-Migration abgeschlossen bis auf `techtree/technology.blade.php` (letzter Rest, siehe oben) — jQuery vollständig entfernt
 - `TestSeeder` führt `data/sql/testdata.sqlite.sql` aus (regex-filtered: nur INSERT/UPDATE Statements)
 - Techtree-Koordinaten phase-lokal (Zeile/Spalte innerhalb Phase), nicht global
 - Trust-Events (`game.trust.*`): Keys `encounter_won`, `encounter_lost`, `colony_threatened` (nicht `combat_*`)
@@ -104,7 +104,7 @@ Vollständige Entscheidung: `docs/adr/0001-graphics-asset-format.md`
 - `game-designer` — Mechanics definieren, GDD aktualisieren (vor jeder neuen Mechanik)
 - `game-developer` — Game Logic, Services, Tick-Verarbeitung
 - `backend-coder` — Controller, Routes, API-Endpoints, Middleware
-- `ui-specialist` — Blade, Alpine.js + PicoCSS (neu), Bootstrap 5 (Legacy, kein jQuery mehr)
+- `ui-specialist` — Blade, Alpine.js + PicoCSS (kein jQuery/Bootstrap mehr, bis auf einen letzten Rest — s.o.)
 - `db-migration-agent` — Schema, Migrations, SQLite, testdata.sqlite.sql
 - `qa-tester` — Tests schreiben: VOR der Implementierung (TDD-Pflicht, siehe unten) + danach für Security-/Adversarial-/Regressionstests
 - `content-writer` — lang/de/*.php Texte, Lore, Tooltips (bei neuen Entitäten automatisch)
