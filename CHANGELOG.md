@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-22
+
+- Docs: Bootstrap-Migrationsstatus in CLAUDE.md/GDD.md korrigiert — war fälschlich als laufend dokumentiert, obwohl ROADMAP.md Phase 3 bereits als abgeschlossen (Mai 2026) führt. Verifiziert: nur noch eine Datei (`techtree/technology.blade.php`) hat Bootstrap-Reste.
+
 ## 2026-08-21
 
 - Docs: GDD-Konsolidierung Phase 2 — gestapelte Korrektur-Blöcke in §4c (Harvester-Baseline + Frischwerte + Reparatur), §4b (Credits-Pfad-A-Lücke), §9 (Encounters-Implementierung) live integriert, ~130 Zeilen Blockzitate entfernt.
