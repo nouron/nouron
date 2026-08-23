@@ -2,6 +2,7 @@
 
 ## 2026-08-22
 
+- Fix: `data/sql/testdata.sqlite.sql` decay_rate/supply_cost-Drift gegen `config/buildings.php` behoben — Hangar decay 0.67→0.60, Krankenstation decay 2.0→0.80, Cantina decay 1.0→0.80 + supply_cost 4→6 (Fund aus GDD-Code-Drift-Audit, `docs/gdd-config-audit.md`).
 - Docs: Bootstrap-Migrationsstatus in CLAUDE.md/GDD.md korrigiert — war fälschlich als laufend dokumentiert, obwohl ROADMAP.md Phase 3 bereits als abgeschlossen (Mai 2026) führt. Verifiziert: nur noch eine Datei (`techtree/technology.blade.php`) hat Bootstrap-Reste.
 
 ## 2026-08-21
