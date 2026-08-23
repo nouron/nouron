@@ -43,11 +43,11 @@ class TechtreeControllerTest extends TestCase
     }
 
     /**
-     * The techtree action URL contains {type}/{id}/{order} — there is no
-     * colony_id segment. This test verifies that the action endpoint only
+     * The techtree order URL contains {type}/{id} — there is no
+     * colony_id segment. This test verifies that the order endpoint only
      * modifies the authenticated user's own colony, not any other colony.
      */
-    public function test_action_only_affects_own_colony(): void
+    public function test_order_only_affects_own_colony(): void
     {
         $bart = User::find($this->userIdBart);
 
@@ -62,7 +62,7 @@ class TechtreeControllerTest extends TestCase
             ->update(['ap_spend' => 0]);
 
         $this->actingAs($bart)
-            ->get(route('techtree.action', ['type' => 'building', 'id' => 27, 'order' => 'add']))
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 27]), ['order' => 'add'])
             ->assertSuccessful();
 
         // Colony 2 must be untouched
@@ -171,12 +171,14 @@ class TechtreeControllerTest extends TestCase
         $response->assertJsonPath('error', 'unknown_type');
     }
 
-    public function test_action_on_an_unknown_type_is_404_not_a_server_error(): void
+    public function test_order_on_an_unknown_type_is_a_client_error_not_a_server_error(): void
     {
-        // Used to throw InvalidArgumentException → 500.
-        $this->actingAs(User::find($this->userIdBart))
-            ->get(route('techtree.action', ['type' => 'bogus', 'id' => 27, 'order' => 'add']))
-            ->assertNotFound();
+        // Used to throw InvalidArgumentException → 500 in the now-removed GET action() path.
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'bogus', 'id' => 27]), ['order' => 'add']);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'unknown_type');
     }
 
     public function test_index_returns200_with_page_data(): void
@@ -325,12 +327,12 @@ class TechtreeControllerTest extends TestCase
 
     /**
      * There is no colony_id parameter in the URL — the route signature
-     * is /techtree/{type}/{id}/{order}. This confirms by design that
+     * is /techtree/{type}/{id}/order. This confirms by design that
      * colony selection is server-side only (session-based).
      */
     public function test_techtree_route_has_no_colony_id_parameter(): void
     {
-        $route = route('techtree.action', ['type' => 'building', 'id' => 27, 'order' => 'add']);
+        $route = route('techtree.order', ['type' => 'building', 'id' => 27]);
         $this->assertStringNotContainsString('colony', $route);
     }
 

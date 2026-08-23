@@ -147,9 +147,5 @@ Route::middleware(['auth', 'run.started'])->get('/nexus-db', [NexusDbController:
 
 Route::middleware(['auth', 'run.started'])->prefix('techtree')->name('techtree.')->group(function () {
     Route::get('/', [TechtreeController::class, 'index'])->name('index');
-    Route::get('/{type}/{id}', [TechtreeController::class, 'technology'])->name('technology');
-    // Action route called by techtree.js AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
-    Route::get('/{type}/{id}/{order}', [TechtreeController::class, 'action'])->name('action');
-    Route::get('/{type}/{id}/{order}/{ap}', [TechtreeController::class, 'action'])->name('action.ap');
     Route::post('/{type}/{id}/order', [TechtreeController::class, 'order'])->name('order');
 });
