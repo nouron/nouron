@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-23
+
+- Chore: tote Frontend-Dependencies entfernt — `package.json` hatte noch `bootstrap` (^3.4.1) und `jquery` als Dependencies, obwohl beide seit der Alpine.js/PicoCSS-Migration nirgends mehr eingebunden werden (auch `pace-js` war unreferenziert). `scripts/copy-vendor.js` (kopierte diese + ein nicht mehr installiertes `ngm`-Paket nach `public/vendor/`) entfernt, npm-Scripts `build`/`postinstall` damit obsolet und ebenfalls entfernt. `package-lock.json` aktualisiert.
+
 ## 2026-08-22
 
 - Fix: `data/sql/testdata.sqlite.sql` decay_rate/supply_cost-Drift gegen `config/buildings.php` behoben — Hangar decay 0.67→0.60, Krankenstation decay 2.0→0.80, Cantina decay 1.0→0.80 + supply_cost 4→6 (Fund aus GDD-Code-Drift-Audit, `docs/gdd-config-audit.md`).
