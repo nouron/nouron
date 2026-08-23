@@ -3,7 +3,8 @@
 ## 2026-08-22
 
 - Fix: `data/sql/testdata.sqlite.sql` decay_rate/supply_cost-Drift gegen `config/buildings.php` behoben — Hangar decay 0.67→0.60, Krankenstation decay 2.0→0.80, Cantina decay 1.0→0.80 + supply_cost 4→6 (Fund aus GDD-Code-Drift-Audit, `docs/gdd-config-audit.md`).
-- Docs: Bootstrap-Migrationsstatus in CLAUDE.md/GDD.md korrigiert — war fälschlich als laufend dokumentiert, obwohl ROADMAP.md Phase 3 bereits als abgeschlossen (Mai 2026) führt. Verifiziert: nur noch eine Datei (`techtree/technology.blade.php`) hat Bootstrap-Reste.
+- Docs: Bootstrap-Migrationsstatus in CLAUDE.md/GDD.md korrigiert — war fälschlich als laufend dokumentiert, obwohl ROADMAP.md Phase 3 bereits als abgeschlossen (Mai 2026) führt. Verifiziert: nur noch eine Datei (`techtree/technology.blade.php`) hatte Bootstrap-Reste.
+- Chore: letzten Bootstrap-Rest entfernt — `techtree/technology.blade.php` + die 2 Partials `techstatus_bar`/`techlevelup_bar` waren toter Code (kein JS ruft die GET-Route `technology()` auf, die echte Techtree-UI nutzt ausschließlich `POST .../order`). View, Partials, `technology()`-Methode und die GET-Routen `techtree.action`/`techtree.action.ap` entfernt. Der Security-Test (I4 Cross-Colony-Exploit), der bisher über die tote GET-Route lief, ist jetzt auf die echte `order()`-Route umgestellt (`TechtreeControllerTest`). Bootstrap-Migration damit vollständig abgeschlossen.
 
 ## 2026-08-21
 

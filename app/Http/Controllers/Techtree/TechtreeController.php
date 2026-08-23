@@ -6,7 +6,6 @@ use App\Http\Controllers\BaseController;
 use App\Http\Controllers\Concerns\ResolvesActiveColony;
 use App\Services\AdvisorService;
 use App\Services\OnboardingHintService;
-use App\Services\ResourcesService;
 use App\Services\Techtree\AbstractTechnologyService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
@@ -31,7 +30,6 @@ class TechtreeController extends BaseController
         private readonly ShipService $shipService,
         private readonly AdvisorService $advisorService,
         private readonly TechtreeColonyService $techtreeColonyService,
-        private readonly ResourcesService $resourcesService,
         private readonly OnboardingHintService $onboardingHintService,
     ) {
         parent::__construct($tick);
@@ -277,70 +275,6 @@ class TechtreeController extends BaseController
         }
 
         return "Benötigt {$desc}";
-    }
-
-    /**
-     * Return a technology detail partial (AJAX popup, no layout).
-     */
-    public function technology(string $type, int $id): View
-    {
-        $colonyId = $this->resolveColonyId();
-        $techtree = $this->techtreeColonyService->getTechtree($colonyId);
-
-        $service = match (strtolower($type)) {
-            'building' => $this->buildingService,
-            'research' => $this->researchService,
-            'ship' => $this->shipService,
-            'personell' => $this->advisorService,
-            default => throw new \InvalidArgumentException("Unknown type: $type"),
-        };
-
-        $tech = $techtree[$type][$id] ?? null;
-        if ($tech !== null && strtolower($type) === 'research') {
-            $tech['ap_for_levelup'] = $this->researchService->knowledgeLevelupCost(
-                $colonyId, $id, (int) ($tech['ap_for_levelup'] ?? 0)
-            );
-        }
-
-        return view('techtree.technology', [
-            'type' => $type,
-            'techId' => $id,
-            'tech' => $tech,
-            'costs' => $service->getEntityCosts($id),
-            'resources' => $this->resourcesService->getResources()->keyBy('id'),
-            'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
-            'requiredBuildingsCheck' => $service->checkRequiredBuildingsByEntityId($colonyId, $id),
-            'requiredResourcesCheck' => $this->resourcesService->check($service->getEntityCosts($id), $colonyId),
-            // Passed so the view can resolve required building/research names
-            'buildings' => $techtree['building'],
-            'researches' => $techtree['research'],
-        ]);
-    }
-
-    /**
-     * Perform a techtree action via GET and return the refreshed technology partial.
-     *
-     * Called by techtree.js via AJAX: GET /techtree/{type}/{id}/{order}[/{ap}]
-     * e.g. /techtree/building/25/add/3   or   /techtree/building/25/levelup
-     */
-    public function action(string $type, int $id, string $order, int $ap = 1): View
-    {
-        $colonyId = $this->resolveColonyId();
-
-        // An unknown or unsupported {type} is a bad request, not a server error: the
-        // route accepts any string, so this is reachable from outside. It used to throw
-        // InvalidArgumentException → 500.
-        $service = $this->serviceForType($type) ?? abort(404);
-
-        match ($order) {
-            'add', 'repair', 'remove' => $service->invest($colonyId, $id, $order, $ap),
-            'levelup' => $service->levelup($colonyId, $id),
-            'leveldown' => $service->leveldown($colonyId, $id),
-            default => null,
-        };
-
-        // Re-render the technology partial so the modal reflects the updated state
-        return $this->technology($type, $id);
     }
 
     /**
