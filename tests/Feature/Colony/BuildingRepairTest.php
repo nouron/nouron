@@ -233,4 +233,24 @@ class BuildingRepairTest extends TestCase
         $response->assertOk()->assertJsonPath('ok', true);
         $response->assertJsonPath('building.tier_label', null);
     }
+
+    public function test_repair_response_has_null_tier_label_when_current_level_not_in_tiers(): void
+    {
+        // Sicherheits-Hub (id=53) hat 'tiers' => [3] konfiguriert, ist aber in den
+        // Testdaten für Kolonie 1 gar nicht platziert — Zeile hier gezielt auf Level 1
+        // anlegen (nicht in [3]), damit tier_label trotz vorhandenem tiers-Array null sein muss.
+        DB::table('colony_buildings')->insert([
+            'colony_id' => self::COLONY_ID,
+            'building_id' => 53,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 10,
+            'ap_spend' => 0,
+        ]);
+
+        $response = $this->repair(53);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $response->assertJsonPath('building.tier_label', null);
+    }
 }

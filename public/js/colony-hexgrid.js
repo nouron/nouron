@@ -725,6 +725,14 @@ function colonyHexView(config) {
             return this.buildingCatalog?.[key]?.label ?? key;
         },
 
+        // Roman numeral for building tier display (design-spec.md "Namensmuster":
+        // Basisname + Stufe (röm. Zahl) + Beiname). Building levels never exceed 8
+        // in this project, so a simple lookup array is sufficient.
+        romanNumeral(n) {
+            const numerals = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+            return numerals[n - 1] ?? String(n);
+        },
+
         // The building on the currently selected tile, or null. Single source
         // of truth for the sidebar so the markup never repeats buildingForTile().
         get selectedBuilding() {

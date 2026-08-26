@@ -28,7 +28,7 @@
 **Interfaces:**
 - Produces: 10 neue Lang-Keys im Muster `tier_{buildingKey}_{level}`, gelesen von `ColonyController::resolveTierLabel()` in Task 4.
 
-- [ ] **Step 1: Keys in `lang/de/techtree.php` einfügen**
+- [x] **Step 1: Keys in `lang/de/techtree.php` einfügen**
 
 Nach der Zeile `'building_tradingPost' => 'Handelsposten',` einfügen:
 
@@ -46,7 +46,7 @@ Nach der Zeile `'building_tradingPost' => 'Handelsposten',` einfügen:
     'tier_tradingPost_3' => 'Persönlicher Kontakt',
 ```
 
-- [ ] **Step 2: Keys in `lang/en/techtree.php` einfügen**
+- [x] **Step 2: Keys in `lang/en/techtree.php` einfügen**
 
 Nach der Zeile `'building_tradingPost' => 'Trading Post',` einfügen:
 
@@ -64,12 +64,12 @@ Nach der Zeile `'building_tradingPost' => 'Trading Post',` einfügen:
     'tier_tradingPost_3' => 'Personal Contact',
 ```
 
-- [ ] **Step 3: Verifizieren, dass beide Dateien noch valides PHP sind**
+- [x] **Step 3: Verifizieren, dass beide Dateien noch valides PHP sind**
 
 Run: `php -l lang/de/techtree.php && php -l lang/en/techtree.php`
 Expected: `No syntax errors detected` für beide.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add lang/de/techtree.php lang/en/techtree.php
@@ -87,7 +87,7 @@ git commit -m "feat: Sprachdatei-Keys für Gebäude-Ausbaustufen-Beinamen"
 - Produces: `config('buildings.{key}.tiers')` — Array von Levelnummern mit Beiname, gelesen von `ColonyController::resolveTierLabel()` in Task 4.
 - Produces: korrigierte `config('buildings.{key}.max_level')`-Werte.
 
-- [ ] **Step 1: `housingComplex.max_level` von 6 auf 3 senken**
+- [x] **Step 1: `housingComplex.max_level` von 6 auf 3 senken**
 
 In `config/buildings.php`, im `housingComplex`-Block (aktuell `'max_level' => 6,`):
 
@@ -105,7 +105,7 @@ In `config/buildings.php`, im `housingComplex`-Block (aktuell `'max_level' => 6,
 
 (Den bestehenden alten Kommentar-Block Zeile 70-80, der die Historie der Doppelachse erklärt, NICHT löschen — bleibt als Kontext stehen, der neue Kommentar kommt direkt vor der Zeile `'max_level' => 3,`.)
 
-- [ ] **Step 2: `bioFacility.max_level` von `null` auf 3 setzen**
+- [x] **Step 2: `bioFacility.max_level` von `null` auf 3 setzen**
 
 Im `bioFacility`-Block:
 
@@ -117,7 +117,7 @@ Im `bioFacility`-Block:
         'max_level' => 3,
 ```
 
-- [ ] **Step 3: `infirmary.max_level` von `null` auf 3 setzen**
+- [x] **Step 3: `infirmary.max_level` von `null` auf 3 setzen**
 
 Im `infirmary`-Block:
 
@@ -128,7 +128,7 @@ Im `infirmary`-Block:
         'max_level' => 3,
 ```
 
-- [ ] **Step 4: `bar.max_level` von `null` auf 3 setzen**
+- [x] **Step 4: `bar.max_level` von `null` auf 3 setzen**
 
 Im `bar`-Block:
 
@@ -139,7 +139,7 @@ Im `bar`-Block:
         'max_level' => 3,
 ```
 
-- [ ] **Step 5: `sciencelab.max_level` von `null` auf 5 setzen**
+- [x] **Step 5: `sciencelab.max_level` von `null` auf 5 setzen**
 
 Im `sciencelab`-Block:
 
@@ -152,7 +152,7 @@ Im `sciencelab`-Block:
         'max_level' => 5,
 ```
 
-- [ ] **Step 6: `tiers`-Array für `hangar` ergänzen**
+- [x] **Step 6: `tiers`-Array für `hangar` ergänzen**
 
 Im `hangar`-Block, direkt nach `'max_level' => 3,` (bereits vorhanden, nicht ändern):
 
@@ -163,7 +163,7 @@ Im `hangar`-Block, direkt nach `'max_level' => 3,` (bereits vorhanden, nicht än
         'tiers' => [1, 2, 3],
 ```
 
-- [ ] **Step 7: `tiers`-Array für `securityHub` ergänzen**
+- [x] **Step 7: `tiers`-Array für `securityHub` ergänzen**
 
 Im `securityHub`-Block, nach `'max_level' => 3,`:
 
@@ -174,7 +174,7 @@ Im `securityHub`-Block, nach `'max_level' => 3,`:
         'tiers' => [3],
 ```
 
-- [ ] **Step 8: `tiers`-Array für `infirmary` ergänzen**
+- [x] **Step 8: `tiers`-Array für `infirmary` ergänzen**
 
 Im `infirmary`-Block, nach dem neuen `'max_level' => 3,` aus Step 3:
 
@@ -182,7 +182,7 @@ Im `infirmary`-Block, nach dem neuen `'max_level' => 3,` aus Step 3:
         'tiers' => [3],
 ```
 
-- [ ] **Step 9: `tiers`-Array für `bioFacility` ergänzen**
+- [x] **Step 9: `tiers`-Array für `bioFacility` ergänzen**
 
 Im `bioFacility`-Block, nach dem neuen `'max_level' => 3,` aus Step 2:
 
@@ -190,7 +190,7 @@ Im `bioFacility`-Block, nach dem neuen `'max_level' => 3,` aus Step 2:
         'tiers' => [3],
 ```
 
-- [ ] **Step 10: `tiers`-Array für `uplinkStation` ergänzen**
+- [x] **Step 10: `tiers`-Array für `uplinkStation` ergänzen**
 
 Im `uplinkStation`-Block, nach `'max_level' => 3,` (bereits vorhanden):
 
@@ -202,7 +202,7 @@ Im `uplinkStation`-Block, nach `'max_level' => 3,` (bereits vorhanden):
         'tiers' => [1],
 ```
 
-- [ ] **Step 11: `tiers`-Array für `tradingPost` ergänzen**
+- [x] **Step 11: `tiers`-Array für `tradingPost` ergänzen**
 
 Im `tradingPost`-Block, nach `'max_level' => 3,` (bereits vorhanden):
 
@@ -213,18 +213,18 @@ Im `tradingPost`-Block, nach `'max_level' => 3,` (bereits vorhanden):
         'tiers' => [1, 2, 3],
 ```
 
-- [ ] **Step 12: Config-Syntax prüfen**
+- [x] **Step 12: Config-Syntax prüfen**
 
 Run: `php -l config/buildings.php`
 Expected: `No syntax errors detected`
 
-- [ ] **Step 13: Testdaten-Kompatibilität prüfen**
+- [x] **Step 13: Testdaten-Kompatibilität prüfen**
 
 Run: `sqlite3 data/db/nouron.db "select cb.building_id, cb.level from colony_buildings cb join buildings b on b.id=cb.building_id where b.name in ('building_housingComplex','building_bioFacility','building_infirmary','building_bar','building_sciencelab');"`
 
 Erwartung: Kein Wert überschreitet den jeweils neuen `max_level` (3 bzw. 5 für sciencelab). Falls doch (z.B. eine manuell hochgelevelte Dev-Kolonie): kein Blocker für diesen Task (kein DB-Constraint erzwingt das, nur `investBuilding()` verweigert *weiteres* Investieren) — nur zur Kenntnis nehmen, keine Migration nötig.
 
-- [ ] **Step 14: Commit**
+- [x] **Step 14: Commit**
 
 ```bash
 git add config/buildings.php
@@ -241,12 +241,12 @@ git commit -m "feat: max_level-Deckel korrigieren + tiers-Arrays für Ausbaustuf
 **Interfaces:**
 - Keine (reine Datenwert-Korrektur in einer bestehenden Methode).
 
-- [ ] **Step 1: Bestehenden Test als Baseline laufen lassen**
+- [x] **Step 1: Bestehenden Test als Baseline laufen lassen**
 
 Run: `bin/phpunit --filter test_near_deadline_scenario_sets_tick_near_limit_and_completes_one_objective`
 Expected: PASS (Baseline vor der Änderung — dieser Test prüft nicht den exakten Agrardom-Level, muss also unverändert grün bleiben)
 
-- [ ] **Step 2: Zeile 616 von Lv4 auf Lv3 ändern**
+- [x] **Step 2: Zeile 616 von Lv4 auf Lv3 ändern**
 
 In `app/Console/Commands/ResetPlayer.php`, `scenarioNearDeadline()`:
 
@@ -256,17 +256,17 @@ In `app/Console/Commands/ResetPlayer.php`, `scenarioNearDeadline()`:
             ->update(['level' => 3, 'status_points' => 20]);     // Agrardom Lv3 (Deckel seit 2026-08-25, war Lv4)
 ```
 
-- [ ] **Step 3: Test erneut laufen lassen**
+- [x] **Step 3: Test erneut laufen lassen**
 
 Run: `bin/phpunit --filter test_near_deadline_scenario_sets_tick_near_limit_and_completes_one_objective`
 Expected: PASS (unverändert — der Test prüft `current_tick`, Objective-Anzahl, Advisor-Anzahl, Harvester-Tile, keinen Agrardom-Wert)
 
-- [ ] **Step 4: Kompletten ResetPlayer-Testfile laufen lassen**
+- [x] **Step 4: Kompletten ResetPlayer-Testfile laufen lassen**
 
 Run: `bin/phpunit tests/Feature/Console/ResetPlayerTest.php`
 Expected: alle Tests PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/Console/Commands/ResetPlayer.php
@@ -287,7 +287,7 @@ git commit -m "fix: ResetPlayer near-deadline-Szenario Agrardom-Level an neuen m
 - Consumes: `config('buildings.{key}.tiers')` (Task 2), `lang/de|en/techtree.php` `tier_*`-Keys (Task 1).
 - Produces: `resolveTierLabel(int $buildingId, int $level): ?string` — private Methode auf `ColonyController`. Fügt jeder von `fetchBuildingRow()`/`hexview()` gelieferten Building-Zeile ein Feld `tier_label` (string oder `null`) hinzu, das im Frontend als `selectedBuilding.tier_label`/`building.tier_label` ankommt.
 
-- [ ] **Step 1: Fehlschlagenden Test für `fetchBuildingRow()`-Ausgabe schreiben (Repair-Endpoint)**
+- [x] **Step 1: Fehlschlagenden Test für `fetchBuildingRow()`-Ausgabe schreiben (Repair-Endpoint)**
 
 In `tests/Feature/Colony/BuildingRepairTest.php`, neue Testmethoden am Ende der Klasse (vor der schließenden `}`) einfügen:
 
@@ -318,12 +318,12 @@ In `tests/Feature/Colony/BuildingRepairTest.php`, neue Testmethoden am Ende der 
     }
 ```
 
-- [ ] **Step 2: Tests laufen lassen, Fehlschlag bestätigen**
+- [x] **Step 2: Tests laufen lassen, Fehlschlag bestätigen**
 
 Run: `bin/phpunit --filter test_repair_response_includes_tier_label_when_configured`
 Expected: FAIL — `building.tier_label` existiert noch nicht im JSON-Response (Assertion-Fehler "Unable to find data" oder `null` != `'Vollausstattung'`, je nach PHPUnit-Version)
 
-- [ ] **Step 3: `resolveTierLabel()`-Helper implementieren**
+- [x] **Step 3: `resolveTierLabel()`-Helper implementieren**
 
 In `app/Http/Controllers/Colony/ColonyController.php`, direkt vor der bestehenden `private function fetchBuildingRow(...)`-Methode (aktuell ca. Zeile 1011) einfügen:
 
@@ -350,7 +350,7 @@ In `app/Http/Controllers/Colony/ColonyController.php`, direkt vor der bestehende
     }
 ```
 
-- [ ] **Step 4: Helper in `fetchBuildingRow()` verdrahten**
+- [x] **Step 4: Helper in `fetchBuildingRow()` verdrahten**
 
 In `fetchBuildingRow()` (aktuell ca. Zeile 1034-1037), nach der Zeile `$row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup(...)` ergänzen:
 
@@ -361,12 +361,12 @@ In `fetchBuildingRow()` (aktuell ca. Zeile 1034-1037), nach der Zeile `$row->ap_
         return $row;
 ```
 
-- [ ] **Step 5: Tests laufen lassen, Erfolg bestätigen**
+- [x] **Step 5: Tests laufen lassen, Erfolg bestätigen**
 
 Run: `bin/phpunit --filter BuildingRepairTest`
 Expected: alle Tests inkl. der 2 neuen PASS
 
-- [ ] **Step 6: Helper auch in `hexview()` verdrahten (initialer Seitenaufbau)**
+- [x] **Step 6: Helper auch in `hexview()` verdrahten (initialer Seitenaufbau)**
 
 In `hexview()`, im `->map(function ($b) use ($globalTick, $colony) { ... })`-Block (aktuell ca. Zeile 138-145), nach der Zeile `$b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup(...)` ergänzen:
 
@@ -377,7 +377,7 @@ In `hexview()`, im `->map(function ($b) use ($globalTick, $colony) { ... })`-Blo
                 return $b;
 ```
 
-- [ ] **Step 7: Fehlschlagenden Test für den initialen Seitenaufbau schreiben**
+- [x] **Step 7: Fehlschlagenden Test für den initialen Seitenaufbau schreiben**
 
 In `tests/Feature/Colony/ColonyViewTest.php`, neue Testmethode am Ende der Klasse einfügen:
 
@@ -398,12 +398,12 @@ In `tests/Feature/Colony/ColonyViewTest.php`, neue Testmethode am Ende der Klass
     }
 ```
 
-- [ ] **Step 8: Test laufen lassen, Fehlschlag dann Erfolg bestätigen**
+- [x] **Step 8: Test laufen lassen, Fehlschlag dann Erfolg bestätigen**
 
 Run: `bin/phpunit --filter test_hexview_buildings_include_tier_label`
 Expected vor Step 6 (falls Reihenfolge vertauscht ausgeführt): FAIL. Nach Step 6: PASS.
 
-- [ ] **Step 9: Beiname im Tile-Panel anzeigen (Blade/Alpine)**
+- [x] **Step 9: Beiname im Tile-Panel anzeigen (Blade/Alpine)**
 
 In `resources/views/colony/hexview.blade.php`, den Block um Zeile 171-181 ersetzen:
 
@@ -445,12 +445,12 @@ Neu:
                         </div>
 ```
 
-- [ ] **Step 10: Blade-Syntax prüfen**
+- [x] **Step 10: Blade-Syntax prüfen**
 
 Run: `php -l resources/views/colony/hexview.blade.php` (prüft nur eingebettetes PHP, keine Blade-Direktiven — reicht als Rauchtest gegen kaputte `@`-Syntax)
 Expected: `No syntax errors detected`
 
-- [ ] **Step 11: Volle Test-Suite + Larastan laufen lassen**
+- [x] **Step 11: Volle Test-Suite + Larastan laufen lassen**
 
 Run: `bin/phpunit`
 Expected: alle Tests PASS (keine Regression in anderen Colony-/Techtree-Tests)
@@ -458,11 +458,11 @@ Expected: alle Tests PASS (keine Regression in anderen Colony-/Techtree-Tests)
 Run: `bin/phpstan analyse --no-progress`
 Expected: `[OK] No errors`
 
-- [ ] **Step 12: Manuelle Browser-Verifikation (CLAUDE.md-Pflicht für UI-Änderungen)**
+- [x] **Step 12: Manuelle Browser-Verifikation (CLAUDE.md-Pflicht für UI-Änderungen)**
 
 Dev-Server starten (siehe `run`-Skill oder projektüblicher Start-Befehl), als Bart einloggen, Kolonieansicht öffnen, Krankenstation-Kachel anklicken. Erwartung: Tile-Panel-Titel zeigt „Krankenstation | 3 – Vollausstattung", Hover-Popup zeigt „Vollausstattung — Level 3 / 3". Ebenso Hangar-Kachel prüfen (zeigt je nach aktuellem Level „Startmodul"/„Ladebucht"/„Anlegestelle"). Ein Gebäude ohne Beiname (z.B. Wohnhabitat) zeigt weiterhin nur „Level X / max" ohne Bindestrich-Zusatz.
 
-- [ ] **Step 13: Commit**
+- [x] **Step 13: Commit**
 
 ```bash
 git add app/Http/Controllers/Colony/ColonyController.php resources/views/colony/hexview.blade.php tests/Feature/Colony/BuildingRepairTest.php tests/Feature/Colony/ColonyViewTest.php
@@ -478,23 +478,23 @@ git commit -m "feat: Ausbaustufen-Beinamen im Kolonie-Hex-View anzeigen (resolve
 
 **Interfaces:** keine (reiner Format-Pass, keine Verhaltensänderung).
 
-- [ ] **Step 1: Blade-Datei zweimal mit Prettier formatieren**
+- [x] **Step 1: Blade-Datei zweimal mit Prettier formatieren**
 
 Laut Projekt-Konvention (Blade-Dateien müssen zweimal formatiert werden, der Pre-Commit-Hook erwartet Idempotenz):
 
 Run: `npx prettier --write resources/views/colony/hexview.blade.php && npx prettier --write resources/views/colony/hexview.blade.php`
 
-- [ ] **Step 2: Pint über den geänderten PHP-Code laufen lassen**
+- [x] **Step 2: Pint über den geänderten PHP-Code laufen lassen**
 
 Run: `bin/pint app/Http/Controllers/Colony/ColonyController.php app/Console/Commands/ResetPlayer.php tests/Feature/Colony/BuildingRepairTest.php tests/Feature/Colony/ColonyViewTest.php`
 Expected: keine Fehler, ggf. Auto-Fixes angewendet
 
-- [ ] **Step 3: Volle Test-Suite erneut laufen lassen (Regressionscheck nach Formatierung)**
+- [x] **Step 3: Volle Test-Suite erneut laufen lassen (Regressionscheck nach Formatierung)**
 
 Run: `bin/phpunit`
 Expected: alle Tests weiterhin PASS
 
-- [ ] **Step 4: Commit (falls Formatierung etwas geändert hat)**
+- [x] **Step 4: Commit (falls Formatierung etwas geändert hat)**
 
 ```bash
 git add -A

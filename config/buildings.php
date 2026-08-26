@@ -70,21 +70,18 @@ return [
         // max_level is a real per-instance level cap (not vestigial): each
         // housingComplex instance levels independently and ResourcesService::
         // getSupplyBreakdown() sums per-instance `level` for the supply
-        // contribution, so max_level=6 genuinely caps how much supply a single
+        // contribution, so max_level genuinely caps how much supply a single
         // instance can contribute. max_instances=6 is the separate instance-count
-        // cap that ColonyController::buildableBuildings() was — before this split —
-        // reading out of the same max_level field by coincidence (both happened to
-        // be 6). Kept identical on purpose (2026-08-03, GDD §4c): decoupling the
-        // fields must not silently change current behaviour. Rewiring
-        // buildableBuildings() to read max_instances instead of max_level is
-        // separate controller work, not done here.
-        // Gesenkt von 6 auf 3 (2026-08-25, game-designer-Review): max_level und
-        // max_instances waren identisch (6) aus historischem Zufall, keine
-        // Design-Absicht (siehe alter Kommentar unten) — Doppelachse machte die
+        // cap that ColonyController::buildableBuildings() reads directly (not via
+        // max_level). Gesenkt von 6 auf 3 (2026-08-25, game-designer-Review):
+        // max_level und max_instances waren bis dahin identisch (6) aus
+        // historischem Zufall, keine Design-Absicht — Doppelachse machte die
         // Bauentscheidung uninteressant (beide Wege füttern denselben Supply-Pool
-        // ohne qualitativen Unterschied). Instanzen bleiben die primäre,
-        // tile-limitierte Wachstumsachse; Level ist jetzt sekundäre Feinabstimmung.
-        // supply_cap-Neukalibrierung ist ein separater Balance-Task nach Playtest
+        // ohne qualitativen Unterschied). Die beiden Felder sind jetzt bewusst
+        // unterschiedlich: max_level=3 ist der Pro-Instanz-Levelcap, max_instances=6
+        // bleibt die separate, tile-limitierte Instanzanzahl-Achse; Level ist
+        // sekundäre Feinabstimmung. supply_cap-Neukalibrierung ist ein separater
+        // Balance-Task nach Playtest
         // (docs/superpowers/specs/2026-08-23-building-tier-system-design.md, Punkt 9).
         'max_level' => 3,
         'max_instances' => 6,
@@ -225,14 +222,17 @@ return [
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
-        // Gedeckelt auf 3 (2026-08-25) — Stufe 3 trifft den plague_risk_reduction_cap
-        // exakt (siehe unten), keine Überinvestition über den Wirkungsdeckel hinaus
-        // mehr möglich.
+        // Gedeckelt auf 3 (2026-08-25) — Absicht ist, dass Stufe 3 den
+        // plague_risk_reduction_cap trifft, damit keine Überinvestition über den
+        // Wirkungsdeckel hinaus möglich ist. Aktuell (3 × 0.08 = 0.24) erreicht das
+        // den Cap (0.50) noch NICHT exakt — Zahlen-Kalibrierung ist ein separater
+        // Balance-Task nach Playtest (ADR 0004, Spec Folge-Task 3), nicht Teil
+        // dieses Struktur-Plans.
         'max_level' => 3,
         'tiers' => [3],
         // Reduces Seuchenausbruch trigger chance (GDD §9) — flat per-level, capped.
-        // Not a bell curve: infirmary has no max_level, so a 5-slot array doesn't fit;
-        // this mirrors decay_rate's own flat-per-level-times-multiplier style instead.
+        // Mirrors decay_rate's own flat-per-level-times-multiplier style rather than
+        // a production_curve-style per-level table.
         'plague_risk_reduction_pct_per_level' => 0.08,
         'plague_risk_reduction_cap' => 0.50,
     ],

@@ -174,11 +174,13 @@
                                 <span x-text="buildingLabel(selectedBuilding.building_key)"></span>
                                 <template x-if="selectedBuilding.level > 0">
                                     <span
-                                        x-text="' | ' + selectedBuilding.level + (selectedBuilding.tier_label ? ' – ' + selectedBuilding.tier_label : '')"></span>
+                                        x-text="selectedBuilding.tier_label
+                                            ? ' ' + romanNumeral(selectedBuilding.level) + ' – ' + selectedBuilding.tier_label
+                                            : ' | ' + selectedBuilding.level"></span>
                                 </template>
                                 <div class="res-popup" x-show="hoverLevel && selectedBuilding.level > 0" x-cloak
                                     x-text="selectedBuilding.tier_label
-                                        ? `${selectedBuilding.tier_label} — Level ${selectedBuilding.level}` + (selectedBuilding.max_level ? ` / ${selectedBuilding.max_level}` : '')
+                                        ? `${selectedBuilding.tier_label} — ${romanNumeral(selectedBuilding.level)}` + (selectedBuilding.max_level ? ` / ${romanNumeral(selectedBuilding.max_level)}` : '')
                                         : (selectedBuilding.max_level
                                             ? `Level ${selectedBuilding.level} / ${selectedBuilding.max_level}`
                                             : `Level ${selectedBuilding.level}`)">

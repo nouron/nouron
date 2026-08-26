@@ -86,6 +86,11 @@ class BuildingServiceTest extends TestCase
 
     public function test_levelup(): void
     {
+        // infirmary.max_level is now capped at 3 (2026-08-25, Ausbaustufen-Umstellung)
+        // and colony 1's infirmary fixture is already at level 3 — this test is about
+        // the generic level/AP mechanics, not the tier cap, so lift the cap locally.
+        DB::table('buildings')->where('id', $this->entityId)->update(['max_level' => null]);
+
         $before = $this->service->getColonyEntity($this->colonyId, $this->entityId);
         $result = $this->service->levelup($this->colonyId, $this->entityId);
         $this->assertTrue($result);
@@ -168,6 +173,11 @@ class BuildingServiceTest extends TestCase
     {
         config(['game.bypass.supply_checks' => false]);
 
+        // infirmary.max_level is now capped at 3 (2026-08-25, Ausbaustufen-Umstellung)
+        // and colony 1's infirmary fixture is already at level 3 — this test drives a
+        // 3→4 levelup purely to exercise the supply gate, so lift the cap locally.
+        DB::table('buildings')->where('id', $this->entityId)->update(['max_level' => null]);
+
         // Clear all supply costs, then set infirmary=3
         DB::table('buildings')->update(['supply_cost' => 0]);
         DB::table('ships')->update(['supply_cost' => 0]);
@@ -192,6 +202,11 @@ class BuildingServiceTest extends TestCase
     {
         // supply_checks bypassed → levelup succeeds regardless of supply
         config(['game.bypass.supply_checks' => true]);
+
+        // infirmary.max_level is now capped at 3 (2026-08-25, Ausbaustufen-Umstellung)
+        // and colony 1's infirmary fixture is already at level 3 — this test is about
+        // the supply bypass, not the tier cap, so lift the cap locally.
+        DB::table('buildings')->where('id', $this->entityId)->update(['max_level' => null]);
 
         DB::table('buildings')->update(['supply_cost' => 999]);
         DB::table('user_resources')->where('user_id', 3)->update(['supply' => 0]);
