@@ -37,6 +37,25 @@ Fast alle Nicht-CC-Gebäude waren zwischen 2026-07-20 und 2026-08-03 bereits auf
 | **Analytik-Labor** | I-III unverändert (Kenntnis-Gates, bestehende Funktion, nicht Teil dieser Umbenennung), IV/V neu als Mengensteigerung (AP-Kosten-Rabatt-Prozentsatz) | Keine Beinamen, durchgängig nackt nummeriert (auch IV/V) |
 | **Uplink-Station** | I = Fähigkeit (schaltet Nexus-Bestellungen überhaupt erst frei), II = Mengensteigerung (Tiefenscan-Kosten -1 AP), III = **zurückgestellt**, s.u. | Beiname bei I, II nackt, III bleibt unbenannt/unverändert bis Folge-Design |
 
+## Finale Beinamen (content-writer, freigegeben 2026-08-25)
+
+| Gebäude | Stufe | Beiname |
+|---|---|---|
+| Hangar | I | Startmodul |
+| Hangar | II | Ladebucht |
+| Hangar | III | Anlegestelle |
+| Sicherheits-Hub | III | Recyclingmodul |
+| Krankenstation | III | Vollausstattung |
+| Agrardom | III | Notvorrat |
+| Uplink-Station | I | Erster Draht |
+| Handelsposten | I | Bekannter Gast |
+| Handelsposten | II | Fester Kunde |
+| Handelsposten | III | Persönlicher Kontakt |
+
+Handelsposten-Namen bilden bewusst eine Beziehungs-Eskalation (Gast → Kunde → Kontakt), passend zur Kanal-Ausweitung Cantina → Reisender Händler → Nexus/Corporate Contact. "Persönlicher Kontakt" (Handelsposten III) und "Erster Draht" (Uplink-Station I) sind bewusst unterschiedliche Motive (Beziehung/Konditionen vs. technische Verbindung) — beide betreffen den Nexus-Kontext, aber auf unterschiedlichen Ebenen, keine Begriffs-Kollision.
+
+Wohnhabitat, Cantina, Analytik-Labor bekommen laut Klassifizierungs-Tabelle keine Beinamen (reine Mengensteigerung).
+
 ## Neue Mechaniken (schließen echte Implementierungslücken, keine reine Umbenennung)
 
 ### Handelsposten (tradingPost) — alle 3 Stufen neu
@@ -70,16 +89,9 @@ Zwei geprüfte, aber verworfene Alternativen für heute:
 
 **Owner-Entscheidung:** Beide Optionen erstmal nicht. Owner befürwortet grundsätzlich einen **Meta-Progressions-Mechanismus** (etwas, das über Runs hinweg freigeschaltet bleibt — roguelike-typisch), das braucht aber einen eigenen Design-Sprint. **Uplink-Station Stufe III bleibt bis dahin unverändert** (aktueller TODO-Zustand, kein neuer Code, keine neue Benennung). Separater Backlog-Punkt, nicht Teil der aktuellen Umsetzung.
 
-## Beinamen (Entwurf, content-writer-Review ausstehend)
-
-Erste Runde vom content-writer geliefert, aber zu großmaßstäblich für eine kleine Kolonie (z.B. „Wohnviertel", „Patrouillenhalle", „Handelsknoten", „Güterknoten" — Stadt-/Flotten-/Konzern-Sprache). **Zweite Runde nötig** mit:
-- Skalen-Korrektur (kleiner Außenposten statt wachsende Stadt)
-- Nur noch für die laut Tabelle oben tatsächlich benannten Stufen (Hangar I-III, Sicherheits-Hub III, Krankenstation III, Agrardom III, Uplink-Station I, Handelsposten I-III)
-- Handelsposten-Namen müssen die neue Kanal-Bedeutung widerspiegeln (I=Cantina-Rabatt, II=+Reisender-Händler-Rabatt, III=+Nexus-Rabatt), nicht generische "Handelsposten wird größer"-Namen
-
 ## Offene Folge-Tasks (nicht Teil dieser Spec)
 
-1. Content-writer: zweite Namensrunde mit obiger Korrektur.
+1. ~~Content-writer: zweite Namensrunde~~ — erledigt, siehe „Finale Beinamen" oben (4 Runden bis zur Freigabe: Runde 1 zu großmaßstäblich, Runde 2 traf den Ton, Runde 3 sollte Sci-Fi-Alternativen liefern — 1. Wahl blieb meist besser außer Hangar I/Sicherheits-Hub III, Runde 4 löste die zu kryptischen Handelsposten-Namen).
 2. Konkrete `config/buildings.php`-Struktur für `tiers` entwerfen (Implementierungs-Task, db-migration-agent/backend-coder).
 3. Zahlen-Kalibrierung für alle Effekte nach Playtest (wie bei jedem anderen Balance-Thema im Projekt — siehe `docs/gdd-balance-checklist.md`).
 4. securityHub `recycle_pct`-Effekt tatsächlich im Code verdrahten (aktuell konfiguriert, nie gelesen — wird mit Stufe III relevant).
