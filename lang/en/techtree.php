@@ -16,6 +16,18 @@ return [
     'building_uplinkStation' => 'Uplink Station',
     'building_tradingPost' => 'Trading Post',
 
+    // ── Tier nicknames (tier_* keys, design spec 2026-08-23) ─────────────────
+    'tier_hangar_1' => 'Launch Module',
+    'tier_hangar_2' => 'Cargo Bay',
+    'tier_hangar_3' => 'Docking Berth',
+    'tier_securityHub_3' => 'Recycling Module',
+    'tier_infirmary_3' => 'Fully Equipped',
+    'tier_bioFacility_3' => 'Emergency Reserve',
+    'tier_uplinkStation_1' => 'Open Line',
+    'tier_tradingPost_1' => 'Familiar Face',
+    'tier_tradingPost_2' => 'Regular Customer',
+    'tier_tradingPost_3' => 'Personal Contact',
+
     // ── Building descriptions (desc_techs_* keys) ─────────────────────────────
     'desc_techs_commandCenter' => 'Everything converges here — reports, plans, decisions. The Command Center is not a glamorous building; it is the nervous system of the colony. Its level determines how far the colony can grow.',
     'desc_techs_housingComplex' => 'A residential habitat is more than shelter — it is the promise that this is not a temporary camp. Every new unit increases the supply capacity of the entire installation.',

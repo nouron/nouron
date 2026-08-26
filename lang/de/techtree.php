@@ -16,6 +16,18 @@ return [
     'building_uplinkStation' => 'Uplink-Station',
     'building_tradingPost' => 'Handelsposten',
 
+    // ── Ausbaustufen-Beinamen (tier_* Keys, Design-Spec 2026-08-23) ──────────
+    'tier_hangar_1' => 'Startmodul',
+    'tier_hangar_2' => 'Ladebucht',
+    'tier_hangar_3' => 'Anlegestelle',
+    'tier_securityHub_3' => 'Recyclingmodul',
+    'tier_infirmary_3' => 'Vollausstattung',
+    'tier_bioFacility_3' => 'Notvorrat',
+    'tier_uplinkStation_1' => 'Erster Draht',
+    'tier_tradingPost_1' => 'Bekannter Gast',
+    'tier_tradingPost_2' => 'Fester Kunde',
+    'tier_tradingPost_3' => 'Persönlicher Kontakt',
+
     // ── Gebäude-Beschreibungen (desc_techs_* Keys) ────────────────────────────
     'desc_techs_commandCenter' => 'Alles läuft hier zusammen — Berichte, Pläne, Entscheidungen. Die Kommandozentrale ist kein glamouröses Gebäude; sie ist das Nervensystem der Kolonie. Ihr Level bestimmt, wie weit die Kolonie wachsen kann.',
     'desc_techs_housingComplex' => 'Ein Wohnhabitat ist mehr als Unterkunft — es ist die Zusage, dass das hier kein vorübergehendes Lager ist. Jede neue Einheit erhöht die Versorgungskapazität der gesamten Anlage.',
