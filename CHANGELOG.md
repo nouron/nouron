@@ -1,6 +1,8 @@
 # Changelog
 
-## 2026-08-23
+## 2026-08-26
+
+- Docs: Design-Spec für Gebäude-Ausbaustufen-System fertiggestellt (`docs/superpowers/specs/2026-08-23-building-tier-system-design.md`) — CC behält Level, alle 9 anderen Gebäude auf max. 3 benannte Ausbaustufen umgestellt (Struktur, keine Zahlen, ADR 0004). Zwei echte Implementierungslücken mitgeschlossen: Handelsposten (bisher leere Hülle) bekommt kanalweise Rabattfreischaltung, Analytik-Labor Lv4/5 (bisher wirkungslos) bekommt Domänen-Effizienzbonus "Wissen". Wohnhabitat-Level-Deckel korrigiert (6→3, Doppelachse mit Instanzen war historische Drift). Finale Beinamen nach 4 content-writer-Namensrunden freigegeben. Exklusive Ausbau-Varianten und Bauten außerhalb der Koloniezone geprüft und zurückgestellt/verworfen.
 
 - Chore: tote Frontend-Dependencies entfernt — `package.json` hatte noch `bootstrap` (^3.4.1) und `jquery` als Dependencies, obwohl beide seit der Alpine.js/PicoCSS-Migration nirgends mehr eingebunden werden (auch `pace-js` war unreferenziert). `scripts/copy-vendor.js` (kopierte diese + ein nicht mehr installiertes `ngm`-Paket nach `public/vendor/`) entfernt, npm-Scripts `build`/`postinstall` damit obsolet und ebenfalls entfernt. `package-lock.json` aktualisiert.
 - Chore: weiterer Dead-Code-Fund aufgeräumt (projektweiter Audit) — `public/js/user.js` (kein `<script src>` bindet es ein, altes Diplomaten-Feature aus der Multiplayer-Ära), `config/researches.php` Legacy-Researches-Block (biology/physics/etc. — DB hat diese Forschungs-IDs seit dem Kenntnisse-Redesign nicht mehr), und 11 ungenutzte Eloquent-Models (`BuildingCost`, `ColonyPersonell`, `ColonyRecord`, `ColonyShip`, `LockedActionpoint`, `PersonellCost`, `ResearchCost`, `Ship`, `ShipCost`, `TradeResource`, `TradeResourceView` — kompletter Datenzugriff läuft überall via `DB::table()`, keine dieser Klassen wurde je instanziiert) entfernt.
