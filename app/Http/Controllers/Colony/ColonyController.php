@@ -141,6 +141,7 @@ class ColonyController extends BaseController
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
+                $b->tier_label = $this->resolveTierLabel((int) $b->building_id, (int) $b->level);
 
                 return $b;
             });
@@ -1008,6 +1009,27 @@ class ColonyController extends BaseController
         return (abs($dq) + abs($dr) + abs($dq + $dr)) / 2;
     }
 
+    /**
+     * Resolve the named tier beiname for a building at a given level, or null
+     * if that level has no name (design-spec.md: "Beiname nur bei echtem
+     * Fähigkeits-Sprung"). Looks the building's config key up by id (same
+     * pattern as OnboardingHintService::canAffordBuildingPlacement()).
+     */
+    private function resolveTierLabel(int $buildingId, int $level): ?string
+    {
+        $key = collect(config('buildings'))->search(fn ($cfg) => $cfg['id'] === $buildingId);
+        if ($key === false) {
+            return null;
+        }
+
+        $tiers = config("buildings.{$key}.tiers", []);
+        if (! in_array($level, $tiers, true)) {
+            return null;
+        }
+
+        return __("techtree.tier_{$key}_{$level}");
+    }
+
     private function fetchBuildingRow(int $colonyId, int $buildingId, int $instanceId = 1): object
     {
         $row = DB::table('colony_buildings')
@@ -1037,6 +1059,7 @@ class ColonyController extends BaseController
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
+        $row->tier_label = $this->resolveTierLabel((int) $row->building_id, (int) $row->level);
 
         return $row;
     }

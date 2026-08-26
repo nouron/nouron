@@ -87,6 +87,24 @@ class ColonyViewTest extends TestCase
         $response->assertSee('x-ref="hintBar"', false);
     }
 
+    public function test_hexview_buildings_include_tier_label(): void
+    {
+        // App-Locale explizit 'de' setzen (Tests laufen sonst mit config-Default 'en').
+        $this->app->setLocale('de');
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $response->assertOk();
+
+        $buildings = $response->viewData('buildings');
+        $infirmary = $buildings->firstWhere('building_id', 46);
+
+        $this->assertNotNull($infirmary, 'Krankenstation (id=46) muss in den Testdaten vorhanden sein');
+        $this->assertSame(3, (int) $infirmary->level, 'Testdaten-Annahme: Krankenstation steht auf Level 3');
+        $this->assertSame('Vollausstattung', $infirmary->tier_label);
+    }
+
     public function test_pending_run_redirects_to_lobby(): void
     {
         // A pending run is active but not yet started (started_at = null).
