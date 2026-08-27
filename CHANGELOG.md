@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-27
+
+- Feat: Handelsposten (tradingPost) bekommt seine erste echte Spielwirkung — Kanal-Rabatt-Freischaltung je Ausbaustufe (I=Cantina, II=+Reisender Händler, III=+Nexus/Corporate Contact), kumulativ, kein Stack-Effekt mit dem Konsul-Rang-Verhandlungsbonus. Bisher komplett wirkungsloser `merchant_price_bonus`-Config-Wert wird jetzt tatsächlich angewendet. Neuer `TradingPostService`, verdrahtet in `BarService`/`MerchantService`/`CorporateContactService`.
+
 ## 2026-08-26
 
 - Docs: Design-Spec für Gebäude-Ausbaustufen-System fertiggestellt (`docs/superpowers/specs/2026-08-23-building-tier-system-design.md`) — CC behält Level, alle 9 anderen Gebäude auf max. 3 benannte Ausbaustufen umgestellt (Struktur, keine Zahlen, ADR 0004). Zwei echte Implementierungslücken mitgeschlossen: Handelsposten (bisher leere Hülle) bekommt kanalweise Rabattfreischaltung, Analytik-Labor Lv4/5 (bisher wirkungslos) bekommt Domänen-Effizienzbonus "Wissen". Wohnhabitat-Level-Deckel korrigiert (6→3, Doppelachse mit Instanzen war historische Drift). Finale Beinamen nach 4 content-writer-Namensrunden freigegeben. Exklusive Ausbau-Varianten und Bauten außerhalb der Koloniezone geprüft und zurückgestellt/verworfen.
