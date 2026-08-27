@@ -1208,4 +1208,110 @@ class BarServiceTest extends TestCase
 
         $this->assertEquals($baseMax, $activeCount, 'trade Lv0 must leave the concurrent offer cap unchanged');
     }
+
+    // ── Handelsposten-Rabatt (Design-Spec 2026-08-23) ──────────────────────────
+
+    private function setTradingPostLevel(?int $level): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 55)->delete();
+
+        if ($level !== null) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => self::COLONY_ID,
+                'building_id' => 55,
+                'instance_id' => 1,
+                'level' => $level,
+                'status_points' => 20,
+                'ap_spend' => 0,
+            ]);
+        }
+    }
+
+    public function test_accept_offer_applies_trading_post_discount_when_credits_are_the_give_side(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(1); // Stufe 1 schaltet den Cantina-Kanal frei
+
+        $giveAmount = 500;
+        $getAmount = 20;
+
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => $getAmount,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok']);
+        $bonus = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedGive = (int) max(1, round($giveAmount * (1 - $bonus)));
+        $this->assertSame($expectedGive, $result['give_amount'], 'give_amount (Credits) must be discounted by the trading post channel rate');
+        $this->assertSame(1000 - $expectedGive, $this->getCredits());
+    }
+
+    public function test_accept_offer_has_no_discount_without_trading_post(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(null);
+
+        $giveAmount = 500;
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertSame($giveAmount, $result['give_amount'], 'no trading post → no discount, unchanged amount');
+    }
+
+    public function test_accept_offer_does_not_stack_trading_post_discount_with_negotiation(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(1);
+        $this->assignTrader(3); // rank 3 Konsul, siehe bestehende assignTrader()-Helper
+
+        $giveAmount = 500;
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        // Verhandeln setzt is_negotiated=true und passt give_amount bereits über den
+        // Konsul-Rang-Bonus an — der Handelsposten-Rabatt darf hier NICHT zusätzlich
+        // draufkommen (GDD: kein Stack-Effekt).
+        config(['game.bypass.ap_checks' => true]);
+        // tick=11 (not 10) — deterministic pseudoRand roll for this offerId/rank
+        // combination only lands as a negotiation success at tick=11; see brief note.
+        $negotiateResult = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
+        $this->assertTrue($negotiateResult['ok']);
+        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
+
+        $negotiatedGiveAmount = DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
+
+        $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
+
+        $this->assertSame((int) $negotiatedGiveAmount, $acceptResult['give_amount'], 'trading post discount must not stack on top of an already-negotiated offer');
+    }
 }
