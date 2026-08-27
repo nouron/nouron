@@ -459,13 +459,14 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 
 Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
 
+<!-- TODO: Konsul-Effizienz-Absatz prüfen, evtl. Verwechslung mit trade-Kenntnis-Domäneneffizienz — separater Task -->
 **Passiv — Konsul-Effizienz:**
 Trade-Orders erhalten einen Bonus (AP-Kostenreduktion). Nur relevant wenn ein Konsul aktiv ist — dies ist ein Beispiel für einen Domänen-Effizienzbonus (§13.3). Exakte Werte: `config/buildings.php`.
 
-**Passiv — Händlerkonditionen:**
-Der Reisende Händler bietet bei Anwesenheit eines Handelspostens bessere Preiskonditionen (Bonus auf Handelswert). Konkreter Wert nach Playtest kalibrieren (siehe `config/buildings.php`).
+**Passiv — Kanal-Rabatt (Design-Spec 2026-08-23):**
+Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal für einen Preisrabatt frei, kumulativ: Stufe I (Bekannter Gast) den Kanal Cantina-Zufallsangebote, Stufe II (Fester Kunde) zusätzlich den Reisenden Händler, Stufe III (Persönlicher Kontakt) zusätzlich Nexus/Corporate Contact (Orin). Beim Cantina-Kanal gilt: kein Stack-Effekt mit dem Konsul-Rang-Verhandlungsbonus — der Rabatt gilt nur für nicht verhandelte Angebote. Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
 
-> **TODO Balance:** Baukosten und Decay nach erstem Playtest festlegen (siehe `config/buildings.php`). Handelswert-Bonus muss mit dem Konsul-Rang-System abgestimmt werden (kein Stack-Effekt wenn Konsul Experte + Handelsposten).
+> **TODO Balance:** Baukosten und Decay nach erstem Playtest festlegen (siehe `config/buildings.php`).
 
 ---
 
