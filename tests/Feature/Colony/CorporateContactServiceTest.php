@@ -166,4 +166,49 @@ class CorporateContactServiceTest extends TestCase
         $this->assertTrue($entitlementService->hasEntitlement(self::USER_ID));
         $this->assertFalse($entitlementService->isSalvageSourced(self::USER_ID), 'purchase path must not be marked as salvage-sourced');
     }
+
+    // ── Handelsposten-Rabatt (Design-Spec 2026-08-23) ──────────────────────────
+
+    private function setTradingPostLevel(?int $level): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 55)->delete();
+
+        if ($level !== null) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => self::COLONY_ID,
+                'building_id' => 55,
+                'instance_id' => 1,
+                'level' => $level,
+                'status_points' => 20,
+                'ap_spend' => 0,
+            ]);
+        }
+    }
+
+    public function test_active_offer_price_is_discounted_with_trading_post_level_3(): void
+    {
+        $this->setTradingPostLevel(null);
+        $offerWithoutDiscount = $this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
+        $this->assertNotNull($offerWithoutDiscount);
+        $fullPrice = $offerWithoutDiscount['price'];
+
+        $this->setTradingPostLevel(3); // Stufe 3 schaltet den Nexus/Corporate-Contact-Kanal frei
+        $offerWithDiscount = $this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
+        $this->assertNotNull($offerWithDiscount);
+
+        $discount = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedPrice = (int) max(1, round($fullPrice * (1 - $discount)));
+        $this->assertSame($expectedPrice, $offerWithDiscount['price'], 'active offer price must reflect the trading post discount at level 3');
+        $this->assertLessThan($fullPrice, $offerWithDiscount['price'], 'discounted price must be strictly lower than the undiscounted price');
+    }
+
+    public function test_active_offer_price_has_no_discount_below_level_3(): void
+    {
+        $this->setTradingPostLevel(2); // Schwelle für diesen Kanal ist 3, Level 2 unlockt ihn noch nicht
+
+        $offer = $this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
+
+        $this->assertNotNull($offer);
+        $this->assertSame(495, $offer['price'], 'below the level-3 threshold, price must equal the documented undiscounted roll (495 Cr at OFFER_HIT_TICK)');
+    }
 }
