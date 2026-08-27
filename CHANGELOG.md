@@ -2,6 +2,7 @@
 
 ## 2026-08-27
 
+- Fix: Whole-Branch-Review-Fund am Handelsposten-Kanal-Rabatt — `BarService::acceptOffer()` prüfte Affordability/Reserve-Floor gegen den vollen statt den rabattierten Preis (dieselbe Lücke, die in `MerchantService::buyItem()` schon behoben war), + 2 Regressionstests. GDD-Absatz präzisiert (nur der explizite Verhandlungsbonus ist vom Stack-Ausschluss erfasst, der passive `trader_discount` stackt noch ungeprüft — offene Design-Frage) und veralteter `merchant_price_bonus`-Kommentar in `config/buildings.php` aktualisiert.
 - Feat: Handelsposten (tradingPost) bekommt seine erste echte Spielwirkung — Kanal-Rabatt-Freischaltung je Ausbaustufe (I=Cantina, II=+Reisender Händler, III=+Nexus/Corporate Contact), kumulativ, kein Stack-Effekt mit dem Konsul-Rang-Verhandlungsbonus. Bisher komplett wirkungsloser `merchant_price_bonus`-Config-Wert wird jetzt tatsächlich angewendet. Neuer `TradingPostService`, verdrahtet in `BarService`/`MerchantService`/`CorporateContactService`.
 
 ## 2026-08-26
