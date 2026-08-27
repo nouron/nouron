@@ -21,6 +21,7 @@ class BarService
     public function __construct(
         private readonly ResourcesService $resourcesService,
         private readonly AdvisorService $advisorService,
+        private readonly TradingPostService $tradingPostService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -160,9 +161,30 @@ class BarService
             }
         }
 
+        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — nur auf
+        // nicht-verhandelte Angebote, kein Stack-Effekt mit dem
+        // Konsul-Rang-Verhandlungsbonus aus negotiateOffer(). Berechnet VOR dem
+        // Affordability-Check, damit dieser gegen den tatsächlich fälligen
+        // Betrag läuft (Whole-Branch-Review-Fund 2026-08-27 — derselbe Bug,
+        // der in MerchantService::buyItem() bereits behoben wurde).
+        $giveAmount = $offer->give_amount;
+        $getAmount = $offer->get_amount;
+        if (! $offer->is_negotiated) {
+            $discount = $this->tradingPostService->discountFor($colonyId, 'bar');
+            if ($discount > 0.0) {
+                $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
+                $giveAmount = $isCreditsOffer
+                    ? (int) max(1, round($offer->give_amount * (1 - $discount)))
+                    : $offer->give_amount;
+                $getAmount = $isCreditsOffer
+                    ? $offer->get_amount
+                    : (int) max(1, round($offer->get_amount * (1 + $discount)));
+            }
+        }
+
         // Check player can afford the give side
         $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
-        if ($giveBalance < $offer->give_amount) {
+        if ($giveBalance < $giveAmount) {
             return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
         }
 
@@ -175,16 +197,16 @@ class BarService
             if ((int) $offer->give_resource_id === $sellResId) {
                 $reserveMultiplier = (int) config('game.merchant.commodity.sell_reserve_multiplier', 2);
                 $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
-                if (($giveBalance - $offer->give_amount) < $reserve) {
+                if (($giveBalance - $giveAmount) < $reserve) {
                     return ['ok' => false, 'error' => __('colony.bar_offer_reserve_floor')];
                 }
             }
         }
 
         // Execute trade atomically — partial transfer must not persist
-        DB::transaction(function () use ($offer, $colonyId, $apCost): void {
-            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $offer->give_amount);
-            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $offer->get_amount);
+        DB::transaction(function () use ($offer, $colonyId, $apCost, $giveAmount, $getAmount): void {
+            $this->resourcesService->decreaseAmount($colonyId, $offer->give_resource_id, $giveAmount);
+            $this->resourcesService->increaseAmount($colonyId, $offer->get_resource_id, $getAmount);
             $offer->is_accepted = true;
             $offer->save();
             if ($apCost > 0) {
@@ -196,17 +218,17 @@ class BarService
             'colony_id' => $colonyId,
             'offer_id' => $offerId,
             'give_resource_id' => $offer->give_resource_id,
-            'give_amount' => $offer->give_amount,
+            'give_amount' => $giveAmount,
             'get_resource_id' => $offer->get_resource_id,
-            'get_amount' => $offer->get_amount,
+            'get_amount' => $getAmount,
         ]);
 
         return [
             'ok' => true,
             'give_resource_id' => $offer->give_resource_id,
-            'give_amount' => $offer->give_amount,
+            'give_amount' => $giveAmount,
             'get_resource_id' => $offer->get_resource_id,
-            'get_amount' => $offer->get_amount,
+            'get_amount' => $getAmount,
         ];
     }
 

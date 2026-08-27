@@ -812,4 +812,65 @@ class MerchantServiceTest extends TestCase
 
         $this->assertTrue($foreignStillFalse, 'markVisited must not affect visits belonging to other colonies');
     }
+
+    // ── Handelsposten-Rabatt (Design-Spec 2026-08-23) ──────────────────────────
+
+    private function setTradingPostLevel(?int $level): void
+    {
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 55)->delete();
+
+        if ($level !== null) {
+            DB::table('colony_buildings')->insert([
+                'colony_id' => self::COLONY_ID,
+                'building_id' => 55,
+                'instance_id' => 1,
+                'level' => $level,
+                'status_points' => 20,
+                'ap_spend' => 0,
+            ]);
+        }
+    }
+
+    public function test_buy_item_applies_trading_post_discount_to_cost(): void
+    {
+        $this->mockTick(20);
+        $this->setTradingPostLevel(2); // Stufe 2 schaltet den Reisender-Händler-Kanal frei
+
+        $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'trust_boost',
+            'payload' => json_encode(['trust_amount' => 15]),
+            'cost_credits' => 100,
+        ]);
+        $this->setCredits(300);
+        $this->setColonyResource(self::TRUST_RESOURCE_ID, 50);
+
+        $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
+
+        $this->assertTrue($result['ok']);
+        $discount = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedCharge = (int) max(1, round(100 * (1 - $discount)));
+        $this->assertSame(300 - $expectedCharge, $result['credits'], 'buyItem must deduct the trading-post-discounted cost, not the full cost_credits');
+        $this->assertSame(300 - $expectedCharge, $this->getCredits());
+    }
+
+    public function test_buy_item_has_no_discount_without_trading_post(): void
+    {
+        $this->mockTick(20);
+        $this->setTradingPostLevel(null);
+
+        $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'trust_boost',
+            'payload' => json_encode(['trust_amount' => 15]),
+            'cost_credits' => 100,
+        ]);
+        $this->setCredits(300);
+        $this->setColonyResource(self::TRUST_RESOURCE_ID, 50);
+
+        $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame(200, $result['credits'], 'no trading post → full cost_credits (100) deducted, unchanged from pre-existing behaviour');
+    }
 }

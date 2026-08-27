@@ -43,6 +43,7 @@ class MerchantService
         private readonly AdvisorService $advisorService,
         private readonly BarService $barService,
         private readonly ResourcesService $resourcesService,
+        private readonly TradingPostService $tradingPostService,
     ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
@@ -307,20 +308,28 @@ class MerchantService
             return ['ok' => false, 'error' => 'Der Händler ist nicht mehr anwesend.'];
         }
 
+        // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 2 schaltet
+        // den Reisender-Händler-Kanal frei. Vor dem Credits-Check berechnet, damit
+        // die Affordability-Prüfung gegen den tatsächlich fälligen Betrag läuft.
+        $discount = $this->tradingPostService->discountFor($colonyId, 'merchant');
+        $chargedCredits = $discount > 0.0
+            ? (int) max(1, round($item->cost_credits * (1 - $discount)))
+            : $item->cost_credits;
+
         // Check credits
         $credits = (int) (DB::table('user_resources')
             ->where('user_id', $userId)
             ->value('credits') ?? 0);
 
-        if ($credits < $item->cost_credits) {
+        if ($credits < $chargedCredits) {
             return ['ok' => false, 'error' => 'Nicht genug Credits.'];
         }
 
         // Deduct credits, apply effect and mark sold atomically.
-        DB::transaction(function () use ($item, $itemId, $colonyId, $userId): void {
+        DB::transaction(function () use ($item, $itemId, $colonyId, $userId, $chargedCredits): void {
             DB::table('user_resources')
                 ->where('user_id', $userId)
-                ->decrement('credits', $item->cost_credits);
+                ->decrement('credits', $chargedCredits);
 
             $this->applyItemEffect($item, $colonyId);
 
@@ -334,7 +343,7 @@ class MerchantService
             'user_id' => $userId,
             'item_id' => $itemId,
             'item_type' => $item->item_type,
-            'cost_credits' => $item->cost_credits,
+            'cost_credits' => $chargedCredits,
         ]);
 
         $newCredits = (int) (DB::table('user_resources')

@@ -374,7 +374,7 @@ return [
         // (Cantina → Reisender Händler → Nexus/Corporate Contact), echter
         // Fähigkeits-Sprung pro Stufe (Design-Spec, Abschnitt "Handelsposten").
         'tiers' => [1, 2, 3],
-        'merchant_price_bonus' => 0.12,    // +12% trade value when Reisender Händler present
+        'merchant_price_bonus' => 0.12,    // discount rate applied per unlocked channel (see TradingPostService)
     ],
 
 ];
