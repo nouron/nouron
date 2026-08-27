@@ -15,9 +15,11 @@ namespace Tests\Feature;
  *   - `buildings.max_instances` column exists after migrate:fresh + seed
  *   - harvester (27): max_instances=2, max_level=1 (no level-up, hard-capped at 2 instances)
  *   - housingComplex (28): max_instances=6 carried over from the previous max_level
- *     cap; max_level stays 6 (level is a live, independently-tracked axis — see
+ *     cap; max_level is a live, independently-tracked axis (see
  *     ResourcesService::getSupplyBreakdown() which sums per-instance `level` for the
- *     supply contribution, so nulling it out would silently uncap housing supply)
+ *     supply contribution, so nulling it out would silently uncap housing supply) —
+ *     lowered to 3 (2026-08-25, Ausbaustufen-Umstellung) once the two axes were
+ *     deliberately decoupled from their historical identical-value coincidence
  *   - Building::create()/update() can mass-assign max_instances (fillable)
  *   - ColonyBuilding::create() can mass-assign instance_id without MassAssignmentException,
  *     and a second instance of the same building does not collide with the
@@ -59,13 +61,16 @@ class BuildingMaxInstancesTest extends TestCase
         $this->assertSame(1, (int) $harvester->max_level);
     }
 
-    public function test_housing_complex_has_max_instances_six_and_keeps_max_level_six(): void
+    public function test_housing_complex_has_max_instances_six_and_max_level_three(): void
     {
+        // max_level lowered 6 → 3 (2026-08-25, Ausbaustufen-Umstellung, see
+        // config/buildings.php housingComplex comment) — max_instances stays the
+        // separate, unrelated instance-count cap.
         $housing = DB::table('buildings')->where('id', 28)->first();
 
         $this->assertNotNull($housing);
         $this->assertSame(6, (int) $housing->max_instances);
-        $this->assertSame(6, (int) $housing->max_level);
+        $this->assertSame(3, (int) $housing->max_level);
     }
 
     public function test_building_model_can_mass_assign_max_instances(): void

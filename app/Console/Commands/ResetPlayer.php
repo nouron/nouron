@@ -613,7 +613,7 @@ class ResetPlayer extends Command
             ->update(['level' => 3, 'status_points' => 20]);     // Housing Lv3
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 41)
-            ->update(['level' => 4, 'status_points' => 20]);     // Agrardom Lv4
+            ->update(['level' => 3, 'status_points' => 20]);     // Agrardom Lv3 (Deckel seit 2026-08-25, war Lv4)
         DB::table('colony_buildings')
             ->where('colony_id', $cid)->where('building_id', 31)
             ->update(['level' => 3, 'status_points' => 20]);     // Sciencelab Lv3

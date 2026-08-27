@@ -70,15 +70,20 @@ return [
         // max_level is a real per-instance level cap (not vestigial): each
         // housingComplex instance levels independently and ResourcesService::
         // getSupplyBreakdown() sums per-instance `level` for the supply
-        // contribution, so max_level=6 genuinely caps how much supply a single
+        // contribution, so max_level genuinely caps how much supply a single
         // instance can contribute. max_instances=6 is the separate instance-count
-        // cap that ColonyController::buildableBuildings() was — before this split —
-        // reading out of the same max_level field by coincidence (both happened to
-        // be 6). Kept identical on purpose (2026-08-03, GDD §4c): decoupling the
-        // fields must not silently change current behaviour. Rewiring
-        // buildableBuildings() to read max_instances instead of max_level is
-        // separate controller work, not done here.
-        'max_level' => 6,
+        // cap that ColonyController::buildableBuildings() reads directly (not via
+        // max_level). Gesenkt von 6 auf 3 (2026-08-25, game-designer-Review):
+        // max_level und max_instances waren bis dahin identisch (6) aus
+        // historischem Zufall, keine Design-Absicht — Doppelachse machte die
+        // Bauentscheidung uninteressant (beide Wege füttern denselben Supply-Pool
+        // ohne qualitativen Unterschied). Die beiden Felder sind jetzt bewusst
+        // unterschiedlich: max_level=3 ist der Pro-Instanz-Levelcap, max_instances=6
+        // bleibt die separate, tile-limitierte Instanzanzahl-Achse; Level ist
+        // sekundäre Feinabstimmung. supply_cap-Neukalibrierung ist ein separater
+        // Balance-Task nach Playtest
+        // (docs/superpowers/specs/2026-08-23-building-tier-system-design.md, Punkt 9).
+        'max_level' => 3,
         'max_instances' => 6,
     ],
 
@@ -117,8 +122,12 @@ return [
         // Klasse "Standard" (GDD §13.7, 2026-08-03): 33 Sole bis Level-Down.
         'decay_rate' => 0.60,
         'max_status_points' => 20,
-        // Hard cap (2026-07-20, GDD §3/§18 balance ticket) — see harvester comment above.
-        'max_level' => 8,
+        // Gedeckelt auf 3 (2026-08-25, Ausbaustufen-Umstellung) — production_curve[41]
+        // (config/game.php) hat weiterhin Einträge für Lv4-8; die werden ab jetzt nie
+        // erreicht und bleiben als inerte historische Daten stehen (gleiches Muster
+        // wie production_curve[27] beim Harvester, siehe dortiger Kommentar).
+        'max_level' => 3,
+        'tiers' => [3],
     ],
 
     // ── Science ───────────────────────────────────────────────────────────────
@@ -145,7 +154,12 @@ return [
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
-        'max_level' => null,
+        // Gedeckelt auf 5 (2026-08-25) — Ausnahme von der max.-3-Regel: Lv1-3
+        // bleiben Kenntnis-Freischalt-Gates (unverändert, siehe researches-
+        // Migrationen), Lv4/5 bekommen einen Domänen-Effizienzbonus "Wissen"
+        // (separater Folge-Plan, noch nicht implementiert — Level-Deckel wird
+        // hier vorab gesetzt, damit er nicht vergessen wird).
+        'max_level' => 5,
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
@@ -191,6 +205,10 @@ return [
         // gatet Schiffe bereits so, das Feld holt nur nach. Instanzen bleiben die primäre
         // Wachstumsachse (Schiffsplätze), unverändert unbegrenzt/supply-limitiert.
         'max_level' => 3,
+        // Ausbaustufen-Beinamen (2026-08-25) — jede Stufe schaltet eine neue
+        // Schiffsklasse frei (echter Fähigkeits-Sprung), siehe lang/de/techtree.php
+        // tier_hangar_1/2/3.
+        'tiers' => [1, 2, 3],
         'max_instances' => null,
     ],
 
@@ -204,10 +222,17 @@ return [
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
-        'max_level' => null,
+        // Gedeckelt auf 3 (2026-08-25) — Absicht ist, dass Stufe 3 den
+        // plague_risk_reduction_cap trifft, damit keine Überinvestition über den
+        // Wirkungsdeckel hinaus möglich ist. Aktuell (3 × 0.08 = 0.24) erreicht das
+        // den Cap (0.50) noch NICHT exakt — Zahlen-Kalibrierung ist ein separater
+        // Balance-Task nach Playtest (ADR 0004, Spec Folge-Task 3), nicht Teil
+        // dieses Struktur-Plans.
+        'max_level' => 3,
+        'tiers' => [3],
         // Reduces Seuchenausbruch trigger chance (GDD §9) — flat per-level, capped.
-        // Not a bell curve: infirmary has no max_level, so a 5-slot array doesn't fit;
-        // this mirrors decay_rate's own flat-per-level-times-multiplier style instead.
+        // Mirrors decay_rate's own flat-per-level-times-multiplier style rather than
+        // a production_curve-style per-level table.
         'plague_risk_reduction_pct_per_level' => 0.08,
         'plague_risk_reduction_cap' => 0.50,
     ],
@@ -240,7 +265,10 @@ return [
         // Klasse "Beansprucht" (GDD §13.7, 2026-08-03): 25 Sole bis Level-Down.
         'decay_rate' => 0.80,
         'max_status_points' => 20,
-        'max_level' => null,
+        // Gedeckelt auf 3 (2026-08-25, Ausbaustufen-Umstellung) — reine
+        // Mengensteigerung (Angebotszahl/-dauer), kein Fähigkeits-Sprung, daher
+        // keine Beinamen.
+        'max_level' => 3,
     ],
 
     'monument' => [
@@ -297,6 +325,10 @@ return [
         'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
+        // Ausbaustufen-Beiname nur bei Stufe 3 (Recycling-Effekt, aktuell nur
+        // konfiguriert — siehe securityHub Folge-Plan zum Verdrahten von
+        // recycle_pct) — Stufen 1/2 sind reine Trust-Bonus-Mengensteigerung.
+        'tiers' => [3],
         'recycle_pct' => 0.10,                 // fraction of build cost returned on level-down
         'event_mitigation_pct' => 0.25,        // 25% reduction on encounter/decay trust penalties (TrustService::eventContribution())
     ],
@@ -318,6 +350,11 @@ return [
         'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
+        // Nur Stufe 1 hat einen Beiname (schaltet Nexus-Bestellungen überhaupt
+        // erst frei — echter Fähigkeits-Sprung). Stufe 2 ist Mengensteigerung
+        // (Scankosten -1 AP). Stufe 3 ist zurückgestellt (Design-Spec Punkt "Neue
+        // Mechaniken" — braucht einen eigenen Meta-Progressions-Design-Sprint).
+        'tiers' => [1],
     ],
 
     // Trading Post — CC Lv4, max 1 instance (is_instanced=0).
@@ -333,6 +370,10 @@ return [
         'decay_rate' => 0.60,
         'max_status_points' => 20,
         'max_level' => 3,
+        // Alle 3 Stufen benannt — jede schaltet einen neuen Rabatt-Kanal frei
+        // (Cantina → Reisender Händler → Nexus/Corporate Contact), echter
+        // Fähigkeits-Sprung pro Stufe (Design-Spec, Abschnitt "Handelsposten").
+        'tiers' => [1, 2, 3],
         'merchant_price_bonus' => 0.12,    // +12% trade value when Reisender Händler present
     ],
 

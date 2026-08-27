@@ -204,4 +204,53 @@ class BuildingRepairTest extends TestCase
             'event' => 'colony.building_repaired',
         ]);
     }
+
+    // ── tier_label (Ausbaustufen-Beinamen, Design-Spec 2026-08-23) ────────────
+
+    public function test_repair_response_includes_tier_label_when_configured(): void
+    {
+        // Krankenstation (id=46) steht in den Testdaten auf Level 3, status_points=10
+        // (max_status_points=20 → reparierbar). Level 3 ist laut config/buildings.php
+        // 'infirmary'.'tiers' benannt ("Vollausstattung").
+        // App-Locale explizit 'de' setzen (Tests laufen sonst mit config-Default 'en',
+        // siehe ColonyHintDismissTest für dasselbe Muster).
+        $this->app->setLocale('de');
+
+        $response = $this->repair(46);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $response->assertJsonPath('building.tier_label', 'Vollausstattung');
+    }
+
+    public function test_repair_response_has_null_tier_label_when_level_has_no_name(): void
+    {
+        // Command Center (id=25) hat kein 'tiers'-Array in config/buildings.php —
+        // jedes Level muss tier_label=null liefern, unabhängig vom aktuellen Level.
+        $this->setCcState(['status_points' => 16]);
+
+        $response = $this->repair(self::CC_ID);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $response->assertJsonPath('building.tier_label', null);
+    }
+
+    public function test_repair_response_has_null_tier_label_when_current_level_not_in_tiers(): void
+    {
+        // Sicherheits-Hub (id=53) hat 'tiers' => [3] konfiguriert, ist aber in den
+        // Testdaten für Kolonie 1 gar nicht platziert — Zeile hier gezielt auf Level 1
+        // anlegen (nicht in [3]), damit tier_label trotz vorhandenem tiers-Array null sein muss.
+        DB::table('colony_buildings')->insert([
+            'colony_id' => self::COLONY_ID,
+            'building_id' => 53,
+            'instance_id' => 1,
+            'level' => 1,
+            'status_points' => 10,
+            'ap_spend' => 0,
+        ]);
+
+        $response = $this->repair(53);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+        $response->assertJsonPath('building.tier_label', null);
+    }
 }
