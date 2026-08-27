@@ -457,14 +457,16 @@ Die Uplink-Station ist das einzige Kommunikationsgebäude der Kolonie — 1 Inst
 
 ### Handelsposten (tradingPost) — Mechanik
 
-Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er stärkt den Handels-AP-Effizienz und den Nexus-Handelskanal:
+Der Handelsposten ist ein auf 1 Instanz begrenztes Wirtschaftsgebäude (CC Lv4, konkurriert mit Religiöser Stätte um dasselbe Tile-Budget). Er verbessert Handelskonditionen über mehrere Kanäle hinweg:
 
 <!-- TODO: Konsul-Effizienz-Absatz prüfen, evtl. Verwechslung mit trade-Kenntnis-Domäneneffizienz — separater Task -->
 **Passiv — Konsul-Effizienz:**
 Trade-Orders erhalten einen Bonus (AP-Kostenreduktion). Nur relevant wenn ein Konsul aktiv ist — dies ist ein Beispiel für einen Domänen-Effizienzbonus (§13.3). Exakte Werte: `config/buildings.php`.
 
 **Passiv — Kanal-Rabatt (Design-Spec 2026-08-23):**
-Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal für einen Preisrabatt frei, kumulativ: Stufe I (Bekannter Gast) den Kanal Cantina-Zufallsangebote, Stufe II (Fester Kunde) zusätzlich den Reisenden Händler, Stufe III (Persönlicher Kontakt) zusätzlich Nexus/Corporate Contact (Orin). Beim Cantina-Kanal gilt: kein Stack-Effekt mit dem Konsul-Rang-Verhandlungsbonus — der Rabatt gilt nur für nicht verhandelte Angebote. Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
+Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal für einen Preisrabatt frei, kumulativ: Stufe I (Bekannter Gast) den Kanal Cantina-Zufallsangebote, Stufe II (Fester Kunde) zusätzlich den Reisenden Händler, Stufe III (Persönlicher Kontakt) zusätzlich Nexus/Corporate Contact (Orin). Beim Cantina-Kanal gilt: kein Stack-Effekt mit dem expliziten Konsul-Verhandlungsbonus (`negotiate_bonus`, ausgelöst über den "Verhandeln"-Button) — der Rabatt gilt nur für nicht verhandelte Angebote.
+> **TODO Balance/Design:** Der passive, bereits bei der Angebots-Generierung eingerechnete Konsul-Rang-Rabatt (`trader_discount`, siehe `BarService::generateOffersForColony()`) ist von diesem Ausschluss NICHT erfasst und stackt aktuell multiplikativ mit dem Handelsposten-Rabatt (z.B. Rang-3-Konsul 30% + Handelsposten-Stufe-I 12% = kombiniert 38,4%). Ob das gewollt ist, wurde noch nicht bewertet — Whole-Branch-Review-Fund 2026-08-27, offene Design-Frage für den nächsten Balance-Pass.
+Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
 
 > **TODO Balance:** Baukosten und Decay nach erstem Playtest festlegen (siehe `config/buildings.php`).
 

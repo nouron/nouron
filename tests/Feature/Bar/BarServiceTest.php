@@ -1314,4 +1314,83 @@ class BarServiceTest extends TestCase
 
         $this->assertSame((int) $negotiatedGiveAmount, $acceptResult['give_amount'], 'trading post discount must not stack on top of an already-negotiated offer');
     }
+
+    /**
+     * Whole-Branch-Review-Fund 2026-08-27: the affordability check must run against
+     * the DISCOUNTED price, not the offer's full give_amount — otherwise a player
+     * who can afford the discounted price but not the full price is wrongly
+     * rejected with bar_offer_insufficient_resources.
+     */
+    public function test_accept_offer_succeeds_when_only_discounted_price_is_affordable(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(1); // Stufe 1 schaltet den Cantina-Kanal frei, 12% Rabatt
+
+        $giveAmount = 500;
+        $getAmount = 20;
+
+        // 450 liegt zwischen dem rabattierten Preis (~440 bei 12%) und dem vollen
+        // Preis (500) — mit dem alten Bug wäre die Prüfung gegen 500 gelaufen und
+        // hätte fälschlich abgelehnt.
+        $this->setCredits(450);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => $getAmount,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $bonus = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedGive = (int) max(1, round($giveAmount * (1 - $bonus)));
+        $this->assertLessThan($giveAmount, $expectedGive, 'fixture assumption: discounted price must be strictly below the full price for this test to be meaningful');
+        $this->assertLessThanOrEqual(450, $expectedGive, 'fixture assumption: discounted price must be affordable at 450 credits for this test to be meaningful');
+
+        $this->assertTrue($result['ok'] ?? false, 'offer must be accepted when the player can afford the discounted price, even if not the full price');
+        $this->assertSame($expectedGive, $result['give_amount']);
+        $this->assertSame(450 - $expectedGive, $this->getCredits());
+    }
+
+    /**
+     * Covers the previously-untested non-credits branch of the trading post
+     * discount: when the give side is a colony resource (not credits), the
+     * discount instead increases the get_amount the player receives.
+     */
+    public function test_accept_offer_discount_applies_to_get_amount_when_resources_are_the_give_side(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(1); // Stufe 1 schaltet den Cantina-Kanal frei, 12% Rabatt
+
+        $giveAmount = 20;
+        $originalGetAmount = 10;
+
+        $this->setColonyResource(self::RES_REGOLITH, 100);
+        $this->setCredits(0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_REGOLITH,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_CREDITS,
+            'get_amount' => $originalGetAmount,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $bonus = (float) config('buildings.tradingPost.merchant_price_bonus');
+        $expectedGet = (int) max(1, round($originalGetAmount * (1 + $bonus)));
+        $this->assertGreaterThan($originalGetAmount, $expectedGet, 'fixture assumption: discount must actually raise get_amount for this test to be meaningful');
+
+        $this->assertTrue($result['ok'] ?? false);
+        $this->assertSame($giveAmount, $result['give_amount'], 'give_amount must be unchanged on the non-credits branch');
+        $this->assertSame($expectedGet, $result['get_amount'], 'get_amount must be boosted by the discount rate when resources (not credits) are the give side');
+        $this->assertSame($expectedGet, $this->getCredits());
+        $this->assertSame(100 - $giveAmount, $this->getColonyResource(self::RES_REGOLITH));
+    }
 }

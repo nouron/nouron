@@ -161,30 +161,12 @@ class BarService
             }
         }
 
-        // Check player can afford the give side
-        $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
-        if ($giveBalance < $offer->give_amount) {
-            return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
-        }
-
-        // Reserve floor (GDD §4b) — only for Corvan's Organika sell offers
-        // (visit_id set). Re-checked here, not just at generation, because stock
-        // can drop between generation and accept (an earlier lot accepted in the
-        // same visit, or ongoing food consumption) — see generateCommodityOffers().
-        if ($offer->visit_id !== null) {
-            $sellResId = (int) config('game.merchant.commodity.sell_resource_id', 5);
-            if ((int) $offer->give_resource_id === $sellResId) {
-                $reserveMultiplier = (int) config('game.merchant.commodity.sell_reserve_multiplier', 2);
-                $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
-                if (($giveBalance - $offer->give_amount) < $reserve) {
-                    return ['ok' => false, 'error' => __('colony.bar_offer_reserve_floor')];
-                }
-            }
-        }
-
         // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — nur auf
         // nicht-verhandelte Angebote, kein Stack-Effekt mit dem
-        // Konsul-Rang-Verhandlungsbonus aus negotiateOffer().
+        // Konsul-Rang-Verhandlungsbonus aus negotiateOffer(). Berechnet VOR dem
+        // Affordability-Check, damit dieser gegen den tatsächlich fälligen
+        // Betrag läuft (Whole-Branch-Review-Fund 2026-08-27 — derselbe Bug,
+        // der in MerchantService::buyItem() bereits behoben wurde).
         $giveAmount = $offer->give_amount;
         $getAmount = $offer->get_amount;
         if (! $offer->is_negotiated) {
@@ -197,6 +179,27 @@ class BarService
                 $getAmount = $isCreditsOffer
                     ? $offer->get_amount
                     : (int) max(1, round($offer->get_amount * (1 + $discount)));
+            }
+        }
+
+        // Check player can afford the give side
+        $giveBalance = $this->getResourceBalance($colonyId, $userId, $offer->give_resource_id);
+        if ($giveBalance < $giveAmount) {
+            return ['ok' => false, 'error' => __('colony.bar_offer_insufficient_resources')];
+        }
+
+        // Reserve floor (GDD §4b) — only for Corvan's Organika sell offers
+        // (visit_id set). Re-checked here, not just at generation, because stock
+        // can drop between generation and accept (an earlier lot accepted in the
+        // same visit, or ongoing food consumption) — see generateCommodityOffers().
+        if ($offer->visit_id !== null) {
+            $sellResId = (int) config('game.merchant.commodity.sell_resource_id', 5);
+            if ((int) $offer->give_resource_id === $sellResId) {
+                $reserveMultiplier = (int) config('game.merchant.commodity.sell_reserve_multiplier', 2);
+                $reserve = $reserveMultiplier * $this->resourcesService->foodNeed($colonyId);
+                if (($giveBalance - $giveAmount) < $reserve) {
+                    return ['ok' => false, 'error' => __('colony.bar_offer_reserve_floor')];
+                }
             }
         }
 
