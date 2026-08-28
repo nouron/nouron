@@ -160,6 +160,15 @@ return [
         // (separater Folge-Plan, noch nicht implementiert — Level-Deckel wird
         // hier vorab gesetzt, damit er nicht vergessen wird).
         'max_level' => 5,
+        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23) — senkt die
+        // AP-Kosten für Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-
+        // Effekten von construction/cartography/trade (die Gebäude-Levelups
+        // rabattieren, siehe config/knowledge.php). Nur Lv4/5 tragen einen Wert,
+        // Lv1-3 bleiben reine Kenntnis-Gates. Platzhalter-Größenordnung angelehnt
+        // an die Kurven-Enden der Kenntnis-Domänen (Lv4=3, Lv5=2 Prozentpunkte
+        // dort) — eigenständig gewählt, da hier nur 2 statt 5 Stufen zur
+        // Verfügung stehen. Zahlen-Kalibrierung nach Playtest (ADR 0004).
+        'ap_cost_reduction_per_lv' => [4 => 3, 5 => 2],   // Σ5% bei Lv5
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────
