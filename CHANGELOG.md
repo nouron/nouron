@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-28
+
+- Feat: Analytik-Labor (sciencelab) Stufe IV/V bekommen ihre erste echte Spielwirkung — Domänen-Effizienzbonus "Wissen", senkt die AP-Kosten für Kenntnis-Levelups (bisher komplett unrabattiert), additiv und unabhängig vom bestehenden Gebäude-Rabatt-Pool (`ProjectBonusService::DOMAIN_KNOWLEDGE_KEYS`, Mitglieder je nach Ausführungsreihenfolge mit dem cartography-Plan variabel — construction+trade oder construction+cartography+trade). Neue `ProjectBonusService::knowledgeApDiscountPercent()`/`effectiveKnowledgeApForLevelup()`, verdrahtet in `ResearchService::knowledgeLevelupCost()`.
+
 ## 2026-08-27
 
 - Fix: Whole-Branch-Review-Fund am Handelsposten-Kanal-Rabatt — `BarService::acceptOffer()` prüfte Affordability/Reserve-Floor gegen den vollen statt den rabattierten Preis (dieselbe Lücke, die in `MerchantService::buyItem()` schon behoben war), + 2 Regressionstests. GDD-Absatz präzisiert (nur der explizite Verhandlungsbonus ist vom Stack-Ausschluss erfasst, der passive `trader_discount` stackt noch ungeprüft — offene Design-Frage) und veralteter `merchant_price_bonus`-Kommentar in `config/buildings.php` aktualisiert.
