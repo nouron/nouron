@@ -9,6 +9,7 @@ use App\Services\ColonyService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
+use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\ResearchService;
@@ -74,6 +75,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ResearchService::class, fn ($app) => new ResearchService(
             $app->make(TickService::class),
             $app->make(ResourcesService::class),
+            $app->make(ProjectBonusService::class),
             $app->make(AdvisorService::class),
         ));
         $this->app->bind(ShipService::class, fn ($app) => new ShipService(
