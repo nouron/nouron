@@ -778,7 +778,7 @@ Ein Level-Up ist zusätzlich gerechtfertigt, wenn die Stufe **etwas Bestimmtes f
 | **Wohnhabitat** | Instanz | 6 | Unverändert. |
 | **Agrardom** | **Instanz** | offen | Mehrere Kuppeln; Nahrungsproduktion skaliert natürlich mit der Anzahl. Umstellung von Level auf Instanz. |
 | **Hangar** | **Instanz + Level** | Instanzen offen, Lv3 | Der einzige Fall, der beide Achsen braucht — siehe unten. |
-| **Analytik-Labor** | Level | Lv3+ | Die Level **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3). Ohne sie bricht die Staffelung weg. |
+| **Analytik-Labor** | Level | Lv3+ | Lv1-3 **sind** die Kenntnis-Stufen (`cartography` Lv1, `geology`/`trade` Lv2, `defense` Lv3) — ohne sie bricht die Staffelung weg. Lv4/5 haben zusätzlich einen eigenen Effekt (Kenntnis-Kosten-Rabatt, s.o.), keine reinen Gate-Stufen mehr. |
 | **Uplink-Station** | Level | Lv3 | §4 nennt sie „das einzige Kommunikationsgebäude der Kolonie". Eine zweite Funkanlage verdoppelt keine Reichweite. |
 | **Sicherheits-Hub** | Level | Lv3 | Eine pro Kolonie. |
 | **Handelsposten** | Level | Lv3 | Eine pro Kolonie. |
@@ -1761,7 +1761,9 @@ Boni senken die **AP-Kosten von Projekten** und verkürzen damit die Bauzeit in 
 
 Mehrere unabhängige Quellen tragen zu gestaffelten Kostenreduktionen bei: Berater-Ränge, Kenntnis-Level nach Domäne, und Koloniereife (CC-Level). Exakte Boni und Maxima: siehe `config/game.php` → `project_cost_bonus`.
 
-Domänen-Kenntnis-Zuordnung: Bau ← `construction`, Navigation ← `cartography`, Wirtschaft ← `trade`. Für die Domäne **Wissen** gibt es keine passende Kenntnis — dort stattdessen **Analytik-Labor-Level-Boni** (max Laborausbau Lv5). Diese asymmetrische Bindung gibt dem Laborausbau endlich einen eigenen mechanischen Effekt (heute hat er außer dem Kenntnis-Gate keinen).
+Domänen-Kenntnis-Zuordnung: Bau ← `construction`, Navigation ← `cartography`, Wirtschaft ← `trade`. Für die Domäne **Wissen** gibt es keine passende Kenntnis — ein früher Entwurf sah hier stattdessen Analytik-Labor-Level-Boni auf denselben Gebäude-Rabatt-Pool vor; das wurde durch eine eigenständige Mechanik ersetzt (siehe unten, „Analytik-Labor Lv4/5"): Analytik-Labor-Level senken stattdessen die AP-Kosten von **Kenntnis-Levelups** selbst, ein separater Pool, kein vierter Beitrag zu diesem hier beschriebenen Gebäude-Rabatt.
+
+**Analytik-Labor Lv4/5 (Design-Spec 2026-08-23, umgesetzt 2026-08-27):** Gibt dem Laborausbau über die reinen Kenntnis-Gates (Lv1-3) hinaus einen eigenen mechanischen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv, unabhängig vom Gebäude-Rabatt-Pool oben. Rührt an nichts, was pro Run gezogen wird (§10 Roguelike-Variabilität bleibt unangetastet) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse. Exakte Werte: `config/buildings.php` → `sciencelab.ap_cost_reduction_per_lv`.
 
 Ein **Mindest-Kostenanteil** (`project_min_cost_factor`) verhindert, dass Projekte auf null fallen — das ist eine Leitplanke für spätere Bonusquellen (Events, Missionsbelohnungen, Run-Modifier), keine aktive Regel zum Start. Wichtig, das so zu lesen, damit später niemand gegen einen Deckel kalibriert, der gar nicht wirkt.
 
