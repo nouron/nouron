@@ -2,7 +2,7 @@
 
 ## 2026-08-28
 
-- Feat: Analytik-Labor (sciencelab) Stufe IV/V bekommen ihre erste echte Spielwirkung — Domänen-Effizienzbonus "Wissen", senkt die AP-Kosten für Kenntnis-Levelups (bisher komplett unrabattiert), additiv und unabhängig vom bestehenden Gebäude-Rabatt-Pool (`ProjectBonusService::DOMAIN_KNOWLEDGE_KEYS`, Mitglieder je nach Ausführungsreihenfolge mit dem cartography-Plan variabel — construction+trade oder construction+cartography+trade). Neue `ProjectBonusService::knowledgeApDiscountPercent()`/`effectiveKnowledgeApForLevelup()`, verdrahtet in `ResearchService::knowledgeLevelupCost()`.
+- Feat: Analytik-Labor (sciencelab) Stufe IV/V bekommen ihre erste echte Spielwirkung — Domänen-Effizienzbonus "Wissen", senkt die AP-Kosten für Kenntnis-Levelups (bisher komplett unrabattiert), additiv und unabhängig vom bestehenden Gebäude-Rabatt-Pool (`ProjectBonusService::DOMAIN_KNOWLEDGE_KEYS`, derzeit construction+cartography+trade). Neue `ProjectBonusService::knowledgeApDiscountPercent()`/`effectiveKnowledgeApForLevelup()`, verdrahtet in `ResearchService::knowledgeLevelupCost()` und `GameTick::grantResearchAp()`.
 
 ## 2026-08-27
 

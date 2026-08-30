@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\DB;
  * three "domain knowledge" curves (construction, cartography, trade) — advisor-rank
  * and CC-level bonus sources from the same GDD table are not yet implemented (out of
  * scope for this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
- * encounters-design.md §2).
+ * encounters-design.md §2). Also hosts a second, independent discount pool for
+ * Kenntnis-Levelup-AP-Kosten, sourced from the Analytik-Labor (sciencelab) building
+ * level — see knowledgeApDiscountPercent() below.
  */
 class ProjectBonusService
 {
@@ -60,7 +62,7 @@ class ProjectBonusService
             ->where('building_id', BuildingId::Sciencelab->value)
             ->value('level') ?? 0);
 
-        $curve = config('buildings.sciencelab.ap_cost_reduction_per_lv', []);
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv', []);
 
         return GameTick::cumulativeCurveYield($curve, $level);
     }

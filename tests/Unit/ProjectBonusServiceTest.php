@@ -99,7 +99,7 @@ class ProjectBonusServiceTest extends TestCase
         $this->setSciencelabLevel(4);
         $service = $this->app->make(ProjectBonusService::class);
 
-        $expected = (int) (config('buildings.sciencelab.ap_cost_reduction_per_lv')[4] ?? 0);
+        $expected = (int) (config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv')[4] ?? 0);
         $this->assertGreaterThan(0, $expected, 'precondition: config must define a Lv4 discount');
         $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
     }
@@ -109,7 +109,7 @@ class ProjectBonusServiceTest extends TestCase
         $this->setSciencelabLevel(5);
         $service = $this->app->make(ProjectBonusService::class);
 
-        $curve = config('buildings.sciencelab.ap_cost_reduction_per_lv');
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
         $expected = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
         $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
     }

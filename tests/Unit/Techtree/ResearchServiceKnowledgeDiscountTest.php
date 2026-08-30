@@ -58,7 +58,7 @@ class ResearchServiceKnowledgeDiscountTest extends TestCase
         $this->setSciencelabLevel(5);
 
         $rawCost = (int) config('knowledge.cartography.levelup_costs.1');
-        $curve = config('buildings.sciencelab.ap_cost_reduction_per_lv');
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
         $discountPercent = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
         $expected = (int) max(
             ceil($rawCost * (float) config('game.project_min_cost_factor', 0.5)),
