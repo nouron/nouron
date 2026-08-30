@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Additive AP-cost discounts for building projects (GDD §13.3). Currently sums the
- * three "domain knowledge" curves (construction, cartography, trade) — advisor-rank
- * and CC-level bonus sources from the same GDD table are not yet implemented (out of
- * scope for this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
+ * two "domain knowledge" curves (construction, trade) — advisor-rank and CC-level
+ * bonus sources from the same GDD table are not yet implemented (out of scope for
+ * this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
  * encounters-design.md §2). Also hosts a second, independent discount pool for
  * Kenntnis-Levelup-AP-Kosten, sourced from the Analytik-Labor (sciencelab) building
- * level — see knowledgeApDiscountPercent() below.
+ * level — see knowledgeApDiscountPercent() below. Since 2026-08-27, cartography no
+ * longer contributes to the building-discount pool above — it has its own separate
+ * Navigation-AP discount pool instead, see effectiveNavigationApCost() below.
  */
 class ProjectBonusService
 {

@@ -818,4 +818,32 @@ class HangarServiceTest extends TestCase
         $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
         $this->assertSame($before - $baseNavApCost, $advisorService->getAvailableActionPoints(self::COLONY_ID), 'no cartography → unchanged base nav AP cost');
     }
+
+    /**
+     * Regression: getMissionCatalogFor() is the read/preview sibling of dispatchShip()
+     * and must report the same discounted nav AP cost, otherwise the UI shows a wrong
+     * chip and can falsely disable missions the player could actually afford.
+     */
+    public function test_get_mission_catalog_for_reports_same_nav_ap_as_dispatch_ship_charges(): void
+    {
+        config(['game.bypass.ap_checks' => false]);
+        $this->insertHangar(1);
+        $this->assignShip(1, self::SHIP_DRONE, 'docked');
+        $this->setKnowledgeLevel('cartography', 5);
+
+        $advisorService = $this->app->make(AdvisorService::class);
+        $before = $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        $catalog = $this->hangarService->getMissionCatalogFor(self::COLONY_ID);
+        $entry = collect($catalog)->firstWhere('key', 'mission_courier_run');
+        $this->assertNotNull($entry);
+
+        $baseNavApCost = 1 * (int) config('missions.nav_ap_per_sol', 2);
+        $this->assertLessThan($baseNavApCost, $entry['nav_ap'], 'precondition: catalog must reflect the cartography discount');
+
+        $this->hangarService->dispatchShip(self::COLONY_ID, 1, 'mission_courier_run');
+        $actualCharged = $before - $advisorService->getAvailableActionPoints(self::COLONY_ID);
+
+        $this->assertSame($actualCharged, $entry['nav_ap'], 'catalog nav_ap must match what dispatchShip() actually charges');
+    }
 }

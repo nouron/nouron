@@ -568,6 +568,10 @@ function colonyHexView(config) {
         },
 
         // Ring-staggered explore cost (matches ColonyTileService::exploreTile()).
+        // ponytail: this is the raw config cost, not the cartography-discounted actual
+        // cost — same known gap as OnboardingHintService (deferred for the same reason
+        // in this plan); fixing display would require the server to ship effective
+        // per-ring costs instead of the raw config array.
         exploreCostFor(tile) {
             return this.exploreCostPerRing[tile?.ring] ?? this.exploreCostDefault;
         },

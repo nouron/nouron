@@ -622,7 +622,7 @@ class HangarService
         $entries = [];
         foreach (config('missions.catalog', []) as $key => $mission) {
             $dist = (int) $mission['sol_distance'];
-            $navApCost = $dist * $navPerSol;
+            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $dist * $navPerSol);
             $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             $availability = 'ok';

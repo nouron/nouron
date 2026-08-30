@@ -76,8 +76,9 @@ return [
     ],
 
     // Lower bound for additive project-AP discounts (§13.3) — prevents bonuses from
-    // pushing ap_for_levelup to 0. Not binding at the current max discount (45%,
-    // construction+cartography+trade fully invested); a guard rail for future bonus
+    // pushing ap_for_levelup to 0. Not binding at the current max discount (30%,
+    // construction+trade fully invested; cartography no longer part of this pool,
+    // it has its own separate Navigation-AP discount); a guard rail for future bonus
     // sources (advisor rank, colony maturity) that are not yet implemented.
     'project_min_cost_factor' => 0.5,
 

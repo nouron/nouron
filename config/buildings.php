@@ -162,7 +162,7 @@ return [
         'max_level' => 5,
         // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23) — senkt die
         // AP-Kosten für Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-
-        // Effekten von construction/cartography/trade (die Gebäude-Levelups
+        // Effekten von construction/trade (die Gebäude-Levelups
         // rabattieren, siehe config/knowledge.php) — eigener Config-Key, da beide
         // Kurven im selben Namensraum sonst kollidieren würden (invertierte
         // Semantik: hier rabattiert Gebäude-Level Kenntnis-Kosten, dort

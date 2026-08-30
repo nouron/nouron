@@ -104,7 +104,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | Kenntnis | Levelup-AP (Lv1→5) | Σ AP | Trust/Lv | Effekt |
 |---|---|---|---|---|
 | **construction** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%) |
-| **cartography** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%) |
+| **cartography** | 20/28/36/44/52 | 180 AP | 0 | Navigation-AP (Tile-Erkundung, Hangar-Missions-Reisekosten) −4/−8/−8/−6/−4% (Σ−30%) |
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +2 | — |
@@ -182,9 +182,9 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 ### AP-Kosten (Beispiele)
 | Aktion | AP-Typ | Kosten |
 |---|---|---|
-| Gebäude-Levelup | construction | *Individuell; Rabatt via construction/cartography/trade* |
+| Gebäude-Levelup | construction | *Individuell; Rabatt via construction/trade* |
 | Kenntnis-Levelup | research | *20–52 je Ziel-Level* |
-| Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3) |
+| Feld erkunden | navigation | 1–3 (ringabhängig: Ring 1=1, Ring 2=2, Ring 3=3); Rabatt via cartography |
 | Handel annehmen | economy | 1 |
 | Handel verhandeln | economy | 3 (+ risk) |
 

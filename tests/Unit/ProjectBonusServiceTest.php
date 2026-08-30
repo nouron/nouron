@@ -136,7 +136,7 @@ class ProjectBonusServiceTest extends TestCase
     public function test_knowledge_discount_does_not_affect_building_discount_pool(): void
     {
         // Die beiden Pools sind unabhängig — Analytik-Labor-Level darf den
-        // bestehenden Gebäude-Rabatt (construction/cartography/trade) nicht
+        // bestehenden Gebäude-Rabatt (construction/trade) nicht
         // beeinflussen, und umgekehrt.
         $this->setSciencelabLevel(5);
         $this->setKnowledgeLevel(90, 0); // construction unbelegt
@@ -172,6 +172,8 @@ class ProjectBonusServiceTest extends TestCase
 
         $discountPercent = $service->navigationApDiscountPercent(self::COLONY_ID);
         $expected = ProjectBonusService::applyDiscount(10, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+
+        $this->assertLessThan(10, $expected, 'precondition: discount must actually lower the base cost of 10');
         $this->assertSame($expected, $service->effectiveNavigationApCost(self::COLONY_ID, 10));
     }
 }
