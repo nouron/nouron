@@ -2,8 +2,10 @@
 
 namespace Tests\Feature\Colony;
 
+use App\Console\Commands\GameTick;
 use App\Services\AdvisorService;
 use App\Services\ColonyTileService;
+use App\Services\ProjectBonusService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -97,5 +99,42 @@ class ColonyTileExploreCostTest extends TestCase
             ->where('colony_id', self::COLONY_ID)
             ->where('q', 2)->where('r', 0)
             ->value('is_explored'));
+    }
+
+    // ── cartography Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) ────────
+
+    private function setCartographyLevel(int $level): void
+    {
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 91],
+            ['level' => $level, 'ap_spend' => 0, 'status_points' => 20]
+        );
+    }
+
+    public function test_exploring_ring2_tile_costs_less_with_cartography(): void
+    {
+        $this->setCartographyLevel(5);
+        $this->fogTile(2, 0, 2);
+        $before = $this->navAp();
+
+        $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 2, 0);
+
+        $this->assertTrue($result['ok']);
+        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
+        $discountPercent = GameTick::cumulativeCurveYield($curve, 5);
+        $expectedCost = ProjectBonusService::applyDiscount(2, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+        $this->assertSame($before - $expectedCost, $this->navAp());
+        $this->assertLessThan(2, $expectedCost, 'precondition: discount must actually lower the ring-2 base cost of 2');
+    }
+
+    public function test_exploring_tile_costs_full_price_without_cartography(): void
+    {
+        $this->fogTile(1, -1, 1);
+        $before = $this->navAp();
+
+        $result = $this->app->make(ColonyTileService::class)->exploreTile(self::COLONY_ID, 1, -1);
+
+        $this->assertTrue($result['ok']);
+        $this->assertSame($before - 1, $this->navAp(), 'no cartography → unchanged ring-1 base cost of 1');
     }
 }

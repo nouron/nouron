@@ -15,6 +15,7 @@ class ColonyTileService
 
     public function __construct(
         private readonly AdvisorService $advisorService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     public function getTilesForColony(int $colonyId): Collection
@@ -38,7 +39,8 @@ class ColonyTileService
             return ['ok' => false, 'error' => 'already_explored', 'message' => __('colony.error_already_explored')];
         }
 
-        $apCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+        $baseApCost = (int) (config('game.colony.explore_cost_per_ring')[$tile->ring] ?? config('game.colony.explore_cost_default', 1));
+        $apCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseApCost);
 
         if (! config('game.bypass.ap_checks') && $this->advisorService->getAvailableActionPoints($colonyId) < $apCost) {
             return ['ok' => false, 'error' => 'no_nav_ap', 'message' => __('colony.error_no_nav_ap')];
