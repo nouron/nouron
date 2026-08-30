@@ -244,6 +244,41 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertSame(0, (int) $row->level, 'research_ap reward must not auto-levelup');
     }
 
+    public function test_completion_caps_research_ap_at_discounted_threshold_with_sciencelab_lv5(): void
+    {
+        // Sciencelab Lv5 (building_id 31) discounts knowledge-levelup AP costs via
+        // ProjectBonusService::effectiveKnowledgeApForLevelup() — the cap used here must
+        // match that discounted value, not the raw config/knowledge.php threshold.
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => 31],
+            ['level' => 5, 'status_points' => 20, 'ap_spend' => 0]
+        );
+
+        $rawThreshold = (int) config('knowledge.cartography.levelup_costs.1');
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
+        $discountPercent = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
+        $discountedThreshold = (int) max(
+            ceil($rawThreshold * (float) config('game.project_min_cost_factor', 0.5)),
+            round($rawThreshold * (1 - $discountPercent / 100))
+        );
+        $this->assertLessThan($rawThreshold, $discountedThreshold, 'precondition: Lv5 must actually discount the threshold');
+
+        // Seed 15 ap_spend so the reward's +8 (mission_data_sweep) overshoots both the
+        // raw threshold (20) and the discounted one — proving which value actually caps.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 91],
+            ['level' => 0, 'ap_spend' => 15, 'status_points' => 20]
+        );
+        $this->dispatchFixture('mission_data_sweep', 3, dispatchTick: 20700, target: ['research_id' => 91]);
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 20706]); // return_tick = 20700 + 2×3
+
+        $row = DB::table('colony_researches')
+            ->where('colony_id', self::COLONY_ID)->where('research_id', 91)->first();
+
+        $this->assertSame($discountedThreshold, (int) $row->ap_spend, 'ap_spend must cap at the discounted threshold, not the raw config value');
+    }
+
     public function test_completion_grants_harvester_entitlement_via_salvage(): void
     {
         // mission_harvester_salvage reward: harvester_instance => true (GDD §4c

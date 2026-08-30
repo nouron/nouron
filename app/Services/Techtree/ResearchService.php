@@ -3,6 +3,10 @@
 namespace App\Services\Techtree;
 
 use App\Enums\BuildingId;
+use App\Services\AdvisorService;
+use App\Services\ProjectBonusService;
+use App\Services\ResourcesService;
+use App\Services\TickService;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -13,6 +17,15 @@ use Illuminate\Support\Facades\DB;
  */
 class ResearchService extends AbstractTechnologyService
 {
+    public function __construct(
+        TickService $tickService,
+        ResourcesService $resourcesService,
+        private readonly ProjectBonusService $projectBonusService,
+        ?AdvisorService $advisorService = null,
+    ) {
+        parent::__construct($tickService, $resourcesService, $advisorService);
+    }
+
     protected function masterTable(): string
     {
         return 'researches';
@@ -110,6 +123,8 @@ class ResearchService extends AbstractTechnologyService
         $targetLevel = $currentLevel + 1;
         $costs = collect(config('knowledge'))->firstWhere('id', $entityId)['levelup_costs'] ?? [];
 
-        return (int) ($costs[$targetLevel] ?? $fallback);
+        $rawCost = (int) ($costs[$targetLevel] ?? $fallback);
+
+        return $this->projectBonusService->effectiveKnowledgeApForLevelup($colonyId, $rawCost);
     }
 }

@@ -17,6 +17,7 @@ use App\Services\EventService;
 use App\Services\HarvesterEntitlementService;
 use App\Services\MerchantService;
 use App\Services\OnboardingTriggerService;
+use App\Services\ProjectBonusService;
 use App\Services\ResourcesService;
 use App\Services\RunProgressService;
 use App\Services\TickService;
@@ -67,6 +68,7 @@ class GameTick extends Command
         private readonly TrustService $trustService,
         private readonly ResourcesService $resourcesService,
         private readonly OnboardingTriggerService $onboardingTriggerService,
+        private readonly ProjectBonusService $projectBonusService,
         private readonly BarService $barService,
         private readonly MerchantService $merchantService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
@@ -492,7 +494,10 @@ class GameTick extends Command
 
         $currentLevel = (int) ($row->level ?? 0);
         $costs = collect(config('knowledge'))->firstWhere('id', $researchId)['levelup_costs'] ?? [];
-        $threshold = (int) ($costs[$currentLevel + 1] ?? PHP_INT_MAX);
+        $rawThreshold = (int) ($costs[$currentLevel + 1] ?? PHP_INT_MAX);
+        $threshold = $rawThreshold === PHP_INT_MAX
+            ? PHP_INT_MAX
+            : $this->projectBonusService->effectiveKnowledgeApForLevelup($colonyId, $rawThreshold);
         $newSpend = min(((int) ($row->ap_spend ?? 0)) + $points, $threshold);
 
         DB::table('colony_researches')->updateOrInsert(

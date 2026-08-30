@@ -157,9 +157,21 @@ return [
         // Gedeckelt auf 5 (2026-08-25) — Ausnahme von der max.-3-Regel: Lv1-3
         // bleiben Kenntnis-Freischalt-Gates (unverändert, siehe researches-
         // Migrationen), Lv4/5 bekommen einen Domänen-Effizienzbonus "Wissen"
-        // (separater Folge-Plan, noch nicht implementiert — Level-Deckel wird
-        // hier vorab gesetzt, damit er nicht vergessen wird).
+        // (implementiert via ProjectBonusService::effectiveKnowledgeApForLevelup(),
+        // siehe knowledge_ap_cost_reduction_per_lv unten).
         'max_level' => 5,
+        // Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23) — senkt die
+        // AP-Kosten für Kenntnis-Levelups, analog zu den ap_cost_reduction_per_lv-
+        // Effekten von construction/cartography/trade (die Gebäude-Levelups
+        // rabattieren, siehe config/knowledge.php) — eigener Config-Key, da beide
+        // Kurven im selben Namensraum sonst kollidieren würden (invertierte
+        // Semantik: hier rabattiert Gebäude-Level Kenntnis-Kosten, dort
+        // rabattiert Kenntnis-Level Gebäude-Kosten). Nur Lv4/5 tragen einen Wert,
+        // Lv1-3 bleiben reine Kenntnis-Gates. Platzhalter-Größenordnung angelehnt
+        // an die Kurven-Enden der Kenntnis-Domänen (Lv4=3, Lv5=2 Prozentpunkte
+        // dort) — eigenständig gewählt, da hier nur 2 statt 5 Stufen zur
+        // Verfügung stehen. Zahlen-Kalibrierung nach Playtest (ADR 0004).
+        'knowledge_ap_cost_reduction_per_lv' => [4 => 3, 5 => 2],   // Σ5% bei Lv5
     ],
 
     // ── Fleet ─────────────────────────────────────────────────────────────────

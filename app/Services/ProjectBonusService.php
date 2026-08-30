@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Console\Commands\GameTick;
+use App\Enums\BuildingId;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -10,7 +11,9 @@ use Illuminate\Support\Facades\DB;
  * three "domain knowledge" curves (construction, cartography, trade) — advisor-rank
  * and CC-level bonus sources from the same GDD table are not yet implemented (out of
  * scope for this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
- * encounters-design.md §2).
+ * encounters-design.md §2). Also hosts a second, independent discount pool for
+ * Kenntnis-Levelup-AP-Kosten, sourced from the Analytik-Labor (sciencelab) building
+ * level — see knowledgeApDiscountPercent() below.
  */
 class ProjectBonusService
 {
@@ -40,6 +43,33 @@ class ProjectBonusService
     public function effectiveApForLevelup(int $colonyId, int $baseApForLevelup): int
     {
         $discountPercent = $this->buildingApDiscountPercent($colonyId);
+        $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
+
+        return self::applyDiscount($baseApForLevelup, $discountPercent, $minCostFactor);
+    }
+
+    /**
+     * Additive AP-cost discount for Kenntnis-Levelups, sourced from the
+     * Analytik-Labor (sciencelab) building level — a separate, independent pool
+     * from buildingApDiscountPercent() above. Only levels 4-5 carry an effect
+     * (levels 1-3 remain pure knowledge-gate thresholds, no discount of their
+     * own — see docs/superpowers/plans/2026-08-26-building-tier-foundation.md).
+     */
+    public function knowledgeApDiscountPercent(int $colonyId): int
+    {
+        $level = (int) (DB::table('colony_buildings')
+            ->where('colony_id', $colonyId)
+            ->where('building_id', BuildingId::Sciencelab->value)
+            ->value('level') ?? 0);
+
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv', []);
+
+        return GameTick::cumulativeCurveYield($curve, $level);
+    }
+
+    public function effectiveKnowledgeApForLevelup(int $colonyId, int $baseApForLevelup): int
+    {
+        $discountPercent = $this->knowledgeApDiscountPercent($colonyId);
         $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
 
         return self::applyDiscount($baseApForLevelup, $discountPercent, $minCostFactor);

@@ -73,4 +73,66 @@ class ProjectBonusServiceTest extends TestCase
         // 15% discount on base 10: round(10 * 0.85) = round(8.5) = 9, floor = ceil(5) = 5.
         $this->assertSame(9, ProjectBonusService::applyDiscount(10, 15, 0.5));
     }
+
+    // ── Analytik-Labor Domänen-Effizienzbonus "Wissen" (Design-Spec 2026-08-23) ──
+
+    private const SCIENCELAB_ID = 31;
+
+    private function setSciencelabLevel(int $level): void
+    {
+        DB::table('colony_buildings')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'building_id' => self::SCIENCELAB_ID],
+            ['level' => $level, 'status_points' => 20, 'ap_spend' => 0]
+        );
+    }
+
+    public function test_knowledge_discount_is_zero_below_level_4(): void
+    {
+        $this->setSciencelabLevel(3);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->knowledgeApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_knowledge_discount_at_level_4(): void
+    {
+        $this->setSciencelabLevel(4);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $expected = (int) (config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv')[4] ?? 0);
+        $this->assertGreaterThan(0, $expected, 'precondition: config must define a Lv4 discount');
+        $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_knowledge_discount_at_level_5_is_cumulative(): void
+    {
+        $this->setSciencelabLevel(5);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $curve = config('buildings.sciencelab.knowledge_ap_cost_reduction_per_lv');
+        $expected = (int) (($curve[4] ?? 0) + ($curve[5] ?? 0));
+        $this->assertSame($expected, $service->knowledgeApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_effective_knowledge_ap_for_levelup_applies_discount(): void
+    {
+        $this->setSciencelabLevel(5);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $discountPercent = $service->knowledgeApDiscountPercent(self::COLONY_ID);
+        $expected = ProjectBonusService::applyDiscount(100, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+        $this->assertSame($expected, $service->effectiveKnowledgeApForLevelup(self::COLONY_ID, 100));
+    }
+
+    public function test_knowledge_discount_does_not_affect_building_discount_pool(): void
+    {
+        // Die beiden Pools sind unabhängig — Analytik-Labor-Level darf den
+        // bestehenden Gebäude-Rabatt (construction/cartography/trade) nicht
+        // beeinflussen, und umgekehrt.
+        $this->setSciencelabLevel(5);
+        $this->setKnowledgeLevel(90, 0); // construction unbelegt
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID));
+    }
 }
