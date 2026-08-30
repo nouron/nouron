@@ -2871,11 +2871,11 @@ Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_
 |--------------|------------|-----------------|
 | agronomy | Agronomie & Kultivierung | +1 |
 | health | Gesundheit & Wohlbefinden | +2 |
-| defense | Verteidigung & Überlebenstaktik | -1 |
+| defense | Verteidigung & Überlebenstaktik | +1 |
 
 Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Vertrauenseffekt — sie sind neutrale Werkzeuge.
 
-**Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis verbreitet ein Klima der Wachsamkeit, das die Stimmung leicht dämpft — analoges Signal zu den Korvetten.
+**Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis schafft Sicherheit und stärkt dadurch das Vertrauen der Kolonisten — "Sicherheit schafft Vertrauen". Eine gut ausgebaute, zivile Sicherheitsvorsorge (Sturm-Risiko-Reduktion, der andere `defense`-Effekt) wird durchgängig positiv gerahmt, ohne Trade-off-Zwang. (Präzedenzfall: `geology` hat ebenfalls zwei Vorteile ohne Vertrauensmalus.)
 
 ### Einflussfaktoren: Relaisvergütung
 

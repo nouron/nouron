@@ -109,7 +109,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **agronomy** | 20/28/36/44/52 | 180 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +2 | — |
 | **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0 |
-| **defense** | 20/28/36/44/52 | 180 AP | −1 | Sturm-Risiko −3/−5/−5/−4/−3% |
+| **defense** | 20/28/36/44/52 | 180 AP | +1 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5
 > **Supply-Cap Bonus**: alle Kenntnisse +3/+5/+5/+4/+3 = 20 max pro Kenntnis

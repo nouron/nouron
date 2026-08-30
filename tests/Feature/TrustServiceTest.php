@@ -38,7 +38,7 @@ namespace Tests\Feature;
  *
  * calculateTrust() — research contribution:
  *   - A positive-trust research (health, id=94) adds level × 2
- *   - A negative-trust research (defense, id=96) subtracts level × 1
+ *   - A positive-trust research (defense, id=96) adds level × 1
  *
  * calculateTrust() — ship contribution:
  *   - A positive-trust ship (frachter, id=47) adds level × 1
@@ -54,6 +54,8 @@ namespace Tests\Feature;
  * calculateTrust() — global clamp:
  *   - Result is clamped to +100 even when raw sum exceeds 100
  *   - Result is clamped to -100 even when raw sum exceeds -100
+ *   - Both clamp-boundary tests use health (id=94) with a negative level for
+ *     the negative-trust scenario, since defense can no longer go negative
  *
  * calculateAndStore():
  *   - Persists the calculated trust in colony_resources (resource_id=12)
@@ -400,9 +402,9 @@ class TrustServiceTest extends TestCase
         $this->assertSame(6, $trust);
     }
 
-    public function test_calculate_trust_negative_research_contribution(): void
+    public function test_calculate_trust_positive_defense_contribution(): void
     {
-        // defense (id=96): -1 per level; level=10 → -10
+        // defense (id=96): +1 per level (Owner-Entscheidung 2026-08-27); level=10 → +10
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
             'research_id' => 96,
@@ -413,7 +415,7 @@ class TrustServiceTest extends TestCase
 
         $trust = $this->service->calculateTrust($this->colonyId, $this->tick);
 
-        $this->assertSame(-10, $trust);
+        $this->assertSame(10, $trust);
     }
 
     public function test_calculate_trust_research_not_in_config_is_ignored(): void
@@ -590,11 +592,16 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_trust_is_clamped_to_negative100(): void
     {
-        // defense (id=96): -1/level; level=200 → raw -200, clamped to -100
+        // health (id=94): +2/level; level=-100 → raw -200, clamped to -100.
+        // Negatives Level ist kein erreichbarer Spielzustand — reiner
+        // Formel-Grenzfall-Test der Clamp-Logik selbst, unabhängig von einer
+        // bestimmten Kenntnis. Ersetzt den vorigen defense-basierten Aufbau
+        // (defense ist seit 2026-08-27 positiv, kann diesen Grenzfall nicht
+        // mehr erzeugen).
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
-            'research_id' => 96,
-            'level' => 200,
+            'research_id' => 94,
+            'level' => -100,
             'status_points' => 10,
             'ap_spend' => 0,
         ]);
@@ -661,11 +668,14 @@ class TrustServiceTest extends TestCase
 
     public function test_calculate_and_store_returns_clamped_value(): void
     {
-        // defense (id=96): -1/level; level=200 → raw -200, clamped to -100
+        // health (id=94): +2/level; level=-100 → raw -200, clamped to -100.
+        // Siehe test_calculate_trust_is_clamped_to_negative100() für die
+        // Begründung, warum health statt defense (defense ist seit
+        // 2026-08-27 positiv).
         DB::table('colony_researches')->insert([
             'colony_id' => $this->colonyId,
-            'research_id' => 96,
-            'level' => 200,
+            'research_id' => 94,
+            'level' => -100,
             'status_points' => 10,
             'ap_spend' => 0,
         ]);
