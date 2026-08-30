@@ -39,7 +39,7 @@ return [
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
         // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
         // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit cartography+trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
+        // Wirkt additiv mit trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
         // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
         'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
     ],
@@ -51,11 +51,9 @@ return [
         'max_status_points' => 20,
         'credits' => 0,
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
-        // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit construction+trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
-        // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
-        'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
+        // Navigation-AP-Rabatt (seit 2026-08-27 kein Mitglied des Bau-Rabatt-Pools mehr).
+        // Rabatt auf Explorationsaktionen, Kurve wird Task 2 finalisieren.
+        'nav_ap_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
     ],
 
     'geology' => [
@@ -94,7 +92,7 @@ return [
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
         // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
         // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit construction+cartography auf ALLE Gebäude-Levelups (Owner-Entscheidung:
+        // Wirkt additiv mit construction auf ALLE Gebäude-Levelups (Owner-Entscheidung:
         // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
         'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
         // Cantina-Angebotsslot-Bonus (Task 4 dieses Plans) — zusätzliche gleichzeitige

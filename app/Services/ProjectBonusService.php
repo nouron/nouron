@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class ProjectBonusService
 {
     /** research_id values from config/knowledge.php that discount building projects. */
-    private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'cartography', 'trade'];
+    private const DOMAIN_KNOWLEDGE_KEYS = ['construction', 'trade'];
 
     public function buildingApDiscountPercent(int $colonyId): int
     {
@@ -73,6 +73,33 @@ class ProjectBonusService
         $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
 
         return self::applyDiscount($baseApForLevelup, $discountPercent, $minCostFactor);
+    }
+
+    /**
+     * Additive AP-cost discount for Navigation actions (currently: tile
+     * exploration, ColonyTileService::exploreTile()), sourced from the
+     * cartography knowledge level — a separate, independent pool from
+     * buildingApDiscountPercent() above. cartography no longer contributes
+     * to the building-project pool (Owner-Entscheidung 2026-08-27).
+     */
+    public function navigationApDiscountPercent(int $colonyId): int
+    {
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', (int) config('knowledge.cartography.id'))
+            ->value('level');
+
+        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv', []);
+
+        return GameTick::cumulativeCurveYield($curve, $level);
+    }
+
+    public function effectiveNavigationApCost(int $colonyId, int $baseApCost): int
+    {
+        $discountPercent = $this->navigationApDiscountPercent($colonyId);
+        $minCostFactor = (float) config('game.project_min_cost_factor', 0.5);
+
+        return self::applyDiscount($baseApCost, $discountPercent, $minCostFactor);
     }
 
     /** Pure discount math, factored out so the floor logic is testable without DB state. */

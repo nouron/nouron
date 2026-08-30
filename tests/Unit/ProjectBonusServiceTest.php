@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Console\Commands\GameTick;
 use App\Services\ProjectBonusService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,15 +36,23 @@ class ProjectBonusServiceTest extends TestCase
         $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID));
     }
 
-    public function test_discount_sums_all_three_domains_additively(): void
+    public function test_discount_sums_construction_and_trade_additively(): void
     {
-        // construction id=90, cartography id=91, trade id=95 (config/knowledge.php)
+        // construction id=90, trade id=95 (config/knowledge.php) — cartography (id=91)
+        // ist NICHT mehr Teil dieses Pools (siehe navigationApDiscountPercent() unten).
         $this->setKnowledgeLevel(90, 3);   // cumulative [2,4,4] = 10
-        $this->setKnowledgeLevel(91, 1);   // cumulative [2] = 2
         $this->setKnowledgeLevel(95, 5);   // cumulative [2,4,4,3,2] = 15
         $service = $this->app->make(ProjectBonusService::class);
 
-        $this->assertSame(27, $service->buildingApDiscountPercent(self::COLONY_ID));
+        $this->assertSame(25, $service->buildingApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_cartography_no_longer_contributes_to_building_discount(): void
+    {
+        $this->setKnowledgeLevel(91, 5);   // cartography Lv5 — voll investiert
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID), 'cartography must no longer feed the building-project discount pool');
     }
 
     public function test_effective_ap_for_levelup_applies_discount(): void
@@ -134,5 +143,35 @@ class ProjectBonusServiceTest extends TestCase
         $service = $this->app->make(ProjectBonusService::class);
 
         $this->assertSame(0, $service->buildingApDiscountPercent(self::COLONY_ID));
+    }
+
+    // ── cartography Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) ────────
+
+    public function test_navigation_discount_is_zero_with_no_cartography(): void
+    {
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->navigationApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_navigation_discount_scales_with_cartography_level(): void
+    {
+        $this->setKnowledgeLevel(91, 3);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $curve = config('knowledge.cartography.nav_ap_reduction_per_lv');
+        $expected = GameTick::cumulativeCurveYield($curve, 3);
+        $this->assertGreaterThan(0, $expected, 'precondition: config must define a non-zero curve up to Lv3');
+        $this->assertSame($expected, $service->navigationApDiscountPercent(self::COLONY_ID));
+    }
+
+    public function test_effective_navigation_ap_cost_applies_discount(): void
+    {
+        $this->setKnowledgeLevel(91, 5);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $discountPercent = $service->navigationApDiscountPercent(self::COLONY_ID);
+        $expected = ProjectBonusService::applyDiscount(10, $discountPercent, (float) config('game.project_min_cost_factor', 0.5));
+        $this->assertSame($expected, $service->effectiveNavigationApCost(self::COLONY_ID, 10));
     }
 }
