@@ -2875,7 +2875,7 @@ Forschungen tragen mit einem Pauschalwert pro Level bei (unabhängig von status_
 
 Alle anderen Kenntnisse (construction, cartography, geology, trade) haben keinen direkten Vertrauenseffekt — sie sind neutrale Werkzeuge.
 
-**Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. **Korrektur (2026-08-27, Owner-Entscheidung):** Verteidigung gibt seit diesem Datum einen POSITIVEN Trust-Beitrag pro Level (`trust_per_lv=+1`, vorher `-1`) — "Sicherheit schafft Vertrauen" statt "Wachsamkeit dämpft Vertrauen". Die vorige Begründung (sichtbare Schutzinfrastruktur signalisiert Gefahr) wurde neu bewertet — eine gut ausgebaute, zivile Sicherheitsvorsorge (Sturm-Risiko-Reduktion, das andere `defense`-Effekt) wird jetzt durchgängig positiv gerahmt, ohne Trade-off-Zwang. (Präzedenzfall: `geology` hat ebenfalls zwei Vorteile ohne Vertrauensmalus, `trust_per_lv=0`.)
+**Rationale:** Agronomie und Gesundheit verbessern spürbar das koloniale Wohlbefinden. Verteidigung als Kenntnis schafft Sicherheit und stärkt dadurch das Vertrauen der Kolonisten — "Sicherheit schafft Vertrauen". Eine gut ausgebaute, zivile Sicherheitsvorsorge (Sturm-Risiko-Reduktion, der andere `defense`-Effekt) wird durchgängig positiv gerahmt, ohne Trade-off-Zwang. (Präzedenzfall: `geology` hat ebenfalls zwei Vorteile ohne Vertrauensmalus.)
 
 ### Einflussfaktoren: Relaisvergütung
 

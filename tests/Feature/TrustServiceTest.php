@@ -38,7 +38,7 @@ namespace Tests\Feature;
  *
  * calculateTrust() — research contribution:
  *   - A positive-trust research (health, id=94) adds level × 2
- *   - A negative-trust research (defense, id=96) subtracts level × 1
+ *   - A positive-trust research (defense, id=96) adds level × 1
  *
  * calculateTrust() — ship contribution:
  *   - A positive-trust ship (frachter, id=47) adds level × 1
@@ -54,6 +54,8 @@ namespace Tests\Feature;
  * calculateTrust() — global clamp:
  *   - Result is clamped to +100 even when raw sum exceeds 100
  *   - Result is clamped to -100 even when raw sum exceeds -100
+ *   - Both clamp-boundary tests use health (id=94) with a negative level for
+ *     the negative-trust scenario, since defense can no longer go negative
  *
  * calculateAndStore():
  *   - Persists the calculated trust in colony_resources (resource_id=12)
