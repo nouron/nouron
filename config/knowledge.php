@@ -58,8 +58,13 @@ return [
         // HangarService::dispatchShip() (Missions-Reisekosten) — beides im Code konsistent
         // als "Navigation-AP" behandelte Kostenpunkte (Fehlercodes no_nav_ap/
         // hangar_dispatch_no_nav_ap). Platzhalter-Größenordnung, Zahlen-Kalibrierung nach
-        // Playtest (ADR 0004).
-        'nav_ap_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
+        // Playtest (ADR 0004) — bewusst auf das Doppelte der ursprünglichen Bau-Rabatt-Kurve
+        // skaliert (Ruling 2026-08-30, SDD-Ledger): exploreTile()s Basiskosten sind winzige
+        // Ganzzahlen (1/2/3 AP), eine 15%-Kurve rundet dort bei jedem Level auf den
+        // Ausgangswert zurück (round() in ProjectBonusService::applyDiscount()) — der Rabatt
+        // wäre ein reiner No-Op gewesen. Σ30% erzeugt bei diesen Größenordnungen tatsächlich
+        // einen sichtbaren Effekt (greift den project_min_cost_factor-Floor).
+        'nav_ap_reduction_per_lv' => [1 => 4, 2 => 8, 3 => 8, 4 => 6, 5 => 4],   // Σ30%
     ],
 
     'geology' => [
