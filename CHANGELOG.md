@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-30
+
+- Feat: cartography aus dem undifferenzierten Bau-AP-Rabatt-Pool gelöst, bekommt stattdessen einen eigenen Navigation-AP-Rabatt auf Tile-Erkundungskosten (`ColonyTileService::exploreTile()`) und Hangar-Missions-Reisekosten (`HangarService::dispatchShip()`) — vorher wirkte die Kenntnis ununterschieden wie construction/trade auf Gebäude-Levelups, jetzt hat sie einen thematisch eigenen Effekt. Bau-Rabatt-Pool-Maximum sinkt dadurch strukturell von 45% auf 30% (2 statt 3 Kenntnisse) — bewusst nicht kompensiert, Zahlen-Kalibrierung nach Playtest.
+
 ## 2026-08-28
 
 - Feat: Analytik-Labor (sciencelab) Stufe IV/V bekommen ihre erste echte Spielwirkung — Domänen-Effizienzbonus "Wissen", senkt die AP-Kosten für Kenntnis-Levelups (bisher komplett unrabattiert), additiv und unabhängig vom bestehenden Gebäude-Rabatt-Pool (`ProjectBonusService::DOMAIN_KNOWLEDGE_KEYS`, derzeit construction+cartography+trade). Neue `ProjectBonusService::knowledgeApDiscountPercent()`/`effectiveKnowledgeApForLevelup()`, verdrahtet in `ResearchService::knowledgeLevelupCost()` und `GameTick::grantResearchAp()`.

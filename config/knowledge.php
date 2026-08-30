@@ -39,7 +39,7 @@ return [
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
         // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
         // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit cartography+trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
+        // Wirkt additiv mit trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
         // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
         'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
     ],
@@ -51,11 +51,20 @@ return [
         'max_status_points' => 20,
         'credits' => 0,
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
-        // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit construction+trade auf ALLE Gebäude-Levelups (Owner-Entscheidung:
-        // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
-        'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
+        // Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) — ersetzt den bisherigen
+        // Bau-AP-Rabatt-Beitrag (der zuvor undifferenziert mit construction/trade in
+        // denselben Pool floss, ohne cartography von den beiden anderen zu unterscheiden).
+        // Wirkt auf ColonyTileService::exploreTile() (Tile-Erkundungskosten) und
+        // HangarService::dispatchShip() (Missions-Reisekosten) — beides im Code konsistent
+        // als "Navigation-AP" behandelte Kostenpunkte (Fehlercodes no_nav_ap/
+        // hangar_dispatch_no_nav_ap). Platzhalter-Größenordnung, Zahlen-Kalibrierung nach
+        // Playtest (ADR 0004) — bewusst auf das Doppelte der ursprünglichen Bau-Rabatt-Kurve
+        // skaliert (Ruling 2026-08-30, SDD-Ledger): exploreTile()s Basiskosten sind winzige
+        // Ganzzahlen (1/2/3 AP), eine 15%-Kurve rundet dort bei jedem Level auf den
+        // Ausgangswert zurück (round() in ProjectBonusService::applyDiscount()) — der Rabatt
+        // wäre ein reiner No-Op gewesen. Σ30% erzeugt bei diesen Größenordnungen tatsächlich
+        // einen sichtbaren Effekt (greift den project_min_cost_factor-Floor).
+        'nav_ap_reduction_per_lv' => [1 => 4, 2 => 8, 3 => 8, 4 => 6, 5 => 4],   // Σ30%
     ],
 
     'geology' => [
@@ -94,7 +103,7 @@ return [
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
         // Bau-AP-Rabatt (GDD §13.3, glockenförmig statt linear — game-designer review
         // 2026-08-15, docs/superpowers/specs/2026-08-15-knowledge-effects-and-encounters-design.md).
-        // Wirkt additiv mit construction+cartography auf ALLE Gebäude-Levelups (Owner-Entscheidung:
+        // Wirkt additiv mit construction auf ALLE Gebäude-Levelups (Owner-Entscheidung:
         // keine Domänentrennung nach Projekttyp, da nur Bau-Projekte existieren).
         'ap_cost_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
         // Cantina-Angebotsslot-Bonus (Task 4 dieses Plans) — zusätzliche gleichzeitige

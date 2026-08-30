@@ -1471,7 +1471,7 @@ Kenntnis-Effekte werden **automatisch** wirksam, sobald die Kenntnis das nötige
 
 Bereits implementierte Effekte (`config/knowledge.php`):
 
-- `construction`, `cartography`, `trade` senken additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`).
+- `construction`, `trade` senken additiv die AP-Kosten von Gebäude-Levelups (§13.3) — glockenförmig über die Level gestaffelt (`ap_cost_reduction_per_lv`). `cartography` senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung und Hangar-Missions-Reisekosten (siehe §13.3).
 - `trade` erhöht zusätzlich die Zahl gleichzeitig aktiver Cantina-Angebote (§12), siehe `bar_offer_boost_per_lv`.
 - `agronomy`, `health`, `defense` wirken auf das Vertrauen (§14), siehe `trust_per_lv`.
 
@@ -1761,7 +1761,7 @@ Boni senken die **AP-Kosten von Projekten** und verkürzen damit die Bauzeit in 
 
 Mehrere unabhängige Quellen tragen zu gestaffelten Kostenreduktionen bei: Berater-Ränge, Kenntnis-Level nach Domäne, und Koloniereife (CC-Level). Exakte Boni und Maxima: siehe `config/game.php` → `project_cost_bonus`.
 
-Domänen-Kenntnis-Zuordnung: Bau ← `construction`, Navigation ← `cartography`, Wirtschaft ← `trade`. Für die Domäne **Wissen** gibt es keine passende Kenntnis — ein früher Entwurf sah hier stattdessen Analytik-Labor-Level-Boni auf denselben Gebäude-Rabatt-Pool vor; das wurde durch eine eigenständige Mechanik ersetzt (siehe unten, „Analytik-Labor Lv4/5"): Analytik-Labor-Level senken stattdessen die AP-Kosten von **Kenntnis-Levelups** selbst, ein separater Pool, kein vierter Beitrag zu diesem hier beschriebenen Gebäude-Rabatt.
+Domänen-Kenntnis-Zuordnung (Bau-Projekt-Rabatt-Pool, `ProjectBonusService::buildingApDiscountPercent()`): Bau ← `construction`, Wirtschaft ← `trade`. `cartography` ist seit 2026-08-27 kein Mitglied dieses Pools mehr — die Kenntnis senkt stattdessen eigenständig die Navigation-AP-Kosten von Tile-Erkundung (`ColonyTileService::exploreTile()`) und Hangar-Missions-Reisekosten (`HangarService::dispatchShip()`), beide über `config('knowledge.cartography.nav_ap_reduction_per_lv')`, ein separater Pool. Für die Domäne **Wissen** gibt es keine passende Kenntnis — ein früher Entwurf sah hier stattdessen Analytik-Labor-Level-Boni auf denselben Gebäude-Rabatt-Pool vor; das wurde durch eine eigenständige Mechanik ersetzt (siehe unten, „Analytik-Labor Lv4/5"): Analytik-Labor-Level senken stattdessen die AP-Kosten von **Kenntnis-Levelups** selbst, ein separater Pool, kein vierter Beitrag zu diesem hier beschriebenen Gebäude-Rabatt.
 
 **Analytik-Labor Lv4/5 (Design-Spec 2026-08-23, umgesetzt 2026-08-27):** Gibt dem Laborausbau über die reinen Kenntnis-Gates (Lv1-3) hinaus einen eigenen mechanischen Effekt — senkt die AP-Kosten für Kenntnis-Levelups, additiv, unabhängig vom Gebäude-Rabatt-Pool oben. Rührt an nichts, was pro Run gezogen wird (§10 Roguelike-Variabilität bleibt unangetastet) — reine Effizienzsteigerung auf bereits freigeschaltete Kenntnisse. Exakte Werte: `config/buildings.php` → `sciencelab.knowledge_ap_cost_reduction_per_lv`.
 
@@ -1770,9 +1770,9 @@ Ein **Mindest-Kostenanteil** (`project_min_cost_factor`) verhindert, dass Projek
 **Boni gelten nur für Projekte, nicht für Handlungen.** Dadurch wächst der Handlungsanteil am Pool über den Run relativ an — das späte Spiel verschiebt sich von selbst Richtung Ausführung. Das ist beabsichtigt und trägt den Kipppunkt aus 13.2 mit.
 
 > **Nachtrag 2026-08-15 (Owner-Entscheidung, PlaytestBot-Befund):** Umgesetzt für
-> `construction`/`cartography`/`trade` — glockenförmig statt linear (Σ15% je Kenntnis
-> bei Lv5, Peak Lv2–4), wirkt additiv auf **alle** Gebäude-Levelups (inkl.
-> CommandCenter), nicht nach Projekttyp getrennt, da im aktuellen Spiel nur
+> `construction`/`trade` — `cartography` wurde am 2026-08-27 aus diesem Pool gelöst, siehe oben —
+> glockenförmig statt linear (Σ15% je Kenntnis bei Lv5, Peak Lv2–4), wirkt additiv auf **alle**
+> Gebäude-Levelups (inkl. CommandCenter), nicht nach Projekttyp getrennt, da im aktuellen Spiel nur
 > Bau-Projekte existieren (Navigation/Wirtschaft haben keine passende Projekt-
 > Kategorie). Berater-Rang- und Koloniereife-Bonusquellen aus der Tabelle oben sind
 > weiterhin nicht implementiert. Siehe `app/Services/ProjectBonusService.php`,
