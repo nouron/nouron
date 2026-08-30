@@ -51,8 +51,14 @@ return [
         'max_status_points' => 20,
         'credits' => 0,
         'levelup_costs' => [1 => 20, 2 => 28, 3 => 36, 4 => 44, 5 => 52],
-        // Navigation-AP-Rabatt (seit 2026-08-27 kein Mitglied des Bau-Rabatt-Pools mehr).
-        // Rabatt auf Explorationsaktionen, Kurve wird Task 2 finalisieren.
+        // Navigation-AP-Rabatt (Owner-Entscheidung 2026-08-27) — ersetzt den bisherigen
+        // Bau-AP-Rabatt-Beitrag (der zuvor undifferenziert mit construction/trade in
+        // denselben Pool floss, ohne cartography von den beiden anderen zu unterscheiden).
+        // Wirkt auf ColonyTileService::exploreTile() (Tile-Erkundungskosten) und
+        // HangarService::dispatchShip() (Missions-Reisekosten) — beides im Code konsistent
+        // als "Navigation-AP" behandelte Kostenpunkte (Fehlercodes no_nav_ap/
+        // hangar_dispatch_no_nav_ap). Platzhalter-Größenordnung, Zahlen-Kalibrierung nach
+        // Playtest (ADR 0004).
         'nav_ap_reduction_per_lv' => [1 => 2, 2 => 4, 3 => 4, 4 => 3, 5 => 2],   // Σ15%
     ],
 
