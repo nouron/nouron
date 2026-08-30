@@ -179,6 +179,14 @@ return [
     // like geology: this effect is new, with no existing calibration history.
     'agronomy_agrardom_bonus_per_level' => [1 => 1, 2 => 2, 3 => 2, 4 => 1, 5 => 1],   // Σ7 Or/Sol
 
+    // health Kenntnis-Bonus: additive Krankheits-/Verletzungs-Risikoreduktion,
+    // zusätzlich zur Krankenstation (buildings.infirmary.plague_risk_reduction_pct_per_level)
+    // — beide Beiträge summiert gegen denselben plague_risk_reduction_cap (Owner-
+    // Entscheidung 2026-08-27, siehe GameTick::rollPlague()). Bell-shaped wie
+    // defense_storm_risk_reduction_per_lv/geology_instability_risk_reduction_per_lv,
+    // Σ20% bei Lv5. Platzhalter-Größenordnung, Zahlen-Kalibrierung nach Playtest (ADR 0004).
+    'health_plague_risk_reduction_per_lv' => [1 => 3, 2 => 5, 3 => 5, 4 => 4, 5 => 3],
+
     // Economy — resource pricing for player-facing buy/sell mechanics.
     'economy' => [
         // Werkstoffe (compounds, resource 4) are not locally producible (GDD §3).

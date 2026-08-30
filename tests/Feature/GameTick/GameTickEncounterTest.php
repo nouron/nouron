@@ -517,4 +517,91 @@ class GameTickEncounterTest extends TestCase
         )->first();
         $this->assertNotNull($warning, 'the Phase 1 ramp must not apply once the colony has reached Phase 2');
     }
+
+    // ── health Kenntnis-Beitrag zur Seuchenausbruch-Risikoreduktion (Owner-Entscheidung 2026-08-27) ──
+
+    private const HEALTH_RESEARCH_ID = 94;
+
+    private const INFIRMARY_ID = 46;
+
+    /** Roll fraction in [0, 1) for (colony_id=1, tick=$tick, rngSeed=0) — mirrors rollPlague()'s own seed formula (NOT rollFor()'s storm formula). */
+    private function rollForPlague(int $tick): float
+    {
+        $seed = 0 + self::COLONY_ID * 179424673 + $tick * 32416187;
+
+        return $this->seededRoll($seed, 0, 9999) / 10000;
+    }
+
+    /**
+     * Scans a tick range for one whose plague roll falls in [$lowerInclusive, $upperExclusive)
+     * — i.e. a roll that WOULD trigger at the lower (infirmary-only) chance but would NOT
+     * trigger at the higher (infirmary+health) chance. Run this once locally, note the
+     * found tick number in a comment, then hardcode it directly in the test (same
+     * methodology this file's existing rollFor()-based tests already use for storm/defense —
+     * see the class docblock's "Uses tick numbers 11700–11749" note for precedent).
+     */
+    private function findPlagueTickInBand(float $lowerInclusive, float $upperExclusive, int $rangeStart = 20000, int $rangeEnd = 20500): int
+    {
+        for ($tick = $rangeStart; $tick <= $rangeEnd; $tick++) {
+            $roll = $this->rollForPlague($tick);
+            if ($roll >= $lowerInclusive && $roll < $upperExclusive) {
+                return $tick;
+            }
+        }
+
+        throw new \RuntimeException('No tick found in band ['.$lowerInclusive.','.$upperExclusive.') within the scanned range — widen rangeEnd.');
+    }
+
+    public function test_health_knowledge_adds_to_infirmary_plague_reduction(): void
+    {
+        config([
+            'game.encounter.plague.chance_per_sol_when_emergent' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 1,
+        ]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 3]);
+        DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->update(['amount' => 0]);
+
+        // Infirmary at level 3: 3 × 0.08 = 0.24 reduction, health at 0.
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::INFIRMARY_ID)
+            ->update(['level' => 3, 'status_points' => 20]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::HEALTH_RESEARCH_ID],
+            ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $infirmaryOnlyReduction = 0.24;
+        $healthCurve = config('game.health_plague_risk_reduction_per_lv');
+        $healthLv5Reduction = array_sum($healthCurve) / 100;
+        $combinedReduction = min(0.50, $infirmaryOnlyReduction + $healthLv5Reduction);
+
+        $this->assertGreaterThan($infirmaryOnlyReduction, $combinedReduction, 'precondition: health must meaningfully add to the reduction (config curve too small otherwise — widen it)');
+
+        // Find a tick whose roll would trigger plague at the infirmary-only chance
+        // but NOT at the combined (infirmary+health) chance.
+        $chanceInfirmaryOnly = 1.0 * (1 - $infirmaryOnlyReduction);
+        $chanceCombined = 1.0 * (1 - $combinedReduction);
+        $tick = $this->findPlagueTickInBand($chanceCombined, $chanceInfirmaryOnly);
+
+        // Control run: health still at 0 — plague MUST trigger at this tick (roll < chanceInfirmaryOnly).
+        // Tick control: this file's OWN existing pattern (verified against GameTickEncounterTest's
+        // storm/instability tests) is simply `Artisan::call('game:tick', ['--tick' => N])` / the
+        // `$this->artisan('game:tick', ['--tick' => N])` assertable form — the command accepts the
+        // target tick directly as a CLI option, no `runs.current_tick` DB manipulation needed or used
+        // anywhere else in this test file. `rngSeed` in rollPlague()'s seed formula comes from
+        // `(int) ($run->rng_seed ?? 0)` (GameTick.php line ~151) — testdata.sqlite.sql sets no explicit
+        // `rng_seed` for run 1, so it defaults to 0, matching this test's `rollForPlague()` helper.
+        $this->artisan('game:tick', ['--tick' => $tick])->assertExitCode(0);
+        $colonyAfterControl = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
+        $this->assertNotNull($colonyAfterControl->plague_until_tick, "control: plague must trigger at tick {$tick} with infirmary-only reduction (precondition for this test to be meaningful)");
+
+        // Reset state, set health to Lv5, re-run the SAME tick — plague must NOT trigger now.
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['plague_until_tick' => null, 'hunger_streak' => 3]);
+        DB::table('colony_researches')->where('colony_id', self::COLONY_ID)->where('research_id', self::HEALTH_RESEARCH_ID)
+            ->update(['level' => 5]);
+
+        $this->artisan('game:tick', ['--tick' => $tick])->assertExitCode(0);
+        $colonyWithHealth = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
+        $this->assertNull($colonyWithHealth->plague_until_tick, "health Lv5 combined with infirmary must push the reduction high enough to avoid the roll at tick {$tick}");
+    }
 }
