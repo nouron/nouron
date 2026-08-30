@@ -37,6 +37,7 @@ class HangarService
         private readonly TrustService $trustService,
         private readonly AdvisorService $advisorService,
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     // ── Read ──────────────────────────────────────────────────────────────────
@@ -459,7 +460,8 @@ class HangarService
             }
 
             $solDistance = (int) $mission['sol_distance'];
-            $navApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
+            $baseNavApCost = $solDistance * (int) config('missions.nav_ap_per_sol', 2);
+            $navApCost = $this->projectBonusService->effectiveNavigationApCost($colonyId, $baseNavApCost);
             $organikaCost = $this->organikaCostFor($colonyId, $mission);
 
             if (! config('game.bypass.ap_checks')
