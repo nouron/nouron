@@ -113,7 +113,11 @@ return [
 
     'defense' => [
         'id' => 96,
-        'trust_per_lv' => -1,      // see GDD §13 — vigilance dampens trust slightly
+        // Vorzeichen umgekehrt (Owner-Entscheidung 2026-08-27, "Sicherheit schafft
+        // Vertrauen" statt "Wachsamkeit dämpft Vertrauen") — reiht defense neben
+        // agronomy (trust_per_lv=1) ein, dieselbe Magnitude wie zuvor, nur positiv.
+        // Zahlen-Kalibrierung nach Playtest (ADR 0004).
+        'trust_per_lv' => 1,
         'decay_rate' => 0,
         'max_status_points' => 20,
         'credits' => 0,
