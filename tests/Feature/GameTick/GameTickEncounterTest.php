@@ -533,12 +533,13 @@ class GameTickEncounterTest extends TestCase
     }
 
     /**
-     * Scans a tick range for one whose plague roll falls in [$lowerInclusive, $upperExclusive)
-     * — i.e. a roll that WOULD trigger at the lower (infirmary-only) chance but would NOT
-     * trigger at the higher (infirmary+health) chance. Run this once locally, note the
-     * found tick number in a comment, then hardcode it directly in the test (same
-     * methodology this file's existing rollFor()-based tests already use for storm/defense —
-     * see the class docblock's "Uses tick numbers 11700–11749" note for precedent).
+     * Scans a tick range at runtime for one whose plague roll falls in
+     * [$lowerInclusive, $upperExclusive) — i.e. a roll that WOULD trigger at the
+     * lower (higher-reduction) chance but would NOT trigger at the higher
+     * (lower-reduction) chance. Unlike this file's rollFor()-based storm/defense
+     * tests, which hardcode a pre-computed tick, the returned tick is used
+     * directly, not hardcoded — so this test keeps working if the underlying
+     * plague/infirmary/health curves ever change.
      */
     private function findPlagueTickInBand(float $lowerInclusive, float $upperExclusive, int $rangeStart = 20000, int $rangeEnd = 20500): int
     {
@@ -570,7 +571,7 @@ class GameTickEncounterTest extends TestCase
             ['level' => 0, 'ap_spend' => 0, 'status_points' => 20]
         );
 
-        $infirmaryOnlyReduction = 0.24;
+        $infirmaryOnlyReduction = 3 * (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level');
         $healthCurve = config('game.health_plague_risk_reduction_per_lv');
         $healthLv5Reduction = array_sum($healthCurve) / 100;
         $combinedReduction = min(0.50, $infirmaryOnlyReduction + $healthLv5Reduction);
@@ -603,5 +604,59 @@ class GameTickEncounterTest extends TestCase
         $this->artisan('game:tick', ['--tick' => $tick])->assertExitCode(0);
         $colonyWithHealth = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
         $this->assertNull($colonyWithHealth->plague_until_tick, "health Lv5 combined with infirmary must push the reduction high enough to avoid the roll at tick {$tick}");
+        $this->assertGreaterThanOrEqual(3, $colonyWithHealth->hunger_streak, 'precondition guard: the plague emergent-gate (hunger_streak>=3) must still hold — otherwise this test would pass for the wrong reason (gate closed, not reduction working)');
+    }
+
+    /**
+     * The plan's core architectural decision is a SHARED cap over the SUM of
+     * infirmary + health reductions — `min($cap, infirmary + health)` — not two
+     * independently-capped terms and not an uncapped sum. Infirmary Lv5 (0.40)
+     * and health Lv5 (0.20) sum to 0.60, which must clamp to the cap (0.50);
+     * the existing test above never reaches the cap (0.24 + 0.20 = 0.44 < 0.50)
+     * and therefore cannot distinguish a correct capped formula from a buggy
+     * uncapped one.
+     */
+    public function test_combined_infirmary_and_health_reduction_is_capped_not_summed_uncapped(): void
+    {
+        config([
+            'game.encounter.plague.chance_per_sol_when_emergent' => 1.0,
+            'game.encounter.cooldown_sols' => 0,
+            'game.encounter.phase1_ramp_sols' => 1,
+        ]);
+        DB::table('glx_colonies')->where('id', self::COLONY_ID)->update(['hunger_streak' => 3]);
+        DB::table('colony_resources')->where('colony_id', self::COLONY_ID)->where('resource_id', 5)->update(['amount' => 0]);
+
+        // Infirmary Lv5: 5 x 0.08 = 0.40. Health Lv5: sum(3,5,5,4,3)/100 = 0.20.
+        DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::INFIRMARY_ID)
+            ->update(['level' => 5, 'status_points' => 20]);
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => self::HEALTH_RESEARCH_ID],
+            ['level' => 5, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $perLevel = (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level');
+        $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
+        $healthCurve = config('game.health_plague_risk_reduction_per_lv');
+        $infirmaryReduction = 5 * $perLevel;
+        $healthReduction = array_sum($healthCurve) / 100;
+        $uncappedSum = $infirmaryReduction + $healthReduction;
+
+        $this->assertGreaterThan($cap, $uncappedSum, 'precondition: the uncapped sum must exceed the cap for this test to be able to distinguish the two formulas');
+
+        $cappedReduction = min($cap, $uncappedSum);
+        $chanceCapped = 1.0 * (1 - $cappedReduction);
+        $chanceUncapped = 1.0 * (1 - $uncappedSum);
+
+        // A roll in [$chanceUncapped, $chanceCapped) triggers under the correct
+        // capped formula (chance = $chanceCapped) but would NOT trigger under a
+        // buggy uncapped-sum formula (chance = $chanceUncapped).
+        $tick = $this->findPlagueTickInBand($chanceUncapped, $chanceCapped);
+
+        $this->artisan('game:tick', ['--tick' => $tick])->assertExitCode(0);
+        $colony = DB::table('glx_colonies')->where('id', self::COLONY_ID)->first();
+        $this->assertNotNull(
+            $colony->plague_until_tick,
+            "the shared cap ({$cap}) must apply to the SUM of infirmary+health reductions ({$uncappedSum}), not leave it uncapped — plague must still trigger at tick {$tick} under the correct capped formula"
+        );
     }
 }
