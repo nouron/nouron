@@ -2,6 +2,8 @@
 
 ## 2026-08-31
 
+- Fix: `hint_build_priority`-Onboarding-Hint behauptete fälschlich, mehrere Gebäude seien "gerade baubar", obwohl Cantina/Analytik-Labor/Hangar ohne Kommandozentrale Lv2 gar nicht platzierbar sind — Wortlaut korrigiert (Owner-Playtest-Fund).
+
 - Feat: trade-Kenntnis bekommt einen eigenen Preis-Bonus auf allen 3 Handelskanälen (Cantina, Reisender Händler, Nexus/Corporate Contact), additiv zum bestehenden Handelsposten-Kanal-Rabatt (Plan 7 der Kenntnis-Effekte-Redesign-Serie, Owner-Entscheidung 2026-08-27). Neuer `ProjectBonusService::tradePriceBonusPercent()`, Config `knowledge.trade.trade_price_bonus_per_lv`.
 - Docs: Post-Merge-Abgleich der Kenntnis-Effekte-Serie gegen GDD/game-reference.md — sciencelab-Effekt in game-reference.md nachgetragen (fehlte komplett), ungenauer Präzedenzfall im health-Paragraph (GDD §9) korrigiert.
 
