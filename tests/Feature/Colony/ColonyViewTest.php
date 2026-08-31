@@ -105,6 +105,25 @@ class ColonyViewTest extends TestCase
         $this->assertSame('Vollausstattung', $infirmary->tier_label);
     }
 
+    // Regression (Owner-Playtest 2026-08-31): the sidebar showed build cost
+    // and progress but never what the building actually does — the player
+    // couldn't plan ahead. buildings.*_desc texts already existed, just
+    // weren't wired into the tile-panel data.
+    public function test_hexview_buildings_include_description(): void
+    {
+        $this->app->setLocale('de');
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $buildings = $response->viewData('buildings');
+        $infirmary = $buildings->firstWhere('building_id', 46);
+
+        $this->assertNotNull($infirmary);
+        $this->assertSame(__('buildings.infirmary_desc'), $infirmary->description);
+        $this->assertNotEmpty($infirmary->description);
+    }
+
     public function test_pending_run_redirects_to_lobby(): void
     {
         // A pending run is active but not yet started (started_at = null).

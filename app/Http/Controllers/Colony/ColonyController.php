@@ -138,6 +138,7 @@ class ColonyController extends BaseController
             ->map(function ($b) use ($globalTick, $colony) {
                 $b->label = __('techtree.'.$b->building_key);
                 $b->image_slug = self::buildingImageSlug($b->building_key);
+                $b->description = __('buildings.'.preg_replace('/^building_/', '', $b->building_key).'_desc');
                 $b->in_transit = $b->pending_until_tick !== null && (int) $b->pending_until_tick >= $globalTick;
                 $b->levelup_cost = $this->levelupRegolithFor((int) $b->building_id, (int) $b->level + 1);
                 $b->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colony->id, (int) $b->ap_for_levelup);
@@ -1056,6 +1057,7 @@ class ColonyController extends BaseController
 
         $row->label = __('techtree.'.$row->building_key);
         $row->image_slug = self::buildingImageSlug($row->building_key);
+        $row->description = __('buildings.'.preg_replace('/^building_/', '', $row->building_key).'_desc');
         $row->in_transit = $row->pending_until_tick !== null && (int) $row->pending_until_tick >= $this->getTick();
         $row->levelup_cost = $this->levelupRegolithFor((int) $row->building_id, (int) $row->level + 1);
         $row->ap_for_levelup = $this->projectBonusService->effectiveApForLevelup($colonyId, (int) $row->ap_for_levelup);
