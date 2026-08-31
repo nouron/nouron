@@ -64,6 +64,9 @@ Schema-Änderungen und Migrations gehören zu **db-migration-agent** — wenn Co
 ## Test-Driven Development — verbindlich
 Vor jedem neuen Controller-Endpoint oder jeder Service-Methode mit Verhalten: erst einen Feature-/Unit-Test schreiben (`tests/Feature/...`), rot laufen lassen, dann implementieren bis grün. Kein Endpoint ohne vorher existierenden Test. Ausnahme nur bei reinem Routing/Wiring ohne eigene Logik oder explizitem Owner-Spike. Details: CLAUDE.md → „Test-Driven Development (TDD) — verbindlich".
 
+## Beim Verdrahten eines Rabatts/Effekts auf einen bestehenden Kostenwert
+Vor der Implementierung grep nach ALLEN Lesestellen des betroffenen Rohwerts (`config('...')`-Key oder Konstante) — insbesondere Controller-/Service-Methoden, die denselben Kostenwert nur zur ANZEIGE oder Verfügbarkeitsprüfung lesen (z.B. ein Katalog-/Vorschau-Endpoint), nicht nur die eine, die den Wert tatsächlich abzieht. Beide müssen denselben rabattierten Wert verwenden — sonst zeigt das UI einen falschen Preis und blockiert ggf. fälschlich erschwingliche Aktionen (realer Bug, PR #283, 2026-08-30).
+
 ## Coding-Standards
 - PSR-12 strikt einhalten
 - Dependency Injection — keine statischen Calls oder globaler State außer idiomatischen Facades
