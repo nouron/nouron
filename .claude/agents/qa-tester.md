@@ -83,6 +83,14 @@ bin/phpunit --filter test_explore_tile_success    # single test method
 - [ ] Alle DB-Schreibzugriffe transaktional?
 - [ ] CSRF auf zustandsändernden Endpoints geprüft?
 
+## Rabatt-/Kosten-Wiring-Checkliste (bei jeder Kenntnis-/Rabatt-Änderung auf einen bestehenden Kostenwert)
+
+Bei der Kenntnis-Effekte-Serie (2026-08-30, PR #283) blieb ein Anzeige-/Vorschau-Pfad unrabattiert, während der Ausführungs-Pfad korrekt war — UI zeigte falschen Preis UND blockierte fälschlich erschwingliche Aktionen. Keine Task-Review hat es gefangen (jede sah nur ihre eigene Datei), erst die Whole-Branch-Review.
+
+- [ ] Grep nach ALLEN Lesern des betroffenen Rohwerts/Config-Keys — nicht nur den einen offensichtlich benannten Konsumenten. Ein Anzeige-/Vorschau-Pfad (z.B. `getXCatalogFor()`, ein Preis-Chip im UI) ist genauso ein Konsument wie der Ausführungs-/Abzugs-Pfad.
+- [ ] Bei kleinen Ganzzahl-Basiskosten (unter ~10): rechnet die Rabatt-Prozentkurve gegen `ProjectBonusService::applyDiscount()`s `round()`-Formel tatsächlich einen sichtbaren Effekt aus, oder rundet sie bei jedem Level auf den Ausgangswert zurück (No-Op)? Von Hand nachrechnen, nicht annehmen.
+- [ ] Wenn Config-Werte geändert werden, die in `docs/game-reference.md` gelistet sind: dort mitziehen (wird nicht automatisch geprüft, siehe CLAUDE.md-Merge-Checkliste).
+
 ## Output-Format
 Vollständige PHPUnit-Test-Klassen liefern, direkt ausführbar. Kurzer Kommentar oben mit abgedeckten Szenarien.
 ## Code-Style (Linter — Pflicht)

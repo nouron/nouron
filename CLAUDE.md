@@ -167,5 +167,6 @@ Vor `mcp__github__merge_pull_request` immer prüfen:
 
 1. **CHANGELOG** — Eintrag für heute (`## YYYY-MM-DD`) vorhanden?
 2. **PR-Beschreibung** — spiegelt alle Commits seit dem letzten Merge wider?
+3. **`docs/game-reference.md`** — falls der PR Config-Werte ändert, die dort gelistet sind (Kenntnis-/Gebäude-Kurven, Kosten, o.ä.): Tabelle aktuell? Wiederholt in mehreren PRs übersehen (Kenntnis-Effekte-Serie, 2026-08-30) — dieses Dokument wird nicht automatisch geprüft, nur manuell nach Balance-Pässen (ADR 0004).
 
-Der Pre-Merge-Hook (`.claude/hooks/pre-merge-check.sh`) blockiert automatisch wenn CHANGELOG fehlt. PR-Beschreibung muss manuell geprüft/aktualisiert werden.
+Der Pre-Merge-Hook (`.claude/hooks/pre-merge-check.sh`) blockiert automatisch wenn CHANGELOG fehlt. PR-Beschreibung und `docs/game-reference.md` müssen manuell geprüft/aktualisiert werden.

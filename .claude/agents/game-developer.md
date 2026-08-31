@@ -61,6 +61,9 @@ Vor JEDER neuen Methode/Mechanik mit Verhalten: erst den PHPUnit-Test schreiben,
 - Alle Balance-Werte in `config/game.php` — keine Zahlen hartkodieren
 - Vollständige PHP-8.2-Typsignaturen auf jeder public-Methode
 
+## Beim Verdrahten eines Rabatts/Effekts auf einen bestehenden Kostenwert
+Vor der Implementierung grep nach ALLEN Lesestellen des betroffenen Rohwerts (`config('...')`-Key oder Konstante) — nicht nur der einen offensichtlich benannten Konsumenten-Methode. Ein Anzeige-/Vorschau-Pfad (z.B. eine `getXCatalogFor()`-Methode fürs UI) ist genauso ein Konsument wie der tatsächliche Ausführungs-/Abzugs-Pfad — beide müssen denselben rabattierten Wert verwenden, sonst zeigt das UI einen falschen Preis und blockiert ggf. fälschlich erschwingliche Aktionen (realer Bug, PR #283, 2026-08-30). Bei `ProjectBonusService::applyDiscount()`-basierten Rabatten zusätzlich prüfen: rundet die Kurve bei kleinen Ganzzahl-Basiskosten (unter ~10) tatsächlich sichtbar herunter, oder rundet `round()` bei jedem Level auf den Ausgangswert zurück (No-Op)?
+
 ### DB-Transaktions-Muster
 ```php
 DB::transaction(function () use ($colony, $amount): void {
