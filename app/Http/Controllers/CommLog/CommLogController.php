@@ -208,8 +208,42 @@ class CommLogController extends BaseController
                 'sols' => (int) config('game.encounter.instability.outage_sols', 3),
             ]))],
             'encounter.plague_triggered' => [$this->seg(__('comm_log.desc.plague_triggered'))],
+            'colony.passive_credits' => $this->descPassiveCredits($params),
+            'colony.stipend_purchased' => $this->descStipendPurchased($params),
             default => [],
         };
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descPassiveCredits(array $params): array
+    {
+        $total = (int) ($params['total'] ?? 0);
+
+        return [
+            $this->seg(__('colony.sol_report_passive_credits').': +'),
+            $this->amountSeg('CR', $total),
+            $this->seg(' erhalten.'),
+        ];
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function descStipendPurchased(array $params): array
+    {
+        $tier = (string) ($params['tier'] ?? '');
+        $tierLabel = $tier ? __('colony.stipend_tier_'.$tier) : '?';
+        $cost = (int) ($params['cost'] ?? 0);
+
+        return [
+            $this->seg(__('colony.stipend_button').' ('.$tierLabel.'): '),
+            $this->amountSeg('CR', $cost),
+            $this->seg(' ausgeschüttet.'),
+        ];
+    }
+
+    /** Amount chip segment — reuses the resourcebar's AP/CR/RG/CO/OR pill style (x-amount-chip). */
+    private function amountSeg(string $abbr, int $value, string $variant = 'res'): array
+    {
+        return ['type' => 'amount', 'abbr' => $abbr, 'value' => $value, 'variant' => $variant];
     }
 
     /** Text segment shorthand. */
@@ -268,7 +302,8 @@ class CommLogController extends BaseController
 
         if ($levelUp) {
             return [
-                $this->seg($ap.' AP in '),
+                $this->amountSeg('AP', $ap, 'ap'),
+                $this->seg(' in '),
                 $this->entitySeg('building', (string) $bKey, $name, [
                     'level' => $newLevel,
                     'link' => '/nexus-db',
@@ -281,7 +316,8 @@ class CommLogController extends BaseController
         $total = $apNeeded ?: '?';
 
         return [
-            $this->seg($ap.' AP in '),
+            $this->amountSeg('AP', $ap, 'ap'),
+            $this->seg(' in '),
             $this->entitySeg('building', (string) $bKey, $name, [
                 'level' => null,
                 'link' => '/nexus-db',
@@ -495,7 +531,9 @@ class CommLogController extends BaseController
                 $this->entitySeg('advisor', $type, (string) $typeName, [
                     'link' => '/nexus-db',
                 ]),
-                $this->seg(' eingestellt. Kosten: '.$cost.' CR.'),
+                $this->seg(' eingestellt. Kosten: '),
+                $this->amountSeg('CR', $cost),
+                $this->seg('.'),
             ];
         }
 
