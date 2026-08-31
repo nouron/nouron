@@ -1428,7 +1428,12 @@ class GameTick extends Command
             ->where('colony_id', $colony->id)->where('building_id', (int) config('buildings.infirmary.id', 46))->value('level');
         $perLevel = (float) config('buildings.infirmary.plague_risk_reduction_pct_per_level', 0.08);
         $cap = (float) config('buildings.infirmary.plague_risk_reduction_cap', 0.50);
-        $reductionPct = min($cap, $infirmaryLevel * $perLevel);
+        $healthId = (int) config('knowledge.health.id', 94);
+        $healthLevel = (int) DB::table('colony_researches')
+            ->where('colony_id', $colony->id)->where('research_id', $healthId)->value('level');
+        $healthReductionPct = self::cumulativeCurveYield(config('game.health_plague_risk_reduction_per_lv', []), $healthLevel) / 100;
+
+        $reductionPct = min($cap, $infirmaryLevel * $perLevel + $healthReductionPct);
 
         $chance *= (1 - $reductionPct) * $rampMultiplier;
 

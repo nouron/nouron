@@ -107,7 +107,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **cartography** | 20/28/36/44/52 | 180 AP | 0 | Navigation-AP (Tile-Erkundung, Hangar-Missions-Reisekosten) −4/−8/−8/−6/−4% (Σ−30%) |
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
-| **health** | 20/28/36/44/52 | 180 AP | +2 | — |
+| **health** | 20/28/36/44/52 | 180 AP | +2 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
 | **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0 |
 | **defense** | 20/28/36/44/52 | 180 AP | +1 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
@@ -400,7 +400,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 | Cantina | +2/Lv | Verhandlungs-Risiko; +Konsul-Slot |
 | Analytik-Labor | 0 | Kenntnis-Forschung; +Analytiker-Slot |
 | Hangar | 0 | Schiff-Ausbau; +Raumfahrer-Slot |
-| Krankenstation | +3/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%) |
+| Krankenstation | +3/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
 | Religiöse Stätte | +2/Lv | Besinnlichkeit (Lv1 only) |
 | Kolonialdenkmal | +2/Lv | Stolz (Lv1 only) |
 | Security Hub | +1/Lv | Trust-Event-Mitigation −25%; Recycling 10% build-cost |

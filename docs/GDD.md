@@ -1424,7 +1424,9 @@ Damit werden zugleich die in §14 markierten Trust-Events mit Anwendungsfällen 
 |---|---|---|---|---|
 | **Sturm** | Zufällig; Basis-Chance/Sol steigt mit Run-Schwierigkeit; trifft 1 (selten 2) zufällige Gebäude der Colony Zone | SP-Verlust nach Ausgangsstufe (Tabelle oben) | variabel nach Phase (häufiger mit mehr Gebäuden) | Hohe SP durch regelmäßige Reparatur |
 | **Geologische Instabilität** | Gekoppelt an das Harvester-Tile; Chance steigt mit Solen seit letzter Relocation, sinkt mit Kenntnis Geologie | Produktionsausfall des Harvesters für eine Weile (statt zusätzlichem Trust-Malus — kein doppelter Bestrafungseffekt) | seltener als Stürme | Kenntnis Geologie senkt Chance; Relocation setzt Zähler zurück |
-| **Seuchenausbruch** | Emergent statt rein zufällig: nur möglich bei echter Vernachlässigung (Hunger-Spirale oder sehr niedriges Vertrauen), dann Zufallschance/Sol | Supply-Cap oder AP-Generierung temporär reduziert + `colony_threatened` | nur im Vernachlässigungsfall — bei gesunder Kolonie 0% Grundrisiko | Krankenstation (infirmary) senkt Chance/Schwere |
+| **Seuchenausbruch** | Emergent statt rein zufällig: nur möglich bei echter Vernachlässigung (Hunger-Spirale oder sehr niedriges Vertrauen), dann Zufallschance/Sol | Supply-Cap oder AP-Generierung temporär reduziert + `colony_threatened` | nur im Vernachlässigungsfall — bei gesunder Kolonie 0% Grundrisiko | Krankenstation (infirmary) und Kenntnis `health` senken Chance/Schwere |
+
+**Additives Risiko-Modell — `health`-Kenntnis und Krankenstation:** Die `health`-Kenntnis trägt wie die Krankenstation additiv zur Seuchenausbruch-Risikoreduktion bei — beide Werte werden gemeinsam gegen denselben Wirkungsdeckel (`plague_risk_reduction_cap`) summiert, kein Konkurrenz-/Stack-Ausschluss (Präzedenzfall: `defense`-Kenntnis + Sicherheits-Hub wirken ebenfalls additiv auf dieselbe Sturm-Gefahr, §14). Exakte Werte: `config/game.php` → `health_plague_risk_reduction_per_lv`.
 
 ### Vorwarnung & Protokollierung
 
