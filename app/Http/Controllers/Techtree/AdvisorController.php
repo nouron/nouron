@@ -372,6 +372,7 @@ class AdvisorController extends BaseController
                 'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
                 'credits' => (int) ($this->resourcesService->getUserResources(['user_id' => $userId])->first()->credits ?? 0),
+                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
                 'activeHint' => $this->resolveHint($colonyId),
             ]);
         }
@@ -405,6 +406,7 @@ class AdvisorController extends BaseController
                 'ok' => true,
                 'slots' => $this->buildSlots($advisors, $slotInfo, $currentTick, $colonyId),
                 'slotInfo' => $slotInfo,
+                'apAvailable' => $this->advisorService->getAvailableActionPoints($colonyId),
                 'activeHint' => $this->resolveHint($colonyId),
             ]);
         }

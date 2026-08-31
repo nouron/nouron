@@ -30,6 +30,7 @@ namespace Tests\Feature\Techtree;
  */
 
 use App\Models\User;
+use App\Services\AdvisorService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -330,6 +331,30 @@ class AdvisorControllerTest extends TestCase
             ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
 
         $response->assertOk()->assertJson(['ok' => true, 'credits' => 10000 - $hireCost]);
+    }
+
+    public function test_hire_json_returns_ap_available_for_resourcebar_sync(): void
+    {
+        // Regression (Owner-Playtest 2026-08-31): the resourcebar AP chip only
+        // updates reactively via this field (advisors.js patches the DOM with
+        // it, mirroring the existing credits-chip sync) — without it a newly
+        // hired advisor's AP contribution is invisible in the header until a
+        // full page reload, even though onboarding hints (which read the AP
+        // pool fresh server-side) already see it.
+        $this->clearBartAdvisors();
+        $this->ensureCredits($this->userIdBart, 10000);
+        $apBefore = app(AdvisorService::class)->getAvailableActionPoints($this->colonyIdBart);
+
+        $bart = User::find($this->userIdBart);
+
+        $response = $this->actingAs($bart)
+            ->withSession($this->bartSession())
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('advisors.hire'), ['personell_id' => $this->personellEngineer]);
+
+        $apAfter = app(AdvisorService::class)->getAvailableActionPoints($this->colonyIdBart);
+        $this->assertGreaterThan($apBefore, $apAfter, 'precondition: hiring must actually raise the AP pool');
+        $response->assertOk()->assertJson(['ok' => true, 'apAvailable' => $apAfter]);
     }
 
     public function test_hire_json_returns_422_on_duplicate(): void

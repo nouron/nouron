@@ -2,6 +2,8 @@
 
 ## 2026-08-31
 
+- Fix: AP-Chip in der Resourcebar aktualisierte sich nach Berater-Anstellung/-Entlassung nicht live — `AdvisorController::hire()`/`fire()` liefern jetzt `apAvailable` im JSON-Response, `advisors.js` patcht den `#resbar-ap`-Chip analog zum bestehenden Credits-Chip-Sync (Owner-Playtest-Fund: Hint zeigte "Forschungs-AP übrig", Header noch "AP 0").
+
 - Fix: `hint_build_priority`-Onboarding-Hint behauptete fälschlich, mehrere Gebäude seien "gerade baubar", obwohl Cantina/Analytik-Labor/Hangar ohne Kommandozentrale Lv2 gar nicht platzierbar sind — Wortlaut korrigiert (Owner-Playtest-Fund).
 
 - Feat: trade-Kenntnis bekommt einen eigenen Preis-Bonus auf allen 3 Handelskanälen (Cantina, Reisender Händler, Nexus/Corporate Contact), additiv zum bestehenden Handelsposten-Kanal-Rabatt (Plan 7 der Kenntnis-Effekte-Redesign-Serie, Owner-Entscheidung 2026-08-27). Neuer `ProjectBonusService::tradePriceBonusPercent()`, Config `knowledge.trade.trade_price_bonus_per_lv`.
