@@ -59,6 +59,7 @@ function advisorCarousel(config) {
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
                 this.syncCreditsChip(res.credits);
+                this.syncApChip(res.apAvailable);
                 this.syncHint(res);
             } else {
                 this.errorMsg = res.message ?? 'Fehler beim Einstellen.';
@@ -89,6 +90,23 @@ function advisorCarousel(config) {
             setTimeout(() => chip.classList.remove('res-chip--flash'), 600);
         },
 
+        // Single shared AP pool chip (#resbar-ap, GDD §13.1) — hiring/firing an
+        // advisor changes it immediately, but the resourcebar is server-rendered
+        // and won't reflect that until a full reload without this patch (Owner-
+        // Playtest 2026-08-31: "Forschungs-AP übrig" hint fired while the header
+        // still showed the pre-hire AP count).
+        syncApChip(apAvailable) {
+            if (apAvailable === undefined) return;
+            const chip = document.getElementById('resbar-ap');
+            if (!chip) return;
+            const el = chip.querySelector('.res-amount');
+            if (el) el.textContent = apAvailable;
+            chip.classList.remove('ap-chip--flash');
+            void chip.offsetWidth;
+            chip.classList.add('ap-chip--flash');
+            setTimeout(() => chip.classList.remove('ap-chip--flash'), 600);
+        },
+
         async doFire() {
             const url = this.routes.fire.replace('__ID__', this.dialogSlot.advisor.id);
             const res = await this.delete(url);
@@ -96,6 +114,7 @@ function advisorCarousel(config) {
                 this.slots = res.slots;
                 this.slotInfo = res.slotInfo;
                 this.closeDialogs();
+                this.syncApChip(res.apAvailable);
                 this.syncHint(res);
             } else {
                 this.errorMsg = res.error ?? 'Fehler beim Entlassen.';
