@@ -862,7 +862,7 @@ class MerchantServiceTest extends TestCase
         $this->setTradingPostLevel(null);
 
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'research_id' => 95],
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
             ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
         );
 

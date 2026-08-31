@@ -7,15 +7,17 @@ use App\Enums\BuildingId;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Additive AP-cost discounts for building projects (GDD §13.3). Currently sums the
- * two "domain knowledge" curves (construction, trade) — advisor-rank and CC-level
- * bonus sources from the same GDD table are not yet implemented (out of scope for
- * this plan, see docs/superpowers/specs/2026-08-15-knowledge-effects-and-
- * encounters-design.md §2). Also hosts a second, independent discount pool for
- * Kenntnis-Levelup-AP-Kosten, sourced from the Analytik-Labor (sciencelab) building
- * level — see knowledgeApDiscountPercent() below. Since 2026-08-27, cartography no
- * longer contributes to the building-discount pool above — it has its own separate
- * Navigation-AP discount pool instead, see effectiveNavigationApCost() below.
+ * Hosts several independent AP-cost discount and price-bonus pools (GDD §13.3),
+ * each sourced from its own knowledge/building level and combined additively
+ * within its own pool only — no cross-pool stacking:
+ *   - building-project AP discount, summed across the construction and trade
+ *     knowledge curves (buildingApDiscountPercent());
+ *   - knowledge-levelup AP discount, sourced from the Analytik-Labor
+ *     (sciencelab) building level (knowledgeApDiscountPercent());
+ *   - navigation-AP discount for exploration and hangar mission actions,
+ *     sourced from the cartography knowledge level (navigationApDiscountPercent());
+ *   - trade-price bonus across all 3 trade channels, sourced from the trade
+ *     knowledge level (tradePriceBonusPercent()).
  */
 class ProjectBonusService
 {
@@ -78,11 +80,11 @@ class ProjectBonusService
     }
 
     /**
-     * Additive AP-cost discount for Navigation actions (currently: tile
-     * exploration, ColonyTileService::exploreTile()), sourced from the
-     * cartography knowledge level — a separate, independent pool from
-     * buildingApDiscountPercent() above. cartography no longer contributes
-     * to the building-project pool (Owner-Entscheidung 2026-08-27).
+     * Additive AP-cost discount for Navigation actions — tile exploration
+     * (ColonyTileService::exploreTile()) and hangar missions
+     * (HangarService::dispatchShip(), HangarService::getMissionCatalogFor()) —
+     * sourced from the cartography knowledge level, a separate, independent
+     * pool from buildingApDiscountPercent() above.
      */
     public function navigationApDiscountPercent(int $colonyId): int
     {
@@ -105,10 +107,10 @@ class ProjectBonusService
     }
 
     /**
-     * Additive percent bonus applied to the sell price on all 3 trade channels
-     * (TradingPostService), sourced from the trade knowledge level — additive
-     * to the existing TradingPostService per-channel discount, not a replacement
-     * (Owner-Entscheidung 2026-08-27).
+     * Additive percent bonus applied to the price a player pays across all 3
+     * trade channels (BarService, MerchantService, CorporateContactService),
+     * sourced from the trade knowledge level — additive to the existing
+     * TradingPostService per-channel discount, not a replacement.
      */
     public function tradePriceBonusPercent(int $colonyId): int
     {

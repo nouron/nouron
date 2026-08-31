@@ -219,7 +219,7 @@ class CorporateContactServiceTest extends TestCase
         $this->setTradingPostLevel(2); // unter dem 'corporate_contact'-Schwellenwert (3) → 0% Handelsposten-Rabatt
 
         DB::table('colony_researches')->updateOrInsert(
-            ['colony_id' => self::COLONY_ID, 'research_id' => 95],
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
             ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
         );
 
