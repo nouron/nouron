@@ -473,6 +473,16 @@
                                         </p>
                                     </template>
 
+                                    {{-- What the NEXT level unlocks (Owner-Playtest-Fund
+                                     2026-08-31, e.g. "Hangar Lv2 → Frachter") — derived from
+                                     existing gate data, see BuildingUnlockService. --}}
+                                    <template
+                                        x-if="buildingCanLevelUp(selectedBuilding) && selectedBuilding.unlocks_next_level && selectedBuilding.unlocks_next_level.length > 0">
+                                        <p class="tile-building-unlocks"
+                                            x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.join(', ')}`">
+                                        </p>
+                                    </template>
+
                                     <template x-if="selectedBuilding.level === 0">
                                         <div class="tile-under-construction">
                                             {{ __("colony.under_construction") }}
