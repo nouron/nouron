@@ -22,6 +22,7 @@ class BarService
         private readonly ResourcesService $resourcesService,
         private readonly AdvisorService $advisorService,
         private readonly TradingPostService $tradingPostService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -167,19 +168,26 @@ class BarService
         // Affordability-Check, damit dieser gegen den tatsächlich fälligen
         // Betrag läuft (Whole-Branch-Review-Fund 2026-08-27 — derselbe Bug,
         // der in MerchantService::buyItem() bereits behoben wurde).
+        //
+        // Der trade-Kenntnis-Preisbonus ist davon unabhängig — eine dritte,
+        // eigenständige Rabattquelle (additiv, wie construction+cartography+trade
+        // im Building-Discount-Pool) — und gilt daher AUCH für verhandelte
+        // Angebote (Whole-Branch-Review-Fund 2026-08-30: durfte nicht von der
+        // is_negotiated-Guard mit ausgeschlossen werden).
         $giveAmount = $offer->give_amount;
         $getAmount = $offer->get_amount;
+        $discount = $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
         if (! $offer->is_negotiated) {
-            $discount = $this->tradingPostService->discountFor($colonyId, 'bar');
-            if ($discount > 0.0) {
-                $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
-                $giveAmount = $isCreditsOffer
-                    ? (int) max(1, round($offer->give_amount * (1 - $discount)))
-                    : $offer->give_amount;
-                $getAmount = $isCreditsOffer
-                    ? $offer->get_amount
-                    : (int) max(1, round($offer->get_amount * (1 + $discount)));
-            }
+            $discount += $this->tradingPostService->discountFor($colonyId, 'bar');
+        }
+        if ($discount > 0.0) {
+            $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
+            $giveAmount = $isCreditsOffer
+                ? (int) max(1, round($offer->give_amount * (1 - $discount)))
+                : $offer->give_amount;
+            $getAmount = $isCreditsOffer
+                ? $offer->get_amount
+                : (int) max(1, round($offer->get_amount * (1 + $discount)));
         }
 
         // Check player can afford the give side

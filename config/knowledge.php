@@ -109,6 +109,11 @@ return [
         // Cantina-Angebotsslot-Bonus (Task 4 dieses Plans) — zusätzliche gleichzeitige
         // Bar-Angebote bei höherem trade-Level.
         'bar_offer_boost_per_lv' => [1 => 0, 2 => 1, 3 => 1, 4 => 0, 5 => 0],   // Σ2 Slots
+        // Additiver Preis-Bonus auf ALLE 3 Handelskanäle, zusätzlich zum bestehenden
+        // TradingPostService-Kanalrabatt — additives Stacking mehrerer Quellen ist
+        // etablierte Projekt-Konvention (siehe construction+cartography+trade auf dem
+        // Gebäude-AP-Rabatt-Pool). Owner-Entscheidung 2026-08-27, Platzhalter-Größe (ADR 0004).
+        'trade_price_bonus_per_lv' => [1 => 2, 2 => 3, 3 => 3, 4 => 2, 5 => 2],
     ],
 
     'defense' => [

@@ -211,4 +211,22 @@ class CorporateContactServiceTest extends TestCase
         $this->assertNotNull($offer);
         $this->assertSame(495, $offer['price'], 'below the level-3 threshold, price must equal the documented undiscounted roll (495 Cr at OFFER_HIT_TICK)');
     }
+
+    public function test_active_offer_price_applies_trade_price_bonus_even_below_trading_post_threshold(): void
+    {
+        // GDD/Owner-Entscheidung 2026-08-27: trade-Kenntnis-Preisbonus ist additiv
+        // zum Handelsposten-Kanal-Rabatt, nicht davon abhängig.
+        $this->setTradingPostLevel(2); // unter dem 'corporate_contact'-Schwellenwert (3) → 0% Handelsposten-Rabatt
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $offer = $this->service->getActiveOffer(self::COLONY_ID, self::USER_ID, self::OFFER_HIT_TICK);
+
+        $this->assertNotNull($offer);
+        $expectedPrice = (int) max(1, round(495 * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+        $this->assertSame($expectedPrice, $offer['price'], 'trade knowledge price bonus must apply even without a trading post channel discount');
+    }
 }

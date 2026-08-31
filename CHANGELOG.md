@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-08-31
+
+- Feat: trade-Kenntnis bekommt einen eigenen Preis-Bonus auf allen 3 Handelskanälen (Cantina, Reisender Händler, Nexus/Corporate Contact), additiv zum bestehenden Handelsposten-Kanal-Rabatt (Plan 7 der Kenntnis-Effekte-Redesign-Serie, Owner-Entscheidung 2026-08-27). Neuer `ProjectBonusService::tradePriceBonusPercent()`, Config `knowledge.trade.trade_price_bonus_per_lv`.
+
 ## 2026-08-30
 
 - Feat: defense-Kenntnis Trust-Effekt von `trust_per_lv=-1` auf `+1` umgekehrt (Owner-Entscheidung 2026-08-27, "Sicherheit schafft Vertrauen") — reine Vorzeichen-Umkehr, gleiche Magnitude. GDD-Begründung angepasst, betroffene Grenzfall-Tests in `TrustServiceTest` auf eine andere Kenntnis-Quelle umgestellt.

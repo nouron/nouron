@@ -854,6 +854,35 @@ class MerchantServiceTest extends TestCase
         $this->assertSame(300 - $expectedCharge, $this->getCredits());
     }
 
+    public function test_buy_item_applies_trade_price_bonus_even_without_trading_post_channel(): void
+    {
+        // GDD/Owner-Entscheidung 2026-08-27: trade-Kenntnis-Preisbonus ist additiv
+        // zum Handelsposten-Kanal-Rabatt, nicht davon abhängig.
+        $this->mockTick(20);
+        $this->setTradingPostLevel(null);
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $visitId = $this->insertVisit(['tick_start' => 20, 'tick_end' => 21]);
+        $itemId = $this->insertItem($visitId, [
+            'item_type' => 'trust_boost',
+            'payload' => json_encode(['trust_amount' => 15]),
+            'cost_credits' => 100,
+        ]);
+        $this->setCredits(300);
+        $this->setColonyResource(self::TRUST_RESOURCE_ID, 50);
+
+        $result = $this->service->buyItem($itemId, self::COLONY_ID, self::USER_ID);
+
+        $this->assertTrue($result['ok']);
+        $expectedCharge = (int) max(1, round(100 * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+        $this->assertSame(300 - $expectedCharge, $result['credits'], 'trade knowledge price bonus must apply even without a trading post channel discount');
+        $this->assertSame(300 - $expectedCharge, $this->getCredits());
+    }
+
     public function test_buy_item_has_no_discount_without_trading_post(): void
     {
         $this->mockTick(20);

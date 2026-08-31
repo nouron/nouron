@@ -176,4 +176,25 @@ class ProjectBonusServiceTest extends TestCase
         $this->assertLessThan(10, $expected, 'precondition: discount must actually lower the base cost of 10');
         $this->assertSame($expected, $service->effectiveNavigationApCost(self::COLONY_ID, 10));
     }
+
+    // ── trade Handelspreis-Bonus (Owner-Entscheidung 2026-08-27) ────────────────
+
+    private const TRADE_RESEARCH_ID = 95;
+
+    public function test_trade_price_bonus_percent_sums_curve_up_to_level(): void
+    {
+        $this->assertSame((int) config('knowledge.trade.id'), self::TRADE_RESEARCH_ID, 'precondition: config/knowledge.php trade.id must match the test constant');
+        $this->setKnowledgeLevel(self::TRADE_RESEARCH_ID, 3);
+        $service = $this->app->make(ProjectBonusService::class);
+
+        // curve [1=>2,2=>3,3=>3,...] summed to level 3 = 8
+        $this->assertSame(8, $service->tradePriceBonusPercent(self::COLONY_ID));
+    }
+
+    public function test_trade_price_bonus_percent_is_zero_with_no_trade_knowledge(): void
+    {
+        $service = $this->app->make(ProjectBonusService::class);
+
+        $this->assertSame(0, $service->tradePriceBonusPercent(self::COLONY_ID));
+    }
 }

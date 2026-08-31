@@ -108,7 +108,7 @@ Alle levelup via Analytik-Labor. Keine Credits-Kosten (=0). Alle Kurven glockenf
 | **geology** | 20/28/36/44/52 | 180 AP | 0 | Harvester +3/+3/+2/+2/+2 Rg/Sol; Instabilität −3/−5/−5/−4/−3% |
 | **agronomy** | 20/28/36/44/52 | 180 AP | +1 | Agrardom +1/+2/+2/+1/+1 Or/Sol |
 | **health** | 20/28/36/44/52 | 180 AP | +2 | Seuchenausbruch-Risiko −3/−5/−5/−4/−3% |
-| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0 |
+| **trade** | 20/28/36/44/52 | 180 AP | 0 | Bau-AP −2/−4/−4/−3/−2 (Σ−15%); Bar-Slots +0/+1/+1/+0/+0; Handelspreis-Bonus +2/+3/+3/+2/+2% (Σ12%) |
 | **defense** | 20/28/36/44/52 | 180 AP | +1 | Sturm-Risiko −3/−5/−5/−4/−3% |
 
 > **CC-Level Gate**: Lv4 & Lv5 knowledge erfordern CC Lv4 bzw. Lv5

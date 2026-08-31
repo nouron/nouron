@@ -44,6 +44,7 @@ class MerchantService
         private readonly BarService $barService,
         private readonly ResourcesService $resourcesService,
         private readonly TradingPostService $tradingPostService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     public function getActiveVisit(int $colonyId, int $currentTick): ?object
@@ -311,7 +312,8 @@ class MerchantService
         // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 2 schaltet
         // den Reisender-Händler-Kanal frei. Vor dem Credits-Check berechnet, damit
         // die Affordability-Prüfung gegen den tatsächlich fälligen Betrag läuft.
-        $discount = $this->tradingPostService->discountFor($colonyId, 'merchant');
+        $discount = $this->tradingPostService->discountFor($colonyId, 'merchant')
+            + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
         $chargedCredits = $discount > 0.0
             ? (int) max(1, round($item->cost_credits * (1 - $discount)))
             : $item->cost_credits;

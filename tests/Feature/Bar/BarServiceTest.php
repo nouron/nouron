@@ -1316,6 +1316,51 @@ class BarServiceTest extends TestCase
     }
 
     /**
+     * Whole-Branch-Review-Fund 2026-08-30: the is_negotiated guard exists solely to
+     * keep the TradingPostService channel discount from stacking with the Konsul
+     * negotiation bonus (see test above) — it must NOT also suppress the trade
+     * knowledge price bonus, a categorically independent third source.
+     */
+    public function test_accept_offer_applies_trade_price_bonus_to_a_negotiated_offer(): void
+    {
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(1);
+        $this->assignTrader(3); // rank 3 Konsul
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $giveAmount = 500;
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        config(['game.bypass.ap_checks' => true]);
+        $negotiateResult = $this->barService->negotiateOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
+        $this->assertTrue($negotiateResult['ok']);
+        $this->assertTrue($negotiateResult['success'] ?? false, 'negotiate must succeed for this assertion to be meaningful — check negotiate_success_chance fixture for rank 3');
+
+        $negotiatedGiveAmount = (int) DB::table('bar_offers')->where('id', $offerId)->value('give_amount');
+        $expectedGive = (int) max(1, round($negotiatedGiveAmount * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+
+        $acceptResult = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 11);
+
+        $this->assertTrue($acceptResult['ok'] ?? false);
+        $this->assertLessThan($negotiatedGiveAmount, $expectedGive, 'fixture assumption: trade bonus must further reduce the already-negotiated amount for this test to be meaningful');
+        $this->assertSame($expectedGive, $acceptResult['give_amount'], 'trade knowledge price bonus must apply on top of a negotiated offer, unlike the trading post channel discount');
+    }
+
+    /**
      * Whole-Branch-Review-Fund 2026-08-27: the affordability check must run against
      * the DISCOUNTED price, not the offer's full give_amount — otherwise a player
      * who can afford the discounted price but not the full price is wrongly
@@ -1354,6 +1399,40 @@ class BarServiceTest extends TestCase
         $this->assertTrue($result['ok'] ?? false, 'offer must be accepted when the player can afford the discounted price, even if not the full price');
         $this->assertSame($expectedGive, $result['give_amount']);
         $this->assertSame(450 - $expectedGive, $this->getCredits());
+    }
+
+    public function test_accept_offer_applies_trade_price_bonus_even_without_trading_post_channel(): void
+    {
+        // GDD/Owner-Entscheidung 2026-08-27: trade-Kenntnis-Preisbonus ist additiv
+        // zum Handelsposten-Kanal-Rabatt, nicht davon abhängig — muss also auch
+        // greifen, wenn der Handelsposten-Kanal selbst gar nicht freigeschaltet ist.
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(0); // unter dem 'bar'-Kanal-Schwellenwert → 0% Handelsposten-Rabatt
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => (int) config('knowledge.trade.id')],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $giveAmount = 500;
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok']);
+        $expectedGive = (int) max(1, round($giveAmount * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+        $this->assertSame($expectedGive, $result['give_amount'], 'trade knowledge price bonus must apply even without a trading post channel discount');
+        $this->assertSame(1000 - $expectedGive, $this->getCredits());
     }
 
     /**
