@@ -104,6 +104,13 @@
                                 @foreach ($segments as $seg)
                                     @if ($seg["type"] === "text")
                                         {{ $seg["value"] }}
+                                    @elseif ($seg["type"] === "amount")
+                                        @php
+                                            $segAbbr = $seg["abbr"];
+                                            $segValue = $seg["value"];
+                                            $segVariant = $seg["variant"];
+                                        @endphp
+                                        <x-amount-chip :abbr="$segAbbr" :value="$segValue" :variant="$segVariant" />
                                     @else
                                         @php
                                             $segType = $seg["type"];

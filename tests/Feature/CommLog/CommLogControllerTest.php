@@ -148,8 +148,12 @@ class CommLogControllerTest extends TestCase
         $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
         $segments = $entries->first()['segments'];
 
-        $this->assertStringContainsString('3 AP in', $segments[0]['value']);
-        $this->assertStringContainsString('7 / 10 AP', $segments[2]['value']);
+        // Regression (Owner-Playtest 2026-08-31): the AP amount must render as
+        // an amount chip (matching the resourcebar's AP chip), not plain text.
+        $this->assertSame('amount', $segments[0]['type']);
+        $this->assertSame('AP', $segments[0]['abbr']);
+        $this->assertSame(3, $segments[0]['value']);
+        $this->assertStringContainsString('7 / 10 AP', $segments[3]['value']);
     }
 
     public function test_building_invested_description_with_levelup(): void
@@ -162,8 +166,10 @@ class CommLogControllerTest extends TestCase
         $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
         $segments = $entries->first()['segments'];
 
-        $this->assertSame(4, $segments[1]['tooltip']['level']);
-        $this->assertStringContainsString('Level 4 erreicht', $segments[2]['value']);
+        $this->assertSame('amount', $segments[0]['type']);
+        $this->assertSame(10, $segments[0]['value']);
+        $this->assertSame(4, $segments[2]['tooltip']['level']);
+        $this->assertStringContainsString('Level 4 erreicht', $segments[3]['value']);
     }
 
     public function test_building_repaired_description(): void
@@ -252,7 +258,9 @@ class CommLogControllerTest extends TestCase
         $segments = $entries->first()['segments'];
 
         $this->assertSame('advisor', $segments[0]['type']);
-        $this->assertStringContainsString('200 CR', $segments[1]['value']);
+        $this->assertSame('amount', $segments[2]['type']);
+        $this->assertSame('CR', $segments[2]['abbr']);
+        $this->assertSame(200, $segments[2]['value']);
     }
 
     public function test_advisor_hired_without_cost(): void
@@ -263,6 +271,52 @@ class CommLogControllerTest extends TestCase
         $segments = $entries->first()['segments'];
 
         $this->assertStringNotContainsString('CR', $segments[1]['value']);
+    }
+
+    // Regression (Owner-Playtest 2026-08-31): colony.passive_credits and
+    // colony.stipend_purchased had no buildDescription() case at all — the log
+    // rendered the raw event key ("colony.passive_credits") instead of a
+    // translated line.
+    public function test_passive_credits_description(): void
+    {
+        $this->log('colony.passive_credits', [
+            'subsidy' => 30, 'relay_bonus' => 10, 'contract' => 0, 'total' => 40,
+        ]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $segments = $entries->first()['segments'];
+
+        $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
+        $this->assertSame('amount', $segments[1]['type']);
+        $this->assertSame('CR', $segments[1]['abbr']);
+        $this->assertSame(40, $segments[1]['value']);
+    }
+
+    public function test_stipend_purchased_description(): void
+    {
+        $this->log('colony.stipend_purchased', ['tier' => 'medium', 'cost' => 150]);
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $segments = $entries->first()['segments'];
+
+        $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
+        $this->assertStringContainsString(__('colony.stipend_tier_medium'), $segments[0]['value']);
+        $this->assertSame('amount', $segments[1]['type']);
+        $this->assertSame(150, $segments[1]['value']);
+    }
+
+    // Regression: none of the other tests here force a full HTML render
+    // (viewData() reads the View object before Blade compiles it) — this is
+    // the only test that would have caught a Blade syntax error in the
+    // amount-chip segment branch (Owner-Playtest 2026-08-31 follow-up).
+    public function test_log_page_with_amount_chip_segment_renders_without_error(): void
+    {
+        $this->log('techtree.advisor_hired', ['advisor_type' => 'engineer', 'credits_cost' => 200]);
+
+        $this->actingAs($this->user())
+            ->get(route('comm.log'))
+            ->assertOk()
+            ->assertSee('200', false);
     }
 
     public function test_bar_accepted_with_resources(): void
