@@ -3,6 +3,7 @@
 ## 2026-08-31
 
 - Fix: AP-Chip in der Resourcebar aktualisierte sich nach Berater-Anstellung/-Entlassung nicht live — `AdvisorController::hire()`/`fire()` liefern jetzt `apAvailable` im JSON-Response, `advisors.js` patcht den `#resbar-ap`-Chip analog zum bestehenden Credits-Chip-Sync (Owner-Playtest-Fund: Hint zeigte "Forschungs-AP übrig", Header noch "AP 0").
+- Feat: Gefahren-Ereignisse (Sturmwarnung, Geologische Instabilität, Seuchenausbruch) waren bisher nur im Protokoll sichtbar und leicht zu übersehen — neue `EncounterNoticeService` + eigene, dringlichere Banner-Zeile über dem Hint-Vorschlag in jedem Colony-Screen. Rein serverseitig gerendert, kein Dismiss nötig: verschwindet automatisch, sobald der Sol endet (Owner-Playtest-Fund + Owner-Entscheidung 2026-08-31).
 
 - Fix: `hint_build_priority`-Onboarding-Hint behauptete fälschlich, mehrere Gebäude seien "gerade baubar", obwohl Cantina/Analytik-Labor/Hangar ohne Kommandozentrale Lv2 gar nicht platzierbar sind — Wortlaut korrigiert (Owner-Playtest-Fund).
 
