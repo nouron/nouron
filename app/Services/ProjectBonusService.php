@@ -104,6 +104,24 @@ class ProjectBonusService
         return self::applyDiscount($baseApCost, $discountPercent, $minCostFactor);
     }
 
+    /**
+     * Additive percent bonus applied to the sell price on all 3 trade channels
+     * (TradingPostService), sourced from the trade knowledge level — additive
+     * to the existing TradingPostService per-channel discount, not a replacement
+     * (Owner-Entscheidung 2026-08-27).
+     */
+    public function tradePriceBonusPercent(int $colonyId): int
+    {
+        $level = (int) DB::table('colony_researches')
+            ->where('colony_id', $colonyId)
+            ->where('research_id', (int) config('knowledge.trade.id'))
+            ->value('level');
+
+        $curve = config('knowledge.trade.trade_price_bonus_per_lv', []);
+
+        return GameTick::cumulativeCurveYield($curve, $level);
+    }
+
     /** Pure discount math, factored out so the floor logic is testable without DB state. */
     public static function applyDiscount(int $base, int $discountPercent, float $minCostFactor): int
     {
