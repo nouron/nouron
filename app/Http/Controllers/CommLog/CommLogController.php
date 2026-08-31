@@ -220,7 +220,7 @@ class CommLogController extends BaseController
         $total = (int) ($params['total'] ?? 0);
 
         return [
-            $this->seg(__('colony.sol_report_passive_credits').': +'),
+            $this->seg(__('colony.sol_report_passive_credits').': '),
             $this->amountSeg('CR', $total),
             $this->seg(' erhalten.'),
         ];
@@ -235,7 +235,7 @@ class CommLogController extends BaseController
 
         return [
             $this->seg(__('colony.stipend_button').' ('.$tierLabel.'): '),
-            $this->amountSeg('CR', $cost),
+            $this->amountSeg('CR', -$cost),
             $this->seg(' ausgeschüttet.'),
         ];
     }
@@ -532,7 +532,7 @@ class CommLogController extends BaseController
                     'link' => '/nexus-db',
                 ]),
                 $this->seg(' eingestellt. Kosten: '),
-                $this->amountSeg('CR', $cost),
+                $this->amountSeg('CR', -$cost),
                 $this->seg('.'),
             ];
         }

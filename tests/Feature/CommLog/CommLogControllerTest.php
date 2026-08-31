@@ -260,7 +260,9 @@ class CommLogControllerTest extends TestCase
         $this->assertSame('advisor', $segments[0]['type']);
         $this->assertSame('amount', $segments[2]['type']);
         $this->assertSame('CR', $segments[2]['abbr']);
-        $this->assertSame(200, $segments[2]['value']);
+        // Owner-Playtest 2026-08-31: deductions show a minus sign INSIDE the
+        // chip; additions show no sign at all (implied).
+        $this->assertSame(-200, $segments[2]['value']);
     }
 
     public function test_advisor_hired_without_cost(): void
@@ -289,6 +291,7 @@ class CommLogControllerTest extends TestCase
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
         $this->assertSame('amount', $segments[1]['type']);
         $this->assertSame('CR', $segments[1]['abbr']);
+        // Owner-Playtest 2026-08-31: additions show no sign (implied additive).
         $this->assertSame(40, $segments[1]['value']);
     }
 
@@ -302,7 +305,8 @@ class CommLogControllerTest extends TestCase
         $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
         $this->assertStringContainsString(__('colony.stipend_tier_medium'), $segments[0]['value']);
         $this->assertSame('amount', $segments[1]['type']);
-        $this->assertSame(150, $segments[1]['value']);
+        // Owner-Playtest 2026-08-31: a deduction shows a minus sign inside the chip.
+        $this->assertSame(-150, $segments[1]['value']);
     }
 
     // Regression: none of the other tests here force a full HTML render
