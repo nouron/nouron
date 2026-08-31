@@ -468,6 +468,8 @@ Jede Ausbaustufe schaltet einen zusätzlichen Handelskanal für einen Preisrabat
 > **TODO Balance/Design:** Der passive, bereits bei der Angebots-Generierung eingerechnete Konsul-Rang-Rabatt (`trader_discount`, siehe `BarService::generateOffersForColony()`) ist von diesem Ausschluss NICHT erfasst und stackt aktuell multiplikativ mit dem Handelsposten-Rabatt (z.B. Rang-3-Konsul 30% + Handelsposten-Stufe-I 12% = kombiniert 38,4%). Ob das gewollt ist, wurde noch nicht bewertet — Whole-Branch-Review-Fund 2026-08-27, offene Design-Frage für den nächsten Balance-Pass.
 Exakter Rabattsatz: `config/buildings.php` → `merchant_price_bonus`.
 
+**Zusätzlich — Kenntnis-Preisbonus:** Die `trade`-Kenntnis liefert unabhängig vom Handelsposten einen eigenen Preis-Bonus auf allen drei Handelskanälen (Cantina-Angebote, Reisender Händler, Nexus/Corporate Contact). Beide Quellen stacken additiv, ohne Konkurrenz oder Ausschluss — dasselbe Muster wie beim Bau-AP-Rabatt-Pool, den `construction` und `trade` gemeinsam speisen (§13.3). Exakte Werte: `config/knowledge.php` → `trade.trade_price_bonus_per_lv`.
+
 > **TODO Balance:** Baukosten und Decay nach erstem Playtest festlegen (siehe `config/buildings.php`).
 
 ---
