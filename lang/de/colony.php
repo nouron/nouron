@@ -371,4 +371,12 @@ return [
     'sol_report_finale_win_cta' => 'Run abschließen',
     'sol_report_finale_lose_cta' => 'Run beenden',
 
+    // Encounter-Gefahrenbanner (GDD §9) — eigene, dringlichere Zeile über dem
+    // normalen Hint-Vorschlag, Owner-Playtest-Fund 2026-08-31: Sturmwarnung etc.
+    // waren zuvor nur im Protokoll sichtbar, leicht zu übersehen.
+    'encounter_notice_storm_warning' => 'Sturmwarnung: :building ist im Vorfeld gefährdet.',
+    'encounter_notice_storm_abgewehrt' => 'Sturm bei :building erfolgreich abgewehrt — kein Schaden.',
+    'encounter_notice_storm_beschaedigt' => 'Sturmschaden an :building.',
+    'encounter_notice_storm_kritisch' => 'Kritischer Sturmschaden an :building — Level gesunken.',
+
 ];

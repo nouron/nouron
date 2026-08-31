@@ -6,6 +6,7 @@ use App\Models\Run;
 use App\Services\AdvisorService;
 use App\Services\BarService;
 use App\Services\ColonyService;
+use App\Services\EncounterNoticeService;
 use App\Services\EventService;
 use App\Services\MerchantService;
 use App\Services\OnboardingHintService;
@@ -198,6 +199,14 @@ class AppServiceProvider extends ServiceProvider
                         $hint['text'] = __($hint['text_key']);
                     }
                     $view->with('activeHint', $hint);
+
+                    // Danger notices (GDD §9 Sturm/Instabilität/Seuche) — own, more
+                    // urgent banner above the hint suggestion (Owner-Playtest-Fund
+                    // 2026-08-31). Reuses $activeRunTick (computed above for the Sol
+                    // chip) so both stay on the exact same clock.
+                    $view->with('activeEncounterNotices', $activeRunTick !== null
+                        ? app(EncounterNoticeService::class)->activeNotices($colonyId, (int) $activeRunTick)
+                        : []);
                 }
             }
         });

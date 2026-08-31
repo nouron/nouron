@@ -1392,6 +1392,26 @@ dialog[x-ref="discoveryDialog"] {
  * Flex row: icon | text (grows) | action link | dismiss button.
  * Uses Alpine x-transition for a smooth fade-in/out on dismiss.
  */
+/* Encounter danger notice (GDD §9 Sturm/Instabilität/Seuche) — sits above the
+ * hint-bar, more urgent styling (red vs. the hint's amber). Static/server-
+ * rendered, no dismiss button: clears itself once game:tick advances past the
+ * tick it was logged at (EncounterNoticeService), see Owner-Playtest-Fund
+ * 2026-08-31. */
+.encounter-notice-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 1rem;
+    background: #fee2e2;
+    border-bottom: 1px solid #fecaca;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.encounter-notice-bar__icon {
+    flex-shrink: 0;
+}
+
 /* Stacking context for the brief overlap between the fading "done" banner
  * and the new hint sliding in above it (see setActiveHint() in
  * colony-hexgrid.js). */

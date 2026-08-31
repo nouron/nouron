@@ -224,6 +224,7 @@
         @endif
 
         @auth
+            @include("partials.encounter-notice-bar")
             @include("partials.hint-bar")
         @endauth
     </header>
