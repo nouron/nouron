@@ -191,6 +191,18 @@
                                         <span x-text="selectedTech.required_desc"></span>
                                     </div>
                                 </template>
+                                {{-- Reverse of Voraussetzung: what the NEXT level unlocks
+                                 (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2 →
+                                 Frachter") — derived from existing gate data, see
+                                 BuildingUnlockService. --}}
+                                <template
+                                    x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
+                                    <div class="detail-row">
+                                        <span
+                                            class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
+                                        <span x-text="selectedTech.unlocks_next_level.join(', ')"></span>
+                                    </div>
+                                </template>
                                 {{-- Colony link: opens build mode with this building pre-selected --}}
                                 <a :href="'/colony/view?build=' + selectedTech.id" class="detail-colony-link">
                                     {{ __("techtree.detail_colony_link") }} &rarr;

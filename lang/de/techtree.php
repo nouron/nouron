@@ -113,6 +113,7 @@ return [
     'detail_status' => 'Status',
     'detail_level' => 'Level',
     'detail_required' => 'Voraussetzung',
+    'detail_unlocks_next_level' => 'Schaltet ab nächstem Level frei',
     'detail_close' => 'Schließen',
 
     // ── UI ───────────────────────────────────────────────────────────────────

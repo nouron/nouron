@@ -959,6 +959,12 @@ button.btn-sol:hover,
     color: #6b6b7a;
 }
 
+.tile-building-unlocks {
+    margin: 0 0 0.5rem;
+    font-size: 0.75rem;
+    color: #6b6b7a;
+}
+
 .tile-under-construction {
     margin: 0.5rem 0;
     padding: 0.3rem 0.6rem;

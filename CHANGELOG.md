@@ -2,6 +2,8 @@
 
 ## 2026-08-31
 
+- Feat: Gebäude-/Techtree-Sidebar zeigten "Voraussetzung", aber nie die Kehrseite — was das NÄCHSTE Level freischaltet (z.B. Hangar Lv1→2 schaltet den Frachter frei). Neue `BuildingUnlockService::unlocksAtLevel()` — reine Rückwärts-Abfrage der bestehenden `required_building_id`/`required_building_level`-Gate-Daten (Gebäude/Schiffe/Berater/Kenntnisse), kein neuer Content nötig. Nur Gebäude-Level (Kenntnis-Level haben aktuell keine diskreten Freischaltungen, nur kontinuierliche Effekt-Kurven) (Owner-Playtest-Fund).
+
 - Feat: Gebäude-/Kenntnis-Detail-Panels (Kolonie-Sidebar, Techtree-Sidebar) zeigten Kosten und Fortschritt, aber nie was gebaut/erforscht eigentlich bewirkt — Spieler konnte nicht vorausplanen. Bereits vorhandene Beschreibungstexte (`buildings.*_desc`, `techtree.desc_techs_*`) jetzt in beiden Panels verdrahtet (generischer Effekt-Text, noch keine Pro-Level-Freischaltungen — das wäre eine separate Content-Aufgabe) (Owner-Playtest-Fund).
 
 - Fix: Berater zählten fälschlich als Supply-Verbraucher (`ResourcesService::getSupplyBreakdown()` — `config('game.supply.cost_advisor', 2)`, ein nirgends definierter Config-Key), obwohl das GDD an 5 Stellen explizit sagt "Berater kosten ausschließlich Credits, kein Supply". Trieb sogar den Over-Cap-Decay-Straf-Mechanismus fälschlich an — eine Kolonie konnte allein durchs Anheuern eines Beraters unbeabsichtigt ins Supply-Minus rutschen (Owner-Playtest-Fund).

@@ -245,6 +245,25 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotEmpty($sciencelab['description']);
     }
 
+    // Regression (Owner-Playtest 2026-08-31, follow-up): reverse of
+    // required_desc — what leveling up a building unlocks (e.g. "Hangar
+    // Lv1→2 unlocks Frachter"). Colony 1's hangar (id=44) is seeded at Lv1.
+    public function test_index_building_items_include_unlocks_next_level(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $hangar = null;
+        foreach ($pageData['phases'] as $phase) {
+            $hangar ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'building' && $t['key'] === 'building_hangar');
+        }
+
+        $this->assertNotNull($hangar, 'hangar building must be present in the phases');
+        $this->assertSame(1, $hangar['level'], 'Testdaten-Annahme: Hangar steht auf Level 1');
+        $this->assertContains(__('techtree.ship_freighter'), $hangar['unlocks_next_level']);
+    }
+
     public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void
     {
         // Playtest regression (2026-07-14): researches.ap_for_levelup is a static

@@ -124,6 +124,25 @@ class ColonyViewTest extends TestCase
         $this->assertNotEmpty($infirmary->description);
     }
 
+    // Regression (Owner-Playtest 2026-08-31, follow-up to the description
+    // fix): "Voraussetzung" was already shown, but never the reverse — what
+    // leveling THIS building up unlocks (e.g. "Hangar Lv1→2 unlocks
+    // Frachter"). Colony 1's hangar (building_id=44) is seeded at level 1.
+    public function test_hexview_buildings_include_unlocks_next_level(): void
+    {
+        $this->app->setLocale('de');
+
+        $response = $this->actingAs($this->makeUser(self::BART_USER_ID))
+            ->get(route('colony.view'));
+
+        $buildings = $response->viewData('buildings');
+        $hangar = $buildings->firstWhere('building_id', 44);
+
+        $this->assertNotNull($hangar);
+        $this->assertSame(1, (int) $hangar->level, 'Testdaten-Annahme: Hangar steht auf Level 1');
+        $this->assertContains(__('techtree.ship_freighter'), $hangar->unlocks_next_level);
+    }
+
     public function test_pending_run_redirects_to_lobby(): void
     {
         // A pending run is active but not yet started (started_at = null).
