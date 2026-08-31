@@ -94,7 +94,7 @@ return [
     'onboarding_hint_advisor_slot2' => 'Berater-Slot 2 ist offen und das dafür nötige Gebäude steht — im Berater-Screen den passenden Berater einstellen.',
     'onboarding_hint_4' => 'Noch keine Kenntnis auf Level 1 — im Techtree Forschungs-AP einer Kenntnis zuweisen. Ergebnisse kommen Sol für Sol.',
     'onboarding_hint_5' => 'Die Stimmung in der Kolonie kippt — Vertrauen stabilisieren: Zivilgebäude bauen oder reparieren, bevor es weiter fällt.',
-    'onboarding_hint_build_priority' => 'Mehrere Gebäude sind gerade baubar, aber die Ressourcen reichen nicht für alle auf einmal — erst eines wählen und fertigstellen. Der Rest kommt, wenn die Kolonie stabiler steht.',
+    'onboarding_hint_build_priority' => 'Cantina, Analytik-Labor und Hangar stehen zur Wahl — aber nicht gleichzeitig: alle drei brauchen zusätzlich Kommandozentrale Lv2, und die Ressourcen reichen ohnehin nicht für alle auf einmal. Schon jetzt überlegen, welches zuerst drankommt.',
     'onboarding_hint_6' => 'Keine Cantina gebaut — Händler und Gäste legen nicht an. Tauschangebote und Einmal-Items passieren die Kolonie einfach.',
     'onboarding_hint_agrardome' => 'Erstes Bauprojekt der Kolonie: der Agrardom. Ohne ihn bleibt CC Level 2 gesperrt und Organika gleich null — heute platzieren, restliche Bau-AP hineinstecken. Investierte Bau-AP bleiben über Sol-Grenzen erhalten, auch wenn ein Sol nicht reicht.',
     'onboarding_hint_analytik' => 'Kein Analytik-Labor — Forschungs-AP können nirgendwo landen. Die Kolonie bleibt wissenschaftlich auf der Stelle.',
