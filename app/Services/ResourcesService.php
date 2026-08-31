@@ -283,10 +283,15 @@ class ResourcesService
             ->where('cr.level', '>', 0)
             ->sum(DB::raw('cr.level * COALESCE(r.supply_cost, 0)'));
 
-        $advisorCount = (int) DB::table('advisors')
-            ->where('colony_id', $colonyId)
-            ->count();
-        $usedAdvisors = $advisorCount * (int) config('game.supply.cost_advisor', 2);
+        // Berater belegen KEIN Supply (GDD §6/§13, mehrfach explizit: "Berater
+        // kosten ausschliesslich Credits — Supply ist nicht betroffen"). Owner-
+        // Playtest-Fund 2026-08-31: dieser Wert wurde bis hier hin trotzdem als
+        // Supply-Verbraucher gezählt, über einen nirgends definierten Config-
+        // Key (`game.supply.cost_advisor`, reiner Fallback-Default) — echter
+        // Drift zwischen Code und Design, kein beabsichtigtes Feature. Feld
+        // bleibt in der Rückgabestruktur (API-Stabilität für bestehende
+        // Konsumenten), ist aber immer 0.
+        $usedAdvisors = 0;
 
         return [
             'cap' => $cap,

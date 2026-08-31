@@ -94,6 +94,37 @@ class OverCapDecayTest extends TestCase
         $this->assertGreaterThanOrEqual(0, $free, 'getFreeSupply() must not be negative when within cap');
     }
 
+    /**
+     * GDD §6/§13 (mehrfach, z.B. Zeile 946/1019/2170/2177): "Berater belegen
+     * kein Supply — sie kosten Credits." Owner-Playtest-Fund 2026-08-31: eine
+     * Kolonie geriet allein durchs Anheuern eines Beraters ins Supply-Minus,
+     * obwohl AdvisorController::hire() (korrekterweise laut GDD) keinerlei
+     * Supply-Gate hat — der Bug lag in getSupplyBreakdown() selbst, das
+     * Berater fälschlich mit `config('game.supply.cost_advisor', 2)` als
+     * Supply-Verbraucher zählte (ein Config-Key, der nirgends definiert ist —
+     * reiner Fallback-Wert, nie absichtlich gesetzt).
+     */
+    public function test_advisors_do_not_consume_supply(): void
+    {
+        $this->zeroAllSupplyCosts();
+        DB::table('user_resources')->where('user_id', 3)->update(['supply' => 4]);
+
+        /** @var ResourcesService $svc */
+        $svc = $this->app->make(ResourcesService::class);
+
+        $freeBefore = $svc->getFreeSupply(1);
+
+        DB::table('advisors')->insert([
+            'user_id' => 3, 'colony_id' => 1, 'personell_id' => 36, // scientist
+            'rank' => 1, 'active_ticks' => 0,
+        ]);
+
+        $freeAfter = $svc->getFreeSupply(1);
+
+        $this->assertSame($freeBefore, $freeAfter, 'hiring an advisor must not change free supply');
+        $this->assertSame(0, $svc->getSupplyBreakdown(1)['used']['advisors'], 'advisors must never appear as a supply consumer');
+    }
+
     // ── getOverCapColonyIds ───────────────────────────────────────────────────
 
     /**

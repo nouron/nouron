@@ -2,6 +2,8 @@
 
 ## 2026-08-31
 
+- Fix: Berater zählten fälschlich als Supply-Verbraucher (`ResourcesService::getSupplyBreakdown()` — `config('game.supply.cost_advisor', 2)`, ein nirgends definierter Config-Key), obwohl das GDD an 5 Stellen explizit sagt "Berater kosten ausschließlich Credits, kein Supply". Trieb sogar den Over-Cap-Decay-Straf-Mechanismus fälschlich an — eine Kolonie konnte allein durchs Anheuern eines Beraters unbeabsichtigt ins Supply-Minus rutschen (Owner-Playtest-Fund).
+
 - Fix: AP-Chip in der Resourcebar aktualisierte sich nach Berater-Anstellung/-Entlassung nicht live — `AdvisorController::hire()`/`fire()` liefern jetzt `apAvailable` im JSON-Response, `advisors.js` patcht den `#resbar-ap`-Chip analog zum bestehenden Credits-Chip-Sync (Owner-Playtest-Fund: Hint zeigte "Forschungs-AP übrig", Header noch "AP 0").
 - Feat: Gefahren-Ereignisse (Sturmwarnung, Geologische Instabilität, Seuchenausbruch) waren bisher nur im Protokoll sichtbar und leicht zu übersehen — neue `EncounterNoticeService` + eigene, dringlichere Banner-Zeile über dem Hint-Vorschlag in jedem Colony-Screen. Rein serverseitig gerendert, kein Dismiss nötig: verschwindet automatisch, sobald der Sol endet (Owner-Playtest-Fund + Owner-Entscheidung 2026-08-31).
 
