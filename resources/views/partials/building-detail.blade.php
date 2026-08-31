@@ -15,30 +15,37 @@
                      null when the item is not a building type → entire block hidden
       level        — integer; level badge shown only when > 0
       <name_field> — display name string
+      description  — general effect text (desc_techs_*/buildings.*_desc lang
+                     strings, existing content, not per-level) — Owner-Playtest-
+                     Fund 2026-08-31: sidebar showed cost/progress but never
+                     what the building/knowledge actually does. Shown only
+                     when truthy (older callers may not pass it yet).
 --}}
 @php
-    $nameField  = $name_field  ?? 'name';
+    $nameField = $name_field ?? "name";
     $showHeader = $show_header ?? true;
 @endphp
 
-{{-- Entire block hidden when image_slug is falsy (non-building types in techtree) --}}
-<div class="building-detail-wrap"
-     x-show="{{ $expr }}.image_slug">
+{{-- Image+header block hidden when image_slug is falsy (non-building types in
+     techtree, e.g. knowledge/ship/personell) — but the description paragraph
+     below is independent of that gate, since knowledge entries have no image
+     yet still need their effect text shown. --}}
+<div class="building-detail-wrap" x-show="{{ $expr }}.image_slug">
 
     <div class="building-detail-img-wrap">
-        <img class="building-detail-img"
-             :src="'/img/buildings/' + {{ $expr }}.image_slug + '.webp'"
-             :alt="{{ $expr }}.{{ $nameField }}">
+        <img class="building-detail-img" :src="'/img/buildings/' + {{ $expr }}.image_slug + '.webp'"
+            :alt="{{ $expr }}.{{ $nameField }}">
     </div>
 
-    @if($showHeader)
-    <div class="building-detail-header">
-        <strong class="building-detail-name"
-                x-text="{{ $expr }}.{{ $nameField }}"></strong>
-        <span class="sidebar-level-badge"
-              x-show="{{ $expr }}.level > 0"
-              x-text="`Lv. ${ {{ $expr }}.level }`"></span>
-    </div>
+    @if ($showHeader)
+        <div class="building-detail-header">
+            <strong class="building-detail-name" x-text="{{ $expr }}.{{ $nameField }}"></strong>
+            <span class="sidebar-level-badge" x-show="{{ $expr }}.level > 0"
+                x-text="`Lv. ${ {{ $expr }}.level }`"></span>
+        </div>
     @endif
 
 </div>
+
+<p class="building-detail-description" x-show="{{ $expr }}.description"
+    x-text="{{ $expr }}.description"></p>

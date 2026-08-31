@@ -931,6 +931,16 @@ button.btn-sol:hover,
     color: var(--color-anthracite, #333);
 }
 
+/* General effect text (Owner-Playtest-Fund 2026-08-31) — sits outside
+ * .building-detail-wrap so it still shows for image-less types (knowledge). */
+.building-detail-description {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-anthracite, #333);
+    opacity: 0.8;
+    margin: 0 0 0.75rem;
+}
+
 /* ── Building level badge (shared building-detail partial) ───────────────── */
 
 .sidebar-level-badge {

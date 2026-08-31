@@ -219,6 +219,32 @@ class TechtreeControllerTest extends TestCase
         }
     }
 
+    // Regression (Owner-Playtest 2026-08-31): the techtree sidebar showed cost/
+    // progress for a knowledge or building node but never what it actually
+    // does — the player couldn't plan ahead. desc_techs_* texts already
+    // existed for every building and knowledge, just weren't wired in.
+    public function test_index_knowledge_and_building_items_include_description(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $construction = null;
+        $sciencelab = null;
+        foreach ($pageData['phases'] as $phase) {
+            $construction ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 90);
+            $sciencelab ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'building' && $t['key'] === 'building_sciencelab');
+        }
+
+        $this->assertNotNull($construction, 'construction (id=90) must be present in the phases');
+        $this->assertSame(__('techtree.desc_techs_construction'), $construction['description']);
+        $this->assertNotEmpty($construction['description']);
+
+        $this->assertNotNull($sciencelab, 'sciencelab building must be present in the phases');
+        $this->assertSame(__('techtree.desc_techs_sciencelab'), $sciencelab['description']);
+        $this->assertNotEmpty($sciencelab['description']);
+    }
+
     public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void
     {
         // Playtest regression (2026-07-14): researches.ap_for_levelup is a static

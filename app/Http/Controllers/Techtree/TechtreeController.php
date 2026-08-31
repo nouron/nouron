@@ -109,6 +109,14 @@ class TechtreeController extends BaseController
                     'col' => (int) ($tech['column'] ?? 0),
                     'status' => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
+                    // What this entity DOES, independent of prereqs — Owner-Playtest-Fund
+                    // 2026-08-31: the sidebar showed cost/progress but never the effect,
+                    // so the player couldn't plan ahead. Reuses the existing desc_techs_*
+                    // texts (already written for every building/knowledge, just unused
+                    // here) — no new content needed for this generic-description pass.
+                    'description' => in_array($type, ['building', 'research'], true)
+                        ? __('techtree.desc_techs_'.preg_replace('/^(building|knowledge)_/', '', $tech['name']))
+                        : null,
                     'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,
