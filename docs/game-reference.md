@@ -398,7 +398,7 @@ colony_tiles   — Hex-Tile-Daten (Koordinaten, Terraintyp, Ressourcen, Gebäude
 |---|---|---|
 | Agrardom | 0 | Organisierte Organika-Produktion |
 | Cantina | +2/Lv | Verhandlungs-Risiko; +Konsul-Slot |
-| Analytik-Labor | 0 | Kenntnis-Forschung; +Analytiker-Slot |
+| Analytik-Labor | 0 | Kenntnis-Forschung; +Analytiker-Slot; Lv4/5: Kenntnis-Levelup-AP −3/−2% (Σ5%) |
 | Hangar | 0 | Schiff-Ausbau; +Raumfahrer-Slot |
 | Krankenstation | +3/Lv | Seuchenausbruch-Risiko −8% pro Lv (Cap 50%, gemeinsam mit health-Kenntnis) |
 | Religiöse Stätte | +2/Lv | Besinnlichkeit (Lv1 only) |
