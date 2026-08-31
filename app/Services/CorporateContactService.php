@@ -26,6 +26,7 @@ class CorporateContactService
     public function __construct(
         private readonly HarvesterEntitlementService $harvesterEntitlementService,
         private readonly TradingPostService $tradingPostService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     /**
@@ -53,7 +54,8 @@ class CorporateContactService
 
         // Handelsposten-Kanal-Rabatt (Design-Spec 2026-08-23) — Stufe 3 schaltet
         // den Nexus/Corporate-Contact-Kanal frei.
-        $discount = $this->tradingPostService->discountFor($colonyId, 'corporate_contact');
+        $discount = $this->tradingPostService->discountFor($colonyId, 'corporate_contact')
+            + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
         if ($discount > 0.0) {
             $price = (int) max(1, round($price * (1 - $discount)));
         }

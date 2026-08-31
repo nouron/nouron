@@ -1356,6 +1356,40 @@ class BarServiceTest extends TestCase
         $this->assertSame(450 - $expectedGive, $this->getCredits());
     }
 
+    public function test_accept_offer_applies_trade_price_bonus_even_without_trading_post_channel(): void
+    {
+        // GDD/Owner-Entscheidung 2026-08-27: trade-Kenntnis-Preisbonus ist additiv
+        // zum Handelsposten-Kanal-Rabatt, nicht davon abhängig — muss also auch
+        // greifen, wenn der Handelsposten-Kanal selbst gar nicht freigeschaltet ist.
+        $this->clearBarOffers();
+        $this->mockTick(10);
+        $this->setTradingPostLevel(0); // unter dem 'bar'-Kanal-Schwellenwert → 0% Handelsposten-Rabatt
+
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => self::COLONY_ID, 'research_id' => 95],
+            ['level' => 3, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $giveAmount = 500;
+        $this->setCredits(1000);
+        $this->setColonyResource(self::RES_REGOLITH, 0);
+
+        $offerId = $this->insertOffer([
+            'give_resource_id' => self::RES_CREDITS,
+            'give_amount' => $giveAmount,
+            'get_resource_id' => self::RES_REGOLITH,
+            'get_amount' => 20,
+            'expires_tick' => 20,
+        ]);
+
+        $result = $this->barService->acceptOffer(self::COLONY_ID, $offerId, self::USER_ID, 10);
+
+        $this->assertTrue($result['ok']);
+        $expectedGive = (int) max(1, round($giveAmount * (1 - 0.08))); // trade Lv3 cumulative curve = 8%
+        $this->assertSame($expectedGive, $result['give_amount'], 'trade knowledge price bonus must apply even without a trading post channel discount');
+        $this->assertSame(1000 - $expectedGive, $this->getCredits());
+    }
+
     /**
      * Covers the previously-untested non-credits branch of the trading post
      * discount: when the give side is a colony resource (not credits), the

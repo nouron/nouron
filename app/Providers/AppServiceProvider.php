@@ -55,6 +55,7 @@ class AppServiceProvider extends ServiceProvider
             $app->make(BarService::class),
             $app->make(ResourcesService::class),
             $app->make(TradingPostService::class),
+            $app->make(ProjectBonusService::class),
         ));
         $this->app->bind(ResourcesService::class, ResourcesService::class);
         $this->app->bind(TrustService::class, fn ($app) => new TrustService(

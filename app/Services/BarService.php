@@ -22,6 +22,7 @@ class BarService
         private readonly ResourcesService $resourcesService,
         private readonly AdvisorService $advisorService,
         private readonly TradingPostService $tradingPostService,
+        private readonly ProjectBonusService $projectBonusService,
     ) {}
 
     public function generateOffersForColony(int $colonyId, int $tick): void
@@ -170,7 +171,8 @@ class BarService
         $giveAmount = $offer->give_amount;
         $getAmount = $offer->get_amount;
         if (! $offer->is_negotiated) {
-            $discount = $this->tradingPostService->discountFor($colonyId, 'bar');
+            $discount = $this->tradingPostService->discountFor($colonyId, 'bar')
+                + $this->projectBonusService->tradePriceBonusPercent($colonyId) / 100;
             if ($discount > 0.0) {
                 $isCreditsOffer = $offer->give_resource_id === self::RES_CREDITS;
                 $giveAmount = $isCreditsOffer
