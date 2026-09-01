@@ -264,6 +264,33 @@ class TechtreeControllerTest extends TestCase
         $this->assertContains(__('techtree.ship_freighter'), $hangar['unlocks_next_level']);
     }
 
+    // Regression (Owner-Playtest 2026-08-31, follow-up to
+    // test_index_building_items_include_unlocks_next_level): knowledge
+    // levels reuse the SAME unlocks_next_level UI slot, populated from the
+    // curve-based KnowledgeEffectDescriptionService instead of the discrete
+    // BuildingUnlockService (knowledge has no discrete gate-unlocks).
+    public function test_index_knowledge_items_include_curve_based_unlocks_next_level(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+
+        // construction (id=90) at level 2 → next level 3 → ap_cost_reduction_per_lv[3]=4.
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 90],
+            ['level' => 2, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $construction = null;
+        foreach ($pageData['phases'] as $phase) {
+            $construction ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 90);
+        }
+
+        $this->assertNotNull($construction);
+        $this->assertContains('-4% Bau-AP-Kosten', $construction['unlocks_next_level']);
+    }
+
     public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void
     {
         // Playtest regression (2026-07-14): researches.ap_for_levelup is a static
