@@ -113,6 +113,11 @@ class TechtreeController extends BaseController
                     'col' => (int) ($tech['column'] ?? 0),
                     'status' => $this->computeStatus($tech, $techtree),
                     'required_desc' => $this->computeRequiredDesc($tech, $techtree),
+                    // Same prerequisites as required_desc, as separate parts for a
+                    // bullet list — Owner-Playtest-Fund 2026-08-31: the detail panel's
+                    // "Voraussetzungen" heading already says what the line means, so
+                    // repeating "Benötigt " in the value read redundant/cluttered.
+                    'required_list' => $this->computeRequiredList($tech, $techtree),
                     // What this entity DOES, independent of prereqs — Owner-Playtest-Fund
                     // 2026-08-31: the sidebar showed cost/progress but never the effect,
                     // so the player couldn't plan ahead. Reuses the existing desc_techs_*
@@ -301,6 +306,41 @@ class TechtreeController extends BaseController
         }
 
         return "Benötigt {$desc}";
+    }
+
+    /**
+     * Same prerequisites as computeRequiredDesc(), split into separate parts
+     * for a bullet list (no "Benötigt " prefix — the caller's heading already
+     * says that). Returns [] when the tech has no building dependency.
+     *
+     * @return list<string>
+     */
+    private function computeRequiredList(array $tech, array $techtree): array
+    {
+        if (empty($tech['required_building_id'])) {
+            return [];
+        }
+
+        $reqId = (int) $tech['required_building_id'];
+        $reqLevel = (int) ($tech['required_building_level'] ?? 1);
+        $reqBuilding = $techtree['building'][$reqId] ?? null;
+
+        if (! $reqBuilding) {
+            return [];
+        }
+
+        $parts = [__('techtree.'.$reqBuilding['name'])." Lv{$reqLevel}"];
+
+        if (! empty($tech['required_building2_id'])) {
+            $req2Id = (int) $tech['required_building2_id'];
+            $req2Level = (int) ($tech['required_building2_level'] ?? 1);
+            $req2Building = $techtree['building'][$req2Id] ?? null;
+            if ($req2Building) {
+                $parts[] = __('techtree.'.$req2Building['name'])." Lv{$req2Level}";
+            }
+        }
+
+        return $parts;
     }
 
     /**

@@ -15,6 +15,12 @@ use Tests\TestCase;
  * VALUE AT a given level into a short readable line, e.g. "construction Lv3"
  * → "-4% Bau-AP-Kosten" (config/knowledge.php: ap_cost_reduction_per_lv[3]=4).
  * Levels whose curve entry is 0 (no change at that level) produce no line.
+ *
+ * Each line is ['text' => string, 'chip' => null|array{abbr,value,cls}] —
+ * Owner-Playtest-Fund 2026-08-31 (2nd follow-up): effects tied to an actual
+ * resource (Rg, Or) render as a resourcebar-style chip in the sidebar, same
+ * visual language as elsewhere in the UI. Percentage/slot-count effects have
+ * no matching resource, so they stay plain text (chip => null).
  */
 class KnowledgeEffectDescriptionServiceTest extends TestCase
 {
@@ -26,12 +32,20 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         $this->service = $this->app->make(KnowledgeEffectDescriptionService::class);
     }
 
+    private function assertHasTextLine(array $lines, string $text): void
+    {
+        $this->assertTrue(
+            collect($lines)->contains(fn ($l) => $l['text'] === $text && $l['chip'] === null),
+            "Expected a plain-text line '{$text}' with no chip"
+        );
+    }
+
     public function test_construction_level3_reduces_construction_ap_cost(): void
     {
         // config/knowledge.php: construction.ap_cost_reduction_per_lv[3] = 4
         $lines = $this->service->effectsAtLevel('construction', 3);
 
-        $this->assertContains('-4% Bau-AP-Kosten', $lines);
+        $this->assertHasTextLine($lines, '-4% Bau-AP-Kosten');
     }
 
     public function test_geology_level1_has_two_distinct_effects(): void
@@ -40,8 +54,11 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         // geology_instability_risk_reduction_per_lv[1]=3
         $lines = $this->service->effectsAtLevel('geology', 1);
 
-        $this->assertContains('+3 Rg/Sol Harvester-Ertrag', $lines);
-        $this->assertContains('-3% Instabilitäts-Risiko', $lines);
+        $harvester = collect($lines)->first(fn ($l) => $l['text'] === 'Harvester-Ertrag');
+        $this->assertNotNull($harvester, 'Harvester-Ertrag line must be present');
+        $this->assertSame(['abbr' => 'RG', 'value' => '+3/Sol', 'cls' => 'Rg'], $harvester['chip']);
+
+        $this->assertHasTextLine($lines, '-3% Instabilitäts-Risiko');
     }
 
     public function test_trade_level4_has_three_distinct_effects(): void
@@ -50,8 +67,8 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         // bar_offer_boost_per_lv[4]=0 (must be OMITTED), trade_price_bonus_per_lv[4]=2
         $lines = $this->service->effectsAtLevel('trade', 4);
 
-        $this->assertContains('-3% Bau-AP-Kosten', $lines);
-        $this->assertContains('+2% Handelspreis-Bonus', $lines);
+        $this->assertHasTextLine($lines, '-3% Bau-AP-Kosten');
+        $this->assertHasTextLine($lines, '+2% Handelspreis-Bonus');
         $this->assertCount(2, $lines, 'bar_offer_boost_per_lv[4]=0 must not produce a line');
     }
 
@@ -60,35 +77,37 @@ class KnowledgeEffectDescriptionServiceTest extends TestCase
         // bar_offer_boost_per_lv[2]=1 — the one level where it's non-zero.
         $lines = $this->service->effectsAtLevel('trade', 2);
 
-        $this->assertContains('+1 Bar-Angebotsslot', $lines);
+        $this->assertHasTextLine($lines, '+1 Bar-Angebotsslot');
     }
 
     public function test_defense_level_reduces_storm_risk(): void
     {
         $lines = $this->service->effectsAtLevel('defense', 2);
 
-        $this->assertContains('-5% Sturm-Risiko', $lines);
+        $this->assertHasTextLine($lines, '-5% Sturm-Risiko');
     }
 
     public function test_health_level_reduces_plague_risk(): void
     {
         $lines = $this->service->effectsAtLevel('health', 3);
 
-        $this->assertContains('-5% Seuchenausbruch-Risiko', $lines);
+        $this->assertHasTextLine($lines, '-5% Seuchenausbruch-Risiko');
     }
 
     public function test_agronomy_level_increases_agrardom_yield(): void
     {
         $lines = $this->service->effectsAtLevel('agronomy', 2);
 
-        $this->assertContains('+2 Or/Sol Agrardom-Ertrag', $lines);
+        $agrardom = collect($lines)->first(fn ($l) => $l['text'] === 'Agrardom-Ertrag');
+        $this->assertNotNull($agrardom, 'Agrardom-Ertrag line must be present');
+        $this->assertSame(['abbr' => 'OR', 'value' => '+2/Sol', 'cls' => 'Or'], $agrardom['chip']);
     }
 
     public function test_cartography_level_reduces_navigation_ap_cost(): void
     {
         $lines = $this->service->effectsAtLevel('cartography', 1);
 
-        $this->assertContains('-4% Navigations-AP-Kosten', $lines);
+        $this->assertHasTextLine($lines, '-4% Navigations-AP-Kosten');
     }
 
     public function test_unknown_knowledge_key_returns_empty(): void

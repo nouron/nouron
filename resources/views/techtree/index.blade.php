@@ -156,10 +156,15 @@
                                         <span x-text="selectedTech.hire_cost + ' Cr'"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_desc">
+                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <span x-text="selectedTech.required_desc"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(part, idx) in selectedTech.required_list"
+                                                :key="idx">
+                                                <li x-text="part"></li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 <a href="{{ route("advisors.index") }}" class="detail-advisor-link">
@@ -185,10 +190,15 @@
                                             x-text="selectedTech.instance_count + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_desc">
+                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <span x-text="selectedTech.required_desc"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(part, idx) in selectedTech.required_list"
+                                                :key="idx">
+                                                <li x-text="part"></li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 {{-- Reverse of Voraussetzung: what the NEXT level unlocks
@@ -200,7 +210,12 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
-                                        <span x-text="selectedTech.unlocks_next_level.join(', ')"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(name, idx) in selectedTech.unlocks_next_level"
+                                                :key="idx">
+                                                <li x-text="name"></li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 {{-- Colony link: opens build mode with this building pre-selected --}}
@@ -220,10 +235,15 @@
                                             x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_desc">
+                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <span x-text="selectedTech.required_desc"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(part, idx) in selectedTech.required_list"
+                                                :key="idx">
+                                                <li x-text="part"></li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 {{-- What the NEXT level's effect curve delivers (Owner-Playtest-
@@ -234,7 +254,20 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
-                                        <span x-text="selectedTech.unlocks_next_level.join(', ')"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(line, idx) in selectedTech.unlocks_next_level"
+                                                :key="idx">
+                                                <li>
+                                                    <template x-if="line.chip">
+                                                        <span :class="'res-chip res-' + line.chip.cls">
+                                                            <span class="res-abbr" x-text="line.chip.abbr"></span>
+                                                            <span class="res-amount" x-text="line.chip.value"></span>
+                                                        </span>
+                                                    </template>
+                                                    <span x-text="line.text"></span>
+                                                </li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                                 {{-- AP invest bar for knowledge --}}
@@ -274,10 +307,15 @@
                                             x-text="selectedTech.level + (selectedTech.hangar_cap ? ' / ' + selectedTech.hangar_cap : '')"></span>
                                     </div>
                                 </template>
-                                <template x-if="selectedTech.required_desc">
+                                <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <span x-text="selectedTech.required_desc"></span>
+                                        <ul class="detail-list">
+                                            <template x-for="(part, idx) in selectedTech.required_list"
+                                                :key="idx">
+                                                <li x-text="part"></li>
+                                            </template>
+                                        </ul>
                                     </div>
                                 </template>
                             </div>
