@@ -288,7 +288,9 @@ class TechtreeControllerTest extends TestCase
         }
 
         $this->assertNotNull($construction);
-        $this->assertContains('-4% Bau-AP-Kosten', $construction['unlocks_next_level']);
+        $this->assertTrue(
+            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% Bau-AP-Kosten' && $l['chip'] === null)
+        );
     }
 
     public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void
@@ -373,6 +375,30 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotNull($cartography['required_desc'], 'knowledge_cartography must have a required_desc');
         $this->assertStringContainsString('+', $cartography['required_desc'],
             'Dual prerequisites must be joined by "+"');
+    }
+
+    // Owner-Playtest-Fund 2026-08-31 (follow-up): the detail panel now renders
+    // prerequisites as a bullet list instead of one "Benötigt X + Y" line, so
+    // the controller must expose the parts separately.
+    public function test_required_list_shows_dual_prerequisites_as_separate_parts(): void
+    {
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        // knowledge_cartography (ID 91) has dual prereq: Analytik-Labor Lv1 + Hangar Lv1
+        $cartography = null;
+        foreach ($pageData['phases'] as $phase) {
+            $found = collect($phase['items'])->first(fn ($t) => $t['id'] === 91 && $t['type'] === 'research');
+            if ($found) {
+                $cartography = $found;
+                break;
+            }
+        }
+
+        $this->assertNotNull($cartography, 'knowledge_cartography (ID 91) must be in a phase');
+        $this->assertCount(2, $cartography['required_list']);
+        $this->assertStringNotContainsString('Benötigt', $cartography['required_list'][0],
+            'bullet parts must not repeat the "Benötigt" prefix already implied by the heading');
     }
 
     public function test_knowledge_cartography_is_in_phase3(): void

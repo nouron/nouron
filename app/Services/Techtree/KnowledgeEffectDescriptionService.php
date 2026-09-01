@@ -35,11 +35,11 @@ class KnowledgeEffectDescriptionService
             ['config' => 'knowledge.cartography.nav_ap_reduction_per_lv', 'label' => 'Navigations-AP-Kosten', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'geology' => [
-            ['config' => 'game.geology_harvester_bonus_per_level', 'label' => 'Harvester-Ertrag', 'unit' => 'Rg/Sol', 'direction' => self::DIRECTION_INCREASE],
+            ['config' => 'game.geology_harvester_bonus_per_level', 'label' => 'Harvester-Ertrag', 'unit' => 'Rg/Sol', 'direction' => self::DIRECTION_INCREASE, 'resAbbr' => 'RG', 'resCls' => 'Rg'],
             ['config' => 'game.geology_instability_risk_reduction_per_lv', 'label' => 'Instabilitäts-Risiko', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
         ],
         'agronomy' => [
-            ['config' => 'game.agronomy_agrardom_bonus_per_level', 'label' => 'Agrardom-Ertrag', 'unit' => 'Or/Sol', 'direction' => self::DIRECTION_INCREASE],
+            ['config' => 'game.agronomy_agrardom_bonus_per_level', 'label' => 'Agrardom-Ertrag', 'unit' => 'Or/Sol', 'direction' => self::DIRECTION_INCREASE, 'resAbbr' => 'OR', 'resCls' => 'Or'],
         ],
         'health' => [
             ['config' => 'game.health_plague_risk_reduction_per_lv', 'label' => 'Seuchenausbruch-Risiko', 'unit' => '%', 'direction' => self::DIRECTION_REDUCTION],
@@ -54,7 +54,7 @@ class KnowledgeEffectDescriptionService
         ],
     ];
 
-    /** @return list<string> */
+    /** @return list<array{text: string, chip: null|array{abbr: string, value: string, cls: string}}> */
     public function effectsAtLevel(string $knowledgeKey, int $level): array
     {
         if ($level < 1 || ! isset(self::EFFECTS[$knowledgeKey])) {
@@ -75,22 +75,36 @@ class KnowledgeEffectDescriptionService
         return $lines;
     }
 
-    /** @param array{config: string, label: string, unit: string, direction: string} $effect */
-    private function formatLine(int $delta, array $effect): string
+    /**
+     * @param  array{config: string, label: string, unit: string, direction: string, resAbbr?: string, resCls?: string}  $effect
+     * @return array{text: string, chip: null|array{abbr: string, value: string, cls: string}}
+     */
+    private function formatLine(int $delta, array $effect): array
     {
         $sign = $effect['direction'] === self::DIRECTION_REDUCTION ? '-' : '+';
         $unit = $effect['unit'];
 
+        // Effects tied to an actual resource (Rg, Or) render as a resourcebar
+        // chip in the sidebar — the label alone is the text, the number/unit
+        // moves into the chip. Everything else (%, slot counts) has no
+        // matching resource, so it stays a single formatted text line.
+        if (isset($effect['resAbbr'], $effect['resCls'])) {
+            return [
+                'text' => $effect['label'],
+                'chip' => ['abbr' => $effect['resAbbr'], 'value' => "{$sign}{$delta}/Sol", 'cls' => $effect['resCls']],
+            ];
+        }
+
         if ($unit === '%') {
-            return "{$sign}{$delta}% {$effect['label']}";
+            return ['text' => "{$sign}{$delta}% {$effect['label']}", 'chip' => null];
         }
 
         if ($unit === '') {
             // Singular/plural label chosen by the caller-side config entry
             // (only trade's bar-slot effect uses this — always ±1 in practice).
-            return "{$sign}{$delta} {$effect['label']}";
+            return ['text' => "{$sign}{$delta} {$effect['label']}", 'chip' => null];
         }
 
-        return "{$sign}{$delta} {$unit} {$effect['label']}";
+        return ['text' => "{$sign}{$delta} {$unit} {$effect['label']}", 'chip' => null];
     }
 }

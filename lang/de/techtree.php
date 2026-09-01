@@ -112,7 +112,7 @@ return [
     'detail_type' => 'Typ',
     'detail_status' => 'Status',
     'detail_level' => 'Level',
-    'detail_required' => 'Voraussetzung',
+    'detail_required' => 'Voraussetzungen',
     'detail_unlocks_next_level' => 'Schaltet ab nächstem Level frei',
     'detail_close' => 'Schließen',
 
@@ -124,8 +124,8 @@ return [
     'costs and requirements' => 'Kosten und Voraussetzungen',
 
     // ── AP-Hinweise (wenn keine AP verfügbar) ─────────────────────────────────
-    'hint_no_research_ap' => 'Kein Forschungs-AP verfügbar — Analytiker-Berater einstellen.',
-    'hint_no_construction_ap' => 'Kein Bau-AP verfügbar — Baumeister-Berater einstellen.',
+    'hint_no_research_ap' => 'Keine AP mehr verfügbar.',
+    'hint_no_construction_ap' => 'Keine AP mehr verfügbar.',
 
     // ── Berater-Chip im Techtree ──────────────────────────────────────────────
     'advisor_hired' => 'Eingestellt',

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-01
+
+- Fix/Feat: Techtree-Sidebar-Politur (Owner-Playtest-Fund) — "Voraussetzung"/"Schaltet frei" zeigen jetzt Aufzählungspunkte statt einer zusammengequetschten Zeile (Überschrift "Voraussetzungen", redundantes "Benötigt" im Text entfernt), Kenntnis-Effekte mit echtem Ressourcenbezug (Harvester-/Agrardom-Ertrag) rendern als Ressourcen-Chip statt Fließtext, und der stale Hint "Kein Forschungs-AP verfügbar — Analytiker-Berater einstellen" (referenzierte den längst zusammengelegten AP-Pool) heißt jetzt schlicht "Keine AP mehr verfügbar".
+
 ## 2026-08-31
 
 - Feat: Techtree-Sidebar zeigt jetzt auch für Kenntnisse, was das nächste Level bringt (z.B. "-4% Bau-AP-Kosten" bei Baukunde) — analog zur Gebäude-Freischaltungsanzeige (PR #297), aber für kontinuierliche Effekt-Kurven statt diskreter Freischaltungen. Neue `KnowledgeEffectDescriptionService` übersetzt die bestehenden `*_per_lv`/`*_per_level`-Kurven (Kenntnis-Effekte-Redesign-Serie) in lesbaren Text, kein neuer Zahlen-Content — nur eine kleine, stabile Label/Einheit-Zuordnung pro Kenntnis (Owner-Playtest-Fund).
