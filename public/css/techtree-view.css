@@ -371,49 +371,63 @@
 }
 
 .detail-inner {
-    border-top: 3px solid #3b82f6;
-    padding: 1.1rem 1.1rem 1.25rem;
+    --detail-accent: #3b82f6;
+    --detail-accent-bg: #eff4fe;
+    --detail-accent-line: rgba(59, 130, 246, 0.3);
+    border-top: 4px solid var(--detail-accent);
+    padding: 1.25rem 1.25rem 1.5rem;
     display: flex;
     flex-direction: column;
     min-height: 100%;
+    position: relative;
+    background: linear-gradient(to bottom, var(--detail-accent-bg) 0, rgba(255, 255, 255, 0) 96px);
 }
 
 .detail-cat-building {
-    border-top-color: #3b82f6;
+    --detail-accent: #3b82f6;
+    --detail-accent-bg: #eff4fe;
+    --detail-accent-line: rgba(59, 130, 246, 0.3);
 }
 .detail-cat-research {
-    border-top-color: #10b981;
+    --detail-accent: #10b981;
+    --detail-accent-bg: #ecf9f5;
+    --detail-accent-line: rgba(16, 185, 129, 0.3);
 }
 .detail-cat-ship {
-    border-top-color: #f59e0b;
+    --detail-accent: #f59e0b;
+    --detail-accent-bg: #fef8ec;
+    --detail-accent-line: rgba(245, 158, 11, 0.3);
 }
 .detail-cat-personell {
-    border-top-color: #8b5cf6;
+    --detail-accent: #8b5cf6;
+    --detail-accent-bg: #f4f0fe;
+    --detail-accent-line: rgba(139, 92, 246, 0.3);
 }
 
 .detail-head {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    margin-bottom: 0.6rem;
+    margin-bottom: 1rem;
 }
 
 .detail-badges {
     display: flex;
-    gap: 0.35rem;
+    gap: 0.4rem;
     align-items: center;
     flex-wrap: wrap;
 }
 
 .detail-type-badge {
-    font-size: 0.6rem;
+    font-size: 0.62rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: #666;
-    background: #efefef;
-    padding: 2px 7px;
-    border-radius: 3px;
+    letter-spacing: 0.08em;
+    color: var(--detail-accent);
+    background: var(--detail-accent-bg);
+    border: 1px solid var(--detail-accent-line);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill, 20px);
 }
 
 .detail-x {
@@ -421,16 +435,20 @@
     border: none;
     font-size: 1.3rem;
     line-height: 1;
-    color: #bbb;
+    color: var(--color-text-secondary, #9a9aa4);
     cursor: pointer;
-    padding: 0;
+    padding: 0.1rem 0.2rem;
     flex-shrink: 0;
-    margin-left: 0.5rem;
-    transition: color 0.1s;
+    margin: -0.1rem -0.2rem 0 0.5rem;
+    border-radius: var(--radius-sm, 4px);
+    transition:
+        color 0.12s,
+        background 0.12s;
 }
 
 .detail-x:hover {
-    color: #333;
+    color: var(--color-text-primary, #1a1a1e);
+    background: rgba(0, 0, 0, 0.05);
 }
 
 /* Full-bleed building image in techtree detail-inner (padding: 1.1rem) */
@@ -448,166 +466,252 @@
 }
 
 .detail-title {
-    margin: 0.1rem 0 1rem;
-    font-size: 1.05rem;
+    margin: 0 0 1.1rem;
+    font-size: 1.15rem;
     font-weight: 700;
-    color: var(--color-anthracite, #2c2c2c);
+    color: var(--color-text-primary, #1a1a1e);
     line-height: 1.3;
     word-break: break-word;
+    position: relative;
+    z-index: 1;
 }
 
 .detail-body {
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    gap: 0;
     margin-bottom: 0;
     font-size: 0.82rem;
     flex: 1;
+    position: relative;
+    z-index: 1;
 }
 
 .detail-row {
     display: flex;
     flex-direction: column;
-    gap: 0.15rem;
-    color: #555;
+    gap: 0.3rem;
+    color: var(--color-text-primary, #333);
+    padding: 0.7rem 0;
+}
+
+.detail-row:first-child {
+    padding-top: 0;
+}
+
+/* Hairline rhythm between stacked info blocks — the AP section and callout
+   boxes bring their own separation, so they opt out to avoid a double border. */
+.detail-row + .detail-row:not(.detail-row--ap):not(.detail-callout) {
+    border-top: 1px solid var(--color-border, #ececef);
 }
 
 .detail-row-label {
-    font-size: 0.65rem;
+    font-size: 0.66rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #999;
+    letter-spacing: 0.07em;
+    color: var(--color-text-secondary, #8a8a94);
+}
+
+.detail-row > span:not(.detail-row-label),
+.detail-row > ul {
+    font-size: 0.88rem;
+    font-weight: 500;
 }
 
 .detail-list {
     margin: 0;
     padding-left: 0;
     list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 .detail-list li {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
+    line-height: 1.35;
+}
+
+.detail-list li::before {
+    content: "";
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--color-border-strong, #ccc);
+}
+
+/* Lines that already carry a resource chip badge don't need a bullet too */
+.detail-list li:has(.res-chip)::before {
+    display: none;
+}
+
+/* Reward preview ("unlocks next level") gets a tinted callout treatment
+   instead of a plain list — it reads as a positive highlight, not a fact. */
+.detail-callout {
+    background: var(--detail-accent-bg);
+    border: 1px solid var(--detail-accent-line);
+    border-radius: var(--radius-sm, 6px);
+    padding: 0.65rem 0.75rem;
+    margin: 0.7rem 0;
+}
+
+.detail-callout .detail-row-label {
+    color: var(--detail-accent);
+    opacity: 0.85;
+}
+
+.detail-callout .detail-list li::before {
+    background: var(--detail-accent);
+}
+
+.detail-callout .detail-list li {
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a1e);
 }
 
 .detail-close {
     display: block;
     width: 100%;
-    padding: 0.6rem;
-    margin-top: 1.25rem;
-    border: none;
-    background: #f0f0f0;
-    color: #2c2c2c;
+    padding: 0.7rem;
+    margin-top: 1.5rem;
+    border: 1px solid var(--color-border-strong, #d0d0dc);
+    background: transparent;
+    color: var(--color-text-primary, #2c2c2c);
     cursor: pointer;
-    font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    transition: background 0.12s;
+    border-radius: var(--radius-sm, 4px);
+    transition:
+        background 0.12s,
+        color 0.12s,
+        border-color 0.12s;
 }
 
 .detail-close:hover {
-    background: #e0e0e0;
+    background: var(--color-text-primary, #2c2c2c);
+    border-color: var(--color-text-primary, #2c2c2c);
+    color: #fff;
 }
 
 /* Advisor-specific detail panel */
 .detail-advisor-hired {
-    color: #16a34a;
+    color: var(--color-success, #16a34a);
     font-weight: 600;
 }
 
-.detail-advisor-link {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 0.45rem 0.85rem;
-    background: #f4f0fe;
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 4px;
-    color: #7c3aed;
+.detail-cta-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 1.1rem;
+    padding: 0.5rem 0.9rem;
+    background: var(--detail-accent-bg);
+    border: 1px solid var(--detail-accent-line);
+    border-radius: var(--radius-sm, 4px);
+    color: var(--detail-accent);
     font-size: 0.82rem;
     font-weight: 600;
     text-decoration: none;
-    transition: background 0.12s;
+    transition:
+        background 0.12s,
+        border-color 0.12s;
 }
 
-.detail-advisor-link:hover {
-    background: #ede9fe;
-    color: #6d28d9;
+.detail-cta-link:hover {
+    background: var(--detail-accent);
+    border-color: var(--detail-accent);
+    color: #fff;
     text-decoration: none;
 }
 
 /* ── Sidebar AP invest bar ──────────────────────────────────────────────── */
 .detail-ap-section {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--pico-muted-border-color, #eee);
+    margin-top: 0.85rem;
+    padding: 0.85rem 0.75rem;
+    background: var(--color-surface, #f7f7f5);
+    border: 1px solid var(--color-border, #ececef);
+    border-radius: var(--radius-sm, 6px);
+}
+
+.detail-row--ap {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 0;
+    gap: 0.5rem;
+}
+
+.detail-row--ap > span:not(.detail-row-label) {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    color: var(--color-text-primary, #1a1a1e);
 }
 
 .detail-ap-bar {
     display: flex;
-    gap: 2px;
-    margin: 0.4rem 0;
-    flex-wrap: wrap;
+    gap: 3px;
+    margin: 0.6rem 0 0;
+    border-radius: var(--radius-round, 999px);
+    overflow: hidden;
 }
 
 .ap-seg {
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    border-radius: 3px;
-    transition: opacity 0.1s;
+    flex: 1 1 0;
+    height: 10px;
+    min-width: 4px;
+    border-radius: 2px;
+    transition:
+        background 0.12s,
+        transform 0.12s;
 }
 
 .ap-seg--done {
-    background: #16a34a;
+    background: var(--detail-accent, #16a34a);
 }
 .ap-seg--todo {
-    background: #bfdbfe;
+    background: var(--detail-accent-bg, #dbeafe);
+    box-shadow: inset 0 0 0 1px var(--detail-accent-line, rgba(59, 130, 246, 0.3));
     cursor: pointer;
 }
 .ap-seg--todo:hover {
-    background: #3b82f6;
+    background: var(--detail-accent, #3b82f6);
+    transform: scaleY(1.3);
 }
 .ap-seg--locked {
-    background: #e5e7eb;
+    background: var(--color-locked, #eeeeee);
     cursor: not-allowed;
 }
 
 .detail-ap-hint {
     font-size: 0.78rem;
-    color: #6b7280;
-    margin: 0.25rem 0 0;
-}
-
-.detail-colony-link {
-    display: inline-block;
-    margin-top: 0.75rem;
-    padding: 0.4rem 0.75rem;
-    background: #f0f9ff;
-    border: 1px solid rgba(14, 165, 233, 0.3);
-    border-radius: 4px;
-    color: #0369a1;
-    font-size: 0.82rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.12s;
-}
-
-.detail-colony-link:hover {
-    background: #e0f2fe;
-    color: #075985;
-    text-decoration: none;
-}
-
-.detail-row--ap {
-    margin-bottom: 0.2rem;
+    color: var(--color-text-secondary, #6b7280);
+    margin: 0.55rem 0 0;
 }
 
 @media (max-width: 599px) {
     .detail-inner {
-        padding: 1.25rem 1.25rem 1.5rem;
+        padding: 1.5rem 1.25rem 1.75rem;
+    }
+
+    /* Grabber handle for the mobile bottom sheet — signals "swipeable panel"
+       without needing extra markup or JS. */
+    .detail-inner::before {
+        content: "";
+        position: absolute;
+        top: 0.55rem;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 36px;
+        height: 4px;
+        border-radius: var(--radius-round, 999px);
+        background: var(--color-border-strong, #d0d0dc);
     }
 }
 
