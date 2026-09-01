@@ -4,6 +4,7 @@
 
 - Fix/Feat: Techtree-Sidebar-Politur (Owner-Playtest-Fund) — "Voraussetzung"/"Schaltet frei" zeigen jetzt Aufzählungspunkte statt einer zusammengequetschten Zeile (Überschrift "Voraussetzungen", redundantes "Benötigt" im Text entfernt), Kenntnis-Effekte mit echtem Ressourcenbezug (Harvester-/Agrardom-Ertrag) rendern als Ressourcen-Chip statt Fließtext, und der stale Hint "Kein Forschungs-AP verfügbar — Analytiker-Berater einstellen" (referenzierte den längst zusammengelegten AP-Pool) heißt jetzt schlicht "Keine AP mehr verfügbar".
 - Fix: Techtree-Sidebar — grauer Hintergrundkasten bei Voraussetzungen/Freischaltungen entfernt, Bullet-Einzug auf 0 (linksbündig statt optisch eingerückt/zentriert wirkend) (Owner-Playtest-Fund, Follow-up).
+- Design: Techtree-Sidebar-Detailpanel visuell überarbeitet (ui-specialist) — kategorie-abhängige Akzentfarbe (Gebäude/Kenntnis/Schiff/Berater) treibt jetzt Typ-Badge, Callout-Box für Freischaltungen, CTA-Links und AP-Fortschrittsbalken einheitlich statt verstreuter Hex-Werte; AP-Bar von starren Quadraten zu einer durchgängigen abgerundeten Segmentleiste; dezente Trennlinien statt Kasten für den vertikalen Rhythmus zwischen Info-Blöcken (Owner-Playtest-Fund, 2. Follow-up: "sauber, elegant, modern").
 
 ## 2026-08-31
 

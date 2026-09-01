@@ -167,7 +167,7 @@
                                         </ul>
                                     </div>
                                 </template>
-                                <a href="{{ route("advisors.index") }}" class="detail-advisor-link">
+                                <a href="{{ route("advisors.index") }}" class="detail-cta-link">
                                     {{ __("techtree.detail_advisor_link") }} &rarr;
                                 </a>
                             </div>
@@ -207,7 +207,7 @@
                                  BuildingUnlockService. --}}
                                 <template
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
-                                    <div class="detail-row">
+                                    <div class="detail-row detail-callout">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
                                         <ul class="detail-list">
@@ -219,7 +219,7 @@
                                     </div>
                                 </template>
                                 {{-- Colony link: opens build mode with this building pre-selected --}}
-                                <a :href="'/colony/view?build=' + selectedTech.id" class="detail-colony-link">
+                                <a :href="'/colony/view?build=' + selectedTech.id" class="detail-cta-link">
                                     {{ __("techtree.detail_colony_link") }} &rarr;
                                 </a>
                             </div>
@@ -251,7 +251,7 @@
                                  KnowledgeEffectDescriptionService. --}}
                                 <template
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
-                                    <div class="detail-row">
+                                    <div class="detail-row detail-callout">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
                                         <ul class="detail-list">
