@@ -1,6 +1,6 @@
 # Nouron — A Free Space Opera Browsergame
 
-Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite, Alpine.js + PicoCSS (new screens) and Bootstrap 5 + jQuery (legacy screens).
+Nouron is a sci-fi strategy browsergame built with PHP 8.2, Laravel 12, SQLite, Alpine.js and PicoCSS. The application is in active development with a completed core architecture (Phase 3, 2026).
 
 ## Quickstart
 
@@ -145,5 +145,4 @@ This project uses third-party frameworks and libraries with their own licenses:
 * [Laravel](https://laravel.com/)
 * [Alpine.js](https://alpinejs.dev/)
 * [PicoCSS](https://picocss.com/)
-* [Bootstrap 5](https://getbootstrap.com/)
-* [jQuery](https://jquery.com/)
+* [Bootstrap Icons](https://icons.getbootstrap.com/) (fonts only)
