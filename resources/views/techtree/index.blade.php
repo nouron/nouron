@@ -2,7 +2,8 @@
 @section("title", "Techtree — Nouron")
 
 @push("styles")
-    <link rel="stylesheet" href="{{ asset("css/techtree-view.css") }}">
+    <link rel="stylesheet"
+        href="{{ asset("css/techtree-view.css") }}?v={{ filemtime(public_path("css/techtree-view.css")) }}">
 @endpush
 
 @push("scripts")
