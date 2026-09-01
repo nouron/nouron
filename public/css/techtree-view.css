@@ -499,9 +499,9 @@
     padding-top: 0;
 }
 
-/* Hairline rhythm between stacked info blocks — the AP section and callout
-   boxes bring their own separation, so they opt out to avoid a double border. */
-.detail-row + .detail-row:not(.detail-row--ap):not(.detail-callout) {
+/* Hairline rhythm between stacked info blocks — no boxes, just a thin
+   divider so the eye can separate blocks without visual clutter. */
+.detail-row + .detail-row:not(.detail-row--ap) {
     border-top: 1px solid var(--color-border, #ececef);
 }
 
@@ -533,43 +533,7 @@
     align-items: center;
     gap: 0.45rem;
     line-height: 1.35;
-}
-
-.detail-list li::before {
-    content: "";
-    flex-shrink: 0;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--color-border-strong, #ccc);
-}
-
-/* Lines that already carry a resource chip badge don't need a bullet too */
-.detail-list li:has(.res-chip)::before {
-    display: none;
-}
-
-/* Reward preview ("unlocks next level") gets a tinted callout treatment
-   instead of a plain list — it reads as a positive highlight, not a fact. */
-.detail-callout {
-    background: var(--detail-accent-bg);
-    border: 1px solid var(--detail-accent-line);
-    border-radius: var(--radius-sm, 6px);
-    padding: 0.65rem 0.75rem;
-    margin: 0.7rem 0;
-}
-
-.detail-callout .detail-row-label {
-    color: var(--detail-accent);
-    opacity: 0.85;
-}
-
-.detail-callout .detail-list li::before {
-    background: var(--detail-accent);
-}
-
-.detail-callout .detail-list li {
-    font-weight: 600;
+    font-weight: 500;
     color: var(--color-text-primary, #1a1a1e);
 }
 
@@ -633,10 +597,8 @@
 /* ── Sidebar AP invest bar ──────────────────────────────────────────────── */
 .detail-ap-section {
     margin-top: 0.85rem;
-    padding: 0.85rem 0.75rem;
-    background: var(--color-surface, #f7f7f5);
-    border: 1px solid var(--color-border, #ececef);
-    border-radius: var(--radius-sm, 6px);
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--color-border, #ececef);
 }
 
 .detail-row--ap {

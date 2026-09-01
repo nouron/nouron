@@ -207,7 +207,7 @@
                                  BuildingUnlockService. --}}
                                 <template
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
-                                    <div class="detail-row detail-callout">
+                                    <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
                                         <ul class="detail-list">
@@ -251,7 +251,7 @@
                                  KnowledgeEffectDescriptionService. --}}
                                 <template
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
-                                    <div class="detail-row detail-callout">
+                                    <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
                                         <ul class="detail-list">
