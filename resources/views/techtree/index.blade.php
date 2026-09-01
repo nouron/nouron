@@ -226,6 +226,17 @@
                                         <span x-text="selectedTech.required_desc"></span>
                                     </div>
                                 </template>
+                                {{-- What the NEXT level's effect curve delivers (Owner-Playtest-
+                                 Fund 2026-08-31, follow-up — e.g. "-4% Bau-AP-Kosten") — see
+                                 KnowledgeEffectDescriptionService. --}}
+                                <template
+                                    x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
+                                    <div class="detail-row">
+                                        <span
+                                            class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
+                                        <span x-text="selectedTech.unlocks_next_level.join(', ')"></span>
+                                    </div>
+                                </template>
                                 {{-- AP invest bar for knowledge --}}
                                 <template x-if="selectedTech.ap_for_levelup > 0 && selectedTech.status !== 'locked'">
                                     <div class="detail-ap-section">

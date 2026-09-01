@@ -9,6 +9,7 @@ use App\Services\OnboardingHintService;
 use App\Services\Techtree\AbstractTechnologyService;
 use App\Services\Techtree\BuildingService;
 use App\Services\Techtree\BuildingUnlockService;
+use App\Services\Techtree\KnowledgeEffectDescriptionService;
 use App\Services\Techtree\ResearchService;
 use App\Services\Techtree\ShipService;
 use App\Services\Techtree\TechtreeColonyService;
@@ -33,6 +34,7 @@ class TechtreeController extends BaseController
         private readonly TechtreeColonyService $techtreeColonyService,
         private readonly OnboardingHintService $onboardingHintService,
         private readonly BuildingUnlockService $buildingUnlockService,
+        private readonly KnowledgeEffectDescriptionService $knowledgeEffectDescriptionService,
     ) {
         parent::__construct($tick);
     }
@@ -119,14 +121,20 @@ class TechtreeController extends BaseController
                     'description' => in_array($type, ['building', 'research'], true)
                         ? __('techtree.desc_techs_'.preg_replace('/^(building|knowledge)_/', '', $tech['name']))
                         : null,
-                    // Reverse of required_desc: what becomes available specifically at
-                    // the NEXT level of this building (Owner-Playtest-Fund 2026-08-31,
-                    // e.g. "Hangar Lv2 unlocks Frachter"). Buildings only — knowledge
-                    // levels never gate other entities in the current data (only
-                    // continuous effect curves, no discrete unlocks to derive).
-                    'unlocks_next_level' => $type === 'building'
-                        ? $this->buildingUnlockService->unlocksAtLevel((int) $id, (int) ($tech['level'] ?? 0) + 1)
-                        : [],
+                    // Reverse of required_desc: what becomes available/changes specifically
+                    // at the NEXT level (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2
+                    // unlocks Frachter" for buildings, "-4% Bau-AP-Kosten" for knowledge —
+                    // buildings have discrete gate-unlocks (BuildingUnlockService), knowledge
+                    // has continuous effect curves (KnowledgeEffectDescriptionService,
+                    // follow-up 2026-08-31) — same UI slot either way.
+                    'unlocks_next_level' => match ($type) {
+                        'building' => $this->buildingUnlockService->unlocksAtLevel((int) $id, (int) ($tech['level'] ?? 0) + 1),
+                        'research' => $this->knowledgeEffectDescriptionService->effectsAtLevel(
+                            preg_replace('/^knowledge_/', '', $tech['name']),
+                            (int) ($tech['level'] ?? 0) + 1
+                        ),
+                        default => [],
+                    },
                     'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,

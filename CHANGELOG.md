@@ -2,6 +2,8 @@
 
 ## 2026-08-31
 
+- Feat: Techtree-Sidebar zeigt jetzt auch für Kenntnisse, was das nächste Level bringt (z.B. "-4% Bau-AP-Kosten" bei Baukunde) — analog zur Gebäude-Freischaltungsanzeige (PR #297), aber für kontinuierliche Effekt-Kurven statt diskreter Freischaltungen. Neue `KnowledgeEffectDescriptionService` übersetzt die bestehenden `*_per_lv`/`*_per_level`-Kurven (Kenntnis-Effekte-Redesign-Serie) in lesbaren Text, kein neuer Zahlen-Content — nur eine kleine, stabile Label/Einheit-Zuordnung pro Kenntnis (Owner-Playtest-Fund).
+
 - Feat: Gebäude-/Techtree-Sidebar zeigten "Voraussetzung", aber nie die Kehrseite — was das NÄCHSTE Level freischaltet (z.B. Hangar Lv1→2 schaltet den Frachter frei). Neue `BuildingUnlockService::unlocksAtLevel()` — reine Rückwärts-Abfrage der bestehenden `required_building_id`/`required_building_level`-Gate-Daten (Gebäude/Schiffe/Berater/Kenntnisse), kein neuer Content nötig. Nur Gebäude-Level (Kenntnis-Level haben aktuell keine diskreten Freischaltungen, nur kontinuierliche Effekt-Kurven) (Owner-Playtest-Fund).
 
 - Feat: Gebäude-/Kenntnis-Detail-Panels (Kolonie-Sidebar, Techtree-Sidebar) zeigten Kosten und Fortschritt, aber nie was gebaut/erforscht eigentlich bewirkt — Spieler konnte nicht vorausplanen. Bereits vorhandene Beschreibungstexte (`buildings.*_desc`, `techtree.desc_techs_*`) jetzt in beiden Panels verdrahtet (generischer Effekt-Text, noch keine Pro-Level-Freischaltungen — das wäre eine separate Content-Aufgabe) (Owner-Playtest-Fund).
