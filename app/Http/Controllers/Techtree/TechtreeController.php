@@ -140,6 +140,17 @@ class TechtreeController extends BaseController
                         ),
                         default => [],
                     },
+                    // What the CURRENT level already delivers — same services, called at
+                    // the current level instead of level+1 (Owner-Playtest-Fund 2026-09-02:
+                    // sidebar showed only the next level's effect, never the active one).
+                    'effects_current_level' => match ($type) {
+                        'building' => $this->buildingUnlockService->unlocksAtLevel((int) $id, (int) ($tech['level'] ?? 0)),
+                        'research' => $this->knowledgeEffectDescriptionService->effectsAtLevel(
+                            preg_replace('/^knowledge_/', '', $tech['name']),
+                            (int) ($tech['level'] ?? 0)
+                        ),
+                        default => [],
+                    },
                     'max_level' => isset($tech['max_level']) ? (int) $tech['max_level'] : null,
                     'key' => $type === 'building' ? $tech['name'] : null,
                     'image_slug' => $type === 'building' ? self::buildingImageSlug($tech['name']) : null,

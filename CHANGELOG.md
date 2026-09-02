@@ -2,6 +2,8 @@
 
 ## 2026-09-02
 
+- Fix: PicoCSS-Spezifitätsbug behoben — alle `.detail-*`-Selektoren in `techtree-view.css` mit `.tech-panel` prefixed, da Pico's globale `aside li`/`aside ul`-Regeln das gemergte Redesign (PR #305) trotz korrekt geladenem CSS unsichtbar gemacht hatten.
+- Fix/Feat: Techtree-Sidebar Nachbesserungen (Owner-Playtest, mehrere Iterationen) — Kenntnisname-Titel-Overlap behoben (Panel als Full-Height-Overlay über Header statt fixer `top`-Offset), kompakte Level-Anzeige direkt unter dem Titel (dedupliziert mit Status-Chip), neues Feld `effects_current_level` (Backend, TDD) ergänzt "Effekte der aktuellen Stufe" neben "Effekte der nächsten Stufe", Listen-Einrückungen entfernt, Ressourcenchip statt Chip+durchgestrichenem Text, Detail-Werte final auf `0.78rem`/`font-weight: 400`/sekundäre Grau-Farbe (`#9a9aa4`) angeglichen — vorherige Iteration hatte nur Größe/Gewicht reduziert, nicht aber die Farbe, wodurch der Text trotzdem "prägnant" wirkte.
 - Design: Techtree-Sidebar-Detailpanel Komplettüberarbeitung im Apple-Stil (ui-specialist, finale Iteration) — Kenntnisname nicht mehr überdeckt (z-index + overflow fix), diskrete Labels (0.64rem, #9a9aa4, 0.08em tracking), prominente Werte (0.95rem, fw600), großzügige 1.25rem Gaps zwischen Info-Blöcken statt Trennlinien/Boxen, keine Einrückung (Listen flush-left), AP-Segmente 20px in sauberer Wrap-Grid, Button-Spacing vergrößert — reine CSS-Überarbeitung, kein Blade-Template-Change (Owner-Playtest-Fund, finale Iteration: "wie würde ein Designer von Apple das designen").
 
 ## 2026-09-01
