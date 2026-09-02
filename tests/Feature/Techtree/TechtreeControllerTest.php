@@ -3,6 +3,7 @@
 namespace Tests\Feature\Techtree;
 
 use App\Models\User;
+use App\Services\Techtree\BuildingUnlockService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -291,6 +292,50 @@ class TechtreeControllerTest extends TestCase
         $this->assertTrue(
             collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% Bau-AP-Kosten' && $l['chip'] === null)
         );
+    }
+
+    // Owner-Playtest-Fund 2026-09-02: the sidebar only showed what the NEXT
+    // level unlocks, never what the CURRENT level already does — same
+    // service, called at the current level instead of level+1.
+    public function test_index_building_items_include_effects_current_level(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $hangar = null;
+        foreach ($pageData['phases'] as $phase) {
+            $hangar ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'building' && $t['key'] === 'building_hangar');
+        }
+
+        $this->assertNotNull($hangar, 'hangar building must be present in the phases');
+        $this->assertSame(1, $hangar['level'], 'Testdaten-Annahme: Hangar steht auf Level 1');
+        $this->assertSame(
+            $this->app->make(BuildingUnlockService::class)->unlocksAtLevel(44, 1),
+            $hangar['effects_current_level']
+        );
+    }
+
+    public function test_index_knowledge_items_include_effects_current_level(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+
+        // construction (id=90) at level 1 -> next level 2 (=4%) differs from current level 1 (=2%).
+        DB::table('colony_researches')->updateOrInsert(
+            ['colony_id' => $this->colonyIdBart, 'research_id' => 90],
+            ['level' => 1, 'ap_spend' => 0, 'status_points' => 20]
+        );
+
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $construction = null;
+        foreach ($pageData['phases'] as $phase) {
+            $construction ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 90);
+        }
+
+        $this->assertNotNull($construction);
+        $this->assertNotSame($construction['unlocks_next_level'], $construction['effects_current_level']);
     }
 
     public function test_knowledge_ap_for_levelup_matches_config_not_stale_db_value(): void

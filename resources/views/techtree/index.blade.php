@@ -115,7 +115,12 @@
                     <div class="detail-head">
                         <div class="detail-badges">
                             <span class="detail-type-badge" x-text="typeLabel(selectedTech.type)"></span>
+                            {{-- Hidden when the compact .detail-subhead level indicator below
+                             the title already shows the same value (building/research at
+                             level > 0) — avoids showing "Lv 1" twice. --}}
                             <span class="tech-status-chip" :class="'chip-' + selectedTech.status"
+                                x-show="!((selectedTech.type === 'building' && !selectedTech.is_instanced && selectedTech.level > 0) ||
+                                    (selectedTech.type === 'research' && selectedTech.level > 0))"
                                 x-text="statusLabel(selectedTech)"></span>
                         </div>
                         <button class="detail-x" @click="closeDetail()"
@@ -124,6 +129,20 @@
 
                     {{-- Title --}}
                     <h3 class="detail-title" x-text="selectedTech.name"></h3>
+
+                    {{-- Compact level indicator directly under the title (Owner-Fund
+                     2026-09-02: LEVEL sat buried further down in the body as an
+                     oversized label+value row — moved up here and shrunk to a
+                     subheader-sized detail, right where it belongs next to the name). --}}
+                    <template
+                        x-if="(selectedTech.type === 'building' && !selectedTech.is_instanced && selectedTech.level > 0) ||
+                            (selectedTech.type === 'research' && selectedTech.level > 0)">
+                        <div class="detail-subhead">
+                            <span class="detail-subhead-label">{{ __("techtree.detail_level") }}</span>
+                            <span class="detail-subhead-value"
+                                x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
+                        </div>
+                    </template>
 
                     {{-- Building image (only for building-type items with a resolved image_slug).
                      show_header:false because the <h3 detail-title> above already renders the name. --}}
@@ -177,13 +196,9 @@
                         {{-- BUILDING --}}
                         <template x-if="selectedTech.type === 'building'">
                             <div>
-                                <template x-if="!selectedTech.is_instanced && selectedTech.level > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_level") }}</span>
-                                        <span
-                                            x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
-                                    </div>
-                                </template>
+                                {{-- Level moved to .detail-subhead right under the title,
+                                 see above — kept only the instanced-count row here since
+                                 that's a different metric (built count vs. level). --}}
                                 <template x-if="selectedTech.is_instanced && selectedTech.instance_count > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_instances") }}</span>
@@ -202,6 +217,24 @@
                                         </ul>
                                     </div>
                                 </template>
+                                {{-- What the CURRENT level already delivers (Owner-Fund
+                                 2026-09-02: sidebar only ever showed the next level's
+                                 effect, never the active one) — see
+                                 BuildingUnlockService::unlocksAtLevel() called at the
+                                 current level instead of level+1. --}}
+                                <template
+                                    x-if="selectedTech.effects_current_level && selectedTech.effects_current_level.length > 0">
+                                    <div class="detail-row">
+                                        <span
+                                            class="detail-row-label">{{ __("techtree.detail_effects_current_level") }}</span>
+                                        <ul class="detail-list">
+                                            <template x-for="(name, idx) in selectedTech.effects_current_level"
+                                                :key="idx">
+                                                <li x-text="name"></li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
                                 {{-- Reverse of Voraussetzung: what the NEXT level unlocks
                                  (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2 →
                                  Frachter") — derived from existing gate data, see
@@ -210,7 +243,7 @@
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
                                     <div class="detail-row">
                                         <span
-                                            class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
+                                            class="detail-row-label">{{ __("techtree.detail_effects_next_level") }}</span>
                                         <ul class="detail-list">
                                             <template x-for="(name, idx) in selectedTech.unlocks_next_level"
                                                 :key="idx">
@@ -229,13 +262,8 @@
                         {{-- RESEARCH / KNOWLEDGE --}}
                         <template x-if="selectedTech.type === 'research'">
                             <div>
-                                <template x-if="selectedTech.level > 0">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_level") }}</span>
-                                        <span
-                                            x-text="selectedTech.level + (selectedTech.max_level ? ' / ' + selectedTech.max_level : '')"></span>
-                                    </div>
-                                </template>
+                                {{-- Level moved to .detail-subhead right under the title,
+                                 see above. --}}
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
@@ -247,6 +275,34 @@
                                         </ul>
                                     </div>
                                 </template>
+                                {{-- What the CURRENT level's effect curve already delivers
+                                 (Owner-Fund 2026-09-02: sidebar only ever showed the next
+                                 level's effect, never the active one) — see
+                                 KnowledgeEffectDescriptionService, called at the current
+                                 level instead of level+1. --}}
+                                <template
+                                    x-if="selectedTech.effects_current_level && selectedTech.effects_current_level.length > 0">
+                                    <div class="detail-row">
+                                        <span
+                                            class="detail-row-label">{{ __("techtree.detail_effects_current_level") }}</span>
+                                        <ul class="detail-list">
+                                            <template x-for="(line, idx) in selectedTech.effects_current_level"
+                                                :key="idx">
+                                                <li>
+                                                    <template x-if="line.chip">
+                                                        <span :class="'res-chip res-' + line.chip.cls">
+                                                            <span class="res-abbr" x-text="line.chip.abbr"></span>
+                                                            <span class="res-amount" x-text="line.chip.value"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="!line.chip">
+                                                        <span x-text="line.text"></span>
+                                                    </template>
+                                                </li>
+                                            </template>
+                                        </ul>
+                                    </div>
+                                </template>
                                 {{-- What the NEXT level's effect curve delivers (Owner-Playtest-
                                  Fund 2026-08-31, follow-up — e.g. "-4% Bau-AP-Kosten") — see
                                  KnowledgeEffectDescriptionService. --}}
@@ -254,7 +310,7 @@
                                     x-if="selectedTech.unlocks_next_level && selectedTech.unlocks_next_level.length > 0">
                                     <div class="detail-row">
                                         <span
-                                            class="detail-row-label">{{ __("techtree.detail_unlocks_next_level") }}</span>
+                                            class="detail-row-label">{{ __("techtree.detail_effects_next_level") }}</span>
                                         <ul class="detail-list">
                                             <template x-for="(line, idx) in selectedTech.unlocks_next_level"
                                                 :key="idx">
@@ -265,7 +321,9 @@
                                                             <span class="res-amount" x-text="line.chip.value"></span>
                                                         </span>
                                                     </template>
-                                                    <span x-text="line.text"></span>
+                                                    <template x-if="!line.chip">
+                                                        <span x-text="line.text"></span>
+                                                    </template>
                                                 </li>
                                             </template>
                                         </ul>

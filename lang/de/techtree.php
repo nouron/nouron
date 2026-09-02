@@ -114,6 +114,12 @@ return [
     'detail_level' => 'Level',
     'detail_required' => 'Voraussetzungen',
     'detail_unlocks_next_level' => 'Schaltet ab nächstem Level frei',
+    // Split of detail_unlocks_next_level into "current" vs "next" (Owner-
+    // Fund 2026-09-02, techtree sidebar only) — detail_unlocks_next_level
+    // above stays untouched, it's still used by the colony sidebar
+    // (hexview.blade.php).
+    'detail_effects_current_level' => 'Effekte der aktuellen Stufe',
+    'detail_effects_next_level' => 'Effekte der nächsten Stufe',
     'detail_close' => 'Schließen',
 
     // ── UI ───────────────────────────────────────────────────────────────────

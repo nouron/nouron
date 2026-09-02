@@ -113,3 +113,5 @@ Verbindliches Set — keine weiteren Schwellwerte einführen:
 |---|---|
 | Alpine.js + Vanilla `fetch()` für alle Interaktionen | jQuery verwenden (vollständig entfernt, Mai 2026) |
 | Container in `em`/`rem` | Fixe `px`-Grössen für Icons und Portraits |
+| Neue Panel-/Card-Klassen mit dem Wrapper-Container prefixen (z.B. `.tech-panel .detail-row`) | Bare Klassen wie `.detail-row` ohne Scope — PicoCSS hat globale `aside li`/`aside ul`-Regeln, die bei gleicher Spezifität gewinnen und neue Styles unsichtbar machen (Bug in PR #305/#306, Techtree-Sidebar) |
+| Sekundäre Detail-Zeilen (Werte neben Meta-Labels, Listeneinträge) klein + `font-weight: 500` halten, angelehnt an die Description-Textgröße (~0.8rem) | Body-Werte in Sidebars mit `font-weight: 600–700` + `~0.95rem` — wirkt in schmalen Panels zu groß/prägnant, nicht "modern/elegant/minimal" |
