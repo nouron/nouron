@@ -380,7 +380,8 @@
     flex-direction: column;
     min-height: 100%;
     position: relative;
-    background: linear-gradient(to bottom, var(--detail-accent-bg) 0, rgba(255, 255, 255, 0) 96px);
+    background: none;
+    overflow: visible;
 }
 
 .detail-cat-building {
@@ -451,10 +452,10 @@
     background: rgba(0, 0, 0, 0.05);
 }
 
-/* Full-bleed building image in techtree detail-inner (padding: 1.1rem) */
+/* Full-bleed building image in techtree detail-inner (padding: 1.25rem) */
 .detail-inner .building-detail-img-wrap {
-    width: calc(100% + 2.2rem);
-    margin: 0 -1.1rem 0.75rem;
+    width: calc(100% + 2.5rem);
+    margin: 0 -1.25rem 1rem;
     overflow: hidden;
 }
 
@@ -466,22 +467,21 @@
 }
 
 .detail-title {
-    margin: 0 0 1.1rem;
+    margin: 0 0 1.5rem;
     font-size: 1.15rem;
     font-weight: 700;
     color: var(--color-text-primary, #1a1a1e);
     line-height: 1.3;
     word-break: break-word;
     position: relative;
-    z-index: 1;
+    z-index: 2;
 }
 
 .detail-body {
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: 1.25rem;
     margin-bottom: 0;
-    font-size: 0.82rem;
     flex: 1;
     position: relative;
     z-index: 1;
@@ -490,63 +490,59 @@
 .detail-row {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.35rem;
     color: var(--color-text-primary, #333);
-    padding: 0.7rem 0;
+    padding: 0;
 }
 
-.detail-row:first-child {
-    padding-top: 0;
-}
-
-/* Hairline rhythm between stacked info blocks — no boxes, just a thin
-   divider so the eye can separate blocks without visual clutter. */
-.detail-row + .detail-row:not(.detail-row--ap) {
-    border-top: 1px solid var(--color-border, #ececef);
+.detail-row + .detail-row {
+    margin-top: 1.25rem;
 }
 
 .detail-row-label {
-    font-size: 0.66rem;
+    font-size: 0.64rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.07em;
-    color: var(--color-text-secondary, #8a8a94);
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
 }
 
 .detail-row > span:not(.detail-row-label),
 .detail-row > ul {
-    font-size: 0.88rem;
-    font-weight: 500;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text-primary, #1a1a1e);
 }
 
 .detail-list {
     margin: 0;
-    padding-left: 0;
+    padding: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.4rem;
 }
 
 .detail-list li {
     display: flex;
-    align-items: center;
-    gap: 0.45rem;
-    line-height: 1.35;
-    font-weight: 500;
+    align-items: flex-start;
+    gap: 0.5rem;
+    line-height: 1.4;
+    font-weight: 600;
     color: var(--color-text-primary, #1a1a1e);
+    font-size: 0.95rem;
 }
 
 .detail-close {
     display: block;
     width: 100%;
-    padding: 0.7rem;
-    margin-top: 1.5rem;
+    padding: 0.75rem;
+    margin-top: 2rem;
     border: 1px solid var(--color-border-strong, #d0d0dc);
     background: transparent;
     color: var(--color-text-primary, #2c2c2c);
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
@@ -572,14 +568,14 @@
 .detail-cta-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    margin-top: 1.1rem;
-    padding: 0.5rem 0.9rem;
+    gap: 0.4rem;
+    margin-top: 1.25rem;
+    padding: 0.6rem 1rem;
     background: var(--detail-accent-bg);
     border: 1px solid var(--detail-accent-line);
     border-radius: var(--radius-sm, 4px);
     color: var(--detail-accent);
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 600;
     text-decoration: none;
     transition:
@@ -596,9 +592,8 @@
 
 /* ── Sidebar AP invest bar ──────────────────────────────────────────────── */
 .detail-ap-section {
-    margin-top: 0.85rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid var(--color-border, #ececef);
+    margin-top: 0;
+    padding: 0;
 }
 
 .detail-row--ap {
@@ -606,31 +601,41 @@
     align-items: baseline;
     justify-content: space-between;
     padding: 0;
-    gap: 0.5rem;
+    gap: 0.75rem;
+}
+
+.detail-row--ap .detail-row-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-secondary, #9a9aa4);
 }
 
 .detail-row--ap > span:not(.detail-row-label) {
     font-variant-numeric: tabular-nums;
     font-weight: 700;
+    font-size: 0.95rem;
     color: var(--color-text-primary, #1a1a1e);
 }
 
 .detail-ap-bar {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px;
+    gap: 5px;
     margin: 0.6rem 0 0;
 }
 
-/* Fixed-size tap targets, not flex-stretched — with 20-30+ segments a
+/* Fixed-size tap targets, not flex-stretched — with 20–30+ segments a
    single-row stretched bar shrinks each one below a tappable width,
    especially on mobile. Wrapping keeps every segment reliably tappable. */
 .ap-seg {
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 20px;
+    height: 20px;
     border-radius: 3px;
     transition: background 0.12s;
+    flex-shrink: 0;
 }
 
 .ap-seg--done {
@@ -650,9 +655,10 @@
 }
 
 .detail-ap-hint {
-    font-size: 0.78rem;
-    color: var(--color-text-secondary, #6b7280);
-    margin: 0.55rem 0 0;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary, #9a9aa4);
+    margin: 0.6rem 0 0;
+    line-height: 1.4;
 }
 
 @media (max-width: 599px) {

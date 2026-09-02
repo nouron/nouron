@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-02
+
+- Design: Techtree-Sidebar-Detailpanel Komplettüberarbeitung im Apple-Stil (ui-specialist, finale Iteration) — Kenntnisname nicht mehr überdeckt (z-index + overflow fix), diskrete Labels (0.64rem, #9a9aa4, 0.08em tracking), prominente Werte (0.95rem, fw600), großzügige 1.25rem Gaps zwischen Info-Blöcken statt Trennlinien/Boxen, keine Einrückung (Listen flush-left), AP-Segmente 20px in sauberer Wrap-Grid, Button-Spacing vergrößert — reine CSS-Überarbeitung, kein Blade-Template-Change (Owner-Playtest-Fund, finale Iteration: "wie würde ein Designer von Apple das designen").
+
 ## 2026-09-01
 
 - Docs: README.md aktualisiert — Techstack reflektiert jetzt den aktuellen Stand (Alpine.js + PicoCSS statt veralteter Bootstrap 5 + jQuery Erwähnung), jQuery und Bootstrap vollständig aus Lizenzblock entfernt (komplett entfernt seit Mai 2026).
