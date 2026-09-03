@@ -414,14 +414,18 @@ class HangarService
      *
      * @param  array{q?: int, r?: int, research_id?: int}|null  $target
      */
-    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null): void
+    public function dispatchShip(int $colonyId, int $instanceId, string $missionKey, ?array $target = null, string $difficulty = 'normal'): void
     {
         $mission = config("missions.catalog.{$missionKey}");
         if ($mission === null) {
             throw new RuntimeException("Unknown mission key: {$missionKey}.");
         }
 
-        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target): void {
+        if (! in_array($difficulty, $mission['difficulties'] ?? [], true)) {
+            throw new RuntimeException(__('missions.error_invalid_difficulty'));
+        }
+
+        DB::transaction(function () use ($colonyId, $instanceId, $missionKey, $mission, $target, $difficulty): void {
             $ship = DB::table('colony_ships')
                 ->where('colony_id', $colonyId)
                 ->where('hangar_instance_id', $instanceId)
@@ -527,6 +531,7 @@ class HangarService
                 'destination' => $missionKey,
                 'sol_distance' => $solDistance,
                 'target' => $targetJson,
+                'difficulty' => $difficulty,
                 'dispatch_tick' => $currentTick,
                 'recall_tick' => null,
                 'state' => 'active',

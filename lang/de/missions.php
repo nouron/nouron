@@ -80,6 +80,7 @@ return [
     'error_invalid_target' => 'Kein gültiges Ziel für diese Mission gewählt.',
     'error_target_consumed' => 'Diese Ruine wurde bereits geborgen.',
     'error_harvester_instance_full' => 'Die Kolonie hat bereits die maximale Anzahl Harvester — eine Bergung würde nichts bringen.',
+    'error_invalid_difficulty' => 'Diese Schwierigkeitsstufe ist für diese Mission nicht verfügbar.',
 
     // ── Sol report ───────────────────────────────────────────────────────────
 

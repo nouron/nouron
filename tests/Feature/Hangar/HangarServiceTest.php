@@ -16,6 +16,8 @@ class HangarServiceTest extends TestCase
 
     private const USER_ID = 3;
 
+    private const HANGAR_INSTANCE = 1;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -88,5 +90,35 @@ class HangarServiceTest extends TestCase
         $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'leicht');
 
         $this->assertSame(0.95, $chance, 'must clamp at chance_cap even with max pilot rank + knowledge overshoot');
+    }
+
+    public function test_dispatch_rejects_a_difficulty_not_offered_by_the_mission(): void
+    {
+        $service = $this->app->make(HangarService::class);
+        // TestSeeder docks a corvette (ship_id 37) at hangar instance 1 (colony 1's
+        // seeded drone sits dispatched there instead — see HangarMissionResolutionTest
+        // fixture comment), so mission_escort_convoy (ships => ['corvette'], no
+        // knowledge/target gate) is the compatible catalog mission here, not
+        // mission_courier_run (drone-only). Its difficulties are ['normal', 'schwer']
+        // (config/missions.php) — 'leicht' must be rejected.
+        $this->expectException(\RuntimeException::class);
+
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'leicht');
+    }
+
+    public function test_dispatch_persists_the_chosen_difficulty(): void
+    {
+        $service = $this->app->make(HangarService::class);
+
+        $service->dispatchShip(self::COLONY_ID, self::HANGAR_INSTANCE, 'mission_escort_convoy', null, 'schwer');
+
+        // TestSeeder already seeds a (recalled/inactive-irrelevant) mission row for
+        // colony 1 / instance 1 (mission_recon_flight, default difficulty 'normal') —
+        // scope to the freshly dispatched row via destination + state to avoid picking
+        // that stale fixture row up instead.
+        $this->assertSame('schwer', DB::table('colony_hangar_missions')
+            ->where('colony_id', self::COLONY_ID)->where('instance_id', self::HANGAR_INSTANCE)
+            ->where('destination', 'mission_escort_convoy')->where('state', 'active')
+            ->value('difficulty'));
     }
 }
