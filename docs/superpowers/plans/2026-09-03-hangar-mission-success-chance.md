@@ -234,11 +234,14 @@ public function test_success_chance_uses_base_chance_when_no_bonuses_apply(): vo
 
 public function test_success_chance_adds_pilot_rank_bonus(): void
 {
+    // Real advisors table columns (see data/sql/testdata.sqlite.sql): user_id,
+    // colony_id, personell_id, rank, active_ticks — no hired_tick column.
     DB::table('advisors')->insert([
+        'user_id' => self::USER_ID,
         'colony_id' => self::COLONY_ID,
         'personell_id' => config('advisors.pilot.id'),
         'rank' => 2,
-        'hired_tick' => 0,
+        'active_ticks' => 0,
     ]);
     $mission = config('missions.catalog.mission_courier_run');
     $service = $this->app->make(\App\Services\HangarService::class);
@@ -266,10 +269,11 @@ public function test_success_chance_adds_knowledge_bonus_above_gate(): void
 public function test_success_chance_is_capped(): void
 {
     DB::table('advisors')->insert([
+        'user_id' => self::USER_ID,
         'colony_id' => self::COLONY_ID,
         'personell_id' => config('advisors.pilot.id'),
         'rank' => 3,
-        'hired_tick' => 0,
+        'active_ticks' => 0,
     ]);
     DB::table('colony_researches')->updateOrInsert(
         ['colony_id' => self::COLONY_ID, 'research_id' => config('knowledge.geology.id')],
@@ -278,13 +282,16 @@ public function test_success_chance_is_capped(): void
     $mission = config('missions.catalog.mission_prospecting_flight');
     $service = $this->app->make(\App\Services\HangarService::class);
 
-    $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'schwer');
+    // leicht base_chance 0.85 + rank3*0.05=0.15 + 4 levels above gate*0.03=0.12 = 1.12 uncapped,
+    // must clamp to chance_cap 0.95. ('schwer' base 0.60 would only reach 0.87 here — not high
+    // enough to ever hit the cap with realistic level 5 knowledge, so this must use 'leicht'.)
+    $chance = $service->successChanceFor(self::COLONY_ID, $mission, 'leicht');
 
     $this->assertSame(0.95, $chance, 'must clamp at chance_cap even with max pilot rank + knowledge overshoot');
 }
 ```
 
-Falls die Testdatei neu angelegt wird: `setUp()` mit `$this->app->make(TestSeeder::class)->run();` und `private const COLONY_ID = 1;` (gleiche Konvention wie `HangarMissionResolutionTest`), `use Illuminate\Support\Facades\DB;`.
+Falls die Testdatei neu angelegt wird: `setUp()` mit `$this->app->make(TestSeeder::class)->run();` und `private const COLONY_ID = 1;` sowie `private const USER_ID = 3;` (gleiche Konvention wie `HangarMissionResolutionTest`), `use Illuminate\Support\Facades\DB;`.
 
 - [ ] **Step 2: Tests laufen lassen, Fehlschlag bestätigen**
 
