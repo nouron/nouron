@@ -1,5 +1,10 @@
 # Changelog
 
+## 2026-09-03
+
+- Design/Feat: Encounter-Events Zwei-Scope-Modell (Einzelgebäude vs. koloniweit) entworfen und für Sturm umgesetzt (GDD §9) — Sturm trifft jetzt alle Kolonie-Zone-Gebäude (Harvester ausgeschlossen), jedes mit eigener SP-basierter Outcome-Berechnung; Trust-Event feuert genau einmal pro Sturm (schlechtestes Tier); ein aggregierter `colony_log`-Eintrag statt N Einzelmeldungen, im Sol-Report als eine Zeile sichtbar. Geologische Instabilität bleibt Einzelgebäude-Scope (fest auf Harvester). Owner-Fund: Sturm-Warnung/Auflösung wirkte unsimuliert, weil das Ergebnis nie im Sol-Report auftauchte.
+- Balance-TODO: `game.encounter.storm.*`-Werte in `config/game.php` sind auf Einzelgebäude-Treffer kalibriert und brauchen nach dem Scope-Wechsel eine Neujustierung (Gesamtschaden multipliziert sich sonst mit Gebäudeanzahl).
+
 ## 2026-09-02
 
 - Fix: PicoCSS-Spezifitätsbug behoben — alle `.detail-*`-Selektoren in `techtree-view.css` mit `.tech-panel` prefixed, da Pico's globale `aside li`/`aside ul`-Regeln das gemergte Redesign (PR #305) trotz korrekt geladenem CSS unsichtbar gemacht hatten.
