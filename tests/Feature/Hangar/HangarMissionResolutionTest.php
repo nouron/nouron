@@ -29,6 +29,7 @@ use App\Services\HarvesterEntitlementService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -49,6 +50,13 @@ class HangarMissionResolutionTest extends TestCase
         parent::setUp();
         $this->app->make(TestSeeder::class)->run();
 
+        // Neutralize the new success-roll for pre-existing reward tests below —
+        // they assert reward payout, not RNG luck. Tests that specifically cover
+        // success/failure override this locally with an explicit Config::set().
+        Config::set('game.missions.difficulty.base_chance', [
+            'leicht' => 1.0, 'normal' => 1.0, 'schwer' => 1.0,
+        ]);
+
         // Free the bay from TestSeeder's pre-populated fixture ships (a real bay
         // only ever holds one) so each test controls exactly one dispatched ship.
         DB::table('colony_ships')
@@ -68,7 +76,8 @@ class HangarMissionResolutionTest extends TestCase
         int $solDistance,
         int $dispatchTick,
         float $statusPoints = 20.0,
-        ?array $target = null
+        ?array $target = null,
+        string $difficulty = 'normal'
     ): int {
         DB::table('colony_ships')->updateOrInsert(
             ['colony_id' => self::COLONY_ID, 'ship_id' => self::SHIP_DRONE],
@@ -88,6 +97,7 @@ class HangarMissionResolutionTest extends TestCase
             'destination' => $missionKey,
             'sol_distance' => $solDistance,
             'target' => $target !== null ? json_encode($target) : null,
+            'difficulty' => $difficulty,
             'dispatch_tick' => $dispatchTick,
             'recall_tick' => null,
             'state' => 'active',
@@ -316,5 +326,77 @@ class HangarMissionResolutionTest extends TestCase
         $this->assertSame($first, $second, 'same seed must roll the same value');
         $this->assertGreaterThanOrEqual(20, $first);
         $this->assertLessThanOrEqual(30, $first);
+    }
+
+    // ── Success chance / difficulty (Spec: docs/superpowers/specs/2026-09-02-hangar-mission-success-chance-design.md) ──
+
+    public function test_success_rolls_pay_the_scaled_reward(): void
+    {
+        // base_chance forced to 1.0 in setUp() — success guaranteed regardless of seed.
+        // reward_multiplier['schwer'] = 1.4 (config/game.php) → 90 * 1.4 = 126.
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21000, difficulty: 'schwer');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21002]);
+
+        $this->assertSame('completed', $this->missionState($missionId));
+        $log = DB::table('colony_log')
+            ->where('user', self::USER_ID)->where('tick', 21002)->where('event', 'hangar.mission_completed')
+            ->first();
+        $this->assertNotNull($log);
+        $params = json_decode($log->parameters, true);
+        $this->assertSame(126, $params['rewards']['credits'], 'schwer multiplies the base 90 credits by 1.4');
+    }
+
+    public function test_failed_roll_pays_no_reward_and_fires_mission_failed_event(): void
+    {
+        DB::table('runs')->where('id', 1)->update(['rng_seed' => 999]);
+        Config::set('game.missions.difficulty.base_chance', [
+            'leicht' => 0.0, 'normal' => 0.0, 'schwer' => 0.0,
+        ]);
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21100, difficulty: 'normal');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21102]);
+
+        $this->assertSame('completed', $this->missionState($missionId), 'a failed roll is still a completed mission outcome, not aborted');
+        $this->assertSame('docked', $this->shipState());
+        $this->assertDatabaseMissing('colony_log', [
+            'user' => self::USER_ID, 'tick' => 21102, 'event' => 'hangar.mission_completed',
+        ]);
+        $log = DB::table('colony_log')
+            ->where('user', self::USER_ID)->where('tick', 21102)->where('event', 'hangar.mission_failed')
+            ->first();
+        $this->assertNotNull($log);
+        $params = json_decode($log->parameters, true);
+        $this->assertSame('mission_courier_run', $params['mission_key']);
+        $this->assertSame('normal', $params['difficulty']);
+    }
+
+    public function test_hard_fail_on_schwer_applies_extra_wear_on_top_of_normal_wear(): void
+    {
+        Config::set('game.missions.difficulty.base_chance', [
+            'leicht' => 0.0, 'normal' => 0.0, 'schwer' => 0.0,
+        ]);
+        // drone wear_per_sol = 1.5 (config/ships.php), hard_fail_extra_wear = 1.0 (config/game.php).
+        // 20.0 - 1.5 (normal wear, applied every tick) - 1.0 (hard fail extra) = 17.5.
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21200, statusPoints: 20.0, difficulty: 'schwer');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21202]);
+
+        $this->assertEqualsWithDelta(17.5, $this->shipStatusPoints(), 0.001);
+        $this->assertSame('completed', $this->missionState($missionId));
+    }
+
+    public function test_hard_fail_extra_wear_does_not_drop_ship_below_zero_sp(): void
+    {
+        Config::set('game.missions.difficulty.base_chance', [
+            'leicht' => 0.0, 'normal' => 0.0, 'schwer' => 0.0,
+        ]);
+        // 1.6 SP - 1.5 normal wear = 0.1, stays above zero (no abort), then -1.0 hard-fail must floor at 0, not go negative.
+        $missionId = $this->dispatchFixture('mission_courier_run', 1, dispatchTick: 21300, statusPoints: 1.6, difficulty: 'schwer');
+
+        Artisan::call('game:tick', ['--run' => 1, '--tick' => 21302]);
+
+        $this->assertSame(0.0, $this->shipStatusPoints());
+        $this->assertSame('completed', $this->missionState($missionId), 'hard-fail wear floor must not retroactively trigger an abort');
     }
 }
