@@ -124,6 +124,10 @@ class HangarServiceTest extends TestCase
 
     public function test_mission_catalog_includes_difficulty_options_with_chance_and_multiplier(): void
     {
+        // Test env defaults to locale 'en' (no APP_LOCALE in .env.testing); this
+        // assertion checks the German label, so scope the locale to this test only.
+        $this->app->setLocale('de');
+
         $service = $this->app->make(HangarService::class);
 
         $entries = $service->getMissionCatalogFor(self::COLONY_ID);
