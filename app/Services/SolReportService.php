@@ -301,6 +301,34 @@ class SolReportService
             ];
         }
 
+        // Sturm (GDD §9, colony-wide scope, Owner-Entscheidung 2026-09-03): ONE
+        // aggregated line per storm, summarizing the tier distribution over all
+        // affected buildings — not one line per building.
+        foreach ($events['encounter.storm_resolved'] ?? [] as $params) {
+            $counts = $params['counts'] ?? [];
+            $abgewehrt = (int) ($counts['abgewehrt'] ?? 0);
+            $beschaedigt = (int) ($counts['beschaedigt'] ?? 0);
+            $kritisch = (int) ($counts['kritisch'] ?? 0);
+
+            $tone = 'good';
+            if ($kritisch > 0) {
+                $tone = 'danger';
+            } elseif ($beschaedigt > 0) {
+                $tone = 'warning';
+            }
+
+            $lines[] = [
+                'label' => __('colony.sol_report_event_storm'),
+                'detail' => __('colony.sol_report_storm_detail', [
+                    'abgewehrt' => $abgewehrt,
+                    'beschaedigt' => $beschaedigt,
+                    'kritisch' => $kritisch,
+                ]),
+                'tone' => $tone,
+                'beat' => $kritisch > 0,
+            ];
+        }
+
         if (empty($lines)) {
             return null;
         }

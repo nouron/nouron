@@ -1235,25 +1235,10 @@ class GameTick extends Command
             return 0;
         }
 
-        // Target: 1 random non-Harvester building of the colony zone (deterministic pick).
-        //
-        // Deliberately NOT filtered on whereNotNull('tile_x'): CommandCenter (25) is
-        // "anchored" — always tile_x=NULL by design (it doesn't occupy a hex tile,
-        // see OnboardingHintService's CC comments) — yet it is a legitimate,
-        // fully-built storm target, and IS the sole eligible target in the existing
-        // fixture-driven tests. A tile_x filter would wrongly exclude it. Any
-        // *tile-placed* building still requires level>0, which in practice means
-        // "actually built", so a level>0/tile_x=NULL combination among placeable
-        // (is_instanced) buildings is not expected to occur in seeded data.
-        $targets = DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)
-            ->where('level', '>', 0)
-            ->where('building_id', '!=', BuildingId::Harvester->value)
-            ->orderBy('building_id')->orderBy('instance_id')
-            ->get(['building_id', 'instance_id']);
-        $targetIdx = $this->seededRoll($seed + 1, 0, $targets->count() - 1);
-        $target = $targets[$targetIdx];
-
+        // Sturm is colony-wide (GDD §9, Owner-Entscheidung 2026-09-03): it hits
+        // ALL eligible (level>0, non-Harvester) Colony-Zone buildings at once, so
+        // the warning carries no single target — resolveStormWarning() picks the
+        // affected set itself, using CURRENT status_points at resolution time.
         $this->fireEncounterOnboardingHint($colony, $tick);
 
         $this->eventService->createEvent([
@@ -1263,14 +1248,22 @@ class GameTick extends Command
             'area' => 'encounter',
             'parameters' => json_encode([
                 'colony_id' => $colony->id,
-                'building_id' => $target->building_id,
-                'instance_id' => $target->instance_id,
             ]),
         ]);
 
         return 1;
     }
 
+    /**
+     * Resolves a colony-wide storm warning (GDD §9, Owner-Entscheidung
+     * 2026-09-03): EVERY eligible (level>0, non-Harvester) Colony-Zone building
+     * gets its OWN SP-based outcome tier from EncounterService::resolveOutcome()
+     * (independent rolls, no shared tier) — but the colony's Trust reacts only
+     * ONCE per storm, using the worst tier among the affected buildings
+     * (kritisch > beschaedigt > abgewehrt), and a single aggregated
+     * `encounter.storm_resolved` colony_log entry is written instead of one row
+     * per building.
+     */
     private function resolveStormWarning(Colony $colony, int $tick, EncounterService $service, array $securityHubColonies): int
     {
         $warning = DB::table('colony_log')
@@ -1283,45 +1276,66 @@ class GameTick extends Command
             return 0;
         }
 
-        $params = json_decode($warning->parameters, true);
-        $cb = DB::table('colony_buildings')
+        $targets = DB::table('colony_buildings')
             ->where('colony_id', $colony->id)
-            ->where('building_id', $params['building_id'])
-            ->where('instance_id', $params['instance_id'])
-            ->first();
+            ->where('level', '>', 0)
+            ->where('building_id', '!=', BuildingId::Harvester->value)
+            ->orderBy('building_id')->orderBy('instance_id')
+            ->get();
 
-        if (! $cb || $cb->level <= 0) {
-            return 0;   // building was demolished/relocated between warning and resolution
+        if ($targets->isEmpty()) {
+            return 0;   // every eligible building was demolished/relocated between warning and resolution
         }
 
-        $maxSP = (int) DB::table('buildings')->where('id', $cb->building_id)->value('max_status_points') ?: 20;
+        $maxSPById = DB::table('buildings')->pluck('max_status_points', 'id');
         $hubActive = isset($securityHubColonies[$colony->id]);
-        $outcome = $service->resolveOutcome((int) $cb->status_points, $maxSP, $hubActive);
 
-        DB::table('colony_buildings')
-            ->where('colony_id', $colony->id)->where('building_id', $cb->building_id)->where('instance_id', $cb->instance_id)
-            ->update(['status_points' => $outcome['sp_after']]);
+        // Worst-tier precedence for the single colony-wide trust event.
+        $tierRank = ['abgewehrt' => 0, 'beschaedigt' => 1, 'kritisch' => 2];
+        $counts = ['abgewehrt' => 0, 'beschaedigt' => 0, 'kritisch' => 0];
+        $worstTier = 'abgewehrt';
+        $worstTrustEvent = 'encounter_won';
 
-        $this->trustService->fireEvent($colony->id, $outcome['trust_event'], $tick);
+        $maxSPMap = null;
+        $buildingNames = null;
+        $buildCostMap = null;
 
-        if ($outcome['forces_level_down']) {
-            $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id')->all();
-            $buildingNames = DB::table('buildings')->pluck('name', 'id')->all();
-            $buildCostMap = DB::table('building_costs')->whereIn('resource_id', [3, 4, 5])
-                ->get()->groupBy('building_id')->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())->all();
-            $this->applyLevelDown($cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
+        foreach ($targets as $cb) {
+            $maxSP = (int) ($maxSPById[$cb->building_id] ?? 20) ?: 20;
+            $outcome = $service->resolveOutcome((int) $cb->status_points, $maxSP, $hubActive);
+
+            DB::table('colony_buildings')
+                ->where('colony_id', $colony->id)->where('building_id', $cb->building_id)->where('instance_id', $cb->instance_id)
+                ->update(['status_points' => $outcome['sp_after']]);
+
+            $counts[$outcome['tier']]++;
+            if ($tierRank[$outcome['tier']] > $tierRank[$worstTier]) {
+                $worstTier = $outcome['tier'];
+                $worstTrustEvent = $outcome['trust_event'];
+            }
+
+            if ($outcome['forces_level_down']) {
+                if ($maxSPMap === null) {
+                    $maxSPMap = DB::table('buildings')->pluck('max_status_points', 'id')->all();
+                    $buildingNames = DB::table('buildings')->pluck('name', 'id')->all();
+                    $buildCostMap = DB::table('building_costs')->whereIn('resource_id', [3, 4, 5])
+                        ->get()->groupBy('building_id')->map(fn ($rows) => $rows->pluck('amount', 'resource_id')->all())->all();
+                }
+                $this->applyLevelDown($cb, $tick, $maxSPMap, $buildingNames, $securityHubColonies, $buildCostMap);
+            }
         }
+
+        $this->trustService->fireEvent($colony->id, $worstTrustEvent, $tick);
 
         $this->eventService->createEvent([
             'user' => $colony->user_id ?? 0,
             'tick' => $tick,
-            'event' => 'encounter.storm_'.$outcome['tier'],
+            'event' => 'encounter.storm_resolved',
             'area' => 'encounter',
             'parameters' => json_encode([
                 'colony_id' => $colony->id,
-                'building_id' => $cb->building_id,
-                'instance_id' => $cb->instance_id,
-                'tier' => $outcome['tier'],
+                'counts' => $counts,
+                'trust_event' => $worstTrustEvent,
             ]),
         ]);
 

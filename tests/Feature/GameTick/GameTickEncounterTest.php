@@ -144,6 +144,15 @@ class GameTickEncounterTest extends TestCase
             ->whereIn('building_id', [31, 44])
             ->update(['level' => 0]);
 
+        // Ordinary per-tick building decay (processBuildingDecay(), step 3 of the
+        // pipeline) runs independently of, and BEFORE, storm resolution on every
+        // tick — including the warning tick. Zero it for the three buildings this
+        // fixture pins to exact SP ratios, so the storm-specific assertions below
+        // aren't polluted by unrelated decay drift over the two ticks used here.
+        DB::table('buildings')
+            ->whereIn('id', [self::CC_ID, 28, 46, 27])
+            ->update(['decay_rate' => 0]);
+
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)->where('building_id', self::CC_ID)
             ->update(['level' => 3, 'status_points' => 20]);

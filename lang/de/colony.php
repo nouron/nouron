@@ -325,6 +325,8 @@ return [
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Kolonisten-Zulage',
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
+    'sol_report_event_storm' => 'Sturm über der Kolonie',
+    'sol_report_storm_detail' => ':abgewehrt abgewehrt, :beschaedigt beschädigt, :kritisch kritisch',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
