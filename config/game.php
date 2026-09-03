@@ -289,9 +289,21 @@ return [
         'phase1_ramp_sols' => 15,
 
         'storm' => [
-            'base_chance' => 0.02,
-            'chance_per_building' => 0.01,   // additive per colony_zone building (excl. Harvester)
-            'chance_cap' => 0.10,
+            // Re-calibrated 2026-09-03 (Owner-Entscheidung, Sturm-Scope-Wechsel zu
+            // koloniweit): a triggered storm now hits EVERY eligible colony_zone
+            // building at once (GameTick::resolveStormWarning()) instead of just
+            // one, so total per-storm severity already scales with building count
+            // on its own. Keeping `chance_per_building` on top double-scaled the
+            // same colony-size signal into BOTH trigger frequency AND per-trigger
+            // damage. `chance_per_building` removed (was 0.01); `base_chance`
+            // lowered so expected building-hits/Sol for a typical 5-12-building
+            // mid/late colony stays roughly in line with the old capped
+            // single-target rate (0.10 chance x 1 building) instead of ballooning
+            // with N. Platzhalter-Größenordnung, Nachjustierung nach Playtest
+            // (siehe GDD §9 BALANCE CONCERN / §18 Regolith-Reserve-Nachtrag).
+            'base_chance' => 0.012,
+            'chance_per_building' => 0.0,
+            'chance_cap' => 0.02,
         ],
         'instability' => [
             'chance_per_sol_since_relocation' => 0.0015,
