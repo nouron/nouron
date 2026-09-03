@@ -972,6 +972,42 @@ details[open] .hangar-pending-summary::before {
     color: #1a1a2e;
 }
 
+.hangar-mission-difficulty {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.15rem;
+}
+
+.hangar-difficulty-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: #f4f4f4;
+    color: #666;
+    border: 1px solid #e4e4ef;
+    cursor: pointer;
+    transition:
+        border-color 0.15s,
+        background 0.15s,
+        color 0.15s;
+}
+
+.hangar-difficulty-chip:hover {
+    border-color: #3b5ac6;
+    background: #f4f6ff;
+}
+
+.hangar-difficulty-chip--selected {
+    border-color: #3b5ac6;
+    background: #3b5ac6;
+    color: #fff;
+}
+
 .hangar-mission-card-footer {
     display: flex;
     justify-content: space-between;

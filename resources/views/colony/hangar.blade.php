@@ -509,6 +509,23 @@
                                 </label>
                             </template>
 
+                            {{-- Difficulty picker — only for the selected mission --}}
+                            <template x-if="missionModal.selectedKey === mission.key">
+                                <div class="hangar-mission-difficulty" @click.stop>
+                                    <template x-for="option in mission.difficulty_options" :key="option.key">
+                                        <button type="button" class="hangar-difficulty-chip"
+                                            :class="{
+                                                'hangar-difficulty-chip--selected': missionModal.selectedDifficulty ===
+                                                    option.key
+                                            }"
+                                            @click="selectDifficulty(option.key)">
+                                            <span x-text="option.label"></span>
+                                            <span x-text="option.chance_pct + '%'"></span>
+                                        </button>
+                                    </template>
+                                </div>
+                            </template>
+
                             <div class="hangar-mission-card-footer">
                                 <template x-if="mission.availability === 'missing_knowledge' && mission.gate">
                                     <span class="hangar-mission-gate-hint"
