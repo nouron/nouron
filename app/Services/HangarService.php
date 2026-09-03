@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\BuildingId;
+use App\Models\Advisor;
 use App\Models\Colony;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -374,6 +375,32 @@ class HangarService
                     'ship_state' => 'docked',
                 ]);
         });
+    }
+
+    /**
+     * Success chance for a catalog mission at a given difficulty (Spec: docs/
+     * superpowers/specs/2026-09-02-hangar-mission-success-chance-design.md).
+     * base_chance[$difficulty] + generic Pilot-Rang bonus + missionsspezifischer
+     * Kenntnis-Bonus (nur falls die Mission ein requires.knowledge-Gate hat,
+     * pro Level über dem Gate), gecappt bei chance_cap.
+     */
+    public function successChanceFor(int $colonyId, array $mission, string $difficulty): float
+    {
+        $base = (float) config("game.missions.difficulty.base_chance.{$difficulty}", 0.70);
+
+        $pilotRank = (int) (Advisor::where('colony_id', $colonyId)
+            ->where('personell_id', config('advisors.pilot.id'))
+            ->value('rank') ?? 0);
+        $chance = $base + $pilotRank * (float) config('game.missions.difficulty.pilot_rank_bonus_pct', 0.05);
+
+        $gate = $mission['requires']['knowledge'] ?? null;
+        if ($gate !== null) {
+            [$knowledgeKey, $requiredLevel] = [array_key_first($gate), reset($gate)];
+            $levelsAbove = max(0, $this->knowledgeLevel($colonyId, $knowledgeKey) - $requiredLevel);
+            $chance += $levelsAbove * (float) config('game.missions.difficulty.knowledge_bonus_pct_per_level', 0.03);
+        }
+
+        return min((float) config('game.missions.difficulty.chance_cap', 0.95), $chance);
     }
 
     /**
