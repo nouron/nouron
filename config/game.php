@@ -678,4 +678,23 @@ return [
         // engaged with the mechanic already and do not need further nudging.
         'hint_explore_max_explored_tiles' => 6,
     ],
+
+    // Hangar mission difficulty and success-chance mechanics (GDD §18, ADR 0004).
+    // Platzhalter-Großenordnung — Nachjustierung nach Playtest.
+    'missions' => [
+        'difficulty' => [
+            // Base success chance per mission difficulty level.
+            'base_chance' => ['leicht' => 0.85, 'normal' => 0.70, 'schwer' => 0.60],
+            // Reward multiplier (Credits, AP, Knowledge) per mission difficulty level.
+            'reward_multiplier' => ['leicht' => 0.7, 'normal' => 1.0, 'schwer' => 1.4],
+            // Per pilot rank (1-3), additive success chance bonus.
+            'pilot_rank_bonus_pct' => 0.05,
+            // Per knowledge level above the mission's gate, additive success chance bonus.
+            'knowledge_bonus_pct_per_level' => 0.03,
+            // Hard cap on final success chance after all bonuses applied.
+            'chance_cap' => 0.95,
+            // Extra Ship Status Point wear (SP cost) on hard-fail outcome for 'schwer' difficulty.
+            'hard_fail_extra_wear' => 1.0,
+        ],
+    ],
 ];
