@@ -20,6 +20,7 @@ class EncounterNoticeService
 {
     private const EVENT_KEYS = [
         'encounter.storm_warning',
+        'encounter.storm_resolved',
         'encounter.storm_abgewehrt',
         'encounter.storm_beschaedigt',
         'encounter.storm_kritisch',
@@ -57,7 +58,12 @@ class EncounterNoticeService
     private function textFor(string $event, array $params): string
     {
         return match ($event) {
-            'encounter.storm_warning' => __('colony.encounter_notice_storm_warning', ['building' => $this->buildingLabel($params)]),
+            'encounter.storm_warning' => __('colony.encounter_notice_storm_warning'),
+            'encounter.storm_resolved' => __('colony.encounter_notice_storm_resolved', [
+                'abgewehrt' => (int) ($params['counts']['abgewehrt'] ?? 0),
+                'beschaedigt' => (int) ($params['counts']['beschaedigt'] ?? 0),
+                'kritisch' => (int) ($params['counts']['kritisch'] ?? 0),
+            ]),
             'encounter.storm_abgewehrt' => __('colony.encounter_notice_storm_abgewehrt', ['building' => $this->buildingLabel($params)]),
             'encounter.storm_beschaedigt' => __('colony.encounter_notice_storm_beschaedigt', ['building' => $this->buildingLabel($params)]),
             'encounter.storm_kritisch' => __('colony.encounter_notice_storm_kritisch', ['building' => $this->buildingLabel($params)]),
