@@ -241,6 +241,114 @@ class SolReportTest extends TestCase
         $this->assertStringContainsString(__('advisors.engineer'), $line['detail']);
     }
 
+    // ── Storm outcome (GDD §9, colony-wide scope, Owner-Entscheidung 2026-09-03) ──
+
+    /**
+     * Umsetzungslücke (GDD §9, 2026-09-03): eventsGroup() does not read
+     * `encounter.*` colony_log events at all today, so a correctly-computed
+     * storm outcome never reaches the Sol-Report. Under the new colony-wide
+     * model, GameTick is expected to write ONE aggregated `encounter.storm_resolved`
+     * colony_log entry per storm (contract: parameters `colony_id`, `counts`
+     * (abgewehrt/beschaedigt/kritisch), `trust_event`) — this must produce
+     * exactly ONE line in the events group, not one line per affected building.
+     */
+    public function test_storm_resolution_shows_one_aggregated_line_in_events_group(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.storm_resolved',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'counts' => ['abgewehrt' => 2, 'beschaedigt' => 1, 'kritisch' => 1],
+                'trust_event' => 'colony_threatened',
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when a storm resolved');
+
+        $stormLines = collect($events['lines'])->filter(fn ($l) => $l['label'] === __('colony.sol_report_event_storm'));
+        $this->assertCount(1, $stormLines, 'Expected exactly one aggregated storm line, not one per affected building');
+
+        $line = $stormLines->first();
+        $this->assertSame(
+            __('colony.sol_report_storm_detail', ['abgewehrt' => 2, 'beschaedigt' => 1, 'kritisch' => 1]),
+            $line['detail'],
+            'the detail line must summarize the tier distribution ("X abgewehrt, Y beschädigt, Z kritisch"), keyed via lang keys not hardcoded German'
+        );
+        $this->assertSame('danger', $line['tone'], 'a kritisch tier present among the affected buildings must show as danger tone');
+    }
+
+    /**
+     * Tone must reflect the worst tier actually present, matching the same
+     * worst-tier logic GameTick uses for the trust event — not e.g. always
+     * "warning" or a tone derived only from the first count key.
+     */
+    public function test_storm_resolution_tone_is_warning_when_worst_tier_is_beschaedigt(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.storm_resolved',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'counts' => ['abgewehrt' => 3, 'beschaedigt' => 1, 'kritisch' => 0],
+                'trust_event' => 'encounter_lost',
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when a storm resolved');
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_storm'));
+
+        $this->assertNotNull($line);
+        $this->assertSame('warning', $line['tone']);
+    }
+
+    public function test_storm_resolution_tone_is_good_when_all_buildings_are_abgewehrt(): void
+    {
+        $run = $this->setRunTick(7);
+        $before = $this->snapshot($run);
+
+        DB::table('colony_log')->insert([
+            'user' => self::BART_ID,
+            'tick' => 7,
+            'event' => 'encounter.storm_resolved',
+            'area' => 'encounter',
+            'parameters' => json_encode([
+                'colony_id' => self::COLONY_ID,
+                'counts' => ['abgewehrt' => 4, 'beschaedigt' => 0, 'kritisch' => 0],
+                'trust_event' => 'encounter_won',
+            ]),
+            'created_at' => now(),
+            'is_read' => 1,
+        ]);
+
+        $report = $this->service()->buildReport($run, $before, false);
+        $events = $this->groupByKey($report, 'events');
+        $this->assertNotNull($events, 'Expected an events group when a storm resolved');
+        $line = collect($events['lines'])->first(fn ($l) => $l['label'] === __('colony.sol_report_event_storm'));
+
+        $this->assertNotNull($line);
+        $this->assertSame('good', $line['tone']);
+    }
+
     public function test_wear_without_level_down_shows_single_neutral_line(): void
     {
         $run = $this->setRunTick(3);
