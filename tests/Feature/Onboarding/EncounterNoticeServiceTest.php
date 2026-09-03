@@ -69,6 +69,50 @@ class EncounterNoticeServiceTest extends TestCase
         );
     }
 
+    // Regression (colony-wide storm scope, 2026-09-03): the storm event
+    // payload no longer carries building_id (colony.storm_warning now
+    // targets all zone buildings at once, not a single instance) — the
+    // notice text must not reference a building at all anymore.
+    public function test_storm_warning_produces_a_notice_without_a_building_reference(): void
+    {
+        $this->insertEncounterLog('encounter.storm_warning', [
+            'colony_id' => self::COLONY_ID,
+        ]);
+
+        $notices = $this->service->activeNotices(self::COLONY_ID, self::CURRENT_TICK);
+
+        $this->assertCount(1, $notices);
+        $this->assertSame('encounter.storm_warning', $notices[0]['event']);
+        $this->assertSame(__('colony.encounter_notice_storm_warning'), $notices[0]['text']);
+        $this->assertStringNotContainsString('?', $notices[0]['text']);
+    }
+
+    // Regression: encounter.storm_resolved replaced the old per-building
+    // storm_abgewehrt/_beschaedigt/_kritisch events but was never added to
+    // EVENT_KEYS/textFor() — the danger banner for storm resolution never
+    // fires at all right now.
+    public function test_storm_resolved_produces_a_notice_with_aggregated_counts(): void
+    {
+        $this->insertEncounterLog('encounter.storm_resolved', [
+            'colony_id' => self::COLONY_ID,
+            'counts' => ['abgewehrt' => 2, 'beschaedigt' => 1, 'kritisch' => 0],
+            'trust_event' => 'colony_threatened',
+        ]);
+
+        $notices = $this->service->activeNotices(self::COLONY_ID, self::CURRENT_TICK);
+
+        $this->assertCount(1, $notices);
+        $this->assertSame('encounter.storm_resolved', $notices[0]['event']);
+        $this->assertSame(
+            __('colony.encounter_notice_storm_resolved', [
+                'abgewehrt' => 2,
+                'beschaedigt' => 1,
+                'kritisch' => 0,
+            ]),
+            $notices[0]['text']
+        );
+    }
+
     public function test_storm_kritisch_produces_a_notice(): void
     {
         $this->insertEncounterLog('encounter.storm_kritisch', [

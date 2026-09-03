@@ -345,6 +345,46 @@ class CommLogControllerTest extends TestCase
         $this->assertNotEmpty($entries->first()['segments']);
     }
 
+    // Regression (colony-wide storm scope, 2026-09-03): encounter.storm_warning
+    // no longer carries a building_id parameter (the storm now targets every
+    // zone building at once) — descStormWarning() must not render a broken
+    // "?" entity chip and must use the new colony-wide lang key.
+    public function test_storm_warning_colony_wide_description(): void
+    {
+        $this->log('encounter.storm_warning', ['colony_id' => 1], area: 'encounter');
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $segments = $entries->first()['segments'];
+
+        $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
+        $this->assertSame(__('comm_log.desc.storm_warning_colony'), $segments[0]['value']);
+        foreach ($segments as $segment) {
+            $this->assertNotSame('?', $segment['label'] ?? null, 'must not render a broken entity chip');
+        }
+    }
+
+    // Regression: encounter.storm_resolved replaced the old per-building
+    // storm_abgewehrt/_beschaedigt/_kritisch events but buildDescription()
+    // has no case for it at all — it currently falls through to the
+    // `default => []` branch, so the Protokoll entry shows no detail text.
+    public function test_storm_resolved_description(): void
+    {
+        $this->log('encounter.storm_resolved', [
+            'colony_id' => 1,
+            'counts' => ['abgewehrt' => 2, 'beschaedigt' => 1, 'kritisch' => 0],
+            'trust_event' => 'colony_threatened',
+        ], area: 'encounter');
+
+        $entries = $this->actingAs($this->user())->get(route('comm.log'))->viewData('entries');
+        $segments = $entries->first()['segments'];
+
+        $this->assertNotEmpty($segments, 'must not fall back to the raw event key');
+        $this->assertSame(
+            __('comm_log.desc.storm_resolved', ['abgewehrt' => 2, 'beschaedigt' => 1, 'kritisch' => 0]),
+            $segments[0]['value']
+        );
+    }
+
     public function test_unmapped_event_yields_empty_segments(): void
     {
         $this->log('some.unmapped_event', ['foo' => 'bar']);
