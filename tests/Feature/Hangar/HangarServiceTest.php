@@ -121,4 +121,19 @@ class HangarServiceTest extends TestCase
             ->where('destination', 'mission_escort_convoy')->where('state', 'active')
             ->value('difficulty'));
     }
+
+    public function test_mission_catalog_includes_difficulty_options_with_chance_and_multiplier(): void
+    {
+        $service = $this->app->make(HangarService::class);
+
+        $entries = $service->getMissionCatalogFor(self::COLONY_ID);
+        $courierRun = collect($entries)->firstWhere('key', 'mission_courier_run');
+
+        $this->assertNotNull($courierRun['difficulty_options']);
+        $this->assertCount(2, $courierRun['difficulty_options'], 'mission_courier_run offers leicht + normal');
+        $leicht = collect($courierRun['difficulty_options'])->firstWhere('key', 'leicht');
+        $this->assertSame('Leicht', $leicht['label']);
+        $this->assertSame(85, $leicht['chance_pct'], 'base_chance 0.85, no bonuses => 85%');
+        $this->assertSame(0.7, $leicht['reward_multiplier']);
+    }
 }

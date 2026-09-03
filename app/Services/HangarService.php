@@ -695,6 +695,16 @@ class HangarService
                 $wear[$shipKey] = round((float) ($shipsConfig[$shipKey]['wear_per_sol'] ?? 1.0) * 2 * $dist, 2);
             }
 
+            $difficultyOptions = [];
+            foreach ($mission['difficulties'] ?? [] as $difficultyKey) {
+                $difficultyOptions[] = [
+                    'key' => $difficultyKey,
+                    'label' => __("missions.difficulty_{$difficultyKey}"),
+                    'chance_pct' => (int) round($this->successChanceFor($colonyId, $mission, $difficultyKey) * 100),
+                    'reward_multiplier' => (float) config("game.missions.difficulty.reward_multiplier.{$difficultyKey}", 1.0),
+                ];
+            }
+
             $entries[] = [
                 'key' => $key,
                 'name' => __("missions.{$key}_name"),
@@ -712,6 +722,7 @@ class HangarService
                 'gate' => $gateInfo,
                 'target_type' => $targetType,
                 'targets' => $targets,
+                'difficulty_options' => $difficultyOptions,
             ];
         }
 
