@@ -200,7 +200,8 @@ class CommLogController extends BaseController
             'trade.bar_accepted' => $this->descBarAccepted($params),
             'trade.merchant_purchase' => [$this->seg(__('comm_log.desc.merchant_purchase'))],
             'merchant.visit' => [$this->seg(__('comm_log.desc.merchant_visit'))],
-            'encounter.storm_warning' => $this->descStormWarning($params),
+            'encounter.storm_warning' => $this->descStormWarning(),
+            'encounter.storm_resolved' => $this->descStormResolved($params),
             'encounter.storm_abgewehrt' => $this->descStormOutcome($params, 'abgewehrt'),
             'encounter.storm_beschaedigt' => $this->descStormOutcome($params, 'beschaedigt'),
             'encounter.storm_kritisch' => $this->descStormOutcome($params, 'kritisch'),
@@ -436,21 +437,21 @@ class CommLogController extends BaseController
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function descStormWarning(array $params): array
+    private function descStormWarning(): array
     {
-        $id = $params['building_id'] ?? null;
-        $intId = $id !== null ? (int) $id : null;
-        $name = $this->resolveBuildingName($intId, null);
-        $bKey = $intId !== null ? ($this->getBuildingNameMap()[$intId] ?? (string) $intId) : '?';
+        return [$this->seg(__('comm_log.desc.storm_warning_colony'))];
+    }
 
-        return [
-            $this->seg('Sturmwarnung: '),
-            $this->entitySeg('building', (string) $bKey, $name, [
-                'level' => null,
-                'link' => '/nexus-db',
-            ]),
-            $this->seg(' ist im Vorfeld gefährdet.'),
-        ];
+    /** @return array<int, array<string, mixed>> */
+    private function descStormResolved(array $params): array
+    {
+        $counts = $params['counts'] ?? [];
+
+        return [$this->seg(__('comm_log.desc.storm_resolved', [
+            'abgewehrt' => (int) ($counts['abgewehrt'] ?? 0),
+            'beschaedigt' => (int) ($counts['beschaedigt'] ?? 0),
+            'kritisch' => (int) ($counts['kritisch'] ?? 0),
+        ]))];
     }
 
     /** @return array<int, array<string, mixed>> */

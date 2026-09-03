@@ -303,9 +303,11 @@ Trigger-Chancen ramp linear von 0 bis volle Stärke über erste 15 Sol.
 
 | Begegnung | Typ | Base-Chance | Per-Building | Cap |
 |---|---|---|---|---|
-| **Sturm** (Weather) | 2% | +1% pro Kolonie-Gebäude | 10% |
+| **Sturm** (Weather) | 1.2% | — (entfernt, s. u.) | 2% |
 | **Geologische Instabilität** | 0.15% × Sol seit Harv-Umzug | — | 5% |
 | **Seuchenausbruch** (Plague) | 5% (nur wenn Hunger ≥3 oder Trust<−20) | — | — |
+
+> **Sturm-Re-Kalibrierung 2026-09-03:** Seit dem Wechsel auf koloniweiten Wirkbereich (GDD §9) trifft ein ausgelöster Sturm ALLE Colony-Zone-Gebäude gleichzeitig statt eines einzelnen — die Gesamtschwere skaliert dadurch bereits von selbst mit der Gebäudeanzahl. Ein zusätzlicher `chance_per_building`-Term hätte dasselbe Kolonie-Größen-Signal doppelt eingepreist (Trigger-Häufigkeit UND Schadenssumme). `chance_per_building` wurde daher entfernt und `base_chance` gesenkt, damit die erwartete Schadenssumme/Sol für eine typische Mid-/Lategame-Kolonie (5-12 Gebäude) grob auf dem alten, gedeckelten Einzelziel-Niveau bleibt statt mit der Gebäudeanzahl zu explodieren. Platzhalter-Größenordnung, Nachjustierung nach Playtest — siehe `config/game.php` (`game.encounter.storm.*`) für den Rechenweg-Kommentar.
 
 > **Cooldown**: 3 Sol nach jeder resolved Begegnung, keine neue WARNING
 

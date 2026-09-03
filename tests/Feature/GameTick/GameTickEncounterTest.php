@@ -28,11 +28,22 @@ use Tests\TestCase;
  *
  * Fixture summary (TestSeeder):
  *   Colony 1 (Springfield), user_id=3 (Bart), run #1 rng_seed=NULL → coerced to 0
- *     CC (building_id=25): level=3       — kept as the sole eligible storm target in test 1
+ *     CC (building_id=25): level=3       — reduced to sole eligible building in some tests
  *     harvester (building_id=27): level=1 — always excluded from storm targeting
- *     housing (28), 31, 46, hangar bays (44×2): leveled to 0 in test 1 so CC is the
- *       only non-Harvester building with level>0 (deterministic target pick)
+ *     housing (28), 31, 46, hangar bays (44×2): leveled to 0 in single-building tests so
+ *       CC is the only non-Harvester building with level>0 (deterministic setup)
  *     defense knowledge (research_id=96): level=0 by default
+ *
+ * Wirkbereich (GDD §9, Owner-Entscheidung 2026-09-03): Sturm is colony-wide — it hits
+ * ALL eligible (level>0, non-Harvester) Colony-Zone buildings in the SAME resolution
+ * step, each with its OWN SP-based outcome tier (no shared roll). Trust reacts once
+ * per storm, using the WORST tier among affected buildings (kritisch > beschaedigt >
+ * abgewehrt), not once per building. The per-building `encounter.storm_abgewehrt` /
+ * `_beschaedigt` / `_kritisch` colony_log events from the old single-building model
+ * are replaced by ONE aggregated `encounter.storm_resolved` event carrying tier counts.
+ * See the "── Storm: colony-wide scope ──" section below for the tests that pin this
+ * contract down (as of this file's current state, still failing against the
+ * single-building implementation — see this task's handoff notes).
  *
  * RNG note: GameTick::rollStorm() seeds via
  *   $seed = $rngSeed + $colony->id * 7919 + $tick * 104729
@@ -105,14 +116,22 @@ class GameTickEncounterTest extends TestCase
         })->values();
     }
 
-    // ── Storm warning → resolution ───────────────────────────────────────────
+    // ── Storm: colony-wide scope (GDD §9, Owner-Entscheidung 2026-09-03) ────────
 
     /**
-     * Force the storm roll to succeed (base_chance=1.0) and reduce colony 1 to a
-     * single non-Harvester building (CC) so the target is deterministic without
-     * needing to control the RNG seed precisely.
+     * Sets up colony 1 with exactly three eligible (level>0, non-Harvester)
+     * buildings, each pinned to a different SP ratio so each resolves to a
+     * different outcome tier deterministically (all max_status_points=20 in the
+     * fixture, see game-reference.md):
+     *   CC (25):        level=3, sp=20 → ratio 1.00 → abgewehrt
+     *   housing (28):   level=2, sp=10 → ratio 0.50 → beschaedigt
+     *   infirmary (46): level=3, sp=5  → ratio 0.25 → kritisch (forces level-down)
+     * sciencelab (31) and both hangar bays (44×1/44×2) are leveled to 0 so they
+     * are NOT eligible and do not add a fourth data point. Harvester (27) is left
+     * at its fixture level (1) specifically to prove it is excluded from storm
+     * targeting even though it is eligible by level.
      */
-    public function test_storm_warning_then_resolution_damages_a_building_two_sols_later(): void
+    private function setUpThreeTierStormFixture(): void
     {
         config([
             'game.encounter.storm.base_chance' => 1.0,
@@ -122,14 +141,42 @@ class GameTickEncounterTest extends TestCase
 
         DB::table('colony_buildings')
             ->where('colony_id', self::COLONY_ID)
-            ->whereNotIn('building_id', [self::CC_ID, 27]) // keep CC + Harvester (excluded from targeting)
+            ->whereIn('building_id', [31, 44])
             ->update(['level' => 0]);
+
+        // Ordinary per-tick building decay (processBuildingDecay(), step 3 of the
+        // pipeline) runs independently of, and BEFORE, storm resolution on every
+        // tick — including the warning tick. Zero it for the three buildings this
+        // fixture pins to exact SP ratios, so the storm-specific assertions below
+        // aren't polluted by unrelated decay drift over the two ticks used here.
+        DB::table('buildings')
+            ->whereIn('id', [self::CC_ID, 28, 46, 27])
+            ->update(['decay_rate' => 0]);
+
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', self::CC_ID)
+            ->update(['level' => 3, 'status_points' => 20]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 28)
+            ->update(['level' => 2, 'status_points' => 10]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 46)
+            ->update(['level' => 3, 'status_points' => 5]);
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 27)
+            ->update(['level' => 1, 'status_points' => 20]);
+    }
+
+    /**
+     * The warning no longer references any specific building — a storm targets
+     * the whole colony, so there is nothing building-specific to warn about yet.
+     */
+    public function test_storm_warning_no_longer_references_a_single_building(): void
+    {
+        $this->setUpThreeTierStormFixture();
 
         Artisan::call('game:tick', ['--tick' => 11700]); // Sol N: warning fires
 
-        // Filter by colony_id — with base_chance/chance_cap set globally, other
-        // (NPC) colonies in the fixture roll storms too, so "latest by id" alone
-        // is ambiguous between colonies.
         $warning = $this->rowsForColony(
             $this->colonyLogQuery()->where('event', 'encounter.storm_warning')->where('tick', 11700),
             self::COLONY_ID
@@ -137,21 +184,142 @@ class GameTickEncounterTest extends TestCase
         $this->assertNotNull($warning, 'a storm warning colony_log entry must exist after the roll succeeds');
 
         $params = json_decode($warning->parameters, true);
-        $this->assertEquals(self::CC_ID, $params['building_id'],
-            'With CC as the only eligible non-Harvester building, the storm must target it');
+        $this->assertArrayHasKey('colony_id', $params);
+        $this->assertArrayNotHasKey('building_id', $params, 'Sturm is colony-wide now — the warning must not name a single target building');
+        $this->assertArrayNotHasKey('instance_id', $params);
+    }
 
-        Artisan::call('game:tick', ['--tick' => 11701]); // Sol N+1: resolution fires
+    /**
+     * Each affected building gets its OWN SP-based outcome tier — a storm is not
+     * a single shared roll applied to every building. CC (full SP) is unharmed,
+     * housing (half SP) is damaged, infirmary (low SP) is forced to level down.
+     * The Harvester is excluded from storm targeting entirely, even though it is
+     * eligible by level (it has its own hazard, geological instability).
+     */
+    public function test_storm_resolution_applies_independent_outcome_tier_per_building(): void
+    {
+        $this->setUpThreeTierStormFixture();
 
-        $resolution = $this->rowsForColony(
+        Artisan::call('game:tick', ['--tick' => 11700]); // warning
+        Artisan::call('game:tick', ['--tick' => 11701]); // resolution
+
+        $cc = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', self::CC_ID)->first();
+        $this->assertSame(20, (int) $cc->status_points, 'CC at full SP (ratio 1.0 >= 0.66) must be abgewehrt — unharmed');
+        $this->assertSame(3, (int) $cc->level, 'abgewehrt must not level-down the building');
+
+        $housing = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 28)->first();
+        // damaged_sp_loss_pct=0.20, no securityHub mitigation (not built in the fixture): loss = round(20*0.20) = 4.
+        $this->assertSame(6, (int) $housing->status_points, 'housing at half SP (ratio 0.5, in [0.33,0.66)) must be beschaedigt — loses 20% of max SP');
+        $this->assertSame(2, (int) $housing->level, 'beschaedigt must not level-down the building (SP stays > 0)');
+
+        $infirmary = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 46)->first();
+        $this->assertSame(2, (int) $infirmary->level, 'infirmary at low SP (ratio 0.25 < 0.33) must be kritisch — forced level-down (3 -> 2)');
+        $this->assertSame(20, (int) $infirmary->status_points, 'a forced level-down resets status_points to the (new) max, per applyLevelDown()');
+
+        $harvester = DB::table('colony_buildings')->where('colony_id', self::COLONY_ID)->where('building_id', 27)->first();
+        $this->assertSame(20, (int) $harvester->status_points, 'Harvester must never be a storm target, even though it is eligible by level');
+        $this->assertSame(1, (int) $harvester->level, 'Harvester level must be untouched by a colony-wide storm');
+
+        $levelDownEvents = $this->rowsForColony(
+            DB::table('colony_log')->where('area', 'techtree')->where('event', 'techtree.level_down')->where('tick', 11701),
+            self::COLONY_ID
+        );
+        $this->assertCount(1, $levelDownEvents, 'exactly one building (infirmary) must have been forced to level down');
+    }
+
+    /**
+     * Trust must react ONCE per colony-wide storm, not once per affected
+     * building — otherwise trust loss would scale with colony size for the same
+     * kind of incident. The single trust event uses the WORST tier among the
+     * affected buildings (kritisch present here -> colony_threatened), even
+     * though two of the three buildings resolved better than that.
+     */
+    public function test_storm_fires_exactly_one_trust_event_using_the_worst_tier(): void
+    {
+        $this->setUpThreeTierStormFixture();
+
+        // Ticks chosen so a single-building implementation would pick building
+        // index 1 (housing, beschaedigt) as its lone target (see rollFor()'s
+        // seed formula) — proving this assertion actually exercises the
+        // "worst-among-all" aggregation, not merely re-confirming whichever one
+        // building the old single-target code happens to land on.
+        Artisan::call('game:tick', ['--tick' => 11702]);
+        Artisan::call('game:tick', ['--tick' => 11703]);
+
+        $trustEvents = DB::table('trust_events')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('tick', 11703)
+            ->whereIn('event_type', ['encounter_won', 'encounter_lost', 'colony_threatened'])
+            ->get();
+
+        $this->assertCount(1, $trustEvents, 'a colony-wide storm must fire exactly one trust event, regardless of how many buildings were affected');
+        $this->assertSame('colony_threatened', $trustEvents->first()->event_type, 'with a kritisch tier among the affected buildings, the single trust event must be the worst one (colony_threatened)');
+    }
+
+    /**
+     * Without any kritisch tier, the worst-tier trust event must be
+     * encounter_lost (from beschaedigt), not encounter_won (from the
+     * better-off abgewehrt buildings) and not colony_threatened.
+     */
+    public function test_storm_trust_event_is_encounter_lost_when_worst_tier_is_beschaedigt(): void
+    {
+        $this->setUpThreeTierStormFixture();
+        // Pull the infirmary out of kritisch range so beschaedigt is the worst tier present.
+        DB::table('colony_buildings')
+            ->where('colony_id', self::COLONY_ID)->where('building_id', 46)
+            ->update(['status_points' => 10]); // ratio 0.5 -> beschaedigt
+
+        // Ticks chosen so a single-building implementation would pick building
+        // index 0 (CC, abgewehrt) as its lone target — proving this assertion
+        // exercises the aggregation, not the one building the old code happens
+        // to land on (see the sibling test's comment for the same rationale).
+        Artisan::call('game:tick', ['--tick' => 11701]);
+        Artisan::call('game:tick', ['--tick' => 11702]);
+
+        $trustEvents = DB::table('trust_events')
+            ->where('colony_id', self::COLONY_ID)
+            ->where('tick', 11702)
+            ->whereIn('event_type', ['encounter_won', 'encounter_lost', 'colony_threatened'])
+            ->get();
+
+        $this->assertCount(1, $trustEvents);
+        $this->assertSame('encounter_lost', $trustEvents->first()->event_type);
+    }
+
+    /**
+     * The resolution must write ONE aggregated colony_log entry summarizing the
+     * distribution of tiers over affected buildings (contract: event
+     * `encounter.storm_resolved`, area `encounter`, parameters `colony_id`,
+     * `counts` (abgewehrt/beschaedigt/kritisch), `trust_event`) — not one row
+     * per building using the old per-building event names
+     * (`encounter.storm_abgewehrt` / `_beschaedigt` / `_kritisch`), which must
+     * no longer be written at all now that Sturm is colony-wide.
+     */
+    public function test_storm_resolution_writes_a_single_aggregated_log_entry(): void
+    {
+        $this->setUpThreeTierStormFixture();
+
+        Artisan::call('game:tick', ['--tick' => 11700]);
+        Artisan::call('game:tick', ['--tick' => 11701]);
+
+        $oldStyleEvents = $this->rowsForColony(
             $this->colonyLogQuery()
                 ->whereIn('event', ['encounter.storm_abgewehrt', 'encounter.storm_beschaedigt', 'encounter.storm_kritisch'])
                 ->where('tick', 11701),
             self::COLONY_ID
-        )->sortByDesc('id')->first();
-        $this->assertNotNull($resolution, 'a storm resolution colony_log entry must exist one Sol after the warning');
+        );
+        $this->assertCount(0, $oldStyleEvents, 'the old per-building event names must not be written anymore under the colony-wide model');
 
-        $resParams = json_decode($resolution->parameters, true);
-        $this->assertEquals(self::CC_ID, $resParams['building_id'], 'Resolution must reference the warned building');
+        $resolved = $this->rowsForColony(
+            $this->colonyLogQuery()->where('event', 'encounter.storm_resolved')->where('tick', 11701),
+            self::COLONY_ID
+        );
+        $this->assertCount(1, $resolved, 'exactly one aggregated encounter.storm_resolved entry must exist, not one per affected building');
+
+        $params = json_decode($resolved->first()->parameters, true);
+        $this->assertSame(self::COLONY_ID, $params['colony_id']);
+        $this->assertSame(['abgewehrt' => 1, 'beschaedigt' => 1, 'kritisch' => 1], $params['counts']);
+        $this->assertSame('colony_threatened', $params['trust_event']);
     }
 
     /**

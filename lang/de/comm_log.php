@@ -43,6 +43,10 @@ return [
         'encounter_lost' => 'Begegnung verloren',
         'encounter' => [
             'storm_warning' => 'Sturmwarnung',
+            'storm_resolved' => 'Sturm — Ausgang entschieden',
+            // Alt: einzelgebäude-bezogene Varianten, seit dem koloniweiten
+            // Sturm-Scope (2026-09-03) nicht mehr erreichbar — die Events
+            // werden nicht mehr geschrieben (siehe encounter.storm_resolved).
             'storm_abgewehrt' => 'Sturm abgewehrt',
             'storm_beschaedigt' => 'Sturmschaden',
             'storm_kritisch' => 'Sturm — kritischer Schaden',
@@ -148,6 +152,16 @@ return [
         'colony_renamed' => 'Kolonie umbenannt.',
         'instability_triggered' => 'Geologische Instabilität: Harvester-Ertrag für :sols Sole gestört.',
         'plague_triggered' => 'Seuchenausbruch: Kolonie bedroht, Aktionspunkte vorübergehend reduziert.',
+
+        // Sturm (koloniweiter Scope, Owner-Entscheidung 2026-09-03): die
+        // Warnung nennt kein einzelnes Gebäude mehr, die Auflösung fasst alle
+        // betroffenen Gebäude in einer Zeile zusammen. Aktuell NICHT verdrahtet
+        // — CommLogController::buildDescription() hat noch keinen eigenen Case
+        // für 'encounter.storm_resolved' (fällt derzeit auf den Event-Label-
+        // Fallback zurück) und descStormWarning() liest weiterhin ein
+        // building_id-Parameter, das im koloniweiten Event nicht mehr existiert.
+        'storm_warning_colony' => 'Sturmwarnung: Ein Sturm zieht über die Kolonie auf. Gepflegte Anlagen werden ihm standhalten, vernachlässigte nicht.',
+        'storm_resolved' => 'Sturm vorüber: Der Wartungszustand der Anlagen hat entschieden — :abgewehrt abgewehrt, :beschaedigt beschädigt, :kritisch kritisch.',
     ],
 
     // Area icons (Bootstrap Icons class) — flat, keys are simple strings (no dots)

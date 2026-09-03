@@ -325,6 +325,8 @@ return [
     'sol_report_advisor_hired_detail' => ':name — -:cost Cr',
     'sol_report_stipend' => 'Kolonisten-Zulage',
     'sol_report_stipend_detail' => '-:cost Cr — +:trust Vertrauen',
+    'sol_report_event_storm' => 'Sturm über der Kolonie',
+    'sol_report_storm_detail' => 'Der Wartungszustand der Anlagen hat entschieden: :abgewehrt abgewehrt, :beschaedigt beschädigt, :kritisch kritisch.',
 
     // Produktion
     'sol_report_no_production' => 'Die Förderanlagen stehen still — kein Regolith, kein Fortschritt. Industriegebäude prüfen.',
@@ -374,7 +376,17 @@ return [
     // Encounter-Gefahrenbanner (GDD §9) — eigene, dringlichere Zeile über dem
     // normalen Hint-Vorschlag, Owner-Playtest-Fund 2026-08-31: Sturmwarnung etc.
     // waren zuvor nur im Protokoll sichtbar, leicht zu übersehen.
-    'encounter_notice_storm_warning' => 'Sturmwarnung: :building ist im Vorfeld gefährdet.',
+    //
+    // Sturm ist seit 2026-09-03 koloniweiter Scope (trifft alle Zone-Gebäude
+    // statt eines einzelnen Ziels) — die Warnung nennt daher kein Gebäude mehr,
+    // sondern verweist auf den Wartungszustand als entscheidenden Faktor.
+    'encounter_notice_storm_warning' => 'Sturmwarnung: Ein Sturm zieht über die Kolonie auf. Gepflegte Anlagen werden ihm standhalten, vernachlässigte nicht.',
+    'encounter_notice_storm_resolved' => 'Sturm vorüber: Der Wartungszustand der Anlagen hat entschieden — :abgewehrt abgewehrt, :beschaedigt beschädigt, :kritisch kritisch.',
+
+    // Alt: einzelgebäude-bezogene Varianten, seit dem koloniweiten Sturm-Scope
+    // nicht mehr erreichbar (die zugehörigen colony_log-Events werden nicht
+    // mehr geschrieben, siehe GameTick::resolveStormWarning()). Belassen falls
+    // Cleanup der toten EncounterNoticeService::EVENT_KEYS-Einträge ansteht.
     'encounter_notice_storm_abgewehrt' => 'Sturm bei :building erfolgreich abgewehrt — kein Schaden.',
     'encounter_notice_storm_beschaedigt' => 'Sturmschaden an :building.',
     'encounter_notice_storm_kritisch' => 'Kritischer Sturmschaden an :building — Level gesunken.',

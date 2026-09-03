@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-09-03
+
+- Design/Feat: Encounter-Events Zwei-Scope-Modell (Einzelgebäude vs. koloniweit) entworfen und für Sturm umgesetzt (GDD §9) — Sturm trifft jetzt alle Kolonie-Zone-Gebäude (Harvester ausgeschlossen), jedes mit eigener SP-basierter Outcome-Berechnung; Trust-Event feuert genau einmal pro Sturm (schlechtestes Tier); ein aggregierter `colony_log`-Eintrag statt N Einzelmeldungen, im Sol-Report als eine Zeile sichtbar. Geologische Instabilität bleibt Einzelgebäude-Scope (fest auf Harvester). Owner-Fund: Sturm-Warnung/Auflösung wirkte unsimuliert, weil das Ergebnis nie im Sol-Report auftauchte.
+- Balance: Sturm-Trigger-Chance rekalibriert (`chance_per_building` entfernt, `base_chance` 0.02→0.012, `chance_cap` 0.10→0.02) — Doppelskalierung mit Gebäudeanzahl behoben (Frequenz UND Schaden wuchsen sonst beide mit Koloniegröße). Platzhalter, Nachjustierung nach Playtest; Regolith-Reserve-Herleitung (GDD §18) muss noch gegen koloniweite Stürme neu geprüft werden.
+- Content/Fix: Sturm-Meldungen (Warnung, Sol-Report, Protokoll) erklären jetzt den Kausalzusammenhang (Wartungszustand entscheidet über abgewehrt/beschädigt/kritisch) statt reiner Zahlen. Dabei zwei kaputte Stellen gefixt, die noch das alte `building_id`-Feld erwartet hatten (`EncounterNoticeService`, `CommLogController::descStormWarning()`) — zeigten sonst ein `?` statt Gebäudename bzw. feuerten die Resolution-Meldung gar nicht.
+
 ## 2026-09-02
 
 - Fix: PicoCSS-Spezifitätsbug behoben — alle `.detail-*`-Selektoren in `techtree-view.css` mit `.tech-panel` prefixed, da Pico's globale `aside li`/`aside ul`-Regeln das gemergte Redesign (PR #305) trotz korrekt geladenem CSS unsichtbar gemacht hatten.
