@@ -599,6 +599,19 @@
     list-style: none;
 }
 
+/* Chip-cloud variant: "Voraussetzungen" and "Effekte" entries render as
+   res-chip badges (resource chip or neutral fallback chip), not full lines
+   of prose — wrap them like a chip row instead of stacking one per line. */
+.tech-panel .detail-list--chips {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.tech-panel .detail-list--chips li {
+    display: inline-flex;
+}
+
 .tech-panel .detail-close {
     display: block;
     width: 100%;

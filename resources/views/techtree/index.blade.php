@@ -179,10 +179,12 @@
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(part, idx) in selectedTech.required_list"
                                                 :key="idx">
-                                                <li x-text="part"></li>
+                                                <li>
+                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>
@@ -209,10 +211,12 @@
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(part, idx) in selectedTech.required_list"
                                                 :key="idx">
-                                                <li x-text="part"></li>
+                                                <li>
+                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>
@@ -227,7 +231,7 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_current_level") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(line, idx) in selectedTech.effects_current_level"
                                                 :key="idx">
                                                 <li>
@@ -238,7 +242,8 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral"
+                                                            x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -254,7 +259,7 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_next_level") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(line, idx) in selectedTech.unlocks_next_level"
                                                 :key="idx">
                                                 <li>
@@ -265,7 +270,8 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral"
+                                                            x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -287,10 +293,12 @@
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(part, idx) in selectedTech.required_list"
                                                 :key="idx">
-                                                <li x-text="part"></li>
+                                                <li>
+                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>
@@ -305,7 +313,7 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_current_level") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(line, idx) in selectedTech.effects_current_level"
                                                 :key="idx">
                                                 <li>
@@ -316,7 +324,8 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral"
+                                                            x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -331,7 +340,7 @@
                                     <div class="detail-row">
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_next_level") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(line, idx) in selectedTech.unlocks_next_level"
                                                 :key="idx">
                                                 <li>
@@ -342,7 +351,8 @@
                                                         </span>
                                                     </template>
                                                     <template x-if="!line.chip">
-                                                        <span x-text="line.text"></span>
+                                                        <span class="res-chip res-chip--neutral"
+                                                            x-text="line.text"></span>
                                                     </template>
                                                 </li>
                                             </template>
@@ -389,10 +399,12 @@
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
-                                        <ul class="detail-list">
+                                        <ul class="detail-list detail-list--chips">
                                             <template x-for="(part, idx) in selectedTech.required_list"
                                                 :key="idx">
-                                                <li x-text="part"></li>
+                                                <li>
+                                                    <span class="res-chip res-chip--neutral" x-text="part"></span>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>
