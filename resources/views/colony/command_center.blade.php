@@ -115,16 +115,17 @@
                 <ul class="cc-list">
                     @foreach ($damagedBuildings as $b)
                         @php
+                            $buildingKey = $b["building_key"];
+                            $buildingLabel = $b["label"];
                             $buildingTooltip = [
                                 "description" => __(
-                                    "buildings." . str_replace("building_", "", $b["building_key"]) . "_desc",
+                                    "buildings." . str_replace("building_", "", $buildingKey) . "_desc",
                                 ),
                             ];
                         @endphp
                         <li class="cc-list-item">
                             <span>
-                                <x-entity-chip type="building" entity-key="{{ $b["building_key"] }}"
-                                    label="{{ $b["label"] }}" :tooltip="$buildingTooltip" />
+                                <x-entity-chip type="building" :entity-key="$buildingKey" :label="$buildingLabel" :tooltip="$buildingTooltip" />
                                 ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
                             </span>
                             <span class="cc-list-item-danger">
@@ -177,14 +178,15 @@
                     @endphp
                     @foreach ($advisors as $a)
                         @php
+                            $advisorEntityKey = "advisor_" . $a["type_key"];
+                            $advisorLabel = $a["name"];
                             $advisorTooltip = [
                                 "description" => $a["type_key"] ? __("advisors." . $a["type_key"] . "_desc") : null,
                             ];
                         @endphp
                         <li class="cc-list-item">
                             <span>
-                                <x-entity-chip type="advisor" entity-key="advisor_{{ $a["type_key"] }}"
-                                    label="{{ $a["name"] }}" :tooltip="$advisorTooltip" />
+                                <x-entity-chip type="advisor" :entity-key="$advisorEntityKey" :label="$advisorLabel" :tooltip="$advisorTooltip" />
                                 ({{ $a["rank_name"] }})
                             </span>
                             <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}

@@ -119,6 +119,18 @@ class CommandCenterTest extends TestCase
         });
     }
 
+    public function test_advisors_widget_renders_advisor_name_not_just_rank(): void
+    {
+        // Regression: nested double-quoted array access inside a <x-entity-chip label="{{ ... }}">
+        // attribute broke Blade's component-tag compiler, leaving the whole tag uncompiled
+        // and its label text invisible — only the "(Junior)" rank suffix rendered.
+        $response = $this->actingAs($this->bart())->get(route('colony.command_center'));
+        $advisorName = $response->viewData('advisors')->first()['name'];
+
+        $response->assertDontSee('x-entity-chip', false);
+        $response->assertSee($advisorName);
+    }
+
     public function test_trust_events_widget_shows_recent_events(): void
     {
         DB::table('trust_events')->insert([
