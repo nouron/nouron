@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-09-04
+
+- Fix: Hangar-Nexus-Anfrage (Owner-Playtest-Fund) — Schiffs-Reihenfolge im Bestell-Modal korrigiert (Drohne/Frachter/Korvette statt PK-Reihenfolge), fehlendes Hangar-Level-Gate ergänzt (Frachter erfordert Hangar-Lv2, Korvette Lv3 — serverseitig erzwungen + UI zeigt gesperrte Typen ausgegraut), Kosten/Lieferzeit als Ressourcen-Chips statt Fließtext, kaputten Response-Handler gefixt (`res.slot` existierte bei diesem Endpoint nie — Pending-Ships-Liste blieb nach Bestellung bis zum Reload leer). Nexus-Lieferzeiten verkürzt (Drohne 2→1, Frachter 3→2, Korvette 5→3 Sole).
+
 ## 2026-09-03
 
 - Design/Feat: Encounter-Events Zwei-Scope-Modell (Einzelgebäude vs. koloniweit) entworfen und für Sturm umgesetzt (GDD §9) — Sturm trifft jetzt alle Kolonie-Zone-Gebäude (Harvester ausgeschlossen), jedes mit eigener SP-basierter Outcome-Berechnung; Trust-Event feuert genau einmal pro Sturm (schlechtestes Tier); ein aggregierter `colony_log`-Eintrag statt N Einzelmeldungen, im Sol-Report als eine Zeile sichtbar. Geologische Instabilität bleibt Einzelgebäude-Scope (fest auf Harvester). Owner-Fund: Sturm-Warnung/Auflösung wirkte unsimuliert, weil das Ergebnis nie im Sol-Report auftauchte.
