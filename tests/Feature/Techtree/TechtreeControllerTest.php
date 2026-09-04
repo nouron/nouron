@@ -312,7 +312,7 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($construction);
         $this->assertTrue(
-            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% Bau-AP-Kosten' && $l['chip'] === null)
+            collect($construction['unlocks_next_level'])->contains(fn ($l) => $l['text'] === '-4% AP-Kosten' && $l['chip'] === null)
         );
     }
 
