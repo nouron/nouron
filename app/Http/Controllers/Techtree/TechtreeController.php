@@ -126,9 +126,15 @@ class TechtreeController extends BaseController
                     // pass. Ships were missed in the original pass (Owner-Playtest-Fund
                     // 2026-09-04) even though desc_techs_drone/corvette/freighter already
                     // existed — 'ship' just needed the same prefix-strip as the others.
-                    'description' => in_array($type, ['building', 'research', 'ship'], true)
-                        ? __('techtree.desc_techs_'.preg_replace('/^(building|knowledge|ship)_/', '', $tech['name']))
-                        : null,
+                    'description' => match (true) {
+                        in_array($type, ['building', 'research', 'ship'], true) => __('techtree.desc_techs_'.preg_replace('/^(building|knowledge|ship)_/', '', $tech['name'])),
+                        // Advisor description reused from the Berater screen's existing
+                        // *_desc lang strings (Owner-Playtest-Fund 2026-09-04) — the
+                        // techtree detail panel dropped its Status/AP-type/hire-cost rows
+                        // in favor of this description, same pattern as CommandCenterController.
+                        (bool) $advisorKey => __('advisors.'.$advisorKey.'_desc'),
+                        default => null,
+                    },
                     // Reverse of required_desc: what becomes available/changes specifically
                     // at the NEXT level (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2
                     // unlocks Frachter" for buildings, "-4% Bau-AP-Kosten" for knowledge —

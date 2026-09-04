@@ -468,8 +468,13 @@
 
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && (selectedBuilding.levelup_cost ?? 0) > 0">
-                                        <p class="tile-building-levelup-cost"
-                                            x-text="`{{ __("colony.levelup_cost_label") }} ${selectedBuilding.levelup_cost} RG {{ __("colony.levelup_cost_suffix") }}`">
+                                        <p class="tile-building-levelup-cost">
+                                            <span>{{ __("colony.levelup_cost_label") }}</span>
+                                            <span class="res-chip res-RG">
+                                                <span class="res-abbr">RG</span>
+                                                <span class="res-amount" x-text="selectedBuilding.levelup_cost"></span>
+                                            </span>
+                                            <span>{{ __("colony.levelup_cost_suffix") }}</span>
                                         </p>
                                     </template>
 

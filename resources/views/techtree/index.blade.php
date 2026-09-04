@@ -155,27 +155,12 @@
                     {{-- Meta rows --}}
                     <div class="detail-body">
 
-                        {{-- ADVISOR: hired status, AP type, hire cost, link to Berater screen --}}
+                        {{-- ADVISOR: description (from partials.building-detail above), required list, link to Berater screen.
+                         Status/AP-type/hire-cost dropped here (Owner-Playtest-Fund 2026-09-04): status is already
+                         shown by the header chip, and AP-type/hire-cost belong on the Berater screen itself, not
+                         this popup — single-pool consolidation made "AP-type" meaningless anyway (see Fix 1). --}}
                         <template x-if="selectedTech.type === 'personell'">
                             <div>
-                                <div class="detail-row">
-                                    <span class="detail-row-label">{{ __("techtree.detail_advisor_status") }}</span>
-                                    <span :class="selectedTech.status === 'built' ? 'detail-advisor-hired' : ''"
-                                        x-text="selectedTech.status === 'built' ? '{{ __("techtree.advisor_hired") }}' : (selectedTech.status === 'available' ? '{{ __("techtree.advisor_available") }}' : '{{ __("techtree.advisor_locked") }}')">
-                                    </span>
-                                </div>
-                                <template x-if="selectedTech.ap_type">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_advisor_ap") }}</span>
-                                        <span x-text="selectedTech.ap_type"></span>
-                                    </div>
-                                </template>
-                                <template x-if="selectedTech.hire_cost">
-                                    <div class="detail-row">
-                                        <span class="detail-row-label">{{ __("techtree.detail_advisor_cost") }}</span>
-                                        <span x-text="selectedTech.hire_cost + ' Cr'"></span>
-                                    </div>
-                                </template>
                                 <template x-if="selectedTech.required_list && selectedTech.required_list.length > 0">
                                     <div class="detail-row">
                                         <span class="detail-row-label">{{ __("techtree.detail_required") }}</span>
