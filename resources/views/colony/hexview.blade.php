@@ -479,7 +479,7 @@
                                     <template
                                         x-if="buildingCanLevelUp(selectedBuilding) && selectedBuilding.unlocks_next_level && selectedBuilding.unlocks_next_level.length > 0">
                                         <p class="tile-building-unlocks"
-                                            x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.join(', ')}`">
+                                            x-text="`{{ __("techtree.detail_unlocks_next_level") }}: ${selectedBuilding.unlocks_next_level.map((l) => l.text).join(', ')}`">
                                         </p>
                                     </template>
 

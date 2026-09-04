@@ -3,6 +3,8 @@
 ## 2026-09-04
 
 - Fix: Hangar-Nexus-Anfrage (Owner-Playtest-Fund) — Schiffs-Reihenfolge im Bestell-Modal korrigiert (Drohne/Frachter/Korvette statt PK-Reihenfolge), fehlendes Hangar-Level-Gate ergänzt (Frachter erfordert Hangar-Lv2, Korvette Lv3 — serverseitig erzwungen + UI zeigt gesperrte Typen ausgegraut), Kosten/Lieferzeit als Ressourcen-Chips statt Fließtext, kaputten Response-Handler gefixt (`res.slot` existierte bei diesem Endpoint nie — Pending-Ships-Liste blieb nach Bestellung bis zum Reload leer). Nexus-Lieferzeiten verkürzt (Drohne 2→1, Frachter 3→2, Korvette 5→3 Sole).
+- Fix: Techtree-Sidebar zeigte für Schiffe keine Beschreibung (`desc_techs_drone/corvette/freighter` in `lang/de/techtree.php` existierten bereits, waren aber nie verdrahtet) — `TechtreeController::index()` befüllt `description` jetzt auch für `ship`-Einträge.
+- Refactor: `BuildingUnlockService::unlocksAtLevel()` liefert jetzt strukturierte `{text, chip}`-Einträge statt reiner Strings — gleiches Format wie `KnowledgeEffectDescriptionService::effectsAtLevel()`, Vorbereitung für einheitliches Chip-Rendering in "Voraussetzungen"/"Effekte der nächsten Stufe" (Blade-Umsetzung folgt separat). `chip` ist für Gebäude-Unlocks immer `null` (reine Entity-Namen, keine Ressourcenwerte).
 
 ## 2026-09-03
 

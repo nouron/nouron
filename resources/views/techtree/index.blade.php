@@ -228,9 +228,19 @@
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_current_level") }}</span>
                                         <ul class="detail-list">
-                                            <template x-for="(name, idx) in selectedTech.effects_current_level"
+                                            <template x-for="(line, idx) in selectedTech.effects_current_level"
                                                 :key="idx">
-                                                <li x-text="name"></li>
+                                                <li>
+                                                    <template x-if="line.chip">
+                                                        <span :class="'res-chip res-' + line.chip.cls">
+                                                            <span class="res-abbr" x-text="line.chip.abbr"></span>
+                                                            <span class="res-amount" x-text="line.chip.value"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="!line.chip">
+                                                        <span x-text="line.text"></span>
+                                                    </template>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>
@@ -245,9 +255,19 @@
                                         <span
                                             class="detail-row-label">{{ __("techtree.detail_effects_next_level") }}</span>
                                         <ul class="detail-list">
-                                            <template x-for="(name, idx) in selectedTech.unlocks_next_level"
+                                            <template x-for="(line, idx) in selectedTech.unlocks_next_level"
                                                 :key="idx">
-                                                <li x-text="name"></li>
+                                                <li>
+                                                    <template x-if="line.chip">
+                                                        <span :class="'res-chip res-' + line.chip.cls">
+                                                            <span class="res-abbr" x-text="line.chip.abbr"></span>
+                                                            <span class="res-amount" x-text="line.chip.value"></span>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="!line.chip">
+                                                        <span x-text="line.text"></span>
+                                                    </template>
+                                                </li>
                                             </template>
                                         </ul>
                                     </div>

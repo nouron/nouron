@@ -121,10 +121,13 @@ class TechtreeController extends BaseController
                     // What this entity DOES, independent of prereqs — Owner-Playtest-Fund
                     // 2026-08-31: the sidebar showed cost/progress but never the effect,
                     // so the player couldn't plan ahead. Reuses the existing desc_techs_*
-                    // texts (already written for every building/knowledge, just unused
-                    // here) — no new content needed for this generic-description pass.
-                    'description' => in_array($type, ['building', 'research'], true)
-                        ? __('techtree.desc_techs_'.preg_replace('/^(building|knowledge)_/', '', $tech['name']))
+                    // texts (already written for every building/knowledge/ship, just
+                    // unused here) — no new content needed for this generic-description
+                    // pass. Ships were missed in the original pass (Owner-Playtest-Fund
+                    // 2026-09-04) even though desc_techs_drone/corvette/freighter already
+                    // existed — 'ship' just needed the same prefix-strip as the others.
+                    'description' => in_array($type, ['building', 'research', 'ship'], true)
+                        ? __('techtree.desc_techs_'.preg_replace('/^(building|knowledge|ship)_/', '', $tech['name']))
                         : null,
                     // Reverse of required_desc: what becomes available/changes specifically
                     // at the NEXT level (Owner-Playtest-Fund 2026-08-31, e.g. "Hangar Lv2

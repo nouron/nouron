@@ -246,6 +246,25 @@ class TechtreeControllerTest extends TestCase
         $this->assertNotEmpty($sciencelab['description']);
     }
 
+    // Regression (Owner-Playtest 2026-09-04): ships were excluded from the
+    // description wiring above even though desc_techs_drone/corvette/freighter
+    // already existed in lang/de/techtree.php, unused.
+    public function test_index_ship_items_include_description(): void
+    {
+        $this->app->setLocale('de');
+        $bart = User::find($this->userIdBart);
+        $pageData = $this->actingAs($bart)->get(route('techtree.index'))->viewData('pageData');
+
+        $drone = null;
+        foreach ($pageData['phases'] as $phase) {
+            $drone ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'ship' && $t['id'] === 85);
+        }
+
+        $this->assertNotNull($drone, 'ship_drone (id=85) must be present in the phases');
+        $this->assertSame(__('techtree.desc_techs_drone'), $drone['description']);
+        $this->assertNotEmpty($drone['description']);
+    }
+
     // Regression (Owner-Playtest 2026-08-31, follow-up): reverse of
     // required_desc — what leveling up a building unlocks (e.g. "Hangar
     // Lv1→2 unlocks Frachter"). Colony 1's hangar (id=44) is seeded at Lv1.
@@ -262,7 +281,10 @@ class TechtreeControllerTest extends TestCase
 
         $this->assertNotNull($hangar, 'hangar building must be present in the phases');
         $this->assertSame(1, $hangar['level'], 'Testdaten-Annahme: Hangar steht auf Level 1');
-        $this->assertContains(__('techtree.ship_freighter'), $hangar['unlocks_next_level']);
+        $this->assertContains(
+            __('techtree.ship_freighter'),
+            array_column($hangar['unlocks_next_level'], 'text')
+        );
     }
 
     // Regression (Owner-Playtest 2026-08-31, follow-up to

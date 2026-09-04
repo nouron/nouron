@@ -140,7 +140,10 @@ class ColonyViewTest extends TestCase
 
         $this->assertNotNull($hangar);
         $this->assertSame(1, (int) $hangar->level, 'Testdaten-Annahme: Hangar steht auf Level 1');
-        $this->assertContains(__('techtree.ship_freighter'), $hangar->unlocks_next_level);
+        $this->assertContains(
+            __('techtree.ship_freighter'),
+            array_column($hangar->unlocks_next_level, 'text')
+        );
     }
 
     public function test_pending_run_redirects_to_lobby(): void
