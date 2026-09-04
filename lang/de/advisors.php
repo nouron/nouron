@@ -44,12 +44,12 @@ return [
     'path_label_scientist' => 'Analytiker-Pfad',
     'path_label_pilot' => 'Raumfahrer-Pfad',
     'path_label_trader' => 'Konsul-Pfad',
-    'path_choice_scientist' => 'Analytiklabor bauen, dann Analytiker einstellen — öffnet den Techtree und gibt Forschungs-AP. Die erste Grundlage für wissenschaftlichen Fortschritt.',
-    'path_choice_pilot' => 'Hangar bauen, dann Raumfahrer einstellen — öffnet Erkundungsmissionen und Navigations-AP. Der erste Schritt raus aus der Koloniezone.',
-    'path_choice_trader' => 'Cantina bauen, dann Konsul einstellen — öffnet Handelsangebote und Wirtschafts-AP. Der schnellste Weg zu Werkstoffen und Extraeinnahmen.',
-    'path_unlock_scientist' => 'Techtree + Kenntnisforschung + Kenntnis-AP',
-    'path_unlock_pilot' => 'Missionen + Hangar-Events + Navigations-AP',
-    'path_unlock_trader' => 'Handel + Cantina-Events + Handels-AP',
+    'path_choice_scientist' => 'Analytiklabor bauen, dann Analytiker einstellen — öffnet den Techtree und gibt AP. Die erste Grundlage für wissenschaftlichen Fortschritt.',
+    'path_choice_pilot' => 'Hangar bauen, dann Raumfahrer einstellen — öffnet Erkundungsmissionen und AP für Erkundung. Der erste Schritt raus aus der Koloniezone.',
+    'path_choice_trader' => 'Cantina bauen, dann Konsul einstellen — öffnet Handelsangebote und AP. Der schnellste Weg zu Werkstoffen und Extraeinnahmen.',
+    'path_unlock_scientist' => 'Techtree + Kenntnisforschung + AP',
+    'path_unlock_pilot' => 'Missionen + Hangar-Events + AP',
+    'path_unlock_trader' => 'Handel + Cantina-Events + AP',
 
     // Hire/fire confirmation dialogs
     'dialog_hire_title' => 'Berater einstellen',
@@ -65,7 +65,7 @@ return [
     'dialog_cancel' => 'Abbrechen',
 
     // Hire-time warnings: AP-type has no consuming building yet
-    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — Forschungs-AP bleibt vorerst ungenutzt.',
-    'warning_no_hangar' => 'Du hast noch keinen Hangar — Navigations-AP wird vorerst nur für Erkundung genutzt.',
+    'warning_no_sciencelab' => 'Du hast noch kein Analytik-Labor — AP für Kenntnisse bleibt vorerst ungenutzt.',
+    'warning_no_hangar' => 'Du hast noch keinen Hangar — AP wird vorerst nur für Erkundung genutzt.',
 
 ];
