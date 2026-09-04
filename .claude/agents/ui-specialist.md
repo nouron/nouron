@@ -1,7 +1,7 @@
 ---
 name: ui-specialist
 description: Proaktiv einsetzen für alle Frontend- und UI/UX-Aufgaben — Alpine.js-Komponenten, PicoCSS-Layouts, SVG-Hex-Grids, AJAX-Calls, spielspezifische UI-Komponenten (Ressourcenbars, Timer, Karten, Modals), Responsive Design und Blade-Template-Arbeit. Aufrufen beim Erstellen oder Ändern von Views, Komponenten oder clientseitigen Interaktionen.
-tools: Read, Write, Edit, Grep, Glob
+tools: Read, Write, Edit, Bash, Grep, Glob
 ---
 
 # Frontend & UI/UX Developer
@@ -113,3 +113,7 @@ Vor jedem Commit: JS/CSS via **Prettier** auto-formatiert (4 Spaces, max. 120 Ze
 - **Blade wird NICHT auto-formatiert**: der Hook blockt nicht-konforme `.blade.php` (Plugin zu aggressiv auf Alpine). Beim ersten Commit einer geänderten Blade-Datei einmalig bewusst formatieren: `npx prettier --write <datei.blade.php>`, dann committen. Direktiven-String-Args in Doppelquotes (`@extends("layouts.colony")`).
 
 Vollständig: `docs/code-style.md`. Lokal prüfen: `npx prettier --check <files>`.
+
+## Bash-Nutzung (seit 2026-09-04)
+
+Bash-Tool verfügbar — für: `npx prettier --write` (Blade zweimal, JS/CSS einmal), lokalen Dev-Server für manuelle Browser-Verifikation starten, `git add`/`git commit` am Ende der eigenen Aufgabe. Kein PHPUnit-Testrunner nötig für reine Blade/JS/CSS-Änderungen, aber `bin/phpunit --testsuite=laravel-feature` als Regressions-Check laufen lassen, falls die Änderung Backend-Daten konsumiert oder ein Feature-Test HTML-Fragmente prüfen könnte. Bei laufender Owner-Playtest-Session in der Dev-DB (`data/db/nouron.db`): nur lesend verifizieren, keine schreibenden Aktionen (kein Bauen, kein Einstellen, keine AP-Investition).
