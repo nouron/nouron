@@ -114,12 +114,18 @@
                 </p>
                 <ul class="cc-list">
                     @foreach ($damagedBuildings as $b)
+                        @php
+                            $buildingTooltip = [
+                                "description" => __(
+                                    "buildings." . str_replace("building_", "", $b["building_key"]) . "_desc",
+                                ),
+                            ];
+                        @endphp
                         <li class="cc-list-item">
                             <span>
                                 <x-entity-chip type="building" entity-key="{{ $b["building_key"] }}"
-                                    label="{{ $b["label"] }}" :tooltip="["description"=> __("buildings." .
-                                    str_replace("building_", "", $b["building_key"]) . "_desc")]" />
-                                    ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
+                                    label="{{ $b["label"] }}" :tooltip="$buildingTooltip" />
+                                ({{ $b["tile_x"] }}, {{ $b["tile_y"] }})
                             </span>
                             <span class="cc-list-item-danger">
                                 {{ __("command_center.widget_maintenance_status", ["sp" => $b["status_points"], "max" => $b["max_status_points"]]) }}
@@ -170,12 +176,16 @@
                         ];
                     @endphp
                     @foreach ($advisors as $a)
+                        @php
+                            $advisorTooltip = [
+                                "description" => $a["type_key"] ? __("advisors." . $a["type_key"] . "_desc") : null,
+                            ];
+                        @endphp
                         <li class="cc-list-item">
                             <span>
                                 <x-entity-chip type="advisor" entity-key="advisor_{{ $a["type_key"] }}"
-                                    label="{{ $a["name"] }}" :tooltip="["description"=> $a["type_key"] ?
-                                    __("advisors." . $a["type_key"] . "_desc") : null]" />
-                                    ({{ $a["rank_name"] }})
+                                    label="{{ $a["name"] }}" :tooltip="$advisorTooltip" />
+                                ({{ $a["rank_name"] }})
                             </span>
                             <span class="ap-chip {{ $apChipClass[$a["ap_type"]] ?? "" }}">+{{ $a["ap_per_tick"] }}
                                 AP</span>
