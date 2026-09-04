@@ -61,6 +61,33 @@ class TechtreeController extends BaseController
                 ->with('info', __('colony.nav_techtree_locked'));
         }
 
+        $phases = $this->buildPhases($colonyId);
+
+        // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
+        $userId = Auth::id();
+        $hint = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
+        $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
+
+        $pageData = ['phases' => $phases];
+
+        $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
+
+        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank', 'firstVisit'));
+    }
+
+    /**
+     * Build the full phases datastructure (items + within-phase dependency arrows)
+     * consumed by the Alpine.js techtree view, both for the initial page render
+     * (index()) and for a post-order refresh (order()) — a single AP investment
+     * can flip an unrelated dependent tech's status from 'locked' to 'available'
+     * (e.g. a building reaching the level another tech's required_building_id/level
+     * gates on), so order() re-derives this same structure rather than patching
+     * only the one invested tech. Keeping the gate logic (computeStatus()) here in
+     * one place avoids duplicating it in JS, where the client doesn't even have the
+     * required_building_id/level fields needed to re-evaluate it itself.
+     */
+    private function buildPhases(int $colonyId): array
+    {
         $techtree = $this->techtreeColonyService->getTechtree($colonyId);
 
         // Map element DOM id → phase number for same-phase arrow filtering
@@ -240,16 +267,33 @@ class TechtreeController extends BaseController
         }
         unset($phase);
 
-        // Onboarding pulse: ranks 2 (personell), 4 (research), 5 (buildings) highlight techtree cards.
-        $userId = Auth::id();
-        $hint = $userId ? $this->onboardingHintService->getActiveHint($colonyId, $userId) : null;
-        $activeHintRank = ($hint && in_array($hint['rank'], [2, 4, 5])) ? $hint['rank'] : 0;
+        return $phases;
+    }
 
-        $pageData = ['phases' => $phases];
+    /**
+     * Lightweight cross-node update payload derived from buildPhases() — only the
+     * fields that can change for OTHER (non-invested) techs as a side effect of one
+     * order: gate status (locked/available/built) and dependency-arrow 'met' flags.
+     * Sent alongside order()'s existing single-tech 'tech' field so the client can
+     * patch every dependent node in place without a full page reload or re-sending
+     * the whole (translation-heavy) phases structure.
+     *
+     * @return array<int, array{items: list<array{id: int, type: string, status: string}>, lines: list<array>}>
+     */
+    private function phasesUpdatePayload(array $phases): array
+    {
+        $update = [];
+        foreach ($phases as $phaseNum => $phase) {
+            $update[$phaseNum] = [
+                'items' => array_map(
+                    fn (array $item) => ['id' => $item['id'], 'type' => $item['type'], 'status' => $item['status']],
+                    $phase['items']
+                ),
+                'lines' => $phase['lines'],
+            ];
+        }
 
-        $firstVisit = $userId ? $this->onboardingHintService->checkFirstVisit('techtree', $userId) : false;
-
-        return view('techtree.index', compact('pageData', 'colonyId', 'activeHintRank', 'firstVisit'));
+        return $update;
     }
 
     private static function buildingImageSlug(string $key): string
@@ -454,6 +498,11 @@ class TechtreeController extends BaseController
             'levelup_blocked_message' => $levelupBlockedReason ? __("techtree.error_{$levelupBlockedReason}") : null,
             'tech' => $this->techStateFor($type, $id, $colonyId),
             'ap_available' => $this->advisorService->getAvailableActionPoints($colonyId),
+            // Owner-Playtest-Fund 2026-09-04: a levelup here can flip a dependent
+            // tech elsewhere in the tree from 'locked' to 'available' (or update an
+            // arrow's 'met' flag) — without this the graph only reflected that after
+            // a full page reload. See buildPhases()/phasesUpdatePayload() docblocks.
+            'phases_update' => $this->phasesUpdatePayload($this->buildPhases($colonyId)),
         ]);
     }
 

@@ -584,6 +584,50 @@ class TechtreeControllerTest extends TestCase
             ->where('colony_id', $this->colonyIdBart)->where('research_id', 91)->value('level'));
     }
 
+    // ── order(): cross-node status refresh (phases_update) ────────────────────
+
+    /**
+     * Owner-Playtest-Fund 2026-09-04: a levelup used to only patch the ONE invested
+     * tech client-side — a dependent tech elsewhere in the tree stayed 'locked' in
+     * the UI until a full page reload, even though the server-side gate had already
+     * flipped. knowledge_geology (research id=92) requires sciencelab (building
+     * id=31) at Lv2 — colony 1's sciencelab starts at Lv1 (locked) and building 27
+     * (its secondary Lv1 requirement) is already met. Leveling sciencelab to Lv2
+     * must report geology's fresh status via 'phases_update' in the same response.
+     */
+    public function test_order_response_includes_phases_update_for_a_newly_unlocked_dependent_tech(): void
+    {
+        // Precondition: geology is locked while sciencelab is still Lv1.
+        $before = $this->actingAs(User::find($this->userIdBart))
+            ->get(route('techtree.index'))->viewData('pageData');
+        $geologyBefore = null;
+        foreach ($before['phases'] as $phase) {
+            $geologyBefore ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+        }
+        $this->assertSame('locked', $geologyBefore['status'], 'precondition: geology must start locked');
+
+        // sciencelab (building 31): ap_spend=0, ap_for_levelup=10 → invest exactly enough to auto-levelup to Lv2.
+        $response = $this->actingAs(User::find($this->userIdBart))
+            ->postJson(route('techtree.order', ['type' => 'building', 'id' => 31]), ['order' => 'add', 'ap' => 10]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+        $response->assertJsonPath('leveled_up', true);
+        $response->assertJsonPath('tech.level', 2);
+
+        $phasesUpdate = $response->json('phases_update');
+        $this->assertIsArray($phasesUpdate, 'response must carry a phases_update payload');
+
+        $geologyUpdate = null;
+        foreach ($phasesUpdate as $phase) {
+            $geologyUpdate ??= collect($phase['items'])->first(fn ($t) => $t['type'] === 'research' && $t['id'] === 92);
+        }
+
+        $this->assertNotNull($geologyUpdate, 'phases_update must include geology (research id=92)');
+        $this->assertSame('available', $geologyUpdate['status'],
+            'geology must flip to available in the same response that unlocks it, without a page reload');
+    }
+
     /**
      * When ap_spend reaches the threshold but levelup() is blocked by an unmet
      * requirement (not just "not enough AP yet"), the invest must still report
